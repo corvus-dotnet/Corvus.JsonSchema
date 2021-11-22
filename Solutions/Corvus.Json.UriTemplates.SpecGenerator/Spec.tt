@@ -1,0 +1,26 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="Corvus.Json" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Text.Json" #>
+<#@ import namespace="System.Collections.Generic" #>
+
+Feature: <#= FeatureName #>
+
+<# foreach (var scenario in Scenarios) { #>
+Scenario Outline: <#= scenario.Name #> at level <#= scenario.Level #>
+	Given the variables
+	| name  | value          |
+<# foreach (var variable in scenario.Variables) { #>
+	| <#= variable.Name #> | <#= variable.Value #> |
+<# } #>
+	When I apply the variables to the template <template> 
+	Then the result should be one of <result>
+
+	Examples:
+	| template | result               |
+<# foreach (var testcase in scenario.TestCases) { #>
+	| <#= testcase.Template #> | <#= testcase.Result #> |
+<# } #>
+
+<# } #>

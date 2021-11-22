@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Note: this file was added to your solution as a result of one or more projects using the Endjin.RecommendedPractices.Build.Common NuGet package.
+    You can edit this file (e.g., to remove these comments), and it will not be updated - the package just checks for its presence, and copies
+    this file. If you don't want this file (but you want to use the NuGet package that puts it here), add this setting to all projects
+    using Endjin.RecommendedPractices.Build.Common:
+     <EndjinDisableCodeAnalysis>true</EndjinDisableCodeAnalysis>
+    and then delete this file. That setting will prevent the package from recreating this file.
+
+    This file will NOT be updated automatically if you update to newer versions of Endjin.RecommendedPractices.Build.Common, partly because
+    it is expected that projects may want to modify these settings, and partly because NuGet doesn't provide a good way to do that. If you
+    want to resynchronize with the current version, delete this file, and Endjin.RecommendedPractices.Build.Common will recreate next
+    time you build (as long as you've not set EndjinDisableCodeAnalysis).
+-->
+<RuleSet Name="StyleCop Rules" Description=" " ToolsVersion="15.0">
+  <Rules AnalyzerId="StyleCop.Analyzers" RuleNamespace="StyleCop.Analyzers">
+    <!--
+        StyleCop's insistence that constructors' summaries must always start with exactly
+        the same boilerplate text is not deeply helpful. Saying "Creates a Foo"
+        is in most cases better than the "Initializes a new instance of the Foo type"
+        that this rule insists on.
+    -->
+    <Rule Id="SA1642" Action="None" />
+    <!--
+        SA1025 makes it impossible to write decent-looking switch expressions because it
+        doesn't allow multiple whitespace characters in a row. There seems to be no way to
+        disable this rule just inside switch expressions, so we reluctantly live without it.
+    -->
+    <Rule Id="SA1025" Action="None" />
+  </Rules>
+</RuleSet>

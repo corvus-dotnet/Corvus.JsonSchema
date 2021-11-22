@@ -1,0 +1,30 @@
+@draft2019-09
+
+Feature: iri draft2019-09
+    In order to use json-schema
+    As a developer
+    I want to support iri in draft2019-09
+
+Scenario Outline: validation of IRIs
+/* Schema: 
+{"format": "iri"}
+*/
+    Given the input JSON file "iri.json"
+    And the schema at "#/0/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/000/tests/000/data | true  | a valid IRI with anchor tag                                                      |
+        | #/000/tests/001/data | true  | a valid IRI with anchor tag and parentheses                                      |
+        | #/000/tests/002/data | true  | a valid IRI with URL-encoded stuff                                               |
+        | #/000/tests/003/data | true  | a valid IRI with many special characters                                         |
+        | #/000/tests/004/data | true  | a valid IRI based on IPv6                                                        |
+        | #/000/tests/005/data | false | an invalid IRI based on IPv6                                                     |
+        | #/000/tests/006/data | false | an invalid relative IRI Reference                                                |
+        | #/000/tests/007/data | false | an invalid IRI                                                                   |
+        | #/000/tests/008/data | false | an invalid IRI though valid IRI reference                                        |

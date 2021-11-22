@@ -1,0 +1,9 @@
+[{"key": "https://json-schema.org/draft/2020-12/schema", "class": "Schema", "path": "C:\\Users\\matth\\source\\repos\\Corvus-dotnet\\Corvus\\Solutions\\Corvus.Json.JsonSchema\\Corvus.Json\\Draft202012\\Schema.cs"}
+, {"key": "https://json-schema.org/draft/2020-12/meta/unevaluated", "class": "Unevaluated", "path": "C:\\Users\\matth\\source\\repos\\Corvus-dotnet\\Corvus\\Solutions\\Corvus.Json.JsonSchema\\Corvus.Json\\Draft202012\\Unevaluated.cs"}
+, {"key": "https://json-schema.org/draft/2020-12/meta/format-annotation", "class": "FormatAnnotation", "path": "C:\\Users\\matth\\source\\repos\\Corvus-dotnet\\Corvus\\Solutions\\Corvus.Json.JsonSchema\\Corvus.Json\\Draft202012\\FormatAnnotation.cs"}
+, {"key": "https://json-schema.org/draft/2020-12/meta/meta-data", "class": "MetaData", "path": "C:\\Users\\matth\\source\\repos\\Corvus-dotnet\\Corvus\\Solutions\\Corvus.Json.JsonSchema\\Corvus.Json\\Draft202012\\MetaData.cs"}
+, {"key": "https://json-schema.org/draft/2020-12/meta/applicator", "class": "Applicator", "path": "C:\\Users\\matth\\source\\repos\\Corvus-dotnet\\Corvus\\Solutions\\Corvus.Json.JsonSchema\\Corvus.Json\\Draft202012\\Applicator.cs"}
+, {"key": "https://json-schema.org/draft/2020-12/meta/core", "class": "Core", "path": "C:\\Users\\matth\\source\\repos\\Corvus-dotnet\\Corvus\\Solutions\\Corvus.Json.JsonSchema\\Corvus.Json\\Draft202012\\Core.cs"}
+, {"key": "https://json-schema.org/draft/2020-12/meta/validation", "class": "Validation", "path": "C:\\Users\\matth\\source\\repos\\Corvus-dotnet\\Corvus\\Solutions\\Corvus.Json.JsonSchema\\Corvus.Json\\Draft202012\\Validation.cs"}
+, {"key": "https://json-schema.org/draft/2020-12/meta/content", "class": "Content", "path": "C:\\Users\\matth\\source\\repos\\Corvus-dotnet\\Corvus\\Solutions\\Corvus.Json.JsonSchema\\Corvus.Json\\Draft202012\\Content.cs"}
+]
