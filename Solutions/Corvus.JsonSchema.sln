@@ -33,8 +33,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{C1485D51
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Corvus.Json.SchemaGenerator", "Corvus.Json.SchemaGenerator\Corvus.Json.SchemaGenerator.csproj", "{60681A49-19DD-4ED3-AA6F-E09501D54CAC}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Corvus.Json.SourceGenerator", "Corvus.Json.SourceGenerator\Corvus.Json.SourceGenerator.csproj", "{B37195B6-D2FD-43D1-BC02-DC8A343D8D52}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -81,10 +79,6 @@ Global
 		{60681A49-19DD-4ED3-AA6F-E09501D54CAC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{60681A49-19DD-4ED3-AA6F-E09501D54CAC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{60681A49-19DD-4ED3-AA6F-E09501D54CAC}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B37195B6-D2FD-43D1-BC02-DC8A343D8D52}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B37195B6-D2FD-43D1-BC02-DC8A343D8D52}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B37195B6-D2FD-43D1-BC02-DC8A343D8D52}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B37195B6-D2FD-43D1-BC02-DC8A343D8D52}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -101,7 +95,6 @@ Global
 		{3DFCF0B4-E0E4-4ACB-B457-6C2309B088D1} = {706FF3BD-2ADD-4FEE-85F3-7C0AA9DD8560}
 		{38EB2BE5-E2DB-43A3-B2FF-09B201DA941B} = {706FF3BD-2ADD-4FEE-85F3-7C0AA9DD8560}
 		{60681A49-19DD-4ED3-AA6F-E09501D54CAC} = {C1485D51-A7BA-42B5-B527-80D008A1BC93}
-		{B37195B6-D2FD-43D1-BC02-DC8A343D8D52} = {C1485D51-A7BA-42B5-B527-80D008A1BC93}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {5F110C3A-9FAB-4CD2-B1B9-77CA0CC6D499}
