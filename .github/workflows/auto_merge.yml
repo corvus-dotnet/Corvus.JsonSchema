@@ -1,0 +1,68 @@
+name: auto_merge
+on:
+  check_run:
+    types:
+      # Check runs completing successfully can unblock the
+      # corresponding pull requests and make them mergeable.
+      - completed
+  pull_request:
+    types:
+      # A closed pull request makes the checks on the other
+      # pull request on the same base outdated.
+      - closed
+      # Adding the autosquash label to a pull request can
+      # trigger an update or a merge.
+      - labeled
+      - synchronize
+  pull_request_review:
+    types:
+      # Review approvals can unblock the pull request and
+      # make it mergeable.
+      - submitted
+  # Success statuses can unblock the corresponding
+  # pull requests and make them mergeable.
+  status: {}
+  workflow_run:
+    workflows: [approve_and_label]
+    types:
+    - completed
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  checks: read
+
+jobs:
+
+  auto_merge:
+    name: Auto-squash the PR
+    runs-on: ubuntu-18.04
+    steps:
+      # This may not be strictly required, but should keep unmerged, closed PRs cleaner
+      - name: Remove 'autosquash' label from closed PRs
+        id: remove_autosquash_label_from_closed_prs
+        uses: actions/github-script@v2
+        with:
+          github-token: '${{ secrets.GITHUB_TOKEN }}'
+          script: |
+            const pulls = await github.search.issuesAndPullRequests({
+              q: 'is:pr is:closed label:autosquash',
+            });
+            core.info(`pulls: ${pulls.data.items}`)
+            const repoUrl = `https://api.github.com/repos/${context.payload.repository.owner.login}/${context.payload.repository.name}`
+            const prs_to_unlabel = pulls.data.items.
+                                          filter(function (x) { return x.repository_url == repoUrl; }).
+                                          map(p=>p.number);
+            for (const i of prs_to_unlabel) {
+              core.info(`Removing label 'autosquash' from issue #${i}`)
+              github.issues.removeLabel({
+                owner: context.payload.repository.owner.login,
+                repo: context.payload.repository.name,
+                issue_number: i,
+                name: 'autosquash'
+              });
+            }
+      - uses: endjin/autosquash@v2.4
+        with:
+          github_token: '${{ secrets.GITHUB_TOKEN }}'
