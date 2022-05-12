@@ -1,0 +1,125 @@
+name: approve_and_label
+on: 
+  pull_request:
+    types: [opened, reopened]
+    
+permissions:
+  issues: write
+  pull-requests: write
+    
+jobs:
+  evaluate_dependabot_pr:
+    runs-on: ubuntu-latest
+    name: Parse Dependabot PR title
+    # Don't process PRs from forked repos
+    if:
+      github.event.pull_request.head.repo.full_name == github.repository
+    outputs:
+      dependency_name: ${{ steps.parse_dependabot_pr_automerge.outputs.dependency_name }}
+      version_from: ${{ steps.parse_dependabot_pr_automerge.outputs.version_from }}
+      version_to: ${{ steps.parse_dependabot_pr_automerge.outputs.version_to }}
+      is_auto_merge_candidate: ${{ steps.parse_dependabot_pr_automerge.outputs.is_interesting_package }}
+      is_auto_release_candidate: ${{ steps.parse_dependabot_pr_autorelease.outputs.is_interesting_package }}
+      semver_increment: ${{ steps.parse_dependabot_pr_automerge.outputs.semver_increment }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Read pr-autoflow configuration
+        id: get_pr_autoflow_config
+        uses: endjin/pr-autoflow/actions/read-configuration@v1
+        with:
+          config_file: .github/config/pr-autoflow.json
+      - name: Dependabot PR - AutoMerge Candidate
+        id: parse_dependabot_pr_automerge
+        uses: endjin/pr-autoflow/actions/dependabot-pr-parser@v1
+        with:
+          pr_title: ${{ github.event.pull_request.title }}
+          package_wildcard_expressions: ${{ steps.get_pr_autoflow_config.outputs.AUTO_MERGE_PACKAGE_WILDCARD_EXPRESSIONS }}
+      - name: Dependabot PR - AutoRelease Candidate
+        id: parse_dependabot_pr_autorelease
+        uses: endjin/pr-autoflow/actions/dependabot-pr-parser@v1
+        with:
+          pr_title: ${{ github.event.pull_request.title }}
+          package_wildcard_expressions: ${{ steps.get_pr_autoflow_config.outputs.AUTO_RELEASE_PACKAGE_WILDCARD_EXPRESSIONS }}
+      - name: debug
+        run: |
+          echo "dependency_name : ${{ steps.parse_dependabot_pr_automerge.outputs.dependency_name }}"
+          echo "is_interesting_package (merge) : ${{ steps.parse_dependabot_pr_automerge.outputs.is_interesting_package }}"
+          echo "is_interesting_package (release) : ${{ steps.parse_dependabot_pr_autorelease.outputs.is_interesting_package }}"
+          echo "semver_increment : ${{ steps.parse_dependabot_pr_automerge.outputs.semver_increment }}"
+  
+  approve:
+    runs-on: ubuntu-latest
+    needs: evaluate_dependabot_pr
+    name: Approve auto-mergeable dependabot PRs
+    if: |
+      (github.actor == 'dependabot[bot]' || github.actor == 'dependjinbot[bot]' || github.actor == 'nektos/act') &&
+      needs.evaluate_dependabot_pr.outputs.is_auto_merge_candidate == 'True'
+    steps:
+      - name: Show PR Details
+        run: |
+          echo "<------------------------------------------------>"
+          echo "dependency_name  : ${{needs.evaluate_dependabot_pr.outputs.dependency_name}}"
+          echo "semver_increment : ${{needs.evaluate_dependabot_pr.outputs.semver_increment}}"
+          echo "auto_merge       : ${{needs.evaluate_dependabot_pr.outputs.is_auto_merge_candidate}}"
+          echo "auto_release     : ${{needs.evaluate_dependabot_pr.outputs.is_auto_release_candidate}}"
+          echo "from_version     : ${{needs.evaluate_dependabot_pr.outputs.version_from}}"
+          echo "to_version       : ${{needs.evaluate_dependabot_pr.outputs.version_to}}"
+          echo "<------------------------------------------------>"
+        shell: bash
+      - name: Approve pull request
+        if: |
+          needs.evaluate_dependabot_pr.outputs.is_auto_merge_candidate == 'True' &&
+          (needs.evaluate_dependabot_pr.outputs.semver_increment == 'minor' || needs.evaluate_dependabot_pr.outputs.semver_increment == 'patch')
+        uses: andrewmusgrave/automatic-pull-request-review@0.0.2
+        with:
+          repo-token: '${{ secrets.GITHUB_TOKEN }}'
+          event: APPROVE
+          body: 'Thank you dependabot 🎊'
+      - name: 'Update PR body'
+        if: |
+          needs.evaluate_dependabot_pr.outputs.is_auto_merge_candidate == 'True' &&
+          (needs.evaluate_dependabot_pr.outputs.semver_increment == 'minor' || needs.evaluate_dependabot_pr.outputs.semver_increment == 'patch')
+        uses: actions/github-script@v2
+        with:
+          github-token: '${{ secrets.GITHUB_TOKEN }}'
+          script: |
+            await github.pulls.update({
+              owner: context.payload.repository.owner.login,
+              repo: context.payload.repository.name,
+              pull_number: context.payload.pull_request.number,
+              body: "Bumps '${{needs.evaluate_dependabot_pr.outputs.dependency_name}}' from ${{needs.evaluate_dependabot_pr.outputs.version_from}} to ${{needs.evaluate_dependabot_pr.outputs.version_to}}"
+            })
+  label:
+    runs-on: ubuntu-latest
+    needs: evaluate_dependabot_pr
+    name: Label
+    steps:
+      - name: 'Label auto-mergeable dependabot PRs with "autosquash"'
+        if: |
+          (github.actor == 'dependabot[bot]' || github.actor == 'dependjinbot[bot]' || github.actor == 'nektos/act') &&
+          needs.evaluate_dependabot_pr.outputs.is_auto_merge_candidate == 'True' &&
+          (needs.evaluate_dependabot_pr.outputs.semver_increment == 'minor' || needs.evaluate_dependabot_pr.outputs.semver_increment == 'patch')
+        uses: actions/github-script@v2
+        with:
+          github-token: '${{ secrets.GITHUB_TOKEN }}'
+          script: |
+            await github.issues.addLabels({
+              owner: context.payload.repository.owner.login,
+              repo: context.payload.repository.name,
+              issue_number: context.payload.pull_request.number,
+              labels: ['autosquash']
+            })
+      - name: 'Label non-dependabot PRs and auto-releasable dependabot PRs with "pending_release"'
+        if: |
+          (github.actor != 'dependabot[bot]' && github.actor != 'dependjinbot[bot]') ||
+          needs.evaluate_dependabot_pr.outputs.is_auto_release_candidate == 'True'
+        uses: actions/github-script@v2
+        with:
+          github-token: '${{ secrets.GITHUB_TOKEN }}'
+          script: |
+            await github.issues.addLabels({
+              owner: context.payload.repository.owner.login,
+              repo: context.payload.repository.name,
+              issue_number: context.payload.pull_request.number,
+              labels: ['pending_release']
+            })
