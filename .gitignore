@@ -336,3 +336,6 @@ coverage.cobertura.xml
 /.vscode
 /Solutions/Menes.Specs/appsettings.local.json
 *.diagsession
+
+# Generated SpecFlow files
+*.feature.cs
