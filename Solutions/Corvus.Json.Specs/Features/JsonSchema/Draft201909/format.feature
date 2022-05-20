@@ -5,9 +5,9 @@ Feature: format draft2019-09
     As a developer
     I want to support format in draft2019-09
 
-Scenario Outline: validation of e-mail addresses
+Scenario Outline: email format
 /* Schema: 
-{"format": "email"}
+{ "format": "email" }
 */
     Given the input JSON file "format.json"
     And the schema at "#/0/schema"
@@ -19,17 +19,16 @@ Scenario Outline: validation of e-mail addresses
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/000/tests/000/data | true  | ignores integers                                                                 |
-        | #/000/tests/001/data | true  | ignores floats                                                                   |
-        | #/000/tests/002/data | true  | ignores objects                                                                  |
-        | #/000/tests/003/data | true  | ignores arrays                                                                   |
-        | #/000/tests/004/data | true  | ignores booleans                                                                 |
-        | #/000/tests/005/data | true  | ignores null                                                                     |
-        #| #/000/tests/006/data | true  | invalid email string is only an annotation by default                            |
+        | #/000/tests/000/data | true  | all string formats ignore integers                                               |
+        | #/000/tests/001/data | true  | all string formats ignore floats                                                 |
+        | #/000/tests/002/data | true  | all string formats ignore objects                                                |
+        | #/000/tests/003/data | true  | all string formats ignore arrays                                                 |
+        | #/000/tests/004/data | true  | all string formats ignore booleans                                               |
+        | #/000/tests/005/data | true  | all string formats ignore nulls                                                  |
 
-Scenario Outline: validation of IDN e-mail addresses
+Scenario Outline: idn-email format
 /* Schema: 
-{"format": "idn-email"}
+{ "format": "idn-email" }
 */
     Given the input JSON file "format.json"
     And the schema at "#/1/schema"
@@ -41,17 +40,16 @@ Scenario Outline: validation of IDN e-mail addresses
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/001/tests/000/data | true  | ignores integers                                                                 |
-        | #/001/tests/001/data | true  | ignores floats                                                                   |
-        | #/001/tests/002/data | true  | ignores objects                                                                  |
-        | #/001/tests/003/data | true  | ignores arrays                                                                   |
-        | #/001/tests/004/data | true  | ignores booleans                                                                 |
-        | #/001/tests/005/data | true  | ignores null                                                                     |
-        #| #/001/tests/006/data | true  | invalid idn-email string is only an annotation by default                        |
+        | #/001/tests/000/data | true  | all string formats ignore integers                                               |
+        | #/001/tests/001/data | true  | all string formats ignore floats                                                 |
+        | #/001/tests/002/data | true  | all string formats ignore objects                                                |
+        | #/001/tests/003/data | true  | all string formats ignore arrays                                                 |
+        | #/001/tests/004/data | true  | all string formats ignore booleans                                               |
+        | #/001/tests/005/data | true  | all string formats ignore nulls                                                  |
 
-Scenario Outline: validation of regexes
+Scenario Outline: regex format
 /* Schema: 
-{"format": "regex"}
+{ "format": "regex" }
 */
     Given the input JSON file "format.json"
     And the schema at "#/2/schema"
@@ -63,17 +61,16 @@ Scenario Outline: validation of regexes
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/002/tests/000/data | true  | ignores integers                                                                 |
-        | #/002/tests/001/data | true  | ignores floats                                                                   |
-        | #/002/tests/002/data | true  | ignores objects                                                                  |
-        | #/002/tests/003/data | true  | ignores arrays                                                                   |
-        | #/002/tests/004/data | true  | ignores booleans                                                                 |
-        | #/002/tests/005/data | true  | ignores null                                                                     |
-        #| #/002/tests/006/data | true  | invalid regex string is only an annotation by default                            |
+        | #/002/tests/000/data | true  | all string formats ignore integers                                               |
+        | #/002/tests/001/data | true  | all string formats ignore floats                                                 |
+        | #/002/tests/002/data | true  | all string formats ignore objects                                                |
+        | #/002/tests/003/data | true  | all string formats ignore arrays                                                 |
+        | #/002/tests/004/data | true  | all string formats ignore booleans                                               |
+        | #/002/tests/005/data | true  | all string formats ignore nulls                                                  |
 
-Scenario Outline: validation of IP addresses
+Scenario Outline: ipv4 format
 /* Schema: 
-{"format": "ipv4"}
+{ "format": "ipv4" }
 */
     Given the input JSON file "format.json"
     And the schema at "#/3/schema"
@@ -85,17 +82,16 @@ Scenario Outline: validation of IP addresses
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/003/tests/000/data | true  | ignores integers                                                                 |
-        | #/003/tests/001/data | true  | ignores floats                                                                   |
-        | #/003/tests/002/data | true  | ignores objects                                                                  |
-        | #/003/tests/003/data | true  | ignores arrays                                                                   |
-        | #/003/tests/004/data | true  | ignores booleans                                                                 |
-        | #/003/tests/005/data | true  | ignores null                                                                     |
-        #| #/003/tests/006/data | true  | invalid ipv4 string is only an annotation by default                             |
+        | #/003/tests/000/data | true  | all string formats ignore integers                                               |
+        | #/003/tests/001/data | true  | all string formats ignore floats                                                 |
+        | #/003/tests/002/data | true  | all string formats ignore objects                                                |
+        | #/003/tests/003/data | true  | all string formats ignore arrays                                                 |
+        | #/003/tests/004/data | true  | all string formats ignore booleans                                               |
+        | #/003/tests/005/data | true  | all string formats ignore nulls                                                  |
 
-Scenario Outline: validation of IPv6 addresses
+Scenario Outline: ipv6 format
 /* Schema: 
-{"format": "ipv6"}
+{ "format": "ipv6" }
 */
     Given the input JSON file "format.json"
     And the schema at "#/4/schema"
@@ -107,17 +103,16 @@ Scenario Outline: validation of IPv6 addresses
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/004/tests/000/data | true  | ignores integers                                                                 |
-        | #/004/tests/001/data | true  | ignores floats                                                                   |
-        | #/004/tests/002/data | true  | ignores objects                                                                  |
-        | #/004/tests/003/data | true  | ignores arrays                                                                   |
-        | #/004/tests/004/data | true  | ignores booleans                                                                 |
-        | #/004/tests/005/data | true  | ignores null                                                                     |
-        #| #/004/tests/006/data | true  | invalid ipv6 string is only an annotation by default                             |
+        | #/004/tests/000/data | true  | all string formats ignore integers                                               |
+        | #/004/tests/001/data | true  | all string formats ignore floats                                                 |
+        | #/004/tests/002/data | true  | all string formats ignore objects                                                |
+        | #/004/tests/003/data | true  | all string formats ignore arrays                                                 |
+        | #/004/tests/004/data | true  | all string formats ignore booleans                                               |
+        | #/004/tests/005/data | true  | all string formats ignore nulls                                                  |
 
-Scenario Outline: validation of IDN hostnames
+Scenario Outline: idn-hostname format
 /* Schema: 
-{"format": "idn-hostname"}
+{ "format": "idn-hostname" }
 */
     Given the input JSON file "format.json"
     And the schema at "#/5/schema"
@@ -129,17 +124,16 @@ Scenario Outline: validation of IDN hostnames
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/005/tests/000/data | true  | ignores integers                                                                 |
-        | #/005/tests/001/data | true  | ignores floats                                                                   |
-        | #/005/tests/002/data | true  | ignores objects                                                                  |
-        | #/005/tests/003/data | true  | ignores arrays                                                                   |
-        | #/005/tests/004/data | true  | ignores booleans                                                                 |
-        | #/005/tests/005/data | true  | ignores null                                                                     |
-        #| #/005/tests/006/data | true  | invalid idn-hostname string is only an annotation by default                     |
+        | #/005/tests/000/data | true  | all string formats ignore integers                                               |
+        | #/005/tests/001/data | true  | all string formats ignore floats                                                 |
+        | #/005/tests/002/data | true  | all string formats ignore objects                                                |
+        | #/005/tests/003/data | true  | all string formats ignore arrays                                                 |
+        | #/005/tests/004/data | true  | all string formats ignore booleans                                               |
+        | #/005/tests/005/data | true  | all string formats ignore nulls                                                  |
 
-Scenario Outline: validation of hostnames
+Scenario Outline: hostname format
 /* Schema: 
-{"format": "hostname"}
+{ "format": "hostname" }
 */
     Given the input JSON file "format.json"
     And the schema at "#/6/schema"
@@ -151,17 +145,16 @@ Scenario Outline: validation of hostnames
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/006/tests/000/data | true  | ignores integers                                                                 |
-        | #/006/tests/001/data | true  | ignores floats                                                                   |
-        | #/006/tests/002/data | true  | ignores objects                                                                  |
-        | #/006/tests/003/data | true  | ignores arrays                                                                   |
-        | #/006/tests/004/data | true  | ignores booleans                                                                 |
-        | #/006/tests/005/data | true  | ignores null                                                                     |
-        #| #/006/tests/006/data | true  | invalid hostname string is only an annotation by default                         |
+        | #/006/tests/000/data | true  | all string formats ignore integers                                               |
+        | #/006/tests/001/data | true  | all string formats ignore floats                                                 |
+        | #/006/tests/002/data | true  | all string formats ignore objects                                                |
+        | #/006/tests/003/data | true  | all string formats ignore arrays                                                 |
+        | #/006/tests/004/data | true  | all string formats ignore booleans                                               |
+        | #/006/tests/005/data | true  | all string formats ignore nulls                                                  |
 
-Scenario Outline: validation of date strings
+Scenario Outline: date format
 /* Schema: 
-{"format": "date"}
+{ "format": "date" }
 */
     Given the input JSON file "format.json"
     And the schema at "#/7/schema"
@@ -173,17 +166,16 @@ Scenario Outline: validation of date strings
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/007/tests/000/data | true  | ignores integers                                                                 |
-        | #/007/tests/001/data | true  | ignores floats                                                                   |
-        | #/007/tests/002/data | true  | ignores objects                                                                  |
-        | #/007/tests/003/data | true  | ignores arrays                                                                   |
-        | #/007/tests/004/data | true  | ignores booleans                                                                 |
-        | #/007/tests/005/data | true  | ignores null                                                                     |
-        #| #/007/tests/006/data | true  | invalid date string is only an annotation by default                             |
+        | #/007/tests/000/data | true  | all string formats ignore integers                                               |
+        | #/007/tests/001/data | true  | all string formats ignore floats                                                 |
+        | #/007/tests/002/data | true  | all string formats ignore objects                                                |
+        | #/007/tests/003/data | true  | all string formats ignore arrays                                                 |
+        | #/007/tests/004/data | true  | all string formats ignore booleans                                               |
+        | #/007/tests/005/data | true  | all string formats ignore nulls                                                  |
 
-Scenario Outline: validation of date-time strings
+Scenario Outline: date-time format
 /* Schema: 
-{"format": "date-time"}
+{ "format": "date-time" }
 */
     Given the input JSON file "format.json"
     And the schema at "#/8/schema"
@@ -195,17 +187,16 @@ Scenario Outline: validation of date-time strings
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/008/tests/000/data | true  | ignores integers                                                                 |
-        | #/008/tests/001/data | true  | ignores floats                                                                   |
-        | #/008/tests/002/data | true  | ignores objects                                                                  |
-        | #/008/tests/003/data | true  | ignores arrays                                                                   |
-        | #/008/tests/004/data | true  | ignores booleans                                                                 |
-        | #/008/tests/005/data | true  | ignores null                                                                     |
-        #| #/008/tests/006/data | true  | invalid date-time string is only an annotation by default                        |
+        | #/008/tests/000/data | true  | all string formats ignore integers                                               |
+        | #/008/tests/001/data | true  | all string formats ignore floats                                                 |
+        | #/008/tests/002/data | true  | all string formats ignore objects                                                |
+        | #/008/tests/003/data | true  | all string formats ignore arrays                                                 |
+        | #/008/tests/004/data | true  | all string formats ignore booleans                                               |
+        | #/008/tests/005/data | true  | all string formats ignore nulls                                                  |
 
-Scenario Outline: validation of time strings
+Scenario Outline: time format
 /* Schema: 
-{"format": "time"}
+{ "format": "time" }
 */
     Given the input JSON file "format.json"
     And the schema at "#/9/schema"
@@ -217,17 +208,16 @@ Scenario Outline: validation of time strings
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/009/tests/000/data | true  | ignores integers                                                                 |
-        | #/009/tests/001/data | true  | ignores floats                                                                   |
-        | #/009/tests/002/data | true  | ignores objects                                                                  |
-        | #/009/tests/003/data | true  | ignores arrays                                                                   |
-        | #/009/tests/004/data | true  | ignores booleans                                                                 |
-        | #/009/tests/005/data | true  | ignores null                                                                     |
-        #| #/009/tests/006/data | true  | invalid time string is only an annotation by default                             |
+        | #/009/tests/000/data | true  | all string formats ignore integers                                               |
+        | #/009/tests/001/data | true  | all string formats ignore floats                                                 |
+        | #/009/tests/002/data | true  | all string formats ignore objects                                                |
+        | #/009/tests/003/data | true  | all string formats ignore arrays                                                 |
+        | #/009/tests/004/data | true  | all string formats ignore booleans                                               |
+        | #/009/tests/005/data | true  | all string formats ignore nulls                                                  |
 
-Scenario Outline: validation of JSON pointers
+Scenario Outline: json-pointer format
 /* Schema: 
-{"format": "json-pointer"}
+{ "format": "json-pointer" }
 */
     Given the input JSON file "format.json"
     And the schema at "#/10/schema"
@@ -239,17 +229,16 @@ Scenario Outline: validation of JSON pointers
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/010/tests/000/data | true  | ignores integers                                                                 |
-        | #/010/tests/001/data | true  | ignores floats                                                                   |
-        | #/010/tests/002/data | true  | ignores objects                                                                  |
-        | #/010/tests/003/data | true  | ignores arrays                                                                   |
-        | #/010/tests/004/data | true  | ignores booleans                                                                 |
-        | #/010/tests/005/data | true  | ignores null                                                                     |
-        #| #/010/tests/006/data | true  | invalid json-pointer string is only an annotation by default                     |
+        | #/010/tests/000/data | true  | all string formats ignore integers                                               |
+        | #/010/tests/001/data | true  | all string formats ignore floats                                                 |
+        | #/010/tests/002/data | true  | all string formats ignore objects                                                |
+        | #/010/tests/003/data | true  | all string formats ignore arrays                                                 |
+        | #/010/tests/004/data | true  | all string formats ignore booleans                                               |
+        | #/010/tests/005/data | true  | all string formats ignore nulls                                                  |
 
-Scenario Outline: validation of relative JSON pointers
+Scenario Outline: relative-json-pointer format
 /* Schema: 
-{"format": "relative-json-pointer"}
+{ "format": "relative-json-pointer" }
 */
     Given the input JSON file "format.json"
     And the schema at "#/11/schema"
@@ -261,17 +250,16 @@ Scenario Outline: validation of relative JSON pointers
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/011/tests/000/data | true  | ignores integers                                                                 |
-        | #/011/tests/001/data | true  | ignores floats                                                                   |
-        | #/011/tests/002/data | true  | ignores objects                                                                  |
-        | #/011/tests/003/data | true  | ignores arrays                                                                   |
-        | #/011/tests/004/data | true  | ignores booleans                                                                 |
-        | #/011/tests/005/data | true  | ignores null                                                                     |
-        #| #/011/tests/006/data | true  | invalid relative-json-pointer string is only an annotation by default            |
+        | #/011/tests/000/data | true  | all string formats ignore integers                                               |
+        | #/011/tests/001/data | true  | all string formats ignore floats                                                 |
+        | #/011/tests/002/data | true  | all string formats ignore objects                                                |
+        | #/011/tests/003/data | true  | all string formats ignore arrays                                                 |
+        | #/011/tests/004/data | true  | all string formats ignore booleans                                               |
+        | #/011/tests/005/data | true  | all string formats ignore nulls                                                  |
 
-Scenario Outline: validation of IRIs
+Scenario Outline: iri format
 /* Schema: 
-{"format": "iri"}
+{ "format": "iri" }
 */
     Given the input JSON file "format.json"
     And the schema at "#/12/schema"
@@ -283,17 +271,16 @@ Scenario Outline: validation of IRIs
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/012/tests/000/data | true  | ignores integers                                                                 |
-        | #/012/tests/001/data | true  | ignores floats                                                                   |
-        | #/012/tests/002/data | true  | ignores objects                                                                  |
-        | #/012/tests/003/data | true  | ignores arrays                                                                   |
-        | #/012/tests/004/data | true  | ignores booleans                                                                 |
-        | #/012/tests/005/data | true  | ignores null                                                                     |
-        #| #/012/tests/006/data | true  | invalid iri string is only an annotation by default                              |
+        | #/012/tests/000/data | true  | all string formats ignore integers                                               |
+        | #/012/tests/001/data | true  | all string formats ignore floats                                                 |
+        | #/012/tests/002/data | true  | all string formats ignore objects                                                |
+        | #/012/tests/003/data | true  | all string formats ignore arrays                                                 |
+        | #/012/tests/004/data | true  | all string formats ignore booleans                                               |
+        | #/012/tests/005/data | true  | all string formats ignore nulls                                                  |
 
-Scenario Outline: validation of IRI references
+Scenario Outline: iri-reference format
 /* Schema: 
-{"format": "iri-reference"}
+{ "format": "iri-reference" }
 */
     Given the input JSON file "format.json"
     And the schema at "#/13/schema"
@@ -305,17 +292,16 @@ Scenario Outline: validation of IRI references
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/013/tests/000/data | true  | ignores integers                                                                 |
-        | #/013/tests/001/data | true  | ignores floats                                                                   |
-        | #/013/tests/002/data | true  | ignores objects                                                                  |
-        | #/013/tests/003/data | true  | ignores arrays                                                                   |
-        | #/013/tests/004/data | true  | ignores booleans                                                                 |
-        | #/013/tests/005/data | true  | ignores null                                                                     |
-        #| #/013/tests/006/data | true  | invalid iri-reference string is only an annotation by default                    |
+        | #/013/tests/000/data | true  | all string formats ignore integers                                               |
+        | #/013/tests/001/data | true  | all string formats ignore floats                                                 |
+        | #/013/tests/002/data | true  | all string formats ignore objects                                                |
+        | #/013/tests/003/data | true  | all string formats ignore arrays                                                 |
+        | #/013/tests/004/data | true  | all string formats ignore booleans                                               |
+        | #/013/tests/005/data | true  | all string formats ignore nulls                                                  |
 
-Scenario Outline: validation of URIs
+Scenario Outline: uri format
 /* Schema: 
-{"format": "uri"}
+{ "format": "uri" }
 */
     Given the input JSON file "format.json"
     And the schema at "#/14/schema"
@@ -327,17 +313,16 @@ Scenario Outline: validation of URIs
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/014/tests/000/data | true  | ignores integers                                                                 |
-        | #/014/tests/001/data | true  | ignores floats                                                                   |
-        | #/014/tests/002/data | true  | ignores objects                                                                  |
-        | #/014/tests/003/data | true  | ignores arrays                                                                   |
-        | #/014/tests/004/data | true  | ignores booleans                                                                 |
-        | #/014/tests/005/data | true  | ignores null                                                                     |
-        #| #/014/tests/006/data | true  | invalid uri string is only an annotation by default                              |
+        | #/014/tests/000/data | true  | all string formats ignore integers                                               |
+        | #/014/tests/001/data | true  | all string formats ignore floats                                                 |
+        | #/014/tests/002/data | true  | all string formats ignore objects                                                |
+        | #/014/tests/003/data | true  | all string formats ignore arrays                                                 |
+        | #/014/tests/004/data | true  | all string formats ignore booleans                                               |
+        | #/014/tests/005/data | true  | all string formats ignore nulls                                                  |
 
-Scenario Outline: validation of URI references
+Scenario Outline: uri-reference format
 /* Schema: 
-{"format": "uri-reference"}
+{ "format": "uri-reference" }
 */
     Given the input JSON file "format.json"
     And the schema at "#/15/schema"
@@ -349,17 +334,16 @@ Scenario Outline: validation of URI references
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/015/tests/000/data | true  | ignores integers                                                                 |
-        | #/015/tests/001/data | true  | ignores floats                                                                   |
-        | #/015/tests/002/data | true  | ignores objects                                                                  |
-        | #/015/tests/003/data | true  | ignores arrays                                                                   |
-        | #/015/tests/004/data | true  | ignores booleans                                                                 |
-        | #/015/tests/005/data | true  | ignores null                                                                     |
-        #| #/015/tests/006/data | true  | invalid uri-reference string is only an annotation by default                    |
+        | #/015/tests/000/data | true  | all string formats ignore integers                                               |
+        | #/015/tests/001/data | true  | all string formats ignore floats                                                 |
+        | #/015/tests/002/data | true  | all string formats ignore objects                                                |
+        | #/015/tests/003/data | true  | all string formats ignore arrays                                                 |
+        | #/015/tests/004/data | true  | all string formats ignore booleans                                               |
+        | #/015/tests/005/data | true  | all string formats ignore nulls                                                  |
 
-Scenario Outline: validation of URI templates
+Scenario Outline: uri-template format
 /* Schema: 
-{"format": "uri-template"}
+{ "format": "uri-template" }
 */
     Given the input JSON file "format.json"
     And the schema at "#/16/schema"
@@ -371,15 +355,14 @@ Scenario Outline: validation of URI templates
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/016/tests/000/data | true  | ignores integers                                                                 |
-        | #/016/tests/001/data | true  | ignores floats                                                                   |
-        | #/016/tests/002/data | true  | ignores objects                                                                  |
-        | #/016/tests/003/data | true  | ignores arrays                                                                   |
-        | #/016/tests/004/data | true  | ignores booleans                                                                 |
-        | #/016/tests/005/data | true  | ignores null                                                                     |
-        #| #/016/tests/006/data | true  | invalid uri-template string is only an annotation by default                     |
+        | #/016/tests/000/data | true  | all string formats ignore integers                                               |
+        | #/016/tests/001/data | true  | all string formats ignore floats                                                 |
+        | #/016/tests/002/data | true  | all string formats ignore objects                                                |
+        | #/016/tests/003/data | true  | all string formats ignore arrays                                                 |
+        | #/016/tests/004/data | true  | all string formats ignore booleans                                               |
+        | #/016/tests/005/data | true  | all string formats ignore nulls                                                  |
 
-Scenario Outline: validation of UUIDs
+Scenario Outline: uuid format
 /* Schema: 
 { "format": "uuid" }
 */
@@ -393,15 +376,14 @@ Scenario Outline: validation of UUIDs
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/017/tests/000/data | true  | ignores integers                                                                 |
-        | #/017/tests/001/data | true  | ignores floats                                                                   |
-        | #/017/tests/002/data | true  | ignores objects                                                                  |
-        | #/017/tests/003/data | true  | ignores arrays                                                                   |
-        | #/017/tests/004/data | true  | ignores booleans                                                                 |
-        | #/017/tests/005/data | true  | ignores null                                                                     |
-        #| #/017/tests/006/data | true  | invalid uuid string is only an annotation by default                             |
+        | #/017/tests/000/data | true  | all string formats ignore integers                                               |
+        | #/017/tests/001/data | true  | all string formats ignore floats                                                 |
+        | #/017/tests/002/data | true  | all string formats ignore objects                                                |
+        | #/017/tests/003/data | true  | all string formats ignore arrays                                                 |
+        | #/017/tests/004/data | true  | all string formats ignore booleans                                               |
+        | #/017/tests/005/data | true  | all string formats ignore nulls                                                  |
 
-Scenario Outline: validation of durations
+Scenario Outline: duration format
 /* Schema: 
 { "format": "duration" }
 */
@@ -415,10 +397,9 @@ Scenario Outline: validation of durations
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/018/tests/000/data | true  | ignores integers                                                                 |
-        | #/018/tests/001/data | true  | ignores floats                                                                   |
-        | #/018/tests/002/data | true  | ignores objects                                                                  |
-        | #/018/tests/003/data | true  | ignores arrays                                                                   |
-        | #/018/tests/004/data | true  | ignores booleans                                                                 |
-        | #/018/tests/005/data | true  | ignores null                                                                     |
-        #| #/018/tests/006/data | true  | invalid duration string is only an annotation by default                         |
+        | #/018/tests/000/data | true  | all string formats ignore integers                                               |
+        | #/018/tests/001/data | true  | all string formats ignore floats                                                 |
+        | #/018/tests/002/data | true  | all string formats ignore objects                                                |
+        | #/018/tests/003/data | true  | all string formats ignore arrays                                                 |
+        | #/018/tests/004/data | true  | all string formats ignore booleans                                               |
+        | #/018/tests/005/data | true  | all string formats ignore nulls                                                  |

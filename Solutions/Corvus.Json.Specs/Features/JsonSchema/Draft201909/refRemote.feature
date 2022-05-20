@@ -164,3 +164,23 @@ Scenario Outline: root ref in remote ref
         | #/006/tests/000/data | true  | string is valid                                                                  |
         | #/006/tests/001/data | true  | null is valid                                                                    |
         | #/006/tests/002/data | false | object is invalid                                                                |
+
+Scenario Outline: remote ref with ref to defs
+/* Schema: 
+{
+            "$id": "http://localhost:1234/schema-remote-ref-ref-defs1.json",
+            "$ref": "ref-and-defs.json"
+        }
+*/
+    Given the input JSON file "refRemote.json"
+    And the schema at "#/7/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/007/tests/000/data | false | invalid                                                                          |
+        | #/007/tests/001/data | true  | valid                                                                            |

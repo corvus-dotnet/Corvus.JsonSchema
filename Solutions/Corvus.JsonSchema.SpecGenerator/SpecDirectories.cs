@@ -7,24 +7,25 @@ namespace Corvus.JsonSchema.SpecGenerator
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.Text.Json;
+    using System.Text.RegularExpressions;
 
     /// <summary>
     /// Directories for spec generation.
     /// </summary>
     internal struct SpecDirectories
     {
-        private SpecDirectories(string testSet, string testsDirectory, string remotesDirectory, string outputDirectory)
+        private SpecDirectories(
+            string testsDirectory,
+            string remotesDirectory,
+            string outputDirectory,
+            TestSelector selector)
         {
-            this.TestSet = testSet;
             this.TestsDirectory = testsDirectory;
             this.RemotesDirectory = remotesDirectory;
             this.OutputDirectory = outputDirectory;
+            this.Selector = selector;
         }
-
-        /// <summary>
-        /// Gets the set of tests to which this belongs.
-        /// </summary>
-        public string TestSet { get; }
 
         /// <summary>
         /// Gets the directory contain the JSON schema specs.
@@ -32,14 +33,20 @@ namespace Corvus.JsonSchema.SpecGenerator
         public string TestsDirectory { get; }
 
         /// <summary>
-        /// Gets or sets  the direcotry containing the JSON schema remote files.
+        /// Gets or sets the direcotry containing the JSON schema remote files.
         /// </summary>
         public string RemotesDirectory { get; set; }
 
         /// <summary>
-        /// Gets or sets  the output directory for the feature files.
+        /// Gets or sets the output directory for the feature files.
         /// </summary>
         public string OutputDirectory { get; set; }
+
+        /// <summary>
+        /// Gets or sets the <see cref="TestSelector"/> determining which files to generate tests
+        /// from.
+        /// </summary>
+        public TestSelector Selector { get; set; }
 
         /// <summary>
         /// Set up the directories from the program arguments.
@@ -54,13 +61,20 @@ namespace Corvus.JsonSchema.SpecGenerator
                 inputDirectory = Path.Combine(inputDirectory, args[0]);
             }
 
-            string testSet = "draft2019-09";
+            TestSelector selector;
             if (args.Length > 2)
             {
-                testSet = args[2];
+                using FileStream selectorFile = File.OpenRead(args[2]);
+                selector = JsonSerializer.Deserialize<TestSelector>(
+                    selectorFile,
+                    new JsonSerializerOptions(JsonSerializerDefaults.Web) { ReadCommentHandling = JsonCommentHandling.Skip }) !;
+            }
+            else
+            {
+                selector = new ();
             }
 
-            string testsDirectory = Path.Combine(inputDirectory, $"tests\\{testSet}");
+            string testsDirectory = Path.Combine(inputDirectory, "tests");
             string remotesDirectory = Path.Combine(inputDirectory, "remotes");
 
             if (!Directory.Exists(testsDirectory))
@@ -73,7 +87,7 @@ namespace Corvus.JsonSchema.SpecGenerator
                 throw new InvalidOperationException($"Unable to find the remotes directory: '{remotesDirectory}'");
             }
 
-            string outputDirectory = Path.Combine(Environment.CurrentDirectory, testSet);
+            string outputDirectory = Path.Combine(Environment.CurrentDirectory, testsDirectory);
             if (args.Length > 1)
             {
                 outputDirectory = Path.Combine(outputDirectory, args[1]);
@@ -88,29 +102,91 @@ namespace Corvus.JsonSchema.SpecGenerator
                 throw new InvalidOperationException($"Unable to create the output directory: '{outputDirectory}'", ex);
             }
 
-            return new SpecDirectories(testSet, testsDirectory, remotesDirectory, outputDirectory);
-        }
-
-        /// <summary>
-        /// Gets the output feature file for the given input file.
-        /// </summary>
-        /// <param name="file">The input file.</param>
-        /// <returns>The output feature file name.</returns>
-        public string GetOutputFeatureFileFor(string file)
-        {
-            return Path.Combine(this.OutputDirectory, Path.ChangeExtension(Path.GetFileName(file), ".feature"));
+            return new SpecDirectories(
+                testsDirectory, remotesDirectory, outputDirectory, selector);
         }
 
         /// <summary>
         /// Enumerates the input test files.
         /// </summary>
         /// <returns>An enumerable of the input test files and their corresponding output feature files.</returns>
-        public IEnumerable<(string testSet, string inputFile, string outputFile)> EnumerateTests()
+        public IEnumerable<TestSet> EnumerateTests()
         {
-            foreach (string inputFile in Directory.EnumerateFiles(this.TestsDirectory))
+            IEnumerable<TestSet>
+                EnumerateCore(string parentTestSetInputDirectory, string inputDirectory, string outputDirectory, string? parentTestSet, TestSelector selector)
             {
-                yield return (this.TestSet, inputFile, this.GetOutputFeatureFileFor(inputFile));
+                string? currentTestSet = selector.TestSet ?? parentTestSet;
+                string testSetInputDirectory = selector.TestSet is null
+                    ? parentTestSetInputDirectory
+                    : inputDirectory;
+
+                var includePatterns = selector.IncludeInThisDirectory.Select(pattern => new Regex(pattern)).ToList();
+                var excludePatterns = selector.ExcludeFromThisDirectory.Select(pattern => new Regex(pattern)).ToList();
+                foreach (string inputFile in Directory.EnumerateFiles(inputDirectory))
+                {
+                    string filename = Path.GetFileName(inputFile);
+                    if (includePatterns.Any(pattern => pattern.IsMatch(filename)) &&
+                        !excludePatterns.Any(pattern => pattern.IsMatch(filename)))
+                    {
+                        if (currentTestSet is null)
+                        {
+                            throw new InvalidOperationException("Test selectors should either specify a testSet, be a descendant of a selector that specifies a testSet, or match no files");
+                        }
+
+                        string inputRelativePath = Path.GetRelativePath(testSetInputDirectory, inputFile);
+                        IReadOnlyDictionary<string, TestSelector.TestExclusion> testToIgnoreIndicesByScenarioName =
+                            selector.TestExclusions.TryGetValue(inputRelativePath, out IReadOnlyDictionary<string, TestSelector.TestExclusion>? exclusions)
+                                ? exclusions
+                                : new Dictionary<string, TestSelector.TestExclusion>();
+
+                        IReadOnlyDictionary<string, IReadOnlySet<int>> testToIgnoreIndicesAsSetByScenarioName = testToIgnoreIndicesByScenarioName
+                            .ToDictionary(
+                                kv => kv.Key,
+                                kv => (IReadOnlySet<int>)new HashSet<int>(kv.Value.TestsToIgnoreIndices));
+                        yield return new (
+                            currentTestSet,
+                            inputFile,
+                            inputRelativePath,
+                            Path.Combine(outputDirectory, Path.ChangeExtension(Path.GetFileName(inputFile), ".feature")),
+                            testToIgnoreIndicesAsSetByScenarioName);
+                    }
+                }
+
+                (string Path, string Name)[] inputSubdirectories = Directory
+                    .EnumerateDirectories(inputDirectory)
+                    .Select(path => (path, Path.GetFileName(path)))
+                    .ToArray();
+                foreach ((string directoryPattern, TestSelector subdirectorySelector) in selector.Subdirectories)
+                {
+                    string outputSubdirectory = subdirectorySelector.OutputFolder is null
+                        ? outputDirectory
+                        : Path.Combine(outputDirectory, subdirectorySelector.OutputFolder);
+                    Regex directoryRegex = new (directoryPattern);
+                    bool foundAtLeastOneMatch = false;
+                    foreach ((string subdirectoryPath, string subdirectoryName) in inputSubdirectories)
+                    {
+                        // Should we detect and warn when more than one pattern matches the same directory?
+                        if (directoryRegex.IsMatch(subdirectoryName))
+                        {
+                            foundAtLeastOneMatch = true;
+
+                            IEnumerable<TestSet> subdirectoryResults =
+                                EnumerateCore(testSetInputDirectory, subdirectoryPath, outputSubdirectory, currentTestSet, subdirectorySelector);
+                            foreach (TestSet result in subdirectoryResults)
+                            {
+                                yield return result;
+                            }
+                        }
+                    }
+
+                    if (!foundAtLeastOneMatch)
+                    {
+                        Console.WriteLine($"Warning: found no directories in {directoryPattern} matching {directoryPattern}");
+                    }
+                }
             }
+
+            return EnumerateCore(this.TestsDirectory, this.TestsDirectory, this.OutputDirectory, null, this.Selector);
         }
 
         /// <inheritdoc/>
@@ -127,5 +203,12 @@ namespace Corvus.JsonSchema.SpecGenerator
         {
             return HashCode.Combine(this.TestsDirectory, this.RemotesDirectory, this.OutputDirectory);
         }
+
+        public record TestSet(
+            string testSet,
+            string inputFile,
+            string inputFileSpecFolderRelativePath,
+            string outputFile,
+            IReadOnlyDictionary<string, IReadOnlySet<int>> testsToIgnoreIndicesByScenarioName);
     }
 }

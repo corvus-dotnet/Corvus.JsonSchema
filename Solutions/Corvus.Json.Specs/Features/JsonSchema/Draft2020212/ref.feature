@@ -384,3 +384,108 @@ Scenario Outline: naive replacement of $ref with its destination is not correct
         | #/014/tests/000/data | false | do not evaluate the $ref inside the enum, matching any string                    |
         | #/014/tests/001/data | false | do not evaluate the $ref inside the enum, definition exact match                 |
         | #/014/tests/002/data | true  | match the enum exactly                                                           |
+
+Scenario Outline: refs with relative uris and defs
+/* Schema: 
+{
+            "$id": "http://example.com/schema-relative-uri-defs1.json",
+            "properties": {
+                "foo": {
+                    "$id": "schema-relative-uri-defs2.json",
+                    "$defs": {
+                        "inner": {
+                            "properties": {
+                                "bar": { "type": "string" }
+                            }
+                        }
+                    },
+                    "$ref": "#/$defs/inner"
+                }
+            },
+            "$ref": "schema-relative-uri-defs2.json"
+        }
+*/
+    Given the input JSON file "ref.json"
+    And the schema at "#/15/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/015/tests/000/data | false | invalid on inner field                                                           |
+        | #/015/tests/001/data | false | invalid on outer field                                                           |
+        | #/015/tests/002/data | true  | valid on both fields                                                             |
+
+Scenario Outline: relative refs with absolute uris and defs
+/* Schema: 
+{
+            "$id": "http://example.com/schema-refs-absolute-uris-defs1.json",
+            "properties": {
+                "foo": {
+                    "$id": "http://example.com/schema-refs-absolute-uris-defs2.json",
+                    "$defs": {
+                        "inner": {
+                            "properties": {
+                                "bar": { "type": "string" }
+                            }
+                        }
+                    },
+                    "$ref": "#/$defs/inner"
+                }
+            },
+            "$ref": "schema-refs-absolute-uris-defs2.json"
+        }
+*/
+    Given the input JSON file "ref.json"
+    And the schema at "#/16/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/016/tests/000/data | false | invalid on inner field                                                           |
+        | #/016/tests/001/data | false | invalid on outer field                                                           |
+        | #/016/tests/002/data | true  | valid on both fields                                                             |
+
+Scenario Outline: $id must be resolved against nearest parent, not just immediate parent
+/* Schema: 
+{
+            "$id": "http://example.com/a.json",
+            "$defs": {
+                "x": {
+                    "$id": "http://example.com/b/c.json",
+                    "not": {
+                        "$defs": {
+                            "y": {
+                                "$id": "d.json",
+                                "type": "number"
+                            }
+                        }
+                    }
+                }
+            },
+            "allOf": [
+                {
+                    "$ref": "http://example.com/b/d.json"
+                }
+            ]
+        }
+*/
+    Given the input JSON file "ref.json"
+    And the schema at "#/17/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/017/tests/000/data | true  | number should pass                                                               |
+        | #/017/tests/001/data | false | non-number should fail                                                           |

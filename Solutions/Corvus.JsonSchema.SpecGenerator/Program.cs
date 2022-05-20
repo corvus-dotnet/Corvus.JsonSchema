@@ -14,7 +14,7 @@ namespace Corvus.JsonSchema.SpecGenerator
         /// <summary>
         /// Main entry point.
         /// </summary>
-        /// <param name="args">Program arguments ([inputDir] [outputDir]).</param>
+        /// <param name="args">Program arguments ([inputDir] [outputDir] [testselector]).</param>
         /// <returns>Result code.</returns>
         public static int Main(string[] args)
         {

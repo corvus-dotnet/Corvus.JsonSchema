@@ -578,3 +578,24 @@ Scenario Outline: unevaluatedItems and contains interact to control item depende
         | #/019/tests/005/data | false | only c's are invalid                                                             |
         | #/019/tests/006/data | false | only b's and c's are invalid                                                     |
         | #/019/tests/007/data | false | only a's and c's are invalid                                                     |
+
+Scenario Outline: non-array instances are valid
+/* Schema: 
+{"unevaluatedItems": false}
+*/
+    Given the input JSON file "unevaluatedItems.json"
+    And the schema at "#/20/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/020/tests/000/data | true  | ignores booleans                                                                 |
+        | #/020/tests/001/data | true  | ignores integers                                                                 |
+        | #/020/tests/002/data | true  | ignores floats                                                                   |
+        | #/020/tests/003/data | true  | ignores objects                                                                  |
+        | #/020/tests/004/data | true  | ignores strings                                                                  |
+        | #/020/tests/005/data | true  | ignores null                                                                     |

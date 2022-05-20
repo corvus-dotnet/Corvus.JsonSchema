@@ -76,25 +76,25 @@ Scenario Outline: $id inside an enum is not a real identifier
                 "id_in_enum": {
                     "enum": [
                         {
-                          "$id": "https://localhost:1234/my_identifier.json",
+                          "$id": "https://localhost:1234/id/my_identifier.json",
                           "type": "null"
                         }
                     ]
                 },
                 "real_id_in_schema": {
-                    "$id": "https://localhost:1234/my_identifier.json",
+                    "$id": "https://localhost:1234/id/my_identifier.json",
                     "type": "string"
                 },
                 "zzz_id_in_const": {
                     "const": {
-                        "$id": "https://localhost:1234/my_identifier.json",
+                        "$id": "https://localhost:1234/id/my_identifier.json",
                         "type": "null"
                     }
                 }
             },
             "anyOf": [
                 { "$ref": "#/$defs/id_in_enum" },
-                { "$ref": "https://localhost:1234/my_identifier.json" }
+                { "$ref": "https://localhost:1234/id/my_identifier.json" }
             ]
         }
 */

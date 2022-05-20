@@ -33,6 +33,9 @@ Scenario Outline: single dependency
         | #/000/tests/002/data | false | wrong type                                                                       |
         | #/000/tests/003/data | false | wrong type other                                                                 |
         | #/000/tests/004/data | false | wrong type both                                                                  |
+        | #/000/tests/005/data | true  | ignores arrays                                                                   |
+        | #/000/tests/006/data | true  | ignores strings                                                                  |
+        | #/000/tests/007/data | true  | ignores other non-objects                                                        |
 
 Scenario Outline: boolean subschemas
 /* Schema: 
