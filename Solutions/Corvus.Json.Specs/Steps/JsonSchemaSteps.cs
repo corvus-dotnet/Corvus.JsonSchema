@@ -84,7 +84,7 @@ namespace Steps
         public async Task GivenIGenerateATypeForTheSchema()
         {
             string inputDataPath = this.scenarioContext.Get<string>(InputDataPath);
-            Type type = await this.driver.GenerateTypeFor(true, int.Parse(inputDataPath.AsSpan().Slice(12, 3)), this.scenarioContext.Get<string>(InputJsonFileName), this.scenarioContext.Get<string>(SchemaPath), inputDataPath, Formatting.ToPascalCaseWithReservedWords(this.featureContext.FeatureInfo.Title).ToString(), Formatting.ToPascalCaseWithReservedWords(this.scenarioContext.ScenarioInfo.Title).ToString(), bool.Parse((string)this.scenarioContext.ScenarioInfo.Arguments[1] !)).ConfigureAwait(false);
+            Type type = await this.driver.GenerateTypeFor(false, int.Parse(inputDataPath.AsSpan().Slice(12, 3)), this.scenarioContext.Get<string>(InputJsonFileName), this.scenarioContext.Get<string>(SchemaPath), inputDataPath, Formatting.ToPascalCaseWithReservedWords(this.featureContext.FeatureInfo.Title).ToString(), Formatting.ToPascalCaseWithReservedWords(this.scenarioContext.ScenarioInfo.Title).ToString(), bool.Parse((string)this.scenarioContext.ScenarioInfo.Arguments[1] !)).ConfigureAwait(false);
             this.scenarioContext.Set(type, SchemaType);
         }
 
