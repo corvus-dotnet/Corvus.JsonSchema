@@ -518,10 +518,31 @@ namespace Corvus.Json
         private static bool TryParseTime(string text, out OffsetTime value)
         {
             ParseResult<OffsetTime> parseResult = OffsetTimePattern.ExtendedIso.Parse(text);
+
+            // Aggravatingly, NodaTime rejects a lowercase Z to indicate a 0 offset, and its custom
+            // pattern language doesn't seem to enable us to specify "either Z or z". It also
+            // doesn't seem to be possible to produce a pattern that only accepts 'z' and which
+            // otherwise reproduces the OffsetTimePattern.ExtendedIso behaviour, because that is
+            // defined in terms of the "G" standard pattern, and you don't get to refer to a
+            // standard pattern from inside a custom pattern.
+            // https://nodatime.org/3.1.x/userguide/offset-patterns
+            // It might be possible to use RegEx instead of NodeTime. But that's a relatively
+            // complex alternative that requires some research.
+            if (!parseResult.Success && text.Contains('z'))
+            {
+                text = text.Replace('z', 'Z');
+                parseResult = OffsetTimePattern.ExtendedIso.Parse(text);
+            }
+
             if (parseResult.Success)
             {
                 value = parseResult.Value;
-                return true;
+
+                // Despite what the documentation claims, NodaTime not only accepts 24:00:00
+                // here, it is able to distinguish between this and 00:00:00 (whereas ISO
+                // 8601 says they are to be treated as equivalent). However, the JSON Schema
+                // test suite requires us to reject times of this form.
+                return value.Hour != 24;
             }
 
             value = default;

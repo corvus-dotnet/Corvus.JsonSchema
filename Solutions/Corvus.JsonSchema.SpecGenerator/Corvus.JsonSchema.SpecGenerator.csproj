@@ -19,4 +19,11 @@
     </PackageReference>
   </ItemGroup>
 
+	<ItemGroup>
+      <!--
+      Temporary workaround while we're not ready to upgrade to Endjin.RecommendedPractices v2.1
+      -->
+	  <PackageReference Update="StyleCop.Analyzers" Version="1.2.0-beta.435" />
+	</ItemGroup>
+
 </Project>

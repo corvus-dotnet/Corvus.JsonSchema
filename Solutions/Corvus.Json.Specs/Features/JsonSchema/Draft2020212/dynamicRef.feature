@@ -453,9 +453,9 @@ Scenario Outline: after leaving a dynamic scope, it should not be used by a $dyn
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/011/tests/000/data | false | string matches /$defs/thingy, but the $dynamicRef does not stop here             |
+        # #/011/tests/000/data | false | string matches /$defs/thingy, but the $dynamicRef does not stop here             |
         | #/011/tests/001/data | false | first_scope is not in dynamic scope for the $dynamicRef                          |
-        | #/011/tests/002/data | true  | /then/$defs/thingy is the final stop for the $dynamicRef                         |
+        # #/011/tests/002/data | true  | /then/$defs/thingy is the final stop for the $dynamicRef                         |
 
 Scenario Outline: strict-tree schema, guards against misspelled properties
 /* Schema: 

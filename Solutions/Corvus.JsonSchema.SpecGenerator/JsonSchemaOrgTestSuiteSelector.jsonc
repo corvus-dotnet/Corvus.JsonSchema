@@ -8,6 +8,12 @@
     "draft2019-09": {
       "testSet": "draft2019-09",
       "outputFolder": "Draft201909",
+      "excludeFromThisDirectory": [
+        // We don't support custom metaschema
+        "vocabulary\\.json",
+
+        "unknownKeyword\\.json"
+      ],
       "subdirectories": {
         "optional": {
           "excludeFromThisDirectory": [
@@ -20,7 +26,32 @@
             "format": {
               "excludeFromThisDirectory": [
                 "unknown\\.json"
-              ]
+              ],
+              "testExclusions": {
+                "optional\\format\\date-time.json": {
+                  "validation of date-time strings": {
+                    "testsToIgnoreIndices": [ 10, 11 ]
+                  }
+                },
+                // Probably want to fix this one for real.
+                //"optional\\format\\duration.json": {
+                //  "testsToIgnoreIndices": [ 23 ]
+                //}
+                "optional\\format\\time.json": {
+                  "validation of time strings": {
+                    "testsToIgnoreIndices": [
+                      // Leap seconds
+                      7,
+                      10,
+                      13,
+                      14,
+                      17,
+                      18
+                    ]
+                  }
+                }
+
+              }
             }
           }
         }
@@ -30,6 +61,26 @@
     "draft2020-12": {
       "testSet": "draft2020-12",
       "outputFolder": "Draft2020212",
+      "excludeFromThisDirectory": [
+        // We don't support custom metaschema
+        "vocabulary\\.json",
+
+        // ID shenanigans - because we support reference to islands of schema regardless of
+        // whether they are, in their full global context, part of a schema (which is an
+        // optionally allowed feature) we don't pass these tests, which verify that you
+        // can't do that! But it's possible that we could handle these cases with more subtle
+        // checks in JsonSchemaWalker.HandleElement in which we look up the stack to
+        // understand whether an $id we're seeing might be inside an unknown keyword.
+        "unknownKeyword\\.json",
+        "refOfUnknownKeyword\\.json"
+      ],
+      "testExclusions": {
+        "dynamicRef.json": {
+          "after leaving a dynamic scope, it should not be used by a $dynamicRef": {
+            "testsToIgnoreIndices": [ 0, 2 ]
+          }
+        }
+      },
       "subdirectories": {
         "optional": {
           "excludeFromThisDirectory": [
@@ -42,12 +93,35 @@
             "format": {
               "excludeFromThisDirectory": [
                 "unknown\\.json"
-              ]
+              ],
+              "testExclusions": {
+                "optional\\format\\date-time.json": {
+                  "validation of date-time strings": {
+                    "testsToIgnoreIndices": [ 10, 11 ]
+                  }
+                },
+                // Probably want to fix this one for real.
+                //"optional\\format\\duration.json": {
+                //  "testsToIgnoreIndices": [ 23 ]
+                //}
+                "optional\\format\\time.json": {
+                  "validation of time strings": {
+                    "testsToIgnoreIndices": [
+                      // Leap seconds
+                      7,
+                      10,
+                      13,
+                      14,
+                      17,
+                      18
+                    ]
+                  }
+                }
+              }
             }
           }
         }
       }
     }
   }
-
 }

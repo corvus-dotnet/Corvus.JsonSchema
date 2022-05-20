@@ -110,9 +110,9 @@ namespace Corvus.JsonSchema.SpecGenerator
         /// Enumerates the input test files.
         /// </summary>
         /// <returns>An enumerable of the input test files and their corresponding output feature files.</returns>
-        public IEnumerable<(string testSet, string inputFile, string inputFileSpecFolderRelativePath, string outputFile)> EnumerateTests()
+        public IEnumerable<TestSet> EnumerateTests()
         {
-            IEnumerable<(string testSet, string inputFile, string inputFileSpecFolderRelativePath, string outputFile)>
+            IEnumerable<TestSet>
                 EnumerateCore(string parentTestSetInputDirectory, string inputDirectory, string outputDirectory, string? parentTestSet, TestSelector selector)
             {
                 string? currentTestSet = selector.TestSet ?? parentTestSet;
@@ -133,11 +133,22 @@ namespace Corvus.JsonSchema.SpecGenerator
                             throw new InvalidOperationException("Test selectors should either specify a testSet, be a descendant of a selector that specifies a testSet, or match no files");
                         }
 
-                        yield return (
+                        string inputRelativePath = Path.GetRelativePath(testSetInputDirectory, inputFile);
+                        IReadOnlyDictionary<string, TestSelector.TestExclusion> testToIgnoreIndicesByScenarioName =
+                            selector.TestExclusions.TryGetValue(inputRelativePath, out IReadOnlyDictionary<string, TestSelector.TestExclusion>? exclusions)
+                                ? exclusions
+                                : new Dictionary<string, TestSelector.TestExclusion>();
+
+                        IReadOnlyDictionary<string, IReadOnlySet<int>> testToIgnoreIndicesAsSetByScenarioName = testToIgnoreIndicesByScenarioName
+                            .ToDictionary(
+                                kv => kv.Key,
+                                kv => (IReadOnlySet<int>)new HashSet<int>(kv.Value.TestsToIgnoreIndices));
+                        yield return new (
                             currentTestSet,
                             inputFile,
-                            Path.GetRelativePath(testSetInputDirectory, inputFile),
-                            Path.Combine(outputDirectory, Path.ChangeExtension(Path.GetFileName(inputFile), ".feature")));
+                            inputRelativePath,
+                            Path.Combine(outputDirectory, Path.ChangeExtension(Path.GetFileName(inputFile), ".feature")),
+                            testToIgnoreIndicesAsSetByScenarioName);
                     }
                 }
 
@@ -159,9 +170,9 @@ namespace Corvus.JsonSchema.SpecGenerator
                         {
                             foundAtLeastOneMatch = true;
 
-                            IEnumerable<(string testSet, string inputFile, string inputFileSpecFolderRelativePath, string outputFile)> subdirectoryResults =
+                            IEnumerable<TestSet> subdirectoryResults =
                                 EnumerateCore(testSetInputDirectory, subdirectoryPath, outputSubdirectory, currentTestSet, subdirectorySelector);
-                            foreach ((string testSet, string inputFile, string inputFileSpecFolderRelativePath, string outputFile) result in subdirectoryResults)
+                            foreach (TestSet result in subdirectoryResults)
                             {
                                 yield return result;
                             }
@@ -192,5 +203,12 @@ namespace Corvus.JsonSchema.SpecGenerator
         {
             return HashCode.Combine(this.TestsDirectory, this.RemotesDirectory, this.OutputDirectory);
         }
+
+        public record TestSet(
+            string testSet,
+            string inputFile,
+            string inputFileSpecFolderRelativePath,
+            string outputFile,
+            IReadOnlyDictionary<string, IReadOnlySet<int>> testsToIgnoreIndicesByScenarioName);
     }
 }

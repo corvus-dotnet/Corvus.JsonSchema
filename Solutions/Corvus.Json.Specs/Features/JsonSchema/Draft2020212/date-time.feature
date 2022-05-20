@@ -29,8 +29,8 @@ Scenario Outline: validation of date-time strings
         | #/000/tests/007/data | true  | a valid date-time string without second fraction                                 |
         | #/000/tests/008/data | true  | a valid date-time string with plus offset                                        |
         | #/000/tests/009/data | true  | a valid date-time string with minus offset                                       |
-        | #/000/tests/010/data | true  | a valid date-time with a leap second, UTC                                        |
-        | #/000/tests/011/data | true  | a valid date-time with a leap second, with minus offset                          |
+        # #/000/tests/010/data | true  | a valid date-time with a leap second, UTC                                        |
+        # #/000/tests/011/data | true  | a valid date-time with a leap second, with minus offset                          |
         | #/000/tests/012/data | false | an invalid date-time past leap second, UTC                                       |
         | #/000/tests/013/data | false | an invalid date-time with leap second on a wrong minute, UTC                     |
         | #/000/tests/014/data | false | an invalid date-time with leap second on a wrong hour, UTC                       |

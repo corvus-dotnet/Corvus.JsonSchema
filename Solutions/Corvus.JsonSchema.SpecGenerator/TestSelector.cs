@@ -27,6 +27,16 @@ namespace Corvus.JsonSchema.SpecGenerator
         public IReadOnlyList<string> ExcludeFromThisDirectory { get; set; } = Array.Empty<string>();
 
         /// <summary>
+        /// Gets or sets a dictionary in which each key is the relative path to a JSON Schema Test
+        /// Suite test file, and the value is a list of numbers indicating the indices of tests
+        /// within that test file that should be excluded.
+        /// </summary>
+        /// <remarks>
+        /// We use this to when we only want to exclude some of the tests in a file.
+        /// </remarks>
+        public IReadOnlyDictionary<string, IReadOnlyDictionary<string, TestExclusion>> TestExclusions { get; set; } = new Dictionary<string, IReadOnlyDictionary<string, TestExclusion>>();
+
+        /// <summary>
         /// Gets or sets a dictionary in which each key is a pattern identifying one or more
         /// subdirectories that should be processed, and the value is a <see cref="TestSelector"/>
         /// determining the settings to use when processing the directories matching the key.
@@ -55,5 +65,15 @@ namespace Corvus.JsonSchema.SpecGenerator
         /// neither it nor any of its ancestors has a non-null <see cref="OutputFolder"/>.
         /// </remarks>
         public string? OutputFolder { get; set; }
+
+        /// <summary>
+        /// Details for a test exclusion.
+        /// </summary>
+        /// <param name="TestsToIgnoreIndices">
+        /// Indices of tests to ignore in a JSON Schema Test Suite input file, grouped by scenario name.
+        /// </param>
+#pragma warning disable SA1313 // Parameter names should begin with lower-case letter - StyleCop doesn't understand
+        public record TestExclusion(IReadOnlyList<int> TestsToIgnoreIndices);
+#pragma warning restore SA1313 // Parameter names should begin with lower-case letter
     }
 }
