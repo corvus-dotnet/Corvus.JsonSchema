@@ -279,14 +279,14 @@ Scenario Outline: multiple dynamic paths to the $recursiveRef keyword
                 "title": "any type of node",
                 "$id": "recursiveRef8_anyLeafNode.json",
                 "$recursiveAnchor": true,
-                "$ref": "recursiveRef8_main.json#/$defs/inner"
+                "$ref": "recursiveRef8_inner.json"
             },
             "else": {
                 "title": "integer node",
                 "$id": "recursiveRef8_integerNode.json",
                 "$recursiveAnchor": true,
                 "type": [ "object", "integer" ],
-                "$ref": "recursiveRef8_main.json#/$defs/inner"
+                "$ref": "recursiveRef8_inner.json"
             }
         }
 */
@@ -302,3 +302,47 @@ Scenario Outline: multiple dynamic paths to the $recursiveRef keyword
         | inputDataReference   | valid | description                                                                      |
         | #/007/tests/000/data | true  | recurse to anyLeafNode - floats are allowed                                      |
         | #/007/tests/001/data | false | recurse to integerNode - floats are not allowed                                  |
+
+Scenario Outline: dynamic $recursiveRef destination (not predictable at schema compile time)
+/* Schema: 
+{
+            "$id": "main.json",
+            "$defs": {
+                "inner": {
+                    "$id": "inner.json",
+                    "$recursiveAnchor": true,
+                    "title": "inner",
+                    "additionalProperties": {
+                        "$recursiveRef": "#"
+                    }
+                }
+
+            },
+            "if": { "propertyNames": { "pattern": "^[a-m]" } },
+            "then": {
+                "title": "any type of node",
+                "$id": "anyLeafNode.json",
+                "$recursiveAnchor": true,
+                "$ref": "main.json#/$defs/inner"
+            },
+            "else": {
+                "title": "integer node",
+                "$id": "integerNode.json",
+                "$recursiveAnchor": true,
+                "type": [ "object", "integer" ],
+                "$ref": "main.json#/$defs/inner"
+            }
+        }
+*/
+    Given the input JSON file "recursiveRef.json"
+    And the schema at "#/8/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/008/tests/000/data | true  | numeric node                                                                     |
+        | #/008/tests/001/data | false | integer node                                                                     |

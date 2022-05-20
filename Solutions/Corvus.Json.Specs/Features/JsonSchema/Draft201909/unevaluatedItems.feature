@@ -495,3 +495,24 @@ Scenario Outline: item is evaluated in an uncle schema to unevaluatedItems
         | inputDataReference   | valid | description                                                                      |
         | #/016/tests/000/data | true  | no extra items                                                                   |
         | #/016/tests/001/data | false | uncle keyword evaluation is not significant                                      |
+
+Scenario Outline: non-array instances are valid
+/* Schema: 
+{"unevaluatedItems": false}
+*/
+    Given the input JSON file "unevaluatedItems.json"
+    And the schema at "#/17/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/017/tests/000/data | true  | ignores booleans                                                                 |
+        | #/017/tests/001/data | true  | ignores integers                                                                 |
+        | #/017/tests/002/data | true  | ignores floats                                                                   |
+        | #/017/tests/003/data | true  | ignores objects                                                                  |
+        | #/017/tests/004/data | true  | ignores strings                                                                  |
+        | #/017/tests/005/data | true  | ignores null                                                                     |

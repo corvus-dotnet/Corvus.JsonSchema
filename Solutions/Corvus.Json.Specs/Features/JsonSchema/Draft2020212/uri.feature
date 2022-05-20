@@ -7,9 +7,9 @@ Feature: uri draft2020-12
 
 Scenario Outline: validation of URIs
 /* Schema: 
-{"format": "uri"}
+{ "format": "uri" }
 */
-    Given the input JSON file "uri.json"
+    Given the input JSON file "optional\format\uri.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
     And I generate a type for the schema

@@ -130,3 +130,39 @@ Scenario Outline: $anchor inside an enum is not a real identifier
         | #/003/tests/001/data | false | in implementations that strip $anchor, this may match either $def                |
         | #/003/tests/002/data | true  | match $ref to $anchor                                                            |
         | #/003/tests/003/data | false | no match on enum or $ref to $anchor                                              |
+
+Scenario Outline: same $anchor with different base uri
+/* Schema: 
+{
+            "$id": "http://localhost:1234/foobar",
+            "$defs": {
+                "A": {
+                    "$id": "child1",
+                    "allOf": [
+                        {
+                            "$id": "child2",
+                            "$anchor": "my_anchor",
+                            "type": "number"
+                        },
+                        {
+                            "$anchor": "my_anchor",
+                            "type": "string"
+                        }
+                    ]
+                }
+            },
+            "$ref": "child1#my_anchor"
+        }
+*/
+    Given the input JSON file "anchor.json"
+    And the schema at "#/4/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/004/tests/000/data | true  | $ref should resolve to /$defs/A/allOf/1                                          |
+        | #/004/tests/001/data | false | $ref should not resolve to /$defs/A/allOf/0                                      |

@@ -104,3 +104,25 @@ Scenario Outline: items + contains
         | #/004/tests/001/data | false | does not match items, matches contains                                           |
         | #/004/tests/002/data | true  | matches both items and contains                                                  |
         | #/004/tests/003/data | false | matches neither items nor contains                                               |
+
+Scenario Outline: contains with false if subschema
+/* Schema: 
+{
+            "contains": {
+                "if": false,
+                "else": true
+            }
+        }
+*/
+    Given the input JSON file "contains.json"
+    And the schema at "#/5/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/005/tests/000/data | true  | any non-empty array is valid                                                     |
+        | #/005/tests/001/data | false | empty array is invalid                                                           |

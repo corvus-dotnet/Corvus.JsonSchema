@@ -23,35 +23,34 @@ namespace Corvus.JsonSchema.SpecGenerator
         /// <param name="specDirectories">The spec directories.</param>
         internal static void Write(SpecDirectories specDirectories)
         {
-            foreach ((string testSet, string inputFile, string outputFile) in specDirectories.EnumerateTests())
+            foreach ((string testSet, string inputFile, string inputFileSpecFolderRelativePath, string outputFile) in specDirectories.EnumerateTests())
             {
                 Console.WriteLine($"Reading: {inputFile}");
                 Console.WriteLine($"Writing: {outputFile}");
                 Console.WriteLine();
-                WriteFeatureFile(testSet, inputFile, outputFile);
+                WriteFeatureFile(testSet, inputFile, inputFileSpecFolderRelativePath, outputFile);
             }
         }
 
-        private static void WriteFeatureFile(string testSet, string inputFile, string outputFile)
+        private static void WriteFeatureFile(string testSet, string inputFileFullPath, string inputFileSpecFolderRelativePath, string outputFile)
         {
-            string inputFileUri = Path.GetFileName(inputFile);
-            using var testDocument = JsonDocument.Parse(File.ReadAllText(inputFile));
+            using var testDocument = JsonDocument.Parse(File.ReadAllText(inputFileFullPath));
 
             var builder = new StringBuilder();
 
-            WriteFeatureHeading(testSet, Path.GetFileNameWithoutExtension(inputFile), builder);
+            WriteFeatureHeading(testSet, Path.GetFileNameWithoutExtension(inputFileFullPath), builder);
 
             int index = 0;
             foreach (JsonElement scenarioDefinition in testDocument.RootElement.EnumerateArray())
             {
-                WriteScenario(inputFileUri, index, scenarioDefinition, builder);
+                WriteScenario(inputFileSpecFolderRelativePath, index, scenarioDefinition, builder);
                 ++index;
             }
 
             File.WriteAllText(outputFile, builder.ToString());
         }
 
-        private static void WriteScenario(string inputFileUri, int scenarioIndex, JsonElement scenarioDefinition, StringBuilder builder)
+        private static void WriteScenario(string inputFileSpecFolderRelativePath, int scenarioIndex, JsonElement scenarioDefinition, StringBuilder builder)
         {
             string inputSchemaReference = $"#/{scenarioIndex}/schema";
 
@@ -63,7 +62,7 @@ namespace Corvus.JsonSchema.SpecGenerator
             builder.AppendLine("/* Schema: ");
             builder.AppendLine(scenarioDefinition.GetProperty("schema").ToString());
             builder.AppendLine("*/");
-            builder.AppendLine($"    Given the input JSON file \"{inputFileUri}\"");
+            builder.AppendLine($"    Given the input JSON file \"{inputFileSpecFolderRelativePath}\"");
             builder.AppendLine($"    And the schema at \"{inputSchemaReference}\"");
             builder.AppendLine("    And the input data at \"<inputDataReference>\"");
             builder.AppendLine("    And I generate a type for the schema");

@@ -14,7 +14,7 @@ Scenario Outline: reference of a root arbitrary keyword
             }
         }
 */
-    Given the input JSON file "refOfUnknownKeyword.json"
+    Given the input JSON file "optional\refOfUnknownKeyword.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
     And I generate a type for the schema
@@ -36,7 +36,7 @@ Scenario Outline: reference of an arbitrary keyword of a sub-schema
             }
         }
 */
-    Given the input JSON file "refOfUnknownKeyword.json"
+    Given the input JSON file "optional\refOfUnknownKeyword.json"
     And the schema at "#/1/schema"
     And the input data at "<inputDataReference>"
     And I generate a type for the schema

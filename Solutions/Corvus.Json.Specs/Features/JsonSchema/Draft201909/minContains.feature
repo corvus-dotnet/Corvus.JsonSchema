@@ -117,7 +117,7 @@ Scenario Outline: maxContains  less than  minContains
         | #/004/tests/002/data | false | invalid maxContains                                                              |
         | #/004/tests/003/data | false | invalid maxContains and minContains                                              |
 
-Scenario Outline: minContains  equals  0
+Scenario Outline: minContains  equals  0 with no maxContains
 /* Schema: 
 {
             "contains": {"const": 1},
@@ -136,3 +136,25 @@ Scenario Outline: minContains  equals  0
         | inputDataReference   | valid | description                                                                      |
         | #/005/tests/000/data | true  | empty data                                                                       |
         | #/005/tests/001/data | true  | minContains = 0 makes contains always pass                                       |
+
+Scenario Outline: minContains  equals  0 with maxContains
+/* Schema: 
+{
+            "contains": {"const": 1},
+            "minContains": 0,
+            "maxContains": 1
+        }
+*/
+    Given the input JSON file "minContains.json"
+    And the schema at "#/6/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/006/tests/000/data | true  | empty data                                                                       |
+        | #/006/tests/001/data | true  | not more than maxContains                                                        |
+        | #/006/tests/002/data | false | too many                                                                         |

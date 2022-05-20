@@ -1,0 +1,53 @@
+{
+  // This defines selectors that build test suites based on the files in the
+  // draft2019-09 and draft2020-12 folders of the JSON Schema spec suite.
+
+  "includeInThisDirectory": [],
+  "subdirectories": {
+
+    "draft2019-09": {
+      "testSet": "draft2019-09",
+      "outputFolder": "Draft201909",
+      "subdirectories": {
+        "optional": {
+          "excludeFromThisDirectory": [
+            "bignum\\.json",
+            "ecmascript-regex\\.json",
+            "non-bmp-regex\\.json",
+            "refOfUnknownKeyword\\.json"
+          ],
+          "subdirectories": {
+            "format": {
+              "excludeFromThisDirectory": [
+                "unknown\\.json"
+              ]
+            }
+          }
+        }
+      }
+    },
+
+    "draft2020-12": {
+      "testSet": "draft2020-12",
+      "outputFolder": "Draft2020212",
+      "subdirectories": {
+        "optional": {
+          "excludeFromThisDirectory": [
+            "bignum\\.json",
+            "ecmascript-regex\\.json",
+            "non-bmp-regex\\.json",
+            "refOfUnknownKeyword\\.json"
+          ],
+          "subdirectories": {
+            "format": {
+              "excludeFromThisDirectory": [
+                "unknown\\.json"
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+
+}
