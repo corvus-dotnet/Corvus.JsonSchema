@@ -25,8 +25,8 @@ namespace Corvus.JsonSchema.SpecGenerator
         {
             foreach (SpecDirectories.TestSet testSet in specDirectories.EnumerateTests())
             {
-                Console.WriteLine($"Reading: {testSet.inputFile}");
-                Console.WriteLine($"Writing: {testSet.outputFile}");
+                Console.WriteLine($"Reading: {testSet.InputFile}");
+                Console.WriteLine($"Writing: {testSet.OutputFile}");
                 Console.WriteLine();
                 WriteFeatureFile(testSet);
             }
@@ -34,11 +34,11 @@ namespace Corvus.JsonSchema.SpecGenerator
 
         private static void WriteFeatureFile(SpecDirectories.TestSet testSet)
         {
-            using var testDocument = JsonDocument.Parse(File.ReadAllText(testSet.inputFile));
+            using var testDocument = JsonDocument.Parse(File.ReadAllText(testSet.InputFile));
 
             var builder = new StringBuilder();
 
-            WriteFeatureHeading(testSet.testSet, Path.GetFileNameWithoutExtension(testSet.inputFile), builder);
+            WriteFeatureHeading(testSet.TestSetName, Path.GetFileNameWithoutExtension(testSet.InputFile), builder);
 
             int index = 0;
             foreach (JsonElement scenarioDefinition in testDocument.RootElement.EnumerateArray())
@@ -47,7 +47,7 @@ namespace Corvus.JsonSchema.SpecGenerator
                 ++index;
             }
 
-            File.WriteAllText(testSet.outputFile, builder.ToString());
+            File.WriteAllText(testSet.OutputFile, builder.ToString());
         }
 
         private static void WriteScenario(SpecDirectories.TestSet testSet, int scenarioIndex, JsonElement scenarioDefinition, StringBuilder builder)
@@ -62,7 +62,7 @@ namespace Corvus.JsonSchema.SpecGenerator
             builder.AppendLine("/* Schema: ");
             builder.AppendLine(scenarioDefinition.GetProperty("schema").ToString());
             builder.AppendLine("*/");
-            builder.AppendLine($"    Given the input JSON file \"{testSet.inputFileSpecFolderRelativePath}\"");
+            builder.AppendLine($"    Given the input JSON file \"{testSet.InputFileSpecFolderRelativePath}\"");
             builder.AppendLine($"    And the schema at \"{inputSchemaReference}\"");
             builder.AppendLine("    And the input data at \"<inputDataReference>\"");
             builder.AppendLine("    And I generate a type for the schema");
@@ -73,7 +73,7 @@ namespace Corvus.JsonSchema.SpecGenerator
             builder.AppendLine("    Examples:");
             builder.AppendLine("        | inputDataReference   | valid | description                                                                      |");
 
-            if (!testSet.testsToIgnoreIndicesByScenarioName.TryGetValue(scenarioTitle, out IReadOnlySet<int>? testsToIgnoreIndices))
+            if (!testSet.TestsToIgnoreIndicesByScenarioName.TryGetValue(scenarioTitle, out IReadOnlySet<int>? testsToIgnoreIndices))
             {
                 testsToIgnoreIndices = new HashSet<int>();
             }

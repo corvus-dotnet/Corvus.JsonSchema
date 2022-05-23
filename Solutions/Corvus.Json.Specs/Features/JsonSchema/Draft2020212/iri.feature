@@ -9,7 +9,7 @@ Scenario Outline: validation of IRIs
 /* Schema: 
 { "format": "iri" }
 */
-    Given the input JSON file "optional\format\iri.json"
+    Given the input JSON file "optional/format/iri.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
     And I generate a type for the schema

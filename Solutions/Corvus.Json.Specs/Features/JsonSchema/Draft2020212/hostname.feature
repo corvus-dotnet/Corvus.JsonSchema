@@ -9,7 +9,7 @@ Scenario Outline: validation of host names
 /* Schema: 
 { "format": "hostname" }
 */
-    Given the input JSON file "optional\format\hostname.json"
+    Given the input JSON file "optional/format/hostname.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
     And I generate a type for the schema

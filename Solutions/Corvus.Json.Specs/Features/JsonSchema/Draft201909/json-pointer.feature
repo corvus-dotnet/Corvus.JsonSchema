@@ -9,7 +9,7 @@ Scenario Outline: validation of JSON-pointers (JSON String Representation)
 /* Schema: 
 { "format": "json-pointer" }
 */
-    Given the input JSON file "optional\format\json-pointer.json"
+    Given the input JSON file "optional/format/json-pointer.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
     And I generate a type for the schema

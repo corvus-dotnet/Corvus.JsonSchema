@@ -9,7 +9,7 @@ Scenario Outline: validation of regular expressions
 /* Schema: 
 { "format": "regex" }
 */
-    Given the input JSON file "optional\format\regex.json"
+    Given the input JSON file "optional/format/regex.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
     And I generate a type for the schema
