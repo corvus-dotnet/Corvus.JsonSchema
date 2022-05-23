@@ -498,7 +498,22 @@ namespace Corvus.Json
 
         private static bool TryParseUri(string text, [NotNullWhen(true)] out Uri? value)
         {
-            return Uri.TryCreate(text, UriKind.Absolute, out value);
+            // Uri.TryCreate considers full-qualified file paths to be acceptable as absolute Uris.
+            // This means that on Linux "/abc" is considered an acceptable absolute Uri! (This is
+            // conceptually equivalent to "C:\abc" being an absolute Uri on Windows, but it's more
+            // of a problem because a lot of relative Uris of the kind you come across on the web
+            // look exactly like Unix file paths.)
+            // https://github.com/dotnet/runtime/issues/22718
+            // However, this only needs to be a problem if you insist that the Uri is absolute.
+            // If you accept either absolute or relative Uris, it will intepret "/abc" as a
+            // relative Uri on either Windows or Linux. It only interprets it as an absolute Uri
+            // if you pass UriKind.Absolute when parsing.
+            // This is why we take the peculiar-looking step of passing UriKind.RelativeOrAbsolute
+            // and then rejecting relative Uris. This causes this method to reject "/abc" on all
+            // platforms. Back when we passed UriKind.Absolute, this code incorrectly accepted
+            // "abc".
+            return Uri.TryCreate(text, UriKind.RelativeOrAbsolute, out value) &&
+                value.IsAbsoluteUri;
         }
     }
 }
