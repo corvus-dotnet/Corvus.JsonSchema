@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.1.31903.286
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Corvus.JsonSchema", "Corvus.JsonSchema\Corvus.JsonSchema.csproj", "{83A532B0-4096-4EEF-A12B-63C739155D62}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Corvus.Json.JsonSchema", "Corvus.Json.JsonSchema\Corvus.Json.JsonSchema.csproj", "{83A532B0-4096-4EEF-A12B-63C739155D62}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Corvus.Json", "Corvus.Json\Corvus.Json.csproj", "{07C49DF8-CE8E-46F9-8DA4-F0B8DEFF1D5A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Corvus.Json.ExtendedTypes", "Corvus.Json.ExtendedTypes\Corvus.Json.ExtendedTypes.csproj", "{07C49DF8-CE8E-46F9-8DA4-F0B8DEFF1D5A}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Corvus.JsonHelpers", "Corvus.JsonHelpers\Corvus.JsonHelpers.csproj", "{2B019910-FE10-4B86-A225-F34C6305E1F3}"
 EndProject
@@ -15,7 +15,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Code Generation", "Code Gen
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Json Object Model", "Json Object Model", "{8F54F97B-19FF-46DB-8EE7-47E3079D30A7}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Corvus.Json.SchemaModel", "Corvus.Json.SchemaModel\Corvus.Json.SchemaModel.csproj", "{CDA2599D-DDF1-432E-8A38-C067DE96EF04}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Corvus.Json.JsonSchema.TypeBuilder", "Corvus.Json.Walker.JsonSchema\Corvus.Json.JsonSchema.TypeBuilder.csproj", "{CDA2599D-DDF1-432E-8A38-C067DE96EF04}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Testing and Specification", "Testing and Specification", "{97A39EA1-C74F-4B7D-99CB-9FD202A155E7}"
 EndProject

@@ -40,9 +40,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Corvus.Json.SchemaModel\Corvus.Json.SchemaModel.csproj" />
-    <ProjectReference Include="..\Corvus.Json.Walker\Corvus.Json.Walker.csproj" />
-    <ProjectReference Include="..\Corvus.Json\Corvus.Json.csproj" />
+    <ProjectReference Include="..\Corvus.Json.Walker.JsonSchema\Corvus.Json.JsonSchema.TypeBuilder.csproj" />
   </ItemGroup>
 
   <ItemGroup>

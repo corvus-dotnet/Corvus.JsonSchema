@@ -8,7 +8,8 @@
 
 	<PropertyGroup>
 		<PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-	</PropertyGroup>
+		<Description>Utility types and methods for working with JSON</Description>
+    </PropertyGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Corvus.Extensions" Version="1.1.4" />

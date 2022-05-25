@@ -10,6 +10,12 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <Compile Remove="FakesAssemblies\**" />
+	  <EmbeddedResource Remove="FakesAssemblies\**" />
+	  <None Remove="FakesAssemblies\**" />
+	</ItemGroup>
+
+	<ItemGroup>
 	  <Compile Include="..\Corvus.Json.Specs\Fakes\FakeWebDocumentResolver.cs" Link="Fakes\FakeWebDocumentResolver.cs" />
 	</ItemGroup>
 
@@ -21,14 +27,15 @@
     </PackageReference>
     <PackageReference Include="BenchmarkDotNet" Version="0.13.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="6.0.0" />
+    <PackageReference Include="Microsoft.QualityTools.Testing.Fakes" Version="16.11.230815" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="Newtonsoft.Json.Schema" Version="3.0.14" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Corvus.Json.SchemaModel\Corvus.Json.SchemaModel.csproj" />
-    <ProjectReference Include="..\Corvus.JsonSchema\Corvus.JsonSchema.csproj" />
-    <ProjectReference Include="..\Corvus.Json\Corvus.Json.csproj" />
+    <ProjectReference Include="..\Corvus.Json.ExtendedTypes\Corvus.Json.ExtendedTypes.csproj" />
+    <ProjectReference Include="..\Corvus.Json.Walker.JsonSchema\Corvus.Json.JsonSchema.TypeBuilder.csproj" />
+    <ProjectReference Include="..\Corvus.Json.JsonSchema\Corvus.Json.JsonSchema.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -45,6 +52,10 @@
 
   <ItemGroup>
     <Folder Include="Fakes\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalDesignTimeBuildInput Remove="FakesAssemblies\**" />
   </ItemGroup>
 
 </Project>

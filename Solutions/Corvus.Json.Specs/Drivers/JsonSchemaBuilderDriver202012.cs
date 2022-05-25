@@ -19,7 +19,7 @@ namespace Drivers
     using System.Threading.Tasks;
     using Corvus.Extensions;
     using Corvus.Json;
-    using Corvus.Json.SchemaModel.Draft202012;
+    using Corvus.Json.JsonSchema.TypeBuilder.Draft202012;
     using Microsoft.CodeAnalysis;
     using Microsoft.CodeAnalysis.CSharp;
     using Microsoft.CodeAnalysis.Emit;
