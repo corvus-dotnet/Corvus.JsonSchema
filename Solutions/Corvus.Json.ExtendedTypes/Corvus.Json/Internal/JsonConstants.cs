@@ -11,7 +11,7 @@ using System;
 
 namespace Corvus.Json
 {
-    public static class JsonConstants
+    internal static class JsonConstants
     {
         public const byte OpenBrace = (byte)'{';
         public const byte CloseBrace = (byte)'}';
