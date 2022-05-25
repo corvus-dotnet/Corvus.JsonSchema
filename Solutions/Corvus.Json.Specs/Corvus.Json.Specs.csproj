@@ -5,10 +5,7 @@
 		<TargetFramework>net6.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
-	</PropertyGroup>
-
-	<PropertyGroup>
-		<PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+        <IsPackable>false</IsPackable>
 	</PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -20,6 +17,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Corvus.Testing.SpecFlow.NUnit" Version="1.5.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="6.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.2.0" />
     <PackageReference Include="SolidToken.SpecFlow.DependencyInjection" Version="3.9.2" />
@@ -42,13 +40,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Corvus.Json.SchemaModel\Corvus.Json.SchemaModel.csproj" />
-    <ProjectReference Include="..\Corvus.Json.Walker\Corvus.Json.Walker.csproj" />
-    <ProjectReference Include="..\Corvus.Json\Corvus.Json.csproj" />
+    <ProjectReference Include="..\Corvus.Json.Walker.JsonSchema\Corvus.Json.JsonSchema.TypeBuilder.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="appsettings.local.json">
+    <None Update="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

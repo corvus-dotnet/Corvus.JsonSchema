@@ -13,7 +13,7 @@ Scenario Outline: schema that uses custom metaschema with format-assertion: fals
             "format": "ipv4"
         }
 */
-    Given the input JSON file "optional\format-assertion.json"
+    Given the input JSON file "optional/format-assertion.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
     And I generate a type for the schema
@@ -34,7 +34,7 @@ Scenario Outline: schema that uses custom metaschema with format-assertion: true
             "format": "ipv4"
         }
 */
-    Given the input JSON file "optional\format-assertion.json"
+    Given the input JSON file "optional/format-assertion.json"
     And the schema at "#/1/schema"
     And the input data at "<inputDataReference>"
     And I generate a type for the schema

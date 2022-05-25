@@ -19,7 +19,7 @@ namespace Drivers
     using System.Threading.Tasks;
     using Corvus.Extensions;
     using Corvus.Json;
-    using Corvus.Json.SchemaModel.Draft202012;
+    using Corvus.Json.JsonSchema.TypeBuilder.Draft202012;
     using Microsoft.CodeAnalysis;
     using Microsoft.CodeAnalysis.CSharp;
     using Microsoft.CodeAnalysis.Emit;
@@ -123,7 +123,7 @@ namespace Drivers
 
             if (isCorvusType)
             {
-                return AssemblyLoadContext.Default.Assemblies.Where(a => a.GetName().Name == "Corvus.Json").Single().ExportedTypes.Where(t => t.FullName == rootTypeName).Single();
+                return AssemblyLoadContext.Default.Assemblies.Where(a => a.GetName().Name == "Corvus.Json.ExtendedTypes").Single().ExportedTypes.Where(t => t.FullName == rootTypeName).Single();
             }
 
             return generatedAssembly.ExportedTypes.Where(t => t.FullName == rootTypeName).Single();

@@ -9,7 +9,7 @@
     using System.Net.Http;
     using System.Text.Json;
     using System.Threading.Tasks;
-    using Corvus.Json.SchemaModel;
+    using Corvus.Json.JsonSchema.TypeBuilder;
     using Microsoft.CodeAnalysis;
     using Microsoft.CodeAnalysis.CSharp;
 
@@ -73,8 +73,8 @@
                 IJsonSchemaBuilder builder =
                     schemaVariant switch
                     { 
-                        SchemaVariant.Draft201909 => new SchemaModel.Draft201909.JsonSchemaBuilder(walker),
-                        _ => new SchemaModel.Draft202012.JsonSchemaBuilder(walker)
+                        SchemaVariant.Draft201909 => new JsonSchema.TypeBuilder.Draft201909.JsonSchemaBuilder(walker),
+                        _ => new JsonSchema.TypeBuilder.Draft202012.JsonSchemaBuilder(walker)
                     };
 
                 JsonReference reference = new JsonReference(schemaFile).Apply(new JsonReference(rootPath));

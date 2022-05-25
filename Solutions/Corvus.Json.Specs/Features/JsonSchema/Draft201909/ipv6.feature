@@ -9,7 +9,7 @@ Scenario Outline: validation of IPv6 addresses
 /* Schema: 
 { "format": "ipv6" }
 */
-    Given the input JSON file "optional\format\ipv6.json"
+    Given the input JSON file "optional/format/ipv6.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
     And I generate a type for the schema

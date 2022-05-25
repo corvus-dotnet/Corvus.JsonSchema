@@ -28,16 +28,16 @@
                 "unknown\\.json"
               ],
               "testExclusions": {
-                "optional\\format\\date-time.json": {
+                "optional/format/date-time.json": {
                   "validation of date-time strings": {
                     "testsToIgnoreIndices": [ 10, 11 ]
                   }
                 },
                 // Probably want to fix this one for real.
-                //"optional\\format\\duration.json": {
+                //"optional/format/duration.json": {
                 //  "testsToIgnoreIndices": [ 23 ]
                 //}
-                "optional\\format\\time.json": {
+                "optional/format/time.json": {
                   "validation of time strings": {
                     "testsToIgnoreIndices": [
                       // Leap seconds
@@ -95,16 +95,16 @@
                 "unknown\\.json"
               ],
               "testExclusions": {
-                "optional\\format\\date-time.json": {
+                "optional/format/date-time.json": {
                   "validation of date-time strings": {
                     "testsToIgnoreIndices": [ 10, 11 ]
                   }
                 },
                 // Probably want to fix this one for real.
-                //"optional\\format\\duration.json": {
+                //"optional/format/duration.json": {
                 //  "testsToIgnoreIndices": [ 23 ]
                 //}
-                "optional\\format\\time.json": {
+                "optional/format/time.json": {
                   "validation of time strings": {
                     "testsToIgnoreIndices": [
                       // Leap seconds

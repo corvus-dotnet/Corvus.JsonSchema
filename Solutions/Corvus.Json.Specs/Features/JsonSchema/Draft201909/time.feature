@@ -9,7 +9,7 @@ Scenario Outline: validation of time strings
 /* Schema: 
 { "format": "time" }
 */
-    Given the input JSON file "optional\format\time.json"
+    Given the input JSON file "optional/format/time.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
     And I generate a type for the schema

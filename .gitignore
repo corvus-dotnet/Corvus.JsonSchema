@@ -343,3 +343,7 @@ coverage.cobertura.xml
 # NCrunch files
 *.ncrunchsolution
 *.ncrunchproject
+
+# Scripted build artifacts
+/_codeCoverage
+/_packages
