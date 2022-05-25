@@ -107,7 +107,7 @@ namespace Drivers
 
             if (isCorvusType)
             {
-                return AssemblyLoadContext.Default.Assemblies.Where(a => a.GetName().Name == "Corvus.Json").Single().ExportedTypes.Where(t => t.FullName == rootTypeName).Single();
+                return AssemblyLoadContext.Default.Assemblies.Where(a => a.GetName().Name == "Corvus.Json.ExtendedTypes").Single().ExportedTypes.Where(t => t.FullName == rootTypeName).Single();
             }
 
             return generatedAssembly.ExportedTypes.Where(t => t.FullName == rootTypeName).Single();
