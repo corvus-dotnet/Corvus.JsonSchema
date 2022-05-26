@@ -30,8 +30,8 @@ namespace Hooks
 
             services.AddTransient<IDocumentResolver>(serviceProvider => new CompoundDocumentResolver(new FakeWebDocumentResolver(serviceProvider.GetRequiredService<IConfiguration>()["jsonSchemaBuilderDriverSettings:remotesBaseDirectory"]), new FileSystemDocumentResolver(), new HttpClientDocumentResolver(new HttpClient())));
             services.AddTransient<JsonWalker>();
-            services.AddTransient<Corvus.Json.SchemaModel.Draft202012.JsonSchemaBuilder>();
-            services.AddTransient<Corvus.Json.SchemaModel.Draft201909.JsonSchemaBuilder>();
+            services.AddTransient<Corvus.Json.JsonSchema.TypeBuilder.Draft202012.JsonSchemaBuilder>();
+            services.AddTransient<Corvus.Json.JsonSchema.TypeBuilder.Draft201909.JsonSchemaBuilder>();
             services.AddTransient<JsonSchemaBuilderDriver202012>();
             services.AddTransient<JsonSchemaBuilderDriver201909>();
 

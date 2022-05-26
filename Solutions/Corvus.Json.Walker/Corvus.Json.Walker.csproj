@@ -9,6 +9,7 @@
 
 	<PropertyGroup>
 		<PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+		<Description>Walks trees of JsonElements to identify and locate entities of interest, with support for references</Description>
 	</PropertyGroup>
 
 	<ItemGroup>

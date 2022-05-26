@@ -9,7 +9,7 @@ Scenario Outline: validation of e-mail addresses
 /* Schema: 
 { "format": "email" }
 */
-    Given the input JSON file "optional\format\email.json"
+    Given the input JSON file "optional/format/email.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
     And I generate a type for the schema

@@ -9,6 +9,9 @@ namespace Steps
     using System.Threading.Tasks;
     using Corvus.Json;
     using Drivers;
+
+    using Microsoft.Extensions.Configuration;
+
     using NUnit.Framework;
     using TechTalk.SpecFlow;
 
@@ -28,6 +31,7 @@ namespace Steps
         private readonly FeatureContext featureContext;
         private readonly ScenarioContext scenarioContext;
         private readonly IJsonSchemaBuilderDriver driver;
+        private readonly IConfiguration configuration;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="JsonSchemaSteps"/> class.
@@ -35,11 +39,13 @@ namespace Steps
         /// <param name="featureContext">The current feature context.</param>
         /// <param name="scenarioContext">The current scenario context.</param>
         /// <param name="driver">The json schema builder driver.</param>
-        public JsonSchemaSteps(FeatureContext featureContext, ScenarioContext scenarioContext, IJsonSchemaBuilderDriver driver)
+        /// <param name="configuration">Configuration settings.</param>
+        public JsonSchemaSteps(FeatureContext featureContext, ScenarioContext scenarioContext, IJsonSchemaBuilderDriver driver, IConfiguration configuration)
         {
             this.featureContext = featureContext;
             this.scenarioContext = scenarioContext;
             this.driver = driver;
+            this.configuration = configuration;
         }
 
         /// <summary>
@@ -71,7 +77,9 @@ namespace Steps
         public async Task GivenTheInputDataAt(string referenceFragment)
         {
             JsonElement? element = await this.driver.GetElement(this.scenarioContext.Get<string>(InputJsonFileName), referenceFragment).ConfigureAwait(false);
-            Assert.NotNull(element);
+            Assert.NotNull(
+                element,
+                $"Failed to load input data at {this.scenarioContext.Get<string>(InputJsonFileName)}, ref {referenceFragment}, jsonSchemaBuilder201909DriverSettings:testBaseDirectory: '{this.configuration["jsonSchemaBuilder201909DriverSettings:testBaseDirectory"]}', jsonSchemaBuilder202012DriverSettings: '{this.configuration["jsonSchemaBuilder202012DriverSettings:testBaseDirectory"]}' CWD: '{Environment.CurrentDirectory}'");
             this.scenarioContext.Set(referenceFragment, InputDataPath);
             this.scenarioContext.Set(element.Value, InputData);
         }
@@ -84,7 +92,7 @@ namespace Steps
         public async Task GivenIGenerateATypeForTheSchema()
         {
             string inputDataPath = this.scenarioContext.Get<string>(InputDataPath);
-            Type type = await this.driver.GenerateTypeFor(true, int.Parse(inputDataPath.AsSpan().Slice(12, 3)), this.scenarioContext.Get<string>(InputJsonFileName), this.scenarioContext.Get<string>(SchemaPath), inputDataPath, Formatting.ToPascalCaseWithReservedWords(this.featureContext.FeatureInfo.Title).ToString(), Formatting.ToPascalCaseWithReservedWords(this.scenarioContext.ScenarioInfo.Title).ToString(), bool.Parse((string)this.scenarioContext.ScenarioInfo.Arguments[1] !)).ConfigureAwait(false);
+            Type type = await this.driver.GenerateTypeFor(false, int.Parse(inputDataPath.AsSpan().Slice(12, 3)), this.scenarioContext.Get<string>(InputJsonFileName), this.scenarioContext.Get<string>(SchemaPath), inputDataPath, Formatting.ToPascalCaseWithReservedWords(this.featureContext.FeatureInfo.Title).ToString(), Formatting.ToPascalCaseWithReservedWords(this.scenarioContext.ScenarioInfo.Title).ToString(), bool.Parse((string)this.scenarioContext.ScenarioInfo.Arguments[1] !)).ConfigureAwait(false);
             this.scenarioContext.Set(type, SchemaType);
         }
 

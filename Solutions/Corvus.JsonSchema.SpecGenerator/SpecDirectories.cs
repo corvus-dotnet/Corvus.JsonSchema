@@ -133,7 +133,7 @@ namespace Corvus.JsonSchema.SpecGenerator
                             throw new InvalidOperationException("Test selectors should either specify a testSet, be a descendant of a selector that specifies a testSet, or match no files");
                         }
 
-                        string inputRelativePath = Path.GetRelativePath(testSetInputDirectory, inputFile);
+                        string inputRelativePath = Path.GetRelativePath(testSetInputDirectory, inputFile).Replace('\\', '/');
                         IReadOnlyDictionary<string, TestSelector.TestExclusion> testToIgnoreIndicesByScenarioName =
                             selector.TestExclusions.TryGetValue(inputRelativePath, out IReadOnlyDictionary<string, TestSelector.TestExclusion>? exclusions)
                                 ? exclusions
@@ -205,10 +205,12 @@ namespace Corvus.JsonSchema.SpecGenerator
         }
 
         public record TestSet(
-            string testSet,
-            string inputFile,
-            string inputFileSpecFolderRelativePath,
-            string outputFile,
-            IReadOnlyDictionary<string, IReadOnlySet<int>> testsToIgnoreIndicesByScenarioName);
+#pragma warning disable SA1313 // Parameter names should begin with lower-case letter - StyleCop failing to understand records here
+            string TestSetName,
+            string InputFile,
+            string InputFileSpecFolderRelativePath,
+            string OutputFile,
+            IReadOnlyDictionary<string, IReadOnlySet<int>> TestsToIgnoreIndicesByScenarioName);
+#pragma warning restore SA1313 // Parameter names should begin with lower-case letter
     }
 }

@@ -9,7 +9,7 @@ Scenario Outline: validation of date-time strings
 /* Schema: 
 { "format": "date-time" }
 */
-    Given the input JSON file "optional\format\date-time.json"
+    Given the input JSON file "optional/format/date-time.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
     And I generate a type for the schema
