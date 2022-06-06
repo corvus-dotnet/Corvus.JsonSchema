@@ -88,7 +88,7 @@
                 }
                 else
                 {
-                    outputPath = Path.GetDirectoryName(schemaFile)!;
+                    outputPath = Path.GetDirectoryName(Path.GetFullPath(schemaFile))!;
                 }
 
                 string mapFile = string.IsNullOrEmpty(outputMapFile) ? outputMapFile: Path.Combine(outputPath, outputMapFile);
