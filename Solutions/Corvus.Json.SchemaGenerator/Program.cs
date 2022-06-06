@@ -17,62 +17,82 @@
     {
         static Task<int> Main(string[] args)
         {
+            var rootNamespace = new Option<string>(
+                                "--rootNamespace",
+                                description: "The default root namespace for generated types");
+            var rootPath = new Option<string>(
+                                "--rootPath",
+                                description: "The path in the document for the root type.");
+            var useSchema = new Option<SchemaVariant>(
+                                "--useSchema",
+                                getDefaultValue: () => SchemaVariant.Draft201909,
+                                description: "The schema variant to use.");
+            var outputMapFile = new Option<string>(
+                                "--outputMapFile",
+                                description: "The name to use for a map file which includes details of the files that were written.");
+            var outputPath = new Option<string>(
+                                "--outputPath",
+                                description: "The output directory. It defaults to the same folder as the schema file.");
+            var outputRootTypeName = new Option<string?>(
+                                "--outputRootTypeName",
+                                getDefaultValue: () => null,
+                                description: "The Dotnet TypeName for the root type.");
+            var rebaseToRootPath = new Option<bool>(
+                                "--rebaseToRootPath",
+                                "If a --rootPath is specified, rebase the document as if it was rooted on the specified element.");
+
+            var schemaFile = new Argument<string>(
+                    "schemaFile",
+                    "The path to the schema file to process")
+            {
+                Arity = ArgumentArity.ExactlyOne,
+            };
+
             var rootCommand = new RootCommand
             {
-                new Option<string>(
-                    "--rootNamespace",
-                    description: "The default root namespace for generated types"),
-                new Option<string>(
-                    "--rootPath",
-                    description: "The path in the document for the root type."),
-                new Option<SchemaVariant>(
-                    "--useSchema",
-                    getDefaultValue: () => SchemaVariant.Draft201909,
-                    description: "The schema variant to use."),
-                new Option<string>(
-                    "--outputMapFile",
-                    description: "The name to use for a map file which includes details of the files that were written."),
-                new Option<string>(
-                    "--outputPath",
-                    description: "The output directory. It defaults to the same folder as the schema file."),
-                new Option<string?>(
-                    "--outputRootTypeName",
-                    getDefaultValue: () => null,
-                    description: "The Dotnet TypeName for the root type."),
-                new Option<bool>(
-                    "--rebaseToRootPath",
-                    "If a --rootPath is specified, rebase the document as if it was rooted on the specified element."),
+                rootNamespace,
+                rootPath,
+                useSchema,
+                outputMapFile,
+                outputPath,
+                outputRootTypeName,
+                rebaseToRootPath,
             };
 
             rootCommand.Description = "Generate C# types from a JSON schema.";
 
-            rootCommand.AddArgument(
-                new Argument<string>(
-                    "schemaFile",
-                    "The path to the schema file to process")
+           
+            rootCommand.AddArgument(schemaFile);
+
+
+            Handler.SetHandler(
+                rootCommand,
+                (schemaFile, rootNamespace, rootPath, rebaseToRootPath, outputPath, outputMapFile, outputRootTypeName, useSchema) =>
                 {
-                    Arity = ArgumentArity.ExactlyOne,
-                });
-
-
-            // Note that the parameters of the handler method are matched according to the names of the options
-            rootCommand.Handler = CommandHandler.Create<string, string, string, bool, string, string, string, SchemaVariant>((schemaFile, rootNamespace, rootPath, rebaseToRootPath, outputPath, outputMapFile, outputRootTypeName, useSchema) =>
-              {
-                  return GenerateTypes(schemaFile, rootNamespace, rootPath, rebaseToRootPath, outputPath, outputMapFile, outputRootTypeName, useSchema);
-              });
+                    return GenerateTypes(schemaFile, rootNamespace, rootPath, rebaseToRootPath, outputPath, outputMapFile, outputRootTypeName, useSchema);
+                },
+                schemaFile,
+                rootNamespace,
+                rootPath,
+                rebaseToRootPath,
+                outputPath,
+                outputMapFile,
+                outputRootTypeName,
+                useSchema
+                );
 
             // Parse the incoming args and invoke the handler
             return rootCommand.InvokeAsync(args);
         }
 
-        private static async Task<int> GenerateTypes(string schemaFile, string rootNamespace, string rootPath, bool rebaseToRootPath, string outputPath, string outputMapFile, string rootTypeName, SchemaVariant schemaVariant)
+        private static async Task<int> GenerateTypes(string schemaFile, string rootNamespace, string rootPath, bool rebaseToRootPath, string outputPath, string outputMapFile, string? rootTypeName, SchemaVariant schemaVariant)
         {
             try
             {
                 var walker = new JsonWalker(new CompoundDocumentResolver(new FileSystemDocumentResolver(), new HttpClientDocumentResolver(new HttpClient())));
                 IJsonSchemaBuilder builder =
                     schemaVariant switch
-                    { 
+                    {
                         SchemaVariant.Draft201909 => new JsonSchema.TypeBuilder.Draft201909.JsonSchemaBuilder(walker),
                         _ => new JsonSchema.TypeBuilder.Draft202012.JsonSchemaBuilder(walker)
                     };
@@ -91,7 +111,7 @@
                     outputPath = Path.GetDirectoryName(schemaFile)!;
                 }
 
-                string mapFile = string.IsNullOrEmpty(outputMapFile) ? outputMapFile: Path.Combine(outputPath, outputMapFile);
+                string mapFile = string.IsNullOrEmpty(outputMapFile) ? outputMapFile : Path.Combine(outputPath, outputMapFile);
                 if (!string.IsNullOrEmpty(mapFile))
                 {
                     File.Delete(mapFile);
