@@ -21,7 +21,7 @@ namespace IdnEmailDraft202012Feature.ValidationOfAnInternationalizedEMailAddress
         [GlobalSetup]
         public Task GlobalSetup()
         {
-            return this.GlobalSetup("draft2020-12\\idn-email.json", "#/0/schema", "#/000/tests/001/data", false);
+            return this.GlobalSetup("draft2020-12\\optional/format/idn-email.json", "#/0/schema", "#/000/tests/001/data", true);
         }
         /// <summary>
         /// Validates using the Corvus types.

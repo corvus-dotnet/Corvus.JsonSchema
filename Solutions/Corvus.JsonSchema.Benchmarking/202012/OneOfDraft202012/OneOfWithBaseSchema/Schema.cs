@@ -13,6 +13,7 @@
 namespace OneOfDraft202012Feature.OneOfWithBaseSchema
 {
     using System;
+    using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Text;
     using System.Text.Json;
@@ -451,12 +452,12 @@ namespace OneOfDraft202012Feature.OneOfWithBaseSchema
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is Schema entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -559,6 +560,8 @@ namespace OneOfDraft202012Feature.OneOfWithBaseSchema
             return this.As<Schema, T>();
         }
 
+
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -1091,12 +1094,12 @@ namespace OneOfDraft202012Feature.OneOfWithBaseSchema
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is OneOf0Entity entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -1199,6 +1202,8 @@ namespace OneOfDraft202012Feature.OneOfWithBaseSchema
             return this.As<OneOf0Entity, T>();
         }
 
+
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -1581,12 +1586,12 @@ namespace OneOfDraft202012Feature.OneOfWithBaseSchema
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is OneOf1Entity entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -1689,6 +1694,8 @@ namespace OneOfDraft202012Feature.OneOfWithBaseSchema
             return this.As<OneOf1Entity, T>();
         }
 
+
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {

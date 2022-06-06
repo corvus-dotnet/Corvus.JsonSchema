@@ -21,7 +21,7 @@ namespace RelativeJsonPointerDraft202012Feature.ValidationOfRelativeJSNPointersR
         [GlobalSetup]
         public Task GlobalSetup()
         {
-            return this.GlobalSetup("draft2020-12\\relative-json-pointer.json", "#/0/schema", "#/000/tests/007/data", false);
+            return this.GlobalSetup("draft2020-12\\optional/format/relative-json-pointer.json", "#/0/schema", "#/000/tests/007/data", true);
         }
         /// <summary>
         /// Validates using the Corvus types.

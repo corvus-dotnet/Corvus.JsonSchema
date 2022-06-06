@@ -13,6 +13,7 @@
 namespace AnyOfDraft202012Feature.AnyOf
 {
     using System;
+    using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Text;
     using System.Text.Json;
@@ -409,12 +410,12 @@ namespace AnyOfDraft202012Feature.AnyOf
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is Schema entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -517,6 +518,8 @@ namespace AnyOfDraft202012Feature.AnyOf
             return this.As<Schema, T>();
         }
 
+
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -1004,12 +1007,12 @@ namespace AnyOfDraft202012Feature.AnyOf
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is AnyOf1Entity entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -1112,6 +1115,8 @@ namespace AnyOfDraft202012Feature.AnyOf
             return this.As<AnyOf1Entity, T>();
         }
 
+
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {

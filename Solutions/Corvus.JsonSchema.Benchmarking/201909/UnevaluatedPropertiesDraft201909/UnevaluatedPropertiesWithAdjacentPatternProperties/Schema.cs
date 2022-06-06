@@ -266,12 +266,12 @@ namespace UnevaluatedPropertiesDraft201909Feature.UnevaluatedPropertiesWithAdjac
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is Schema entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -519,6 +519,24 @@ namespace UnevaluatedPropertiesDraft201909Feature.UnevaluatedPropertiesWithAdjac
             return this.As<Schema, T>();
         }
 
+    
+                /// <summary>
+        /// Determines if a property matches ^foo producing a <see cref="Corvus.Json.JsonString" />.
+        /// </summary>
+        public bool MatchesPatternJsonString(in Property property)
+        {
+            return PatternPropertyJsonString.IsMatch(property.Name);
+        }
+
+        /// <summary>
+        /// Get a property as the matching property type ^foo as a <see cref="Corvus.Json.JsonString" />.
+        /// </summary>
+        public Corvus.Json.JsonString AsPatternJsonString(in Property property)
+        {
+            return property.ValueAs<Corvus.Json.JsonString>();
+        }
+
+            
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {

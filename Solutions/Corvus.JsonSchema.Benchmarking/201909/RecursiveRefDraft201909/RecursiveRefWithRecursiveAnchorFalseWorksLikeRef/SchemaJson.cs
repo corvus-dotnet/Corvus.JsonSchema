@@ -248,12 +248,12 @@ namespace RecursiveRefDraft201909Feature.RecursiveRefWithRecursiveAnchorFalseWor
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is SchemaJson entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -350,6 +350,7 @@ namespace RecursiveRefDraft201909Feature.RecursiveRefWithRecursiveAnchorFalseWor
             return this.As<SchemaJson, T>();
         }
 
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {

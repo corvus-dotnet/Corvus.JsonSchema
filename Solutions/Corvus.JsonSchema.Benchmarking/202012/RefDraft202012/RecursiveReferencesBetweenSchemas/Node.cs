@@ -13,6 +13,7 @@
 namespace RefDraft202012Feature.RecursiveReferencesBetweenSchemas
 {
     using System;
+    using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Text;
     using System.Text.Json;
@@ -395,12 +396,12 @@ namespace RefDraft202012Feature.RecursiveReferencesBetweenSchemas
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is Node entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -648,6 +649,8 @@ namespace RefDraft202012Feature.RecursiveReferencesBetweenSchemas
             return this.As<Node, T>();
         }
 
+
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {

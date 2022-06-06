@@ -328,12 +328,12 @@ namespace RecursiveRefDraft201909Feature.RecursiveRefWithRecursiveAnchorFalseWor
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is MyobjectJson entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -581,6 +581,7 @@ namespace RecursiveRefDraft201909Feature.RecursiveRefWithRecursiveAnchorFalseWor
             return this.As<MyobjectJson, T>();
         }
 
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -989,12 +990,12 @@ namespace RecursiveRefDraft201909Feature.RecursiveRefWithRecursiveAnchorFalseWor
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is AnyOf1Value entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -1260,6 +1261,7 @@ namespace RecursiveRefDraft201909Feature.RecursiveRefWithRecursiveAnchorFalseWor
             return this.As<AnyOf1Value, T>();
         }
 
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {

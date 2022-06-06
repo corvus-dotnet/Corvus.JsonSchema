@@ -13,6 +13,7 @@
 namespace RefRemoteDraft202012Feature.RootRefInRemoteRef
 {
     using System;
+    using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Text;
     using System.Text.Json;
@@ -175,12 +176,12 @@ namespace RefRemoteDraft202012Feature.RootRefInRemoteRef
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is OrNull entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -277,6 +278,8 @@ namespace RefRemoteDraft202012Feature.RootRefInRemoteRef
             return this.As<OrNull, T>();
         }
 
+
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {

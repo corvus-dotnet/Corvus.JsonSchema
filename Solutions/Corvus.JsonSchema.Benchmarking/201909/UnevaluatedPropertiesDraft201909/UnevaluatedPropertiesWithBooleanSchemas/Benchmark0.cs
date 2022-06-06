@@ -21,7 +21,7 @@ namespace UnevaluatedPropertiesDraft201909Feature.UnevaluatedPropertiesWithBoole
         [GlobalSetup]
         public Task GlobalSetup()
         {
-            return this.GlobalSetup("draft2019-09\\unevaluatedProperties.json", "#/15/schema", "#/015/tests/000/data", true);
+            return this.GlobalSetup("draft2019-09\\unevaluatedProperties.json", "#/17/schema", "#/017/tests/000/data", true);
         }
         /// <summary>
         /// Validates using the Corvus types.

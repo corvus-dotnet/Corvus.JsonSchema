@@ -1051,6 +1051,72 @@ namespace Corvus.Json
         }
 
         /// <inheritdoc/>
+        public JsonNotAny Add<TItem1, TItem2>(TItem1 item1, TItem2 item2)
+            where TItem1 : struct, IJsonValue
+            where TItem2 : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array)
+            {
+                return new JsonNotAny(this.AsArray.Add(item1, item2));
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
+        public JsonNotAny Add<TItem1, TItem2, TItem3>(TItem1 item1, TItem2 item2, TItem3 item3)
+            where TItem1 : struct, IJsonValue
+            where TItem2 : struct, IJsonValue
+            where TItem3 : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array)
+            {
+                return new JsonNotAny(this.AsArray.Add(item1, item2, item3));
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
+        public JsonNotAny Add<TItem1, TItem2, TItem3, TItem4>(TItem1 item1, TItem2 item2, TItem3 item3, TItem4 item4)
+            where TItem1 : struct, IJsonValue
+            where TItem2 : struct, IJsonValue
+            where TItem3 : struct, IJsonValue
+            where TItem4 : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array)
+            {
+                return new JsonNotAny(this.AsArray.Add(item1, item2, item3, item4));
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
+        public JsonNotAny Add<TItem>(params TItem[] items)
+            where TItem : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array)
+            {
+                return new JsonNotAny(this.AsArray.Add(items));
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
+        public JsonNotAny AddRange<TItem>(IEnumerable<TItem> items)
+            where TItem : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array)
+            {
+                return new JsonNotAny(this.AsArray.AddRange(items));
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
         public JsonNotAny Insert<TItem>(int index, TItem item)
             where TItem : struct, IJsonValue
         {

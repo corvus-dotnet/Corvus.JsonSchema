@@ -405,12 +405,12 @@ namespace UnevaluatedPropertiesDraft201909Feature.UnevaluatedPropertiesWithNeste
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is Schema entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -658,6 +658,7 @@ namespace UnevaluatedPropertiesDraft201909Feature.UnevaluatedPropertiesWithNeste
             return this.As<Schema, T>();
         }
 
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -1151,12 +1152,12 @@ namespace UnevaluatedPropertiesDraft201909Feature.UnevaluatedPropertiesWithNeste
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is AllOf0Entity entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -1404,6 +1405,24 @@ namespace UnevaluatedPropertiesDraft201909Feature.UnevaluatedPropertiesWithNeste
             return this.As<AllOf0Entity, T>();
         }
 
+    
+                /// <summary>
+        /// Determines if a property matches ^bar producing a <see cref="Corvus.Json.JsonString" />.
+        /// </summary>
+        public bool MatchesPatternJsonString(in Property property)
+        {
+            return PatternPropertyJsonString.IsMatch(property.Name);
+        }
+
+        /// <summary>
+        /// Get a property as the matching property type ^bar as a <see cref="Corvus.Json.JsonString" />.
+        /// </summary>
+        public Corvus.Json.JsonString AsPatternJsonString(in Property property)
+        {
+            return property.ValueAs<Corvus.Json.JsonString>();
+        }
+
+            
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {

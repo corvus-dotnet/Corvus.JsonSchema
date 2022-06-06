@@ -397,12 +397,12 @@ namespace OneOfDraft201909Feature.OneOfComplexTypes
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is Schema entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -650,6 +650,7 @@ namespace OneOfDraft201909Feature.OneOfComplexTypes
             return this.As<Schema, T>();
         }
 
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -1152,12 +1153,12 @@ namespace OneOfDraft201909Feature.OneOfComplexTypes
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is OneOf0Entity entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -1405,6 +1406,7 @@ namespace OneOfDraft201909Feature.OneOfComplexTypes
             return this.As<OneOf0Entity, T>();
         }
 
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -1888,12 +1890,12 @@ namespace OneOfDraft201909Feature.OneOfComplexTypes
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is OneOf1Entity entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -2141,6 +2143,7 @@ namespace OneOfDraft201909Feature.OneOfComplexTypes
             return this.As<OneOf1Entity, T>();
         }
 
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {

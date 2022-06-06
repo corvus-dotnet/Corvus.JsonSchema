@@ -13,6 +13,7 @@
 namespace PatternPropertiesDraft202012Feature.MultipleSimultaneousPatternPropertiesAreValidated
 {
     using System;
+    using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Text;
     using System.Text.Json;
@@ -271,12 +272,12 @@ namespace PatternPropertiesDraft202012Feature.MultipleSimultaneousPatternPropert
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is Schema entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -524,6 +525,41 @@ namespace PatternPropertiesDraft202012Feature.MultipleSimultaneousPatternPropert
             return this.As<Schema, T>();
         }
 
+
+    
+                /// <summary>
+        /// Determines if a property matches a* producing a <see cref="Corvus.Json.JsonInteger" />.
+        /// </summary>
+        public bool MatchesPatternJsonInteger(in Property property)
+        {
+            return PatternPropertyJsonInteger.IsMatch(property.Name);
+        }
+
+        /// <summary>
+        /// Get a property as the matching property type a* as a <see cref="Corvus.Json.JsonInteger" />.
+        /// </summary>
+        public Corvus.Json.JsonInteger AsPatternJsonInteger(in Property property)
+        {
+            return property.ValueAs<Corvus.Json.JsonInteger>();
+        }
+
+                /// <summary>
+        /// Determines if a property matches aaa* producing a <see cref="PatternPropertiesDraft202012Feature.MultipleSimultaneousPatternPropertiesAreValidated.Schema.AaaEntity" />.
+        /// </summary>
+        public bool MatchesPatternAaaEntity(in Property property)
+        {
+            return PatternPropertyAaaEntity.IsMatch(property.Name);
+        }
+
+        /// <summary>
+        /// Get a property as the matching property type aaa* as a <see cref="PatternPropertiesDraft202012Feature.MultipleSimultaneousPatternPropertiesAreValidated.Schema.AaaEntity" />.
+        /// </summary>
+        public PatternPropertiesDraft202012Feature.MultipleSimultaneousPatternPropertiesAreValidated.Schema.AaaEntity AsPatternAaaEntity(in Property property)
+        {
+            return property.ValueAs<PatternPropertiesDraft202012Feature.MultipleSimultaneousPatternPropertiesAreValidated.Schema.AaaEntity>();
+        }
+
+            
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -993,12 +1029,12 @@ namespace PatternPropertiesDraft202012Feature.MultipleSimultaneousPatternPropert
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is AaaEntity entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -1101,6 +1137,8 @@ namespace PatternPropertiesDraft202012Feature.MultipleSimultaneousPatternPropert
             return this.As<AaaEntity, T>();
         }
 
+
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {

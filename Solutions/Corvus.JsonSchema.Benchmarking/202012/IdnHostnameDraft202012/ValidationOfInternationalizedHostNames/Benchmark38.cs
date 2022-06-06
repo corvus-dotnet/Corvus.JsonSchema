@@ -21,7 +21,7 @@ namespace IdnHostnameDraft202012Feature.ValidationOfInternationalizedHostNames
         [GlobalSetup]
         public Task GlobalSetup()
         {
-            return this.GlobalSetup("draft2020-12\\idn-hostname.json", "#/0/schema", "#/000/tests/038/data", true);
+            return this.GlobalSetup("draft2020-12\\optional/format/idn-hostname.json", "#/0/schema", "#/000/tests/038/data", false);
         }
         /// <summary>
         /// Validates using the Corvus types.

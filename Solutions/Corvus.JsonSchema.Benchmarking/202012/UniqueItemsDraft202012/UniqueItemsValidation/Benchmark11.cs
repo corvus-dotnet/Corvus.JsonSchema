@@ -21,7 +21,7 @@ namespace UniqueItemsDraft202012Feature.UniqueItemsValidation
         [GlobalSetup]
         public Task GlobalSetup()
         {
-            return this.GlobalSetup("draft2020-12\\uniqueItems.json", "#/0/schema", "#/000/tests/011/data", true);
+            return this.GlobalSetup("draft2020-12\\uniqueItems.json", "#/0/schema", "#/000/tests/011/data", false);
         }
         /// <summary>
         /// Validates using the Corvus types.

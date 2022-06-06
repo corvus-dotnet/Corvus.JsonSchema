@@ -21,7 +21,7 @@ namespace DateTimeDraft202012Feature.ValidationOfDateTimeStrings
         [GlobalSetup]
         public Task GlobalSetup()
         {
-            return this.GlobalSetup("draft2020-12\\date-time.json", "#/0/schema", "#/000/tests/008/data", false);
+            return this.GlobalSetup("draft2020-12\\optional/format/date-time.json", "#/0/schema", "#/000/tests/008/data", true);
         }
         /// <summary>
         /// Validates using the Corvus types.

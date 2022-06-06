@@ -21,7 +21,7 @@ namespace UnevaluatedPropertiesDraft201909Feature.InPlaceApplicatorSiblingsAnyOf
         [GlobalSetup]
         public Task GlobalSetup()
         {
-            return this.GlobalSetup("draft2019-09\\unevaluatedProperties.json", "#/26/schema", "#/026/tests/002/data", true);
+            return this.GlobalSetup("draft2019-09\\unevaluatedProperties.json", "#/28/schema", "#/028/tests/002/data", true);
         }
         /// <summary>
         /// Validates using the Corvus types.

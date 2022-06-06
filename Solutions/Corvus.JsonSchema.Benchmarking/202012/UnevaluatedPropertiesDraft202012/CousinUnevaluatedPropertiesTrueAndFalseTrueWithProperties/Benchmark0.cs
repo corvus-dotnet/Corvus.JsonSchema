@@ -21,7 +21,7 @@ namespace UnevaluatedPropertiesDraft202012Feature.CousinUnevaluatedPropertiesTru
         [GlobalSetup]
         public Task GlobalSetup()
         {
-            return this.GlobalSetup("draft2020-12\\unevaluatedProperties.json", "#/22/schema", "#/022/tests/000/data", false);
+            return this.GlobalSetup("draft2020-12\\unevaluatedProperties.json", "#/24/schema", "#/024/tests/000/data", false);
         }
         /// <summary>
         /// Validates using the Corvus types.

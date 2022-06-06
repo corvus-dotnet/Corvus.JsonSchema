@@ -21,7 +21,7 @@ namespace PropertyNamesDraft201909Feature.PropertyNamesWithBooleanSchemaTrue
         [GlobalSetup]
         public Task GlobalSetup()
         {
-            return this.GlobalSetup("draft2019-09\\propertyNames.json", "#/1/schema", "#/001/tests/000/data", true);
+            return this.GlobalSetup("draft2019-09\\propertyNames.json", "#/2/schema", "#/002/tests/000/data", true);
         }
         /// <summary>
         /// Validates using the Corvus types.

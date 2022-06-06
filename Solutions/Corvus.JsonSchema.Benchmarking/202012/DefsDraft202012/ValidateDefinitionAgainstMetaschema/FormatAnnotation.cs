@@ -13,6 +13,7 @@
 namespace DefsDraft202012Feature.ValidateDefinitionAgainstMetaschema
 {
     using System;
+    using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Text;
     using System.Text.Json;
@@ -426,12 +427,12 @@ namespace DefsDraft202012Feature.ValidateDefinitionAgainstMetaschema
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is FormatAnnotation entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -684,6 +685,8 @@ namespace DefsDraft202012Feature.ValidateDefinitionAgainstMetaschema
             return this.As<FormatAnnotation, T>();
         }
 
+
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {

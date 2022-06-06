@@ -21,7 +21,7 @@ namespace Ipv4Draft201909Feature.ValidationOfIPAddresses
         [GlobalSetup]
         public Task GlobalSetup()
         {
-            return this.GlobalSetup("draft2019-09\\ipv4.json", "#/0/schema", "#/000/tests/007/data", true);
+            return this.GlobalSetup("draft2019-09\\optional/format/ipv4.json", "#/0/schema", "#/000/tests/007/data", false);
         }
         /// <summary>
         /// Validates using the Corvus types.
