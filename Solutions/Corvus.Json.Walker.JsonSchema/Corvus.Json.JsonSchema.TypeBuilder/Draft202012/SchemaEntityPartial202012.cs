@@ -2265,7 +2265,7 @@ public partial class SchemaEntity202012
         /// <summary>
         /// Gets a value indicating whether this is an object value.
         /// </summary>
-        public bool IsObject => this.typeDeclaration.Schema.IsObjectType();
+        public bool IsObject => this.typeDeclaration.Schema.IsObjectType() || this.typeDeclaration.Properties.Length > 0;
 
         /// <summary>
         /// Gets a value indicating whether this is an array value.
