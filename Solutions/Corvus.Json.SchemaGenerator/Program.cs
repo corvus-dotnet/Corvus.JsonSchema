@@ -44,6 +44,7 @@
                     "If a --rootPath is specified, rebase the document as if it was rooted on the specified element."),
             };
 
+            rootCommand.Name = "generatejsonschematypes";
             rootCommand.Description = "Generate C# types from a JSON schema.";
 
             rootCommand.AddArgument(
@@ -138,9 +139,9 @@
                 }
 
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                Console.Error.WriteLine($"Unable to generate types.");
+                Console.Error.WriteLine(ex.Message);
                 return -1;
             }
 
