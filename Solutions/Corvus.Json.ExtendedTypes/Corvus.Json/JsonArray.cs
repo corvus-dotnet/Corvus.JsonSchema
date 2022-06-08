@@ -345,7 +345,7 @@ namespace Corvus.Json
         /// <returns>The new array created from the items.</returns>
         public static JsonArray From(JsonAny item1)
         {
-            return ImmutableList.Create(item1);
+            return new JsonArray(ImmutableList.Create(item1));
         }
 
         /// <summary>
@@ -356,7 +356,7 @@ namespace Corvus.Json
         /// <returns>The new array created from the items.</returns>
         public static JsonArray From(JsonAny item1, JsonAny item2)
         {
-            return ImmutableList.Create(item1, item2);
+            return new JsonArray(ImmutableList.Create(item1, item2));
         }
 
         /// <summary>
@@ -368,7 +368,7 @@ namespace Corvus.Json
         /// <returns>The new array created from the items.</returns>
         public static JsonArray From(JsonAny item1, JsonAny item2, JsonAny item3)
         {
-            return ImmutableList.Create(item1, item2, item3);
+            return new JsonArray(ImmutableList.Create(item1, item2, item3));
         }
 
         /// <summary>
@@ -381,7 +381,7 @@ namespace Corvus.Json
         /// <returns>The new array created from the items.</returns>
         public static JsonArray From(JsonAny item1, JsonAny item2, JsonAny item3, JsonAny item4)
         {
-            return ImmutableList.Create(item1, item2, item3, item4);
+            return new JsonArray(ImmutableList.Create(item1, item2, item3, item4));
         }
 
         /// <summary>
