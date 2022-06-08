@@ -745,8 +745,7 @@ namespace Corvus.Json
         {
             if (this.items is ImmutableList<JsonAny> items)
             {
-                ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
-                builder.AddRange(items);
+                var builder = items.ToBuilder();
                 foreach (JsonAny item in itemsArray)
                 {
                     builder.Add(item);
