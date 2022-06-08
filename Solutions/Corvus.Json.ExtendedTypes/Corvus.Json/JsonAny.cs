@@ -1103,8 +1103,8 @@ namespace Corvus.Json
         {
             if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
             {
-            return this.AsArray.Add(item1, item2);
-        }
+                return this.AsArray.Add(item1, item2);
+            }
 
             return this;
         }
@@ -1117,8 +1117,8 @@ namespace Corvus.Json
         {
             if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
             {
-            return this.AsArray.Add(item1, item2, item3);
-        }
+                return this.AsArray.Add(item1, item2, item3);
+            }
 
             return this;
         }
@@ -1132,8 +1132,8 @@ namespace Corvus.Json
         {
             if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
             {
-            return this.AsArray.Add(item1, item2, item3, item4);
-        }
+                return this.AsArray.Add(item1, item2, item3, item4);
+            }
 
             return this;
         }
@@ -1144,8 +1144,8 @@ namespace Corvus.Json
         {
             if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
             {
-            return this.AsArray.Add(items);
-        }
+                return this.AsArray.Add(items);
+            }
 
             return this;
         }
@@ -1156,8 +1156,8 @@ namespace Corvus.Json
         {
             if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
             {
-            return this.AsArray.AddRange(items);
-        }
+                return this.AsArray.AddRange(items);
+            }
 
             return this;
         }
