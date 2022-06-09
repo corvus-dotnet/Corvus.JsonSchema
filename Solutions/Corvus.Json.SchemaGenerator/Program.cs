@@ -62,7 +62,7 @@
             rootCommand.Name = "generatejsonschematypes";
             rootCommand.Description = "Generate C# types from a JSON schema.";
 
-           
+
             rootCommand.AddArgument(schemaFile);
 
 
@@ -98,6 +98,17 @@
                         _ => new JsonSchema.TypeBuilder.Draft202012.JsonSchemaBuilder(walker)
                     };
 
+                if (!new JsonUri(schemaFile).IsValid())
+                {
+                    // If this is, in fact, a local file path, not a uri, then convert to a fullpath and URI-style separators.
+                    if (!Path.IsPathFullyQualified(schemaFile))
+                    {
+                        schemaFile = Path.GetFullPath(schemaFile);
+                    }
+
+                    schemaFile = schemaFile.Replace('\\', '/');
+                }
+
                 JsonReference reference = new JsonReference(schemaFile).Apply(new JsonReference(rootPath));
                 string resolvedReference = await walker.TryRebaseDocumentToPropertyValue(reference, "$id").ConfigureAwait(false);
 
@@ -109,7 +120,7 @@
                 }
                 else
                 {
-                    outputPath = Path.GetDirectoryName(Path.GetFullPath(schemaFile))!;
+                    outputPath = Path.GetDirectoryName(schemaFile)!;
                 }
 
                 string mapFile = string.IsNullOrEmpty(outputMapFile) ? outputMapFile : Path.Combine(outputPath, outputMapFile);
