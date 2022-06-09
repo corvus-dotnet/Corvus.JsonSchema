@@ -13,6 +13,7 @@
 namespace RefDraft202012Feature.RefAppliesAlongsideSiblingKeywords
 {
     using System;
+    using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Text;
     using System.Text.Json;
@@ -336,12 +337,12 @@ namespace RefDraft202012Feature.RefAppliesAlongsideSiblingKeywords
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is Schema entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -589,6 +590,8 @@ namespace RefDraft202012Feature.RefAppliesAlongsideSiblingKeywords
             return this.As<Schema, T>();
         }
 
+
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -1035,12 +1038,12 @@ namespace RefDraft202012Feature.RefAppliesAlongsideSiblingKeywords
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is FooEntity entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -1155,6 +1158,72 @@ namespace RefDraft202012Feature.RefAppliesAlongsideSiblingKeywords
         }
 
         /// <inheritdoc/>
+        public FooEntity Add<TItem1, TItem2>(TItem1 item1, TItem2 item2)
+            where TItem1 : struct, IJsonValue
+            where TItem2 : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return this.AsArray.Add(item1, item2);
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
+        public FooEntity Add<TItem1, TItem2, TItem3>(TItem1 item1, TItem2 item2, TItem3 item3)
+            where TItem1 : struct, IJsonValue
+            where TItem2 : struct, IJsonValue
+            where TItem3 : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return this.AsArray.Add(item1, item2, item3);
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
+        public FooEntity Add<TItem1, TItem2, TItem3, TItem4>(TItem1 item1, TItem2 item2, TItem3 item3, TItem4 item4)
+            where TItem1 : struct, IJsonValue
+            where TItem2 : struct, IJsonValue
+            where TItem3 : struct, IJsonValue
+            where TItem4 : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return this.AsArray.Add(item1, item2, item3, item4);
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
+        public FooEntity Add<TItem>(params TItem[] items)
+            where TItem : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return this.AsArray.Add(items);
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
+        public FooEntity AddRange<TItem>(IEnumerable<TItem> items)
+            where TItem : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return this.AsArray.AddRange(items);
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
         public FooEntity Insert<TItem>(int index, TItem item)
             where TItem : struct, IJsonValue
         {
@@ -1220,6 +1289,8 @@ namespace RefDraft202012Feature.RefAppliesAlongsideSiblingKeywords
             return this.As<FooEntity, T>();
         }
 
+
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {

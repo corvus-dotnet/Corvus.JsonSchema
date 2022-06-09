@@ -589,12 +589,12 @@ namespace AllOfDraft201909Feature.AllOfWithBaseSchema
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is Schema entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -842,6 +842,7 @@ namespace AllOfDraft201909Feature.AllOfWithBaseSchema
             return this.As<Schema, T>();
         }
 
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -1385,12 +1386,12 @@ namespace AllOfDraft201909Feature.AllOfWithBaseSchema
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is AllOf0Entity entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -1638,6 +1639,7 @@ namespace AllOfDraft201909Feature.AllOfWithBaseSchema
             return this.As<AllOf0Entity, T>();
         }
 
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -2121,12 +2123,12 @@ namespace AllOfDraft201909Feature.AllOfWithBaseSchema
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is AllOf1Entity entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -2374,6 +2376,7 @@ namespace AllOfDraft201909Feature.AllOfWithBaseSchema
             return this.As<AllOf1Entity, T>();
         }
 
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {

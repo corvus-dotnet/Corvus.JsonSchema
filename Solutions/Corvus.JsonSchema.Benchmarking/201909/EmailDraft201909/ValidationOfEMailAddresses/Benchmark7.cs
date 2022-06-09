@@ -21,7 +21,7 @@ namespace EmailDraft201909Feature.ValidationOfEMailAddresses
         [GlobalSetup]
         public Task GlobalSetup()
         {
-            return this.GlobalSetup("draft2019-09\\email.json", "#/0/schema", "#/000/tests/007/data", true);
+            return this.GlobalSetup("draft2019-09\\optional/format/email.json", "#/0/schema", "#/000/tests/007/data", false);
         }
         /// <summary>
         /// Validates using the Corvus types.

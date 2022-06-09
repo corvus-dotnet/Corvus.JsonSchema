@@ -271,12 +271,12 @@ namespace PatternPropertiesDraft201909Feature.RegexesAreNotAnchoredByDefaultAndA
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is Schema entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -524,6 +524,40 @@ namespace PatternPropertiesDraft201909Feature.RegexesAreNotAnchoredByDefaultAndA
             return this.As<Schema, T>();
         }
 
+    
+                /// <summary>
+        /// Determines if a property matches [0-9]{2,} producing a <see cref="Corvus.Json.JsonBoolean" />.
+        /// </summary>
+        public bool MatchesPatternJsonBoolean(in Property property)
+        {
+            return PatternPropertyJsonBoolean.IsMatch(property.Name);
+        }
+
+        /// <summary>
+        /// Get a property as the matching property type [0-9]{2,} as a <see cref="Corvus.Json.JsonBoolean" />.
+        /// </summary>
+        public Corvus.Json.JsonBoolean AsPatternJsonBoolean(in Property property)
+        {
+            return property.ValueAs<Corvus.Json.JsonBoolean>();
+        }
+
+                /// <summary>
+        /// Determines if a property matches X_ producing a <see cref="Corvus.Json.JsonString" />.
+        /// </summary>
+        public bool MatchesPatternJsonString(in Property property)
+        {
+            return PatternPropertyJsonString.IsMatch(property.Name);
+        }
+
+        /// <summary>
+        /// Get a property as the matching property type X_ as a <see cref="Corvus.Json.JsonString" />.
+        /// </summary>
+        public Corvus.Json.JsonString AsPatternJsonString(in Property property)
+        {
+            return property.ValueAs<Corvus.Json.JsonString>();
+        }
+
+            
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {

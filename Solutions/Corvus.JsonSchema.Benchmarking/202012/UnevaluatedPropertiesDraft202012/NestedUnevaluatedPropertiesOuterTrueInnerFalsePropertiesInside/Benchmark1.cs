@@ -21,7 +21,7 @@ namespace UnevaluatedPropertiesDraft202012Feature.NestedUnevaluatedPropertiesOut
         [GlobalSetup]
         public Task GlobalSetup()
         {
-            return this.GlobalSetup("draft2020-12\\unevaluatedProperties.json", "#/21/schema", "#/021/tests/001/data", false);
+            return this.GlobalSetup("draft2020-12\\unevaluatedProperties.json", "#/23/schema", "#/023/tests/001/data", false);
         }
         /// <summary>
         /// Validates using the Corvus types.

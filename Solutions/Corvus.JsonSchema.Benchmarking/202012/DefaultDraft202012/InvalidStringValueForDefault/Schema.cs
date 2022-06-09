@@ -13,6 +13,7 @@
 namespace DefaultDraft202012Feature.InvalidStringValueForDefault
 {
     using System;
+    using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Text;
     using System.Text.Json;
@@ -337,12 +338,12 @@ namespace DefaultDraft202012Feature.InvalidStringValueForDefault
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is Schema entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -626,6 +627,8 @@ namespace DefaultDraft202012Feature.InvalidStringValueForDefault
             return this.As<Schema, T>();
         }
 
+
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -1069,12 +1072,12 @@ namespace DefaultDraft202012Feature.InvalidStringValueForDefault
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is BarValue entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -1177,6 +1180,8 @@ namespace DefaultDraft202012Feature.InvalidStringValueForDefault
             return this.As<BarValue, T>();
         }
 
+
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {

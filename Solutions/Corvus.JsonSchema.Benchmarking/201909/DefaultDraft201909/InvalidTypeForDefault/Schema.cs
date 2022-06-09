@@ -337,12 +337,12 @@ namespace DefaultDraft201909Feature.InvalidTypeForDefault
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is Schema entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -626,6 +626,7 @@ namespace DefaultDraft201909Feature.InvalidTypeForDefault
             return this.As<Schema, T>();
         }
 
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -1098,12 +1099,12 @@ namespace DefaultDraft201909Feature.InvalidTypeForDefault
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is FooValue entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -1206,6 +1207,7 @@ namespace DefaultDraft201909Feature.InvalidTypeForDefault
             return this.As<FooValue, T>();
         }
 
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {

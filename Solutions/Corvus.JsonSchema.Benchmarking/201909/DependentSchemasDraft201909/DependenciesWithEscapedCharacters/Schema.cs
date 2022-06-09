@@ -260,12 +260,12 @@ namespace DependentSchemasDraft201909Feature.DependenciesWithEscapedCharacters
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is Schema entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -513,6 +513,7 @@ namespace DependentSchemasDraft201909Feature.DependenciesWithEscapedCharacters
             return this.As<Schema, T>();
         }
 
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -900,12 +901,12 @@ namespace DependentSchemasDraft201909Feature.DependenciesWithEscapedCharacters
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is FooBarEntity entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -1153,6 +1154,7 @@ namespace DependentSchemasDraft201909Feature.DependenciesWithEscapedCharacters
             return this.As<FooBarEntity, T>();
         }
 
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -1602,12 +1604,12 @@ namespace DependentSchemasDraft201909Feature.DependenciesWithEscapedCharacters
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is FooBarEntity1 entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -1855,6 +1857,7 @@ namespace DependentSchemasDraft201909Feature.DependenciesWithEscapedCharacters
             return this.As<FooBarEntity1, T>();
         }
 
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {

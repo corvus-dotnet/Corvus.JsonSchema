@@ -677,6 +677,111 @@ namespace Steps
         }
 
         /// <summary>
+        /// Gets the <see cref="JsonAny"/> from the context with key <see cref="JsonValueSteps.SubjectUnderTest"/>
+        /// adds the given values to it, and stores it in the <see cref="ArrayValueResultkey"/>.
+        /// </summary>
+        /// <param name="value1">The first serialized value to add.</param>
+        /// <param name="value2">The second serialized value to add.</param>
+        [When(@"I add the 2 items (.*) and (.*) to the JsonAny")]
+        public void WhenIAddTheItemsToTheJsonAny(string value1, string value2)
+        {
+            JsonAny sut = this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest);
+            try
+            {
+                this.scenarioContext.Set(sut.Add(JsonAny.ParseUriValue(value1), JsonAny.ParseUriValue(value2)), ArrayValueResultkey);
+            }
+            catch (Exception ex)
+            {
+                this.scenarioContext.Set(ex, ArrayExceptionKey);
+            }
+        }
+
+        /// <summary>
+        /// Gets the <see cref="JsonAny"/> from the context with key <see cref="JsonValueSteps.SubjectUnderTest"/>
+        /// adds the given values to it, and stores it in the <see cref="ArrayValueResultkey"/>.
+        /// </summary>
+        /// <param name="value1">The first serialized value to add.</param>
+        /// <param name="value2">The second serialized value to add.</param>
+        /// <param name="value3">The third serialized value to add.</param>
+        [When(@"I add the 3 items (.*), (.*) and (.*) to the JsonAny")]
+        public void WhenIAddTheItemsToTheJsonAny(string value1, string value2, string value3)
+        {
+            JsonAny sut = this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest);
+            try
+            {
+                this.scenarioContext.Set(sut.Add(JsonAny.ParseUriValue(value1), JsonAny.ParseUriValue(value2), JsonAny.ParseUriValue(value3)), ArrayValueResultkey);
+            }
+            catch (Exception ex)
+            {
+                this.scenarioContext.Set(ex, ArrayExceptionKey);
+            }
+        }
+
+        /// <summary>
+        /// Gets the <see cref="JsonAny"/> from the context with key <see cref="JsonValueSteps.SubjectUnderTest"/>
+        /// adds the given values to it, and stores it in the <see cref="ArrayValueResultkey"/>.
+        /// </summary>
+        /// <param name="value1">The first serialized value to add.</param>
+        /// <param name="value2">The second serialized value to add.</param>
+        /// <param name="value3">The third serialized value to add.</param>
+        /// <param name="value4">The fourth serialized value to add.</param>
+        [When(@"I add the 4 items (.*), (.*), (.*) and (.*) to the JsonAny")]
+        public void WhenIAddTheItemsToTheJsonAny(string value1, string value2, string value3, string value4)
+        {
+            JsonAny sut = this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest);
+            try
+            {
+                this.scenarioContext.Set(sut.Add(JsonAny.ParseUriValue(value1), JsonAny.ParseUriValue(value2), JsonAny.ParseUriValue(value3), JsonAny.ParseUriValue(value4)), ArrayValueResultkey);
+            }
+            catch (Exception ex)
+            {
+                this.scenarioContext.Set(ex, ArrayExceptionKey);
+            }
+        }
+
+        /// <summary>
+        /// Gets the <see cref="JsonAny"/> from the context with key <see cref="JsonValueSteps.SubjectUnderTest"/>
+        /// adds the given values to it, and stores it in the <see cref="ArrayValueResultkey"/>.
+        /// </summary>
+        /// <param name="value1">The first serialized value to add.</param>
+        /// <param name="value2">The second serialized value to add.</param>
+        /// <param name="value3">The third serialized value to add.</param>
+        /// <param name="value4">The fourth serialized value to add.</param>
+        /// <param name="value5">The fifth serialized value to add.</param>
+        [When(@"I add the 5 items (.*), (.*), (.*), (.*) and (.*) to the JsonAny")]
+        public void WhenIAddTheItemsToTheJsonAny(string value1, string value2, string value3, string value4, string value5)
+        {
+            JsonAny sut = this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest);
+            try
+            {
+                this.scenarioContext.Set(sut.Add(JsonAny.ParseUriValue(value1), JsonAny.ParseUriValue(value2), JsonAny.ParseUriValue(value3), JsonAny.ParseUriValue(value4), JsonAny.ParseUriValue(value5)), ArrayValueResultkey);
+            }
+            catch (Exception ex)
+            {
+                this.scenarioContext.Set(ex, ArrayExceptionKey);
+            }
+        }
+
+        /// <summary>
+        /// Gets the <see cref="JsonAny"/> from the context with key <see cref="JsonValueSteps.SubjectUnderTest"/>
+        /// adds the given value to it, and stores it in the <see cref="ArrayValueResultkey"/>.
+        /// </summary>
+        /// <param name="values">The serialized value to add.</param>
+        [When(@"I add the range (.*) to the JsonAny")]
+        public void WhenIAddTheRangeToTheJsonAny(string values)
+        {
+            JsonAny sut = this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest);
+            try
+            {
+                this.scenarioContext.Set(sut.AddRange(JsonAny.ParseUriValue(values).AsArray.AsItemsList), ArrayValueResultkey);
+            }
+            catch (Exception ex)
+            {
+                this.scenarioContext.Set(ex, ArrayExceptionKey);
+            }
+        }
+
+        /// <summary>
         /// Gets the <see cref="JsonArray"/> from the context with key <see cref="JsonValueSteps.SubjectUnderTest"/>
         /// adds the given value to it, and stores it in the <see cref="ArrayValueResultkey"/>.
         /// </summary>
@@ -697,6 +802,111 @@ namespace Steps
 
         /// <summary>
         /// Gets the <see cref="JsonArray"/> from the context with key <see cref="JsonValueSteps.SubjectUnderTest"/>
+        /// adds the given values to it, and stores it in the <see cref="ArrayValueResultkey"/>.
+        /// </summary>
+        /// <param name="value1">The first serialized value to add.</param>
+        /// <param name="value2">The second serialized value to add.</param>
+        [When(@"I add the 2 items (.*) and (.*) to the JsonArray")]
+        public void WhenIAddTheItemsToTheJsonArray(string value1, string value2)
+        {
+            JsonArray sut = this.scenarioContext.Get<JsonArray>(JsonValueSteps.SubjectUnderTest);
+            try
+            {
+                this.scenarioContext.Set(sut.Add(JsonAny.ParseUriValue(value1), JsonAny.ParseUriValue(value2)), ArrayValueResultkey);
+            }
+            catch (Exception ex)
+            {
+                this.scenarioContext.Set(ex, ArrayExceptionKey);
+            }
+        }
+
+        /// <summary>
+        /// Gets the <see cref="JsonArray"/> from the context with key <see cref="JsonValueSteps.SubjectUnderTest"/>
+        /// adds the given values to it, and stores it in the <see cref="ArrayValueResultkey"/>.
+        /// </summary>
+        /// <param name="value1">The first serialized value to add.</param>
+        /// <param name="value2">The second serialized value to add.</param>
+        /// <param name="value3">The third serialized value to add.</param>
+        [When(@"I add the 3 items (.*), (.*) and (.*) to the JsonArray")]
+        public void WhenIAddTheItemsToTheJsonArray(string value1, string value2, string value3)
+        {
+            JsonArray sut = this.scenarioContext.Get<JsonArray>(JsonValueSteps.SubjectUnderTest);
+            try
+            {
+                this.scenarioContext.Set(sut.Add(JsonAny.ParseUriValue(value1), JsonAny.ParseUriValue(value2), JsonAny.ParseUriValue(value3)), ArrayValueResultkey);
+            }
+            catch (Exception ex)
+            {
+                this.scenarioContext.Set(ex, ArrayExceptionKey);
+            }
+        }
+
+        /// <summary>
+        /// Gets the <see cref="JsonArray"/> from the context with key <see cref="JsonValueSteps.SubjectUnderTest"/>
+        /// adds the given values to it, and stores it in the <see cref="ArrayValueResultkey"/>.
+        /// </summary>
+        /// <param name="value1">The first serialized value to add.</param>
+        /// <param name="value2">The second serialized value to add.</param>
+        /// <param name="value3">The third serialized value to add.</param>
+        /// <param name="value4">The fourth serialized value to add.</param>
+        [When(@"I add the 4 items (.*), (.*), (.*) and (.*) to the JsonArray")]
+        public void WhenIAddTheItemsToTheJsonArray(string value1, string value2, string value3, string value4)
+        {
+            JsonArray sut = this.scenarioContext.Get<JsonArray>(JsonValueSteps.SubjectUnderTest);
+            try
+            {
+                this.scenarioContext.Set(sut.Add(JsonAny.ParseUriValue(value1), JsonAny.ParseUriValue(value2), JsonAny.ParseUriValue(value3), JsonAny.ParseUriValue(value4)), ArrayValueResultkey);
+            }
+            catch (Exception ex)
+            {
+                this.scenarioContext.Set(ex, ArrayExceptionKey);
+            }
+        }
+
+        /// <summary>
+        /// Gets the <see cref="JsonArray"/> from the context with key <see cref="JsonValueSteps.SubjectUnderTest"/>
+        /// adds the given values to it, and stores it in the <see cref="ArrayValueResultkey"/>.
+        /// </summary>
+        /// <param name="value1">The first serialized value to add.</param>
+        /// <param name="value2">The second serialized value to add.</param>
+        /// <param name="value3">The third serialized value to add.</param>
+        /// <param name="value4">The fourth serialized value to add.</param>
+        /// <param name="value5">The fifth serialized value to add.</param>
+        [When(@"I add the 5 items (.*), (.*), (.*), (.*) and (.*) to the JsonArray")]
+        public void WhenIAddTheItemsToTheJsonArray(string value1, string value2, string value3, string value4, string value5)
+        {
+            JsonArray sut = this.scenarioContext.Get<JsonArray>(JsonValueSteps.SubjectUnderTest);
+            try
+            {
+                this.scenarioContext.Set(sut.Add(JsonAny.ParseUriValue(value1), JsonAny.ParseUriValue(value2), JsonAny.ParseUriValue(value3), JsonAny.ParseUriValue(value4), JsonAny.ParseUriValue(value5)), ArrayValueResultkey);
+            }
+            catch (Exception ex)
+            {
+                this.scenarioContext.Set(ex, ArrayExceptionKey);
+            }
+        }
+
+        /// <summary>
+        /// Gets the <see cref="JsonArray"/> from the context with key <see cref="JsonValueSteps.SubjectUnderTest"/>
+        /// adds the given value to it, and stores it in the <see cref="ArrayValueResultkey"/>.
+        /// </summary>
+        /// <param name="values">The serialized value to add.</param>
+        [When(@"I add the range (.*) to the JsonArray")]
+        public void WhenIAddTheRangeToTheJsonArray(string values)
+        {
+            JsonArray sut = this.scenarioContext.Get<JsonArray>(JsonValueSteps.SubjectUnderTest);
+            try
+            {
+                this.scenarioContext.Set(sut.AddRange(JsonAny.ParseUriValue(values).AsArray.AsItemsList), ArrayValueResultkey);
+            }
+            catch (Exception ex)
+            {
+                this.scenarioContext.Set(ex, ArrayExceptionKey);
+            }
+        }
+
+        /// <summary>
+        /// Gets the <see cref="JsonArray"/> from the context with key <see cref="JsonValueSteps.SubjectUnderTest"/>
         /// adds the given value to it, and stores it in the <see cref="ArrayValueResultkey"/>.
         /// </summary>
         /// <param name="value">The serialized value to add.</param>
@@ -707,6 +917,111 @@ namespace Steps
             try
             {
                 this.scenarioContext.Set(sut.Add(JsonAny.ParseUriValue(value)), ArrayValueResultkey);
+            }
+            catch (Exception ex)
+            {
+                this.scenarioContext.Set(ex, ArrayExceptionKey);
+            }
+        }
+
+        /// <summary>
+        /// Gets the <see cref="JsonNotAny"/> from the context with key <see cref="JsonValueSteps.SubjectUnderTest"/>
+        /// adds the given values to it, and stores it in the <see cref="ArrayValueResultkey"/>.
+        /// </summary>
+        /// <param name="value1">The first serialized value to add.</param>
+        /// <param name="value2">The second serialized value to add.</param>
+        [When(@"I add the 2 items (.*) and (.*) to the JsonNotAny")]
+        public void WhenIAddTheItemsToTheJsonNotAny(string value1, string value2)
+        {
+            JsonNotAny sut = this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest);
+            try
+            {
+                this.scenarioContext.Set(sut.Add(JsonAny.ParseUriValue(value1), JsonAny.ParseUriValue(value2)), ArrayValueResultkey);
+            }
+            catch (Exception ex)
+            {
+                this.scenarioContext.Set(ex, ArrayExceptionKey);
+            }
+        }
+
+        /// <summary>
+        /// Gets the <see cref="JsonNotAny"/> from the context with key <see cref="JsonValueSteps.SubjectUnderTest"/>
+        /// adds the given values to it, and stores it in the <see cref="ArrayValueResultkey"/>.
+        /// </summary>
+        /// <param name="value1">The first serialized value to add.</param>
+        /// <param name="value2">The second serialized value to add.</param>
+        /// <param name="value3">The third serialized value to add.</param>
+        [When(@"I add the 3 items (.*), (.*) and (.*) to the JsonNotAny")]
+        public void WhenIAddTheItemsToTheJsonNotAny(string value1, string value2, string value3)
+        {
+            JsonNotAny sut = this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest);
+            try
+            {
+                this.scenarioContext.Set(sut.Add(JsonAny.ParseUriValue(value1), JsonAny.ParseUriValue(value2), JsonAny.ParseUriValue(value3)), ArrayValueResultkey);
+            }
+            catch (Exception ex)
+            {
+                this.scenarioContext.Set(ex, ArrayExceptionKey);
+            }
+        }
+
+        /// <summary>
+        /// Gets the <see cref="JsonNotAny"/> from the context with key <see cref="JsonValueSteps.SubjectUnderTest"/>
+        /// adds the given values to it, and stores it in the <see cref="ArrayValueResultkey"/>.
+        /// </summary>
+        /// <param name="value1">The first serialized value to add.</param>
+        /// <param name="value2">The second serialized value to add.</param>
+        /// <param name="value3">The third serialized value to add.</param>
+        /// <param name="value4">The fourth serialized value to add.</param>
+        [When(@"I add the 4 items (.*), (.*), (.*) and (.*) to the JsonNotAny")]
+        public void WhenIAddTheItemsToTheJsonNotAny(string value1, string value2, string value3, string value4)
+        {
+            JsonNotAny sut = this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest);
+            try
+            {
+                this.scenarioContext.Set(sut.Add(JsonAny.ParseUriValue(value1), JsonAny.ParseUriValue(value2), JsonAny.ParseUriValue(value3), JsonAny.ParseUriValue(value4)), ArrayValueResultkey);
+            }
+            catch (Exception ex)
+            {
+                this.scenarioContext.Set(ex, ArrayExceptionKey);
+            }
+        }
+
+        /// <summary>
+        /// Gets the <see cref="JsonNotAny"/> from the context with key <see cref="JsonValueSteps.SubjectUnderTest"/>
+        /// adds the given values to it, and stores it in the <see cref="ArrayValueResultkey"/>.
+        /// </summary>
+        /// <param name="value1">The first serialized value to add.</param>
+        /// <param name="value2">The second serialized value to add.</param>
+        /// <param name="value3">The third serialized value to add.</param>
+        /// <param name="value4">The fourth serialized value to add.</param>
+        /// <param name="value5">The fifth serialized value to add.</param>
+        [When(@"I add the 5 items (.*), (.*), (.*), (.*) and (.*) to the JsonNotAny")]
+        public void WhenIAddTheItemsToTheJsonNotAny(string value1, string value2, string value3, string value4, string value5)
+        {
+            JsonNotAny sut = this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest);
+            try
+            {
+                this.scenarioContext.Set(sut.Add(JsonAny.ParseUriValue(value1), JsonAny.ParseUriValue(value2), JsonAny.ParseUriValue(value3), JsonAny.ParseUriValue(value4), JsonAny.ParseUriValue(value5)), ArrayValueResultkey);
+            }
+            catch (Exception ex)
+            {
+                this.scenarioContext.Set(ex, ArrayExceptionKey);
+            }
+        }
+
+        /// <summary>
+        /// Gets the <see cref="JsonNotAny"/> from the context with key <see cref="JsonValueSteps.SubjectUnderTest"/>
+        /// adds the given value to it, and stores it in the <see cref="ArrayValueResultkey"/>.
+        /// </summary>
+        /// <param name="values">The serialized value to add.</param>
+        [When(@"I add the range (.*) to the JsonNotAny")]
+        public void WhenIAddTheRangeToTheJsonNotAny(string values)
+        {
+            JsonNotAny sut = this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest);
+            try
+            {
+                this.scenarioContext.Set(sut.AddRange(JsonAny.ParseUriValue(values).AsArray.AsItemsList), ArrayValueResultkey);
             }
             catch (Exception ex)
             {

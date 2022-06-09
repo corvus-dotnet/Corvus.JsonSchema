@@ -21,7 +21,7 @@ namespace Ipv6Draft201909Feature.ValidationOfIPv6Addresses
         [GlobalSetup]
         public Task GlobalSetup()
         {
-            return this.GlobalSetup("draft2019-09\\ipv6.json", "#/0/schema", "#/000/tests/002/data", false);
+            return this.GlobalSetup("draft2019-09\\optional/format/ipv6.json", "#/0/schema", "#/000/tests/002/data", true);
         }
         /// <summary>
         /// Validates using the Corvus types.

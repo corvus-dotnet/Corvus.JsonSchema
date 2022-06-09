@@ -13,6 +13,7 @@
 namespace ItemsDraft202012Feature.ItemsAndSubitems
 {
     using System;
+    using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Text;
     using System.Text.Json;
@@ -330,12 +331,12 @@ namespace ItemsDraft202012Feature.ItemsAndSubitems
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is JsonNotAnyArray entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -467,6 +468,72 @@ namespace ItemsDraft202012Feature.ItemsAndSubitems
         }
 
         /// <inheritdoc/>
+        public JsonNotAnyArray Add<TItem1, TItem2>(TItem1 item1, TItem2 item2)
+            where TItem1 : struct, IJsonValue
+            where TItem2 : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return this.AsArray.Add(item1, item2);
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
+        public JsonNotAnyArray Add<TItem1, TItem2, TItem3>(TItem1 item1, TItem2 item2, TItem3 item3)
+            where TItem1 : struct, IJsonValue
+            where TItem2 : struct, IJsonValue
+            where TItem3 : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return this.AsArray.Add(item1, item2, item3);
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
+        public JsonNotAnyArray Add<TItem1, TItem2, TItem3, TItem4>(TItem1 item1, TItem2 item2, TItem3 item3, TItem4 item4)
+            where TItem1 : struct, IJsonValue
+            where TItem2 : struct, IJsonValue
+            where TItem3 : struct, IJsonValue
+            where TItem4 : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return this.AsArray.Add(item1, item2, item3, item4);
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
+        public JsonNotAnyArray Add<TItem>(params TItem[] items)
+            where TItem : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return this.AsArray.Add(items);
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
+        public JsonNotAnyArray AddRange<TItem>(IEnumerable<TItem> items)
+            where TItem : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return this.AsArray.AddRange(items);
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
         public JsonNotAnyArray Insert<TItem>(int index, TItem item)
             where TItem : struct, IJsonValue
         {
@@ -532,6 +599,8 @@ namespace ItemsDraft202012Feature.ItemsAndSubitems
             return this.As<JsonNotAnyArray, T>();
         }
 
+
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -1042,12 +1111,12 @@ namespace ItemsDraft202012Feature.ItemsAndSubitems
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is ItemJsonNotAnyArray entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -1179,6 +1248,72 @@ namespace ItemsDraft202012Feature.ItemsAndSubitems
         }
 
         /// <inheritdoc/>
+        public ItemJsonNotAnyArray Add<TItem1, TItem2>(TItem1 item1, TItem2 item2)
+            where TItem1 : struct, IJsonValue
+            where TItem2 : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return this.AsArray.Add(item1, item2);
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
+        public ItemJsonNotAnyArray Add<TItem1, TItem2, TItem3>(TItem1 item1, TItem2 item2, TItem3 item3)
+            where TItem1 : struct, IJsonValue
+            where TItem2 : struct, IJsonValue
+            where TItem3 : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return this.AsArray.Add(item1, item2, item3);
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
+        public ItemJsonNotAnyArray Add<TItem1, TItem2, TItem3, TItem4>(TItem1 item1, TItem2 item2, TItem3 item3, TItem4 item4)
+            where TItem1 : struct, IJsonValue
+            where TItem2 : struct, IJsonValue
+            where TItem3 : struct, IJsonValue
+            where TItem4 : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return this.AsArray.Add(item1, item2, item3, item4);
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
+        public ItemJsonNotAnyArray Add<TItem>(params TItem[] items)
+            where TItem : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return this.AsArray.Add(items);
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
+        public ItemJsonNotAnyArray AddRange<TItem>(IEnumerable<TItem> items)
+            where TItem : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return this.AsArray.AddRange(items);
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
         public ItemJsonNotAnyArray Insert<TItem>(int index, TItem item)
             where TItem : struct, IJsonValue
         {
@@ -1244,6 +1379,8 @@ namespace ItemsDraft202012Feature.ItemsAndSubitems
             return this.As<ItemJsonNotAnyArray, T>();
         }
 
+
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -1752,12 +1889,12 @@ namespace ItemsDraft202012Feature.ItemsAndSubitems
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is SubItemValue entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -2005,6 +2142,8 @@ namespace ItemsDraft202012Feature.ItemsAndSubitems
             return this.As<SubItemValue, T>();
         }
 
+
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {

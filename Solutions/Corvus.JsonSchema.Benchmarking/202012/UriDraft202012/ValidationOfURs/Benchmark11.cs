@@ -21,7 +21,7 @@ namespace UriDraft202012Feature.ValidationOfURs
         [GlobalSetup]
         public Task GlobalSetup()
         {
-            return this.GlobalSetup("draft2020-12\\uri.json", "#/0/schema", "#/000/tests/011/data", true);
+            return this.GlobalSetup("draft2020-12\\optional/format/uri.json", "#/0/schema", "#/000/tests/011/data", true);
         }
         /// <summary>
         /// Validates using the Corvus types.

@@ -13,6 +13,7 @@
 namespace PropertiesDraft202012Feature.PropertiesPatternPropertiesAdditionalPropertiesInteraction
 {
     using System;
+    using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Text;
     using System.Text.Json;
@@ -405,12 +406,12 @@ namespace PropertiesDraft202012Feature.PropertiesPatternPropertiesAdditionalProp
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is Schema entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -676,6 +677,25 @@ namespace PropertiesDraft202012Feature.PropertiesPatternPropertiesAdditionalProp
             return this.As<Schema, T>();
         }
 
+
+    
+                /// <summary>
+        /// Determines if a property matches f.o producing a <see cref="PropertiesDraft202012Feature.PropertiesPatternPropertiesAdditionalPropertiesInteraction.Schema.FOEntity" />.
+        /// </summary>
+        public bool MatchesPatternFOEntity(in Property property)
+        {
+            return PatternPropertyFOEntity.IsMatch(property.Name);
+        }
+
+        /// <summary>
+        /// Get a property as the matching property type f.o as a <see cref="PropertiesDraft202012Feature.PropertiesPatternPropertiesAdditionalPropertiesInteraction.Schema.FOEntity" />.
+        /// </summary>
+        public PropertiesDraft202012Feature.PropertiesPatternPropertiesAdditionalPropertiesInteraction.Schema.FOEntity AsPatternFOEntity(in Property property)
+        {
+            return property.ValueAs<PropertiesDraft202012Feature.PropertiesPatternPropertiesAdditionalPropertiesInteraction.Schema.FOEntity>();
+        }
+
+            
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -1169,12 +1189,12 @@ namespace PropertiesDraft202012Feature.PropertiesPatternPropertiesAdditionalProp
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is FOEntity entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -1289,6 +1309,72 @@ namespace PropertiesDraft202012Feature.PropertiesPatternPropertiesAdditionalProp
         }
 
         /// <inheritdoc/>
+        public FOEntity Add<TItem1, TItem2>(TItem1 item1, TItem2 item2)
+            where TItem1 : struct, IJsonValue
+            where TItem2 : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return this.AsArray.Add(item1, item2);
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
+        public FOEntity Add<TItem1, TItem2, TItem3>(TItem1 item1, TItem2 item2, TItem3 item3)
+            where TItem1 : struct, IJsonValue
+            where TItem2 : struct, IJsonValue
+            where TItem3 : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return this.AsArray.Add(item1, item2, item3);
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
+        public FOEntity Add<TItem1, TItem2, TItem3, TItem4>(TItem1 item1, TItem2 item2, TItem3 item3, TItem4 item4)
+            where TItem1 : struct, IJsonValue
+            where TItem2 : struct, IJsonValue
+            where TItem3 : struct, IJsonValue
+            where TItem4 : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return this.AsArray.Add(item1, item2, item3, item4);
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
+        public FOEntity Add<TItem>(params TItem[] items)
+            where TItem : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return this.AsArray.Add(items);
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
+        public FOEntity AddRange<TItem>(IEnumerable<TItem> items)
+            where TItem : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return this.AsArray.AddRange(items);
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
         public FOEntity Insert<TItem>(int index, TItem item)
             where TItem : struct, IJsonValue
         {
@@ -1354,6 +1440,8 @@ namespace PropertiesDraft202012Feature.PropertiesPatternPropertiesAdditionalProp
             return this.As<FOEntity, T>();
         }
 
+
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -1775,12 +1863,12 @@ namespace PropertiesDraft202012Feature.PropertiesPatternPropertiesAdditionalProp
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is FooArray entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -1895,6 +1983,72 @@ namespace PropertiesDraft202012Feature.PropertiesPatternPropertiesAdditionalProp
         }
 
         /// <inheritdoc/>
+        public FooArray Add<TItem1, TItem2>(TItem1 item1, TItem2 item2)
+            where TItem1 : struct, IJsonValue
+            where TItem2 : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return this.AsArray.Add(item1, item2);
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
+        public FooArray Add<TItem1, TItem2, TItem3>(TItem1 item1, TItem2 item2, TItem3 item3)
+            where TItem1 : struct, IJsonValue
+            where TItem2 : struct, IJsonValue
+            where TItem3 : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return this.AsArray.Add(item1, item2, item3);
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
+        public FooArray Add<TItem1, TItem2, TItem3, TItem4>(TItem1 item1, TItem2 item2, TItem3 item3, TItem4 item4)
+            where TItem1 : struct, IJsonValue
+            where TItem2 : struct, IJsonValue
+            where TItem3 : struct, IJsonValue
+            where TItem4 : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return this.AsArray.Add(item1, item2, item3, item4);
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
+        public FooArray Add<TItem>(params TItem[] items)
+            where TItem : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return this.AsArray.Add(items);
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
+        public FooArray AddRange<TItem>(IEnumerable<TItem> items)
+            where TItem : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return this.AsArray.AddRange(items);
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
         public FooArray Insert<TItem>(int index, TItem item)
             where TItem : struct, IJsonValue
         {
@@ -1960,6 +2114,8 @@ namespace PropertiesDraft202012Feature.PropertiesPatternPropertiesAdditionalProp
             return this.As<FooArray, T>();
         }
 
+
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {

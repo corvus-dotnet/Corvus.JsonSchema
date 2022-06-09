@@ -336,12 +336,12 @@ namespace RefRemoteDraft201909Feature.BaseURChangeChangeFolder
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is ScopeChangeDefs1Json entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -589,6 +589,7 @@ namespace RefRemoteDraft201909Feature.BaseURChangeChangeFolder
             return this.As<ScopeChangeDefs1Json, T>();
         }
 
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {

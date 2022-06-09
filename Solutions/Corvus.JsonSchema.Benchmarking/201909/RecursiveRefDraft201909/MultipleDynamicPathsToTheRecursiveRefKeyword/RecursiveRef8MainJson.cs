@@ -647,12 +647,12 @@ namespace RecursiveRefDraft201909Feature.MultipleDynamicPathsToTheRecursiveRefKe
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is RecursiveRef8MainJson entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -906,6 +906,7 @@ namespace RecursiveRefDraft201909Feature.MultipleDynamicPathsToTheRecursiveRefKe
             return this.As<RecursiveRef8MainJson, T>();
         }
 
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -1336,12 +1337,12 @@ namespace RecursiveRefDraft201909Feature.MultipleDynamicPathsToTheRecursiveRefKe
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is IfEntity entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -1589,6 +1590,7 @@ namespace RecursiveRefDraft201909Feature.MultipleDynamicPathsToTheRecursiveRefKe
             return this.As<IfEntity, T>();
         }
 
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -2000,12 +2002,12 @@ namespace RecursiveRefDraft201909Feature.MultipleDynamicPathsToTheRecursiveRefKe
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is PropertyNamesEntity entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -2108,6 +2110,7 @@ namespace RecursiveRefDraft201909Feature.MultipleDynamicPathsToTheRecursiveRefKe
             return this.As<PropertyNamesEntity, T>();
         }
 
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {

@@ -21,7 +21,7 @@ namespace HostnameDraft201909Feature.ValidationOfHostNames
         [GlobalSetup]
         public Task GlobalSetup()
         {
-            return this.GlobalSetup("draft2019-09\\hostname.json", "#/0/schema", "#/000/tests/008/data", false);
+            return this.GlobalSetup("draft2019-09\\optional/format/hostname.json", "#/0/schema", "#/000/tests/008/data", false);
         }
         /// <summary>
         /// Validates using the Corvus types.

@@ -13,6 +13,7 @@
 namespace PatternPropertiesDraft202012Feature.PatternPropertiesWithBooleanSchemas
 {
     using System;
+    using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Text;
     using System.Text.Json;
@@ -271,12 +272,12 @@ namespace PatternPropertiesDraft202012Feature.PatternPropertiesWithBooleanSchema
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is Schema entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -524,6 +525,41 @@ namespace PatternPropertiesDraft202012Feature.PatternPropertiesWithBooleanSchema
             return this.As<Schema, T>();
         }
 
+
+    
+                /// <summary>
+        /// Determines if a property matches f.* producing a <see cref="Corvus.Json.JsonAny" />.
+        /// </summary>
+        public bool MatchesPatternJsonAny(in Property property)
+        {
+            return PatternPropertyJsonAny.IsMatch(property.Name);
+        }
+
+        /// <summary>
+        /// Get a property as the matching property type f.* as a <see cref="Corvus.Json.JsonAny" />.
+        /// </summary>
+        public Corvus.Json.JsonAny AsPatternJsonAny(in Property property)
+        {
+            return property.ValueAs<Corvus.Json.JsonAny>();
+        }
+
+                /// <summary>
+        /// Determines if a property matches b.* producing a <see cref="Corvus.Json.JsonNotAny" />.
+        /// </summary>
+        public bool MatchesPatternJsonNotAny(in Property property)
+        {
+            return PatternPropertyJsonNotAny.IsMatch(property.Name);
+        }
+
+        /// <summary>
+        /// Get a property as the matching property type b.* as a <see cref="Corvus.Json.JsonNotAny" />.
+        /// </summary>
+        public Corvus.Json.JsonNotAny AsPatternJsonNotAny(in Property property)
+        {
+            return property.ValueAs<Corvus.Json.JsonNotAny>();
+        }
+
+            
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {

@@ -13,6 +13,7 @@
 namespace DefsDraft202012Feature.ValidateDefinitionAgainstMetaschema
 {
     using System;
+    using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Text;
     using System.Text.Json;
@@ -922,12 +923,12 @@ namespace DefsDraft202012Feature.ValidateDefinitionAgainstMetaschema
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is Core entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -1180,6 +1181,8 @@ namespace DefsDraft202012Feature.ValidateDefinitionAgainstMetaschema
             return this.As<Core, T>();
         }
 
+
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -1752,12 +1755,12 @@ namespace DefsDraft202012Feature.ValidateDefinitionAgainstMetaschema
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is AnchorStringValue entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -1860,6 +1863,8 @@ namespace DefsDraft202012Feature.ValidateDefinitionAgainstMetaschema
             return this.As<AnchorStringValue, T>();
         }
 
+
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -2295,12 +2300,12 @@ namespace DefsDraft202012Feature.ValidateDefinitionAgainstMetaschema
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is IdEntity entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -2403,6 +2408,8 @@ namespace DefsDraft202012Feature.ValidateDefinitionAgainstMetaschema
             return this.As<IdEntity, T>();
         }
 
+
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -2769,12 +2776,12 @@ namespace DefsDraft202012Feature.ValidateDefinitionAgainstMetaschema
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is VocabularyValue entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -3040,6 +3047,8 @@ namespace DefsDraft202012Feature.ValidateDefinitionAgainstMetaschema
             return this.As<VocabularyValue, T>();
         }
 
+
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -3463,12 +3472,12 @@ namespace DefsDraft202012Feature.ValidateDefinitionAgainstMetaschema
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is DefsValue entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -3734,6 +3743,8 @@ namespace DefsDraft202012Feature.ValidateDefinitionAgainstMetaschema
             return this.As<DefsValue, T>();
         }
 
+
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {

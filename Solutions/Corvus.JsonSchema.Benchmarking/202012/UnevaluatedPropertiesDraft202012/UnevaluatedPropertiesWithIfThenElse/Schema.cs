@@ -13,6 +13,7 @@
 namespace UnevaluatedPropertiesDraft202012Feature.UnevaluatedPropertiesWithIfThenElse
 {
     using System;
+    using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Text;
     using System.Text.Json;
@@ -441,12 +442,12 @@ namespace UnevaluatedPropertiesDraft202012Feature.UnevaluatedPropertiesWithIfThe
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is Schema entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -694,6 +695,8 @@ namespace UnevaluatedPropertiesDraft202012Feature.UnevaluatedPropertiesWithIfThe
             return this.As<Schema, T>();
         }
 
+
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -1286,12 +1289,12 @@ namespace UnevaluatedPropertiesDraft202012Feature.UnevaluatedPropertiesWithIfThe
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is ElseEntity entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -1539,6 +1542,8 @@ namespace UnevaluatedPropertiesDraft202012Feature.UnevaluatedPropertiesWithIfThe
             return this.As<ElseEntity, T>();
         }
 
+
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -2020,12 +2025,12 @@ namespace UnevaluatedPropertiesDraft202012Feature.UnevaluatedPropertiesWithIfThe
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is IfEntity entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -2273,6 +2278,8 @@ namespace UnevaluatedPropertiesDraft202012Feature.UnevaluatedPropertiesWithIfThe
             return this.As<IfEntity, T>();
         }
 
+
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -2731,12 +2738,12 @@ namespace UnevaluatedPropertiesDraft202012Feature.UnevaluatedPropertiesWithIfThe
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is FooEntity entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -2839,6 +2846,8 @@ namespace UnevaluatedPropertiesDraft202012Feature.UnevaluatedPropertiesWithIfThe
             return this.As<FooEntity, T>();
         }
 
+
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -3238,12 +3247,12 @@ namespace UnevaluatedPropertiesDraft202012Feature.UnevaluatedPropertiesWithIfThe
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is ThenEntity entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -3491,6 +3500,8 @@ namespace UnevaluatedPropertiesDraft202012Feature.UnevaluatedPropertiesWithIfThe
             return this.As<ThenEntity, T>();
         }
 
+
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {

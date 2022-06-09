@@ -19,7 +19,9 @@ namespace Corvus.Json
         /// <summary>
         /// An empty JsonArray.
         /// </summary>
-        public static readonly JsonArray Empty = new (ImmutableList<JsonAny>.Empty);
+#pragma warning disable SA1000 // Keywords should be spaced correctly
+        public static readonly JsonArray Empty = new(ImmutableList<JsonAny>.Empty);
+#pragma warning restore SA1000 // Keywords should be spaced correctly
 
         private readonly JsonElement jsonElement;
         private readonly ImmutableList<JsonAny>? items;
@@ -556,40 +558,225 @@ namespace Corvus.Json
         public JsonArray Add<TItem>(TItem item)
             where TItem : struct, IJsonValue
         {
-            return new JsonArray(this.AsItemsList.Add(item.AsAny));
+            return this.AsItemsListWith(item.AsAny);
+        }
+
+        /// <inheritdoc/>
+        public JsonArray Add<TItem1, TItem2>(TItem1 item1, TItem2 item2)
+            where TItem1 : struct, IJsonValue
+            where TItem2 : struct, IJsonValue
+        {
+            return this.AsItemsListWith(item1.AsAny, item2.AsAny);
+        }
+
+        /// <inheritdoc/>
+        public JsonArray Add<TItem1, TItem2, TItem3>(TItem1 item1, TItem2 item2, TItem3 item3)
+            where TItem1 : struct, IJsonValue
+            where TItem2 : struct, IJsonValue
+            where TItem3 : struct, IJsonValue
+        {
+            return this.AsItemsListWith(item1.AsAny, item2.AsAny, item3.AsAny);
+        }
+
+        /// <inheritdoc/>
+        public JsonArray Add<TItem1, TItem2, TItem3, TItem4>(TItem1 item1, TItem2 item2, TItem3 item3, TItem4 item4)
+            where TItem1 : struct, IJsonValue
+            where TItem2 : struct, IJsonValue
+            where TItem3 : struct, IJsonValue
+            where TItem4 : struct, IJsonValue
+        {
+            return this.AsItemsListWith(item1.AsAny, item2.AsAny, item3.AsAny, item4.AsAny);
+        }
+
+        /// <inheritdoc/>
+        public JsonArray Add<TItem>(params TItem[] items)
+            where TItem : struct, IJsonValue
+        {
+            return this.AsItemsListWith(items);
+        }
+
+        /// <inheritdoc/>
+        public JsonArray AddRange<TItem>(IEnumerable<TItem> items)
+            where TItem : struct, IJsonValue
+        {
+            return this.AsItemsListWith(items);
         }
 
         /// <inheritdoc/>
         public JsonArray Insert<TItem>(int index, TItem item)
             where TItem : struct, IJsonValue
         {
-            return new JsonArray(this.AsItemsList.Insert(index, item.AsAny));
+            return this.AsItemsList.Insert(index, item.AsAny);
         }
 
         /// <inheritdoc/>
         public JsonArray Replace<TItem>(TItem oldValue, TItem newValue)
             where TItem : struct, IJsonValue
         {
-            return new JsonArray(this.AsItemsList.Replace(oldValue.AsAny, newValue.AsAny));
+            return this.AsItemsList.Replace(oldValue.AsAny, newValue.AsAny);
         }
 
         /// <inheritdoc/>
         public JsonArray SetItem<TItem>(int index, TItem value)
             where TItem : struct, IJsonValue
         {
-            return new JsonArray(this.AsItemsList.SetItem(index, value.AsAny));
+            return this.AsItemsList.SetItem(index, value.AsAny);
         }
 
         /// <inheritdoc/>
         public JsonArray RemoveAt(int index)
         {
-            return new JsonArray(this.AsItemsList.RemoveAt(index));
+            return this.AsItemsList.RemoveAt(index);
         }
 
         /// <inheritdoc/>
         public JsonArray RemoveRange(int index, int count)
         {
-            return new JsonArray(this.AsItemsList.RemoveRange(index, count));
+            return this.AsItemsList.RemoveRange(index, count);
+        }
+
+        private ImmutableList<JsonAny> AsItemsListWith(JsonAny item)
+        {
+            if (this.items is ImmutableList<JsonAny> items)
+            {
+                return items.Add(item);
+            }
+
+            if (this.jsonElement.ValueKind == JsonValueKind.Array)
+            {
+                ImmutableList<JsonAny>.Builder builder = this.CreateListFromJsonElement();
+                builder.Add(item);
+                return builder.ToImmutable();
+            }
+
+            return ImmutableList<JsonAny>.Empty;
+        }
+
+        private ImmutableList<JsonAny> AsItemsListWith(in JsonAny item1, in JsonAny item2)
+        {
+            JsonAny[] itemsArray = ArrayPool<JsonAny>.Shared.Rent(2);
+            itemsArray[0] = item1;
+            itemsArray[1] = item2;
+
+            try
+            {
+                return this.AsItemsListWith(itemsArray.AsSpan()[..2]);
+            }
+            finally
+            {
+                ArrayPool<JsonAny>.Shared.Return(itemsArray);
+            }
+        }
+
+        private ImmutableList<JsonAny> AsItemsListWith(in JsonAny item1, in JsonAny item2, in JsonAny item3)
+        {
+            JsonAny[] itemsArray = ArrayPool<JsonAny>.Shared.Rent(3);
+            itemsArray[0] = item1;
+            itemsArray[1] = item2;
+            itemsArray[2] = item3;
+
+            try
+            {
+                return this.AsItemsListWith(itemsArray.AsSpan()[..3]);
+            }
+            finally
+            {
+                ArrayPool<JsonAny>.Shared.Return(itemsArray);
+            }
+        }
+
+        private ImmutableList<JsonAny> AsItemsListWith(in JsonAny item1, in JsonAny item2, in JsonAny item3, in JsonAny item4)
+        {
+            JsonAny[] itemsArray = ArrayPool<JsonAny>.Shared.Rent(4);
+            itemsArray[0] = item1;
+            itemsArray[1] = item2;
+            itemsArray[2] = item3;
+            itemsArray[3] = item4;
+
+            try
+            {
+                return this.AsItemsListWith(itemsArray.AsSpan()[..4]);
+            }
+            finally
+            {
+                ArrayPool<JsonAny>.Shared.Return(itemsArray);
+            }
+        }
+
+        private ImmutableList<JsonAny> AsItemsListWith<TItem>(TItem[] items)
+            where TItem : struct, IJsonValue
+        {
+            JsonAny[] itemsArray = ArrayPool<JsonAny>.Shared.Rent(items.Length);
+            for (int i = 0; i < items.Length; ++i)
+            {
+                itemsArray[i] = items[i].AsAny;
+            }
+
+            try
+            {
+                return this.AsItemsListWith(itemsArray.AsSpan()[..items.Length]);
+            }
+            finally
+            {
+                ArrayPool<JsonAny>.Shared.Return(itemsArray);
+            }
+        }
+
+        private ImmutableList<JsonAny> AsItemsListWith<TItem>(IEnumerable<TItem> itemsToAdd)
+            where TItem : struct, IJsonValue
+        {
+            if (this.items is ImmutableList<JsonAny> items)
+            {
+                return items
+                    .AddRange(itemsToAdd.Select(s => s.AsAny));
+            }
+
+            if (this.jsonElement.ValueKind == JsonValueKind.Array)
+            {
+                ImmutableList<JsonAny>.Builder builder = this.CreateListFromJsonElement();
+                builder.AddRange(itemsToAdd.Select(s => s.AsAny));
+                return builder.ToImmutable();
+            }
+
+            return ImmutableList<JsonAny>.Empty;
+        }
+
+        private ImmutableList<JsonAny> AsItemsListWith(ReadOnlySpan<JsonAny> itemsArray)
+        {
+            if (this.items is ImmutableList<JsonAny> items)
+            {
+                var builder = items.ToBuilder();
+                foreach (JsonAny item in itemsArray)
+                {
+                    builder.Add(item);
+                }
+
+                return builder.ToImmutable();
+            }
+
+            if (this.jsonElement.ValueKind == JsonValueKind.Array)
+            {
+                ImmutableList<JsonAny>.Builder builder = this.CreateListFromJsonElement();
+                foreach (JsonAny item in itemsArray)
+                {
+                    builder.Add(item);
+                }
+
+                return builder.ToImmutable();
+            }
+
+            return ImmutableList<JsonAny>.Empty;
+        }
+
+        private ImmutableList<JsonAny>.Builder CreateListFromJsonElement()
+        {
+            ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
+            foreach (JsonElement existingItem in this.jsonElement.EnumerateArray())
+            {
+                builder.Add(new JsonAny(existingItem));
+            }
+
+            return builder;
         }
 
         private int GetHashCodeCore()

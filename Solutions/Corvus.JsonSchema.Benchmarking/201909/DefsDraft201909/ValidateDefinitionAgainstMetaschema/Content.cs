@@ -550,12 +550,12 @@ namespace DefsDraft201909Feature.ValidateDefinitionAgainstMetaschema
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is Content entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -808,6 +808,7 @@ namespace DefsDraft201909Feature.ValidateDefinitionAgainstMetaschema
             return this.As<Content, T>();
         }
 
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {

@@ -466,7 +466,7 @@ namespace Corvus.Json.JsonSchema.Draft201909
                 return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -475,9 +475,14 @@ namespace Corvus.Json.JsonSchema.Draft201909
             JsonValueKind valueKind = this.ValueKind;
             return valueKind switch
             {
-            JsonValueKind.Object => this.AsObject.GetHashCode(), JsonValueKind.Array => this.AsArray().GetHashCode(), JsonValueKind.Number => this.AsNumber().GetHashCode(), JsonValueKind.String => this.AsString().GetHashCode(), JsonValueKind.True or JsonValueKind.False => this.AsBoolean.GetHashCode(), JsonValueKind.Null => JsonNull.NullHashCode, _ => JsonAny.UndefinedHashCode, }
-
-            ;
+                JsonValueKind.Object => this.AsObject.GetHashCode(),
+                JsonValueKind.Array => this.AsArray().GetHashCode(),
+                JsonValueKind.Number => this.AsNumber().GetHashCode(),
+                JsonValueKind.String => this.AsString().GetHashCode(),
+                JsonValueKind.True or JsonValueKind.False => this.AsBoolean.GetHashCode(),
+                JsonValueKind.Null => JsonNull.NullHashCode,
+                _ => JsonAny.UndefinedHashCode,
+            };
         }
 
         /// <summary>
@@ -543,9 +548,14 @@ namespace Corvus.Json.JsonSchema.Draft201909
 
             return valueKind switch
             {
-            JsonValueKind.Object => this.AsObject.Equals(other.AsObject()), JsonValueKind.Array => this.AsArray().Equals(other.AsArray()), JsonValueKind.Number => this.AsNumber().Equals(other.AsNumber()), JsonValueKind.String => this.AsString().Equals(other.AsString()), JsonValueKind.True or JsonValueKind.False => this.AsBoolean.Equals(other.AsBoolean()), JsonValueKind.Null => true, _ => false, }
-
-            ;
+                JsonValueKind.Object => this.AsObject.Equals(other.AsObject()),
+                JsonValueKind.Array => this.AsArray().Equals(other.AsArray()),
+                JsonValueKind.Number => this.AsNumber().Equals(other.AsNumber()),
+                JsonValueKind.String => this.AsString().Equals(other.AsString()),
+                JsonValueKind.True or JsonValueKind.False => this.AsBoolean.Equals(other.AsBoolean()),
+                JsonValueKind.Null => true,
+                _ => false,
+            };
         }
 
         /// <inheritdoc/>
@@ -559,9 +569,14 @@ namespace Corvus.Json.JsonSchema.Draft201909
 
             return valueKind switch
             {
-            JsonValueKind.Object => this.AsObject.Equals(other.AsObject), JsonValueKind.Array => this.AsArray().Equals(other.AsArray()), JsonValueKind.Number => this.AsNumber().Equals(other.AsNumber()), JsonValueKind.String => this.AsString().Equals(other.AsString()), JsonValueKind.True or JsonValueKind.False => this.AsBoolean.Equals(other.AsBoolean), JsonValueKind.Null => true, _ => false, }
-
-            ;
+                JsonValueKind.Object => this.AsObject.Equals(other.AsObject),
+                JsonValueKind.Array => this.AsArray().Equals(other.AsArray()),
+                JsonValueKind.Number => this.AsNumber().Equals(other.AsNumber()),
+                JsonValueKind.String => this.AsString().Equals(other.AsString()),
+                JsonValueKind.True or JsonValueKind.False => this.AsBoolean.Equals(other.AsBoolean),
+                JsonValueKind.Null => true,
+                _ => false,
+            };
         }
 
         /// <inheritdoc/>

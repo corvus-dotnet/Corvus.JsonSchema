@@ -21,7 +21,7 @@ namespace RegexDraft202012Feature.ValidationOfRegularExpressions
         [GlobalSetup]
         public Task GlobalSetup()
         {
-            return this.GlobalSetup("draft2020-12\\regex.json", "#/0/schema", "#/000/tests/001/data", false);
+            return this.GlobalSetup("draft2020-12\\optional/format/regex.json", "#/0/schema", "#/000/tests/001/data", true);
         }
         /// <summary>
         /// Validates using the Corvus types.

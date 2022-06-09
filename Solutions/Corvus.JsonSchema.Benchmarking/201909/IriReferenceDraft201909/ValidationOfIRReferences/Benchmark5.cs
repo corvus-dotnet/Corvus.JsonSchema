@@ -21,7 +21,7 @@ namespace IriReferenceDraft201909Feature.ValidationOfIRReferences
         [GlobalSetup]
         public Task GlobalSetup()
         {
-            return this.GlobalSetup("draft2019-09\\iri-reference.json", "#/0/schema", "#/000/tests/005/data", true);
+            return this.GlobalSetup("draft2019-09\\optional/format/iri-reference.json", "#/0/schema", "#/000/tests/005/data", true);
         }
         /// <summary>
         /// Validates using the Corvus types.

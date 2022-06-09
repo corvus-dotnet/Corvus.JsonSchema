@@ -13,6 +13,7 @@
 namespace UnevaluatedItemsDraft202012Feature.UnevaluatedItemsWithIfThenElse
 {
     using System;
+    using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Text;
     using System.Text.Json;
@@ -506,12 +507,12 @@ namespace UnevaluatedItemsDraft202012Feature.UnevaluatedItemsWithIfThenElse
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is Schema entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -626,6 +627,72 @@ namespace UnevaluatedItemsDraft202012Feature.UnevaluatedItemsWithIfThenElse
         }
 
         /// <inheritdoc/>
+        public Schema Add<TItem1, TItem2>(TItem1 item1, TItem2 item2)
+            where TItem1 : struct, IJsonValue
+            where TItem2 : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return this.AsArray.Add(item1, item2);
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
+        public Schema Add<TItem1, TItem2, TItem3>(TItem1 item1, TItem2 item2, TItem3 item3)
+            where TItem1 : struct, IJsonValue
+            where TItem2 : struct, IJsonValue
+            where TItem3 : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return this.AsArray.Add(item1, item2, item3);
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
+        public Schema Add<TItem1, TItem2, TItem3, TItem4>(TItem1 item1, TItem2 item2, TItem3 item3, TItem4 item4)
+            where TItem1 : struct, IJsonValue
+            where TItem2 : struct, IJsonValue
+            where TItem3 : struct, IJsonValue
+            where TItem4 : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return this.AsArray.Add(item1, item2, item3, item4);
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
+        public Schema Add<TItem>(params TItem[] items)
+            where TItem : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return this.AsArray.Add(items);
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
+        public Schema AddRange<TItem>(IEnumerable<TItem> items)
+            where TItem : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return this.AsArray.AddRange(items);
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
         public Schema Insert<TItem>(int index, TItem item)
             where TItem : struct, IJsonValue
         {
@@ -691,6 +758,8 @@ namespace UnevaluatedItemsDraft202012Feature.UnevaluatedItemsWithIfThenElse
             return this.As<Schema, T>();
         }
 
+
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -1285,12 +1354,12 @@ namespace UnevaluatedItemsDraft202012Feature.UnevaluatedItemsWithIfThenElse
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is ElseEntity entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -1405,6 +1474,72 @@ namespace UnevaluatedItemsDraft202012Feature.UnevaluatedItemsWithIfThenElse
         }
 
         /// <inheritdoc/>
+        public ElseEntity Add<TItem1, TItem2>(TItem1 item1, TItem2 item2)
+            where TItem1 : struct, IJsonValue
+            where TItem2 : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return this.AsArray.Add(item1, item2);
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
+        public ElseEntity Add<TItem1, TItem2, TItem3>(TItem1 item1, TItem2 item2, TItem3 item3)
+            where TItem1 : struct, IJsonValue
+            where TItem2 : struct, IJsonValue
+            where TItem3 : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return this.AsArray.Add(item1, item2, item3);
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
+        public ElseEntity Add<TItem1, TItem2, TItem3, TItem4>(TItem1 item1, TItem2 item2, TItem3 item3, TItem4 item4)
+            where TItem1 : struct, IJsonValue
+            where TItem2 : struct, IJsonValue
+            where TItem3 : struct, IJsonValue
+            where TItem4 : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return this.AsArray.Add(item1, item2, item3, item4);
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
+        public ElseEntity Add<TItem>(params TItem[] items)
+            where TItem : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return this.AsArray.Add(items);
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
+        public ElseEntity AddRange<TItem>(IEnumerable<TItem> items)
+            where TItem : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return this.AsArray.AddRange(items);
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
         public ElseEntity Insert<TItem>(int index, TItem item)
             where TItem : struct, IJsonValue
         {
@@ -1470,6 +1605,8 @@ namespace UnevaluatedItemsDraft202012Feature.UnevaluatedItemsWithIfThenElse
             return this.As<ElseEntity, T>();
         }
 
+
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -1915,12 +2052,12 @@ namespace UnevaluatedItemsDraft202012Feature.UnevaluatedItemsWithIfThenElse
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is PrefixItems3Entity entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -2023,6 +2160,8 @@ namespace UnevaluatedItemsDraft202012Feature.UnevaluatedItemsWithIfThenElse
             return this.As<PrefixItems3Entity, T>();
         }
 
+
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -2413,12 +2552,12 @@ namespace UnevaluatedItemsDraft202012Feature.UnevaluatedItemsWithIfThenElse
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is IfEntity entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -2533,6 +2672,72 @@ namespace UnevaluatedItemsDraft202012Feature.UnevaluatedItemsWithIfThenElse
         }
 
         /// <inheritdoc/>
+        public IfEntity Add<TItem1, TItem2>(TItem1 item1, TItem2 item2)
+            where TItem1 : struct, IJsonValue
+            where TItem2 : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return this.AsArray.Add(item1, item2);
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
+        public IfEntity Add<TItem1, TItem2, TItem3>(TItem1 item1, TItem2 item2, TItem3 item3)
+            where TItem1 : struct, IJsonValue
+            where TItem2 : struct, IJsonValue
+            where TItem3 : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return this.AsArray.Add(item1, item2, item3);
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
+        public IfEntity Add<TItem1, TItem2, TItem3, TItem4>(TItem1 item1, TItem2 item2, TItem3 item3, TItem4 item4)
+            where TItem1 : struct, IJsonValue
+            where TItem2 : struct, IJsonValue
+            where TItem3 : struct, IJsonValue
+            where TItem4 : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return this.AsArray.Add(item1, item2, item3, item4);
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
+        public IfEntity Add<TItem>(params TItem[] items)
+            where TItem : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return this.AsArray.Add(items);
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
+        public IfEntity AddRange<TItem>(IEnumerable<TItem> items)
+            where TItem : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return this.AsArray.AddRange(items);
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
         public IfEntity Insert<TItem>(int index, TItem item)
             where TItem : struct, IJsonValue
         {
@@ -2598,6 +2803,8 @@ namespace UnevaluatedItemsDraft202012Feature.UnevaluatedItemsWithIfThenElse
             return this.As<IfEntity, T>();
         }
 
+
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -3025,12 +3232,12 @@ namespace UnevaluatedItemsDraft202012Feature.UnevaluatedItemsWithIfThenElse
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is PrefixItems1Entity entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -3133,6 +3340,8 @@ namespace UnevaluatedItemsDraft202012Feature.UnevaluatedItemsWithIfThenElse
             return this.As<PrefixItems1Entity, T>();
         }
 
+
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -3513,12 +3722,12 @@ namespace UnevaluatedItemsDraft202012Feature.UnevaluatedItemsWithIfThenElse
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is PrefixItems0Entity entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -3621,6 +3830,8 @@ namespace UnevaluatedItemsDraft202012Feature.UnevaluatedItemsWithIfThenElse
             return this.As<PrefixItems0Entity, T>();
         }
 
+
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -4007,12 +4218,12 @@ namespace UnevaluatedItemsDraft202012Feature.UnevaluatedItemsWithIfThenElse
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is ThenEntity entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -4127,6 +4338,72 @@ namespace UnevaluatedItemsDraft202012Feature.UnevaluatedItemsWithIfThenElse
         }
 
         /// <inheritdoc/>
+        public ThenEntity Add<TItem1, TItem2>(TItem1 item1, TItem2 item2)
+            where TItem1 : struct, IJsonValue
+            where TItem2 : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return this.AsArray.Add(item1, item2);
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
+        public ThenEntity Add<TItem1, TItem2, TItem3>(TItem1 item1, TItem2 item2, TItem3 item3)
+            where TItem1 : struct, IJsonValue
+            where TItem2 : struct, IJsonValue
+            where TItem3 : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return this.AsArray.Add(item1, item2, item3);
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
+        public ThenEntity Add<TItem1, TItem2, TItem3, TItem4>(TItem1 item1, TItem2 item2, TItem3 item3, TItem4 item4)
+            where TItem1 : struct, IJsonValue
+            where TItem2 : struct, IJsonValue
+            where TItem3 : struct, IJsonValue
+            where TItem4 : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return this.AsArray.Add(item1, item2, item3, item4);
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
+        public ThenEntity Add<TItem>(params TItem[] items)
+            where TItem : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return this.AsArray.Add(items);
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
+        public ThenEntity AddRange<TItem>(IEnumerable<TItem> items)
+            where TItem : struct, IJsonValue
+        {
+            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return this.AsArray.AddRange(items);
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc/>
         public ThenEntity Insert<TItem>(int index, TItem item)
             where TItem : struct, IJsonValue
         {
@@ -4192,6 +4469,8 @@ namespace UnevaluatedItemsDraft202012Feature.UnevaluatedItemsWithIfThenElse
             return this.As<ThenEntity, T>();
         }
 
+
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -4628,12 +4907,12 @@ namespace UnevaluatedItemsDraft202012Feature.UnevaluatedItemsWithIfThenElse
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is PrefixItems2Entity entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -4736,6 +5015,8 @@ namespace UnevaluatedItemsDraft202012Feature.UnevaluatedItemsWithIfThenElse
             return this.As<PrefixItems2Entity, T>();
         }
 
+
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {

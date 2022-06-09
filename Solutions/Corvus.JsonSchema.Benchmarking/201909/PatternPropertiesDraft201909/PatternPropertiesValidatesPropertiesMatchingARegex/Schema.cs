@@ -266,12 +266,12 @@ namespace PatternPropertiesDraft201909Feature.PatternPropertiesValidatesProperti
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is Schema entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -519,6 +519,24 @@ namespace PatternPropertiesDraft201909Feature.PatternPropertiesValidatesProperti
             return this.As<Schema, T>();
         }
 
+    
+                /// <summary>
+        /// Determines if a property matches f.*o producing a <see cref="Corvus.Json.JsonInteger" />.
+        /// </summary>
+        public bool MatchesPatternJsonInteger(in Property property)
+        {
+            return PatternPropertyJsonInteger.IsMatch(property.Name);
+        }
+
+        /// <summary>
+        /// Get a property as the matching property type f.*o as a <see cref="Corvus.Json.JsonInteger" />.
+        /// </summary>
+        public Corvus.Json.JsonInteger AsPatternJsonInteger(in Property property)
+        {
+            return property.ValueAs<Corvus.Json.JsonInteger>();
+        }
+
+            
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {

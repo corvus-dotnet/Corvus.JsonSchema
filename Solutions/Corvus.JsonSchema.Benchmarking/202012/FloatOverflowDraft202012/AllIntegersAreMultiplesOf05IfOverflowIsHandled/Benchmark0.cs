@@ -21,7 +21,7 @@ namespace FloatOverflowDraft202012Feature.AllIntegersAreMultiplesOf05IfOverflowI
         [GlobalSetup]
         public Task GlobalSetup()
         {
-            return this.GlobalSetup("draft2020-12\\float-overflow.json", "#/0/schema", "#/000/tests/000/data", true);
+            return this.GlobalSetup("draft2020-12\\optional/float-overflow.json", "#/0/schema", "#/000/tests/000/data", true);
         }
         /// <summary>
         /// Validates using the Corvus types.

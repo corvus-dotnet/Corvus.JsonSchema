@@ -923,12 +923,12 @@ namespace RefDraft201909Feature.RemoteRefContainingRefsItself
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is Core entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -1217,6 +1217,7 @@ namespace RefDraft201909Feature.RemoteRefContainingRefsItself
             return this.As<Core, T>();
         }
 
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -1799,12 +1800,12 @@ namespace RefDraft201909Feature.RemoteRefContainingRefsItself
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is IdValue entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -1907,6 +1908,7 @@ namespace RefDraft201909Feature.RemoteRefContainingRefsItself
             return this.As<IdValue, T>();
         }
 
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -2382,12 +2384,12 @@ namespace RefDraft201909Feature.RemoteRefContainingRefsItself
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is AnchorValue entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -2490,6 +2492,7 @@ namespace RefDraft201909Feature.RemoteRefContainingRefsItself
             return this.As<AnchorValue, T>();
         }
 
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -2872,12 +2875,12 @@ namespace RefDraft201909Feature.RemoteRefContainingRefsItself
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is RecursiveAnchorValue entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -2979,6 +2982,7 @@ namespace RefDraft201909Feature.RemoteRefContainingRefsItself
             return this.As<RecursiveAnchorValue, T>();
         }
 
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -3347,12 +3351,12 @@ namespace RefDraft201909Feature.RemoteRefContainingRefsItself
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is VocabularyValue entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -3618,6 +3622,7 @@ namespace RefDraft201909Feature.RemoteRefContainingRefsItself
             return this.As<VocabularyValue, T>();
         }
 
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -4043,12 +4048,12 @@ namespace RefDraft201909Feature.RemoteRefContainingRefsItself
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is DefsValue entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -4314,6 +4319,7 @@ namespace RefDraft201909Feature.RemoteRefContainingRefsItself
             return this.As<DefsValue, T>();
         }
 
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {

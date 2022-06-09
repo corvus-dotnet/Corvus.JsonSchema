@@ -259,12 +259,12 @@ namespace RecursiveRefDraft201909Feature.MultipleDynamicPathsToTheRecursiveRefKe
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is RecursiveRef8InnerJson entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -530,6 +530,7 @@ namespace RecursiveRefDraft201909Feature.MultipleDynamicPathsToTheRecursiveRefKe
             return this.As<RecursiveRef8InnerJson, T>();
         }
 
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {

@@ -328,12 +328,12 @@ namespace IdDraft201909Feature.IdInsideAnEnumIsNotARealIdentifier
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is Schema entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -581,6 +581,7 @@ namespace IdDraft201909Feature.IdInsideAnEnumIsNotARealIdentifier
             return this.As<Schema, T>();
         }
 
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -989,12 +990,12 @@ namespace IdDraft201909Feature.IdInsideAnEnumIsNotARealIdentifier
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is IdInEnumEntity entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -1242,6 +1243,7 @@ namespace IdDraft201909Feature.IdInsideAnEnumIsNotARealIdentifier
             return this.As<IdInEnumEntity, T>();
         }
 
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -1335,7 +1337,7 @@ namespace IdDraft201909Feature.IdInsideAnEnumIsNotARealIdentifier
             /// <remarks>
             /// {Description}.
             /// </remarks>
-            public static readonly IdInEnumEntity Item0 = JsonAny.Parse("{\r\n                          \"$id\": \"https://localhost:1234/my_identifier.json\",\r\n                          \"type\": \"null\"\r\n                        }");
+            public static readonly IdInEnumEntity Item0 = JsonAny.Parse("{\r\n                          \"$id\": \"https://localhost:1234/id/my_identifier.json\",\r\n                          \"type\": \"null\"\r\n                        }");
             
         
 

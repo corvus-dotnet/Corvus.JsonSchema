@@ -13,6 +13,7 @@
 namespace UnevaluatedPropertiesDraft202012Feature.UnevaluatedPropertiesWithAnyOf
 {
     using System;
+    using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Text;
     using System.Text.Json;
@@ -543,12 +544,12 @@ namespace UnevaluatedPropertiesDraft202012Feature.UnevaluatedPropertiesWithAnyOf
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is Schema entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -796,6 +797,8 @@ namespace UnevaluatedPropertiesDraft202012Feature.UnevaluatedPropertiesWithAnyOf
             return this.As<Schema, T>();
         }
 
+
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -1417,12 +1420,12 @@ namespace UnevaluatedPropertiesDraft202012Feature.UnevaluatedPropertiesWithAnyOf
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is AnyOf0Entity entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -1670,6 +1673,8 @@ namespace UnevaluatedPropertiesDraft202012Feature.UnevaluatedPropertiesWithAnyOf
             return this.As<AnyOf0Entity, T>();
         }
 
+
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -2128,12 +2133,12 @@ namespace UnevaluatedPropertiesDraft202012Feature.UnevaluatedPropertiesWithAnyOf
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is BarEntity entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -2236,6 +2241,8 @@ namespace UnevaluatedPropertiesDraft202012Feature.UnevaluatedPropertiesWithAnyOf
             return this.As<BarEntity, T>();
         }
 
+
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -2635,12 +2642,12 @@ namespace UnevaluatedPropertiesDraft202012Feature.UnevaluatedPropertiesWithAnyOf
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is AnyOf1Entity entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -2888,6 +2895,8 @@ namespace UnevaluatedPropertiesDraft202012Feature.UnevaluatedPropertiesWithAnyOf
             return this.As<AnyOf1Entity, T>();
         }
 
+
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -3346,12 +3355,12 @@ namespace UnevaluatedPropertiesDraft202012Feature.UnevaluatedPropertiesWithAnyOf
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is BazEntity entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -3454,6 +3463,8 @@ namespace UnevaluatedPropertiesDraft202012Feature.UnevaluatedPropertiesWithAnyOf
             return this.As<BazEntity, T>();
         }
 
+
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -3853,12 +3864,12 @@ namespace UnevaluatedPropertiesDraft202012Feature.UnevaluatedPropertiesWithAnyOf
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is AnyOf2Entity entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -4106,6 +4117,8 @@ namespace UnevaluatedPropertiesDraft202012Feature.UnevaluatedPropertiesWithAnyOf
             return this.As<AnyOf2Entity, T>();
         }
 
+
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -4564,12 +4577,12 @@ namespace UnevaluatedPropertiesDraft202012Feature.UnevaluatedPropertiesWithAnyOf
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is QuuxEntity entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -4672,6 +4685,8 @@ namespace UnevaluatedPropertiesDraft202012Feature.UnevaluatedPropertiesWithAnyOf
             return this.As<QuuxEntity, T>();
         }
 
+
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {

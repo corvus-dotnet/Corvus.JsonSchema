@@ -21,7 +21,7 @@ namespace DurationDraft202012Feature.ValidationOfDurationStrings
         [GlobalSetup]
         public Task GlobalSetup()
         {
-            return this.GlobalSetup("draft2020-12\\duration.json", "#/0/schema", "#/000/tests/006/data", false);
+            return this.GlobalSetup("draft2020-12\\optional/format/duration.json", "#/0/schema", "#/000/tests/006/data", true);
         }
         /// <summary>
         /// Validates using the Corvus types.

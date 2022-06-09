@@ -13,6 +13,7 @@
 namespace RefRemoteDraft202012Feature.BaseURChangeChangeFolder
 {
     using System;
+    using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Text;
     using System.Text.Json;
@@ -336,12 +337,12 @@ namespace RefRemoteDraft202012Feature.BaseURChangeChangeFolder
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is ScopeChangeDefs1Json entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -589,6 +590,8 @@ namespace RefRemoteDraft202012Feature.BaseURChangeChangeFolder
             return this.As<ScopeChangeDefs1Json, T>();
         }
 
+
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {

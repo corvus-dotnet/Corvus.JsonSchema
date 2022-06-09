@@ -404,12 +404,12 @@ namespace UnevaluatedPropertiesDraft201909Feature.NestedUnevaluatedPropertiesOut
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is Schema entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -657,6 +657,7 @@ namespace UnevaluatedPropertiesDraft201909Feature.NestedUnevaluatedPropertiesOut
             return this.As<Schema, T>();
         }
 
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -1191,12 +1192,12 @@ namespace UnevaluatedPropertiesDraft201909Feature.NestedUnevaluatedPropertiesOut
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is AllOf0Entity entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -1444,6 +1445,7 @@ namespace UnevaluatedPropertiesDraft201909Feature.NestedUnevaluatedPropertiesOut
             return this.As<AllOf0Entity, T>();
         }
 
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {

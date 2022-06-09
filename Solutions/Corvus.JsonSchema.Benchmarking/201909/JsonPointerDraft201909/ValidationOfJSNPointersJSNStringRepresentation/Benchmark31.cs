@@ -21,7 +21,7 @@ namespace JsonPointerDraft201909Feature.ValidationOfJSNPointersJSNStringRepresen
         [GlobalSetup]
         public Task GlobalSetup()
         {
-            return this.GlobalSetup("draft2019-09\\json-pointer.json", "#/0/schema", "#/000/tests/031/data", false);
+            return this.GlobalSetup("draft2019-09\\optional/format/json-pointer.json", "#/0/schema", "#/000/tests/031/data", false);
         }
         /// <summary>
         /// Validates using the Corvus types.

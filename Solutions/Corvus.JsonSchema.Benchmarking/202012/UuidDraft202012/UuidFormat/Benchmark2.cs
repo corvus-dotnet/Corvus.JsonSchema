@@ -21,7 +21,7 @@ namespace UuidDraft202012Feature.UuidFormat
         [GlobalSetup]
         public Task GlobalSetup()
         {
-            return this.GlobalSetup("draft2020-12\\uuid.json", "#/0/schema", "#/000/tests/002/data", true);
+            return this.GlobalSetup("draft2020-12\\optional/format/uuid.json", "#/0/schema", "#/000/tests/002/data", true);
         }
         /// <summary>
         /// Validates using the Corvus types.

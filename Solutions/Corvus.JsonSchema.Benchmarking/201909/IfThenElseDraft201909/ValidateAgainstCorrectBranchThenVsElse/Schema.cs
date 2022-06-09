@@ -522,12 +522,12 @@ namespace IfThenElseDraft201909Feature.ValidateAgainstCorrectBranchThenVsElse
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is Schema entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -630,6 +630,7 @@ namespace IfThenElseDraft201909Feature.ValidateAgainstCorrectBranchThenVsElse
             return this.As<Schema, T>();
         }
 
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -1126,12 +1127,12 @@ namespace IfThenElseDraft201909Feature.ValidateAgainstCorrectBranchThenVsElse
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is ElseEntity entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -1234,6 +1235,7 @@ namespace IfThenElseDraft201909Feature.ValidateAgainstCorrectBranchThenVsElse
             return this.As<ElseEntity, T>();
         }
 
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -1648,12 +1650,12 @@ namespace IfThenElseDraft201909Feature.ValidateAgainstCorrectBranchThenVsElse
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is IfEntity entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -1756,6 +1758,7 @@ namespace IfThenElseDraft201909Feature.ValidateAgainstCorrectBranchThenVsElse
             return this.As<IfEntity, T>();
         }
 
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -2170,12 +2173,12 @@ namespace IfThenElseDraft201909Feature.ValidateAgainstCorrectBranchThenVsElse
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            if (obj is ThenEntity entity)
+            if (obj is IJsonValue jv)
             {
-                return this.Equals(entity);
+                return this.Equals(jv.AsAny);
             }
 
-            return false;
+            return obj is null && this.IsNull();
         }
 
         /// <inheritdoc/>
@@ -2278,6 +2281,7 @@ namespace IfThenElseDraft201909Feature.ValidateAgainstCorrectBranchThenVsElse
             return this.As<ThenEntity, T>();
         }
 
+    
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
         {
