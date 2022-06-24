@@ -1045,7 +1045,7 @@ and the output looks like this:
 Oldroyd, Michael: 14 July 1944
 occupation: Farrier
 Additional properties:
-occupation: Farrier
+occupation: "Farrier"
 selfEmployed: false
 salary: 26000
 michaelOldroyd is valid.
