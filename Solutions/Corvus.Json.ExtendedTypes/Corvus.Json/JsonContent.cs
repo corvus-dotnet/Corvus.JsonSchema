@@ -280,7 +280,7 @@ namespace Corvus.Json
         /// <inheritdoc/>
         public override string ToString()
         {
-            return this.GetString();
+            return this.Serialize();
         }
 
         /// <summary>

@@ -5,7 +5,7 @@
 Scenario Outline: Equals for json element backed value as a string
 	Given the JsonElement backed JsonString <jsonValue>
 	When I compare it to the string <value>
-	Then the result should be <result>
+	Then the result should be exactly <result>
 
 	Examples:
 		| jsonValue | value     | result |
@@ -17,7 +17,7 @@ Scenario Outline: Equals for json element backed value as a string
 Scenario Outline: Equals for dotnet backed value as a string
 	Given the dotnet backed JsonString <jsonValue>
 	When I compare it to the string <value>
-	Then the result should be <result>
+	Then the result should be exactly <result>
 
 	Examples:
 		| jsonValue | value     | result |
@@ -27,7 +27,7 @@ Scenario Outline: Equals for dotnet backed value as a string
 Scenario Outline: Equals for string json element backed value as an IJsonValue
 	Given the JsonElement backed JsonString <jsonValue>
 	When I compare the string to the IJsonValue <value>
-	Then the result should be <result>
+	Then the result should be exactly <result>
 
 	Examples:
 		| jsonValue | value                          | result |
@@ -53,7 +53,7 @@ Scenario Outline: Equals for string json element backed value as an IJsonValue
 Scenario Outline: Equals for string dotnet backed value as an IJsonValue
 	Given the dotnet backed JsonString <jsonValue>
 	When I compare the string to the IJsonValue <value>
-	Then the result should be <result>
+	Then the result should be exactly <result>
 
 	Examples:
 		| jsonValue | value                          | result |
@@ -79,7 +79,7 @@ Scenario Outline: Equals for string dotnet backed value as an IJsonValue
 Scenario Outline: Equals for string json element backed value as an object
 	Given the JsonElement backed JsonString <jsonValue>
 	When I compare the string to the object <value>
-	Then the result should be <result>
+	Then the result should be exactly <result>
 
 	Examples:
 		| jsonValue | value                          | result |
@@ -107,7 +107,7 @@ Scenario Outline: Equals for string json element backed value as an object
 Scenario Outline: Equals for string dotnet backed value as an object
 	Given the dotnet backed JsonString <jsonValue>
 	When I compare the string to the object <value>
-	Then the result should be <result>
+	Then the result should be exactly <result>
 
 	Examples:
 		| jsonValue | value                          | result |

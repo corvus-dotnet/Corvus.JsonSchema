@@ -5,7 +5,7 @@
 Scenario Outline: Equals for json element backed value as a boolean
 	Given the JsonElement backed JsonBoolean <jsonValue>
 	When I compare it to the boolean <value>
-	Then the result should be <result>
+	Then the result should be exactly <result>
 
 	Examples:
 		| jsonValue | value | result |
@@ -20,7 +20,7 @@ Scenario Outline: Equals for json element backed value as a boolean
 Scenario Outline: Equals for dotnet backed value as a boolean
 	Given the dotnet backed JsonBoolean <jsonValue>
 	When I compare it to the boolean <value>
-	Then the result should be <result>
+	Then the result should be exactly <result>
 
 	Examples:
 		| jsonValue | value | result |
@@ -32,7 +32,7 @@ Scenario Outline: Equals for dotnet backed value as a boolean
 Scenario Outline: Equals for boolean json element backed value as an IJsonValue
 	Given the JsonElement backed JsonBoolean <jsonValue>
 	When I compare the boolean to the IJsonValue <value>
-	Then the result should be <result>
+	Then the result should be exactly <result>
 
 	Examples:
 		| jsonValue | value                          | result |
@@ -59,7 +59,7 @@ Scenario Outline: Equals for boolean json element backed value as an IJsonValue
 Scenario Outline: Equals for boolean dotnet backed value as an IJsonValue
 	Given the dotnet backed JsonBoolean <jsonValue>
 	When I compare the boolean to the IJsonValue <value>
-	Then the result should be <result>
+	Then the result should be exactly <result>
 
 	Examples:
 		| jsonValue | value                          | result |
@@ -86,7 +86,7 @@ Scenario Outline: Equals for boolean dotnet backed value as an IJsonValue
 Scenario Outline: Equals for boolean json element backed value as an object
 	Given the JsonElement backed JsonBoolean <jsonValue>
 	When I compare the boolean to the object <value>
-	Then the result should be <result>
+	Then the result should be exactly <result>
 
 	Examples:
 		| jsonValue | value                          | result |
@@ -115,7 +115,7 @@ Scenario Outline: Equals for boolean json element backed value as an object
 Scenario Outline: Equals for boolean dotnet backed value as an object
 	Given the dotnet backed JsonBoolean <jsonValue>
 	When I compare the boolean to the object <value>
-	Then the result should be <result>
+	Then the result should be exactly <result>
 
 	Examples:
 		| jsonValue | value                          | result |

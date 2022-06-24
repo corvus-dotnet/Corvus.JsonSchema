@@ -5,7 +5,7 @@
 Scenario Outline: Equals for json element backed value as a email
 	Given the JsonElement backed JsonEmail <jsonValue>
 	When I compare it to the email <value>
-	Then the result should be <result>
+	Then the result should be exactly <result>
 
 	Examples:
 		| jsonValue          | value              | result |
@@ -18,7 +18,7 @@ Scenario Outline: Equals for json element backed value as a email
 Scenario Outline: Equals for dotnet backed value as a email
 	Given the dotnet backed JsonEmail <jsonValue>
 	When I compare it to the email <value>
-	Then the result should be <result>
+	Then the result should be exactly <result>
 
 	Examples:
 		| jsonValue          | value              | result |
@@ -29,7 +29,7 @@ Scenario Outline: Equals for dotnet backed value as a email
 Scenario Outline: Equals for email json element backed value as an IJsonValue
 	Given the JsonElement backed JsonEmail <jsonValue>
 	When I compare the email to the IJsonValue <value>
-	Then the result should be <result>
+	Then the result should be exactly <result>
 
 	Examples:
 		| jsonValue          | value                          | result |
@@ -56,7 +56,7 @@ Scenario Outline: Equals for email json element backed value as an IJsonValue
 Scenario Outline: Equals for email dotnet backed value as an IJsonValue
 	Given the dotnet backed JsonEmail <jsonValue>
 	When I compare the email to the IJsonValue <value>
-	Then the result should be <result>
+	Then the result should be exactly <result>
 
 	Examples:
 		| jsonValue          | value                          | result |
@@ -83,7 +83,7 @@ Scenario Outline: Equals for email dotnet backed value as an IJsonValue
 Scenario Outline: Equals for email json element backed value as an object
 	Given the JsonElement backed JsonEmail <jsonValue>
 	When I compare the email to the object <value>
-	Then the result should be <result>
+	Then the result should be exactly <result>
 
 	Examples:
 		| jsonValue          | value                          | result |
@@ -111,7 +111,7 @@ Scenario Outline: Equals for email json element backed value as an object
 Scenario Outline: Equals for email dotnet backed value as an object
 	Given the dotnet backed JsonEmail <jsonValue>
 	When I compare the email to the object <value>
-	Then the result should be <result>
+	Then the result should be exactly <result>
 
 	Examples:
 		| jsonValue          | value                          | result |

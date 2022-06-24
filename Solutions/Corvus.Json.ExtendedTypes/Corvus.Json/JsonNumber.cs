@@ -258,14 +258,7 @@ namespace Corvus.Json
         /// <inheritdoc/>
         public override string ToString()
         {
-            JsonValueKind valueKind = this.ValueKind;
-
-            return valueKind switch
-            {
-                JsonValueKind.Number => this.GetDouble().ToString(),
-                JsonValueKind.Null => "null",
-                _ => string.Empty,
-            };
+            return this.Serialize();
         }
 
         /// <summary>

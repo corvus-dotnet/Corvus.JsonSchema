@@ -10,6 +10,7 @@ namespace Corvus.Json
     using System.Collections.Generic;
     using System.Reflection;
     using System.Reflection.Emit;
+    using System.Text;
     using System.Text.Json;
     using Corvus.Extensions;
 
@@ -18,10 +19,50 @@ namespace Corvus.Json
     /// </summary>
     public static class JsonValueExtensions
     {
+        private const int MaxStackChars = 1024;
         private static readonly ConcurrentDictionary<ConverterType, object> FactoryCache = new ();
 
         private delegate TTarget JsonValueConverter<TSource, TTarget>(TSource source)
             where TTarget : struct, IJsonValue;
+
+        /// <summary>
+        /// Serialize the entity to a string.
+        /// </summary>
+        /// <typeparam name="TValue">The type of <see cref="IJsonValue"/>.</typeparam>
+        /// <param name="value">The value to serialize.</param>
+        /// <returns>A string representation fo the value.</returns>
+        public static string Serialize<TValue>(this TValue value)
+            where TValue : struct, IJsonValue
+        {
+            var abw = new ArrayBufferWriter<byte>();
+            using var writer = new Utf8JsonWriter(abw);
+            value.WriteTo(writer);
+            writer.Flush();
+
+            int length = Encoding.UTF8.GetMaxCharCount(abw.WrittenCount);
+#pragma warning disable SA1011 // Closing square brackets should be spaced correctly
+            char[]? pooledChars = null;
+#pragma warning restore SA1011 // Closing square brackets should be spaced correctly
+
+            Span<char> chars = length <= JsonConstants.StackallocThreshold ?
+                stackalloc char[length] :
+                (pooledChars = ArrayPool<char>.Shared.Rent(length));
+
+            int count = Encoding.UTF8.GetChars(abw.WrittenSpan, chars);
+
+            Span<char> writtenChars = chars[..count];
+#pragma warning disable SA1000 // Keywords should be spaced correctly
+            string result = new(writtenChars);
+#pragma warning restore SA1000 // Keywords should be spaced correctly
+
+            if (pooledChars != null)
+            {
+                writtenChars.Clear();
+                ArrayPool<char>.Shared.Return(pooledChars);
+            }
+
+            return result;
+        }
 
         /// <summary>
         /// Gets a value determining whether the value is valid.
