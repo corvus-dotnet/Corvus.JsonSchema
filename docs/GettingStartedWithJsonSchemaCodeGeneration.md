@@ -1,5 +1,17 @@
 TL;DR - this is a getting started Hands-On-Lab that walks you through our new JSON Schema code generation library and tools for C#.
 
+## Goals
+
+- Understand how to generate C# code from JSON schema, supporting the full capabilities of JSON Schema, using the `Corvus.Json.JsonSchema.TypeGeneratorTool`
+- Understand how to serialize and deserialize JSON documents using the generated code
+- Understand how to validate JSON documents against schema using the generated code
+- Understand how to navigate a JSON document using the generated code
+- Understand how to explore an unknown JSON document (or undocumented extensions) using the `Corvus.Json.ExtendedTypes`
+- Understand how to create new JSON documents using the generated code and `Corvus.Json.ExtendedTypes`.
+- Understand how to transform and compose JSON from various sources, without unncessary allocations or copying.
+
+## Context
+
 In my [previous post](https://endjin.com/blog/2021/05/csharp-serialization-with-system-text-json-schema), I introduced the concept behind our JSON object model extensions, built over [System.Text.Json](https://docs.microsoft.com/en-us/dotnet/api/system.text.json?view=net-6.0).
 
 We also looked at how a code generation tool could take JSON Schema and emit a full-fidelity dotnet type model for that schema, including well-optimised schema validation, with great allocation and compute performance for common scenarios where traditional JSON serialization would be the norm.
@@ -9,6 +21,20 @@ Finally, we looked at how this model supports interoperability between types gen
 I'm pleased to say that we've now published our initial preview release of this tooling over on github/nuget. This is the [library containing the core extensions to the JSON object model](https://www.nuget.org/packages/Corvus.Json.ExtendedTypes) and this is the [tool which generates code from JSON-schema definitions](https://www.nuget.org/packages/Corvus.Json.JsonSchema.TypeGeneratorTool) (including those embedded in OpenAPI 3.1 documents).
 
 If you want to incorporate this into your tool chain, read on!
+
+This is a hands-on-lab. While you'll get a lot from reading the documentation, you'll get a whole lot more from following along and working through code as you go.
+
+> This is intended a step-by-step guide, so let us know in the comments if we've glossed over anything and we'll add some more detail.
+>
+> You don't have to use exactly the tools we recommend. If you are proficient with another IDE, go ahead and use that instead.
+
+
+> ### A note for non-C# developers
+> If you aren't a C# dotnet developer - I guess you're used to translating from C# examples to F# or VB. Sorry, this is another one of those articles.
+>
+> It's also true that the code generator emits C# code, which you can compile into a dotnet library for use with your preferred language. The actual generation is templated and extensible, so if you were tempted, you could emit code in the language of your choice. The translation would not be trivial, but *PRs are Love*.
+>
+> F# would be particularly well suited to an idiomatic implementation!
 
 ## Prerequisites
 
@@ -33,13 +59,13 @@ dotnet new console -o JsonSchemaSample -f net6.0
 cd JsonSchemaSample
 ```
 
-We now want to add a reference to our JSON object model extensions to the project. We can use the `dotnet add` command to do that at the command line, or you could use your favourite package manager or IDE.
+And we'll add a reference to our JSON object model extensions to the project. We can use the `dotnet add` command to do that, or you could use your favourite package manager, or IDE.
 
 ```
 dotnet add package Corvus.Json.ExtendedTypes
 ```
 
-First, let's inspect `JsonSchemaSample.csproj`.
+Just to make sure that's all OK, and our editor is also working, let's inspect `JsonSchemaSample.csproj`.
 
 ```
 code JsonSchemaSample.csproj
@@ -47,7 +73,7 @@ code JsonSchemaSample.csproj
 
 > Remember, I'm using [VS Code](https://code.visualstudio.com/Download). But you can use whatever tooling you like.
 
-It should look something like this. Notice that we have a package reference to `Corvus.Json.ExtendedTypes`.
+When the editor loads up the project file, it should look something like this. Notice that we have a package reference to `Corvus.Json.ExtendedTypes`.
 
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
@@ -66,9 +92,11 @@ It should look something like this. Notice that we have a package reference to `
 </Project>
 ```
 
-## Designing with json-schema
+## Designing with JSON schema
 
-Now, we are going to create a JSON schema document. This one is a simple representation of a person. Here's the whole thing, and we'll break it down in more detail in a second. 
+We are going to start with a JSON schema document. The first one we will be working with is a simple representation of a "person". Maybe it is the schema from a CRM service's API?
+
+Here's the whole thing, and we'll break it down in more detail in a second. 
 
 ```json
 {
@@ -127,7 +155,7 @@ Now, we are going to create a JSON schema document. This one is a simple represe
 }
 ```
 
-Let's get that into the solution. Again, these steps are using VS Code, but you can use whatever IDE and/or tools you like. We're going to create an `api` folder and create a `person-from-api.json` document in there.
+Let's get that into the solution. Again, these steps are using VS Code, but you can use whatever IDE and/or tools you like. We'll create an `api` folder and drop a document called `person-from-api.json` in there.
 
 ```
 mkdir api
@@ -210,7 +238,7 @@ The `name` is defined by a reference to the `PersonName` schema. If we look up t
 
 This turns out to be a string which, if present, must be at least 1 character long, and at most 256 characters long.
 
-`otherNames` is defined by our `OtherNames` schema fragment, and that is a bit more interesting.
+`otherNames` is defined by our `OtherNames` schema, and that is a bit more interesting.
 
 ```json
 "OtherNames": {
@@ -221,7 +249,7 @@ This turns out to be a string which, if present, must be at least 1 character lo
     }
 ```
 
-This says that it will be *either* a `PersonNameElement` *or* a `PersonNameElementCollection`.
+This says that it will be *either* a `PersonNameElement` *or* a `PersonNameElementCollection` (but not both).
 
 We've already seen `PersonNameElement`, and a `PersonNameElementArray` is, as you might imagine, an array of `PersonNameElement` items.
 
@@ -236,7 +264,7 @@ We've already seen `PersonNameElement`, and a `PersonNameElementArray` is, as yo
 
 So, we're saying that you can represent the "other names" as a single string, or an array of strings.
 
-So, if a person's full name was `Michael Francis James Oldroyd`, I could represent that in schema-valid JSON as
+An example might be useful. If a person's full name was `Michael Francis James Oldroyd`, I could represent that in schema-valid JSON as
 
 ```json
 {
@@ -258,7 +286,9 @@ or
 
 You can see how this gives the API flexibility. Maybe a previous version only supported the single `PersonNameElement` form, and we added this array option in a later version, maintaining backwards compatibility, but giving us a way of deconstructing the name with higher fidelity.
 
-> This is a really good reason to use a schema-first design approach. C# developers may not have thought of this pattern when extending their API with a code-first approach. *Either-this-or-that* (a form of [union](https://en.wikipedia.org/wiki/Union_type)) is not a language-supported idiom, but it is frequently useful in the rest of the universe! Esepcially in JSON schema, where it is *everywhere*. You'll see more of this later.
+> I won't go on about schema-first or code-first, but this is a really good reason to use a schema-first design approach.
+>
+> C# developers may not have thought of this pattern when extending their API with a code-first approach. *Either-this-or-that* (a form of [union](https://en.wikipedia.org/wiki/Union_type)) is not a language-supported idiom, but it is frequently useful in the rest of the universe! Esepcially in JSON schema, where it is *everywhere*. You'll see more of this later.
 
 Anyway, whatever the pros and cons of this design, that's what our API does!
 
@@ -298,27 +328,31 @@ Options:
   -?, -h, --help                             Show help and usage information
   ```
 
-First, we have an option to define the `--rootNamespace` in which our types will be generated.
+There first option we're going to use defines the `--rootNamespace` into which our types will be generated.
 
 > You'll see later that only some of our types will be emitted directly into that namespace - many will become *nested types* embedded in their parent type. This helps us to keep the namespace clean, and minimize type name clashes.
 
-In this case we will use `JsonSchemaSample.Api` to match our project name and folder path.
+We will use `JsonSchemaSample.Api` as the namespace. This matches our project name and folder path.
 
-Second, we can provide a `--rootPath` to find a schema for which to generate code, somewhere in the document. This is in the same [JSON Pointer format](https://www.rfc-editor.org/rfc/rfc6901) that you are familiar with for `$ref` instances inside the document, in the standard *URI Fragment Identifier Representation*. Note also that in most terminals, you will have to wrap it in single quotes to ensure that the command line is parsed correctly.
+Second, we can provide a `--rootPath` to locate the schema in the document for which we are going to generate code.
 
-We will use `'#/$defs/Person'`.
+This is in the [JSON Pointer format](https://www.rfc-editor.org/rfc/rfc6901) that you are familiar with for specifying a `$ref` in the JSON schema document. It is in the *URI Fragment Identifier Representation*.
 
-There's one more slighlty annoying thing to do. In this preview version, we don't support inferring the json schema version from the document itself, so we also need to provide that explicity. For us that will be `--useSchema Draft202012`.
+> Note also that in most terminals, you will have to wrap it in single quotes to ensure that the command line is parsed correctly.
 
-Finally, we need to provide the path to the schema document itself. For us, we are in the same directory as the file concerned, so it will be just `person-from-api.json`.
+We want to generate the code for the schema at `'#/$defs/Person'`.
+
+There's one more *slightly annoying* thing to do. In this preview version, we don't support inferring the json schema version from the document itself, so we also need to provide that explicity. For us that will be `--useSchema Draft202012`.
+
+Finally, we need to provide the path to the json schema document containing the types to generate. For us, we are in the same directory as the file concerned, so that is just `person-from-api.json`.
 
 > Note that any references to documents either in this parameter on the command line, or in `$ref`s in the documents themselves don't *have* to be in the local file system. You can happily use `http[s]` references to external documents, and it'll work just fine!
 >
 > We'll see this in action as we develop our example further.
 
-The other defaults mean that we will generate our output files in the same folder as the input schema file (*not* the current working directory, so you can supply deep paths to the source file, without needing an explicit `--outputPath` on your command line).
+The tool defaults mean that we will generate our output files in the same folder as the input schema file.
 
-There will be one file per type that is emitted into the root namespace, named for the single enclosing type in that file.
+> Notice that this is *not* the current working directory, so you can supply deep paths to the source file from wherevere you happen to be, without needing an explicit `--outputPath` on your command line. We've found that his minimizes the complexity of integrating this tool into a build process.
 
 So we end up with the command.
 
@@ -326,13 +360,13 @@ So we end up with the command.
 generatejsonschematypes --rootNamespace JsonSchemaSample.Api --rootPath '#/$defs/Person' --useSchema Draft202012 person-from-api.json
 ```
 
-Let's run that now. When it has completed, list the files in the directory, using whatever command is appropriate for your shell.
+Let's run that now. When it has completed, list the C# files in the directory, using whatever command is appropriate for your shell.
 
 ```
 ls *.cs
 ```
 
-> Remember I'm using Powershell, so, as with Linux distros, I have `ls`. Windows Command Prompt users might want `dir`. 
+> Remember I'm using Powershell, so, as with Linux distros, I have access to `ls`. Windows Command Prompt users might want `dir`. 
 
 You should see the following file names listed (plus whatever other detail your particular shell adds to its output):
 ```
@@ -349,9 +383,9 @@ So far so good. Let's have a look at the generated types in more detail.
 
 ## The generated types
 
-The first thing that you'll probably notice is that it has generated files for all of the schema elements that the `Person` schema referenced, that were found in the `$defs` section of the root, plus the `Person` schema itself.
+The first thing that you'll probably notice is that it has generated files for each of the schema elements that the `Person` schema referenced, plus the `Person` schema itself.
 
-> The rule the tool is using is that anything that appears in the `$defs` section at the root of the schema will be in the root namespace. Anything else will be nested in the type generated for its parent scope. We'll go into that in more detail later.
+Had there been other elements that were *not* referenced by the `Person` schema they would *not* have been generated.
 
 Before we dive into the details, let's build the code and find out what we can do with it.
 
@@ -366,7 +400,7 @@ cd ..
 dotnet build
 ```
 
-This will have emitted an executable in the bin folder. We can run it...
+This emits an executable in the bin folder. We can run it...
 
 ```
 .\bin\Debug\net6.0\JsonSchemaSample.exe
@@ -378,7 +412,7 @@ This will have emitted an executable in the bin folder. We can run it...
  Hello, World!
  ```
 
-So far so good. Now, let's put the types we've generated to work.
+Let's put the types we've generated to work.
 
 ## Consuming JSON - "Deserialization"
 
@@ -411,7 +445,7 @@ It already contains a couple of lines, that produced our "Hello, World!" message
 Console.WriteLine("Hello, World!");
 ```
 
-Instead, let's add a using statement for our generated code. Recall that we put it in the `JsonSchemaSample.Api` namespace. So let's add that. We'll also need `System.Text.Json`, `Corvus.Json`, and, for our date work, [`NodaTime`](https://nodatime.org/).
+Instead, let's add a `using` statement for our generated code. Recall that we put it in the `JsonSchemaSample.Api` namespace. We'll also need `System.Text.Json`, `Corvus.Json`, and, for our date work, [`NodaTime`](https://nodatime.org/).
 
 > You can use the internal dotnet Date and Time classes, but NodaTime is a lot better in general, and specfically a better fit for the JSON date/time specifications. We hope this changes in dotnet vFuture!
 
@@ -422,9 +456,9 @@ using JsonSchemaSample.Api;
 using NodaTime;
 ```
 
-Now, let's explicitly create a `JsonDocument` from our sample JSON text.
+Now, let's create a `JsonDocument` from our sample JSON text.
 
-[`JsonDocument.Parse`](https://docs.microsoft.com/en-us/dotnet/api/system.text.json.jsondocument.parse?view=net-6.0) offers several overloads for parsing streams, blocks of bytes, and plain old strings. We'll use the string parser for the purposes of this exercise.
+You're probably already familiar with this process. [`JsonDocument.Parse`](https://docs.microsoft.com/en-us/dotnet/api/system.text.json.jsondocument.parse?view=net-6.0) offers several overloads for parsing streams, blocks of bytes, and plain old strings. We'll use the string parser for the purposes of this exercise.
 
 Add this code beneath your `using` statements.
 
@@ -441,11 +475,13 @@ string jsonText = @"{
 using JsonDocument document = JsonDocument.Parse(jsonText);
 ```
 
-You'll see in a moment that we don't *have* to indirect through `JsonDocument` to create instances of our types; there are tools in the library which can abstract this away for you. But I think it is useful to start out by seeing a little bit behind the curtain, so it doesn't look *too* much like magic.
+You'll see in a moment that we don't *have* to work through `JsonDocument` to create instances of our types; there are tools in the library which can abstract this away for you. But I think it is useful to start out by seeing a little bit behind the curtain, so it doesn't look *too* much like magic.
+
+> One nice thing about building over `JsonDocument`, `JsonElement`, `Utf8JsonReader` etc. is that we benefit immediately from all of the performance work being put into these types by the dotnet team.
 
 Hopefully, you should recognize that JSON text as something that we expect to be valid according to our `Person` schema.
 
-So let's wrap that element in our `Person` type. That's simple enough.
+So let's wrap that element in our `Person` type.
 
 Add the following line of code:
 
@@ -454,6 +490,8 @@ Person michaelOldroyd = new Person(document.RootElement);
 ```
 
 Now we can access the elements of that JSON payload via our `Person` type.
+
+> Unless otherwise indicated, I'm now going to assume that you are adding any code blocks that appear in this Lab at the bottom of the `program.cs` file.
 
 ```csharp
 string familyName = michaelOldroyd.Name.FamilyName;
@@ -480,17 +518,17 @@ Oldroyd, Michael: 14 July 1944
 
 > If you are wondering about variations in the date formatting, that is the result of the [`NodaTime.LocalDate`](https://nodatime.org/3.0.x/api/NodaTime.LocalDate.html) `ToString()` implementation.
 
-So far, so "just like serialization". But - and here's the rather nifty thing about this - creating the wrapper didn't allocate anything. It made a bit of space on the stack for the `Person` value type, which, internally, has a field for the `JsonDocument.RootElement`. And because those are both `readonly struct`, it didn't even need to make a copy of that value.
+So far, so "just like serialization". But - and here's the rather nifty thing about this - creating the wrapper didn't really allocate anything. It made a bit of space on the stack for the `Person` value type, which, internally, has a field for the `JsonDocument.RootElement`. And because those are both `readonly struct`, it minimized copying of that value too.
 
-It's true that we then went on to allocate a bunch of strings when we accessed the bits we were interested in, and passed them to `Console.WriteLine()`
+It's true that we then went on to allocate a bunch of strings when we accessed the bits we were interested in, and passed them to `Console.WriteLine()`, but that's just the cost of interoperating with a world where we don't yet have `ReadOnlySpan<char>`-like strings!
 
 > There are optimizations that could be done, at the expense of ease-of-use. In particular, we're expecting to see a vFuture version of `System.Text.Json` where it is better able to expose the underlying data without unecessary string allocation.
 
-But anything we didn't use remained entirely untouched. This is very powerful.
+But, by and large, we didn't allocate anything - we continued to work over the underlying UTF8 bytes. This, as we will see, is very powerful.
 
 ## Serialization
 
-We can also write our entity back to an output of some kind.
+Reading JSON data is very important. But we also need to write our JSON back to an output of some kind.
 
 There are two ways to do this.
 
@@ -503,6 +541,8 @@ You'd use it something like this (but don't add this code):
 Utf8JsonWriter writer;
 michaelOldroyd.WriteTo(writer);
 ```
+
+This is the most efficient approach, and minimizes allocations.
 
 But we also provide a simple `Serialize()` extension method to turn your output into a string.
 
