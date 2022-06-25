@@ -1,4 +1,4 @@
-TL;DR - this is a getting started Hands-On-Lab that walks you through our new JSON Schema code generation library and tools for C#.
+TL;DR - this is a getting started Hands-On-Lab that walks you through our new JSON Schema-based code generation library and tools for C#. It builds on `System.Text.Json` to provide rich serialization, deserialization, composition, and validation support.
 
 ## Goals
 
@@ -12,37 +12,49 @@ TL;DR - this is a getting started Hands-On-Lab that walks you through our new JS
 
 ## Context
 
-In my [previous post](https://endjin.com/blog/2021/05/csharp-serialization-with-system-text-json-schema), I introduced the concept behind our JSON object model extensions, built over [System.Text.Json](https://docs.microsoft.com/en-us/dotnet/api/system.text.json?view=net-6.0).
+In my [previous post](https://endjin.com/blog/2021/05/csharp-serialization-with-system-text-json-schema), I introduced the concepts behind our JSON object model extensions, built over [System.Text.Json](https://docs.microsoft.com/en-us/dotnet/api/system.text.json?view=net-6.0).
 
-We also looked at how a code generation tool could take JSON Schema and emit a full-fidelity dotnet type model for that schema, including well-optimised schema validation, with great allocation and compute performance for common scenarios where traditional JSON serialization would be the norm.
+> You don't need to read that post to work with this lab.
 
-Finally, we looked at how this model supports interoperability between types generated from different schema, and even compiled into different libraries, without any shared user code.
+In summary, we looked at how a code generation tool could take JSON Schema and emit a full-fidelity dotnet type model for that schema, including well-optimised schema validation, with great allocation and compute performance for common scenarios where traditional JSON serialization would be the norm.
+
+It also demonstrated how this model could support interoperability between types generated from different schema, and even compiled into different libraries, without any shared user code.
 
 I'm pleased to say that we've now published our initial preview release of this tooling over on github/nuget. This is the [library containing the core extensions to the JSON object model](https://www.nuget.org/packages/Corvus.Json.ExtendedTypes) and this is the [tool which generates code from JSON-schema definitions](https://www.nuget.org/packages/Corvus.Json.JsonSchema.TypeGeneratorTool) (including those embedded in OpenAPI 3.1 documents).
 
 If you want to incorporate this into your tool chain, read on!
 
-This is a hands-on-lab. While you'll get a lot from reading the documentation, you'll get a whole lot more from following along and working through code as you go.
+## Hands on Lab - The Rules
 
-> This is intended a step-by-step guide, so let us know in the comments if we've glossed over anything and we'll add some more detail.
->
-> You don't have to use exactly the tools we recommend. If you are proficient with another IDE, go ahead and use that instead.
+This is a hands-on-lab. While you'll get a lot from reading this as "documentation", you'll get a whole lot more from following along and working through code as you go.
+
+Other than that, there are no rules. Pause, stop, go and explore things for yourself as you go along, make lists of questions and post them here. We're around to help you get familiar with the tools and code. 
+
+Also, you don't have to use exactly the tools we recommend. If you are proficient with another IDE, go ahead and use that instead.
+
+But this is intended a step-by-step guide, so please let us know in the comments if we've glossed over anything and we'll add some more detail.
 
 
 > ### A note for non-C# developers
-> If you aren't a C# dotnet developer - I guess you're used to translating from C# examples to F# or VB. Sorry, this is another one of those articles.
+> If you aren't a C# dotnet developer... I guess you're used to translating from C# examples to F# or VB. Sorry, this is another one of those articles.
 >
-> It's also true that the code generator emits C# code, which you can compile into a dotnet library for use with your preferred language. The actual generation is templated and extensible, so if you were tempted, you could emit code in the language of your choice. The translation would not be trivial, but *PRs are Love*.
+> However, It's also true that the code generator emits C# code, which you can compile into a dotnet library for use with your preferred language. The actual generation is templated and extensible, so if you were tempted, you could emit code in the language of your choice. The translation would not be trivial, but *PRs are Love*.
 >
 > F# would be particularly well suited to an idiomatic implementation!
 
 ## Prerequisites
 
-You'll need
+### You'll need
 
 - the [.NET 6 SDK](https://docs.microsoft.com/en-us/dotnet/core/sdk) (maybe you've already installed Visual Studio 2022 and acquired it that way; but you don't have to install Visual Studio to get started; you can download these SDK bits and use the completely free/OSS toolchain to follow along.)
 - a shell, with the SDK developer tools in the path. I'm using [PowerShell](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.2) in the [Windows Terminal](https://docs.microsoft.com/en-us/windows/terminal/install), [configured with the Visual Studio "Developer" config for PowerShell](https://blog.yannickreekmans.be/developer-powershell-command-prompt-visual-studio-windows-terminal/).
 - A text editor or IDE. I'm using [VS Code](https://code.visualstudio.com/).
+
+### Things that would help
+
+- Some familiarity with building C# code with dotnet6.0
+- Some familiarity with [json-schema](https://json-schema.org/understanding-json-schema/)
+- Some familiarity with JSON reading, writing, and serialization, preferably with `System.Text.Json`
 
 ## Getting started
 
@@ -155,7 +167,7 @@ Here's the whole thing, and we'll break it down in more detail in a second.
 }
 ```
 
-Let's get that into the solution. Again, these steps are using VS Code, but you can use whatever IDE and/or tools you like. We'll create an `api` folder and drop a document called `person-from-api.json` in there.
+Let's get that into the project. As before, these steps are using Powershell and VS Code, but you can use whatever IDE and/or tools you like. We'll create an `api` folder and drop a document called `person-from-api.json` in there.
 
 ```
 mkdir api
@@ -352,7 +364,7 @@ Finally, we need to provide the path to the json schema document containing the 
 
 The tool defaults mean that we will generate our output files in the same folder as the input schema file.
 
-> Notice that this is *not* the current working directory, so you can supply deep paths to the source file from wherevere you happen to be, without needing an explicit `--outputPath` on your command line. We've found that his minimizes the complexity of integrating this tool into a build process.
+> Notice that this is *not* the current working directory, so you can supply deep paths to the source file from wherevere you happen to be, without needing an explicit `--outputPath` on your command line. We've found that this minimizes the complexity of integrating the tool into a build process.
 
 So we end up with the command.
 
@@ -447,7 +459,7 @@ Console.WriteLine("Hello, World!");
 
 Instead, let's add a `using` statement for our generated code. Recall that we put it in the `JsonSchemaSample.Api` namespace. We'll also need `System.Text.Json`, `Corvus.Json`, and, for our date work, [`NodaTime`](https://nodatime.org/).
 
-> You can use the internal dotnet Date and Time classes, but NodaTime is a lot better in general, and specfically a better fit for the JSON date/time specifications. We hope this changes in dotnet vFuture!
+> You can use the internal dotnet date and time types, but NodaTime is a lot better in general, and specfically a better fit for the JSON schema date/time specifications. We hope this changes in dotnet vFuture!
 
 ```csharp
 using System.Text.Json;
@@ -518,11 +530,11 @@ Oldroyd, Michael: 14 July 1944
 
 > If you are wondering about variations in the date formatting, that is the result of the [`NodaTime.LocalDate`](https://nodatime.org/3.0.x/api/NodaTime.LocalDate.html) `ToString()` implementation.
 
-So far, so "just like serialization". But - and here's the rather nifty thing about this - creating the wrapper didn't really allocate anything. It made a bit of space on the stack for the `Person` value type, which, internally, has a field for the `JsonDocument.RootElement`. And because those are both `readonly struct`, it minimized copying of that value too.
+So far, so "just like serialization". But - and here's the rather nifty thing about this - creating the wrapper didn't really allocate anything. It made a bit of space on the stack for the `Person` value type, which, internally, has a field for the `JsonDocument.RootElement`. And because those are both `readonly struct`, it minimized copying of that value too. The `JsonDocument` itself is a very slim wrapper over the underlying JSON byte payload (along with some indexing information). This is as close to "just a binary blob" as you are going to get with JSON text.
 
 It's true that we then went on to allocate a bunch of strings when we accessed the bits we were interested in, and passed them to `Console.WriteLine()`, but that's just the cost of interoperating with a world where we don't yet have `ReadOnlySpan<char>`-like strings!
 
-> There are optimizations that could be done, at the expense of ease-of-use. In particular, we're expecting to see a vFuture version of `System.Text.Json` where it is better able to expose the underlying data without unecessary string allocation.
+> There are optimizations that could still be done, at the expense of ease-of-use. In particular, we're expecting to see a vFuture version of `System.Text.Json` where it is better able to expose the underlying data without unecessary string allocation, and we intend to invest in that area.
 
 But, by and large, we didn't allocate anything - we continued to work over the underlying UTF8 bytes. This, as we will see, is very powerful.
 
@@ -532,7 +544,7 @@ Reading JSON data is very important. But we also need to write our JSON back to 
 
 There are two ways to do this.
 
-First, any `IJsonValue` has a `WriteTo()` method that takes a `Utf8JsonWriter`.
+All our dotnet JSON types - both our extensions, and any generated code, implement the `IJsonValue` interface. We'll look at that in more detail later. But one feature of `IJsonValue` is that it has a `WriteTo()` method that takes a `Utf8JsonWriter`.
 
 You'd use it something like this (but don't add this code):
 
@@ -544,9 +556,9 @@ michaelOldroyd.WriteTo(writer);
 
 This is the most efficient approach, and minimizes allocations.
 
-But we also provide a simple `Serialize()` extension method to turn your output into a string.
+However, we just want to see what the document is like when serialized. We could do all the work of creating an `ArrayBuffer`, and decoding the output to a `string`, but that's a bit of a pain.
 
-We can use that to confirm that our JSON round-trips correctly.
+Fortunately, we also provide a simple `Serialize()` extension method that does all this for you.
 
 Add the following code:
 
@@ -571,7 +583,11 @@ Oldroyd, Michael: 14 July 1944
 
 > Obviously, it is more efficient to use `WriteTo()`, rather than the `Serialize()` codepath, as the former avoids unnecessarily allocating strings.
 >
-> In fact, for many common cases, using `WriteTo()` means that you will just be writing the underlying UTF8-encoded byte buffers directly into the output, even when you have modified and composed JSON content from multiple sources.
+> It's not totally clear-cut, though. Internally, `Serialize()` uses `stackalloc` and/or buffer rental to avoid allocations, so you only pay for the final string allocation.
+>
+> On the other hand, for many common cases, using `WriteTo()` means that you will just be writing the underlying UTF8-encoded byte buffers directly into the output, even when you have modified and composed JSON content from multiple sources.
+>
+> Prefer `WriteTo()`, where possible
 
 Once you've finished exploring that, you can delete those two lines before we move on. We'll re-introduce serialization again later.
 
@@ -583,9 +599,9 @@ Console.WriteLine(serializedOldroyd);
 
 ## Introducing JsonAny
 
-So we've now seen a simple example of roundtripping our JSON data to- and from- our generated type system.
+So we've now seen a simple example of roundtripping our JSON data to-and-from our generated types.
 
-One thing I mentioned earlier was that you don't have to go via `JsonDocument` to get JSON text deserialized into our generated types. There is a a type in the `Corvus.Json.ExtendedTypes` library called `Corvus.Json.JsonAny`. This represents any JSON value, and it has a family of static methods called `Parse()`, used for parsing JSON text. These are analogous to `JsonDocument.Parse()`.
+One thing I mentioned earlier was that you don't have to go via `JsonDocument` to get JSON text deserialized into our generated types. There is a a type in the `Corvus.Json.ExtendedTypes` library called `Corvus.Json.JsonAny`. This represents any JSON value, and it has a family of `static` methods called `Parse()`, used for parsing JSON text. These are analogous to `JsonDocument.Parse()`.
 
 We can go ahead and replace these two lines:
 
@@ -616,7 +632,7 @@ Oldroyd, Michael: 14 July 1944
 
 > ### The same but different
 > 
-> It is worth pausing for a quick side note on performance characteristics. Feel free to skip ahead if you don't really care right now.
+> It is worth pausing for a quick sidebar on performance characteristics. Feel free to skip ahead if you don't really care right now.
 >
 > This code is the same *in effect*, and slightly simpler to write, but a little different under the hood.
 >
@@ -628,9 +644,9 @@ Oldroyd, Michael: 14 July 1944
 >
 > In high-performance applications, you would want to control the lifetime of the `JsonDocument` yourself.
 
-### Converting to and from `JsonAny`
+### Converting to-and-from `JsonAny`
 
-All types in `Corvus.Json` that represent JSON elements are `readonly struct`, and implement an interface called `IJsonValue`.
+All types in `Corvus.Json` that represent JSON elements are `readonly struct`, and, as we've said above, implement an interface called `IJsonValue`.
 
 This includes `JsonAny` itself, and all the types we code generate.
 
@@ -653,7 +669,7 @@ So it returns a `JsonAny`. But it has been implicitly converted to a `Person` in
 Person michaelOldroyd = JsonAny.Parse(jsonText);
 ```
 
-`Person` has implicit conversion operators to- and from- `JsonAny` to give us an optimised means of converting in either direction.
+`Person` has implicit conversion operators to-and-from `JsonAny` to give us an optimised means of converting in either direction.
 
 We've actually used other implicit conversions several times already in the code we've written.
 
@@ -673,9 +689,9 @@ Here's how the first of those is declared:
  public JsonSchemaSample.Api.PersonNameElement FamilyName
  ```
 
-So that's a `PersonNameElement` - but we can convert it implicitly to a C# `string`.
+So that's a `PersonNameElement` - but we can clearly convert it implicitly to a C# `string`.
 
-The code generator knows that the schema defined `PersonNameElement` can be represented as a `string` primitive, so it generated conversions for us, which make it simple to use in idiomatic dotnet code.
+The code generator knows that a `string` primitive is (the only) valid type for the `PersonNameElement` schema, so it generated conversions for us. This makes it a lot simpler to use in regular dotnet code.
 
 Similarly for `PersonName.DateOfBirth`
 
@@ -683,7 +699,7 @@ Similarly for `PersonName.DateOfBirth`
 public Corvus.Json.JsonDate DateOfBirth
 ```
 
-`JsonDate` is part of our extended JSON type model and it is implicitly covertible to `NodaTime.LocalDate` for the same reason. 
+`JsonDate` is part of our extended JSON type model and it is implicitly covertible to-and-from `NodaTime.LocalDate` for the same reason. 
 
 So conversions are really useful in that they let us write idiomatic dotnet code, while maintaining the benefits of our JSON data model. But there's another important consequence of this feature.
 
@@ -700,7 +716,7 @@ What?! What??!! An instance of any type that implements `IJsonValue` can (via ex
 
 Yes. That's absolute true.
 
-In fact, for your convenience, there is a 'casting' extension method that lets you perform exactly that anything-to-anything conversion.
+In fact, for your convenience, there is even a 'casting' extension method that lets you perform exactly that anything-to-anything conversion.
 
 (Don't add this code, it's just for illustration.)
 
@@ -722,7 +738,7 @@ JSON schema is more like a [duck-typing](https://en.wikipedia.org/wiki/Duck_typi
 - "if it has one of these properties, it must look like this" (`dependentSchemas`)
 - "it must be a number or an object" (`sarray of primitive types`)
 
-When we construct an instance of one of our JSON types from some JSON data, we know we can safely use it via that type, if it is *valid* according to the schema from which the type was generated.
+When we construct an instance of one of our JSON types from some JSON data, we know we can safely use it via that type, if, and only if, it is *valid* according to the schema from which the type was generated.
 
 Fortunately (but not coincidentally!), the code generator emits a `Validate()` method to test for this.
 
@@ -737,9 +753,11 @@ The first thing you'll notice is that we didn't actually call the `Validate()` m
 
 `Validate()` is capable of returning a whole lot of diagnostic information about failures, about which we don't care in this case.
 
- Instead, we use the `IsValid<T>()` extension method to return a boolean `true`/`false` value, which is simpler to work with.
+> We support a number of different diagnostic levels. In this preview release, the detailed diagnostic information is a bit of a mess; we will fix that up before GA.
 
- If we build and run again...
+Instead, we use the `IsValid<T>()` extension method to return a boolean `true`/`false` value, which is simpler to work with.
+
+If we build and run again...
 
 ```
 dotnet build
@@ -755,7 +773,7 @@ michaelOldroyd is valid.
 
 Which is just as we expected.
 
-What if we now deliberately create an invalid document.
+What if we now deliberately create a JSON document which is not valid according to our schema?
 
 Let's add the following code:
 
@@ -773,7 +791,7 @@ bool isValid2 = invalidOldroyd.IsValid();
 Console.WriteLine($"invalidOldroyd {(isValid2 ? "is" : "is not")} valid.");
 ```
 
-Notice that we have omitted the `familyName` from the `name` object. This makes it invalid according to the schema (because `familyName` is a `required` property.) 
+Notice that we have omitted the `familyName` property from the `name` object. This makes it invalid according to the schema (because `familyName` is a `required` property.) 
 
 Build and run...
 
@@ -791,8 +809,6 @@ invalidOldroyd is not valid.
 ```
 
 Which is as we expected. But, in fact, even though it is invalid, we can still manipulate the parts of the entity that *are* valid, through this type system. To do that we need to understand a little bit more about how data is represented.
-
-## Values, Null, and Undefined
 
 Let's add a bit of code to inspect the `invalidOldroyd`.
 
@@ -822,12 +838,14 @@ Michael: 14 July 1944
 So, where the data is present, we can still extract it - the type model is very forgiving like that.
 
 > This is really useful for systems that deal with JSON data. If the type model explodes in the face of malformed data, it can be very difficult to diagnose issues and provide effective error reporting, or even self-healing capabilities.
+>
+> But if it is important to explode, you can do so; e.g. by testing with `Validate()` and throwing an exception. The choice is yours, not the library's.
 
- But what about the missing data? How do we deal with that.
+ But what about the 'missing' data? How do we deal with that.
 
-This is not just a problem for *invalid* schema. We have to be able to deal with optional data in our schema, too.
+This is not just a problem for *invalid* schema. We have to be able to deal with optional data in valid schema, too.
 
-Let's delete our "invalid data" code, and go back to our valid JSON text.
+To make things clear, let's delete our "invalid data" code, and go back to our valid JSON text.
 
 (*These are the lines to remove*)
 ```csharp
@@ -875,15 +893,25 @@ Oldroyd, : 14 July 1944
 michaelOldroyd is valid.
 ```
 
-So what's happened? Well, as we expected, `michaelOldroyd` is still valid.
+So what has happened? Well, as we expected, `michaelOldroyd` is still valid.
 
 But we've got a missing `givenName`, which leads to a trailing comma in our output. What can we about that?
 
-Remember that JSON schema values can be present (that's the value), present but *null*, or not present at all (which we call *undefined*). This is a little different from dotnet properties which are typically only present or (if nullable) `null`.
+## Values, Null, and Undefined
+
+Let's remind ourselves about the characteristics of JSON data.
+
+Remember that JSON values can be present (that's the value), present but *null* (if the schema allows `null` values), or not present at all (which we call *undefined*). This is a little different from dotnet properties which are typically only present or (if the type is nullable) `null`.
+
+```json
+{ "foo": 3.14 } # Present with a non-null value
+{ "foo": null } # Present and null
+{} # Not present
+```
 
 > These latter cases correspond with the `JsonValueKind.Null` and `JsonValueKind.Undefined` values for `JsonElement.ValueKind`.
 >
-> We expose the same values from the `IJsonValue.ValueKind` property.
+> We expose these same values for our JSON values from the `IJsonValue.ValueKind` property.
 
 We can distinguish these conditions with a few extension methods.
 
@@ -891,12 +919,12 @@ Let's replace the code that extracts the given name with the following:
 
 ```csharp
 string givenName =
-    michaelOldroyd.Name.GivenName.IsNotNullOrUndefined() 
+    michaelOldroyd.Name.GivenName.IsNotUndefined() 
         ? michaelOldroyd.Name.GivenName
         : "[no given name specified]";
 ```
 
-We are using the `IsNotNullOrUndefined()` extension to determine whether we actually have the optional value or not. If not, we will inject some appropriate text.
+We are using the `IsNotUndefined()` extension to determine whether we actually have the optional value or not. If not, we will inject some appropriate text.
 
 This time, when we build and run...
 
@@ -908,13 +936,13 @@ dotnet build
 We get:
 
 ```
-Oldroyd, [not specified]: 14 July 1944
+Oldroyd, [no given name specified]: 14 July 1944
 michaelOldroyd is valid.
 ```
 
-There is a family of other similar extensions like `IsNull()`, and `IsUndefined()` for you to explore.
+There is a family of other similar extensions like `IsNull()`, and `IsNullOrUndefined()` for you to explore.
 
-These can come in handy when you are dealing with the possibility of additional properties on your object.
+One case when these can come in handy is when you are dealing with the possibility of additional properties on your object.
 
 ### Additional properties
 
@@ -934,7 +962,7 @@ string jsonText = @"{
 }";
 ```
 
-I've added back the `givenName` property, and included an additional property `occupation`.
+I've added back the `givenName` property, and included an additional property called `occupation`.
 
 Let's build and run, to verify the output.
 
@@ -943,7 +971,7 @@ dotnet build
 .\bin\Debug\net6.0\JsonSchemaSample.exe
 ```
 
-We are expecting it to produce the usual output, and for the instance to be valid.
+We are expecting it to produce the usual output, and for the instance still to be valid.
 
 ```
 Oldroyd, Michael: 14 July 1944
@@ -953,6 +981,8 @@ michaelOldroyd is valid.
 So how can we get hold of the `occupation` property?
 
 Well, any type which represents a JSON `object` implements our `IJsonObject<T>` interface, and that gives us the ability to inspect all of the properties of the object.
+
+> As with `IJsonValue` you should not be using this interface directly, as it would cause your value to be boxed. 
 
 In particular, we can search for a well-known additional property if we wish, with the `TryGetPropertyMethod()`.
 
@@ -973,6 +1003,8 @@ bool isValid = michaelOldroyd.IsValid();
 `TryGetProperty` uses the familiar `TryXXX` pattern used throughout the dotnet framework. Notice how we are also checking that the value provided is a string, using the `ValueKind` property. If it is, we know that we can use the `JsonAny.AsString` property to convert to a string.
 
 > This kind of ad-hoc validation is very common in "undocumented extension" scenarios, where the schema falls short of the data actually being provided.
+>
+> In fact, you could navigate a whole JSON document using just our extended JSON types, the `Valuekind` property, the `As<T>` and its corresponding `Is<T>()` validation checker, without generating any code at all! 
 
 Build and run
 
@@ -981,19 +1013,19 @@ dotnet build
 .\bin\Debug\net6.0\JsonSchemaSample.exe
 ```
 
-And we see the occupation added to the output.
+And we see the `occupation` added to the output.
 
 ```
 Oldroyd, Michael: 14 July 1944
-occupation: Farrier
+occupation: "Farrier"
 michaelOldroyd is valid.
 ```
 
 ### Enumerating properties
 
-If we aren't fishing for a well known additional property, but want to operate over whatever we find in the object, we can *enumerate* the properties in the object.
+If we aren't fishing for a well known additional property, but want to operate over whatever we find in the object, we can *enumerate* its properties directly.
 
-Let's add a few more additional properties to our JSON document.
+Let's add a few more *additional properties* to our JSON document.
 
 ```csharp
 string jsonText = @"{
@@ -1011,7 +1043,7 @@ string jsonText = @"{
 
 You can see we've added a `bool` property called `selfEmployed` and a `number` property called `salary`.
 
-Now, let's add some code to enumerate the properties in the object. Insert the following after the code that write the occupation to the console.
+Now, let's add some code to enumerate the properties in the object. Insert the following after the code that writes the `occupation` to the console.
 
 ```csharp
 Console.WriteLine("Additional properties:");
@@ -1032,7 +1064,7 @@ dotnet build
 
 ```
 Oldroyd, Michael: 14 July 1944
-occupation: Farrier
+occupation: "Farrier"
 Additional properties:
 name: {"familyName":"Oldroyd","givenName":"Michael","otherNames":["Francis","James"]}
 occupation: "Farrier"
@@ -1042,15 +1074,17 @@ dateOfBirth: "1944-07-14"
 michaelOldroyd is valid.
 ```
 
-Notice that it is provided with the underlying JSON form of the actual property names. The the string formatter uses `ToString()` under the covers, and the default implementation of that serializes the value to the string.
+The JSON `Property` type has a `Name` property which gives us the underlying JSON form of the actual property name, as a `string`, and a `Value` property which returns the value as a `JsonAny`.
 
-You can see that this has emmitted our additinal properites, but we've also got the "well-known" properties in this list. Is there a way to filter those out?
+If you take a look at its definition, you'll find a `ValueAs<T>()` method to get the value as a specific type, and a family of `ValueAs[Primitive]` properties, plus `ValueKind` if you want to explore its underlying type.)
+
+The result of all this is that we have emitted our additional properties to the Console; but we've also got the "well-known" properties in this list. Is there a way to filter those out?
 
 You'll not be surprised to learn that there is.
 
-If we go and look at any of our code generated types, you'll see that the generator has emitted `const` fields for the well-known properties of any `object`. They take the form `<PropertyName>JsonPropertyName` and `<PropertyName>Utf8JsonPropertyName`.
+If we go and look at any of our code generated types, you'll see that the generator has emitted `const` fields for the well-known properties of thos `object` types that have them. They take the form `<PropertyName>JsonPropertyName` and `<PropertyName>Utf8JsonPropertyName`.
 
-As you might expect, these fields expose the `char` and UTF8-encoded `byte` versions of the relevant JSON property name.
+As you might expect, these fields expose the `char` and UTF8-encoded `byte` versions of the relevant JSON property names.
 
 We can use these to add a filter to our enumerator, to eliminate the well-known properties, and just work over the additional properties.
 
@@ -1083,7 +1117,7 @@ and the output looks like this:
 
 ```
 Oldroyd, Michael: 14 July 1944
-occupation: Farrier
+occupation: "Farrier"
 Additional properties:
 occupation: "Farrier"
 selfEmployed: false
@@ -1097,9 +1131,11 @@ We're now only looking at the additional properties, and can use our tools to in
 
 It's important to note that, as far as is possible, we preserve information with conversions and extensions.
 
-> There are edge cases where you can devise a conversion and manipulation process that is *not* information preserving. Howver, for any `JsonElement`-backed use case like this, all information is preserved between conversions.
+> There are edge cases where you can devise a conversion and manipulation process that is *not* information preserving. However, for any `JsonElement`-backed use case like this, all information is preserved between conversions.
 
-Let's serialize our new "extended" `Person` and verify that the additional properties are correctly written to the output. 
+With most code-first C#-to-JSON serializers, you lose this characteristic unless it has been specifically designed-in to your C# classes. This can be particularly challenging when diagnosing issues with malformed input data, for example.  
+
+Let's serialize our new "extended" `Person` and verify that the additional properties are preserved and written to the output. 
 
 Add the following code at the end of the file.
 
@@ -1118,9 +1154,9 @@ dotnet build
 
 ```
 Oldroyd, Michael: 14 July 1944
-occupation: Farrier
+occupation: "Farrier"
 Additional properties:
-occupation: Farrier
+occupation: "Farrier"
 selfEmployed: false
 salary: 26000
 michaelOldroyd is valid.
@@ -1131,9 +1167,9 @@ Notice how the additional properties are preserved in the serialized output.
 
 ## JSON Schema and Union types
 
-We're now reasonably confident about using our generated dotnet types for the standard json primitives like `object`, `string`, `bool` and `number`. We've seen how to enumerate `object` properties, examine the type of the values we discover, and determine whether properties are present or not. 
+We're now reasonably confident about using our generated dotnet types for the standard json primitives like `object`, `string`, `bool` and `number` (and `null`). We've seen how to enumerate `object` properties, examine the type of the values we discover, and determine whether properties are present or not. 
 
-Now, we're going to have a look at how represent some more sophisticated JSON schema constraints, and to do that we are going to look at the `otherNames` property on a `PersonName`.
+Now, we're going to have a look at how represent some more sophisticated JSON schema constraints, and to do that we are going to look at the `otherNames` property on a `PersonName`. This will also give us a chance to look at how we represent and `array`.
 
 
 ---
