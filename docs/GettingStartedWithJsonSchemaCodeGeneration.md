@@ -1276,6 +1276,12 @@ TODO: Enumerate the arrays
 
 So far, we've deserialized existing JSON data, examined it, and serialized the object back to a UTF8 output form. But what about creating new JSON entities?
 
+In dotnet6, `System.Text.Json` added the `Nodes` namespace with [`JsonObject`](https://docs.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject?view=net-6.0) and [`JsonArray`](https://docs.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonarray?view=net-6.0) types to help you build JSON documents.
+
+Our extended and generated types *do not* use `JsonObject` under the covers to create new JSON documents, but they *do* build on similar factory patterns. We use our knowledge of the JSON schema from which the types were generated to help us create semantically valid data structures.
+
+Let's get started with the simplest structures - the primitives `string`, `boolean`, `number`, and `null`.
+
 ### Creating primitives
 
 We've actually seen some examples of how to create instances of primitive types already.
@@ -1351,6 +1357,40 @@ public static Person Create(JsonSchemaSample.Api.PersonName name, Corvus.Json.Js
 `Name` is a required property, so we have to pass an instance as the first parameter. `DateOfBirth` is optional, so it is passed as a nullable value, with a default value of `null`.
 
 Let's delete the code we've already added (apart from our `using` statements) and try using everything we've learned so far to create a new `Person`.
+
+```csharp
+Person audreyJones =
+    Person.Create(
+        name: PersonName.Create(
+                givenName: "Audrey",
+                otherNames: JsonArray.From("Margaret", "Nancy"),
+                familyName: "Jones"),
+        dateOfBirth: new LocalDate(1947, 11, 7));
+```
+
+You'll notice that I've used the C# syntax that lets me specify parameter names explicitly. I like to do this when building up entities like this, as it allows me to reorder the parameters in whatever way I feel is natural, and I can just remove "optional" items, wherever they appear in the list.
+
+For example, a minimal valid person could just be created like this:
+
+*(don't add this code - it's just an example)*
+```csharp
+var minPerson = Person.Create(PersonName.Create("Jones"));
+```
+
+But it isn't nearly so expressive.
+
+Incidentally, we don't have to use the `array` form for the `otherNames` property - we could have just used the `string`. Similarly for the `dateOfBirth`, we could have used a suitable date string.
+
+*(don't add this code - it's just an example)*
+```csharp
+Person audreyJones =
+    Person.Create(
+        name: PersonName.Create(
+                givenName: "Audrey",
+                otherNames: "Margaret Nancy",
+                familyName: "Jones"),
+        dateOfBirth: "1947-11-07");
+```
 
 ## JSON Schema and Union types
 
