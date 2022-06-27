@@ -1315,7 +1315,7 @@ Take a bit of time to explore the other primitive types in the extended type mod
 
 ### Creating arrays
 
-Creating an instance of an array is also fairly simply. Remember that we generated an `array` type called `PersonNameElementArray`. Because it has a simple item type of `PersonNameElement`, you will see a family of static methods called `PersonNameElementArray.From()`, which take one or more `PersonNameElement` instances.
+Creating an instance of an array is also fairly simple. Remember that we generated an `array` type called `PersonNameElementArray`. Because it has a simple item type of `PersonNameElement`, you will see a family of static methods called `PersonNameElementArray.From()`, which take one or more `PersonNameElement` instances.
 
 > Sometimes, the collection of items in an array cannot be described by a single schema. Perhaps there is a different schema for items at different indices, for example. In those cases, this convenience method will *not* be emitted, and you should use `JsonArray.From()` instead. See below for examples of this.
 
