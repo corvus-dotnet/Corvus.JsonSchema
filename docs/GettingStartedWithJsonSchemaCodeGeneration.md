@@ -1154,9 +1154,9 @@ dateOfBirth: "1944-07-14"
 michaelOldroyd is valid.
 ```
 
-The JSON `Property` type has a `Name` property which gives us the underlying JSON form of the actual property name, as a `string`, and a `Value` property which returns the value as a `JsonAny`.
+The JSON `Property` type has a `Name` property which gives us the underlying JSON form of the actual property name, as a `string`. Its `Value` property returns the value as a `JsonAny`.
 
-`Property` also exposes a `ValueAs<T>()` method to get the value as a specific type of `IJsonValue`, and a family of `ValueAs[Primitive]` properties, plus `ValueKind` if you want to explore its underlying type. These are analagous to the methods on `JsonAny` but you avoid converting to `JsonAny` explicitly, just to examine `Property` information.
+It also exposes a `ValueAs<T>()` method to get the value as a specific type of `IJsonValue`, and a family of `ValueAs[Primitive]` properties, plus `ValueKind` if you want to explore its underlying type. These are analagous to the methods on `JsonAny` but you avoid converting to `JsonAny` explicitly, just to examine `Property` information.
 
 The result of all this is that we have emitted our additional properties to the Console; but we've also got the "well-known" properties in this list. Is there a way to filter those out?
 
