@@ -983,7 +983,7 @@ Remember that JSON values can be present (that's the value), present but *null* 
 
 > These latter cases correspond with the `JsonValueKind.Null` and `JsonValueKind.Undefined` values for `JsonElement.ValueKind`.
 >
-> We expose these same values for our JSON values from the `IJsonValue.ValueKind` property.
+> We expose this same information with the `IJsonValue.ValueKind` property.
 
 We can distinguish these conditions with a few extension methods.
 
