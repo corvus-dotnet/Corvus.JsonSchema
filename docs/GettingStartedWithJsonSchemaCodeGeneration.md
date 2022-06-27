@@ -406,11 +406,11 @@ We want to generate the code for the schema at `'#/$defs/Person'`.
  
  (And technically, it is in the *URI Fragment Identifier Representation* of that format.)
 
-> Note also that in most terminals, you will have to wrap it in single quotes to ensure that the command line is parsed correctly, as above.
+> Note also that in most terminals, you will have to wrap the pointer in single quotes to ensure that the command line is parsed correctly, as above.
 
 There's one more *slightly annoying* thing to do. In this preview version, we don't support inferring the json schema version from the document itself, so we also need to provide that explicity. For us that will be `--useSchema Draft202012`.
 
-Finally, we need to provide the path to the json schema document containing the types to generate. For us, we are in the same directory as the file concerned, so that is just `person-from-api.json`.
+Finally, we need to provide the path to the json schema document containing the schema for which to generate types. We happen to be in the same directory as the file concerned, so that is just `person-from-api.json`.
 
 > Note that any references to documents either in this parameter on the command line, or in `$ref`s in the documents themselves don't *have* to be in the local file system. You can happily use `http[s]` references to external documents, and it'll work just fine!
 >
@@ -418,7 +418,7 @@ Finally, we need to provide the path to the json schema document containing the 
 
 The other defaults mean that we will generate our output files in the same folder as the input schema file.
 
-> Notice that this is *not* the current working directory. You can supply deep paths to the source file from wherevere you happen to be, and the output files will be generated next to it. There's no need to specify and `--outputPath` for this common scenario.
+> Notice that this is *not* the current working directory. You can supply deep paths to the source file from wherevere you happen to be, and the output files will be generated next to it. There's no need to specify an `--outputPath` for this common scenario.
 >
 > We've found that this minimizes the complexity of integrating the tool into a build process.
 
