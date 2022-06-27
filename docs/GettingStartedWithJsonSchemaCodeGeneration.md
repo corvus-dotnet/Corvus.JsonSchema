@@ -354,7 +354,7 @@ You'll also notice that there is a `Link` schema fragment at `#/$defs/Link`, whi
 
 Anyway, whatever the pros and cons of this design, that's what our schema looks like!
 
-So, now, let's generate some code...
+So, let's generate some code...
 
 ## Generating C# code
 
@@ -400,11 +400,11 @@ We will use `JsonSchemaSample.Api` as the namespace. This matches our project na
 
 Second, we can provide a `--rootPath` to locate the schema in the document for which we are going to generate code.
 
-This is in the [JSON Pointer format](https://www.rfc-editor.org/rfc/rfc6901).
-
 We want to generate the code for the schema at `'#/$defs/Person'`.
 
- You'll recognize this as the syntax you use for specifying a `$ref` in the JSON schema document. Technically, it is in the *URI Fragment Identifier Representation* of that format.
+ You'll probably recognize this as the syntax you use for specifying a `$ref` within a JSON schema document. It is part of the [JSON Pointer specification](https://www.rfc-editor.org/rfc/rfc6901).
+ 
+ (And technically, it is in the *URI Fragment Identifier Representation* of that format.)
 
 > Note also that in most terminals, you will have to wrap it in single quotes to ensure that the command line is parsed correctly, as above.
 
