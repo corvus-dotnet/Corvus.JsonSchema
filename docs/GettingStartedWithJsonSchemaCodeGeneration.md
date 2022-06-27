@@ -583,7 +583,7 @@ LocalDate dateOfBirth = michaelOldroyd.DateOfBirth;
 Console.WriteLine($"{familyName}, {givenName}: {dateOfBirth}");
 ```
 
-Notice how we're using normal property accessors, and regular dotnet types like `string` and NodaTime's `LocalDate`.
+Notice how we're using normal property accessors, and regular dotnet types like `string`, or NodaTime's `LocalDate`.
 
 Let's build and run that again.
 
