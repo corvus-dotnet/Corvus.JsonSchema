@@ -751,17 +751,17 @@ string givenName = michaelOldroyd.Name.GivenName;
 LocalDate dateOfBirth = michaelOldroyd.DateOfBirth;
 ```
 
-we've happily written `string` and `LocalDate` - but what type *is* the value returned from `michaelOldroyd.Name.FamilyName` or `michaelOldroyd.DateOfBirth`?
+The code is assigning to `string` and `LocalDate`, but what type *is* the value returned from `michaelOldroyd.Name.FamilyName`, or `michaelOldroyd.DateOfBirth`?
 
-Here's how the first of those is declared:
+If you look at the code in `Person.cs` you can find the declaration for the `Person.FamilyName` property.
 
 ```csharp
  public JsonSchemaSample.Api.PersonNameElement FamilyName
  ```
 
-So that's a `PersonNameElement` - but we can clearly convert it implicitly to a C# `string`.
+So that's a `PersonNameElement`. And yet, we can clearly convert it implicitly to a C# `string`.
 
-The code generator knows that a `string` primitive is (the only) valid type for the `PersonNameElement` schema, so it generated conversions for us. This makes it a lot simpler to use in regular dotnet code.
+What happened was that the code generator examined the schema for `PersonNameElement`. It recognized that a `string` primitive is a valid representation for the `PersonNameElement`, so it generated an assortment of conversions for us, making it very simple to use in regular dotnet code.
 
 Similarly for `PersonName.DateOfBirth`
 
@@ -771,7 +771,9 @@ public Corvus.Json.JsonDate DateOfBirth
 
 `JsonDate` is part of our extended JSON type model and it is implicitly covertible to-and-from `NodaTime.LocalDate` for the same reason. 
 
-So conversions are really useful in that they let us write idiomatic dotnet code, while maintaining the benefits of our JSON data model. But there's another important consequence of this feature.
+So conversions are really useful in that they let us write idiomatic dotnet code, while maintaining the benefits of our JSON data model.
+
+But there's another important consequence of this feature.
 
 Remember our conversion rules:
 
