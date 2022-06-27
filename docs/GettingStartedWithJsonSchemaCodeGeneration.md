@@ -1080,6 +1080,8 @@ bool isValid = michaelOldroyd.IsValid();
 
 Notice how we are also checking that the value provided is a string, using the `ValueKind` property. If it is, we know that we can use the `JsonAny.AsString` property to convert to a string.
 
+This is one of a family of `JsonAny` properties that convert to the primitives `JsonObject`, `JsonString`, `JsonArray`, `JsonNumber`, `JsonBoolean`, and  `JsonNull`.
+
 > This kind of ad-hoc validation is very common in "undocumented extension" scenarios, where the schema falls short of the data actually being provided.
 >
 > In fact, you could navigate a whole JSON document using just our extended JSON types, the `ValueKind` property, `JsonAny.As[Primitive]`, and the `As<T>()` cast, without generating any code at all!
