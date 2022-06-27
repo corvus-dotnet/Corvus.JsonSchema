@@ -1325,7 +1325,9 @@ Let's use `PersonNameElementArray.From()` to create an array of name elements.
 var otherNames = PersonNameElementArray.From("Margaret", "Nancy");
 ```
 
-The implicit conversion from `string` to `PersonNameElement` meant we avoided having to `new` elements explicitly, avoiding this kind of verbosity:
+The implicit conversion from `string` to `PersonNameElement` meant we avoided having to `new` elements explicitly.
+
+Although just syntactic sugar, it makes the code much more readable. Compare with this:
 
 *(don't add this - it is for comparison only)*
 ```csharp
