@@ -978,7 +978,7 @@ Remember that JSON values can be present (that's the value), present but *null* 
 ```json
 { "foo": 3.14 } # Present with a non-null value
 { "foo": null } # Present and null
-{} # Not present
+{}              # Not present
 ```
 
 > These latter cases correspond with the `JsonValueKind.Null` and `JsonValueKind.Undefined` values for `JsonElement.ValueKind`.
