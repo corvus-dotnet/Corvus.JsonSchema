@@ -1415,6 +1415,7 @@ When we pass (dotnet) `null` as the value for an optional parameter to one of ou
 
 For example
 
+*(don't add this code)*
 ```csharp
 Person.Create(
   name: PersonName.Create("Jones"),
@@ -1429,6 +1430,7 @@ This represents
 
 In order to say *set the value for this property to null* we have to use `JsonNull.Instance`.
 
+*(don't add this code)*
 ```csharp
 Person.Create(
   name: PersonName.Create("Jones"),
