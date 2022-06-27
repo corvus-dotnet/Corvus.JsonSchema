@@ -1014,6 +1014,10 @@ michaelOldroyd is valid.
 
 There is a family of other similar extensions like `IsNull()`, and `IsNullOrUndefined()` for you to explore.
 
+> Sometimes, you want to be able to map the JSON concept of *null or undefined* directly to the dotnet concept of *nullable*.
+>
+> We provide an extension method `AsOptional<T>()`, which converts the `IJsonValue` from a `T` to a `Nullable<T>`. The value will be `null` if the JSON element was `JsonValueKind.Null` or `JsonValueKind.Undefined`.
+
 One case when these can come in handy is when you are dealing with the possibility of additional properties on your object.
 
 ### Additional properties
