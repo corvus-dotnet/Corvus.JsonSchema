@@ -1076,7 +1076,9 @@ if (michaelOldroyd.TryGetProperty("occupation", out JsonAny occupation) &&
 bool isValid = michaelOldroyd.IsValid();
 ```
 
-`TryGetProperty` uses the familiar `TryXXX` pattern used throughout the dotnet framework. Notice how we are also checking that the value provided is a string, using the `ValueKind` property. If it is, we know that we can use the `JsonAny.AsString` property to convert to a string.
+`TryGetProperty` uses the familiar `TryXXX` pattern used throughout the dotnet framework. We pass in the name of the property we wish to receive (as it appears in the JSON document). If it finds such a property, it returns `true` and sets the output value. 
+
+Notice how we are also checking that the value provided is a string, using the `ValueKind` property. If it is, we know that we can use the `JsonAny.AsString` property to convert to a string.
 
 > This kind of ad-hoc validation is very common in "undocumented extension" scenarios, where the schema falls short of the data actually being provided.
 >
