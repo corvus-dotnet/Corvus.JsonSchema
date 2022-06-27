@@ -1360,7 +1360,7 @@ public static Person Create(JsonSchemaSample.Api.PersonName name, Corvus.Json.Js
 
 `Name` is a required property, so we have to pass an instance as the first parameter. `DateOfBirth` is optional, so it is passed as a nullable value, with a default value of `null`.
 
-Let's delete the code we've already added (apart from our `using` statements) and try using everything we've learned so far to create a new `Person`.
+Let's delete the code we've already added (apart from our `using` statements) and try to apply everything we've learned so far to create a new `Person`.
 
 ```csharp
 Person audreyJones =
