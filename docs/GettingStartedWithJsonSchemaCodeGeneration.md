@@ -1078,7 +1078,7 @@ bool isValid = michaelOldroyd.IsValid();
 
 `TryGetProperty` uses the familiar `TryXXX` pattern used throughout the dotnet framework. We pass in the name of the property we wish to receive (as it appears in the JSON document). If it finds such a property, it returns `true` and sets the output value. 
 
-Notice how we are also checking that the value provided is a string, using the `ValueKind` property. If it is, we know that we can use the `JsonAny.AsString` property to convert to a string.
+Notice how we are also checking that the value provided is a JSON `string`, using the `ValueKind` property. If it is, we know that we can use the `JsonAny.AsString` property to convert to a string.
 
 This is one of a family of `JsonAny` properties that convert to the primitives `JsonObject`, `JsonString`, `JsonArray`, `JsonNumber`, `JsonBoolean`, and  `JsonNull`.
 
