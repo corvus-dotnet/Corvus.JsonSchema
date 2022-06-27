@@ -806,7 +806,7 @@ Recall that JSON Schema does not offer a strong type system like the one with wh
 JSON schema is more like a [duck-typing](https://en.wikipedia.org/wiki/Duck_typing) model. It describes the "shape" of the JSON with statements like
 
 - "it must look like this or like this or like this" (`anyOf`/`oneOf`)
-- "if it looks like this, then it will also look like that, otherwise - - it looks like this other thing" (`if`/`then`/`else`)
+- "if it looks like this, then it will also look like that, otherwise it looks like this other thing" (`if`/`then`/`else`)
 - "if it has one of these properties, it must look like this" (`dependentSchemas`)
 - "it must be a number or an object" (`sarray of primitive types`)
 
