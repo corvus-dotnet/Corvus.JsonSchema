@@ -1351,6 +1351,8 @@ Notice that we use one of the the static methods on `JsonArray` called `From`() 
 Because our code generator understands the structure of `object` schema, including which properties are optional, and which are `required`, it is able to emit *factory methods* that assist in the creation of valid instances.
 
 > Like constructors, factory methods create new instances of objects. To avoid collisions between the constructors we emit as standard, and the ones we want to create for our properties, we always generate a factory method rather than an additional constructor.
+>
+> One problematic case we are trying to avoid comes up when we have an object with nothing but optional properties. In that case, we would wish to generate a constructor with nothing but optional parameters. This can cause issues with the default, parameterless constructor.
 
 Let's look at the definition of the `Create()` method emitted for `Person`.
 
