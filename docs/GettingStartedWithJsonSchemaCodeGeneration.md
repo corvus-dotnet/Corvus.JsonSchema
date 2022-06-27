@@ -1268,15 +1268,87 @@ michaelOldroyd is valid.
 
 Notice how the additional properties are preserved in the serialized output.
 
+### Working with arrays
+
+TODO: Enumerate the arrays
+
+## Creating and modifying JSON
+
+So far, we've deserialized existing JSON data, examined it, and serialized the object back to a UTF8 output form. But what about creating new JSON entities?
+
+### Creating primitives
+
+We've actually seen some examples of how to create instances of primitive types already.
+
+You can either use an implicit cast from a dotnet type, or new up the object from the value. Let's have a look at some examples of doing that.
+
+Let's delete all the text from `program.cs` for the time being, and add back our using statements.
+
+```csharp
+using System.Text.Json;
+using Corvus.Json;
+using JsonSchemaSample.Api;
+using NodaTime;
+```
+
+Then, try adding the following:
+
+```csharp
+JsonString myImplicitString = "a string, implicitly";
+JsonString myExplicitString = new JsonString("a string, explicitly");
+JsonNumber myImplicitNumber = 1.1;
+JsonNumber myExplicitNumber = new JsonNumber(1.1);
+JsonBoolean myImplicitBoolean = true;
+JsonBoolean myExplicitBoolean = new JsonBoolean(true);
+JsonNull myImplicitNull = default;
+JsonNull myExplicitNull = new JsonNull();
+JsonNull myNull = JsonNull.Instance;
+```
+
+Take a bit of time to explore the other primitive types in the extended type model, like `JsonDateTime`, `JsonInteger` and `JsonEmail`, and see how they can be constructed.
+
+### Creating arrays
+
+Creating an instance of an array is also fairly simply. Remember that we generated an `array` type called `PersonNameElementArray`. Because it has a simple item type of `PersonNameElement`, you will see a family of static methods called `PersonNameElementArray.From()`, which take one or more `PersonNameElement` instances.
+
+Let's use that to create an array of name elements.
+
+
+```csharp
+var otherNames = PersonNameElementArray.From("Margaret", "Nancy");
+```
+
+The implicit conversion from `string` to `PersonNameElement` meant we avoided having to `new` elements explicitly, avoiding this kind of verbosity:
+
+*(don't add this - it is for comparison only)*
+```csharp
+// We avoided having to write...
+var otherNames = PersonNameElementArray.From(new PersonNameElement("Margaret"), new PersonNameElement("Nancy"));
+```
+
+We can also create arrays from existing collections of items. For example, let's take an existing list of strings, and create a `PersonNameElementArray` from them, using our `JsonArray` primitive.
+
+```csharp
+var someNameStrings = new List<string> { "Margaret", "Nancy" };
+PersonNameElementArray array = JsonArray.From(someNameStrings);
+```
+
+Notice that we use one of the the static methods on `JsonArray` called `From`() to construct a generic `JsonArray` of strings, and then implicitly convert that to a `PersonNameElementArray`.
+
+> There are overloads of `From()` on `JsonArray` to create arrays of all sorts of primitive types, and a generic `From<T>()` method to create an array of any `IJsonValue` based type.
+
+
+# Using `Create()` to create objects
+
+Our code generator understands the  
+
 ## JSON Schema and Union types
 
 We now know how to use our generated dotnet types in standard "serialization" scenarios. We have seen property accessors that, thanks to the implicit conversions, let us treat our JSON primitives as their dotnet equivalents: `string`, `bool`, and `null`, or even more sophisticated entities like `LocalDate`.
 
 We've seen that object hierarchies are supported just as we'd expect for any dotnet types, but that we automatically get extensions which allow us to enumerate `object` properties, examine the type of the values we discover, and determine whether properties are present or not.
 
-Now, we're going to have a look at how we represent some more sophisticated JSON schema constraints. To do that we are going to examine the `otherNames` property on a `PersonName`. This will also give us a chance to look at how we represent the last JSON primitive we've not seen - `array`.
-
-
+Now, we're going to have a look at how we represent some more sophisticated JSON schema constraints. To do that we are going to examine the `otherNames` property on a `PersonName`.
 ---
 
 [TODO: This comes much later]
