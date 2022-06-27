@@ -1228,13 +1228,17 @@ We're now only looking at the additional properties, and can use our tools to in
 
 ### Preserving information
 
-It's important to note that, as far as is possible, we preserve information with conversions and extensions.
+One challenge with JSON serialization and deserialization is a loss of fidelity as you roundtrip your information.
+
+Using standard code-first serializers, if you are faced with additional properties, or schema extensions, or you are dealing with malformed data and trying to figure out what to do with it for diagnostic or self-healing scenarios, you may lose information as you transform to-and-from the dotnet world.
+
+With most code-first C#-to-JSON (de-)serialization, you lose this characteristic unless it has been explicitly designed-in to your C# classes.
+
+With our generated code and extended type model, we preserve as much information as possible through any transformations. That's true even when we convert between types which are not valid for the underlying data. 
 
 > There are edge cases where you can devise a conversion and manipulation process that is *not* information preserving. However, for any `JsonElement`-backed use case like this, all information is preserved between conversions.
 
-With most code-first C#-to-JSON serializers, you lose this characteristic unless it has been specifically designed-in to your C# classes. This can be particularly challenging when diagnosing issues with malformed input data, for example.  
-
-Let's serialize our new "extended" `Person` and verify that the additional properties are preserved and written to the output. 
+Let's serialize our new "extended" `Person` and verify that the additional properties are preserved and written to the output.
 
 Add the following code at the end of the file.
 
