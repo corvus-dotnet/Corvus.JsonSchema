@@ -1313,7 +1313,6 @@ Creating an instance of an array is also fairly simply. Remember that we generat
 
 Let's use that to create an array of name elements.
 
-
 ```csharp
 var otherNames = PersonNameElementArray.From("Margaret", "Nancy");
 ```
@@ -1337,16 +1336,25 @@ Notice that we use one of the the static methods on `JsonArray` called `From`() 
 
 > There are overloads of `From()` on `JsonArray` to create arrays of all sorts of primitive types, and a generic `From<T>()` method to create an array of any `IJsonValue` based type.
 
+### Using `Create()` to create objects
 
-# Using `Create()` to create objects
+Because our code generator understands the structure of your `object` schema, including which properties are optional, and which are `required`, it is able to emit handy factory methods that assist in the creation of valid instances.
 
-Our code generator understands the  
+Let's look at the definition of the `Create()` method emitted for `Person`.
+
+```csharp
+public static Person Create(JsonSchemaSample.Api.PersonName name, Corvus.Json.JsonDate? dateOfBirth = null)
+```
+
+`Name` is a required property, so we have to pass an instance as the first parameter. `DateOfBirth` is optional, so it is passed as a nullable value, with a default value of `null`.
+
+Let's delete the code we've already added (apart from our `using` statements) and try using everything we've learned so far to create a new `Person`.
 
 ## JSON Schema and Union types
 
 We now know how to use our generated dotnet types in standard "serialization" scenarios. We have seen property accessors that, thanks to the implicit conversions, let us treat our JSON primitives as their dotnet equivalents: `string`, `bool`, and `null`, or even more sophisticated entities like `LocalDate`.
 
-We've seen that object hierarchies are supported just as we'd expect for any dotnet types, but that we automatically get extensions which allow us to enumerate `object` properties, examine the type of the values we discover, and determine whether properties are present or not.
+We've seen that object hierarchies are supported just as we'd expect for any dotnet types, but that we automatically get extensions which allow us to enumerate `array` items and `object` properties, examine the type of the values we discover, and determine whether properties are present or not.
 
 Now, we're going to have a look at how we represent some more sophisticated JSON schema constraints. To do that we are going to examine the `otherNames` property on a `PersonName`.
 ---
