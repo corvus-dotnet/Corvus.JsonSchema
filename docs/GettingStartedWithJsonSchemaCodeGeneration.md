@@ -1164,6 +1164,25 @@ You'll not be surprised to learn that there is.
 
 If we go and look at any of our code generated types, you'll see that the generator has emitted `const` fields for the well-known properties of thos `object` types that have them. They take the form `<PropertyName>JsonPropertyName` and `<PropertyName>Utf8JsonPropertyName`.
 
+```csharp
+/// <summary>
+/// JSON property name for <see cref = "Name"/>.
+/// </summary>
+public static readonly ReadOnlyMemory<byte>NameUtf8JsonPropertyName = new byte[]{110, 97, 109, 101};
+/// <summary>
+/// JSON property name for <see cref = "Name"/>.
+/// </summary>
+public static readonly string NameJsonPropertyName ="name";
+/// <summary>
+/// JSON property name for <see cref = "DateOfBirth"/>.
+/// </summary>
+public static readonly ReadOnlyMemory<byte>DateOfBirthUtf8JsonPropertyName = new byte[]{100, 97, 116,101, 79, 102, 66, 105, 114, 116, 104};
+/// <summary>
+/// JSON property name for <see cref = "DateOfBirth"/>.
+/// </summary>
+public static readonly string DateOfBirthJsonPropertyName = "dateOfBirth";
+```
+
 As you might expect, these fields expose the `char` and UTF8-encoded `byte` versions of the relevant JSON property names.
 
 We can use these to add a filter to our enumerator, to eliminate the well-known properties, and just work over the additional properties.
