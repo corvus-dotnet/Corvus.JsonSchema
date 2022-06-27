@@ -506,7 +506,7 @@ Generally, this requires us to bring all or part of a data stream into memory, a
 
 `System.Text.Json` has a very efficient way of doing this using its [`JsonElement`](https://docs.microsoft.com/en-us/dotnet/api/system.text.json.jsonelement?view=net-6.0) and related entities. These are immutable [value types](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/value-types) that provide thin wrappers over the underlying UTF8 bytes, converting into dotnet primitives like `string`, `long`, or `bool` at the point of use.
 
-Our [Corvus.Json.ExtendedTypes library](https://www.nuget.org/packages/Corvus.Json.ExtendedTypes) extends this model to include types which represent all of the JSON-schema primitives and common extensions, including arrays, objects, an assortment of numeric and date types etc.
+Our [Corvus.Json.ExtendedTypes library](https://www.nuget.org/packages/Corvus.Json.ExtendedTypes) extends this model to include types which represent all of the JSON-schema primitives and common extensions, including arrays, objects, numbers, and an assortment of formatted string types like dates, times and URIs.
 
 The code generator builds on these to give us an easy way of manipulating the JSON data in the same just-in-time fashion, without creating a copy of the underlying UTF8 bytes, but with all the idiomatic dotnet features like named properties, and conversion to-and-from dotnet primitives.
 
