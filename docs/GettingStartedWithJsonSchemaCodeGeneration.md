@@ -540,7 +540,7 @@ using NodaTime;
 
 Now, let's create a `JsonDocument` from our sample JSON text.
 
-You're probably already familiar with this process. [`JsonDocument.Parse`](https://docs.microsoft.com/en-us/dotnet/api/system.text.json.jsondocument.parse?view=net-6.0) offers several overloads for parsing streams, blocks of bytes, and plain old strings. We'll use the string parser for the purposes of this exercise.
+You're probably already familiar with this process. [`JsonDocument.Parse`](https://docs.microsoft.com/en-us/dotnet/api/system.text.json.jsondocument.parse?view=net-6.0) offers several overloads for parsing streams, blocks of bytes, and plain old strings. We'll use the string parser for the purposes of this lab.
 
 Add this code beneath your `using` statements.
 
