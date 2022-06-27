@@ -1272,7 +1272,7 @@ Notice how the additional properties are preserved in the serialized output.
 
 We're now reasonably confident about using our generated dotnet types for the standard json primitives like `object`, `string`, `bool` and `number` (and `null`). We've seen how to enumerate `object` properties, examine the type of the values we discover, and determine whether properties are present or not. 
 
-Now, we're going to have a look at how represent some more sophisticated JSON schema constraints, and to do that we are going to look at the `otherNames` property on a `PersonName`. This will also give us a chance to look at how we represent and `array`.
+Now, we're going to have a look at how represent some more sophisticated JSON schema constraints, and to do that we are going to look at the `otherNames` property on a `PersonName`. This will also give us a chance to look at how we represent the last JSON primitive we've not seen - `array`.
 
 
 ---
