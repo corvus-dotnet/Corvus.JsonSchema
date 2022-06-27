@@ -1280,7 +1280,7 @@ In dotnet6, `System.Text.Json` added the `Nodes` namespace with [`JsonObject`](h
 
 Our extended and generated types *do not* use `JsonObject` under the covers to create new JSON documents, but they *do* build on similar factory patterns. We use our knowledge of the JSON schema from which the types were generated to help us create semantically valid data structures.
 
-Let's get started with the simplest structures - the primitives `string`, `boolean`, `number`, and `null`.
+Let's get started with the simplest entities - the primitives `string`, `boolean`, `number`, and `null`.
 
 ### Creating primitives
 
