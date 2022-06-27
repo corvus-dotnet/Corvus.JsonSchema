@@ -500,7 +500,7 @@ Let's put the types we've generated to work.
 
 A very common scenario is consuming and working over a JSON payload provided by some service, using dotnet types.
 
-This is often called "deserialization", and consists of taking some UTF8-encoded JSON text payload and turning it ito a representation in the dotnet type system.
+This is often called "deserialization", and consists of taking some UTF8-encoded JSON text payload and turning it into a representation in the dotnet type system.
 
 Generally, this requires us to bring all or part of a data stream into memory, and then construct C# objects from it.
 
