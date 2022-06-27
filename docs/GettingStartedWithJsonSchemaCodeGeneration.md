@@ -985,7 +985,7 @@ Remember that JSON values can be present (that's the value), present but *null* 
 >
 > We expose this same information with the `IJsonValue.ValueKind` property.
 
-We can distinguish these conditions with a few extension methods.
+Because it is so common to need to test these conditions, we have provided a few extension methods to help out.
 
 Let's replace the code that extracts the given name with the following:
 
