@@ -1338,7 +1338,9 @@ Notice that we use one of the the static methods on `JsonArray` called `From`() 
 
 ### Using `Create()` to create objects
 
-Because our code generator understands the structure of your `object` schema, including which properties are optional, and which are `required`, it is able to emit handy factory methods that assist in the creation of valid instances.
+Because our code generator understands the structure of your `object` schema, including which properties are optional, and which are `required`, it is able to emit handy *factory methods* that assist in the creation of valid instances.
+
+> Like constructors, factory methods create new instances of objects. To avoid collisions between the constructors we emit as standard, and the ones we want to create for our properties, we always generate a factory method rather than an additional constructor.
 
 Let's look at the definition of the `Create()` method emitted for `Person`.
 
