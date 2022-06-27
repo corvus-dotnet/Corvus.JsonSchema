@@ -1333,7 +1333,7 @@ The implicit conversion from `string` to `PersonNameElement` meant we avoided ha
 var otherNames = PersonNameElementArray.From(new PersonNameElement("Margaret"), new PersonNameElement("Nancy"));
 ```
 
-We can also create arrays from existing collections of items. For example, let's take an existing list of strings, and create a `PersonNameElementArray` from them, using our `JsonArray` primitive.
+We can also create arrays from existing collections of items. There's a general-purpose type called `JsonArray` which has static factory methods to create arrays from a variety of different primitives. For example, let's take an existing list of strings, and create a `PersonNameElementArray` from them, using `JsonArray.From(IEnumerable<string>)`
 
 ```csharp
 var someNameStrings = new List<string> { "Margaret", "Nancy" };
