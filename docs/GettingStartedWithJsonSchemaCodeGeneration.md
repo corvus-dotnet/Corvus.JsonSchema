@@ -32,13 +32,13 @@ Other than that, there are no rules. Pause, stop, go and explore things for your
 
 Also, you don't have to use exactly the tools we recommend. If you are proficient with another IDE, go ahead and use that instead.
 
-But this is intended a step-by-step guide, so please let us know in the comments if we've glossed over anything and we'll add some more detail.
+But this is intended to be a step-by-step guide. Please let us know in the comments if we've glossed over anything, and we'll add some more detail or explanatory notes.
 
 
 > ### A note for non-C# developers
 > If you aren't a C# dotnet developer... I guess you're used to translating from C# examples to F# or VB. Sorry, this is another one of those articles.
 >
-> However, It's also true that the code generator emits C# code, which you can compile into a dotnet library for use with your preferred language. The actual generation is templated and extensible, so if you were tempted, you could emit code in the language of your choice. The translation would not be trivial, but *PRs are Love*.
+> While it's also true that the code generator emits C# code, you can compile it into a dotnet library for use with your preferred language. The actual generation is templated and extensible, so if you were tempted, you could emit code in the language of your choice. The translation would not be trivial, but *PRs are Love*.
 >
 > F# would be particularly well suited to an idiomatic implementation!
 
@@ -162,6 +162,54 @@ Here's the whole thing, and we'll break it down in more detail in a second.
       "type": "string",
       "minLength": 1,
       "maxLength": 256
+    },
+    "Link":
+    {
+      "required": [
+        "href"
+      ],
+      "type": "object",
+      "properties": {
+        "href": {
+          "title": "URI of the target resource",
+          "type": "string",
+          "description": "Either a URI [RFC3986] or URI Template [RFC6570] of the target resource."
+        },
+        "templated": {
+          "title": "URI Template",
+          "type": "boolean",
+          "description": "Is true when the link object's href property is a URI Template. Defaults to false.",
+          "default": false
+        },
+        "type": {
+          "title": "Media type indication of the target resource",
+          "pattern": "^(application|audio|example|image|message|model|multipart|text|video)\\\\/[a-zA-Z0-9!#\\\\$&\\\\.\\\\+-\\\\^_]{1,127}$",
+          "type": "string",
+          "description": "When present, used as a hint to indicate the media type expected when dereferencing the target resource."
+        },
+        "name": {
+          "title": "Secondary key",
+          "type": "string",
+          "description": "When present, may be used as a secondary key for selecting link objects that contain the same relation type."
+        },
+        "profile": {
+          "title": "Additional semantics of the target resource",
+          "type": "string",
+          "description": "A URI that, when dereferenced, results in a profile to allow clients to learn about additional semantics (constraints, conventions, extensions) that are associated with the target resource representation, in addition to those defined by the HAL media type and relations.",
+          "format": "uri"
+        },
+        "description": {
+          "title": "Human-readable identifier",
+          "type": "string",
+          "description": "When present, is used to label the destination of a link such that it can be used as a human-readable identifier (e.g. a menu entry) in the language indicated by the Content-Language header (if present)."
+        },
+        "hreflang": {
+          "title": "Language indication of the target resource [RFC5988]",
+          "pattern": "^([a-zA-Z]{2,3}(-[a-zA-Z]{3}(-[a-zA-Z]{3}){0,2})?(-[a-zA-Z]{4})?(-([a-zA-Z]{2}|[0-9]{3}))?(-([a-zA-Z0-9]{5,8}|[0-9][a-zA-Z0-9]{3}))*([0-9A-WY-Za-wy-z](-[a-zA-Z0-9]{2,8}){1,})*(x-[a-zA-Z0-9]{2,8})?)|(x-[a-zA-Z0-9]{2,8})|(en-GB-oed)|(i-ami)|(i-bnn)|(i-default)|(i-enochian)|(i-hak)|(i-klingon)|(i-lux)|(i-mingo)|(i-navajo)|(i-pwn)|(i-tao)|(i-tay)|(i-tsu)|(sgn-BE-FR)|(sgn-BE-NL)|(sgn-CH-DE)|(art-lojban)|(cel-gaulish)|(no-bok)|(no-nyn)|(zh-guoyu)|(zh-hakka)|(zh-min)|(zh-min-nan)|(zh-xiang)$",
+          "type": "string",
+          "description": "When present, is a hint in RFC5646 format indicating what the language of the result of dereferencing the link should be.  Note that this is only a hint; for example, it does not override the Content-Language header of a HTTP response obtained by actually following the link."
+        }
+      }
     }
   }
 }
@@ -302,13 +350,15 @@ You can see how this gives the API flexibility. Maybe a previous version only su
 >
 > C# developers may not have thought of this pattern when extending their API with a code-first approach. *Either-this-or-that* (a form of [union](https://en.wikipedia.org/wiki/Union_type)) is not a language-supported idiom, but it is frequently useful in the rest of the universe! Esepcially in JSON schema, where it is *everywhere*. You'll see more of this later.
 
-Anyway, whatever the pros and cons of this design, that's what our API does!
+You'll also notice that there is a `Link` schema fragment at `#/$defs/Link`, which isn't referenced elsewhere (for now!). If you take a quick look, you'll see that it is a schematisation of a web link. More on this later...
+
+Anyway, whatever the pros and cons of this design, that's what our schema looks like!
 
 So, now, let's generate some code...
 
 ## Generating C# code
 
-The tool has installed a dotnet executable for us, so let's see how to use it. At the command prompt, type
+We've already installed our code generator tool. To check that all went well, we can run it, with the `-h` option.
 
 ```
 generatejsonschematypes -h
@@ -340,7 +390,9 @@ Options:
   -?, -h, --help                             Show help and usage information
   ```
 
-There first option we're going to use defines the `--rootNamespace` into which our types will be generated.
+So - how to generate some code from our schema?
+
+The first option we're going to use defines the `--rootNamespace` into which our types will be generated.
 
 > You'll see later that only some of our types will be emitted directly into that namespace - many will become *nested types* embedded in their parent type. This helps us to keep the namespace clean, and minimize type name clashes.
 
@@ -348,11 +400,13 @@ We will use `JsonSchemaSample.Api` as the namespace. This matches our project na
 
 Second, we can provide a `--rootPath` to locate the schema in the document for which we are going to generate code.
 
-This is in the [JSON Pointer format](https://www.rfc-editor.org/rfc/rfc6901) that you are familiar with for specifying a `$ref` in the JSON schema document. It is in the *URI Fragment Identifier Representation*.
-
-> Note also that in most terminals, you will have to wrap it in single quotes to ensure that the command line is parsed correctly.
+This is in the [JSON Pointer format](https://www.rfc-editor.org/rfc/rfc6901).
 
 We want to generate the code for the schema at `'#/$defs/Person'`.
+
+ You'll recognize this as the syntax you use for specifying a `$ref` in the JSON schema document. Technically, it is in the *URI Fragment Identifier Representation* of that format.
+
+> Note also that in most terminals, you will have to wrap it in single quotes to ensure that the command line is parsed correctly, as above.
 
 There's one more *slightly annoying* thing to do. In this preview version, we don't support inferring the json schema version from the document itself, so we also need to provide that explicity. For us that will be `--useSchema Draft202012`.
 
@@ -362,9 +416,11 @@ Finally, we need to provide the path to the json schema document containing the 
 >
 > We'll see this in action as we develop our example further.
 
-The tool defaults mean that we will generate our output files in the same folder as the input schema file.
+The other defaults mean that we will generate our output files in the same folder as the input schema file.
 
-> Notice that this is *not* the current working directory, so you can supply deep paths to the source file from wherevere you happen to be, without needing an explicit `--outputPath` on your command line. We've found that this minimizes the complexity of integrating the tool into a build process.
+> Notice that this is *not* the current working directory. You can supply deep paths to the source file from wherevere you happen to be, and the output files will be generated next to it. There's no need to specify and `--outputPath` for this common scenario.
+>
+> We've found that this minimizes the complexity of integrating the tool into a build process.
 
 So we end up with the command.
 
@@ -378,7 +434,7 @@ Let's run that now. When it has completed, list the C# files in the directory, u
 ls *.cs
 ```
 
-> Remember I'm using Powershell, so, as with Linux distros, I have access to `ls`. Windows Command Prompt users might want `dir`. 
+> Remember that I'm using Powershell, so, as with Linux distros, I have access to `ls`. Windows Command Prompt users might want `dir`. 
 
 You should see the following file names listed (plus whatever other detail your particular shell adds to its output):
 ```
@@ -397,7 +453,19 @@ So far so good. Let's have a look at the generated types in more detail.
 
 The first thing that you'll probably notice is that it has generated files for each of the schema elements that the `Person` schema referenced, plus the `Person` schema itself.
 
-Had there been other elements that were *not* referenced by the `Person` schema they would *not* have been generated.
+| Schema location | File |
+| --- | --- |
+| `#/$defs/Person` | `Person.cs` |
+| `#/$defs/PersonName` | `PersonName.cs` |
+| `#/$defs/PersonNameElement` | `PersonNameElement.cs` |
+| `#/$defs/OtherNames` | `OtherNames.cs` |
+| `#/$defs/PersonNameElementArray.cs` | `PersonNameElementArray.cs` |
+
+Remember the `Link` schema we saw earlier that was *not* referenced by the `Person` schema? It has *not* been generated. The code generator only generates types for schema elements that it sees as it walks the tree from the element it finds at the `rootPath`.
+
+> If you want to generate types that are *not* directly referenced from that root element, then you can place them into a `$defs` object *within* your root element.
+>
+> If you don't want to do this (or can't), the tool is idempotent when run against the same source document, regardless of the root element it is pointing at. This means that you can happily run the tool multiple times, for each new element you want to generate. 
 
 Before we dive into the details, let's build the code and find out what we can do with it.
 
