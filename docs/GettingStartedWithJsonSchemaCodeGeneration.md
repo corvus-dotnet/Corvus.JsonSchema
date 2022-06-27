@@ -1060,7 +1060,7 @@ Well, any type which represents a JSON `object` implements our `IJsonObject<T>` 
 
 > As with `IJsonValue` you should not be using this interface directly, as it would cause your value to be boxed. 
 
-In particular, we can search for a well-known additional property if we wish, with the `TryGetProperty()` method.
+In particular, we can search for a well-known additional property with the `TryGetProperty()` method.
 
 Let's add some code to do that. We'll insert it between the line that writes out the name and date of birth, and the code that does the validation, like this.
 
