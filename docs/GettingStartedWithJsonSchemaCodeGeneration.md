@@ -492,6 +492,8 @@ This emits an executable in the bin folder. We can run it...
  Hello, World!
  ```
 
+> If you don't see the output, double check that you've followed all the steps correctly up to this point. If it still doesn't work, ping us a comment and we will see if we can help you. 
+
 Let's put the types we've generated to work.
 
 ## Consuming JSON - "Deserialization"
