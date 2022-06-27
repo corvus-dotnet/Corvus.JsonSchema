@@ -1381,7 +1381,18 @@ For example, a minimal valid person could just be created like this:
 var minPerson = Person.Create(PersonName.Create("Jones"));
 ```
 
-But it isn't nearly so expressive.
+Or a person with neither `givenName` nor `otherNames` could be created like this:
+
+*(again, no need to add this code)*
+```csharp
+Person.Create(
+    PersonName.Create(
+        "Jones",
+        null,
+        "Margaret Nancy"));
+```
+
+But it isn't nearly so clear what is being done.
 
 Incidentally, we don't have to use the `array` form for the `otherNames` property - we could have just used the `string`. Similarly for the `dateOfBirth`, we could have used a suitable date string.
 
