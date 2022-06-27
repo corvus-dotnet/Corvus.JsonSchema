@@ -653,9 +653,9 @@ Oldroyd, Michael: 14 July 1944
 
 > Obviously, it is more efficient to use `WriteTo()`, rather than the `Serialize()` codepath, as the former avoids unnecessarily allocating strings.
 >
-> It's not totally clear-cut, though. Internally, `Serialize()` uses `stackalloc` and/or buffer rental to avoid allocations, so you only pay for the final string allocation.
+> It's not totally clear-cut, though. Internally, `Serialize()` uses `stackalloc` and/or buffer rental to avoid allocations, so you only pay for the final decoding from UTF8 to char, and string allocation.
 >
-> On the other hand, for many common cases, using `WriteTo()` means that you will just be writing the underlying UTF8-encoded byte buffers directly into the output, even when you have modified and composed JSON content from multiple sources.
+> On the other hand, for many common cases, using `WriteTo()` means that you will just write the underlying UTF8-encoded byte buffers directly into the output, even when you have modified and composed JSON content from multiple sources.
 >
 > Prefer `WriteTo()`, where possible
 
