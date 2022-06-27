@@ -812,7 +812,7 @@ JSON schema is more like a [duck-typing](https://en.wikipedia.org/wiki/Duck_typi
 
 When we construct an instance of one of our C# `IJsonValue` types from some JSON data, we know we can safely use it via that type, if, and only if, it is *valid* according to the schema from which the type was generated.
 
-Fortunately (but not coincidentally!), the code generator emits a `Validate()` method to test for this.
+Fortunately (but not coincidentally!), the code generator emits an implementation `IJsonValue.Validate()` to test for this.
 
 Let's try validating our `Person`.
 
