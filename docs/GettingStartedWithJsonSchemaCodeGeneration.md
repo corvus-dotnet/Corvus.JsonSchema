@@ -1460,6 +1460,7 @@ We now know how to use our generated dotnet types in standard "serialization" sc
 We've seen that object hierarchies are supported just as we'd expect for any dotnet types, but that we automatically get extensions which allow us to enumerate `array` items and `object` properties, examine the type of the values we discover, and determine whether properties are present or not.
 
 Now, we're going to have a look at how we represent some more sophisticated JSON schema constraints. To do that we are going to examine the `otherNames` property on a `PersonName`.
+
 ---
 
 [TODO: This comes much later]
