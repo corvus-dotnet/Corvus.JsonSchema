@@ -571,7 +571,7 @@ Add the following line of code:
 Person michaelOldroyd = new Person(document.RootElement);
 ```
 
-Now we can access the elements of that JSON payload via our `Person` type.
+Now we can access the elements of that JSON payload via our dotnet `Person` and related types.
 
 > Unless otherwise indicated, I'm now going to assume that you are adding any code blocks that appear in this Lab at the bottom of the `program.cs` file.
 
@@ -583,7 +583,7 @@ LocalDate dateOfBirth = michaelOldroyd.DateOfBirth;
 Console.WriteLine($"{familyName}, {givenName}: {dateOfBirth}");
 ```
 
-Notice how we're using normal property accessors, and dotnet types like `string` and NodaTime's `LocalDate`.
+Notice how we're using normal property accessors, and regular dotnet types like `string` and NodaTime's `LocalDate`.
 
 Let's build and run that again.
 
