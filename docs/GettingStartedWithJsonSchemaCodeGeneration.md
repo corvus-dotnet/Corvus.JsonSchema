@@ -1272,7 +1272,7 @@ Notice how the additional properties are preserved in the serialized output.
 
 TODO: Enumerate the arrays
 
-## Creating and modifying JSON
+## Creating JSON
 
 So far, we've deserialized existing JSON data, examined it, and serialized the object back to a UTF8 output form. But what about creating new JSON entities?
 
@@ -1409,7 +1409,7 @@ Person audreyJones =
 
 #### Optional v. Null
 
-This is where we hit another point of discrepancy between how dotnet represents values, and how there are represented in JSON. Once again, it is around the distinction between a value, a value which is `null`, and an undefined value.
+If you look again at the definition of the `Create()` methods we have been using, you may spot another point of friction. Once again, it centres on the distinction between a value, a value which is `null`, and an undefined value.
 
 When we pass (dotnet) `null` as the value for an optional parameter to one of our `Create()` methods, we are saying *do not set a value for the property*.
 
@@ -1421,6 +1421,12 @@ Person.Create(
   dateOfBirth: null);
 ```
 
+This represents
+
+```json
+{ "name": {"familyName": "Jones"} }
+```
+
 In order to say *set the value for this property to null* we have to use `JsonNull.Instance`.
 
 ```csharp
@@ -1429,7 +1435,21 @@ Person.Create(
   dateOfBirth: JsonNull.Instance);
 ```
 
+This represents
+
+```json
+{ "name": {
+    "familyName": "Jones",
+    },
+  "dateOfBirth": null
+}
+```
+
 (Though, in fact, this would not compile, as the code generator knew that `dateOfBirth` is not allowed to be `null`, and so there is no explicit conversion from `JsonNull` to `JsonDate`.)
+
+## Modifying JSON
+
+TODO: Immutability, With() and walking the tree.
 
 ## JSON Schema and Union types
 
