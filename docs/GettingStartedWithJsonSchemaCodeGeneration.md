@@ -1407,6 +1407,30 @@ Person audreyJones =
         dateOfBirth: "1947-11-07");
 ```
 
+#### Optional v. Null
+
+This is where we hit another point of discrepancy between how dotnet represents values, and how there are represented in JSON. Once again, it is around the distinction between a value, a value which is `null`, and an undefined value.
+
+When we pass (dotnet) `null` as the value for an optional parameter to one of our `Create()` methods, we are saying *do not set a value for the property*.
+
+For example
+
+```csharp
+Person.Create(
+  name: PersonName.Create("Jones"),
+  dateOfBirth: null);
+```
+
+In order to say *set the value for this property to null* we have to use `JsonNull.Instance`.
+
+```csharp
+Person.Create(
+  name: PersonName.Create("Jones"),
+  dateOfBirth: JsonNull.Instance);
+```
+
+(Though, in fact, this would not compile, as the code generator knew that `dateOfBirth` is not allowed to be `null`, and so there is no explicit conversion from `JsonNull` to `JsonDate`.)
+
 ## JSON Schema and Union types
 
 We now know how to use our generated dotnet types in standard "serialization" scenarios. We have seen property accessors that, thanks to the implicit conversions, let us treat our JSON primitives as their dotnet equivalents: `string`, `bool`, and `null`, or even more sophisticated entities like `LocalDate`.
