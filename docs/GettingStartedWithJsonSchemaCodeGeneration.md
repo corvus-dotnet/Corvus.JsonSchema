@@ -1319,7 +1319,7 @@ Creating an instance of an array is also fairly simple. Remember that we generat
 
 > Sometimes, the collection of items in an array cannot be described by a single schema. Perhaps there is a different schema for items at different indices, for example. In those cases, this convenience method will *not* be emitted, and you should use `JsonArray.From()` instead. See below for examples of this.
 
-Let's use that to create an array of name elements.
+Let's use `PersonNameElementArray.From()` to create an array of name elements.
 
 ```csharp
 var otherNames = PersonNameElementArray.From("Margaret", "Nancy");
