@@ -2426,6 +2426,7 @@ namespace <#= Namespace #>
                 builder.Add(<#= property.DotnetPropertyName#>JsonPropertyName, <#= property.DotnetParameterName #>__);
             }            
         <#
+            }
         }
         #>
             return builder.ToImmutable();
