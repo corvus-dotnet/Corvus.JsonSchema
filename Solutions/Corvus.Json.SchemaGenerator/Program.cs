@@ -98,7 +98,8 @@
                         _ => new JsonSchema.TypeBuilder.Draft202012.JsonSchemaBuilder(walker)
                     };
 
-                if (!new JsonUri(schemaFile).IsValid())
+                var uri = new JsonUri(schemaFile);
+                if (!uri.IsValid() || uri.GetUri().IsFile)
                 {
                     // If this is, in fact, a local file path, not a uri, then convert to a fullpath and URI-style separators.
                     if (!Path.IsPathFullyQualified(schemaFile))
