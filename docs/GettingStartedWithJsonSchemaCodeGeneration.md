@@ -1400,13 +1400,12 @@ Incidentally, we don't have to use the `array` form for the `otherNames` propert
 
 *(don't add this code - it's just an example)*
 ```csharp
-Person audreyJones =
-    Person.Create(
-        name: PersonName.Create(
-                givenName: "Audrey",
-                otherNames: "Margaret Nancy",
-                familyName: "Jones"),
-        dateOfBirth: "1947-11-07");
+Person.Create(
+    name: PersonName.Create(
+            givenName: "Audrey",
+            otherNames: "Margaret Nancy",
+            familyName: "Jones"),
+    dateOfBirth: "1947-11-07");
 ```
 
 #### Optional v. Null
@@ -1463,153 +1462,96 @@ We've seen that object hierarchies are supported just as we'd expect for any dot
 
 Now, we're going to have a look at how we represent some more sophisticated JSON schema constraints. To do that we are going to examine the `otherNames` property on a `PersonName`.
 
----
+First, revert our code back to just our original example person, parsed from some JSON text.
 
-[TODO: This comes much later]
+```csharp
+using System.Text.Json;
+using Corvus.Json;
+using JsonSchemaSample.Api;
+using NodaTime;
 
-## Under the hood
+string jsonText = @"{
+    ""name"": {
+      ""familyName"": ""Oldroyd"",
+      ""givenName"": ""Michael"",
+      ""otherNames"": [""Francis"", ""James""]
+    },
+    ""dateOfBirth"": ""1944-07-14""
+}";
 
-Now that we've seen what we get from our basic code generation, let's take a deeper dive into what has happened under the hood, before we move on to look at some more advanced use cases. If you want to skip ahead, and come back to this later, feel free - but I think it is useful to get a better understanding of what is happening at this stage. It will help you in your JSON Schema design, and in understanding why 3rd party schema are producing the results they do.
+Person michaelOldroyd = JsonAny.Parse(jsonText);
+```
 
-### Naming
+Now, let's look at the `OtherNames` property in a bit more detail.
 
-You have seen that the tool has picked type names based on the structure of the schema document - in this case the property names in the `$defs` section, converted into valid, style-compliant C# names.
+We know from the schema that it can be an array type (`PersonNameElementArray`), or a string type (`PersonNameElement`). But how do we know which to choose?
 
-There is a heuristic to generate the "best" names it can, based on the structure of the document. So even a random third-party schema definition should produce fairly nice-looking, self-explanatory code.
+We've already seen the basic techniques available to use. Let's look at a few:
 
-> In general, you should favour *named, referenced elements* over *inline schema* to produce the most readable, self-documenting type and property names.
->
-> Use standard JSON conventions for naming in your schema - the tool will automatically translate into C# conventions for you, and avoid name collisions.
+We could check to see if the `ValueKind` is `Array` and cast on that basis.
 
-### What actually gets generated?
-
-The code generator walks the JSON schema document, starting at the provided `--rootPath`, and follows all the references it finds from that point on.
-
-This means that if we had entities defined in our Json Schema document that were *not* referenced by the entity we pick as our `--rootPath`, the tool would *not* generate code for them.
-
-This allows you to generate subsets of types for a given fragment of schema, and is one reason we encourage the `$defs` approach for all schema.
-
-If you reference the root of a document, you will walk the whole schema including the `$defs` in the root and generate types for everything in the document whether they are "needed" or not.
-
-> There are good reasons why you might want to take either approach - but recall that you *don't* have to generate all your types at the same time, into the same library, for them to be interoperable. So the need for "holisitc" generation is considerably reduced, and we recommend this "partial document" approach.
-
-### Nested types and namespaces
-Another consequence of choosing one style over the other is that the code generation will be slightly different.
-
-Recall the rule I mentioned above. Types are generated as nested types of their most immediate parent type. If no type is to be generated for any parent, then they are generated into the root namespace.
-
-So, a C# type generated from a schema placed in the `$defs` section of the root, and `$ref`-erencing schema in that same `$defs` section will, if set as the `--rootPath` to generate will have its type placed into the root namespace, and those referenced types will *also* be placed into the root alongside it (because no type has been generated for the schema that contains that `$defs` section). This is the case we have just seen.
-
-Whereas the *same schema* placed at the root of schema document will be placed into the root namespace, and `$ref`-erences that it makes to schema in its own `$defs` section will then be nested types of that root type (because its `$defs` section is scoped to a type that *has* been generated - the type found at the schema root.)
-
-Let's give that a try.
-
-First, edit the schema to move the `Person` schema up to the root. For your convenience, I've reproduced that here.
-
-```json
+```csharp
+if (michaelOldroyd.Name.OtherNames.ValueKind == JsonValueKind.Array)
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "JSON Schema for a Person entity coming back from a 3rd party API (e.g. a storage format in a database)",
-
-  "type": "object",  
-  "required":  ["name"],
-  "properties": {
-    "name": { "$ref": "#/$defs/PersonName" },
-    "dateOfBirth": {
-      "type": "string",
-      "format": "date"
-    }
-  },
-
-  "$defs": {
-    "PersonName": {
-      "type": "object",
-      "description": "A name of a person.",
-      "required": [ "familyName" ],
-      "properties": {
-        "givenName": {
-          "$ref": "#/$defs/PersonNameElement",
-          "description": "The person's given name."
-        },
-        "familyName": {
-          "$ref": "#/$defs/PersonNameElement",
-          "description": "The person's family name."
-        },
-        "otherNames": {
-          "$ref": "#/$defs/OtherNames",
-          "description": "Other (middle) names for the person"
-        }
-      }
-    },
-    "OtherNames": {
-        "oneOf": [
-            { "$ref": "#/$defs/PersonNameElement" },
-            { "$ref": "#/$defs/PersonNameElementArray" }
-        ] 
-    },
-    "PersonNameElementArray": {
-      "type": "array",
-      "items": {
-        "$ref": "#/$defs/PersonNameElement"
-      }
-    },
-    "PersonNameElement": {
-      "type": "string",
-      "minLength": 1,
-      "maxLength": 256
-    }
-  }
+    PersonNameElementArray otherNames = michaelOldroyd.Name.OtherNames.As<PersonNameElementArray>();
 }
 ```
 
-Let's delete the types we generated before. I'm using PowerShell as my terminal, so I can delete the C# files with:
+But that depends on us knowing that being an array value is enough to tell us what type the value is. That means having an intimiate knowledge of the existing schema. 
 
-```
-rm *.cs
-```
-
-If we now generate types for that schema, we don't need a `--rootPath`, but we *do* want to provide an explicit `--outputRootTypeName` (or we will get a fairly boring default value).
-
-```
-generatejsonschematypes --rootNamespace JsonSchemaSample.Api --outputRootTypeName Person --useSchema Draft202012 person-from-api.json
-```
-
-If you list the generated files now, you'll see that we only have 1 file.
-
-```
-Name
-----
-  Person.cs
-```
-
-If you inspect the contents of that file, you'll find that we have our Person type at the root
+A more general approach might be to cast to the desired target type (`PersonNameElementArray`) and check whether it is valid
 
 ```csharp
-public readonly struct Person
+if (michaelOldroyd.Name.OtherNames.As<PersonNameElementArray>().IsValid())
+{
+    PersonNameElementArray otherNames = michaelOldroyd.Name.OtherNames.As<PersonNameElementArray>();
+}
 ```
 
-with nested type definitions called things like
+That's a little better, but it still depends on us knowing what type the property *might* be (i.e. remembering what is in the schema).
+
+> Both of these are the kind of thing you might do with `JsonAny` with unschematized data. (Or, indeed, the raw `JsonElement` itself.)
+
+Fortunately, the code generator has helped us out with some additional members on our `OtherNames` type.
+
+Let's remind ourselves of the schema for `OtherNames` again.
+
+```json
+"OtherNames": {
+    "oneOf": [
+        { "$ref": "#/$defs/PersonNameElement" },
+        { "$ref": "#/$defs/PersonNameElementArray" }
+    ] 
+}
+```
+
+Because it uses the `anyOf` syntax, the code generator has recognized that `OtherNames` is a *union* of the `PersonNameElement` and `PersonNameElementArray` types.
+
+So it has generated us some properties of the form `Is<UnionTypeName>` and `As<UnionTypeName>`.
+
+In this case, they are `IsPersonNameElement` and `AsPersonNameElement`, and their array equivalents `IsPersonNameElementArray` and `AsPersonNameElementArray`.
+
+So, the most discoverable way to write the code above might be
 
 ```csharp
-public readonly struct PersonNameElementValue
+
+OtherNames otherNames;
+if (otherNames.IsPersonNameElementArray)
+{
+    PersonNameElementArray otherNamesArray = otherNames.AsPersonNameElementArray;
+    
+    // Use the array
+    otherNamesArray.EnumerateArray();
+}
 ```
 
-and
+This test-and-use pattern is so common, that we also add a conditional cast method.
 
 ```csharp
-public readonly struct PersonNameElementValueArray
+
+if (michaelOldroyd.Name.OtherNames.TryAsPersonNameElementArray(out PersonNameElementArray element))
+{
+    // Use the array
+    element.EnumerateArray();
+}
 ```
-
-#### Common suffixes
-
-Why the difference in naming from the types that appeared in the root namespace? Where do these `Value` and `Array` suffixes come into it?
-
-This was a choice to maintain consistency in naming.
-
-For schema defintions for properties, we generate the type name for the nested type based on the property name and the suffix `Value` (for a simple `string`, `number`, or `bool`); or `Entity` (for more complex types). Schemas that are simple `array`s will typically be named for the name of the type generated from its `items` schema, with the suffix `Array`.
-
-The suffix helps us avoid the naming clash between the property name and the type of the property that would otherwise occur.
-
-When those nested types are defined in `$ref`-enced schema, we simply take the property name we would have generated if it were emitted at the root, and append the corresponding suffix.
-
-We find that this helps give you some cognitive clues as to where types are defined and help prevent you getting lost in what can be quite complex type hierarchies for larger schema.
