@@ -1960,6 +1960,16 @@ public partial class SchemaEntity201909
     }
 
     /// <summary>
+    /// Determines whether a particular child type declaration is a constant value.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration to check.</param>
+    /// <returns><c>True</c> if the type declaration represents a const value.</returns>
+    public static bool IsConst(TypeDeclaration typeDeclaration)
+    {
+        return typeDeclaration.Schema.Const.IsNotUndefined();
+    }
+
+    /// <summary>
     /// Emits code for the UTF8 encoded byte array for the given string.
     /// </summary>
     /// <param name="name">The string to encode.</param>
