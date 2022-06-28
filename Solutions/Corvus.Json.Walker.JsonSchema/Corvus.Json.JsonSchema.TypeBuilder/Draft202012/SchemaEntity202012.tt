@@ -2427,15 +2427,6 @@ namespace <#= Namespace #>
                 builder.Add(<#= property.DotnetPropertyName#>JsonPropertyName, <#= property.DotnetParameterName #>__);
             }            
         <#
-            if (IsConst(property.Type))
-            {
-        #>
-            else
-            {
-                builder.Add(<#= property.DotnetPropertyName#>JsonPropertyName, new <#= property.Type.FullyQualifiedDotnetTypeName #>());
-            }
-        <#
-            }
         }
         #>
             return builder.ToImmutable();
