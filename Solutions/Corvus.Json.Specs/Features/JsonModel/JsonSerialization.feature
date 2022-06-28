@@ -1,6 +1,37 @@
 ﻿Feature: JsonSerialization
 	Writing entities
 
+Scenario Outline: Serialize a jsonelement-backed JsonAny to a string
+	Given the JsonElement backed JsonAny <jsonValue>
+	When the json value is round-trip serialized via a string
+	Then the round-tripped result should be <type>
+	And the round-tripped result should be equal to the JsonAny <jsonValue>
+
+	Examples:
+		| jsonValue                               | type      |
+		| {"foo": 3, "bar": "hello", "baz": null} | an Object |
+		| [1,2,"3",4.0]                           | an Array  |
+		| true                                    | a Boolean |
+		| "Hello world"                           | a String  |
+		| 3.2                                     | a Number  |
+		| null                                    | Null      |
+
+Scenario Outline: Serialize a dotnet-backed JsonAny to a string
+	Given the dotnet backed JsonAny <jsonValue>
+	When the json value is round-trip serialized via a string
+	Then the round-tripped result should be <type>
+	And the round-tripped result should be equal to the JsonAny <jsonValue>
+
+	Examples:
+		| jsonValue                               | type      |
+		| {"foo": 3, "bar": "hello", "baz": null} | an Object |
+		| [1,2,"3",4.0]                           | an Array  |
+		| true                                    | a Boolean |
+		| "Hello world"                           | a String  |
+		| 3.2                                     | a Number  |
+		| null                                    | Null      |
+
+
 Scenario Outline: Write a jsonelement-backed JsonAny to a string
 	Given the JsonElement backed JsonAny <jsonValue>
 	When the json value is round-tripped via a string

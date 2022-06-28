@@ -5,7 +5,7 @@
 Scenario Outline: Equals for json element backed value as a ipV4
 	Given the JsonElement backed JsonIpV4 <jsonValue>
 	When I compare it to the ipV4 <value>
-	Then the result should be <result>
+	Then the result should be exactly <result>
 
 	Examples:
 		| jsonValue     | value         | result |
@@ -17,7 +17,7 @@ Scenario Outline: Equals for json element backed value as a ipV4
 Scenario Outline: Equals for dotnet backed value as a ipV4
 	Given the dotnet backed JsonIpV4 <jsonValue>
 	When I compare it to the ipV4 <value>
-	Then the result should be <result>
+	Then the result should be exactly <result>
 
 	Examples:
 		| jsonValue     | value         | result |
@@ -27,7 +27,7 @@ Scenario Outline: Equals for dotnet backed value as a ipV4
 Scenario Outline: Equals for ipV4 json element backed value as an IJsonValue
 	Given the JsonElement backed JsonIpV4 <jsonValue>
 	When I compare the ipV4 to the IJsonValue <value>
-	Then the result should be <result>
+	Then the result should be exactly <result>
 
 	Examples:
 		| jsonValue     | value                          | result |
@@ -54,7 +54,7 @@ Scenario Outline: Equals for ipV4 json element backed value as an IJsonValue
 Scenario Outline: Equals for ipV4 dotnet backed value as an IJsonValue
 	Given the dotnet backed JsonIpV4 <jsonValue>
 	When I compare the ipV4 to the IJsonValue <value>
-	Then the result should be <result>
+	Then the result should be exactly <result>
 
 	Examples:
 		| jsonValue     | value                          | result |
@@ -81,7 +81,7 @@ Scenario Outline: Equals for ipV4 dotnet backed value as an IJsonValue
 Scenario Outline: Equals for ipV4 json element backed value as an object
 	Given the JsonElement backed JsonIpV4 <jsonValue>
 	When I compare the ipV4 to the object <value>
-	Then the result should be <result>
+	Then the result should be exactly <result>
 
 	Examples:
 		| jsonValue     | value                          | result |
@@ -109,7 +109,7 @@ Scenario Outline: Equals for ipV4 json element backed value as an object
 Scenario Outline: Equals for ipV4 dotnet backed value as an object
 	Given the dotnet backed JsonIpV4 <jsonValue>
 	When I compare the ipV4 to the object <value>
-	Then the result should be <result>
+	Then the result should be exactly <result>
 
 	Examples:
 		| jsonValue     | value                          | result |

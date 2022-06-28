@@ -8,6 +8,7 @@ namespace Corvus.Json.UriTemplates
     using System;
     using System.Collections.Immutable;
     using System.Text;
+    using System.Text.Json;
 
     /// <summary>
     /// A result builder for a parameter set in a URI template.
@@ -195,7 +196,7 @@ namespace Corvus.Json.UriTemplates
         public void AppendValue(JsonAny value, int prefixLength, bool allowReserved)
         {
             ReadOnlySpan<char> valueString;
-            valueString = value.ToString();
+            valueString = ToUriTemplateString(value);
 
             if (prefixLength != 0)
             {
@@ -208,6 +209,19 @@ namespace Corvus.Json.UriTemplates
             Span<char> result = stackalloc char[Encoding.UTF8.GetMaxByteCount(valueString.Length) * 3];
             int written = Encode(valueString, result, allowReserved);
             this.result.Append(result[..written]);
+        }
+
+        private static string ToUriTemplateString(JsonAny value)
+        {
+            return value.ValueKind switch
+            {
+                JsonValueKind.True => "true",
+                JsonValueKind.False => "false",
+                JsonValueKind.Number => value.AsNumber.GetDouble().ToString(),
+                JsonValueKind.String => value.AsString.GetString(),
+                JsonValueKind.Null => "null",
+                _ => string.Empty,
+            };
         }
 
         private static int Encode(ReadOnlySpan<char> p, Span<char> result, bool allowReserved)

@@ -816,18 +816,7 @@ namespace Corvus.Json
         /// <inheritdoc/>
         public override string ToString()
         {
-            JsonValueKind valueKind = this.ValueKind;
-
-            return valueKind switch
-            {
-                JsonValueKind.Object => this.AsObject.ToString(),
-                JsonValueKind.Array => this.AsArray.ToString(),
-                JsonValueKind.Number => this.AsNumber.ToString(),
-                JsonValueKind.String => this.AsString.ToString(),
-                JsonValueKind.True or JsonValueKind.False => this.AsBoolean.ToString(),
-                JsonValueKind.Null => "null",
-                _ => "undefined",
-            };
+            return this.Serialize();
         }
 
         /// <inheritdoc/>

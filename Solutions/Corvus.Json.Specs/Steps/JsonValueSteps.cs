@@ -119,6 +119,16 @@ namespace Steps
         }
 
         /// <summary>
+        /// Serializes an <see cref="IJsonValue"/> from the context variable <see cref="SubjectUnderTest"/>, using <see cref="JsonValueExtensions.Serialize{TValue}(TValue)"/>, and deserializes and stores the resulting <see cref="JsonAny"/> in the context variable <see cref="SerializationResult"/>.
+        /// </summary>
+        [When(@"the json value is round-trip serialized via a string")]
+        public void WhenTheJsonValueIsRound_TripSerializedViaAString()
+        {
+            JsonAny sut = this.scenarioContext.Get<IJsonValue>(SubjectUnderTest).AsAny;
+            this.scenarioContext.Set(JsonAny.ParseUriValue(sut.Serialize()), SerializationResult);
+        }
+
+        /// <summary>
         /// Compares the string from the context variable <see cref="SerializationResult"/> with the expected value.
         /// </summary>
         /// <param name="expected">The expected value.</param>

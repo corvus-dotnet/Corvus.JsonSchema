@@ -5,7 +5,7 @@
 Scenario Outline: Equals for json element backed value as a base64content
 	Given the JsonElement backed JsonBase64Content <jsonValue>
 	When I compare it to the base64content <value>
-	Then the result should be <result>
+	Then the result should be exactly <result>
 
 	Examples:
 		| jsonValue                      | value                          | result |
@@ -17,7 +17,7 @@ Scenario Outline: Equals for json element backed value as a base64content
 Scenario Outline: Equals for dotnet backed value as a base64content
 	Given the dotnet backed JsonBase64Content <jsonValue>
 	When I compare it to the base64content <value>
-	Then the result should be <result>
+	Then the result should be exactly <result>
 
 	Examples:
 		| jsonValue                      | value                          | result |
@@ -27,7 +27,7 @@ Scenario Outline: Equals for dotnet backed value as a base64content
 Scenario Outline: Equals for base64content json element backed value as an IJsonValue
 	Given the JsonElement backed JsonBase64Content <jsonValue>
 	When I compare the base64content to the IJsonValue <value>
-	Then the result should be <result>
+	Then the result should be exactly <result>
 
 	Examples:
 		| jsonValue                      | value                          | result |
@@ -53,7 +53,7 @@ Scenario Outline: Equals for base64content json element backed value as an IJson
 Scenario Outline: Equals for base64content dotnet backed value as an IJsonValue
 	Given the dotnet backed JsonBase64Content <jsonValue>
 	When I compare the base64content to the IJsonValue <value>
-	Then the result should be <result>
+	Then the result should be exactly <result>
 
 	Examples:
 		| jsonValue                      | value                          | result |
@@ -79,7 +79,7 @@ Scenario Outline: Equals for base64content dotnet backed value as an IJsonValue
 Scenario Outline: Equals for base64content json element backed value as an object
 	Given the JsonElement backed JsonBase64Content <jsonValue>
 	When I compare the base64content to the object <value>
-	Then the result should be <result>
+	Then the result should be exactly <result>
 
 	Examples:
 		| jsonValue                      | value                          | result |
@@ -107,7 +107,7 @@ Scenario Outline: Equals for base64content json element backed value as an objec
 Scenario Outline: Equals for base64content dotnet backed value as an object
 	Given the dotnet backed JsonBase64Content <jsonValue>
 	When I compare the base64content to the object <value>
-	Then the result should be <result>
+	Then the result should be exactly <result>
 
 	Examples:
 		| jsonValue                      | value                          | result |

@@ -5,7 +5,7 @@
 Scenario Outline: Equals for json element backed value as a idnEmail
 	Given the JsonElement backed JsonIdnEmail <jsonValue>
 	When I compare it to the idnEmail <value>
-	Then the result should be <result>
+	Then the result should be exactly <result>
 
 	Examples:
 		| jsonValue          | value              | result |
@@ -18,7 +18,7 @@ Scenario Outline: Equals for json element backed value as a idnEmail
 Scenario Outline: Equals for dotnet backed value as a idnEmail
 	Given the dotnet backed JsonIdnEmail <jsonValue>
 	When I compare it to the idnEmail <value>
-	Then the result should be <result>
+	Then the result should be exactly <result>
 
 	Examples:
 		| jsonValue          | value              | result |
@@ -29,7 +29,7 @@ Scenario Outline: Equals for dotnet backed value as a idnEmail
 Scenario Outline: Equals for idnEmail json element backed value as an IJsonValue
 	Given the JsonElement backed JsonIdnEmail <jsonValue>
 	When I compare the idnEmail to the IJsonValue <value>
-	Then the result should be <result>
+	Then the result should be exactly <result>
 
 	Examples:
 		| jsonValue          | value                          | result |
@@ -56,7 +56,7 @@ Scenario Outline: Equals for idnEmail json element backed value as an IJsonValue
 Scenario Outline: Equals for idnEmail dotnet backed value as an IJsonValue
 	Given the dotnet backed JsonIdnEmail <jsonValue>
 	When I compare the idnEmail to the IJsonValue <value>
-	Then the result should be <result>
+	Then the result should be exactly <result>
 
 	Examples:
 		| jsonValue          | value                          | result |
@@ -82,7 +82,7 @@ Scenario Outline: Equals for idnEmail dotnet backed value as an IJsonValue
 Scenario Outline: Equals for idnEmail json element backed value as an object
 	Given the JsonElement backed JsonIdnEmail <jsonValue>
 	When I compare the idnEmail to the object <value>
-	Then the result should be <result>
+	Then the result should be exactly <result>
 
 	Examples:
 		| jsonValue          | value                          | result |
@@ -110,7 +110,7 @@ Scenario Outline: Equals for idnEmail json element backed value as an object
 Scenario Outline: Equals for idnEmail dotnet backed value as an object
 	Given the dotnet backed JsonIdnEmail <jsonValue>
 	When I compare the idnEmail to the object <value>
-	Then the result should be <result>
+	Then the result should be exactly <result>
 
 	Examples:
 		| jsonValue          | value                          | result |

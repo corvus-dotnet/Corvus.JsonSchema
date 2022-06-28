@@ -459,14 +459,7 @@ namespace Corvus.Json
         /// <inheritdoc/>
         public override string ToString()
         {
-            var abw = new ArrayBufferWriter<byte>();
-            using var writer = new Utf8JsonWriter(abw);
-            this.WriteTo(writer);
-            writer.Flush();
-
-            Span<char> chars = stackalloc char[Encoding.UTF8.GetMaxCharCount(abw.WrittenCount)];
-            Encoding.UTF8.GetChars(abw.WrittenSpan, chars);
-            return new string(chars);
+            return this.Serialize();
         }
 
         /// <summary>
