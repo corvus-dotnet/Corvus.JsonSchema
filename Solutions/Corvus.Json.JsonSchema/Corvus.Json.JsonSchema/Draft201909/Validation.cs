@@ -1429,6 +1429,12 @@ namespace Corvus.Json.JsonSchema.Draft201909
         }
 
         /// <inheritdoc/>
+        public override string ToString()
+        {
+            return this.Serialize();
+        }
+
+        /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
             if (obj is IJsonValue jv)
@@ -2242,6 +2248,12 @@ namespace Corvus.Json.JsonSchema.Draft201909
             }
 
             /// <inheritdoc/>
+            public override string ToString()
+            {
+                return this.Serialize();
+            }
+
+            /// <inheritdoc/>
             public override bool Equals(object? obj)
             {
                 if (obj is IJsonValue jv)
@@ -2656,6 +2668,12 @@ namespace Corvus.Json.JsonSchema.Draft201909
             public static bool operator !=(NonNegativeIntegerValue lhs, NonNegativeIntegerValue rhs)
             {
                 return !lhs.Equals(rhs);
+            }
+
+            /// <inheritdoc/>
+            public override string ToString()
+            {
+                return this.Serialize();
             }
 
             /// <inheritdoc/>
@@ -3146,6 +3164,12 @@ namespace Corvus.Json.JsonSchema.Draft201909
             }
 
             /// <inheritdoc/>
+            public override string ToString()
+            {
+                return this.Serialize();
+            }
+
+            /// <inheritdoc/>
             public override bool Equals(object? obj)
             {
                 if (obj is IJsonValue jv)
@@ -3482,6 +3506,12 @@ namespace Corvus.Json.JsonSchema.Draft201909
             public static bool operator !=(UniqueItemsValue lhs, UniqueItemsValue rhs)
             {
                 return !lhs.Equals(rhs);
+            }
+
+            /// <inheritdoc/>
+            public override string ToString()
+            {
+                return this.Serialize();
             }
 
             /// <inheritdoc/>
@@ -3966,6 +3996,12 @@ namespace Corvus.Json.JsonSchema.Draft201909
             }
 
             /// <inheritdoc/>
+            public override string ToString()
+            {
+                return this.Serialize();
+            }
+
+            /// <inheritdoc/>
             public override bool Equals(object? obj)
             {
                 if (obj is IJsonValue jv)
@@ -4378,6 +4414,12 @@ namespace Corvus.Json.JsonSchema.Draft201909
             public static JsonStringArray From(Corvus.Json.JsonString item1, Corvus.Json.JsonString item2, Corvus.Json.JsonString item3, Corvus.Json.JsonString item4)
             {
                 return new JsonStringArray(ImmutableList.Create((JsonAny)item1, (JsonAny)item2, (JsonAny)item3, (JsonAny)item4));
+            }
+
+            /// <inheritdoc/>
+            public override string ToString()
+            {
+                return this.Serialize();
             }
 
             /// <inheritdoc/>
@@ -4916,6 +4958,12 @@ namespace Corvus.Json.JsonSchema.Draft201909
             public static bool operator !=(DependentRequiredValue lhs, DependentRequiredValue rhs)
             {
                 return !lhs.Equals(rhs);
+            }
+
+            /// <inheritdoc/>
+            public override string ToString()
+            {
+                return this.Serialize();
             }
 
             /// <inheritdoc/>
@@ -5508,6 +5556,12 @@ namespace Corvus.Json.JsonSchema.Draft201909
             public static JsonAnyArray From(JsonAny item1, JsonAny item2, JsonAny item3, JsonAny item4)
             {
                 return new JsonAnyArray(ImmutableList.Create(item1, item2, item3, item4));
+            }
+
+            /// <inheritdoc/>
+            public override string ToString()
+            {
+                return this.Serialize();
             }
 
             /// <inheritdoc/>
@@ -6365,6 +6419,12 @@ namespace Corvus.Json.JsonSchema.Draft201909
             }
 
             /// <inheritdoc/>
+            public override string ToString()
+            {
+                return this.Serialize();
+            }
+
+            /// <inheritdoc/>
             public override bool Equals(object? obj)
             {
                 if (obj is IJsonValue jv)
@@ -6985,6 +7045,12 @@ namespace Corvus.Json.JsonSchema.Draft201909
                 }
 
                 /// <inheritdoc/>
+                public override string ToString()
+                {
+                    return this.Serialize();
+                }
+
+                /// <inheritdoc/>
                 public override bool Equals(object? obj)
                 {
                     if (obj is IJsonValue jv)
@@ -7593,6 +7659,12 @@ namespace Corvus.Json.JsonSchema.Draft201909
             public static bool operator !=(SimpleTypesEntity lhs, SimpleTypesEntity rhs)
             {
                 return !lhs.Equals(rhs);
+            }
+
+            /// <inheritdoc/>
+            public override string ToString()
+            {
+                return this.Serialize();
             }
 
             /// <inheritdoc/>
