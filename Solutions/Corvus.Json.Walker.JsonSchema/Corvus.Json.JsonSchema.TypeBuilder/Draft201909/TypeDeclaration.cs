@@ -347,12 +347,27 @@ namespace Corvus.Json.JsonSchema.TypeBuilder.Draft201909
             int index = this.properties.IndexOf(propertyDeclaration, PropertyDeclarationEqualityComparer.Instance);
             if (index >= 0)
             {
-                this.properties = this.properties.SetItem(index, propertyDeclaration);
+                this.MergeProperties(index, propertyDeclaration);
             }
             else
             {
                 this.properties = this.properties.Add(propertyDeclaration);
             }
+        }
+
+        private void MergeProperties(int index, PropertyDeclaration propertyDeclaration)
+        {
+            PropertyDeclaration? original = this.properties[index];
+
+            // Merge whether this is a required property with the parent
+            var propertyToAdd =
+                new PropertyDeclaration(
+                    propertyDeclaration.Type,
+                    propertyDeclaration.JsonPropertyName,
+                    propertyDeclaration.IsRequired || original.IsRequired,
+                    propertyDeclaration.IsDefinedInLocalScope);
+
+            this.properties = this.properties.SetItem(index, propertyToAdd);
         }
 
         /// <summary>
