@@ -355,21 +355,6 @@ namespace Corvus.Json.JsonSchema.TypeBuilder.Draft201909
             }
         }
 
-        private void MergeProperties(int index, PropertyDeclaration propertyDeclaration)
-        {
-            PropertyDeclaration? original = this.properties[index];
-
-            // Merge whether this is a required property with the parent
-            var propertyToAdd =
-                new PropertyDeclaration(
-                    propertyDeclaration.Type,
-                    propertyDeclaration.JsonPropertyName,
-                    propertyDeclaration.IsRequired || original.IsRequired,
-                    propertyDeclaration.IsDefinedInLocalScope);
-
-            this.properties = this.properties.SetItem(index, propertyToAdd);
-        }
-
         /// <summary>
         /// Normalizes the property set, ensuring we don't have any duplicate types or names.
         /// </summary>
@@ -458,6 +443,21 @@ namespace Corvus.Json.JsonSchema.TypeBuilder.Draft201909
             }
 
             this.Namespace = ns;
+        }
+
+        private void MergeProperties(int index, PropertyDeclaration propertyDeclaration)
+        {
+            PropertyDeclaration? original = this.properties[index];
+
+            // Merge whether this is a required property with the parent
+            var propertyToAdd =
+                new PropertyDeclaration(
+                    propertyDeclaration.Type,
+                    propertyDeclaration.JsonPropertyName,
+                    propertyDeclaration.IsRequired || original.IsRequired,
+                    propertyDeclaration.IsDefinedInLocalScope);
+
+            this.properties = this.properties.SetItem(index, propertyToAdd);
         }
 
         private class PropertyDeclarationEqualityComparer : IEqualityComparer<PropertyDeclaration>
