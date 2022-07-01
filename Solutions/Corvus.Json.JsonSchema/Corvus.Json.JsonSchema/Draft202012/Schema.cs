@@ -4362,6 +4362,12 @@ namespace Corvus.Json.JsonSchema.Draft202012
         }
 
         /// <inheritdoc/>
+        public override string ToString()
+        {
+            return this.Serialize();
+        }
+
+        /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
             if (obj is IJsonValue jv)
@@ -5153,6 +5159,12 @@ namespace Corvus.Json.JsonSchema.Draft202012
             }
 
             /// <inheritdoc/>
+            public override string ToString()
+            {
+                return this.Serialize();
+            }
+
+            /// <inheritdoc/>
             public override bool Equals(object? obj)
             {
                 if (obj is IJsonValue jv)
@@ -5672,6 +5684,12 @@ namespace Corvus.Json.JsonSchema.Draft202012
             public static bool operator !=(DependenciesValue lhs, DependenciesValue rhs)
             {
                 return !lhs.Equals(rhs);
+            }
+
+            /// <inheritdoc/>
+            public override string ToString()
+            {
+                return this.Serialize();
             }
 
             /// <inheritdoc/>
@@ -6728,6 +6746,12 @@ namespace Corvus.Json.JsonSchema.Draft202012
                 public static AdditionalPropertiesEntity From(JsonAny item1, JsonAny item2, JsonAny item3, JsonAny item4)
                 {
                     return new AdditionalPropertiesEntity(ImmutableList.Create(item1, item2, item3, item4));
+                }
+
+                /// <inheritdoc/>
+                public override string ToString()
+                {
+                    return this.Serialize();
                 }
 
                 /// <inheritdoc/>

@@ -802,6 +802,12 @@ namespace Corvus.Json.JsonSchema.Draft202012
         }
 
         /// <inheritdoc/>
+        public override string ToString()
+        {
+            return this.Serialize();
+        }
+
+        /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
             if (obj is IJsonValue jv)
@@ -1463,6 +1469,12 @@ namespace Corvus.Json.JsonSchema.Draft202012
             }
 
             /// <inheritdoc/>
+            public override string ToString()
+            {
+                return this.Serialize();
+            }
+
+            /// <inheritdoc/>
             public override bool Equals(object? obj)
             {
                 if (obj is IJsonValue jv)
@@ -1853,6 +1865,12 @@ namespace Corvus.Json.JsonSchema.Draft202012
             }
 
             /// <inheritdoc/>
+            public override string ToString()
+            {
+                return this.Serialize();
+            }
+
+            /// <inheritdoc/>
             public override bool Equals(object? obj)
             {
                 if (obj is IJsonValue jv)
@@ -2195,6 +2213,12 @@ namespace Corvus.Json.JsonSchema.Draft202012
             public static bool operator !=(VocabularyValue lhs, VocabularyValue rhs)
             {
                 return !lhs.Equals(rhs);
+            }
+
+            /// <inheritdoc/>
+            public override string ToString()
+            {
+                return this.Serialize();
             }
 
             /// <inheritdoc/>
@@ -2723,6 +2747,12 @@ namespace Corvus.Json.JsonSchema.Draft202012
             public static bool operator !=(DefsValue lhs, DefsValue rhs)
             {
                 return !lhs.Equals(rhs);
+            }
+
+            /// <inheritdoc/>
+            public override string ToString()
+            {
+                return this.Serialize();
             }
 
             /// <inheritdoc/>
