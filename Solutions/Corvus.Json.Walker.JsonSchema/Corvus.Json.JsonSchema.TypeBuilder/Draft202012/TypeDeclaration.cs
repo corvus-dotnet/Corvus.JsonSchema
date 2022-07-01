@@ -2,6 +2,9 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+#pragma warning disable SA1000 // new() construct upsets old StyleCop
+#pragma warning disable SA1008 // parens inside the new slicing syntax upsets old StyleCop
+
 namespace Corvus.Json.JsonSchema.TypeBuilder.Draft202012
 {
     using System;
@@ -230,7 +233,7 @@ namespace Corvus.Json.JsonSchema.TypeBuilder.Draft202012
                     int lastSlash = reference.Path.LastIndexOf('/');
                     if (lastSlash == reference.Path.Length - 1 && lastSlash > 0)
                     {
-                        lastSlash = reference.Path[.. (lastSlash - 1)].LastIndexOf('/');
+                        lastSlash = reference.Path[..(lastSlash - 1)].LastIndexOf('/');
                         ReadOnlySpan<char> dnt = Formatting.ToPascalCaseWithReservedWords(reference.Path[(lastSlash + 1)..].ToString());
                         this.DotnetTypeName = dnt.ToString();
                     }
@@ -262,7 +265,7 @@ namespace Corvus.Json.JsonSchema.TypeBuilder.Draft202012
                     int lastSlash = reference.Fragment.LastIndexOf('/');
                     if (char.IsDigit(reference.Fragment[lastSlash + 1]) && lastSlash > 0)
                     {
-                        int previousSlash = reference.Fragment[.. (lastSlash - 1)].LastIndexOf('/');
+                        int previousSlash = reference.Fragment[..(lastSlash - 1)].LastIndexOf('/');
                         if (previousSlash >= 0)
                         {
                             lastSlash = previousSlash;
@@ -272,8 +275,8 @@ namespace Corvus.Json.JsonSchema.TypeBuilder.Draft202012
                     }
                     else if (reference.Fragment[(lastSlash + 1)..].SequenceEqual("items") && lastSlash > 0)
                     {
-                        int previousSlash = reference.Fragment[.. (lastSlash - 1)].LastIndexOf('/');
-                        typename = Formatting.ToPascalCaseWithReservedWords(reference.Fragment[(previousSlash + 1) .. lastSlash].ToString());
+                        int previousSlash = reference.Fragment[..(lastSlash - 1)].LastIndexOf('/');
+                        typename = Formatting.ToPascalCaseWithReservedWords(reference.Fragment[(previousSlash + 1)..lastSlash].ToString());
                     }
                     else
                     {
@@ -285,12 +288,12 @@ namespace Corvus.Json.JsonSchema.TypeBuilder.Draft202012
                     int lastSlash = reference.Path.LastIndexOf('/');
                     if (lastSlash == reference.Path.Length - 1)
                     {
-                        lastSlash = reference.Path[.. (lastSlash - 1)].LastIndexOf('/');
+                        lastSlash = reference.Path[..(lastSlash - 1)].LastIndexOf('/');
                     }
 
                     if (char.IsDigit(reference.Path[lastSlash + 1]))
                     {
-                        int previousSlash = reference.Path[.. (lastSlash - 1)].LastIndexOf('/');
+                        int previousSlash = reference.Path[..(lastSlash - 1)].LastIndexOf('/');
                         if (previousSlash >= 0)
                         {
                             lastSlash = previousSlash;
@@ -347,7 +350,7 @@ namespace Corvus.Json.JsonSchema.TypeBuilder.Draft202012
             int index = this.properties.IndexOf(propertyDeclaration, PropertyDeclarationEqualityComparer.Instance);
             if (index >= 0)
             {
-                this.properties = this.properties.SetItem(index, propertyDeclaration);
+                this.MergeProperties(index, propertyDeclaration);
             }
             else
             {
@@ -382,12 +385,12 @@ namespace Corvus.Json.JsonSchema.TypeBuilder.Draft202012
                 baseName.CopyTo(name);
                 int suffixLength = 0;
                 int index = 1;
-                string nameString = name[.. (baseName.Length + suffixLength)].ToString();
+                string nameString = name[..(baseName.Length + suffixLength)].ToString();
                 while (existingNames.Contains(nameString))
                 {
                     index.TryFormat(name[baseName.Length..], out suffixLength);
                     index++;
-                    nameString = name[.. (baseName.Length + suffixLength)].ToString();
+                    nameString = name[..(baseName.Length + suffixLength)].ToString();
                 }
 
                 existingNames.Add(nameString);
@@ -445,9 +448,24 @@ namespace Corvus.Json.JsonSchema.TypeBuilder.Draft202012
             this.Namespace = ns;
         }
 
+        private void MergeProperties(int index, PropertyDeclaration propertyDeclaration)
+        {
+            PropertyDeclaration? original = this.properties[index];
+
+            // Merge whether this is a required property with the parent
+            var propertyToAdd =
+                new PropertyDeclaration(
+                    propertyDeclaration.Type,
+                    propertyDeclaration.JsonPropertyName,
+                    propertyDeclaration.IsRequired || original.IsRequired,
+                    propertyDeclaration.IsDefinedInLocalScope);
+
+            this.properties = this.properties.SetItem(index, propertyToAdd);
+        }
+
         private class PropertyDeclarationEqualityComparer : IEqualityComparer<PropertyDeclaration>
         {
-            public static readonly PropertyDeclarationEqualityComparer Instance = new ();
+            public static readonly PropertyDeclarationEqualityComparer Instance = new();
 
             public bool Equals(PropertyDeclaration? x, PropertyDeclaration? y)
             {

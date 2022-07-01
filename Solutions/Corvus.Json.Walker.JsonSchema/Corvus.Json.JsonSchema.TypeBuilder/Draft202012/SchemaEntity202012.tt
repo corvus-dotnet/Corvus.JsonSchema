@@ -252,6 +252,62 @@ namespace <#= Namespace #>
     }
     #>
 
+    <#
+    if (HasConst)
+    {
+    #>
+        /// <summary>
+        /// Initializes a new instance of the <see cref="<#= TypeDeclaration.DotnetTypeName #>"/> struct.
+        /// </summary>
+        public <#= TypeDeclaration.DotnetTypeName #>()
+        {
+            this.jsonElementBacking = __CorvusConstValue.jsonElementBacking;
+    <#
+    if(IsImplicitObject)
+    {
+    #>
+            this.objectBacking = __CorvusConstValue.objectBacking;
+    <#
+    }
+    #>
+    <#
+    if(IsImplicitArray)
+    {
+    #>
+            this.arrayBacking = __CorvusConstValue.arrayBacking;
+    <#
+    }
+    #>
+    <#
+    if(IsImplicitNumber)
+    {
+    #>
+            this.numberBacking = __CorvusConstValue.numberBacking;
+    <#
+    }
+    #>
+    <#
+    if(IsImplicitString)
+    {
+    #>
+            this.stringBacking = __CorvusConstValue.stringBacking;
+    <#
+    }
+    #>
+    <#
+    if(IsImplicitBoolean)
+    {
+    #>
+            this.booleanBacking = __CorvusConstValue.booleanBacking;
+    <#
+    }
+    #>
+        }
+
+    <#
+    }
+    #>
+
         /// <summary>
         /// Initializes a new instance of the <see cref="<#= TypeDeclaration.DotnetTypeName #>"/> struct.
         /// </summary>
@@ -2309,17 +2365,20 @@ namespace <#= Namespace #>
         bool isFirstCreateParameter = true;
         foreach(var property in RequiredAllOfAndRefProperties)
         {
-            if (isFirstCreateParameter)
-            {
-                isFirstCreateParameter = false;
-            }
-            else
-            {
+            if (!IsConst(property.Type))
+            {           
+                if (isFirstCreateParameter)
+                {
+                    isFirstCreateParameter = false;
+                }
+                else
+                {
         #>, <#
-            }
+                }
         #>
            <#= property.Type.FullyQualifiedDotnetTypeName #> <#= property.DotnetParameterName #>
         <#
+            }
         }
         #>
         <#
@@ -2345,9 +2404,18 @@ namespace <#= Namespace #>
         <#
         foreach(var property in RequiredAllOfAndRefProperties)
         {
+            if (IsConst(property.Type))
+            {
+        #>
+            builder.Add(<#= property.DotnetPropertyName#>JsonPropertyName, new <#= property.Type.FullyQualifiedDotnetTypeName #>());
+        <#
+            }
+            else
+            {
         #>
             builder.Add(<#= property.DotnetPropertyName#>JsonPropertyName, <#= property.DotnetParameterName #>);
         <#
+            }
         }
         #>
         <#
@@ -2357,7 +2425,7 @@ namespace <#= Namespace #>
             if (<#= property.DotnetParameterName #> is <#= property.Type.FullyQualifiedDotnetTypeName #> <#= property.DotnetParameterName #>__)
             {
                 builder.Add(<#= property.DotnetPropertyName#>JsonPropertyName, <#= property.DotnetParameterName #>__);
-            }
+            }            
         <#
         }
         #>
@@ -2367,6 +2435,10 @@ namespace <#= Namespace #>
         <#
         foreach(var property in Properties)
         {
+            if (IsConst(property.Type))
+            {
+                continue;
+            }
         #>
 
         /// <summary>

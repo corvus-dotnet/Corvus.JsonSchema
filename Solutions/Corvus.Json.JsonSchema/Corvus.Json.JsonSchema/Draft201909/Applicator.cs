@@ -1258,6 +1258,12 @@ namespace Corvus.Json.JsonSchema.Draft201909
         }
 
         /// <inheritdoc/>
+        public override string ToString()
+        {
+            return this.Serialize();
+        }
+
+        /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
             if (obj is IJsonValue jv)
@@ -2479,6 +2485,12 @@ namespace Corvus.Json.JsonSchema.Draft201909
             }
 
             /// <inheritdoc/>
+            public override string ToString()
+            {
+                return this.Serialize();
+            }
+
+            /// <inheritdoc/>
             public override bool Equals(object? obj)
             {
                 if (obj is IJsonValue jv)
@@ -3187,6 +3199,12 @@ namespace Corvus.Json.JsonSchema.Draft201909
             }
 
             /// <inheritdoc/>
+            public override string ToString()
+            {
+                return this.Serialize();
+            }
+
+            /// <inheritdoc/>
             public override bool Equals(object? obj)
             {
                 if (obj is IJsonValue jv)
@@ -3709,6 +3727,12 @@ namespace Corvus.Json.JsonSchema.Draft201909
             }
 
             /// <inheritdoc/>
+            public override string ToString()
+            {
+                return this.Serialize();
+            }
+
+            /// <inheritdoc/>
             public override bool Equals(object? obj)
             {
                 if (obj is IJsonValue jv)
@@ -4155,6 +4179,12 @@ namespace Corvus.Json.JsonSchema.Draft201909
                 }
 
                 /// <inheritdoc/>
+                public override string ToString()
+                {
+                    return this.Serialize();
+                }
+
+                /// <inheritdoc/>
                 public override bool Equals(object? obj)
                 {
                     if (obj is IJsonValue jv)
@@ -4449,6 +4479,12 @@ namespace Corvus.Json.JsonSchema.Draft201909
             public static bool operator !=(DependentSchemasValue lhs, DependentSchemasValue rhs)
             {
                 return !lhs.Equals(rhs);
+            }
+
+            /// <inheritdoc/>
+            public override string ToString()
+            {
+                return this.Serialize();
             }
 
             /// <inheritdoc/>
@@ -5047,6 +5083,12 @@ namespace Corvus.Json.JsonSchema.Draft201909
             public static SchemaArray From(Corvus.Json.JsonSchema.Draft201909.Schema item1, Corvus.Json.JsonSchema.Draft201909.Schema item2, Corvus.Json.JsonSchema.Draft201909.Schema item3, Corvus.Json.JsonSchema.Draft201909.Schema item4)
             {
                 return new SchemaArray(ImmutableList.Create((JsonAny)item1, (JsonAny)item2, (JsonAny)item3, (JsonAny)item4));
+            }
+
+            /// <inheritdoc/>
+            public override string ToString()
+            {
+                return this.Serialize();
             }
 
             /// <inheritdoc/>

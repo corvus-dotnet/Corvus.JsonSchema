@@ -1959,6 +1959,16 @@ public partial class SchemaEntity202012
     }
 
     /// <summary>
+    /// Determines whether a particular child type declaration is a constant value.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration to check.</param>
+    /// <returns><c>True</c> if the type declaration represents a const value.</returns>
+    public static bool IsConst(TypeDeclaration typeDeclaration)
+    {
+        return typeDeclaration.Schema.Const.IsNotUndefined();
+    }
+
+    /// <summary>
     /// Writes a nested type.
     /// </summary>
     /// <param name="child">The child type to write.</param>
