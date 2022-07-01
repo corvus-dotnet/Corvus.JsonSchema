@@ -473,6 +473,19 @@ namespace Corvus.Json
         }
 
         /// <summary>
+        /// Force the value to a <see cref="JsonElement"/> backing.
+        /// </summary>
+        /// <typeparam name="T">The type of <see cref="IJsonValue"/> to convert.</typeparam>
+        /// <param name="value">The value to convert.</param>
+        /// <returns>The value with a JsonElement backing.</returns>
+        /// <remarks>This will force a serialization of the element if it did not already have a JsonElement backing.</remarks>
+        public static T WithJsonBacking<T>(this T value)
+            where T : struct, IJsonValue
+        {
+            return JsonAny.From(value.AsJsonElement).As<T>();
+        }
+
+        /// <summary>
         /// Create an instance of the given type from a <see cref="JsonElement"/>.
         /// </summary>
         /// <typeparam name="TTarget">The target type.</typeparam>

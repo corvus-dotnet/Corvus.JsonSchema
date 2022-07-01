@@ -10,7 +10,9 @@ namespace Corvus.Json.Visitor;
 /// <param name="Output">The output from visiting the node. This will be the original node if <see cref="IsTransformed"/> is <c>false</c>.</param>
 /// <param name="Transformed">Indicates whether the node was transformed or not.</param>
 /// <param name="Walk">The action for the parent to take after visiting this node.</param>
+#pragma warning disable SA1313 // Parameter names should begin with lower-case letter
 public readonly record struct VisitResult(JsonAny Output, Transformed Transformed, Walk Walk)
+#pragma warning restore SA1313 // Parameter names should begin with lower-case letter
 {
     /// <summary>
     /// Gets a value indicating whether the node was transformed.

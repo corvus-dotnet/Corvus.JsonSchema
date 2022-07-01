@@ -102,18 +102,14 @@ public static partial class JsonTransformingVisitor
 
             // Build the array path
             int digits = index == 0 ? 1 : (int)Math.Ceiling(Math.Log10(index));
-            int offset = path.Length > 0 ? 1 : 0;
-            int desiredLength = path.Length + digits + offset;
+            int desiredLength = path.Length + digits + 1;
             TryExtendBuffer(ref pathBuffer, desiredLength);
             Span<char> itemPath = pathBuffer.AsSpan(0, desiredLength);
             path.CopyTo(itemPath);
-            if (offset > 0)
-            {
-                itemPath[path.Length] = '/';
-            }
+            itemPath[path.Length] = '/';
 
 #pragma warning disable SA1009 // Closing parenthesis should be spaced correctly
-            index.TryFormat(itemPath[(path.Length + offset)..], out int digitsWritten);
+            index.TryFormat(itemPath[(path.Length + 1)..], out int digitsWritten);
 #pragma warning restore SA1009 // Closing parenthesis should be spaced correctly
 
             // Visit the array item, and determine whether we've transformed it.
@@ -179,18 +175,14 @@ public static partial class JsonTransformingVisitor
 
             // Build the property path
             string propertyName = property.Name;
-            int offset = path.Length > 0 ? 1 : 0;
-            int desiredLength = path.Length + propertyName.Length + offset;
+            int desiredLength = path.Length + propertyName.Length + 1;
             TryExtendBuffer(ref pathBuffer, desiredLength);
             Span<char> propertyPath = pathBuffer.AsSpan(0, desiredLength);
             path.CopyTo(propertyPath);
-            if (offset > 0)
-            {
-                propertyPath[path.Length] = '/';
-            }
+            propertyPath[path.Length] = '/';
 
 #pragma warning disable SA1009 // Closing parenthesis should be spaced correctly
-            propertyName.CopyTo(propertyPath[(path.Length + offset)..]);
+            propertyName.CopyTo(propertyPath[(path.Length + 1)..]);
 #pragma warning restore SA1009 // Closing parenthesis should be spaced correctly
 
             // Visit the property, and determine whether we've transformed it.
