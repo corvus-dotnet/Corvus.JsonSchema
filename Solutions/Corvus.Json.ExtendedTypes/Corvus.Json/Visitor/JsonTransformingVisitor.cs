@@ -101,7 +101,7 @@ public static partial class JsonTransformingVisitor
             }
 
             // Build the array path
-            int digits = index == 0 ? 1 : (int)Math.Ceiling(Math.Log10(index));
+            int digits = index == 0 ? 1 : (int)Math.Floor(Math.Log10(index)) + 1;
             int desiredLength = path.Length + digits + 1;
             TryExtendBuffer(ref pathBuffer, desiredLength);
             Span<char> itemPath = pathBuffer.AsSpan(0, desiredLength);

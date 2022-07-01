@@ -292,6 +292,20 @@ public static class JsonPointerExtensions
             }
             else if (current.ValueKind == JsonValueKind.Array)
             {
+                if (component.Length > 1 && component[0] == '0')
+                {
+                    // We were unable to find the element at that index in the array.
+                    if (throwOnFailure)
+                    {
+                        throw new JsonException($"Unable to find the array element at path {fragment[0..endRun].ToString()}.");
+                    }
+                    else
+                    {
+                        element = default;
+                        return false;
+                    }
+                }
+
                 if (int.TryParse(component, out int targetArrayIndex))
                 {
                     int arrayIndex = 0;

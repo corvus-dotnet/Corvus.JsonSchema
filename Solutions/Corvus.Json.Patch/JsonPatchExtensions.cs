@@ -4,6 +4,7 @@
 
 namespace Corvus.Json.Patch;
 
+using System.Diagnostics.CodeAnalysis;
 using Corvus.Json.Visitor;
 
 /// <summary>
@@ -64,6 +65,12 @@ public static partial class JsonPatchExtensions
     {
         JsonAny current = value.AsAny;
 
+        if (!patchOperations.IsValid())
+        {
+            result = current;
+            return false;
+        }
+
         foreach (PatchOperation patchOperation in patchOperations.EnumerateItems())
         {
             if (!TryApplyPatchOperation(current, patchOperation, out current))
@@ -98,6 +105,17 @@ public static partial class JsonPatchExtensions
                 result = default;
                 return false;
         }
+    }
+
+    private static bool TryGetArrayIndex(ReadOnlySpan<char> pathSegment, [NotNullWhen(true)] out int index)
+    {
+        if (pathSegment.Length > 1 && pathSegment[0] == '0')
+        {
+            index = 0;
+            return false;
+        }
+
+        return int.TryParse(pathSegment, out index);
     }
 
     private static JsonAny? FindSourceElement(JsonAny root, ReadOnlySpan<char> from)

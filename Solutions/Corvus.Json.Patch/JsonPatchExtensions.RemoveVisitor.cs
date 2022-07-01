@@ -68,7 +68,7 @@ public static partial class JsonPatchExtensions
                     {
                         int arrayLength = arrayNode.Length;
 
-                        if (int.TryParse(itemIndex, out int index) && index < arrayLength)
+                        if (TryGetArrayIndex(itemIndex, out int index) && index < arrayLength)
                         {
                             return RemoveNode(index, in arrayNode);
                         }

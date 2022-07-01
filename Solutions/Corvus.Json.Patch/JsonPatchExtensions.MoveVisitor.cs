@@ -36,37 +36,8 @@ public static partial class JsonPatchExtensions
         {
             bool skipChildren = true;
 
-            if (!this.Added)
-            {
-                // Otherwise, this is an add operation with the node we found.
-                VisitResult resultFromAdd = AddVisitor.VisitForAdd(path, nodeToVisit, this.SourceElement, this.PatchOperation.Path);
-
-                if (resultFromAdd.Walk == Walk.TerminateAtThisNodeAndAbandonAllChanges)
-                {
-                    // We failed, so fail
-                    return new(nodeToVisit, Transformed.No, Walk.TerminateAtThisNodeAndAbandonAllChanges);
-                }
-
-                // We succeeded on the "Add" part, so say that we have added
-                if (resultFromAdd.Walk == Walk.TerminateAtThisNodeAndKeepChanges)
-                {
-                    this.Added = true;
-                    if (this.Removed)
-                    {
-                        return resultFromAdd;
-                    }
-                    else
-                    {
-                        return new(resultFromAdd.Output, Transformed.Yes, Walk.SkipChildren);
-                    }
-                }
-
-                if (resultFromAdd.Walk != Walk.SkipChildren)
-                {
-                    // We need to continue searching down this path
-                    skipChildren = false;
-                }
-            }
+            JsonAny currentNode = nodeToVisit;
+            Transformed transformed = Transformed.No;
 
             // We have fallen through because we have either Added already, or we have just added and not yet removed
             if (!this.Removed)
@@ -88,10 +59,9 @@ public static partial class JsonPatchExtensions
                     {
                         return resultFromRemove;
                     }
-                    else
-                    {
-                        return new(resultFromRemove.Output, Transformed.Yes, Walk.SkipChildren);
-                    }
+
+                    currentNode = resultFromRemove.Output;
+                    transformed = Transformed.Yes;
                 }
 
                 if (resultFromRemove.Walk != Walk.SkipChildren)
@@ -101,9 +71,40 @@ public static partial class JsonPatchExtensions
                 }
             }
 
+            if (!this.Added)
+            {
+                // Otherwise, this is an add operation with the node we found.
+                VisitResult resultFromAdd = AddVisitor.VisitForAdd(path, currentNode, this.SourceElement, this.PatchOperation.Path);
+
+                if (resultFromAdd.Walk == Walk.TerminateAtThisNodeAndAbandonAllChanges)
+                {
+                    // We failed, so fail
+                    return new(nodeToVisit, Transformed.No, Walk.TerminateAtThisNodeAndAbandonAllChanges);
+                }
+
+                // We succeeded on the "Add" part, so say that we have added
+                if (resultFromAdd.Walk == Walk.TerminateAtThisNodeAndKeepChanges)
+                {
+                    this.Added = true;
+                    if (this.Removed)
+                    {
+                        return resultFromAdd;
+                    }
+
+                    currentNode = resultFromAdd.Output;
+                    transformed = Transformed.Yes;
+                }
+
+                if (resultFromAdd.Walk != Walk.SkipChildren)
+                {
+                    // We need to continue searching down this path
+                    skipChildren = false;
+                }
+            }
+
             // If we didn't fail out of either added or removed, just continue if either the source or the target
             // are interested in continuing down this path, otherwise skip children, if both are happy to skip
-            return new(nodeToVisit, Transformed.No, skipChildren ? Walk.SkipChildren : Walk.Continue);
+            return new(currentNode, transformed, skipChildren ? Walk.SkipChildren : Walk.Continue);
         }
     }
 }

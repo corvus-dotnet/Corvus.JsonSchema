@@ -1,541 +1,541 @@
 
 Feature: tests
 
-Scenario: empty list, empty docs [f0eb19ea-04b3-4ceb-8c01-a5e8e02fa4c1]
+Scenario: empty list, empty docs [3bd3f18f-2cd3-4b29-b192-e75c9ec7dfd9]
 	Given the document {}
 	And the patch []
 	When I apply the patch to the document
 	Then the transformed document should equal {}
 
-Scenario: empty patch list [48aeba26-ca81-4660-8ea0-58cdb8428221]
+Scenario: empty patch list [53af56c6-b311-4126-a874-e3b02effffb8]
 	Given the document {"foo":1}
 	And the patch []
 	When I apply the patch to the document
 	Then the transformed document should equal {"foo":1}
 
-Scenario: rearrangements OK? [5c1322d8-7217-40b0-8ec2-59ca8c79d8ad]
+Scenario: rearrangements OK? [e2595ded-6d8c-406e-ae51-0c4725c884c0]
 	Given the document {"foo":1,"bar":2}
 	And the patch []
 	When I apply the patch to the document
 	Then the transformed document should equal {"bar":2,"foo":1}
 
-Scenario: rearrangements OK?  How about one level down ... array [020aad9c-63ba-4cc8-870a-fbbdf99b8990]
+Scenario: rearrangements OK?  How about one level down ... array [c908998d-1bfe-47ff-a880-65d3f67e6823]
 	Given the document [{"foo":1,"bar":2}]
 	And the patch []
 	When I apply the patch to the document
 	Then the transformed document should equal [{"bar":2,"foo":1}]
 
-Scenario: rearrangements OK?  How about one level down... [ea37e8df-abbb-4f94-807b-767dc150d859]
+Scenario: rearrangements OK?  How about one level down... [cab7431c-67d0-421f-abd2-4446d650a52d]
 	Given the document {"foo":{"foo":1,"bar":2}}
 	And the patch []
 	When I apply the patch to the document
 	Then the transformed document should equal {"foo":{"bar":2,"foo":1}}
 
-Scenario: add replaces any existing field [f12b12b7-e24e-4976-b471-af8db93b7b56]
+Scenario: add replaces any existing field [6b99e9fd-a604-4fcc-a558-9ea9053975fa]
 	Given the document {"foo":null}
 	And the patch [{"op":"add","path":"/foo","value":1}]
 	When I apply the patch to the document
 	Then the transformed document should equal {"foo":1}
 
-Scenario: toplevel array [0a994399-046a-4386-a881-f5f5ed633a7c]
+Scenario: toplevel array [1fa3a78b-b5c3-4ccd-a8fa-cfbf05190fae]
 	Given the document []
 	And the patch [{"op":"add","path":"/0","value":"foo"}]
 	When I apply the patch to the document
 	Then the transformed document should equal ["foo"]
 
-Scenario: toplevel array, no change [c339cc7d-a4f9-4e71-a7e9-d77c155889f7]
+Scenario: toplevel array, no change [6b3f6375-624c-41cc-9446-53c4c306af72]
 	Given the document ["foo"]
 	And the patch []
 	When I apply the patch to the document
 	Then the transformed document should equal ["foo"]
 
-Scenario: toplevel object, numeric string [a55e0ab6-4c9c-4d3c-9dce-5519e7cebe05]
+Scenario: toplevel object, numeric string [9270e397-a791-4196-98e9-7748b731d134]
 	Given the document {}
 	And the patch [{"op":"add","path":"/foo","value":"1"}]
 	When I apply the patch to the document
 	Then the transformed document should equal {"foo":"1"}
 
-Scenario: toplevel object, integer [9cb78587-1ba0-4bdb-a150-dca88e47a0df]
+Scenario: toplevel object, integer [74d218e7-6c5c-4c8d-ab05-6032c38ab9a0]
 	Given the document {}
 	And the patch [{"op":"add","path":"/foo","value":1}]
 	When I apply the patch to the document
 	Then the transformed document should equal {"foo":1}
 
-Scenario: replace object document with array document? [dca4589f-cba5-4165-b1d7-195ac1195ee7]
+Scenario: replace object document with array document? [b8c353d1-fad4-47fb-9447-741034b5192d]
 	Given the document {}
 	And the patch [{"op":"add","path":"","value":[]}]
 	When I apply the patch to the document
 	Then the transformed document should equal []
 
-Scenario: replace array document with object document? [5a5966d2-9684-4107-8842-4b13438beece]
+Scenario: replace array document with object document? [3594d553-75d7-408f-90ba-4fe76313aa92]
 	Given the document []
 	And the patch [{"op":"add","path":"","value":{}}]
 	When I apply the patch to the document
 	Then the transformed document should equal {}
 
-Scenario: append to root array document? [23d3cd03-5407-478a-adea-2fdf5fbab836]
+Scenario: append to root array document? [8bdfd67f-13f1-4354-b417-f1645aeb21bb]
 	Given the document []
 	And the patch [{"op":"add","path":"/-","value":"hi"}]
 	When I apply the patch to the document
 	Then the transformed document should equal ["hi"]
 
-Scenario: Add, / target [309d3402-e09e-48c2-8d9b-d79153d0937b]
+Scenario: Add, / target [0497b84c-8e27-48c4-80a0-bbe95cec4b35]
 	Given the document {}
 	And the patch [{"op":"add","path":"/","value":1}]
 	When I apply the patch to the document
 	Then the transformed document should equal {"":1}
 
-Scenario: Add, /foo/ deep target (trailing slash) [3e5bc413-6885-443f-82a9-b44274bf8779]
+Scenario: Add, /foo/ deep target (trailing slash) [572b15f4-1fa1-44af-a534-9a6a1ef49dbf]
 	Given the document {"foo":{}}
 	And the patch [{"op":"add","path":"/foo/","value":1}]
 	When I apply the patch to the document
 	Then the transformed document should equal {"foo":{"":1}}
 
-Scenario: Add composite value at top level [9189f212-2b0a-4b30-8ca6-79a576e323d3]
+Scenario: Add composite value at top level [03b17d0b-dcdc-409c-8cd5-efdf1ebdb039]
 	Given the document {"foo":1}
 	And the patch [{"op":"add","path":"/bar","value":[1,2]}]
 	When I apply the patch to the document
 	Then the transformed document should equal {"foo":1,"bar":[1,2]}
 
-Scenario: Add into composite value [9a80433a-72f6-4716-a6d4-49fb3863310c]
+Scenario: Add into composite value [6247959a-8aaf-4de2-be8e-2d4ee6036e0e]
 	Given the document {"foo":1,"baz":[{"qux":"hello"}]}
 	And the patch [{"op":"add","path":"/baz/0/foo","value":"world"}]
 	When I apply the patch to the document
 	Then the transformed document should equal {"foo":1,"baz":[{"qux":"hello","foo":"world"}]}
 
-Scenario: Undescribed scenario [f1de5857-a47f-415d-8bdf-3c84f0520186]
+Scenario: Undescribed scenario [66b36eeb-d02d-401a-bafd-01af7f98482d]
 	Given the document {"bar":[1,2]}
 	And the patch [{"op":"add","path":"/bar/8","value":"5"}]
 	When I apply the patch to the document
 	Then the document should not be transformed.
 
-Scenario: Undescribed scenario [bf30fe75-144a-4d52-afa0-e27ad04ea752]
+Scenario: Undescribed scenario [47239f43-de7d-44ea-8885-2c902a2f838e]
 	Given the document {"bar":[1,2]}
 	And the patch [{"op":"add","path":"/bar/-1","value":"5"}]
 	When I apply the patch to the document
 	Then the document should not be transformed.
 
-Scenario: Undescribed scenario [70e96c6b-9aea-4942-8968-5f90ab208fee]
+Scenario: Undescribed scenario [89c44882-3ddd-4432-b597-48512ee70462]
 	Given the document {"foo":1}
 	And the patch [{"op":"add","path":"/bar","value":true}]
 	When I apply the patch to the document
 	Then the transformed document should equal {"foo":1,"bar":true}
 
-Scenario: Undescribed scenario [3c78de7b-061f-4665-bd34-4134d3438ca5]
+Scenario: Undescribed scenario [445fc9ba-4fb3-46af-b641-2d2c660b4e30]
 	Given the document {"foo":1}
 	And the patch [{"op":"add","path":"/bar","value":false}]
 	When I apply the patch to the document
 	Then the transformed document should equal {"foo":1,"bar":false}
 
-Scenario: Undescribed scenario [7f1c8c33-1822-4514-974d-10ae36e3f2a5]
+Scenario: Undescribed scenario [5b6336b8-44cf-4327-904e-98cdb90a1385]
 	Given the document {"foo":1}
 	And the patch [{"op":"add","path":"/bar","value":null}]
 	When I apply the patch to the document
 	Then the transformed document should equal {"foo":1,"bar":null}
 
-Scenario: 0 can be an array index or object element name [7ee57dee-fc9f-4452-95d4-0583952734b3]
+Scenario: 0 can be an array index or object element name [a6ce525a-cca2-48f1-8d14-dea32267ef52]
 	Given the document {"foo":1}
 	And the patch [{"op":"add","path":"/0","value":"bar"}]
 	When I apply the patch to the document
 	Then the transformed document should equal {"foo":1,"0":"bar"}
 
-Scenario: Undescribed scenario [b7a35026-2113-4c98-a50e-c27a2723debe]
+Scenario: Undescribed scenario [ad627842-00be-432c-add2-8be3aaba96f2]
 	Given the document ["foo"]
 	And the patch [{"op":"add","path":"/1","value":"bar"}]
 	When I apply the patch to the document
 	Then the transformed document should equal ["foo","bar"]
 
-Scenario: Undescribed scenario [4c800c2f-925f-48ea-9a69-0b2a330d4a4f]
+Scenario: Undescribed scenario [78e74c83-1b64-4541-bb60-4e5d9d068714]
 	Given the document ["foo","sil"]
 	And the patch [{"op":"add","path":"/1","value":"bar"}]
 	When I apply the patch to the document
 	Then the transformed document should equal ["foo","bar","sil"]
 
-Scenario: Undescribed scenario [b330f4f7-ebf2-4ebd-972f-57aed965168c]
+Scenario: Undescribed scenario [b1b1c000-c4a5-4a02-86fc-f8d5d4d96455]
 	Given the document ["foo","sil"]
 	And the patch [{"op":"add","path":"/0","value":"bar"}]
 	When I apply the patch to the document
 	Then the transformed document should equal ["bar","foo","sil"]
 
-Scenario: push item to array via last index + 1 [8b1caa65-7a40-4748-a07a-afe0d414d553]
+Scenario: push item to array via last index + 1 [ce2e5d29-1086-40d3-a0b8-9fcf5f149948]
 	Given the document ["foo","sil"]
 	And the patch [{"op":"add","path":"/2","value":"bar"}]
 	When I apply the patch to the document
 	Then the transformed document should equal ["foo","sil","bar"]
 
-Scenario: add item to array at index > length should fail [7d997dbe-8ef1-4b90-beab-a68dcfe7d93b]
+Scenario: add item to array at index > length should fail [60b9050b-cdc4-41ec-b699-76bbde40e675]
 	Given the document ["foo","sil"]
 	And the patch [{"op":"add","path":"/3","value":"bar"}]
 	When I apply the patch to the document
 	Then the document should not be transformed.
 
-Scenario: test against implementation-specific numeric parsing [f27c5741-1e3e-4665-aad7-28e419015fc4]
+Scenario: test against implementation-specific numeric parsing [f0ff3906-2ba9-4b10-90a4-334635abfd1f]
 	Given the document {"1e0":"foo"}
 	And the patch [{"op":"test","path":"/1e0","value":"foo"}]
 	When I apply the patch to the document
 	Then the transformed document should equal {"1e0":"foo"}
 
-Scenario: test with bad number should fail [f1255270-dbaf-459e-a21e-cb8b79bc6fe4]
+Scenario: test with bad number should fail [a7be816f-e68d-4b42-9392-db30c1306b9d]
 	Given the document ["foo","bar"]
 	And the patch [{"op":"test","path":"/1e0","value":"bar"}]
 	When I apply the patch to the document
 	Then the document should not be transformed.
 
-Scenario: Undescribed scenario [b9318e23-51d7-4b47-9873-79978778ddb6]
+Scenario: Undescribed scenario [22fed12b-f9a4-4cbf-b324-7a54f81a8cff]
 	Given the document ["foo","sil"]
 	And the patch [{"op":"add","path":"/bar","value":42}]
 	When I apply the patch to the document
 	Then the document should not be transformed.
 
-Scenario: value in array add not flattened [0398e8eb-d578-4b2c-a4e5-2f9f8bf6c9cc]
+Scenario: value in array add not flattened [294736fd-fca5-4b1b-a9b1-fe9c65771544]
 	Given the document ["foo","sil"]
 	And the patch [{"op":"add","path":"/1","value":["bar","baz"]}]
 	When I apply the patch to the document
 	Then the transformed document should equal ["foo",["bar","baz"],"sil"]
 
-Scenario: Undescribed scenario [120a1a66-855f-4325-9d89-c3c43a6bb0ed]
+Scenario: Undescribed scenario [f367b31c-b678-4049-bb44-43bf7c6a04b7]
 	Given the document {"foo":1,"bar":[1,2,3,4]}
 	And the patch [{"op":"remove","path":"/bar"}]
 	When I apply the patch to the document
 	Then the transformed document should equal {"foo":1}
 
-Scenario: Undescribed scenario [9e9e8952-97ab-4369-817c-2487dce494b8]
+Scenario: Undescribed scenario [3394e6a6-920a-4c53-a560-3a516fc859b4]
 	Given the document {"foo":1,"baz":[{"qux":"hello"}]}
 	And the patch [{"op":"remove","path":"/baz/0/qux"}]
 	When I apply the patch to the document
 	Then the transformed document should equal {"foo":1,"baz":[{}]}
 
-Scenario: Undescribed scenario [2792924d-184d-4652-8e5b-8f566e84a970]
+Scenario: Undescribed scenario [ff4c93dd-49ca-41a9-80f3-1855bfc384f5]
 	Given the document {"foo":1,"baz":[{"qux":"hello"}]}
 	And the patch [{"op":"replace","path":"/foo","value":[1,2,3,4]}]
 	When I apply the patch to the document
 	Then the transformed document should equal {"foo":[1,2,3,4],"baz":[{"qux":"hello"}]}
 
-Scenario: Undescribed scenario [a08a7283-2e3b-4298-ab56-d51839fb9904]
+Scenario: Undescribed scenario [dc891463-65bf-411e-99d5-412f516b35c0]
 	Given the document {"foo":[1,2,3,4],"baz":[{"qux":"hello"}]}
 	And the patch [{"op":"replace","path":"/baz/0/qux","value":"world"}]
 	When I apply the patch to the document
 	Then the transformed document should equal {"foo":[1,2,3,4],"baz":[{"qux":"world"}]}
 
-Scenario: Undescribed scenario [b896e7e6-a43b-4058-98da-56933b6735fb]
+Scenario: Undescribed scenario [8e89d7bb-89fa-49d3-a2f6-9bc353b2caf7]
 	Given the document ["foo"]
 	And the patch [{"op":"replace","path":"/0","value":"bar"}]
 	When I apply the patch to the document
 	Then the transformed document should equal ["bar"]
 
-Scenario: Undescribed scenario [cc0e2978-f6c3-47fe-adf3-dc2b85880dfd]
+Scenario: Undescribed scenario [8ce7235e-3301-4d5f-8a19-51b8144207f0]
 	Given the document [""]
 	And the patch [{"op":"replace","path":"/0","value":0}]
 	When I apply the patch to the document
 	Then the transformed document should equal [0]
 
-Scenario: Undescribed scenario [f917fdd1-6f19-4b7d-b3cf-e4c37af0ef96]
+Scenario: Undescribed scenario [b2f60b7d-ea2d-4f3a-a2fa-25de87775d7f]
 	Given the document [""]
 	And the patch [{"op":"replace","path":"/0","value":true}]
 	When I apply the patch to the document
 	Then the transformed document should equal [true]
 
-Scenario: Undescribed scenario [de065511-87fe-4e48-9530-00d447c362cf]
+Scenario: Undescribed scenario [fec282f2-e808-4815-bf4a-0000043cc5b0]
 	Given the document [""]
 	And the patch [{"op":"replace","path":"/0","value":false}]
 	When I apply the patch to the document
 	Then the transformed document should equal [false]
 
-Scenario: Undescribed scenario [b58945fd-c4cb-44a0-bac7-aca3d2188ef6]
+Scenario: Undescribed scenario [f261f08f-092d-486f-b529-baf018620e95]
 	Given the document [""]
 	And the patch [{"op":"replace","path":"/0","value":null}]
 	When I apply the patch to the document
 	Then the transformed document should equal [null]
 
-Scenario: value in array replace not flattened [53dfab89-5800-46c2-88c3-6e5e35fe8a9e]
+Scenario: value in array replace not flattened [ef218964-211a-4c19-a115-c7d47ab66efd]
 	Given the document ["foo","sil"]
 	And the patch [{"op":"replace","path":"/1","value":["bar","baz"]}]
 	When I apply the patch to the document
 	Then the transformed document should equal ["foo",["bar","baz"]]
 
-Scenario: replace whole document [77d375d9-f965-48b5-b94d-13fd86a6e944]
+Scenario: replace whole document [2265e8d4-a3ca-44fa-9424-863aac12177b]
 	Given the document {"foo":"bar"}
 	And the patch [{"op":"replace","path":"","value":{"baz":"qux"}}]
 	When I apply the patch to the document
 	Then the transformed document should equal {"baz":"qux"}
 
-Scenario: test replace with missing parent key should fail [94578516-a526-4101-952e-de41a53030bf]
+Scenario: test replace with missing parent key should fail [b3a7ebf1-f521-4f91-b93d-0ed4a3bceb0b]
 	Given the document {"bar":"baz"}
 	And the patch [{"op":"replace","path":"/foo/bar","value":false}]
 	When I apply the patch to the document
 	Then the document should not be transformed.
 
-Scenario: spurious patch properties [ba6d83d4-1841-469e-81cf-b262735516a8]
+Scenario: spurious patch properties [93a6524d-8c73-47db-862a-944539965601]
 	Given the document {"foo":1}
 	And the patch [{"op":"test","path":"/foo","value":1,"spurious":1}]
 	When I apply the patch to the document
 	Then the transformed document should equal {"foo":1}
 
-Scenario: null value should be valid obj property [707597af-5dd9-4498-8c1b-5d5994f97dac]
+Scenario: null value should be valid obj property [d8b603ec-d930-4ab5-8abb-6cf2fdda56f9]
 	Given the document {"foo":null}
 	And the patch [{"op":"test","path":"/foo","value":null}]
 	When I apply the patch to the document
 	Then the transformed document should equal {"foo":null}
 
-Scenario: null value should be valid obj property to be replaced with something truthy [a1c3d49f-2757-4cb6-9ce5-ae7d51ce14f7]
+Scenario: null value should be valid obj property to be replaced with something truthy [7340e482-6cfb-47c5-8bb7-e45b006ad46a]
 	Given the document {"foo":null}
 	And the patch [{"op":"replace","path":"/foo","value":"truthy"}]
 	When I apply the patch to the document
 	Then the transformed document should equal {"foo":"truthy"}
 
-Scenario: null value should be valid obj property to be moved [ae6c8fe2-1775-466b-b24f-89bf290d8066]
+Scenario: null value should be valid obj property to be moved [c4cdc00f-c9a7-4a20-8a6a-a9e1800b22f7]
 	Given the document {"foo":null}
 	And the patch [{"op":"move","from":"/foo","path":"/bar"}]
 	When I apply the patch to the document
 	Then the transformed document should equal {"bar":null}
 
-Scenario: null value should be valid obj property to be copied [6b04c8c4-a1f6-40fa-8a14-0da5fd3bcc3f]
+Scenario: null value should be valid obj property to be copied [93450980-2de6-4ada-a42e-17394f6f1bf4]
 	Given the document {"foo":null}
 	And the patch [{"op":"copy","from":"/foo","path":"/bar"}]
 	When I apply the patch to the document
 	Then the transformed document should equal {"foo":null,"bar":null}
 
-Scenario: null value should be valid obj property to be removed [fb33dcd2-858a-4bd7-95b4-679b6d68518a]
+Scenario: null value should be valid obj property to be removed [42dbaf47-7820-440f-92d9-2ea963ae732b]
 	Given the document {"foo":null}
 	And the patch [{"op":"remove","path":"/foo"}]
 	When I apply the patch to the document
 	Then the transformed document should equal {}
 
-Scenario: null value should still be valid obj property replace other value [b2816189-0c0d-47a3-825c-409d82e9b9f9]
+Scenario: null value should still be valid obj property replace other value [bb7e112c-57bb-4a7e-8d48-cf3eb84b3322]
 	Given the document {"foo":"bar"}
 	And the patch [{"op":"replace","path":"/foo","value":null}]
 	When I apply the patch to the document
 	Then the transformed document should equal {"foo":null}
 
-Scenario: test should pass despite rearrangement [4d45156c-f596-4afe-b0b2-e3da0f1e9641]
+Scenario: test should pass despite rearrangement [fd68644f-9a95-4ca6-82ad-d25ac2be4aaf]
 	Given the document {"foo":{"foo":1,"bar":2}}
 	And the patch [{"op":"test","path":"/foo","value":{"bar":2,"foo":1}}]
 	When I apply the patch to the document
 	Then the transformed document should equal {"foo":{"foo":1,"bar":2}}
 
-Scenario: test should pass despite (nested) rearrangement [d78fbf86-9a00-473d-93fb-28bda0c06df7]
+Scenario: test should pass despite (nested) rearrangement [42eefdb5-bc58-4ed7-9044-4d49b03b6266]
 	Given the document {"foo":[{"foo":1,"bar":2}]}
 	And the patch [{"op":"test","path":"/foo","value":[{"bar":2,"foo":1}]}]
 	When I apply the patch to the document
 	Then the transformed document should equal {"foo":[{"foo":1,"bar":2}]}
 
-Scenario: test should pass - no error [3150b7b1-064f-4ba7-a55e-881767eb1d75]
+Scenario: test should pass - no error [9fcb06f4-6638-4a98-9001-a580c840d9af]
 	Given the document {"foo":{"bar":[1,2,5,4]}}
 	And the patch [{"op":"test","path":"/foo","value":{"bar":[1,2,5,4]}}]
 	When I apply the patch to the document
 	Then the transformed document should equal {"foo":{"bar":[1,2,5,4]}}
 
-Scenario: Undescribed scenario [0d8e8abd-6a1c-4fc5-bb33-b22d908b04cb]
+Scenario: Undescribed scenario [6a14a9bb-ef37-48c9-9d95-0911c3c19284]
 	Given the document {"foo":{"bar":[1,2,5,4]}}
 	And the patch [{"op":"test","path":"/foo","value":[1,2]}]
 	When I apply the patch to the document
 	Then the document should not be transformed.
 
-Scenario: Empty-string element [afdc0c00-d9b6-4f8f-b13d-77b2b4d77411]
+Scenario: Empty-string element [07939ea8-77c8-4b85-b423-665ecfb7615e]
 	Given the document {"":1}
 	And the patch [{"op":"test","path":"/","value":1}]
 	When I apply the patch to the document
 	Then the transformed document should equal {"":1}
 
-Scenario: Undescribed scenario [ad60b7fc-99fc-4c67-b22d-8c7799046bca]
+Scenario: Undescribed scenario [cad75706-88bb-4d24-a3d9-5ed172a8987d]
 	Given the document {"foo":["bar","baz"],"":0,"a/b":1,"c%d":2,"e^f":3,"g|h":4,"i\\j":5,"k\u0022l":6," ":7,"m~n":8}
 	And the patch [{"op":"test","path":"/foo","value":["bar","baz"]},{"op":"test","path":"/foo/0","value":"bar"},{"op":"test","path":"/","value":0},{"op":"test","path":"/a~1b","value":1},{"op":"test","path":"/c%d","value":2},{"op":"test","path":"/e^f","value":3},{"op":"test","path":"/g|h","value":4},{"op":"test","path":"/i\\j","value":5},{"op":"test","path":"/k\u0022l","value":6},{"op":"test","path":"/ ","value":7},{"op":"test","path":"/m~0n","value":8}]
 	When I apply the patch to the document
 	Then the transformed document should equal {"":0," ":7,"a/b":1,"c%d":2,"e^f":3,"foo":["bar","baz"],"g|h":4,"i\\j":5,"k\u0022l":6,"m~n":8}
 
-Scenario: Move to same location has no effect [fcf3cac7-ee63-4937-9ee2-a820e675c40e]
+Scenario: Move to same location has no effect [752ef9ba-1235-446f-8c1d-ea8246910ba2]
 	Given the document {"foo":1}
 	And the patch [{"op":"move","from":"/foo","path":"/foo"}]
 	When I apply the patch to the document
 	Then the transformed document should equal {"foo":1}
 
-Scenario: Undescribed scenario [7630fff0-a530-48aa-90d4-2ae39d92be6d]
+Scenario: Undescribed scenario [d512187b-aab6-4798-bbb8-f8a15497c2a8]
 	Given the document {"foo":1,"baz":[{"qux":"hello"}]}
 	And the patch [{"op":"move","from":"/foo","path":"/bar"}]
 	When I apply the patch to the document
 	Then the transformed document should equal {"baz":[{"qux":"hello"}],"bar":1}
 
-Scenario: Undescribed scenario [db604aa1-4188-44a6-848f-bc09c9bda25c]
+Scenario: Undescribed scenario [d4ba2028-4420-4751-ad53-8176c15055dc]
 	Given the document {"baz":[{"qux":"hello"}],"bar":1}
 	And the patch [{"op":"move","from":"/baz/0/qux","path":"/baz/1"}]
 	When I apply the patch to the document
 	Then the transformed document should equal {"baz":[{},"hello"],"bar":1}
 
-Scenario: Undescribed scenario [f7a8454e-6575-4510-a8f5-76be4d9a6dd1]
+Scenario: Undescribed scenario [a51b39d2-f4f2-4baf-99a4-b498228619ff]
 	Given the document {"baz":[{"qux":"hello"}],"bar":1}
 	And the patch [{"op":"copy","from":"/baz/0","path":"/boo"}]
 	When I apply the patch to the document
 	Then the transformed document should equal {"baz":[{"qux":"hello"}],"bar":1,"boo":{"qux":"hello"}}
 
-Scenario: replacing the root of the document is possible with add [21b3a435-d7b5-4a26-a808-53cbe9419865]
+Scenario: replacing the root of the document is possible with add [ceb145f5-b536-42fa-988b-89f896ab2dee]
 	Given the document {"foo":"bar"}
 	And the patch [{"op":"add","path":"","value":{"baz":"qux"}}]
 	When I apply the patch to the document
 	Then the transformed document should equal {"baz":"qux"}
 
-Scenario: Adding to "/-" adds to the end of the array [2f958b9a-0462-4174-a22e-48197a895938]
+Scenario: Adding to "/-" adds to the end of the array [3afa1546-16cd-427e-a951-e15f45caa8b7]
 	Given the document [1,2]
 	And the patch [{"op":"add","path":"/-","value":{"foo":["bar","baz"]}}]
 	When I apply the patch to the document
 	Then the transformed document should equal [1,2,{"foo":["bar","baz"]}]
 
-Scenario: Adding to "/-" adds to the end of the array, even n levels down [b6df6048-4893-498d-9eb3-15c7f0bd12a0]
+Scenario: Adding to "/-" adds to the end of the array, even n levels down [2152083f-864f-49d0-8406-41e16609177c]
 	Given the document [1,2,[3,[4,5]]]
 	And the patch [{"op":"add","path":"/2/1/-","value":{"foo":["bar","baz"]}}]
 	When I apply the patch to the document
 	Then the transformed document should equal [1,2,[3,[4,5,{"foo":["bar","baz"]}]]]
 
-Scenario: test remove with bad number should fail [df746b5b-ed70-4024-bb70-688f62074079]
+Scenario: test remove with bad number should fail [15ef5728-2e4d-46f7-9821-7472ebdf15ca]
 	Given the document {"foo":1,"baz":[{"qux":"hello"}]}
 	And the patch [{"op":"remove","path":"/baz/1e0/qux"}]
 	When I apply the patch to the document
 	Then the document should not be transformed.
 
-Scenario: test remove on array [18900ae9-ab24-4063-96b2-c5e9f7ec29ac]
+Scenario: test remove on array [b473e18e-7329-4500-892c-92c681ed3d79]
 	Given the document [1,2,3,4]
 	And the patch [{"op":"remove","path":"/0"}]
 	When I apply the patch to the document
 	Then the transformed document should equal [2,3,4]
 
-Scenario: test repeated removes [30e3b2c7-be84-4ffb-bf4f-ca15dbcf694b]
+Scenario: test repeated removes [bd10c562-fc10-4443-af16-44434c366c02]
 	Given the document [1,2,3,4]
 	And the patch [{"op":"remove","path":"/1"},{"op":"remove","path":"/2"}]
 	When I apply the patch to the document
 	Then the transformed document should equal [1,3]
 
-Scenario: test remove with bad index should fail [a3391957-9fe9-4191-993e-aaf2efe0295e]
+Scenario: test remove with bad index should fail [1b76b028-d810-423b-86be-66dcaa1771cc]
 	Given the document [1,2,3,4]
 	And the patch [{"op":"remove","path":"/1e0"}]
 	When I apply the patch to the document
 	Then the document should not be transformed.
 
-Scenario: test replace with bad number should fail [bc8ccbdb-f568-4843-91c9-0d6da6670f3a]
+Scenario: test replace with bad number should fail [e093c368-5fb1-4365-beba-863fd31a00f2]
 	Given the document [""]
 	And the patch [{"op":"replace","path":"/1e0","value":false}]
 	When I apply the patch to the document
 	Then the document should not be transformed.
 
-Scenario: test copy with bad number should fail [c11e8371-f809-4c3e-9526-e54f3e57ef93]
+Scenario: test copy with bad number should fail [392874e7-b537-4973-8b0f-1db04f8d7f90]
 	Given the document {"baz":[1,2,3],"bar":1}
 	And the patch [{"op":"copy","from":"/baz/1e0","path":"/boo"}]
 	When I apply the patch to the document
 	Then the document should not be transformed.
 
-Scenario: test move with bad number should fail [62d4e48d-cc2b-4bbe-8fc2-0fd904863b26]
+Scenario: test move with bad number should fail [035eaba5-1187-45d9-8acf-146e55ec3760]
 	Given the document {"foo":1,"baz":[1,2,3,4]}
 	And the patch [{"op":"move","from":"/baz/1e0","path":"/foo"}]
 	When I apply the patch to the document
 	Then the document should not be transformed.
 
-Scenario: test add with bad number should fail [17446dab-0243-4ed8-8508-3c1601e64635]
+Scenario: test add with bad number should fail [023296fa-2442-44d1-8dae-fb53b552ce7a]
 	Given the document ["foo","sil"]
 	And the patch [{"op":"add","path":"/1e0","value":"bar"}]
 	When I apply the patch to the document
 	Then the document should not be transformed.
 
-Scenario: missing 'path' parameter [ade94665-c59a-4a95-bded-634464273d46]
+Scenario: missing 'path' parameter [8a13b7a8-0166-4c33-8141-51a866cd78f1]
 	Given the document {}
 	And the patch [{"op":"add","value":"bar"}]
 	When I apply the patch to the document
 	Then the document should not be transformed.
 
-Scenario: 'path' parameter with null value [959889fa-c89e-453b-8be0-1546a5767342]
+Scenario: 'path' parameter with null value [3262f87a-df38-42d8-85f9-c089fe07e574]
 	Given the document {}
 	And the patch [{"op":"add","path":null,"value":"bar"}]
 	When I apply the patch to the document
 	Then the document should not be transformed.
 
-Scenario: invalid JSON Pointer token [a159ff73-67b7-487f-ab8a-d2752c10ad41]
+Scenario: invalid JSON Pointer token [4c045186-98ae-4c5b-9f4c-7321e03323e7]
 	Given the document {}
 	And the patch [{"op":"add","path":"foo","value":"bar"}]
 	When I apply the patch to the document
 	Then the document should not be transformed.
 
-Scenario: missing 'value' parameter to add [68a2b870-6b39-4aa8-b011-abfcd9cd22a3]
+Scenario: missing 'value' parameter to add [32a972e0-1480-4776-9622-92bbfbf7b447]
 	Given the document [1]
 	And the patch [{"op":"add","path":"/-"}]
 	When I apply the patch to the document
 	Then the document should not be transformed.
 
-Scenario: missing 'value' parameter to replace [64caf814-dd4e-445f-8bc4-a7c4a4908283]
+Scenario: missing 'value' parameter to replace [aec99300-1e39-427b-8ef9-2f606f9d8156]
 	Given the document [1]
 	And the patch [{"op":"replace","path":"/0"}]
 	When I apply the patch to the document
 	Then the document should not be transformed.
 
-Scenario: missing 'value' parameter to test [04de32d6-0174-400f-ab77-b1f551111242]
+Scenario: missing 'value' parameter to test [7b23db48-2540-4df7-b243-a96a8141bdd7]
 	Given the document [null]
 	And the patch [{"op":"test","path":"/0"}]
 	When I apply the patch to the document
 	Then the document should not be transformed.
 
-Scenario: missing value parameter to test - where undef is falsy [d1bf2ee0-8f9d-43b8-b6a3-981cfc482eca]
+Scenario: missing value parameter to test - where undef is falsy [9866f0a0-2e8e-40ee-a1e8-1376411ba02f]
 	Given the document [false]
 	And the patch [{"op":"test","path":"/0"}]
 	When I apply the patch to the document
 	Then the document should not be transformed.
 
-Scenario: missing from parameter to copy [1af8e2b1-2a7b-481b-a353-61fb76630835]
+Scenario: missing from parameter to copy [cda9a168-ea33-4884-a2a5-113d851e4626]
 	Given the document [1]
 	And the patch [{"op":"copy","path":"/-"}]
 	When I apply the patch to the document
 	Then the document should not be transformed.
 
-Scenario: missing from location to copy [c1499bea-d14e-4a2f-a395-248e8b624a0f]
+Scenario: missing from location to copy [0177e003-c6b3-427d-aed9-7390cf7dd5d2]
 	Given the document {"foo":1}
 	And the patch [{"op":"copy","from":"/bar","path":"/foo"}]
 	When I apply the patch to the document
 	Then the document should not be transformed.
 
-Scenario: missing from parameter to move [c407ef91-8231-4e32-b543-c355a872fe9f]
+Scenario: missing from parameter to move [b2ad961e-b32e-4aa2-8cf1-d1567d388d93]
 	Given the document {"foo":1}
 	And the patch [{"op":"move","path":""}]
 	When I apply the patch to the document
 	Then the document should not be transformed.
 
-Scenario: missing from location to move [1741c3cf-1369-46d4-82a1-aab0c3ca8f09]
+Scenario: missing from location to move [6c3a9f97-fe3a-4e11-b455-ed8aa50ade3c]
 	Given the document {"foo":1}
 	And the patch [{"op":"move","from":"/bar","path":"/foo"}]
 	When I apply the patch to the document
 	Then the document should not be transformed.
 
-Scenario: unrecognized op should fail [2ee426d5-0392-48c3-a527-5ecd61816499]
+Scenario: unrecognized op should fail [325febf0-d671-45be-b5fe-936c3faca8a7]
 	Given the document {"foo":1}
 	And the patch [{"op":"spam","path":"/foo","value":1}]
 	When I apply the patch to the document
 	Then the document should not be transformed.
 
-Scenario: test with bad array number that has leading zeros [93db8e1b-469e-4a3b-99f0-94b1738a7b19]
+Scenario: test with bad array number that has leading zeros [90dd249c-4adf-41d9-a6fc-1f089d73e5fd]
 	Given the document ["foo","bar"]
 	And the patch [{"op":"test","path":"/00","value":"foo"}]
 	When I apply the patch to the document
 	Then the document should not be transformed.
 
-Scenario: test with bad array number that has leading zeros [402850b5-c06d-4625-a93d-98fd9ce4ecd5]
+Scenario: test with bad array number that has leading zeros [bb96bc18-0c28-48bb-a9a0-9221477b83ea]
 	Given the document ["foo","bar"]
 	And the patch [{"op":"test","path":"/01","value":"bar"}]
 	When I apply the patch to the document
 	Then the document should not be transformed.
 
-Scenario: Removing nonexistent field [51bc7151-2629-4a8b-9e41-6cdcdf7201e9]
+Scenario: Removing nonexistent field [5c0749e0-67d9-46af-b767-d1b75a5d35f0]
 	Given the document {"foo":"bar"}
 	And the patch [{"op":"remove","path":"/baz"}]
 	When I apply the patch to the document
 	Then the document should not be transformed.
 
-Scenario: Removing deep nonexistent path [6eeaab6f-a348-4ee8-844c-be87c60b674b]
+Scenario: Removing deep nonexistent path [742fa1c7-3df5-47fd-bd89-52be5e790674]
 	Given the document {"foo":"bar"}
 	And the patch [{"op":"remove","path":"/missing1/missing2"}]
 	When I apply the patch to the document
 	Then the document should not be transformed.
 
-Scenario: Removing nonexistent index [9f3592f3-2699-402f-a0f7-458c3924318a]
+Scenario: Removing nonexistent index [7fafcde9-9ccd-4190-9b47-f2346dcbacc9]
 	Given the document ["foo","bar"]
 	And the patch [{"op":"remove","path":"/2"}]
 	When I apply the patch to the document
 	Then the document should not be transformed.
 
-Scenario: Patch with different capitalisation than doc [b0ecec6e-1314-4962-bceb-1b827683aade]
+Scenario: Patch with different capitalisation than doc [7b72867a-a82e-4854-a0ba-2f60dcb2121d]
 	Given the document {"foo":"bar"}
 	And the patch [{"op":"add","path":"/FOO","value":"BAR"}]
 	When I apply the patch to the document

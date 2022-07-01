@@ -37,8 +37,12 @@ public static partial class JsonPatchExtensions
             {
                 if (operationPath.Length == path.Length)
                 {
-                    // We are an exact match, and we cannot add at this node, because, by definition, it already exists
-                    return new(nodeToVisit, Transformed.No, Walk.TerminateAtThisNodeAndAbandonAllChanges);
+                    if (!value.HasValue)
+                    {
+                        return new(nodeToVisit, Transformed.No, Walk.TerminateAtThisNodeAndAbandonAllChanges);
+                    }
+
+                    return new(value.Value, Transformed.Yes, Walk.TerminateAtThisNodeAndKeepChanges);
                 }
 
                 if (nodeToVisit.ValueKind == JsonValueKind.Object)
@@ -46,13 +50,6 @@ public static partial class JsonPatchExtensions
                     // We are an object, so we need to see if the rest of the path represents a property.
                     if (TryGetTerminatingPathElement(operationPath[path.Length..], out ReadOnlySpan<char> propertyName))
                     {
-                        // Add does not permit us to replace a property that already exists (that's what Replace is for)
-                        if (nodeToVisit.HasProperty(propertyName))
-                        {
-                            // So we don't transform, and we abandon the walk at this point.
-                            return new(nodeToVisit, Transformed.No, Walk.TerminateAtThisNodeAndAbandonAllChanges);
-                        }
-
                         if (!value.HasValue)
                         {
                             return new(nodeToVisit, Transformed.No, Walk.TerminateAtThisNodeAndAbandonAllChanges);
@@ -79,13 +76,20 @@ public static partial class JsonPatchExtensions
 
                         int arrayLength = arrayNode.Length;
 
-                        if (itemIndex.Length == 1 && itemIndex[0] == '-')
+                        if (itemIndex[0] == '-')
                         {
-                            // We got the '-' which means add it at the end
-                            return AddNodeAtEnd(arrayNode, value.Value);
+                            if (itemIndex.Length == 1)
+                            {
+                                // We got the '-' which means add it at the end
+                                return AddNodeAtEnd(arrayNode, value.Value);
+                            }
+                            else
+                            {
+                                return new(nodeToVisit, Transformed.No, Walk.TerminateAtThisNodeAndAbandonAllChanges);
+                            }
                         }
 
-                        if (int.TryParse(itemIndex, out int index))
+                        if (TryGetArrayIndex(itemIndex, out int index))
                         {
                             // You can specify the end explicitly
                             if (index == arrayLength)
