@@ -6,6 +6,7 @@ namespace Steps
 {
     using Corvus.Json;
     using Corvus.Json.Patch;
+    using Corvus.Json.Patch.Model;
     using NUnit.Framework;
     using TechTalk.SpecFlow;
 
@@ -19,6 +20,8 @@ namespace Steps
         private const string PatchKey = "Patch";
         private const string ResultKey = "Result";
         private const string OutputKey = "Output";
+        private const string ExceptionKey = "Exception";
+        private const string BuilderKey = "Builder";
         private readonly ScenarioContext scenarioContext;
 
         /// <summary>
@@ -51,6 +54,64 @@ namespace Steps
         }
 
         /// <summary>
+        /// Parses the <paramref name="jsonString"/> and uses it to create a <see cref="PatchBuilder"/> for those operations. The result
+        /// is stored in the context key <see cref="BuilderKey"/>. If the build fails, the exception is stored in the <see cref="ExceptionKey"/>.
+        /// </summary>
+        /// <param name="jsonString">The json string containing the patch.</param>
+        [When("I build the patch (.*)")]
+        public void WhenIBuildThePatch(string jsonString)
+        {
+            try
+            {
+                PatchOperationArray patchOperationArray = JsonAny.Parse(jsonString);
+                this.scenarioContext.Set(patchOperationArray, PatchKey);
+
+                JsonAny document = this.scenarioContext.Get<JsonAny>(DocumentKey);
+                PatchBuilder builder = document.BeginPatch();
+
+                foreach (PatchOperation operation in patchOperationArray.EnumerateItems())
+                {
+                    string op = operation.Op;
+                    switch (op)
+                    {
+                        case "add":
+                            Add add = operation.AsAdd;
+                            builder = builder.Add(add.Value, operation.Path);
+                            break;
+                        case "copy":
+                            Copy copy = operation.AsCopy;
+                            builder = builder.Copy(copy.From, operation.Path);
+                            break;
+                        case "move":
+                            Move move = operation.AsMove;
+                            builder = builder.Move(move.From, operation.Path);
+                            break;
+                        case "remove":
+                            builder = builder.Remove(operation.Path);
+                            break;
+                        case "replace":
+                            Replace replace = operation.AsReplace;
+                            builder = builder.Replace(replace.Value, operation.Path);
+                            break;
+                        case "test":
+                            Test test = operation.AsTest;
+                            builder = builder.Test(test.Value, operation.Path);
+                            break;
+                        default:
+                            // Ignore unrecognized nodes
+                            break;
+                    }
+                }
+
+                this.scenarioContext.Set(builder, BuilderKey);
+            }
+            catch (Exception ex)
+            {
+                this.scenarioContext.Set(ex, ExceptionKey);
+            }
+        }
+
+        /// <summary>
         /// Applies the <see cref="PatchOperationArray"/> in the context at <see cref="PatchKey"/> to the <see cref="JsonAny"/> in the context at <see cref="DocumentKey"/>
         /// and stores the results in the context in <see cref="ResultKey"/> and <see cref="OutputKey"/>.
         /// </summary>
@@ -62,16 +123,44 @@ namespace Steps
             this.scenarioContext.Set(output, OutputKey);
         }
 
+        /// <summary>
+        /// Gets the result from the <see cref="BuilderKey"/>, then compares the resulting value with the <see cref="JsonAny"/> represented by the <paramref name="jsonString"/>.
+        /// </summary>
+        /// <param name="jsonString">The expected value.</param>
+        [Then("the patch result should equal (.*)")]
+        public void ThenThePatchResultShouldEqual(string jsonString)
+        {
+            PatchBuilder builder = this.scenarioContext.Get<PatchBuilder>(BuilderKey);
+            Assert.AreEqual(JsonAny.Parse(jsonString), builder.Value);
+        }
+
+        /// <summary>
+        /// Compare the transformed document from the <see cref="OutputKey"/> with the <see cref="JsonAny"/> represented
+        /// by the <paramref name="jsonString"/>.
+        /// </summary>
+        /// <param name="jsonString">The document with which to compare the output.</param>
         [Then("the transformed document should equal (.*)")]
         public void ThenTheTransformedDocumentShouldEqual(string jsonString)
         {
             Assert.AreEqual(JsonAny.Parse(jsonString), this.scenarioContext.Get<JsonAny>(OutputKey));
         }
 
+        /// <summary>
+        /// Validate the <see cref="ResultKey"/> indicates that the document was not transformed.
+        /// </summary>
         [Then("the document should not be transformed.")]
         public void ThenTheDocumentShouldNotBeTransformed()
         {
             Assert.IsFalse(this.scenarioContext.Get<bool>(ResultKey));
+        }
+
+        /// <summary>
+        /// Validate the <see cref="ResultKey"/> indicates that the document was not transformed.
+        /// </summary>
+        [Then("a patch exception should be thrown")]
+        public void APatchExceptionShouldBeThrown()
+        {
+            Assert.IsInstanceOf<JsonPatchException>(this.scenarioContext.Get<Exception>(ExceptionKey));
         }
     }
 }

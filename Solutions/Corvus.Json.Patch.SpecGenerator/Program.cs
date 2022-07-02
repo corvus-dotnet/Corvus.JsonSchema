@@ -39,6 +39,10 @@ namespace Corvus.Json.Patch.SpecGenerator
                 string outputFilename = Path.Combine(outputPath, $"{spec.FeatureName}.feature");
                 File.WriteAllText(outputFilename, spec.TransformText());
                 Console.WriteLine(outputFilename);
+
+                var builderSpec = new BuilderSpec(feature, $"builder_{Path.GetFileNameWithoutExtension(testFile)}");
+                outputFilename = Path.Combine(outputPath, $"{builderSpec.FeatureName}.feature");
+                File.WriteAllText(outputFilename, builderSpec.TransformText());
             }
 
             return 0;

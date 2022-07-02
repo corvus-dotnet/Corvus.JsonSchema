@@ -7,7 +7,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 #nullable enable
-namespace Corvus.Json.Patch
+namespace Corvus.Json.Patch.Model
 {
     using System;
     using System.Collections.Generic;
@@ -20,16 +20,16 @@ namespace Corvus.Json.Patch
     /// <summary>
     /// A type generated from a JsonSchema specification.
     /// </summary>
-    public readonly struct Add : IJsonObject<Add>, IEquatable<Add>
+    public readonly struct Copy : IJsonObject<Copy>, IEquatable<Copy>
     {
         /// <summary>
-        /// JSON property name for <see cref = "Value"/>.
+        /// JSON property name for <see cref = "From"/>.
         /// </summary>
-        public static readonly ReadOnlyMemory<byte> ValueUtf8JsonPropertyName = new byte[]{118, 97, 108, 117, 101};
+        public static readonly ReadOnlyMemory<byte> FromUtf8JsonPropertyName = new byte[]{102, 114, 111, 109};
         /// <summary>
-        /// JSON property name for <see cref = "Value"/>.
+        /// JSON property name for <see cref = "From"/>.
         /// </summary>
-        public static readonly string ValueJsonPropertyName = "value";
+        public static readonly string FromJsonPropertyName = "from";
         /// <summary>
         /// JSON property name for <see cref = "Path"/>.
         /// </summary>
@@ -46,34 +46,34 @@ namespace Corvus.Json.Patch
         /// JSON property name for <see cref = "Op"/>.
         /// </summary>
         public static readonly string OpJsonPropertyName = "op";
-        private static readonly ImmutableDictionary<string, PropertyValidator<Add>> __CorvusLocalProperties = CreateLocalPropertyValidators();
+        private static readonly ImmutableDictionary<string, PropertyValidator<Copy>> __CorvusLocalProperties = CreateLocalPropertyValidators();
         private readonly JsonElement jsonElementBacking;
         private readonly ImmutableDictionary<string, JsonAny>? objectBacking;
         /// <summary>
-        /// Initializes a new instance of the <see cref = "Add"/> struct.
+        /// Initializes a new instance of the <see cref = "Copy"/> struct.
         /// </summary>
         /// <param name = "value">The backing <see cref = "JsonElement"/>.</param>
-        public Add(JsonElement value)
+        public Copy(JsonElement value)
         {
             this.jsonElementBacking = value;
             this.objectBacking = default;
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref = "Add"/> struct.
+        /// Initializes a new instance of the <see cref = "Copy"/> struct.
         /// </summary>
         /// <param name = "value">A property dictionary.</param>
-        public Add(ImmutableDictionary<string, JsonAny> value)
+        public Copy(ImmutableDictionary<string, JsonAny> value)
         {
             this.jsonElementBacking = default;
             this.objectBacking = value;
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref = "Add"/> struct.
+        /// Initializes a new instance of the <see cref = "Copy"/> struct.
         /// </summary>
         /// <param name = "jsonObject">The <see cref = "JsonObject"/> from which to construct the value.</param>
-        public Add(JsonObject jsonObject)
+        public Copy(JsonObject jsonObject)
         {
             if (jsonObject.HasJsonElement)
             {
@@ -88,10 +88,10 @@ namespace Corvus.Json.Patch
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref = "Add"/> struct.
+        /// Initializes a new instance of the <see cref = "Copy"/> struct.
         /// </summary>
-        /// <param name = "conversion">The <see cref = "Corvus.Json.Patch.PatchOperationCommon"/> from which to construct the value.</param>
-        public Add(Corvus.Json.Patch.PatchOperationCommon conversion)
+        /// <param name = "conversion">The <see cref = "Corvus.Json.Patch.Model.PatchOperationCommon"/> from which to construct the value.</param>
+        public Copy(Corvus.Json.Patch.Model.PatchOperationCommon conversion)
         {
             if (conversion.HasJsonElement)
             {
@@ -113,9 +113,9 @@ namespace Corvus.Json.Patch
         }
 
         /// <summary>
-        /// Gets the value as a <see cref = "Corvus.Json.Patch.PatchOperationCommon"/>.
+        /// Gets the value as a <see cref = "Corvus.Json.Patch.Model.PatchOperationCommon"/>.
         /// </summary>
-        public Corvus.Json.Patch.PatchOperationCommon AsPatchOperationCommon
+        public Corvus.Json.Patch.Model.PatchOperationCommon AsPatchOperationCommon
         {
             get
             {
@@ -124,18 +124,18 @@ namespace Corvus.Json.Patch
         }
 
         /// <summary>
-        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.Patch.PatchOperationCommon"/>.
+        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.Patch.Model.PatchOperationCommon"/>.
         /// </summary>
         public bool IsPatchOperationCommon
         {
             get
             {
-                return ((Corvus.Json.Patch.PatchOperationCommon)this).Validate().IsValid;
+                return ((Corvus.Json.Patch.Model.PatchOperationCommon)this).Validate().IsValid;
             }
         }
 
         /// <summary>
-        /// Gets Value.
+        /// Gets From.
         /// </summary>
         /// <remarks>
         /// {Property title}.
@@ -144,13 +144,13 @@ namespace Corvus.Json.Patch
         /// <example>
         /// {Property examples}.
         /// </example>
-        public Corvus.Json.JsonAny Value
+        public Corvus.Json.JsonPointer From
         {
             get
             {
                 if (this.objectBacking is ImmutableDictionary<string, JsonAny> properties)
                 {
-                    if (properties.TryGetValue(ValueJsonPropertyName, out JsonAny result))
+                    if (properties.TryGetValue(FromJsonPropertyName, out JsonAny result))
                     {
                         return result;
                     }
@@ -158,9 +158,9 @@ namespace Corvus.Json.Patch
 
                 if (this.jsonElementBacking.ValueKind == JsonValueKind.Object)
                 {
-                    if (this.jsonElementBacking.TryGetProperty(ValueUtf8JsonPropertyName.Span, out JsonElement result))
+                    if (this.jsonElementBacking.TryGetProperty(FromUtf8JsonPropertyName.Span, out JsonElement result))
                     {
-                        return new Corvus.Json.JsonAny(result);
+                        return new Corvus.Json.JsonPointer(result);
                     }
                 }
 
@@ -212,7 +212,7 @@ namespace Corvus.Json.Patch
         /// <example>
         /// {Property examples}.
         /// </example>
-        public Corvus.Json.Patch.Add.OpEntity Op
+        public Corvus.Json.Patch.Model.Copy.OpEntity Op
         {
             get
             {
@@ -228,7 +228,7 @@ namespace Corvus.Json.Patch
                 {
                     if (this.jsonElementBacking.TryGetProperty(OpUtf8JsonPropertyName.Span, out JsonElement result))
                     {
-                        return new Corvus.Json.Patch.Add.OpEntity(result);
+                        return new Corvus.Json.Patch.Model.Copy.OpEntity(result);
                     }
                 }
 
@@ -285,23 +285,23 @@ namespace Corvus.Json.Patch
         }
 
         /// <summary>
-        /// Conversion from <see cref = "Corvus.Json.Patch.PatchOperationCommon"/>.
+        /// Conversion from <see cref = "Corvus.Json.Patch.Model.PatchOperationCommon"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator Add(Corvus.Json.Patch.PatchOperationCommon value)
+        public static implicit operator Copy(Corvus.Json.Patch.Model.PatchOperationCommon value)
         {
-            return new Add(value);
+            return new Copy(value);
         }
 
         /// <summary>
-        /// Conversion to <see cref = "Corvus.Json.Patch.PatchOperationCommon"/>.
+        /// Conversion to <see cref = "Corvus.Json.Patch.Model.PatchOperationCommon"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator Corvus.Json.Patch.PatchOperationCommon(Add value)
+        public static implicit operator Corvus.Json.Patch.Model.PatchOperationCommon(Copy value)
         {
             if (value.ValueKind == JsonValueKind.Object)
             {
-                return new Corvus.Json.Patch.PatchOperationCommon(value.AsObject);
+                return new Corvus.Json.Patch.Model.PatchOperationCommon(value.AsObject);
             }
 
             return default;
@@ -311,21 +311,21 @@ namespace Corvus.Json.Patch
         /// Conversion from any.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator Add(JsonAny value)
+        public static implicit operator Copy(JsonAny value)
         {
             if (value.HasJsonElement)
             {
-                return new Add(value.AsJsonElement);
+                return new Copy(value.AsJsonElement);
             }
 
-            return value.As<Add>();
+            return value.As<Copy>();
         }
 
         /// <summary>
         /// Conversion to any.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator JsonAny(Add value)
+        public static implicit operator JsonAny(Copy value)
         {
             return value.AsAny;
         }
@@ -334,16 +334,16 @@ namespace Corvus.Json.Patch
         /// Conversion from object.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator Add(JsonObject value)
+        public static implicit operator Copy(JsonObject value)
         {
-            return new Add(value);
+            return new Copy(value);
         }
 
         /// <summary>
         /// Conversion to object.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator JsonObject(Add value)
+        public static implicit operator JsonObject(Copy value)
         {
             return value.AsObject;
         }
@@ -352,7 +352,7 @@ namespace Corvus.Json.Patch
         /// Implicit conversion to a property dictionary.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator ImmutableDictionary<string, JsonAny>(Add value)
+        public static implicit operator ImmutableDictionary<string, JsonAny>(Copy value)
         {
             return value.AsObject.AsPropertyDictionary;
         }
@@ -361,9 +361,9 @@ namespace Corvus.Json.Patch
         /// Implicit conversion from a property dictionary.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator Add(ImmutableDictionary<string, JsonAny> value)
+        public static implicit operator Copy(ImmutableDictionary<string, JsonAny> value)
         {
-            return new Add(value);
+            return new Copy(value);
         }
 
         /// <summary>
@@ -372,7 +372,7 @@ namespace Corvus.Json.Patch
         /// <param name = "lhs">The left hand side of the comparison.</param>
         /// <param name = "rhs">The right hand side of the comparison.</param>
         /// <returns>True if they are equal.</returns>
-        public static bool operator ==(Add lhs, Add rhs)
+        public static bool operator ==(Copy lhs, Copy rhs)
         {
             return lhs.Equals(rhs);
         }
@@ -383,31 +383,31 @@ namespace Corvus.Json.Patch
         /// <param name = "lhs">The left hand side of the comparison.</param>
         /// <param name = "rhs">The right hand side of the comparison.</param>
         /// <returns>True if they are not equal.</returns>
-        public static bool operator !=(Add lhs, Add rhs)
+        public static bool operator !=(Copy lhs, Copy rhs)
         {
             return !lhs.Equals(rhs);
         }
 
         /// <summary>
-        /// Creates an instance of a <see cref = "Add"/>.
+        /// Creates an instance of a <see cref = "Copy"/>.
         /// </summary>
-        public static Add Create(Corvus.Json.JsonAny value, Corvus.Json.JsonPointer path)
+        public static Copy Create(Corvus.Json.JsonPointer from, Corvus.Json.JsonPointer path)
         {
             var builder = ImmutableDictionary.CreateBuilder<string, JsonAny>();
-            builder.Add(ValueJsonPropertyName, value);
+            builder.Add(FromJsonPropertyName, from);
             builder.Add(PathJsonPropertyName, path);
-            builder.Add(OpJsonPropertyName, new Corvus.Json.Patch.Add.OpEntity());
+            builder.Add(OpJsonPropertyName, new Corvus.Json.Patch.Model.Copy.OpEntity());
             return builder.ToImmutable();
         }
 
         /// <summary>
-        /// Sets value.
+        /// Sets from.
         /// </summary>
         /// <param name = "value">The value to set.</param>
         /// <returns>The entity with the updated property.</returns>
-        public Add WithValue(Corvus.Json.JsonAny value)
+        public Copy WithFrom(Corvus.Json.JsonPointer value)
         {
-            return this.SetProperty(ValueJsonPropertyName, value);
+            return this.SetProperty(FromJsonPropertyName, value);
         }
 
         /// <summary>
@@ -415,7 +415,7 @@ namespace Corvus.Json.Patch
         /// </summary>
         /// <param name = "value">The value to set.</param>
         /// <returns>The entity with the updated property.</returns>
-        public Add WithPath(Corvus.Json.JsonPointer value)
+        public Copy WithPath(Corvus.Json.JsonPointer value)
         {
             return this.SetProperty(PathJsonPropertyName, value);
         }
@@ -521,7 +521,7 @@ namespace Corvus.Json.Patch
         }
 
         /// <inheritdoc/>
-        public bool Equals(Add other)
+        public bool Equals(Copy other)
         {
             JsonValueKind valueKind = this.ValueKind;
             if (other.ValueKind != valueKind)
@@ -590,7 +590,7 @@ namespace Corvus.Json.Patch
         }
 
         /// <inheritdoc/>
-        public Add SetProperty<TValue>(string name, TValue value)
+        public Copy SetProperty<TValue>(string name, TValue value)
             where TValue : struct, IJsonValue
         {
             if (this.ValueKind == JsonValueKind.Object || this.ValueKind == JsonValueKind.Undefined)
@@ -602,7 +602,7 @@ namespace Corvus.Json.Patch
         }
 
         /// <inheritdoc/>
-        public Add SetProperty<TValue>(ReadOnlySpan<char> name, TValue value)
+        public Copy SetProperty<TValue>(ReadOnlySpan<char> name, TValue value)
             where TValue : struct, IJsonValue
         {
             if (this.ValueKind == JsonValueKind.Object || this.ValueKind == JsonValueKind.Undefined)
@@ -614,7 +614,7 @@ namespace Corvus.Json.Patch
         }
 
         /// <inheritdoc/>
-        public Add SetProperty<TValue>(ReadOnlySpan<byte> utf8name, TValue value)
+        public Copy SetProperty<TValue>(ReadOnlySpan<byte> utf8name, TValue value)
             where TValue : struct, IJsonValue
         {
             if (this.ValueKind == JsonValueKind.Object || this.ValueKind == JsonValueKind.Undefined)
@@ -626,7 +626,7 @@ namespace Corvus.Json.Patch
         }
 
         /// <inheritdoc/>
-        public Add RemoveProperty(string name)
+        public Copy RemoveProperty(string name)
         {
             if (this.ValueKind == JsonValueKind.Object)
             {
@@ -637,7 +637,7 @@ namespace Corvus.Json.Patch
         }
 
         /// <inheritdoc/>
-        public Add RemoveProperty(ReadOnlySpan<char> name)
+        public Copy RemoveProperty(ReadOnlySpan<char> name)
         {
             if (this.ValueKind == JsonValueKind.Object)
             {
@@ -648,7 +648,7 @@ namespace Corvus.Json.Patch
         }
 
         /// <inheritdoc/>
-        public Add RemoveProperty(ReadOnlySpan<byte> utf8Name)
+        public Copy RemoveProperty(ReadOnlySpan<byte> utf8Name)
         {
             if (this.ValueKind == JsonValueKind.Object)
             {
@@ -662,7 +662,7 @@ namespace Corvus.Json.Patch
         public T As<T>()
             where T : struct, IJsonValue
         {
-            return this.As<Add, T>();
+            return this.As<Copy, T>();
         }
 
         /// <inheritdoc/>
@@ -706,23 +706,23 @@ namespace Corvus.Json.Patch
             }
         }
 
-        private static ImmutableDictionary<string, PropertyValidator<Add>> CreateLocalPropertyValidators()
+        private static ImmutableDictionary<string, PropertyValidator<Copy>> CreateLocalPropertyValidators()
         {
-            ImmutableDictionary<string, PropertyValidator<Add>>.Builder builder = ImmutableDictionary.CreateBuilder<string, PropertyValidator<Add>>();
-            builder.Add(ValueJsonPropertyName, __CorvusValidateValue);
+            ImmutableDictionary<string, PropertyValidator<Copy>>.Builder builder = ImmutableDictionary.CreateBuilder<string, PropertyValidator<Copy>>();
+            builder.Add(FromJsonPropertyName, __CorvusValidateFrom);
             builder.Add(OpJsonPropertyName, __CorvusValidateOp);
             return builder.ToImmutable();
         }
 
-        private static ValidationContext __CorvusValidateValue(in Add that, in ValidationContext validationContext, ValidationLevel level)
+        private static ValidationContext __CorvusValidateFrom(in Copy that, in ValidationContext validationContext, ValidationLevel level)
         {
-            Corvus.Json.JsonAny property = that.Value;
+            Corvus.Json.JsonPointer property = that.From;
             return property.Validate(validationContext, level);
         }
 
-        private static ValidationContext __CorvusValidateOp(in Add that, in ValidationContext validationContext, ValidationLevel level)
+        private static ValidationContext __CorvusValidateOp(in Copy that, in ValidationContext validationContext, ValidationLevel level)
         {
-            Corvus.Json.Patch.Add.OpEntity property = that.Op;
+            Corvus.Json.Patch.Model.Copy.OpEntity property = that.Op;
             return property.Validate(validationContext, level);
         }
 
@@ -735,12 +735,12 @@ namespace Corvus.Json.Patch
             }
 
             int propertyCount = 0;
-            bool foundValue = false;
+            bool foundFrom = false;
             bool foundOp = false;
             foreach (Property property in this.EnumerateObject())
             {
                 string propertyName = property.Name;
-                if (__CorvusLocalProperties.TryGetValue(propertyName, out PropertyValidator<Add>? propertyValidator))
+                if (__CorvusLocalProperties.TryGetValue(propertyName, out PropertyValidator<Copy>? propertyValidator))
                 {
                     result = result.WithLocalProperty(propertyCount);
                     var propertyResult = propertyValidator(this, result.CreateChildContext(), level);
@@ -750,9 +750,9 @@ namespace Corvus.Json.Patch
                         return result;
                     }
 
-                    if (ValueJsonPropertyName.Equals(propertyName))
+                    if (FromJsonPropertyName.Equals(propertyName))
                     {
-                        foundValue = true;
+                        foundFrom = true;
                     }
                     else if (OpJsonPropertyName.Equals(propertyName))
                     {
@@ -763,11 +763,11 @@ namespace Corvus.Json.Patch
                 propertyCount++;
             }
 
-            if (!foundValue)
+            if (!foundFrom)
             {
                 if (level >= ValidationLevel.Detailed)
                 {
-                    result = result.WithResult(isValid: false, $"6.5.3. required - required property \"value\" not present.");
+                    result = result.WithResult(isValid: false, $"6.5.3. required - required property \"from\" not present.");
                 }
                 else if (level >= ValidationLevel.Basic)
                 {
@@ -801,7 +801,7 @@ namespace Corvus.Json.Patch
         private ValidationContext ValidateAllOf(in ValidationContext validationContext, ValidationLevel level)
         {
             ValidationContext result = validationContext;
-            ValidationContext allOfResult0 = this.As<Corvus.Json.Patch.PatchOperationCommon>().Validate(validationContext.CreateChildContext(), level);
+            ValidationContext allOfResult0 = this.As<Corvus.Json.Patch.Model.PatchOperationCommon>().Validate(validationContext.CreateChildContext(), level);
             if (!allOfResult0.IsValid)
             {
                 if (level >= ValidationLevel.Detailed)
@@ -831,7 +831,7 @@ namespace Corvus.Json.Patch
         /// </summary>
         public readonly struct OpEntity : IJsonValue, IEquatable<OpEntity>
         {
-            private static readonly OpEntity __CorvusConstValue = JsonAny.Parse("\"add\"");
+            private static readonly OpEntity __CorvusConstValue = JsonAny.Parse("\"copy\"");
             private readonly JsonElement jsonElementBacking;
             private readonly string? stringBacking;
             /// <summary>

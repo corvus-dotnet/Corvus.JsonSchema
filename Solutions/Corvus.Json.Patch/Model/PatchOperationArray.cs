@@ -7,7 +7,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 #nullable enable
-namespace Corvus.Json.Patch
+namespace Corvus.Json.Patch.Model
 {
     using System;
     using System.Collections.Generic;
@@ -210,7 +210,7 @@ namespace Corvus.Json.Patch
         /// </summary>
         /// <param name = "items">The items from which to create the array.</param>
         /// <returns>The new array created from the items.</returns>
-        public static PatchOperationArray From(params Corvus.Json.Patch.PatchOperation[] items)
+        public static PatchOperationArray From(params Corvus.Json.Patch.Model.PatchOperation[] items)
         {
             var builder = ImmutableList.CreateBuilder<JsonAny>();
             foreach (var item in items)
@@ -226,7 +226,7 @@ namespace Corvus.Json.Patch
         /// </summary>
         /// <param name = "item1">The items from which to create the array.</param>
         /// <returns>The new array created from the items.</returns>
-        public static PatchOperationArray From(Corvus.Json.Patch.PatchOperation item1)
+        public static PatchOperationArray From(Corvus.Json.Patch.Model.PatchOperation item1)
         {
             return new PatchOperationArray(ImmutableList.Create((JsonAny)item1));
         }
@@ -237,7 +237,7 @@ namespace Corvus.Json.Patch
         /// <param name = "item1">The first item from which to create the array.</param>
         /// <param name = "item2">The second item from which to create the array.</param>
         /// <returns>The new array created from the items.</returns>
-        public static PatchOperationArray From(Corvus.Json.Patch.PatchOperation item1, Corvus.Json.Patch.PatchOperation item2)
+        public static PatchOperationArray From(Corvus.Json.Patch.Model.PatchOperation item1, Corvus.Json.Patch.Model.PatchOperation item2)
         {
             return new PatchOperationArray(ImmutableList.Create((JsonAny)item1, (JsonAny)item2));
         }
@@ -249,7 +249,7 @@ namespace Corvus.Json.Patch
         /// <param name = "item2">The second item from which to create the array.</param>
         /// <param name = "item3">The third item from which to create the array.</param>
         /// <returns>The new array created from the items.</returns>
-        public static PatchOperationArray From(Corvus.Json.Patch.PatchOperation item1, Corvus.Json.Patch.PatchOperation item2, Corvus.Json.Patch.PatchOperation item3)
+        public static PatchOperationArray From(Corvus.Json.Patch.Model.PatchOperation item1, Corvus.Json.Patch.Model.PatchOperation item2, Corvus.Json.Patch.Model.PatchOperation item3)
         {
             return new PatchOperationArray(ImmutableList.Create((JsonAny)item1, (JsonAny)item2, (JsonAny)item3));
         }
@@ -262,7 +262,7 @@ namespace Corvus.Json.Patch
         /// <param name = "item3">The third item from which to create the array.</param>
         /// <param name = "item4">The fourth item from which to create the array.</param>
         /// <returns>The new array created from the items.</returns>
-        public static PatchOperationArray From(Corvus.Json.Patch.PatchOperation item1, Corvus.Json.Patch.PatchOperation item2, Corvus.Json.Patch.PatchOperation item3, Corvus.Json.Patch.PatchOperation item4)
+        public static PatchOperationArray From(Corvus.Json.Patch.Model.PatchOperation item1, Corvus.Json.Patch.Model.PatchOperation item2, Corvus.Json.Patch.Model.PatchOperation item3, Corvus.Json.Patch.Model.PatchOperation item4)
         {
             return new PatchOperationArray(ImmutableList.Create((JsonAny)item1, (JsonAny)item2, (JsonAny)item3, (JsonAny)item4));
         }
@@ -322,18 +322,18 @@ namespace Corvus.Json.Patch
         }
 
         /// <summary>
-        /// Enumerate the items in the array as a <see cref = "Corvus.Json.Patch.PatchOperation"/>.
+        /// Enumerate the items in the array as a <see cref = "Corvus.Json.Patch.Model.PatchOperation"/>.
         /// </summary>
-        public JsonArrayEnumerator<Corvus.Json.Patch.PatchOperation> EnumerateItems()
+        public JsonArrayEnumerator<Corvus.Json.Patch.Model.PatchOperation> EnumerateItems()
         {
             if (this.arrayBacking is ImmutableList<JsonAny> items)
             {
-                return new JsonArrayEnumerator<Corvus.Json.Patch.PatchOperation>(items);
+                return new JsonArrayEnumerator<Corvus.Json.Patch.Model.PatchOperation>(items);
             }
 
             if (this.jsonElementBacking.ValueKind == JsonValueKind.Array)
             {
-                return new JsonArrayEnumerator<Corvus.Json.Patch.PatchOperation>(this.jsonElementBacking);
+                return new JsonArrayEnumerator<Corvus.Json.Patch.Model.PatchOperation>(this.jsonElementBacking);
             }
 
             return default;
@@ -578,7 +578,7 @@ namespace Corvus.Json.Patch
             JsonArrayEnumerator arrayEnumerator = this.EnumerateArray();
             while (arrayEnumerator.MoveNext())
             {
-                result = arrayEnumerator.Current.As<Corvus.Json.Patch.PatchOperation>().Validate(result, level);
+                result = arrayEnumerator.Current.As<Corvus.Json.Patch.Model.PatchOperation>().Validate(result, level);
                 if (level == ValidationLevel.Flag && !result.IsValid)
                 {
                     return result;

@@ -5,6 +5,7 @@
 namespace Corvus.Json.Patch;
 
 using System.Diagnostics.CodeAnalysis;
+using Corvus.Json.Patch.Model;
 using Corvus.Json.Visitor;
 
 /// <summary>

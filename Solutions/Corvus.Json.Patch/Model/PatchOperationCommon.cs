@@ -7,7 +7,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 #nullable enable
-namespace Corvus.Json.Patch
+namespace Corvus.Json.Patch.Model
 {
     using System;
     using System.Collections.Generic;

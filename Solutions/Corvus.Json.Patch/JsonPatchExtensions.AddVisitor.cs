@@ -4,6 +4,7 @@
 
 namespace Corvus.Json.Patch;
 using System.Text.Json;
+using Corvus.Json.Patch.Model;
 using Corvus.Json.Visitor;
 
 /// <summary>

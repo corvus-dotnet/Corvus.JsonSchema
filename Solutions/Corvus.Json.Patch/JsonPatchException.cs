@@ -9,7 +9,7 @@ using System.Runtime.Serialization;
 /// An exception for JSON Patch operations.
 /// </summary>
 [Serializable]
-internal class JsonPatchException : Exception
+public class JsonPatchException : Exception
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonPatchException"/> class.

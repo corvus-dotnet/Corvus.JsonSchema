@@ -3,6 +3,7 @@
 // </copyright>
 
 namespace Corvus.Json.Patch;
+using Corvus.Json.Patch.Model;
 using Corvus.Json.Visitor;
 
 /// <summary>

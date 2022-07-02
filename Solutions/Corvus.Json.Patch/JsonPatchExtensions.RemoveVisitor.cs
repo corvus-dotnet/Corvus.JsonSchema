@@ -4,6 +4,7 @@
 
 namespace Corvus.Json.Patch;
 using System.Text.Json;
+using Corvus.Json.Patch.Model;
 using Corvus.Json.Visitor;
 
 /// <summary>
@@ -36,7 +37,7 @@ public static partial class JsonPatchExtensions
             {
                 if (operationPath.Length == path.Length)
                 {
-                    // We are an exact match, and we cannot add at this node, because, by definition, it already exists
+                    // We are an exact match, but we should have found that in the parent; we can't remove ourselves.
                     return new(nodeToVisit, Transformed.No, Walk.TerminateAtThisNodeAndAbandonAllChanges);
                 }
 
@@ -81,7 +82,7 @@ public static partial class JsonPatchExtensions
                     return new(nodeToVisit, Transformed.No, Walk.Continue);
                 }
 
-                // The parent entity wasn't an object or an array, so it can't be added to; this is an error.
+                // The parent entity wasn't an object or an array, so it can't be removed from; this is an error.
                 return new(nodeToVisit, Transformed.No, Walk.TerminateAtThisNodeAndAbandonAllChanges);
             }
 

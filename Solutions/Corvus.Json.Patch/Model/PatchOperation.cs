@@ -7,7 +7,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 #nullable enable
-namespace Corvus.Json.Patch
+namespace Corvus.Json.Patch.Model
 {
     using System;
     using System.Collections.Generic;
@@ -81,8 +81,8 @@ namespace Corvus.Json.Patch
         /// <summary>
         /// Initializes a new instance of the <see cref = "PatchOperation"/> struct.
         /// </summary>
-        /// <param name = "conversion">The <see cref = "Corvus.Json.Patch.PatchOperationCommon"/> from which to construct the value.</param>
-        public PatchOperation(Corvus.Json.Patch.PatchOperationCommon conversion)
+        /// <param name = "conversion">The <see cref = "Corvus.Json.Patch.Model.PatchOperationCommon"/> from which to construct the value.</param>
+        public PatchOperation(Corvus.Json.Patch.Model.PatchOperationCommon conversion)
         {
             if (conversion.HasJsonElement)
             {
@@ -106,8 +106,8 @@ namespace Corvus.Json.Patch
         /// <summary>
         /// Initializes a new instance of the <see cref = "PatchOperation"/> struct.
         /// </summary>
-        /// <param name = "conversion">The <see cref = "Corvus.Json.Patch.Add"/> from which to construct the value.</param>
-        public PatchOperation(Corvus.Json.Patch.Add conversion)
+        /// <param name = "conversion">The <see cref = "Corvus.Json.Patch.Model.Add"/> from which to construct the value.</param>
+        public PatchOperation(Corvus.Json.Patch.Model.Add conversion)
         {
             if (conversion.HasJsonElement)
             {
@@ -131,8 +131,8 @@ namespace Corvus.Json.Patch
         /// <summary>
         /// Initializes a new instance of the <see cref = "PatchOperation"/> struct.
         /// </summary>
-        /// <param name = "conversion">The <see cref = "Corvus.Json.Patch.Remove"/> from which to construct the value.</param>
-        public PatchOperation(Corvus.Json.Patch.Remove conversion)
+        /// <param name = "conversion">The <see cref = "Corvus.Json.Patch.Model.Remove"/> from which to construct the value.</param>
+        public PatchOperation(Corvus.Json.Patch.Model.Remove conversion)
         {
             if (conversion.HasJsonElement)
             {
@@ -156,8 +156,8 @@ namespace Corvus.Json.Patch
         /// <summary>
         /// Initializes a new instance of the <see cref = "PatchOperation"/> struct.
         /// </summary>
-        /// <param name = "conversion">The <see cref = "Corvus.Json.Patch.Replace"/> from which to construct the value.</param>
-        public PatchOperation(Corvus.Json.Patch.Replace conversion)
+        /// <param name = "conversion">The <see cref = "Corvus.Json.Patch.Model.Replace"/> from which to construct the value.</param>
+        public PatchOperation(Corvus.Json.Patch.Model.Replace conversion)
         {
             if (conversion.HasJsonElement)
             {
@@ -181,8 +181,8 @@ namespace Corvus.Json.Patch
         /// <summary>
         /// Initializes a new instance of the <see cref = "PatchOperation"/> struct.
         /// </summary>
-        /// <param name = "conversion">The <see cref = "Corvus.Json.Patch.Move"/> from which to construct the value.</param>
-        public PatchOperation(Corvus.Json.Patch.Move conversion)
+        /// <param name = "conversion">The <see cref = "Corvus.Json.Patch.Model.Move"/> from which to construct the value.</param>
+        public PatchOperation(Corvus.Json.Patch.Model.Move conversion)
         {
             if (conversion.HasJsonElement)
             {
@@ -206,8 +206,8 @@ namespace Corvus.Json.Patch
         /// <summary>
         /// Initializes a new instance of the <see cref = "PatchOperation"/> struct.
         /// </summary>
-        /// <param name = "conversion">The <see cref = "Corvus.Json.Patch.Copy"/> from which to construct the value.</param>
-        public PatchOperation(Corvus.Json.Patch.Copy conversion)
+        /// <param name = "conversion">The <see cref = "Corvus.Json.Patch.Model.Copy"/> from which to construct the value.</param>
+        public PatchOperation(Corvus.Json.Patch.Model.Copy conversion)
         {
             if (conversion.HasJsonElement)
             {
@@ -231,8 +231,8 @@ namespace Corvus.Json.Patch
         /// <summary>
         /// Initializes a new instance of the <see cref = "PatchOperation"/> struct.
         /// </summary>
-        /// <param name = "conversion">The <see cref = "Corvus.Json.Patch.Test"/> from which to construct the value.</param>
-        public PatchOperation(Corvus.Json.Patch.Test conversion)
+        /// <param name = "conversion">The <see cref = "Corvus.Json.Patch.Model.Test"/> from which to construct the value.</param>
+        public PatchOperation(Corvus.Json.Patch.Model.Test conversion)
         {
             if (conversion.HasJsonElement)
             {
@@ -254,9 +254,9 @@ namespace Corvus.Json.Patch
         }
 
         /// <summary>
-        /// Gets the value as a <see cref = "Corvus.Json.Patch.PatchOperationCommon"/>.
+        /// Gets the value as a <see cref = "Corvus.Json.Patch.Model.PatchOperationCommon"/>.
         /// </summary>
-        public Corvus.Json.Patch.PatchOperationCommon AsPatchOperationCommon
+        public Corvus.Json.Patch.Model.PatchOperationCommon AsPatchOperationCommon
         {
             get
             {
@@ -265,20 +265,20 @@ namespace Corvus.Json.Patch
         }
 
         /// <summary>
-        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.Patch.PatchOperationCommon"/>.
+        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.Patch.Model.PatchOperationCommon"/>.
         /// </summary>
         public bool IsPatchOperationCommon
         {
             get
             {
-                return ((Corvus.Json.Patch.PatchOperationCommon)this).Validate().IsValid;
+                return ((Corvus.Json.Patch.Model.PatchOperationCommon)this).Validate().IsValid;
             }
         }
 
         /// <summary>
-        /// Gets the value as a <see cref = "Corvus.Json.Patch.Add"/>.
+        /// Gets the value as a <see cref = "Corvus.Json.Patch.Model.Add"/>.
         /// </summary>
-        public Corvus.Json.Patch.Add AsAdd
+        public Corvus.Json.Patch.Model.Add AsAdd
         {
             get
             {
@@ -287,20 +287,20 @@ namespace Corvus.Json.Patch
         }
 
         /// <summary>
-        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.Patch.Add"/>.
+        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.Patch.Model.Add"/>.
         /// </summary>
         public bool IsAdd
         {
             get
             {
-                return ((Corvus.Json.Patch.Add)this).Validate().IsValid;
+                return ((Corvus.Json.Patch.Model.Add)this).Validate().IsValid;
             }
         }
 
         /// <summary>
-        /// Gets the value as a <see cref = "Corvus.Json.Patch.Remove"/>.
+        /// Gets the value as a <see cref = "Corvus.Json.Patch.Model.Remove"/>.
         /// </summary>
-        public Corvus.Json.Patch.Remove AsRemove
+        public Corvus.Json.Patch.Model.Remove AsRemove
         {
             get
             {
@@ -309,20 +309,20 @@ namespace Corvus.Json.Patch
         }
 
         /// <summary>
-        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.Patch.Remove"/>.
+        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.Patch.Model.Remove"/>.
         /// </summary>
         public bool IsRemove
         {
             get
             {
-                return ((Corvus.Json.Patch.Remove)this).Validate().IsValid;
+                return ((Corvus.Json.Patch.Model.Remove)this).Validate().IsValid;
             }
         }
 
         /// <summary>
-        /// Gets the value as a <see cref = "Corvus.Json.Patch.Replace"/>.
+        /// Gets the value as a <see cref = "Corvus.Json.Patch.Model.Replace"/>.
         /// </summary>
-        public Corvus.Json.Patch.Replace AsReplace
+        public Corvus.Json.Patch.Model.Replace AsReplace
         {
             get
             {
@@ -331,20 +331,20 @@ namespace Corvus.Json.Patch
         }
 
         /// <summary>
-        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.Patch.Replace"/>.
+        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.Patch.Model.Replace"/>.
         /// </summary>
         public bool IsReplace
         {
             get
             {
-                return ((Corvus.Json.Patch.Replace)this).Validate().IsValid;
+                return ((Corvus.Json.Patch.Model.Replace)this).Validate().IsValid;
             }
         }
 
         /// <summary>
-        /// Gets the value as a <see cref = "Corvus.Json.Patch.Move"/>.
+        /// Gets the value as a <see cref = "Corvus.Json.Patch.Model.Move"/>.
         /// </summary>
-        public Corvus.Json.Patch.Move AsMove
+        public Corvus.Json.Patch.Model.Move AsMove
         {
             get
             {
@@ -353,20 +353,20 @@ namespace Corvus.Json.Patch
         }
 
         /// <summary>
-        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.Patch.Move"/>.
+        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.Patch.Model.Move"/>.
         /// </summary>
         public bool IsMove
         {
             get
             {
-                return ((Corvus.Json.Patch.Move)this).Validate().IsValid;
+                return ((Corvus.Json.Patch.Model.Move)this).Validate().IsValid;
             }
         }
 
         /// <summary>
-        /// Gets the value as a <see cref = "Corvus.Json.Patch.Copy"/>.
+        /// Gets the value as a <see cref = "Corvus.Json.Patch.Model.Copy"/>.
         /// </summary>
-        public Corvus.Json.Patch.Copy AsCopy
+        public Corvus.Json.Patch.Model.Copy AsCopy
         {
             get
             {
@@ -375,20 +375,20 @@ namespace Corvus.Json.Patch
         }
 
         /// <summary>
-        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.Patch.Copy"/>.
+        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.Patch.Model.Copy"/>.
         /// </summary>
         public bool IsCopy
         {
             get
             {
-                return ((Corvus.Json.Patch.Copy)this).Validate().IsValid;
+                return ((Corvus.Json.Patch.Model.Copy)this).Validate().IsValid;
             }
         }
 
         /// <summary>
-        /// Gets the value as a <see cref = "Corvus.Json.Patch.Test"/>.
+        /// Gets the value as a <see cref = "Corvus.Json.Patch.Model.Test"/>.
         /// </summary>
-        public Corvus.Json.Patch.Test AsTest
+        public Corvus.Json.Patch.Model.Test AsTest
         {
             get
             {
@@ -397,13 +397,13 @@ namespace Corvus.Json.Patch
         }
 
         /// <summary>
-        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.Patch.Test"/>.
+        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.Patch.Model.Test"/>.
         /// </summary>
         public bool IsTest
         {
             get
             {
-                return ((Corvus.Json.Patch.Test)this).Validate().IsValid;
+                return ((Corvus.Json.Patch.Model.Test)this).Validate().IsValid;
             }
         }
 
@@ -524,161 +524,161 @@ namespace Corvus.Json.Patch
         }
 
         /// <summary>
-        /// Conversion from <see cref = "Corvus.Json.Patch.PatchOperationCommon"/>.
+        /// Conversion from <see cref = "Corvus.Json.Patch.Model.PatchOperationCommon"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator PatchOperation(Corvus.Json.Patch.PatchOperationCommon value)
+        public static implicit operator PatchOperation(Corvus.Json.Patch.Model.PatchOperationCommon value)
         {
             return new PatchOperation(value);
         }
 
         /// <summary>
-        /// Conversion to <see cref = "Corvus.Json.Patch.PatchOperationCommon"/>.
+        /// Conversion to <see cref = "Corvus.Json.Patch.Model.PatchOperationCommon"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator Corvus.Json.Patch.PatchOperationCommon(PatchOperation value)
+        public static implicit operator Corvus.Json.Patch.Model.PatchOperationCommon(PatchOperation value)
         {
             if (value.ValueKind == JsonValueKind.Object)
             {
-                return new Corvus.Json.Patch.PatchOperationCommon(value.AsObject);
+                return new Corvus.Json.Patch.Model.PatchOperationCommon(value.AsObject);
             }
 
             return default;
         }
 
         /// <summary>
-        /// Conversion from <see cref = "Corvus.Json.Patch.Add"/>.
+        /// Conversion from <see cref = "Corvus.Json.Patch.Model.Add"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator PatchOperation(Corvus.Json.Patch.Add value)
+        public static implicit operator PatchOperation(Corvus.Json.Patch.Model.Add value)
         {
             return new PatchOperation(value);
         }
 
         /// <summary>
-        /// Conversion to <see cref = "Corvus.Json.Patch.Add"/>.
+        /// Conversion to <see cref = "Corvus.Json.Patch.Model.Add"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator Corvus.Json.Patch.Add(PatchOperation value)
+        public static implicit operator Corvus.Json.Patch.Model.Add(PatchOperation value)
         {
             if (value.ValueKind == JsonValueKind.Object)
             {
-                return new Corvus.Json.Patch.Add(value.AsObject);
+                return new Corvus.Json.Patch.Model.Add(value.AsObject);
             }
 
             return default;
         }
 
         /// <summary>
-        /// Conversion from <see cref = "Corvus.Json.Patch.Remove"/>.
+        /// Conversion from <see cref = "Corvus.Json.Patch.Model.Remove"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator PatchOperation(Corvus.Json.Patch.Remove value)
+        public static implicit operator PatchOperation(Corvus.Json.Patch.Model.Remove value)
         {
             return new PatchOperation(value);
         }
 
         /// <summary>
-        /// Conversion to <see cref = "Corvus.Json.Patch.Remove"/>.
+        /// Conversion to <see cref = "Corvus.Json.Patch.Model.Remove"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator Corvus.Json.Patch.Remove(PatchOperation value)
+        public static implicit operator Corvus.Json.Patch.Model.Remove(PatchOperation value)
         {
             if (value.ValueKind == JsonValueKind.Object)
             {
-                return new Corvus.Json.Patch.Remove(value.AsObject);
+                return new Corvus.Json.Patch.Model.Remove(value.AsObject);
             }
 
             return default;
         }
 
         /// <summary>
-        /// Conversion from <see cref = "Corvus.Json.Patch.Replace"/>.
+        /// Conversion from <see cref = "Corvus.Json.Patch.Model.Replace"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator PatchOperation(Corvus.Json.Patch.Replace value)
+        public static implicit operator PatchOperation(Corvus.Json.Patch.Model.Replace value)
         {
             return new PatchOperation(value);
         }
 
         /// <summary>
-        /// Conversion to <see cref = "Corvus.Json.Patch.Replace"/>.
+        /// Conversion to <see cref = "Corvus.Json.Patch.Model.Replace"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator Corvus.Json.Patch.Replace(PatchOperation value)
+        public static implicit operator Corvus.Json.Patch.Model.Replace(PatchOperation value)
         {
             if (value.ValueKind == JsonValueKind.Object)
             {
-                return new Corvus.Json.Patch.Replace(value.AsObject);
+                return new Corvus.Json.Patch.Model.Replace(value.AsObject);
             }
 
             return default;
         }
 
         /// <summary>
-        /// Conversion from <see cref = "Corvus.Json.Patch.Move"/>.
+        /// Conversion from <see cref = "Corvus.Json.Patch.Model.Move"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator PatchOperation(Corvus.Json.Patch.Move value)
+        public static implicit operator PatchOperation(Corvus.Json.Patch.Model.Move value)
         {
             return new PatchOperation(value);
         }
 
         /// <summary>
-        /// Conversion to <see cref = "Corvus.Json.Patch.Move"/>.
+        /// Conversion to <see cref = "Corvus.Json.Patch.Model.Move"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator Corvus.Json.Patch.Move(PatchOperation value)
+        public static implicit operator Corvus.Json.Patch.Model.Move(PatchOperation value)
         {
             if (value.ValueKind == JsonValueKind.Object)
             {
-                return new Corvus.Json.Patch.Move(value.AsObject);
+                return new Corvus.Json.Patch.Model.Move(value.AsObject);
             }
 
             return default;
         }
 
         /// <summary>
-        /// Conversion from <see cref = "Corvus.Json.Patch.Copy"/>.
+        /// Conversion from <see cref = "Corvus.Json.Patch.Model.Copy"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator PatchOperation(Corvus.Json.Patch.Copy value)
+        public static implicit operator PatchOperation(Corvus.Json.Patch.Model.Copy value)
         {
             return new PatchOperation(value);
         }
 
         /// <summary>
-        /// Conversion to <see cref = "Corvus.Json.Patch.Copy"/>.
+        /// Conversion to <see cref = "Corvus.Json.Patch.Model.Copy"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator Corvus.Json.Patch.Copy(PatchOperation value)
+        public static implicit operator Corvus.Json.Patch.Model.Copy(PatchOperation value)
         {
             if (value.ValueKind == JsonValueKind.Object)
             {
-                return new Corvus.Json.Patch.Copy(value.AsObject);
+                return new Corvus.Json.Patch.Model.Copy(value.AsObject);
             }
 
             return default;
         }
 
         /// <summary>
-        /// Conversion from <see cref = "Corvus.Json.Patch.Test"/>.
+        /// Conversion from <see cref = "Corvus.Json.Patch.Model.Test"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator PatchOperation(Corvus.Json.Patch.Test value)
+        public static implicit operator PatchOperation(Corvus.Json.Patch.Model.Test value)
         {
             return new PatchOperation(value);
         }
 
         /// <summary>
-        /// Conversion to <see cref = "Corvus.Json.Patch.Test"/>.
+        /// Conversion to <see cref = "Corvus.Json.Patch.Model.Test"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator Corvus.Json.Patch.Test(PatchOperation value)
+        public static implicit operator Corvus.Json.Patch.Model.Test(PatchOperation value)
         {
             if (value.ValueKind == JsonValueKind.Object)
             {
-                return new Corvus.Json.Patch.Test(value.AsObject);
+                return new Corvus.Json.Patch.Model.Test(value.AsObject);
             }
 
             return default;
@@ -1085,7 +1085,7 @@ namespace Corvus.Json.Patch
         {
             ValidationContext result = validationContext;
             int oneOfCount = 0;
-            ValidationContext oneOfResult0 = this.As<Corvus.Json.Patch.Add>().Validate(validationContext.CreateChildContext(), level);
+            ValidationContext oneOfResult0 = this.As<Corvus.Json.Patch.Model.Add>().Validate(validationContext.CreateChildContext(), level);
             if (oneOfResult0.IsValid)
             {
                 result = result.MergeChildContext(oneOfResult0, level >= ValidationLevel.Detailed);
@@ -1112,7 +1112,7 @@ namespace Corvus.Json.Patch
                 }
             }
 
-            ValidationContext oneOfResult1 = this.As<Corvus.Json.Patch.Remove>().Validate(validationContext.CreateChildContext(), level);
+            ValidationContext oneOfResult1 = this.As<Corvus.Json.Patch.Model.Remove>().Validate(validationContext.CreateChildContext(), level);
             if (oneOfResult1.IsValid)
             {
                 result = result.MergeChildContext(oneOfResult1, level >= ValidationLevel.Detailed);
@@ -1139,7 +1139,7 @@ namespace Corvus.Json.Patch
                 }
             }
 
-            ValidationContext oneOfResult2 = this.As<Corvus.Json.Patch.Replace>().Validate(validationContext.CreateChildContext(), level);
+            ValidationContext oneOfResult2 = this.As<Corvus.Json.Patch.Model.Replace>().Validate(validationContext.CreateChildContext(), level);
             if (oneOfResult2.IsValid)
             {
                 result = result.MergeChildContext(oneOfResult2, level >= ValidationLevel.Detailed);
@@ -1166,7 +1166,7 @@ namespace Corvus.Json.Patch
                 }
             }
 
-            ValidationContext oneOfResult3 = this.As<Corvus.Json.Patch.Move>().Validate(validationContext.CreateChildContext(), level);
+            ValidationContext oneOfResult3 = this.As<Corvus.Json.Patch.Model.Move>().Validate(validationContext.CreateChildContext(), level);
             if (oneOfResult3.IsValid)
             {
                 result = result.MergeChildContext(oneOfResult3, level >= ValidationLevel.Detailed);
@@ -1193,7 +1193,7 @@ namespace Corvus.Json.Patch
                 }
             }
 
-            ValidationContext oneOfResult4 = this.As<Corvus.Json.Patch.Copy>().Validate(validationContext.CreateChildContext(), level);
+            ValidationContext oneOfResult4 = this.As<Corvus.Json.Patch.Model.Copy>().Validate(validationContext.CreateChildContext(), level);
             if (oneOfResult4.IsValid)
             {
                 result = result.MergeChildContext(oneOfResult4, level >= ValidationLevel.Detailed);
@@ -1220,7 +1220,7 @@ namespace Corvus.Json.Patch
                 }
             }
 
-            ValidationContext oneOfResult5 = this.As<Corvus.Json.Patch.Test>().Validate(validationContext.CreateChildContext(), level);
+            ValidationContext oneOfResult5 = this.As<Corvus.Json.Patch.Model.Test>().Validate(validationContext.CreateChildContext(), level);
             if (oneOfResult5.IsValid)
             {
                 result = result.MergeChildContext(oneOfResult5, level >= ValidationLevel.Detailed);
@@ -1291,7 +1291,7 @@ namespace Corvus.Json.Patch
         private ValidationContext ValidateAllOf(in ValidationContext validationContext, ValidationLevel level)
         {
             ValidationContext result = validationContext;
-            ValidationContext allOfResult0 = this.As<Corvus.Json.Patch.PatchOperationCommon>().Validate(validationContext.CreateChildContext(), level);
+            ValidationContext allOfResult0 = this.As<Corvus.Json.Patch.Model.PatchOperationCommon>().Validate(validationContext.CreateChildContext(), level);
             if (!allOfResult0.IsValid)
             {
                 if (level >= ValidationLevel.Detailed)

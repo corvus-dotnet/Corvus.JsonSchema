@@ -7,7 +7,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 #nullable enable
-namespace Corvus.Json.Patch
+namespace Corvus.Json.Patch.Model
 {
     using System;
     using System.Collections.Generic;
@@ -20,7 +20,7 @@ namespace Corvus.Json.Patch
     /// <summary>
     /// A type generated from a JsonSchema specification.
     /// </summary>
-    public readonly struct Test : IJsonObject<Test>, IEquatable<Test>
+    public readonly struct Replace : IJsonObject<Replace>, IEquatable<Replace>
     {
         /// <summary>
         /// JSON property name for <see cref = "Value"/>.
@@ -46,34 +46,34 @@ namespace Corvus.Json.Patch
         /// JSON property name for <see cref = "Op"/>.
         /// </summary>
         public static readonly string OpJsonPropertyName = "op";
-        private static readonly ImmutableDictionary<string, PropertyValidator<Test>> __CorvusLocalProperties = CreateLocalPropertyValidators();
+        private static readonly ImmutableDictionary<string, PropertyValidator<Replace>> __CorvusLocalProperties = CreateLocalPropertyValidators();
         private readonly JsonElement jsonElementBacking;
         private readonly ImmutableDictionary<string, JsonAny>? objectBacking;
         /// <summary>
-        /// Initializes a new instance of the <see cref = "Test"/> struct.
+        /// Initializes a new instance of the <see cref = "Replace"/> struct.
         /// </summary>
         /// <param name = "value">The backing <see cref = "JsonElement"/>.</param>
-        public Test(JsonElement value)
+        public Replace(JsonElement value)
         {
             this.jsonElementBacking = value;
             this.objectBacking = default;
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref = "Test"/> struct.
+        /// Initializes a new instance of the <see cref = "Replace"/> struct.
         /// </summary>
         /// <param name = "value">A property dictionary.</param>
-        public Test(ImmutableDictionary<string, JsonAny> value)
+        public Replace(ImmutableDictionary<string, JsonAny> value)
         {
             this.jsonElementBacking = default;
             this.objectBacking = value;
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref = "Test"/> struct.
+        /// Initializes a new instance of the <see cref = "Replace"/> struct.
         /// </summary>
         /// <param name = "jsonObject">The <see cref = "JsonObject"/> from which to construct the value.</param>
-        public Test(JsonObject jsonObject)
+        public Replace(JsonObject jsonObject)
         {
             if (jsonObject.HasJsonElement)
             {
@@ -88,10 +88,10 @@ namespace Corvus.Json.Patch
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref = "Test"/> struct.
+        /// Initializes a new instance of the <see cref = "Replace"/> struct.
         /// </summary>
-        /// <param name = "conversion">The <see cref = "Corvus.Json.Patch.PatchOperationCommon"/> from which to construct the value.</param>
-        public Test(Corvus.Json.Patch.PatchOperationCommon conversion)
+        /// <param name = "conversion">The <see cref = "Corvus.Json.Patch.Model.PatchOperationCommon"/> from which to construct the value.</param>
+        public Replace(Corvus.Json.Patch.Model.PatchOperationCommon conversion)
         {
             if (conversion.HasJsonElement)
             {
@@ -113,9 +113,9 @@ namespace Corvus.Json.Patch
         }
 
         /// <summary>
-        /// Gets the value as a <see cref = "Corvus.Json.Patch.PatchOperationCommon"/>.
+        /// Gets the value as a <see cref = "Corvus.Json.Patch.Model.PatchOperationCommon"/>.
         /// </summary>
-        public Corvus.Json.Patch.PatchOperationCommon AsPatchOperationCommon
+        public Corvus.Json.Patch.Model.PatchOperationCommon AsPatchOperationCommon
         {
             get
             {
@@ -124,13 +124,13 @@ namespace Corvus.Json.Patch
         }
 
         /// <summary>
-        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.Patch.PatchOperationCommon"/>.
+        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.Patch.Model.PatchOperationCommon"/>.
         /// </summary>
         public bool IsPatchOperationCommon
         {
             get
             {
-                return ((Corvus.Json.Patch.PatchOperationCommon)this).Validate().IsValid;
+                return ((Corvus.Json.Patch.Model.PatchOperationCommon)this).Validate().IsValid;
             }
         }
 
@@ -212,7 +212,7 @@ namespace Corvus.Json.Patch
         /// <example>
         /// {Property examples}.
         /// </example>
-        public Corvus.Json.Patch.Test.OpEntity Op
+        public Corvus.Json.Patch.Model.Replace.OpEntity Op
         {
             get
             {
@@ -228,7 +228,7 @@ namespace Corvus.Json.Patch
                 {
                     if (this.jsonElementBacking.TryGetProperty(OpUtf8JsonPropertyName.Span, out JsonElement result))
                     {
-                        return new Corvus.Json.Patch.Test.OpEntity(result);
+                        return new Corvus.Json.Patch.Model.Replace.OpEntity(result);
                     }
                 }
 
@@ -285,23 +285,23 @@ namespace Corvus.Json.Patch
         }
 
         /// <summary>
-        /// Conversion from <see cref = "Corvus.Json.Patch.PatchOperationCommon"/>.
+        /// Conversion from <see cref = "Corvus.Json.Patch.Model.PatchOperationCommon"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator Test(Corvus.Json.Patch.PatchOperationCommon value)
+        public static implicit operator Replace(Corvus.Json.Patch.Model.PatchOperationCommon value)
         {
-            return new Test(value);
+            return new Replace(value);
         }
 
         /// <summary>
-        /// Conversion to <see cref = "Corvus.Json.Patch.PatchOperationCommon"/>.
+        /// Conversion to <see cref = "Corvus.Json.Patch.Model.PatchOperationCommon"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator Corvus.Json.Patch.PatchOperationCommon(Test value)
+        public static implicit operator Corvus.Json.Patch.Model.PatchOperationCommon(Replace value)
         {
             if (value.ValueKind == JsonValueKind.Object)
             {
-                return new Corvus.Json.Patch.PatchOperationCommon(value.AsObject);
+                return new Corvus.Json.Patch.Model.PatchOperationCommon(value.AsObject);
             }
 
             return default;
@@ -311,21 +311,21 @@ namespace Corvus.Json.Patch
         /// Conversion from any.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator Test(JsonAny value)
+        public static implicit operator Replace(JsonAny value)
         {
             if (value.HasJsonElement)
             {
-                return new Test(value.AsJsonElement);
+                return new Replace(value.AsJsonElement);
             }
 
-            return value.As<Test>();
+            return value.As<Replace>();
         }
 
         /// <summary>
         /// Conversion to any.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator JsonAny(Test value)
+        public static implicit operator JsonAny(Replace value)
         {
             return value.AsAny;
         }
@@ -334,16 +334,16 @@ namespace Corvus.Json.Patch
         /// Conversion from object.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator Test(JsonObject value)
+        public static implicit operator Replace(JsonObject value)
         {
-            return new Test(value);
+            return new Replace(value);
         }
 
         /// <summary>
         /// Conversion to object.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator JsonObject(Test value)
+        public static implicit operator JsonObject(Replace value)
         {
             return value.AsObject;
         }
@@ -352,7 +352,7 @@ namespace Corvus.Json.Patch
         /// Implicit conversion to a property dictionary.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator ImmutableDictionary<string, JsonAny>(Test value)
+        public static implicit operator ImmutableDictionary<string, JsonAny>(Replace value)
         {
             return value.AsObject.AsPropertyDictionary;
         }
@@ -361,9 +361,9 @@ namespace Corvus.Json.Patch
         /// Implicit conversion from a property dictionary.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator Test(ImmutableDictionary<string, JsonAny> value)
+        public static implicit operator Replace(ImmutableDictionary<string, JsonAny> value)
         {
-            return new Test(value);
+            return new Replace(value);
         }
 
         /// <summary>
@@ -372,7 +372,7 @@ namespace Corvus.Json.Patch
         /// <param name = "lhs">The left hand side of the comparison.</param>
         /// <param name = "rhs">The right hand side of the comparison.</param>
         /// <returns>True if they are equal.</returns>
-        public static bool operator ==(Test lhs, Test rhs)
+        public static bool operator ==(Replace lhs, Replace rhs)
         {
             return lhs.Equals(rhs);
         }
@@ -383,20 +383,20 @@ namespace Corvus.Json.Patch
         /// <param name = "lhs">The left hand side of the comparison.</param>
         /// <param name = "rhs">The right hand side of the comparison.</param>
         /// <returns>True if they are not equal.</returns>
-        public static bool operator !=(Test lhs, Test rhs)
+        public static bool operator !=(Replace lhs, Replace rhs)
         {
             return !lhs.Equals(rhs);
         }
 
         /// <summary>
-        /// Creates an instance of a <see cref = "Test"/>.
+        /// Creates an instance of a <see cref = "Replace"/>.
         /// </summary>
-        public static Test Create(Corvus.Json.JsonAny value, Corvus.Json.JsonPointer path)
+        public static Replace Create(Corvus.Json.JsonAny value, Corvus.Json.JsonPointer path)
         {
             var builder = ImmutableDictionary.CreateBuilder<string, JsonAny>();
             builder.Add(ValueJsonPropertyName, value);
             builder.Add(PathJsonPropertyName, path);
-            builder.Add(OpJsonPropertyName, new Corvus.Json.Patch.Test.OpEntity());
+            builder.Add(OpJsonPropertyName, new Corvus.Json.Patch.Model.Replace.OpEntity());
             return builder.ToImmutable();
         }
 
@@ -405,7 +405,7 @@ namespace Corvus.Json.Patch
         /// </summary>
         /// <param name = "value">The value to set.</param>
         /// <returns>The entity with the updated property.</returns>
-        public Test WithValue(Corvus.Json.JsonAny value)
+        public Replace WithValue(Corvus.Json.JsonAny value)
         {
             return this.SetProperty(ValueJsonPropertyName, value);
         }
@@ -415,7 +415,7 @@ namespace Corvus.Json.Patch
         /// </summary>
         /// <param name = "value">The value to set.</param>
         /// <returns>The entity with the updated property.</returns>
-        public Test WithPath(Corvus.Json.JsonPointer value)
+        public Replace WithPath(Corvus.Json.JsonPointer value)
         {
             return this.SetProperty(PathJsonPropertyName, value);
         }
@@ -521,7 +521,7 @@ namespace Corvus.Json.Patch
         }
 
         /// <inheritdoc/>
-        public bool Equals(Test other)
+        public bool Equals(Replace other)
         {
             JsonValueKind valueKind = this.ValueKind;
             if (other.ValueKind != valueKind)
@@ -590,7 +590,7 @@ namespace Corvus.Json.Patch
         }
 
         /// <inheritdoc/>
-        public Test SetProperty<TValue>(string name, TValue value)
+        public Replace SetProperty<TValue>(string name, TValue value)
             where TValue : struct, IJsonValue
         {
             if (this.ValueKind == JsonValueKind.Object || this.ValueKind == JsonValueKind.Undefined)
@@ -602,7 +602,7 @@ namespace Corvus.Json.Patch
         }
 
         /// <inheritdoc/>
-        public Test SetProperty<TValue>(ReadOnlySpan<char> name, TValue value)
+        public Replace SetProperty<TValue>(ReadOnlySpan<char> name, TValue value)
             where TValue : struct, IJsonValue
         {
             if (this.ValueKind == JsonValueKind.Object || this.ValueKind == JsonValueKind.Undefined)
@@ -614,7 +614,7 @@ namespace Corvus.Json.Patch
         }
 
         /// <inheritdoc/>
-        public Test SetProperty<TValue>(ReadOnlySpan<byte> utf8name, TValue value)
+        public Replace SetProperty<TValue>(ReadOnlySpan<byte> utf8name, TValue value)
             where TValue : struct, IJsonValue
         {
             if (this.ValueKind == JsonValueKind.Object || this.ValueKind == JsonValueKind.Undefined)
@@ -626,7 +626,7 @@ namespace Corvus.Json.Patch
         }
 
         /// <inheritdoc/>
-        public Test RemoveProperty(string name)
+        public Replace RemoveProperty(string name)
         {
             if (this.ValueKind == JsonValueKind.Object)
             {
@@ -637,7 +637,7 @@ namespace Corvus.Json.Patch
         }
 
         /// <inheritdoc/>
-        public Test RemoveProperty(ReadOnlySpan<char> name)
+        public Replace RemoveProperty(ReadOnlySpan<char> name)
         {
             if (this.ValueKind == JsonValueKind.Object)
             {
@@ -648,7 +648,7 @@ namespace Corvus.Json.Patch
         }
 
         /// <inheritdoc/>
-        public Test RemoveProperty(ReadOnlySpan<byte> utf8Name)
+        public Replace RemoveProperty(ReadOnlySpan<byte> utf8Name)
         {
             if (this.ValueKind == JsonValueKind.Object)
             {
@@ -662,7 +662,7 @@ namespace Corvus.Json.Patch
         public T As<T>()
             where T : struct, IJsonValue
         {
-            return this.As<Test, T>();
+            return this.As<Replace, T>();
         }
 
         /// <inheritdoc/>
@@ -706,23 +706,23 @@ namespace Corvus.Json.Patch
             }
         }
 
-        private static ImmutableDictionary<string, PropertyValidator<Test>> CreateLocalPropertyValidators()
+        private static ImmutableDictionary<string, PropertyValidator<Replace>> CreateLocalPropertyValidators()
         {
-            ImmutableDictionary<string, PropertyValidator<Test>>.Builder builder = ImmutableDictionary.CreateBuilder<string, PropertyValidator<Test>>();
+            ImmutableDictionary<string, PropertyValidator<Replace>>.Builder builder = ImmutableDictionary.CreateBuilder<string, PropertyValidator<Replace>>();
             builder.Add(ValueJsonPropertyName, __CorvusValidateValue);
             builder.Add(OpJsonPropertyName, __CorvusValidateOp);
             return builder.ToImmutable();
         }
 
-        private static ValidationContext __CorvusValidateValue(in Test that, in ValidationContext validationContext, ValidationLevel level)
+        private static ValidationContext __CorvusValidateValue(in Replace that, in ValidationContext validationContext, ValidationLevel level)
         {
             Corvus.Json.JsonAny property = that.Value;
             return property.Validate(validationContext, level);
         }
 
-        private static ValidationContext __CorvusValidateOp(in Test that, in ValidationContext validationContext, ValidationLevel level)
+        private static ValidationContext __CorvusValidateOp(in Replace that, in ValidationContext validationContext, ValidationLevel level)
         {
-            Corvus.Json.Patch.Test.OpEntity property = that.Op;
+            Corvus.Json.Patch.Model.Replace.OpEntity property = that.Op;
             return property.Validate(validationContext, level);
         }
 
@@ -740,7 +740,7 @@ namespace Corvus.Json.Patch
             foreach (Property property in this.EnumerateObject())
             {
                 string propertyName = property.Name;
-                if (__CorvusLocalProperties.TryGetValue(propertyName, out PropertyValidator<Test>? propertyValidator))
+                if (__CorvusLocalProperties.TryGetValue(propertyName, out PropertyValidator<Replace>? propertyValidator))
                 {
                     result = result.WithLocalProperty(propertyCount);
                     var propertyResult = propertyValidator(this, result.CreateChildContext(), level);
@@ -801,7 +801,7 @@ namespace Corvus.Json.Patch
         private ValidationContext ValidateAllOf(in ValidationContext validationContext, ValidationLevel level)
         {
             ValidationContext result = validationContext;
-            ValidationContext allOfResult0 = this.As<Corvus.Json.Patch.PatchOperationCommon>().Validate(validationContext.CreateChildContext(), level);
+            ValidationContext allOfResult0 = this.As<Corvus.Json.Patch.Model.PatchOperationCommon>().Validate(validationContext.CreateChildContext(), level);
             if (!allOfResult0.IsValid)
             {
                 if (level >= ValidationLevel.Detailed)
@@ -831,7 +831,7 @@ namespace Corvus.Json.Patch
         /// </summary>
         public readonly struct OpEntity : IJsonValue, IEquatable<OpEntity>
         {
-            private static readonly OpEntity __CorvusConstValue = JsonAny.Parse("\"test\"");
+            private static readonly OpEntity __CorvusConstValue = JsonAny.Parse("\"replace\"");
             private readonly JsonElement jsonElementBacking;
             private readonly string? stringBacking;
             /// <summary>
