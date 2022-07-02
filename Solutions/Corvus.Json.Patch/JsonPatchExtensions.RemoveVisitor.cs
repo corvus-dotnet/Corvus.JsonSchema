@@ -14,13 +14,10 @@ public static partial class JsonPatchExtensions
 {
     private class RemoveVisitor
     {
-        public RemoveVisitor(JsonAny node, Remove patchOperation)
+        public RemoveVisitor(Remove patchOperation)
         {
-            this.Document = node;
             this.PatchOperation = patchOperation;
         }
-
-        public JsonAny Document { get; }
 
         public Remove PatchOperation { get; }
 

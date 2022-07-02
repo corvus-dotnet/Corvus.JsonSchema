@@ -30,33 +30,6 @@ public static partial class JsonPatchExtensions
     /// Apply a patch to a <see cref="IJsonValue"/>.
     /// </summary>
     /// <typeparam name="T">The type of <see cref="IJsonValue"/>.</typeparam>
-    /// <typeparam name="TResult">The type of the resulting <see cref="IJsonValue"/>.</typeparam>
-    /// <param name="value">The value to which to apply the patch.</param>
-    /// <param name="patchOperations">The patch operations to apply.</param>
-    /// <param name="result">The result of applying the patch.</param>
-    /// <returns><c>True</c> is the patch was applied.</returns>
-    public static bool TryApplyPatch<T, TResult>(this T value, PatchOperationArray patchOperations, out TResult result)
-        where T : struct, IJsonValue
-        where TResult : struct, IJsonValue
-    {
-        bool success = value.TryApplyPatch(patchOperations, out JsonAny interimResult);
-
-        if (success)
-        {
-            result = interimResult.As<TResult>();
-        }
-        else
-        {
-            result = default;
-        }
-
-        return success;
-    }
-
-    /// <summary>
-    /// Apply a patch to a <see cref="IJsonValue"/>.
-    /// </summary>
-    /// <typeparam name="T">The type of <see cref="IJsonValue"/>.</typeparam>
     /// <param name="value">The value to which to apply the patch.</param>
     /// <param name="patchOperations">The patch operations to apply.</param>
     /// <param name="result">The result of applying the patch.</param>
@@ -103,7 +76,7 @@ public static partial class JsonPatchExtensions
             case "test":
                 return TryApplyTest(node, patchOperation, out result);
             default:
-                result = default;
+                result = node;
                 return false;
         }
     }
@@ -165,7 +138,7 @@ public static partial class JsonPatchExtensions
 
     private static bool TryApplyAdd(JsonAny node, Add patchOperation, out JsonAny result)
     {
-        AddVisitor visitor = new(node, patchOperation);
+        AddVisitor visitor = new(patchOperation);
         bool transformed = JsonTransformingVisitor.Visit(node, visitor.Visit, out JsonAny transformedResult);
         result = transformedResult;
         return transformed;
@@ -203,7 +176,7 @@ public static partial class JsonPatchExtensions
 
     private static bool TryApplyRemove(JsonAny node, Remove patchOperation, out JsonAny result)
     {
-        RemoveVisitor visitor = new(node, patchOperation);
+        RemoveVisitor visitor = new(patchOperation);
         bool transformed = JsonTransformingVisitor.Visit(node, visitor.Visit, out JsonAny transformedResult);
         result = transformedResult;
         return transformed;
@@ -211,7 +184,7 @@ public static partial class JsonPatchExtensions
 
     private static bool TryApplyReplace(JsonAny node, Replace patchOperation, out JsonAny result)
     {
-        ReplaceVisitor visitor = new(node, patchOperation);
+        ReplaceVisitor visitor = new(patchOperation);
         bool transformed = JsonTransformingVisitor.Visit(node, visitor.Visit, out JsonAny transformedResult);
         result = transformedResult;
         return transformed;

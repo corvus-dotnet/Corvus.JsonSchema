@@ -16,14 +16,11 @@ public static partial class JsonPatchExtensions
     {
         public MoveVisitor(JsonAny node, Move patchOperation)
         {
-            this.Document = node;
             this.PatchOperation = patchOperation;
             this.Added = false;
             this.Removed = false;
             this.SourceElement = FindSourceElement(node, patchOperation.From);
         }
-
-        public JsonAny Document { get; }
 
         public Move PatchOperation { get; }
 

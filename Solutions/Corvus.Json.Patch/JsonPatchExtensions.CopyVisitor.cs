@@ -16,13 +16,10 @@ public static partial class JsonPatchExtensions
     {
         public CopyVisitor(JsonAny node, Copy patchOperation)
         {
-            this.Document = node;
             this.PatchOperation = patchOperation;
 
             this.SourceElement = FindSourceElement(node, patchOperation.From);
         }
-
-        public JsonAny Document { get; }
 
         public Copy PatchOperation { get; }
 

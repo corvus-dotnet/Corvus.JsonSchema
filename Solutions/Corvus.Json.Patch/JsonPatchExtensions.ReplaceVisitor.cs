@@ -13,13 +13,10 @@ public static partial class JsonPatchExtensions
 {
     private class ReplaceVisitor
     {
-        public ReplaceVisitor(JsonAny node, Replace patchOperation)
+        public ReplaceVisitor(Replace patchOperation)
         {
-            this.Document = node;
             this.PatchOperation = patchOperation;
         }
-
-        public JsonAny Document { get; }
 
         public Replace PatchOperation { get; }
 

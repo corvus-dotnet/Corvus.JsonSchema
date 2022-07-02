@@ -76,14 +76,32 @@ namespace Steps
                     {
                         case "add":
                             Add add = operation.AsAdd;
+
+                            if (!add.IsValid())
+                            {
+                                throw new JsonPatchException("Invalid add operation.");
+                            }
+
                             builder = builder.Add(add.Value, operation.Path);
                             break;
                         case "copy":
                             Copy copy = operation.AsCopy;
+
+                            if (!copy.IsValid())
+                            {
+                                throw new JsonPatchException("Invalid copy operation.");
+                            }
+
                             builder = builder.Copy(copy.From, operation.Path);
                             break;
                         case "move":
                             Move move = operation.AsMove;
+
+                            if (!move.IsValid())
+                            {
+                                throw new JsonPatchException("Invalid move operation.");
+                            }
+
                             builder = builder.Move(move.From, operation.Path);
                             break;
                         case "remove":
@@ -91,15 +109,26 @@ namespace Steps
                             break;
                         case "replace":
                             Replace replace = operation.AsReplace;
+
+                            if (!replace.IsValid())
+                            {
+                                throw new JsonPatchException("Invalid replace operation.");
+                            }
+
                             builder = builder.Replace(replace.Value, operation.Path);
                             break;
                         case "test":
                             Test test = operation.AsTest;
+
+                            if (!test.IsValid())
+                            {
+                                throw new JsonPatchException("Invalid test operation.");
+                            }
+
                             builder = builder.Test(test.Value, operation.Path);
                             break;
                         default:
-                            // Ignore unrecognized nodes
-                            break;
+                            throw new JsonPatchException("Unrecognized operation.");
                     }
                 }
 
