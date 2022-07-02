@@ -236,6 +236,7 @@ public static class JsonPointerExtensions
         where T : struct, IJsonValue
     {
         JsonAny current = root.AsAny;
+
         int index = 0;
         int startRun = 0;
         Span<char> decodedComponent = stackalloc char[fragment.Length];
@@ -253,11 +254,6 @@ public static class JsonPointerExtensions
             }
 
             startRun = index;
-
-            if (index >= fragment.Length)
-            {
-                break;
-            }
 
             while (index < fragment.Length && fragment[index] != '/')
             {
