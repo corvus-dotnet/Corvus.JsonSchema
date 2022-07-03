@@ -4,7 +4,7 @@
 
 namespace Benchmarks
 {
-    using System.Text.Json.Nodes;
+    using System.Text.Json;
     using Corvus.Json;
 
     /// <summary>
@@ -13,17 +13,9 @@ namespace Benchmarks
     public class BenchmarkBase
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="BenchmarkBase"/> class.
-        /// </summary>
-        protected BenchmarkBase()
-        {
-            this.Node = JsonValue.Create(false);
-        }
-
-        /// <summary>
         /// Gets the JsonNode for the benchmark.
         /// </summary>
-        public JsonNode Node { get; private set; }
+        public JsonElement Element { get; private set; }
 
         /// <summary>
         /// Gets the JsonAny for the benchmark.
@@ -38,16 +30,8 @@ namespace Benchmarks
         /// <exception cref="InvalidOperationException">Thrown if the input file could not be parsed.</exception>
         protected async Task GlobalSetup(string filePath)
         {
-            var node = JsonNode.Parse(await File.ReadAllTextAsync(filePath).ConfigureAwait(false));
-
-            if (node is JsonNode n)
-            {
-                this.Node = n;
-            }
-            else
-            {
-                throw new InvalidOperationException($"Bad input file {filePath}");
-            }
+            using var doc = JsonDocument.Parse(await File.ReadAllTextAsync(filePath).ConfigureAwait(false));
+            this.Element = doc.RootElement.Clone();
 
             this.Any = JsonAny.Parse(await File.ReadAllTextAsync(filePath).ConfigureAwait(false));
         }

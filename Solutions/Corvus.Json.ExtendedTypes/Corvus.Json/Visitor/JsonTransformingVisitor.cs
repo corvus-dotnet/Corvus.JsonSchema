@@ -187,12 +187,28 @@ public static partial class JsonTransformingVisitor
     {
         bool hasTransformedProperties = false;
         bool terminateEntireWalkApplyingChanges = false;
-        ImmutableDictionary<string, JsonAny>.Builder builder = ImmutableDictionary.CreateBuilder<string, JsonAny>();
+        ImmutableDictionary<string, JsonAny>.Builder builder;
+
+        if (asObject.HasJsonElement)
+        {
+            builder = ImmutableDictionary.CreateBuilder<string, JsonAny>();
+        }
+        else
+        {
+            builder = asObject.AsPropertyDictionary.ToBuilder();
+        }
+
         foreach (Property property in asObject.EnumerateObject())
         {
             if (terminateEntireWalkApplyingChanges)
             {
-                builder.Add(property.Name, property.Value);
+                string pn = property.Name;
+
+                if (!builder.ContainsKey(pn))
+                {
+                    builder.Add(pn, property.Value);
+                }
+
                 continue;
             }
 
@@ -226,7 +242,13 @@ public static partial class JsonTransformingVisitor
             hasTransformedProperties = hasTransformedProperties || propertyResult.IsTransformed;
 
             // We need to build up the set of properties, whether we have transformed them or not
-            builder.Add(property.Name, propertyResult.Output);
+            string name = property.Name;
+            if (builder.ContainsKey(name))
+            {
+                builder.Remove(name);
+            }
+
+            builder.Add(name, propertyResult.Output);
         }
 
         if (terminateEntireWalkApplyingChanges)

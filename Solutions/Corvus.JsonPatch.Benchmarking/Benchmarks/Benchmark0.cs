@@ -183,7 +183,7 @@ namespace Benchmarks
         [Benchmark(Baseline = true)]
         public void PatchJsonEverything()
         {
-            Json.Patch.PatchResult? patchResult = this.jePatch?.Apply(this.Node);
+            Json.Patch.PatchResult? patchResult = this.jePatch?.Apply(System.Text.Json.Nodes.JsonArray.Create(this.Element));
             if (patchResult is not Json.Patch.PatchResult pr || !pr.IsSuccess)
             {
                 throw new Exception(patchResult?.Error);

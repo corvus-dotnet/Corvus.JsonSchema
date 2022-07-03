@@ -20,6 +20,7 @@ internal class Program
                 ManualConfig.Create(DefaultConfig.Instance)
                 .AddJob(Job.Dry
                     .WithRuntime(CoreRuntime.Core60)
+                    .WithUnrollFactor(16)
                     .WithOutlierMode(OutlierMode.RemoveAll)
                     .WithStrategy(RunStrategy.Throughput)));
     }
