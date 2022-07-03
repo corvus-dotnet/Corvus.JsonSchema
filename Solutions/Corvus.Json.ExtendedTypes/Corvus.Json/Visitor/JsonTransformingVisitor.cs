@@ -90,13 +90,28 @@ public static partial class JsonTransformingVisitor
     {
         bool terminateEntireWalkApplyingChanges = false;
         bool hasTransformedItems = false;
-        ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
+        ImmutableList<JsonAny>.Builder builder;
+
+        if (asArray.HasJsonElement)
+        {
+            builder = ImmutableList.CreateBuilder<JsonAny>();
+        }
+        else
+        {
+            builder = asArray.AsItemsList.ToBuilder();
+        }
+
         int index = 0;
         foreach (JsonAny item in asArray.EnumerateArray())
         {
             if (terminateEntireWalkApplyingChanges)
             {
-                builder.Add(item);
+                if (index >= builder.Count)
+                {
+                    builder.Add(item);
+                }
+
+                index++;
                 continue;
             }
 
@@ -130,7 +145,15 @@ public static partial class JsonTransformingVisitor
             hasTransformedItems = hasTransformedItems || itemResult.IsTransformed;
 
             // We need to build up the set of items, whether we have transformed them or not
-            builder.Add(itemResult.Output);
+            if (index < builder.Count && itemResult.IsTransformed)
+            {
+                builder[index] = itemResult.Output;
+            }
+            else
+            {
+                builder.Add(itemResult.Output);
+            }
+
             ++index;
         }
 
