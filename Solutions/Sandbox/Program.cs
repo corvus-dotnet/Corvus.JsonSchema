@@ -8,113 +8,109 @@ Console.WriteLine("Hello, World!");
 
 var jp = new Json.Patch.JsonPatch(
         Json.Patch.PatchOperation.Copy(
-        Json.Pointer.JsonPointer.Create("/11/actor/id"),
-        Json.Pointer.JsonPointer.Create("/14/actor/id")),
+        Json.Pointer.JsonPointer.Parse("/11/actor/id"),
+        Json.Pointer.JsonPointer.Parse("/14/actor/id")),
         Json.Patch.PatchOperation.Copy(
-        Json.Pointer.JsonPointer.Create("/12/actor/id"),
-        Json.Pointer.JsonPointer.Create("/15/actor/id")),
+        Json.Pointer.JsonPointer.Parse("/12/actor/id"),
+        Json.Pointer.JsonPointer.Parse("/15/actor/id")),
         Json.Patch.PatchOperation.Copy(
-        Json.Pointer.JsonPointer.Create("/13/actor/id"),
-        Json.Pointer.JsonPointer.Create("/16/actor/id")),
+        Json.Pointer.JsonPointer.Parse("/13/actor/id"),
+        Json.Pointer.JsonPointer.Parse("/16/actor/id")),
         Json.Patch.PatchOperation.Copy(
-        Json.Pointer.JsonPointer.Create("/14/actor/id"),
-        Json.Pointer.JsonPointer.Create("/17/actor/id")),
+        Json.Pointer.JsonPointer.Parse("/14/actor/id"),
+        Json.Pointer.JsonPointer.Parse("/17/actor/id")),
         Json.Patch.PatchOperation.Copy(
-        Json.Pointer.JsonPointer.Create("/15/actor/id"),
-        Json.Pointer.JsonPointer.Create("/18/actor/id")),
+        Json.Pointer.JsonPointer.Parse("/15/actor/id"),
+        Json.Pointer.JsonPointer.Parse("/18/actor/id")),
         Json.Patch.PatchOperation.Copy(
-        Json.Pointer.JsonPointer.Create("/16/actor/id"),
-        Json.Pointer.JsonPointer.Create("/19/actor/id")),
+        Json.Pointer.JsonPointer.Parse("/16/actor/id"),
+        Json.Pointer.JsonPointer.Parse("/19/actor/id")),
         Json.Patch.PatchOperation.Copy(
-        Json.Pointer.JsonPointer.Create("/17/actor/id"),
-        Json.Pointer.JsonPointer.Create("/20/actor/id")),
+        Json.Pointer.JsonPointer.Parse("/17/actor/id"),
+        Json.Pointer.JsonPointer.Parse("/20/actor/id")),
         Json.Patch.PatchOperation.Copy(
-        Json.Pointer.JsonPointer.Create("/18/actor/id"),
-        Json.Pointer.JsonPointer.Create("/21/actor/id")),
+        Json.Pointer.JsonPointer.Parse("/18/actor/id"),
+        Json.Pointer.JsonPointer.Parse("/21/actor/id")),
         Json.Patch.PatchOperation.Copy(
-        Json.Pointer.JsonPointer.Create("/19/actor/id"),
-        Json.Pointer.JsonPointer.Create("/22/actor/id")),
+        Json.Pointer.JsonPointer.Parse("/19/actor/id"),
+        Json.Pointer.JsonPointer.Parse("/22/actor/id")),
         Json.Patch.PatchOperation.Copy(
-        Json.Pointer.JsonPointer.Create("/20/actor/id"),
-        Json.Pointer.JsonPointer.Create("/23/actor/id")),
+        Json.Pointer.JsonPointer.Parse("/20/actor/id"),
+        Json.Pointer.JsonPointer.Parse("/23/actor/id")),
         Json.Patch.PatchOperation.Copy(
-        Json.Pointer.JsonPointer.Create("/21/actor/id"),
-        Json.Pointer.JsonPointer.Create("/24/actor/id")),
+        Json.Pointer.JsonPointer.Parse("/21/actor/id"),
+        Json.Pointer.JsonPointer.Parse("/24/actor/id")),
         Json.Patch.PatchOperation.Copy(
-        Json.Pointer.JsonPointer.Create("/22/actor/id"),
-        Json.Pointer.JsonPointer.Create("/25/actor/id")),
+        Json.Pointer.JsonPointer.Parse("/22/actor/id"),
+        Json.Pointer.JsonPointer.Parse("/25/actor/id")),
         Json.Patch.PatchOperation.Copy(
-        Json.Pointer.JsonPointer.Create("/23/actor/id"),
-        Json.Pointer.JsonPointer.Create("/26/actor/id")),
+        Json.Pointer.JsonPointer.Parse("/23/actor/id"),
+        Json.Pointer.JsonPointer.Parse("/26/actor/id")),
         Json.Patch.PatchOperation.Copy(
-        Json.Pointer.JsonPointer.Create("/24/actor/id"),
-        Json.Pointer.JsonPointer.Create("/27/actor/id")),
+        Json.Pointer.JsonPointer.Parse("/24/actor/id"),
+        Json.Pointer.JsonPointer.Parse("/27/actor/id")),
     Json.Patch.PatchOperation.Copy(
-        Json.Pointer.JsonPointer.Create("/25/actor/id"),
-        Json.Pointer.JsonPointer.Create("/28/actor/id")),
+        Json.Pointer.JsonPointer.Parse("/25/actor/id"),
+        Json.Pointer.JsonPointer.Parse("/28/actor/id")),
     Json.Patch.PatchOperation.Copy(
-        Json.Pointer.JsonPointer.Create("/26/actor/id"),
-        Json.Pointer.JsonPointer.Create("/29/actor/id")),
+        Json.Pointer.JsonPointer.Parse("/26/actor/id"),
+        Json.Pointer.JsonPointer.Parse("/29/actor/id")),
         Json.Patch.PatchOperation.Copy(
-        Json.Pointer.JsonPointer.Create("/27/actor/id"),
-        Json.Pointer.JsonPointer.Create("/30/actor/id")),
+        Json.Pointer.JsonPointer.Parse("/27/actor/id"),
+        Json.Pointer.JsonPointer.Parse("/30/actor/id")),
         Json.Patch.PatchOperation.Copy(
-        Json.Pointer.JsonPointer.Create("/28/actor/id"),
-        Json.Pointer.JsonPointer.Create("/31/actor/id")),
+        Json.Pointer.JsonPointer.Parse("/28/actor/id"),
+        Json.Pointer.JsonPointer.Parse("/31/actor/id")),
         Json.Patch.PatchOperation.Copy(
-        Json.Pointer.JsonPointer.Create("/29/actor/id"),
-        Json.Pointer.JsonPointer.Create("/32/actor/id")),
+        Json.Pointer.JsonPointer.Parse("/29/actor/id"),
+        Json.Pointer.JsonPointer.Parse("/32/actor/id")),
         Json.Patch.PatchOperation.Copy(
-        Json.Pointer.JsonPointer.Create("/30/actor/id"),
-        Json.Pointer.JsonPointer.Create("/33/actor/id")),
+        Json.Pointer.JsonPointer.Parse("/30/actor/id"),
+        Json.Pointer.JsonPointer.Parse("/33/actor/id")),
         Json.Patch.PatchOperation.Copy(
-        Json.Pointer.JsonPointer.Create("/31/actor/id"),
-        Json.Pointer.JsonPointer.Create("/34/actor/id")),
+        Json.Pointer.JsonPointer.Parse("/31/actor/id"),
+        Json.Pointer.JsonPointer.Parse("/34/actor/id")),
         Json.Patch.PatchOperation.Copy(
-        Json.Pointer.JsonPointer.Create("/32/actor/id"),
-        Json.Pointer.JsonPointer.Create("/35/actor/id")),
+        Json.Pointer.JsonPointer.Parse("/32/actor/id"),
+        Json.Pointer.JsonPointer.Parse("/35/actor/id")),
         Json.Patch.PatchOperation.Copy(
-        Json.Pointer.JsonPointer.Create("/33/actor/id"),
-        Json.Pointer.JsonPointer.Create("/36/actor/id")),
+        Json.Pointer.JsonPointer.Parse("/33/actor/id"),
+        Json.Pointer.JsonPointer.Parse("/36/actor/id")),
         Json.Patch.PatchOperation.Copy(
-        Json.Pointer.JsonPointer.Create("/34/actor/id"),
-        Json.Pointer.JsonPointer.Create("/37/actor/id")),
+        Json.Pointer.JsonPointer.Parse("/34/actor/id"),
+        Json.Pointer.JsonPointer.Parse("/37/actor/id")),
         Json.Patch.PatchOperation.Copy(
-        Json.Pointer.JsonPointer.Create("/35/actor/id"),
-        Json.Pointer.JsonPointer.Create("/38/actor/id")),
+        Json.Pointer.JsonPointer.Parse("/35/actor/id"),
+        Json.Pointer.JsonPointer.Parse("/38/actor/id")),
         Json.Patch.PatchOperation.Copy(
-        Json.Pointer.JsonPointer.Create("/36/actor/id"),
-        Json.Pointer.JsonPointer.Create("/39/actor/id")),
+        Json.Pointer.JsonPointer.Parse("/36/actor/id"),
+        Json.Pointer.JsonPointer.Parse("/39/actor/id")),
         Json.Patch.PatchOperation.Copy(
-        Json.Pointer.JsonPointer.Create("/37/actor/id"),
-        Json.Pointer.JsonPointer.Create("/40/actor/id")),
+        Json.Pointer.JsonPointer.Parse("/37/actor/id"),
+        Json.Pointer.JsonPointer.Parse("/40/actor/id")),
         Json.Patch.PatchOperation.Copy(
-        Json.Pointer.JsonPointer.Create("/38/actor/id"),
-        Json.Pointer.JsonPointer.Create("/41/actor/id")),
+        Json.Pointer.JsonPointer.Parse("/38/actor/id"),
+        Json.Pointer.JsonPointer.Parse("/41/actor/id")),
         Json.Patch.PatchOperation.Copy(
-        Json.Pointer.JsonPointer.Create("/39/actor/id"),
-        Json.Pointer.JsonPointer.Create("/42/actor/id")),
+        Json.Pointer.JsonPointer.Parse("/39/actor/id"),
+        Json.Pointer.JsonPointer.Parse("/42/actor/id")),
         Json.Patch.PatchOperation.Copy(
-        Json.Pointer.JsonPointer.Create("/40/actor/id"),
-        Json.Pointer.JsonPointer.Create("/43/actor/id")),
+        Json.Pointer.JsonPointer.Parse("/40/actor/id"),
+        Json.Pointer.JsonPointer.Parse("/43/actor/id")),
         Json.Patch.PatchOperation.Copy(
-        Json.Pointer.JsonPointer.Create("/41/actor/id"),
-        Json.Pointer.JsonPointer.Create("/44/actor/id")),
+        Json.Pointer.JsonPointer.Parse("/41/actor/id"),
+        Json.Pointer.JsonPointer.Parse("/44/actor/id")),
         Json.Patch.PatchOperation.Copy(
-        Json.Pointer.JsonPointer.Create("/42/actor/id"),
-        Json.Pointer.JsonPointer.Create("/45/actor/id")),
+        Json.Pointer.JsonPointer.Parse("/42/actor/id"),
+        Json.Pointer.JsonPointer.Parse("/45/actor/id")),
         Json.Patch.PatchOperation.Copy(
-        Json.Pointer.JsonPointer.Create("/43/actor/id"),
-        Json.Pointer.JsonPointer.Create("/46/actor/id")));
+        Json.Pointer.JsonPointer.Parse("/43/actor/id"),
+        Json.Pointer.JsonPointer.Parse("/46/actor/id")));
 
-var someFile = JsonAny.Parse(File.ReadAllText("large-File.json"));
+var someFile = JsonAny.Parse(File.ReadAllText("large-array-file.json"));
 var node = System.Text.Json.Nodes.JsonArray.Create(someFile.AsJsonElement);
 
-var sw2 = Stopwatch.StartNew();
 Json.Patch.PatchResult jpResult = jp.Apply(node);
-sw2.Stop();
-
-Console.WriteLine($"Time: {sw2.ElapsedMilliseconds}ms");
 
 var patchDocument = PatchOperationArray.From(
     Copy.Create("/11/actor/id", "/14/actor/id"),
@@ -152,10 +148,6 @@ var patchDocument = PatchOperationArray.From(
     Copy.Create("/43/actor/id", "/46/actor/id")
     );
 
-var someFile2 = JsonAny.Parse(File.ReadAllText("large-File.json"));
+var someFile2 = JsonAny.Parse(File.ReadAllText("large-array-file.json"));
 
-var sw = Stopwatch.StartNew();
 bool patched = someFile2.TryApplyPatch(patchDocument, out JsonAny result);
-sw.Stop();
-
-Console.WriteLine($"Time: {sw.ElapsedMilliseconds}ms");
