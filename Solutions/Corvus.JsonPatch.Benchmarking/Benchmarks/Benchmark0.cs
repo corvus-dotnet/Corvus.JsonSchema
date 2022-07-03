@@ -26,104 +26,104 @@ namespace Benchmarks
             this.jePatch =
                 new Json.Patch.JsonPatch(
                     Json.Patch.PatchOperation.Copy(
-                        Json.Pointer.JsonPointer.Create("/11/actor/id"),
-                        Json.Pointer.JsonPointer.Create("/14/actor/id")),
+                        Json.Pointer.JsonPointer.Parse("/11/actor/id"),
+                        Json.Pointer.JsonPointer.Parse("/14/actor/id")),
                     Json.Patch.PatchOperation.Copy(
-                        Json.Pointer.JsonPointer.Create("/12/actor/id"),
-                        Json.Pointer.JsonPointer.Create("/15/actor/id")),
+                        Json.Pointer.JsonPointer.Parse("/12/actor/id"),
+                        Json.Pointer.JsonPointer.Parse("/15/actor/id")),
                     Json.Patch.PatchOperation.Copy(
-                        Json.Pointer.JsonPointer.Create("/13/actor/id"),
-                        Json.Pointer.JsonPointer.Create("/16/actor/id")),
+                        Json.Pointer.JsonPointer.Parse("/13/actor/id"),
+                        Json.Pointer.JsonPointer.Parse("/16/actor/id")),
                     Json.Patch.PatchOperation.Copy(
-                        Json.Pointer.JsonPointer.Create("/14/actor/id"),
-                        Json.Pointer.JsonPointer.Create("/17/actor/id")),
+                        Json.Pointer.JsonPointer.Parse("/14/actor/id"),
+                        Json.Pointer.JsonPointer.Parse("/17/actor/id")),
                     Json.Patch.PatchOperation.Copy(
-                        Json.Pointer.JsonPointer.Create("/15/actor/id"),
-                        Json.Pointer.JsonPointer.Create("/18/actor/id")),
+                        Json.Pointer.JsonPointer.Parse("/15/actor/id"),
+                        Json.Pointer.JsonPointer.Parse("/18/actor/id")),
                     Json.Patch.PatchOperation.Copy(
-                        Json.Pointer.JsonPointer.Create("/16/actor/id"),
-                        Json.Pointer.JsonPointer.Create("/19/actor/id")),
+                        Json.Pointer.JsonPointer.Parse("/16/actor/id"),
+                        Json.Pointer.JsonPointer.Parse("/19/actor/id")),
                     Json.Patch.PatchOperation.Copy(
-                        Json.Pointer.JsonPointer.Create("/17/actor/id"),
-                        Json.Pointer.JsonPointer.Create("/20/actor/id")),
+                        Json.Pointer.JsonPointer.Parse("/17/actor/id"),
+                        Json.Pointer.JsonPointer.Parse("/20/actor/id")),
                     Json.Patch.PatchOperation.Copy(
-                        Json.Pointer.JsonPointer.Create("/18/actor/id"),
-                        Json.Pointer.JsonPointer.Create("/21/actor/id")),
+                        Json.Pointer.JsonPointer.Parse("/18/actor/id"),
+                        Json.Pointer.JsonPointer.Parse("/21/actor/id")),
                     Json.Patch.PatchOperation.Copy(
-                        Json.Pointer.JsonPointer.Create("/19/actor/id"),
-                        Json.Pointer.JsonPointer.Create("/22/actor/id")),
+                        Json.Pointer.JsonPointer.Parse("/19/actor/id"),
+                        Json.Pointer.JsonPointer.Parse("/22/actor/id")),
                     Json.Patch.PatchOperation.Copy(
-                        Json.Pointer.JsonPointer.Create("/20/actor/id"),
-                        Json.Pointer.JsonPointer.Create("/23/actor/id")),
+                        Json.Pointer.JsonPointer.Parse("/20/actor/id"),
+                        Json.Pointer.JsonPointer.Parse("/23/actor/id")),
                     Json.Patch.PatchOperation.Copy(
-                        Json.Pointer.JsonPointer.Create("/21/actor/id"),
-                        Json.Pointer.JsonPointer.Create("/24/actor/id")),
+                        Json.Pointer.JsonPointer.Parse("/21/actor/id"),
+                        Json.Pointer.JsonPointer.Parse("/24/actor/id")),
                     Json.Patch.PatchOperation.Copy(
-                        Json.Pointer.JsonPointer.Create("/22/actor/id"),
-                        Json.Pointer.JsonPointer.Create("/25/actor/id")),
+                        Json.Pointer.JsonPointer.Parse("/22/actor/id"),
+                        Json.Pointer.JsonPointer.Parse("/25/actor/id")),
                     Json.Patch.PatchOperation.Copy(
-                        Json.Pointer.JsonPointer.Create("/23/actor/id"),
-                        Json.Pointer.JsonPointer.Create("/26/actor/id")),
+                        Json.Pointer.JsonPointer.Parse("/23/actor/id"),
+                        Json.Pointer.JsonPointer.Parse("/26/actor/id")),
                     Json.Patch.PatchOperation.Copy(
-                        Json.Pointer.JsonPointer.Create("/24/actor/id"),
-                        Json.Pointer.JsonPointer.Create("/27/actor/id")),
+                        Json.Pointer.JsonPointer.Parse("/24/actor/id"),
+                        Json.Pointer.JsonPointer.Parse("/27/actor/id")),
                     Json.Patch.PatchOperation.Copy(
-                        Json.Pointer.JsonPointer.Create("/25/actor/id"),
-                        Json.Pointer.JsonPointer.Create("/28/actor/id")),
+                        Json.Pointer.JsonPointer.Parse("/25/actor/id"),
+                        Json.Pointer.JsonPointer.Parse("/28/actor/id")),
                     Json.Patch.PatchOperation.Copy(
-                        Json.Pointer.JsonPointer.Create("/26/actor/id"),
-                        Json.Pointer.JsonPointer.Create("/29/actor/id")),
+                        Json.Pointer.JsonPointer.Parse("/26/actor/id"),
+                        Json.Pointer.JsonPointer.Parse("/29/actor/id")),
                     Json.Patch.PatchOperation.Copy(
-                        Json.Pointer.JsonPointer.Create("/27/actor/id"),
-                        Json.Pointer.JsonPointer.Create("/30/actor/id")),
+                        Json.Pointer.JsonPointer.Parse("/27/actor/id"),
+                        Json.Pointer.JsonPointer.Parse("/30/actor/id")),
                     Json.Patch.PatchOperation.Copy(
-                        Json.Pointer.JsonPointer.Create("/28/actor/id"),
-                        Json.Pointer.JsonPointer.Create("/31/actor/id")),
+                        Json.Pointer.JsonPointer.Parse("/28/actor/id"),
+                        Json.Pointer.JsonPointer.Parse("/31/actor/id")),
                     Json.Patch.PatchOperation.Copy(
-                        Json.Pointer.JsonPointer.Create("/29/actor/id"),
-                        Json.Pointer.JsonPointer.Create("/32/actor/id")),
+                        Json.Pointer.JsonPointer.Parse("/29/actor/id"),
+                        Json.Pointer.JsonPointer.Parse("/32/actor/id")),
                     Json.Patch.PatchOperation.Copy(
-                        Json.Pointer.JsonPointer.Create("/30/actor/id"),
-                        Json.Pointer.JsonPointer.Create("/33/actor/id")),
+                        Json.Pointer.JsonPointer.Parse("/30/actor/id"),
+                        Json.Pointer.JsonPointer.Parse("/33/actor/id")),
                     Json.Patch.PatchOperation.Copy(
-                        Json.Pointer.JsonPointer.Create("/31/actor/id"),
-                        Json.Pointer.JsonPointer.Create("/34/actor/id")),
+                        Json.Pointer.JsonPointer.Parse("/31/actor/id"),
+                        Json.Pointer.JsonPointer.Parse("/34/actor/id")),
                     Json.Patch.PatchOperation.Copy(
-                        Json.Pointer.JsonPointer.Create("/32/actor/id"),
-                        Json.Pointer.JsonPointer.Create("/35/actor/id")),
+                        Json.Pointer.JsonPointer.Parse("/32/actor/id"),
+                        Json.Pointer.JsonPointer.Parse("/35/actor/id")),
                     Json.Patch.PatchOperation.Copy(
-                        Json.Pointer.JsonPointer.Create("/33/actor/id"),
-                        Json.Pointer.JsonPointer.Create("/36/actor/id")),
+                        Json.Pointer.JsonPointer.Parse("/33/actor/id"),
+                        Json.Pointer.JsonPointer.Parse("/36/actor/id")),
                     Json.Patch.PatchOperation.Copy(
-                        Json.Pointer.JsonPointer.Create("/34/actor/id"),
-                        Json.Pointer.JsonPointer.Create("/37/actor/id")),
+                        Json.Pointer.JsonPointer.Parse("/34/actor/id"),
+                        Json.Pointer.JsonPointer.Parse("/37/actor/id")),
                     Json.Patch.PatchOperation.Copy(
-                        Json.Pointer.JsonPointer.Create("/35/actor/id"),
-                        Json.Pointer.JsonPointer.Create("/38/actor/id")),
+                        Json.Pointer.JsonPointer.Parse("/35/actor/id"),
+                        Json.Pointer.JsonPointer.Parse("/38/actor/id")),
                     Json.Patch.PatchOperation.Copy(
-                        Json.Pointer.JsonPointer.Create("/36/actor/id"),
-                        Json.Pointer.JsonPointer.Create("/39/actor/id")),
+                        Json.Pointer.JsonPointer.Parse("/36/actor/id"),
+                        Json.Pointer.JsonPointer.Parse("/39/actor/id")),
                     Json.Patch.PatchOperation.Copy(
-                        Json.Pointer.JsonPointer.Create("/37/actor/id"),
-                        Json.Pointer.JsonPointer.Create("/40/actor/id")),
+                        Json.Pointer.JsonPointer.Parse("/37/actor/id"),
+                        Json.Pointer.JsonPointer.Parse("/40/actor/id")),
                     Json.Patch.PatchOperation.Copy(
-                        Json.Pointer.JsonPointer.Create("/38/actor/id"),
-                        Json.Pointer.JsonPointer.Create("/41/actor/id")),
+                        Json.Pointer.JsonPointer.Parse("/38/actor/id"),
+                        Json.Pointer.JsonPointer.Parse("/41/actor/id")),
                     Json.Patch.PatchOperation.Copy(
-                        Json.Pointer.JsonPointer.Create("/39/actor/id"),
-                        Json.Pointer.JsonPointer.Create("/42/actor/id")),
+                        Json.Pointer.JsonPointer.Parse("/39/actor/id"),
+                        Json.Pointer.JsonPointer.Parse("/42/actor/id")),
                     Json.Patch.PatchOperation.Copy(
-                        Json.Pointer.JsonPointer.Create("/40/actor/id"),
-                        Json.Pointer.JsonPointer.Create("/43/actor/id")),
+                        Json.Pointer.JsonPointer.Parse("/40/actor/id"),
+                        Json.Pointer.JsonPointer.Parse("/43/actor/id")),
                     Json.Patch.PatchOperation.Copy(
-                        Json.Pointer.JsonPointer.Create("/41/actor/id"),
-                        Json.Pointer.JsonPointer.Create("/44/actor/id")),
+                        Json.Pointer.JsonPointer.Parse("/41/actor/id"),
+                        Json.Pointer.JsonPointer.Parse("/44/actor/id")),
                     Json.Patch.PatchOperation.Copy(
-                        Json.Pointer.JsonPointer.Create("/42/actor/id"),
-                        Json.Pointer.JsonPointer.Create("/45/actor/id")),
+                        Json.Pointer.JsonPointer.Parse("/42/actor/id"),
+                        Json.Pointer.JsonPointer.Parse("/45/actor/id")),
                     Json.Patch.PatchOperation.Copy(
-                        Json.Pointer.JsonPointer.Create("/43/actor/id"),
-                        Json.Pointer.JsonPointer.Create("/46/actor/id")));
+                        Json.Pointer.JsonPointer.Parse("/43/actor/id"),
+                        Json.Pointer.JsonPointer.Parse("/46/actor/id")));
 
             this.corvusPatch =
                 Corvus.Json.Patch.Model.PatchOperationArray.From(
@@ -171,6 +171,10 @@ namespace Benchmarks
         public void PatchCorvus()
         {
             bool result = Corvus.Json.Patch.JsonPatchExtensions.TryApplyPatch(this.Any, this.corvusPatch, out Corvus.Json.JsonAny output);
+            if (!result)
+            {
+                throw new Exception("Fail!");
+            }
         }
 
         /// <summary>
@@ -180,6 +184,10 @@ namespace Benchmarks
         public void PatchJsonEverything()
         {
             Json.Patch.PatchResult? patchResult = this.jePatch?.Apply(this.Node);
+            if (patchResult is not Json.Patch.PatchResult pr || !pr.IsSuccess)
+            {
+                throw new Exception(patchResult?.Error);
+            }
         }
     }
 }
