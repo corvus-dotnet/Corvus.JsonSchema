@@ -1,4 +1,4 @@
-// <copyright file="Benchmark0.cs" company="Endjin Limited">
+// <copyright file="LargeFileBenchmark.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 namespace Benchmarks
@@ -11,7 +11,7 @@ namespace Benchmarks
     /// Additional properties benchmark.
     /// </summary>
     [MemoryDiagnoser]
-    public class Benchmark0 : BenchmarkBase
+    public class LargeFileBenchmark : BenchmarkBase
     {
         private Corvus.Json.Patch.Model.PatchOperationArray corvusPatch;
         private Json.Patch.JsonPatch? jePatch;
@@ -183,7 +183,7 @@ namespace Benchmarks
         [Benchmark(Baseline = true)]
         public void PatchJsonEverything()
         {
-            Json.Patch.PatchResult? patchResult = this.jePatch?.Apply(System.Text.Json.Nodes.JsonArray.Create(this.Element));
+            Json.Patch.PatchResult? patchResult = this.jePatch?.Apply(this.ElementAsNode());
             if (patchResult is not Json.Patch.PatchResult pr || !pr.IsSuccess)
             {
                 throw new Exception(patchResult?.Error);

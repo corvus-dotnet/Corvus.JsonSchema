@@ -147,7 +147,17 @@ namespace Steps
         [When("I apply the patch to the document")]
         public void WhenIApplyThePatchToTheDocument()
         {
-            bool result = this.scenarioContext.Get<JsonAny>(DocumentKey).TryApplyPatch(this.scenarioContext.Get<PatchOperationArray>(PatchKey), out JsonAny output);
+            PatchOperationArray patch = this.scenarioContext.Get<PatchOperationArray>(PatchKey);
+            JsonAny doc = this.scenarioContext.Get<JsonAny>(DocumentKey);
+
+            if (!patch.IsValid())
+            {
+                this.scenarioContext.Set(false, ResultKey);
+                this.scenarioContext.Set(doc, OutputKey);
+                return;
+            }
+
+            bool result = doc.TryApplyPatch(patch, out JsonAny output);
             this.scenarioContext.Set(result, ResultKey);
             this.scenarioContext.Set(output, OutputKey);
         }

@@ -4,7 +4,9 @@
 
 namespace Benchmarks
 {
+    using System.IO;
     using System.Text.Json;
+    using System.Threading.Tasks;
     using Corvus.Json;
 
     /// <summary>
@@ -12,7 +14,7 @@ namespace Benchmarks
     /// </summary>
     public class BenchmarkBase
     {
-        private System.Text.Json.Nodes.JsonNode? node;
+        private JsonElement element;
 
         /// <summary>
         /// Gets the JsonAny for the benchmark.
@@ -37,15 +39,10 @@ namespace Benchmarks
         /// <param name="filePath">The input file for the document to transform.</param>
         /// <returns>A <see cref="Task"/> which completes when setup is complete.</returns>
         /// <exception cref="InvalidOperationException">Thrown if the input file could not be parsed.</exception>
-        protected Task GlobalSetup(string filePath)
+        protected async Task GlobalSetup(string filePath)
         {
-            using Stream stream1 = File.OpenRead(filePath);
-            this.node = System.Text.Json.Nodes.JsonNode.Parse(stream1);
-
-            using Stream stream2 = File.OpenRead(filePath);
-            this.Any = JsonAny.Parse(stream2);
-
-            return Task.CompletedTask;
+            string jsonString = await File.ReadAllTextAsync(filePath).ConfigureAwait(false);
+            await this.GlobalSetupJson(jsonString).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -56,7 +53,9 @@ namespace Benchmarks
         /// <exception cref="InvalidOperationException">Thrown if the input file could not be parsed.</exception>
         protected Task GlobalSetupJson(string jsonString)
         {
-            this.node = System.Text.Json.Nodes.JsonNode.Parse(jsonString);
+            using var doc = JsonDocument.Parse(jsonString);
+            this.element = doc.RootElement.Clone();
+
             this.Any = JsonAny.Parse(jsonString);
 
             return Task.CompletedTask;
@@ -68,7 +67,12 @@ namespace Benchmarks
         /// <returns>The json node for the element.</returns>
         protected System.Text.Json.Nodes.JsonNode? ElementAsNode()
         {
-            return this.node;
+            return this.element.ValueKind switch
+            {
+                JsonValueKind.Object => System.Text.Json.Nodes.JsonObject.Create(this.element),
+                JsonValueKind.Array => System.Text.Json.Nodes.JsonArray.Create(this.element),
+                _ => System.Text.Json.Nodes.JsonValue.Create(this.element),
+            };
         }
     }
 }

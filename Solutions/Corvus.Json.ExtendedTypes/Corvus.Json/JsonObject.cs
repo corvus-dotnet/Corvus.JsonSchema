@@ -113,6 +113,82 @@ namespace Corvus.Json
         }
 
         /// <summary>
+        /// Gets the object as a property dictionary, removing a property if presents.
+        /// </summary>
+        /// <param name="name">The name of the property to remove.</param>
+        /// <returns>
+        /// An immutable dictionary of properties without the named property.
+        /// </returns>
+        public ImmutableDictionary<string, JsonAny> AsPropertyDictionaryWithout(string name)
+        {
+            if (this.properties is ImmutableDictionary<string, JsonAny> properties)
+            {
+                return properties.Remove(name);
+            }
+
+            if (this.jsonElement.ValueKind == JsonValueKind.Object)
+            {
+                ImmutableDictionary<string, JsonAny>.Builder builder = ImmutableDictionary.CreateBuilder<string, JsonAny>();
+                foreach (JsonProperty property in this.jsonElement.EnumerateObject())
+                {
+                    if (property.NameEquals(name))
+                    {
+                        continue;
+                    }
+
+                    builder.Add(property.Name, new JsonAny(property.Value));
+                }
+
+                return builder.ToImmutable();
+            }
+
+            return ImmutableDictionary<string, JsonAny>.Empty;
+        }
+
+        /// <summary>
+        /// Gets the object as a property dictionary, adding a single object.
+        /// </summary>
+        /// <param name="name">The name of the property to add.</param>
+        /// <param name="value">The value of the property to add.</param>
+        /// <returns>
+        /// An immutable dictionary of properties with the named property set to the new value.
+        /// </returns>
+        public ImmutableDictionary<string, JsonAny> AsPropertyDictionaryWith(string name, JsonAny value)
+        {
+            if (this.properties is ImmutableDictionary<string, JsonAny> properties)
+            {
+                var builder = this.properties.ToBuilder();
+                if (builder.ContainsKey(name))
+                {
+                    builder.Remove(name);
+                }
+
+                builder.Add(name, value);
+                return builder.ToImmutable();
+            }
+
+            if (this.jsonElement.ValueKind == JsonValueKind.Object)
+            {
+                ImmutableDictionary<string, JsonAny>.Builder builder = ImmutableDictionary.CreateBuilder<string, JsonAny>();
+                foreach (JsonProperty property in this.jsonElement.EnumerateObject())
+                {
+                    builder.Add(property.Name, new JsonAny(property.Value));
+                }
+
+                if (builder.ContainsKey(name))
+                {
+                    builder.Remove(name);
+                }
+
+                builder.Add(name, value);
+
+                return builder.ToImmutable();
+            }
+
+            return ImmutableDictionary<string, JsonAny>.Empty;
+        }
+
+        /// <summary>
         /// Implicit conversion to a property dictionary.
         /// </summary>
         /// <param name="value">The value from which to convert.</param>
@@ -547,7 +623,7 @@ namespace Corvus.Json
         {
             if (this.ValueKind == JsonValueKind.Object || this.ValueKind == JsonValueKind.Undefined)
             {
-                return new JsonObject(this.AsPropertyDictionary.SetItem(name, value.AsAny));
+                return new JsonObject(this.AsPropertyDictionaryWith(name, value.AsAny));
             }
 
             return this;
@@ -570,13 +646,13 @@ namespace Corvus.Json
         /// <inheritdoc/>
         public JsonObject RemoveProperty(string name)
         {
-            return new JsonObject(this.AsPropertyDictionary.Remove(name));
+            return new JsonObject(this.AsPropertyDictionaryWithout(name));
         }
 
         /// <inheritdoc/>
         public JsonObject RemoveProperty(ReadOnlySpan<char> name)
         {
-            return new JsonObject(this.AsPropertyDictionary.Remove(name.ToString()));
+            return new JsonObject(this.AsPropertyDictionaryWithout(name.ToString()));
         }
 
         /// <inheritdoc/>

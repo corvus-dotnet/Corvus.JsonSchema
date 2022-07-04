@@ -39,7 +39,7 @@ public static partial class JsonPatchExtensions
     {
         JsonAny current = value.AsAny;
 
-        if (!patchOperations.IsValid())
+        if (patchOperations.Length == 0)
         {
             result = current;
             return false;

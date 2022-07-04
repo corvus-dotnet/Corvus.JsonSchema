@@ -7,8 +7,6 @@ using System.Buffers;
 using System.Collections.Immutable;
 using System.Text.Json;
 
-// TODO: move to Corvus.Json.ExtendedTypes
-
 /// <summary>
 /// A type which allows you to transform an existing tree.
 /// </summary>

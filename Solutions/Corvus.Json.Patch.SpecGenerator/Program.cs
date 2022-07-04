@@ -19,13 +19,18 @@ namespace Corvus.Json.Patch.SpecGenerator
         /// <returns>0 if successul, -1 if incorrect parameters passed.</returns>
         public static int Main(string[] args)
         {
-            if (args.Length != 2)
+            if (args.Length != 3)
             {
                 return -1;
             }
 
             string path = args[0];
             string outputPath = args[1];
+            string benchmarkPath = args[2];
+
+            // Index for generating benchmarks
+            int index = 0;
+
             foreach (string testFile in Directory.EnumerateFiles(path, "*.json"))
             {
                 ScenarioArray feature = JsonAny.Parse(File.ReadAllText(testFile));
@@ -43,6 +48,20 @@ namespace Corvus.Json.Patch.SpecGenerator
                 var builderSpec = new BuilderSpec(feature, $"builder_{Path.GetFileNameWithoutExtension(testFile)}");
                 outputFilename = Path.Combine(outputPath, $"{builderSpec.FeatureName}.feature");
                 File.WriteAllText(outputFilename, builderSpec.TransformText());
+
+                foreach (Scenario scenario in feature.EnumerateItems())
+                {
+                    if (scenario.IsDisabledScenario || scenario.IsScenarioWithError)
+                    {
+                        continue;
+                    }
+
+                    var benchmark = new Benchmark(scenario, spec.FeatureName, index);
+                    string benchmarkFileName = Path.Combine(benchmarkPath, $"GeneratedBenchmark{index}.cs");
+                    File.WriteAllText(benchmarkFileName, benchmark.TransformText());
+
+                    ++index;
+                }
             }
 
             return 0;

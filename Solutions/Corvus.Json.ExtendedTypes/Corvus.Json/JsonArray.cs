@@ -599,33 +599,156 @@ namespace Corvus.Json
         public JsonArray Insert<TItem>(int index, TItem item)
             where TItem : struct, IJsonValue
         {
-            return this.AsItemsList.Insert(index, item.AsAny);
+            return this.AsItemsListInserting(index, item.AsAny);
         }
 
         /// <inheritdoc/>
         public JsonArray Replace<TItem>(TItem oldValue, TItem newValue)
             where TItem : struct, IJsonValue
         {
-            return this.AsItemsList.Replace(oldValue.AsAny, newValue.AsAny);
+            return this.AsItemsListReplacing(oldValue.AsAny, newValue.AsAny);
         }
 
         /// <inheritdoc/>
         public JsonArray SetItem<TItem>(int index, TItem value)
             where TItem : struct, IJsonValue
         {
-            return this.AsItemsList.SetItem(index, value.AsAny);
+            return this.AsItemsListSetting(index, value.AsAny);
         }
 
         /// <inheritdoc/>
         public JsonArray RemoveAt(int index)
         {
-            return this.AsItemsList.RemoveAt(index);
+            return this.AsItemsListRemovingAt(index);
         }
 
         /// <inheritdoc/>
         public JsonArray RemoveRange(int index, int count)
         {
-            return this.AsItemsList.RemoveRange(index, count);
+            return this.AsItemsListRemovingRange(index, count);
+        }
+
+        private ImmutableList<JsonAny> AsItemsListRemovingAt(int index)
+        {
+            return this.AsItemsListRemovingRange(index, 1);
+        }
+
+        private ImmutableList<JsonAny> AsItemsListInserting(int index, JsonAny value)
+        {
+            if (this.items is ImmutableList<JsonAny> items)
+            {
+                return items.SetItem(index, value);
+            }
+
+            if (this.jsonElement.ValueKind == JsonValueKind.Array)
+            {
+                ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
+                int current = 0;
+                foreach (JsonElement existingItem in this.jsonElement.EnumerateArray())
+                {
+                    if (current == index)
+                    {
+                        builder.Add(value);
+                    }
+
+                    builder.Add(new JsonAny(existingItem));
+                    ++current;
+                }
+
+                return builder.ToImmutable();
+            }
+
+            return ImmutableList<JsonAny>.Empty;
+        }
+
+        private ImmutableList<JsonAny> AsItemsListReplacing(JsonAny oldValue, JsonAny newValue)
+        {
+            if (this.items is ImmutableList<JsonAny> items)
+            {
+                return items.Replace(oldValue, newValue);
+            }
+
+            if (this.jsonElement.ValueKind == JsonValueKind.Array)
+            {
+                ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
+                foreach (JsonElement existingItem in this.jsonElement.EnumerateArray())
+                {
+                    var oldAny = new JsonAny(existingItem);
+                    if (oldAny == oldValue)
+                    {
+                        builder.Add(newValue);
+                    }
+                    else
+                    {
+                        builder.Add(oldAny);
+                    }
+                }
+
+                return builder.ToImmutable();
+            }
+
+            return ImmutableList<JsonAny>.Empty;
+        }
+
+        private ImmutableList<JsonAny> AsItemsListSetting(int index, JsonAny value)
+        {
+            if (this.items is ImmutableList<JsonAny> items)
+            {
+                return items.SetItem(index, value);
+            }
+
+            if (this.jsonElement.ValueKind == JsonValueKind.Array)
+            {
+                ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
+                int current = 0;
+                foreach (JsonElement existingItem in this.jsonElement.EnumerateArray())
+                {
+                    if (current == index)
+                    {
+                        builder.Add(value);
+                    }
+                    else
+                    {
+                        builder.Add(new JsonAny(existingItem));
+                    }
+
+                    ++current;
+                }
+
+                return builder.ToImmutable();
+            }
+
+            return ImmutableList<JsonAny>.Empty;
+        }
+
+        private ImmutableList<JsonAny> AsItemsListRemovingRange(int index, int count)
+        {
+            if (this.items is ImmutableList<JsonAny> items)
+            {
+                return items.RemoveRange(index, count);
+            }
+
+            if (this.jsonElement.ValueKind == JsonValueKind.Array)
+            {
+                ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
+                int current = 0;
+                int end = index + count;
+                foreach (JsonElement existingItem in this.jsonElement.EnumerateArray())
+                {
+                    if (current >= index && current < end)
+                    {
+                        ++current;
+                        continue;
+                    }
+
+                    builder.Add(new JsonAny(existingItem));
+                    ++current;
+                }
+
+                return builder.ToImmutable();
+            }
+
+            return ImmutableList<JsonAny>.Empty;
         }
 
         private ImmutableList<JsonAny> AsItemsListWith(JsonAny item)
