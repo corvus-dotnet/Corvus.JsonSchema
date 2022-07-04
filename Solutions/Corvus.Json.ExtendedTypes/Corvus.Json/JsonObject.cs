@@ -131,13 +131,10 @@ namespace Corvus.Json
                 ImmutableDictionary<string, JsonAny>.Builder builder = ImmutableDictionary.CreateBuilder<string, JsonAny>();
                 foreach (JsonProperty property in this.jsonElement.EnumerateObject())
                 {
-                    if (property.NameEquals(name))
-                    {
-                        continue;
-                    }
-
                     builder.Add(property.Name, new JsonAny(property.Value));
                 }
+
+                builder.Remove(name);
 
                 return builder.ToImmutable();
             }
@@ -157,13 +154,8 @@ namespace Corvus.Json
         {
             if (this.properties is ImmutableDictionary<string, JsonAny> properties)
             {
-                var builder = this.properties.ToBuilder();
-                if (builder.ContainsKey(name))
-                {
-                    builder.Remove(name);
-                }
-
-                builder.Add(name, value);
+                var builder = properties.ToBuilder();
+                builder[name] = value;
                 return builder.ToImmutable();
             }
 
@@ -175,14 +167,14 @@ namespace Corvus.Json
                     builder.Add(property.Name, new JsonAny(property.Value));
                 }
 
-                if (builder.ContainsKey(name))
-                {
-                    builder.Remove(name);
-                }
-
-                builder.Add(name, value);
+                builder[name] = value;
 
                 return builder.ToImmutable();
+            }
+
+            if (this.jsonElement.ValueKind == JsonValueKind.Undefined)
+            {
+                return ImmutableDictionary<string, JsonAny>.Empty.Add(name, value);
             }
 
             return ImmutableDictionary<string, JsonAny>.Empty;
