@@ -38,7 +38,9 @@ public static partial class JsonPatchExtensions
                     return new(nodeToVisit, Transformed.No, Walk.TerminateAtThisNodeAndAbandonAllChanges);
                 }
 
-                if (nodeToVisit.ValueKind == JsonValueKind.Object)
+                JsonValueKind nodeToVisitValueKind = nodeToVisit.ValueKind;
+
+                if (nodeToVisitValueKind == JsonValueKind.Object)
                 {
                     // We are an object, so we need to see if the rest of the path represents a property.
                     if (TryGetTerminatingPathElement(operationPath[path.Length..], out ReadOnlySpan<char> propertyName))
@@ -58,17 +60,15 @@ public static partial class JsonPatchExtensions
                     return new(nodeToVisit, Transformed.No, Walk.Continue);
                 }
 
-                if (nodeToVisit.ValueKind == JsonValueKind.Array)
+                if (nodeToVisitValueKind == JsonValueKind.Array)
                 {
-                    JsonArray arrayNode = nodeToVisit.AsArray;
-
                     if (TryGetTerminatingPathElement(operationPath[path.Length..], out ReadOnlySpan<char> itemIndex))
                     {
-                        int arrayLength = arrayNode.Length;
+                        int arrayLength = nodeToVisit.Length;
 
                         if (TryGetArrayIndex(itemIndex, out int index) && index < arrayLength)
                         {
-                            return RemoveNode(index, in arrayNode);
+                            return RemoveNode(index, in nodeToVisit);
                         }
 
                         // The index wasn't in the correct form (either because it was past the end, or not in an index format)
@@ -86,9 +86,9 @@ public static partial class JsonPatchExtensions
             // If it didn't start with the span, we can give up on this whole tree segment
             return new(nodeToVisit, Transformed.No, Walk.SkipChildren);
 
-            static VisitResult RemoveNode(int index, in JsonArray arrayNode)
+            static VisitResult RemoveNode(int index, in JsonAny arrayNode)
             {
-                JsonArray returnNode = arrayNode.RemoveAt(index);
+                JsonAny returnNode = arrayNode.RemoveAt(index);
                 return new(returnNode, Transformed.Yes, Walk.TerminateAtThisNodeAndKeepChanges);
             }
         }

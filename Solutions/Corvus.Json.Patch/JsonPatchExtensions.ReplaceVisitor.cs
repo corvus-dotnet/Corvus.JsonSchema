@@ -30,10 +30,12 @@ public static partial class JsonPatchExtensions
 
         internal static VisitResult VisitForReplace(in ReadOnlySpan<char> path, in JsonAny nodeToVisit, in JsonAny value, in ReadOnlySpan<char> operationPath)
         {
+            int operationPathLength = operationPath.Length;
+
             // If we are the root, or our span starts with the path so far, we might be matching
-            if (operationPath.Length == 0 || operationPath.StartsWith(path))
+            if (operationPathLength == 0 || operationPath.StartsWith(path))
             {
-                if (operationPath.Length == path.Length)
+                if (operationPathLength == path.Length)
                 {
                     // We are an exact match, so we can just replace this node.
                     return new(value, Transformed.Yes, Walk.TerminateAtThisNodeAndKeepChanges);

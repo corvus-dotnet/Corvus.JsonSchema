@@ -51,7 +51,9 @@ public static partial class JsonPatchExtensions
                     return new(nodeToVisit, Transformed.No, Walk.SkipChildren);
                 }
 
-                if (nodeToVisit.ValueKind == JsonValueKind.Object)
+                JsonValueKind nodeToVisitValueKind = nodeToVisit.ValueKind;
+
+                if (nodeToVisitValueKind == JsonValueKind.Object)
                 {
                     // We are an object, so we need to see if the rest of the path represents a property.
                     if (TryGetTerminatingPathElement(operationPath[path.Length..], out ReadOnlySpan<char> propertyName))
@@ -69,10 +71,8 @@ public static partial class JsonPatchExtensions
                     return new(nodeToVisit, Transformed.No, Walk.Continue);
                 }
 
-                if (nodeToVisit.ValueKind == JsonValueKind.Array)
+                if (nodeToVisitValueKind == JsonValueKind.Array)
                 {
-                    JsonArray arrayNode = nodeToVisit.AsArray;
-
                     if (TryGetTerminatingPathElement(operationPath[path.Length..], out ReadOnlySpan<char> itemIndex))
                     {
                         ////if (!value.HasValue)
@@ -80,14 +80,14 @@ public static partial class JsonPatchExtensions
                         ////    return new(nodeToVisit, Transformed.No, Walk.TerminateAtThisNodeAndAbandonAllChanges);
                         ////}
 
-                        int arrayLength = arrayNode.Length;
+                        int arrayLength = nodeToVisit.Length;
 
                         if (itemIndex[0] == '-')
                         {
                             if (itemIndex.Length == 1)
                             {
                                 // We got the '-' which means add it at the end
-                                return AddNodeAtEnd(arrayNode, value);
+                                return AddNodeAtEnd(nodeToVisit, value);
                             }
                             else
                             {
@@ -100,12 +100,12 @@ public static partial class JsonPatchExtensions
                             // You can specify the end explicitly
                             if (index == arrayLength)
                             {
-                                return AddNodeAtEnd(in arrayNode, value);
+                                return AddNodeAtEnd(in nodeToVisit, value);
                             }
 
                             if (index < arrayLength)
                             {
-                                return InsertNode(index, in arrayNode, value);
+                                return InsertNode(index, in nodeToVisit, value);
                             }
                         }
 
@@ -124,15 +124,15 @@ public static partial class JsonPatchExtensions
             // If it didn't start with the span, we can give up on this whole tree segment
             return new(nodeToVisit, Transformed.No, Walk.SkipChildren);
 
-            static VisitResult AddNodeAtEnd(in JsonArray arrayNode, in JsonAny node)
+            static VisitResult AddNodeAtEnd(in JsonAny arrayNode, in JsonAny node)
             {
-                JsonArray returnNode = arrayNode.Add(node);
+                JsonAny returnNode = arrayNode.Add(node);
                 return new(returnNode, Transformed.Yes, Walk.TerminateAtThisNodeAndKeepChanges);
             }
 
-            static VisitResult InsertNode(int index, in JsonArray arrayNode, in JsonAny node)
+            static VisitResult InsertNode(int index, in JsonAny arrayNode, in JsonAny node)
             {
-                JsonArray returnNode = arrayNode.Insert(index, node);
+                JsonAny returnNode = arrayNode.Insert(index, node);
                 return new(returnNode, Transformed.Yes, Walk.TerminateAtThisNodeAndKeepChanges);
             }
         }
