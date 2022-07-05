@@ -21,7 +21,7 @@ public static partial class JsonPatchExtensions
 
         public JsonAny Value { get; }
 
-        public JsonPointer Path { get; }
+        public string Path { get; }
 
         public VisitResult Visit(in ReadOnlySpan<char> path, in JsonAny nodeToVisit)
         {

@@ -25,9 +25,9 @@ public static partial class JsonPatchExtensions
 
         public JsonAny SourceElement { get; }
 
-        public JsonPointer From { get; }
+        public string From { get; }
 
-        public JsonPointer Path { get; }
+        public string Path { get; }
 
         public bool Added { get; set; }
 

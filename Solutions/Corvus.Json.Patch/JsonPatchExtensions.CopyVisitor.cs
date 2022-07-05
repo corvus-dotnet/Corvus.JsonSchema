@@ -20,7 +20,7 @@ public static partial class JsonPatchExtensions
             this.SourceElement = sourceElement;
         }
 
-        public JsonPointer Path { get; }
+        public string Path { get; }
 
         public JsonAny SourceElement { get; }
 

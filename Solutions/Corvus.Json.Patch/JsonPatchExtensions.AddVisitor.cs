@@ -16,7 +16,7 @@ public static partial class JsonPatchExtensions
     {
         public JsonAny Value { get; }
 
-        public JsonPointer Path { get; }
+        public string Path { get; }
 
         public AddVisitor(Add patchOperation)
         {
