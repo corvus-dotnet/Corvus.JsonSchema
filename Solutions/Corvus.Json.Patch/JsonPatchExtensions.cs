@@ -202,6 +202,13 @@ public static partial class JsonPatchExtensions
     private static bool TryApplyAdd(in JsonAny node, in PatchOperation patchOperation, out JsonAny result)
     {
         AddVisitor visitor = new(patchOperation);
+
+        if (visitor.Path.Length == 0)
+        {
+            result = visitor.Value;
+            return true;
+        }
+
         bool transformed = JsonTransformingVisitor.Visit(node, (in ReadOnlySpan<char> path, in JsonAny nodeToVisit) => visitor.Visit(path, nodeToVisit), out JsonAny transformedResult);
         result = transformedResult;
         return transformed;
@@ -213,13 +220,6 @@ public static partial class JsonPatchExtensions
         patchOperation.TryGetProperty(Move.FromUtf8JsonPropertyName.Span, out JsonAny fromAny);
         ReadOnlySpan<char> from = fromAny.AsString;
 
-        // If the source and the destination match, then we are already done!
-        ////if (patchOperation.Path.Equals(from))
-        ////{
-        ////    result = node;
-        ////    return true;
-        ////}
-
         JsonAny? source = FindSourceElement(node, from);
         if (!source.HasValue)
         {
@@ -228,6 +228,12 @@ public static partial class JsonPatchExtensions
         }
 
         CopyVisitor visitor = new(patchOperation, source.Value);
+
+        if (visitor.Path.Length == 0)
+        {
+            result = visitor.SourceElement;
+            return true;
+        }
 
         bool transformed = JsonTransformingVisitor.Visit(node, (in ReadOnlySpan<char> p, in JsonAny n) => visitor.Visit(p, n), out JsonAny transformedResult);
         result = transformedResult;
@@ -240,13 +246,6 @@ public static partial class JsonPatchExtensions
         patchOperation.TryGetProperty(Move.FromUtf8JsonPropertyName.Span, out JsonAny fromAny);
         ReadOnlySpan<char> from = fromAny.AsString;
 
-        // If the source and the destination match, then we are already done!
-        ////if (patchOperation.Path.Equals(from))
-        ////{
-        ////    result = node;
-        ////    return true;
-        ////}
-
         JsonAny? source = FindSourceElement(node, from);
         if (!source.HasValue)
         {
@@ -255,6 +254,13 @@ public static partial class JsonPatchExtensions
         }
 
         MoveVisitor visitor = new(patchOperation, source.Value);
+
+        if (visitor.Path.Length == 0)
+        {
+            result = visitor.SourceElement;
+            return true;
+        }
+
         bool transformed = JsonTransformingVisitor.Visit(node, (in ReadOnlySpan<char> p, in JsonAny n) => visitor.Visit(p, n), out JsonAny transformedResult);
         result = transformedResult;
         return transformed;
@@ -273,6 +279,13 @@ public static partial class JsonPatchExtensions
     private static bool TryApplyReplace(in JsonAny node, in PatchOperation patchOperation, out JsonAny result)
     {
         ReplaceVisitor visitor = new(patchOperation);
+
+        if (visitor.Path.Length == 0)
+        {
+            result = visitor.Value;
+            return true;
+        }
+
         bool transformed = JsonTransformingVisitor.Visit(node, (in ReadOnlySpan<char> p, in JsonAny n) => visitor.Visit(p, n), out JsonAny transformedResult);
         result = transformedResult;
         return transformed;

@@ -2,7 +2,7 @@
 
 try
 {
-    var bench = new GeneratedBenchmark22();
+    var bench = new LargeFileBenchmark();
     await bench.GlobalSetup().ConfigureAwait(false);
 
     // Warmup
