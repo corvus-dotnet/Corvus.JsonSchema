@@ -300,7 +300,7 @@ namespace Corvus.Json
         /// <summary>
         /// Gets a value indicating whether this is backed by a JSON element.
         /// </summary>
-        public bool HasJsonElement => this.objectBacking is null && this.arrayBacking is null && this.numberBacking is null && this.stringBacking is null && this.booleanBacking is null;
+        public bool HasJsonElement => this.jsonElementBacking.ValueKind != JsonValueKind.Undefined || (this.objectBacking is null && this.arrayBacking is null && this.numberBacking is null && this.stringBacking is null && this.booleanBacking is null);
 
         /// <summary>
         /// Gets the value as a JsonElement.

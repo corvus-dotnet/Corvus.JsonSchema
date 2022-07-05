@@ -199,7 +199,7 @@ public static partial class JsonPatchExtensions
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool TryApplyAdd(in JsonAny node, in Add patchOperation, out JsonAny result)
+    private static bool TryApplyAdd(in JsonAny node, in PatchOperation patchOperation, out JsonAny result)
     {
         AddVisitor visitor = new(patchOperation);
         bool transformed = JsonTransformingVisitor.Visit(node, (in ReadOnlySpan<char> path, in JsonAny nodeToVisit) => visitor.Visit(path, nodeToVisit), out JsonAny transformedResult);
@@ -208,16 +208,19 @@ public static partial class JsonPatchExtensions
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool TryApplyCopy(in JsonAny node, in Copy patchOperation, out JsonAny result)
+    private static bool TryApplyCopy(in JsonAny node, in PatchOperation patchOperation, out JsonAny result)
     {
+        patchOperation.TryGetProperty(Move.FromUtf8JsonPropertyName.Span, out JsonAny fromAny);
+        ReadOnlySpan<char> from = fromAny.AsString;
+
         // If the source and the destination match, then we are already done!
-        if (patchOperation.Path.Equals(patchOperation.From))
+        if (patchOperation.Path.Equals(from))
         {
             result = node;
             return true;
         }
 
-        JsonAny? source = FindSourceElement(node, patchOperation.From);
+        JsonAny? source = FindSourceElement(node, from);
         if (!source.HasValue)
         {
             result = node;
@@ -232,16 +235,19 @@ public static partial class JsonPatchExtensions
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool TryApplyMove(in JsonAny node, in Move patchOperation, out JsonAny result)
+    private static bool TryApplyMove(in JsonAny node, in PatchOperation patchOperation, out JsonAny result)
     {
+        patchOperation.TryGetProperty(Move.FromUtf8JsonPropertyName.Span, out JsonAny fromAny);
+        ReadOnlySpan<char> from = fromAny.AsString;
+
         // If the source and the destination match, then we are already done!
-        if (patchOperation.Path.Equals(patchOperation.From))
+        if (patchOperation.Path.Equals(from))
         {
             result = node;
             return true;
         }
 
-        JsonAny? source = FindSourceElement(node, patchOperation.From);
+        JsonAny? source = FindSourceElement(node, from);
         if (!source.HasValue)
         {
             result = node;
@@ -255,7 +261,7 @@ public static partial class JsonPatchExtensions
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool TryApplyRemove(JsonAny node, Remove patchOperation, out JsonAny result)
+    private static bool TryApplyRemove(JsonAny node, PatchOperation patchOperation, out JsonAny result)
     {
         RemoveVisitor visitor = new(patchOperation);
         bool transformed = JsonTransformingVisitor.Visit(node, (in ReadOnlySpan<char> p, in JsonAny n) => visitor.Visit(p, n), out JsonAny transformedResult);
@@ -264,7 +270,7 @@ public static partial class JsonPatchExtensions
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool TryApplyReplace(in JsonAny node, in Replace patchOperation, out JsonAny result)
+    private static bool TryApplyReplace(in JsonAny node, in PatchOperation patchOperation, out JsonAny result)
     {
         ReplaceVisitor visitor = new(patchOperation);
         bool transformed = JsonTransformingVisitor.Visit(node, (in ReadOnlySpan<char> p, in JsonAny n) => visitor.Visit(p, n), out JsonAny transformedResult);
@@ -273,15 +279,18 @@ public static partial class JsonPatchExtensions
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool TryApplyTest(in JsonAny node, in Test patchOperation, out JsonAny result)
+    private static bool TryApplyTest(in JsonAny node, in PatchOperation patchOperation, out JsonAny result)
     {
         result = node;
 
         // Find the node to test.
         if (node.TryResolvePointer(patchOperation.Path, out JsonAny itemToTest))
         {
-            // Verify that the value of the node is the one supplied in the test operation.
-            return itemToTest == patchOperation.Value;
+            if (patchOperation.TryGetProperty(Test.ValueUtf8JsonPropertyName.Span, out JsonAny value))
+            {
+                // Verify that the value of the node is the one supplied in the test operation.
+                return itemToTest == value;
+            }
         }
 
         return false;

@@ -115,10 +115,13 @@ public static partial class JsonTransformingVisitor
                 if (asArray.HasJsonElement)
                 {
                     builder.Add(item);
+                    index++;
+                    continue;
                 }
-
-                index++;
-                continue;
+                else
+                {
+                    break;
+                }
             }
 
             // Build the array path
@@ -211,14 +214,21 @@ public static partial class JsonTransformingVisitor
         {
             if (terminateEntireWalkApplyingChanges)
             {
-                string pn = property.Name;
-
-                if (!builder.ContainsKey(pn))
+                if (asObject.HasJsonElement)
                 {
-                    builder.Add(pn, property.Value);
-                }
+                    string pn = property.Name;
 
-                continue;
+                    if (!builder.ContainsKey(pn))
+                    {
+                        builder.Add(pn, property.Value);
+                    }
+
+                    continue;
+                }
+                else
+                {
+                    break;
+                }
             }
 
             // Build the property path
