@@ -11,7 +11,7 @@ using Corvus.Json.Visitor;
 /// </summary>
 public static partial class JsonPatchExtensions
 {
-    private class ReplaceVisitor
+    private struct ReplaceVisitor
     {
         public ReplaceVisitor(Replace patchOperation)
         {
@@ -20,12 +20,12 @@ public static partial class JsonPatchExtensions
 
         public Replace PatchOperation { get; }
 
-        public VisitResult Visit(ReadOnlySpan<char> path, JsonAny nodeToVisit)
+        public VisitResult Visit(in ReadOnlySpan<char> path, in JsonAny nodeToVisit)
         {
             return VisitForReplace(path, nodeToVisit, this.PatchOperation.Value, this.PatchOperation.Path);
         }
 
-        internal static VisitResult VisitForReplace(ReadOnlySpan<char> path, JsonAny nodeToVisit, JsonAny value, ReadOnlySpan<char> operationPath)
+        internal static VisitResult VisitForReplace(in ReadOnlySpan<char> path, in JsonAny nodeToVisit, in JsonAny value, in ReadOnlySpan<char> operationPath)
         {
             // If we are the root, or our span starts with the path so far, we might be matching
             if (operationPath.Length == 0 || operationPath.StartsWith(path))

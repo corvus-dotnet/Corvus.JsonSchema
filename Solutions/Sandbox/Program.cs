@@ -9,10 +9,19 @@ try
 {
     var bench = new GeneratedBenchmark0();
     await bench.GlobalSetup().ConfigureAwait(false);
+
+    // Warmup
     bench.PatchCorvus();
-    bench.PatchJsonEverything();
+
+    // Give us a nice big gap
+    Task.Delay(1000).Wait();
+
+    for (int i = 0; i < 32768; ++i)
+    {
+        bench.PatchCorvus();
+    }
 }
-catch(Exception ex)
+catch (Exception ex)
 {
     Console.WriteLine(ex.ToString());
     throw;

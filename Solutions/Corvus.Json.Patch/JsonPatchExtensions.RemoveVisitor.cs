@@ -12,7 +12,7 @@ using Corvus.Json.Visitor;
 /// </summary>
 public static partial class JsonPatchExtensions
 {
-    private class RemoveVisitor
+    private struct RemoveVisitor
     {
         public RemoveVisitor(Remove patchOperation)
         {
@@ -21,13 +21,13 @@ public static partial class JsonPatchExtensions
 
         public Remove PatchOperation { get; }
 
-        public VisitResult Visit(ReadOnlySpan<char> path, JsonAny nodeToVisit)
+        public VisitResult Visit(in ReadOnlySpan<char> path, in JsonAny nodeToVisit)
         {
             return VisitForRemove(path, nodeToVisit, this.PatchOperation.Path.AsSpan());
         }
 
         // This is used by Remove and Move
-        internal static VisitResult VisitForRemove(ReadOnlySpan<char> path, JsonAny nodeToVisit, ReadOnlySpan<char> operationPath)
+        internal static VisitResult VisitForRemove(in ReadOnlySpan<char> path, in JsonAny nodeToVisit, in ReadOnlySpan<char> operationPath)
         {
             // If we are the root, or our span starts with the path so far, we might be matching
             if (operationPath.Length == 0 || operationPath.StartsWith(path))

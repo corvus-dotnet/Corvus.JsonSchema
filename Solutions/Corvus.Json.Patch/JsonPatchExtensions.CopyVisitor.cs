@@ -12,20 +12,20 @@ using Corvus.Json.Visitor;
 /// </summary>
 public static partial class JsonPatchExtensions
 {
-    private class CopyVisitor
+    private struct CopyVisitor
     {
-        public CopyVisitor(JsonAny node, Copy patchOperation)
+        public CopyVisitor(JsonAny node, Copy patchOperation, JsonAny sourceElement)
         {
             this.PatchOperation = patchOperation;
 
-            this.SourceElement = FindSourceElement(node, patchOperation.From);
+            this.SourceElement = sourceElement;
         }
 
         public Copy PatchOperation { get; }
 
-        public JsonAny? SourceElement { get; }
+        public JsonAny SourceElement { get; }
 
-        public VisitResult Visit(ReadOnlySpan<char> path, JsonAny nodeToVisit)
+        public VisitResult Visit(in ReadOnlySpan<char> path, in JsonAny nodeToVisit)
         {
             // This is an add operation with the node we found.
             return AddVisitor.VisitForAdd(path, nodeToVisit, this.SourceElement, this.PatchOperation.Path);

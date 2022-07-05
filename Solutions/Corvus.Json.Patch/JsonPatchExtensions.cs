@@ -5,6 +5,7 @@
 namespace Corvus.Json.Patch;
 
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using Corvus.Json.Patch.Model;
 using Corvus.Json.Visitor;
 
@@ -14,6 +15,13 @@ using Corvus.Json.Visitor;
 [System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.SpacingRules", "SA1000:Keywords should be spaced correctly", Justification = "new() syntax not supported by current version of StyleCop")]
 public static partial class JsonPatchExtensions
 {
+    private static readonly ReadOnlyMemory<byte> AddAsUtf8 = new byte[] { 0x61, 0x64, 0x64 };
+    private static readonly ReadOnlyMemory<byte> CopyAsUtf8 = new byte[] { 0x63, 0x6f, 0x70, 0x79 };
+    private static readonly ReadOnlyMemory<byte> MoveAsUtf8 = new byte[] { 0x6d, 0x6f, 0x76, 0x65 };
+    private static readonly ReadOnlyMemory<byte> RemoveAsUtf8 = new byte[] { 0x72, 0x65, 0x6d, 0x6f, 0x76, 0x65 };
+    private static readonly ReadOnlyMemory<byte> ReplaceAsUtf8 = new byte[] { 0x72, 0x65, 0x70, 0x6c, 0x61, 0x63, 0x65 };
+    private static readonly ReadOnlyMemory<byte> TestAsUtf8 = new byte[] { 0x74, 0x65, 0x73, 0x74 };
+
     /// <summary>
     /// Begin gathering a <see cref="PatchOperationArray"/> by applying successive patch operations to an initial <see cref="IJsonValue"/>.
     /// </summary>
@@ -34,7 +42,7 @@ public static partial class JsonPatchExtensions
     /// <param name="patchOperations">The patch operations to apply.</param>
     /// <param name="result">The result of applying the patch.</param>
     /// <returns><c>True</c> is the patch was applied.</returns>
-    public static bool TryApplyPatch<T>(this T value, PatchOperationArray patchOperations, out JsonAny result)
+    public static bool TryApplyPatch<T>(this T value, in PatchOperationArray patchOperations, out JsonAny result)
         where T : struct, IJsonValue
     {
         JsonAny current = value.AsAny;
@@ -59,29 +67,79 @@ public static partial class JsonPatchExtensions
         return true;
     }
 
-    private static bool TryApplyPatchOperation(JsonAny node, PatchOperation patchOperation, out JsonAny result)
+    private static bool TryApplyPatchOperation(in JsonAny node, in PatchOperation patchOperation, out JsonAny result)
     {
-        switch (patchOperation.Op.GetString())
+        if (patchOperation.HasJsonElement)
         {
-            case "add":
+            if (patchOperation.Op.EqualsUtf8Bytes(AddAsUtf8.Span))
+            {
                 return TryApplyAdd(node, patchOperation, out result);
-            case "copy":
+            }
+
+            if (patchOperation.Op.EqualsUtf8Bytes(CopyAsUtf8.Span))
+            {
                 return TryApplyCopy(node, patchOperation, out result);
-            case "move":
+            }
+
+            if (patchOperation.Op.EqualsUtf8Bytes(MoveAsUtf8.Span))
+            {
                 return TryApplyMove(node, patchOperation, out result);
-            case "remove":
+            }
+
+            if (patchOperation.Op.EqualsUtf8Bytes(RemoveAsUtf8.Span))
+            {
                 return TryApplyRemove(node, patchOperation, out result);
-            case "replace":
+            }
+
+            if (patchOperation.Op.EqualsUtf8Bytes(ReplaceAsUtf8.Span))
+            {
                 return TryApplyReplace(node, patchOperation, out result);
-            case "test":
+            }
+
+            if (patchOperation.Op.EqualsUtf8Bytes(TestAsUtf8.Span))
+            {
                 return TryApplyTest(node, patchOperation, out result);
-            default:
-                result = node;
-                return false;
+            }
+
+            result = node;
+            return false;
         }
+
+        if (patchOperation.Op.EqualsString("add"))
+        {
+            return TryApplyAdd(node, patchOperation, out result);
+        }
+
+        if (patchOperation.Op.EqualsString("copy"))
+        {
+            return TryApplyCopy(node, patchOperation, out result);
+        }
+
+        if (patchOperation.Op.EqualsString("move"))
+        {
+            return TryApplyMove(node, patchOperation, out result);
+        }
+
+        if (patchOperation.Op.EqualsString("remove"))
+        {
+            return TryApplyRemove(node, patchOperation, out result);
+        }
+
+        if (patchOperation.Op.EqualsString("remove"))
+        {
+            return TryApplyReplace(node, patchOperation, out result);
+        }
+
+        if (patchOperation.Op.EqualsString("test"))
+        {
+            return TryApplyTest(node, patchOperation, out result);
+        }
+
+        result = node;
+        return false;
     }
 
-    private static bool TryGetArrayIndex(ReadOnlySpan<char> pathSegment, [NotNullWhen(true)] out int index)
+    private static bool TryGetArrayIndex(in ReadOnlySpan<char> pathSegment, [NotNullWhen(true)] out int index)
     {
         if (pathSegment.Length > 1 && pathSegment[0] == '0')
         {
@@ -92,7 +150,8 @@ public static partial class JsonPatchExtensions
         return int.TryParse(pathSegment, out index);
     }
 
-    private static JsonAny? FindSourceElement(JsonAny root, ReadOnlySpan<char> from)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static JsonAny? FindSourceElement(in JsonAny root, in ReadOnlySpan<char> from)
     {
         // Try to find the node to copy
         if (root.TryResolvePointer(from, out JsonAny sourceElement))
@@ -103,7 +162,8 @@ public static partial class JsonPatchExtensions
         return null;
     }
 
-    private static bool TryGetTerminatingPathElement(ReadOnlySpan<char> opPathTail, out ReadOnlySpan<char> propertyName)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool TryGetTerminatingPathElement(in ReadOnlySpan<char> opPathTail, out ReadOnlySpan<char> propertyName)
     {
         int index = 0;
         int start = 0;
@@ -136,7 +196,8 @@ public static partial class JsonPatchExtensions
         return true;
     }
 
-    private static bool TryApplyAdd(JsonAny node, Add patchOperation, out JsonAny result)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool TryApplyAdd(in JsonAny node, in Add patchOperation, out JsonAny result)
     {
         AddVisitor visitor = new(patchOperation);
         bool transformed = JsonTransformingVisitor.Visit(node, visitor.Visit, out JsonAny transformedResult);
@@ -144,7 +205,8 @@ public static partial class JsonPatchExtensions
         return transformed;
     }
 
-    private static bool TryApplyCopy(JsonAny node, Copy patchOperation, out JsonAny result)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool TryApplyCopy(in JsonAny node, in Copy patchOperation, out JsonAny result)
     {
         // If the source and the destination match, then we are already done!
         if (patchOperation.Path.Equals(patchOperation.From))
@@ -153,13 +215,22 @@ public static partial class JsonPatchExtensions
             return true;
         }
 
-        CopyVisitor visitor = new(node, patchOperation);
-        bool transformed = JsonTransformingVisitor.Visit(node, visitor.Visit, out JsonAny transformedResult);
+        JsonAny? source = FindSourceElement(node, patchOperation.From);
+        if (!source.HasValue)
+        {
+            result = node;
+            return false;
+        }
+
+        CopyVisitor visitor = new(node, patchOperation, source.Value);
+
+        bool transformed = JsonTransformingVisitor.Visit(node, (in ReadOnlySpan<char> p, in JsonAny n) => visitor.Visit(p, n), out JsonAny transformedResult);
         result = transformedResult;
         return transformed;
     }
 
-    private static bool TryApplyMove(JsonAny node, Move patchOperation, out JsonAny result)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool TryApplyMove(in JsonAny node, in Move patchOperation, out JsonAny result)
     {
         // If the source and the destination match, then we are already done!
         if (patchOperation.Path.Equals(patchOperation.From))
@@ -168,29 +239,39 @@ public static partial class JsonPatchExtensions
             return true;
         }
 
-        MoveVisitor visitor = new(node, patchOperation);
-        bool transformed = JsonTransformingVisitor.Visit(node, visitor.Visit, out JsonAny transformedResult);
+        JsonAny? source = FindSourceElement(node, patchOperation.From);
+        if (!source.HasValue)
+        {
+            result = node;
+            return false;
+        }
+
+        MoveVisitor visitor = new(node, patchOperation, source.Value);
+        bool transformed = JsonTransformingVisitor.Visit(node, (in ReadOnlySpan<char> p, in JsonAny n) => visitor.Visit(p, n), out JsonAny transformedResult);
         result = transformedResult;
         return transformed;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool TryApplyRemove(JsonAny node, Remove patchOperation, out JsonAny result)
     {
         RemoveVisitor visitor = new(patchOperation);
-        bool transformed = JsonTransformingVisitor.Visit(node, visitor.Visit, out JsonAny transformedResult);
+        bool transformed = JsonTransformingVisitor.Visit(node, (in ReadOnlySpan<char> p, in JsonAny n) => visitor.Visit(p, n), out JsonAny transformedResult);
         result = transformedResult;
         return transformed;
     }
 
-    private static bool TryApplyReplace(JsonAny node, Replace patchOperation, out JsonAny result)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool TryApplyReplace(in JsonAny node, in Replace patchOperation, out JsonAny result)
     {
         ReplaceVisitor visitor = new(patchOperation);
-        bool transformed = JsonTransformingVisitor.Visit(node, visitor.Visit, out JsonAny transformedResult);
+        bool transformed = JsonTransformingVisitor.Visit(node, (in ReadOnlySpan<char> p, in JsonAny n) => visitor.Visit(p, n), out JsonAny transformedResult);
         result = transformedResult;
         return transformed;
     }
 
-    private static bool TryApplyTest(JsonAny node, Test patchOperation, out JsonAny result)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool TryApplyTest(in JsonAny node, in Test patchOperation, out JsonAny result)
     {
         result = node;
 
