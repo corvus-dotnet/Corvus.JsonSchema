@@ -42,6 +42,11 @@ public static partial class JsonPatchExtensions
 
                     return new(value, Transformed.Yes, Walk.TerminateAtThisNodeAndKeepChanges);
                 }
+                else if (operationPath[path.Length] != '/')
+                {
+                    // If our next character is not a path separator, then we must have a partial node match, and we need to skip on to the next sibling.
+                    return new(nodeToVisit, Transformed.No, Walk.SkipChildren);
+                }
 
                 if (nodeToVisit.ValueKind == JsonValueKind.Object)
                 {

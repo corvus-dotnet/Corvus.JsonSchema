@@ -70,6 +70,14 @@ public static partial class JsonTransformingVisitor
 #pragma warning restore SA1000 // Keywords should be spaced correctly
         }
 
+        if (rootResult.Walk == Walk.SkipChildren)
+        {
+            // Don't iterate into the children, but do continue the walk.
+#pragma warning disable SA1000 // Keywords should be spaced correctly
+            return new(nodeToVisit, Transformed.No, Walk.Continue);
+#pragma warning restore SA1000 // Keywords should be spaced correctly
+        }
+
         // If we are terminating here, don't visit the children.
         if (rootResult.Walk != Walk.Continue)
         {
@@ -104,6 +112,11 @@ public static partial class JsonTransformingVisitor
         {
             if (terminateEntireWalkApplyingChanges)
             {
+                if (asArray.HasJsonElement)
+                {
+                    builder.Add(item);
+                }
+
                 index++;
                 continue;
             }
@@ -138,9 +151,12 @@ public static partial class JsonTransformingVisitor
             hasTransformedItems = hasTransformedItems || itemResult.IsTransformed;
 
             // We need to build up the set of items, whether we have transformed them or not
-            if (index < builder.Count && itemResult.IsTransformed)
+            if (index < builder.Count)
             {
-                builder[index] = itemResult.Output;
+                if (itemResult.IsTransformed)
+                {
+                    builder[index] = itemResult.Output;
+                }
             }
             else
             {
