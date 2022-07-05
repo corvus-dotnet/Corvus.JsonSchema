@@ -61,8 +61,9 @@ public static partial class JsonTransformingVisitor
     {
         // First, visit the entity itself
         VisitResult rootResult = visitor(path, nodeToVisit);
+        Walk rootResultWalk = rootResult.Walk;
 
-        if (rootResult.Walk == Walk.TerminateAtThisNodeAndAbandonAllChanges)
+        if (rootResultWalk == Walk.TerminateAtThisNodeAndAbandonAllChanges)
         {
             // We're terminating, and abandoning changes, so just return this node.
 #pragma warning disable SA1000 // Keywords should be spaced correctly
@@ -70,7 +71,7 @@ public static partial class JsonTransformingVisitor
 #pragma warning restore SA1000 // Keywords should be spaced correctly
         }
 
-        if (rootResult.Walk == Walk.SkipChildren)
+        if (rootResultWalk == Walk.SkipChildren)
         {
             // Don't iterate into the children, but do continue the walk.
 #pragma warning disable SA1000 // Keywords should be spaced correctly
@@ -79,20 +80,21 @@ public static partial class JsonTransformingVisitor
         }
 
         // If we are terminating here, don't visit the children.
-        if (rootResult.Walk != Walk.Continue)
+        if (rootResultWalk != Walk.Continue)
         {
             return rootResult;
         }
 
-        return rootResult.Output.ValueKind switch
+        JsonAny rootResultOutput = rootResult.Output;
+        return rootResultOutput.ValueKind switch
         {
-            JsonValueKind.Object => VisitObject(path, rootResult.Output.AsObject, visitor, ref pathBuffer),
-            JsonValueKind.Array => VisitArray(path, rootResult.Output.AsArray, visitor, ref pathBuffer),
+            JsonValueKind.Object => VisitObject(path, rootResultOutput, visitor, ref pathBuffer),
+            JsonValueKind.Array => VisitArray(path, rootResultOutput, visitor, ref pathBuffer),
             _ => rootResult,
         };
     }
 
-    private static VisitResult VisitArray(in ReadOnlySpan<char> path, in JsonArray asArray, Visitor visitor, ref char[] pathBuffer)
+    private static VisitResult VisitArray(in ReadOnlySpan<char> path, in JsonAny asArray, Visitor visitor, ref char[] pathBuffer)
     {
         bool terminateEntireWalkApplyingChanges = false;
         bool hasTransformedItems = false;
@@ -195,7 +197,7 @@ public static partial class JsonTransformingVisitor
         return new VisitResult(asArray, Transformed.No, Walk.Continue);
     }
 
-    private static VisitResult VisitObject(ReadOnlySpan<char> path, JsonObject asObject, Visitor visitor, ref char[] pathBuffer)
+    private static VisitResult VisitObject(ReadOnlySpan<char> path, JsonAny asObject, Visitor visitor, ref char[] pathBuffer)
     {
         bool hasTransformedProperties = false;
         bool terminateEntireWalkApplyingChanges = false;

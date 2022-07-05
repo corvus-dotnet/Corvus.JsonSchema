@@ -1,4 +1,4 @@
-// <copyright file="GeneratedBenchmark22.cs" company="Endjin Limited">
+// <copyright file="GeneratedBenchmark31.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 #pragma warning disable
@@ -7,9 +7,9 @@ namespace Benchmarks
     using System.Threading.Tasks;
 
     /// <summary>
-    /// tests - replace object document with array document?.
+    /// tests - Undescribed scenario.
     /// </summary>
-    public class GeneratedBenchmark22 : BenchmarkBase
+    public class GeneratedBenchmark31 : BenchmarkBase
     {
         private Corvus.Json.Patch.Model.PatchOperationArray corvusPatch;
         private Json.Patch.JsonPatch? jePatch;
@@ -20,11 +20,11 @@ namespace Benchmarks
         /// <returns>A <see cref="Task"/> which completes once setup is complete.</returns>
         public async Task GlobalSetup()
         {
-            this.jePatch = BuildJEPatch("[{\"op\":\"add\",\"path\":\"\",\"value\":[]}]");
+            this.jePatch = BuildJEPatch("[{\"op\":\"add\",\"path\":\"/bar\",\"value\":null}]");
                 
-            this.corvusPatch = Corvus.Json.JsonAny.Parse("[{\"op\":\"add\",\"path\":\"\",\"value\":[]}]");
+            this.corvusPatch = Corvus.Json.JsonAny.Parse("[{\"op\":\"add\",\"path\":\"/bar\",\"value\":null}]");
 
-            await this.GlobalSetupJson("{}").ConfigureAwait(false);
+            await this.GlobalSetupJson("{\"foo\":1}").ConfigureAwait(false);
         }
 
         /// <summary>

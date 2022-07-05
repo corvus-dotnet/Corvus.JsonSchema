@@ -170,7 +170,8 @@ public static partial class JsonPatchExtensions
         int index = 0;
         int start = 0;
         int length = 0;
-        while (index < opPathTail.Length)
+        int opPathTailLength = opPathTail.Length;
+        while (index < opPathTailLength)
         {
             // If we hit a separator, we have a potential problem.
             if (opPathTail[index] == '/')

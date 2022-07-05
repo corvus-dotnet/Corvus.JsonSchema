@@ -81,7 +81,14 @@ namespace Corvus.Json
         {
             get
             {
-                return new JsonAny(this);
+                if (this.properties is ImmutableDictionary<string, JsonAny> p)
+                {
+                    return new JsonAny(p);
+                }
+                else
+                {
+                    return new JsonAny(this.jsonElement);
+                }
             }
         }
 
