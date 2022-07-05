@@ -40,15 +40,6 @@ namespace Benchmarks
         }
 
         /// <summary>
-        /// Validates using the Corvus types.
-        /// </summary>
-        [Benchmark]
-        public void PatchCorvus()
-        {
-            bool result = Corvus.Json.Patch.JsonPatchExtensions.TryApplyPatch(this.Any, this.corvusPatch, out Corvus.Json.JsonAny output);
-        }
-
-        /// <summary>
         /// Validates using the Newtonsoft types.
         /// </summary>
         [Benchmark(Baseline = true)]
@@ -63,6 +54,16 @@ namespace Benchmarks
                 // Swallow failures until we can diagnose the issue with running inside BMDN
                 // https://github.com/dotnet/BenchmarkDotNet/issues/2032
             }
+        }
+
+        
+        /// <summary>
+        /// Validates using the Corvus types.
+        /// </summary>
+        [Benchmark]
+        public void PatchCorvus()
+        {
+            bool result = Corvus.Json.Patch.JsonPatchExtensions.TryApplyPatch(this.Any, this.corvusPatch, out Corvus.Json.JsonAny output);
         }
     }
 }

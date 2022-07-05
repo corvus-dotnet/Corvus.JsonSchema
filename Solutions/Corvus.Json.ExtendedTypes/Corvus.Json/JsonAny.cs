@@ -8,6 +8,7 @@ namespace Corvus.Json
     using System.Buffers;
     using System.Collections.Immutable;
     using System.IO;
+    using System.Runtime.CompilerServices;
     using System.Text.Json;
 
     /// <summary>
@@ -385,6 +386,7 @@ namespace Corvus.Json
         /// </summary>
         public JsonObject AsObject
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
                 if (this.objectBacking is ImmutableDictionary<string, JsonAny> objectBacking)
@@ -403,6 +405,7 @@ namespace Corvus.Json
         /// </summary>
         public JsonArray AsArray
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
                 if (this.arrayBacking is ImmutableList<JsonAny> arrayBacking)
@@ -421,6 +424,7 @@ namespace Corvus.Json
         /// </summary>
         public JsonNumber AsNumber
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
                 if (this.numberBacking is double numberBacking)
@@ -439,6 +443,7 @@ namespace Corvus.Json
         /// </summary>
         public JsonString AsString
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
                 if (this.stringBacking is string stringBacking)
@@ -484,6 +489,7 @@ namespace Corvus.Json
         /// </summary>
         public JsonBoolean AsBoolean
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
                 if (this.booleanBacking is bool booleanBacking)
@@ -504,6 +510,7 @@ namespace Corvus.Json
         public JsonNull AsNull
 #pragma warning restore CA1822 // Mark members as static
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
                 return default;

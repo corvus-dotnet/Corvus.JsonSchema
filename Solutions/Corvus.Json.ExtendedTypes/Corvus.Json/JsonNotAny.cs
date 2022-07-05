@@ -370,13 +370,19 @@ namespace Corvus.Json
         {
             get
             {
+                if (this.HasJsonElement)
+                {
+                    return new JsonAny(this.jsonElementBacking);
+                }
+
                 return this.ValueKind switch
                 {
-                    JsonValueKind.Object => new JsonAny(this.AsObject),
-                    JsonValueKind.Array => new JsonAny(this.AsArray),
-                    JsonValueKind.Number => new JsonAny(this.AsNumber),
-                    JsonValueKind.String => new JsonAny(this.AsString),
-                    JsonValueKind.True or JsonValueKind.False => new JsonAny(this.AsBoolean),
+                    JsonValueKind.Object => new JsonAny(this.objectBacking!),
+                    JsonValueKind.Array => new JsonAny(this.arrayBacking!),
+                    JsonValueKind.Number => new JsonAny(this.numberBacking!.Value),
+                    JsonValueKind.String => new JsonAny(this.stringBacking!),
+                    JsonValueKind.True => new JsonAny(true),
+                    JsonValueKind.False => new JsonAny(false),
                     JsonValueKind.Undefined => default,
                     JsonValueKind.Null => JsonNull.Instance,
                     _ => default,
@@ -759,7 +765,7 @@ namespace Corvus.Json
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator JsonNotAny(ImmutableList<JsonAny> value)
         {
-            return new JsonAny(value);
+            return new JsonNotAny(value);
         }
 
         /// <summary>

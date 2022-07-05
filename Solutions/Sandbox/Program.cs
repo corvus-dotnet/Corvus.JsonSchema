@@ -1,25 +1,20 @@
-﻿using System;
-using System.Diagnostics;
-using Benchmarks;
-using Corvus.Json;
-using Corvus.Json.Patch;
-using Corvus.Json.Patch.Model;
+﻿using Benchmarks;
 
 try
 {
-    var bench = new LargeFileBenchmark();
+    var bench = new GeneratedBenchmark2();
     await bench.GlobalSetup().ConfigureAwait(false);
 
     // Warmup
     bench.PatchCorvus();
 
     // Give us a nice big gap
-    ////Task.Delay(1000).Wait();
+    Task.Delay(1000).Wait();
 
-    ////for (int i = 0; i < 32768; ++i)
-    ////{
-    ////    bench.PatchCorvus();
-    ////}
+    for (int i = 0; i < 32768; ++i)
+    {
+        bench.PatchCorvus();
+    }
 }
 catch (Exception ex)
 {
