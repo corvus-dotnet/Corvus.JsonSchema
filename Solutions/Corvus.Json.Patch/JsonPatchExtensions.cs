@@ -214,11 +214,11 @@ public static partial class JsonPatchExtensions
         ReadOnlySpan<char> from = fromAny.AsString;
 
         // If the source and the destination match, then we are already done!
-        if (patchOperation.Path.Equals(from))
-        {
-            result = node;
-            return true;
-        }
+        ////if (patchOperation.Path.Equals(from))
+        ////{
+        ////    result = node;
+        ////    return true;
+        ////}
 
         JsonAny? source = FindSourceElement(node, from);
         if (!source.HasValue)
@@ -241,11 +241,11 @@ public static partial class JsonPatchExtensions
         ReadOnlySpan<char> from = fromAny.AsString;
 
         // If the source and the destination match, then we are already done!
-        if (patchOperation.Path.Equals(from))
-        {
-            result = node;
-            return true;
-        }
+        ////if (patchOperation.Path.Equals(from))
+        ////{
+        ////    result = node;
+        ////    return true;
+        ////}
 
         JsonAny? source = FindSourceElement(node, from);
         if (!source.HasValue)
