@@ -21,7 +21,7 @@ public static partial class JsonPatchExtensions
 
         public Add PatchOperation { get; }
 
-        public VisitResult Visit(in ReadOnlySpan<char> path, in JsonAny nodeToVisit)
+        public VisitResult Visit(ReadOnlySpan<char> path, JsonAny nodeToVisit)
         {
             return VisitForAdd(path, nodeToVisit, this.PatchOperation.Value, this.PatchOperation.Path.AsSpan());
         }

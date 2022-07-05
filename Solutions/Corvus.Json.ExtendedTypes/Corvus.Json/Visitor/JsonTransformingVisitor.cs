@@ -21,7 +21,7 @@ public static partial class JsonTransformingVisitor
     /// <param name="path">The path visited.</param>
     /// <param name="nodeToVisit">The node to visit.</param>
     /// <returns>The result of visiting the node.</returns>
-    public delegate VisitResult Visitor(ReadOnlySpan<char> path, JsonAny nodeToVisit);
+    public delegate VisitResult Visitor(in ReadOnlySpan<char> path, in JsonAny nodeToVisit);
 
     /// <summary>
     /// Walk the tree, optionally transforming nodes.
@@ -57,7 +57,7 @@ public static partial class JsonTransformingVisitor
         }
     }
 
-    private static VisitResult Visit(ReadOnlySpan<char> path, JsonAny nodeToVisit, Visitor visitor, ref char[] pathBuffer)
+    private static VisitResult Visit(in ReadOnlySpan<char> path, in JsonAny nodeToVisit, Visitor visitor, ref char[] pathBuffer)
     {
         // First, visit the entity itself
         VisitResult rootResult = visitor(path, nodeToVisit);
@@ -84,7 +84,7 @@ public static partial class JsonTransformingVisitor
         };
     }
 
-    private static VisitResult VisitArray(ReadOnlySpan<char> path, JsonArray asArray, Visitor visitor, ref char[] pathBuffer)
+    private static VisitResult VisitArray(in ReadOnlySpan<char> path, in JsonArray asArray, Visitor visitor, ref char[] pathBuffer)
     {
         bool terminateEntireWalkApplyingChanges = false;
         bool hasTransformedItems = false;
@@ -104,11 +104,6 @@ public static partial class JsonTransformingVisitor
         {
             if (terminateEntireWalkApplyingChanges)
             {
-                if (index >= builder.Count)
-                {
-                    builder.Add(item);
-                }
-
                 index++;
                 continue;
             }

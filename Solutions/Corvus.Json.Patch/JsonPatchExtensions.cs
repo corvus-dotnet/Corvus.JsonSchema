@@ -125,7 +125,7 @@ public static partial class JsonPatchExtensions
             return TryApplyRemove(node, patchOperation, out result);
         }
 
-        if (patchOperation.Op.EqualsString("remove"))
+        if (patchOperation.Op.EqualsString("replace"))
         {
             return TryApplyReplace(node, patchOperation, out result);
         }
@@ -200,7 +200,7 @@ public static partial class JsonPatchExtensions
     private static bool TryApplyAdd(in JsonAny node, in Add patchOperation, out JsonAny result)
     {
         AddVisitor visitor = new(patchOperation);
-        bool transformed = JsonTransformingVisitor.Visit(node, visitor.Visit, out JsonAny transformedResult);
+        bool transformed = JsonTransformingVisitor.Visit(node, (in ReadOnlySpan<char> path, in JsonAny nodeToVisit) => visitor.Visit(path, nodeToVisit), out JsonAny transformedResult);
         result = transformedResult;
         return transformed;
     }

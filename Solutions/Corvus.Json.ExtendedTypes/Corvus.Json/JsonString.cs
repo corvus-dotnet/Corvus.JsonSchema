@@ -351,6 +351,58 @@ namespace Corvus.Json
             return this.Equals(other.AsString());
         }
 
+        /// <summary>
+        /// Compare to a sequence of characters.
+        /// </summary>
+        /// <param name="utf8Bytes">The UTF8-encoded character sequence to compare.</param>
+        /// <returns><c>True</c> if teh sequences match.</returns>
+        public bool EqualsUtf8Bytes(ReadOnlySpan<byte> utf8Bytes)
+        {
+            if (this.ValueKind != JsonValueKind.String)
+            {
+                return false;
+            }
+
+            if (this.HasJsonElement)
+            {
+                return this.jsonElement.ValueEquals(utf8Bytes);
+            }
+
+            if (this.value is string val)
+            {
+                Span<char> chars = stackalloc char[Encoding.UTF8.GetMaxCharCount(utf8Bytes.Length)];
+                int written = Encoding.UTF8.GetChars(utf8Bytes, chars);
+                return chars[..written].SequenceEqual(val);
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Compare to a sequence of characters.
+        /// </summary>
+        /// <param name="chars">The character sequence to compare.</param>
+        /// <returns><c>True</c> if teh sequences match.</returns>
+        public bool EqualsString(ReadOnlySpan<char> chars)
+        {
+            if (this.ValueKind != JsonValueKind.String)
+            {
+                return false;
+            }
+
+            if (this.HasJsonElement)
+            {
+                return this.jsonElement.ValueEquals(chars);
+            }
+
+            if (this.value is string val)
+            {
+                return chars.SequenceEqual(val);
+            }
+
+            return false;
+        }
+
         /// <inheritdoc/>
         public bool Equals(JsonString other)
         {
