@@ -1,16 +1,15 @@
-// <copyright file="GeneratedBenchmark0.cs" company="Endjin Limited">
+// <copyright file="GeneratedBenchmark22.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 #pragma warning disable
 namespace Benchmarks
 {
-    using System;
     using System.Threading.Tasks;
 
     /// <summary>
-    /// spec_tests - A.1.  Adding an Object Member.
+    /// tests - replace object document with array document?.
     /// </summary>
-    public class GeneratedBenchmark0 : BenchmarkBase
+    public class GeneratedBenchmark22 : BenchmarkBase
     {
         private Corvus.Json.Patch.Model.PatchOperationArray corvusPatch;
         private Json.Patch.JsonPatch? jePatch;
@@ -21,11 +20,11 @@ namespace Benchmarks
         /// <returns>A <see cref="Task"/> which completes once setup is complete.</returns>
         public async Task GlobalSetup()
         {
-            this.jePatch = BuildJEPatch("[{\"op\":\"add\",\"path\":\"/baz\",\"value\":\"qux\"}]");
+            this.jePatch = BuildJEPatch("[{\"op\":\"add\",\"path\":\"\",\"value\":[]}]");
                 
-            this.corvusPatch = Corvus.Json.JsonAny.Parse("[{\"op\":\"add\",\"path\":\"/baz\",\"value\":\"qux\"}]");
+            this.corvusPatch = Corvus.Json.JsonAny.Parse("[{\"op\":\"add\",\"path\":\"\",\"value\":[]}]");
 
-            await this.GlobalSetupJson("{\"foo\":\"bar\"}").ConfigureAwait(false);
+            await this.GlobalSetupJson("{}").ConfigureAwait(false);
         }
 
         /// <summary>
@@ -45,10 +44,10 @@ namespace Benchmarks
             {
                Json.Patch.PatchResult? patchResult = this.jePatch?.Apply(ElementAsNode());
             }
-            catch(Exception ex)
+            catch(Exception)
             {
-                // Push this out into a long wait for failure.
-                Console.WriteLine(ex);
+                // Swallow failures until we can diagnose the issue with running inside BMDN
+                // https://github.com/dotnet/BenchmarkDotNet/issues/2032
             }
         }
     }

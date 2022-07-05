@@ -11,18 +11,21 @@ using Corvus.Json.Visitor;
 /// </summary>
 public static partial class JsonPatchExtensions
 {
-    private struct ReplaceVisitor
+    private readonly struct ReplaceVisitor
     {
         public ReplaceVisitor(Replace patchOperation)
         {
-            this.PatchOperation = patchOperation;
+            this.Value = patchOperation.Value;
+            this.Path = patchOperation.Path;
         }
 
-        public Replace PatchOperation { get; }
+        public JsonAny Value { get; }
+
+        public JsonPointer Path { get; }
 
         public VisitResult Visit(in ReadOnlySpan<char> path, in JsonAny nodeToVisit)
         {
-            return VisitForReplace(path, nodeToVisit, this.PatchOperation.Value, this.PatchOperation.Path);
+            return VisitForReplace(path, nodeToVisit, this.Value, this.Path);
         }
 
         internal static VisitResult VisitForReplace(in ReadOnlySpan<char> path, in JsonAny nodeToVisit, in JsonAny value, in ReadOnlySpan<char> operationPath)

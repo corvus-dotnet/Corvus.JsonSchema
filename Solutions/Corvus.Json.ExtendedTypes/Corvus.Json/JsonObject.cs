@@ -129,12 +129,17 @@ namespace Corvus.Json
             if (this.jsonElement.ValueKind == JsonValueKind.Object)
             {
                 ImmutableDictionary<string, JsonAny>.Builder builder = ImmutableDictionary.CreateBuilder<string, JsonAny>();
+
                 foreach (JsonProperty property in this.jsonElement.EnumerateObject())
                 {
-                    builder.Add(property.Name, new JsonAny(property.Value));
-                }
+                    string propertyName = property.Name;
+                    if (propertyName.Equals(name, StringComparison.Ordinal))
+                    {
+                        continue;
+                    }
 
-                builder.Remove(name);
+                    builder.Add(propertyName, new JsonAny(property.Value));
+                }
 
                 return builder.ToImmutable();
             }

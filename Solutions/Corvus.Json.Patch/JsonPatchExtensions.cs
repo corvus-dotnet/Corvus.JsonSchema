@@ -69,34 +69,36 @@ public static partial class JsonPatchExtensions
 
     private static bool TryApplyPatchOperation(in JsonAny node, in PatchOperation patchOperation, out JsonAny result)
     {
+        JsonString op = patchOperation.Op;
+
         if (patchOperation.HasJsonElement)
         {
-            if (patchOperation.Op.EqualsUtf8Bytes(AddAsUtf8.Span))
+            if (op.EqualsUtf8Bytes(AddAsUtf8.Span))
             {
                 return TryApplyAdd(node, patchOperation, out result);
             }
 
-            if (patchOperation.Op.EqualsUtf8Bytes(CopyAsUtf8.Span))
+            if (op.EqualsUtf8Bytes(CopyAsUtf8.Span))
             {
                 return TryApplyCopy(node, patchOperation, out result);
             }
 
-            if (patchOperation.Op.EqualsUtf8Bytes(MoveAsUtf8.Span))
+            if (op.EqualsUtf8Bytes(MoveAsUtf8.Span))
             {
                 return TryApplyMove(node, patchOperation, out result);
             }
 
-            if (patchOperation.Op.EqualsUtf8Bytes(RemoveAsUtf8.Span))
+            if (op.EqualsUtf8Bytes(RemoveAsUtf8.Span))
             {
                 return TryApplyRemove(node, patchOperation, out result);
             }
 
-            if (patchOperation.Op.EqualsUtf8Bytes(ReplaceAsUtf8.Span))
+            if (op.EqualsUtf8Bytes(ReplaceAsUtf8.Span))
             {
                 return TryApplyReplace(node, patchOperation, out result);
             }
 
-            if (patchOperation.Op.EqualsUtf8Bytes(TestAsUtf8.Span))
+            if (op.EqualsUtf8Bytes(TestAsUtf8.Span))
             {
                 return TryApplyTest(node, patchOperation, out result);
             }
@@ -105,32 +107,32 @@ public static partial class JsonPatchExtensions
             return false;
         }
 
-        if (patchOperation.Op.EqualsString("add"))
+        if (op.EqualsString("add"))
         {
             return TryApplyAdd(node, patchOperation, out result);
         }
 
-        if (patchOperation.Op.EqualsString("copy"))
+        if (op.EqualsString("copy"))
         {
             return TryApplyCopy(node, patchOperation, out result);
         }
 
-        if (patchOperation.Op.EqualsString("move"))
+        if (op.EqualsString("move"))
         {
             return TryApplyMove(node, patchOperation, out result);
         }
 
-        if (patchOperation.Op.EqualsString("remove"))
+        if (op.EqualsString("remove"))
         {
             return TryApplyRemove(node, patchOperation, out result);
         }
 
-        if (patchOperation.Op.EqualsString("replace"))
+        if (op.EqualsString("replace"))
         {
             return TryApplyReplace(node, patchOperation, out result);
         }
 
-        if (patchOperation.Op.EqualsString("test"))
+        if (op.EqualsString("test"))
         {
             return TryApplyTest(node, patchOperation, out result);
         }
@@ -222,7 +224,7 @@ public static partial class JsonPatchExtensions
             return false;
         }
 
-        CopyVisitor visitor = new(node, patchOperation, source.Value);
+        CopyVisitor visitor = new(patchOperation, source.Value);
 
         bool transformed = JsonTransformingVisitor.Visit(node, (in ReadOnlySpan<char> p, in JsonAny n) => visitor.Visit(p, n), out JsonAny transformedResult);
         result = transformedResult;
@@ -246,7 +248,7 @@ public static partial class JsonPatchExtensions
             return false;
         }
 
-        MoveVisitor visitor = new(node, patchOperation, source.Value);
+        MoveVisitor visitor = new(patchOperation, source.Value);
         bool transformed = JsonTransformingVisitor.Visit(node, (in ReadOnlySpan<char> p, in JsonAny n) => visitor.Visit(p, n), out JsonAny transformedResult);
         result = transformedResult;
         return transformed;

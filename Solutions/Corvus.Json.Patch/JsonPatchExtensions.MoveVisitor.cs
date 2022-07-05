@@ -14,17 +14,20 @@ public static partial class JsonPatchExtensions
 {
     private struct MoveVisitor
     {
-        public MoveVisitor(JsonAny node, Move patchOperation, JsonAny sourceElement)
+        public MoveVisitor(Move patchOperation, JsonAny sourceElement)
         {
-            this.PatchOperation = patchOperation;
+            this.From = patchOperation.From;
+            this.Path = patchOperation.Path;
             this.Added = false;
             this.Removed = false;
             this.SourceElement = sourceElement;
         }
 
-        public Move PatchOperation { get; }
-
         public JsonAny SourceElement { get; }
+
+        public JsonPointer From { get; }
+
+        public JsonPointer Path { get; }
 
         public bool Added { get; set; }
 
@@ -41,7 +44,7 @@ public static partial class JsonPatchExtensions
             if (!this.Removed)
             {
                 // Otherwise, this is a remove operation at the source location.
-                VisitResult resultFromRemove = RemoveVisitor.VisitForRemove(path, nodeToVisit, this.PatchOperation.From);
+                VisitResult resultFromRemove = RemoveVisitor.VisitForRemove(path, nodeToVisit, this.From);
 
                 if (resultFromRemove.Walk == Walk.TerminateAtThisNodeAndAbandonAllChanges)
                 {
@@ -72,7 +75,7 @@ public static partial class JsonPatchExtensions
             if (!this.Added)
             {
                 // Otherwise, this is an add operation with the node we found.
-                VisitResult resultFromAdd = AddVisitor.VisitForAdd(path, currentNode, this.SourceElement, this.PatchOperation.Path);
+                VisitResult resultFromAdd = AddVisitor.VisitForAdd(path, currentNode, this.SourceElement, this.Path);
 
                 if (resultFromAdd.Walk == Walk.TerminateAtThisNodeAndAbandonAllChanges)
                 {

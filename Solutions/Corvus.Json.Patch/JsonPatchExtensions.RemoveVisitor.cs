@@ -12,18 +12,18 @@ using Corvus.Json.Visitor;
 /// </summary>
 public static partial class JsonPatchExtensions
 {
-    private struct RemoveVisitor
+    private readonly struct RemoveVisitor
     {
         public RemoveVisitor(Remove patchOperation)
         {
-            this.PatchOperation = patchOperation;
+            this.Path = patchOperation.Path;
         }
 
-        public Remove PatchOperation { get; }
+        public JsonPointer Path { get; }
 
         public VisitResult Visit(in ReadOnlySpan<char> path, in JsonAny nodeToVisit)
         {
-            return VisitForRemove(path, nodeToVisit, this.PatchOperation.Path.AsSpan());
+            return VisitForRemove(path, nodeToVisit, this.Path);
         }
 
         // This is used by Remove and Move
