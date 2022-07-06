@@ -965,49 +965,144 @@ namespace Corvus.Json
         /// <inheritdoc/>
         public JsonObjectEnumerator EnumerateObject()
         {
-            return this.AsObject.EnumerateObject();
+            if (this.objectBacking is ImmutableDictionary<string, JsonAny> properties)
+            {
+                return new JsonObjectEnumerator(properties);
+            }
+
+            if (this.jsonElementBacking.ValueKind == JsonValueKind.Object)
+            {
+                return new JsonObjectEnumerator(this.jsonElementBacking);
+            }
+
+            return default;
         }
 
         /// <inheritdoc/>
         public JsonArrayEnumerator EnumerateArray()
         {
-            return this.AsArray.EnumerateArray();
+            if (this.arrayBacking is ImmutableList<JsonAny> items)
+            {
+                return new JsonArrayEnumerator(items);
+            }
+
+            if (this.jsonElementBacking.ValueKind == JsonValueKind.Array)
+            {
+                return new JsonArrayEnumerator(this.jsonElementBacking);
+            }
+
+            return default;
         }
 
         /// <inheritdoc/>
         public bool TryGetProperty(string name, out JsonAny value)
         {
-            return this.AsObject.TryGetProperty(name, out value);
+            if (this.objectBacking is ImmutableDictionary<string, JsonAny> properties)
+            {
+                return properties.TryGetValue(name, out value);
+            }
+
+            if (this.jsonElementBacking.ValueKind == JsonValueKind.Object)
+            {
+                if (this.jsonElementBacking.TryGetProperty(name, out JsonElement jsonElement))
+                {
+                    value = new JsonAny(jsonElement);
+                    return true;
+                }
+            }
+
+            value = default;
+            return false;
         }
 
         /// <inheritdoc/>
         public bool TryGetProperty(ReadOnlySpan<char> name, out JsonAny value)
         {
-            return this.AsObject.TryGetProperty(name, out value);
+            if (this.objectBacking is ImmutableDictionary<string, JsonAny> properties)
+            {
+                return properties.TryGetValue(name.ToString(), out value);
+            }
+
+            if (this.jsonElementBacking.ValueKind == JsonValueKind.Object)
+            {
+                if (this.jsonElementBacking.TryGetProperty(name, out JsonElement jsonElement))
+                {
+                    value = new JsonAny(jsonElement);
+                    return true;
+                }
+            }
+
+            value = default;
+            return false;
         }
 
         /// <inheritdoc/>
         public bool TryGetProperty(ReadOnlySpan<byte> utf8name, out JsonAny value)
         {
-            return this.AsObject.TryGetProperty(utf8name, out value);
+            if (this.objectBacking is ImmutableDictionary<string, JsonAny> properties)
+            {
+                return properties.TryGetValue(Encoding.UTF8.GetString(utf8name), out value);
+            }
+
+            if (this.jsonElementBacking.ValueKind == JsonValueKind.Object)
+            {
+                if (this.jsonElementBacking.TryGetProperty(utf8name, out JsonElement jsonElement))
+                {
+                    value = new JsonAny(jsonElement);
+                    return true;
+                }
+            }
+
+            value = default;
+            return false;
         }
 
         /// <inheritdoc/>
         public bool HasProperty(string name)
         {
-            return this.AsObject.HasProperty(name);
+            if (this.objectBacking is ImmutableDictionary<string, JsonAny> properties)
+            {
+                return properties.TryGetValue(name, out _);
+            }
+
+            if (this.jsonElementBacking.ValueKind == JsonValueKind.Object)
+            {
+                return this.jsonElementBacking.TryGetProperty(name, out JsonElement _);
+            }
+
+            return false;
         }
 
         /// <inheritdoc/>
         public bool HasProperty(ReadOnlySpan<char> name)
         {
-            return this.AsObject.HasProperty(name);
+            if (this.objectBacking is ImmutableDictionary<string, JsonAny> properties)
+            {
+                return properties.TryGetValue(name.ToString(), out _);
+            }
+
+            if (this.jsonElementBacking.ValueKind == JsonValueKind.Object)
+            {
+                return this.jsonElementBacking.TryGetProperty(name, out JsonElement _);
+            }
+
+            return false;
         }
 
         /// <inheritdoc/>
         public bool HasProperty(ReadOnlySpan<byte> utf8name)
         {
-            return this.AsObject.HasProperty(utf8name);
+            if (this.objectBacking is ImmutableDictionary<string, JsonAny> properties)
+            {
+                return properties.TryGetValue(Encoding.UTF8.GetString(utf8name), out _);
+            }
+
+            if (this.jsonElementBacking.ValueKind == JsonValueKind.Object)
+            {
+                return this.jsonElementBacking.TryGetProperty(utf8name, out JsonElement _);
+            }
+
+            return false;
         }
 
         /// <inheritdoc/>

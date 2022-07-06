@@ -2,7 +2,7 @@
 
 try
 {
-    var bench = new GeneratedBenchmark31();
+    var bench = new GeneratedBenchmark64();
     await bench.GlobalSetup().ConfigureAwait(false);
 
     // Warmup
