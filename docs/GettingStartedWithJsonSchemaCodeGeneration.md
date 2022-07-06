@@ -35,7 +35,7 @@ Also, you don't have to use exactly the tools we recommend. If you are proficien
 But this is intended to be a step-by-step guide. Please let us know in the comments if we've glossed over anything, and we'll add some more detail or explanatory notes.
 
 
-> ### A note for non-C# developers
+> ### A note for non-C# dotnet developers
 > If you aren't a C# dotnet developer... I guess you're used to translating from C# examples to F# or VB. Sorry, this is another one of those articles.
 >
 > While it's also true that the code generator emits C# code, you can compile it into a dotnet library for use with your preferred language. The actual generation is templated and extensible, so if you were tempted, you could emit code in the language of your choice. The translation would not be trivial, but *PRs are Love*.
@@ -46,7 +46,7 @@ But this is intended to be a step-by-step guide. Please let us know in the comme
 
 ### You'll need
 
-- the [.NET 6 SDK](https://docs.microsoft.com/en-us/dotnet/core/sdk) (maybe you've already installed Visual Studio 2022 and acquired it that way; but you don't have to install Visual Studio to get started; you can download these SDK bits and use the completely free/OSS toolchain to follow along.)
+- the [.NET 6 SDK](https://docs.microsoft.com/en-us/dotnet/core/sdk) (maybe you've already installed [Visual Studio 2022](https://visualstudio.microsoft.com/vs/community/) and acquired it that way; but you don't have to install Visual Studio to get started; you can download these SDK bits and use the completely free/OSS toolchain to follow along.)
 - a shell, with the SDK developer tools in the path. I'm using [PowerShell](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.2) in the [Windows Terminal](https://docs.microsoft.com/en-us/windows/terminal/install), [configured with the Visual Studio "Developer" config for PowerShell](https://blog.yannickreekmans.be/developer-powershell-command-prompt-visual-studio-windows-terminal/).
 - A text editor or IDE. I'm using [VS Code](https://code.visualstudio.com/).
 
