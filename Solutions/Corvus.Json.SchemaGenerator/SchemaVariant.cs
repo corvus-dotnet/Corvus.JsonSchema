@@ -5,6 +5,7 @@
     /// </summary>
     public enum SchemaVariant
     {
+        NotSpecified,
         Draft201909,
         Draft202012
     }
