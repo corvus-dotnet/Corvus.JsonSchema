@@ -4,6 +4,7 @@
 
 namespace Corvus.Json.Patch;
 
+using System.Runtime.CompilerServices;
 using Corvus.Json.Patch.Model;
 using Corvus.Json.Visitor;
 
@@ -24,7 +25,8 @@ public static partial class JsonPatchExtensions
 
         public JsonAny SourceElement { get; }
 
-        public VisitResult Visit(in ReadOnlySpan<char> path, in JsonAny nodeToVisit)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public VisitResult Visit(ReadOnlySpan<char> path, in JsonAny nodeToVisit)
         {
             // This is an add operation with the node we found.
             return AddVisitor.VisitForAdd(path, nodeToVisit, this.SourceElement, this.Path);

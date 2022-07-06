@@ -5,6 +5,7 @@
 namespace Corvus.Json.Visitor;
 using System.Buffers;
 using System.Collections.Immutable;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 
 /// <summary>
@@ -21,7 +22,7 @@ public static partial class JsonTransformingVisitor
     /// <param name="path">The path visited.</param>
     /// <param name="nodeToVisit">The node to visit.</param>
     /// <returns>The result of visiting the node.</returns>
-    public delegate VisitResult Visitor(in ReadOnlySpan<char> path, in JsonAny nodeToVisit);
+    public delegate VisitResult Visitor(ReadOnlySpan<char> path, in JsonAny nodeToVisit);
 
     /// <summary>
     /// Walk the tree, optionally transforming nodes.
@@ -57,7 +58,7 @@ public static partial class JsonTransformingVisitor
         }
     }
 
-    private static VisitResult Visit(in ReadOnlySpan<char> path, in JsonAny nodeToVisit, Visitor visitor, ref char[] pathBuffer)
+    private static VisitResult Visit(ReadOnlySpan<char> path, in JsonAny nodeToVisit, Visitor visitor, ref char[] pathBuffer)
     {
         // First, visit the entity itself
         VisitResult rootResult = visitor(path, nodeToVisit);
@@ -94,7 +95,7 @@ public static partial class JsonTransformingVisitor
         };
     }
 
-    private static VisitResult VisitArray(in ReadOnlySpan<char> path, in JsonAny asArray, Visitor visitor, ref char[] pathBuffer)
+    private static VisitResult VisitArray(ReadOnlySpan<char> path, in JsonAny asArray, Visitor visitor, ref char[] pathBuffer)
     {
         bool terminateEntireWalkApplyingChanges = false;
         bool hasTransformedItems = false;
@@ -218,13 +219,7 @@ public static partial class JsonTransformingVisitor
             {
                 if (asObject.HasJsonElement)
                 {
-                    string pn = property.Name;
-
-                    if (!builder.ContainsKey(pn))
-                    {
-                        builder.Add(pn, property.Value);
-                    }
-
+                    builder[property.Name] = property.Value;
                     continue;
                 }
                 else
@@ -263,13 +258,7 @@ public static partial class JsonTransformingVisitor
             hasTransformedProperties = hasTransformedProperties || propertyResult.IsTransformed;
 
             // We need to build up the set of properties, whether we have transformed them or not
-            string name = property.Name;
-            if (builder.ContainsKey(name))
-            {
-                builder.Remove(name);
-            }
-
-            builder.Add(name, propertyResult.Output);
+            builder[property.Name] = propertyResult.Output;
         }
 
         if (terminateEntireWalkApplyingChanges)
@@ -298,6 +287,7 @@ public static partial class JsonTransformingVisitor
         return new VisitResult(asObject, Transformed.No, Walk.Continue);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void TryExtendBuffer(ref char[] propertyPathBuffer, int desiredLength)
     {
         if (propertyPathBuffer.Length < desiredLength)

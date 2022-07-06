@@ -356,7 +356,7 @@ namespace Corvus.Json
         /// </summary>
         /// <param name="utf8Bytes">The UTF8-encoded character sequence to compare.</param>
         /// <returns><c>True</c> if teh sequences match.</returns>
-        public bool EqualsUtf8Bytes(in ReadOnlySpan<byte> utf8Bytes)
+        public bool EqualsUtf8Bytes(ReadOnlySpan<byte> utf8Bytes)
         {
             if (this.ValueKind != JsonValueKind.String)
             {
@@ -383,7 +383,7 @@ namespace Corvus.Json
         /// </summary>
         /// <param name="chars">The character sequence to compare.</param>
         /// <returns><c>True</c> if teh sequences match.</returns>
-        public bool EqualsString(in ReadOnlySpan<char> chars)
+        public bool EqualsString(ReadOnlySpan<char> chars)
         {
             if (this.ValueKind != JsonValueKind.String)
             {

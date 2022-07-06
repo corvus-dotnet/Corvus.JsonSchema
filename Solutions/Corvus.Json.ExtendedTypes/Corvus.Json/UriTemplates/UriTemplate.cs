@@ -412,7 +412,7 @@ namespace Corvus.Json.UriTemplates
                     || c == '.';
         }
 
-        private static string GetQueryExpression(in ReadOnlySpan<string> paramNames, string prefix)
+        private static string GetQueryExpression(ReadOnlySpan<string> paramNames, string prefix)
         {
             StringBuilder sb = StringBuilderPool.Shared.Get();
 
@@ -448,7 +448,7 @@ namespace Corvus.Json.UriTemplates
             }
         }
 
-        private static string GetExpression(in ReadOnlySpan<string> paramNames, string? prefix = null)
+        private static string GetExpression(ReadOnlySpan<string> paramNames, string? prefix = null)
         {
             StringBuilder sb = StringBuilderPool.Shared.Get();
 

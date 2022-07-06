@@ -33,9 +33,9 @@ public static partial class JsonPatchExtensions
 
         public bool Removed { get; set; }
 
-        public VisitResult Visit(in ReadOnlySpan<char> path, in JsonAny nodeToVisit)
+        public VisitResult Visit(ReadOnlySpan<char> path, in JsonAny nodeToVisit)
         {
-            bool skipChildren = true;
+            Walk skipChildren = Walk.SkipChildren;
 
             JsonAny currentNode = nodeToVisit;
             Transformed transformed = Transformed.No;
@@ -69,7 +69,7 @@ public static partial class JsonPatchExtensions
                 if (resultFromRemoveWalk != Walk.SkipChildren)
                 {
                     // We need to continue down this path
-                    skipChildren = false;
+                    skipChildren = Walk.Continue;
                 }
             }
 
@@ -100,13 +100,13 @@ public static partial class JsonPatchExtensions
                 if (resultFromAddWalk != Walk.SkipChildren)
                 {
                     // We need to continue searching down this path
-                    skipChildren = false;
+                    skipChildren = Walk.Continue;
                 }
             }
 
             // If we didn't fail out of either added or removed, just continue if either the source or the target
             // are interested in continuing down this path, otherwise skip children, if both are happy to skip
-            return new(currentNode, transformed, skipChildren ? Walk.SkipChildren : Walk.Continue);
+            return new(currentNode, transformed, skipChildren);
         }
     }
 }

@@ -3,6 +3,8 @@
 // </copyright>
 
 namespace Corvus.Json.Patch;
+
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json.Patch.Model;
 using Corvus.Json.Visitor;
@@ -24,6 +26,7 @@ public static partial class JsonPatchExtensions
             this.Path = patchOperation.Path;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public VisitResult Visit(ReadOnlySpan<char> path, JsonAny nodeToVisit)
         {
             return VisitForAdd(path, nodeToVisit, this.Value, this.Path);
@@ -31,18 +34,13 @@ public static partial class JsonPatchExtensions
 
         // This is used by AddVisitor, CopyVistor and MoveVisitor
         [System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.SpacingRules", "SA1000:Keywords should be spaced correctly", Justification = "new() syntax not supported by current version of StyleCop")]
-        internal static VisitResult VisitForAdd(in ReadOnlySpan<char> path, in JsonAny nodeToVisit, in JsonAny value, in ReadOnlySpan<char> operationPath)
+        internal static VisitResult VisitForAdd(ReadOnlySpan<char> path, in JsonAny nodeToVisit, in JsonAny value, ReadOnlySpan<char> operationPath)
         {
             // If we are the root, or our span starts with the path so far, we might be matching
             if (operationPath.Length == 0 || operationPath.StartsWith(path))
             {
                 if (operationPath.Length == path.Length)
                 {
-                    ////if (!value.HasValue)
-                    ////{
-                    ////    return new(nodeToVisit, Transformed.No, Walk.TerminateAtThisNodeAndAbandonAllChanges);
-                    ////}
-
                     return new(value, Transformed.Yes, Walk.TerminateAtThisNodeAndKeepChanges);
                 }
                 else if (operationPath[path.Length] != '/')
@@ -58,11 +56,6 @@ public static partial class JsonPatchExtensions
                     // We are an object, so we need to see if the rest of the path represents a property.
                     if (TryGetTerminatingPathElement(operationPath[path.Length..], out ReadOnlySpan<char> propertyName))
                     {
-                        ////if (!value.HasValue)
-                        ////{
-                        ////    return new(nodeToVisit, Transformed.No, Walk.TerminateAtThisNodeAndAbandonAllChanges);
-                        ////}
-
                         // Return the transformed result, and stop walking the tree here.
                         return new(nodeToVisit.SetProperty(propertyName, value), Transformed.Yes, Walk.TerminateAtThisNodeAndKeepChanges);
                     }
@@ -75,11 +68,6 @@ public static partial class JsonPatchExtensions
                 {
                     if (TryGetTerminatingPathElement(operationPath[path.Length..], out ReadOnlySpan<char> itemIndex))
                     {
-                        ////if (!value.HasValue)
-                        ////{
-                        ////    return new(nodeToVisit, Transformed.No, Walk.TerminateAtThisNodeAndAbandonAllChanges);
-                        ////}
-
                         int arrayLength = nodeToVisit.Length;
 
                         if (itemIndex[0] == '-')

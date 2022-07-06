@@ -3,6 +3,8 @@
 // </copyright>
 
 namespace Corvus.Json.Patch;
+
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json.Patch.Model;
 using Corvus.Json.Visitor;
@@ -21,13 +23,14 @@ public static partial class JsonPatchExtensions
 
         public string Path { get; }
 
-        public VisitResult Visit(in ReadOnlySpan<char> path, in JsonAny nodeToVisit)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public VisitResult Visit(ReadOnlySpan<char> path, in JsonAny nodeToVisit)
         {
             return VisitForRemove(path, nodeToVisit, this.Path);
         }
 
         // This is used by Remove and Move
-        internal static VisitResult VisitForRemove(in ReadOnlySpan<char> path, in JsonAny nodeToVisit, in ReadOnlySpan<char> operationPath)
+        internal static VisitResult VisitForRemove(ReadOnlySpan<char> path, in JsonAny nodeToVisit, ReadOnlySpan<char> operationPath)
         {
             // If we are the root, or our span starts with the path so far, we might be matching
             if (operationPath.Length == 0 || operationPath.StartsWith(path))

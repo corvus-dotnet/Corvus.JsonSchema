@@ -1134,6 +1134,54 @@ namespace Corvus.Json
             };
         }
 
+        /// <summary>
+        /// Set the property.
+        /// </summary>
+        /// <param name="name">The name of the property.</param>
+        /// <param name="value">The value of the property.</param>
+        /// <returns>The value with the property set.</returns>
+        public JsonAny SetProperty(string name, JsonAny value)
+        {
+            if (this.ValueKind == JsonValueKind.Object || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return new JsonAny(this.AsPropertyDictionaryWith(name, value));
+            }
+
+            return this;
+        }
+
+        /// <summary>
+        /// Set the property.
+        /// </summary>
+        /// <param name="name">The name of the property.</param>
+        /// <param name="value">The value of the property.</param>
+        /// <returns>The value with the property set.</returns>
+        public JsonAny SetProperty(ReadOnlySpan<char> name, JsonAny value)
+        {
+            if (this.ValueKind == JsonValueKind.Object || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return new JsonAny(this.AsPropertyDictionaryWith(name.ToString(), value));
+            }
+
+            return this;
+        }
+
+        /// <summary>
+        /// Set the property.
+        /// </summary>
+        /// <param name="utf8Name">The name of the property.</param>
+        /// <param name="value">The value of the property.</param>
+        /// <returns>The value with the property set.</returns>
+        public JsonAny SetProperty(ReadOnlySpan<byte> utf8Name, JsonAny value)
+        {
+            if (this.ValueKind == JsonValueKind.Object || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return new JsonAny(this.AsPropertyDictionaryWith(Encoding.UTF8.GetString(utf8Name), value));
+            }
+
+            return this;
+        }
+
         /// <inheritdoc/>
         public JsonAny SetProperty<TValue>(string name, TValue value)
             where TValue : struct, IJsonValue
@@ -1176,6 +1224,16 @@ namespace Corvus.Json
         public JsonAny RemoveProperty(ReadOnlySpan<byte> utf8Name)
         {
             return this.RemoveProperty(Encoding.UTF8.GetString(utf8Name));
+        }
+
+        /// <summary>
+        /// Add an item.
+        /// </summary>
+        /// <param name="item">The item to add.</param>
+        /// <returns>The value with the item added.</returns>
+        public JsonAny Add(JsonAny item)
+        {
+            return this.AsItemsListWith(item);
         }
 
         /// <inheritdoc/>
@@ -1224,6 +1282,17 @@ namespace Corvus.Json
             where TItem : struct, IJsonValue
         {
             return this.AsItemsListWith(items);
+        }
+
+        /// <summary>
+        /// Insert an item into the array.
+        /// </summary>
+        /// <param name="index">The index at which to insert the item.</param>
+        /// <param name="item">The item to insert.</param>
+        /// <returns>The value with the item inserted.</returns>
+        public JsonAny Insert(int index, JsonAny item)
+        {
+            return this.AsItemsListInserting(index, item);
         }
 
         /// <inheritdoc/>

@@ -141,7 +141,7 @@ public static partial class JsonPatchExtensions
         return false;
     }
 
-    private static bool TryGetArrayIndex(in ReadOnlySpan<char> pathSegment, [NotNullWhen(true)] out int index)
+    private static bool TryGetArrayIndex(ReadOnlySpan<char> pathSegment, [NotNullWhen(true)] out int index)
     {
         if (pathSegment.Length > 1 && pathSegment[0] == '0')
         {
@@ -153,7 +153,7 @@ public static partial class JsonPatchExtensions
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static JsonAny? FindSourceElement(in JsonAny root, in ReadOnlySpan<char> from)
+    private static JsonAny? FindSourceElement(in JsonAny root, ReadOnlySpan<char> from)
     {
         // Try to find the node to copy
         if (root.TryResolvePointer(from, out JsonAny sourceElement))
@@ -165,7 +165,7 @@ public static partial class JsonPatchExtensions
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool TryGetTerminatingPathElement(in ReadOnlySpan<char> opPathTail, out ReadOnlySpan<char> propertyName)
+    private static bool TryGetTerminatingPathElement(ReadOnlySpan<char> opPathTail, out ReadOnlySpan<char> propertyName)
     {
         int index = 0;
         int start = 0;
@@ -210,7 +210,7 @@ public static partial class JsonPatchExtensions
             return true;
         }
 
-        bool transformed = JsonTransformingVisitor.Visit(node, (in ReadOnlySpan<char> path, in JsonAny nodeToVisit) => visitor.Visit(path, nodeToVisit), out JsonAny transformedResult);
+        bool transformed = JsonTransformingVisitor.Visit(node, (ReadOnlySpan<char> path, in JsonAny nodeToVisit) => visitor.Visit(path, nodeToVisit), out JsonAny transformedResult);
         result = transformedResult;
         return transformed;
     }
@@ -236,7 +236,7 @@ public static partial class JsonPatchExtensions
             return true;
         }
 
-        bool transformed = JsonTransformingVisitor.Visit(node, (in ReadOnlySpan<char> p, in JsonAny n) => visitor.Visit(p, n), out JsonAny transformedResult);
+        bool transformed = JsonTransformingVisitor.Visit(node, (ReadOnlySpan<char> p, in JsonAny n) => visitor.Visit(p, n), out JsonAny transformedResult);
         result = transformedResult;
         return transformed;
     }
@@ -262,7 +262,7 @@ public static partial class JsonPatchExtensions
             return true;
         }
 
-        bool transformed = JsonTransformingVisitor.Visit(node, (in ReadOnlySpan<char> p, in JsonAny n) => visitor.Visit(p, n), out JsonAny transformedResult);
+        bool transformed = JsonTransformingVisitor.Visit(node, (ReadOnlySpan<char> p, in JsonAny n) => visitor.Visit(p, n), out JsonAny transformedResult);
         result = transformedResult;
         return transformed;
     }
@@ -271,7 +271,7 @@ public static partial class JsonPatchExtensions
     private static bool TryApplyRemove(JsonAny node, PatchOperation patchOperation, out JsonAny result)
     {
         RemoveVisitor visitor = new(patchOperation);
-        bool transformed = JsonTransformingVisitor.Visit(node, (in ReadOnlySpan<char> p, in JsonAny n) => visitor.Visit(p, n), out JsonAny transformedResult);
+        bool transformed = JsonTransformingVisitor.Visit(node, (ReadOnlySpan<char> p, in JsonAny n) => visitor.Visit(p, n), out JsonAny transformedResult);
         result = transformedResult;
         return transformed;
     }
@@ -287,7 +287,7 @@ public static partial class JsonPatchExtensions
             return true;
         }
 
-        bool transformed = JsonTransformingVisitor.Visit(node, (in ReadOnlySpan<char> p, in JsonAny n) => visitor.Visit(p, n), out JsonAny transformedResult);
+        bool transformed = JsonTransformingVisitor.Visit(node, (ReadOnlySpan<char> p, in JsonAny n) => visitor.Visit(p, n), out JsonAny transformedResult);
         result = transformedResult;
         return transformed;
     }

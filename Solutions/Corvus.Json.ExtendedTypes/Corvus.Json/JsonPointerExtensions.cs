@@ -57,7 +57,7 @@ public static class JsonPointerExtensions
     /// <param name="root">The root element from which to start resolving the pointer.</param>
     /// <param name="fragment">The fragment in <c>#/blah/foo/3/bar/baz</c> form.</param>
     /// <returns><c>true</c> if the element was found.</returns>
-    public static JsonAny ResolvePointer<T>(this T root, in ReadOnlySpan<char> fragment)
+    public static JsonAny ResolvePointer<T>(this T root, ReadOnlySpan<char> fragment)
         where T : struct, IJsonValue
     {
         if (TryResolvePointer(root, fragment, true, out JsonAny element))
@@ -76,7 +76,7 @@ public static class JsonPointerExtensions
     /// <param name="fragment">The fragment in <c>#/blah/foo/3/bar/baz</c> form.</param>
     /// <param name="element">The element found at the given location.</param>
     /// <returns><c>true</c> if the element was found.</returns>
-    public static bool TryResolvePointer<T>(this T root, in ReadOnlySpan<char> fragment, out JsonAny element)
+    public static bool TryResolvePointer<T>(this T root, ReadOnlySpan<char> fragment, out JsonAny element)
         where T : struct, IJsonValue
     {
         return TryResolvePointer(root, fragment, false, out element);
@@ -88,7 +88,7 @@ public static class JsonPointerExtensions
     /// <param name="unencodedFragment">The encoded fragment.</param>
     /// <param name="fragment">The span into which to write the result.</param>
     /// <returns>The length of the decoded fragment.</returns>
-    private static int EncodePointer(in ReadOnlySpan<char> unencodedFragment, ref Span<char> fragment)
+    private static int EncodePointer(ReadOnlySpan<char> unencodedFragment, ref Span<char> fragment)
     {
         int readIndex = 0;
         int writeIndex = 0;
@@ -232,7 +232,7 @@ public static class JsonPointerExtensions
     /// <param name="throwOnFailure">If true, we throw on failure.</param>
     /// <param name="element">The element found at the given location.</param>
     /// <returns><c>true</c> if the element was found.</returns>
-    private static bool TryResolvePointer<T>(T root, in ReadOnlySpan<char> fragment, bool throwOnFailure, out JsonAny element)
+    private static bool TryResolvePointer<T>(T root, ReadOnlySpan<char> fragment, bool throwOnFailure, out JsonAny element)
         where T : struct, IJsonValue
     {
         JsonAny current = root.AsAny;

@@ -28,7 +28,7 @@ namespace Corvus.Json
         /// <param name="root">The root document from which to start resolving the pointer.</param>
         /// <param name="fragment">The fragment in <c>#/blah/foo/3/bar/baz</c> form.</param>
         /// <returns><c>true</c> if the element was found.</returns>
-        public static JsonElement ResolvePointer(JsonDocument root, in ReadOnlySpan<char> fragment)
+        public static JsonElement ResolvePointer(JsonDocument root, ReadOnlySpan<char> fragment)
         {
             if (TryResolvePointer(root.RootElement, fragment, true, out JsonElement? element))
             {
@@ -44,7 +44,7 @@ namespace Corvus.Json
         /// <param name="root">The root element from which to start resolving the pointer.</param>
         /// <param name="fragment">The fragment in <c>#/blah/foo/3/bar/baz</c> form.</param>
         /// <returns><c>true</c> if the element was found.</returns>
-        public static JsonElement ResolvePointer(JsonElement root, in ReadOnlySpan<char> fragment)
+        public static JsonElement ResolvePointer(JsonElement root, ReadOnlySpan<char> fragment)
         {
             if (TryResolvePointer(root, fragment, true, out JsonElement? element))
             {
@@ -61,7 +61,7 @@ namespace Corvus.Json
         /// <param name="fragment">The fragment in <c>#/blah/foo/3/bar/baz</c> form.</param>
         /// <param name="element">The element found at the given location.</param>
         /// <returns><c>true</c> if the element was found.</returns>
-        public static bool TryResolvePointer(JsonDocument root, in ReadOnlySpan<char> fragment, [NotNullWhen(true)] out JsonElement? element)
+        public static bool TryResolvePointer(JsonDocument root, ReadOnlySpan<char> fragment, [NotNullWhen(true)] out JsonElement? element)
         {
             return TryResolvePointer(root.RootElement, fragment, false, out element);
         }
@@ -73,7 +73,7 @@ namespace Corvus.Json
         /// <param name="fragment">The fragment in <c>#/blah/foo/3/bar/baz</c> form.</param>
         /// <param name="element">The element found at the given location.</param>
         /// <returns><c>true</c> if the element was found.</returns>
-        public static bool TryResolvePointer(JsonElement root, in ReadOnlySpan<char> fragment, [NotNullWhen(true)] out JsonElement? element)
+        public static bool TryResolvePointer(JsonElement root, ReadOnlySpan<char> fragment, [NotNullWhen(true)] out JsonElement? element)
         {
             return TryResolvePointer(root, fragment, false, out element);
         }
@@ -84,7 +84,7 @@ namespace Corvus.Json
         /// <param name="unencodedFragment">The encoded fragment.</param>
         /// <param name="fragment">The span into which to write the result.</param>
         /// <returns>The length of the decoded fragment.</returns>
-        internal static int EncodePointer(in ReadOnlySpan<char> unencodedFragment, ref Span<char> fragment)
+        internal static int EncodePointer(ReadOnlySpan<char> unencodedFragment, ref Span<char> fragment)
         {
             int readIndex = 0;
             int writeIndex = 0;
@@ -228,7 +228,7 @@ namespace Corvus.Json
         /// <param name="throwOnFailure">If true, we throw on failure.</param>
         /// <param name="element">The element found at the given location.</param>
         /// <returns><c>true</c> if the element was found.</returns>
-        private static bool TryResolvePointer(JsonElement root, in ReadOnlySpan<char> fragment, bool throwOnFailure, [NotNullWhen(true)] out JsonElement? element)
+        private static bool TryResolvePointer(JsonElement root, ReadOnlySpan<char> fragment, bool throwOnFailure, [NotNullWhen(true)] out JsonElement? element)
         {
             JsonElement current = root;
             int index = 0;

@@ -3,6 +3,8 @@
 // </copyright>
 
 namespace Corvus.Json.Patch;
+
+using System.Runtime.CompilerServices;
 using Corvus.Json.Patch.Model;
 using Corvus.Json.Visitor;
 
@@ -23,12 +25,13 @@ public static partial class JsonPatchExtensions
 
         public string Path { get; }
 
-        public VisitResult Visit(in ReadOnlySpan<char> path, in JsonAny nodeToVisit)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public VisitResult Visit(ReadOnlySpan<char> path, in JsonAny nodeToVisit)
         {
             return VisitForReplace(path, nodeToVisit, this.Value, this.Path);
         }
 
-        internal static VisitResult VisitForReplace(in ReadOnlySpan<char> path, in JsonAny nodeToVisit, in JsonAny value, in ReadOnlySpan<char> operationPath)
+        internal static VisitResult VisitForReplace(ReadOnlySpan<char> path, in JsonAny nodeToVisit, in JsonAny value, ReadOnlySpan<char> operationPath)
         {
             int operationPathLength = operationPath.Length;
 
