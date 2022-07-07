@@ -1523,7 +1523,7 @@ Let's remind ourselves of the schema for `OtherNames` again.
 }
 ```
 
-Because it uses the `anyOf` syntax, the code generator has recognized that `OtherNames` is a *union* of the `PersonNameElement` and `PersonNameElementArray` types.
+Because it uses the `oneOf` syntax, the code generator has recognized that `OtherNames` is a *union* of the `PersonNameElement` and `PersonNameElementArray` types.
 
 So it has generated us some properties of the form `Is<UnionTypeName>` and `As<UnionTypeName>`.
 
