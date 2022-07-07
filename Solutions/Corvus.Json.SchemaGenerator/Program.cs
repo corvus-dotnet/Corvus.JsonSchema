@@ -91,8 +91,8 @@
             try
             {
                 var walker = new JsonWalker(new CompoundDocumentResolver(new FileSystemDocumentResolver(), new HttpClientDocumentResolver(new HttpClient())));
-
-                if (!new JsonUri(schemaFile).IsValid())
+                var uri = new JsonUri(schemaFile);
+                if (!uri.IsValid() || uri.GetUri().IsFile)
                 {
                     // If this is, in fact, a local file path, not a uri, then convert to a fullpath and URI-style separators.
                     if (!Path.IsPathFullyQualified(schemaFile))
