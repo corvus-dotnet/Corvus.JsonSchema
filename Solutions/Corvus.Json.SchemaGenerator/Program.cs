@@ -106,16 +106,19 @@
                 JsonReference reference = new JsonReference(schemaFile).Apply(new JsonReference(rootPath));
                 string resolvedReference = await walker.TryRebaseDocumentToPropertyValue(reference, "$id").ConfigureAwait(false);
 
-                if (await TryGetSchemaFrom(walker, resolvedReference).ConfigureAwait(false) is SchemaVariant variant)
+                if (schemaVariant == SchemaVariant.NotSpecified)
                 {
-                    schemaVariant = variant;
+                    if (await TryGetSchemaFrom(walker, resolvedReference).ConfigureAwait(false) is SchemaVariant variant)
+                    {
+                        schemaVariant = variant;
+                    }
                 }
 
                 IJsonSchemaBuilder builder =
                     schemaVariant switch
                     {
-                        SchemaVariant.Draft201909 => new JsonSchema.TypeBuilder.Draft201909.JsonSchemaBuilder(walker),
-                        _ => new JsonSchema.TypeBuilder.Draft202012.JsonSchemaBuilder(walker)
+                        SchemaVariant.Draft202012 => new JsonSchema.TypeBuilder.Draft202012.JsonSchemaBuilder(walker),
+                        _ => new JsonSchema.TypeBuilder.Draft201909.JsonSchemaBuilder(walker)
                     };
 
                 (_, ImmutableDictionary<string, (string, string)> generatedTypes) = await builder.BuildTypesFor(resolvedReference, rootNamespace, rebaseToRootPath, rootTypeName: rootTypeName).ConfigureAwait(false);
