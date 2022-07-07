@@ -408,8 +408,6 @@ We want to generate the code for the schema at `'#/$defs/Person'`.
 
 > Note also that in most terminals, you will have to wrap the pointer in single quotes to ensure that the command line is parsed correctly, as above.
 
-There's one more *slightly annoying* thing to do. In this preview version, we don't support inferring the json schema version from the document itself, so we also need to provide that explicity. For us that will be `--useSchema Draft202012`.
-
 Finally, we need to provide the path to the json schema document containing the schema for which to generate types. We happen to be in the same directory as the file concerned, so that is just `person-from-api.json`.
 
 > Note that any references to documents either in this parameter on the command line, or in `$ref`s in the documents themselves don't *have* to be in the local file system. You can happily use `http[s]` references to external documents, and it'll work just fine!
@@ -425,7 +423,7 @@ The other defaults mean that we will generate our output files in the same folde
 So we end up with the command.
 
 ```
-generatejsonschematypes --rootNamespace JsonSchemaSample.Api --rootPath '#/$defs/Person' --useSchema Draft202012 person-from-api.json
+generatejsonschematypes --rootNamespace JsonSchemaSample.Api --rootPath '#/$defs/Person' person-from-api.json
 ```
 
 Let's run that now. When it has completed, list the C# files in the directory, using whatever command is appropriate for your shell.
@@ -465,7 +463,7 @@ Remember the `Link` schema we saw earlier that was *not* referenced by the `Pers
 
 > If you want to generate types that are *not* directly referenced from that root element, then you can place them into a `$defs` object *within* your root element.
 >
-> If you don't want to do this (or can't), the tool is idempotent when run against the same source document, regardless of the root element it is pointing at. This means that you can happily run the tool multiple times, for each new element you want to generate. 
+> If you don't want to do this (or can't), the tool is idempotent when run against the same source document. This means that you can happily run the tool multiple times, with a different `--rootPath` for each element you want to generate. 
 
 Before we dive into the details, let's build the code and find out what we can do with it.
 
