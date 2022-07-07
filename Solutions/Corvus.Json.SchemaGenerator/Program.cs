@@ -25,8 +25,8 @@
                                 description: "The path in the document for the root type.");
             var useSchema = new Option<SchemaVariant>(
                                 "--useSchema",
-                                getDefaultValue: () => SchemaVariant.Draft201909,
-                                description: "The schema variant to use.");
+                                getDefaultValue: () => SchemaVariant.NotSpecified,
+                                description: "Override the schema variant to use. This will default to draft2019-09 if it cannot be picked up from the schema itself.");
             var outputMapFile = new Option<string>(
                                 "--outputMapFile",
                                 description: "The name to use for a map file which includes details of the files that were written.");
@@ -91,13 +91,6 @@
             try
             {
                 var walker = new JsonWalker(new CompoundDocumentResolver(new FileSystemDocumentResolver(), new HttpClientDocumentResolver(new HttpClient())));
-                IJsonSchemaBuilder builder =
-                    schemaVariant switch
-                    {
-                        SchemaVariant.Draft201909 => new JsonSchema.TypeBuilder.Draft201909.JsonSchemaBuilder(walker),
-                        _ => new JsonSchema.TypeBuilder.Draft202012.JsonSchemaBuilder(walker)
-                    };
-
                 var uri = new JsonUri(schemaFile);
                 if (!uri.IsValid() || uri.GetUri().IsFile)
                 {
@@ -112,6 +105,21 @@
 
                 JsonReference reference = new JsonReference(schemaFile).Apply(new JsonReference(rootPath));
                 string resolvedReference = await walker.TryRebaseDocumentToPropertyValue(reference, "$id").ConfigureAwait(false);
+
+                if (schemaVariant == SchemaVariant.NotSpecified)
+                {
+                    if (await TryGetSchemaFrom(walker, resolvedReference).ConfigureAwait(false) is SchemaVariant variant)
+                    {
+                        schemaVariant = variant;
+                    }
+                }
+
+                IJsonSchemaBuilder builder =
+                    schemaVariant switch
+                    {
+                        SchemaVariant.Draft202012 => new JsonSchema.TypeBuilder.Draft202012.JsonSchemaBuilder(walker),
+                        _ => new JsonSchema.TypeBuilder.Draft201909.JsonSchemaBuilder(walker)
+                    };
 
                 (_, ImmutableDictionary<string, (string, string)> generatedTypes) = await builder.BuildTypesFor(resolvedReference, rootNamespace, rebaseToRootPath, rootTypeName: rootTypeName).ConfigureAwait(false);
 
@@ -178,6 +186,32 @@
             }
 
             return 0;
+        }
+
+        private static async Task<SchemaVariant?> TryGetSchemaFrom(JsonWalker walker, string resolvedReference)
+        {
+            JsonElement? rootElement = await walker.GetDocumentElement(resolvedReference).ConfigureAwait(false);
+            if (rootElement is JsonElement re && re.TryGetProperty("$schema", out JsonElement schema))
+            {
+                if (schema.ValueKind == JsonValueKind.String)
+                {
+                    string? schemaValue = schema.GetString();
+                    if (schemaValue is string sv)
+                    {
+                        if (sv == "https://json-schema.org/draft/2019-09/schema")
+                        {
+                            return SchemaVariant.Draft201909;
+                        }
+
+                        if (sv == "https://json-schema.org/draft/2020-12/schema")
+                        {
+                            return SchemaVariant.Draft202012;
+                        }
+                    }
+                }
+            }
+
+            return null;
         }
     }
 }

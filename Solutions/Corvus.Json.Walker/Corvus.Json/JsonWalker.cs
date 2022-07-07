@@ -20,17 +20,19 @@ namespace Corvus.Json
         /// </summary>
         public const string DefaultContent = "application/vnd.Corvus.element-default";
 
-        private readonly List<Func<JsonWalker, JsonElement, Task<bool>>> handlers = new ();
-        private readonly List<Func<JsonWalker, JsonReference, bool, bool, Func<Task<LocatedElement?>>, Task<LocatedElement?>>> resolvers = new ();
+#pragma warning disable SA1000 // Keywords should be spaced correctly
+        private readonly List<Func<JsonWalker, JsonElement, Task<bool>>> handlers = new();
+        private readonly List<Func<JsonWalker, JsonReference, bool, bool, Func<Task<LocatedElement?>>, Task<LocatedElement?>>> resolvers = new();
 
-        private readonly Dictionary<string, LocatedElement> locatedElements = new ();
+        private readonly Dictionary<string, LocatedElement> locatedElements = new();
 
         private readonly IDocumentResolver documentResolver;
         private readonly string baseLocation;
 
-        private readonly List<(string, bool, bool, List<string>, Action<JsonWalker, LocatedElement>)> unresolvedReferences = new ();
+        private readonly List<(string, bool, bool, List<string>, Action<JsonWalker, LocatedElement>)> unresolvedReferences = new();
 
-        private Stack<string> scopedLocationStack = new ();
+        private Stack<string> scopedLocationStack = new();
+#pragma warning restore SA1000 // Keywords should be spaced correctly
 
         /// <summary>
         /// Initializes a new instance of the <see cref="JsonWalker"/> class.
@@ -106,6 +108,16 @@ namespace Corvus.Json
         }
 
         /// <summary>
+        /// Resolves element.
+        /// </summary>
+        /// <param name="reference">The document reference for which to provide the element.</param>
+        /// <returns>A <see cref="Task{T}"/> which, when complete, provides the root element of the document.</returns>
+        public async Task<JsonElement?> GetDocumentElement(string reference)
+        {
+            return await this.documentResolver.TryResolve(new JsonReference(reference).WithFragment(string.Empty)).ConfigureAwait(false);
+        }
+
+        /// <summary>
         /// Rebases a reference to a canonical URI contained in a given property..
         /// </summary>
         /// <param name="reference">The reference to rebase as a root document.</param>
@@ -120,7 +132,9 @@ namespace Corvus.Json
             {
                 if (e.TryGetProperty(propertyName, out JsonElement uri) && uri.ValueKind == JsonValueKind.String)
                 {
-                    string outputUri = uri.GetString() !;
+#pragma warning disable SA1009 // Closing parenthesis should be spaced correctly
+                    string outputUri = uri.GetString()!;
+#pragma warning restore SA1009 // Closing parenthesis should be spaced correctly
                     var outputUriRef = new JsonReference(outputUri);
                     if (!outputUriRef.HasFragment)
                     {
