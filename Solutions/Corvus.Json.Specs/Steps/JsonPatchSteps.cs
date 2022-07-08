@@ -169,6 +169,7 @@ namespace Steps
         [Then("the patch result should equal (.*)")]
         public void ThenThePatchResultShouldEqual(string jsonString)
         {
+            Assert.IsTrue(this.scenarioContext.ContainsKey(BuilderKey), "No result was set.");
             PatchBuilder builder = this.scenarioContext.Get<PatchBuilder>(BuilderKey);
             Assert.AreEqual(JsonAny.Parse(jsonString), builder.Value);
         }
