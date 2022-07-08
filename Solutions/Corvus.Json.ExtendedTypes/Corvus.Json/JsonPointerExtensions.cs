@@ -25,12 +25,12 @@ public static class JsonPointerExtensions
     public static JsonAny ResolvePointer<T>(this T root, in JsonPointer pointer)
         where T : struct, IJsonValue
     {
-        if (TryResolvePointer(root, pointer.AsSpan(), true, out JsonAny element))
+        if (ResolvePointerInternal(root, pointer.AsSpan(), true, out JsonAny element))
         {
             return element;
         }
 
-        throw new InvalidOperationException("Internal error: TryResolveFragment() should have thrown if it failed to resolve a fragment");
+        throw new InvalidOperationException("Internal error: ResolvePointerInternal() should have thrown if it failed to resolve a fragment");
     }
 
     /// <summary>
@@ -44,7 +44,7 @@ public static class JsonPointerExtensions
     public static bool TryResolvePointer<T>(this T root, in JsonPointer pointer, out JsonAny element)
         where T : struct, IJsonValue
     {
-        return TryResolvePointer(root, pointer.AsSpan(), false, out element);
+        return ResolvePointerInternal(root, pointer.AsSpan(), false, out element);
     }
 
     /// <summary>
@@ -57,12 +57,12 @@ public static class JsonPointerExtensions
     public static JsonAny ResolvePointer<T>(this T root, ReadOnlySpan<char> fragment)
         where T : struct, IJsonValue
     {
-        if (TryResolvePointer(root, fragment, true, out JsonAny element))
+        if (ResolvePointerInternal(root, fragment, true, out JsonAny element))
         {
             return element;
         }
 
-        throw new InvalidOperationException("Internal error: TryResolveFragment() should have thrown if it failed to resolve a fragment");
+        throw new InvalidOperationException("Internal error: ResolvePointerInternal() should have thrown if it failed to resolve a fragment");
     }
 
     /// <summary>
@@ -76,7 +76,7 @@ public static class JsonPointerExtensions
     public static bool TryResolvePointer<T>(this T root, ReadOnlySpan<char> fragment, out JsonAny element)
         where T : struct, IJsonValue
     {
-        return TryResolvePointer(root, fragment, false, out element);
+        return ResolvePointerInternal(root, fragment, false, out element);
     }
 
     /// <summary>
@@ -229,7 +229,7 @@ public static class JsonPointerExtensions
     /// <param name="throwOnFailure">If true, we throw on failure.</param>
     /// <param name="element">The element found at the given location.</param>
     /// <returns><c>true</c> if the element was found.</returns>
-    private static bool TryResolvePointer<T>(T root, ReadOnlySpan<char> fragment, bool throwOnFailure, out JsonAny element)
+    private static bool ResolvePointerInternal<T>(T root, ReadOnlySpan<char> fragment, bool throwOnFailure, out JsonAny element)
         where T : struct, IJsonValue
     {
         JsonAny current = root.AsAny;
