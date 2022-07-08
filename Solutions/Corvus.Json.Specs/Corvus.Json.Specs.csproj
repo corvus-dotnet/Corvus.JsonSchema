@@ -1,78 +1,54 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
+	<Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
 
 	<PropertyGroup>
 		<TargetFramework>net6.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
-        <IsPackable>false</IsPackable>
+		<IsPackable>false</IsPackable>
 	</PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <NoWarn>RCS1029;CS1591</NoWarn>
-  </PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+		<NoWarn>RCS1029;CS1591</NoWarn>
+	</PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <NoWarn>RCS1029;CS1591</NoWarn>
-  </PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+		<NoWarn>RCS1029;CS1591</NoWarn>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <SpecFlowObsoleteCodeBehindFiles Remove="Features\JsonPatch\tests - Copy.feature.cs" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Corvus.Testing.SpecFlow.NUnit" Version="1.5.1" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="6.0.0" />
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.2.0" />
+		<PackageReference Include="SolidToken.SpecFlow.DependencyInjection" Version="3.9.2" />
+		<PackageReference Include="SpecFlow.Plus.LivingDocPlugin" Version="3.9.57" />
+		<PackageReference Include="System.Text.Encodings.Web" Version="6.0.0" />
 
-  <ItemGroup>
-    <PackageReference Include="Corvus.Testing.SpecFlow.NUnit" Version="1.5.1" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="6.0.0" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.2.0" />
-    <PackageReference Include="SolidToken.SpecFlow.DependencyInjection" Version="3.9.2" />
-    <PackageReference Include="SpecFlow.Plus.LivingDocPlugin" Version="3.9.57" />
-    <PackageReference Include="System.Text.Encodings.Web" Version="6.0.0" />
-
-    <PackageReference Include="Endjin.RecommendedPractices" Version="1.2.0">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.2.0" />
+		<PackageReference Include="Endjin.RecommendedPractices" Version="1.2.0">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.2.0" />
 
 
-    <PackageReference Include="SpecFlow.NUnit" Version="3.9.74" />
-    <PackageReference Include="nunit" Version="3.13.3" />
-    <PackageReference Include="NUnit3TestAdapter" Version="4.2.1" />
+		<PackageReference Include="SpecFlow.NUnit" Version="3.9.74" />
+		<PackageReference Include="nunit" Version="3.13.3" />
+		<PackageReference Include="NUnit3TestAdapter" Version="4.2.1" />
 
-    <PackageReference Include="FluentAssertions" Version="6.6.0" />
+		<PackageReference Include="FluentAssertions" Version="6.6.0" />
+		<PackageReference Update="StyleCop.Analyzers" Version="1.2.0-beta.435" />
 
-  </ItemGroup>
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Corvus.Json.Patch\Corvus.Json.Patch.csproj" />
-    <ProjectReference Include="..\Corvus.Json.Walker.JsonSchema\Corvus.Json.JsonSchema.TypeBuilder.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\Corvus.Json.Patch\Corvus.Json.Patch.csproj" />
+		<ProjectReference Include="..\Corvus.Json.Walker.JsonSchema\Corvus.Json.JsonSchema.TypeBuilder.csproj" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <Compile Update="Features\JsonPatch\builder_tests.feature.cs">
-      <DependentUpon>builder_tests.feature</DependentUpon>
-    </Compile>
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="appsettings.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Update="StyleCop.Analyzers" Version="1.2.0-beta.435" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <SpecFlowFeatureFiles Update="Features\JsonPatch\builder_spec_tests.feature">
-      <Visible>$(UsingMicrosoftNETSdk)</Visible>
-      <CodeBehindFile>%(RelativeDir)%(Filename).feature$(DefaultLanguageSourceExtension)</CodeBehindFile>
-    </SpecFlowFeatureFiles>
-    <SpecFlowFeatureFiles Update="Features\JsonPatch\builder_tests.feature">
-      <Visible>$(UsingMicrosoftNETSdk)</Visible>
-      <CodeBehindFile>%(RelativeDir)%(Filename).feature$(DefaultLanguageSourceExtension)</CodeBehindFile>
-    </SpecFlowFeatureFiles>
-  </ItemGroup>
+	<ItemGroup>
+		<None Update="appsettings.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
 
 </Project>
