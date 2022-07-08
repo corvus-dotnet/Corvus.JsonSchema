@@ -204,6 +204,12 @@ public static partial class JsonTransformingVisitor
         bool terminateEntireWalkApplyingChanges = false;
         ImmutableDictionary<string, JsonAny>.Builder builder;
 
+        // We have two separate strategies in play.
+        // If we have a JsonElement backing, and we are going to mutate the object,
+        // we need to build up a copy of the object as we mutate it, so we use
+        // an empty immutable dictionary builder.
+        // If we *already* have a ImmutableDictionary backing, it is more efficient
+        // to mutate the existing copy using the .ToBuilder() method.
         if (asObject.HasJsonElement)
         {
             builder = ImmutableDictionary.CreateBuilder<string, JsonAny>();
