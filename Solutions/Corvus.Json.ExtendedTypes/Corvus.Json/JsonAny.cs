@@ -521,6 +521,13 @@ namespace Corvus.Json
         /// <summary>
         /// Gets the instance as a list of <see cref="JsonAny"/>.
         /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This is intended for operations which mutate the underlying list.
+        /// For read-only scenarios, it is generally more efficient to use
+        /// the <see cref="EnumerateArray()"/> method.
+        /// </para>
+        /// </remarks>
         public ImmutableList<JsonAny> AsItemsList
         {
             get
