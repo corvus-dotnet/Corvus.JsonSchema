@@ -3,6 +3,8 @@
 // </copyright>
 
 namespace Corvus.Json;
+
+using System.Buffers;
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
@@ -236,84 +238,66 @@ public static class JsonPointerExtensions
 
         int index = 0;
         int startRun = 0;
-        Span<char> decodedComponent = stackalloc char[fragment.Length];
 
-        while (index < fragment.Length)
+#pragma warning disable SA1011 // Closing square brackets should be spaced correctly
+        char[]? decodedComponentChars = null;
+#pragma warning restore SA1011 // Closing square brackets should be spaced correctly
+
+        int length = fragment.Length;
+        Span<char> decodedComponent = length <= JsonConstants.StackallocThreshold ?
+            stackalloc char[length] :
+            (decodedComponentChars = ArrayPool<char>.Shared.Rent(length));
+
+        try
         {
-            if (index == 0 && fragment[index] == '#')
+            while (index < fragment.Length)
             {
-                ++index;
-            }
-
-            if (fragment[index] == '/')
-            {
-                ++index;
-            }
-
-            startRun = index;
-
-            while (index < fragment.Length && fragment[index] != '/')
-            {
-                ++index;
-            }
-
-            // We've either reached the fragment.Length (so have to go 1 back from the end)
-            // or we're sitting on the terminating '/'
-            int endRun = index;
-            ReadOnlySpan<char> encodedComponent = fragment[startRun..endRun];
-            int decodedWritten = DecodePointer(encodedComponent, decodedComponent);
-            ReadOnlySpan<char> component = decodedComponent[..decodedWritten];
-            if (current.ValueKind == JsonValueKind.Object)
-            {
-                if (current.TryGetProperty(component, out JsonAny next))
+                if (index == 0 && fragment[index] == '#')
                 {
-                    current = next;
+                    ++index;
                 }
-                else
+
+                if (fragment[index] == '/')
                 {
-                    // We were unable to find the element at that location.
-                    if (throwOnFailure)
+                    ++index;
+                }
+
+                startRun = index;
+
+                while (index < fragment.Length && fragment[index] != '/')
+                {
+                    ++index;
+                }
+
+                // We've either reached the fragment.Length (so have to go 1 back from the end)
+                // or we're sitting on the terminating '/'
+                int endRun = index;
+                ReadOnlySpan<char> encodedComponent = fragment[startRun..endRun];
+                int decodedWritten = DecodePointer(encodedComponent, decodedComponent);
+                ReadOnlySpan<char> component = decodedComponent[..decodedWritten];
+                if (current.ValueKind == JsonValueKind.Object)
+                {
+                    if (current.TryGetProperty(component, out JsonAny next))
                     {
-                        throw new JsonException($"Unable to find the element at path {fragment[0..endRun].ToString()}.");
+                        current = next;
                     }
                     else
                     {
-                        element = default;
-                        return false;
+                        // We were unable to find the element at that location.
+                        if (throwOnFailure)
+                        {
+                            throw new JsonException($"Unable to find the element at path {fragment[0..endRun].ToString()}.");
+                        }
+                        else
+                        {
+                            element = default;
+                            return false;
+                        }
                     }
                 }
-            }
-            else if (current.ValueKind == JsonValueKind.Array)
-            {
-                if (component.Length > 1 && component[0] == '0')
+                else if (current.ValueKind == JsonValueKind.Array)
                 {
-                    // We were unable to find the element at that index in the array.
-                    if (throwOnFailure)
-                    {
-                        throw new JsonException($"Unable to find the array element at path {fragment[0..endRun].ToString()}.");
-                    }
-                    else
-                    {
-                        element = default;
-                        return false;
-                    }
-                }
-
-                if (int.TryParse(component, out int targetArrayIndex))
-                {
-                    int arrayIndex = 0;
-                    JsonArrayEnumerator enumerator = current.EnumerateArray();
-                    while (enumerator.MoveNext() && arrayIndex < targetArrayIndex)
-                    {
-                        arrayIndex++;
-                    }
-
-                    // Check to see if we reached the target, and didn't go off the end of the enumeration.
-                    if (arrayIndex == targetArrayIndex && enumerator.Current.ValueKind != JsonValueKind.Undefined)
-                    {
-                        current = enumerator.Current;
-                    }
-                    else
+                    if (component.Length > 1 && component[0] == '0')
                     {
                         // We were unable to find the element at that index in the array.
                         if (throwOnFailure)
@@ -326,24 +310,60 @@ public static class JsonPointerExtensions
                             return false;
                         }
                     }
-                }
-                else
-                {
-                    // We couldn't parse the integer of the index
-                    if (throwOnFailure)
+
+                    if (int.TryParse(component, out int targetArrayIndex))
                     {
-                        throw new JsonException($"Expected to find an integer array index at path {fragment[0..endRun].ToString()}, but found {fragment[startRun..endRun].ToString()}.");
+                        int arrayIndex = 0;
+                        JsonArrayEnumerator enumerator = current.EnumerateArray();
+                        while (enumerator.MoveNext() && arrayIndex < targetArrayIndex)
+                        {
+                            arrayIndex++;
+                        }
+
+                        // Check to see if we reached the target, and didn't go off the end of the enumeration.
+                        if (arrayIndex == targetArrayIndex && enumerator.Current.ValueKind != JsonValueKind.Undefined)
+                        {
+                            current = enumerator.Current;
+                        }
+                        else
+                        {
+                            // We were unable to find the element at that index in the array.
+                            if (throwOnFailure)
+                            {
+                                throw new JsonException($"Unable to find the array element at path {fragment[0..endRun].ToString()}.");
+                            }
+                            else
+                            {
+                                element = default;
+                                return false;
+                            }
+                        }
                     }
                     else
                     {
-                        element = default;
-                        return false;
+                        // We couldn't parse the integer of the index
+                        if (throwOnFailure)
+                        {
+                            throw new JsonException($"Expected to find an integer array index at path {fragment[0..endRun].ToString()}, but found {fragment[startRun..endRun].ToString()}.");
+                        }
+                        else
+                        {
+                            element = default;
+                            return false;
+                        }
                     }
                 }
             }
-        }
 
-        element = current;
-        return true;
+            element = current;
+            return true;
+        }
+        finally
+        {
+            if (decodedComponentChars is char[] dcc)
+            {
+                ArrayPool<char>.Shared.Return(dcc);
+            }
+        }
     }
 }
