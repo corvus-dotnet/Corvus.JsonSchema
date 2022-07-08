@@ -370,7 +370,15 @@ namespace Corvus.Json
 
             if (this.value is string val)
             {
-                Span<char> chars = stackalloc char[Encoding.UTF8.GetMaxCharCount(utf8Bytes.Length)];
+                int maxCharCount = Encoding.UTF8.GetMaxCharCount(utf8Bytes.Length);
+#pragma warning disable SA1011 // Closing square brackets should be spaced correctly
+                char[]? pooledChars = null;
+#pragma warning restore SA1011 // Closing square brackets should be spaced correctly
+
+                Span<char> chars = maxCharCount <= JsonConstants.StackallocThreshold ?
+                    stackalloc char[maxCharCount] :
+                    (pooledChars = ArrayPool<char>.Shared.Rent(maxCharCount));
+
                 int written = Encoding.UTF8.GetChars(utf8Bytes, chars);
                 return chars[..written].SequenceEqual(val);
             }
