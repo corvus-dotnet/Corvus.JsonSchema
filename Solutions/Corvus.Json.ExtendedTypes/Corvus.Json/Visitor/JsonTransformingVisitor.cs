@@ -250,7 +250,7 @@ public static partial class JsonTransformingVisitor
             VisitResult propertyResult = Visit(propertyPath, property.Value, visitor, ref pathBuffer);
             if (propertyResult.Walk == Walk.TerminateAtThisNodeAndAbandonAllChanges)
             {
-                // We didn't transform any properties, and we are baling out right now
+                // We didn't transform any properties, and we are bailing out right now
                 return new VisitResult(asObject, Transformed.No, Walk.TerminateAtThisNodeAndAbandonAllChanges);
             }
 
