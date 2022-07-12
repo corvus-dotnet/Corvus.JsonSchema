@@ -1330,6 +1330,20 @@ foreach(PersonNameElement otherName in michaelOldroyd.Name.OtherNames.As<PersonN
 
 Notice that we are explicitly casting to the `PersonNameElementArray` type, and then using `EnumerateItems()`. The `Current` property of the enumerator is a `PersonNameElement` so we can use that directly (and we don't need to cast our `JsonAny` to a string any more in the `Console.WriteLine()` call).
 
+As you might expect, if we build and run...
+
+```
+dotnet build
+.\bin\Debug\net6.0\JsonSchemaSample.exe
+```
+
+...we get the same output as before.
+
+```
+Francis
+James
+```
+
 ## Creating JSON
 
 So far, we've deserialized existing JSON data, examined it, and serialized the object back to a UTF8 output form. But what about creating new JSON entities?
