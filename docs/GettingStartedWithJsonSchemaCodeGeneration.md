@@ -1268,7 +1268,67 @@ Notice how the additional properties are preserved in the serialized output.
 
 ### Working with arrays
 
-TODO: Enumerate the arrays
+Working with arrays is very similar. Just as with `JsonArray` there is an `EnumerateArray()` method to iterate the items in the array.
+
+To see that in action, let's revert to our starting point.
+
+```csharp
+using System.Text.Json;
+using Corvus.Json;
+using JsonSchemaSample.Api;
+using NodaTime;
+
+string jsonText = @"{
+    ""name"": {
+      ""familyName"": ""Oldroyd"",
+      ""givenName"": ""Michael"",
+      ""otherNames"": [""Francis"", ""James""]
+    },
+    ""dateOfBirth"": ""1944-07-14""
+}";
+
+Person michaelOldroyd = JsonAny.Parse(jsonText);
+```
+
+and now add some code to enumerate the array:
+
+```csharp
+foreach(JsonAny otherName in michaelOldroyd.Name.OtherNames.AsArray().EnumerateArray())
+{
+  Console.WriteLine(otherName.AsString);
+}
+```
+
+Build and run again...
+
+```
+dotnet build
+.\bin\Debug\net6.0\JsonSchemaSample.exe
+```
+
+...and we see the other names written to the console.
+
+```
+Francis
+James
+```
+
+> You'll notice that we are explicitly casting `OtherNames` to an array type, using `AsArray()`, and then calling the `EnumerateArray()` method.
+>
+> We'll look at neater ways of doing that in our section on Union types later in this Lab.
+
+That's the basic functionality we get for any array-like value. However, if the code generator determined that there was a particular type permissible for the items (e.g. by specifying a single schema for `items`), then it will emit a second method called `EnumerateItems()`.
+
+Let's try that out. Let's change our `foreach` loop to the following:
+
+```csharp
+foreach(PersonNameElement otherName in michaelOldroyd.Name.OtherNames.As<PersonNameElementArray>().EnumerateItems())
+{
+  Console.WriteLine(otherName);
+}
+```
+
+Notice that we are explicitly casting to the `PersonNameElementArray` type, and then using `EnumerateItems()`. The `Current` property of the enumerator is a `PersonNameElement` so we can use that directly (and we don't need to cast our `JsonAny` to a string any more in the `Console.WriteLine()` call).
 
 ## Creating JSON
 
@@ -1447,6 +1507,38 @@ This represents
 ```
 
 (Though, in fact, this would not compile, as the code generator knew that `dateOfBirth` is not allowed to be `null`, and so there is no explicit conversion from `JsonNull` to `JsonDate`.)
+
+### Using anonymous types
+
+Another way to create JSON quickly is to use anonymous types. This is slightly less visually crufty than using a constant string, but, behind the scenes, causes a round-trip out to a UTF8 representation and back. You would not normally use it in production code, but it is great for examples.
+
+Instead of our JSON string.
+
+```csharp
+string jsonText = @"{
+    ""name"": {
+      ""familyName"": ""Oldroyd"",
+      ""givenName"": ""Michael"",
+      ""otherNames"": [""Francis"", ""James""]
+    },
+    ""dateOfBirth"": ""1944-07-14""
+  }";
+```
+
+we could use anonymous types like this:
+
+```csharp
+var jsonAnon = new {
+    name = new { 
+      familyName = "Oldroyd",
+      givenName = "Michael",
+      otherNames = new [] { "Francis", "James" }
+    },
+    dateOfBirth = "1944-07-14"
+  };
+```
+
+That can be passed to an overload of `JsonAny.From<T>()` which will use the built in `System.Text.Json.Serializer` to round trip the value into our model.
 
 ## Modifying JSON
 
