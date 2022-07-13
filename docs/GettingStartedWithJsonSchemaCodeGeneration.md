@@ -1315,16 +1315,29 @@ James
 
 > You'll notice that we are just assuming that `OtherNames` is an array type, and calling the `EnumerateArray()` method that it exposes. But what if it was in the string representation? We could always check the `ValueKind` to make sure it was safe to do so, but we'll look at more reliable techniques in our section on Union types later in this Lab.
 
-In addition to enumeration, we can also find the `Length` of the array. We might use this to pre-allocate a working buffer of some kind, before going on to enumerate the array.
+In addition to enumeration, we can also find the `Length` of the array. We might use this to pre-allocate a working buffer of some kind, before going on to enumerate the array. We can also index directly into the array. The standard `JsonAny this[int index]` will return you a `JsonAny`.
 
-Unlike dotnet arrays, there is no mechanism to index directly into the array. There is an extension method `GetItem<T>()` which will return the item at a specific index. Worst case, that will be as expensive as iterating the array to that index, so you should use it judiciously. 
+That's the basic functionality we get for any array-like value.
 
-That's the basic functionality we get for any array-like value. However, if the code generator determined that there was a particular type permissible for the items (e.g. by specifying a single schema for `items`), then it will emit a second method called `EnumerateItems()`.
+However, if the code generator determined that there was a specific type that could represent the items in the array (e.g. by specifying a single schema for `items`), then it will emit a second method called `EnumerateItems()`.
+
+> The generator will also emit a strongly typed `GetItem(int index)` method to complement the standard indexer, if it detects this "single item type" case.
+
+There are cases where this is not possible. For example, you can use the array form of the items definition which requires specific item schema at specific indices:
+
+ ```json
+ "items": [{"$ref": "#/$defs/firstItemType"}, {"$ref": "#/$defs/secondItemType"}, {"$ref": "#/$defs/thirdItemType"}]
+```
+
+If you do this, then the generator currently leaves out these extra accessors.
+
 
 Let's try that out. Let's change our `foreach` loop to the following:
 
 ```csharp
-foreach(PersonNameElement otherName in michaelOldroyd.Name.OtherNames.As<PersonNameElementArray>().EnumerateItems())
+PersonNameElementArray array = michaelOldroyd.Name.OtherNames.As<PersonNameElementArray>();
+
+foreach(PersonNameElement otherName in array.EnumerateItems())
 {
   Console.WriteLine(otherName);
 }
