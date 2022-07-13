@@ -92,7 +92,20 @@ namespace Steps
         public async Task GivenIGenerateATypeForTheSchema()
         {
             string inputDataPath = this.scenarioContext.Get<string>(InputDataPath);
-            Type type = await this.driver.GenerateTypeFor(false, int.Parse(inputDataPath.AsSpan().Slice(12, 3)), this.scenarioContext.Get<string>(InputJsonFileName), this.scenarioContext.Get<string>(SchemaPath), inputDataPath, Formatting.ToPascalCaseWithReservedWords(this.featureContext.FeatureInfo.Title).ToString(), Formatting.ToPascalCaseWithReservedWords(this.scenarioContext.ScenarioInfo.Title).ToString(), bool.Parse((string)this.scenarioContext.ScenarioInfo.Arguments[1] !)).ConfigureAwait(false);
+            string filename = this.scenarioContext.Get<string>(InputJsonFileName);
+            string schemaPath = this.scenarioContext.Get<string>(SchemaPath);
+            Type type;
+            string key = filename + schemaPath;
+            if (this.featureContext.ContainsKey(key))
+            {
+                type = this.featureContext.Get<Type>(key);
+            }
+            else
+            {
+                type = await this.driver.GenerateTypeFor(false, int.Parse(inputDataPath.AsSpan().Slice(12, 3)), filename, schemaPath, inputDataPath, Formatting.ToPascalCaseWithReservedWords(this.featureContext.FeatureInfo.Title).ToString(), Formatting.ToPascalCaseWithReservedWords(this.scenarioContext.ScenarioInfo.Title).ToString(), bool.Parse((string)this.scenarioContext.ScenarioInfo.Arguments[1]!)).ConfigureAwait(false);
+                this.featureContext.Set(type, key);
+            }
+
             this.scenarioContext.Set(type, SchemaType);
         }
 

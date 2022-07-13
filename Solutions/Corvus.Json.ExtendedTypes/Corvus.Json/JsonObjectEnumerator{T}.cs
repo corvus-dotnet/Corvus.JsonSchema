@@ -23,7 +23,7 @@ namespace Corvus.Json
         private ImmutableDictionary<string, JsonAny>.Enumerator dictionaryEnumerator;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="JsonObjectEnumerator"/> struct.
+        /// Initializes a new instance of the <see cref="JsonObjectEnumerator{T}"/> struct.
         /// </summary>
         /// <param name="jsonElement">The Json Element to enumerate.</param>
         public JsonObjectEnumerator(JsonElement jsonElement)
@@ -35,7 +35,7 @@ namespace Corvus.Json
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="JsonObjectEnumerator"/> struct.
+        /// Initializes a new instance of the <see cref="JsonObjectEnumerator{T}"/> struct.
         /// </summary>
         /// <param name="dictionary">The property dictionary to enumerate.</param>
         public JsonObjectEnumerator(ImmutableDictionary<string, JsonAny> dictionary)

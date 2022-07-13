@@ -15,7 +15,7 @@ namespace Corvus.Json.UriTemplates
     /// </summary>
     public static class UriExtensions
     {
-        private static readonly Regex UnreservedCharacters = new (@"([-A-Za-z0-9._~]*)=([^&]*)&?", RegexOptions.Compiled);       //// Unreserved characters: http://tools.ietf.org/html/rfc3986#section-2.3
+        private static readonly Regex UnreservedCharacters = new(@"([-A-Za-z0-9._~]*)=([^&]*)&?", RegexOptions.Compiled);       //// Unreserved characters: http://tools.ietf.org/html/rfc3986#section-2.3
 
         /// <summary>
         /// Make a template from a URI and its query string parameters.
@@ -35,9 +35,9 @@ namespace Corvus.Json.UriTemplates
         /// <param name="parameters">The parameters to apply in a query string.</param>
         /// <returns>The URI template with the corresponding query string parameters.</returns>
         /// <remarks>It is expected the parameters for the query string have already been exploded if appropriate.</remarks>
-        public static UriTemplate MakeTemplate(this Uri uri, params (string key, JsonAny value)[] parameters)
+        public static UriTemplate MakeTemplate(this Uri uri, params (string Key, JsonAny Value)[] parameters)
         {
-            return MakeTemplate(uri, parameters.ToImmutableDictionary(p => p.key, p => p.value));
+            return MakeTemplate(uri, parameters.ToImmutableDictionary(p => p.Key, p => p.Value));
         }
 
         /// <summary>
@@ -52,7 +52,8 @@ namespace Corvus.Json.UriTemplates
             string target = uri.GetComponents(
                 UriComponents.AbsoluteUri
                 & ~UriComponents.Query
-                & ~UriComponents.Fragment, UriFormat.Unescaped);
+                & ~UriComponents.Fragment,
+                UriFormat.Unescaped);
 
             StringBuilder sb = StringBuilderPool.Shared.Get();
             try

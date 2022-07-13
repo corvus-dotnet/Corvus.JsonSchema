@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "JSON Schema for json patch tests as found at https://github.com/json-patch/json-patch-tests",
+
+  "$defs": {
+    "Feature": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Scenario" }
+    },
+    "Scenario": {
+      "allOf": [ { "$ref": "#/$defs/ScenarioCommon" } ],
+      "oneOf": [
+        { "$ref": "#/$defs/ScenarioWithResult" },
+        { "$ref": "#/$defs/ScenarioWithError" },
+        { "$ref": "#/$defs/DisabledScenario" }
+      ]
+    },
+    "ScenarioWithResult": {
+      "allOf": [
+        { "$ref": "#/$defs/ScenarioCommon" },
+        { "$ref": "#/$defs/NotDisabled" }
+      ],
+      "required": [ "expected" ],
+      "expected": {}
+    },
+    "DisabledScenario": {
+      "allOf": [
+        { "$ref": "#/$defs/ScenarioCommon" }
+      ],
+      "required": [ "disabled" ],
+      "disabled": { "type": "boolean" }
+    },
+    "NotDisabled": {
+      "properties": { "disabled": false }
+    },
+    "ScenarioWithError": {
+      "allOf": [
+        { "$ref": "#/$defs/ScenarioCommon" },
+        { "$ref": "#/$defs/NotDisabled" }
+      ],
+      "required": [ "error" ],
+      "error": { "type": "string" }
+    },
+    "ScenarioCommon": {
+      "type": "object",
+      "required": [ "doc", "patch" ],
+      "properties": {
+        "comment": { "type": "string" },
+        "doc": {},
+        "patch": {}
+      }
+    }
+  }
+}

@@ -33,7 +33,7 @@ namespace Drivers
         private readonly IConfiguration configuration;
         private readonly JsonSchemaBuilder builder;
         private readonly IDocumentResolver documentResolver = new FileSystemDocumentResolver();
-        private TestAssemblyLoadContext? assemblyLoadContext = new ();
+        private TestAssemblyLoadContext? assemblyLoadContext = new();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="JsonSchemaBuilderDriver202012"/> class.
@@ -91,7 +91,7 @@ namespace Drivers
 
             path = await this.builder.RebaseReferenceAsRootDocument(path).ConfigureAwait(false);
 
-            (string rootTypeName, ImmutableDictionary<string, (string dotnetTypeName, string code)> generatedTypes) = await this.builder.BuildTypesFor(path, $"{featureName}Feature.{scenarioName}").ConfigureAwait(false);
+            (string rootTypeName, ImmutableDictionary<string, (string DotnetTypeName, string Code)> generatedTypes) = await this.builder.BuildTypesFor(path, $"{featureName}Feature.{scenarioName}").ConfigureAwait(false);
 
             bool isCorvusType = rootTypeName.StartsWith("Corvus.");
 
@@ -160,13 +160,13 @@ namespace Drivers
             return this.CreateInstance(type, document.RootElement.Clone());
         }
 
-        private static void WriteBenchmarks(int index, string filename, string schemaPath, string dataPath, string featureName, string scenarioName, ImmutableDictionary<string, (string, string)> generatedTypes, string rootTypeName, bool valid, string outputBaseDirectory)
+        private static void WriteBenchmarks(int index, string filename, string schemaPath, string dataPath, string featureName, string scenarioName, ImmutableDictionary<string, (string DotnetTypeName, string Code)> generatedTypes, string rootTypeName, bool valid, string outputBaseDirectory)
         {
-            foreach (KeyValuePair<string, (string dotnetTypeName, string code)> item in generatedTypes)
+            foreach (KeyValuePair<string, (string DotnetTypeName, string Code)> item in generatedTypes)
             {
                 string path = Path.Combine(outputBaseDirectory, $@"{featureName}\{scenarioName}");
                 Directory.CreateDirectory(path);
-                File.WriteAllText(Path.ChangeExtension(Path.Combine(path, item.Value.dotnetTypeName), ".cs"), item.Value.code);
+                File.WriteAllText(Path.ChangeExtension(Path.Combine(path, item.Value.DotnetTypeName), ".cs"), item.Value.Code);
                 File.WriteAllText(Path.Combine(path, $"Benchmark{index}.cs"), BuildBenchmark(index, filename, schemaPath, dataPath, featureName, scenarioName, rootTypeName, valid));
             }
         }
@@ -254,11 +254,11 @@ namespace Drivers
             };
         }
 
-        private static IEnumerable<SyntaxTree> ParseSyntaxTrees(ImmutableDictionary<string, (string, string)> generatedTypes)
+        private static IEnumerable<SyntaxTree> ParseSyntaxTrees(ImmutableDictionary<string, (string DotnetTypeName, string Code)> generatedTypes)
         {
-            foreach (KeyValuePair<string, (string dotnetTypeName, string code)> type in generatedTypes)
+            foreach (KeyValuePair<string, (string DotnetTypeName, string Code)> type in generatedTypes)
             {
-                yield return CSharpSyntaxTree.ParseText(type.Value.code, path: type.Key);
+                yield return CSharpSyntaxTree.ParseText(type.Value.Code, path: type.Key);
             }
         }
 

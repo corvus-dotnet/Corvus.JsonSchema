@@ -22,7 +22,7 @@ namespace Corvus.Json.JsonSchema.TypeBuilder
         /// <param name="baseUriToNamespaceMap">A map of base URIs to namespaces to use for specific types.</param>
         /// <param name="rootTypeName">A specific root type name for the root entity.</param>
         /// <returns>A <see cref="Task"/> which completes once the types are built. The tuple provides the root type name, and the generated types.</returns>
-        Task<(string rootType, ImmutableDictionary<string, (string, string)> generatedTypes)> BuildTypesFor(string reference, string rootNamespace, bool rebase = false, Dictionary<string, string>? baseUriToNamespaceMap = null, string? rootTypeName = null);
+        Task<(string RootType, ImmutableDictionary<string, (string DotnetTypeName, string Code)> GeneratedTypes)> BuildTypesFor(string reference, string rootNamespace, bool rebase = false, Dictionary<string, string>? baseUriToNamespaceMap = null, string? rootTypeName = null);
 
         /// <summary>
         /// Rebases a reference to an artificial root document.

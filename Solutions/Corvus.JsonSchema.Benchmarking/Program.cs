@@ -9,6 +9,7 @@ namespace Corvus.JsonSchema.Benchmarking
     using BenchmarkDotNet.Environments;
     using BenchmarkDotNet.Jobs;
     using BenchmarkDotNet.Running;
+    using Perfolizer.Horology;
     using Perfolizer.Mathematics.OutlierDetection;
 
     /// <summary>
@@ -25,7 +26,7 @@ namespace Corvus.JsonSchema.Benchmarking
             BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).RunAllJoined(
                 ManualConfig.Create(DefaultConfig.Instance)
                 .AddJob(Job.Dry
-                    .WithRuntime(CoreRuntime.Core50)
+                    .WithRuntime(CoreRuntime.Core60)
                     .WithOutlierMode(OutlierMode.RemoveAll)
                     .WithStrategy(RunStrategy.Throughput)));
         }

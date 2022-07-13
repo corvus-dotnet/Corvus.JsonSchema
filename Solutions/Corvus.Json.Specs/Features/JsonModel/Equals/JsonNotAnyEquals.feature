@@ -5,7 +5,7 @@
 Scenario Outline: Equals for json element backed value as a notAny
 	Given the JsonElement backed JsonNotAny <jsonValue>
 	When I compare it to the notAny <value>
-	Then the result should be exactly <result>
+	Then the result should be <result>
 
 	Examples:
 		| jsonValue        | value                           | result |
@@ -36,7 +36,7 @@ Scenario Outline: Equals for json element backed value as a notAny
 Scenario Outline: Equals for dotnet backed value as a notAny
 	Given the dotnet backed JsonNotAny <jsonValue>
 	When I compare it to the notAny <value>
-	Then the result should be exactly <result>
+	Then the result should be <result>
 
 	Examples:
 		| jsonValue                                              | value                                                  | result |
@@ -65,7 +65,7 @@ Scenario Outline: Equals for dotnet backed value as a notAny
 Scenario Outline: Equals for notAny json element backed value as an IJsonValue
 	Given the JsonElement backed JsonNotAny <jsonValue>
 	When I compare the notAny to the IJsonValue <value>
-	Then the result should be exactly <result>
+	Then the result should be <result>
 
 	Examples:
 		| jsonValue        | value            | result |
@@ -79,7 +79,7 @@ Scenario Outline: Equals for notAny json element backed value as an IJsonValue
 Scenario Outline: Equals for notAny dotnet backed value as an IJsonValue
 	Given the dotnet backed JsonNotAny <jsonValue>
 	When I compare the notAny to the IJsonValue <value>
-	Then the result should be exactly <result>
+	Then the result should be <result>
 
 	Examples:
 		| jsonValue        | value            | result |
@@ -93,7 +93,7 @@ Scenario Outline: Equals for notAny dotnet backed value as an IJsonValue
 Scenario Outline: Equals for notAny json element backed value as an object
 	Given the JsonElement backed JsonNotAny <jsonValue>
 	When I compare the notAny to the object <value>
-	Then the result should be exactly <result>
+	Then the result should be <result>
 
 	Examples:
 		| jsonValue        | value            | result |
@@ -107,7 +107,7 @@ Scenario Outline: Equals for notAny json element backed value as an object
 Scenario Outline: Equals for notAny dotnet backed value as an object
 	Given the dotnet backed JsonNotAny <jsonValue>
 	When I compare the notAny to the object <value>
-	Then the result should be exactly <result>
+	Then the result should be <result>
 
 	Examples:
 		| jsonValue        | value            | result |

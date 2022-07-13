@@ -10,6 +10,7 @@ namespace Corvus.Json
     using System.Collections.Generic;
     using System.Reflection;
     using System.Reflection.Emit;
+    using System.Runtime.CompilerServices;
     using System.Text;
     using System.Text.Json;
     using Corvus.Extensions;
@@ -20,7 +21,7 @@ namespace Corvus.Json
     public static class JsonValueExtensions
     {
         private const int MaxStackChars = 1024;
-        private static readonly ConcurrentDictionary<ConverterType, object> FactoryCache = new ();
+        private static readonly ConcurrentDictionary<ConverterType, object> FactoryCache = new();
 
         private delegate TTarget JsonValueConverter<TSource, TTarget>(TSource source)
             where TTarget : struct, IJsonValue;
@@ -70,10 +71,24 @@ namespace Corvus.Json
         /// <typeparam name="TValue">The type of <see cref="IJsonValue"/>.</typeparam>
         /// <param name="value">The value to validate.</param>
         /// <returns><c>True</c> if the value is valid.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsValid<TValue>(this TValue value)
             where TValue : struct, IJsonValue
         {
             return value.Validate().IsValid;
+        }
+
+        /// <summary>
+        /// Gets a value determining whether the value is valid.
+        /// </summary>
+        /// <typeparam name="TValue">The type of <see cref="IJsonValue"/>.</typeparam>
+        /// <param name="value">The value to validate.</param>
+        /// <returns>The updated validation context.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ValidationContext Validate<TValue>(this TValue value)
+            where TValue : struct, IJsonValue
+        {
+            return value.Validate(ValidationContext.ValidContext);
         }
 
         /// <summary>
@@ -201,47 +216,11 @@ namespace Corvus.Json
         /// <typeparam name="TTarget">The target type.</typeparam>
         /// <param name="source">The value from which to convert.</param>
         /// <returns>An instance of the target type.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static TTarget As<TSource, TTarget>(this TSource source)
             where TSource : struct, IJsonValue
             where TTarget : struct, IJsonValue
         {
-            Type targetType = typeof(TTarget);
-
-            if (targetType == typeof(TSource))
-            {
-                return CastTo<TTarget>.From(source);
-            }
-
-            if (targetType == typeof(JsonObject))
-            {
-                return CastTo<TTarget>.From(source.AsObject());
-            }
-
-            if (targetType == typeof(JsonAny))
-            {
-                return CastTo<TTarget>.From(source.AsAny);
-            }
-
-            if (targetType == typeof(JsonArray))
-            {
-                return CastTo<TTarget>.From(source.AsArray());
-            }
-
-            if (targetType == typeof(JsonNumber))
-            {
-                return CastTo<TTarget>.From(source.AsNumber());
-            }
-
-            if (targetType == typeof(JsonString))
-            {
-                return CastTo<TTarget>.From(source.AsString());
-            }
-
-            if (targetType == typeof(JsonBoolean))
-            {
-                return CastTo<TTarget>.From(source.AsBoolean());
-            }
-
             if (source.HasJsonElement)
             {
                 return FromJsonElement<TTarget>(source.AsJsonElement);
@@ -264,6 +243,7 @@ namespace Corvus.Json
         /// <typeparam name="T">The type of value to test.</typeparam>
         /// <param name="value">The value to test.</param>
         /// <returns><c>True</c> if the value is Null or Undefined.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsNullOrUndefined<T>(this T value)
             where T : struct, IJsonValue
         {
@@ -277,6 +257,7 @@ namespace Corvus.Json
         /// <typeparam name="T">The type of value to test.</typeparam>
         /// <param name="value">The value to test.</param>
         /// <returns><c>True</c> if the value is Null.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsNull<T>(this T value)
             where T : struct, IJsonValue
         {
@@ -290,6 +271,7 @@ namespace Corvus.Json
         /// <typeparam name="T">The type of value to test.</typeparam>
         /// <param name="value">The value to test.</param>
         /// <returns><c>False</c> if the value is Null.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsNotNull<T>(this T value)
             where T : struct, IJsonValue
         {
@@ -303,6 +285,7 @@ namespace Corvus.Json
         /// <typeparam name="T">The type of value to test.</typeparam>
         /// <param name="value">The value to test.</param>
         /// <returns><c>True</c> if the value is Undefined.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsUndefined<T>(this T value)
             where T : struct, IJsonValue
         {
@@ -316,6 +299,7 @@ namespace Corvus.Json
         /// <typeparam name="T">The type of value to test.</typeparam>
         /// <param name="value">The value to test.</param>
         /// <returns><c>False</c> if the value is Undefined.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsNotUndefined<T>(this T value)
             where T : struct, IJsonValue
         {
@@ -329,6 +313,7 @@ namespace Corvus.Json
         /// <typeparam name="T">The type of value to test.</typeparam>
         /// <param name="value">The value to test.</param>
         /// <returns><c>False</c> if the value is Null or Undefined.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsNotNullOrUndefined<T>(this T value)
             where T : struct, IJsonValue
         {
@@ -342,6 +327,7 @@ namespace Corvus.Json
         /// <typeparam name="T">The type of value.</typeparam>
         /// <param name="value">The value to get.</param>
         /// <returns>Returns <c>null</c> if the value is of kind Null or Undefined, otherwise it returns the value.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T? AsOptional<T>(this T value)
             where T : struct, IJsonValue
         {
@@ -359,14 +345,10 @@ namespace Corvus.Json
         /// <typeparam name="T">The type from which to convert.</typeparam>
         /// <param name="value">The value to convert.</param>
         /// <returns>A <see cref="JsonNumber"/>.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static JsonNumber AsNumber<T>(this T value)
             where T : struct, IJsonValue
         {
-            if (typeof(T) == typeof(JsonNumber))
-            {
-                return CastTo<JsonNumber>.From(value);
-            }
-
             return value.AsAny.AsNumber;
         }
 
@@ -376,14 +358,10 @@ namespace Corvus.Json
         /// <typeparam name="T">The type from which to convert.</typeparam>
         /// <param name="value">The value to convert.</param>
         /// <returns>A <see cref="JsonObject"/>.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static JsonObject AsObject<T>(this T value)
             where T : struct, IJsonValue
         {
-            if (typeof(T) == typeof(JsonObject))
-            {
-                return CastTo<JsonObject>.From(value);
-            }
-
             return value.AsAny.AsObject;
         }
 
@@ -393,14 +371,10 @@ namespace Corvus.Json
         /// <typeparam name="T">The type from which to convert.</typeparam>
         /// <param name="value">The value to convert.</param>
         /// <returns>A <see cref="JsonArray"/>.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static JsonArray AsArray<T>(this T value)
             where T : struct, IJsonValue
         {
-            if (typeof(T) == typeof(JsonArray))
-            {
-                return CastTo<JsonArray>.From(value);
-            }
-
             return value.AsAny.AsArray;
         }
 
@@ -410,14 +384,10 @@ namespace Corvus.Json
         /// <typeparam name="T">The type from which to convert.</typeparam>
         /// <param name="value">The value to convert.</param>
         /// <returns>A <see cref="JsonString"/>.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static JsonString AsString<T>(this T value)
             where T : struct, IJsonValue
         {
-            if (typeof(T) == typeof(JsonString))
-            {
-                return CastTo<JsonString>.From(value);
-            }
-
             return value.AsAny.AsString;
         }
 
@@ -427,14 +397,10 @@ namespace Corvus.Json
         /// <typeparam name="T">The type from which to convert.</typeparam>
         /// <param name="value">The value to convert.</param>
         /// <returns>A <see cref="JsonBoolean"/>.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static JsonBoolean AsBoolean<T>(this T value)
             where T : struct, IJsonValue
         {
-            if (typeof(T) == typeof(JsonBoolean))
-            {
-                return CastTo<JsonBoolean>.From(value);
-            }
-
             return value.AsAny.AsBoolean;
         }
 
@@ -444,14 +410,10 @@ namespace Corvus.Json
         /// <typeparam name="T">The type from which to convert.</typeparam>
         /// <param name="value">The value to convert.</param>
         /// <returns>A <see cref="JsonNull"/>.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static JsonNull AsNull<T>(this T value)
             where T : struct, IJsonValue
         {
-            if (typeof(T) == typeof(JsonNull))
-            {
-                return CastTo<JsonNull>.From(value);
-            }
-
             return default;
         }
 
@@ -473,47 +435,67 @@ namespace Corvus.Json
         }
 
         /// <summary>
+        /// Force the value to a <see cref="JsonElement"/> backing.
+        /// </summary>
+        /// <typeparam name="T">The type of <see cref="IJsonValue"/> to convert.</typeparam>
+        /// <param name="value">The value to convert.</param>
+        /// <returns>The value with a JsonElement backing.</returns>
+        /// <remarks>This will force a serialization of the element if it did not already have a JsonElement backing.</remarks>
+        public static T WithJsonBacking<T>(this T value)
+            where T : struct, IJsonValue
+        {
+            return JsonAny.From(value.AsJsonElement).As<T>();
+        }
+
+        /// <summary>
         /// Create an instance of the given type from a <see cref="JsonElement"/>.
         /// </summary>
         /// <typeparam name="TTarget">The target type.</typeparam>
         /// <param name="jsonElement">The <see cref="JsonElement"/> from which to create the instance.</param>
         /// <returns>An instance of the given type backed by the JsonElement.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static TTarget FromJsonElement<TTarget>(in JsonElement jsonElement)
             where TTarget : struct, IJsonValue
         {
             return From<JsonElement, TTarget>(jsonElement);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static TTarget FromBoolean<TTarget>(in JsonBoolean jsonBoolean)
             where TTarget : struct, IJsonValue
         {
             return From<JsonBoolean, TTarget>(jsonBoolean);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static TTarget FromString<TTarget>(in JsonString jsonString)
             where TTarget : struct, IJsonValue
         {
             return From<JsonString, TTarget>(jsonString);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static TTarget FromNumber<TTarget>(in JsonNumber jsonNumber)
             where TTarget : struct, IJsonValue
         {
             return From<JsonNumber, TTarget>(jsonNumber);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static TTarget FromObject<TTarget>(in JsonObject jsonObject)
             where TTarget : struct, IJsonValue
         {
             return From<JsonObject, TTarget>(jsonObject);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static TTarget FromArray<TTarget>(in JsonArray jsonArray)
             where TTarget : struct, IJsonValue
         {
             return From<JsonArray, TTarget>(jsonArray);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static TTarget From<TSource, TTarget>(in TSource source)
             where TTarget : struct, IJsonValue
         {

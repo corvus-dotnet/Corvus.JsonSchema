@@ -8,6 +8,8 @@ namespace Corvus.Json
     using System.Buffers;
     using System.Collections.Immutable;
     using System.IO;
+    using System.Runtime.CompilerServices;
+    using System.Text;
     using System.Text.Json;
 
     /// <summary>
@@ -299,7 +301,7 @@ namespace Corvus.Json
         /// <summary>
         /// Gets a value indicating whether this is backed by a JSON element.
         /// </summary>
-        public bool HasJsonElement => this.objectBacking is null && this.arrayBacking is null && this.numberBacking is null && this.stringBacking is null && this.booleanBacking is null;
+        public bool HasJsonElement => this.jsonElementBacking.ValueKind != JsonValueKind.Undefined || (this.objectBacking is null && this.arrayBacking is null && this.numberBacking is null && this.stringBacking is null && this.booleanBacking is null);
 
         /// <summary>
         /// Gets the value as a JsonElement.
@@ -385,6 +387,7 @@ namespace Corvus.Json
         /// </summary>
         public JsonObject AsObject
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
                 if (this.objectBacking is ImmutableDictionary<string, JsonAny> objectBacking)
@@ -403,6 +406,7 @@ namespace Corvus.Json
         /// </summary>
         public JsonArray AsArray
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
                 if (this.arrayBacking is ImmutableList<JsonAny> arrayBacking)
@@ -421,6 +425,7 @@ namespace Corvus.Json
         /// </summary>
         public JsonNumber AsNumber
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
                 if (this.numberBacking is double numberBacking)
@@ -439,6 +444,7 @@ namespace Corvus.Json
         /// </summary>
         public JsonString AsString
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
                 if (this.stringBacking is string stringBacking)
@@ -484,6 +490,7 @@ namespace Corvus.Json
         /// </summary>
         public JsonBoolean AsBoolean
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
                 if (this.booleanBacking is bool booleanBacking)
@@ -504,9 +511,44 @@ namespace Corvus.Json
         public JsonNull AsNull
 #pragma warning restore CA1822 // Mark members as static
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
                 return default;
+            }
+        }
+
+        /// <summary>
+        /// Gets the instance as a list of <see cref="JsonAny"/>.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This is intended for operations which mutate the underlying list.
+        /// For read-only scenarios, it is generally more efficient to use
+        /// the <see cref="EnumerateArray()"/> method.
+        /// </para>
+        /// </remarks>
+        public ImmutableList<JsonAny> AsItemsList
+        {
+            get
+            {
+                if (this.arrayBacking is ImmutableList<JsonAny> items)
+                {
+                    return items;
+                }
+
+                if (this.jsonElementBacking.ValueKind == JsonValueKind.Array)
+                {
+                    ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
+                    foreach (JsonElement item in this.jsonElementBacking.EnumerateArray())
+                    {
+                        builder.Add(new JsonAny(item));
+                    }
+
+                    return builder.ToImmutable();
+                }
+
+                return ImmutableList<JsonAny>.Empty;
             }
         }
 
@@ -930,49 +972,144 @@ namespace Corvus.Json
         /// <inheritdoc/>
         public JsonObjectEnumerator EnumerateObject()
         {
-            return this.AsObject.EnumerateObject();
+            if (this.objectBacking is ImmutableDictionary<string, JsonAny> properties)
+            {
+                return new JsonObjectEnumerator(properties);
+            }
+
+            if (this.jsonElementBacking.ValueKind == JsonValueKind.Object)
+            {
+                return new JsonObjectEnumerator(this.jsonElementBacking);
+            }
+
+            return default;
         }
 
         /// <inheritdoc/>
         public JsonArrayEnumerator EnumerateArray()
         {
-            return this.AsArray.EnumerateArray();
+            if (this.arrayBacking is ImmutableList<JsonAny> items)
+            {
+                return new JsonArrayEnumerator(items);
+            }
+
+            if (this.jsonElementBacking.ValueKind == JsonValueKind.Array)
+            {
+                return new JsonArrayEnumerator(this.jsonElementBacking);
+            }
+
+            return default;
         }
 
         /// <inheritdoc/>
         public bool TryGetProperty(string name, out JsonAny value)
         {
-            return this.AsObject.TryGetProperty(name, out value);
+            if (this.objectBacking is ImmutableDictionary<string, JsonAny> properties)
+            {
+                return properties.TryGetValue(name, out value);
+            }
+
+            if (this.jsonElementBacking.ValueKind == JsonValueKind.Object)
+            {
+                if (this.jsonElementBacking.TryGetProperty(name, out JsonElement jsonElement))
+                {
+                    value = new JsonAny(jsonElement);
+                    return true;
+                }
+            }
+
+            value = default;
+            return false;
         }
 
         /// <inheritdoc/>
         public bool TryGetProperty(ReadOnlySpan<char> name, out JsonAny value)
         {
-            return this.AsObject.TryGetProperty(name, out value);
+            if (this.objectBacking is ImmutableDictionary<string, JsonAny> properties)
+            {
+                return properties.TryGetValue(name.ToString(), out value);
+            }
+
+            if (this.jsonElementBacking.ValueKind == JsonValueKind.Object)
+            {
+                if (this.jsonElementBacking.TryGetProperty(name, out JsonElement jsonElement))
+                {
+                    value = new JsonAny(jsonElement);
+                    return true;
+                }
+            }
+
+            value = default;
+            return false;
         }
 
         /// <inheritdoc/>
         public bool TryGetProperty(ReadOnlySpan<byte> utf8name, out JsonAny value)
         {
-            return this.AsObject.TryGetProperty(utf8name, out value);
+            if (this.objectBacking is ImmutableDictionary<string, JsonAny> properties)
+            {
+                return properties.TryGetValue(Encoding.UTF8.GetString(utf8name), out value);
+            }
+
+            if (this.jsonElementBacking.ValueKind == JsonValueKind.Object)
+            {
+                if (this.jsonElementBacking.TryGetProperty(utf8name, out JsonElement jsonElement))
+                {
+                    value = new JsonAny(jsonElement);
+                    return true;
+                }
+            }
+
+            value = default;
+            return false;
         }
 
         /// <inheritdoc/>
         public bool HasProperty(string name)
         {
-            return this.AsObject.HasProperty(name);
+            if (this.objectBacking is ImmutableDictionary<string, JsonAny> properties)
+            {
+                return properties.TryGetValue(name, out _);
+            }
+
+            if (this.jsonElementBacking.ValueKind == JsonValueKind.Object)
+            {
+                return this.jsonElementBacking.TryGetProperty(name, out JsonElement _);
+            }
+
+            return false;
         }
 
         /// <inheritdoc/>
         public bool HasProperty(ReadOnlySpan<char> name)
         {
-            return this.AsObject.HasProperty(name);
+            if (this.objectBacking is ImmutableDictionary<string, JsonAny> properties)
+            {
+                return properties.TryGetValue(name.ToString(), out _);
+            }
+
+            if (this.jsonElementBacking.ValueKind == JsonValueKind.Object)
+            {
+                return this.jsonElementBacking.TryGetProperty(name, out JsonElement _);
+            }
+
+            return false;
         }
 
         /// <inheritdoc/>
         public bool HasProperty(ReadOnlySpan<byte> utf8name)
         {
-            return this.AsObject.HasProperty(utf8name);
+            if (this.objectBacking is ImmutableDictionary<string, JsonAny> properties)
+            {
+                return properties.TryGetValue(Encoding.UTF8.GetString(utf8name), out _);
+            }
+
+            if (this.jsonElementBacking.ValueKind == JsonValueKind.Object)
+            {
+                return this.jsonElementBacking.TryGetProperty(utf8name, out JsonElement _);
+            }
+
+            return false;
         }
 
         /// <inheritdoc/>
@@ -1004,13 +1141,61 @@ namespace Corvus.Json
             };
         }
 
+        /// <summary>
+        /// Set the property.
+        /// </summary>
+        /// <param name="name">The name of the property.</param>
+        /// <param name="value">The value of the property.</param>
+        /// <returns>The value with the property set.</returns>
+        public JsonAny SetProperty(string name, JsonAny value)
+        {
+            if (this.ValueKind == JsonValueKind.Object || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return new JsonAny(this.AsPropertyDictionaryWith(name, value));
+            }
+
+            return this;
+        }
+
+        /// <summary>
+        /// Set the property.
+        /// </summary>
+        /// <param name="name">The name of the property.</param>
+        /// <param name="value">The value of the property.</param>
+        /// <returns>The value with the property set.</returns>
+        public JsonAny SetProperty(ReadOnlySpan<char> name, JsonAny value)
+        {
+            if (this.ValueKind == JsonValueKind.Object || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return new JsonAny(this.AsPropertyDictionaryWith(name.ToString(), value));
+            }
+
+            return this;
+        }
+
+        /// <summary>
+        /// Set the property.
+        /// </summary>
+        /// <param name="utf8Name">The name of the property.</param>
+        /// <param name="value">The value of the property.</param>
+        /// <returns>The value with the property set.</returns>
+        public JsonAny SetProperty(ReadOnlySpan<byte> utf8Name, JsonAny value)
+        {
+            if (this.ValueKind == JsonValueKind.Object || this.ValueKind == JsonValueKind.Undefined)
+            {
+                return new JsonAny(this.AsPropertyDictionaryWith(Encoding.UTF8.GetString(utf8Name), value));
+            }
+
+            return this;
+        }
+
         /// <inheritdoc/>
         public JsonAny SetProperty<TValue>(string name, TValue value)
             where TValue : struct, IJsonValue
         {
             if (this.ValueKind == JsonValueKind.Object || this.ValueKind == JsonValueKind.Undefined)
             {
-                return this.AsObject.SetProperty(name, value).AsAny;
+                return new JsonAny(this.AsPropertyDictionaryWith(name, value.AsAny));
             }
 
             return this;
@@ -1020,69 +1205,49 @@ namespace Corvus.Json
         public JsonAny SetProperty<TValue>(ReadOnlySpan<char> name, TValue value)
             where TValue : struct, IJsonValue
         {
-            if (this.ValueKind == JsonValueKind.Object || this.ValueKind == JsonValueKind.Undefined)
-            {
-                return this.AsObject.SetProperty(name, value).AsAny;
-            }
-
-            return this;
+            return this.SetProperty(name.ToString(), value);
         }
 
         /// <inheritdoc/>
         public JsonAny SetProperty<TValue>(ReadOnlySpan<byte> utf8Name, TValue value)
             where TValue : struct, IJsonValue
         {
-            if (this.ValueKind == JsonValueKind.Object || this.ValueKind == JsonValueKind.Undefined)
-            {
-                return this.AsObject.SetProperty(utf8Name, value).AsAny;
-            }
-
-            return this;
+            return this.SetProperty(Encoding.UTF8.GetString(utf8Name), value);
         }
 
         /// <inheritdoc/>
         public JsonAny RemoveProperty(string name)
         {
-            if (this.ValueKind == JsonValueKind.Object)
-            {
-                return this.AsObject.RemoveProperty(name).AsAny;
-            }
-
-            return this;
+            return new JsonAny(this.AsPropertyDictionaryWithout(name));
         }
 
         /// <inheritdoc/>
         public JsonAny RemoveProperty(ReadOnlySpan<char> name)
         {
-            if (this.ValueKind == JsonValueKind.Object)
-            {
-                return this.AsObject.RemoveProperty(name).AsAny;
-            }
-
-            return this;
+            return new JsonAny(this.AsPropertyDictionaryWithout(name.ToString()));
         }
 
         /// <inheritdoc/>
         public JsonAny RemoveProperty(ReadOnlySpan<byte> utf8Name)
         {
-            if (this.ValueKind == JsonValueKind.Object)
-            {
-                return this.AsObject.RemoveProperty(utf8Name).AsAny;
-            }
+            return this.RemoveProperty(Encoding.UTF8.GetString(utf8Name));
+        }
 
-            return this;
+        /// <summary>
+        /// Add an item.
+        /// </summary>
+        /// <param name="item">The item to add.</param>
+        /// <returns>The value with the item added.</returns>
+        public JsonAny Add(JsonAny item)
+        {
+            return this.AsItemsListWith(item);
         }
 
         /// <inheritdoc/>
         public JsonAny Add<TItem>(TItem item)
             where TItem : struct, IJsonValue
         {
-            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
-            {
-                return this.AsArray.Add(item).AsAny;
-            }
-
-            return this;
+            return this.AsItemsListWith(item.AsAny);
         }
 
         /// <inheritdoc/>
@@ -1090,12 +1255,7 @@ namespace Corvus.Json
             where TItem1 : struct, IJsonValue
             where TItem2 : struct, IJsonValue
         {
-            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
-            {
-                return this.AsArray.Add(item1, item2);
-            }
-
-            return this;
+            return this.AsItemsListWith(item1.AsAny, item2.AsAny);
         }
 
         /// <inheritdoc/>
@@ -1104,12 +1264,7 @@ namespace Corvus.Json
             where TItem2 : struct, IJsonValue
             where TItem3 : struct, IJsonValue
         {
-            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
-            {
-                return this.AsArray.Add(item1, item2, item3);
-            }
-
-            return this;
+            return this.AsItemsListWith(item1.AsAny, item2.AsAny, item3.AsAny);
         }
 
         /// <inheritdoc/>
@@ -1119,94 +1274,65 @@ namespace Corvus.Json
             where TItem3 : struct, IJsonValue
             where TItem4 : struct, IJsonValue
         {
-            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
-            {
-                return this.AsArray.Add(item1, item2, item3, item4);
-            }
-
-            return this;
+            return this.AsItemsListWith(item1.AsAny, item2.AsAny, item3.AsAny, item4.AsAny);
         }
 
         /// <inheritdoc/>
         public JsonAny Add<TItem>(params TItem[] items)
             where TItem : struct, IJsonValue
         {
-            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
-            {
-                return this.AsArray.Add(items);
-            }
-
-            return this;
+            return this.AsItemsListWith(items);
         }
 
         /// <inheritdoc/>
         public JsonAny AddRange<TItem>(IEnumerable<TItem> items)
             where TItem : struct, IJsonValue
         {
-            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
-            {
-                return this.AsArray.AddRange(items);
-            }
+            return this.AsItemsListWith(items);
+        }
 
-            return this;
+        /// <summary>
+        /// Insert an item into the array.
+        /// </summary>
+        /// <param name="index">The index at which to insert the item.</param>
+        /// <param name="item">The item to insert.</param>
+        /// <returns>The value with the item inserted.</returns>
+        public JsonAny Insert(int index, JsonAny item)
+        {
+            return this.AsItemsListInserting(index, item);
         }
 
         /// <inheritdoc/>
         public JsonAny Insert<TItem>(int index, TItem item)
             where TItem : struct, IJsonValue
         {
-            if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
-            {
-                return this.AsArray.Insert(index, item).AsAny;
-            }
-
-            return this;
+            return this.AsItemsListInserting(index, item.AsAny);
         }
 
         /// <inheritdoc/>
         public JsonAny Replace<TItem>(TItem oldValue, TItem newValue)
             where TItem : struct, IJsonValue
         {
-            if (this.ValueKind == JsonValueKind.Array)
-            {
-                return this.AsArray.Replace(oldValue, newValue).AsAny;
-            }
-
-            return this;
-        }
-
-        /// <inheritdoc/>
-        public JsonAny RemoveAt(int index)
-        {
-            if (this.ValueKind == JsonValueKind.Array)
-            {
-                return this.AsArray.RemoveAt(index).AsAny;
-            }
-
-            return this;
-        }
-
-        /// <inheritdoc/>
-        public JsonAny RemoveRange(int index, int count)
-        {
-            if (this.ValueKind == JsonValueKind.Array)
-            {
-                return this.AsArray.RemoveRange(index, count).AsAny;
-            }
-
-            return this;
+            return this.AsItemsListReplacing(oldValue.AsAny, newValue.AsAny);
         }
 
         /// <inheritdoc/>
         public JsonAny SetItem<TItem>(int index, TItem value)
             where TItem : struct, IJsonValue
         {
-            if (this.ValueKind == JsonValueKind.Array)
-            {
-                return this.AsArray.SetItem(index, value).AsAny;
-            }
+            return this.AsItemsListSetting(index, value.AsAny);
+        }
 
-            return this;
+        /// <inheritdoc/>
+        public JsonAny RemoveAt(int index)
+        {
+            return this.AsItemsListRemovingAt(index);
+        }
+
+        /// <inheritdoc/>
+        public JsonAny RemoveRange(int index, int count)
+        {
+            return this.AsItemsListRemovingRange(index, count);
         }
 
         /// <inheritdoc/>
@@ -1217,9 +1343,406 @@ namespace Corvus.Json
         }
 
         /// <inheritdoc/>
-        public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
+        public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
         {
-            return validationContext ?? ValidationContext.ValidContext;
+            return validationContext;
+        }
+
+        /// <summary>
+        /// Gets the object as a property dictionary.
+        /// </summary>
+        public ImmutableDictionary<string, JsonAny> AsPropertyDictionary
+        {
+            get
+            {
+                if (this.objectBacking is ImmutableDictionary<string, JsonAny> properties)
+                {
+                    return properties;
+                }
+
+                if (this.jsonElementBacking.ValueKind == JsonValueKind.Object)
+                {
+                    ImmutableDictionary<string, JsonAny>.Builder builder = ImmutableDictionary.CreateBuilder<string, JsonAny>();
+                    foreach (JsonProperty property in this.jsonElementBacking.EnumerateObject())
+                    {
+                        builder.Add(property.Name, new JsonAny(property.Value));
+                    }
+
+                    return builder.ToImmutable();
+                }
+
+                return ImmutableDictionary<string, JsonAny>.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Gets the object as a property dictionary, removing a property if presents.
+        /// </summary>
+        /// <param name="name">The name of the property to remove.</param>
+        /// <returns>
+        /// An immutable dictionary of properties without the named property.
+        /// </returns>
+        public ImmutableDictionary<string, JsonAny> AsPropertyDictionaryWithout(string name)
+        {
+            if (this.objectBacking is ImmutableDictionary<string, JsonAny> properties)
+            {
+                return properties.Remove(name);
+            }
+
+            if (this.jsonElementBacking.ValueKind == JsonValueKind.Object)
+            {
+                ImmutableDictionary<string, JsonAny>.Builder builder = ImmutableDictionary.CreateBuilder<string, JsonAny>();
+
+                foreach (JsonProperty property in this.jsonElementBacking.EnumerateObject())
+                {
+                    string propertyName = property.Name;
+                    if (propertyName.Equals(name, StringComparison.Ordinal))
+                    {
+                        continue;
+                    }
+
+                    builder.Add(propertyName, new JsonAny(property.Value));
+                }
+
+                return builder.ToImmutable();
+            }
+
+            return ImmutableDictionary<string, JsonAny>.Empty;
+        }
+
+        /// <summary>
+        /// Gets the object as a property dictionary, adding a single object.
+        /// </summary>
+        /// <param name="name">The name of the property to add.</param>
+        /// <param name="value">The value of the property to add.</param>
+        /// <returns>
+        /// An immutable dictionary of properties with the named property set to the new value.
+        /// </returns>
+        public ImmutableDictionary<string, JsonAny> AsPropertyDictionaryWith(string name, JsonAny value)
+        {
+            if (this.objectBacking is ImmutableDictionary<string, JsonAny> properties)
+            {
+                var builder = properties.ToBuilder();
+                builder[name] = value;
+                return builder.ToImmutable();
+            }
+
+            if (this.jsonElementBacking.ValueKind == JsonValueKind.Object)
+            {
+                ImmutableDictionary<string, JsonAny>.Builder builder = ImmutableDictionary.CreateBuilder<string, JsonAny>();
+                foreach (JsonProperty property in this.jsonElementBacking.EnumerateObject())
+                {
+                    builder.Add(property.Name, new JsonAny(property.Value));
+                }
+
+                builder[name] = value;
+
+                return builder.ToImmutable();
+            }
+
+            if (this.jsonElementBacking.ValueKind == JsonValueKind.Undefined)
+            {
+                return ImmutableDictionary<string, JsonAny>.Empty.Add(name, value);
+            }
+
+            return ImmutableDictionary<string, JsonAny>.Empty;
+        }
+
+        private ImmutableList<JsonAny> AsItemsListRemovingAt(int index)
+        {
+            return this.AsItemsListRemovingRange(index, 1);
+        }
+
+        private ImmutableList<JsonAny> AsItemsListInserting(int index, JsonAny value)
+        {
+            if (this.arrayBacking is ImmutableList<JsonAny> items)
+            {
+                return items.Insert(index, value);
+            }
+
+            if (this.jsonElementBacking.ValueKind == JsonValueKind.Array)
+            {
+                int arrayLength = this.jsonElementBacking.GetArrayLength();
+                if (index > arrayLength)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(index));
+                }
+
+                ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
+                int current = 0;
+                bool inserted = false;
+                foreach (JsonElement existingItem in this.jsonElementBacking.EnumerateArray())
+                {
+                    if (current == index)
+                    {
+                        inserted = true;
+                        builder.Add(value);
+                    }
+
+                    builder.Add(new JsonAny(existingItem));
+                    ++current;
+                }
+
+                if (!inserted)
+                {
+                    builder.Add(value);
+                }
+
+                return builder.ToImmutable();
+            }
+
+            return ImmutableList<JsonAny>.Empty;
+        }
+
+        private ImmutableList<JsonAny> AsItemsListReplacing(JsonAny oldValue, JsonAny newValue)
+        {
+            if (this.arrayBacking is ImmutableList<JsonAny> items)
+            {
+                return items.Replace(oldValue, newValue);
+            }
+
+            if (this.jsonElementBacking.ValueKind == JsonValueKind.Array)
+            {
+                ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
+                foreach (JsonElement existingItem in this.jsonElementBacking.EnumerateArray())
+                {
+                    var oldAny = new JsonAny(existingItem);
+                    if (oldAny == oldValue)
+                    {
+                        builder.Add(newValue);
+                    }
+                    else
+                    {
+                        builder.Add(oldAny);
+                    }
+                }
+
+                return builder.ToImmutable();
+            }
+
+            return ImmutableList<JsonAny>.Empty;
+        }
+
+        private ImmutableList<JsonAny> AsItemsListSetting(int index, JsonAny value)
+        {
+            if (this.arrayBacking is ImmutableList<JsonAny> items)
+            {
+                return items.SetItem(index, value);
+            }
+
+            if (this.jsonElementBacking.ValueKind == JsonValueKind.Array)
+            {
+                int arrayLength = this.jsonElementBacking.GetArrayLength();
+                if (index >= arrayLength)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(index));
+                }
+
+                ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
+                int current = 0;
+                foreach (JsonElement existingItem in this.jsonElementBacking.EnumerateArray())
+                {
+                    if (current == index)
+                    {
+                        builder.Add(value);
+                    }
+                    else
+                    {
+                        builder.Add(new JsonAny(existingItem));
+                    }
+
+                    ++current;
+                }
+
+                return builder.ToImmutable();
+            }
+
+            return ImmutableList<JsonAny>.Empty;
+        }
+
+        private ImmutableList<JsonAny> AsItemsListRemovingRange(int index, int count)
+        {
+            if (this.arrayBacking is ImmutableList<JsonAny> items)
+            {
+                return items.RemoveRange(index, count);
+            }
+
+            if (this.jsonElementBacking.ValueKind == JsonValueKind.Array)
+            {
+                int arrayLength = this.jsonElementBacking.GetArrayLength();
+                if (index >= arrayLength)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(index));
+                }
+
+                if (index + count > arrayLength)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(count));
+                }
+
+                ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
+                int current = 0;
+                int end = index + count;
+                foreach (JsonElement existingItem in this.jsonElementBacking.EnumerateArray())
+                {
+                    if (current >= index && current < end)
+                    {
+                        ++current;
+                        continue;
+                    }
+
+                    builder.Add(new JsonAny(existingItem));
+                    ++current;
+                }
+
+                return builder.ToImmutable();
+            }
+
+            return ImmutableList<JsonAny>.Empty;
+        }
+
+        private ImmutableList<JsonAny> AsItemsListWith(JsonAny item)
+        {
+            if (this.arrayBacking is ImmutableList<JsonAny> items)
+            {
+                return items.Add(item);
+            }
+
+            if (this.jsonElementBacking.ValueKind == JsonValueKind.Array)
+            {
+                ImmutableList<JsonAny>.Builder builder = this.CreateListFromJsonElement();
+                builder.Add(item);
+                return builder.ToImmutable();
+            }
+
+            return ImmutableList<JsonAny>.Empty;
+        }
+
+        private ImmutableList<JsonAny> AsItemsListWith(in JsonAny item1, in JsonAny item2)
+        {
+            JsonAny[] itemsArray = ArrayPool<JsonAny>.Shared.Rent(2);
+            itemsArray[0] = item1;
+            itemsArray[1] = item2;
+
+            try
+            {
+                return this.AsItemsListWith(itemsArray.AsSpan()[..2]);
+            }
+            finally
+            {
+                ArrayPool<JsonAny>.Shared.Return(itemsArray);
+            }
+        }
+
+        private ImmutableList<JsonAny> AsItemsListWith(in JsonAny item1, in JsonAny item2, in JsonAny item3)
+        {
+            JsonAny[] itemsArray = ArrayPool<JsonAny>.Shared.Rent(3);
+            itemsArray[0] = item1;
+            itemsArray[1] = item2;
+            itemsArray[2] = item3;
+
+            try
+            {
+                return this.AsItemsListWith(itemsArray.AsSpan()[..3]);
+            }
+            finally
+            {
+                ArrayPool<JsonAny>.Shared.Return(itemsArray);
+            }
+        }
+
+        private ImmutableList<JsonAny> AsItemsListWith(in JsonAny item1, in JsonAny item2, in JsonAny item3, in JsonAny item4)
+        {
+            JsonAny[] itemsArray = ArrayPool<JsonAny>.Shared.Rent(4);
+            itemsArray[0] = item1;
+            itemsArray[1] = item2;
+            itemsArray[2] = item3;
+            itemsArray[3] = item4;
+
+            try
+            {
+                return this.AsItemsListWith(itemsArray.AsSpan()[..4]);
+            }
+            finally
+            {
+                ArrayPool<JsonAny>.Shared.Return(itemsArray);
+            }
+        }
+
+        private ImmutableList<JsonAny> AsItemsListWith<TItem>(TItem[] items)
+            where TItem : struct, IJsonValue
+        {
+            JsonAny[] itemsArray = ArrayPool<JsonAny>.Shared.Rent(items.Length);
+            for (int i = 0; i < items.Length; ++i)
+            {
+                itemsArray[i] = items[i].AsAny;
+            }
+
+            try
+            {
+                return this.AsItemsListWith(itemsArray.AsSpan()[..items.Length]);
+            }
+            finally
+            {
+                ArrayPool<JsonAny>.Shared.Return(itemsArray);
+            }
+        }
+
+        private ImmutableList<JsonAny> AsItemsListWith<TItem>(IEnumerable<TItem> itemsToAdd)
+            where TItem : struct, IJsonValue
+        {
+            if (this.arrayBacking is ImmutableList<JsonAny> items)
+            {
+                return items
+                    .AddRange(itemsToAdd.Select(s => s.AsAny));
+            }
+
+            if (this.jsonElementBacking.ValueKind == JsonValueKind.Array)
+            {
+                ImmutableList<JsonAny>.Builder builder = this.CreateListFromJsonElement();
+                builder.AddRange(itemsToAdd.Select(s => s.AsAny));
+                return builder.ToImmutable();
+            }
+
+            return ImmutableList<JsonAny>.Empty;
+        }
+
+        private ImmutableList<JsonAny> AsItemsListWith(ReadOnlySpan<JsonAny> itemsArray)
+        {
+            if (this.arrayBacking is ImmutableList<JsonAny> items)
+            {
+                var builder = items.ToBuilder();
+                foreach (JsonAny item in itemsArray)
+                {
+                    builder.Add(item);
+                }
+
+                return builder.ToImmutable();
+            }
+
+            if (this.jsonElementBacking.ValueKind == JsonValueKind.Array)
+            {
+                ImmutableList<JsonAny>.Builder builder = this.CreateListFromJsonElement();
+                foreach (JsonAny item in itemsArray)
+                {
+                    builder.Add(item);
+                }
+
+                return builder.ToImmutable();
+            }
+
+            return ImmutableList<JsonAny>.Empty;
+        }
+
+        private ImmutableList<JsonAny>.Builder CreateListFromJsonElement()
+        {
+            ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
+            foreach (JsonElement existingItem in this.jsonElementBacking.EnumerateArray())
+            {
+                builder.Add(new JsonAny(existingItem));
+            }
+
+            return builder;
         }
     }
 }

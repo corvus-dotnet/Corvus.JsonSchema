@@ -15,7 +15,7 @@ namespace Corvus.Json
     /// </summary>
     public readonly struct JsonRegex : IJsonValue, IEquatable<JsonRegex>
     {
-        private static readonly Regex Empty = new (".*", RegexOptions.None);
+        private static readonly Regex Empty = new(".*", RegexOptions.None);
         private readonly JsonElement jsonElement;
         private readonly string? value;
         private readonly Regex? localRegexValue;
@@ -286,9 +286,9 @@ namespace Corvus.Json
         }
 
         /// <inheritdoc/>
-        public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
+        public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
         {
-            ValidationContext result = validationContext ?? ValidationContext.ValidContext;
+            ValidationContext result = validationContext;
 
             return Json.Validate.TypeRegex(this, result, level);
         }

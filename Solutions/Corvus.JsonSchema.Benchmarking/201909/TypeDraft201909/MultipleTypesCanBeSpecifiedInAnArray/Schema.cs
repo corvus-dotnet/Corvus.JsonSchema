@@ -605,9 +605,9 @@ namespace TypeDraft201909Feature.MultipleTypesCanBeSpecifiedInAnArray
 
     
         /// <inheritdoc/>
-        public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
+        public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
         {
-            ValidationContext result = validationContext ?? ValidationContext.ValidContext;
+            ValidationContext result = validationContext;
             if (level != ValidationLevel.Flag)
             {
                 result = result.UsingStack();

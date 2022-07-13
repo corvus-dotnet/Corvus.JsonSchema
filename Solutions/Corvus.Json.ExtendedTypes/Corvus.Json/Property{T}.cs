@@ -20,7 +20,7 @@ namespace Corvus.Json
         private readonly T? value;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Property"/> struct.
+        /// Initializes a new instance of the <see cref="Property{T}"/> struct.
         /// </summary>
         /// <param name="jsonProperty">The JSON property over which to construct this instance.</param>
         public Property(JsonProperty jsonProperty)
@@ -31,7 +31,7 @@ namespace Corvus.Json
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Property"/> struct.
+        /// Initializes a new instance of the <see cref="Property{T}"/> struct.
         /// </summary>
         /// <param name="name">The property name.</param>
         /// <param name="value">The property value.</param>

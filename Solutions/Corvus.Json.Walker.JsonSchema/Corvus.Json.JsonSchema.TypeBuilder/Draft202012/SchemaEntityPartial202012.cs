@@ -1102,7 +1102,7 @@ public partial class SchemaEntity202012
     {
         get
         {
-            return (this.HasSingleItemsType || (this.TypeDeclaration.Schema.Items.IsUndefined() && this.TypeDeclaration.Schema.UnevaluatedItems.IsNotUndefined())) && this.SingleItemsDotnetTypeName != $"{BuiltInTypes.AnyTypeDeclaration.ns}.{BuiltInTypes.AnyTypeDeclaration.type}";
+            return (this.HasSingleItemsType || (this.TypeDeclaration.Schema.Items.IsUndefined() && this.TypeDeclaration.Schema.UnevaluatedItems.IsNotUndefined())) && this.SingleItemsDotnetTypeName != $"{BuiltInTypes.AnyTypeDeclaration.Ns}.{BuiltInTypes.AnyTypeDeclaration.Type}";
         }
     }
 
@@ -1123,16 +1123,16 @@ public partial class SchemaEntity202012
 
                 if (this.TypeDeclaration.Schema.Items.ValueKind == JsonValueKind.True)
                 {
-                    return $"{BuiltInTypes.AnyTypeDeclaration.ns}.{BuiltInTypes.AnyTypeDeclaration.type}";
+                    return $"{BuiltInTypes.AnyTypeDeclaration.Ns}.{BuiltInTypes.AnyTypeDeclaration.Type}";
                 }
 
                 if (this.TypeDeclaration.Schema.Items.ValueKind == JsonValueKind.False)
                 {
-                    return $"{BuiltInTypes.NotAnyTypeDeclaration.ns}.{BuiltInTypes.NotAnyTypeDeclaration.type}";
+                    return $"{BuiltInTypes.NotAnyTypeDeclaration.Ns}.{BuiltInTypes.NotAnyTypeDeclaration.Type}";
                 }
             }
 
-            return $"{BuiltInTypes.AnyTypeDeclaration.ns}.{BuiltInTypes.AnyTypeDeclaration.type}";
+            return $"{BuiltInTypes.AnyTypeDeclaration.Ns}.{BuiltInTypes.AnyTypeDeclaration.Type}";
         }
     }
 
@@ -1991,7 +1991,7 @@ public partial class SchemaEntity202012
     {
         if (this.PatternProperties.Count(p => p.DotnetTypeName == patternProperty.DotnetTypeName) == 1)
         {
-            return patternProperty.DotnetTypeName[(patternProperty.DotnetTypeName.LastIndexOf('.') + 1) ..];
+            return patternProperty.DotnetTypeName[(patternProperty.DotnetTypeName.LastIndexOf('.') + 1)..];
         }
 
         return (this.PatternProperties.IndexOf(patternProperty) + 1).ToString();
@@ -2257,7 +2257,7 @@ public partial class SchemaEntity202012
         private readonly TypeDeclaration? convertVia;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="EnumValue"/> struct.
+        /// Initializes a new instance of the <see cref="Conversion"/> struct.
         /// </summary>
         /// <param name="typeDeclaration">The type declaration for the conversion.</param>
         /// <param name="convertVia">The type declaration to convert via or null if this is a constructed conversion.</param>

@@ -9,7 +9,7 @@ namespace Corvus.JsonSchema.SpecGenerator
     /// <summary>
     /// This program generates feature files for the Json Schema specs.
     /// </summary>
-    public class Program
+    public static class Program
     {
         /// <summary>
         /// Main entry point.

@@ -15,6 +15,6 @@ namespace Corvus.Json.UriTemplates
         /// <summary>
         /// Gets a shared <see cref="StringBuilder"/> pool.
         /// </summary>
-        public static readonly DefaultObjectPool<StringBuilder> Shared = new (new StringBuilderPooledObjectPolicy());
+        public static readonly DefaultObjectPool<StringBuilder> Shared = new(new StringBuilderPooledObjectPolicy());
     }
 }

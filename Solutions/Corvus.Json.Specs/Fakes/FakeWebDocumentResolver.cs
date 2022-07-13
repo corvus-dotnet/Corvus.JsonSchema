@@ -17,11 +17,11 @@ namespace Corvus.Json
     public class FakeWebDocumentResolver : IDocumentResolver
     {
         private readonly string baseDirectory;
-        private readonly Dictionary<string, JsonDocument> documents = new ();
+        private readonly Dictionary<string, JsonDocument> documents = new();
         private bool disposedValue;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="FileSystemDocumentResolver"/> class.
+        /// Initializes a new instance of the <see cref="FakeWebDocumentResolver"/> class.
         /// </summary>
         /// <param name="baseDirectory">The base directory for the file system resolver.</param>
         public FakeWebDocumentResolver(string baseDirectory)
@@ -35,7 +35,7 @@ namespace Corvus.Json
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="FileSystemDocumentResolver"/> class.
+        /// Initializes a new instance of the <see cref="FakeWebDocumentResolver"/> class.
         /// </summary>
         /// <remarks>The default base directory is <see cref="Environment.CurrentDirectory"/>.</remarks>
         public FakeWebDocumentResolver()

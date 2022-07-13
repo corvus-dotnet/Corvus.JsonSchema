@@ -18,7 +18,7 @@ public readonly struct TestCase
     private readonly JsonAny result;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="Variable"/> struct.
+    /// Initializes a new instance of the <see cref="TestCase"/> struct.
     /// </summary>
     /// <param name="testcase">The <see cref="JsonArray"/> backing.</param>
     public TestCase(JsonArray testcase)

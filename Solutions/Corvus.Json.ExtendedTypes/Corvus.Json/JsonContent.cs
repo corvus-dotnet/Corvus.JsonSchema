@@ -298,6 +298,7 @@ namespace Corvus.Json
 
             if (this.value is string value)
             {
+#pragma warning disable RCS1075 // Avoid empty catch clause that catches System.Exception.
                 try
                 {
                     ReadOnlySpan<byte> utf8Source = Encoding.UTF8.GetBytes(value);
@@ -324,6 +325,7 @@ namespace Corvus.Json
                 {
                     // Fall through to the return...
                 }
+#pragma warning restore RCS1075 // Avoid empty catch clause that catches System.Exception.
 
                 result = null;
                 return EncodedContentMediaTypeParseStatus.UnableToParseToMediaType;
@@ -331,6 +333,7 @@ namespace Corvus.Json
 
             if (this.jsonElement.ValueKind == JsonValueKind.String)
             {
+#pragma warning disable RCS1075 // Avoid empty catch clause that catches System.Exception.
                 try
                 {
 #pragma warning disable CS8604 // Possible null reference argument - this is not possible if this.jsonElement.ValueKind == JsonValueKind.String as above.
@@ -359,6 +362,7 @@ namespace Corvus.Json
                 {
                     // Fall through to the return...
                 }
+#pragma warning restore RCS1075 // Avoid empty catch clause that catches System.Exception.
 
                 result = default;
                 return EncodedContentMediaTypeParseStatus.UnableToParseToMediaType;
@@ -369,9 +373,9 @@ namespace Corvus.Json
         }
 
         /// <inheritdoc/>
-        public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
+        public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
         {
-            ValidationContext result = validationContext ?? ValidationContext.ValidContext;
+            ValidationContext result = validationContext;
 
             JsonValueKind valueKind = this.ValueKind;
 

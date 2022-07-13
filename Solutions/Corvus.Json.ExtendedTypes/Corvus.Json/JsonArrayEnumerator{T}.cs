@@ -23,7 +23,7 @@ namespace Corvus.Json
         private ImmutableList<JsonAny>.Enumerator listEnumerator;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="JsonArrayEnumerator"/> struct.
+        /// Initializes a new instance of the <see cref="JsonArrayEnumerator{T}"/> struct.
         /// </summary>
         /// <param name="jsonElement">The Json Element to enumerate.</param>
         public JsonArrayEnumerator(JsonElement jsonElement)
@@ -35,7 +35,7 @@ namespace Corvus.Json
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="JsonArrayEnumerator"/> struct.
+        /// Initializes a new instance of the <see cref="JsonArrayEnumerator{T}"/> struct.
         /// </summary>
         /// <param name="list">The property list to enumerate.</param>
         public JsonArrayEnumerator(ImmutableList<JsonAny> list)

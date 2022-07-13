@@ -5,7 +5,7 @@
 Scenario Outline: Equals for json element backed value as a relativePointer
 	Given the JsonElement backed JsonRelativePointer <jsonValue>
 	When I compare it to the relativePointer <value>
-	Then the result should be exactly <result>
+	Then the result should be <result>
 
 	Examples:
 		| jsonValue   | value       | result |
@@ -17,7 +17,7 @@ Scenario Outline: Equals for json element backed value as a relativePointer
 Scenario Outline: Equals for dotnet backed value as a relativePointer
 	Given the dotnet backed JsonRelativePointer <jsonValue>
 	When I compare it to the relativePointer <value>
-	Then the result should be exactly <result>
+	Then the result should be <result>
 
 	Examples:
 		| jsonValue   | value       | result |
@@ -27,7 +27,7 @@ Scenario Outline: Equals for dotnet backed value as a relativePointer
 Scenario Outline: Equals for relativePointer json element backed value as an IJsonValue
 	Given the JsonElement backed JsonRelativePointer <jsonValue>
 	When I compare the relativePointer to the IJsonValue <value>
-	Then the result should be exactly <result>
+	Then the result should be <result>
 
 	Examples:
 		| jsonValue   | value                          | result |
@@ -54,7 +54,7 @@ Scenario Outline: Equals for relativePointer json element backed value as an IJs
 Scenario Outline: Equals for relativePointer dotnet backed value as an IJsonValue
 	Given the dotnet backed JsonRelativePointer <jsonValue>
 	When I compare the relativePointer to the IJsonValue <value>
-	Then the result should be exactly <result>
+	Then the result should be <result>
 
 	Examples:
 		| jsonValue   | value                          | result |
@@ -81,7 +81,7 @@ Scenario Outline: Equals for relativePointer dotnet backed value as an IJsonValu
 Scenario Outline: Equals for relativePointer json element backed value as an object
 	Given the JsonElement backed JsonRelativePointer <jsonValue>
 	When I compare the relativePointer to the object <value>
-	Then the result should be exactly <result>
+	Then the result should be <result>
 
 	Examples:
 		| jsonValue   | value                          | result |
@@ -109,7 +109,7 @@ Scenario Outline: Equals for relativePointer json element backed value as an obj
 Scenario Outline: Equals for relativePointer dotnet backed value as an object
 	Given the dotnet backed JsonRelativePointer <jsonValue>
 	When I compare the relativePointer to the object <value>
-	Then the result should be exactly <result>
+	Then the result should be <result>
 
 	Examples:
 		| jsonValue   | value                          | result |

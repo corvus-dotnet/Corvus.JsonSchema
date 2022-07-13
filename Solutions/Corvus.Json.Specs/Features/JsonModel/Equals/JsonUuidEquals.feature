@@ -5,7 +5,7 @@
 Scenario Outline: Equals for json element backed value as a uuid
 	Given the JsonElement backed JsonUuid <jsonValue>
 	When I compare it to the uuid <value>
-	Then the result should be exactly <result>
+	Then the result should be <result>
 
 	Examples:
 		| jsonValue                              | value                                  | result |
@@ -18,7 +18,7 @@ Scenario Outline: Equals for json element backed value as a uuid
 Scenario Outline: Equals for dotnet backed value as a uuid
 	Given the dotnet backed JsonUuid <jsonValue>
 	When I compare it to the uuid <value>
-	Then the result should be exactly <result>
+	Then the result should be <result>
 
 	Examples:
 		| jsonValue                              | value                                  | result |
@@ -29,7 +29,7 @@ Scenario Outline: Equals for dotnet backed value as a uuid
 Scenario Outline: Equals for uuid json element backed value as an IJsonValue
 	Given the JsonElement backed JsonUuid <jsonValue>
 	When I compare the uuid to the IJsonValue <value>
-	Then the result should be exactly <result>
+	Then the result should be <result>
 
 	Examples:
 		| jsonValue                              | value                                  | result |
@@ -56,7 +56,7 @@ Scenario Outline: Equals for uuid json element backed value as an IJsonValue
 Scenario Outline: Equals for uuid dotnet backed value as an IJsonValue
 	Given the dotnet backed JsonUuid <jsonValue>
 	When I compare the uuid to the IJsonValue <value>
-	Then the result should be exactly <result>
+	Then the result should be <result>
 
 	Examples:
 		| jsonValue                              | value                                  | result |
@@ -83,7 +83,7 @@ Scenario Outline: Equals for uuid dotnet backed value as an IJsonValue
 Scenario Outline: Equals for uuid json element backed value as an object
 	Given the JsonElement backed JsonUuid <jsonValue>
 	When I compare the uuid to the object <value>
-	Then the result should be exactly <result>
+	Then the result should be <result>
 
 	Examples:
 		| jsonValue                              | value                                  | result |
@@ -111,7 +111,7 @@ Scenario Outline: Equals for uuid json element backed value as an object
 Scenario Outline: Equals for uuid dotnet backed value as an object
 	Given the dotnet backed JsonUuid <jsonValue>
 	When I compare the uuid to the object <value>
-	Then the result should be exactly <result>
+	Then the result should be <result>
 
 	Examples:
 		| jsonValue                              | value                                  | result |

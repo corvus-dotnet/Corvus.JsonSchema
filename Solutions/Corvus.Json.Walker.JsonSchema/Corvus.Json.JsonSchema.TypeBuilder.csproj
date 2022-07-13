@@ -14,7 +14,7 @@
 	
   <ItemGroup>
     <PackageReference Include="Corvus.Extensions" Version="1.1.4" />
-    <PackageReference Include="Endjin.RecommendedPractices" Version="1.2.0">
+    <PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
@@ -22,7 +22,7 @@
     <PackageReference Include="Mono.TextTemplating" Version="2.2.1" />
     <PackageReference Include="NodaTime" Version="3.1.0" />
     <PackageReference Include="System.Collections.Immutable" Version="6.0.0" />
-    <PackageReference Include="System.Text.Json" Version="6.0.4" />
+    <PackageReference Include="System.Text.Json" Version="6.0.5" />
   </ItemGroup>
 	
   <ItemGroup>

@@ -20,10 +20,10 @@ namespace Corvus.Json.JsonSchema.TypeBuilder.Draft201909
     /// </summary>
     public class JsonSchemaBuilder : IJsonSchemaBuilder
     {
-        private readonly HashSet<TypeDeclaration> typeDeclarations = new ();
-        private readonly Dictionary<string, TypeDeclaration> locatedTypeDeclarations = new ();
+        private readonly HashSet<TypeDeclaration> typeDeclarations = new();
+        private readonly Dictionary<string, TypeDeclaration> locatedTypeDeclarations = new();
         private readonly JsonWalker walker;
-        private readonly Dictionary<string, TypeDeclaration> dynamicAnchors = new ();
+        private readonly Dictionary<string, TypeDeclaration> dynamicAnchors = new();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="JsonSchemaBuilder"/> class.
@@ -43,7 +43,7 @@ namespace Corvus.Json.JsonSchema.TypeBuilder.Draft201909
         }
 
         /// <inheritdoc/>
-        public async Task<(string rootType, ImmutableDictionary<string, (string, string)> generatedTypes)> BuildTypesFor(string reference, string rootNamespace, bool rebase = false, Dictionary<string, string>? baseUriToNamespaceMap = null, string? rootTypeName = null)
+        public async Task<(string RootType, ImmutableDictionary<string, (string DotnetTypeName, string Code)> GeneratedTypes)> BuildTypesFor(string reference, string rootNamespace, bool rebase = false, Dictionary<string, string>? baseUriToNamespaceMap = null, string? rootTypeName = null)
         {
             // First, we resolve the reference and locate our root element.
             LocatedElement? rootElement = await this.walker.ResolveReference(new JsonReference(reference), false, false).ConfigureAwait(false);

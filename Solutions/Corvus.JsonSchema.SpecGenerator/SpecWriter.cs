@@ -15,7 +15,7 @@ namespace Corvus.JsonSchema.SpecGenerator
     /// <remarks>
     /// https://github.com/json-schema-org/JSON-Schema-Test-Suite/tree/master/tests/draft2020-12.
     /// </remarks>
-    internal class SpecWriter
+    internal static class SpecWriter
     {
         /// <summary>
         /// Write the feature files for the json specs.

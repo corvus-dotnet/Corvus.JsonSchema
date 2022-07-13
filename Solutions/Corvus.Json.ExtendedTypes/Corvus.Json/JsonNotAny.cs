@@ -370,13 +370,19 @@ namespace Corvus.Json
         {
             get
             {
+                if (this.HasJsonElement)
+                {
+                    return new JsonAny(this.jsonElementBacking);
+                }
+
                 return this.ValueKind switch
                 {
-                    JsonValueKind.Object => new JsonAny(this.AsObject),
-                    JsonValueKind.Array => new JsonAny(this.AsArray),
-                    JsonValueKind.Number => new JsonAny(this.AsNumber),
-                    JsonValueKind.String => new JsonAny(this.AsString),
-                    JsonValueKind.True or JsonValueKind.False => new JsonAny(this.AsBoolean),
+                    JsonValueKind.Object => new JsonAny(this.objectBacking!),
+                    JsonValueKind.Array => new JsonAny(this.arrayBacking!),
+                    JsonValueKind.Number => new JsonAny(this.numberBacking!.Value),
+                    JsonValueKind.String => new JsonAny(this.stringBacking!),
+                    JsonValueKind.True => new JsonAny(true),
+                    JsonValueKind.False => new JsonAny(false),
                     JsonValueKind.Undefined => default,
                     JsonValueKind.Null => JsonNull.Instance,
                     _ => default,
@@ -759,7 +765,7 @@ namespace Corvus.Json
         /// <param name="value">The value from which to convert.</param>
         public static implicit operator JsonNotAny(ImmutableList<JsonAny> value)
         {
-            return new JsonAny(value);
+            return new JsonNotAny(value);
         }
 
         /// <summary>
@@ -1171,14 +1177,14 @@ namespace Corvus.Json
         }
 
         /// <inheritdoc/>
-        public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
+        public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
         {
             if (level == ValidationLevel.Flag)
             {
-                return validationContext?.WithResult(isValid: false) ?? ValidationContext.InvalidContext;
+                return validationContext.WithResult(isValid: false);
             }
 
-            ValidationContext result = validationContext ?? ValidationContext.InvalidContext;
+            ValidationContext result = validationContext;
             return result.WithResult(isValid: false, "9.2.1.4 not - the instance matches {}.");
         }
     }

@@ -23,10 +23,10 @@ namespace Corvus.Json.UriTemplates
         private const string Op = "(?<op>[+#./;?&]?)";
         private const string Var = "(?<var>(?:(?<lvar>" + Varname + ")[*]?,?)*)";
         private const string Varspec = "(?<varspec>{" + Op + Var + "})";
-        private static readonly Regex FindParam = new (Varspec, RegexOptions.Compiled);
-        private static readonly Regex TemplateConversion = new (@"([^{]|^)\?", RegexOptions.Compiled);
+        private static readonly Regex FindParam = new(Varspec, RegexOptions.Compiled);
+        private static readonly Regex TemplateConversion = new(@"([^{]|^)\?", RegexOptions.Compiled);
 
-        private static readonly Dictionary<char, OperatorInfo> Operators = new ()
+        private static readonly Dictionary<char, OperatorInfo> Operators = new()
             {
                 { '\0', new OperatorInfo(@default: true, first: string.Empty, separator: ',', named: false, ifEmpty: string.Empty, allowReserved: false) },
                 { '+', new OperatorInfo(@default: false, first: string.Empty, separator: ',', named: false, ifEmpty: string.Empty, allowReserved: true) },
@@ -405,14 +405,14 @@ namespace Corvus.Json.UriTemplates
 
         private static bool IsVarNameChar(char c)
         {
-            return (c >= 'A' && c <= 'z')     //// Alpha
+            return (c >= 'A' && c <= 'z') ////     Alpha
                     || (c >= '0' && c <= '9') //// Digit
                     || c == '_'
                     || c == '%'
                     || c == '.';
         }
 
-        private static string GetQueryExpression(in ReadOnlySpan<string> paramNames, string prefix)
+        private static string GetQueryExpression(ReadOnlySpan<string> paramNames, string prefix)
         {
             StringBuilder sb = StringBuilderPool.Shared.Get();
 
@@ -448,7 +448,7 @@ namespace Corvus.Json.UriTemplates
             }
         }
 
-        private static string GetExpression(in ReadOnlySpan<string> paramNames, string? prefix = null)
+        private static string GetExpression(ReadOnlySpan<string> paramNames, string? prefix = null)
         {
             StringBuilder sb = StringBuilderPool.Shared.Get();
 
@@ -625,7 +625,7 @@ namespace Corvus.Json.UriTemplates
 
                         break;
 
-                    case ':':  // Parse Prefix Modifier
+                    case ':': // Parse Prefix Modifier
                         currentChar = currentExpression[++i];
                         int prefixStart = i;
                         while (currentChar >= '0' && currentChar <= '9' && i < currentExpression.Length)
@@ -744,7 +744,7 @@ namespace Corvus.Json.UriTemplates
             if (valueKind == JsonValueKind.Array)
             {
                 JsonArray array = value;
-                if (varSpec.OperatorInfo.Named && !varSpec.Explode)  //// exploding will prefix with list name
+                if (varSpec.OperatorInfo.Named && !varSpec.Explode) //// exploding will prefix with list name
                 {
                     result.AppendName(varname, varSpec.OperatorInfo, array.Length == 0);
                 }
@@ -760,7 +760,7 @@ namespace Corvus.Json.UriTemplates
                 }
 
                 JsonObject instance = value;
-                if (varSpec.OperatorInfo.Named && !varSpec.Explode)  //// exploding will prefix with list name
+                if (varSpec.OperatorInfo.Named && !varSpec.Explode) //// exploding will prefix with list name
                 {
                     result.AppendName(varname, varSpec.OperatorInfo, !instance.HasProperties());
                 }

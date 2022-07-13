@@ -220,9 +220,9 @@ namespace Corvus.Json
         }
 
         /// <inheritdoc/>
-        public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
+        public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
         {
-            ValidationContext result = validationContext ?? ValidationContext.ValidContext;
+            ValidationContext result = validationContext;
 
             JsonValueKind valueKind = this.ValueKind;
 
@@ -349,6 +349,66 @@ namespace Corvus.Json
             }
 
             return this.Equals(other.AsString());
+        }
+
+        /// <summary>
+        /// Compare to a sequence of characters.
+        /// </summary>
+        /// <param name="utf8Bytes">The UTF8-encoded character sequence to compare.</param>
+        /// <returns><c>True</c> if teh sequences match.</returns>
+        public bool EqualsUtf8Bytes(ReadOnlySpan<byte> utf8Bytes)
+        {
+            if (this.ValueKind != JsonValueKind.String)
+            {
+                return false;
+            }
+
+            if (this.HasJsonElement)
+            {
+                return this.jsonElement.ValueEquals(utf8Bytes);
+            }
+
+            if (this.value is string val)
+            {
+                int maxCharCount = Encoding.UTF8.GetMaxCharCount(utf8Bytes.Length);
+#pragma warning disable SA1011 // Closing square brackets should be spaced correctly
+                char[]? pooledChars = null;
+#pragma warning restore SA1011 // Closing square brackets should be spaced correctly
+
+                Span<char> chars = maxCharCount <= JsonConstants.StackallocThreshold ?
+                    stackalloc char[maxCharCount] :
+                    (pooledChars = ArrayPool<char>.Shared.Rent(maxCharCount));
+
+                int written = Encoding.UTF8.GetChars(utf8Bytes, chars);
+                return chars[..written].SequenceEqual(val);
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Compare to a sequence of characters.
+        /// </summary>
+        /// <param name="chars">The character sequence to compare.</param>
+        /// <returns><c>True</c> if teh sequences match.</returns>
+        public bool EqualsString(ReadOnlySpan<char> chars)
+        {
+            if (this.ValueKind != JsonValueKind.String)
+            {
+                return false;
+            }
+
+            if (this.HasJsonElement)
+            {
+                return this.jsonElement.ValueEquals(chars);
+            }
+
+            if (this.value is string val)
+            {
+                return chars.SequenceEqual(val);
+            }
+
+            return false;
         }
 
         /// <inheritdoc/>

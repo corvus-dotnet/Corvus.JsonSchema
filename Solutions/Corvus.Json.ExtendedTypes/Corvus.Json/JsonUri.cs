@@ -15,7 +15,7 @@ namespace Corvus.Json
     /// </summary>
     public readonly struct JsonUri : IJsonValue, IEquatable<JsonUri>
     {
-        private static readonly Uri EmptyUri = new (string.Empty, UriKind.RelativeOrAbsolute);
+        private static readonly Uri EmptyUri = new(string.Empty, UriKind.RelativeOrAbsolute);
 
         private readonly JsonElement jsonElement;
         private readonly string? value;
@@ -287,9 +287,9 @@ namespace Corvus.Json
         }
 
         /// <inheritdoc/>
-        public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
+        public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
         {
-            ValidationContext result = validationContext ?? ValidationContext.ValidContext;
+            ValidationContext result = validationContext;
 
             return Json.Validate.TypeUri(this, result, level);
         }

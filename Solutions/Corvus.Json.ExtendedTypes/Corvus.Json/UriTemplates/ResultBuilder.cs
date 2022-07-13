@@ -229,10 +229,10 @@ namespace Corvus.Json.UriTemplates
             int written = 0;
             foreach (char c in p)
             {
-                if ((c >= 'A' && c <= 'z')                                      //// Alpha
-                    || (c >= '0' && c <= '9')                                   //// Digit
-                    || UriUnreservedSymbols.IndexOf(c) != -1                    //// Unreserved symbols  - These should never be percent encoded
-                    || (allowReserved && UriReservedSymbols.IndexOf(c) != -1))  //// Reserved symbols - should be included if requested (+)
+                if ((c >= 'A' && c <= 'z') ////                                     Alpha
+                    || (c >= '0' && c <= '9') ////                                  Digit
+                    || UriUnreservedSymbols.IndexOf(c) != -1 ////                   Unreserved symbols  - These should never be percent encoded
+                    || (allowReserved && UriReservedSymbols.IndexOf(c) != -1)) //// Reserved symbols - should be included if requested (+)
                 {
                     result[written++] = c;
                 }
