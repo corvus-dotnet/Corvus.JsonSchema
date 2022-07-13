@@ -15,6 +15,13 @@ namespace Corvus.Json
         int Length { get; }
 
         /// <summary>
+        /// Gets the item at the given index.
+        /// </summary>
+        /// <param name="index">The index of the item to get.</param>
+        /// <returns>A <see cref="JsonAny"/> representing that item at the given index.</returns>
+        JsonAny this[int index] { get; }
+
+        /// <summary>
         /// Enumerate the array.
         /// </summary>
         /// <returns>A <see cref="JsonArrayEnumerator"/>.</returns>

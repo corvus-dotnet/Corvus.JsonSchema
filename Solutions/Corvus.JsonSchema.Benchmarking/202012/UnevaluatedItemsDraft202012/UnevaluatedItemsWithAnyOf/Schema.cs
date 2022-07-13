@@ -157,8 +157,21 @@ namespace UnevaluatedItemsDraft202012Feature.UnevaluatedItemsWithAnyOf
                 return this.jsonElementBacking.GetArrayLength();
             }
         }
-    
-            /// <summary>
+        /// <inheritdoc/>
+        public JsonAny this[int index]
+        {
+            get
+            {
+                if (this.arrayBacking is ImmutableList<JsonAny> items)
+                {
+                    return items[index];
+                }
+
+                return new JsonAny(this.jsonElementBacking[index]);
+            }
+        }
+
+        /// <summary>
         /// Gets the value as a <see cref="UnevaluatedItemsDraft202012Feature.UnevaluatedItemsWithAnyOf.Schema.AnyOf0Entity" />.
         /// </summary>
         public UnevaluatedItemsDraft202012Feature.UnevaluatedItemsWithAnyOf.Schema.AnyOf0Entity AsAnyOf0Entity
@@ -1069,13 +1082,26 @@ namespace UnevaluatedItemsDraft202012Feature.UnevaluatedItemsWithAnyOf
                 return this.jsonElementBacking.GetArrayLength();
             }
         }
-    
-    
-    
+
+            /// <inheritdoc/>
+            public JsonAny this[int index]
+            {
+                get
+                {
+                    if (this.arrayBacking is ImmutableList<JsonAny> items)
+                    {
+                        return items[index];
+                    }
+
+                    return new JsonAny(this.jsonElementBacking[index]);
+                }
+            }
+
+
             /// <summary>
-        /// Gets a value indicating whether this is backed by a JSON element.
-        /// </summary>
-        public bool HasJsonElement =>
+            /// Gets a value indicating whether this is backed by a JSON element.
+            /// </summary>
+            public bool HasJsonElement =>
     
     
                         this.arrayBacking is null
@@ -2249,13 +2275,26 @@ namespace UnevaluatedItemsDraft202012Feature.UnevaluatedItemsWithAnyOf
                 return this.jsonElementBacking.GetArrayLength();
             }
         }
-    
-    
-    
+
+            /// <inheritdoc/>
+            public JsonAny this[int index]
+            {
+                get
+                {
+                    if (this.arrayBacking is ImmutableList<JsonAny> items)
+                    {
+                        return items[index];
+                    }
+
+                    return new JsonAny(this.jsonElementBacking[index]);
+                }
+            }
+
+
             /// <summary>
-        /// Gets a value indicating whether this is backed by a JSON element.
-        /// </summary>
-        public bool HasJsonElement =>
+            /// Gets a value indicating whether this is backed by a JSON element.
+            /// </summary>
+            public bool HasJsonElement =>
     
     
                         this.arrayBacking is null
