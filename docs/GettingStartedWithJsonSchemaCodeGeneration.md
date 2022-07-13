@@ -1293,7 +1293,7 @@ Person michaelOldroyd = JsonAny.Parse(jsonText);
 and now add some code to enumerate the array:
 
 ```csharp
-foreach(JsonAny otherName in michaelOldroyd.Name.OtherNames.AsArray().EnumerateArray())
+foreach(JsonAny otherName in michaelOldroyd.Name.OtherNames.EnumerateArray())
 {
   Console.WriteLine(otherName.AsString);
 }
@@ -1313,9 +1313,11 @@ Francis
 James
 ```
 
-> You'll notice that we are explicitly casting `OtherNames` to an array type, using `AsArray()`, and then calling the `EnumerateArray()` method.
->
-> We'll look at neater ways of doing that in our section on Union types later in this Lab.
+> You'll notice that we are just assuming that `OtherNames` is an array type, and calling the `EnumerateArray()` method that it exposes. But what if it was in the string representation? We could always check the `ValueKind` to make sure it was safe to do so, but we'll look at more reliable techniques in our section on Union types later in this Lab.
+
+In addition to enumeration, we can also find the `Length` of the array. We might use this to pre-allocate a working buffer of some kind, before going on to enumerate the array.
+
+Unlike dotnet arrays, there is no mechanism to index directly into the array. There is an extension method `GetItem<T>()` which will return the item at a specific index. Worst case, that will be as expensive as iterating the array to that index, so you should use it judiciously. 
 
 That's the basic functionality we get for any array-like value. However, if the code generator determined that there was a particular type permissible for the items (e.g. by specifying a single schema for `items`), then it will emit a second method called `EnumerateItems()`.
 
@@ -1347,6 +1349,44 @@ James
 ## Creating JSON
 
 So far, we've deserialized existing JSON data, examined it, and serialized the object back to a UTF8 output form. But what about creating new JSON entities?
+
+### Using anonymous types
+
+We've seen one way of quickly generating a JSON model - by deserializing a JSON string.
+
+Another way to create JSON quickly is to use anonymous types. This is slightly less visually crufty than using a constant string, but, behind the scenes, causes a round-trip out to a UTF8 representation and back. You would not normally use it in production code, but it is great for examples.
+
+Instead of our JSON string.
+
+```csharp
+string jsonText = @"{
+    ""name"": {
+      ""familyName"": ""Oldroyd"",
+      ""givenName"": ""Michael"",
+      ""otherNames"": [""Francis"", ""James""]
+    },
+    ""dateOfBirth"": ""1944-07-14""
+  }";
+```
+
+we could use anonymous types like this:
+
+```csharp
+var jsonAnon = new {
+    name = new { 
+      familyName = "Oldroyd",
+      givenName = "Michael",
+      otherNames = new [] { "Francis", "James" }
+    },
+    dateOfBirth = "1944-07-14"
+  };
+```
+
+That can be passed to an overload of `JsonAny.From<T>()` which will use the built in `System.Text.Json.Serializer` to round trip the value into our model.
+
+### Building a JSON document
+
+That's all very well if you are creating a whole document in one go, but what if you want to build or compose a document from constituent parts?
 
 In dotnet6, `System.Text.Json` added the `Nodes` namespace with [`JsonObject`](https://docs.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject?view=net-6.0) and [`JsonArray`](https://docs.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonarray?view=net-6.0) types to help you build JSON documents.
 
@@ -1522,37 +1562,6 @@ This represents
 
 (Though, in fact, this would not compile, as the code generator knew that `dateOfBirth` is not allowed to be `null`, and so there is no explicit conversion from `JsonNull` to `JsonDate`.)
 
-### Using anonymous types
-
-Another way to create JSON quickly is to use anonymous types. This is slightly less visually crufty than using a constant string, but, behind the scenes, causes a round-trip out to a UTF8 representation and back. You would not normally use it in production code, but it is great for examples.
-
-Instead of our JSON string.
-
-```csharp
-string jsonText = @"{
-    ""name"": {
-      ""familyName"": ""Oldroyd"",
-      ""givenName"": ""Michael"",
-      ""otherNames"": [""Francis"", ""James""]
-    },
-    ""dateOfBirth"": ""1944-07-14""
-  }";
-```
-
-we could use anonymous types like this:
-
-```csharp
-var jsonAnon = new {
-    name = new { 
-      familyName = "Oldroyd",
-      givenName = "Michael",
-      otherNames = new [] { "Francis", "James" }
-    },
-    dateOfBirth = "1944-07-14"
-  };
-```
-
-That can be passed to an overload of `JsonAny.From<T>()` which will use the built in `System.Text.Json.Serializer` to round trip the value into our model.
 
 ## Modifying JSON
 
@@ -1590,9 +1599,20 @@ Now, let's look at the `OtherNames` property in a bit more detail.
 
 We know from the schema that it can be an array type (`PersonNameElementArray`), or a string type (`PersonNameElement`). But how do we know which to choose?
 
-We've already seen the basic techniques available to use. Let's look at a few:
+We've already seen the basic techniques available to use - we used them when we explored array enumeration, earlier.
+
+Let's remind ourselves of those basic techniques.
 
 We could check to see if the `ValueKind` is `Array` and cast on that basis.
+
+```csharp
+if (michaelOldroyd.Name.OtherNames.ValueKind == JsonValueKind.Array)
+{
+    JsonArray otherNames = michaelOldroyd.Name.OtherNames.AsArray();
+}
+```
+
+or, because we know that is (or should be!) a `PersonNameElementArray` we could explicitly cast to that type.
 
 ```csharp
 if (michaelOldroyd.Name.OtherNames.ValueKind == JsonValueKind.Array)
@@ -1601,7 +1621,7 @@ if (michaelOldroyd.Name.OtherNames.ValueKind == JsonValueKind.Array)
 }
 ```
 
-But that depends on us knowing that being an array value is enough to tell us what type the value is. That means having an intimiate knowledge of the existing schema. 
+Both of those techniques depend on us knowing that "being an array type" is enough to tell us how to treat the value. That means having an intimiate knowledge of the existing schema. 
 
 A more general approach might be to cast to the desired target type (`PersonNameElementArray`) and check whether it is valid
 
@@ -1645,7 +1665,7 @@ if (otherNames.IsPersonNameElementArray)
     PersonNameElementArray otherNamesArray = otherNames.AsPersonNameElementArray;
     
     // Use the array
-    otherNamesArray.EnumerateArray();
+    otherNamesArray.EnumerateItems();
 }
 ```
 
@@ -1653,9 +1673,9 @@ This test-and-use pattern is so common, that we also add a conditional cast meth
 
 ```csharp
 
-if (michaelOldroyd.Name.OtherNames.TryAsPersonNameElementArray(out PersonNameElementArray element))
+if (michaelOldroyd.Name.OtherNames.TryAsPersonNameElementArray(out PersonNameElementArray otherNamesArray))
 {
     // Use the array
-    element.EnumerateArray();
+    otherNamesArray.EnumerateItems();
 }
 ```
