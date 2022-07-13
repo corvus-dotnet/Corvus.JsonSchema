@@ -5,7 +5,7 @@
 Scenario Outline: Equals for json element backed value as a iriReference
 	Given the JsonElement backed JsonIriReference <jsonValue>
 	When I compare it to the iriReference <value>
-	Then the result should be exactly <result>
+	Then the result should be <result>
 
 	Examples:
 		| jsonValue                      | value                            | result |
@@ -17,7 +17,7 @@ Scenario Outline: Equals for json element backed value as a iriReference
 Scenario Outline: Equals for dotnet backed value as a iriReference
 	Given the dotnet backed JsonIriReference <jsonValue>
 	When I compare it to the iriReference <value>
-	Then the result should be exactly <result>
+	Then the result should be <result>
 
 	Examples:
 		| jsonValue                      | value                            | result |
@@ -27,7 +27,7 @@ Scenario Outline: Equals for dotnet backed value as a iriReference
 Scenario Outline: Equals for iriReference json element backed value as an IJsonValue
 	Given the JsonElement backed JsonIriReference <jsonValue>
 	When I compare the iriReference to the IJsonValue <value>
-	Then the result should be exactly <result>
+	Then the result should be <result>
 
 	Examples:
 		| jsonValue                      | value                          | result |
@@ -54,7 +54,7 @@ Scenario Outline: Equals for iriReference json element backed value as an IJsonV
 Scenario Outline: Equals for iriReference dotnet backed value as an IJsonValue
 	Given the dotnet backed JsonIriReference <jsonValue>
 	When I compare the iriReference to the IJsonValue <value>
-	Then the result should be exactly <result>
+	Then the result should be <result>
 
 	Examples:
 		| jsonValue                      | value                          | result |
@@ -81,7 +81,7 @@ Scenario Outline: Equals for iriReference dotnet backed value as an IJsonValue
 Scenario Outline: Equals for iriReference json element backed value as an object
 	Given the JsonElement backed JsonIriReference <jsonValue>
 	When I compare the iriReference to the object <value>
-	Then the result should be exactly <result>
+	Then the result should be <result>
 
 	Examples:
 		| jsonValue                      | value                          | result |
@@ -109,7 +109,7 @@ Scenario Outline: Equals for iriReference json element backed value as an object
 Scenario Outline: Equals for iriReference dotnet backed value as an object
 	Given the dotnet backed JsonIriReference <jsonValue>
 	When I compare the iriReference to the object <value>
-	Then the result should be exactly <result>
+	Then the result should be <result>
 
 	Examples:
 		| jsonValue                      | value                          | result |

@@ -1177,14 +1177,14 @@ namespace Corvus.Json
         }
 
         /// <inheritdoc/>
-        public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
+        public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
         {
             if (level == ValidationLevel.Flag)
             {
-                return validationContext?.WithResult(isValid: false) ?? ValidationContext.InvalidContext;
+                return validationContext.WithResult(isValid: false);
             }
 
-            ValidationContext result = validationContext ?? ValidationContext.InvalidContext;
+            ValidationContext result = validationContext;
             return result.WithResult(isValid: false, "9.2.1.4 not - the instance matches {}.");
         }
     }

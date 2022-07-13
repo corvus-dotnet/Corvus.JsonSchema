@@ -79,6 +79,19 @@ namespace Corvus.Json
         }
 
         /// <summary>
+        /// Gets a value determining whether the value is valid.
+        /// </summary>
+        /// <typeparam name="TValue">The type of <see cref="IJsonValue"/>.</typeparam>
+        /// <param name="value">The value to validate.</param>
+        /// <returns>The updated validation context.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ValidationContext Validate<TValue>(this TValue value)
+            where TValue : struct, IJsonValue
+        {
+            return value.Validate(ValidationContext.ValidContext);
+        }
+
+        /// <summary>
         /// Gets a value indicating whether the instance has properties.
         /// </summary>
         /// <typeparam name="TValue">The type of the instance.</typeparam>

@@ -5,7 +5,7 @@
 Scenario Outline: Equals for json element backed value as a content
 	Given the JsonElement backed JsonContent <jsonValue>
 	When I compare it to the content <value>
-	Then the result should be exactly <result>
+	Then the result should be <result>
 
 	Examples:
 		| jsonValue              | value                  | result |
@@ -17,7 +17,7 @@ Scenario Outline: Equals for json element backed value as a content
 Scenario Outline: Equals for dotnet backed value as a content
 	Given the dotnet backed JsonContent <jsonValue>
 	When I compare it to the content <value>
-	Then the result should be exactly <result>
+	Then the result should be <result>
 
 	Examples:
 		| jsonValue              | value                  | result |
@@ -27,7 +27,7 @@ Scenario Outline: Equals for dotnet backed value as a content
 Scenario Outline: Equals for content json element backed value as an IJsonValue
 	Given the JsonElement backed JsonContent <jsonValue>
 	When I compare the content to the IJsonValue <value>
-	Then the result should be exactly <result>
+	Then the result should be <result>
 
 	Examples:
 		| jsonValue              | value                          | result |
@@ -53,7 +53,7 @@ Scenario Outline: Equals for content json element backed value as an IJsonValue
 Scenario Outline: Equals for content dotnet backed value as an IJsonValue
 	Given the dotnet backed JsonContent <jsonValue>
 	When I compare the content to the IJsonValue <value>
-	Then the result should be exactly <result>
+	Then the result should be <result>
 
 	Examples:
 		| jsonValue              | value                          | result |
@@ -79,7 +79,7 @@ Scenario Outline: Equals for content dotnet backed value as an IJsonValue
 Scenario Outline: Equals for content json element backed value as an object
 	Given the JsonElement backed JsonContent <jsonValue>
 	When I compare the content to the object <value>
-	Then the result should be exactly <result>
+	Then the result should be <result>
 
 	Examples:
 		| jsonValue              | value                          | result |
@@ -107,7 +107,7 @@ Scenario Outline: Equals for content json element backed value as an object
 Scenario Outline: Equals for content dotnet backed value as an object
 	Given the dotnet backed JsonContent <jsonValue>
 	When I compare the content to the object <value>
-	Then the result should be exactly <result>
+	Then the result should be <result>
 
 	Examples:
 		| jsonValue              | value                          | result |

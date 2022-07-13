@@ -1343,9 +1343,9 @@ namespace Corvus.Json
         }
 
         /// <inheritdoc/>
-        public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
+        public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
         {
-            return validationContext ?? ValidationContext.ValidContext;
+            return validationContext;
         }
 
         /// <summary>

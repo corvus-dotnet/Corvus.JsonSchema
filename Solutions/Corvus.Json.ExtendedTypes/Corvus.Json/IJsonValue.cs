@@ -62,6 +62,6 @@ namespace Corvus.Json
         /// <param name="validationContext">The intitial validation context.</param>
         /// <param name="level">The validation level.</param>
         /// <returns>The updated validation context.</returns>
-        ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag);
+        ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag);
     }
 }

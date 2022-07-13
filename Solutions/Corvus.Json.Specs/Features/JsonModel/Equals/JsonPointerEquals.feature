@@ -5,7 +5,7 @@
 Scenario Outline: Equals for json element backed value as a pointer
 	Given the JsonElement backed JsonPointer <jsonValue>
 	When I compare it to the pointer <value>
-	Then the result should be exactly <result>
+	Then the result should be <result>
 
 	Examples:
 		| jsonValue | value    | result |
@@ -17,7 +17,7 @@ Scenario Outline: Equals for json element backed value as a pointer
 Scenario Outline: Equals for dotnet backed value as a pointer
 	Given the dotnet backed JsonPointer <jsonValue>
 	When I compare it to the pointer <value>
-	Then the result should be exactly <result>
+	Then the result should be <result>
 
 	Examples:
 		| jsonValue | value    | result |
@@ -27,7 +27,7 @@ Scenario Outline: Equals for dotnet backed value as a pointer
 Scenario Outline: Equals for pointer json element backed value as an IJsonValue
 	Given the JsonElement backed JsonPointer <jsonValue>
 	When I compare the pointer to the IJsonValue <value>
-	Then the result should be exactly <result>
+	Then the result should be <result>
 
 	Examples:
 		| jsonValue | value                          | result |
@@ -54,7 +54,7 @@ Scenario Outline: Equals for pointer json element backed value as an IJsonValue
 Scenario Outline: Equals for pointer dotnet backed value as an IJsonValue
 	Given the dotnet backed JsonPointer <jsonValue>
 	When I compare the pointer to the IJsonValue <value>
-	Then the result should be exactly <result>
+	Then the result should be <result>
 
 	Examples:
 		| jsonValue | value                          | result |
@@ -81,7 +81,7 @@ Scenario Outline: Equals for pointer dotnet backed value as an IJsonValue
 Scenario Outline: Equals for pointer json element backed value as an object
 	Given the JsonElement backed JsonPointer <jsonValue>
 	When I compare the pointer to the object <value>
-	Then the result should be exactly <result>
+	Then the result should be <result>
 
 	Examples:
 		| jsonValue | value                          | result |
@@ -109,7 +109,7 @@ Scenario Outline: Equals for pointer json element backed value as an object
 Scenario Outline: Equals for pointer dotnet backed value as an object
 	Given the dotnet backed JsonPointer <jsonValue>
 	When I compare the pointer to the object <value>
-	Then the result should be exactly <result>
+	Then the result should be <result>
 
 	Examples:
 		| jsonValue | value                          | result |

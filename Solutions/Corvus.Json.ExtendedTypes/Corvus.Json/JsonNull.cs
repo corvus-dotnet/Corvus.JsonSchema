@@ -92,14 +92,14 @@ namespace Corvus.Json
         }
 
         /// <inheritdoc/>
-        public ValidationContext Validate(in ValidationContext? validationContext = null, ValidationLevel level = ValidationLevel.Flag)
+        public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
         {
             if (this.jsonElementBacking is JsonElement je)
             {
-                return Json.Validate.TypeNull(je.ValueKind, validationContext ?? ValidationContext.ValidContext, level);
+                return Json.Validate.TypeNull(je.ValueKind, validationContext, level);
             }
 
-            return Json.Validate.TypeNull(JsonValueKind.Null, validationContext ?? ValidationContext.ValidContext, level);
+            return Json.Validate.TypeNull(JsonValueKind.Null, validationContext, level);
         }
 
         /// <inheritdoc/>
