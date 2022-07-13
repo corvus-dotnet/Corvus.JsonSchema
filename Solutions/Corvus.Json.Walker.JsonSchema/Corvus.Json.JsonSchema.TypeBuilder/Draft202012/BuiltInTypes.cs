@@ -17,193 +17,193 @@ namespace Corvus.Json.JsonSchema.TypeBuilder.Draft202012
         /// <summary>
         /// The {}/true type declaration.
         /// </summary>
-        public static readonly (string ns, string type) AnyTypeDeclaration = ("Corvus.Json", "JsonAny");
+        public static readonly (string Ns, string Type) AnyTypeDeclaration = ("Corvus.Json", "JsonAny");
 
         /// <summary>
         /// The not {}/false type declaration.
         /// </summary>
-        public static readonly (string ns, string type) NotAnyTypeDeclaration = ("Corvus.Json", "JsonNotAny");
+        public static readonly (string Ns, string Type) NotAnyTypeDeclaration = ("Corvus.Json", "JsonNotAny");
 
         /// <summary>
         /// Gets a type declaration instance for the Any type declaration.
         /// </summary>
-        public static readonly TypeDeclaration AnyTypeDeclarationInstance = new (new Schema(true));
+        public static readonly TypeDeclaration AnyTypeDeclarationInstance = new(new Schema(true));
 
         /// <summary>
         /// Gets a type declaration instance for the NotAny type declaration.
         /// </summary>
-        public static readonly TypeDeclaration NotAnyTypeDeclarationInstance = new (new Schema(false));
+        public static readonly TypeDeclaration NotAnyTypeDeclarationInstance = new(new Schema(false));
 
         /// <summary>
         /// The not {}/false type declaration.
         /// </summary>
-        public static readonly (string ns, string type) NullTypeDeclaration = ("Corvus.Json", "JsonNull");
+        public static readonly (string Ns, string Type) NullTypeDeclaration = ("Corvus.Json", "JsonNull");
 
         /// <summary>
         /// The not {}/false type declaration.
         /// </summary>
-        public static readonly (string ns, string type) NumberTypeDeclaration = ("Corvus.Json", "JsonNumber");
+        public static readonly (string Ns, string Type) NumberTypeDeclaration = ("Corvus.Json", "JsonNumber");
 
         /// <summary>
         /// The not {}/false type declaration.
         /// </summary>
-        public static readonly (string ns, string type) IntegerTypeDeclaration = ("Corvus.Json", "JsonInteger");
+        public static readonly (string Ns, string Type) IntegerTypeDeclaration = ("Corvus.Json", "JsonInteger");
 
         /// <summary>
         /// The array type declaration.
         /// </summary>
-        public static readonly (string ns, string type) ArrayTypeDeclaration = ("Corvus.Json", "JsonArray");
+        public static readonly (string Ns, string Type) ArrayTypeDeclaration = ("Corvus.Json", "JsonArray");
 
         /// <summary>
         /// The array type declaration.
         /// </summary>
-        public static readonly (string ns, string type) ObjectTypeDeclaration = ("Corvus.Json", "JsonObject");
+        public static readonly (string Ns, string Type) ObjectTypeDeclaration = ("Corvus.Json", "JsonObject");
 
         /// <summary>
         /// A clr <see cref="int"/> type.
         /// </summary>
-        public static readonly (string ns, string type) ClrInt32TypeDeclaration = ("Corvus.Json", "JsonInteger");
+        public static readonly (string Ns, string Type) ClrInt32TypeDeclaration = ("Corvus.Json", "JsonInteger");
 
         /// <summary>
         /// A clr <see cref="long"/> type.
         /// </summary>
-        public static readonly (string ns, string type) ClrInt64TypeDeclaration = ("Corvus.Json", "JsonInteger");
+        public static readonly (string Ns, string Type) ClrInt64TypeDeclaration = ("Corvus.Json", "JsonInteger");
 
         /// <summary>
         /// A clr <see cref="float"/> type.
         /// </summary>
-        public static readonly (string ns, string type) ClrFloatTypeDeclaration = ("Corvus.Json", "JsonNumber");
+        public static readonly (string Ns, string Type) ClrFloatTypeDeclaration = ("Corvus.Json", "JsonNumber");
 
         /// <summary>
         /// A clr <see cref="double"/> type.
         /// </summary>
-        public static readonly (string ns, string type) ClrDoubleTypeDeclaration = ("Corvus.Json", "JsonNumber");
+        public static readonly (string Ns, string Type) ClrDoubleTypeDeclaration = ("Corvus.Json", "JsonNumber");
 
         /// <summary>
         /// A clr <see cref="string"/> type.
         /// </summary>
-        public static readonly (string ns, string type) ClrStringTypeDeclaration = ("Corvus.Json", "JsonString");
+        public static readonly (string Ns, string Type) ClrStringTypeDeclaration = ("Corvus.Json", "JsonString");
 
         /// <summary>
         /// A clr <see cref="bool"/> type.
         /// </summary>
-        public static readonly (string ns, string type) ClrBoolTypeDeclaration = ("Corvus.Json", "JsonBoolean");
+        public static readonly (string Ns, string Type) ClrBoolTypeDeclaration = ("Corvus.Json", "JsonBoolean");
 
         /// <summary>
         /// A clr <see cref="Guid"/> type.
         /// </summary>
-        public static readonly (string ns, string type) ClrGuidTypeDeclaration = ("Corvus.Json", "JsonUuid");
+        public static readonly (string Ns, string Type) ClrGuidTypeDeclaration = ("Corvus.Json", "JsonUuid");
 
         /// <summary>
         /// A clr <see cref="Uri"/> type.
         /// </summary>
-        public static readonly (string ns, string type) ClrUriTypeDeclaration = ("Corvus.Json", "JsonUri");
+        public static readonly (string Ns, string Type) ClrUriTypeDeclaration = ("Corvus.Json", "JsonUri");
 
         /// <summary>
         /// A clr <see cref="Uri"/> type.
         /// </summary>
-        public static readonly (string ns, string type) ClrUriReferenceTypeDeclaration = ("Corvus.Json", "JsonUriReference");
+        public static readonly (string Ns, string Type) ClrUriReferenceTypeDeclaration = ("Corvus.Json", "JsonUriReference");
 
         /// <summary>
         /// A clr <see cref="Uri"/> type.
         /// </summary>
-        public static readonly (string ns, string type) ClrUriTemplateTypeDeclaration = ("Corvus.Json", "JsonUriTemplate");
+        public static readonly (string Ns, string Type) ClrUriTemplateTypeDeclaration = ("Corvus.Json", "JsonUriTemplate");
 
         /// <summary>
         /// A clr IRI type.
         /// </summary>
-        public static readonly (string ns, string type) ClrIriTypeDeclaration = ("Corvus.Json", "JsonIri");
+        public static readonly (string Ns, string Type) ClrIriTypeDeclaration = ("Corvus.Json", "JsonIri");
 
         /// <summary>
         /// A clr JsonPointer type.
         /// </summary>
-        public static readonly (string ns, string type) ClrJsonPointerTypeDeclaration = ("Corvus.Json", "JsonPointer");
+        public static readonly (string Ns, string Type) ClrJsonPointerTypeDeclaration = ("Corvus.Json", "JsonPointer");
 
         /// <summary>
         /// A clr RelativeJsonPointer type.
         /// </summary>
-        public static readonly (string ns, string type) ClrRelativeJsonPointerTypeDeclaration = ("Corvus.Json", "RelativeJsonPointer");
+        public static readonly (string Ns, string Type) ClrRelativeJsonPointerTypeDeclaration = ("Corvus.Json", "RelativeJsonPointer");
 
         /// <summary>
         /// A clr Regex type.
         /// </summary>
-        public static readonly (string ns, string type) ClrRegexTypeDeclaration = ("Corvus.Json", "JsonRegex");
+        public static readonly (string Ns, string Type) ClrRegexTypeDeclaration = ("Corvus.Json", "JsonRegex");
 
         /// <summary>
         /// A clr IRI-Reference type.
         /// </summary>
-        public static readonly (string ns, string type) ClrIriReferenceTypeDeclaration = ("Corvus.Json", "JsonIriReference");
+        public static readonly (string Ns, string Type) ClrIriReferenceTypeDeclaration = ("Corvus.Json", "JsonIriReference");
 
         /// <summary>
         /// A clr base64 encoded string type.
         /// </summary>
-        public static readonly (string ns, string type) ClrBase64StringTypeDeclaration = ("Corvus.Json", "JsonBase64String");
+        public static readonly (string Ns, string Type) ClrBase64StringTypeDeclaration = ("Corvus.Json", "JsonBase64String");
 
         /// <summary>
         /// A clr base64 encoded JsonDocument type.
         /// </summary>
-        public static readonly (string ns, string type) ClrBase64ContentTypeDeclaration = ("Corvus.Json", "JsonBase64Content");
+        public static readonly (string Ns, string Type) ClrBase64ContentTypeDeclaration = ("Corvus.Json", "JsonBase64Content");
 
         /// <summary>
         /// A clr string type.
         /// </summary>
-        public static readonly (string ns, string type) ClrContentTypeDeclaration = ("Corvus.Json", "JsonContent");
+        public static readonly (string Ns, string Type) ClrContentTypeDeclaration = ("Corvus.Json", "JsonContent");
 
         /// <summary>
         /// A clr <see cref="NodaTime.LocalDate"/> type.
         /// </summary>
-        public static readonly (string ns, string type) ClrDateTypeDeclaration = ("Corvus.Json", "JsonDate");
+        public static readonly (string Ns, string Type) ClrDateTypeDeclaration = ("Corvus.Json", "JsonDate");
 
         /// <summary>
         /// A clr <see cref="NodaTime.OffsetDateTime"/> type.
         /// </summary>
-        public static readonly (string ns, string type) ClrDateTimeTypeDeclaration = ("Corvus.Json", "JsonDateTime");
+        public static readonly (string Ns, string Type) ClrDateTimeTypeDeclaration = ("Corvus.Json", "JsonDateTime");
 
         /// <summary>
         /// A clr <see cref="NodaTime.Period"/> type.
         /// </summary>
-        public static readonly (string ns, string type) ClrDurationTypeDeclaration = ("Corvus.Json", "JsonDuration");
+        public static readonly (string Ns, string Type) ClrDurationTypeDeclaration = ("Corvus.Json", "JsonDuration");
 
         /// <summary>
         /// A clr <see cref="NodaTime.OffsetTime"/> type.
         /// </summary>
-        public static readonly (string ns, string type) ClrTimeTypeDeclaration = ("Corvus.Json", "JsonTime");
+        public static readonly (string Ns, string Type) ClrTimeTypeDeclaration = ("Corvus.Json", "JsonTime");
 
         /// <summary>
         /// A clr <see cref="string"/> type that matches an email address.
         /// </summary>
         // language=regex
-        public static readonly (string ns, string type) EmailTypeDeclaration = ("Corvus.Json", "JsonEmail");
+        public static readonly (string Ns, string Type) EmailTypeDeclaration = ("Corvus.Json", "JsonEmail");
 
         /// <summary>
         /// A clr <see cref="string"/> type that matches an idn-email address.
         /// </summary>
         // language=regex
-        public static readonly (string ns, string type) IdnEmailTypeDeclaration = ("Corvus.Json", "JsonIdnEmail");
+        public static readonly (string Ns, string Type) IdnEmailTypeDeclaration = ("Corvus.Json", "JsonIdnEmail");
 
         /// <summary>
         /// A clr <see cref="string"/> type that matches a hostname address.
         /// </summary>
         // language=regex
-        public static readonly (string ns, string type) HostnameTypeDeclaration = ("Corvus.Json", "JsonHostname");
+        public static readonly (string Ns, string Type) HostnameTypeDeclaration = ("Corvus.Json", "JsonHostname");
 
         /// <summary>
         /// A clr <see cref="string"/> type that matches a hostname address.
         /// </summary>
         // language=regex
-        public static readonly (string ns, string type) IdnHostnameTypeDeclaration = ("Corvus.Json", "JsonIdnHostname");
+        public static readonly (string Ns, string Type) IdnHostnameTypeDeclaration = ("Corvus.Json", "JsonIdnHostname");
 
         /// <summary>
         /// A clr <see cref="string"/> type that matches a V4 IP address.
         /// </summary>
         // language=regex
-        public static readonly (string ns, string type) IpV4TypeDeclaration = ("Corvus.Json", "JsonIpV4");
+        public static readonly (string Ns, string Type) IpV4TypeDeclaration = ("Corvus.Json", "JsonIpV4");
 
         /// <summary>
         /// A clr <see cref="string"/> type that matches a V6 IP address.
         /// </summary>
         // language=regex
-        public static readonly (string ns, string type) IpV6TypeDeclaration = ("Corvus.Json", "JsonIpV6");
+        public static readonly (string Ns, string Type) IpV6TypeDeclaration = ("Corvus.Json", "JsonIpV6");
 
         /// <summary>
         /// Gets the built in type and namespace for the given type and optional format.
@@ -213,7 +213,7 @@ namespace Corvus.Json.JsonSchema.TypeBuilder.Draft202012
         /// <param name="contentEncoding">The content encoding for which to get the type declaration.</param>
         /// <param name="contentMediaType">The content media type for which to get the type declaration.</param>
         /// <returns>A tuple of the namespace and type corresponding to the type and optional format.</returns>
-        public static (string ns, string type) GetTypeNameFor(string? type, string? format, string? contentEncoding, string? contentMediaType)
+        public static (string Ns, string Type) GetTypeNameFor(string? type, string? format, string? contentEncoding, string? contentMediaType)
         {
             return type switch
             {
@@ -229,7 +229,7 @@ namespace Corvus.Json.JsonSchema.TypeBuilder.Draft202012
             };
         }
 
-        private static (string ns, string type)? GetStringFor(string? format, string? contentEcoding, string? contentMediaType)
+        private static (string Ns, string Type)? GetStringFor(string? format, string? contentEcoding, string? contentMediaType)
         {
             return format switch
             {
@@ -256,7 +256,7 @@ namespace Corvus.Json.JsonSchema.TypeBuilder.Draft202012
             };
         }
 
-        private static (string ns, string type)? GetJsonStringFor(string? contentMediaType, string? contentEncoding)
+        private static (string Ns, string Type)? GetJsonStringFor(string? contentMediaType, string? contentEncoding)
         {
             return (contentMediaType, contentEncoding) switch
             {
@@ -268,7 +268,7 @@ namespace Corvus.Json.JsonSchema.TypeBuilder.Draft202012
             };
         }
 
-        private static (string ns, string type)? GetNumberFor(string? format)
+        private static (string Ns, string Type)? GetNumberFor(string? format)
         {
             return format switch
             {
@@ -278,7 +278,7 @@ namespace Corvus.Json.JsonSchema.TypeBuilder.Draft202012
             };
         }
 
-        private static (string ns, string type)? GetIntegerFor(string? format)
+        private static (string Ns, string Type)? GetIntegerFor(string? format)
         {
             return format switch
             {

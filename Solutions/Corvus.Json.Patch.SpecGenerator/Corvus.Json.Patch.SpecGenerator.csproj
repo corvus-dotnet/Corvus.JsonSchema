@@ -11,7 +11,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="Corvus.Extensions" Version="1.1.4" />
-		<PackageReference Include="Endjin.RecommendedPractices" Version="1.2.0">
+		<PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.0">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
@@ -25,5 +25,10 @@
 		<ProjectReference Include="..\Corvus.Json.Walker.JsonSchema\Corvus.Json.JsonSchema.TypeBuilder.csproj" />
 		<ProjectReference Include="..\Corvus.Json.Patch\Corvus.Json.Patch.csproj" />
 	</ItemGroup>
+
+	<PropertyGroup>
+		<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+		<RestoreLockedMode Condition="$(ContinuousIntegrationBuild) == 'true'">true</RestoreLockedMode>
+	</PropertyGroup>
 
 </Project>

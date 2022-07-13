@@ -21,7 +21,7 @@ namespace Corvus.Json
     public static class JsonValueExtensions
     {
         private const int MaxStackChars = 1024;
-        private static readonly ConcurrentDictionary<ConverterType, object> FactoryCache = new ();
+        private static readonly ConcurrentDictionary<ConverterType, object> FactoryCache = new();
 
         private delegate TTarget JsonValueConverter<TSource, TTarget>(TSource source)
             where TTarget : struct, IJsonValue;

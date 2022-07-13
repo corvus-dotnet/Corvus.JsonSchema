@@ -10,7 +10,7 @@ namespace Corvus.Json.Visitor;
 public enum Walk
 {
     /// <summary>
-    /// Continue to iterate into the children of this node, if present or move to the next available sibling
+    /// Continue to iterate into the children of this node, if present or move to the next available sibling.
     /// </summary>
     Continue,
 

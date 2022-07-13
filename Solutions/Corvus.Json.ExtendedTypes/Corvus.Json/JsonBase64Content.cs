@@ -368,10 +368,10 @@ namespace Corvus.Json
 
             if (this.value is string value)
             {
-                Span<byte> decoded = stackalloc byte[value.Length];
-                if (Convert.TryFromBase64String(value, decoded, out int bytesWritten))
+                Span<byte> decoded1 = stackalloc byte[value.Length];
+                if (Convert.TryFromBase64String(value, decoded1, out int bytesWritten))
                 {
-                    var reader = new Utf8JsonReader(decoded);
+                    var reader = new Utf8JsonReader(decoded1);
                     if (JsonDocument.TryParseValue(ref reader, out result))
                     {
                         return EncodedContentMediaTypeParseStatus.Success;
@@ -382,26 +382,26 @@ namespace Corvus.Json
                 return EncodedContentMediaTypeParseStatus.UnableToParseToMediaType;
             }
 
-            if (this.jsonElement.ValueKind == JsonValueKind.String)
+            if (this.jsonElement.ValueKind == JsonValueKind.String &&
+                this.jsonElement.TryGetBytesFromBase64(out byte[]? decoded))
             {
-                if (this.jsonElement.TryGetBytesFromBase64(out byte[]? decoded))
+                var reader = new Utf8JsonReader(decoded);
+#pragma warning disable RCS1075 // Avoid empty catch clause that catches System.Exception.
+                try
                 {
-                    var reader = new Utf8JsonReader(decoded);
-                    try
+                    if (JsonDocument.TryParseValue(ref reader, out result))
                     {
-                        if (JsonDocument.TryParseValue(ref reader, out result))
-                        {
-                            return EncodedContentMediaTypeParseStatus.Success;
-                        }
+                        return EncodedContentMediaTypeParseStatus.Success;
                     }
-                    catch (Exception)
-                    {
-                        // Fall through to the return...
-                    }
-
-                    result = default;
-                    return EncodedContentMediaTypeParseStatus.UnableToParseToMediaType;
                 }
+                catch (Exception)
+                {
+                    // Fall through to the return...
+                }
+#pragma warning restore RCS1075 // Avoid empty catch clause that catches System.Exception.
+
+                result = default;
+                return EncodedContentMediaTypeParseStatus.UnableToParseToMediaType;
             }
 
             result = null;

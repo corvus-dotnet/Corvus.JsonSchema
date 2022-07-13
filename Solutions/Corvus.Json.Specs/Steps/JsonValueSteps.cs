@@ -36,7 +36,7 @@ namespace Steps
         private readonly ScenarioContext scenarioContext;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="JsonValueEqualitySteps"/> class.
+        /// Initializes a new instance of the <see cref="JsonValueSteps"/> class.
         /// </summary>
         /// <param name="scenarioContext">The scenario context.</param>
         public JsonValueSteps(ScenarioContext scenarioContext)
@@ -110,8 +110,8 @@ namespace Steps
         public void WhenTheJsonValueIsRound_TrippedViaAString()
         {
             IJsonValue sut = this.scenarioContext.Get<IJsonValue>(SubjectUnderTest);
-            ArrayBufferWriter<byte> abw = new ();
-            using Utf8JsonWriter writer = new (abw);
+            ArrayBufferWriter<byte> abw = new();
+            using Utf8JsonWriter writer = new(abw);
             sut.WriteTo(writer);
             writer.Flush();
 

@@ -10,12 +10,12 @@ namespace Corvus.Json.Visitor;
 public enum Transformed
 {
     /// <summary>
-    /// The node was not transformed
+    /// The node was not transformed.
     /// </summary>
     No,
 
     /// <summary>
-    /// The node was transformed
+    /// The node was transformed.
     /// </summary>
     Yes,
 }

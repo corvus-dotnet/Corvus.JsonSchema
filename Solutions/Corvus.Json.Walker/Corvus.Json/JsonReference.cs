@@ -18,7 +18,7 @@ namespace Corvus.Json
         /// <summary>
         /// Gets a reference to the root fragment.
         /// </summary>
-        public static readonly JsonReference RootFragment = new ("#");
+        public static readonly JsonReference RootFragment = new("#");
 
         private readonly ReadOnlyMemory<char> reference;
 
@@ -437,7 +437,7 @@ namespace Corvus.Json
             int lastSlash = basePath.LastIndexOf('/');
             if (lastSlash > 0)
             {
-                basePath[.. (lastSlash + 1)].CopyTo(pathMemory.Span);
+                basePath[..(lastSlash + 1)].CopyTo(pathMemory.Span);
                 path.CopyTo(pathMemory.Span[(lastSlash + 1)..]);
                 return lastSlash + 1 + path.Length;
             }
@@ -764,7 +764,7 @@ namespace Corvus.Json
 
             if (index < this.reference.Length && this.reference.Span[index] == ':')
             {
-                return this.reference.Span[.. (index + 1)];
+                return this.reference.Span[..(index + 1)];
             }
 
             return ReadOnlySpan<char>.Empty;

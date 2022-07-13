@@ -67,11 +67,11 @@ namespace Corvus.JsonSchema.SpecGenerator
                 using FileStream selectorFile = File.OpenRead(args[2]);
                 selector = JsonSerializer.Deserialize<TestSelector>(
                     selectorFile,
-                    new JsonSerializerOptions(JsonSerializerDefaults.Web) { ReadCommentHandling = JsonCommentHandling.Skip }) !;
+                    new JsonSerializerOptions(JsonSerializerDefaults.Web) { ReadCommentHandling = JsonCommentHandling.Skip })!;
             }
             else
             {
-                selector = new ();
+                selector = new();
             }
 
             string testsDirectory = Path.Combine(inputDirectory, "tests");
@@ -143,7 +143,7 @@ namespace Corvus.JsonSchema.SpecGenerator
                             .ToDictionary(
                                 kv => kv.Key,
                                 kv => (IReadOnlySet<int>)new HashSet<int>(kv.Value.TestsToIgnoreIndices));
-                        yield return new (
+                        yield return new(
                             currentTestSet,
                             inputFile,
                             inputRelativePath,
@@ -161,7 +161,7 @@ namespace Corvus.JsonSchema.SpecGenerator
                     string outputSubdirectory = subdirectorySelector.OutputFolder is null
                         ? outputDirectory
                         : Path.Combine(outputDirectory, subdirectorySelector.OutputFolder);
-                    Regex directoryRegex = new (directoryPattern);
+                    Regex directoryRegex = new(directoryPattern);
                     bool foundAtLeastOneMatch = false;
                     foreach ((string subdirectoryPath, string subdirectoryName) in inputSubdirectories)
                     {

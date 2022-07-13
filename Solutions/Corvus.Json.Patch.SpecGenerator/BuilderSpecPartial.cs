@@ -12,7 +12,7 @@ public partial class BuilderSpec
 #pragma warning restore CA1050 // Declare types in namespaces
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="Spec"/> class.
+    /// Initializes a new instance of the <see cref="BuilderSpec"/> class.
     /// </summary>
     /// <param name="feature">The JSON object containing the feature definition.</param>
     /// <param name="name">The name of the feature.</param>

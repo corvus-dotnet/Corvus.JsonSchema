@@ -22,7 +22,7 @@ namespace Corvus.Json.JsonSchema.TypeBuilder.Draft201909
         /// </summary>
         public const string SchemaContent = "application/vnd.Corvus.jsonschemawalker.draft201909schemacontent";
 
-        private readonly Dictionary<string, LocatedElement> anchoredSchema = new ();
+        private readonly Dictionary<string, LocatedElement> anchoredSchema = new();
 
         /// <summary>
         /// Register this with the given <see cref="JsonWalker"/>.

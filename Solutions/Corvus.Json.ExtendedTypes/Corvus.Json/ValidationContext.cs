@@ -25,12 +25,12 @@ namespace Corvus.Json
         /// <summary>
         /// Gets a valid context.
         /// </summary>
-        public static readonly ValidationContext ValidContext = new (true, ImmutableArray<ulong>.Empty, ImmutableArray<ulong>.Empty, ImmutableArray<ulong>.Empty, ImmutableArray<ulong>.Empty, ImmutableStack<string>.Empty, ImmutableStack<string>.Empty, ImmutableArray<ValidationResult>.Empty, UsingFeatures.None);
+        public static readonly ValidationContext ValidContext = new(true, ImmutableArray<ulong>.Empty, ImmutableArray<ulong>.Empty, ImmutableArray<ulong>.Empty, ImmutableArray<ulong>.Empty, ImmutableStack<string>.Empty, ImmutableStack<string>.Empty, ImmutableArray<ValidationResult>.Empty, UsingFeatures.None);
 
         /// <summary>
         /// Gets an invalid context.
         /// </summary>
-        public static readonly ValidationContext InvalidContext = new (false, ImmutableArray<ulong>.Empty, ImmutableArray<ulong>.Empty, ImmutableArray<ulong>.Empty, ImmutableArray<ulong>.Empty, ImmutableStack<string>.Empty, ImmutableStack<string>.Empty, ImmutableArray<ValidationResult>.Empty, UsingFeatures.None);
+        public static readonly ValidationContext InvalidContext = new(false, ImmutableArray<ulong>.Empty, ImmutableArray<ulong>.Empty, ImmutableArray<ulong>.Empty, ImmutableArray<ulong>.Empty, ImmutableStack<string>.Empty, ImmutableStack<string>.Empty, ImmutableArray<ValidationResult>.Empty, UsingFeatures.None);
 
         private static readonly ImmutableStack<string> RootLocationStack = ImmutableStack.Create("#");
         private static readonly ImmutableStack<string> RootAbsoluteLocationStack = ImmutableStack.Create("#");

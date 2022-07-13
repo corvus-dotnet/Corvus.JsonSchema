@@ -13,7 +13,7 @@ public partial class Benchmark
 #pragma warning restore CA1050 // Declare types in namespaces
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="Spec"/> class.
+    /// Initializes a new instance of the <see cref="Benchmark"/> class.
     /// </summary>
     /// <param name="scenario">The JSON object containing the scenario definition.</param>
     /// <param name="featureName">The name of the feature.</param>

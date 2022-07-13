@@ -25,7 +25,7 @@ namespace Steps
         private readonly ScenarioContext scenarioContext;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="UriTemplateSteps"/> class.
+        /// Initializes a new instance of the <see cref="JsonPatchSteps"/> class.
         /// </summary>
         /// <param name="scenarioContext">The scenario context.</param>
         public JsonPatchSteps(ScenarioContext scenarioContext)

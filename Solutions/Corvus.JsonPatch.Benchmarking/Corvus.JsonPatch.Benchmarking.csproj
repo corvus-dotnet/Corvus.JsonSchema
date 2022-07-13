@@ -15,7 +15,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.13.1" />
-		<PackageReference Include="Endjin.RecommendedPractices" Version="1.2.0">
+		<PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.0">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
@@ -33,5 +33,10 @@
 	<ItemGroup>
 		<Folder Include="Benchmarks\Generated\" />
 	</ItemGroup>
+
+	<PropertyGroup>
+		<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+		<RestoreLockedMode Condition="$(ContinuousIntegrationBuild) == 'true'">true</RestoreLockedMode>
+	</PropertyGroup>
 
 </Project>

@@ -22,9 +22,9 @@ namespace Corvus.Json.JsonSchema.TypeBuilder.Draft202012
         /// </summary>
         public const string SchemaContent = "application/vnd.Corvus.jsonschemawalker.draft201909schemacontent";
 
-        private readonly Dictionary<string, LocatedElement> anchoredSchema = new ();
-        private readonly Dictionary<string, LocatedElement> dynamicAnchoredSchema = new ();
-        private readonly Stack<LocatedElement> currentSchema = new ();
+        private readonly Dictionary<string, LocatedElement> anchoredSchema = new();
+        private readonly Dictionary<string, LocatedElement> dynamicAnchoredSchema = new();
+        private readonly Stack<LocatedElement> currentSchema = new();
 
         /// <summary>
         /// Register this with the given <see cref="JsonWalker"/>.
@@ -109,7 +109,7 @@ namespace Corvus.Json.JsonSchema.TypeBuilder.Draft202012
                 {
                     if (property.NameEquals("$anchor") || property.NameEquals("$dynamicAnchor"))
                     {
-                        if (property.Value.ValueKind == JsonValueKind.String && !this.anchoredSchema.ContainsKey(property.Value.GetString() !))
+                        if (property.Value.ValueKind == JsonValueKind.String && !this.anchoredSchema.ContainsKey(property.Value.GetString()!))
                         {
                             return true;
                         }

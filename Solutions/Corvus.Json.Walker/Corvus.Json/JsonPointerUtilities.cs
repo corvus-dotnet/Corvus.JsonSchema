@@ -19,7 +19,7 @@ namespace Corvus.Json
     /// </remarks>
     public static class JsonPointerUtilities
     {
-        private static readonly HashSet<char> ReservedCharacters = new () { '%', '"' };
+        private static readonly HashSet<char> ReservedCharacters = new() { '%', '"' };
         private static readonly char[] HexDigits = new char[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
 
         /// <summary>

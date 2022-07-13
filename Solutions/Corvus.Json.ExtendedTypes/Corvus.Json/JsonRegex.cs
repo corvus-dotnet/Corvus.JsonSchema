@@ -15,7 +15,7 @@ namespace Corvus.Json
     /// </summary>
     public readonly struct JsonRegex : IJsonValue, IEquatable<JsonRegex>
     {
-        private static readonly Regex Empty = new (".*", RegexOptions.None);
+        private static readonly Regex Empty = new(".*", RegexOptions.None);
         private readonly JsonElement jsonElement;
         private readonly string? value;
         private readonly Regex? localRegexValue;

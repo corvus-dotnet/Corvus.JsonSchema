@@ -10,7 +10,7 @@ namespace Corvus.Json.Patch.SpecGenerator
     /// <summary>
     /// Spec Generator for UriTemplates.
     /// </summary>
-    public class Program
+    public static class Program
     {
         /// <summary>
         /// Program entry point.
