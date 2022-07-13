@@ -12,26 +12,37 @@ namespace Corvus.Json
     /// </summary>
     public readonly struct ValidationContext
     {
+        [Flags]
+        private enum UsingFeatures
+        {
+            None = 0b0000,
+            EvaluatedProperties = 0b0001,
+            EvaluatedItems = 0b0010,
+            Results = 0b0100,
+            Stack = 0b1000,
+        }
+
         /// <summary>
         /// Gets a valid context.
         /// </summary>
-        public static readonly ValidationContext ValidContext = new (true);
+        public static readonly ValidationContext ValidContext = new (true, ImmutableArray<ulong>.Empty, ImmutableArray<ulong>.Empty, ImmutableArray<ulong>.Empty, ImmutableArray<ulong>.Empty, ImmutableStack<string>.Empty, ImmutableStack<string>.Empty, ImmutableArray<ValidationResult>.Empty, UsingFeatures.None);
 
         /// <summary>
         /// Gets an invalid context.
         /// </summary>
-        public static readonly ValidationContext InvalidContext = new (false);
+        public static readonly ValidationContext InvalidContext = new (false, ImmutableArray<ulong>.Empty, ImmutableArray<ulong>.Empty, ImmutableArray<ulong>.Empty, ImmutableArray<ulong>.Empty, ImmutableStack<string>.Empty, ImmutableStack<string>.Empty, ImmutableArray<ValidationResult>.Empty, UsingFeatures.None);
 
         private static readonly ImmutableStack<string> RootLocationStack = ImmutableStack.Create("#");
         private static readonly ImmutableStack<string> RootAbsoluteLocationStack = ImmutableStack.Create("#");
 
-        private readonly ImmutableArray<ulong>? localEvaluatedItemIndex;
-        private readonly ImmutableArray<ulong>? localEvaluatedProperties;
-        private readonly ImmutableArray<ulong>? appliedEvaluatedItemIndex;
-        private readonly ImmutableArray<ulong>? appliedEvaluatedProperties;
-        private readonly ImmutableStack<string>? absoluteKeywordLocationStack;
-        private readonly ImmutableStack<string>? locationStack;
-        private readonly ImmutableArray<ValidationResult>? results;
+        private readonly UsingFeatures usingFeatures;
+        private readonly ImmutableArray<ulong> localEvaluatedItemIndex;
+        private readonly ImmutableArray<ulong> localEvaluatedProperties;
+        private readonly ImmutableArray<ulong> appliedEvaluatedItemIndex;
+        private readonly ImmutableArray<ulong> appliedEvaluatedProperties;
+        private readonly ImmutableStack<string> absoluteKeywordLocationStack;
+        private readonly ImmutableStack<string> locationStack;
+        private readonly ImmutableArray<ValidationResult> results;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ValidationContext"/> struct.
@@ -44,7 +55,8 @@ namespace Corvus.Json
         /// <param name="locationStack">The current location stack.</param>
         /// <param name="absoluteKeywordLocationStack">The current absolute keyword location stack.</param>
         /// <param name="results">The validation results.</param>
-        private ValidationContext(bool isValid, in ImmutableArray<ulong>? localEvaluatedItemIndex = null, in ImmutableArray<ulong>? localEvaluatedProperties = null, in ImmutableArray<ulong>? appliedEvaluatedItemIndex = null, in ImmutableArray<ulong>? appliedEvaluatedProperties = null, in ImmutableStack<string>? locationStack = null, in ImmutableStack<string>? absoluteKeywordLocationStack = null, in ImmutableArray<ValidationResult>? results = null)
+        /// <param name="usingFeatures">Indicates which features are being used.</param>
+        private ValidationContext(bool isValid, in ImmutableArray<ulong> localEvaluatedItemIndex, in ImmutableArray<ulong> localEvaluatedProperties, in ImmutableArray<ulong> appliedEvaluatedItemIndex, in ImmutableArray<ulong> appliedEvaluatedProperties, in ImmutableStack<string> locationStack, in ImmutableStack<string> absoluteKeywordLocationStack, in ImmutableArray<ValidationResult> results, UsingFeatures usingFeatures)
         {
             this.localEvaluatedItemIndex = localEvaluatedItemIndex;
             this.localEvaluatedProperties = localEvaluatedProperties;
@@ -54,6 +66,7 @@ namespace Corvus.Json
             this.absoluteKeywordLocationStack = absoluteKeywordLocationStack;
             this.IsValid = isValid;
             this.results = results;
+            this.usingFeatures = usingFeatures;
         }
 
         /// <summary>
@@ -64,7 +77,7 @@ namespace Corvus.Json
         /// <summary>
         /// Gets the validation results.
         /// </summary>
-        public ImmutableArray<ValidationResult> Results => this.results ?? ImmutableArray<ValidationResult>.Empty;
+        public ImmutableArray<ValidationResult> Results => this.results;
 
         /// <summary>
         /// Use the results set.
@@ -72,7 +85,7 @@ namespace Corvus.Json
         /// <returns>The validation context enabled with the keyword stack.</returns>
         public ValidationContext UsingResults()
         {
-            return new ValidationContext(this.IsValid, this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack, this.absoluteKeywordLocationStack, this.results ?? ImmutableArray<ValidationResult>.Empty);
+            return new ValidationContext(this.IsValid, this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack, this.absoluteKeywordLocationStack, this.results, this.usingFeatures | UsingFeatures.Results);
         }
 
         /// <summary>
@@ -82,7 +95,8 @@ namespace Corvus.Json
         /// <remarks>If you enable the keyword stack, this automatically enables results.</remarks>
         public ValidationContext UsingStack()
         {
-            return new ValidationContext(this.IsValid, this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack ?? RootLocationStack, this.absoluteKeywordLocationStack ?? RootAbsoluteLocationStack, this.results ?? ImmutableArray<ValidationResult>.Empty);
+            bool usingStack = (this.usingFeatures & UsingFeatures.Stack) != 0;
+            return new ValidationContext(this.IsValid, this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, usingStack ? this.locationStack : RootLocationStack, usingStack ? this.absoluteKeywordLocationStack : RootAbsoluteLocationStack, this.results, this.usingFeatures | UsingFeatures.Stack);
         }
 
         /// <summary>
@@ -91,7 +105,8 @@ namespace Corvus.Json
         /// <returns>The validation context enabled with evaluated properties.</returns>
         public ValidationContext UsingEvaluatedProperties()
         {
-            return new ValidationContext(this.IsValid, this.localEvaluatedItemIndex, this.localEvaluatedProperties ?? ImmutableArray.Create<ulong>(0), this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties ?? ImmutableArray.Create<ulong>(0), this.locationStack, this.absoluteKeywordLocationStack, this.results);
+            bool usingEvaluatedProperties = (this.usingFeatures & UsingFeatures.EvaluatedProperties) != 0;
+            return new ValidationContext(this.IsValid, this.localEvaluatedItemIndex, usingEvaluatedProperties ? this.localEvaluatedProperties : ImmutableArray.Create<ulong>(0), this.appliedEvaluatedItemIndex, usingEvaluatedProperties ? this.appliedEvaluatedProperties : ImmutableArray.Create<ulong>(0), this.locationStack, this.absoluteKeywordLocationStack, this.results, this.usingFeatures | UsingFeatures.EvaluatedProperties);
         }
 
         /// <summary>
@@ -100,7 +115,9 @@ namespace Corvus.Json
         /// <returns>The validation context enabled with evaluated properties.</returns>
         public ValidationContext UsingEvaluatedItems()
         {
-            return new ValidationContext(this.IsValid, this.localEvaluatedItemIndex ?? ImmutableArray.Create<ulong>(0), this.localEvaluatedProperties, this.appliedEvaluatedItemIndex ?? ImmutableArray.Create<ulong>(0), this.appliedEvaluatedProperties, this.locationStack, this.absoluteKeywordLocationStack, this.results);
+            bool usingEvaluatedItems = (this.usingFeatures & UsingFeatures.EvaluatedItems) != 0;
+
+            return new ValidationContext(this.IsValid, usingEvaluatedItems ? this.localEvaluatedItemIndex : ImmutableArray.Create<ulong>(0), this.localEvaluatedProperties, usingEvaluatedItems ? this.appliedEvaluatedItemIndex : ImmutableArray.Create<ulong>(0), this.appliedEvaluatedProperties, this.locationStack, this.absoluteKeywordLocationStack, this.results, this.usingFeatures | UsingFeatures.EvaluatedItems);
         }
 
         /// <summary>
@@ -144,10 +161,7 @@ namespace Corvus.Json
         /// <returns><c>True</c> if the property has been evaluated either locally or by applied schema.</returns>
         public bool HasEvaluatedLocalOrAppliedProperty(int propertyIndex)
         {
-            bool hasLep = this.localEvaluatedProperties is ImmutableArray<ulong>;
-            bool hasAep = this.appliedEvaluatedProperties is ImmutableArray<ulong>;
-
-            if (!hasLep && !hasAep)
+            if ((this.usingFeatures & UsingFeatures.EvaluatedProperties) == 0)
             {
                 return false;
             }
@@ -156,20 +170,14 @@ namespace Corvus.Json
             int bit = propertyIndex % 64;
             ulong bitPattern = 1UL << bit;
 
-            if (this.localEvaluatedProperties is ImmutableArray<ulong> lep)
+            if (offset < this.localEvaluatedProperties.Length && ((this.localEvaluatedProperties[offset] & bitPattern) != 0))
             {
-                if (offset < lep.Length && ((lep[offset] & bitPattern) != 0))
-                {
-                    return true;
-                }
+                return true;
             }
 
-            if (this.appliedEvaluatedProperties is ImmutableArray<ulong> aep)
+            if (offset < this.appliedEvaluatedProperties.Length && ((this.appliedEvaluatedProperties[offset] & bitPattern) != 0))
             {
-                if (offset < aep.Length && ((aep[offset] & bitPattern) != 0))
-                {
-                    return true;
-                }
+                return true;
             }
 
             return false;
@@ -182,10 +190,7 @@ namespace Corvus.Json
         /// <returns><c>True</c> if an item has been evaluated either locally or by applied schema.</returns>
         public bool HasEvaluatedLocalOrAppliedItemIndex(int itemIndex)
         {
-            bool hasLeii = this.localEvaluatedItemIndex is ImmutableArray<ulong>;
-            bool hasAeii = this.appliedEvaluatedItemIndex is ImmutableArray<ulong>;
-
-            if (!hasLeii && !hasAeii)
+            if ((this.usingFeatures & UsingFeatures.EvaluatedItems) == 0)
             {
                 return false;
             }
@@ -194,20 +199,14 @@ namespace Corvus.Json
             int bit = itemIndex % 64;
             ulong bitPattern = 1UL << bit;
 
-            if (this.localEvaluatedItemIndex is ImmutableArray<ulong> leii)
+            if (offset < this.localEvaluatedItemIndex.Length && ((this.localEvaluatedItemIndex[offset] & bitPattern) != 0))
             {
-                if (offset < leii.Length && ((leii[offset] & bitPattern) != 0))
-                {
-                    return true;
-                }
+                return true;
             }
 
-            if (this.appliedEvaluatedItemIndex is ImmutableArray<ulong> aeii)
+            if (offset < this.appliedEvaluatedItemIndex.Length && ((this.appliedEvaluatedItemIndex[offset] & bitPattern) != 0))
             {
-                if (offset < aeii.Length && ((aeii[offset] & bitPattern) != 0))
-                {
-                    return true;
-                }
+                return true;
             }
 
             return false;
@@ -221,7 +220,17 @@ namespace Corvus.Json
         /// <returns>The updated validation context.</returns>
         public ValidationContext WithResult(bool isValid, string? message = null)
         {
-            return new ValidationContext(this.IsValid && isValid, this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack, this.absoluteKeywordLocationStack, message is string msg ? this.results?.Add(new ValidationResult(isValid, msg, this.absoluteKeywordLocationStack?.Peek(), this.locationStack?.Peek())) : this.results);
+            if ((this.usingFeatures & UsingFeatures.Results) == 0)
+            {
+                return new ValidationContext(this.IsValid && isValid, this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack, this.absoluteKeywordLocationStack, this.results, this.usingFeatures);
+            }
+
+            if ((this.usingFeatures & UsingFeatures.Stack) == 0)
+            {
+                return new ValidationContext(this.IsValid && isValid, this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack, this.absoluteKeywordLocationStack, message is string msg1 ? this.results.Add(new ValidationResult(isValid, msg1, null, null)) : this.results, this.usingFeatures);
+            }
+
+            return new ValidationContext(this.IsValid && isValid, this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack, this.absoluteKeywordLocationStack, message is string msg2 ? this.results.Add(new ValidationResult(isValid, msg2, this.absoluteKeywordLocationStack.Peek(), this.locationStack?.Peek())) : this.results, this.usingFeatures);
         }
 
         /// <summary>
@@ -231,7 +240,7 @@ namespace Corvus.Json
         /// <returns>The updated validation context.</returns>
         public ValidationContext WithLocalItemIndex(int index)
         {
-            return new ValidationContext(this.IsValid, this.AddLocalEvaluatedItem(index), this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack, this.absoluteKeywordLocationStack, this.results);
+            return new ValidationContext(this.IsValid, this.AddLocalEvaluatedItem(index), this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack, this.absoluteKeywordLocationStack, this.results, this.usingFeatures);
         }
 
         /// <summary>
@@ -241,7 +250,7 @@ namespace Corvus.Json
         /// <returns>The updated validation context.</returns>
         public ValidationContext WithLocalProperty(int propertyIndex)
         {
-            return new ValidationContext(this.IsValid, this.localEvaluatedItemIndex, this.AddLocalEvaluatedProperty(propertyIndex), this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack, this.absoluteKeywordLocationStack, this.results);
+            return new ValidationContext(this.IsValid, this.localEvaluatedItemIndex, this.AddLocalEvaluatedProperty(propertyIndex), this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack, this.absoluteKeywordLocationStack, this.results, this.usingFeatures);
         }
 
         /// <summary>
@@ -252,7 +261,7 @@ namespace Corvus.Json
         /// <returns>The updated validation context.</returns>
         public ValidationContext MergeChildContext(in ValidationContext childContext, bool includeResults)
         {
-            return new ValidationContext(includeResults ? this.IsValid && childContext.IsValid : this.IsValid, this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.CombineItems(childContext), this.CombineProperties(childContext), this.locationStack, this.absoluteKeywordLocationStack, includeResults && childContext.results is not null ? this.results?.AddRange(childContext.results) : this.results);
+            return new ValidationContext(includeResults ? this.IsValid && childContext.IsValid : this.IsValid, this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.CombineItems(childContext), this.CombineProperties(childContext), this.locationStack, this.absoluteKeywordLocationStack, includeResults && (this.usingFeatures & UsingFeatures.Results) != 0 && (childContext.usingFeatures & UsingFeatures.Results) != 0 ? this.results.AddRange(childContext.results) : this.results, this.usingFeatures);
         }
 
         /// <summary>
@@ -263,7 +272,12 @@ namespace Corvus.Json
         /// <returns>The context updated with the given location.</returns>
         public ValidationContext PushLocation(string location, string absoluteKeywordLocation)
         {
-            return new ValidationContext(this.IsValid, this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack?.Push(location), this.absoluteKeywordLocationStack?.Push(absoluteKeywordLocation), this.results);
+            if ((this.usingFeatures & UsingFeatures.Stack) == 0)
+            {
+                return this;
+            }
+
+            return new ValidationContext(this.IsValid, this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack.Push(location), this.absoluteKeywordLocationStack.Push(absoluteKeywordLocation), this.results, this.usingFeatures);
         }
 
         /// <summary>
@@ -272,7 +286,12 @@ namespace Corvus.Json
         /// <returns>The updated context.</returns>
         public ValidationContext PopLocation()
         {
-            return new ValidationContext(this.IsValid, this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack?.Pop(), this.absoluteKeywordLocationStack?.Pop(), this.results);
+            if ((this.usingFeatures & UsingFeatures.Stack) == 0)
+            {
+                return this;
+            }
+
+            return new ValidationContext(this.IsValid, this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack.Pop(), this.absoluteKeywordLocationStack.Pop(), this.results, this.usingFeatures);
         }
 
         /// <summary>
@@ -281,7 +300,10 @@ namespace Corvus.Json
         /// <returns>A new (valid) validation context with no evaluated items or properties, at the current location.</returns>
         public ValidationContext CreateChildContext()
         {
-            return new ValidationContext(this.IsValid, this.localEvaluatedItemIndex is null ? null : ImmutableArray.Create<ulong>(0), this.localEvaluatedProperties is null ? null : ImmutableArray.Create<ulong>(0), this.appliedEvaluatedItemIndex is null ? null : ImmutableArray.Create<ulong>(0), this.appliedEvaluatedProperties is null ? null : ImmutableArray.Create<ulong>(0), this.locationStack, this.absoluteKeywordLocationStack, null);
+            bool usingEvaluatedItems = (this.usingFeatures & UsingFeatures.EvaluatedItems) != 0;
+            bool usingEvaluatedProperties = (this.usingFeatures & UsingFeatures.EvaluatedProperties) != 0;
+
+            return new ValidationContext(this.IsValid, usingEvaluatedItems ? ImmutableArray.Create<ulong>(0) : ImmutableArray<ulong>.Empty, usingEvaluatedProperties ? ImmutableArray.Create<ulong>(0) : ImmutableArray<ulong>.Empty, usingEvaluatedItems ? ImmutableArray.Create<ulong>(0) : ImmutableArray<ulong>.Empty, usingEvaluatedProperties ? ImmutableArray.Create<ulong>(0) : ImmutableArray<ulong>.Empty, this.locationStack, this.absoluteKeywordLocationStack, ImmutableArray<ValidationResult>.Empty, this.usingFeatures);
         }
 
         /// <summary>
@@ -311,17 +333,23 @@ namespace Corvus.Json
                 return this;
             }
 
-            ImmutableArray<ValidationResult>.Builder builder = ImmutableArray.CreateBuilder<ValidationResult>();
-
-            if (this.results is ImmutableArray<ValidationResult> thisResults)
+            if ((this.usingFeatures & UsingFeatures.Results) == 0)
             {
-                builder.AddRange(thisResults);
+                return new ValidationContext(
+                    isValid,
+                    this.localEvaluatedItemIndex,
+                    this.localEvaluatedProperties,
+                    this.appliedEvaluatedItemIndex,
+                    this.appliedEvaluatedProperties,
+                    this.locationStack,
+                    this.absoluteKeywordLocationStack,
+                    this.results,
+                    this.usingFeatures);
             }
 
-            if (result1.results is ImmutableArray<ValidationResult> result1Results)
-            {
-                builder.AddRange(result1Results);
-            }
+            var builder = this.results.ToBuilder();
+
+            builder.AddRange(result1.Results);
 
             return new ValidationContext(
                 isValid,
@@ -331,7 +359,8 @@ namespace Corvus.Json
                 this.appliedEvaluatedProperties,
                 this.locationStack,
                 this.absoluteKeywordLocationStack,
-                builder.ToImmutable());
+                builder.ToImmutable(),
+                this.usingFeatures);
         }
 
         /// <summary>
@@ -362,22 +391,25 @@ namespace Corvus.Json
                 return this;
             }
 
-            ImmutableArray<ValidationResult>.Builder builder = ImmutableArray.CreateBuilder<ValidationResult>();
-
-            if (this.results is ImmutableArray<ValidationResult> thisResults)
+            if ((this.usingFeatures & UsingFeatures.Results) == 0)
             {
-                builder.AddRange(thisResults);
+                return new ValidationContext(
+                    isValid,
+                    this.localEvaluatedItemIndex,
+                    this.localEvaluatedProperties,
+                    this.appliedEvaluatedItemIndex,
+                    this.appliedEvaluatedProperties,
+                    this.locationStack,
+                    this.absoluteKeywordLocationStack,
+                    this.results,
+                    this.usingFeatures);
             }
 
-            if (result1.results is ImmutableArray<ValidationResult> result1Results)
-            {
-                builder.AddRange(result1Results);
-            }
+            var builder = this.results.ToBuilder();
 
-            if (result2.results is ImmutableArray<ValidationResult> result2Results)
-            {
-                builder.AddRange(result2Results);
-            }
+            builder.AddRange(result1.results);
+
+            builder.AddRange(result2.results);
 
             return new ValidationContext(
                 isValid,
@@ -387,7 +419,8 @@ namespace Corvus.Json
                 this.appliedEvaluatedProperties,
                 this.locationStack,
                 this.absoluteKeywordLocationStack,
-                builder.ToImmutable());
+                builder.ToImmutable(),
+                this.usingFeatures);
         }
 
         /// <summary>
@@ -419,27 +452,27 @@ namespace Corvus.Json
                 return this;
             }
 
-            ImmutableArray<ValidationResult>.Builder builder = ImmutableArray.CreateBuilder<ValidationResult>();
-
-            if (this.results is ImmutableArray<ValidationResult> thisResults)
+            if ((this.usingFeatures & UsingFeatures.Results) == 0)
             {
-                builder.AddRange(thisResults);
+                return new ValidationContext(
+                    isValid,
+                    this.localEvaluatedItemIndex,
+                    this.localEvaluatedProperties,
+                    this.appliedEvaluatedItemIndex,
+                    this.appliedEvaluatedProperties,
+                    this.locationStack,
+                    this.absoluteKeywordLocationStack,
+                    this.results,
+                    this.usingFeatures);
             }
 
-            if (result1.results is ImmutableArray<ValidationResult> result1Results)
-            {
-                builder.AddRange(result1Results);
-            }
+            var builder = this.results.ToBuilder();
 
-            if (result2.results is ImmutableArray<ValidationResult> result2Results)
-            {
-                builder.AddRange(result2Results);
-            }
+            builder.AddRange(result1.results);
 
-            if (result3.results is ImmutableArray<ValidationResult> result3Results)
-            {
-                builder.AddRange(result3Results);
-            }
+            builder.AddRange(result2.results);
+
+            builder.AddRange(result3.results);
 
             return new ValidationContext(
                 isValid,
@@ -449,7 +482,8 @@ namespace Corvus.Json
                 this.appliedEvaluatedProperties,
                 this.locationStack,
                 this.absoluteKeywordLocationStack,
-                builder.ToImmutable());
+                builder.ToImmutable(),
+                this.usingFeatures);
         }
 
         /// <summary>
@@ -482,32 +516,29 @@ namespace Corvus.Json
                 return this;
             }
 
-            ImmutableArray<ValidationResult>.Builder builder = ImmutableArray.CreateBuilder<ValidationResult>();
-
-            if (this.results is ImmutableArray<ValidationResult> thisResults)
+            if ((this.usingFeatures & UsingFeatures.Results) == 0)
             {
-                builder.AddRange(thisResults);
+                return new ValidationContext(
+                    isValid,
+                    this.localEvaluatedItemIndex,
+                    this.localEvaluatedProperties,
+                    this.appliedEvaluatedItemIndex,
+                    this.appliedEvaluatedProperties,
+                    this.locationStack,
+                    this.absoluteKeywordLocationStack,
+                    this.results,
+                    this.usingFeatures);
             }
 
-            if (result1.results is ImmutableArray<ValidationResult> result1Results)
-            {
-                builder.AddRange(result1Results);
-            }
+            var builder = this.results.ToBuilder();
 
-            if (result2.results is ImmutableArray<ValidationResult> result2Results)
-            {
-                builder.AddRange(result2Results);
-            }
+            builder.AddRange(result1.results);
 
-            if (result3.results is ImmutableArray<ValidationResult> result3Results)
-            {
-                builder.AddRange(result3Results);
-            }
+            builder.AddRange(result2.results);
 
-            if (result4.results is ImmutableArray<ValidationResult> result4Results)
-            {
-                builder.AddRange(result4Results);
-            }
+            builder.AddRange(result3.results);
+
+            builder.AddRange(result4.results);
 
             return new ValidationContext(
                 isValid,
@@ -517,7 +548,8 @@ namespace Corvus.Json
                 this.appliedEvaluatedProperties,
                 this.locationStack,
                 this.absoluteKeywordLocationStack,
-                builder.ToImmutable());
+                builder.ToImmutable(),
+                this.usingFeatures);
         }
 
         /// <summary>
@@ -551,37 +583,27 @@ namespace Corvus.Json
                 return this;
             }
 
-            ImmutableArray<ValidationResult>.Builder builder = ImmutableArray.CreateBuilder<ValidationResult>();
-
-            if (this.results is ImmutableArray<ValidationResult> thisResults)
+            if ((this.usingFeatures & UsingFeatures.Results) == 0)
             {
-                builder.AddRange(thisResults);
+                return new ValidationContext(
+                    isValid,
+                    this.localEvaluatedItemIndex,
+                    this.localEvaluatedProperties,
+                    this.appliedEvaluatedItemIndex,
+                    this.appliedEvaluatedProperties,
+                    this.locationStack,
+                    this.absoluteKeywordLocationStack,
+                    this.results,
+                    this.usingFeatures);
             }
 
-            if (result1.results is ImmutableArray<ValidationResult> result1Results)
-            {
-                builder.AddRange(result1Results);
-            }
+            var builder = this.results.ToBuilder();
 
-            if (result2.results is ImmutableArray<ValidationResult> result2Results)
-            {
-                builder.AddRange(result2Results);
-            }
-
-            if (result3.results is ImmutableArray<ValidationResult> result3Results)
-            {
-                builder.AddRange(result3Results);
-            }
-
-            if (result4.results is ImmutableArray<ValidationResult> result4Results)
-            {
-                builder.AddRange(result4Results);
-            }
-
-            if (result5.results is ImmutableArray<ValidationResult> result5Results)
-            {
-                builder.AddRange(result5Results);
-            }
+            builder.AddRange(result1.results);
+            builder.AddRange(result2.results);
+            builder.AddRange(result3.results);
+            builder.AddRange(result4.results);
+            builder.AddRange(result5.results);
 
             return new ValidationContext(
                 isValid,
@@ -591,7 +613,8 @@ namespace Corvus.Json
                 this.appliedEvaluatedProperties,
                 this.locationStack,
                 this.absoluteKeywordLocationStack,
-                builder.ToImmutable());
+                builder.ToImmutable(),
+                this.usingFeatures);
         }
 
         /// <summary>
@@ -626,42 +649,28 @@ namespace Corvus.Json
                 return this;
             }
 
-            ImmutableArray<ValidationResult>.Builder builder = ImmutableArray.CreateBuilder<ValidationResult>();
-
-            if (this.results is ImmutableArray<ValidationResult> thisResults)
+            if ((this.usingFeatures & UsingFeatures.Results) == 0)
             {
-                builder.AddRange(thisResults);
+                return new ValidationContext(
+                    isValid,
+                    this.localEvaluatedItemIndex,
+                    this.localEvaluatedProperties,
+                    this.appliedEvaluatedItemIndex,
+                    this.appliedEvaluatedProperties,
+                    this.locationStack,
+                    this.absoluteKeywordLocationStack,
+                    this.results,
+                    this.usingFeatures);
             }
 
-            if (result1.results is ImmutableArray<ValidationResult> result1Results)
-            {
-                builder.AddRange(result1Results);
-            }
+            var builder = this.results.ToBuilder();
 
-            if (result2.results is ImmutableArray<ValidationResult> result2Results)
-            {
-                builder.AddRange(result2Results);
-            }
-
-            if (result3.results is ImmutableArray<ValidationResult> result3Results)
-            {
-                builder.AddRange(result3Results);
-            }
-
-            if (result4.results is ImmutableArray<ValidationResult> result4Results)
-            {
-                builder.AddRange(result4Results);
-            }
-
-            if (result5.results is ImmutableArray<ValidationResult> result5Results)
-            {
-                builder.AddRange(result5Results);
-            }
-
-            if (result6.results is ImmutableArray<ValidationResult> result6Results)
-            {
-                builder.AddRange(result6Results);
-            }
+            builder.AddRange(result1.results);
+            builder.AddRange(result2.results);
+            builder.AddRange(result3.results);
+            builder.AddRange(result4.results);
+            builder.AddRange(result5.results);
+            builder.AddRange(result6.results);
 
             return new ValidationContext(
                 isValid,
@@ -671,7 +680,8 @@ namespace Corvus.Json
                 this.appliedEvaluatedProperties,
                 this.locationStack,
                 this.absoluteKeywordLocationStack,
-                builder.ToImmutable());
+                builder.ToImmutable(),
+                this.usingFeatures);
         }
 
         /// <summary>
@@ -707,47 +717,29 @@ namespace Corvus.Json
                 return this;
             }
 
-            ImmutableArray<ValidationResult>.Builder builder = ImmutableArray.CreateBuilder<ValidationResult>();
-
-            if (this.results is ImmutableArray<ValidationResult> thisResults)
+            if ((this.usingFeatures & UsingFeatures.Results) == 0)
             {
-                builder.AddRange(thisResults);
+                return new ValidationContext(
+                    isValid,
+                    this.localEvaluatedItemIndex,
+                    this.localEvaluatedProperties,
+                    this.appliedEvaluatedItemIndex,
+                    this.appliedEvaluatedProperties,
+                    this.locationStack,
+                    this.absoluteKeywordLocationStack,
+                    this.results,
+                    this.usingFeatures);
             }
 
-            if (result1.results is ImmutableArray<ValidationResult> result1Results)
-            {
-                builder.AddRange(result1Results);
-            }
+            var builder = this.results.ToBuilder();
 
-            if (result2.results is ImmutableArray<ValidationResult> result2Results)
-            {
-                builder.AddRange(result2Results);
-            }
-
-            if (result3.results is ImmutableArray<ValidationResult> result3Results)
-            {
-                builder.AddRange(result3Results);
-            }
-
-            if (result4.results is ImmutableArray<ValidationResult> result4Results)
-            {
-                builder.AddRange(result4Results);
-            }
-
-            if (result5.results is ImmutableArray<ValidationResult> result5Results)
-            {
-                builder.AddRange(result5Results);
-            }
-
-            if (result6.results is ImmutableArray<ValidationResult> result6Results)
-            {
-                builder.AddRange(result6Results);
-            }
-
-            if (result7.results is ImmutableArray<ValidationResult> result7Results)
-            {
-                builder.AddRange(result7Results);
-            }
+            builder.AddRange(result1.results);
+            builder.AddRange(result2.results);
+            builder.AddRange(result3.results);
+            builder.AddRange(result4.results);
+            builder.AddRange(result5.results);
+            builder.AddRange(result6.results);
+            builder.AddRange(result7.results);
 
             return new ValidationContext(
                 isValid,
@@ -757,7 +749,8 @@ namespace Corvus.Json
                 this.appliedEvaluatedProperties,
                 this.locationStack,
                 this.absoluteKeywordLocationStack,
-                builder.ToImmutable());
+                builder.ToImmutable(),
+                this.usingFeatures);
         }
 
         /// <summary>
@@ -794,52 +787,30 @@ namespace Corvus.Json
                 return this;
             }
 
-            ImmutableArray<ValidationResult>.Builder builder = ImmutableArray.CreateBuilder<ValidationResult>();
-
-            if (this.results is ImmutableArray<ValidationResult> thisResults)
+            if ((this.usingFeatures & UsingFeatures.Results) == 0)
             {
-                builder.AddRange(thisResults);
+                return new ValidationContext(
+                    isValid,
+                    this.localEvaluatedItemIndex,
+                    this.localEvaluatedProperties,
+                    this.appliedEvaluatedItemIndex,
+                    this.appliedEvaluatedProperties,
+                    this.locationStack,
+                    this.absoluteKeywordLocationStack,
+                    this.results,
+                    this.usingFeatures);
             }
 
-            if (result1.results is ImmutableArray<ValidationResult> result1Results)
-            {
-                builder.AddRange(result1Results);
-            }
+            var builder = this.results.ToBuilder();
 
-            if (result2.results is ImmutableArray<ValidationResult> result2Results)
-            {
-                builder.AddRange(result2Results);
-            }
-
-            if (result3.results is ImmutableArray<ValidationResult> result3Results)
-            {
-                builder.AddRange(result3Results);
-            }
-
-            if (result4.results is ImmutableArray<ValidationResult> result4Results)
-            {
-                builder.AddRange(result4Results);
-            }
-
-            if (result5.results is ImmutableArray<ValidationResult> result5Results)
-            {
-                builder.AddRange(result5Results);
-            }
-
-            if (result6.results is ImmutableArray<ValidationResult> result6Results)
-            {
-                builder.AddRange(result6Results);
-            }
-
-            if (result7.results is ImmutableArray<ValidationResult> result7Results)
-            {
-                builder.AddRange(result7Results);
-            }
-
-            if (result8.results is ImmutableArray<ValidationResult> result8Results)
-            {
-                builder.AddRange(result8Results);
-            }
+            builder.AddRange(result1.results);
+            builder.AddRange(result2.results);
+            builder.AddRange(result3.results);
+            builder.AddRange(result4.results);
+            builder.AddRange(result5.results);
+            builder.AddRange(result6.results);
+            builder.AddRange(result7.results);
+            builder.AddRange(result8.results);
 
             return new ValidationContext(
                 isValid,
@@ -849,7 +820,8 @@ namespace Corvus.Json
                 this.appliedEvaluatedProperties,
                 this.locationStack,
                 this.absoluteKeywordLocationStack,
-                builder.ToImmutable());
+                builder.ToImmutable(),
+                this.usingFeatures);
         }
 
         /// <summary>
@@ -879,12 +851,21 @@ namespace Corvus.Json
                 return this;
             }
 
-            ImmutableArray<ValidationResult>.Builder builder = ImmutableArray.CreateBuilder<ValidationResult>();
-
-            if (this.results is ImmutableArray<ValidationResult> thisResults)
+            if ((this.usingFeatures & UsingFeatures.Results) == 0)
             {
-                builder.AddRange(thisResults);
+                return new ValidationContext(
+                    isValid,
+                    this.localEvaluatedItemIndex,
+                    this.localEvaluatedProperties,
+                    this.appliedEvaluatedItemIndex,
+                    this.appliedEvaluatedProperties,
+                    this.locationStack,
+                    this.absoluteKeywordLocationStack,
+                    this.results,
+                    this.usingFeatures);
             }
+
+            var builder = this.results.ToBuilder();
 
             foreach (ValidationContext result in results)
             {
@@ -902,7 +883,8 @@ namespace Corvus.Json
                 this.appliedEvaluatedProperties,
                 this.locationStack,
                 this.absoluteKeywordLocationStack,
-                builder.ToImmutable());
+                builder.ToImmutable(),
+                this.usingFeatures);
         }
 
         /// <summary>
@@ -923,10 +905,12 @@ namespace Corvus.Json
             }
         }
 
-        private ImmutableArray<ulong>? AddLocalEvaluatedProperty(int index)
+        private ImmutableArray<ulong> AddLocalEvaluatedProperty(int index)
         {
-            if (this.localEvaluatedProperties is ImmutableArray<ulong> lep)
+            if ((this.usingFeatures & UsingFeatures.EvaluatedProperties) != 0)
             {
+                ImmutableArray<ulong> lep = this.localEvaluatedProperties;
+
                 // Calculate the offset into the array
                 int offset = index / 64;
                 ulong bit = 1UL << (index % 64);
@@ -942,50 +926,50 @@ namespace Corvus.Json
             return this.localEvaluatedProperties;
         }
 
-        private ImmutableArray<ulong>? AddLocalEvaluatedItem(int index)
+        private ImmutableArray<ulong> AddLocalEvaluatedItem(int index)
         {
-            if (this.localEvaluatedItemIndex is ImmutableArray<ulong> lep)
+            if ((this.usingFeatures & UsingFeatures.EvaluatedItems) != 0)
             {
+                ImmutableArray<ulong> lei = this.localEvaluatedItemIndex;
+
                 // Calculate the offset into the array
                 int offset = index / 64;
                 ulong bit = 1UL << (index % 64);
-                if (offset >= lep.Length)
+                if (offset >= lei.Length)
                 {
-                    lep = lep.AddRange(Enumerable.Repeat(0UL, offset - lep.Length + 1));
+                    lei = lei.AddRange(Enumerable.Repeat(0UL, offset - lei.Length + 1));
                 }
 
-                lep = lep.SetItem(offset, lep.ItemRef(offset) | bit);
-                return lep;
+                lei = lei.SetItem(offset, lei.ItemRef(offset) | bit);
+                return lei;
             }
 
             return this.localEvaluatedItemIndex;
         }
 
-        private ImmutableArray<ulong>? CombineItems(in ValidationContext childContext)
+        private ImmutableArray<ulong> CombineItems(in ValidationContext childContext)
         {
-            if (this.appliedEvaluatedItemIndex is not ImmutableArray<ulong> aeii)
+            if ((this.usingFeatures & UsingFeatures.EvaluatedItems) == 0)
             {
-                return null;
+                return this.localEvaluatedItemIndex;
             }
 
-            ImmutableArray<ulong>.Builder result = ImmutableArray.CreateBuilder<ulong>();
-            result.AddRange(aeii);
-            ApplyBits(result, childContext.appliedEvaluatedItemIndex!.Value);
-            ApplyBits(result, childContext.localEvaluatedItemIndex!.Value);
+            var result = this.appliedEvaluatedItemIndex.ToBuilder();
+            ApplyBits(result, childContext.appliedEvaluatedItemIndex);
+            ApplyBits(result, childContext.localEvaluatedItemIndex);
             return result.ToImmutable();
         }
 
-        private ImmutableArray<ulong>? CombineProperties(in ValidationContext childContext)
+        private ImmutableArray<ulong> CombineProperties(in ValidationContext childContext)
         {
-            if (this.appliedEvaluatedProperties is not ImmutableArray<ulong> aep)
+            if ((this.usingFeatures & UsingFeatures.EvaluatedProperties) == 0)
             {
-                return null;
+                return this.localEvaluatedProperties;
             }
 
-            ImmutableArray<ulong>.Builder result = ImmutableArray.CreateBuilder<ulong>();
-            result.AddRange(aep);
-            ApplyBits(result, childContext.appliedEvaluatedProperties!.Value);
-            ApplyBits(result, childContext.localEvaluatedProperties!.Value);
+            var result = this.appliedEvaluatedProperties.ToBuilder();
+            ApplyBits(result, childContext.appliedEvaluatedProperties);
+            ApplyBits(result, childContext.localEvaluatedProperties);
             return result.ToImmutable();
         }
     }
