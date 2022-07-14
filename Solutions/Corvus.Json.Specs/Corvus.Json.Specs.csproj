@@ -24,7 +24,7 @@
 		<PackageReference Include="SpecFlow.Plus.LivingDocPlugin" Version="3.9.57" />
 		<PackageReference Include="System.Text.Encodings.Web" Version="6.0.0" />
 
-		<PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.0">
+		<PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.1">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
