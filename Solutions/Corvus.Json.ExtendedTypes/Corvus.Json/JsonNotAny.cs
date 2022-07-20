@@ -290,6 +290,27 @@ namespace Corvus.Json
             }
         }
 
+#pragma warning disable SA1648 // inheritdoc should be used with inheriting class
+        /// <inheritdoc/>
+        public JsonAny this[int index]
+#pragma warning restore SA1648 // inheritdoc should be used with inheriting class
+        {
+            get
+            {
+                if (this.arrayBacking is ImmutableList<JsonAny> items)
+                {
+                    if (index >= items.Count)
+                    {
+                        throw new IndexOutOfRangeException(nameof(index));
+                    }
+
+                    return items[index];
+                }
+
+                return new JsonAny(this.jsonElementBacking[index]);
+            }
+        }
+
         /// <summary>
         /// Gets a value indicating whether this is backed by a JSON element.
         /// </summary>

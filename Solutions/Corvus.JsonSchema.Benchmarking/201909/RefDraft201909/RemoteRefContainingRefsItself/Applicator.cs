@@ -2284,11 +2284,26 @@ namespace RefDraft201909Feature.RemoteRefContainingRefsItself
                 return this.jsonElementBacking.GetArrayLength();
             }
         }
-    
+
+            /// <inheritdoc/>
+            public JsonAny this[int index]
+            {
+                get
+                {
+                    if (this.arrayBacking is ImmutableList<JsonAny> items)
+                    {
+                        return items[index];
+                    }
+
+                    return new JsonAny(this.jsonElementBacking[index]);
+                }
+            }
+
+
             /// <summary>
-        /// Gets the value as a <see cref="RefDraft201909Feature.RemoteRefContainingRefsItself.Schema" />.
-        /// </summary>
-        public RefDraft201909Feature.RemoteRefContainingRefsItself.Schema AsSchema
+            /// Gets the value as a <see cref="RefDraft201909Feature.RemoteRefContainingRefsItself.Schema" />.
+            /// </summary>
+            public RefDraft201909Feature.RemoteRefContainingRefsItself.Schema AsSchema
         {
             get
             {
@@ -5944,13 +5959,26 @@ namespace RefDraft201909Feature.RemoteRefContainingRefsItself
                 return this.jsonElementBacking.GetArrayLength();
             }
         }
-    
-    
-        
+
+            /// <inheritdoc/>
+            public JsonAny this[int index]
+            {
+                get
+                {
+                    if (this.arrayBacking is ImmutableList<JsonAny> items)
+                    {
+                        return items[index];
+                    }
+
+                    return new JsonAny(this.jsonElementBacking[index]);
+                }
+            }
+
+
             /// <summary>
-        /// Gets a value indicating whether this is backed by a JSON element.
-        /// </summary>
-        public bool HasJsonElement =>
+            /// Gets a value indicating whether this is backed by a JSON element.
+            /// </summary>
+            public bool HasJsonElement =>
     
     
                         this.arrayBacking is null

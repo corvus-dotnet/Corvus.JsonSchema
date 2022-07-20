@@ -130,8 +130,21 @@ namespace AdditionalItemsDraft201909Feature.AdditionalItemsShouldNotLookInApplic
                 return this.jsonElementBacking.GetArrayLength();
             }
         }
-    
-            /// <summary>
+        /// <inheritdoc/>
+        public JsonAny this[int index]
+        {
+            get
+            {
+                if (this.arrayBacking is ImmutableList<JsonAny> items)
+                {
+                    return items[index];
+                }
+
+                return new JsonAny(this.jsonElementBacking[index]);
+            }
+        }
+
+        /// <summary>
         /// Gets the value as a <see cref="AdditionalItemsDraft201909Feature.AdditionalItemsShouldNotLookInApplicatorsInvalidCase.Schema.AllOf0Entity" />.
         /// </summary>
         public AdditionalItemsDraft201909Feature.AdditionalItemsShouldNotLookInApplicatorsInvalidCase.Schema.AllOf0Entity AsAllOf0Entity
@@ -904,13 +917,26 @@ namespace AdditionalItemsDraft201909Feature.AdditionalItemsShouldNotLookInApplic
                 return this.jsonElementBacking.GetArrayLength();
             }
         }
-    
-    
-        
+
+            /// <inheritdoc/>
+            public JsonAny this[int index]
+            {
+                get
+                {
+                    if (this.arrayBacking is ImmutableList<JsonAny> items)
+                    {
+                        return items[index];
+                    }
+
+                    return new JsonAny(this.jsonElementBacking[index]);
+                }
+            }
+
+
             /// <summary>
-        /// Gets a value indicating whether this is backed by a JSON element.
-        /// </summary>
-        public bool HasJsonElement =>
+            /// Gets a value indicating whether this is backed by a JSON element.
+            /// </summary>
+            public bool HasJsonElement =>
     
     
                         this.arrayBacking is null

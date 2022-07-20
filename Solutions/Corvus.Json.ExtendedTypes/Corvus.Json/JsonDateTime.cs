@@ -342,7 +342,7 @@ namespace Corvus.Json
         {
             if (this.value is string value)
             {
-                result = value.ToString();
+                result = value;
                 return true;
             }
 

@@ -2284,11 +2284,24 @@ namespace IdDraft201909Feature.UnnormalizedIdsAreAllowedButDiscouraged
                 return this.jsonElementBacking.GetArrayLength();
             }
         }
-    
+            /// <inheritdoc/>
+            public JsonAny this[int index]
+            {
+                get
+                {
+                    if (this.arrayBacking is ImmutableList<JsonAny> items)
+                    {
+                        return items[index];
+                    }
+
+                    return new JsonAny(this.jsonElementBacking[index]);
+                }
+            }
+
             /// <summary>
-        /// Gets the value as a <see cref="IdDraft201909Feature.UnnormalizedIdsAreAllowedButDiscouraged.Schema" />.
-        /// </summary>
-        public IdDraft201909Feature.UnnormalizedIdsAreAllowedButDiscouraged.Schema AsSchema
+            /// Gets the value as a <see cref="IdDraft201909Feature.UnnormalizedIdsAreAllowedButDiscouraged.Schema" />.
+            /// </summary>
+            public IdDraft201909Feature.UnnormalizedIdsAreAllowedButDiscouraged.Schema AsSchema
         {
             get
             {
@@ -5944,13 +5957,26 @@ namespace IdDraft201909Feature.UnnormalizedIdsAreAllowedButDiscouraged
                 return this.jsonElementBacking.GetArrayLength();
             }
         }
-    
-    
-        
+
+            /// <inheritdoc/>
+            public JsonAny this[int index]
+            {
+                get
+                {
+                    if (this.arrayBacking is ImmutableList<JsonAny> items)
+                    {
+                        return items[index];
+                    }
+
+                    return new JsonAny(this.jsonElementBacking[index]);
+                }
+            }
+
+
             /// <summary>
-        /// Gets a value indicating whether this is backed by a JSON element.
-        /// </summary>
-        public bool HasJsonElement =>
+            /// Gets a value indicating whether this is backed by a JSON element.
+            /// </summary>
+            public bool HasJsonElement =>
     
     
                         this.arrayBacking is null

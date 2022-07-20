@@ -114,19 +114,7 @@ namespace Corvus.Json
         public static TItem GetItem<TItem>(this JsonArray value, int index)
             where TItem : struct, IJsonValue
         {
-            int currentIndex = 0;
-            JsonArrayEnumerator enumerator = value.EnumerateArray();
-            while (enumerator.MoveNext())
-            {
-                if (currentIndex == index)
-                {
-                    return enumerator.CurrentAs<TItem>();
-                }
-
-                currentIndex++;
-            }
-
-            throw new ArgumentOutOfRangeException(nameof(index));
+            return value[index].As<TItem>();
         }
 
         /// <summary>
@@ -140,19 +128,7 @@ namespace Corvus.Json
         public static TItem GetItem<TItem>(this JsonAny value, int index)
             where TItem : struct, IJsonValue
         {
-            int currentIndex = 0;
-            JsonArrayEnumerator enumerator = value.EnumerateArray();
-            while (enumerator.MoveNext())
-            {
-                if (currentIndex == index)
-                {
-                    return enumerator.CurrentAs<TItem>();
-                }
-
-                currentIndex++;
-            }
-
-            throw new ArgumentOutOfRangeException(nameof(index));
+            return value[index].As<TItem>();
         }
 
         /// <summary>
@@ -166,19 +142,7 @@ namespace Corvus.Json
         public static TItem GetItem<TItem>(this JsonNotAny value, int index)
             where TItem : struct, IJsonValue
         {
-            int currentIndex = 0;
-            JsonArrayEnumerator enumerator = value.EnumerateArray();
-            while (enumerator.MoveNext())
-            {
-                if (currentIndex == index)
-                {
-                    return enumerator.CurrentAs<TItem>();
-                }
-
-                currentIndex++;
-            }
-
-            throw new ArgumentOutOfRangeException(nameof(index));
+            return value[index].As<TItem>();
         }
 
         /// <summary>

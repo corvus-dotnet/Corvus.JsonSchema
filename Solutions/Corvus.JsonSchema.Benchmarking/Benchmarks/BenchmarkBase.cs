@@ -27,7 +27,6 @@ namespace Corvus.JsonSchema.Benchmarking.Benchmarks
         private JSchema? newtonsoftSchema;
         private bool? isValid;
         private string? data;
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.SpacingRules", "SA1011:Closing square brackets should be spaced correctly", Justification = "Stylecop is broken.")]
         private byte[]? dataBytes;
 
         /// <summary>
@@ -73,7 +72,7 @@ namespace Corvus.JsonSchema.Benchmarking.Benchmarks
             where T : struct, IJsonValue
         {
             var reader = new Utf8JsonReader(this.dataBytes!.AsSpan());
-            JsonDocument.TryParseValue(ref reader, out JsonDocument? document);
+            _ = JsonDocument.TryParseValue(ref reader, out JsonDocument? document);
             T value = new JsonAny(document!.RootElement).As<T>();
 
             if (value.Validate().IsValid != this.isValid)
@@ -99,7 +98,7 @@ namespace Corvus.JsonSchema.Benchmarking.Benchmarks
             var services = new ServiceCollection();
 
             services.AddTransient<IDocumentResolver>(serviceProvider => new CompoundDocumentResolver(new FakeWebDocumentResolver(serviceProvider.GetRequiredService<IConfiguration>()["jsonSchemaBuilderDriverSettings:remotesBaseDirectory"]), new FileSystemDocumentResolver(), new HttpClientDocumentResolver(new HttpClient())));
-            services.AddTransient<IConfiguration>(sp =>
+            services.AddTransient<IConfiguration>(_ =>
             {
                 IConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
                 configurationBuilder.AddJsonFile("appsettings.json", true);

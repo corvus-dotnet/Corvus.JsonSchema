@@ -7073,11 +7073,25 @@ namespace IdDraft202012Feature.UnnormalizedIdsAreAllowedButDiscouraged
                 return this.jsonElementBacking.GetArrayLength();
             }
         }
-    
-            /// <summary>
-        /// Gets the value as a <see cref="IdDraft202012Feature.UnnormalizedIdsAreAllowedButDiscouraged.Schema" />.
-        /// </summary>
-        public IdDraft202012Feature.UnnormalizedIdsAreAllowedButDiscouraged.Schema AsSchema
+
+                /// <inheritdoc/>
+                public JsonAny this[int index]
+                {
+                    get
+                    {
+                        if (this.arrayBacking is ImmutableList<JsonAny> items)
+                        {
+                            return items[index];
+                        }
+
+                        return new JsonAny(this.jsonElementBacking[index]);
+                    }
+                }
+
+                /// <summary>
+                /// Gets the value as a <see cref="IdDraft202012Feature.UnnormalizedIdsAreAllowedButDiscouraged.Schema" />.
+                /// </summary>
+                public IdDraft202012Feature.UnnormalizedIdsAreAllowedButDiscouraged.Schema AsSchema
         {
             get
             {

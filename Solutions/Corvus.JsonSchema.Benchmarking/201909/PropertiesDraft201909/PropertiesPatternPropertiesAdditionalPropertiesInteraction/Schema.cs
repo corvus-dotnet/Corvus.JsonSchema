@@ -969,13 +969,26 @@ namespace PropertiesDraft201909Feature.PropertiesPatternPropertiesAdditionalProp
                 return this.jsonElementBacking.GetArrayLength();
             }
         }
-    
-    
-        
+
+            /// <inheritdoc/>
+            public JsonAny this[int index]
+            {
+                get
+                {
+                    if (this.arrayBacking is ImmutableList<JsonAny> items)
+                    {
+                        return items[index];
+                    }
+
+                    return new JsonAny(this.jsonElementBacking[index]);
+                }
+            }
+
+
             /// <summary>
-        /// Gets a value indicating whether this is backed by a JSON element.
-        /// </summary>
-        public bool HasJsonElement =>
+            /// Gets a value indicating whether this is backed by a JSON element.
+            /// </summary>
+            public bool HasJsonElement =>
     
     
                         this.arrayBacking is null
@@ -1644,13 +1657,26 @@ namespace PropertiesDraft201909Feature.PropertiesPatternPropertiesAdditionalProp
                 return this.jsonElementBacking.GetArrayLength();
             }
         }
-    
-    
-        
+
+            /// <inheritdoc/>
+            public JsonAny this[int index]
+            {
+                get
+                {
+                    if (this.arrayBacking is ImmutableList<JsonAny> items)
+                    {
+                        return items[index];
+                    }
+
+                    return new JsonAny(this.jsonElementBacking[index]);
+                }
+            }
+
+
             /// <summary>
-        /// Gets a value indicating whether this is backed by a JSON element.
-        /// </summary>
-        public bool HasJsonElement =>
+            /// Gets a value indicating whether this is backed by a JSON element.
+            /// </summary>
+            public bool HasJsonElement =>
     
     
                         this.arrayBacking is null
