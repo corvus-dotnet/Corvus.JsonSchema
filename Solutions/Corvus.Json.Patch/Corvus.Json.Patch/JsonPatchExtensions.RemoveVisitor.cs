@@ -24,13 +24,13 @@ public static partial class JsonPatchExtensions
         public string Path { get; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public VisitResult Visit(ReadOnlySpan<char> path, in JsonAny nodeToVisit)
+        public void Visit(ReadOnlySpan<char> path, in JsonAny nodeToVisit, ref VisitResult result)
         {
-            return VisitForRemove(path, nodeToVisit, this.Path);
+            VisitForRemove(path, nodeToVisit, this.Path, ref result);
         }
 
         // This is used by Remove and Move
-        internal static VisitResult VisitForRemove(ReadOnlySpan<char> path, in JsonAny nodeToVisit, ReadOnlySpan<char> operationPath)
+        internal static void VisitForRemove(ReadOnlySpan<char> path, in JsonAny nodeToVisit, ReadOnlySpan<char> operationPath, ref VisitResult result)
         {
             // If we are the root, or our span starts with the path so far, we might be matching
             if (operationPath.Length == 0 || operationPath.StartsWith(path))
@@ -38,7 +38,10 @@ public static partial class JsonPatchExtensions
                 if (operationPath.Length == path.Length)
                 {
                     // We are an exact match, but we should have found that in the parent; we can't remove ourselves.
-                    return new(nodeToVisit, Transformed.No, Walk.TerminateAtThisNodeAndAbandonAllChanges);
+                    result.Output = nodeToVisit;
+                    result.Transformed = Transformed.No;
+                    result.Walk = Walk.TerminateAtThisNodeAndAbandonAllChanges;
+                    return;
                 }
 
                 JsonValueKind nodeToVisitValueKind = nodeToVisit.ValueKind;
@@ -52,15 +55,24 @@ public static partial class JsonPatchExtensions
                         if (!nodeToVisit.HasProperty(propertyName))
                         {
                             // So we don't transform, and we abandon the walk at this point.
-                            return new(nodeToVisit, Transformed.No, Walk.TerminateAtThisNodeAndAbandonAllChanges);
+                            result.Output = nodeToVisit;
+                            result.Transformed = Transformed.No;
+                            result.Walk = Walk.TerminateAtThisNodeAndAbandonAllChanges;
+                            return;
                         }
 
                         // Return the transformed result, and stop walking the tree here.
-                        return new(nodeToVisit.RemoveProperty(propertyName), Transformed.Yes, Walk.TerminateAtThisNodeAndKeepChanges);
+                        result.Output = nodeToVisit.RemoveProperty(propertyName);
+                        result.Transformed = Transformed.Yes;
+                        result.Walk = Walk.TerminateAtThisNodeAndKeepChanges;
+                        return;
                     }
 
                     // The path element wasn't a terminus, but it could still be a deeper property, so let's continue the walk
-                    return new(nodeToVisit, Transformed.No, Walk.Continue);
+                    result.Output = nodeToVisit;
+                    result.Transformed = Transformed.No;
+                    result.Walk = Walk.Continue;
+                    return;
                 }
 
                 if (nodeToVisitValueKind == JsonValueKind.Array)
@@ -71,28 +83,43 @@ public static partial class JsonPatchExtensions
 
                         if (TryGetArrayIndex(itemIndex, out int index) && index < arrayLength)
                         {
-                            return RemoveNode(index, in nodeToVisit);
+                            RemoveNode(index, in nodeToVisit, ref result);
+                            return;
                         }
 
                         // The index wasn't in the correct form (either because it was past the end, or not in an index format)
-                        return new(nodeToVisit, Transformed.No, Walk.TerminateAtThisNodeAndAbandonAllChanges);
+                        result.Output = nodeToVisit;
+                        result.Transformed = Transformed.No;
+                        result.Walk = Walk.TerminateAtThisNodeAndAbandonAllChanges;
+                        return;
                     }
 
                     // The path element wasn't a terminus, but it could still be a deeper walk into an indexed element, so let's continue the walk
-                    return new(nodeToVisit, Transformed.No, Walk.Continue);
+                    result.Output = nodeToVisit;
+                    result.Transformed = Transformed.No;
+                    result.Walk = Walk.Continue;
+                    return;
                 }
 
                 // The parent entity wasn't an object or an array, so it can't be removed from; this is an error.
-                return new(nodeToVisit, Transformed.No, Walk.TerminateAtThisNodeAndAbandonAllChanges);
+                result.Output = nodeToVisit;
+                result.Transformed = Transformed.No;
+                result.Walk = Walk.TerminateAtThisNodeAndAbandonAllChanges;
+                return;
             }
 
             // If it didn't start with the span, we can give up on this whole tree segment
-            return new(nodeToVisit, Transformed.No, Walk.SkipChildren);
+            result.Output = nodeToVisit;
+            result.Transformed = Transformed.No;
+            result.Walk = Walk.SkipChildren;
+            return;
 
-            static VisitResult RemoveNode(int index, in JsonAny arrayNode)
+            static void RemoveNode(int index, in JsonAny arrayNode, ref VisitResult result)
             {
-                JsonAny returnNode = arrayNode.RemoveAt(index);
-                return new(returnNode, Transformed.Yes, Walk.TerminateAtThisNodeAndKeepChanges);
+                result.Output = arrayNode.RemoveAt(index);
+                result.Transformed = Transformed.Yes;
+                result.Walk = Walk.TerminateAtThisNodeAndKeepChanges;
+                return;
             }
         }
     }

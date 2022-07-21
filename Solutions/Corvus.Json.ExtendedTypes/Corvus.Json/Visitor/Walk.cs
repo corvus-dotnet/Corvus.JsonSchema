@@ -7,7 +7,7 @@ namespace Corvus.Json.Visitor;
 /// <summary>
 /// Used by <see cref="VisitResult"/> to determine what action should be taken after visiting a node.
 /// </summary>
-public enum Walk
+public enum Walk : byte
 {
     /// <summary>
     /// Continue to iterate into the children of this node, if present or move to the next available sibling.

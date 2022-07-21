@@ -26,10 +26,10 @@ public static partial class JsonPatchExtensions
         public JsonAny SourceElement { get; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public VisitResult Visit(ReadOnlySpan<char> path, in JsonAny nodeToVisit)
+        public void Visit(ReadOnlySpan<char> path, in JsonAny nodeToVisit, ref VisitResult result)
         {
             // This is an add operation with the node we found.
-            return AddVisitor.VisitForAdd(path, nodeToVisit, this.SourceElement, this.Path);
+            AddVisitor.VisitForAdd(path, nodeToVisit, this.SourceElement, this.Path, ref result);
         }
     }
 }

@@ -210,7 +210,7 @@ public static partial class JsonPatchExtensions
             return true;
         }
 
-        bool transformed = JsonTransformingVisitor.Visit(node, (ReadOnlySpan<char> path, in JsonAny nodeToVisit) => visitor.Visit(path, nodeToVisit), out JsonAny transformedResult);
+        bool transformed = JsonTransformingVisitor.Visit(node, visitor.Visit, out JsonAny transformedResult);
         result = transformedResult;
         return transformed;
     }
@@ -236,7 +236,7 @@ public static partial class JsonPatchExtensions
             return true;
         }
 
-        bool transformed = JsonTransformingVisitor.Visit(node, (ReadOnlySpan<char> p, in JsonAny n) => visitor.Visit(p, n), out JsonAny transformedResult);
+        bool transformed = JsonTransformingVisitor.Visit(node, visitor.Visit, out JsonAny transformedResult);
         result = transformedResult;
         return transformed;
     }
@@ -262,7 +262,7 @@ public static partial class JsonPatchExtensions
             return true;
         }
 
-        bool transformed = JsonTransformingVisitor.Visit(node, (ReadOnlySpan<char> p, in JsonAny n) => visitor.Visit(p, n), out JsonAny transformedResult);
+        bool transformed = JsonTransformingVisitor.Visit(node, visitor.Visit, out JsonAny transformedResult);
         result = transformedResult;
         return transformed;
     }
@@ -271,7 +271,7 @@ public static partial class JsonPatchExtensions
     private static bool TryApplyRemove(JsonAny node, PatchOperation patchOperation, out JsonAny result)
     {
         RemoveVisitor visitor = new(patchOperation);
-        bool transformed = JsonTransformingVisitor.Visit(node, (ReadOnlySpan<char> p, in JsonAny n) => visitor.Visit(p, n), out JsonAny transformedResult);
+        bool transformed = JsonTransformingVisitor.Visit(node, visitor.Visit, out JsonAny transformedResult);
         result = transformedResult;
         return transformed;
     }
@@ -287,7 +287,7 @@ public static partial class JsonPatchExtensions
             return true;
         }
 
-        bool transformed = JsonTransformingVisitor.Visit(node, (ReadOnlySpan<char> p, in JsonAny n) => visitor.Visit(p, n), out JsonAny transformedResult);
+        bool transformed = JsonTransformingVisitor.Visit(node, visitor.Visit, out JsonAny transformedResult);
         result = transformedResult;
         return transformed;
     }

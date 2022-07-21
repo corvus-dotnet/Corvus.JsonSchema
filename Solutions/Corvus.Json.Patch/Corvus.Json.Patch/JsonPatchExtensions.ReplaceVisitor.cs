@@ -26,12 +26,12 @@ public static partial class JsonPatchExtensions
         public string Path { get; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public VisitResult Visit(ReadOnlySpan<char> path, in JsonAny nodeToVisit)
+        public void Visit(ReadOnlySpan<char> path, in JsonAny nodeToVisit, ref VisitResult result)
         {
-            return VisitForReplace(path, nodeToVisit, this.Value, this.Path);
+            VisitForReplace(path, nodeToVisit, this.Value, this.Path, ref result);
         }
 
-        internal static VisitResult VisitForReplace(ReadOnlySpan<char> path, in JsonAny nodeToVisit, in JsonAny value, ReadOnlySpan<char> operationPath)
+        internal static void VisitForReplace(ReadOnlySpan<char> path, in JsonAny nodeToVisit, in JsonAny value, ReadOnlySpan<char> operationPath, ref VisitResult result)
         {
             int operationPathLength = operationPath.Length;
 
@@ -41,15 +41,23 @@ public static partial class JsonPatchExtensions
                 if (operationPathLength == path.Length)
                 {
                     // We are an exact match, so we can just replace this node.
-                    return new(value, Transformed.Yes, Walk.TerminateAtThisNodeAndKeepChanges);
+                    result.Output = value;
+                    result.Transformed = Transformed.Yes;
+                    result.Walk = Walk.TerminateAtThisNodeAndKeepChanges;
+                    return;
                 }
 
                 // Otherwise we need to continue, as we are on the path
-                return new(nodeToVisit, Transformed.No, Walk.Continue);
+                result.Output = nodeToVisit;
+                result.Transformed = Transformed.No;
+                result.Walk = Walk.Continue;
+                return;
             }
 
             // If it didn't start with the span, we can give up on this whole tree segment
-            return new(nodeToVisit, Transformed.No, Walk.SkipChildren);
+            result.Output = nodeToVisit;
+            result.Transformed = Transformed.No;
+            result.Walk = Walk.SkipChildren;
         }
     }
 }
