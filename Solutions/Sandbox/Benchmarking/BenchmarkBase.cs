@@ -26,9 +26,7 @@ public class BenchmarkBase
     /// <returns>The <see cref="Json.Patch.JsonPatch"/> built from the string.</returns>
     protected static Json.Patch.JsonPatch BuildJEPatch(string patch)
     {
-#pragma warning disable SA1009 // Closing parenthesis should be spaced correctly
         return JsonSerializer.Deserialize<Json.Patch.JsonPatch>(patch)!;
-#pragma warning restore SA1009 // Closing parenthesis should be spaced correctly
     }
 
     /// <summary>

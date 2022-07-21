@@ -13,7 +13,12 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="JsonPatch.Net" Version="2.0.2" />
+	</ItemGroup>
+	
+	<ItemGroup>
 	  <ProjectReference Include="..\Corvus.Json.ExtendedTypes\Corvus.Json.ExtendedTypes.csproj" />
+	  <ProjectReference Include="..\Corvus.Json.Patch\Corvus.Json.Patch.csproj" />
 	</ItemGroup>
 
 </Project>

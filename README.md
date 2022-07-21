@@ -32,3 +32,9 @@ git commit - "Updated to latest JSON Schema Test Suite"
 (Or you can use `git submodule update --remote` instead of `cd`ing into the submodule folder and
 updating from there.)
 
+## Use of benchmark dotnet
+
+While we are still making use of Preview features, you need to add the benchmark dotnet nightlies package feed to your nuget package sources.
+Benchmark Dotnet Nightlies
+
+[You can find the benchmark dotnet nightlies here.](https://ci.appveyor.com/nuget/benchmarkdotnet)
