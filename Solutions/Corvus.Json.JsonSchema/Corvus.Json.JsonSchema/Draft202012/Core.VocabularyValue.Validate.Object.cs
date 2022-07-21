@@ -7,7 +7,9 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 #nullable enable
+using System.Collections.Immutable;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Corvus.Json;
 using Corvus.Json.Internal;
 

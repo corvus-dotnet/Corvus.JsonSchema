@@ -210,8 +210,18 @@ public readonly partial struct Core
                 int maxCharCount = Encoding.UTF8.GetMaxCharCount(utf8Bytes.Length);
                 char[]? pooledChars = null;
                 Span<char> chars = maxCharCount <= JsonValueHelpers.MaxStackAlloc ? stackalloc char[maxCharCount] : (pooledChars = ArrayPool<char>.Shared.Rent(maxCharCount));
-                int written = Encoding.UTF8.GetChars(utf8Bytes, chars);
-                return chars[..written].SequenceEqual(this.stringBacking);
+                try
+                {
+                    int written = Encoding.UTF8.GetChars(utf8Bytes, chars);
+                    return chars[..written].SequenceEqual(this.stringBacking);
+                }
+                finally
+                {
+                    if (pooledChars is not null)
+                    {
+                        ArrayPool<char>.Shared.Return(pooledChars);
+                    }
+                }
             }
 
             return false;

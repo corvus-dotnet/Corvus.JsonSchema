@@ -7,8 +7,6 @@
 		<Nullable>enable</Nullable>
 	</PropertyGroup>
 
-
-
 	<PropertyGroup>
 		<NoWarn>CS1591</NoWarn>
 	</PropertyGroup>
@@ -33,8 +31,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\Corvus.Json.JsonSchema\Corvus.Json.JsonSchema.csproj" />
-	  <ProjectReference Include="..\Corvus.Json.Walker\Corvus.Json.Walker.csproj" />
+	  <ProjectReference Include="..\Corvus.Json.ExtendedTypes\Corvus.Json.ExtendedTypes.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

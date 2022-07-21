@@ -7,6 +7,12 @@
 		<Nullable>enable</Nullable>
 	</PropertyGroup>
 
+
+
+	<PropertyGroup>
+		<NoWarn>CS1591</NoWarn>
+	</PropertyGroup>
+
 	<PropertyGroup>
 		<LangVersion>preview</LangVersion>
 		<EnablePreviewFeatures>true</EnablePreviewFeatures>
@@ -14,7 +20,7 @@
 
 	<PropertyGroup>
 		<PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-		<Description>Object models representing JSON Schema documents (201909 and 202012 drafts)</Description>
+		<Description>A library for generating code from .NET types representing data types found in JSON.</Description>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -23,16 +29,13 @@
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0" />
-		<PackageReference Include="Microsoft.Extensions.ObjectPool" Version="6.0.7" />
-		<PackageReference Include="NodaTime" Version="3.1.0" />
-		<PackageReference Include="System.Buffers" Version="4.5.1" />
-		<PackageReference Include="System.Collections.Immutable" Version="6.0.0" />
-		<PackageReference Include="System.Text.Json" Version="6.0.5" />
+		<PackageReference Include="System.CodeDom" Version="6.0.0" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\Corvus.Json.ExtendedTypes\Corvus.Json.ExtendedTypes.csproj" />
+	  <ProjectReference Include="..\Corvus.Json.CodeGeneration.Abstractions\Corvus.Json.CodeGeneration.Abstractions.csproj" />
+	  <ProjectReference Include="..\Corvus.Json.JsonSchema\Corvus.Json.JsonSchema.csproj" />
+	  <ProjectReference Include="..\Corvus.Json.Walker\Corvus.Json.Walker.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -44,8 +47,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="Corvus.Json.JsonSchema\Draft201909\" />
-	  <Folder Include="Corvus.Json.JsonSchema\Draft202012\" />
+	  <Folder Include="Corvus.Json.CodeGeneration\Generators\" />
 	</ItemGroup>
 
 </Project>

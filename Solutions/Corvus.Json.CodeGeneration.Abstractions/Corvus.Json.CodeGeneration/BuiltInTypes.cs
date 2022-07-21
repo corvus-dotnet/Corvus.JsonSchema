@@ -2,8 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using Corvus.Json.JsonSchema.Draft202012;
-
 namespace Corvus.Json.CodeGeneration;
 
 /// <summary>
@@ -20,16 +18,6 @@ public static class BuiltInTypes
     /// The not {}/false type declaration.
     /// </summary>
     public static readonly (string Ns, string Type) NotAnyTypeDeclaration = ("Corvus.Json", "JsonNotAny");
-
-    /// <summary>
-    /// Gets a type declaration instance for the Any type declaration.
-    /// </summary>
-    public static readonly TypeDeclaration AnyTypeDeclarationInstance = new(new Schema(true));
-
-    /// <summary>
-    /// Gets a type declaration instance for the NotAny type declaration.
-    /// </summary>
-    public static readonly TypeDeclaration NotAnyTypeDeclarationInstance = new(new Schema(false));
 
     /// <summary>
     /// The null type declaration.

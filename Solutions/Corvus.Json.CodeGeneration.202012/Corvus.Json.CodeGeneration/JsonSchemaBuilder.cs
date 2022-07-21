@@ -16,6 +16,8 @@ namespace Corvus.Json.CodeGeneration;
 /// </summary>
 public class JsonSchemaBuilder : IJsonSchemaBuilder
 {
+    private static readonly TypeDeclaration AnyTypeDeclarationInstance = new(new Schema(true));
+
     private readonly HashSet<TypeDeclaration> typeDeclarations = new();
     private readonly Dictionary<string, TypeDeclaration> locatedTypeDeclarations = new();
     private readonly JsonWalker walker;
@@ -727,7 +729,7 @@ public class JsonSchemaBuilder : IJsonSchemaBuilder
             return typeDeclaration;
         }
 
-        return BuiltInTypes.AnyTypeDeclarationInstance;
+        return AnyTypeDeclarationInstance;
     }
 
     private TypeDeclaration GetTypeDeclarationForProperty(string location, string lexicalLocation, string propertyName)
@@ -737,7 +739,7 @@ public class JsonSchemaBuilder : IJsonSchemaBuilder
             return typeDeclaration;
         }
 
-        return BuiltInTypes.AnyTypeDeclarationInstance;
+        return AnyTypeDeclarationInstance;
     }
 
     private bool TryGetTypeDeclarationForProperty(string location, string lexicalLocation, string propertyName, [NotNullWhen(true)] out TypeDeclaration? typeDeclaration)
@@ -811,7 +813,7 @@ public class JsonSchemaBuilder : IJsonSchemaBuilder
         {
             foreach (JsonString requiredName in source.Schema.Required.EnumerateArray())
             {
-                target.AddOrReplaceProperty(new PropertyDeclaration(BuiltInTypes.AnyTypeDeclarationInstance, requiredName!, true, source.Location == target.Location));
+                target.AddOrReplaceProperty(new PropertyDeclaration(AnyTypeDeclarationInstance, requiredName!, true, source.Location == target.Location));
             }
         }
 

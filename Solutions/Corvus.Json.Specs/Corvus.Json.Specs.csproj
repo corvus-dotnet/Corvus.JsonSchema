@@ -45,7 +45,7 @@
 
 		<PackageReference Include="System.Text.Json" Version="6.0.5" />
 
-		<ProjectReference Include="..\Corvus.Json.CodeGeneration\Corvus.Json.CodeGeneration.csproj" />
+		<ProjectReference Include="..\Corvus.Json.CodeGeneration.202012\Corvus.Json.CodeGeneration.202012.csproj" />
 
 		<ProjectReference Include="..\Corvus.Json.Patch\Corvus.Json.Patch.csproj" />
 		<PackageReference Update="StyleCop.Analyzers" Version="1.2.0-beta.435" />
