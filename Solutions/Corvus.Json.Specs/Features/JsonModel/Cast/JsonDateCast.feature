@@ -41,21 +41,6 @@ Scenario: Cast to LocalDate for json element backed value as an date
 	When I cast the LocalDate to JsonDate
 	Then the result should equal the JsonDate '2018-11-13'
 
-Scenario: Cast to ReadOnlySpan<byte> for json element backed value as an date
-	Given the JsonElement backed JsonDate "2018-11-13"
-	When I cast the JsonDate to ReadOnlySpan<byte>
-	Then the result should equal the ReadOnlySpan<byte> '2018-11-13'
-
-Scenario: Cast to ReadOnlySpan<byte> for dotnet backed value as an date
-	Given the dotnet backed JsonDate 2018-11-13
-	When I cast the JsonDate to ReadOnlySpan<byte>
-	Then the result should equal the ReadOnlySpan<byte> '2018-11-13'
-
-Scenario: Cast from ReadOnlySpan<byte> for json element backed value as an date
-	Given the ReadOnlyMemory<byte> for "2018-11-13"
-	When I cast the ReadOnlySpan<byte> to JsonDate
-	Then the result should equal the JsonDate '2018-11-13'
-
 Scenario: Cast to ReadOnlySpan<char> for json element backed value as an date
 	Given the JsonElement backed JsonDate "2018-11-13"
 	When I cast the JsonDate to ReadOnlySpan<char>

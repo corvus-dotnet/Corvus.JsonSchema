@@ -2,489 +2,512 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-namespace Corvus.Json
+using System.Buffers;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
+using System.Text.Json;
+using Corvus.Json.Internal;
+
+namespace Corvus.Json;
+
+/// <summary>
+/// Represents a JSON number.
+/// </summary>
+public readonly partial struct JsonNumber : IJsonNumber<JsonNumber>
 {
-    using System;
-    using System.Buffers;
-    using System.Text.Json;
+    private readonly Backing backing;
+    private readonly JsonElement jsonElementBacking;
+    private readonly double numberBacking;
 
     /// <summary>
-    /// A JSON object.
+    /// Initializes a new instance of the <see cref="JsonNumber"/> struct.
     /// </summary>
-    public readonly struct JsonNumber : IJsonValue, IEquatable<JsonNumber>
+    public JsonNumber()
     {
-        private readonly JsonElement jsonElement;
-        private readonly double? value;
+        this.jsonElementBacking = default;
+        this.backing = Backing.JsonElement;
+        this.numberBacking = default;
+    }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="JsonNumber"/> struct.
-        /// </summary>
-        /// <param name="jsonElement">The JSON element from which to construct the object.</param>
-        public JsonNumber(JsonElement jsonElement)
-        {
-            this.jsonElement = jsonElement;
-            this.value = default;
-        }
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonNumber"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to construct the instance.</param>
+    public JsonNumber(in JsonElement value)
+    {
+        this.jsonElementBacking = value;
+        this.backing = Backing.JsonElement;
+        this.numberBacking = default;
+    }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="JsonNumber"/> struct.
-        /// </summary>
-        /// <param name="value">The double value.</param>
-        public JsonNumber(double value)
-        {
-            this.jsonElement = default;
-            this.value = value;
-        }
+    /// <summary>
+    /// Gets a Null instance.
+    /// </summary>
+    public static JsonNumber Null { get; } = new(JsonValueHelpers.NullElement);
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="JsonNumber"/> struct.
-        /// </summary>
-        /// <param name="value">The double value.</param>
-        public JsonNumber(float value)
-        {
-            this.jsonElement = default;
-            this.value = value;
-        }
+    /// <summary>
+    /// Gets an Undefined instance.
+    /// </summary>
+    public static JsonNumber Undefined { get; }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="JsonNumber"/> struct.
-        /// </summary>
-        /// <param name="value">The double value.</param>
-        public JsonNumber(int value)
+    /// <inheritdoc/>
+    public JsonAny AsAny
+    {
+        get
         {
-            this.jsonElement = default;
-            this.value = value;
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="JsonNumber"/> struct.
-        /// </summary>
-        /// <param name="value">The long value.</param>
-        public JsonNumber(long value)
-        {
-            this.jsonElement = default;
-            this.value = value;
-        }
-
-        /// <summary>
-        /// Gets the <see cref="JsonValueKind"/>.
-        /// </summary>
-        public JsonValueKind ValueKind
-        {
-            get
+            if ((this.backing & Backing.JsonElement) != 0)
             {
-                if (this.value is not null)
-                {
-                    return JsonValueKind.Number;
-                }
-
-                return this.jsonElement.ValueKind;
-            }
-        }
-
-        /// <summary>
-        /// Gets a value indicating whether this is backed by a <see cref="JsonElement"/>.
-        /// </summary>
-        public bool HasJsonElement => this.value is null;
-
-        /// <summary>
-        /// Gets the backing <see cref="JsonElement"/>.
-        /// </summary>
-        public JsonElement AsJsonElement
-        {
-            get
-            {
-                if (this.value is double value)
-                {
-                    return NumberToJsonElement(value);
-                }
-
-                return this.jsonElement;
-            }
-        }
-
-        /// <inheritdoc/>
-        public JsonAny AsAny
-        {
-            get
-            {
-                return new JsonAny(this);
-            }
-        }
-
-        /// <summary>
-        /// Implicit conversion to JsonAny.
-        /// </summary>
-        /// <param name="value">The value from which to convert.</param>
-        public static implicit operator JsonAny(JsonNumber value)
-        {
-            return value.AsAny;
-        }
-
-        /// <summary>
-        /// Implicit conversion from JsonAny.
-        /// </summary>
-        /// <param name="value">The value from which to convert.</param>
-        public static implicit operator JsonNumber(JsonAny value)
-        {
-            return value.AsNumber;
-        }
-
-        /// <summary>
-        /// Conversion from double.
-        /// </summary>
-        /// <param name="value">The value from which to convert.</param>
-        public static implicit operator JsonNumber(double value)
-        {
-            return new JsonNumber(value);
-        }
-
-        /// <summary>
-        /// Conversion to double.
-        /// </summary>
-        /// <param name="number">The number from which to convert.</param>
-        public static implicit operator double(JsonNumber number)
-        {
-            return number.GetDouble();
-        }
-
-        /// <summary>
-        /// Conversion from float.
-        /// </summary>
-        /// <param name="value">The value from which to convert.</param>
-        public static implicit operator JsonNumber(float value)
-        {
-            return new JsonNumber(value);
-        }
-
-        /// <summary>
-        /// Conversion to float.
-        /// </summary>
-        /// <param name="number">The number from which to convert.</param>
-        public static implicit operator float(JsonNumber number)
-        {
-            return number.GetSingle();
-        }
-
-        /// <summary>
-        /// Conversion from long.
-        /// </summary>
-        /// <param name="value">The value from which to convert.</param>
-        public static implicit operator JsonNumber(long value)
-        {
-            return new JsonNumber(value);
-        }
-
-        /// <summary>
-        /// Conversion to long.
-        /// </summary>
-        /// <param name="number">The number from which to convert.</param>
-        public static implicit operator long(JsonNumber number)
-        {
-            return number.GetInt64();
-        }
-
-        /// <summary>
-        /// Conversion from int.
-        /// </summary>
-        /// <param name="value">The value from which to convert.</param>
-        public static implicit operator JsonNumber(int value)
-        {
-            return new JsonNumber(value);
-        }
-
-        /// <summary>
-        /// Conversion to int.
-        /// </summary>
-        /// <param name="number">The number from which to convert.</param>
-        public static implicit operator int(JsonNumber number)
-        {
-            return number.GetInt32();
-        }
-
-        /// <summary>
-        /// Standard equality operator.
-        /// </summary>
-        /// <param name="lhs">The left hand side of the comparison.</param>
-        /// <param name="rhs">The right hand side of the comparison.</param>
-        /// <returns>True if they are equal.</returns>
-        public static bool operator ==(JsonNumber lhs, JsonNumber rhs)
-        {
-            return lhs.Equals(rhs);
-        }
-
-        /// <summary>
-        /// Standard inequality operator.
-        /// </summary>
-        /// <param name="lhs">The left hand side of the comparison.</param>
-        /// <param name="rhs">The right hand side of the comparison.</param>
-        /// <returns>True if they are not equal.</returns>
-        public static bool operator !=(JsonNumber lhs, JsonNumber rhs)
-        {
-            return !lhs.Equals(rhs);
-        }
-
-        /// <summary>
-        /// Write a property dictionary to a <see cref="JsonElement"/>.
-        /// </summary>
-        /// <param name="value">The value to write.</param>
-        /// <returns>A JsonElement serialized from the properties.</returns>
-        public static JsonElement NumberToJsonElement(double value)
-        {
-            var abw = new ArrayBufferWriter<byte>();
-            using var writer = new Utf8JsonWriter(abw);
-            writer.WriteNumberValue(value);
-            writer.Flush();
-            var reader = new Utf8JsonReader(abw.WrittenSpan);
-            using var document = JsonDocument.ParseValue(ref reader);
-            return document.RootElement.Clone();
-        }
-
-        /// <inheritdoc/>
-        public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
-        {
-            ValidationContext result = validationContext;
-
-            return Json.Validate.TypeNumber(this.ValueKind, result, level);
-        }
-
-        /// <inheritdoc/>
-        public T As<T>()
-            where T : struct, IJsonValue
-        {
-            return this.As<JsonNumber, T>();
-        }
-
-        /// <inheritdoc/>
-        public override string ToString()
-        {
-            return this.Serialize();
-        }
-
-        /// <summary>
-        /// Gets the <see cref="JsonNumber"/> as a <see cref="double"/>.
-        /// </summary>
-        /// <returns>The <see cref="double"/>.</returns>
-        public double GetDouble()
-        {
-            if (this.TryGetDouble(out double value))
-            {
-                return value;
+                return new(this.jsonElementBacking);
             }
 
-            throw new InvalidOperationException("Unable to get this JsonNumber as a double.");
-        }
+            if ((this.backing & Backing.Number) != 0)
+            {
+                return new(this.numberBacking);
+            }
 
-        /// <summary>
-        /// Try to get a <see cref="double"/> value from this <see cref="JsonNumber"/>.
-        /// </summary>
-        /// <param name="value">The <see cref="JsonNumber"/> as a <see cref="double"/>.</param>
-        /// <returns><c>True</c> if we were able to get the value.</returns>
-        public bool TryGetDouble(out double value)
+            if ((this.backing & Backing.Null) != 0)
+            {
+                return JsonAny.Null;
+            }
+
+            return JsonAny.Undefined;
+        }
+    }
+
+    /// <inheritdoc/>
+    public JsonElement AsJsonElement
+    {
+        get
         {
-            if (this.value is double vad)
+            if ((this.backing & Backing.JsonElement) != 0)
             {
-                value = vad;
-                return true;
+                return this.jsonElementBacking;
             }
 
-            if (this.jsonElement.ValueKind == JsonValueKind.Number)
+            if ((this.backing & Backing.Null) != 0)
             {
-                return this.jsonElement.TryGetDouble(out value);
+                return JsonValueHelpers.NullElement;
             }
 
-            value = default;
-            return false;
+            if ((this.backing & Backing.Number) != 0)
+            {
+                return JsonValueHelpers.NumberToJsonElement(this.numberBacking);
+            }
+
+            return default;
         }
+    }
 
-        /// <summary>
-        /// Gets the <see cref="JsonNumber"/> as a <see cref="float"/>.
-        /// </summary>
-        /// <returns>The <see cref="float"/>.</returns>
-        public float GetSingle()
+    /// <inheritdoc/>
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public JsonString AsString
+    {
+        get
         {
-            if (this.TryGetSingle(out float value))
+            if ((this.backing & Backing.JsonElement) != 0)
             {
-                return value;
+                return new(this.jsonElementBacking);
             }
 
-            throw new InvalidOperationException("Unable to get the JsonNumber as a single.");
+            throw new InvalidOperationException();
         }
+    }
 
-        /// <summary>
-        /// Try to get a <see cref="float"/> value from this <see cref="JsonNumber"/>.
-        /// </summary>
-        /// <param name="value">The <see cref="JsonNumber"/> as a <see cref="float"/>.</param>
-        /// <returns><c>True</c> if we were able to get the value.</returns>
-        public bool TryGetSingle(out float value)
+    /// <inheritdoc/>
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public JsonBoolean AsBoolean
+    {
+        get
         {
-            if (this.value is double vad)
+            if ((this.backing & Backing.JsonElement) != 0)
             {
-                if (vad >= float.MinValue && vad <= float.MaxValue)
-                {
-                    value = (float)vad;
-                    return true;
-                }
+                return new(this.jsonElementBacking);
             }
 
-            if (this.jsonElement.ValueKind == JsonValueKind.Number)
-            {
-                return this.jsonElement.TryGetSingle(out value);
-            }
-
-            value = default;
-            return false;
+            throw new InvalidOperationException();
         }
+    }
 
-        /// <summary>
-        /// Gets the <see cref="JsonNumber"/> as a <see cref="long"/>.
-        /// </summary>
-        /// <returns>The <see cref="long"/>.</returns>
-        public long GetInt64()
+    /// <inheritdoc/>
+    public JsonNumber AsNumber
+    {
+        get
         {
-            if (this.TryGetInt64(out long value))
-            {
-                return value;
-            }
-
-            throw new InvalidOperationException("Unable to get the JsonNumber as an int64.");
+            return this;
         }
+    }
 
-        /// <summary>
-        /// Try to get a <see cref="long"/> value from this <see cref="JsonNumber"/>.
-        /// </summary>
-        /// <param name="value">The <see cref="JsonNumber"/> as a <see cref="long"/>.</param>
-        /// <returns><c>True</c> if we were able to get the value.</returns>
-        public bool TryGetInt64(out long value)
+    /// <inheritdoc/>
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public JsonObject AsObject
+    {
+        get
         {
-            if (this.value is double vad)
+            if ((this.backing & Backing.JsonElement) != 0)
             {
-                if (vad >= long.MinValue && vad <= long.MaxValue)
-                {
-                    value = (long)vad;
-                    return true;
-                }
+                return new(this.jsonElementBacking);
             }
 
-            if (this.jsonElement.ValueKind == JsonValueKind.Number)
-            {
-                return this.jsonElement.TryGetInt64(out value);
-            }
-
-            value = default;
-            return false;
+            throw new InvalidOperationException();
         }
+    }
 
-        /// <summary>
-        /// Gets the <see cref="JsonNumber"/> as an <see cref="int"/>.
-        /// </summary>
-        /// <returns>The <see cref="int"/>.</returns>
-        public int GetInt32()
+    /// <inheritdoc/>
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public JsonArray AsArray
+    {
+        get
         {
-            if (this.TryGetInt32(out int value))
+            if ((this.backing & Backing.JsonElement) != 0)
             {
-                return value;
+                return new(this.jsonElementBacking);
             }
 
-            throw new InvalidOperationException("Unable to get the JsonNumber as an int32.");
+            throw new InvalidOperationException();
         }
+    }
 
-        /// <summary>
-        /// Try to get a <see cref="int"/> value from this <see cref="JsonNumber"/>.
-        /// </summary>
-        /// <param name="value">The <see cref="JsonNumber"/> as a <see cref="int"/>.</param>
-        /// <returns><c>True</c> if we were able to get the value.</returns>
-        public bool TryGetInt32(out int value)
+    /// <inheritdoc/>
+    public bool HasJsonElementBacking => (this.backing & Backing.JsonElement) != 0;
+
+    /// <inheritdoc/>
+    public bool HasDotnetBacking => (this.backing & Backing.Dotnet) != 0;
+
+    /// <inheritdoc/>
+    public JsonValueKind ValueKind
+    {
+        get
         {
-            if (this.value is double vad)
+            if ((this.backing & Backing.JsonElement) != 0)
             {
-                if (vad >= int.MinValue && vad <= int.MaxValue)
-                {
-                    value = (int)vad;
-                    return true;
-                }
+                return this.jsonElementBacking.ValueKind;
             }
 
-            if (this.jsonElement.ValueKind == JsonValueKind.Number)
+            if ((this.backing & Backing.Null) != 0)
             {
-                return this.jsonElement.TryGetInt32(out value);
+                return JsonValueKind.Null;
             }
 
-            value = default;
-            return false;
+            if ((this.backing & Backing.Number) != 0)
+            {
+                return JsonValueKind.Number;
+            }
+
+            return JsonValueKind.Undefined;
         }
+    }
 
-        /// <inheritdoc/>
-        public override bool Equals(object? obj)
+    /// <summary>
+    /// Equality operator.
+    /// </summary>
+    /// <param name="left">The lhs.</param>
+    /// <param name="right">The rhs.</param>
+    /// <returns><c>True</c> if the values are equal.</returns>
+    public static bool operator ==(in JsonNumber left, in JsonNumber right)
+    {
+        return left.Equals(right);
+    }
+
+    /// <summary>
+    /// Inequality operator.
+    /// </summary>
+    /// <param name="left">The lhs.</param>
+    /// <param name="right">The rhs.</param>
+    /// <returns><c>True</c> if the values are equal.</returns>
+    public static bool operator !=(in JsonNumber left, in JsonNumber right)
+    {
+        return !left.Equals(right);
+    }
+
+    /// <summary>
+    /// Gets an instance of the JSON value from a JsonAny value.
+    /// </summary>
+    /// <param name="value">The <see cref="JsonAny"/> value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the <see cref="JsonAny"/>.</returns>
+    /// <remarks>The returned value will have a <see cref="IJsonValue.ValueKind"/> of <see cref="JsonValueKind.Undefined"/> if the
+    /// value cannot be constructed from the given instance (e.g. because they have an incompatible dotnet backing type.
+    /// </remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static JsonNumber FromAny(in JsonAny value)
+    {
+        if (value.HasJsonElementBacking)
         {
-            if (obj is IJsonValue jv)
-            {
-                return this.Equals(jv.AsAny);
-            }
-
-            return obj is null && this.IsNull();
+            return new(value.AsJsonElement);
         }
 
-        /// <inheritdoc/>
-        public override int GetHashCode()
+        JsonValueKind valueKind = value.ValueKind;
+        return valueKind switch
         {
-            JsonValueKind valueKind = this.ValueKind;
+            JsonValueKind.Number => new((double)value),
+            JsonValueKind.Null => Null,
+            _ => Undefined,
+        };
+    }
 
-            return valueKind switch
-            {
-                JsonValueKind.Number => this.GetDouble().GetHashCode(),
-                JsonValueKind.Null => JsonNull.NullHashCode,
-                _ => JsonAny.UndefinedHashCode,
-            };
-        }
+    /// <summary>
+    /// Gets an instance of the JSON value from a <see cref="JsonElement"/> value.
+    /// </summary>
+    /// <param name="value">The <see cref="JsonElement"/> value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the <see cref="JsonElement"/>.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static JsonNumber FromJson(in JsonElement value)
+    {
+        return new(value);
+    }
 
-        /// <summary>
-        /// Writes the object to the <see cref="Utf8JsonWriter"/>.
-        /// </summary>
-        /// <param name="writer">The writer to which to write the object.</param>
-        public void WriteTo(Utf8JsonWriter writer)
+    /// <summary>
+    /// Gets an instance of the JSON value from a string value.
+    /// </summary>
+    /// <typeparam name="TValue">The type of the value.</typeparam>
+    /// <param name="value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>The value will be undefined if it cannot be initialized with the specified instance.</remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public static JsonNumber FromString<TValue>(in TValue value)
+        where TValue : struct, IJsonString<TValue>
+    {
+        if (value.HasJsonElementBacking)
         {
-            if (this.value is double value)
-            {
-                writer.WriteNumberValue(value);
-            }
-            else
-            {
-                this.jsonElement.WriteTo(writer);
-            }
+            return new(value.AsJsonElement);
         }
 
-        /// <inheritdoc/>
-        public bool Equals<T>(T other)
-            where T : struct, IJsonValue
+        return Undefined;
+    }
+
+    /// <summary>
+    /// Gets an instance of the JSON value from a boolean value.
+    /// </summary>
+    /// <typeparam name="TValue">The type of the value.</typeparam>
+    /// <param name="value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>The value will be undefined if it cannot be initialized with the specified instance.</remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public static JsonNumber FromBoolean<TValue>(in TValue value)
+        where TValue : struct, IJsonBoolean<TValue>
+    {
+        if (value.HasJsonElementBacking)
         {
-            if (this.IsNull() && other.IsNull())
-            {
-                return true;
-            }
-
-            if (other.ValueKind != JsonValueKind.Number)
-            {
-                return false;
-            }
-
-            return this.Equals(other.AsNumber());
+            return new(value.AsJsonElement);
         }
 
-        /// <inheritdoc/>
-        public bool Equals(JsonNumber other)
+        return Undefined;
+    }
+
+    /// <summary>
+    /// Gets an instance of the JSON value from a double value.
+    /// </summary>
+    /// <typeparam name="TValue">The type of the value.</typeparam>
+    /// <param name="value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>The value will be undefined if it cannot be initialized with the specified instance.</remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static JsonNumber FromNumber<TValue>(in TValue value)
+        where TValue : struct, IJsonNumber<TValue>
+    {
+        if (value.HasJsonElementBacking)
         {
-            if (this.IsNull() && other.IsNull())
-            {
-                return true;
-            }
-
-            if (other.ValueKind != this.ValueKind || this.ValueKind != JsonValueKind.Number)
-            {
-                return false;
-            }
-
-            return this.GetDouble() == other.GetDouble();
+            return new(value.AsJsonElement);
         }
+
+        if (value.ValueKind == JsonValueKind.Number)
+        {
+            return new((double)value);
+        }
+
+        return Undefined;
+    }
+
+    /// <summary>
+    /// Gets an instance of the JSON value from an array value.
+    /// </summary>
+    /// <typeparam name="TValue">The type of the value.</typeparam>
+    /// <param name="value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>The value will be undefined if it cannot be initialized with the specified instance.</remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public static JsonNumber FromArray<TValue>(in TValue value)
+        where TValue : struct, IJsonArray<TValue>
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        return Undefined;
+    }
+
+    /// <summary>
+    /// Gets an instance of the JSON value from an object value.
+    /// </summary>
+    /// <typeparam name="TValue">The type of the value.</typeparam>
+    /// <param name="value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>The value will be undefined if it cannot be initialized with the specified instance.</remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public static JsonNumber FromObject<TValue>(in TValue value)
+        where TValue : struct, IJsonObject<TValue>
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        return Undefined;
+    }
+
+    /// <summary>
+    /// Parses a JSON string into a JsonNumber.
+    /// </summary>
+    /// <param name="json">The json string to parse.</param>
+    /// <param name="options">The (optional) JsonDocumentOptions.</param>
+    /// <returns>A <see cref="JsonNumber"/> instance built from the JSON string.</returns>
+    public static JsonNumber Parse(string json, JsonDocumentOptions options = default)
+    {
+        using var jsonDocument = JsonDocument.Parse(json, options);
+        return new JsonNumber(jsonDocument.RootElement.Clone());
+    }
+
+    /// <summary>
+    /// Parses a JSON string into a JsonNumber.
+    /// </summary>
+    /// <param name="utf8Json">The json string to parse.</param>
+    /// <param name="options">The (optional) JsonDocumentOptions.</param>
+    /// <returns>A <see cref="JsonNumber"/> instance built from the JSON string.</returns>
+    public static JsonNumber Parse(Stream utf8Json, JsonDocumentOptions options = default)
+    {
+        using var jsonDocument = JsonDocument.Parse(utf8Json, options);
+        return new JsonNumber(jsonDocument.RootElement.Clone());
+    }
+
+    /// <summary>
+    /// Parses a JSON string into a JsonNumber.
+    /// </summary>
+    /// <param name="utf8Json">The json string to parse.</param>
+    /// <param name="options">The (optional) JsonDocumentOptions.</param>
+    /// <returns>A <see cref="JsonNumber"/> instance built from the JSON string.</returns>
+    public static JsonNumber Parse(ReadOnlyMemory<byte> utf8Json, JsonDocumentOptions options = default)
+    {
+        using var jsonDocument = JsonDocument.Parse(utf8Json, options);
+        return new JsonNumber(jsonDocument.RootElement.Clone());
+    }
+
+    /// <summary>
+    /// Parses a JSON string into a JsonNumber.
+    /// </summary>
+    /// <param name="json">The json string to parse.</param>
+    /// <param name="options">The (optional) JsonDocumentOptions.</param>
+    /// <returns>A <see cref="JsonNumber"/> instance built from the JSON string.</returns>
+    public static JsonNumber Parse(ReadOnlyMemory<char> json, JsonDocumentOptions options = default)
+    {
+        using var jsonDocument = JsonDocument.Parse(json, options);
+        return new JsonNumber(jsonDocument.RootElement.Clone());
+    }
+
+    /// <summary>
+    /// Parses a JSON string into a JsonNumber.
+    /// </summary>
+    /// <param name="utf8Json">The json string to parse.</param>
+    /// <param name="options">The (optional) JsonDocumentOptions.</param>
+    /// <returns>A <see cref="JsonNumber"/> instance built from the JSON string.</returns>
+    public static JsonNumber Parse(ReadOnlySequence<byte> utf8Json, JsonDocumentOptions options = default)
+    {
+        using var jsonDocument = JsonDocument.Parse(utf8Json, options);
+        return new JsonNumber(jsonDocument.RootElement.Clone());
+    }
+
+    /// <summary>
+    /// Gets the value as the target value.
+    /// </summary>
+    /// <typeparam name="TTarget">The type of the target.</typeparam>
+    /// <returns>An instance of the target type.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public TTarget As<TTarget>()
+        where TTarget : struct, IJsonValue<TTarget>
+    {
+        if ((this.backing & Backing.JsonElement) != 0)
+        {
+            return TTarget.FromJson(this.jsonElementBacking);
+        }
+
+        if ((this.backing & Backing.Number) != 0)
+        {
+            return TTarget.FromNumber(this);
+        }
+
+        if ((this.backing & Backing.Null) != 0)
+        {
+            return TTarget.Null;
+        }
+
+        return TTarget.Undefined;
+    }
+
+    /// <inheritdoc/>
+    public override bool Equals(object? obj)
+    {
+        return
+            (obj is IJsonValue jv && this.Equals(jv.AsAny)) ||
+            (obj is null && this.IsNull());
+    }
+
+    /// <inheritdoc/>
+    public bool Equals<T>(T other)
+        where T : struct, IJsonValue<T>
+    {
+        return JsonValueHelpers.CompareValues(this, other);
+    }
+
+    /// <inheritdoc/>
+    public bool Equals(JsonNumber other)
+    {
+        return JsonValueHelpers.CompareValues(this, other);
+    }
+
+    /// <inheritdoc/>
+    public void WriteTo(Utf8JsonWriter writer)
+    {
+        if ((this.backing & Backing.JsonElement) != 0)
+        {
+            if (this.jsonElementBacking.ValueKind != JsonValueKind.Undefined)
+            {
+                this.jsonElementBacking.WriteTo(writer);
+            }
+
+            return;
+        }
+
+        if ((this.backing & Backing.Null) != 0)
+        {
+            writer.WriteNullValue();
+            return;
+        }
+
+        if ((this.backing & Backing.Number) != 0)
+        {
+            writer.WriteNumberValue(this.numberBacking);
+            return;
+        }
+    }
+
+    /// <inheritdoc/>
+    public override int GetHashCode()
+    {
+        return JsonValueHelpers.GetHashCode(this);
+    }
+
+    /// <inheritdoc/>
+    public override string ToString()
+    {
+        return this.Serialize();
+    }
+
+    /// <inheritdoc/>
+    public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
+    {
+        return Json.Validate.TypeNumber(this.ValueKind, validationContext, level);
     }
 }

@@ -1,20 +1,36 @@
-﻿using Benchmarks;
+﻿using Corvus.Json;
+using JsonSchemaSample.Api;
 
-try
+Console.WriteLine("Hello world.");
+
+var matthew =
+    Person.Create(
+        name: PersonName.Create(
+            givenName: "Matthew",
+            familyName: "Adams",
+            otherNames: "William"),
+        dateOfBirth: "1973-02-14");
+
+var michael =
+    Person.Create(
+        name: PersonName.Create(
+            givenName: "Michael",
+            familyName: "Adams",
+            otherNames: OtherNames.FromItems("Francis", "James")),
+        dateOfBirth: "not valid");
+
+Console.WriteLine(matthew);
+Console.WriteLine($"matthew.IsValid(): {matthew.IsValid()}");
+Console.WriteLine(michael);
+Console.WriteLine($"michael.IsValid: {michael.IsValid()}");
+
+
+if (michael.Name.OtherNames.TryGetAsPersonNameElement(out PersonNameElement result))
 {
-    var bench = new GeneratedBenchmark28();
-    await bench.GlobalSetup().ConfigureAwait(false);
-
-    // Warmup
-    bench.PatchCorvus();
-
-
-    for (int i = 0; i < 32768; ++i)
-    {
-        bench.PatchCorvus();
-    }
+    Console.WriteLine($"It was an item: {result}");
 }
-catch (Exception ex)
+
+if (michael.Name.OtherNames.TryGetAsPersonNameElementArray(out PersonNameElementArray arrayResult))
 {
-    Console.WriteLine(ex.ToString());
+    Console.WriteLine($"It was an array: {arrayResult}");
 }

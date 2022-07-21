@@ -7,8 +7,14 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<IsPackable>false</IsPackable>
+		<NoWarn>CS1591</NoWarn>
 	</PropertyGroup>
 
+	<PropertyGroup>
+		<LangVersion>preview</LangVersion>
+		<EnablePreviewFeatures>true</EnablePreviewFeatures>
+	</PropertyGroup>
+	
 	<ItemGroup>
 		<PackageReference Include="Corvus.Extensions" Version="1.1.4" />
 		<PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.1">
@@ -22,7 +28,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\Corvus.Json.Walker.JsonSchema\Corvus.Json.JsonSchema.TypeBuilder.csproj" />
 		<ProjectReference Include="..\Corvus.Json.Patch\Corvus.Json.Patch.csproj" />
 	</ItemGroup>
 
@@ -30,5 +35,9 @@
 		<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
 		<RestoreLockedMode Condition="$(ContinuousIntegrationBuild) == 'true'">true</RestoreLockedMode>
 	</PropertyGroup>
+
+	<ItemGroup>
+	  <PackageReference Update="Roslynator.Analyzers" Version="4.1.1" />
+	</ItemGroup>
 
 </Project>

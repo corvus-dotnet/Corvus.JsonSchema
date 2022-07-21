@@ -2,126 +2,122 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-namespace Corvus.Json
+using System.Text.Json;
+
+namespace Corvus.Json;
+
+/// <summary>
+/// Delegates <see cref="JsonDocument"/> resolution to one of a set of <see cref="IDocumentResolver"/> instances.
+/// </summary>
+public class CompoundDocumentResolver : IDocumentResolver
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Text.Json;
-    using System.Threading.Tasks;
+    private readonly IDocumentResolver[] documentResolvers;
+    private readonly Dictionary<string, JsonDocument> documents = new();
+    private bool disposedValue;
 
     /// <summary>
-    /// Delegates <see cref="JsonDocument"/> resolution to one of a set of <see cref="IDocumentResolver"/> instances.
+    /// Initializes a new instance of the <see cref="CompoundDocumentResolver"/> class.
     /// </summary>
-    public class CompoundDocumentResolver : IDocumentResolver
+    /// <param name="documentResolvers">The document resolvers to which to delegate.</param>
+    /// <remarks>Note that we take ownership of the lifecycle of the document resolvers passed to us.</remarks>
+    public CompoundDocumentResolver(params IDocumentResolver[] documentResolvers)
     {
-        private readonly IDocumentResolver[] documentResolvers;
-        private readonly Dictionary<string, JsonDocument> documents = new();
-        private bool disposedValue;
+        this.documentResolvers = documentResolvers;
+    }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="CompoundDocumentResolver"/> class.
-        /// </summary>
-        /// <param name="documentResolvers">The document resolvers to which to delegate.</param>
-        /// <remarks>Note that we take ownership of the lifecycle of the document resolvers passed to us.</remarks>
-        public CompoundDocumentResolver(params IDocumentResolver[] documentResolvers)
+    /// <inheritdoc/>
+    public bool AddDocument(string uri, JsonDocument document)
+    {
+        this.CheckDisposed();
+        return this.documents.TryAdd(uri, document);
+    }
+
+    /// <inheritdoc/>
+    public async Task<JsonElement?> TryResolve(JsonReference reference)
+    {
+        this.CheckDisposed();
+        string uri = new(reference.Uri);
+
+        if (this.documents.TryGetValue(uri, out JsonDocument? result))
         {
-            this.documentResolvers = documentResolvers;
-        }
-
-        /// <inheritdoc/>
-        public bool AddDocument(string uri, JsonDocument document)
-        {
-            this.CheckDisposed();
-            return this.documents.TryAdd(uri, document);
-        }
-
-        /// <inheritdoc/>
-        public async Task<JsonElement?> TryResolve(JsonReference reference)
-        {
-            this.CheckDisposed();
-            string uri = new(reference.Uri);
-
-            if (this.documents.TryGetValue(uri, out JsonDocument? result))
+            if (JsonPointerUtilities.TryResolvePointer(result, reference.Fragment, out JsonElement? element))
             {
-                if (JsonPointerUtilities.TryResolvePointer(result, reference.Fragment, out JsonElement? element))
-                {
-                    return element;
-                }
-
-                return default;
-            }
-
-            foreach (IDocumentResolver resolver in this.documentResolvers)
-            {
-                JsonElement? element = await resolver.TryResolve(reference).ConfigureAwait(false);
-                if (element is JsonElement je)
-                {
-                    return je;
-                }
+                return element;
             }
 
             return default;
         }
 
-        /// <inheritdoc/>
-        public void Reset()
+        foreach (IDocumentResolver resolver in this.documentResolvers)
         {
-            this.CheckDisposed();
-
-            this.DisposeDocumentsAndClear();
-
-            foreach (IDocumentResolver resolver in this.documentResolvers)
+            JsonElement? element = await resolver.TryResolve(reference).ConfigureAwait(false);
+            if (element is JsonElement je)
             {
-                resolver.Reset();
+                return je;
             }
         }
 
-        /// <inheritdoc/>
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-            this.Dispose(disposing: true);
-            GC.SuppressFinalize(this);
-        }
+        return default;
+    }
 
-        /// <summary>
-        /// Implements the dispose pattern.
-        /// </summary>
-        /// <param name="disposing">True if we are disposing.</param>
-        protected virtual void Dispose(bool disposing)
+    /// <inheritdoc/>
+    public void Reset()
+    {
+        this.CheckDisposed();
+
+        this.DisposeDocumentsAndClear();
+
+        foreach (IDocumentResolver resolver in this.documentResolvers)
         {
-            if (!this.disposedValue)
+            resolver.Reset();
+        }
+    }
+
+    /// <inheritdoc/>
+    public void Dispose()
+    {
+        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        this.Dispose(disposing: true);
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// Implements the dispose pattern.
+    /// </summary>
+    /// <param name="disposing">True if we are disposing.</param>
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!this.disposedValue)
+        {
+            if (disposing)
             {
-                if (disposing)
+                this.DisposeDocumentsAndClear();
+
+                foreach (IDocumentResolver resolver in this.documentResolvers)
                 {
-                    this.DisposeDocumentsAndClear();
-
-                    foreach (IDocumentResolver resolver in this.documentResolvers)
-                    {
-                        resolver.Dispose();
-                    }
+                    resolver.Dispose();
                 }
-
-                this.disposedValue = true;
             }
+
+            this.disposedValue = true;
+        }
+    }
+
+    private void DisposeDocumentsAndClear()
+    {
+        foreach (KeyValuePair<string, JsonDocument> document in this.documents)
+        {
+            document.Value.Dispose();
         }
 
-        private void DisposeDocumentsAndClear()
-        {
-            foreach (KeyValuePair<string, JsonDocument> document in this.documents)
-            {
-                document.Value.Dispose();
-            }
+        this.documents.Clear();
+    }
 
-            this.documents.Clear();
-        }
-
-        private void CheckDisposed()
+    private void CheckDisposed()
+    {
+        if (this.disposedValue)
         {
-            if (this.disposedValue)
-            {
-                throw new ObjectDisposedException(nameof(CompoundDocumentResolver));
-            }
+            throw new ObjectDisposedException(nameof(CompoundDocumentResolver));
         }
     }
 }

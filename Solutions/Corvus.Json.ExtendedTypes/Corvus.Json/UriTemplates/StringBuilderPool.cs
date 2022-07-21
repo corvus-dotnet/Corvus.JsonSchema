@@ -2,19 +2,18 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-namespace Corvus.Json.UriTemplates
-{
-    using System.Text;
-    using Microsoft.Extensions.ObjectPool;
+using System.Text;
+using Microsoft.Extensions.ObjectPool;
 
+namespace Corvus.Json.UriTemplates;
+
+/// <summary>
+/// A <see cref="StringBuilder"/> provider.
+/// </summary>
+internal static class StringBuilderPool
+{
     /// <summary>
-    /// A <see cref="StringBuilder"/> provider.
+    /// Gets a shared <see cref="StringBuilder"/> pool.
     /// </summary>
-    internal static class StringBuilderPool
-    {
-        /// <summary>
-        /// Gets a shared <see cref="StringBuilder"/> pool.
-        /// </summary>
-        public static readonly DefaultObjectPool<StringBuilder> Shared = new(new StringBuilderPooledObjectPolicy());
-    }
+    public static readonly DefaultObjectPool<StringBuilder> Shared = new(new StringBuilderPooledObjectPolicy());
 }

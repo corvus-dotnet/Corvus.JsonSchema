@@ -31,21 +31,6 @@ Scenario: Cast from JsonString for json element backed value as an uriTemplate
 	When I cast the JsonString to JsonUriTemplate
 	Then the result should equal the JsonUriTemplate 'http://example.com/dictionary/{term:1}/{term}'
 
-Scenario: Cast to ReadOnlySpan<byte> for json element backed value as an uriTemplate
-	Given the JsonElement backed JsonUriTemplate "http://example.com/dictionary/{term:1}/{term}"
-	When I cast the JsonUriTemplate to ReadOnlySpan<byte>
-	Then the result should equal the ReadOnlySpan<byte> 'http://example.com/dictionary/{term:1}/{term}'
-
-Scenario: Cast to ReadOnlySpan<byte> for dotnet backed value as an uriTemplate
-	Given the dotnet backed JsonUriTemplate http://example.com/dictionary/{term:1}/{term}
-	When I cast the JsonUriTemplate to ReadOnlySpan<byte>
-	Then the result should equal the ReadOnlySpan<byte> 'http://example.com/dictionary/{term:1}/{term}'
-
-Scenario: Cast from ReadOnlySpan<byte> for json element backed value as an uriTemplate
-	Given the ReadOnlyMemory<byte> for "http://example.com/dictionary/{term:1}/{term}"
-	When I cast the ReadOnlySpan<byte> to JsonUriTemplate
-	Then the result should equal the JsonUriTemplate 'http://example.com/dictionary/{term:1}/{term}'
-
 Scenario: Cast to ReadOnlySpan<char> for json element backed value as an uriTemplate
 	Given the JsonElement backed JsonUriTemplate "http://example.com/dictionary/{term:1}/{term}"
 	When I cast the JsonUriTemplate to ReadOnlySpan<char>

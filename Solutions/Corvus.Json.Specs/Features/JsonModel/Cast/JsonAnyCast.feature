@@ -3,17 +3,17 @@
 
 Scenario: Cast to dictionary for json element backed value as a JsonAny
 	Given the JsonElement backed JsonAny {"foo": 3}
-	When I cast the JsonAny to ImmutableDictionary<string,JsonAny>
-	Then the result should equal the ImmutableDictionary<string,JsonAny> '{"foo": 3}'
+	When I cast the JsonAny to ImmutableDictionary<JsonPropertyName,JsonAny>
+	Then the result should equal the ImmutableDictionary<JsonPropertyName,JsonAny> '{"foo": 3}'
 
 Scenario: Cast to dictionary for dotnet backed value as a JsonAny
 	Given the object backed JsonAny {"foo": 3}
-	When I cast the JsonAny to ImmutableDictionary<string,JsonAny>
-	Then the result should equal the ImmutableDictionary<string,JsonAny> '{"foo": 3}'
+	When I cast the JsonAny to ImmutableDictionary<JsonPropertyName,JsonAny>
+	Then the result should equal the ImmutableDictionary<JsonPropertyName,JsonAny> '{"foo": 3}'
 
 Scenario: Cast from dictionary for json element backed value as a JsonAny
-	Given the ImmutableDictionary<string,JsonAny> for {"foo": 3}
-	When I cast the ImmutableDictionary<string,JsonAny> to JsonAny
+	Given the ImmutableDictionary<JsonPropertyName,JsonAny> for {"foo": 3}
+	When I cast the ImmutableDictionary<JsonPropertyName,JsonAny> to JsonAny
 	Then the result should equal the JsonAny '{"foo": 3}'
 
 Scenario: Cast to JsonString for json element backed value as a JsonAny
@@ -29,21 +29,6 @@ Scenario: Cast to JsonString for dotnet backed value as a JsonAny
 Scenario: Cast from JsonString for json element backed value as a JsonAny
 	Given the JsonString for "hello@endjin.com"
 	When I cast the JsonString to JsonAny
-	Then the result should equal the JsonAny 'hello@endjin.com'
-
-Scenario: Cast to ReadOnlySpan<byte> for json element backed value as a JsonAny
-	Given the JsonElement backed JsonAny "hello@endjin.com"
-	When I cast the JsonAny to ReadOnlySpan<byte>
-	Then the result should equal the ReadOnlySpan<byte> 'hello@endjin.com'
-
-Scenario: Cast to ReadOnlySpan<byte> for dotnet backed value as a string
-	Given the string backed JsonAny hello@endjin.com
-	When I cast the JsonAny to ReadOnlySpan<byte>
-	Then the result should equal the ReadOnlySpan<byte> 'hello@endjin.com'
-
-Scenario: Cast from ReadOnlySpan<byte> for json element backed value as a JsonAny
-	Given the ReadOnlyMemory<byte> for "hello@endjin.com"
-	When I cast the ReadOnlySpan<byte> to JsonAny
 	Then the result should equal the JsonAny 'hello@endjin.com'
 
 Scenario: Cast to ReadOnlySpan<char> for json element backed value as a JsonAny

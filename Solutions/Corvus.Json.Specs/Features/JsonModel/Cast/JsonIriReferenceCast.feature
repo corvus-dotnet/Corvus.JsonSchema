@@ -46,21 +46,6 @@ Scenario: Cast from Uri for json element backed value as an iri
 	When I cast the Uri to JsonIriReference
 	Then the result should equal the JsonIriReference 'http://foo.bar/?baz=qux#quux'
 
-Scenario: Cast to ReadOnlySpan<byte> for json element backed value as an iri
-	Given the JsonElement backed JsonIriReference "http://foo.bar/?baz=qux#quux"
-	When I cast the JsonIriReference to ReadOnlySpan<byte>
-	Then the result should equal the ReadOnlySpan<byte> 'http://foo.bar/?baz=qux#quux'
-
-Scenario: Cast to ReadOnlySpan<byte> for dotnet backed value as an iri
-	Given the dotnet backed JsonIriReference http://foo.bar/?baz=qux#quux
-	When I cast the JsonIriReference to ReadOnlySpan<byte>
-	Then the result should equal the ReadOnlySpan<byte> 'http://foo.bar/?baz=qux#quux'
-
-Scenario: Cast from ReadOnlySpan<byte> for json element backed value as an iri
-	Given the ReadOnlyMemory<byte> for "http://foo.bar/?baz=qux#quux"
-	When I cast the ReadOnlySpan<byte> to JsonIriReference
-	Then the result should equal the JsonIriReference 'http://foo.bar/?baz=qux#quux'
-
 Scenario: Cast to ReadOnlySpan<char> for json element backed value as an iri
 	Given the JsonElement backed JsonIriReference "http://foo.bar/?baz=qux#quux"
 	When I cast the JsonIriReference to ReadOnlySpan<char>

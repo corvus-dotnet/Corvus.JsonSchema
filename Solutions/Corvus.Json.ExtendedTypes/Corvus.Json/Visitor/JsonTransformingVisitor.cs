@@ -2,11 +2,12 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-namespace Corvus.Json.Visitor;
 using System.Buffers;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+
+namespace Corvus.Json.Visitor;
 
 /// <summary>
 /// A type which allows you to transform an existing tree.
@@ -101,13 +102,13 @@ public static partial class JsonTransformingVisitor
         bool hasTransformedItems = false;
         ImmutableList<JsonAny>.Builder builder;
 
-        if (asArray.HasJsonElement)
+        if (asArray.HasJsonElementBacking)
         {
             builder = ImmutableList.CreateBuilder<JsonAny>();
         }
         else
         {
-            builder = asArray.AsItemsList.ToBuilder();
+            builder = asArray.AsImmutableListBuilder();
         }
 
         int index = 0;
@@ -115,7 +116,7 @@ public static partial class JsonTransformingVisitor
         {
             if (terminateEntireWalkApplyingChanges)
             {
-                if (asArray.HasJsonElement)
+                if (asArray.HasJsonElementBacking)
                 {
                     builder.Add(item);
                     index++;
@@ -202,7 +203,7 @@ public static partial class JsonTransformingVisitor
     {
         bool hasTransformedProperties = false;
         bool terminateEntireWalkApplyingChanges = false;
-        ImmutableDictionary<string, JsonAny>.Builder builder;
+        ImmutableDictionary<JsonPropertyName, JsonAny>.Builder builder;
 
         // We have two separate strategies in play.
         // If we have a JsonElement backing, and we are going to mutate the object,
@@ -210,20 +211,20 @@ public static partial class JsonTransformingVisitor
         // an empty immutable dictionary builder.
         // If we *already* have a ImmutableDictionary backing, it is more efficient
         // to mutate the existing copy using the .ToBuilder() method.
-        if (asObject.HasJsonElement)
+        if (asObject.HasJsonElementBacking)
         {
-            builder = ImmutableDictionary.CreateBuilder<string, JsonAny>();
+            builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
         }
         else
         {
-            builder = asObject.AsPropertyDictionary.ToBuilder();
+            builder = asObject.AsImmutableDictionaryBuilder();
         }
 
-        foreach (Property property in asObject.EnumerateObject())
+        foreach (JsonObjectProperty property in asObject.EnumerateObject())
         {
             if (terminateEntireWalkApplyingChanges)
             {
-                if (asObject.HasJsonElement)
+                if (asObject.HasJsonElementBacking)
                 {
                     builder[property.Name] = property.Value;
                     continue;

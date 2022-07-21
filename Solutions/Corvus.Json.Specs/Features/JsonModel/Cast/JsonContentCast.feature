@@ -31,21 +31,6 @@ Scenario: Cast from JsonString for json element backed value as an content
 	When I cast the JsonString to JsonContent
 	Then the result should equal the JsonContent '"{\"foo\": \"bar\"}"'
 
-Scenario: Cast to ReadOnlySpan<byte> for json element backed value as an content
-	Given the JsonElement backed JsonContent "{\"foo\": \"bar\"}"
-	When I cast the JsonContent to ReadOnlySpan<byte>
-	Then the result should equal the ReadOnlySpan<byte> '{"foo": "bar"}'
-
-Scenario: Cast to ReadOnlySpan<byte> for dotnet backed value as an content
-	Given the dotnet backed JsonContent "{\"foo\": \"bar\"}"
-	When I cast the JsonContent to ReadOnlySpan<byte>
-	Then the result should equal the ReadOnlySpan<byte> '{"foo": "bar"}'
-
-Scenario: Cast from ReadOnlySpan<byte> for json element backed value as an content
-	Given the ReadOnlyMemory<byte> for "{\"foo\": \"bar\"}"
-	When I cast the ReadOnlySpan<byte> to JsonContent
-	Then the result should equal the JsonContent '"{\"foo\": \"bar\"}"'
-
 Scenario: Cast to ReadOnlySpan<char> for json element backed value as an content
 	Given the JsonElement backed JsonContent "{\"foo\": \"bar\"}"
 	When I cast the JsonContent to ReadOnlySpan<char>

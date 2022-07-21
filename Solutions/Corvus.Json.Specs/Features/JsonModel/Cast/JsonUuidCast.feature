@@ -46,21 +46,6 @@ Scenario: Cast from Guid for json element backed value as an uuid
 	When I cast the Guid to JsonUuid
 	Then the result should equal the JsonUuid 'c3f2a2a3-72c1-4abc-a741-b0e7095f20d1'
 
-Scenario: Cast to ReadOnlySpan<byte> for json element backed value as an uuid
-	Given the JsonElement backed JsonUuid "c3f2a2a3-72c1-4abc-a741-b0e7095f20d1"
-	When I cast the JsonUuid to ReadOnlySpan<byte>
-	Then the result should equal the ReadOnlySpan<byte> 'c3f2a2a3-72c1-4abc-a741-b0e7095f20d1'
-
-Scenario: Cast to ReadOnlySpan<byte> for dotnet backed value as an uuid
-	Given the dotnet backed JsonUuid c3f2a2a3-72c1-4abc-a741-b0e7095f20d1
-	When I cast the JsonUuid to ReadOnlySpan<byte>
-	Then the result should equal the ReadOnlySpan<byte> 'c3f2a2a3-72c1-4abc-a741-b0e7095f20d1'
-
-Scenario: Cast from ReadOnlySpan<byte> for json element backed value as an uuid
-	Given the ReadOnlyMemory<byte> for "c3f2a2a3-72c1-4abc-a741-b0e7095f20d1"
-	When I cast the ReadOnlySpan<byte> to JsonUuid
-	Then the result should equal the JsonUuid 'c3f2a2a3-72c1-4abc-a741-b0e7095f20d1'
-
 Scenario: Cast to ReadOnlySpan<char> for json element backed value as an uuid
 	Given the JsonElement backed JsonUuid "c3f2a2a3-72c1-4abc-a741-b0e7095f20d1"
 	When I cast the JsonUuid to ReadOnlySpan<char>

@@ -46,21 +46,6 @@ Scenario: Cast from Regex for json element backed value as a regex
 	When I cast the Regex to JsonRegex
 	Then the result should equal the JsonRegex '([abc])+\s+$'
 
-Scenario: Cast to ReadOnlySpan<byte> for json element backed value as a regex
-	Given the JsonElement backed JsonRegex "([abc])+\\s+$"
-	When I cast the JsonRegex to ReadOnlySpan<byte>
-	Then the result should equal the ReadOnlySpan<byte> '([abc])+\s+$'
-
-Scenario: Cast to ReadOnlySpan<byte> for dotnet backed value as a regex
-	Given the dotnet backed JsonRegex "([abc])+\\s+$"
-	When I cast the JsonRegex to ReadOnlySpan<byte>
-	Then the result should equal the ReadOnlySpan<byte> '([abc])+\s+$'
-
-Scenario: Cast from ReadOnlySpan<byte> for json element backed value as a regex
-	Given the ReadOnlyMemory<byte> for "([abc])+\\s+$"
-	When I cast the ReadOnlySpan<byte> to JsonRegex
-	Then the result should equal the JsonRegex '([abc])+\\s+$'
-
 Scenario: Cast to ReadOnlySpan<char> for json element backed value as a regex
 	Given the JsonElement backed JsonRegex "([abc])+\\s+$"
 	When I cast the JsonRegex to ReadOnlySpan<char>

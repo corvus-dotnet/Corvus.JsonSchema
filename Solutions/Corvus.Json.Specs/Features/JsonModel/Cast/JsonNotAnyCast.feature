@@ -3,17 +3,17 @@
 
 Scenario: Cast to dictionary for json element backed value as a JsonNotAny
 	Given the JsonElement backed JsonNotAny {"foo": 3}
-	When I cast the JsonNotAny to ImmutableDictionary<string,JsonAny>
-	Then the result should equal the ImmutableDictionary<string,JsonAny> '{"foo": 3}'
+	When I cast the JsonNotAny to ImmutableDictionary<JsonPropertyName,JsonAny>
+	Then the result should equal the ImmutableDictionary<JsonPropertyName,JsonAny> '{"foo": 3}'
 
 Scenario: Cast to dictionary for dotnet backed value as a JsonNotAny
 	Given the object backed JsonNotAny {"foo": 3}
-	When I cast the JsonNotAny to ImmutableDictionary<string,JsonAny>
-	Then the result should equal the ImmutableDictionary<string,JsonAny> '{"foo": 3}'
+	When I cast the JsonNotAny to ImmutableDictionary<JsonPropertyName,JsonAny>
+	Then the result should equal the ImmutableDictionary<JsonPropertyName,JsonAny> '{"foo": 3}'
 
 Scenario: Cast from dictionary for json element backed value as a JsonNotAny
-	Given the ImmutableDictionary<string,JsonAny> for {"foo": 3}
-	When I cast the ImmutableDictionary<string,JsonAny> to JsonNotAny
+	Given the ImmutableDictionary<JsonPropertyName,JsonAny> for {"foo": 3}
+	When I cast the ImmutableDictionary<JsonPropertyName,JsonAny> to JsonNotAny
 	Then the result should equal the JsonNotAny '{"foo": 3}'
 
 Scenario: Cast to JsonString for json element backed value as a JsonNotAny

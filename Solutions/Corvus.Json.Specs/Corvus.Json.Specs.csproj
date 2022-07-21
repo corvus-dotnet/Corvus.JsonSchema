@@ -6,6 +6,12 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<IsPackable>false</IsPackable>
+		<PreserveCompilationContext>true</PreserveCompilationContext>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<LangVersion>preview</LangVersion>
+		<EnablePreviewFeatures>true</EnablePreviewFeatures>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -36,13 +42,14 @@
 		<PackageReference Include="NUnit3TestAdapter" Version="4.2.1" />
 
 		<PackageReference Include="FluentAssertions" Version="6.7.0" />
+
+		<PackageReference Include="System.Text.Json" Version="6.0.5" />
+
+		<ProjectReference Include="..\Corvus.Json.CodeGeneration\Corvus.Json.CodeGeneration.csproj" />
+
+		<ProjectReference Include="..\Corvus.Json.Patch\Corvus.Json.Patch.csproj" />
 		<PackageReference Update="StyleCop.Analyzers" Version="1.2.0-beta.435" />
 
-	</ItemGroup>
-
-	<ItemGroup>
-		<ProjectReference Include="..\Corvus.Json.Patch\Corvus.Json.Patch.csproj" />
-		<ProjectReference Include="..\Corvus.Json.Walker.JsonSchema\Corvus.Json.JsonSchema.TypeBuilder.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -55,5 +62,9 @@
 		<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
 		<RestoreLockedMode Condition="$(ContinuousIntegrationBuild) == 'true'">true</RestoreLockedMode>
 	</PropertyGroup>
+
+	<ItemGroup>
+	  <PackageReference Update="Roslynator.Analyzers" Version="4.1.1" />
+	</ItemGroup>
 
 </Project>
