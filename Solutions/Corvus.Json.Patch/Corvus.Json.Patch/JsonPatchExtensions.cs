@@ -152,19 +152,6 @@ public static partial class JsonPatchExtensions
         return int.TryParse(pathSegment, out index);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static JsonAny? FindSourceElement(in JsonAny root, ReadOnlySpan<char> from)
-    {
-        // Try to find the node to copy
-        if (root.TryResolvePointer(from, out JsonAny sourceElement))
-        {
-            return sourceElement;
-        }
-
-        return null;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool TryGetTerminatingPathElement(ReadOnlySpan<char> opPathTail, out ReadOnlySpan<char> propertyName)
     {
         int index = 0;
@@ -199,7 +186,6 @@ public static partial class JsonPatchExtensions
         return true;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool TryApplyAdd(in JsonAny node, in PatchOperation patchOperation, out JsonAny result)
     {
         AddVisitor visitor = new(patchOperation);
@@ -215,20 +201,18 @@ public static partial class JsonPatchExtensions
         return transformed;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool TryApplyCopy(in JsonAny node, in PatchOperation patchOperation, out JsonAny result)
     {
         patchOperation.TryGetProperty(Move.FromUtf8JsonPropertyName.Span, out JsonAny fromAny);
         ReadOnlySpan<char> from = fromAny.AsString;
 
-        JsonAny? source = FindSourceElement(node, from);
-        if (!source.HasValue)
+        if (!node.TryResolvePointer(from, out JsonAny source))
         {
             result = node;
             return false;
         }
 
-        CopyVisitor visitor = new(patchOperation, source.Value);
+        CopyVisitor visitor = new(patchOperation, source);
 
         if (visitor.Path.Length == 0)
         {
@@ -236,25 +220,21 @@ public static partial class JsonPatchExtensions
             return true;
         }
 
-        bool transformed = JsonTransformingVisitor.Visit(node, visitor.Visit, out JsonAny transformedResult);
-        result = transformedResult;
-        return transformed;
+        return JsonTransformingVisitor.Visit(node, visitor.Visit, out result);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool TryApplyMove(in JsonAny node, in PatchOperation patchOperation, out JsonAny result)
     {
         patchOperation.TryGetProperty(Move.FromUtf8JsonPropertyName.Span, out JsonAny fromAny);
         ReadOnlySpan<char> from = fromAny.AsString;
 
-        JsonAny? source = FindSourceElement(node, from);
-        if (!source.HasValue)
+        if (!node.TryResolvePointer(from, out JsonAny source))
         {
             result = node;
             return false;
         }
 
-        MoveVisitor visitor = new(patchOperation, source.Value);
+        MoveVisitor visitor = new(patchOperation, source);
 
         if (visitor.Path.Length == 0)
         {
@@ -262,13 +242,10 @@ public static partial class JsonPatchExtensions
             return true;
         }
 
-        bool transformed = JsonTransformingVisitor.Visit(node, visitor.Visit, out JsonAny transformedResult);
-        result = transformedResult;
-        return transformed;
+        return JsonTransformingVisitor.Visit(node, visitor.Visit, out result);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool TryApplyRemove(JsonAny node, PatchOperation patchOperation, out JsonAny result)
+    private static bool TryApplyRemove(in JsonAny node, in PatchOperation patchOperation, out JsonAny result)
     {
         RemoveVisitor visitor = new(patchOperation);
         bool transformed = JsonTransformingVisitor.Visit(node, visitor.Visit, out JsonAny transformedResult);
@@ -276,7 +253,6 @@ public static partial class JsonPatchExtensions
         return transformed;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool TryApplyReplace(in JsonAny node, in PatchOperation patchOperation, out JsonAny result)
     {
         ReplaceVisitor visitor = new(patchOperation);
@@ -292,7 +268,6 @@ public static partial class JsonPatchExtensions
         return transformed;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool TryApplyTest(in JsonAny node, in PatchOperation patchOperation, out JsonAny result)
     {
         result = node;
@@ -303,7 +278,7 @@ public static partial class JsonPatchExtensions
             if (patchOperation.TryGetProperty(Test.ValueUtf8JsonPropertyName.Span, out JsonAny value))
             {
                 // Verify that the value of the node is the one supplied in the test operation.
-                return itemToTest == value;
+                return itemToTest.Equals(value);
             }
         }
 

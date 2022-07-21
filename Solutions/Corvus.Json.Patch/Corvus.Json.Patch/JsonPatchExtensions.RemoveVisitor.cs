@@ -44,9 +44,25 @@ public static partial class JsonPatchExtensions
                     return;
                 }
 
-                JsonValueKind nodeToVisitValueKind = nodeToVisit.ValueKind;
+                VisitForRemoveCore(path, nodeToVisit, operationPath, ref result);
+                return;
+            }
 
-                if (nodeToVisitValueKind == JsonValueKind.Object)
+            // If it didn't start with the span, we can give up on this whole tree segment
+            result.Output = nodeToVisit;
+            result.Transformed = Transformed.No;
+            result.Walk = Walk.SkipChildren;
+
+            static void RemoveNode(int index, in JsonAny arrayNode, ref VisitResult result)
+            {
+                result.Output = arrayNode.RemoveAt(index);
+                result.Transformed = Transformed.Yes;
+                result.Walk = Walk.TerminateAtThisNodeAndKeepChanges;
+            }
+
+            static void VisitForRemoveCore(ReadOnlySpan<char> path, in JsonAny nodeToVisit, ReadOnlySpan<char> operationPath, ref VisitResult result)
+            {
+                if (nodeToVisit.ValueKind == JsonValueKind.Object)
                 {
                     // We are an object, so we need to see if the rest of the path represents a property.
                     if (TryGetTerminatingPathElement(operationPath[path.Length..], out ReadOnlySpan<char> propertyName))
@@ -75,7 +91,7 @@ public static partial class JsonPatchExtensions
                     return;
                 }
 
-                if (nodeToVisitValueKind == JsonValueKind.Array)
+                if (nodeToVisit.ValueKind == JsonValueKind.Array)
                 {
                     if (TryGetTerminatingPathElement(operationPath[path.Length..], out ReadOnlySpan<char> itemIndex))
                     {
@@ -105,20 +121,6 @@ public static partial class JsonPatchExtensions
                 result.Output = nodeToVisit;
                 result.Transformed = Transformed.No;
                 result.Walk = Walk.TerminateAtThisNodeAndAbandonAllChanges;
-                return;
-            }
-
-            // If it didn't start with the span, we can give up on this whole tree segment
-            result.Output = nodeToVisit;
-            result.Transformed = Transformed.No;
-            result.Walk = Walk.SkipChildren;
-            return;
-
-            static void RemoveNode(int index, in JsonAny arrayNode, ref VisitResult result)
-            {
-                result.Output = arrayNode.RemoveAt(index);
-                result.Transformed = Transformed.Yes;
-                result.Walk = Walk.TerminateAtThisNodeAndKeepChanges;
                 return;
             }
         }
