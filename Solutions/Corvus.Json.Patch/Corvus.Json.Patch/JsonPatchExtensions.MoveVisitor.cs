@@ -14,10 +14,12 @@ public static partial class JsonPatchExtensions
 {
     private struct MoveVisitor
     {
-        public MoveVisitor(in Move patchOperation, in JsonAny sourceElement)
+        public MoveVisitor(string path, string from, in JsonAny sourceElement)
         {
-            this.From = patchOperation.From;
-            this.Path = patchOperation.Path;
+            this.Path = path;
+            this.From = from;
+            this.TerminatingFromBegin = from.LastIndexOf('/') + 1;
+            this.TerminatingPathBegin = path.LastIndexOf('/') + 1;
             this.Added = false;
             this.Removed = false;
             this.SourceElement = sourceElement;
@@ -27,7 +29,13 @@ public static partial class JsonPatchExtensions
 
         public string From { get; }
 
+        public bool Nop { get; }
+
+        public int TerminatingFromBegin { get; }
+
         public string Path { get; }
+
+        public int TerminatingPathBegin { get; }
 
         public bool Added { get; set; }
 
@@ -43,7 +51,7 @@ public static partial class JsonPatchExtensions
             if (!this.Removed)
             {
                 // Otherwise, this is a remove operation at the source location.
-                RemoveVisitor.VisitForRemove(path, nodeToVisit, this.From, ref result);
+                RemoveVisitor.VisitForRemove(path, nodeToVisit, this.From, this.From[this.TerminatingFromBegin..], ref result);
 
                 if (result.Walk == Walk.TerminateAtThisNodeAndAbandonAllChanges)
                 {
@@ -73,7 +81,7 @@ public static partial class JsonPatchExtensions
             if (!this.Added)
             {
                 // Otherwise, this is an add operation with the node we found.
-                AddVisitor.VisitForAdd(path, result.Output, this.SourceElement, this.Path, ref result);
+                AddVisitor.VisitForAdd(path, result.Output, this.SourceElement, this.Path, this.Path[this.TerminatingPathBegin..], ref result);
                 if (result.Walk == Walk.TerminateAtThisNodeAndAbandonAllChanges)
                 {
                     // We failed, so fail

@@ -3,7 +3,6 @@
 // </copyright>
 
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
 using Corvus.Json.Patch.Model;
 using Corvus.Json.Visitor;
 
@@ -188,23 +187,34 @@ public static partial class JsonPatchExtensions
 
     private static bool TryApplyAdd(in JsonAny node, in PatchOperation patchOperation, out JsonAny result)
     {
-        AddVisitor visitor = new(patchOperation);
-
-        if (visitor.Path.Length == 0)
+        patchOperation.TryGetProperty(Add.PathUtf8JsonPropertyName.Span, out JsonAny pathAny);
+        patchOperation.TryGetProperty(Add.ValueUtf8JsonPropertyName.Span, out JsonAny value);
+        string path = pathAny;
+        if (path.Length == 0)
         {
-            result = visitor.Value;
+            result = value;
             return true;
         }
 
-        bool transformed = JsonTransformingVisitor.Visit(node, visitor.Visit, out JsonAny transformedResult);
+        AddVisitor visitor = new(path, value);
+
+        bool transformed = node.Visit(visitor.Visit, out JsonAny transformedResult);
         result = transformedResult;
         return transformed;
     }
 
     private static bool TryApplyCopy(in JsonAny node, in PatchOperation patchOperation, out JsonAny result)
     {
-        patchOperation.TryGetProperty(Move.FromUtf8JsonPropertyName.Span, out JsonAny fromAny);
-        ReadOnlySpan<char> from = fromAny.AsString;
+        patchOperation.TryGetProperty(Copy.FromUtf8JsonPropertyName.Span, out JsonAny fromAny);
+        patchOperation.TryGetProperty(Copy.PathUtf8JsonPropertyName.Span, out JsonAny pathAny);
+        string from = fromAny;
+        string path = pathAny;
+
+        if (from.Equals(path))
+        {
+            result = node;
+            return true;
+        }
 
         if (!node.TryResolvePointer(from, out JsonAny source))
         {
@@ -212,21 +222,28 @@ public static partial class JsonPatchExtensions
             return false;
         }
 
-        CopyVisitor visitor = new(patchOperation, source);
-
-        if (visitor.Path.Length == 0)
+        if (path.Length == 0)
         {
-            result = visitor.SourceElement;
+            result = source;
             return true;
         }
 
-        return JsonTransformingVisitor.Visit(node, visitor.Visit, out result);
+        CopyVisitor visitor = new(path, source);
+        return node.Visit(visitor.Visit, out result);
     }
 
     private static bool TryApplyMove(in JsonAny node, in PatchOperation patchOperation, out JsonAny result)
     {
         patchOperation.TryGetProperty(Move.FromUtf8JsonPropertyName.Span, out JsonAny fromAny);
-        ReadOnlySpan<char> from = fromAny.AsString;
+        patchOperation.TryGetProperty(Move.PathUtf8JsonPropertyName.Span, out JsonAny pathAny);
+        string from = fromAny;
+        string path = pathAny;
+
+        if (from.Equals(path))
+        {
+            result = node;
+            return true;
+        }
 
         if (!node.TryResolvePointer(from, out JsonAny source))
         {
@@ -234,21 +251,20 @@ public static partial class JsonPatchExtensions
             return false;
         }
 
-        MoveVisitor visitor = new(patchOperation, source);
-
-        if (visitor.Path.Length == 0)
+        if (path.Length == 0)
         {
-            result = visitor.SourceElement;
+            result = source;
             return true;
         }
 
-        return JsonTransformingVisitor.Visit(node, visitor.Visit, out result);
+        MoveVisitor visitor = new(path, from, source);
+        return node.Visit(visitor.Visit, out result);
     }
 
     private static bool TryApplyRemove(in JsonAny node, in PatchOperation patchOperation, out JsonAny result)
     {
         RemoveVisitor visitor = new(patchOperation);
-        bool transformed = JsonTransformingVisitor.Visit(node, visitor.Visit, out JsonAny transformedResult);
+        bool transformed = node.Visit(visitor.Visit, out JsonAny transformedResult);
         result = transformedResult;
         return transformed;
     }
@@ -263,7 +279,7 @@ public static partial class JsonPatchExtensions
             return true;
         }
 
-        bool transformed = JsonTransformingVisitor.Visit(node, visitor.Visit, out JsonAny transformedResult);
+        bool transformed = node.Visit(visitor.Visit, out JsonAny transformedResult);
         result = transformedResult;
         return transformed;
     }

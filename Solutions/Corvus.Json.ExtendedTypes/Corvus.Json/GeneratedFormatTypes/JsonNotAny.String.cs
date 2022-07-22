@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
@@ -169,5 +170,96 @@ public readonly partial struct JsonNotAny : IJsonString<JsonNotAny>
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Compare to a sequence of characters.
+    /// </summary>
+    /// <param name="utf8Bytes">The UTF8-encoded character sequence to compare.</param>
+    /// <returns><c>True</c> if teh sequences match.</returns>
+    public bool EqualsUtf8Bytes(ReadOnlySpan<byte> utf8Bytes)
+    {
+        if ((this.backing & Backing.JsonElement) != 0)
+        {
+            if (this.jsonElementBacking.ValueKind == JsonValueKind.String)
+            {
+                return this.jsonElementBacking.ValueEquals(utf8Bytes);
+            }
+        }
+
+        if ((this.backing & Backing.String) != 0)
+        {
+            int maxCharCount = Encoding.UTF8.GetMaxCharCount(utf8Bytes.Length);
+            char[]? pooledChars = null;
+
+            Span<char> chars = maxCharCount <= JsonValueHelpers.MaxStackAlloc ?
+                stackalloc char[maxCharCount] :
+                (pooledChars = ArrayPool<char>.Shared.Rent(maxCharCount));
+
+            try
+            {
+                int written = Encoding.UTF8.GetChars(utf8Bytes, chars);
+                return chars[..written].SequenceEqual(this.stringBacking);
+            }
+            finally
+            {
+                if (pooledChars is not null)
+                {
+                    ArrayPool<char>.Shared.Return(pooledChars);
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Compare to a sequence of characters.
+    /// </summary>
+    /// <param name="chars">The character sequence to compare.</param>
+    /// <returns><c>True</c> if teh sequences match.</returns>
+    public bool EqualsString(string chars)
+    {
+        if ((this.backing & Backing.JsonElement) != 0)
+        {
+            if (this.jsonElementBacking.ValueKind == JsonValueKind.String)
+            {
+                return this.jsonElementBacking.ValueEquals(chars);
+            }
+
+            return false;
+        }
+
+        if ((this.backing & Backing.String) != 0)
+        {
+            return chars.Equals(this.stringBacking, StringComparison.Ordinal);
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Compare to a sequence of characters.
+    /// </summary>
+    /// <param name="chars">The character sequence to compare.</param>
+    /// <returns><c>True</c> if teh sequences match.</returns>
+    public bool EqualsString(ReadOnlySpan<char> chars)
+    {
+        if ((this.backing & Backing.JsonElement) != 0)
+        {
+            if (this.jsonElementBacking.ValueKind == JsonValueKind.String)
+            {
+                return this.jsonElementBacking.ValueEquals(chars);
+            }
+
+            return false;
+        }
+
+        if ((this.backing & Backing.String) != 0)
+        {
+            return chars.SequenceEqual(this.stringBacking);
+        }
+
+        return false;
     }
 }

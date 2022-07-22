@@ -246,6 +246,31 @@ public readonly partial struct JsonIpV6
     /// </summary>
     /// <param name="chars">The character sequence to compare.</param>
     /// <returns><c>True</c> if teh sequences match.</returns>
+    public bool EqualsString(string chars)
+    {
+        if ((this.backing & Backing.JsonElement) != 0)
+        {
+            if (this.jsonElementBacking.ValueKind == JsonValueKind.String)
+            {
+                return this.jsonElementBacking.ValueEquals(chars);
+            }
+
+            return false;
+        }
+
+        if ((this.backing & Backing.String) != 0)
+        {
+            return chars.Equals(this.stringBacking, StringComparison.Ordinal);
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Compare to a sequence of characters.
+    /// </summary>
+    /// <param name="chars">The character sequence to compare.</param>
+    /// <returns><c>True</c> if teh sequences match.</returns>
     public bool EqualsString(ReadOnlySpan<char> chars)
     {
         if ((this.backing & Backing.JsonElement) != 0)

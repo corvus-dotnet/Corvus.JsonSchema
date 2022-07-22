@@ -17,7 +17,7 @@ namespace Corvus.Json.CodeGeneration.Generators {
     public partial class CodeGeneratorString : CodeGeneratorStringBase {
         
         
-        #line 320 "./Templates/CodeGenerator.String.tt"
+        #line 345 "./Templates/CodeGenerator.String.tt"
 
     public bool ShouldGenerate
     {
@@ -587,18 +587,27 @@ namespace ");
                     " false;\r\n    }\r\n\r\n    /// <summary>\r\n    /// Compare to a sequence of characters" +
                     ".\r\n    /// </summary>\r\n    /// <param name=\"chars\">The character sequence to com" +
                     "pare.</param>\r\n    /// <returns><c>True</c> if teh sequences match.</returns>\r\n " +
-                    "   public bool EqualsString(ReadOnlySpan<char> chars)\r\n    {\r\n        if ((this." +
-                    "backing & Backing.JsonElement) != 0)\r\n        {\r\n            if (this.jsonElemen" +
-                    "tBacking.ValueKind == JsonValueKind.String)\r\n            {\r\n                retu" +
-                    "rn this.jsonElementBacking.ValueEquals(chars);\r\n            }\r\n\r\n            ret" +
-                    "urn false;\r\n        }\r\n\r\n        if ((this.backing & Backing.String) != 0)\r\n    " +
-                    "    {\r\n            return chars.SequenceEqual(this.stringBacking);\r\n        }\r\n\r" +
-                    "\n        return false;\r\n    }\r\n}\r\n");
+                    "   public bool EqualsString(string chars)\r\n    {\r\n        if ((this.backing & Ba" +
+                    "cking.JsonElement) != 0)\r\n        {\r\n            if (this.jsonElementBacking.Val" +
+                    "ueKind == JsonValueKind.String)\r\n            {\r\n                return this.json" +
+                    "ElementBacking.ValueEquals(chars);\r\n            }\r\n\r\n            return false;\r\n" +
+                    "        }\r\n\r\n        if ((this.backing & Backing.String) != 0)\r\n        {\r\n     " +
+                    "       return chars.Equals(this.stringBacking, StringComparison.Ordinal);\r\n     " +
+                    "   }\r\n\r\n        return false;\r\n    }\r\n\r\n    /// <summary>\r\n    /// Compare to a " +
+                    "sequence of characters.\r\n    /// </summary>\r\n    /// <param name=\"chars\">The cha" +
+                    "racter sequence to compare.</param>\r\n    /// <returns><c>True</c> if teh sequenc" +
+                    "es match.</returns>\r\n    public bool EqualsString(ReadOnlySpan<char> chars)\r\n   " +
+                    " {\r\n        if ((this.backing & Backing.JsonElement) != 0)\r\n        {\r\n         " +
+                    "   if (this.jsonElementBacking.ValueKind == JsonValueKind.String)\r\n            {" +
+                    "\r\n                return this.jsonElementBacking.ValueEquals(chars);\r\n          " +
+                    "  }\r\n\r\n            return false;\r\n        }\r\n\r\n        if ((this.backing & Backi" +
+                    "ng.String) != 0)\r\n        {\r\n            return chars.SequenceEqual(this.stringB" +
+                    "acking);\r\n        }\r\n\r\n        return false;\r\n    }\r\n}\r\n");
             
             #line default
             #line hidden
             
-            #line 319 "./Templates/CodeGenerator.String.tt"
+            #line 344 "./Templates/CodeGenerator.String.tt"
  EndNesting(); 
             
             #line default

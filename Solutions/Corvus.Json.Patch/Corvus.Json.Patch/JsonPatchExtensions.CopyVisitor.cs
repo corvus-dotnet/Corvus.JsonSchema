@@ -15,13 +15,16 @@ public static partial class JsonPatchExtensions
 {
     private readonly struct CopyVisitor
     {
-        public CopyVisitor(Copy patchOperation, JsonAny sourceElement)
+        public CopyVisitor(string path, in JsonAny sourceElement)
         {
-            this.Path = patchOperation.Path;
+            this.Path = path;
+            this.TerminatingPathElementBegin = this.Path.LastIndexOf('/') + 1;
             this.SourceElement = sourceElement;
         }
 
         public string Path { get; }
+
+        public int TerminatingPathElementBegin { get; }
 
         public JsonAny SourceElement { get; }
 
@@ -29,7 +32,7 @@ public static partial class JsonPatchExtensions
         public void Visit(ReadOnlySpan<char> path, in JsonAny nodeToVisit, ref VisitResult result)
         {
             // This is an add operation with the node we found.
-            AddVisitor.VisitForAdd(path, nodeToVisit, this.SourceElement, this.Path, ref result);
+            AddVisitor.VisitForAdd(path, nodeToVisit, this.SourceElement, this.Path, this.Path[this.TerminatingPathElementBegin..], ref result);
         }
     }
 }

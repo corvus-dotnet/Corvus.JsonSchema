@@ -16,23 +16,26 @@ public static partial class JsonPatchExtensions
 {
     private readonly struct AddVisitor
     {
-        public AddVisitor(Add patchOperation)
+        public AddVisitor(string path, in JsonAny value)
         {
-            this.Value = patchOperation.Value;
-            this.Path = patchOperation.Path;
+            this.Path = path;
+            this.Value = value;
+            this.TerminatingPathIndexBegin = this.Path.LastIndexOf('/') + 1;
         }
 
         public JsonAny Value { get; }
 
         public string Path { get; }
 
+        public int TerminatingPathIndexBegin { get; }
+
         public void Visit(ReadOnlySpan<char> path, in JsonAny nodeToVisit, ref VisitResult result)
         {
-            VisitForAdd(path, nodeToVisit, this.Value, this.Path, ref result);
+            VisitForAdd(path, nodeToVisit, this.Value, this.Path, this.Path[this.TerminatingPathIndexBegin..], ref result);
         }
 
         // This is used by AddVisitor, CopyVistor and MoveVisitor
-        internal static void VisitForAdd(ReadOnlySpan<char> path, in JsonAny nodeToVisit, in JsonAny value, ReadOnlySpan<char> operationPath, ref VisitResult result)
+        internal static void VisitForAdd(ReadOnlySpan<char> path, in JsonAny nodeToVisit, in JsonAny value, ReadOnlySpan<char> operationPath, ReadOnlySpan<char> terminatingPathElement, ref VisitResult result)
         {
             // If we are the root, or our span starts with the path so far, we might be matching
             if (operationPath.Length == 0 || operationPath.StartsWith(path))
@@ -53,84 +56,7 @@ public static partial class JsonPatchExtensions
                     return;
                 }
 
-                JsonValueKind nodeToVisitValueKind = nodeToVisit.ValueKind;
-
-                if (nodeToVisitValueKind == JsonValueKind.Object)
-                {
-                    // We are an object, so we need to see if the rest of the path represents a property.
-                    if (TryGetTerminatingPathElement(operationPath[path.Length..], out ReadOnlySpan<char> propertyName))
-                    {
-                        // Return the transformed result, and stop walking the tree here.
-                        result.Output = nodeToVisit.SetProperty(propertyName, value);
-                        result.Transformed = Transformed.Yes;
-                        result.Walk = Walk.TerminateAtThisNodeAndKeepChanges;
-                        return;
-                    }
-
-                    // The path element wasn't a terminus, but it could still be a deeper property, so let's continue the walk
-                    result.Output = nodeToVisit;
-                    result.Transformed = Transformed.No;
-                    result.Walk = Walk.Continue;
-                    return;
-                }
-
-                if (nodeToVisitValueKind == JsonValueKind.Array)
-                {
-                    if (TryGetTerminatingPathElement(operationPath[path.Length..], out ReadOnlySpan<char> itemIndex))
-                    {
-                        int arrayLength = nodeToVisit.GetArrayLength();
-
-                        if (itemIndex[0] == '-')
-                        {
-                            if (itemIndex.Length == 1)
-                            {
-                                // We got the '-' which means add it at the end
-                                AddNodeAtEnd(nodeToVisit, value, ref result);
-                                return;
-                            }
-                            else
-                            {
-                                result.Output = nodeToVisit;
-                                result.Transformed = Transformed.No;
-                                result.Walk = Walk.TerminateAtThisNodeAndAbandonAllChanges;
-                                return;
-                            }
-                        }
-
-                        if (TryGetArrayIndex(itemIndex, out int index))
-                        {
-                            // You can specify the end explicitly
-                            if (index == arrayLength)
-                            {
-                                AddNodeAtEnd(nodeToVisit, value, ref result);
-                                return;
-                            }
-
-                            if (index < arrayLength)
-                            {
-                                InsertNode(index, nodeToVisit, value, ref result);
-                                return;
-                            }
-                        }
-
-                        // The index wasn't in the correct form (either because it was past the end, or not in an index format)
-                        result.Output = nodeToVisit;
-                        result.Transformed = Transformed.No;
-                        result.Walk = Walk.TerminateAtThisNodeAndAbandonAllChanges;
-                        return;
-                    }
-
-                    // The path element wasn't a terminus, but it could still be a deeper walk into an indexed element, so let's continue the walk
-                    result.Output = nodeToVisit;
-                    result.Transformed = Transformed.No;
-                    result.Walk = Walk.Continue;
-                    return;
-                }
-
-                // The parent entity wasn't an object or an array, so it can't be added to; this is an error.
-                result.Output = nodeToVisit;
-                result.Transformed = Transformed.No;
-                result.Walk = Walk.TerminateAtThisNodeAndAbandonAllChanges;
+                VisitForAddCore(path, nodeToVisit, value, operationPath, terminatingPathElement, ref result);
                 return;
             }
 
@@ -139,20 +65,90 @@ public static partial class JsonPatchExtensions
             result.Transformed = Transformed.No;
             result.Walk = Walk.SkipChildren;
             return;
+        }
 
-            static void AddNodeAtEnd(in JsonAny arrayNode, in JsonAny node, ref VisitResult result)
+        private static void VisitForAddCore(ReadOnlySpan<char> path, in JsonAny nodeToVisit, in JsonAny value, ReadOnlySpan<char> operationPath, ReadOnlySpan<char> terminatingPathElement, ref VisitResult result)
+        {
+            if (path.Length + terminatingPathElement.Length + 1 != operationPath.Length)
             {
-                result.Output = arrayNode.Add(node);
-                result.Transformed = Transformed.Yes;
-                result.Walk = Walk.TerminateAtThisNodeAndKeepChanges;
+                // The path element wasn't a terminus, but it could still be a deeper property, so let's continue the walk
+                result.Output = nodeToVisit;
+                result.Transformed = Transformed.No;
+                result.Walk = Walk.Continue;
+                return;
             }
 
-            static void InsertNode(int index, in JsonAny arrayNode, in JsonAny node, ref VisitResult result)
+            if (nodeToVisit.ValueKind == JsonValueKind.Object)
             {
-                result.Output = arrayNode.Insert(index, node);
+                // Return the transformed result, and stop walking the tree here.
+                result.Output = nodeToVisit.SetProperty(terminatingPathElement, value);
                 result.Transformed = Transformed.Yes;
                 result.Walk = Walk.TerminateAtThisNodeAndKeepChanges;
+                return;
             }
+
+            if (nodeToVisit.ValueKind == JsonValueKind.Array)
+            {
+                int arrayLength = nodeToVisit.GetArrayLength();
+
+                if (terminatingPathElement[0] == '-')
+                {
+                    if (terminatingPathElement.Length == 1)
+                    {
+                        // We got the '-' which means add it at the end
+                        AddNodeAtEnd(nodeToVisit, value, ref result);
+                        return;
+                    }
+                    else
+                    {
+                        result.Output = nodeToVisit;
+                        result.Transformed = Transformed.No;
+                        result.Walk = Walk.TerminateAtThisNodeAndAbandonAllChanges;
+                        return;
+                    }
+                }
+
+                if (TryGetArrayIndex(terminatingPathElement, out int index))
+                {
+                    // You can specify the end explicitly
+                    if (index == arrayLength)
+                    {
+                        AddNodeAtEnd(nodeToVisit, value, ref result);
+                        return;
+                    }
+
+                    if (index < arrayLength)
+                    {
+                        InsertNode(index, nodeToVisit, value, ref result);
+                        return;
+                    }
+                }
+
+                // The index wasn't in the correct form (either because it was past the end, or not in an index format)
+                result.Output = nodeToVisit;
+                result.Transformed = Transformed.No;
+                result.Walk = Walk.TerminateAtThisNodeAndAbandonAllChanges;
+                return;
+            }
+
+            // The parent entity wasn't an object or an array, so it can't be added to; this is an error.
+            result.Output = nodeToVisit;
+            result.Transformed = Transformed.No;
+            result.Walk = Walk.TerminateAtThisNodeAndAbandonAllChanges;
+        }
+
+        private static void AddNodeAtEnd(in JsonAny arrayNode, in JsonAny node, ref VisitResult result)
+        {
+            result.Output = arrayNode.Add(node);
+            result.Transformed = Transformed.Yes;
+            result.Walk = Walk.TerminateAtThisNodeAndKeepChanges;
+        }
+
+        private static void InsertNode(int index, in JsonAny arrayNode, in JsonAny node, ref VisitResult result)
+        {
+            result.Output = arrayNode.Insert(index, node);
+            result.Transformed = Transformed.Yes;
+            result.Walk = Walk.TerminateAtThisNodeAndKeepChanges;
         }
     }
 }
