@@ -16,7 +16,7 @@ public static partial class JsonPatchExtensions
 {
     private readonly struct RemoveVisitor
     {
-        public RemoveVisitor(Remove patchOperation)
+        public RemoveVisitor(in Remove patchOperation)
         {
             this.Path = patchOperation.Path;
             this.BeginTerminator = this.Path.LastIndexOf('/') + 1;
