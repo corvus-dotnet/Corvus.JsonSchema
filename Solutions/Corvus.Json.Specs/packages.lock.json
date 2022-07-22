@@ -1568,7 +1568,8 @@
         "type": "Project",
         "dependencies": {
           "Corvus.Extensions": "[1.1.4, )",
-          "Corvus.Json.ExtendedTypes": "[1.0.0, )",
+          "Corvus.Json.Walker": "[1.0.0, )",
+          "Microsoft.CodeAnalysis.CSharp": "[4.2.0, )",
           "System.CodeDom": "[6.0.0, )"
         }
       },

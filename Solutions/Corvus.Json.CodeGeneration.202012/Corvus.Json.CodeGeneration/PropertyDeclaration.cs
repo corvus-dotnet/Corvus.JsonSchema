@@ -2,12 +2,14 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using Corvus.Json.JsonSchema.Draft202012;
+
 namespace Corvus.Json.CodeGeneration;
 
 /// <summary>
 /// A property declaration in a <see cref="TypeDeclaration"/>.
 /// </summary>
-public class PropertyDeclaration
+public class PropertyDeclaration : PropertyDeclaration<Schema, PropertyDeclaration, TypeDeclaration>
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="PropertyDeclaration"/> class.
@@ -17,44 +19,9 @@ public class PropertyDeclaration
     /// <param name="isRequired">Whether the property is required by default.</param>
     /// <param name="isInLocalScope">Whether the property is in the local scope.</param>
     public PropertyDeclaration(TypeDeclaration type, string jsonPropertyName, bool isRequired, bool isInLocalScope)
+        : base(type, jsonPropertyName, isRequired, isInLocalScope)
     {
-        this.Type = type;
-        this.JsonPropertyName = jsonPropertyName;
-        this.IsRequired = isRequired;
-        this.IsDefinedInLocalScope = isInLocalScope;
     }
-
-    /// <summary>
-    /// Gets the type of the property.
-    /// </summary>
-    public TypeDeclaration Type { get; }
-
-    /// <summary>
-    /// Gets the json property name of the property.
-    /// </summary>
-    public string JsonPropertyName { get; }
-
-    /// <summary>
-    /// Gets a value indicating whether this property is required.
-    /// </summary>
-    public bool IsRequired { get; }
-
-    /// <summary>
-    /// Gets a value indicating whether this property is defined in the local scope.
-    /// </summary>
-    /// <remarks>If true, then this property is defined in the current schema. If false, it
-    /// has been dervied from a merged type.</remarks>
-    public bool IsDefinedInLocalScope { get; }
-
-    /// <summary>
-    /// Gets or sets the dotnet property name.
-    /// </summary>
-    public string? DotnetPropertyName { get; set; }
-
-    /// <summary>
-    /// Gets the dotnet parameter name.
-    /// </summary>
-    public string? DotnetParameterName => this.DotnetPropertyName is string dnpn ? Formatting.ToCamelCaseWithReservedWords(dnpn).ToString() : null;
 
     /// <summary>
     /// Gets a value indicating whether this property has a default value.
@@ -66,8 +33,9 @@ public class PropertyDeclaration
     /// </summary>
     public string? DefaultValue => this.Type.Schema.Default is JsonAny def ? def.ToString() : default;
 
-    /// <summary>
-    /// Gets the constructor parameter name for this property.
-    /// </summary>
-    public string? ConstructorParameterName => this.DotnetPropertyName is string dnpn ? char.ToLower(dnpn[0]) + dnpn[1..] : null;
+    /// <inheritdoc/>
+    public override PropertyDeclaration WithRequired(bool isRequired)
+    {
+        return new PropertyDeclaration(this.Type, this.JsonPropertyName, isRequired, this.IsDefinedInLocalScope);
+    }
 }

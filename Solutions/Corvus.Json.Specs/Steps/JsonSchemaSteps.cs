@@ -4,6 +4,7 @@
 
 using System.Text.Json;
 using Corvus.Json;
+using Corvus.Json.CodeGeneration;
 using Drivers;
 
 using Microsoft.Extensions.Configuration;

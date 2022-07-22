@@ -5,20 +5,14 @@
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
-namespace Corvus.Json;
+namespace Corvus.Json.CodeGeneration;
 
 /// <summary>
 /// Formatting utilities.
 /// </summary>
 public static class Formatting
 {
-    private static readonly ReadOnlyMemory<char> HttpsScheme = "https://".AsMemory();
-    private static readonly ReadOnlyMemory<char> HttpScheme = "http://".AsMemory();
-    private static readonly ReadOnlyMemory<char> FileScheme = "file://".AsMemory();
-    private static readonly ReadOnlyMemory<char> Value = "Value".AsMemory();
     private static readonly ReadOnlyMemory<char> TypePrefix = "Type".AsMemory();
-    private static readonly ReadOnlyMemory<char> Item = "Item".AsMemory();
-    private static readonly ReadOnlyMemory<char> Root = "RootEntity".AsMemory();
 
     private static readonly ReadOnlyMemory<char>[] Keywords = new ReadOnlyMemory<char>[]
     {
@@ -110,34 +104,6 @@ public static class Formatting
         return dotnetTypeName;
     }
 
-    private static ReadOnlySpan<char> TrimFileExtension(ReadOnlySpan<char> uriFragment)
-    {
-        int lastDot = -1;
-
-        // Don't need to check the last character or the first character
-        // ('.blah' and 'blah.' will translate fine)
-        for (int i = uriFragment.Length - 2; i > 0; --i)
-        {
-            if (uriFragment[i] == '/')
-            {
-                break;
-            }
-
-            if (uriFragment[i] == '.')
-            {
-                lastDot = i;
-                break;
-            }
-        }
-
-        if (lastDot == -1)
-        {
-            return uriFragment;
-        }
-
-        return uriFragment[..lastDot];
-    }
-
     private static ReadOnlySpan<char> SubstituteReservedWords(ReadOnlySpan<char> v)
     {
         foreach (ReadOnlyMemory<char> k in Keywords)
@@ -181,7 +147,7 @@ public static class Formatting
                 if (capitalizeNext)
                 {
                     chars[setIndex] = char.ToUpperInvariant(chars[readIndex]);
-                    uppercasedCount += 1;
+                    uppercasedCount++;
                 }
                 else if (lowercaseNext)
                 {
@@ -193,7 +159,7 @@ public static class Formatting
                 {
                     if (char.ToUpperInvariant(chars[readIndex]) == chars[readIndex])
                     {
-                        uppercasedCount += 1;
+                        uppercasedCount++;
                         if (uppercasedCount > 2)
                         {
                             chars[setIndex] = char.ToLowerInvariant(chars[readIndex]);

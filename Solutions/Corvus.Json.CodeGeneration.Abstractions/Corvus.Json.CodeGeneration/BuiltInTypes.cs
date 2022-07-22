@@ -135,22 +135,22 @@ public static class BuiltInTypes
     public static readonly (string Ns, string Type) ClrContentTypeDeclaration = ("Corvus.Json", "JsonContent");
 
     /// <summary>
-    /// A clr <see cref="NodaTime.LocalDate"/> type.
+    /// A clr NodaTime.LocalDate type.
     /// </summary>
     public static readonly (string Ns, string Type) ClrDateTypeDeclaration = ("Corvus.Json", "JsonDate");
 
     /// <summary>
-    /// A clr <see cref="NodaTime.OffsetDateTime"/> type.
+    /// A clr NodaTime.OffsetDateTime type.
     /// </summary>
     public static readonly (string Ns, string Type) ClrDateTimeTypeDeclaration = ("Corvus.Json", "JsonDateTime");
 
     /// <summary>
-    /// A clr <see cref="NodaTime.Period"/> type.
+    /// A clr NodaTime.Period type.
     /// </summary>
     public static readonly (string Ns, string Type) ClrDurationTypeDeclaration = ("Corvus.Json", "JsonDuration");
 
     /// <summary>
-    /// A clr <see cref="NodaTime.OffsetTime"/> type.
+    /// A clr NodaTime.OffsetTime type.
     /// </summary>
     public static readonly (string Ns, string Type) ClrTimeTypeDeclaration = ("Corvus.Json", "JsonTime");
 
