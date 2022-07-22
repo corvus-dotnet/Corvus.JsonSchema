@@ -2,243 +2,240 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-namespace Corvus.Json
+namespace Corvus.Json;
+
+/// <summary>
+/// A decomposed JsonReference to help you build / deconstruct references.
+/// </summary>
+public ref struct JsonReferenceBuilder
 {
-    using System;
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonReferenceBuilder"/> struct.
+    /// </summary>
+    /// <param name="scheme">The scheme.</param>
+    /// <param name="authority">The authority.</param>
+    /// <param name="path">The path.</param>
+    /// <param name="query">The query.</param>
+    /// <param name="fragment">The fragment.</param>
+    /// <remarks>
+    /// A builder/deconstructor for a JsonReference.
+    /// <code>
+    /// <![CDATA[
+    ///     foo://example.com:8042/over/there?name=ferret#nose
+    ///     \_/   \______________/\_________/ \_________/ \__/
+    ///      |           |            |            |        |
+    ///    scheme     authority     path          query  fragment
+    /// ]]>
+    /// </code>
+    /// </remarks>
+    public JsonReferenceBuilder(ReadOnlySpan<char> scheme, ReadOnlySpan<char> authority, ReadOnlySpan<char> path, ReadOnlySpan<char> query, ReadOnlySpan<char> fragment)
+    {
+        this.Scheme = scheme;
+        this.Authority = authority;
+        this.Path = path;
+        this.Query = query;
+        this.Fragment = fragment;
+    }
 
     /// <summary>
-    /// A decomposed JsonReference to help you build / deconstruct references.
+    /// Gets the scheme.
     /// </summary>
-    public ref struct JsonReferenceBuilder
+    public ReadOnlySpan<char> Scheme { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether the reference has a scheme component.
+    /// </summary>
+    public bool HasScheme => this.Scheme.Length > 0;
+
+    /// <summary>
+    /// Gets the authority.
+    /// </summary>
+    public ReadOnlySpan<char> Authority { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether the reference has an authority component.
+    /// </summary>
+    public bool HasAuthority => this.Authority.Length > 0;
+
+    /// <summary>
+    /// Gets the path.
+    /// </summary>
+    public ReadOnlySpan<char> Path { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether the reference has a path component.
+    /// </summary>
+    public bool HasPath => this.Path.Length > 0;
+
+    /// <summary>
+    /// Gets the query.
+    /// </summary>
+    public ReadOnlySpan<char> Query { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether the reference has a query component.
+    /// </summary>
+    public bool HasQuery => this.Query.Length > 0;
+
+    /// <summary>
+    /// Gets the fragment.
+    /// </summary>
+    public ReadOnlySpan<char> Fragment { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether the reference has a query component.
+    /// </summary>
+    public bool HasFragment => this.Fragment.Length > 0;
+
+    /// <summary>
+    /// Gets the host.
+    /// </summary>
+    public ReadOnlySpan<char> Host => this.FindHost();
+
+    /// <summary>
+    /// Gets the port.
+    /// </summary>
+    public ReadOnlySpan<char> Port => this.FindPort();
+
+    /// <summary>
+    /// Gets a reference builder from a reference.
+    /// </summary>
+    /// <param name="reference">The reference from which to create the builder.</param>
+    /// <returns>A <see cref="JsonReferenceBuilder"/> initialized from the given string.</returns>
+    public static JsonReferenceBuilder From(string reference)
     {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="JsonReferenceBuilder"/> struct.
-        /// </summary>
-        /// <param name="scheme">The scheme.</param>
-        /// <param name="authority">The authority.</param>
-        /// <param name="path">The path.</param>
-        /// <param name="query">The query.</param>
-        /// <param name="fragment">The fragment.</param>
-        /// <remarks>
-        /// A builder/deconstructor for a JsonReference.
-        /// <code>
-        /// <![CDATA[
-        ///     foo://example.com:8042/over/there?name=ferret#nose
-        ///     \_/   \______________/\_________/ \_________/ \__/
-        ///      |           |            |            |        |
-        ///    scheme     authority     path          query  fragment
-        /// ]]>
-        /// </code>
-        /// </remarks>
-        public JsonReferenceBuilder(ReadOnlySpan<char> scheme, ReadOnlySpan<char> authority, ReadOnlySpan<char> path, ReadOnlySpan<char> query, ReadOnlySpan<char> fragment)
+        return new JsonReference(reference).AsBuilder();
+    }
+
+    /// <summary>
+    /// Gets the JsonReference corresponding to this builder.
+    /// </summary>
+    /// <returns>The <see cref="JsonReference"/> built from this builder.</returns>
+    public JsonReference AsReference()
+    {
+        int totalLength = 0;
+        if (this.Scheme.Length > 0)
         {
-            this.Scheme = scheme;
-            this.Authority = authority;
-            this.Path = path;
-            this.Query = query;
-            this.Fragment = fragment;
+            // Scheme plus ':'
+            totalLength += this.Scheme.Length + 1;
         }
 
-        /// <summary>
-        /// Gets the scheme.
-        /// </summary>
-        public ReadOnlySpan<char> Scheme { get; }
-
-        /// <summary>
-        /// Gets a value indicating whether the reference has a scheme component.
-        /// </summary>
-        public bool HasScheme => this.Scheme.Length > 0;
-
-        /// <summary>
-        /// Gets the authority.
-        /// </summary>
-        public ReadOnlySpan<char> Authority { get; }
-
-        /// <summary>
-        /// Gets a value indicating whether the reference has an authority component.
-        /// </summary>
-        public bool HasAuthority => this.Authority.Length > 0;
-
-        /// <summary>
-        /// Gets the path.
-        /// </summary>
-        public ReadOnlySpan<char> Path { get; }
-
-        /// <summary>
-        /// Gets a value indicating whether the reference has a path component.
-        /// </summary>
-        public bool HasPath => this.Path.Length > 0;
-
-        /// <summary>
-        /// Gets the query.
-        /// </summary>
-        public ReadOnlySpan<char> Query { get; }
-
-        /// <summary>
-        /// Gets a value indicating whether the reference has a query component.
-        /// </summary>
-        public bool HasQuery => this.Query.Length > 0;
-
-        /// <summary>
-        /// Gets the fragment.
-        /// </summary>
-        public ReadOnlySpan<char> Fragment { get; }
-
-        /// <summary>
-        /// Gets a value indicating whether the reference has a query component.
-        /// </summary>
-        public bool HasFragment => this.Fragment.Length > 0;
-
-        /// <summary>
-        /// Gets the host.
-        /// </summary>
-        public ReadOnlySpan<char> Host => this.FindHost();
-
-        /// <summary>
-        /// Gets the port.
-        /// </summary>
-        public ReadOnlySpan<char> Port => this.FindPort();
-
-        /// <summary>
-        /// Gets a reference builder from a reference.
-        /// </summary>
-        /// <param name="reference">The reference from which to create the builder.</param>
-        /// <returns>A <see cref="JsonReferenceBuilder"/> initialized from the given string.</returns>
-        public static JsonReferenceBuilder From(string reference)
+        if (this.Authority.Length > 0)
         {
-            return new JsonReference(reference).AsBuilder();
+            // '//' plus authority
+            totalLength += this.Authority.Length + 2;
         }
 
-        /// <summary>
-        /// Gets the JsonReference corresponding to this builder.
-        /// </summary>
-        /// <returns>The <see cref="JsonReference"/> built from this builder.</returns>
-        public JsonReference AsReference()
+        if (this.Path.Length > 0 && this.Path[0] != '/' && this.Authority.Length > 0)
         {
-            int totalLength = 0;
-            if (this.Scheme.Length > 0)
-            {
-                // Scheme plus ':'
-                totalLength += this.Scheme.Length + 1;
-            }
+            totalLength += this.Path.Length + 1;
+        }
+        else
+        {
+            totalLength += this.Path.Length;
+        }
 
-            if (this.Authority.Length > 0)
-            {
-                // '//' plus authority
-                totalLength += this.Authority.Length + 2;
-            }
+        if (this.Query.Length > 0)
+        {
+            // '?' plus query
+            totalLength += this.Query.Length + 1;
+        }
 
-            if (this.Path.Length > 0 && this.Path[0] != '/' && this.Authority.Length > 0)
-            {
-                totalLength += this.Path.Length + 1;
-            }
-            else
-            {
-                totalLength += this.Path.Length;
-            }
+        if (this.Fragment.Length > 0)
+        {
+            // '#' plus fragment
+            totalLength += this.Fragment.Length + 1;
+        }
 
-            if (this.Query.Length > 0)
-            {
-                // '?' plus query
-                totalLength += this.Query.Length + 1;
-            }
+        if (totalLength == 0)
+        {
+            return JsonReference.RootFragment;
+        }
 
-            if (this.Fragment.Length > 0)
-            {
-                // '#' plus fragment
-                totalLength += this.Fragment.Length + 1;
-            }
+        var reference = new Memory<char>(new char[totalLength]);
+        int index = 0;
+        if (this.Scheme.Length > 0)
+        {
+            this.Scheme.CopyTo(reference.Span.Slice(index, this.Scheme.Length));
+            index += this.Scheme.Length;
+            reference.Span[index] = ':';
+            index += 1;
+        }
 
-            if (totalLength == 0)
-            {
-                return JsonReference.RootFragment;
-            }
+        if (this.Authority.Length > 0)
+        {
+            reference.Span[index] = '/';
+            reference.Span[index + 1] = '/';
+            index += 2;
+            this.Authority.CopyTo(reference.Span.Slice(index, this.Authority.Length));
+            index += this.Authority.Length;
+        }
 
-            var reference = new Memory<char>(new char[totalLength]);
-            int index = 0;
-            if (this.Scheme.Length > 0)
-            {
-                this.Scheme.CopyTo(reference.Span.Slice(index, this.Scheme.Length));
-                index += this.Scheme.Length;
-                reference.Span[index] = ':';
-                index += 1;
-            }
-
-            if (this.Authority.Length > 0)
+        if (this.Path.Length > 0)
+        {
+            if (this.Path[0] != '/' && this.Authority.Length > 0)
             {
                 reference.Span[index] = '/';
-                reference.Span[index + 1] = '/';
-                index += 2;
-                this.Authority.CopyTo(reference.Span.Slice(index, this.Authority.Length));
-                index += this.Authority.Length;
-            }
-
-            if (this.Path.Length > 0)
-            {
-                if (this.Path[0] != '/' && this.Authority.Length > 0)
-                {
-                    reference.Span[index] = '/';
-                    index++;
-                }
-
-                this.Path.CopyTo(reference.Span.Slice(index, this.Path.Length));
-                index += this.Path.Length;
-            }
-
-            if (this.Query.Length > 0)
-            {
-                reference.Span[index] = '?';
-                index += 1;
-                this.Query.CopyTo(reference.Span.Slice(index, this.Query.Length));
-                index += this.Query.Length;
-            }
-
-            if (this.Fragment.Length > 0)
-            {
-                reference.Span[index] = '#';
-                index += 1;
-                this.Fragment.CopyTo(reference.Span.Slice(index, this.Fragment.Length));
-            }
-
-            return new JsonReference(reference);
-        }
-
-        private ReadOnlySpan<char> FindHost()
-        {
-            if (!this.HasAuthority)
-            {
-                return ReadOnlySpan<char>.Empty;
-            }
-
-            int index = 0;
-            while (index < this.Authority.Length && this.Authority[index] != ':')
-            {
                 index++;
             }
 
-            return this.Authority[0..index];
+            this.Path.CopyTo(reference.Span.Slice(index, this.Path.Length));
+            index += this.Path.Length;
         }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.SpacingRules", "SA1009:Closing parenthesis should be spaced correctly", Justification = "Stylecop does not yet support ..")]
-        private ReadOnlySpan<char> FindPort()
+        if (this.Query.Length > 0)
         {
-            if (!this.HasAuthority)
-            {
-                return ReadOnlySpan<char>.Empty;
-            }
-
-            int index = 0;
-            while (index < this.Authority.Length && this.Authority[index] != ':')
-            {
-                index++;
-            }
-
-            if (index == this.Authority.Length)
-            {
-                return ReadOnlySpan<char>.Empty;
-            }
-
-            return this.Authority[(index + 1)..];
+            reference.Span[index] = '?';
+            index += 1;
+            this.Query.CopyTo(reference.Span.Slice(index, this.Query.Length));
+            index += this.Query.Length;
         }
+
+        if (this.Fragment.Length > 0)
+        {
+            reference.Span[index] = '#';
+            index += 1;
+            this.Fragment.CopyTo(reference.Span.Slice(index, this.Fragment.Length));
+        }
+
+        return new JsonReference(reference);
+    }
+
+    private ReadOnlySpan<char> FindHost()
+    {
+        if (!this.HasAuthority)
+        {
+            return ReadOnlySpan<char>.Empty;
+        }
+
+        int index = 0;
+        while (index < this.Authority.Length && this.Authority[index] != ':')
+        {
+            index++;
+        }
+
+        return this.Authority[0..index];
+    }
+
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.SpacingRules", "SA1009:Closing parenthesis should be spaced correctly", Justification = "Stylecop does not yet support ..")]
+    private ReadOnlySpan<char> FindPort()
+    {
+        if (!this.HasAuthority)
+        {
+            return ReadOnlySpan<char>.Empty;
+        }
+
+        int index = 0;
+        while (index < this.Authority.Length && this.Authority[index] != ':')
+        {
+            index++;
+        }
+
+        if (index == this.Authority.Length)
+        {
+            return ReadOnlySpan<char>.Empty;
+        }
+
+        return this.Authority[(index + 1)..];
     }
 }

@@ -7,722 +7,587 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 #nullable enable
-namespace Corvus.Json.JsonSchema.Draft202012
+using System.Buffers;
+using System.ComponentModel;
+using System.Collections.Immutable;
+using System.Runtime.CompilerServices;
+using System.Text.Json;
+using Corvus.Json;
+using Corvus.Json.Internal;
+
+namespace Corvus.Json.JsonSchema.Draft202012;
+/// <summary>
+/// A type generated from a JsonSchema specification.
+/// </summary>
+public readonly partial struct FormatAnnotation
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Collections.Immutable;
-    using System.Text;
-    using System.Text.Json;
-    using System.Text.RegularExpressions;
-    using Corvus.Json;
+    private readonly Backing backing;
+    private readonly JsonElement jsonElementBacking;
+    private readonly bool boolBacking;
+    private readonly ImmutableDictionary<JsonPropertyName, JsonAny> objectBacking;
+    /// <summary>
+    /// Initializes a new instance of the <see cref = "FormatAnnotation"/> struct.
+    /// </summary>
+    public FormatAnnotation()
+    {
+        this.jsonElementBacking = default;
+        this.backing = Backing.JsonElement;
+        this.boolBacking = default;
+        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+    }
 
     /// <summary>
-    /// A type generated from a JsonSchema specification.
+    /// Initializes a new instance of the <see cref = "FormatAnnotation"/> struct.
     /// </summary>
-    public readonly struct FormatAnnotation : IJsonObject<FormatAnnotation>, IEquatable<FormatAnnotation>
+    /// <param name = "value">The value from which to construct the instance.</param>
+    public FormatAnnotation(in JsonElement value)
     {
-        /// <summary>
-        /// JSON property name for <see cref = "Format"/>.
-        /// </summary>
-        public static readonly ReadOnlyMemory<byte> FormatUtf8JsonPropertyName = new byte[]{102, 111, 114, 109, 97, 116};
-        /// <summary>
-        /// JSON property name for <see cref = "Format"/>.
-        /// </summary>
-        public static readonly string FormatJsonPropertyName = "format";
-        private static readonly ImmutableDictionary<string, PropertyValidator<FormatAnnotation>> __CorvusLocalProperties = CreateLocalPropertyValidators();
-        private readonly JsonElement jsonElementBacking;
-        private readonly ImmutableDictionary<string, JsonAny>? objectBacking;
-        private readonly bool? booleanBacking;
-        /// <summary>
-        /// Initializes a new instance of the <see cref = "FormatAnnotation"/> struct.
-        /// </summary>
-        /// <param name = "value">The backing <see cref = "JsonElement"/>.</param>
-        public FormatAnnotation(JsonElement value)
-        {
-            this.jsonElementBacking = value;
-            this.objectBacking = default;
-            this.booleanBacking = default;
-        }
+        this.jsonElementBacking = value;
+        this.backing = Backing.JsonElement;
+        this.boolBacking = default;
+        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+    }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref = "FormatAnnotation"/> struct.
-        /// </summary>
-        /// <param name = "value">A property dictionary.</param>
-        public FormatAnnotation(ImmutableDictionary<string, JsonAny> value)
+    /// <summary>
+    /// Gets a Null instance.
+    /// </summary>
+    public static FormatAnnotation Null { get; } = new(JsonValueHelpers.NullElement);
+    /// <summary>
+    /// Gets an Undefined instance.
+    /// </summary>
+    public static FormatAnnotation Undefined { get; } = default;
+    /// <inheritdoc/>
+    public JsonAny AsAny
+    {
+        get
         {
-            this.jsonElementBacking = default;
-            this.objectBacking = value;
-            this.booleanBacking = default;
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref = "FormatAnnotation"/> struct.
-        /// </summary>
-        /// <param name = "jsonObject">The <see cref = "JsonObject"/> from which to construct the value.</param>
-        public FormatAnnotation(JsonObject jsonObject)
-        {
-            if (jsonObject.HasJsonElement)
+            if ((this.backing & Backing.JsonElement) != 0)
             {
-                this.jsonElementBacking = jsonObject.AsJsonElement;
-                this.objectBacking = default;
-            }
-            else
-            {
-                this.jsonElementBacking = default;
-                this.objectBacking = jsonObject.AsPropertyDictionary;
+                return new(this.jsonElementBacking);
             }
 
-            this.booleanBacking = default;
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref = "FormatAnnotation"/> struct.
-        /// </summary>
-        /// <param name = "jsonBoolean">The <see cref = "JsonBoolean"/> from which to construct the value.</param>
-        public FormatAnnotation(JsonBoolean jsonBoolean)
-        {
-            if (jsonBoolean.HasJsonElement)
+            if ((this.backing & Backing.Bool) != 0)
             {
-                this.jsonElementBacking = jsonBoolean.AsJsonElement;
-                this.booleanBacking = default;
-            }
-            else
-            {
-                this.jsonElementBacking = default;
-                this.booleanBacking = jsonBoolean.GetBoolean();
+                return new(this.boolBacking);
             }
 
-            this.objectBacking = default;
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref = "FormatAnnotation"/> struct.
-        /// </summary>
-        /// <param name = "boolean">The <see cref = "bool "/> from which to construct the value.</param>
-        public FormatAnnotation(bool boolean)
-        {
-            this.jsonElementBacking = default;
-            this.booleanBacking = boolean;
-            this.objectBacking = default;
-        }
-
-        /// <summary>
-        /// Gets Format.
-        /// </summary>
-        /// <remarks>
-        /// {Property title}.
-        /// {Property description}.
-        /// </remarks>
-        /// <example>
-        /// {Property examples}.
-        /// </example>
-        public Corvus.Json.JsonString Format
-        {
-            get
+            if ((this.backing & Backing.Object) != 0)
             {
-                if (this.objectBacking is ImmutableDictionary<string, JsonAny> properties)
-                {
-                    if (properties.TryGetValue(FormatJsonPropertyName, out JsonAny result))
-                    {
-                        return result;
-                    }
-                }
-
-                if (this.jsonElementBacking.ValueKind == JsonValueKind.Object)
-                {
-                    if (this.jsonElementBacking.TryGetProperty(FormatUtf8JsonPropertyName.Span, out JsonElement result))
-                    {
-                        return new Corvus.Json.JsonString(result);
-                    }
-                }
-
-                return default;
+                return new(this.objectBacking);
             }
-        }
 
-        /// <summary>
-        /// Gets a value indicating whether this is backed by a JSON element.
-        /// </summary>
-        public bool HasJsonElement => this.objectBacking is null && this.booleanBacking is null;
-        /// <summary>
-        /// Gets the value as a JsonElement.
-        /// </summary>
-        public JsonElement AsJsonElement
-        {
-            get
+            if ((this.backing & Backing.Null) != 0)
             {
-                if (this.objectBacking is ImmutableDictionary<string, JsonAny> objectBacking)
-                {
-                    return JsonObject.PropertiesToJsonElement(objectBacking);
-                }
+                return JsonAny.Null;
+            }
 
-                if (this.booleanBacking is bool booleanBacking)
-                {
-                    return JsonBoolean.BoolToJsonElement(booleanBacking);
-                }
+            return JsonAny.Undefined;
+        }
+    }
 
+    /// <inheritdoc/>
+    public JsonElement AsJsonElement
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
                 return this.jsonElementBacking;
             }
-        }
 
-        /// <inheritdoc/>
-        public JsonValueKind ValueKind
-        {
-            get
+            if ((this.backing & Backing.Bool) != 0)
             {
-                if (this.objectBacking is ImmutableDictionary<string, JsonAny>)
-                {
-                    return JsonValueKind.Object;
-                }
+                return JsonValueHelpers.BoolToJsonElement(this.boolBacking);
+            }
 
-                if (this.booleanBacking is bool booleanBacking)
-                {
-                    return booleanBacking ? JsonValueKind.True : JsonValueKind.False;
-                }
+            if ((this.backing & Backing.Object) != 0)
+            {
+                return JsonValueHelpers.ObjectToJsonElement(this.objectBacking);
+            }
 
+            if ((this.backing & Backing.Null) != 0)
+            {
+                return JsonValueHelpers.NullElement;
+            }
+
+            return default;
+        }
+    }
+
+    /// <inheritdoc/>
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public JsonString AsString
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                return new(this.jsonElementBacking);
+            }
+
+            throw new InvalidOperationException();
+        }
+    }
+
+    /// <inheritdoc/>
+    public JsonBoolean AsBoolean
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                return new(this.jsonElementBacking);
+            }
+
+            if ((this.backing & Backing.Bool) != 0)
+            {
+                return new(this.boolBacking);
+            }
+
+            throw new InvalidOperationException();
+        }
+    }
+
+    /// <inheritdoc/>
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public JsonNumber AsNumber
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                return new(this.jsonElementBacking);
+            }
+
+            throw new InvalidOperationException();
+        }
+    }
+
+    /// <inheritdoc/>
+    public JsonObject AsObject
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                return new(this.jsonElementBacking);
+            }
+
+            if ((this.backing & Backing.Object) != 0)
+            {
+                return new(this.objectBacking);
+            }
+
+            throw new InvalidOperationException();
+        }
+    }
+
+    /// <inheritdoc/>
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public JsonArray AsArray
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                return new(this.jsonElementBacking);
+            }
+
+            throw new InvalidOperationException();
+        }
+    }
+
+    /// <inheritdoc/>
+    public bool HasJsonElementBacking
+    {
+        get
+        {
+            return (this.backing & Backing.JsonElement) != 0;
+        }
+    }
+
+    /// <inheritdoc/>
+    public bool HasDotnetBacking
+    {
+        get
+        {
+            return (this.backing & Backing.Dotnet) != 0;
+        }
+    }
+
+    /// <inheritdoc/>
+    public JsonValueKind ValueKind
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
                 return this.jsonElementBacking.ValueKind;
             }
-        }
 
-        /// <inheritdoc/>
-        public JsonAny AsAny
-        {
-            get
+            if ((this.backing & Backing.Bool) != 0)
             {
-                if (this.objectBacking is ImmutableDictionary<string, JsonAny> objectBacking)
-                {
-                    return new JsonAny(objectBacking);
-                }
-
-                if (this.booleanBacking is bool booleanBacking)
-                {
-                    return new JsonAny(booleanBacking);
-                }
-
-                return new JsonAny(this.jsonElementBacking);
-            }
-        }
-
-        /// <summary>
-        /// Conversion from any.
-        /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator FormatAnnotation(JsonAny value)
-        {
-            if (value.HasJsonElement)
-            {
-                return new FormatAnnotation(value.AsJsonElement);
+                return this.boolBacking ? JsonValueKind.True : JsonValueKind.False;
             }
 
-            return value.As<FormatAnnotation>();
-        }
-
-        /// <summary>
-        /// Conversion to any.
-        /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator JsonAny(FormatAnnotation value)
-        {
-            return value.AsAny;
-        }
-
-        /// <summary>
-        /// Conversion from object.
-        /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator FormatAnnotation(JsonObject value)
-        {
-            return new FormatAnnotation(value);
-        }
-
-        /// <summary>
-        /// Conversion to object.
-        /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator JsonObject(FormatAnnotation value)
-        {
-            return value.AsObject;
-        }
-
-        /// <summary>
-        /// Implicit conversion to a property dictionary.
-        /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator ImmutableDictionary<string, JsonAny>(FormatAnnotation value)
-        {
-            return value.AsObject.AsPropertyDictionary;
-        }
-
-        /// <summary>
-        /// Implicit conversion from a property dictionary.
-        /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator FormatAnnotation(ImmutableDictionary<string, JsonAny> value)
-        {
-            return new FormatAnnotation(value);
-        }
-
-        /// <summary>
-        /// Conversion from bool.
-        /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator FormatAnnotation(bool value)
-        {
-            return new FormatAnnotation(value);
-        }
-
-        /// <summary>
-        /// Conversion to bool.
-        /// </summary>
-        /// <param name = "boolean">The value from which to convert.</param>
-        public static implicit operator bool (FormatAnnotation boolean)
-        {
-            return boolean.AsBoolean.GetBoolean();
-        }
-
-        /// <summary>
-        /// Conversion from bool.
-        /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator FormatAnnotation(JsonBoolean value)
-        {
-            return new FormatAnnotation(value);
-        }
-
-        /// <summary>
-        /// Conversion to bool.
-        /// </summary>
-        /// <param name = "boolean">The value from which to convert.</param>
-        public static implicit operator JsonBoolean(FormatAnnotation boolean)
-        {
-            return boolean.AsBoolean;
-        }
-
-        /// <summary>
-        /// Standard equality operator.
-        /// </summary>
-        /// <param name = "lhs">The left hand side of the comparison.</param>
-        /// <param name = "rhs">The right hand side of the comparison.</param>
-        /// <returns>True if they are equal.</returns>
-        public static bool operator ==(FormatAnnotation lhs, FormatAnnotation rhs)
-        {
-            return lhs.Equals(rhs);
-        }
-
-        /// <summary>
-        /// Standard inequality operator.
-        /// </summary>
-        /// <param name = "lhs">The left hand side of the comparison.</param>
-        /// <param name = "rhs">The right hand side of the comparison.</param>
-        /// <returns>True if they are not equal.</returns>
-        public static bool operator !=(FormatAnnotation lhs, FormatAnnotation rhs)
-        {
-            return !lhs.Equals(rhs);
-        }
-
-        /// <summary>
-        /// Creates an instance of a <see cref = "FormatAnnotation"/>.
-        /// </summary>
-        public static FormatAnnotation Create(Corvus.Json.JsonString? format = null)
-        {
-            var builder = ImmutableDictionary.CreateBuilder<string, JsonAny>();
-            if (format is Corvus.Json.JsonString format__)
+            if ((this.backing & Backing.Object) != 0)
             {
-                builder.Add(FormatJsonPropertyName, format__);
+                return JsonValueKind.Object;
             }
 
-            return builder.ToImmutable();
-        }
-
-        /// <summary>
-        /// Sets format.
-        /// </summary>
-        /// <param name = "value">The value to set.</param>
-        /// <returns>The entity with the updated property.</returns>
-        public FormatAnnotation WithFormat(Corvus.Json.JsonString value)
-        {
-            return this.SetProperty(FormatJsonPropertyName, value);
-        }
-
-        /// <inheritdoc/>
-        public override string ToString()
-        {
-            return this.Serialize();
-        }
-
-        /// <inheritdoc/>
-        public override bool Equals(object? obj)
-        {
-            if (obj is IJsonValue jv)
+            if ((this.backing & Backing.Null) != 0)
             {
-                return this.Equals(jv.AsAny);
+                return JsonValueKind.Null;
             }
 
-            return obj is null && this.IsNull();
+            return JsonValueKind.Undefined;
+        }
+    }
+
+    /// <summary>
+    /// Conversion from JsonAny.
+    /// </summary>
+    /// <param name = "value">The value from which to convert.</param>
+    public static implicit operator FormatAnnotation(JsonAny value)
+    {
+        return FormatAnnotation.FromAny(value);
+    }
+
+    /// <summary>
+    /// Conversion to JsonAny.
+    /// </summary>
+    /// <param name = "value">The value from which to convert.</param>
+    /// <exception cref = "InvalidOperationException">The value was not compatible with this type.</exception>
+    public static implicit operator JsonAny(in FormatAnnotation value)
+    {
+        return value.AsAny;
+    }
+
+    /// <summary>
+    /// Equality operator.
+    /// </summary>
+    /// <param name = "left">The lhs.</param>
+    /// <param name = "right">The rhs.</param>
+    /// <returns><c>True</c> if the values are equal.</returns>
+    public static bool operator ==(in FormatAnnotation left, in FormatAnnotation right)
+    {
+        return left.Equals(right);
+    }
+
+    /// <summary>
+    /// Inequality operator.
+    /// </summary>
+    /// <param name = "left">The lhs.</param>
+    /// <param name = "right">The rhs.</param>
+    /// <returns><c>True</c> if the values are equal.</returns>
+    public static bool operator !=(in FormatAnnotation left, in FormatAnnotation right)
+    {
+        return !left.Equals(right);
+    }
+
+    /// <summary>
+    /// Gets an instance of the JSON value from a JsonAny value.
+    /// </summary>
+    /// <param name = "value">The <see cref = "JsonAny"/> value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the <see cref = "JsonAny"/>.</returns>
+    /// <remarks>The returned value will have a <see cref = "IJsonValue.ValueKind"/> of <see cref = "JsonValueKind.Undefined"/> if the
+    /// value cannot be constructed from the given instance (e.g. because they have an incompatible dotnet backing type.
+    /// </remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static FormatAnnotation FromAny(in JsonAny value)
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
         }
 
-        /// <inheritdoc/>
-        public override int GetHashCode()
+        JsonValueKind valueKind = value.ValueKind;
+        return valueKind switch
         {
-            JsonValueKind valueKind = this.ValueKind;
-            return valueKind switch
-            {
-                JsonValueKind.Object => this.AsObject.GetHashCode(),
-                JsonValueKind.Array => this.AsArray().GetHashCode(),
-                JsonValueKind.Number => this.AsNumber().GetHashCode(),
-                JsonValueKind.String => this.AsString().GetHashCode(),
-                JsonValueKind.True or JsonValueKind.False => this.AsBoolean.GetHashCode(),
-                JsonValueKind.Null => JsonNull.NullHashCode,
-                _ => JsonAny.UndefinedHashCode,
-            };
+            JsonValueKind.True => new(true),
+            JsonValueKind.False => new(false),
+            JsonValueKind.Object => new((ImmutableDictionary<JsonPropertyName, JsonAny>)value),
+            JsonValueKind.Null => Null,
+            _ => Undefined,
+        };
+    }
+
+    /// <summary>
+    /// Gets an instance of the JSON value from a <see cref = "JsonElement"/> value.
+    /// </summary>
+    /// <param name = "value">The <see cref = "JsonElement"/> value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the <see cref = "JsonElement"/>.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static FormatAnnotation FromJson(in JsonElement value)
+    {
+        return new(value);
+    }
+
+    /// <summary>
+    /// Gets an instance of the JSON value from a boolean value.
+    /// </summary>
+    /// <typeparam name = "TValue">The type of the value.</typeparam>
+    /// <param name = "value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>This will be FormatAnnotation.Undefined if the type is not compatible.</remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static FormatAnnotation FromBoolean<TValue>(in TValue value)
+        where TValue : struct, IJsonBoolean<TValue>
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
         }
 
-        /// <summary>
-        /// Writes the object to the <see cref = "Utf8JsonWriter"/>.
-        /// </summary>
-        /// <param name = "writer">The writer to which to write the object.</param>
-        public void WriteTo(Utf8JsonWriter writer)
+        if (value.ValueKind == JsonValueKind.True)
         {
-            if (this.objectBacking is ImmutableDictionary<string, JsonAny> objectBacking)
-            {
-                JsonObject.WriteProperties(objectBacking, writer);
-                return;
-            }
+            return new(true);
+        }
 
-            if (this.booleanBacking is bool booleanBacking)
-            {
-                writer.WriteBooleanValue(booleanBacking);
-                return;
-            }
+        if (value.ValueKind == JsonValueKind.False)
+        {
+            return new(false);
+        }
 
+        return Undefined;
+    }
+
+    /// <summary>
+    /// Gets an instance of the JSON value from a string value.
+    /// </summary>
+    /// <typeparam name = "TValue">The type of the value.</typeparam>
+    /// <param name = "value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>This will be FormatAnnotation.Undefined if the type is not compatible.</remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public static FormatAnnotation FromString<TValue>(in TValue value)
+        where TValue : struct, IJsonString<TValue>
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        return Undefined;
+    }
+
+    /// <summary>
+    /// Gets an instance of the JSON value from a number value.
+    /// </summary>
+    /// <typeparam name = "TValue">The type of the value.</typeparam>
+    /// <param name = "value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>This will be FormatAnnotation.Undefined if the type is not compatible.</remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public static FormatAnnotation FromNumber<TValue>(in TValue value)
+        where TValue : struct, IJsonNumber<TValue>
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        return Undefined;
+    }
+
+    /// <summary>
+    /// Gets an instance of the JSON value from an array value.
+    /// </summary>
+    /// <typeparam name = "TValue">The type of the value.</typeparam>
+    /// <param name = "value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>This will be FormatAnnotation.Undefined if the type is not compatible.</remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public static FormatAnnotation FromArray<TValue>(in TValue value)
+        where TValue : struct, IJsonArray<TValue>
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        return Undefined;
+    }
+
+    /// <summary>
+    /// Gets an instance of the JSON value from an object value.
+    /// </summary>
+    /// <typeparam name = "TValue">The type of the value.</typeparam>
+    /// <param name = "value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>This will be FormatAnnotation.Undefined if the type is not compatible.</remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static FormatAnnotation FromObject<TValue>(in TValue value)
+        where TValue : struct, IJsonObject<TValue>
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        if (value.ValueKind == JsonValueKind.Object)
+        {
+            return new((ImmutableDictionary<JsonPropertyName, JsonAny>)value);
+        }
+
+        return Undefined;
+    }
+
+    /// <summary>
+    /// Parses a JSON string into a FormatAnnotation.
+    /// </summary>
+    /// <param name = "json">The json string to parse.</param>
+    /// <param name = "options">The (optional) JsonDocumentOptions.</param>
+    /// <returns>A <see cref = "FormatAnnotation"/> instance built from the JSON string.</returns>
+    public static FormatAnnotation Parse(string json, JsonDocumentOptions options = default)
+    {
+        using var jsonDocument = JsonDocument.Parse(json, options);
+        return new FormatAnnotation(jsonDocument.RootElement.Clone());
+    }
+
+    /// <summary>
+    /// Parses a JSON string into a FormatAnnotation.
+    /// </summary>
+    /// <param name = "utf8Json">The json string to parse.</param>
+    /// <param name = "options">The (optional) JsonDocumentOptions.</param>
+    /// <returns>A <see cref = "FormatAnnotation"/> instance built from the JSON string.</returns>
+    public static FormatAnnotation Parse(Stream utf8Json, JsonDocumentOptions options = default)
+    {
+        using var jsonDocument = JsonDocument.Parse(utf8Json, options);
+        return new FormatAnnotation(jsonDocument.RootElement.Clone());
+    }
+
+    /// <summary>
+    /// Parses a JSON string into a FormatAnnotation.
+    /// </summary>
+    /// <param name = "utf8Json">The json string to parse.</param>
+    /// <param name = "options">The (optional) JsonDocumentOptions.</param>
+    /// <returns>A <see cref = "FormatAnnotation"/> instance built from the JSON string.</returns>
+    public static FormatAnnotation Parse(ReadOnlyMemory<byte> utf8Json, JsonDocumentOptions options = default)
+    {
+        using var jsonDocument = JsonDocument.Parse(utf8Json, options);
+        return new FormatAnnotation(jsonDocument.RootElement.Clone());
+    }
+
+    /// <summary>
+    /// Parses a JSON string into a FormatAnnotation.
+    /// </summary>
+    /// <param name = "json">The json string to parse.</param>
+    /// <param name = "options">The (optional) JsonDocumentOptions.</param>
+    /// <returns>A <see cref = "FormatAnnotation"/> instance built from the JSON string.</returns>
+    public static FormatAnnotation Parse(ReadOnlyMemory<char> json, JsonDocumentOptions options = default)
+    {
+        using var jsonDocument = JsonDocument.Parse(json, options);
+        return new FormatAnnotation(jsonDocument.RootElement.Clone());
+    }
+
+    /// <summary>
+    /// Parses a JSON string into a FormatAnnotation.
+    /// </summary>
+    /// <param name = "utf8Json">The json string to parse.</param>
+    /// <param name = "options">The (optional) JsonDocumentOptions.</param>
+    /// <returns>A <see cref = "FormatAnnotation"/> instance built from the JSON string.</returns>
+    public static FormatAnnotation Parse(ReadOnlySequence<byte> utf8Json, JsonDocumentOptions options = default)
+    {
+        using var jsonDocument = JsonDocument.Parse(utf8Json, options);
+        return new FormatAnnotation(jsonDocument.RootElement.Clone());
+    }
+
+    /// <summary>
+    /// Gets the value as the target value.
+    /// </summary>
+    /// <typeparam name = "TTarget">The type of the target.</typeparam>
+    /// <returns>An instance of the target type.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public TTarget As<TTarget>()
+        where TTarget : struct, IJsonValue<TTarget>
+    {
+        if ((this.backing & Backing.JsonElement) != 0)
+        {
+            return TTarget.FromJson(this.jsonElementBacking);
+        }
+
+        if ((this.backing & Backing.Bool) != 0)
+        {
+            return TTarget.FromBoolean(this);
+        }
+
+        if ((this.backing & Backing.Object) != 0)
+        {
+            return TTarget.FromObject(this);
+        }
+
+        if ((this.backing & Backing.Null) != 0)
+        {
+            return TTarget.Null;
+        }
+
+        return TTarget.Undefined;
+    }
+
+    /// <inheritdoc/>
+    public override bool Equals(object? obj)
+    {
+        return (obj is IJsonValue jv && this.Equals(jv.AsAny)) || (obj is null && this.IsNull());
+    }
+
+    /// <inheritdoc/>
+    public bool Equals<T>(T other)
+        where T : struct, IJsonValue<T>
+    {
+        return JsonValueHelpers.CompareValues(this, other);
+    }
+
+    /// <inheritdoc/>
+    public bool Equals(FormatAnnotation other)
+    {
+        return JsonValueHelpers.CompareValues(this, other);
+    }
+
+    /// <inheritdoc/>
+    public void WriteTo(Utf8JsonWriter writer)
+    {
+        if ((this.backing & Backing.JsonElement) != 0)
+        {
             if (this.jsonElementBacking.ValueKind != JsonValueKind.Undefined)
             {
                 this.jsonElementBacking.WriteTo(writer);
-                return;
             }
 
+            return;
+        }
+
+        if ((this.backing & Backing.Bool) != 0)
+        {
+            writer.WriteBooleanValue(this.boolBacking);
+            return;
+        }
+
+        if ((this.backing & Backing.Object) != 0)
+        {
+            JsonValueHelpers.WriteProperties(this.objectBacking, writer);
+            return;
+        }
+
+        if ((this.backing & Backing.Null) != 0)
+        {
             writer.WriteNullValue();
+            return;
         }
+    }
 
-        /// <inheritdoc/>
-        public JsonObjectEnumerator EnumerateObject()
-        {
-            return this.AsObject.EnumerateObject();
-        }
+    /// <inheritdoc/>
+    public override int GetHashCode()
+    {
+        return JsonValueHelpers.GetHashCode(this);
+    }
 
-        /// <inheritdoc/>
-        public bool TryGetProperty(string name, out JsonAny value)
-        {
-            return this.AsObject.TryGetProperty(name, out value);
-        }
-
-        /// <inheritdoc/>
-        public bool TryGetProperty(ReadOnlySpan<char> name, out JsonAny value)
-        {
-            return this.AsObject.TryGetProperty(name, out value);
-        }
-
-        /// <inheritdoc/>
-        public bool TryGetProperty(ReadOnlySpan<byte> utf8name, out JsonAny value)
-        {
-            return this.AsObject.TryGetProperty(utf8name, out value);
-        }
-
-        /// <inheritdoc/>
-        public bool Equals<T>(T other)
-            where T : struct, IJsonValue
-        {
-            JsonValueKind valueKind = this.ValueKind;
-            if (other.ValueKind != valueKind)
-            {
-                return false;
-            }
-
-            return valueKind switch
-            {
-                JsonValueKind.Object => this.AsObject.Equals(other.AsObject()),
-                JsonValueKind.Array => this.AsArray().Equals(other.AsArray()),
-                JsonValueKind.Number => this.AsNumber().Equals(other.AsNumber()),
-                JsonValueKind.String => this.AsString().Equals(other.AsString()),
-                JsonValueKind.True or JsonValueKind.False => this.AsBoolean.Equals(other.AsBoolean()),
-                JsonValueKind.Null => true,
-                _ => false,
-            };
-        }
-
-        /// <inheritdoc/>
-        public bool Equals(FormatAnnotation other)
-        {
-            JsonValueKind valueKind = this.ValueKind;
-            if (other.ValueKind != valueKind)
-            {
-                return false;
-            }
-
-            return valueKind switch
-            {
-                JsonValueKind.Object => this.AsObject.Equals(other.AsObject),
-                JsonValueKind.Array => this.AsArray().Equals(other.AsArray()),
-                JsonValueKind.Number => this.AsNumber().Equals(other.AsNumber()),
-                JsonValueKind.String => this.AsString().Equals(other.AsString()),
-                JsonValueKind.True or JsonValueKind.False => this.AsBoolean.Equals(other.AsBoolean),
-                JsonValueKind.Null => true,
-                _ => false,
-            };
-        }
-
-        /// <inheritdoc/>
-        public bool HasProperty(string name)
-        {
-            if (this.objectBacking is ImmutableDictionary<string, JsonAny> properties)
-            {
-                return properties.TryGetValue(name, out _);
-            }
-
-            if (this.jsonElementBacking.ValueKind == JsonValueKind.Object)
-            {
-                return this.jsonElementBacking.TryGetProperty(name.ToString(), out JsonElement _);
-            }
-
-            return false;
-        }
-
-        /// <inheritdoc/>
-        public bool HasProperty(ReadOnlySpan<char> name)
-        {
-            if (this.objectBacking is ImmutableDictionary<string, JsonAny> properties)
-            {
-                return properties.TryGetValue(name.ToString(), out _);
-            }
-
-            if (this.jsonElementBacking.ValueKind == JsonValueKind.Object)
-            {
-                return this.jsonElementBacking.TryGetProperty(name, out JsonElement _);
-            }
-
-            return false;
-        }
-
-        /// <inheritdoc/>
-        public bool HasProperty(ReadOnlySpan<byte> utf8name)
-        {
-            if (this.objectBacking is ImmutableDictionary<string, JsonAny> properties)
-            {
-                return properties.TryGetValue(System.Text.Encoding.UTF8.GetString(utf8name), out _);
-            }
-
-            if (this.jsonElementBacking.ValueKind == JsonValueKind.Object)
-            {
-                return this.jsonElementBacking.TryGetProperty(utf8name, out JsonElement _);
-            }
-
-            return false;
-        }
-
-        /// <inheritdoc/>
-        public FormatAnnotation SetProperty<TValue>(string name, TValue value)
-            where TValue : struct, IJsonValue
-        {
-            if (this.ValueKind == JsonValueKind.Object || this.ValueKind == JsonValueKind.Undefined)
-            {
-                return this.AsObject.SetProperty(name, value);
-            }
-
-            return this;
-        }
-
-        /// <inheritdoc/>
-        public FormatAnnotation SetProperty<TValue>(ReadOnlySpan<char> name, TValue value)
-            where TValue : struct, IJsonValue
-        {
-            if (this.ValueKind == JsonValueKind.Object || this.ValueKind == JsonValueKind.Undefined)
-            {
-                return this.AsObject.SetProperty(name, value);
-            }
-
-            return this;
-        }
-
-        /// <inheritdoc/>
-        public FormatAnnotation SetProperty<TValue>(ReadOnlySpan<byte> utf8name, TValue value)
-            where TValue : struct, IJsonValue
-        {
-            if (this.ValueKind == JsonValueKind.Object || this.ValueKind == JsonValueKind.Undefined)
-            {
-                return this.AsObject.SetProperty(utf8name, value);
-            }
-
-            return this;
-        }
-
-        /// <inheritdoc/>
-        public FormatAnnotation RemoveProperty(string name)
-        {
-            if (this.ValueKind == JsonValueKind.Object)
-            {
-                return this.AsObject.RemoveProperty(name);
-            }
-
-            return this;
-        }
-
-        /// <inheritdoc/>
-        public FormatAnnotation RemoveProperty(ReadOnlySpan<char> name)
-        {
-            if (this.ValueKind == JsonValueKind.Object)
-            {
-                return this.AsObject.RemoveProperty(name);
-            }
-
-            return this;
-        }
-
-        /// <inheritdoc/>
-        public FormatAnnotation RemoveProperty(ReadOnlySpan<byte> utf8Name)
-        {
-            if (this.ValueKind == JsonValueKind.Object)
-            {
-                return this.AsObject.RemoveProperty(utf8Name);
-            }
-
-            return this;
-        }
-
-        /// <inheritdoc/>
-        public T As<T>()
-            where T : struct, IJsonValue
-        {
-            return this.As<FormatAnnotation, T>();
-        }
-
-        /// <inheritdoc/>
-        public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
-        {
-            ValidationContext result = validationContext;
-            if (level != ValidationLevel.Flag)
-            {
-                result = result.UsingStack();
-            }
-
-            JsonValueKind valueKind = this.ValueKind;
-            result = this.ValidateType(valueKind, result, level);
-            if (level == ValidationLevel.Flag && !result.IsValid)
-            {
-                return result;
-            }
-
-            result = this.ValidateObject(valueKind, result, level);
-            if (level == ValidationLevel.Flag && !result.IsValid)
-            {
-                return result;
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        /// Gets the value as a <see cref = "JsonObject"/>.
-        /// </summary>
-        private JsonObject AsObject
-        {
-            get
-            {
-                if (this.objectBacking is ImmutableDictionary<string, JsonAny> objectBacking)
-                {
-                    return new JsonObject(objectBacking);
-                }
-
-                return new JsonObject(this.jsonElementBacking);
-            }
-        }
-
-        /// <summary>
-        /// Gets the value as a <see cref = "JsonBoolean"/>.
-        /// </summary>
-        private JsonBoolean AsBoolean
-        {
-            get
-            {
-                if (this.booleanBacking is bool booleanBacking)
-                {
-                    return new JsonBoolean(booleanBacking);
-                }
-
-                return new JsonBoolean(this.jsonElementBacking);
-            }
-        }
-
-        private static ImmutableDictionary<string, PropertyValidator<FormatAnnotation>> CreateLocalPropertyValidators()
-        {
-            ImmutableDictionary<string, PropertyValidator<FormatAnnotation>>.Builder builder = ImmutableDictionary.CreateBuilder<string, PropertyValidator<FormatAnnotation>>();
-            builder.Add(FormatJsonPropertyName, __CorvusValidateFormat);
-            return builder.ToImmutable();
-        }
-
-        private static ValidationContext __CorvusValidateFormat(in FormatAnnotation that, in ValidationContext validationContext, ValidationLevel level)
-        {
-            Corvus.Json.JsonString property = that.Format;
-            return property.Validate(validationContext, level);
-        }
-
-        private ValidationContext ValidateObject(JsonValueKind valueKind, in ValidationContext validationContext, ValidationLevel level)
-        {
-            ValidationContext result = validationContext;
-            if (valueKind != JsonValueKind.Object)
-            {
-                return result;
-            }
-
-            int propertyCount = 0;
-            foreach (Property property in this.EnumerateObject())
-            {
-                string propertyName = property.Name;
-                if (__CorvusLocalProperties.TryGetValue(propertyName, out PropertyValidator<FormatAnnotation>? propertyValidator))
-                {
-                    result = result.WithLocalProperty(propertyCount);
-                    var propertyResult = propertyValidator(this, result.CreateChildContext(), level);
-                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
-                    if (level == ValidationLevel.Flag && !result.IsValid)
-                    {
-                        return result;
-                    }
-                }
-
-                propertyCount++;
-            }
-
-            return result;
-        }
-
-        private ValidationContext ValidateType(JsonValueKind valueKind, in ValidationContext validationContext, ValidationLevel level)
-        {
-            ValidationContext result = validationContext;
-            bool isValid = false;
-            ValidationContext localResultObject = Corvus.Json.Validate.TypeObject(valueKind, result, level);
-            if (level == ValidationLevel.Flag && localResultObject.IsValid)
-            {
-                return validationContext;
-            }
-
-            if (localResultObject.IsValid)
-            {
-                isValid = true;
-            }
-
-            ValidationContext localResultBoolean = Corvus.Json.Validate.TypeBoolean(valueKind, result, level);
-            if (level == ValidationLevel.Flag && localResultBoolean.IsValid)
-            {
-                return validationContext;
-            }
-
-            if (localResultBoolean.IsValid)
-            {
-                isValid = true;
-            }
-
-            result = result.MergeResults(isValid, level, localResultObject, localResultBoolean);
-            return result;
-        }
+    /// <inheritdoc/>
+    public override string ToString()
+    {
+        return this.Serialize();
     }
 }

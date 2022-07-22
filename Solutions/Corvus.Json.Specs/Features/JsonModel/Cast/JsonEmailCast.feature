@@ -31,21 +31,6 @@ Scenario: Cast from JsonString for json element backed value as an email
 	When I cast the JsonString to JsonEmail
 	Then the result should equal the JsonEmail 'hello@endjin.com'
 
-Scenario: Cast to ReadOnlySpan<byte> for json element backed value as an email
-	Given the JsonElement backed JsonEmail "hello@endjin.com"
-	When I cast the JsonEmail to ReadOnlySpan<byte>
-	Then the result should equal the ReadOnlySpan<byte> 'hello@endjin.com'
-
-Scenario: Cast to ReadOnlySpan<byte> for dotnet backed value as an email
-	Given the dotnet backed JsonEmail hello@endjin.com
-	When I cast the JsonEmail to ReadOnlySpan<byte>
-	Then the result should equal the ReadOnlySpan<byte> 'hello@endjin.com'
-
-Scenario: Cast from ReadOnlySpan<byte> for json element backed value as an email
-	Given the ReadOnlyMemory<byte> for "hello@endjin.com"
-	When I cast the ReadOnlySpan<byte> to JsonEmail
-	Then the result should equal the JsonEmail 'hello@endjin.com'
-
 Scenario: Cast to ReadOnlySpan<char> for json element backed value as an email
 	Given the JsonElement backed JsonEmail "hello@endjin.com"
 	When I cast the JsonEmail to ReadOnlySpan<char>

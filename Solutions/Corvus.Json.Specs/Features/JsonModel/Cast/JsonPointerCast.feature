@@ -31,21 +31,6 @@ Scenario: Cast from JsonString for json element backed value as a relativePointe
 	When I cast the JsonString to JsonRelativePointer
 	Then the result should equal the JsonRelativePointer '0/foo/bar'
 
-Scenario: Cast to ReadOnlySpan<byte> for json element backed value as a relativePointer
-	Given the JsonElement backed JsonRelativePointer "0/foo/bar"
-	When I cast the JsonRelativePointer to ReadOnlySpan<byte>
-	Then the result should equal the ReadOnlySpan<byte> '0/foo/bar'
-
-Scenario: Cast to ReadOnlySpan<byte> for dotnet backed value as a relativePointer
-	Given the dotnet backed JsonRelativePointer 0/foo/bar
-	When I cast the JsonRelativePointer to ReadOnlySpan<byte>
-	Then the result should equal the ReadOnlySpan<byte> '0/foo/bar'
-
-Scenario: Cast from ReadOnlySpan<byte> for json element backed value as a relativePointer
-	Given the ReadOnlyMemory<byte> for "0/foo/bar"
-	When I cast the ReadOnlySpan<byte> to JsonRelativePointer
-	Then the result should equal the JsonRelativePointer '0/foo/bar'
-
 Scenario: Cast to ReadOnlySpan<char> for json element backed value as a relativePointer
 	Given the JsonElement backed JsonRelativePointer "0/foo/bar"
 	When I cast the JsonRelativePointer to ReadOnlySpan<char>

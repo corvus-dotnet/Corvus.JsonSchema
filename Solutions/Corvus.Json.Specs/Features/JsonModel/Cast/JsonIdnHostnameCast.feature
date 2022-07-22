@@ -31,21 +31,6 @@ Scenario: Cast from JsonString for json element backed value as a idnIdnHostname
 	When I cast the JsonString to JsonIdnHostname
 	Then the result should equal the JsonIdnHostname 'www.example.com'
 
-Scenario: Cast to ReadOnlySpan<byte> for json element backed value as a idnIdnHostname
-	Given the JsonElement backed JsonIdnHostname "www.example.com"
-	When I cast the JsonIdnHostname to ReadOnlySpan<byte>
-	Then the result should equal the ReadOnlySpan<byte> 'www.example.com'
-
-Scenario: Cast to ReadOnlySpan<byte> for dotnet backed value as a idnIdnHostname
-	Given the dotnet backed JsonIdnHostname www.example.com
-	When I cast the JsonIdnHostname to ReadOnlySpan<byte>
-	Then the result should equal the ReadOnlySpan<byte> 'www.example.com'
-
-Scenario: Cast from ReadOnlySpan<byte> for json element backed value as a idnIdnHostname
-	Given the ReadOnlyMemory<byte> for "www.example.com"
-	When I cast the ReadOnlySpan<byte> to JsonIdnHostname
-	Then the result should equal the JsonIdnHostname 'www.example.com'
-
 Scenario: Cast to ReadOnlySpan<char> for json element backed value as a idnIdnHostname
 	Given the JsonElement backed JsonIdnHostname "www.example.com"
 	When I cast the JsonIdnHostname to ReadOnlySpan<char>

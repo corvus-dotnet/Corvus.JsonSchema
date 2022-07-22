@@ -1,20 +1,44 @@
-﻿using Benchmarks;
+﻿////using Corvus.Json;
+////using JsonSchemaSample.Api;
 
-try
+////Console.WriteLine("Hello world.");
+
+////var matthew =
+////    Person.Create(
+////        name: PersonName.Create(
+////            givenName: "Matthew",
+////            familyName: "Adams",
+////            otherNames: "William"),
+////        dateOfBirth: "1973-02-14");
+
+////var michael =
+////    Person.Create(
+////        name: PersonName.Create(
+////            givenName: "Michael",
+////            familyName: "Adams",
+////            otherNames: OtherNames.FromItems("Francis", "James")),
+////        dateOfBirth: "not valid");
+
+////Console.WriteLine(matthew);
+////Console.WriteLine($"matthew.IsValid(): {matthew.IsValid()}");
+////Console.WriteLine(michael);
+////Console.WriteLine($"michael.IsValid: {michael.IsValid()}");
+
+
+////if (michael.Name.OtherNames.TryGetAsPersonNameElement(out PersonNameElement result))
+////{
+////    Console.WriteLine($"It was an item: {result}");
+////}
+
+////if (michael.Name.OtherNames.TryGetAsPersonNameElementArray(out PersonNameElementArray arrayResult))
+////{
+////    Console.WriteLine($"It was an array: {arrayResult}");
+////}
+
+var bench = new Benchmarks.GeneratedBenchmark5();
+await bench.GlobalSetup();
+
+for (int i = 0; i < 10000; ++i)
 {
-    var bench = new GeneratedBenchmark28();
-    await bench.GlobalSetup().ConfigureAwait(false);
-
-    // Warmup
     bench.PatchCorvus();
-
-
-    for (int i = 0; i < 32768; ++i)
-    {
-        bench.PatchCorvus();
-    }
-}
-catch (Exception ex)
-{
-    Console.WriteLine(ex.ToString());
 }

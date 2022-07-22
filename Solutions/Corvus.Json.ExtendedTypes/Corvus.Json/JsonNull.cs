@@ -2,147 +2,484 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-namespace Corvus.Json
+using System.Buffers;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
+using System.Text.Json;
+using Corvus.Json.Internal;
+
+namespace Corvus.Json;
+
+/// <summary>
+/// Represents a JSON iri.
+/// </summary>
+public readonly partial struct JsonNull : IJsonValue<JsonNull>
 {
-    using System;
-    using System.Text.Json;
+    private readonly Backing backing;
+    private readonly JsonElement jsonElementBacking;
 
     /// <summary>
-    /// The JSON null value.
+    /// Initializes a new instance of the <see cref="JsonNull"/> struct.
     /// </summary>
-    public readonly struct JsonNull : IJsonValue
+    public JsonNull()
     {
-        /// <summary>
-        /// Gets the constant HashCode for a null instance.
-        /// </summary>
-        public static readonly int NullHashCode = new Guid("e55d355c-0834-4cb8-93f3-7fa3e0977e2a").GetHashCode();
+        this.jsonElementBacking = default;
+        this.backing = Backing.JsonElement;
+    }
 
-        /// <summary>
-        /// Gets a null value.
-        /// </summary>
-        public static readonly JsonNull Instance = new(JsonAny.ParseUriValue("null").AsJsonElement);
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonNull"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to construct the instance.</param>
+    public JsonNull(in JsonElement value)
+    {
+        this.jsonElementBacking = value;
+        this.backing = Backing.JsonElement;
+    }
 
-        private static readonly JsonAny NullAnyInstance = new(Instance.AsJsonElement);
+    /// <summary>
+    /// Gets a Null instance.
+    /// </summary>
+    public static JsonNull Null { get; } = new(JsonValueHelpers.NullElement);
 
-        private readonly JsonElement jsonElementBacking;
+    /// <summary>
+    /// Gets an Undefined instance.
+    /// </summary>
+    public static JsonNull Undefined { get; }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="JsonNull"/> struct.
-        /// </summary>
-        /// <param name="jsonElement">The JsonElement from which to construct the entity.</param>
-        public JsonNull(JsonElement jsonElement)
+    /// <inheritdoc/>
+    public JsonAny AsAny
+    {
+        get
         {
-            this.jsonElementBacking = jsonElement;
-        }
-
-        /// <inheritdoc/>
-        public JsonElement AsJsonElement => this.jsonElementBacking;
-
-        /// <inheritdoc/>
-        public bool HasJsonElement => true;
-
-        /// <inheritdoc/>
-        public JsonValueKind ValueKind => JsonValueKind.Null;
-
-        /// <inheritdoc/>
-        public JsonAny AsAny => NullAnyInstance;
-
-        /// <summary>
-        /// Implicit conversion to JsonAny.
-        /// </summary>
-        /// <param name="value">The value from which to convert.</param>
-#pragma warning disable IDE0060 // Remove unused parameter
-        public static implicit operator JsonAny(JsonNull value)
-#pragma warning restore IDE0060 // Remove unused parameter
-        {
-            return NullAnyInstance;
-        }
-
-        /// <summary>
-        /// Implicit conversion from JsonAny.
-        /// </summary>
-        /// <param name="value">The value from which to convert.</param>
-#pragma warning disable IDE0060 // Remove unused parameter
-        public static implicit operator JsonNull(JsonAny value)
-#pragma warning restore IDE0060 // Remove unused parameter
-        {
-            return Instance;
-        }
-
-        /// <summary>
-        /// Standard equality operator.
-        /// </summary>
-        /// <param name="lhs">The left hand side of the comparison.</param>
-        /// <param name="rhs">The right hand side of the comparison.</param>
-        /// <returns>True if they are equal.</returns>
-        public static bool operator ==(JsonNull lhs, JsonNull rhs)
-        {
-            return lhs.Equals(rhs);
-        }
-
-        /// <summary>
-        /// Standard inequality operator.
-        /// </summary>
-        /// <param name="lhs">The left hand side of the comparison.</param>
-        /// <param name="rhs">The right hand side of the comparison.</param>
-        /// <returns>True if they are not equal.</returns>
-        public static bool operator !=(JsonNull lhs, JsonNull rhs)
-        {
-            return !lhs.Equals(rhs);
-        }
-
-        /// <inheritdoc/>
-        public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
-        {
-            if (this.jsonElementBacking is JsonElement je)
+            if ((this.backing & Backing.JsonElement) != 0)
             {
-                return Json.Validate.TypeNull(je.ValueKind, validationContext, level);
+                return new(this.jsonElementBacking);
             }
 
-            return Json.Validate.TypeNull(JsonValueKind.Null, validationContext, level);
-        }
-
-        /// <inheritdoc/>
-        public T As<T>()
-            where T : struct, IJsonValue
-        {
-            return NullAnyInstance.As<T>();
-        }
-
-        /// <inheritdoc/>
-        public bool Equals<T>(T other)
-            where T : struct, IJsonValue
-        {
-            return this.ValueKind == other.ValueKind;
-        }
-
-        /// <inheritdoc/>
-        public override bool Equals(object? obj)
-        {
-            if (obj is IJsonValue jv)
+            if ((this.backing & Backing.Null) != 0)
             {
-                return this.Equals(jv.AsAny);
+                return JsonAny.Null;
             }
 
-            return false;
+            return JsonAny.Undefined;
         }
+    }
 
-        /// <inheritdoc/>
-        public override int GetHashCode()
+    /// <inheritdoc/>
+    public JsonElement AsJsonElement
+    {
+        get
         {
-            return NullHashCode;
-        }
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                return this.jsonElementBacking;
+            }
 
-        /// <inheritdoc/>
-        public override string ToString()
+            if ((this.backing & Backing.Null) != 0)
+            {
+                return JsonValueHelpers.NullElement;
+            }
+
+            return default;
+        }
+    }
+
+    /// <inheritdoc/>
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public JsonString AsString
+    {
+        get
         {
-            return "null";
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                return new(this.jsonElementBacking);
+            }
+
+            throw new InvalidOperationException();
+        }
+    }
+
+    /// <inheritdoc/>
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public JsonBoolean AsBoolean
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                return new(this.jsonElementBacking);
+            }
+
+            throw new InvalidOperationException();
+        }
+    }
+
+    /// <inheritdoc/>
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public JsonNumber AsNumber
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                return new(this.jsonElementBacking);
+            }
+
+            throw new InvalidOperationException();
+        }
+    }
+
+    /// <inheritdoc/>
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public JsonObject AsObject
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                return new(this.jsonElementBacking);
+            }
+
+            throw new InvalidOperationException();
+        }
+    }
+
+    /// <inheritdoc/>
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public JsonArray AsArray
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                return new(this.jsonElementBacking);
+            }
+
+            throw new InvalidOperationException();
+        }
+    }
+
+    /// <inheritdoc/>
+    public bool HasJsonElementBacking => (this.backing & Backing.JsonElement) != 0;
+
+    /// <inheritdoc/>
+    public bool HasDotnetBacking => (this.backing & Backing.Dotnet) != 0;
+
+    /// <inheritdoc/>
+    public JsonValueKind ValueKind
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                return this.jsonElementBacking.ValueKind;
+            }
+
+            if ((this.backing & Backing.Null) != 0)
+            {
+                return JsonValueKind.Null;
+            }
+
+            return JsonValueKind.Undefined;
+        }
+    }
+
+    /// <summary>
+    /// Equality operator.
+    /// </summary>
+    /// <param name="left">The lhs.</param>
+    /// <param name="right">The rhs.</param>
+    /// <returns><c>True</c> if the values are equal.</returns>
+    public static bool operator ==(in JsonNull left, in JsonNull right)
+    {
+        return left.Equals(right);
+    }
+
+    /// <summary>
+    /// Inequality operator.
+    /// </summary>
+    /// <param name="left">The lhs.</param>
+    /// <param name="right">The rhs.</param>
+    /// <returns><c>True</c> if the values are equal.</returns>
+    public static bool operator !=(in JsonNull left, in JsonNull right)
+    {
+        return !left.Equals(right);
+    }
+
+    /// <summary>
+    /// Gets an instance of the JSON value from a JsonAny value.
+    /// </summary>
+    /// <param name="value">The <see cref="JsonAny"/> value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the <see cref="JsonAny"/>.</returns>
+    /// <remarks>The returned value will have a <see cref="IJsonValue.ValueKind"/> of <see cref="JsonValueKind.Undefined"/> if the
+    /// value cannot be constructed from the given instance (e.g. because they have an incompatible dotnet backing type.
+    /// </remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static JsonNull FromAny(in JsonAny value)
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
         }
 
-        /// <inheritdoc/>
-        public void WriteTo(Utf8JsonWriter writer)
+        JsonValueKind valueKind = value.ValueKind;
+        return valueKind switch
+        {
+            JsonValueKind.Null => Null,
+            _ => Undefined,
+        };
+    }
+
+    /// <summary>
+    /// Gets an instance of the JSON value from a <see cref="JsonElement"/> value.
+    /// </summary>
+    /// <param name="value">The <see cref="JsonElement"/> value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the <see cref="JsonElement"/>.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static JsonNull FromJson(in JsonElement value)
+    {
+        return new(value);
+    }
+
+    /// <summary>
+    /// Gets an instance of the JSON value from a string value.
+    /// </summary>
+    /// <typeparam name="TValue">The type of the value.</typeparam>
+    /// <param name="value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>The value will be undefined if it cannot be initialized with the specified instance.</remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public static JsonNull FromString<TValue>(in TValue value)
+        where TValue : struct, IJsonString<TValue>
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        return Undefined;
+    }
+
+    /// <summary>
+    /// Gets an instance of the JSON value from a boolean value.
+    /// </summary>
+    /// <typeparam name="TValue">The type of the value.</typeparam>
+    /// <param name="value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>The value will be undefined if it cannot be initialized with the specified instance.</remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public static JsonNull FromBoolean<TValue>(in TValue value)
+        where TValue : struct, IJsonBoolean<TValue>
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        return Undefined;
+    }
+
+    /// <summary>
+    /// Gets an instance of the JSON value from a double value.
+    /// </summary>
+    /// <typeparam name="TValue">The type of the value.</typeparam>
+    /// <param name="value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>The value will be undefined if it cannot be initialized with the specified instance.</remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public static JsonNull FromNumber<TValue>(in TValue value)
+        where TValue : struct, IJsonNumber<TValue>
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        return Undefined;
+    }
+
+    /// <summary>
+    /// Gets an instance of the JSON value from an array value.
+    /// </summary>
+    /// <typeparam name="TValue">The type of the value.</typeparam>
+    /// <param name="value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>The value will be undefined if it cannot be initialized with the specified instance.</remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public static JsonNull FromArray<TValue>(in TValue value)
+        where TValue : struct, IJsonArray<TValue>
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        return Undefined;
+    }
+
+    /// <summary>
+    /// Gets an instance of the JSON value from an object value.
+    /// </summary>
+    /// <typeparam name="TValue">The type of the value.</typeparam>
+    /// <param name="value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>The value will be undefined if it cannot be initialized with the specified instance.</remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public static JsonNull FromObject<TValue>(in TValue value)
+        where TValue : struct, IJsonObject<TValue>
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        return Undefined;
+    }
+
+    /// <summary>
+    /// Parses a JSON string into a JsonNull.
+    /// </summary>
+    /// <param name="json">The json string to parse.</param>
+    /// <param name="options">The (optional) JsonDocumentOptions.</param>
+    /// <returns>A <see cref="JsonNull"/> instance built from the JSON string.</returns>
+    public static JsonNull Parse(string json, JsonDocumentOptions options = default)
+    {
+        using var jsonDocument = JsonDocument.Parse(json, options);
+        return new JsonNull(jsonDocument.RootElement.Clone());
+    }
+
+    /// <summary>
+    /// Parses a JSON string into a JsonNull.
+    /// </summary>
+    /// <param name="utf8Json">The json string to parse.</param>
+    /// <param name="options">The (optional) JsonDocumentOptions.</param>
+    /// <returns>A <see cref="JsonNull"/> instance built from the JSON string.</returns>
+    public static JsonNull Parse(Stream utf8Json, JsonDocumentOptions options = default)
+    {
+        using var jsonDocument = JsonDocument.Parse(utf8Json, options);
+        return new JsonNull(jsonDocument.RootElement.Clone());
+    }
+
+    /// <summary>
+    /// Parses a JSON string into a JsonNull.
+    /// </summary>
+    /// <param name="utf8Json">The json string to parse.</param>
+    /// <param name="options">The (optional) JsonDocumentOptions.</param>
+    /// <returns>A <see cref="JsonNull"/> instance built from the JSON string.</returns>
+    public static JsonNull Parse(ReadOnlyMemory<byte> utf8Json, JsonDocumentOptions options = default)
+    {
+        using var jsonDocument = JsonDocument.Parse(utf8Json, options);
+        return new JsonNull(jsonDocument.RootElement.Clone());
+    }
+
+    /// <summary>
+    /// Parses a JSON string into a JsonNull.
+    /// </summary>
+    /// <param name="json">The json string to parse.</param>
+    /// <param name="options">The (optional) JsonDocumentOptions.</param>
+    /// <returns>A <see cref="JsonNull"/> instance built from the JSON string.</returns>
+    public static JsonNull Parse(ReadOnlyMemory<char> json, JsonDocumentOptions options = default)
+    {
+        using var jsonDocument = JsonDocument.Parse(json, options);
+        return new JsonNull(jsonDocument.RootElement.Clone());
+    }
+
+    /// <summary>
+    /// Parses a JSON string into a JsonNull.
+    /// </summary>
+    /// <param name="utf8Json">The json string to parse.</param>
+    /// <param name="options">The (optional) JsonDocumentOptions.</param>
+    /// <returns>A <see cref="JsonNull"/> instance built from the JSON string.</returns>
+    public static JsonNull Parse(ReadOnlySequence<byte> utf8Json, JsonDocumentOptions options = default)
+    {
+        using var jsonDocument = JsonDocument.Parse(utf8Json, options);
+        return new JsonNull(jsonDocument.RootElement.Clone());
+    }
+
+    /// <summary>
+    /// Gets the value as the target value.
+    /// </summary>
+    /// <typeparam name="TTarget">The type of the target.</typeparam>
+    /// <returns>An instance of the target type.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public TTarget As<TTarget>()
+        where TTarget : struct, IJsonValue<TTarget>
+    {
+        if ((this.backing & Backing.JsonElement) != 0)
+        {
+            return TTarget.FromJson(this.jsonElementBacking);
+        }
+
+        if ((this.backing & Backing.Null) != 0)
+        {
+            return TTarget.Null;
+        }
+
+        return TTarget.Undefined;
+    }
+
+    /// <inheritdoc/>
+    public override bool Equals(object? obj)
+    {
+        return
+            (obj is IJsonValue jv && this.Equals(jv.AsAny)) ||
+            (obj is null && this.IsNull());
+    }
+
+    /// <inheritdoc/>
+    public bool Equals<T>(T other)
+        where T : struct, IJsonValue<T>
+    {
+        return JsonValueHelpers.CompareValues(this, other);
+    }
+
+    /// <inheritdoc/>
+    public bool Equals(JsonNull other)
+    {
+        return JsonValueHelpers.CompareValues(this, other);
+    }
+
+    /// <inheritdoc/>
+    public void WriteTo(Utf8JsonWriter writer)
+    {
+        if ((this.backing & Backing.JsonElement) != 0)
+        {
+            if (this.jsonElementBacking.ValueKind != JsonValueKind.Undefined)
+            {
+                this.jsonElementBacking.WriteTo(writer);
+            }
+
+            return;
+        }
+
+        if ((this.backing & Backing.Null) != 0)
         {
             writer.WriteNullValue();
+            return;
         }
+    }
+
+    /// <inheritdoc/>
+    public override int GetHashCode()
+    {
+        return JsonValueHelpers.GetHashCode(this);
+    }
+
+    /// <inheritdoc/>
+    public override string ToString()
+    {
+        return this.Serialize();
+    }
+
+    /// <inheritdoc/>
+    public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
+    {
+        return Json.Validate.TypeNull(this.ValueKind, validationContext, level);
     }
 }

@@ -41,21 +41,6 @@ Scenario: Cast to Period for json element backed value as a duration
 	When I cast the Period to JsonDuration
 	Then the result should equal the JsonDuration 'P3Y6M4DT12H30M5S'
 
-Scenario: Cast to ReadOnlySpan<byte> for json element backed value as a duration
-	Given the JsonElement backed JsonDuration "P3Y6M4DT12H30M5S"
-	When I cast the JsonDuration to ReadOnlySpan<byte>
-	Then the result should equal the ReadOnlySpan<byte> 'P3Y6M4DT12H30M5S'
-
-Scenario: Cast to ReadOnlySpan<byte> for dotnet backed value as a duration
-	Given the dotnet backed JsonDuration P3Y6M4DT12H30M5S
-	When I cast the JsonDuration to ReadOnlySpan<byte>
-	Then the result should equal the ReadOnlySpan<byte> 'P3Y6M4DT12H30M5S'
-
-Scenario: Cast from ReadOnlySpan<byte> for json element backed value as a duration
-	Given the ReadOnlyMemory<byte> for "P3Y6M4DT12H30M5S"
-	When I cast the ReadOnlySpan<byte> to JsonDuration
-	Then the result should equal the JsonDuration 'P3Y6M4DT12H30M5S'
-
 Scenario: Cast to ReadOnlySpan<char> for json element backed value as a duration
 	Given the JsonElement backed JsonDuration "P3Y6M4DT12H30M5S"
 	When I cast the JsonDuration to ReadOnlySpan<char>

@@ -41,21 +41,6 @@ Scenario: Cast to OffsetTime for json element backed value as a time
 	When I cast the OffsetTime to JsonTime
 	Then the result should equal the JsonTime '08:30:06+00:20'
 
-Scenario: Cast to ReadOnlySpan<byte> for json element backed value as a time
-	Given the JsonElement backed JsonTime "08:30:06+00:20"
-	When I cast the JsonTime to ReadOnlySpan<byte>
-	Then the result should equal the ReadOnlySpan<byte> '08:30:06+00:20'
-
-Scenario: Cast to ReadOnlySpan<byte> for dotnet backed value as a time
-	Given the dotnet backed JsonTime 08:30:06+00:20
-	When I cast the JsonTime to ReadOnlySpan<byte>
-	Then the result should equal the ReadOnlySpan<byte> '08:30:06+00:20'
-
-Scenario: Cast from ReadOnlySpan<byte> for json element backed value as a time
-	Given the ReadOnlyMemory<byte> for "08:30:06+00:20"
-	When I cast the ReadOnlySpan<byte> to JsonTime
-	Then the result should equal the JsonTime '08:30:06+00:20'
-
 Scenario: Cast to ReadOnlySpan<char> for json element backed value as a time
 	Given the JsonElement backed JsonTime "08:30:06+00:20"
 	When I cast the JsonTime to ReadOnlySpan<char>

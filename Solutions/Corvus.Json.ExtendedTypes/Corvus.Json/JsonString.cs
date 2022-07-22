@@ -2,452 +2,512 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-namespace Corvus.Json
+using System.Buffers;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
+using System.Text.Json;
+using Corvus.Json.Internal;
+
+namespace Corvus.Json;
+
+/// <summary>
+/// Represents a JSON string.
+/// </summary>
+public readonly partial struct JsonString : IJsonString<JsonString>
 {
-    using System;
-    using System.Buffers;
-    using System.Text;
-    using System.Text.Json;
+    private readonly Backing backing;
+    private readonly JsonElement jsonElementBacking;
+    private readonly string stringBacking;
 
     /// <summary>
-    /// A JSON object.
+    /// Initializes a new instance of the <see cref="JsonString"/> struct.
     /// </summary>
-    public readonly struct JsonString : IJsonValue, IEquatable<JsonString>
+    public JsonString()
     {
-        private readonly JsonElement jsonElement;
-        private readonly string? value;
+        this.jsonElementBacking = default;
+        this.backing = Backing.JsonElement;
+        this.stringBacking = string.Empty;
+    }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="JsonString"/> struct.
-        /// </summary>
-        /// <param name="jsonElement">The JSON element from which to construct the object.</param>
-        public JsonString(JsonElement jsonElement)
-        {
-            this.jsonElement = jsonElement;
-            this.value = default;
-        }
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonString"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to construct the instance.</param>
+    public JsonString(in JsonElement value)
+    {
+        this.jsonElementBacking = value;
+        this.backing = Backing.JsonElement;
+        this.stringBacking = string.Empty;
+    }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="JsonString"/> struct.
-        /// </summary>
-        /// <param name="value">The string value.</param>
-        public JsonString(string value)
-        {
-            this.jsonElement = default;
-            this.value = value;
-        }
+    /// <summary>
+    /// Gets a Null instance.
+    /// </summary>
+    public static JsonString Null { get; } = new(JsonValueHelpers.NullElement);
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="JsonString"/> struct.
-        /// </summary>
-        /// <param name="value">The string value.</param>
-        public JsonString(ReadOnlySpan<char> value)
-        {
-            this.jsonElement = default;
-            this.value = value.ToString();
-        }
+    /// <summary>
+    /// Gets an Undefined instance.
+    /// </summary>
+    public static JsonString Undefined { get; }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="JsonString"/> struct.
-        /// </summary>
-        /// <param name="value">The utf8-encoded string value.</param>
-        public JsonString(ReadOnlySpan<byte> value)
+    /// <inheritdoc/>
+    public JsonAny AsAny
+    {
+        get
         {
-            this.jsonElement = default;
-            this.value = Encoding.UTF8.GetString(value);
-        }
-
-        /// <summary>
-        /// Gets the <see cref="JsonValueKind"/>.
-        /// </summary>
-        public JsonValueKind ValueKind
-        {
-            get
+            if ((this.backing & Backing.JsonElement) != 0)
             {
-                if (this.value is not null)
-                {
-                    return JsonValueKind.String;
-                }
-
-                return this.jsonElement.ValueKind;
-            }
-        }
-
-        /// <summary>
-        /// Gets a value indicating whether this is backed by a <see cref="JsonElement"/>.
-        /// </summary>
-        public bool HasJsonElement => this.value is null;
-
-        /// <summary>
-        /// Gets the backing <see cref="JsonElement"/>.
-        /// </summary>
-        public JsonElement AsJsonElement
-        {
-            get
-            {
-                if (this.value is string value)
-                {
-                    return StringToJsonElement(value);
-                }
-
-                return this.jsonElement;
-            }
-        }
-
-        /// <inheritdoc/>
-        public JsonAny AsAny
-        {
-            get
-            {
-                return new JsonAny(this);
-            }
-        }
-
-        /// <summary>
-        /// Implicit conversion to JsonAny.
-        /// </summary>
-        /// <param name="value">The value from which to convert.</param>
-        public static implicit operator JsonAny(JsonString value)
-        {
-            return value.AsAny;
-        }
-
-        /// <summary>
-        /// Implicit conversion from JsonAny.
-        /// </summary>
-        /// <param name="value">The value from which to convert.</param>
-        public static implicit operator JsonString(JsonAny value)
-        {
-            return value.AsString;
-        }
-
-        /// <summary>
-        /// Conversion from string.
-        /// </summary>
-        /// <param name="value">The value from which to convert.</param>
-        public static implicit operator JsonString(string value)
-        {
-            return new JsonString(value);
-        }
-
-        /// <summary>
-        /// Conversion to string.
-        /// </summary>
-        /// <param name="value">The number from which to convert.</param>
-        public static implicit operator string(JsonString value)
-        {
-            return value.GetString();
-        }
-
-        /// <summary>
-        /// Conversion from string.
-        /// </summary>
-        /// <param name="value">The value from which to convert.</param>
-        public static implicit operator JsonString(ReadOnlySpan<char> value)
-        {
-            return new JsonString(value);
-        }
-
-        /// <summary>
-        /// Conversion to string.
-        /// </summary>
-        /// <param name="value">The number from which to convert.</param>
-        public static implicit operator ReadOnlySpan<char>(JsonString value)
-        {
-            return value.AsSpan();
-        }
-
-        /// <summary>
-        /// Conversion from utf8 bytes.
-        /// </summary>
-        /// <param name="value">The value from which to convert.</param>
-        public static implicit operator JsonString(ReadOnlySpan<byte> value)
-        {
-            return new JsonString(value);
-        }
-
-        /// <summary>
-        /// Conversion to utf8 bytes.
-        /// </summary>
-        /// <param name="value">The number from which to convert.</param>
-        public static implicit operator ReadOnlySpan<byte>(JsonString value)
-        {
-            return Encoding.UTF8.GetBytes(value);
-        }
-
-        /// <summary>
-        /// Standard equality operator.
-        /// </summary>
-        /// <param name="lhs">The left hand side of the comparison.</param>
-        /// <param name="rhs">The right hand side of the comparison.</param>
-        /// <returns>True if they are equal.</returns>
-        public static bool operator ==(JsonString lhs, JsonString rhs)
-        {
-            return lhs.Equals(rhs);
-        }
-
-        /// <summary>
-        /// Standard inequality operator.
-        /// </summary>
-        /// <param name="lhs">The left hand side of the comparison.</param>
-        /// <param name="rhs">The right hand side of the comparison.</param>
-        /// <returns>True if they are not equal.</returns>
-        public static bool operator !=(JsonString lhs, JsonString rhs)
-        {
-            return !lhs.Equals(rhs);
-        }
-
-        /// <summary>
-        /// Write a property dictionary to a <see cref="JsonElement"/>.
-        /// </summary>
-        /// <param name="value">The value to write.</param>
-        /// <returns>A JsonElement serialized from the properties.</returns>
-        public static JsonElement StringToJsonElement(string value)
-        {
-            var abw = new ArrayBufferWriter<byte>();
-            using var writer = new Utf8JsonWriter(abw);
-            writer.WriteStringValue(value);
-            writer.Flush();
-            var reader = new Utf8JsonReader(abw.WrittenSpan);
-            using var document = JsonDocument.ParseValue(ref reader);
-            return document.RootElement.Clone();
-        }
-
-        /// <inheritdoc/>
-        public override string ToString()
-        {
-            return this.Serialize();
-        }
-
-        /// <inheritdoc/>
-        public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
-        {
-            ValidationContext result = validationContext;
-
-            JsonValueKind valueKind = this.ValueKind;
-
-            return Json.Validate.TypeString(valueKind, result, level);
-        }
-
-        /// <inheritdoc/>
-        public T As<T>()
-            where T : struct, IJsonValue
-        {
-            return this.As<JsonString, T>();
-        }
-
-        /// <summary>
-        /// Gets the value as a string.
-        /// </summary>
-        /// <returns>The value as a string.</returns>
-        public string GetString()
-        {
-            if (this.TryGetString(out string result))
-            {
-                return result;
+                return new(this.jsonElementBacking);
             }
 
-            return string.Empty;
-        }
+            if ((this.backing & Backing.String) != 0)
+            {
+                return new(this.stringBacking);
+            }
 
-        /// <summary>
-        /// Gets the value as a string.
-        /// </summary>
-        /// <param name="result">The value as a string.</param>
-        /// <returns><c>True</c> if the value could be retrieved.</returns>
-        public bool TryGetString(out string result)
+            if ((this.backing & Backing.Null) != 0)
+            {
+                return JsonAny.Null;
+            }
+
+            return JsonAny.Undefined;
+        }
+    }
+
+    /// <inheritdoc/>
+    public JsonElement AsJsonElement
+    {
+        get
         {
-            if (this.value is string value)
+            if ((this.backing & Backing.JsonElement) != 0)
             {
-                result = value;
-                return true;
+                return this.jsonElementBacking;
             }
 
-            if (this.jsonElement.ValueKind == JsonValueKind.String)
+            if ((this.backing & Backing.Null) != 0)
             {
-                string? str = this.jsonElement.GetString();
-                result = str!;
-                return true;
+                return JsonValueHelpers.NullElement;
             }
 
-            result = string.Empty;
-            return false;
+            if ((this.backing & Backing.String) != 0)
+            {
+                return JsonValueHelpers.StringToJsonElement(this.stringBacking);
+            }
+
+            return default;
         }
+    }
 
-        /// <summary>
-        /// Gets the value as a span.
-        /// </summary>
-        /// <returns>The value as a span of char.</returns>
-        public ReadOnlySpan<char> AsSpan()
+    /// <inheritdoc/>
+    public JsonString AsString
+    {
+        get
         {
-            if (this.value is string value)
-            {
-                return value;
-            }
-
-            if (this.jsonElement.ValueKind == JsonValueKind.String)
-            {
-                string? str = this.jsonElement.GetString();
-                return str!.AsSpan();
-            }
-
-            return ReadOnlySpan<char>.Empty;
+            return this;
         }
+    }
 
-        /// <inheritdoc/>
-        public override bool Equals(object? obj)
+    /// <inheritdoc/>
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public JsonBoolean AsBoolean
+    {
+        get
         {
-            if (obj is IJsonValue jv)
+            if ((this.backing & Backing.JsonElement) != 0)
             {
-                return this.Equals(jv.AsAny);
+                return new(this.jsonElementBacking);
             }
 
-            return obj is null && this.IsNull();
+            throw new InvalidOperationException();
         }
+    }
 
-        /// <inheritdoc/>
-        public override int GetHashCode()
+    /// <inheritdoc/>
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public JsonNumber AsNumber
+    {
+        get
         {
-            JsonValueKind valueKind = this.ValueKind;
-
-            return valueKind switch
+            if ((this.backing & Backing.JsonElement) != 0)
             {
-                JsonValueKind.String => this.GetString().GetHashCode(),
-                JsonValueKind.Null => JsonNull.NullHashCode,
-                _ => JsonAny.UndefinedHashCode,
-            };
-        }
+                return new(this.jsonElementBacking);
+            }
 
-        /// <summary>
-        /// Writes the string to the <see cref="Utf8JsonWriter"/>.
-        /// </summary>
-        /// <param name="writer">The writer to which to write the object.</param>
-        public void WriteTo(Utf8JsonWriter writer)
+            throw new InvalidOperationException();
+        }
+    }
+
+    /// <inheritdoc/>
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public JsonObject AsObject
+    {
+        get
         {
-            if (this.value is string value)
+            if ((this.backing & Backing.JsonElement) != 0)
             {
-                writer.WriteStringValue(value);
+                return new(this.jsonElementBacking);
             }
-            else
-            {
-                this.jsonElement.WriteTo(writer);
-            }
-        }
 
-        /// <inheritdoc/>
-        public bool Equals<T>(T other)
-            where T : struct, IJsonValue
+            throw new InvalidOperationException();
+        }
+    }
+
+    /// <inheritdoc/>
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public JsonArray AsArray
+    {
+        get
         {
-            if (this.IsNull() && other.IsNull())
+            if ((this.backing & Backing.JsonElement) != 0)
             {
-                return true;
+                return new(this.jsonElementBacking);
             }
 
-            if (other.ValueKind != JsonValueKind.String)
-            {
-                return false;
-            }
-
-            return this.Equals(other.AsString());
+            throw new InvalidOperationException();
         }
+    }
 
-        /// <summary>
-        /// Compare to a sequence of characters.
-        /// </summary>
-        /// <param name="utf8Bytes">The UTF8-encoded character sequence to compare.</param>
-        /// <returns><c>True</c> if teh sequences match.</returns>
-        public bool EqualsUtf8Bytes(ReadOnlySpan<byte> utf8Bytes)
+    /// <inheritdoc/>
+    public bool HasJsonElementBacking => (this.backing & Backing.JsonElement) != 0;
+
+    /// <inheritdoc/>
+    public bool HasDotnetBacking => (this.backing & Backing.Dotnet) != 0;
+
+    /// <inheritdoc/>
+    public JsonValueKind ValueKind
+    {
+        get
         {
-            if (this.ValueKind != JsonValueKind.String)
+            if ((this.backing & Backing.JsonElement) != 0)
             {
-                return false;
+                return this.jsonElementBacking.ValueKind;
             }
 
-            if (this.HasJsonElement)
+            if ((this.backing & Backing.Null) != 0)
             {
-                return this.jsonElement.ValueEquals(utf8Bytes);
+                return JsonValueKind.Null;
             }
 
-            if (this.value is string val)
+            if ((this.backing & Backing.String) != 0)
             {
-                int maxCharCount = Encoding.UTF8.GetMaxCharCount(utf8Bytes.Length);
-#pragma warning disable SA1011 // Closing square brackets should be spaced correctly
-                char[]? pooledChars = null;
-#pragma warning restore SA1011 // Closing square brackets should be spaced correctly
-
-                Span<char> chars = maxCharCount <= JsonConstants.StackallocThreshold ?
-                    stackalloc char[maxCharCount] :
-                    (pooledChars = ArrayPool<char>.Shared.Rent(maxCharCount));
-
-                int written = Encoding.UTF8.GetChars(utf8Bytes, chars);
-                return chars[..written].SequenceEqual(val);
+                return JsonValueKind.String;
             }
 
-            return false;
+            return JsonValueKind.Undefined;
         }
+    }
 
-        /// <summary>
-        /// Compare to a sequence of characters.
-        /// </summary>
-        /// <param name="chars">The character sequence to compare.</param>
-        /// <returns><c>True</c> if teh sequences match.</returns>
-        public bool EqualsString(ReadOnlySpan<char> chars)
+    /// <summary>
+    /// Equality operator.
+    /// </summary>
+    /// <param name="left">The lhs.</param>
+    /// <param name="right">The rhs.</param>
+    /// <returns><c>True</c> if the values are equal.</returns>
+    public static bool operator ==(in JsonString left, in JsonString right)
+    {
+        return left.Equals(right);
+    }
+
+    /// <summary>
+    /// Inequality operator.
+    /// </summary>
+    /// <param name="left">The lhs.</param>
+    /// <param name="right">The rhs.</param>
+    /// <returns><c>True</c> if the values are equal.</returns>
+    public static bool operator !=(in JsonString left, in JsonString right)
+    {
+        return !left.Equals(right);
+    }
+
+    /// <summary>
+    /// Gets an instance of the JSON value from a JsonAny value.
+    /// </summary>
+    /// <param name="value">The <see cref="JsonAny"/> value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the <see cref="JsonAny"/>.</returns>
+    /// <remarks>The returned value will have a <see cref="IJsonValue.ValueKind"/> of <see cref="JsonValueKind.Undefined"/> if the
+    /// value cannot be constructed from the given instance (e.g. because they have an incompatible dotnet backing type.
+    /// </remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static JsonString FromAny(in JsonAny value)
+    {
+        if (value.HasJsonElementBacking)
         {
-            if (this.ValueKind != JsonValueKind.String)
-            {
-                return false;
-            }
-
-            if (this.HasJsonElement)
-            {
-                return this.jsonElement.ValueEquals(chars);
-            }
-
-            if (this.value is string val)
-            {
-                return chars.SequenceEqual(val);
-            }
-
-            return false;
+            return new(value.AsJsonElement);
         }
 
-        /// <inheritdoc/>
-        public bool Equals(JsonString other)
+        JsonValueKind valueKind = value.ValueKind;
+        return valueKind switch
         {
-            if (this.IsNull() && other.IsNull())
-            {
-                return true;
-            }
+            JsonValueKind.String => new((string)value),
+            JsonValueKind.Null => Null,
+            _ => Undefined,
+        };
+    }
 
-            if (other.ValueKind != this.ValueKind || this.ValueKind != JsonValueKind.String)
-            {
-                return false;
-            }
+    /// <summary>
+    /// Gets an instance of the JSON value from a <see cref="JsonElement"/> value.
+    /// </summary>
+    /// <param name="value">The <see cref="JsonElement"/> value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the <see cref="JsonElement"/>.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static JsonString FromJson(in JsonElement value)
+    {
+        return new(value);
+    }
 
-            // If they are both json elements, it is faster to avoid re-encoding, so we go via the strings
-            // This would be obviated if
-            if (this.HasJsonElement && other.HasJsonElement)
-            {
-                // I wish we could compare JSON elements...
-                return this.jsonElement.ValueEquals(other.jsonElement.GetString());
-            }
-
-            // If we have a json element and they don't, it's faster to go via our value equals
-            // over their json encoded text.
-            if (this.HasJsonElement)
-            {
-                return this.jsonElement.ValueEquals(other.GetString());
-            }
-
-            // If they have a json element and we don't, it's faster to go via their value equals
-            // over our string.
-            if (other.HasJsonElement)
-            {
-                return other.jsonElement.ValueEquals(this.GetString());
-            }
-
-            // Otherwise, it is faster to go via the two text instances
-            return this.GetString().Equals(other.GetString(), StringComparison.Ordinal);
+    /// <summary>
+    /// Gets an instance of the JSON value from a string value.
+    /// </summary>
+    /// <typeparam name="TValue">The type of the value.</typeparam>
+    /// <param name="value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>The value will be undefined if it cannot be initialized with the specified instance.</remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static JsonString FromString<TValue>(in TValue value)
+        where TValue : struct, IJsonString<TValue>
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
         }
+
+        if (value.ValueKind == JsonValueKind.String)
+        {
+            return new((string)value);
+        }
+
+        return Undefined;
+    }
+
+    /// <summary>
+    /// Gets an instance of the JSON value from a boolean value.
+    /// </summary>
+    /// <typeparam name="TValue">The type of the value.</typeparam>
+    /// <param name="value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>The value will be undefined if it cannot be initialized with the specified instance.</remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public static JsonString FromBoolean<TValue>(in TValue value)
+        where TValue : struct, IJsonBoolean<TValue>
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        return Undefined;
+    }
+
+    /// <summary>
+    /// Gets an instance of the JSON value from a double value.
+    /// </summary>
+    /// <typeparam name="TValue">The type of the value.</typeparam>
+    /// <param name="value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>The value will be undefined if it cannot be initialized with the specified instance.</remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public static JsonString FromNumber<TValue>(in TValue value)
+        where TValue : struct, IJsonNumber<TValue>
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        return Undefined;
+    }
+
+    /// <summary>
+    /// Gets an instance of the JSON value from an array value.
+    /// </summary>
+    /// <typeparam name="TValue">The type of the value.</typeparam>
+    /// <param name="value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>The value will be undefined if it cannot be initialized with the specified instance.</remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public static JsonString FromArray<TValue>(in TValue value)
+        where TValue : struct, IJsonArray<TValue>
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        return Undefined;
+    }
+
+    /// <summary>
+    /// Gets an instance of the JSON value from an object value.
+    /// </summary>
+    /// <typeparam name="TValue">The type of the value.</typeparam>
+    /// <param name="value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>The value will be undefined if it cannot be initialized with the specified instance.</remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public static JsonString FromObject<TValue>(in TValue value)
+        where TValue : struct, IJsonObject<TValue>
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        return Undefined;
+    }
+
+    /// <summary>
+    /// Parses a JSON string into a JsonString.
+    /// </summary>
+    /// <param name="json">The json string to parse.</param>
+    /// <param name="options">The (optional) JsonDocumentOptions.</param>
+    /// <returns>A <see cref="JsonString"/> instance built from the JSON string.</returns>
+    public static JsonString Parse(string json, JsonDocumentOptions options = default)
+    {
+        using var jsonDocument = JsonDocument.Parse(json, options);
+        return new JsonString(jsonDocument.RootElement.Clone());
+    }
+
+    /// <summary>
+    /// Parses a JSON string into a JsonString.
+    /// </summary>
+    /// <param name="utf8Json">The json string to parse.</param>
+    /// <param name="options">The (optional) JsonDocumentOptions.</param>
+    /// <returns>A <see cref="JsonString"/> instance built from the JSON string.</returns>
+    public static JsonString Parse(Stream utf8Json, JsonDocumentOptions options = default)
+    {
+        using var jsonDocument = JsonDocument.Parse(utf8Json, options);
+        return new JsonString(jsonDocument.RootElement.Clone());
+    }
+
+    /// <summary>
+    /// Parses a JSON string into a JsonString.
+    /// </summary>
+    /// <param name="utf8Json">The json string to parse.</param>
+    /// <param name="options">The (optional) JsonDocumentOptions.</param>
+    /// <returns>A <see cref="JsonString"/> instance built from the JSON string.</returns>
+    public static JsonString Parse(ReadOnlyMemory<byte> utf8Json, JsonDocumentOptions options = default)
+    {
+        using var jsonDocument = JsonDocument.Parse(utf8Json, options);
+        return new JsonString(jsonDocument.RootElement.Clone());
+    }
+
+    /// <summary>
+    /// Parses a JSON string into a JsonString.
+    /// </summary>
+    /// <param name="json">The json string to parse.</param>
+    /// <param name="options">The (optional) JsonDocumentOptions.</param>
+    /// <returns>A <see cref="JsonString"/> instance built from the JSON string.</returns>
+    public static JsonString Parse(ReadOnlyMemory<char> json, JsonDocumentOptions options = default)
+    {
+        using var jsonDocument = JsonDocument.Parse(json, options);
+        return new JsonString(jsonDocument.RootElement.Clone());
+    }
+
+    /// <summary>
+    /// Parses a JSON string into a JsonString.
+    /// </summary>
+    /// <param name="utf8Json">The json string to parse.</param>
+    /// <param name="options">The (optional) JsonDocumentOptions.</param>
+    /// <returns>A <see cref="JsonString"/> instance built from the JSON string.</returns>
+    public static JsonString Parse(ReadOnlySequence<byte> utf8Json, JsonDocumentOptions options = default)
+    {
+        using var jsonDocument = JsonDocument.Parse(utf8Json, options);
+        return new JsonString(jsonDocument.RootElement.Clone());
+    }
+
+    /// <summary>
+    /// Gets the value as the target value.
+    /// </summary>
+    /// <typeparam name="TTarget">The type of the target.</typeparam>
+    /// <returns>An instance of the target type.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public TTarget As<TTarget>()
+        where TTarget : struct, IJsonValue<TTarget>
+    {
+        if ((this.backing & Backing.JsonElement) != 0)
+        {
+            return TTarget.FromJson(this.jsonElementBacking);
+        }
+
+        if ((this.backing & Backing.String) != 0)
+        {
+            return TTarget.FromString(this);
+        }
+
+        if ((this.backing & Backing.Null) != 0)
+        {
+            return TTarget.Null;
+        }
+
+        return TTarget.Undefined;
+    }
+
+    /// <inheritdoc/>
+    public override bool Equals(object? obj)
+    {
+        return
+            (obj is IJsonValue jv && this.Equals(jv.AsAny)) ||
+            (obj is null && this.IsNull());
+    }
+
+    /// <inheritdoc/>
+    public bool Equals<T>(T other)
+        where T : struct, IJsonValue<T>
+    {
+        return JsonValueHelpers.CompareValues(this, other);
+    }
+
+    /// <inheritdoc/>
+    public bool Equals(JsonString other)
+    {
+        return JsonValueHelpers.CompareValues(this, other);
+    }
+
+    /// <inheritdoc/>
+    public void WriteTo(Utf8JsonWriter writer)
+    {
+        if ((this.backing & Backing.JsonElement) != 0)
+        {
+            if (this.jsonElementBacking.ValueKind != JsonValueKind.Undefined)
+            {
+                this.jsonElementBacking.WriteTo(writer);
+            }
+
+            return;
+        }
+
+        if ((this.backing & Backing.Null) != 0)
+        {
+            writer.WriteNullValue();
+            return;
+        }
+
+        if ((this.backing & Backing.String) != 0)
+        {
+            writer.WriteStringValue(this.stringBacking);
+            return;
+        }
+    }
+
+    /// <inheritdoc/>
+    public override int GetHashCode()
+    {
+        return JsonValueHelpers.GetHashCode(this);
+    }
+
+    /// <inheritdoc/>
+    public override string ToString()
+    {
+        return this.Serialize();
+    }
+
+    /// <inheritdoc/>
+    public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
+    {
+        return Json.Validate.TypeString(this.ValueKind, validationContext, level);
     }
 }

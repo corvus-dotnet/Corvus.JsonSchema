@@ -1,0 +1,19 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="Corvus.Json" #>
+<#@ import namespace="Corvus.Json.Patch" #>
+<#@ import namespace="Corvus.Json.Patch.SpecGenerator" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Text.Json" #>
+<#@ import namespace="System.Collections.Generic" #>
+
+Feature: <#= FeatureName #>
+<# foreach (var scenario in Feature.EnumerateArray()) {
+	if(scenario.IsDisabledScenario) { continue; }#>
+
+Scenario: <#= (string)scenario.Comment.AsOptional() ?? $"Undescribed scenario"#> [<#= System.Guid.NewGuid() #>]
+	Given the document <#= scenario.Doc #>
+	When I build the patch <#= scenario.Patch #>
+	Then<# if(scenario.IsScenarioWithError) {#> a patch exception should be thrown<# } else { #> the patch result should equal <#= GetExpected(scenario) #><# } #>
+
+<# } #>

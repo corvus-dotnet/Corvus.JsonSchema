@@ -7,7 +7,19 @@
 
 # Code style rules for enforcing the endjin house style
 # See: https://docs.microsoft.com/en-us/visualstudio/ide/editorconfig-code-style-settings-reference
-[*.cs]
+
+# XML project files
+[*.{csproj,vbproj,vcxproj,vcxproj.filters,proj,projitems,shproj}]
+indent_size = 2
+
+# XML config files
+[*.{props,targets,ruleset,config,nuspec,resx,vsixmanifest,vsct}]
+indent_size = 2
+
+# C# files
+[*.{cs,csx}]
+indent_size = 4
+insert_final_newline  = false
 
 # Core editorconfig formatting - indentation
 
@@ -24,10 +36,6 @@ csharp_indent_switch_labels = true
 csharp_new_line_before_catch = true
 csharp_new_line_before_else = true
 csharp_new_line_before_open_brace = object_collection, object_collection_array_initalizers, accessors, lambdas, control_blocks, methods, properties, types
-
-# Formatting - organize using options
-
-dotnet_sort_system_directives_first = true
 
 # Formatting - spacing options
 
@@ -76,8 +84,28 @@ dotnet_style_qualification_for_method = true:suggestion
 dotnet_style_qualification_for_property = true:suggestion
 dotnet_style_qualification_for_event = true:suggestion
 
-# Style - using
-csharp_using_directive_placement = inside_namespace:warning
+# Style - using directives and namespace declarations
+csharp_using_directive_placement = outside_namespace:warning
+dotnet_sort_system_directives_first = true
+csharp_style_namespace_declarations = file_scoped:warning
 
-# StyleCop currently chokes on various uses of record
-dotnet_diagnostic.SA1201.severity = None
+# Code analyzer rules (formerly in StyleCop.ruleset)
+# SA1025 makes it impossible to write decent-looking switch expressions because it
+# doesn't allow multiple whitespace characters in a row. There seems to be no way to
+# disable this rule just inside switch expressions, so we reluctantly live without it.
+dotnet_diagnostic.SA1025.severity = None
+# StyleCop's insistence that constructors' summaries must always start with exactly
+# the same boilerplate text is not deeply helpful. Saying "Creates a Foo"
+# is in most cases better than the "Initializes a new instance of the Foo type"
+# that this rule insists on.
+dotnet_diagnostic.SA1642.severity = None
+
+# CLS Compliance - not relevant for most of what we work on.
+dotnet_diagnostic.CA1014.severity = None
+
+# Standard exception constructors - not helpful when the exception absolutely needs certain information
+dotnet_diagnostic.CA1032.severity = None
+dotnet_diagnostic.RCS1194.severity = None
+
+# Localize string constants - apps that want localization can turn this back on
+dotnet_diagnostic.CA1303.severity = None

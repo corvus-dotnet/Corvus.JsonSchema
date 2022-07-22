@@ -16,21 +16,6 @@ Scenario: Cast from JsonAny for json element backed value as a string
 	When I cast the JsonAny to JsonString
 	Then the result should equal the JsonString 'Hello'
 
-Scenario: Cast to ReadOnlySpan<byte> for json element backed value as a string
-	Given the JsonElement backed JsonString "Hello"
-	When I cast the JsonString to ReadOnlySpan<byte>
-	Then the result should equal the ReadOnlySpan<byte> 'Hello'
-
-Scenario: Cast to ReadOnlySpan<byte> for dotnet backed value as a string
-	Given the dotnet backed JsonString Hello
-	When I cast the JsonString to ReadOnlySpan<byte>
-	Then the result should equal the ReadOnlySpan<byte> 'Hello'
-
-Scenario: Cast from ReadOnlySpan<byte> for json element backed value as a string
-	Given the ReadOnlyMemory<byte> for "Hello"
-	When I cast the ReadOnlySpan<byte> to JsonString
-	Then the result should equal the JsonString 'Hello'
-
 Scenario: Cast to ReadOnlySpan<char> for json element backed value as a string
 	Given the JsonElement backed JsonString "Hello"
 	When I cast the JsonString to ReadOnlySpan<char>

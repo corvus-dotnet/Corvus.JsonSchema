@@ -2,132 +2,127 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-namespace Corvus.Json
+using System.Text.Json;
+
+namespace Corvus.Json;
+
+/// <summary>
+/// Resolves a <see cref="JsonDocument"/> from the local filesystem.
+/// </summary>
+public class FileSystemDocumentResolver : IDocumentResolver
 {
-    using System;
-    using System.Collections.Generic;
-    using System.IO;
-    using System.Text.Json;
-    using System.Threading.Tasks;
+    private readonly string baseDirectory;
+    private readonly Dictionary<string, JsonDocument> documents = new();
+    private bool disposedValue;
 
     /// <summary>
-    /// Resolves a <see cref="JsonDocument"/> from the local filesystem.
+    /// Initializes a new instance of the <see cref="FileSystemDocumentResolver"/> class.
     /// </summary>
-    public class FileSystemDocumentResolver : IDocumentResolver
+    /// <param name="baseDirectory">The base directory for the file system resolver.</param>
+    public FileSystemDocumentResolver(string baseDirectory)
     {
-        private readonly string baseDirectory;
-        private readonly Dictionary<string, JsonDocument> documents = new();
-        private bool disposedValue;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="FileSystemDocumentResolver"/> class.
-        /// </summary>
-        /// <param name="baseDirectory">The base directory for the file system resolver.</param>
-        public FileSystemDocumentResolver(string baseDirectory)
+        if (string.IsNullOrEmpty(baseDirectory))
         {
-            if (string.IsNullOrEmpty(baseDirectory))
+            throw new ArgumentException($"'{nameof(baseDirectory)}' cannot be null or empty", nameof(baseDirectory));
+        }
+
+        this.baseDirectory = baseDirectory;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="FileSystemDocumentResolver"/> class.
+    /// </summary>
+    /// <remarks>The default base directory is <see cref="Environment.CurrentDirectory"/>.</remarks>
+    public FileSystemDocumentResolver()
+    {
+        this.baseDirectory = Environment.CurrentDirectory;
+    }
+
+    /// <inheritdoc/>
+    public bool AddDocument(string uri, JsonDocument document)
+    {
+        this.CheckDisposed();
+
+        return this.documents.TryAdd(uri, document);
+    }
+
+    /// <inheritdoc/>
+    public async Task<JsonElement?> TryResolve(JsonReference reference)
+    {
+        this.CheckDisposed();
+
+        string path = Path.Combine(this.baseDirectory, new string(reference.Uri));
+
+        if (this.documents.TryGetValue(path, out JsonDocument? result))
+        {
+            if (JsonPointerUtilities.TryResolvePointer(result, reference.Fragment, out JsonElement? element))
             {
-                throw new ArgumentException($"'{nameof(baseDirectory)}' cannot be null or empty", nameof(baseDirectory));
+                return element;
             }
 
-            this.baseDirectory = baseDirectory;
+            return default;
         }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="FileSystemDocumentResolver"/> class.
-        /// </summary>
-        /// <remarks>The default base directory is <see cref="Environment.CurrentDirectory"/>.</remarks>
-        public FileSystemDocumentResolver()
+        try
         {
-            this.baseDirectory = Environment.CurrentDirectory;
+            using Stream stream = File.OpenRead(path);
+            result = await JsonDocument.ParseAsync(stream).ConfigureAwait(false);
+            this.documents.Add(path, result);
+            return JsonPointerUtilities.ResolvePointer(result, reference.Fragment);
         }
-
-        /// <inheritdoc/>
-        public bool AddDocument(string uri, JsonDocument document)
+        catch (Exception)
         {
-            this.CheckDisposed();
-
-            return this.documents.TryAdd(uri, document);
+            return default;
         }
+    }
 
-        /// <inheritdoc/>
-        public async Task<JsonElement?> TryResolve(JsonReference reference)
+    /// <inheritdoc/>
+    public void Reset()
+    {
+        this.CheckDisposed();
+        this.DisposeDocumentsAndClear();
+    }
+
+    /// <inheritdoc/>
+    public void Dispose()
+    {
+        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        this.Dispose(disposing: true);
+        System.GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// Implements the dispose pattern.
+    /// </summary>
+    /// <param name="disposing">True if we are disposing.</param>
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!this.disposedValue)
         {
-            this.CheckDisposed();
-
-            string path = Path.Combine(this.baseDirectory, new string(reference.Uri));
-
-            if (this.documents.TryGetValue(path, out JsonDocument? result))
+            if (disposing)
             {
-                if (JsonPointerUtilities.TryResolvePointer(result, reference.Fragment, out JsonElement? element))
-                {
-                    return element;
-                }
-
-                return default;
+                this.DisposeDocumentsAndClear();
             }
 
-            try
-            {
-                using Stream stream = File.OpenRead(path);
-                result = await JsonDocument.ParseAsync(stream).ConfigureAwait(false);
-                this.documents.Add(path, result);
-                return JsonPointerUtilities.ResolvePointer(result, reference.Fragment);
-            }
-            catch (Exception)
-            {
-                return default;
-            }
+            this.disposedValue = true;
+        }
+    }
+
+    private void DisposeDocumentsAndClear()
+    {
+        foreach (KeyValuePair<string, JsonDocument> document in this.documents)
+        {
+            document.Value.Dispose();
         }
 
-        /// <inheritdoc/>
-        public void Reset()
+        this.documents.Clear();
+    }
+
+    private void CheckDisposed()
+    {
+        if (this.disposedValue)
         {
-            this.CheckDisposed();
-            this.DisposeDocumentsAndClear();
-        }
-
-        /// <inheritdoc/>
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-            this.Dispose(disposing: true);
-            System.GC.SuppressFinalize(this);
-        }
-
-        /// <summary>
-        /// Implements the dispose pattern.
-        /// </summary>
-        /// <param name="disposing">True if we are disposing.</param>
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!this.disposedValue)
-            {
-                if (disposing)
-                {
-                    this.DisposeDocumentsAndClear();
-                }
-
-                this.disposedValue = true;
-            }
-        }
-
-        private void DisposeDocumentsAndClear()
-        {
-            foreach (KeyValuePair<string, JsonDocument> document in this.documents)
-            {
-                document.Value.Dispose();
-            }
-
-            this.documents.Clear();
-        }
-
-        private void CheckDisposed()
-        {
-            if (this.disposedValue)
-            {
-                throw new ObjectDisposedException(nameof(CompoundDocumentResolver));
-            }
+            throw new ObjectDisposedException(nameof(CompoundDocumentResolver));
         }
     }
 }

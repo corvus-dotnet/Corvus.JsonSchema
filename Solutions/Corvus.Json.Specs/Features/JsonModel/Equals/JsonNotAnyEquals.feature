@@ -121,7 +121,6 @@ Scenario Outline: Equals for notAny dotnet backed value as an object
 		| [1,2,3]          | null             | false  |
 		| [1,2,3]          | <null>           | false  |
 		| [1,2,3]          | <undefined>      | false  |
-		| <undefined>      | <undefined>      | true   |
 		| <undefined>      | "Hello"          | false  |
 		| null             | null             | true   |
 		| null             | <null>           | true   |
