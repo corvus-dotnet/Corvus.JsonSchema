@@ -260,9 +260,7 @@ public static partial class JsonTransformingVisitor
             path.CopyTo(propertyPath);
             propertyPath[path.Length] = '/';
 
-#pragma warning disable SA1009 // Closing parenthesis should be spaced correctly
             propertyName.CopyTo(propertyPath[(path.Length + 1)..]);
-#pragma warning restore SA1009 // Closing parenthesis should be spaced correctly
 
             // Visit the property, and determine whether we've transformed it.
             Visit(propertyPath, property.Value, visitor, ref pathBuffer, ref result);
@@ -329,10 +327,11 @@ public static partial class JsonTransformingVisitor
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void TryExtendBuffer(ref char[] propertyPathBuffer, int desiredLength)
     {
-        if (propertyPathBuffer.Length < desiredLength)
+        int length = propertyPathBuffer.Length;
+        if (length < desiredLength)
         {
             ArrayPool<char>.Shared.Return(propertyPathBuffer);
-            propertyPathBuffer = ArrayPool<char>.Shared.Rent(Math.Max(desiredLength, propertyPathBuffer.Length + BufferChunkSize));
+            propertyPathBuffer = ArrayPool<char>.Shared.Rent(Math.Max(desiredLength, length + BufferChunkSize));
         }
     }
 }

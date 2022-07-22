@@ -12,7 +12,7 @@ namespace Corvus.Json;
 /// A JSON property name.
 /// </summary>
 /// <param name="Name">The name of the property.</param>
-public readonly record struct JsonPropertyName(string Name)
+public readonly record struct JsonPropertyName(string Name) : IEquatable<string>
 {
     /// <summary>
     /// Conversion to string.
@@ -83,7 +83,7 @@ public readonly record struct JsonPropertyName(string Name)
     /// </summary>
     /// <param name="value">The value with which to compare.</param>
     /// <returns><c>True</c> is the values are equal.</returns>
-    public bool Equals(string value)
+    public bool Equals(string? value)
     {
         return this.Name.Equals(value);
     }
