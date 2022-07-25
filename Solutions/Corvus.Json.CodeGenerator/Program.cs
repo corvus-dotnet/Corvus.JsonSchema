@@ -111,9 +111,9 @@ class Program
             IJsonSchemaBuilder builder =
                 schemaVariant switch
                 {
-                    //SchemaVariant.Draft202012 => new CodeGeneration.Draft202012.JsonSchemaBuilder(walker),
-                    SchemaVariant.Draft202012 => new CodeGeneration.Draft201909.JsonSchemaBuilder(walker),
-                    _ => new CodeGeneration.Draft201909.JsonSchemaBuilder(walker)
+                    SchemaVariant.Draft202012 => new CodeGeneration.Draft202012.JsonSchemaBuilder(walker),
+                    SchemaVariant.Draft201909 => new CodeGeneration.Draft201909.JsonSchemaBuilder(walker),
+                    _ => new CodeGeneration.Draft202012.JsonSchemaBuilder(walker)
                 };
 
             (string RootType, ImmutableDictionary<string, TypeAndCode> GeneratedTypes) result = await builder.BuildTypesFor(resolvedReference, rootNamespace, rebaseToRootPath, rootTypeName: rootTypeName).ConfigureAwait(false);
