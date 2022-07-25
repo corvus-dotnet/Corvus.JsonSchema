@@ -2,137 +2,134 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-namespace Corvus.JsonSchema.SpecGenerator
+using System.Text;
+using System.Text.Json;
+
+namespace Corvus.JsonSchema.SpecGenerator;
+
+/// <summary>
+/// Write .feature files for specs from the json schema specs.
+/// </summary>
+/// <remarks>
+/// https://github.com/json-schema-org/JSON-Schema-Test-Suite/tree/master/tests/draft2020-12.
+/// </remarks>
+internal static class SpecWriter
 {
-    using System;
-    using System.IO;
-    using System.Text;
-    using System.Text.Json;
-
     /// <summary>
-    /// Write .feature files for specs from the json schema specs.
+    /// Write the feature files for the json specs.
     /// </summary>
-    /// <remarks>
-    /// https://github.com/json-schema-org/JSON-Schema-Test-Suite/tree/master/tests/draft2020-12.
-    /// </remarks>
-    internal static class SpecWriter
+    /// <param name="specDirectories">The spec directories.</param>
+    internal static void Write(SpecDirectories specDirectories)
     {
-        /// <summary>
-        /// Write the feature files for the json specs.
-        /// </summary>
-        /// <param name="specDirectories">The spec directories.</param>
-        internal static void Write(SpecDirectories specDirectories)
+        foreach (SpecDirectories.TestSet testSet in specDirectories.EnumerateTests())
         {
-            foreach (SpecDirectories.TestSet testSet in specDirectories.EnumerateTests())
-            {
-                Console.WriteLine($"Reading: {testSet.InputFile}");
-                Console.WriteLine($"Writing: {testSet.OutputFile}");
-                Console.WriteLine();
-                WriteFeatureFile(testSet);
-            }
+            Console.WriteLine($"Reading: {testSet.InputFile}");
+            Console.WriteLine($"Writing: {testSet.OutputFile}");
+            Console.WriteLine();
+            WriteFeatureFile(testSet);
+        }
+    }
+
+    private static void WriteFeatureFile(SpecDirectories.TestSet testSet)
+    {
+        using var testDocument = JsonDocument.Parse(File.ReadAllText(testSet.InputFile));
+
+        var builder = new StringBuilder();
+
+        WriteFeatureHeading(testSet.TestSetName, Path.GetFileNameWithoutExtension(testSet.InputFile), builder);
+
+        int index = 0;
+        foreach (JsonElement scenarioDefinition in testDocument.RootElement.EnumerateArray())
+        {
+            WriteScenario(testSet, index, scenarioDefinition, builder);
+            ++index;
         }
 
-        private static void WriteFeatureFile(SpecDirectories.TestSet testSet)
+        File.WriteAllText(testSet.OutputFile, builder.ToString());
+    }
+
+    private static void WriteScenario(SpecDirectories.TestSet testSet, int scenarioIndex, JsonElement scenarioDefinition, StringBuilder builder)
+    {
+        string inputSchemaReference = $"#/{scenarioIndex}/schema";
+
+        string? scenarioTitle = scenarioDefinition.GetProperty("description").GetString();
+        scenarioTitle = NormalizeTitleForDeduplication(scenarioTitle!);
+
+        builder.AppendLine();
+        builder.AppendLine($"Scenario Outline: {scenarioTitle}");
+        builder.AppendLine("/* Schema: ");
+        builder.AppendLine(scenarioDefinition.GetProperty("schema").ToString());
+        builder.AppendLine("*/");
+        builder.AppendLine($"    Given the input JSON file \"{testSet.InputFileSpecFolderRelativePath}\"");
+        builder.AppendLine($"    And the schema at \"{inputSchemaReference}\"");
+        builder.AppendLine("    And the input data at \"<inputDataReference>\"");
+        builder.AppendLine("    And I generate a type for the schema");
+        builder.AppendLine("    And I construct an instance of the schema type from the data");
+        builder.AppendLine("    When I validate the instance");
+        builder.AppendLine("    Then the result will be <valid>");
+        builder.AppendLine();
+        builder.AppendLine("    Examples:");
+        builder.AppendLine("        | inputDataReference   | valid | description                                                                      |");
+
+        if (!testSet.TestsToIgnoreIndicesByScenarioName.TryGetValue(scenarioTitle, out IReadOnlySet<int>? testsToIgnoreIndices))
         {
-            using var testDocument = JsonDocument.Parse(File.ReadAllText(testSet.InputFile));
-
-            var builder = new StringBuilder();
-
-            WriteFeatureHeading(testSet.TestSetName, Path.GetFileNameWithoutExtension(testSet.InputFile), builder);
-
-            int index = 0;
-            foreach (JsonElement scenarioDefinition in testDocument.RootElement.EnumerateArray())
-            {
-                WriteScenario(testSet, index, scenarioDefinition, builder);
-                ++index;
-            }
-
-            File.WriteAllText(testSet.OutputFile, builder.ToString());
+            testsToIgnoreIndices = new HashSet<int>();
         }
 
-        private static void WriteScenario(SpecDirectories.TestSet testSet, int scenarioIndex, JsonElement scenarioDefinition, StringBuilder builder)
+        int testIndex = 0;
+        foreach (JsonElement test in scenarioDefinition.GetProperty("tests").EnumerateArray())
         {
-            string inputSchemaReference = $"#/{scenarioIndex}/schema";
+            WriteExample(scenarioIndex, testIndex, test, builder, testsToIgnoreIndices.Contains(testIndex));
+            ++testIndex;
+        }
+    }
 
-            string? scenarioTitle = scenarioDefinition.GetProperty("description").GetString();
-            scenarioTitle = NormalizeTitleForDeduplication(scenarioTitle!);
+    private static string NormalizeTitleForDeduplication(string scenarioTitle)
+    {
+        scenarioTitle = scenarioTitle
+            .Replace("[", "array[")
+            .Replace("<=", " less than or equal ")
+            .Replace("<", " less than ")
+            .Replace(">=", " greater than or equal ")
+            .Replace(">", " greater than ")
+            .Replace("==", " equals ")
+            .Replace("=", " equals ");
+        return scenarioTitle;
+    }
 
-            builder.AppendLine();
-            builder.AppendLine($"Scenario Outline: {scenarioTitle}");
-            builder.AppendLine("/* Schema: ");
-            builder.AppendLine(scenarioDefinition.GetProperty("schema").ToString());
-            builder.AppendLine("*/");
-            builder.AppendLine($"    Given the input JSON file \"{testSet.InputFileSpecFolderRelativePath}\"");
-            builder.AppendLine($"    And the schema at \"{inputSchemaReference}\"");
-            builder.AppendLine("    And the input data at \"<inputDataReference>\"");
-            builder.AppendLine("    And I generate a type for the schema");
-            builder.AppendLine("    And I construct an instance of the schema type from the data");
-            builder.AppendLine("    When I validate the instance");
-            builder.AppendLine("    Then the result will be <valid>");
-            builder.AppendLine();
-            builder.AppendLine("    Examples:");
-            builder.AppendLine("        | inputDataReference   | valid | description                                                                      |");
+    private static void WriteFeatureHeading(string testSet, string featureName, StringBuilder builder)
+    {
+        builder.AppendLine($"@{testSet}");
+        builder.AppendLine();
+        builder.AppendLine($"Feature: {featureName} {testSet}");
+        builder.AppendLine("    In order to use json-schema");
+        builder.AppendLine("    As a developer");
+        builder.AppendLine($"    I want to support {featureName} in {testSet}");
+    }
 
-            if (!testSet.TestsToIgnoreIndicesByScenarioName.TryGetValue(scenarioTitle, out IReadOnlySet<int>? testsToIgnoreIndices))
-            {
-                testsToIgnoreIndices = new HashSet<int>();
-            }
+    private static void WriteExample(int scenarioIndex, int testIndex, JsonElement test, StringBuilder builder, bool omit)
+    {
+        string inputDataReference = $"#/{scenarioIndex:D3}/tests/{testIndex:D3}/data";
 
-            int testIndex = 0;
-            foreach (JsonElement test in scenarioDefinition.GetProperty("tests").EnumerateArray())
-            {
-                WriteExample(scenarioIndex, testIndex, test, builder, testsToIgnoreIndices.Contains(testIndex));
-                ++testIndex;
-            }
+        string valid;
+        if (test.GetProperty("valid").ValueKind == JsonValueKind.False)
+        {
+            valid = "false";
+        }
+        else
+        {
+            valid = "true ";
         }
 
-        private static string NormalizeTitleForDeduplication(string scenarioTitle)
+        string? description = test.GetProperty("description").GetString();
+
+        if (description is null)
         {
-            scenarioTitle = scenarioTitle
-                .Replace("[", "array[")
-                .Replace("<=", " less than or equal ")
-                .Replace("<", " less than ")
-                .Replace(">=", " greater than or equal ")
-                .Replace(">", " greater than ")
-                .Replace("==", " equals ")
-                .Replace("=", " equals ");
-            return scenarioTitle;
+            throw new Exception("Expected a 'description' property with a string value.");
         }
 
-        private static void WriteFeatureHeading(string testSet, string featureName, StringBuilder builder)
-        {
-            builder.AppendLine($"@{testSet}");
-            builder.AppendLine();
-            builder.AppendLine($"Feature: {featureName} {testSet}");
-            builder.AppendLine("    In order to use json-schema");
-            builder.AppendLine("    As a developer");
-            builder.AppendLine($"    I want to support {featureName} in {testSet}");
-        }
+        description = description.PadRight(80);
 
-        private static void WriteExample(int scenarioIndex, int testIndex, JsonElement test, StringBuilder builder, bool omit)
-        {
-            string inputDataReference = $"#/{scenarioIndex:D3}/tests/{testIndex:D3}/data";
-
-            string valid;
-            if (test.GetProperty("valid").ValueKind == JsonValueKind.False)
-            {
-                valid = "false";
-            }
-            else
-            {
-                valid = "true ";
-            }
-
-            string? description = test.GetProperty("description").GetString();
-
-            if (description is null)
-            {
-                throw new Exception("Expected a 'description' property with a string value.");
-            }
-
-            description = description.PadRight(80);
-
-            builder.AppendLine($"        {(omit ? '#' : '|')} {inputDataReference} | {valid} | {description} |");
-        }
+        builder.Append("        ").Append(omit ? '#' : '|').Append(' ').Append(inputDataReference).Append(" | ").Append(valid).Append(" | ").Append(description).AppendLine(" |");
     }
 }
