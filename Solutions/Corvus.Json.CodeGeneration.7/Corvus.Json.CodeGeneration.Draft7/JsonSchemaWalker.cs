@@ -89,7 +89,7 @@ internal class JsonSchemaWalker
             return true;
         }
 
-        if (schema.Id.IsNotUndefined())
+        if (schema.Id.IsNotUndefined() && !schema.Ref.IsNotNullOrUndefined())
         {
             string currentLocation = walker.PeekLocationStack();
 
@@ -139,7 +139,7 @@ internal class JsonSchemaWalker
             walker.PopLocationStack();
         }
 
-        if (schema.Id.IsNotUndefined())
+        if (schema.Id.IsNotUndefined() && !schema.Ref.IsNotNullOrUndefined())
         {
             // We pushed our ID onto the stack, so pop it back off again.
             walker.PopLocationStack();
