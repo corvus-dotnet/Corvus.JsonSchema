@@ -45,6 +45,8 @@
 
 		<PackageReference Include="System.Text.Json" Version="6.0.5" />
 
+		<ProjectReference Include="..\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.201909.csproj" />
+
 		<ProjectReference Include="..\Corvus.Json.CodeGeneration.202012\Corvus.Json.CodeGeneration.202012.csproj" />
 
 		<ProjectReference Include="..\Corvus.Json.Patch\Corvus.Json.Patch.csproj" />

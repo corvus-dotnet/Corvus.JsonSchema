@@ -1554,6 +1554,16 @@
           "System.Xml.ReaderWriter": "4.3.0"
         }
       },
+      "corvus.json.codegeneration.201909": {
+        "type": "Project",
+        "dependencies": {
+          "Corvus.Extensions": "[1.1.4, )",
+          "Corvus.Json.CodeGeneration.Abstractions": "[1.0.0, )",
+          "Corvus.Json.JsonSchema": "[1.0.0, )",
+          "Corvus.Json.Walker": "[1.0.0, )",
+          "System.CodeDom": "[6.0.0, )"
+        }
+      },
       "corvus.json.codegeneration.202012": {
         "type": "Project",
         "dependencies": {
