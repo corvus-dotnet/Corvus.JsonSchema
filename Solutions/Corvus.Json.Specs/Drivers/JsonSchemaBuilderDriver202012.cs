@@ -13,6 +13,7 @@ using System.Text.RegularExpressions;
 using Corvus.Extensions;
 using Corvus.Json;
 using Corvus.Json.CodeGeneration;
+using Corvus.Json.CodeGeneration.Draft202012;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Emit;
