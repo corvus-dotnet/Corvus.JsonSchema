@@ -8,9 +8,6 @@ using System.Text.Json;
 using Corvus.Json.CodeGeneration.Draft201909;
 using Corvus.Json.JsonSchema.Draft201909;
 
-// Compatibility
-using JsonObjectProperty = Corvus.Json.Property;
-
 namespace Corvus.Json.CodeGeneration.Generators.Draft201909;
 
 /// <summary>
@@ -1189,7 +1186,7 @@ public partial class CodeGeneratorValidate
             ImmutableArray<string>.Builder builder = ImmutableArray.CreateBuilder<string>();
             if (this.TypeDeclaration.Schema.Items.IsSchemaArray)
             {
-                for (int i = 0; i < this.TypeDeclaration.Schema.Items.Length; ++i)
+                for (int i = 0; i < this.TypeDeclaration.Schema.Items.GetArrayLength(); ++i)
                 {
                     TypeDeclaration td = this.Builder.GetTypeDeclarationForPropertyArrayIndex(this.TypeDeclaration, "items", i);
                     builder.Add(td.FullyQualifiedDotnetTypeName ?? string.Empty);

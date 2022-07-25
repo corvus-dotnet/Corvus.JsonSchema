@@ -534,7 +534,7 @@ public class JsonSchemaBuilder : IJsonSchemaBuilder
 
         if (currentDeclaration.Schema.DependentSchemas.IsNotUndefined())
         {
-            foreach (Property<Schema> schemaProperty in currentDeclaration.Schema.DependentSchemas.EnumerateProperties())
+            foreach (JsonObjectProperty schemaProperty in currentDeclaration.Schema.DependentSchemas.EnumerateObject())
             {
                 TypeDeclaration typeDeclaration = this.GetTypeDeclarationForProperty(new JsonReference(currentDeclaration.Location).AppendUnencodedPropertyNameToFragment("dependentSchemas"), new JsonReference(currentDeclaration.LexicalLocation).AppendUnencodedPropertyNameToFragment("dependentSchemas"), schemaProperty.Name);
                 AddTypeDeclarationsToReferencedTypes(referencedTypes, typeDeclaration);
@@ -587,7 +587,7 @@ public class JsonSchemaBuilder : IJsonSchemaBuilder
         if (currentDeclaration.Schema.OneOf.IsNotUndefined())
         {
             int index = 0;
-            foreach (Schema schema in currentDeclaration.Schema.OneOf.EnumerateItems())
+            foreach (Schema schema in currentDeclaration.Schema.OneOf.EnumerateArray())
             {
                 TypeDeclaration typeDeclaration = this.GetTypeDeclarationForPropertyArrayIndex(currentDeclaration.Location, "oneOf", index);
                 AddTypeDeclarationsToReferencedTypes(referencedTypes, typeDeclaration);
@@ -598,7 +598,7 @@ public class JsonSchemaBuilder : IJsonSchemaBuilder
 
         if (currentDeclaration.Schema.PatternProperties.IsNotUndefined())
         {
-            foreach (Property<Schema> schemaProperty in currentDeclaration.Schema.PatternProperties.EnumerateProperties())
+            foreach (JsonObjectProperty schemaProperty in currentDeclaration.Schema.PatternProperties.EnumerateObject())
             {
                 TypeDeclaration typeDeclaration = this.GetTypeDeclarationForProperty(new JsonReference(currentDeclaration.Location).AppendUnencodedPropertyNameToFragment("patternProperties"), new JsonReference(currentDeclaration.LexicalLocation).AppendUnencodedPropertyNameToFragment("patternProperties"), schemaProperty.Name);
                 AddTypeDeclarationsToReferencedTypes(referencedTypes, typeDeclaration);
@@ -608,7 +608,7 @@ public class JsonSchemaBuilder : IJsonSchemaBuilder
 
         if (currentDeclaration.Schema.Properties.IsNotUndefined())
         {
-            foreach (Property<Schema> schemaProperty in currentDeclaration.Schema.Properties.EnumerateProperties())
+            foreach (JsonObjectProperty schemaProperty in currentDeclaration.Schema.Properties.EnumerateObject())
             {
                 if (this.TryGetTypeDeclarationForProperty(new JsonReference(currentDeclaration.Location).AppendUnencodedPropertyNameToFragment("properties"), new JsonReference(currentDeclaration.LexicalLocation).AppendUnencodedPropertyNameToFragment("properties"), schemaProperty.Name, out TypeDeclaration? typeDeclaration))
                 {
@@ -827,7 +827,7 @@ public class JsonSchemaBuilder : IJsonSchemaBuilder
         // elsewhere
         if (source.Schema.Required.IsNotUndefined())
         {
-            foreach (JsonString requiredName in source.Schema.Required.EnumerateItems())
+            foreach (JsonString requiredName in source.Schema.Required.EnumerateArray())
             {
                 target.AddOrReplaceProperty(new PropertyDeclaration(AnyTypeDeclarationInstance, requiredName!, true, source.Location == target.Location));
             }
@@ -836,7 +836,7 @@ public class JsonSchemaBuilder : IJsonSchemaBuilder
         if (source.Schema.AllOf.IsNotUndefined())
         {
             int index = 0;
-            foreach (Schema schema in source.Schema.AllOf.EnumerateItems())
+            foreach (Schema schema in source.Schema.AllOf.EnumerateArray())
             {
                 TypeDeclaration allOfTypeDeclaration = this.GetTypeDeclarationForPropertyArrayIndex(source.Location, "allOf", index);
                 this.AddPropertiesFromType(allOfTypeDeclaration, target, typesVisited);
@@ -846,27 +846,27 @@ public class JsonSchemaBuilder : IJsonSchemaBuilder
 
         if (source.Schema.Ref.IsNotUndefined() && !source.Schema.IsNakedReference())
         {
-            TypeDeclaration refTypeDeclaration = this.GetTypeDeclarationForProperty(source, "$ref");
+            TypeDeclaration refTypeDeclaration = this.GetTypeDeclarationForProperty(source.Location, source.LexicalLocation, "$ref");
             this.AddPropertiesFromType(refTypeDeclaration, target, typesVisited);
         }
 
         if (source.Schema.RecursiveRef.IsNotUndefined() && !source.Schema.IsNakedRecursiveReference())
         {
-            TypeDeclaration refTypeDeclaration = this.GetTypeDeclarationForProperty(source, "$recursiveRef");
+            TypeDeclaration refTypeDeclaration = this.GetTypeDeclarationForProperty(source.Location, source.LexicalLocation, "$recursiveRef");
             this.AddPropertiesFromType(refTypeDeclaration, target, typesVisited);
         }
 
         // Then we add our own properties.
         if (source.Schema.Properties.IsNotUndefined())
         {
-            foreach (Property<Schema> property in source.Schema.Properties.EnumerateProperties())
+            foreach (JsonObjectProperty property in source.Schema.Properties.EnumerateObject())
             {
-                string propertyName = property.Name;
+                JsonPropertyName propertyName = property.Name;
                 bool isRequired = false;
 
                 if (source.Schema.Required.IsNotUndefined())
                 {
-                    if (source.Schema.Required.EnumerateItems().Any(r => propertyName == r.GetString()))
+                    if (source.Schema.Required.EnumerateArray().Any(r => propertyName == r))
                     {
                         isRequired = true;
                     }

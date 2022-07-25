@@ -23,7 +23,6 @@
 
 	<ItemGroup>
 		<PackageReference Include="Corvus.Extensions" Version="1.1.4" />
-		<PackageReference Include="Corvus.Json.JsonSchema" Version="0.1.12" />
 		<PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.1">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -33,6 +32,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\Corvus.Json.CodeGeneration.Abstractions\Corvus.Json.CodeGeneration.Abstractions.csproj" />
+		<ProjectReference Include="..\Corvus.Json.JsonSchema\Corvus.Json.JsonSchema.csproj" />
 		<ProjectReference Include="..\Corvus.Json.Walker\Corvus.Json.Walker.csproj" />
 	</ItemGroup>
 
