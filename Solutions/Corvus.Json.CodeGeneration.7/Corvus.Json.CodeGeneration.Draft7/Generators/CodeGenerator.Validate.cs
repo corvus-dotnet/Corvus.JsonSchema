@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace Corvus.Json.CodeGeneration.Generators.Draft201909 {
+namespace Corvus.Json.CodeGeneration.Generators.Draft7 {
     using System.Collections.Generic;
     using Corvus.Json;
     using System;
@@ -87,7 +87,7 @@ namespace ");
             #line hidden
             
             #line 34 "./Templates/CodeGenerator.Validate.tt"
-  if (HasAdditionalProperties || HasUnevaluatedProperties)
+  if (HasAdditionalProperties)
     { 
             
             #line default
@@ -101,7 +101,7 @@ namespace ");
             
             #line 38 "./Templates/CodeGenerator.Validate.tt"
   }
-    if (HasAdditionalItems || HasUnevaluatedItems)
+    if (HasAdditionalItems)
     { 
             
             #line default
@@ -131,7 +131,7 @@ namespace ");
             
             #line 52 "./Templates/CodeGenerator.Validate.tt"
   }
-    if ((HasExplicitType || HasFormat || HasMediaTypeOrEncoding) || (HasItems || HasContains || HasUniqueItems || HasMaxItems || HasMinItems || HasUnevaluatedItems || HasAdditionalItems) || (HasDependentRequired || HasLocalProperties || HasRequired || HasMaxProperties || HasMinProperties || HasDependentSchemas || HasPropertyNames || HasPatternProperties || ((AllowsAdditionalProperties && (HasAdditionalProperties || HasUnevaluatedProperties)))))
+    if ((HasExplicitType || HasFormat || HasMediaTypeOrEncoding) || (HasItems || HasContains || HasUniqueItems || HasMaxItems || HasMinItems|| HasAdditionalItems) || (HasDependentRequired || HasLocalProperties || HasRequired || HasMaxProperties || HasMinProperties || HasDependentSchemas || HasPropertyNames || HasPatternProperties || ((AllowsAdditionalProperties && (HasAdditionalProperties)))))
     { 
             
             #line default
@@ -491,7 +491,7 @@ namespace ");
             
             #line 190 "./Templates/CodeGenerator.Validate.tt"
   }
-    if (HasDependentRequired || HasLocalProperties || HasRequired || HasMaxProperties || HasMinProperties || HasDependentSchemas || HasPropertyNames || HasPatternProperties || ((AllowsAdditionalProperties && (HasAdditionalProperties || HasUnevaluatedProperties)) || !AllowsAdditionalProperties))
+    if (HasDependentRequired || HasLocalProperties || HasRequired || HasMaxProperties || HasMinProperties || HasDependentSchemas || HasPropertyNames || HasPatternProperties || ((AllowsAdditionalProperties && (HasAdditionalProperties)) || !AllowsAdditionalProperties))
     { 
             
             #line default
@@ -507,7 +507,7 @@ namespace ");
             
             #line 199 "./Templates/CodeGenerator.Validate.tt"
   }
-    if (HasItems || HasContains || HasUniqueItems || HasMaxItems || HasMinItems || HasUnevaluatedItems || HasAdditionalItems)
+    if (HasItems || HasContains || HasUniqueItems || HasMaxItems || HasMinItems || HasAdditionalItems)
     { 
             
             #line default

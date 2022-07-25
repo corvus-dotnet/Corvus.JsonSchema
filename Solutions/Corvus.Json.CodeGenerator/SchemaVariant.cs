@@ -6,6 +6,7 @@
 public enum SchemaVariant
 {
     NotSpecified,
+    Draft7,
     Draft201909,
     Draft202012
 }

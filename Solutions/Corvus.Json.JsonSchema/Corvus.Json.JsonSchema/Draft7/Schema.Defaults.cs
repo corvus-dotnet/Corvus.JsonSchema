@@ -75,7 +75,6 @@ public readonly partial struct Schema
         builder.Add(MinLengthJsonPropertyName, JsonAny.Parse("0"));
         builder.Add(MinItemsJsonPropertyName, JsonAny.Parse("0"));
         builder.Add(UniqueItemsJsonPropertyName, JsonAny.Parse("false"));
-        builder.Add(MinContainsJsonPropertyName, JsonAny.Parse("1"));
         builder.Add(MinPropertiesJsonPropertyName, JsonAny.Parse("0"));
         builder.Add(RequiredJsonPropertyName, JsonAny.Parse("[]"));
         builder.Add(DeprecatedJsonPropertyName, JsonAny.Parse("false"));

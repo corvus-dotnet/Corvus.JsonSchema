@@ -1,44 +1,18 @@
-﻿////using Corvus.Json;
-////using JsonSchemaSample.Api;
+﻿using System.Text.Json;
+using Corvus.Json;
+using Corvus.Json.JsonSchema.Draft7;
 
-////Console.WriteLine("Hello world.");
+using var documentResolver =
+    new CompoundDocumentResolver(
+        new FileSystemDocumentResolver(),
+        new HttpClientDocumentResolver(new HttpClient()));
 
-////var matthew =
-////    Person.Create(
-////        name: PersonName.Create(
-////            givenName: "Matthew",
-////            familyName: "Adams",
-////            otherNames: "William"),
-////        dateOfBirth: "1973-02-14");
-
-////var michael =
-////    Person.Create(
-////        name: PersonName.Create(
-////            givenName: "Michael",
-////            familyName: "Adams",
-////            otherNames: OtherNames.FromItems("Francis", "James")),
-////        dateOfBirth: "not valid");
-
-////Console.WriteLine(matthew);
-////Console.WriteLine($"matthew.IsValid(): {matthew.IsValid()}");
-////Console.WriteLine(michael);
-////Console.WriteLine($"michael.IsValid: {michael.IsValid()}");
-
-
-////if (michael.Name.OtherNames.TryGetAsPersonNameElement(out PersonNameElement result))
-////{
-////    Console.WriteLine($"It was an item: {result}");
-////}
-
-////if (michael.Name.OtherNames.TryGetAsPersonNameElementArray(out PersonNameElementArray arrayResult))
-////{
-////    Console.WriteLine($"It was an array: {arrayResult}");
-////}
-
-var bench = new Benchmarks.GeneratedBenchmark5();
-await bench.GlobalSetup();
-
-for (int i = 0; i < 10000; ++i)
+JsonElement? element = await documentResolver.TryResolve(new JsonReference("https://json-schema.org/draft-07/schema")).ConfigureAwait(false);
+if (element is JsonElement schemaElement)
 {
-    bench.PatchCorvus();
+    var schema = Schema.FromJson(schemaElement);
+}
+else
+{
+    Console.Error.WriteLine("Unable to find the Draft7 metaschema.");
 }

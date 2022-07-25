@@ -73,7 +73,6 @@ public readonly partial struct Validation
         builder.Add(MinLengthJsonPropertyName, JsonAny.Parse("0"));
         builder.Add(MinItemsJsonPropertyName, JsonAny.Parse("0"));
         builder.Add(UniqueItemsJsonPropertyName, JsonAny.Parse("false"));
-        builder.Add(MinContainsJsonPropertyName, JsonAny.Parse("1"));
         builder.Add(MinPropertiesJsonPropertyName, JsonAny.Parse("0"));
         builder.Add(RequiredJsonPropertyName, JsonAny.Parse("[]"));
         return builder.ToImmutable();

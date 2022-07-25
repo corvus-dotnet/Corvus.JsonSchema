@@ -31,12 +31,12 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
         {
             result = result.UsingStack();
         }
-<#  if (HasAdditionalProperties || HasUnevaluatedProperties)
+<#  if (HasAdditionalProperties)
     { #>
 
         result = result.UsingEvaluatedProperties();
 <#  }
-    if (HasAdditionalItems || HasUnevaluatedItems)
+    if (HasAdditionalItems)
     { #>
 
         result = result.UsingEvaluatedItems();
@@ -50,7 +50,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
             return result;
         }
 <#  }
-    if ((HasExplicitType || HasFormat || HasMediaTypeOrEncoding) || (HasItems || HasContains || HasUniqueItems || HasMaxItems || HasMinItems || HasUnevaluatedItems || HasAdditionalItems) || (HasDependentRequired || HasLocalProperties || HasRequired || HasMaxProperties || HasMinProperties || HasDependentSchemas || HasPropertyNames || HasPatternProperties || ((AllowsAdditionalProperties && (HasAdditionalProperties || HasUnevaluatedProperties)))))
+    if ((HasExplicitType || HasFormat || HasMediaTypeOrEncoding) || (HasItems || HasContains || HasUniqueItems || HasMaxItems || HasMinItems|| HasAdditionalItems) || (HasDependentRequired || HasLocalProperties || HasRequired || HasMaxProperties || HasMinProperties || HasDependentSchemas || HasPropertyNames || HasPatternProperties || ((AllowsAdditionalProperties && (HasAdditionalProperties)))))
     { #>
 
         JsonValueKind valueKind = this.ValueKind;
@@ -188,7 +188,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
             return result;
         }
 <#  }
-    if (HasDependentRequired || HasLocalProperties || HasRequired || HasMaxProperties || HasMinProperties || HasDependentSchemas || HasPropertyNames || HasPatternProperties || ((AllowsAdditionalProperties && (HasAdditionalProperties || HasUnevaluatedProperties)) || !AllowsAdditionalProperties))
+    if (HasDependentRequired || HasLocalProperties || HasRequired || HasMaxProperties || HasMinProperties || HasDependentSchemas || HasPropertyNames || HasPatternProperties || ((AllowsAdditionalProperties && (HasAdditionalProperties)) || !AllowsAdditionalProperties))
     { #>
 
         result = this.ValidateObject(valueKind, result, level);
@@ -197,7 +197,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
             return result;
         }
 <#  }
-    if (HasItems || HasContains || HasUniqueItems || HasMaxItems || HasMinItems || HasUnevaluatedItems || HasAdditionalItems)
+    if (HasItems || HasContains || HasUniqueItems || HasMaxItems || HasMinItems || HasAdditionalItems)
     { #>
 
         result = this.ValidateArray(valueKind, result, level);
