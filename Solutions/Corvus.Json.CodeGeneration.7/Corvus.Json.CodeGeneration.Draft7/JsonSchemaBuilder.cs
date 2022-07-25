@@ -525,13 +525,6 @@ public class JsonSchemaBuilder : IJsonSchemaBuilder
             localTypes.Add(typeDeclaration);
         }
 
-        if (currentDeclaration.Schema.ContentSchema.IsNotUndefined())
-        {
-            TypeDeclaration typeDeclaration = this.GetTypeDeclarationForProperty(currentDeclaration, "contentSchema");
-            AddTypeDeclarationsToReferencedTypes(referencedTypes, typeDeclaration);
-            localTypes.Add(typeDeclaration);
-        }
-
         if (currentDeclaration.Schema.Dependencies.IsNotUndefined())
         {
             foreach (JsonObjectProperty schemaProperty in currentDeclaration.Schema.Dependencies.EnumerateObject())
@@ -697,11 +690,6 @@ public class JsonSchemaBuilder : IJsonSchemaBuilder
         if (draft7Schema.IsNakedReference())
         {
             return this.ReduceSchema(absoluteLocation, out reducedTypeDeclaration, "$ref");
-        }
-
-        if (draft7Schema.IsNakedRecursiveReference())
-        {
-            return this.ReduceSchema(absoluteLocation, out reducedTypeDeclaration, "$recursiveRef");
         }
 
         reducedTypeDeclaration = default;

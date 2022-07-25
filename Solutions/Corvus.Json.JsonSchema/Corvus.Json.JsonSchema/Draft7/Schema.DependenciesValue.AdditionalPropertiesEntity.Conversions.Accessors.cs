@@ -53,35 +53,35 @@ public readonly partial struct Schema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.Draft7.Validation.JsonStringArray"/>.
+            /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.Draft7.Schema.JsonStringArray"/>.
             /// </summary>
-            public Corvus.Json.JsonSchema.Draft7.Validation.JsonStringArray AsJsonStringArray
+            public Corvus.Json.JsonSchema.Draft7.Schema.JsonStringArray AsJsonStringArray
             {
                 get
                 {
-                    return (Corvus.Json.JsonSchema.Draft7.Validation.JsonStringArray)this;
+                    return (Corvus.Json.JsonSchema.Draft7.Schema.JsonStringArray)this;
                 }
             }
 
             /// <summary>
-            /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.JsonSchema.Draft7.Validation.JsonStringArray"/>.
+            /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.JsonSchema.Draft7.Schema.JsonStringArray"/>.
             /// </summary>
             public bool IsJsonStringArray
             {
                 get
                 {
-                    return ((Corvus.Json.JsonSchema.Draft7.Validation.JsonStringArray)this).IsValid();
+                    return ((Corvus.Json.JsonSchema.Draft7.Schema.JsonStringArray)this).IsValid();
                 }
             }
 
             /// <summary>
-            /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.Draft7.Validation.JsonStringArray"/>.
+            /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.Draft7.Schema.JsonStringArray"/>.
             /// </summary>
             /// <param name = "result">The result of the conversion.</param>
             /// <returns><c>True</c> if the conversion was valid.</returns>
-            public bool TryGetAsJsonStringArray(out Corvus.Json.JsonSchema.Draft7.Validation.JsonStringArray result)
+            public bool TryGetAsJsonStringArray(out Corvus.Json.JsonSchema.Draft7.Schema.JsonStringArray result)
             {
-                result = (Corvus.Json.JsonSchema.Draft7.Validation.JsonStringArray)this;
+                result = (Corvus.Json.JsonSchema.Draft7.Schema.JsonStringArray)this;
                 return result.IsValid();
             }
         }

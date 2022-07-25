@@ -2030,7 +2030,7 @@ public partial class CodeGeneratorObject
             }
         }
 
-        if (typeDeclaration.Schema.Ref.IsNotUndefined() && !(typeDeclaration.Schema.IsNakedReference() || typeDeclaration.Schema.IsNakedRecursiveReference()))
+        if (typeDeclaration.Schema.Ref.IsNotUndefined() && !typeDeclaration.Schema.IsNakedReference())
         {
             TypeDeclaration td = this.Builder.GetTypeDeclarationForProperty(typeDeclaration, "$ref");
 
@@ -2041,7 +2041,7 @@ public partial class CodeGeneratorObject
             }
         }
 
-        if (typeDeclaration.Schema.Then.IsNotUndefined() && !(typeDeclaration.Schema.IsNakedReference() || typeDeclaration.Schema.IsNakedRecursiveReference()))
+        if (typeDeclaration.Schema.Then.IsNotUndefined() && !typeDeclaration.Schema.IsNakedReference())
         {
             TypeDeclaration td = this.Builder.GetTypeDeclarationForProperty(typeDeclaration, "then");
 
@@ -2052,7 +2052,7 @@ public partial class CodeGeneratorObject
             }
         }
 
-        if (typeDeclaration.Schema.Else.IsNotUndefined() && !(typeDeclaration.Schema.IsNakedReference() || typeDeclaration.Schema.IsNakedRecursiveReference()))
+        if (typeDeclaration.Schema.Else.IsNotUndefined() && !typeDeclaration.Schema.IsNakedReference())
         {
             TypeDeclaration td = this.Builder.GetTypeDeclarationForProperty(typeDeclaration, "else");
 

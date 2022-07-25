@@ -32,12 +32,6 @@ public readonly partial struct Schema
             return result;
         }
 
-        result = this.ValidateAllOf(result, level);
-        if (level == ValidationLevel.Flag && !result.IsValid)
-        {
-            return result;
-        }
-
         result = this.ValidateObject(valueKind, result, level);
         if (level == ValidationLevel.Flag && !result.IsValid)
         {

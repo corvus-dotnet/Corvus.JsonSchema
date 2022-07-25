@@ -46,6 +46,7 @@
 	<ItemGroup>
 	  <Folder Include="Corvus.Json.JsonSchema\Draft201909\" />
 	  <Folder Include="Corvus.Json.JsonSchema\Draft202012\" />
+	  <Folder Include="Corvus.Json.JsonSchema\Draft7\" />
 	</ItemGroup>
 
 </Project>

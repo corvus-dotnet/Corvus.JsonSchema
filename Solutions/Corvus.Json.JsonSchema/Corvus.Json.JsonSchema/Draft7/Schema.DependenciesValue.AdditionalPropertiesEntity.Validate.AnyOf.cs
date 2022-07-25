@@ -27,14 +27,7 @@ public readonly partial struct Schema
                 if (anyOfResult0.IsValid)
                 {
                     result = result.MergeChildContext(anyOfResult0, level >= ValidationLevel.Detailed);
-                    if (level == ValidationLevel.Flag)
-                    {
-                        return result;
-                    }
-                    else
-                    {
-                        foundValid = true;
-                    }
+                    foundValid = true;
                 }
                 else
                 {
@@ -48,18 +41,11 @@ public readonly partial struct Schema
                     }
                 }
 
-                ValidationContext anyOfResult1 = this.As<Corvus.Json.JsonSchema.Draft7.Validation.JsonStringArray>().Validate(validationContext.CreateChildContext(), level);
+                ValidationContext anyOfResult1 = this.As<Corvus.Json.JsonSchema.Draft7.Schema.JsonStringArray>().Validate(validationContext.CreateChildContext(), level);
                 if (anyOfResult1.IsValid)
                 {
                     result = result.MergeChildContext(anyOfResult1, level >= ValidationLevel.Detailed);
-                    if (level == ValidationLevel.Flag)
-                    {
-                        return result;
-                    }
-                    else
-                    {
-                        foundValid = true;
-                    }
+                    foundValid = true;
                 }
                 else
                 {

@@ -67,274 +67,10 @@ public readonly partial struct Schema
             }
 
             /// <summary>
-            /// Conversion from <see cref = "Corvus.Json.JsonSchema.Draft7.Core"/>.
+            /// Conversion from <see cref = "Corvus.Json.JsonSchema.Draft7.Schema.JsonStringArray"/>.
             /// </summary>
             /// <param name = "value">The value from which to convert.</param>
-            public static implicit operator AdditionalPropertiesEntity(Corvus.Json.JsonSchema.Draft7.Core value)
-            {
-                if (value.HasJsonElementBacking)
-                {
-                    return new(value.AsJsonElement);
-                }
-
-                return value.ValueKind switch
-                {
-                    JsonValueKind.Object => new((ImmutableDictionary<JsonPropertyName, JsonAny>)value),
-                    JsonValueKind.True => new(true),
-                    JsonValueKind.False => new(false),
-                    _ => Undefined
-                };
-            }
-
-            /// <summary>
-            /// Conversion to <see cref = "Corvus.Json.JsonSchema.Draft7.Core"/>.
-            /// </summary>
-            /// <param name = "value">The value from which to convert.</param>
-            public static implicit operator Corvus.Json.JsonSchema.Draft7.Core(AdditionalPropertiesEntity value)
-            {
-                if ((value.backing & Backing.JsonElement) != 0)
-                {
-                    return new(value.AsJsonElement);
-                }
-
-                if ((value.backing & Backing.Object) != 0)
-                {
-                    return new(value.objectBacking);
-                }
-
-                if ((value.backing & Backing.Bool) != 0)
-                {
-                    return new(value.boolBacking);
-                }
-
-                return Corvus.Json.JsonSchema.Draft7.Core.Undefined;
-            }
-
-            /// <summary>
-            /// Conversion from <see cref = "Corvus.Json.JsonSchema.Draft7.Applicator"/>.
-            /// </summary>
-            /// <param name = "value">The value from which to convert.</param>
-            public static implicit operator AdditionalPropertiesEntity(Corvus.Json.JsonSchema.Draft7.Applicator value)
-            {
-                if (value.HasJsonElementBacking)
-                {
-                    return new(value.AsJsonElement);
-                }
-
-                return value.ValueKind switch
-                {
-                    JsonValueKind.Object => new((ImmutableDictionary<JsonPropertyName, JsonAny>)value),
-                    JsonValueKind.True => new(true),
-                    JsonValueKind.False => new(false),
-                    _ => Undefined
-                };
-            }
-
-            /// <summary>
-            /// Conversion to <see cref = "Corvus.Json.JsonSchema.Draft7.Applicator"/>.
-            /// </summary>
-            /// <param name = "value">The value from which to convert.</param>
-            public static implicit operator Corvus.Json.JsonSchema.Draft7.Applicator(AdditionalPropertiesEntity value)
-            {
-                if ((value.backing & Backing.JsonElement) != 0)
-                {
-                    return new(value.AsJsonElement);
-                }
-
-                if ((value.backing & Backing.Object) != 0)
-                {
-                    return new(value.objectBacking);
-                }
-
-                if ((value.backing & Backing.Bool) != 0)
-                {
-                    return new(value.boolBacking);
-                }
-
-                return Corvus.Json.JsonSchema.Draft7.Applicator.Undefined;
-            }
-
-            /// <summary>
-            /// Conversion from <see cref = "Corvus.Json.JsonSchema.Draft7.Validation"/>.
-            /// </summary>
-            /// <param name = "value">The value from which to convert.</param>
-            public static implicit operator AdditionalPropertiesEntity(Corvus.Json.JsonSchema.Draft7.Validation value)
-            {
-                if (value.HasJsonElementBacking)
-                {
-                    return new(value.AsJsonElement);
-                }
-
-                return value.ValueKind switch
-                {
-                    JsonValueKind.Object => new((ImmutableDictionary<JsonPropertyName, JsonAny>)value),
-                    JsonValueKind.True => new(true),
-                    JsonValueKind.False => new(false),
-                    _ => Undefined
-                };
-            }
-
-            /// <summary>
-            /// Conversion to <see cref = "Corvus.Json.JsonSchema.Draft7.Validation"/>.
-            /// </summary>
-            /// <param name = "value">The value from which to convert.</param>
-            public static implicit operator Corvus.Json.JsonSchema.Draft7.Validation(AdditionalPropertiesEntity value)
-            {
-                if ((value.backing & Backing.JsonElement) != 0)
-                {
-                    return new(value.AsJsonElement);
-                }
-
-                if ((value.backing & Backing.Object) != 0)
-                {
-                    return new(value.objectBacking);
-                }
-
-                if ((value.backing & Backing.Bool) != 0)
-                {
-                    return new(value.boolBacking);
-                }
-
-                return Corvus.Json.JsonSchema.Draft7.Validation.Undefined;
-            }
-
-            /// <summary>
-            /// Conversion from <see cref = "Corvus.Json.JsonSchema.Draft7.MetaData"/>.
-            /// </summary>
-            /// <param name = "value">The value from which to convert.</param>
-            public static implicit operator AdditionalPropertiesEntity(Corvus.Json.JsonSchema.Draft7.MetaData value)
-            {
-                if (value.HasJsonElementBacking)
-                {
-                    return new(value.AsJsonElement);
-                }
-
-                return value.ValueKind switch
-                {
-                    JsonValueKind.Object => new((ImmutableDictionary<JsonPropertyName, JsonAny>)value),
-                    JsonValueKind.True => new(true),
-                    JsonValueKind.False => new(false),
-                    _ => Undefined
-                };
-            }
-
-            /// <summary>
-            /// Conversion to <see cref = "Corvus.Json.JsonSchema.Draft7.MetaData"/>.
-            /// </summary>
-            /// <param name = "value">The value from which to convert.</param>
-            public static implicit operator Corvus.Json.JsonSchema.Draft7.MetaData(AdditionalPropertiesEntity value)
-            {
-                if ((value.backing & Backing.JsonElement) != 0)
-                {
-                    return new(value.AsJsonElement);
-                }
-
-                if ((value.backing & Backing.Object) != 0)
-                {
-                    return new(value.objectBacking);
-                }
-
-                if ((value.backing & Backing.Bool) != 0)
-                {
-                    return new(value.boolBacking);
-                }
-
-                return Corvus.Json.JsonSchema.Draft7.MetaData.Undefined;
-            }
-
-            /// <summary>
-            /// Conversion from <see cref = "Corvus.Json.JsonSchema.Draft7.Format"/>.
-            /// </summary>
-            /// <param name = "value">The value from which to convert.</param>
-            public static implicit operator AdditionalPropertiesEntity(Corvus.Json.JsonSchema.Draft7.Format value)
-            {
-                if (value.HasJsonElementBacking)
-                {
-                    return new(value.AsJsonElement);
-                }
-
-                return value.ValueKind switch
-                {
-                    JsonValueKind.Object => new((ImmutableDictionary<JsonPropertyName, JsonAny>)value),
-                    JsonValueKind.True => new(true),
-                    JsonValueKind.False => new(false),
-                    _ => Undefined
-                };
-            }
-
-            /// <summary>
-            /// Conversion to <see cref = "Corvus.Json.JsonSchema.Draft7.Format"/>.
-            /// </summary>
-            /// <param name = "value">The value from which to convert.</param>
-            public static implicit operator Corvus.Json.JsonSchema.Draft7.Format(AdditionalPropertiesEntity value)
-            {
-                if ((value.backing & Backing.JsonElement) != 0)
-                {
-                    return new(value.AsJsonElement);
-                }
-
-                if ((value.backing & Backing.Object) != 0)
-                {
-                    return new(value.objectBacking);
-                }
-
-                if ((value.backing & Backing.Bool) != 0)
-                {
-                    return new(value.boolBacking);
-                }
-
-                return Corvus.Json.JsonSchema.Draft7.Format.Undefined;
-            }
-
-            /// <summary>
-            /// Conversion from <see cref = "Corvus.Json.JsonSchema.Draft7.Content"/>.
-            /// </summary>
-            /// <param name = "value">The value from which to convert.</param>
-            public static implicit operator AdditionalPropertiesEntity(Corvus.Json.JsonSchema.Draft7.Content value)
-            {
-                if (value.HasJsonElementBacking)
-                {
-                    return new(value.AsJsonElement);
-                }
-
-                return value.ValueKind switch
-                {
-                    JsonValueKind.Object => new((ImmutableDictionary<JsonPropertyName, JsonAny>)value),
-                    JsonValueKind.True => new(true),
-                    JsonValueKind.False => new(false),
-                    _ => Undefined
-                };
-            }
-
-            /// <summary>
-            /// Conversion to <see cref = "Corvus.Json.JsonSchema.Draft7.Content"/>.
-            /// </summary>
-            /// <param name = "value">The value from which to convert.</param>
-            public static implicit operator Corvus.Json.JsonSchema.Draft7.Content(AdditionalPropertiesEntity value)
-            {
-                if ((value.backing & Backing.JsonElement) != 0)
-                {
-                    return new(value.AsJsonElement);
-                }
-
-                if ((value.backing & Backing.Object) != 0)
-                {
-                    return new(value.objectBacking);
-                }
-
-                if ((value.backing & Backing.Bool) != 0)
-                {
-                    return new(value.boolBacking);
-                }
-
-                return Corvus.Json.JsonSchema.Draft7.Content.Undefined;
-            }
-
-            /// <summary>
-            /// Conversion from <see cref = "Corvus.Json.JsonSchema.Draft7.Validation.JsonStringArray"/>.
-            /// </summary>
-            /// <param name = "value">The value from which to convert.</param>
-            public static implicit operator AdditionalPropertiesEntity(Corvus.Json.JsonSchema.Draft7.Validation.JsonStringArray value)
+            public static implicit operator AdditionalPropertiesEntity(Corvus.Json.JsonSchema.Draft7.Schema.JsonStringArray value)
             {
                 if (value.HasJsonElementBacking)
                 {
@@ -349,10 +85,10 @@ public readonly partial struct Schema
             }
 
             /// <summary>
-            /// Conversion to <see cref = "Corvus.Json.JsonSchema.Draft7.Validation.JsonStringArray"/>.
+            /// Conversion to <see cref = "Corvus.Json.JsonSchema.Draft7.Schema.JsonStringArray"/>.
             /// </summary>
             /// <param name = "value">The value from which to convert.</param>
-            public static implicit operator Corvus.Json.JsonSchema.Draft7.Validation.JsonStringArray(AdditionalPropertiesEntity value)
+            public static implicit operator Corvus.Json.JsonSchema.Draft7.Schema.JsonStringArray(AdditionalPropertiesEntity value)
             {
                 if ((value.backing & Backing.JsonElement) != 0)
                 {
@@ -364,7 +100,7 @@ public readonly partial struct Schema
                     return new(value.arrayBacking);
                 }
 
-                return Corvus.Json.JsonSchema.Draft7.Validation.JsonStringArray.Undefined;
+                return Corvus.Json.JsonSchema.Draft7.Schema.JsonStringArray.Undefined;
             }
         }
     }
