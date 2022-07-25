@@ -44,7 +44,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 <#  }
     else
     { #>
-        int arrayLength = this.Length;
+        int arrayLength = this.GetArrayLength();
 <#  }
     if (HasContains)
     { #>

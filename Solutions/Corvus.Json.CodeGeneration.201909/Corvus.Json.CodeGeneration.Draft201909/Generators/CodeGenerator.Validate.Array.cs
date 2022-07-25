@@ -134,7 +134,7 @@ namespace ");
             #line hidden
             
             #line 47 "./Templates/CodeGenerator.Validate.Array.tt"
-            this.Write("        int arrayLength = this.Length;\r\n");
+            this.Write("        int arrayLength = this.GetArrayLength();\r\n");
             
             #line default
             #line hidden
