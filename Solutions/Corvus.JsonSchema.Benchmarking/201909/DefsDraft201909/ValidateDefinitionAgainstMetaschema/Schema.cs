@@ -6829,11 +6829,25 @@ namespace DefsDraft201909Feature.ValidateDefinitionAgainstMetaschema
                 return this.jsonElementBacking.GetArrayLength();
             }
         }
-    
-            /// <summary>
-        /// Gets the value as a <see cref="DefsDraft201909Feature.ValidateDefinitionAgainstMetaschema.Schema" />.
-        /// </summary>
-        public DefsDraft201909Feature.ValidateDefinitionAgainstMetaschema.Schema AsSchema
+
+                /// <inheritdoc/>
+                public JsonAny this[int index]
+                {
+                    get
+                    {
+                        if (this.arrayBacking is ImmutableList<JsonAny> items)
+                        {
+                            return items[index];
+                        }
+
+                        return new JsonAny(this.jsonElementBacking[index]);
+                    }
+                }
+
+                /// <summary>
+                /// Gets the value as a <see cref="DefsDraft201909Feature.ValidateDefinitionAgainstMetaschema.Schema" />.
+                /// </summary>
+                public DefsDraft201909Feature.ValidateDefinitionAgainstMetaschema.Schema AsSchema
         {
             get
             {

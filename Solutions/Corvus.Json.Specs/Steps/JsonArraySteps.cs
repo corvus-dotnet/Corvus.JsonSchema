@@ -364,6 +364,16 @@ namespace Steps
         }
 
         /// <summary>
+        /// Checks the the entity in the context with key <see cref="ArrayExceptionKey"/> is an IndexOutOfRangeException.
+        /// </summary>
+        [Then(@"the array operation should produce an IndexOutOfRangeException")]
+        public void ThenTheArrayOperationShouldProduceAndIndexOutOfRangeException()
+        {
+            Assert.IsTrue(this.scenarioContext.ContainsKey(ArrayExceptionKey));
+            Assert.IsAssignableFrom<IndexOutOfRangeException>(this.scenarioContext.Get<object>(ArrayExceptionKey));
+        }
+
+        /// <summary>
         /// Gets the <see cref="JsonArray"/> from the context with key <see cref="JsonValueSteps.SubjectUnderTest"/>
         /// and gets the item at the given index storing the result in <see cref="ArrayValueResultkey"/>.
         /// </summary>

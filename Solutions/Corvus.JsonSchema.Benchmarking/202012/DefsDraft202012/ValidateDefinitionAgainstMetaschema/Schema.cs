@@ -7073,11 +7073,26 @@ namespace DefsDraft202012Feature.ValidateDefinitionAgainstMetaschema
                 return this.jsonElementBacking.GetArrayLength();
             }
         }
-    
-            /// <summary>
-        /// Gets the value as a <see cref="DefsDraft202012Feature.ValidateDefinitionAgainstMetaschema.Schema" />.
-        /// </summary>
-        public DefsDraft202012Feature.ValidateDefinitionAgainstMetaschema.Schema AsSchema
+
+                /// <inheritdoc/>
+                public JsonAny this[int index]
+                {
+                    get
+                    {
+                        if (this.arrayBacking is ImmutableList<JsonAny> items)
+                        {
+                            return items[index];
+                        }
+
+                        return new JsonAny(this.jsonElementBacking[index]);
+                    }
+                }
+
+
+                /// <summary>
+                /// Gets the value as a <see cref="DefsDraft202012Feature.ValidateDefinitionAgainstMetaschema.Schema" />.
+                /// </summary>
+                public DefsDraft202012Feature.ValidateDefinitionAgainstMetaschema.Schema AsSchema
         {
             get
             {

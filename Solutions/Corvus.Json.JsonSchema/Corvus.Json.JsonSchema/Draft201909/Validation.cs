@@ -4225,6 +4225,20 @@ namespace Corvus.Json.JsonSchema.Draft201909
                 }
             }
 
+            /// <inheritdoc/>
+            public JsonAny this[int index]
+            {
+                get
+                {
+                    if (this.arrayBacking is ImmutableList<JsonAny> items)
+                    {
+                        return items[index];
+                    }
+
+                    return new JsonAny(this.jsonElementBacking[index]);
+                }
+            }
+
             /// <summary>
             /// Gets a value indicating whether this is backed by a JSON element.
             /// </summary>
@@ -5373,6 +5387,20 @@ namespace Corvus.Json.JsonSchema.Draft201909
                 }
             }
 
+            /// <inheritdoc/>
+            public JsonAny this[int index]
+            {
+                get
+                {
+                    if (this.arrayBacking is ImmutableList<JsonAny> items)
+                    {
+                        return items[index];
+                    }
+
+                    return new JsonAny(this.jsonElementBacking[index]);
+                }
+            }
+
             /// <summary>
             /// Gets a value indicating whether this is backed by a JSON element.
             /// </summary>
@@ -6053,6 +6081,20 @@ namespace Corvus.Json.JsonSchema.Draft201909
                     }
 
                     return this.jsonElementBacking.GetArrayLength();
+                }
+            }
+
+            /// <inheritdoc/>
+            public JsonAny this[int index]
+            {
+                get
+                {
+                    if (this.arrayBacking is ImmutableList<JsonAny> items)
+                    {
+                        return items[index];
+                    }
+
+                    return new JsonAny(this.jsonElementBacking[index]);
                 }
             }
 
@@ -6850,6 +6892,20 @@ namespace Corvus.Json.JsonSchema.Draft201909
                         }
 
                         return this.jsonElementBacking.GetArrayLength();
+                    }
+                }
+
+                /// <inheritdoc/>
+                public JsonAny this[int index]
+                {
+                    get
+                    {
+                        if (this.arrayBacking is ImmutableList<JsonAny> items)
+                        {
+                            return items[index];
+                        }
+
+                        return new JsonAny(this.jsonElementBacking[index]);
                     }
                 }
 

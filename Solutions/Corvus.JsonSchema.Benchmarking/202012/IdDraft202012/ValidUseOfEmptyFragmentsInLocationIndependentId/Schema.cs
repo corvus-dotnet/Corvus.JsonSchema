@@ -7073,11 +7073,26 @@ namespace IdDraft202012Feature.ValidUseOfEmptyFragmentsInLocationIndependentId
                 return this.jsonElementBacking.GetArrayLength();
             }
         }
-    
-            /// <summary>
-        /// Gets the value as a <see cref="IdDraft202012Feature.ValidUseOfEmptyFragmentsInLocationIndependentId.Schema" />.
-        /// </summary>
-        public IdDraft202012Feature.ValidUseOfEmptyFragmentsInLocationIndependentId.Schema AsSchema
+
+                /// <inheritdoc/>
+                public JsonAny this[int index]
+                {
+                    get
+                    {
+                        if (this.arrayBacking is ImmutableList<JsonAny> items)
+                        {
+                            return items[index];
+                        }
+
+                        return new JsonAny(this.jsonElementBacking[index]);
+                    }
+                }
+
+
+                /// <summary>
+                /// Gets the value as a <see cref="IdDraft202012Feature.ValidUseOfEmptyFragmentsInLocationIndependentId.Schema" />.
+                /// </summary>
+                public IdDraft202012Feature.ValidUseOfEmptyFragmentsInLocationIndependentId.Schema AsSchema
         {
             get
             {

@@ -1261,6 +1261,21 @@ namespace <#= Namespace #>
                 return this.jsonElementBacking.GetArrayLength();
             }
         }
+
+        /// <inheritdoc/>
+        public JsonAny this[int index]
+        {
+            get
+            {
+                if (this.arrayBacking is ImmutableList<JsonAny> items)
+                {
+                    return items[index];
+                }
+
+                return new JsonAny(this.jsonElementBacking[index]);
+            }
+        }
+
     <#
     }
     #>
@@ -2426,7 +2441,6 @@ namespace <#= Namespace #>
                 builder.Add(<#= property.DotnetPropertyName#>JsonPropertyName, <#= property.DotnetParameterName #>__);
             }            
         <#
-            }
         }
         #>
             return builder.ToImmutable();

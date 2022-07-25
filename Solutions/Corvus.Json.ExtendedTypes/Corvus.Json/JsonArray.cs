@@ -19,10 +19,7 @@ namespace Corvus.Json
         /// <summary>
         /// An empty JsonArray.
         /// </summary>
-#pragma warning disable SA1000 // Keywords should be spaced correctly
         public static readonly JsonArray Empty = new(ImmutableList<JsonAny>.Empty);
-#pragma warning restore SA1000 // Keywords should be spaced correctly
-
         private readonly JsonElement jsonElement;
         private readonly ImmutableList<JsonAny>? items;
 
@@ -78,6 +75,27 @@ namespace Corvus.Json
                 }
 
                 return this.jsonElement.GetArrayLength();
+            }
+        }
+
+#pragma warning disable SA1648 // inheritdoc should be used with inheriting class
+        /// <inheritdoc/>
+        public JsonAny this[int index]
+#pragma warning restore SA1648 // inheritdoc should be used with inheriting class
+        {
+            get
+            {
+                if (this.items is ImmutableList<JsonAny> items)
+                {
+                    if (index >= items.Count)
+                    {
+                        throw new IndexOutOfRangeException(nameof(index));
+                    }
+
+                    return items[index];
+                }
+
+                return new JsonAny(this.jsonElement[index]);
             }
         }
 
@@ -539,12 +557,7 @@ namespace Corvus.Json
                 }
             }
 
-            if (rhs.MoveNext())
-            {
-                return false;
-            }
-
-            return true;
+            return !rhs.MoveNext();
         }
 
         /// <inheritdoc/>
@@ -637,6 +650,11 @@ namespace Corvus.Json
         {
             if (this.items is ImmutableList<JsonAny> items)
             {
+                if (index > items.Count)
+                {
+                    throw new IndexOutOfRangeException(nameof(index));
+                }
+
                 return items.Insert(index, value);
             }
 
@@ -645,7 +663,7 @@ namespace Corvus.Json
                 int arrayLength = this.jsonElement.GetArrayLength();
                 if (index > arrayLength)
                 {
-                    throw new ArgumentOutOfRangeException(nameof(index));
+                    throw new IndexOutOfRangeException(nameof(index));
                 }
 
                 ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
@@ -707,6 +725,11 @@ namespace Corvus.Json
         {
             if (this.items is ImmutableList<JsonAny> items)
             {
+                if (index >= items.Count)
+                {
+                    throw new IndexOutOfRangeException(nameof(index));
+                }
+
                 return items.SetItem(index, value);
             }
 
@@ -715,7 +738,7 @@ namespace Corvus.Json
                 int arrayLength = this.jsonElement.GetArrayLength();
                 if (index >= arrayLength)
                 {
-                    throw new ArgumentOutOfRangeException(nameof(index));
+                    throw new IndexOutOfRangeException(nameof(index));
                 }
 
                 ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
@@ -744,6 +767,16 @@ namespace Corvus.Json
         {
             if (this.items is ImmutableList<JsonAny> items)
             {
+                if (index >= items.Count)
+                {
+                    throw new IndexOutOfRangeException(nameof(index));
+                }
+
+                if (index + count > items.Count)
+                {
+                    throw new IndexOutOfRangeException(nameof(count));
+                }
+
                 return items.RemoveRange(index, count);
             }
 
@@ -752,12 +785,12 @@ namespace Corvus.Json
                 int arrayLength = this.jsonElement.GetArrayLength();
                 if (index >= arrayLength)
                 {
-                    throw new ArgumentOutOfRangeException(nameof(index));
+                    throw new IndexOutOfRangeException(nameof(index));
                 }
 
                 if (index + count > arrayLength)
                 {
-                    throw new ArgumentOutOfRangeException(nameof(count));
+                    throw new IndexOutOfRangeException(nameof(count));
                 }
 
                 ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
