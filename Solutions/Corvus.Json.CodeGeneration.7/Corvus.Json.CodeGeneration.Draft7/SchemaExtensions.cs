@@ -427,45 +427,8 @@ public static class SchemaExtensions
     /// <returns><c>True</c> if the schema has a $ref and no other substantive properties.</returns>
     public static bool IsNakedReference(this Schema draft7Schema)
     {
+        // If we have a reference, we are always naked.
         return
-            draft7Schema.Ref.IsNotUndefined() &&
-            draft7Schema.AdditionalItems.IsUndefined() &&
-            draft7Schema.AdditionalProperties.IsUndefined() &&
-            draft7Schema.AllOf.IsUndefined() &&
-            draft7Schema.AnyOf.IsUndefined() &&
-            draft7Schema.Const.IsUndefined() &&
-            draft7Schema.Contains.IsUndefined() &&
-            draft7Schema.ContentEncoding.IsUndefined() &&
-            draft7Schema.ContentMediaType.IsUndefined() &&
-            draft7Schema.Default.IsUndefined() &&
-            draft7Schema.Dependencies.IsUndefined() &&
-            draft7Schema.Else.IsUndefined() &&
-            draft7Schema.Enum.IsUndefined() &&
-            draft7Schema.ExclusiveMaximum.IsUndefined() &&
-            draft7Schema.ExclusiveMinimum.IsUndefined() &&
-            draft7Schema.Format.IsUndefined() &&
-            draft7Schema.If.IsUndefined() &&
-            draft7Schema.Items.IsUndefined() &&
-            draft7Schema.Maximum.IsUndefined() &&
-            draft7Schema.MaxItems.IsUndefined() &&
-            draft7Schema.MaxLength.IsUndefined() &&
-            draft7Schema.MaxProperties.IsUndefined() &&
-            draft7Schema.Minimum.IsUndefined() &&
-            draft7Schema.MinItems.IsUndefined() &&
-            draft7Schema.MinLength.IsUndefined() &&
-            draft7Schema.MinProperties.IsUndefined() &&
-            draft7Schema.MultipleOf.IsUndefined() &&
-            draft7Schema.Not.IsUndefined() &&
-            draft7Schema.OneOf.IsUndefined() &&
-            draft7Schema.Pattern.IsUndefined() &&
-            draft7Schema.PatternProperties.IsUndefined() &&
-            draft7Schema.Properties.IsUndefined() &&
-            draft7Schema.PropertyNames.IsUndefined() &&
-            draft7Schema.ReadOnly.IsUndefined() &&
-            draft7Schema.Required.IsUndefined() &&
-            draft7Schema.Then.IsUndefined() &&
-            draft7Schema.Type.IsUndefined() &&
-            draft7Schema.UniqueItems.IsUndefined() &&
-            draft7Schema.WriteOnly.IsUndefined();
+            draft7Schema.Ref.IsNotUndefined();
     }
 }

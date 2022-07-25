@@ -16,6 +16,12 @@
 		</PackageReference>
 	</ItemGroup>
 
+	<ItemGroup>
+	  <None Update="JsonSchemaOrgTestSuiteSelector.jsonc">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+	</ItemGroup>
+
 	<PropertyGroup>
 		<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
 		<RestoreLockedMode Condition="$(ContinuousIntegrationBuild) == 'true'">true</RestoreLockedMode>

@@ -30,8 +30,10 @@ public static class ContainerConfiguration
         services.AddTransient<JsonWalker>();
         services.AddTransient<Corvus.Json.CodeGeneration.Draft202012.JsonSchemaBuilder>();
         services.AddTransient<Corvus.Json.CodeGeneration.Draft201909.JsonSchemaBuilder>();
+        services.AddTransient<Corvus.Json.CodeGeneration.Draft7.JsonSchemaBuilder>();
         services.AddTransient<JsonSchemaBuilderDriver202012>();
         services.AddTransient<JsonSchemaBuilderDriver201909>();
+        services.AddTransient<JsonSchemaBuilderDriver7>();
 
         services.AddTransient<IJsonSchemaBuilderDriver>(sp =>
         {
@@ -44,6 +46,11 @@ public static class ContainerConfiguration
             if (scenarioContext.ScenarioInfo.ScenarioAndFeatureTags.Any(t => t == "draft2019-09"))
             {
                 return sp.GetRequiredService<JsonSchemaBuilderDriver201909>();
+            }
+
+            if (scenarioContext.ScenarioInfo.ScenarioAndFeatureTags.Any(t => t == "draft7"))
+            {
+                return sp.GetRequiredService<JsonSchemaBuilderDriver7>();
             }
 
             // Default to 202012

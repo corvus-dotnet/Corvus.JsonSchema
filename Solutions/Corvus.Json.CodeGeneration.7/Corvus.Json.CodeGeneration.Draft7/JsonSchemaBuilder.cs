@@ -107,7 +107,7 @@ public class JsonSchemaBuilder : IJsonSchemaBuilder
     /// <returns>The given type declaration.</returns>
     internal TypeDeclaration GetTypeDeclarationForDependentSchema(TypeDeclaration typeDeclaration, string dependentSchema)
     {
-        return this.GetTypeDeclarationForProperty(new JsonReference(typeDeclaration.Location).AppendUnencodedPropertyNameToFragment("dependentSchemas"), new JsonReference(typeDeclaration.LexicalLocation).AppendUnencodedPropertyNameToFragment("dependentSchemas"), dependentSchema);
+        return this.GetTypeDeclarationForProperty(new JsonReference(typeDeclaration.Location).AppendUnencodedPropertyNameToFragment("dependencies"), new JsonReference(typeDeclaration.LexicalLocation).AppendUnencodedPropertyNameToFragment("dependentSchemas"), dependentSchema);
     }
 
     /// <summary>
@@ -529,13 +529,13 @@ public class JsonSchemaBuilder : IJsonSchemaBuilder
         {
             foreach (JsonObjectProperty schemaProperty in currentDeclaration.Schema.Dependencies.EnumerateObject())
             {
-                if (schemaProperty.Value.ValueKind != System.Text.Json.JsonValueKind.Object)
+                if (!schemaProperty.Value.As<Schema>().IsValid())
                 {
-                    // We are not doing dependent schema-style dependencies.
-                    break;
+                    // This is not a schema-style dependency.
+                    continue;
                 }
 
-                TypeDeclaration typeDeclaration = this.GetTypeDeclarationForProperty(new JsonReference(currentDeclaration.Location).AppendUnencodedPropertyNameToFragment("dependentSchemas"), new JsonReference(currentDeclaration.LexicalLocation).AppendUnencodedPropertyNameToFragment("dependencies"), schemaProperty.Name);
+                TypeDeclaration typeDeclaration = this.GetTypeDeclarationForProperty(new JsonReference(currentDeclaration.Location).AppendUnencodedPropertyNameToFragment("dependencies"), new JsonReference(currentDeclaration.LexicalLocation).AppendUnencodedPropertyNameToFragment("dependencies"), schemaProperty.Name);
                 AddTypeDeclarationsToReferencedTypes(referencedTypes, typeDeclaration);
                 localTypes.Add(typeDeclaration);
             }
@@ -659,11 +659,6 @@ public class JsonSchemaBuilder : IJsonSchemaBuilder
         {
             throw new InvalidOperationException("Unable to build types for an invalid schema.");
         }
-
-        ////if (draft7Schema.Id is Draft7MetaCore.IdValue idValue)
-        ////{
-        ////    location = new JsonReference(location).Apply(new JsonReference(idValue));
-        ////}
 
         if (this.TryReduceSchema(location, draft7Schema, out TypeDeclaration? reducedTypeDeclaration))
         {

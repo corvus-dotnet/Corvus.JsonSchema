@@ -1046,7 +1046,10 @@ public partial class CodeGeneratorValidateArray
             {
                 foreach (JsonObjectProperty property in this.TypeDeclaration.Schema.Dependencies.EnumerateObject())
                 {
-                    builder.Add(new DependentSchema(property.Name, this.Builder.GetTypeDeclarationForDependentSchema(this.TypeDeclaration, property.Name).FullyQualifiedDotnetTypeName!));
+                    if (property.Value.As<Schema>().IsValid())
+                    {
+                        builder.Add(new DependentSchema(property.Name, this.Builder.GetTypeDeclarationForDependentSchema(this.TypeDeclaration, property.Name).FullyQualifiedDotnetTypeName!));
+                    }
                 }
             }
 
@@ -1066,13 +1069,16 @@ public partial class CodeGeneratorValidateArray
             {
                 foreach (JsonObjectProperty property in this.TypeDeclaration.Schema.Dependencies.EnumerateObject())
                 {
-                    ImmutableArray<string>.Builder innerBuilder = ImmutableArray.CreateBuilder<string>();
-                    foreach (JsonAny item in property.Value.EnumerateArray())
+                    if (property.Value.ValueKind == JsonValueKind.Array)
                     {
-                        innerBuilder.Add((string)item);
-                    }
+                        ImmutableArray<string>.Builder innerBuilder = ImmutableArray.CreateBuilder<string>();
+                        foreach (JsonAny item in property.Value.EnumerateArray())
+                        {
+                            innerBuilder.Add((string)item);
+                        }
 
-                    builder.Add(new DependentRequiredValue(property.Name, innerBuilder.ToImmutable()));
+                        builder.Add(new DependentRequiredValue(property.Name, innerBuilder.ToImmutable()));
+                    }
                 }
             }
 

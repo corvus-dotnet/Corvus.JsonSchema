@@ -263,6 +263,16 @@ public class JsonWalker
             {
                 if (this.locatedElements.ContainsKey(reference))
                 {
+                    LocatedElement locatedElement1 = this.locatedElements[reference];
+                    if (stackLocation[0] != reference)
+                    {
+                        stackLocation.Reverse();
+                        this.scopedLocationStack = new Stack<string>(stackLocation);
+                        postResolutionAction(this, locatedElement1);
+
+                        this.PopLocationStack();
+                    }
+
                     continue;
                 }
 

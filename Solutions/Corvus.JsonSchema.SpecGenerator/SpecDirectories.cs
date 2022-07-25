@@ -87,7 +87,7 @@ internal struct SpecDirectories
         string outputDirectory = Path.Combine(Environment.CurrentDirectory, testsDirectory);
         if (args.Length > 1)
         {
-            outputDirectory = Path.Combine(outputDirectory, args[1]);
+            outputDirectory = Path.Combine(Environment.CurrentDirectory, args[1]);
         }
 
         try

@@ -5,6 +5,30 @@
   "includeInThisDirectory": [],
   "subdirectories": {
 
+    "draft7": {
+      "testSet": "draft7",
+      "outputFolder": "Draft7",
+      "excludeFromThisDirectory": [
+        "unknownKeyword\\.json"
+      ],
+      "subdirectories": {
+        "optional": {
+          "excludeFromThisDirectory": [
+            "bignum\\.json",
+            "ecmascript-regex\\.json",
+            "non-bmp-regex\\.json"
+          ],
+          "subdirectories": {
+            "format": {
+              "excludeFromThisDirectory": [
+                "unknown\\.json"
+              ]
+            }
+          }
+        }
+      }
+    },
+
     "draft2019-09": {
       "testSet": "draft2019-09",
       "outputFolder": "Draft201909",
