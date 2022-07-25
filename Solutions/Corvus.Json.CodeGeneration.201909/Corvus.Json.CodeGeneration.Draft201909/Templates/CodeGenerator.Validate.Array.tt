@@ -52,13 +52,13 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 <#  }
     if (HasItems || HasContains || HasUniqueItems || HasUnevaluatedItems || HasAdditionalItems)
     { #>
-        JsonArrayEnumerator arrayEnumerator = this.EnumerateArray();
+        var arrayEnumerator = this.EnumerateArray();
 
         while (arrayEnumerator.MoveNext())
         {
 <#      if (HasUniqueItems)
         { #>
-            JsonArrayEnumerator innerEnumerator = this.EnumerateArray();
+            var innerEnumerator = this.EnumerateArray();
             int innerIndex = -1;
             while (innerIndex < arrayLength && innerEnumerator.MoveNext())
             {
