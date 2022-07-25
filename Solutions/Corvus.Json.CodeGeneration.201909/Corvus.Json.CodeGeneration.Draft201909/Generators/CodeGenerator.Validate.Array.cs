@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace Corvus.Json.CodeGeneration.Generators.Draft202012 {
+namespace Corvus.Json.CodeGeneration.Generators.Draft201909 {
     using System.Collections.Generic;
     using Corvus.Json;
     using System;
@@ -17,13 +17,13 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft202012 {
     public partial class CodeGeneratorValidateArray : CodeGeneratorValidateArrayBase {
         
         
-        #line 304 "./Templates/CodeGenerator.Validate.Array.tt"
+        #line 313 "./Templates/CodeGenerator.Validate.Array.tt"
 
     public bool ShouldGenerate
     {
         get
         {
-            return HasItems || HasContains || HasUniqueItems || HasMaxItems || HasMinItems || HasUnevaluatedItems || HasPrefixItems;
+            return HasItems || HasContains || HasUniqueItems || HasMaxItems || HasMinItems || HasUnevaluatedItems || HasAdditionalItems;
         }
     }
 
@@ -36,10 +36,10 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft202012 {
             
             #line 4 "./Templates/CodeGenerator.Validate.Array.tt"
 
-    // This is only emitted if (HasItems || HasContains || HasUniqueItems || HasMaxItems || HasMinItems || HasUnevaluatedItems || HasPrefixItems) is true
+    // This is only emitted if (HasItems || HasContains || HasUniqueItems || HasMaxItems || HasMinItems || HasUnevaluatedItems || HasAditionalItems) is true
     if(!ShouldGenerate)
     {
-        throw new InvalidOperationException("CodeGenerator.Validate.Array should not be emitted if (HasItems || HasContains || HasUniqueItems || HasMaxItems || HasMinItems || HasUnevaluatedItems || HasPrefixItems) is false.");
+        throw new InvalidOperationException("CodeGenerator.Validate.Array should not be emitted if (HasItems || HasContains || HasUniqueItems || HasMaxItems || HasMinItems || HasUnevaluatedItems || HasAdditionalItems) is false.");
     } 
             
             #line default
@@ -113,7 +113,7 @@ namespace ");
             #line hidden
             
             #line 40 "./Templates/CodeGenerator.Validate.Array.tt"
-  if (HasItems || HasContains || HasUniqueItems || HasUnevaluatedItems || HasPrefixItems)
+  if (HasItems || HasContains || HasUniqueItems || HasUnevaluatedItems || HasAdditionalItems)
     { 
             
             #line default
@@ -134,7 +134,7 @@ namespace ");
             #line hidden
             
             #line 47 "./Templates/CodeGenerator.Validate.Array.tt"
-            this.Write("        int arrayLength = this.GetArrayLength();\r\n");
+            this.Write("        int arrayLength = this.Length;\r\n");
             
             #line default
             #line hidden
@@ -155,123 +155,29 @@ namespace ");
             
             #line 52 "./Templates/CodeGenerator.Validate.Array.tt"
   }
-    if (HasItems || HasContains || HasUniqueItems || HasUnevaluatedItems || HasPrefixItems)
+    if (HasItems || HasContains || HasUniqueItems || HasUnevaluatedItems || HasAdditionalItems)
     { 
             
             #line default
             #line hidden
             
             #line 55 "./Templates/CodeGenerator.Validate.Array.tt"
-            this.Write("\r\n");
+            this.Write("        JsonArrayEnumerator arrayEnumerator = this.EnumerateArray();\r\n\r\n        w" +
+                    "hile (arrayEnumerator.MoveNext())\r\n        {\r\n");
             
             #line default
             #line hidden
             
-            #line 56 "./Templates/CodeGenerator.Validate.Array.tt"
-  if (!CanEnumerateAsSpecificType)
-    { 
-            
-            #line default
-            #line hidden
-            
-            #line 58 "./Templates/CodeGenerator.Validate.Array.tt"
-            this.Write("\r\n        JsonArrayEnumerator arrayEnumerator = this.EnumerateArray();\r\n");
-            
-            #line default
-            #line hidden
-            
-            #line 60 "./Templates/CodeGenerator.Validate.Array.tt"
-  }
-    else
-    { 
-            
-            #line default
-            #line hidden
-            
-            #line 63 "./Templates/CodeGenerator.Validate.Array.tt"
-            this.Write("\r\n        JsonArrayEnumerator<");
-            
-            #line default
-            #line hidden
-            
-            #line 64 "./Templates/CodeGenerator.Validate.Array.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
-            
-            #line default
-            #line hidden
-            
-            #line 64 "./Templates/CodeGenerator.Validate.Array.tt"
-            this.Write("> arrayEnumerator = this.EnumerateArray();\r\n");
-            
-            #line default
-            #line hidden
-            
-            #line 65 "./Templates/CodeGenerator.Validate.Array.tt"
-  } 
-            
-            #line default
-            #line hidden
-            
-            #line 66 "./Templates/CodeGenerator.Validate.Array.tt"
-            this.Write("\r\n        while (arrayEnumerator.MoveNext())\r\n        {\r\n");
-            
-            #line default
-            #line hidden
-            
-            #line 69 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 59 "./Templates/CodeGenerator.Validate.Array.tt"
       if (HasUniqueItems)
         { 
             
             #line default
             #line hidden
             
-            #line 71 "./Templates/CodeGenerator.Validate.Array.tt"
-  if (!CanEnumerateAsSpecificType)
-    { 
-            
-            #line default
-            #line hidden
-            
-            #line 73 "./Templates/CodeGenerator.Validate.Array.tt"
-            this.Write("\r\n            JsonArrayEnumerator innerEnumerator = this.EnumerateArray();\r\n");
-            
-            #line default
-            #line hidden
-            
-            #line 75 "./Templates/CodeGenerator.Validate.Array.tt"
-  }
-    else
-    { 
-            
-            #line default
-            #line hidden
-            
-            #line 78 "./Templates/CodeGenerator.Validate.Array.tt"
-            this.Write("\r\n            JsonArrayEnumerator<");
-            
-            #line default
-            #line hidden
-            
-            #line 79 "./Templates/CodeGenerator.Validate.Array.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
-            
-            #line default
-            #line hidden
-            
-            #line 79 "./Templates/CodeGenerator.Validate.Array.tt"
-            this.Write("> innerEnumerator = this.EnumerateArray();\r\n");
-            
-            #line default
-            #line hidden
-            
-            #line 80 "./Templates/CodeGenerator.Validate.Array.tt"
-  } 
-            
-            #line default
-            #line hidden
-            
-            #line 81 "./Templates/CodeGenerator.Validate.Array.tt"
-            this.Write(@"            int innerIndex = -1;
+            #line 61 "./Templates/CodeGenerator.Validate.Array.tt"
+            this.Write(@"            JsonArrayEnumerator innerEnumerator = this.EnumerateArray();
+            int innerIndex = -1;
             while (innerIndex < arrayLength && innerEnumerator.MoveNext())
             {
                 innerIndex++;
@@ -300,7 +206,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 105 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 86 "./Templates/CodeGenerator.Validate.Array.tt"
       }
         if (HasContains)
         { 
@@ -308,135 +214,139 @@ namespace ");
             #line default
             #line hidden
             
-            #line 108 "./Templates/CodeGenerator.Validate.Array.tt"
-            this.Write("            ValidationContext containsResult = arrayEnumerator.Current.As<");
+            #line 89 "./Templates/CodeGenerator.Validate.Array.tt"
+            this.Write("\r\n            ValidationContext containsResult = arrayEnumerator.Current.As<");
             
             #line default
             #line hidden
             
-            #line 108 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 90 "./Templates/CodeGenerator.Validate.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( ContainsDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 108 "./Templates/CodeGenerator.Validate.Array.tt"
-            this.Write(">().Validate(result.CreateChildContext(), level);\r\n            if (containsResult" +
-                    ".IsValid)\r\n            {\r\n                result = result.WithLocalItemIndex(arr" +
-                    "ayLength);\r\n                containsCount++;\r\n");
+            #line 90 "./Templates/CodeGenerator.Validate.Array.tt"
+            this.Write(">().Validate(result.CreateChildContext(), level);\r\n\r\n            if (containsResu" +
+                    "lt.IsValid)\r\n            {\r\n                result = result.WithLocalItemIndex(a" +
+                    "rrayLength);\r\n                containsCount++;\r\n");
             
             #line default
             #line hidden
             
-            #line 113 "./Templates/CodeGenerator.Validate.Array.tt"
-          if (HasMaxContains && !HasUnevaluatedItems)
+            #line 96 "./Templates/CodeGenerator.Validate.Array.tt"
+          if (HasMaxContains)
             { 
             
             #line default
             #line hidden
             
-            #line 115 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 98 "./Templates/CodeGenerator.Validate.Array.tt"
             this.Write("                if (level == ValidationLevel.Flag && containsCount > ");
             
             #line default
             #line hidden
             
-            #line 115 "./Templates/CodeGenerator.Validate.Array.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture(  MaxContains ));
+            #line 98 "./Templates/CodeGenerator.Validate.Array.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( MaxContains ));
             
             #line default
             #line hidden
             
-            #line 115 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 98 "./Templates/CodeGenerator.Validate.Array.tt"
             this.Write(")\r\n                {\r\n                    return result.WithResult(isValid: false" +
                     ");\r\n                }\r\n");
             
             #line default
             #line hidden
             
-            #line 119 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 102 "./Templates/CodeGenerator.Validate.Array.tt"
           } 
             
             #line default
             #line hidden
             
-            #line 120 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 103 "./Templates/CodeGenerator.Validate.Array.tt"
             this.Write("            }\r\n");
             
             #line default
             #line hidden
             
-            #line 121 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 104 "./Templates/CodeGenerator.Validate.Array.tt"
       }
-        if (HasSingleItemsType && !HasPrefixItems)
+        if (HasSingleItemsType)
         { 
             
             #line default
             #line hidden
             
-            #line 124 "./Templates/CodeGenerator.Validate.Array.tt"
-            this.Write(@"
-            result = arrayEnumerator.Current.Validate(result, level);
-            if (level == ValidationLevel.Flag && !result.IsValid)
-            {
-                return result;
-            }
-
-            result = result.WithLocalItemIndex(arrayLength);
-");
+            #line 107 "./Templates/CodeGenerator.Validate.Array.tt"
+            this.Write("\r\n            result = arrayEnumerator.Current.As<");
             
             #line default
             #line hidden
             
-            #line 132 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 108 "./Templates/CodeGenerator.Validate.Array.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 108 "./Templates/CodeGenerator.Validate.Array.tt"
+            this.Write(">().Validate(result, level);\r\n            if (level == ValidationLevel.Flag && !r" +
+                    "esult.IsValid)\r\n            {\r\n                return result;\r\n            }\r\n\r\n" +
+                    "            result = result.WithLocalItemIndex(arrayLength);\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 115 "./Templates/CodeGenerator.Validate.Array.tt"
       }
-        else if (HasPrefixItems)
-        {
-            int itemsIndex = 0; 
+        else if (HasMultipleItemsType)
+        { 
             
             #line default
             #line hidden
             
-            #line 136 "./Templates/CodeGenerator.Validate.Array.tt"
-            this.Write("\r\n            switch (arrayLength)\r\n            {\r\n");
+            #line 118 "./Templates/CodeGenerator.Validate.Array.tt"
+            this.Write("            switch (arrayLength)\r\n            {\r\n");
             
             #line default
             #line hidden
             
-            #line 139 "./Templates/CodeGenerator.Validate.Array.tt"
-          if (HasPrefixItems)
-            {
-                foreach (var prefixItem in PrefixItems)
-                { 
+            #line 120 "./Templates/CodeGenerator.Validate.Array.tt"
+          int itemsIndex = 0;
+            foreach (var item in Items)
+            { 
             
             #line default
             #line hidden
             
-            #line 143 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 123 "./Templates/CodeGenerator.Validate.Array.tt"
             this.Write("                case ");
             
             #line default
             #line hidden
             
-            #line 143 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 123 "./Templates/CodeGenerator.Validate.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( itemsIndex ));
             
             #line default
             #line hidden
             
-            #line 143 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 123 "./Templates/CodeGenerator.Validate.Array.tt"
             this.Write(":\r\n                    result = arrayEnumerator.Current.As<");
             
             #line default
             #line hidden
             
-            #line 144 "./Templates/CodeGenerator.Validate.Array.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( prefixItem ));
+            #line 124 "./Templates/CodeGenerator.Validate.Array.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( item ));
             
             #line default
             #line hidden
             
-            #line 144 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 124 "./Templates/CodeGenerator.Validate.Array.tt"
             this.Write(@">().Validate(result, level);
                     if (level == ValidationLevel.Flag && !result.IsValid)
                     {
@@ -450,63 +360,111 @@ namespace ");
             #line default
             #line hidden
             
-            #line 152 "./Templates/CodeGenerator.Validate.Array.tt"
-                  itemsIndex++;
-                }
-            }
+            #line 132 "./Templates/CodeGenerator.Validate.Array.tt"
+              itemsIndex++;
+            } 
             
             #line default
             #line hidden
             
-            #line 155 "./Templates/CodeGenerator.Validate.Array.tt"
-            this.Write("                default:\r\n");
+            #line 134 "./Templates/CodeGenerator.Validate.Array.tt"
+            this.Write("\r\n                default:\r\n");
             
             #line default
             #line hidden
             
-            #line 156 "./Templates/CodeGenerator.Validate.Array.tt"
-          if (HasSingleItemsType)
+            #line 136 "./Templates/CodeGenerator.Validate.Array.tt"
+          if (!AllowsAdditionalItems)
             { 
             
             #line default
             #line hidden
             
-            #line 158 "./Templates/CodeGenerator.Validate.Array.tt"
-            this.Write(@"                    result = arrayEnumerator.Current.Validate(result, level);
-                    if (level == ValidationLevel.Flag && !result.IsValid)
+            #line 138 "./Templates/CodeGenerator.Validate.Array.tt"
+            this.Write(@"                    if (level >= ValidationLevel.Detailed)
                     {
-                        return result;
+                        result = result.WithResult(isValid: false, $""9.3.1.2. additionalItems - Additional items are not permitted at index {arrayLength}."");
                     }
-
-                    result = result.WithLocalItemIndex(arrayLength);
+                    else if (level >= ValidationLevel.Basic)
+                    {
+                        result = result.WithResult(isValid: false, ""9.3.1.2. additionalItems - Additional items are not permitted."");
+                    }
+                    else if (level == ValidationLevel.Flag)
+                    {
+                        return result.WithResult(isValid: false);
+                    }
 ");
             
             #line default
             #line hidden
             
-            #line 165 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 150 "./Templates/CodeGenerator.Validate.Array.tt"
           }
-            else if (HasUnevaluatedItems)
-            { 
+            if (AllowsAdditionalItems)
+            {
+                if (HasAdditionalItems)
+                {
+                    if (HasAdditionalItemsSchema)
+                    { 
+            
+            #line default
+            #line hidden
+            
+            #line 157 "./Templates/CodeGenerator.Validate.Array.tt"
+            this.Write("                    result = arrayEnumerator.Current.As<");
+            
+            #line default
+            #line hidden
+            
+            #line 157 "./Templates/CodeGenerator.Validate.Array.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( AdditionalItemsDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 157 "./Templates/CodeGenerator.Validate.Array.tt"
+            this.Write(">().Validate(result, level);\r\n                    if (level == ValidationLevel.Fl" +
+                    "ag && !result.IsValid)\r\n                    {\r\n                        return re" +
+                    "sult;\r\n                    }\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 162 "./Templates/CodeGenerator.Validate.Array.tt"
+                  } 
+            
+            #line default
+            #line hidden
+            
+            #line 163 "./Templates/CodeGenerator.Validate.Array.tt"
+            this.Write("\r\n                    result = result.WithLocalItemIndex(arrayLength);\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 165 "./Templates/CodeGenerator.Validate.Array.tt"
+              }
+                else if (HasUnevaluatedItems)
+                { 
             
             #line default
             #line hidden
             
             #line 168 "./Templates/CodeGenerator.Validate.Array.tt"
             this.Write("                    if (!result.HasEvaluatedLocalOrAppliedItemIndex(arrayLength))" +
-                    "\r\n                    {\r\n                        result = arrayEnumerator.Curren" +
-                    "t.As<");
+                    "\r\n                    {\r\n\r\n                        result = arrayEnumerator.Curr" +
+                    "ent.As<");
             
             #line default
             #line hidden
             
-            #line 170 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 171 "./Templates/CodeGenerator.Validate.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( UnevaluatedItemsDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 170 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 171 "./Templates/CodeGenerator.Validate.Array.tt"
             this.Write(@">().Validate(result, level);
 
                         if (level == ValidationLevel.Flag && !result.IsValid)
@@ -521,40 +479,45 @@ namespace ");
             #line default
             #line hidden
             
-            #line 179 "./Templates/CodeGenerator.Validate.Array.tt"
-          } 
-            
-            #line default
-            #line hidden
-            
             #line 180 "./Templates/CodeGenerator.Validate.Array.tt"
-            this.Write("                    break;\r\n            }\r\n");
+              }
+            } 
             
             #line default
             #line hidden
             
             #line 182 "./Templates/CodeGenerator.Validate.Array.tt"
-      }
-        else if (HasUnevaluatedItems)
-        { 
+            this.Write("                    break;\r\n                }\r\n");
             
             #line default
             #line hidden
             
-            #line 185 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 184 "./Templates/CodeGenerator.Validate.Array.tt"
+      }
+        else
+        {
+            if (AllowsAdditionalItems)
+            {
+                if (!HasAdditionalItems && HasUnevaluatedItems)
+                { 
+            
+            #line default
+            #line hidden
+            
+            #line 191 "./Templates/CodeGenerator.Validate.Array.tt"
             this.Write("\r\n            if (!result.HasEvaluatedLocalOrAppliedItemIndex(arrayLength))\r\n    " +
                     "        {\r\n                result = arrayEnumerator.Current.As<");
             
             #line default
             #line hidden
             
-            #line 188 "./Templates/CodeGenerator.Validate.Array.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( UnevaluatedItemsDotnetTypeName ));
+            #line 194 "./Templates/CodeGenerator.Validate.Array.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture(  UnevaluatedItemsDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 188 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 194 "./Templates/CodeGenerator.Validate.Array.tt"
             this.Write(@">().Validate(result, level);
 
                 if (level == ValidationLevel.Flag && !result.IsValid)
@@ -569,19 +532,21 @@ namespace ");
             #line default
             #line hidden
             
-            #line 197 "./Templates/CodeGenerator.Validate.Array.tt"
-      } 
+            #line 203 "./Templates/CodeGenerator.Validate.Array.tt"
+              }
+            }
+        } 
             
             #line default
             #line hidden
             
-            #line 198 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 206 "./Templates/CodeGenerator.Validate.Array.tt"
             this.Write("\r\n            arrayLength++;\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 201 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 209 "./Templates/CodeGenerator.Validate.Array.tt"
   }
     if (HasMaxItems)
     { 
@@ -589,19 +554,19 @@ namespace ");
             #line default
             #line hidden
             
-            #line 204 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 212 "./Templates/CodeGenerator.Validate.Array.tt"
             this.Write("\r\n        if (arrayLength > ");
             
             #line default
             #line hidden
             
-            #line 205 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 213 "./Templates/CodeGenerator.Validate.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( MaxItems ));
             
             #line default
             #line hidden
             
-            #line 205 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 213 "./Templates/CodeGenerator.Validate.Array.tt"
             this.Write(")\r\n        {\r\n            if (level >= ValidationLevel.Detailed)\r\n            {\r\n" +
                     "                result = result.WithResult(isValid: false, $\"6.4.1. maxItems - {" +
                     "arrayLength} exceeds maximum number of items ");
@@ -609,13 +574,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 209 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 217 "./Templates/CodeGenerator.Validate.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( MaxItems ));
             
             #line default
             #line hidden
             
-            #line 209 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 217 "./Templates/CodeGenerator.Validate.Array.tt"
             this.Write(".\");\r\n            }\r\n            else if (level >= ValidationLevel.Basic)\r\n      " +
                     "      {\r\n                result = result.WithResult(isValid: false, \"6.4.1. maxI" +
                     "tems - item count exceeds maximum number of items ");
@@ -623,20 +588,20 @@ namespace ");
             #line default
             #line hidden
             
-            #line 213 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 221 "./Templates/CodeGenerator.Validate.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( MaxItems ));
             
             #line default
             #line hidden
             
-            #line 213 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 221 "./Templates/CodeGenerator.Validate.Array.tt"
             this.Write(".\");\r\n            }\r\n            else\r\n            {\r\n                return resu" +
                     "lt.WithResult(isValid: false);\r\n            }\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 220 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 228 "./Templates/CodeGenerator.Validate.Array.tt"
   }
     if (HasMinItems)
     { 
@@ -644,19 +609,19 @@ namespace ");
             #line default
             #line hidden
             
-            #line 223 "./Templates/CodeGenerator.Validate.Array.tt"
-            this.Write("\r\n        if (arrayLength < ");
+            #line 231 "./Templates/CodeGenerator.Validate.Array.tt"
+            this.Write("        if (arrayLength < ");
             
             #line default
             #line hidden
             
-            #line 224 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 231 "./Templates/CodeGenerator.Validate.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( MinItems ));
             
             #line default
             #line hidden
             
-            #line 224 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 231 "./Templates/CodeGenerator.Validate.Array.tt"
             this.Write(")\r\n        {\r\n            if (level >= ValidationLevel.Detailed)\r\n            {\r\n" +
                     "                result = result.WithResult(isValid: false, $\"6.4.2. minItems - {" +
                     "arrayLength} is less than the minimum number of items ");
@@ -664,13 +629,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 228 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 235 "./Templates/CodeGenerator.Validate.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( MinItems ));
             
             #line default
             #line hidden
             
-            #line 228 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 235 "./Templates/CodeGenerator.Validate.Array.tt"
             this.Write(".\");\r\n            }\r\n            else if (level >= ValidationLevel.Basic)\r\n      " +
                     "      {\r\n                result = result.WithResult(isValid: false, \"6.4.2. minI" +
                     "tems - item count is less than the minimum number of items ");
@@ -678,20 +643,20 @@ namespace ");
             #line default
             #line hidden
             
-            #line 232 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 239 "./Templates/CodeGenerator.Validate.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( MinItems ));
             
             #line default
             #line hidden
             
-            #line 232 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 239 "./Templates/CodeGenerator.Validate.Array.tt"
             this.Write(".\");\r\n            }\r\n            else\r\n            {\r\n                return resu" +
-                    "lt.WithResult(isValid: false);\r\n            }\r\n        }\r\n");
+                    "lt.WithResult(isValid: false);\r\n            }\r\n\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 239 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 247 "./Templates/CodeGenerator.Validate.Array.tt"
   }
     if (HasContains)
     {
@@ -701,19 +666,19 @@ namespace ");
             #line default
             #line hidden
             
-            #line 244 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 252 "./Templates/CodeGenerator.Validate.Array.tt"
             this.Write("\r\n        if (containsCount > ");
             
             #line default
             #line hidden
             
-            #line 245 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 253 "./Templates/CodeGenerator.Validate.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( MaxContains ));
             
             #line default
             #line hidden
             
-            #line 245 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 253 "./Templates/CodeGenerator.Validate.Array.tt"
             this.Write(")\r\n        {\r\n            if (level >= ValidationLevel.Detailed)\r\n            {\r\n" +
                     "                result = result.WithResult(isValid: false, $\"6.4.4. maxContains " +
                     "- {containsCount} exceeds maximum number of matching items ");
@@ -721,13 +686,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 249 "./Templates/CodeGenerator.Validate.Array.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture(     MaxContains ));
+            #line 257 "./Templates/CodeGenerator.Validate.Array.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( MaxContains ));
             
             #line default
             #line hidden
             
-            #line 249 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 257 "./Templates/CodeGenerator.Validate.Array.tt"
             this.Write(".\");\r\n            }\r\n            else if (level >= ValidationLevel.Basic)\r\n      " +
                     "      {\r\n                result = result.WithResult(isValid: false, \"6.4.4. maxC" +
                     "ontains - item count exceeds maximum number of matching items ");
@@ -735,20 +700,20 @@ namespace ");
             #line default
             #line hidden
             
-            #line 253 "./Templates/CodeGenerator.Validate.Array.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture(     MaxContains ));
+            #line 261 "./Templates/CodeGenerator.Validate.Array.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( MaxContains ));
             
             #line default
             #line hidden
             
-            #line 253 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 261 "./Templates/CodeGenerator.Validate.Array.tt"
             this.Write(".\");\r\n            }\r\n            else\r\n            {\r\n                return resu" +
                     "lt.WithResult(isValid: false);\r\n            }\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 260 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 268 "./Templates/CodeGenerator.Validate.Array.tt"
       }
         if (HasMinContains)
         { 
@@ -756,19 +721,19 @@ namespace ");
             #line default
             #line hidden
             
-            #line 263 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 271 "./Templates/CodeGenerator.Validate.Array.tt"
             this.Write("\r\n        if (containsCount < ");
             
             #line default
             #line hidden
             
-            #line 264 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 272 "./Templates/CodeGenerator.Validate.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( MinContains ));
             
             #line default
             #line hidden
             
-            #line 264 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 272 "./Templates/CodeGenerator.Validate.Array.tt"
             this.Write(")\r\n        {\r\n            if (level >= ValidationLevel.Detailed)\r\n            {\r\n" +
                     "                result = result.WithResult(isValid: false, $\"6.4.5. minContains " +
                     "- {containsCount} is less than minimum number of matching items ");
@@ -776,13 +741,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 268 "./Templates/CodeGenerator.Validate.Array.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture(     MinContains ));
+            #line 276 "./Templates/CodeGenerator.Validate.Array.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( MinContains ));
             
             #line default
             #line hidden
             
-            #line 268 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 276 "./Templates/CodeGenerator.Validate.Array.tt"
             this.Write(".\");\r\n            }\r\n            else if (level >= ValidationLevel.Basic)\r\n      " +
                     "      {\r\n                result = result.WithResult(isValid: false, \"6.4.5. minC" +
                     "ontains - item count is less than minimum number of matching items ");
@@ -790,20 +755,20 @@ namespace ");
             #line default
             #line hidden
             
-            #line 272 "./Templates/CodeGenerator.Validate.Array.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture(     MinContains ));
+            #line 280 "./Templates/CodeGenerator.Validate.Array.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( MinContains ));
             
             #line default
             #line hidden
             
-            #line 272 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 280 "./Templates/CodeGenerator.Validate.Array.tt"
             this.Write(".\");\r\n            }\r\n            else\r\n            {\r\n                return resu" +
                     "lt.WithResult(isValid: false);\r\n            }\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 279 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 287 "./Templates/CodeGenerator.Validate.Array.tt"
       }
         else
         { 
@@ -811,7 +776,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 282 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 290 "./Templates/CodeGenerator.Validate.Array.tt"
             this.Write(@"
         if (containsCount == 0)
         {
@@ -833,20 +798,20 @@ namespace ");
             #line default
             #line hidden
             
-            #line 298 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 306 "./Templates/CodeGenerator.Validate.Array.tt"
       }
     } 
             
             #line default
             #line hidden
             
-            #line 300 "./Templates/CodeGenerator.Validate.Array.tt"
-            this.Write("        return result;\r\n    }\r\n}\r\n");
+            #line 308 "./Templates/CodeGenerator.Validate.Array.tt"
+            this.Write("\r\n        return result;\r\n    }\r\n}\r\n");
             
             #line default
             #line hidden
             
-            #line 303 "./Templates/CodeGenerator.Validate.Array.tt"
+            #line 312 "./Templates/CodeGenerator.Validate.Array.tt"
  EndNesting(); 
             
             #line default

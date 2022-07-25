@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace Corvus.Json.CodeGeneration.Generators.Draft202012 {
+namespace Corvus.Json.CodeGeneration.Generators.Draft201909 {
     using System.Collections.Generic;
     using Corvus.Json;
     using System;
@@ -101,7 +101,7 @@ namespace ");
             
             #line 38 "./Templates/CodeGenerator.Validate.tt"
   }
-    if (HasUnevaluatedItems)
+    if (HasAdditionalProperties || HasUnevaluatedItems)
     { 
             
             #line default
@@ -131,7 +131,7 @@ namespace ");
             
             #line 52 "./Templates/CodeGenerator.Validate.tt"
   }
-    if ((HasExplicitType || HasFormat || HasMediaTypeOrEncoding) || (HasItems || HasContains || HasUniqueItems || HasMaxItems || HasMinItems || HasUnevaluatedItems || HasPrefixItems) || (HasDependentRequired || HasLocalProperties || HasRequired || HasMaxProperties || HasMinProperties || HasDependentSchemas || HasPropertyNames || HasPatternProperties || ((AllowsAdditionalProperties && (HasAdditionalProperties || HasUnevaluatedProperties)))))
+    if ((HasExplicitType || HasFormat || HasMediaTypeOrEncoding) || (HasItems || HasContains || HasUniqueItems || HasMaxItems || HasMinItems || HasUnevaluatedItems || HasAdditionalItems) || (HasDependentRequired || HasLocalProperties || HasRequired || HasMaxProperties || HasMinProperties || HasDependentSchemas || HasPropertyNames || HasPatternProperties || ((AllowsAdditionalProperties && (HasAdditionalProperties || HasUnevaluatedProperties)))))
     { 
             
             #line default
@@ -507,7 +507,7 @@ namespace ");
             
             #line 199 "./Templates/CodeGenerator.Validate.tt"
   }
-    if (HasItems || HasContains || HasUniqueItems || HasMaxItems || HasMinItems || HasUnevaluatedItems || HasPrefixItems)
+    if (HasItems || HasContains || HasUniqueItems || HasMaxItems || HasMinItems || HasUnevaluatedItems || HasAdditionalItems)
     { 
             
             #line default
