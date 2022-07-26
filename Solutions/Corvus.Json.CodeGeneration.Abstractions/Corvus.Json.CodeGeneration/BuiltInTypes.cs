@@ -130,9 +130,19 @@ public static class BuiltInTypes
     public static readonly (string Ns, string Type) ClrBase64ContentTypeDeclaration = ("Corvus.Json", "JsonBase64Content");
 
     /// <summary>
+    /// A clr base64 encoded JsonDocument type.
+    /// </summary>
+    public static readonly (string Ns, string Type) ClrBase64ContentTypeDeclarationPre201909 = ("Corvus.Json", "JsonBase64ContentPre201909");
+
+    /// <summary>
     /// A clr string type.
     /// </summary>
     public static readonly (string Ns, string Type) ClrContentTypeDeclaration = ("Corvus.Json", "JsonContent");
+
+    /// <summary>
+    /// A clr string type.
+    /// </summary>
+    public static readonly (string Ns, string Type) ClrContentTypeDeclarationPre201909 = ("Corvus.Json", "JsonContentPre201909");
 
     /// <summary>
     /// A clr NodaTime.LocalDate type.
@@ -197,8 +207,9 @@ public static class BuiltInTypes
     /// <param name="format">The format for which to get the type declaration.</param>
     /// <param name="contentEncoding">The content encoding for which to get the type declaration.</param>
     /// <param name="contentMediaType">The content media type for which to get the type declaration.</param>
+    /// <param name="pre201909">Whether to get pre-201909 types.</param>
     /// <returns>A tuple of the namespace and type corresponding to the type and optional format.</returns>
-    public static (string Ns, string Type) GetTypeNameFor(string? type, string? format, string? contentEncoding, string? contentMediaType)
+    public static (string Ns, string Type) GetTypeNameFor(string? type, string? format, string? contentEncoding, string? contentMediaType, bool pre201909 = false)
     {
         return type switch
         {
@@ -206,7 +217,7 @@ public static class BuiltInTypes
             "integer" => GetIntegerFor(format) ?? IntegerTypeDeclaration,
             "number" => GetNumberFor(format) ?? NumberTypeDeclaration,
             "boolean" => ClrBoolTypeDeclaration,
-            "string" => GetStringFor(format, contentEncoding, contentMediaType) ?? ClrStringTypeDeclaration,
+            "string" => GetStringFor(format, contentEncoding, contentMediaType, pre201909) ?? ClrStringTypeDeclaration,
             "array" => ArrayTypeDeclaration,
             "object" => ObjectTypeDeclaration,
             null => GetIntegerFor(format) ?? GetNumberFor(format) ?? GetStringFor(format, contentEncoding, contentMediaType) ?? throw new InvalidOperationException($"Unsupported format declaration {format}."),
@@ -224,7 +235,7 @@ public static class BuiltInTypes
         return GetStringFor(format, null, null) is not null;
     }
 
-    private static (string Ns, string Type)? GetStringFor(string? format, string? contentEncoding, string? contentMediaType)
+    private static (string Ns, string Type)? GetStringFor(string? format, string? contentEncoding, string? contentMediaType, bool pre201909 = false)
     {
         return format switch
         {
@@ -247,17 +258,17 @@ public static class BuiltInTypes
             "json-pointer" => ClrJsonPointerTypeDeclaration,
             "relative-json-pointer" => ClrRelativeJsonPointerTypeDeclaration,
             "regex" => ClrRegexTypeDeclaration,
-            _ => GetJsonStringFor(contentMediaType, contentEncoding),
+            _ => GetJsonStringFor(contentMediaType, contentEncoding, pre201909),
         };
     }
 
-    private static (string Ns, string Type)? GetJsonStringFor(string? contentMediaType, string? contentEncoding)
+    private static (string Ns, string Type)? GetJsonStringFor(string? contentMediaType, string? contentEncoding, bool pre201909 = false)
     {
         return (contentMediaType, contentEncoding) switch
         {
-            ("application/json", "base64") => ClrBase64ContentTypeDeclaration,
+            ("application/json", "base64") => pre201909 ? ClrBase64ContentTypeDeclarationPre201909 : ClrBase64ContentTypeDeclaration,
             (_, "base64") => ClrBase64StringTypeDeclaration,
-            ("application/json", null) => ClrContentTypeDeclaration,
+            ("application/json", null) => pre201909 ? ClrContentTypeDeclarationPre201909 : ClrContentTypeDeclaration,
             (null, null) => ClrStringTypeDeclaration,
             _ => null,
         };

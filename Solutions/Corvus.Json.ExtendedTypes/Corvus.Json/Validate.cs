@@ -1885,10 +1885,24 @@ public static partial class Validate
     /// <param name="value">The instance to validate.</param>
     /// <param name="validationContext">The current validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <returns>The updated validation context.</returns>
+    public static ValidationContext TypeContentPre201909<TValue>(in TValue value, in ValidationContext validationContext, ValidationLevel level)
+        where TValue : struct, IJsonValue<TValue>
+    {
+        return TypeContent(value, validationContext, level, false);
+    }
+
+    /// <summary>
+    /// Validates a content value.
+    /// </summary>
+    /// <typeparam name="TValue">The type of the <see cref="IJsonValue"/> to validate.</typeparam>
+    /// <param name="value">The instance to validate.</param>
+    /// <param name="validationContext">The current validation context.</param>
+    /// <param name="level">The validation level.</param>
     /// <param name="alwaysPassAndAnnotateFailuresInContentDecodingChecks">Always pass failures in content decoding, but annotate.</param>
     /// <returns>The updated validation context.</returns>
     public static ValidationContext TypeContent<TValue>(in TValue value, in ValidationContext validationContext, ValidationLevel level, bool alwaysPassAndAnnotateFailuresInContentDecodingChecks = true)
-        where TValue : struct, IJsonValue<TValue>
+    where TValue : struct, IJsonValue<TValue>
     {
         ValidationContext result = validationContext;
 
@@ -1959,10 +1973,24 @@ public static partial class Validate
     /// <param name="value">The instance to validate.</param>
     /// <param name="validationContext">The current validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <returns>The updated validation context.</returns>
+    public static ValidationContext TypeBase64ContentPre201909<TValue>(in TValue value, in ValidationContext validationContext, ValidationLevel level)
+        where TValue : struct, IJsonValue<TValue>
+    {
+        return TypeBase64Content(value, validationContext, level, false);
+    }
+
+    /// <summary>
+    /// Validates a base64Content value.
+    /// </summary>
+    /// <typeparam name="TValue">The type of the <see cref="IJsonValue"/> to validate.</typeparam>
+    /// <param name="value">The instance to validate.</param>
+    /// <param name="validationContext">The current validation context.</param>
+    /// <param name="level">The validation level.</param>
     /// <param name="alwaysPassAndAnnotateFailuresInContentDecodingChecks">Always pass failures in content decoding, but annotate.</param>
     /// <returns>The updated validation context.</returns>
     public static ValidationContext TypeBase64Content<TValue>(in TValue value, in ValidationContext validationContext, ValidationLevel level, bool alwaysPassAndAnnotateFailuresInContentDecodingChecks = true)
-        where TValue : struct, IJsonValue<TValue>
+    where TValue : struct, IJsonValue<TValue>
     {
         ValidationContext result = validationContext;
 
@@ -2036,8 +2064,23 @@ public static partial class Validate
     /// <param name="validationContext">The current validation context.</param>
     /// <param name="level">The validation level.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeBase64String<TValue>(in TValue value, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeBase64StringPre201909<TValue>(in TValue value, in ValidationContext validationContext, ValidationLevel level)
         where TValue : struct, IJsonValue<TValue>
+    {
+        return TypeBase64String(value, validationContext, level, false);
+    }
+
+    /// <summary>
+    /// Validates a base64 value.
+    /// </summary>
+    /// <typeparam name="TValue">The type of the <see cref="IJsonValue"/> to validate.</typeparam>
+    /// <param name="value">The instance to validate.</param>
+    /// <param name="validationContext">The current validation context.</param>
+    /// <param name="level">The validation level.</param>
+    /// <param name="alwaysPassAndAnnotateFailuresInContentDecodingChecks">Always pass but annotate the nodes on encoding failure.</param>
+    /// <returns>The updated validation context.</returns>
+    public static ValidationContext TypeBase64String<TValue>(in TValue value, in ValidationContext validationContext, ValidationLevel level, bool alwaysPassAndAnnotateFailuresInContentDecodingChecks = true)
+    where TValue : struct, IJsonValue<TValue>
     {
         ValidationContext result = validationContext;
 
@@ -2066,15 +2109,15 @@ public static partial class Validate
             // Valid, but we annotate
             if (level >= ValidationLevel.Detailed)
             {
-                return result.WithResult(isValid: true, "Validation 8.3 contentEncoding - should have been a base64 encoded 'string'.");
+                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks, "Validation 8.3 contentEncoding - should have been a base64 encoded 'string'.");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return result.WithResult(isValid: true, "Validation 8.3 contentEncoding - should have been a base64 encoded 'string'.");
+                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks, "Validation 8.3 contentEncoding - should have been a base64 encoded 'string'.");
             }
             else
             {
-                return result.WithResult(isValid: true);
+                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks);
             }
         }
         else if (level == ValidationLevel.Verbose)

@@ -7,6 +7,14 @@ t4 -o ./GeneratedFormatTypes/JsonBase64String.Core.cs -p"=OverrideEquals=false" 
 t4 -o ./GeneratedFormatTypes/JsonBase64String.Basics.cs -p"=TypeName=JsonBase64String" -p"=JsonTypeName=base64string" ./Templates/FormattedStringType.Basics.tt
 t4 -o ./GeneratedFormatTypes/JsonContent.Core.cs -p"=OverrideEquals=true" -p"=TypeName=JsonContent" -p"=JsonTypeName=content" -p"=ValidateMethodName=TypeContent" ./Templates/FormattedStringType.Core.tt
 t4 -o ./GeneratedFormatTypes/JsonContent.Basics.cs -p"=TypeName=JsonContent" -p"=JsonTypeName=content" ./Templates/FormattedStringType.Basics.tt
+
+t4 -o ./GeneratedFormatTypes/JsonContentPre201909.Core.cs -p"=OverrideEquals=true" -p"=TypeName=JsonContentPre201909" -p"=JsonTypeName=content" -p"=ValidateMethodName=TypeContentPre201909" ./Templates/FormattedStringType.Core.tt
+t4 -o ./GeneratedFormatTypes/JsonContentPre201909.Basics.cs -p"=TypeName=JsonContentPre201909" -p"=JsonTypeName=content" ./Templates/FormattedStringType.Basics.tt
+t4 -o ./GeneratedFormatTypes/JsonBase64ContentPre201909.Core.cs -p"=OverrideEquals=false" -p"=TypeName=JsonBase64ContentPre201909" -p"=JsonTypeName=base64content" -p"=ValidateMethodName=TypeBase64ContentPre201909" ./Templates/FormattedStringType.Core.tt
+t4 -o ./GeneratedFormatTypes/JsonBase64ContentPre201909.Basics.cs -p"=TypeName=JsonBase64ContentPre201909" -p"=JsonTypeName=base64content" ./Templates/FormattedStringType.Basics.tt
+t4 -o ./GeneratedFormatTypes/JsonBase64StringPre201909.Core.cs -p"=OverrideEquals=false" -p"=TypeName=JsonBase64StringPre201909" -p"=JsonTypeName=base64string" -p"=ValidateMethodName=TypeBase64StringPre201909" ./Templates/FormattedStringType.Core.tt
+t4 -o ./GeneratedFormatTypes/JsonBase64StringPre201909.Basics.cs -p"=TypeName=JsonBase64StringPre201909" -p"=JsonTypeName=base64string" ./Templates/FormattedStringType.Basics.tt
+
 t4 -o ./GeneratedFormatTypes/JsonDate.Core.cs -p"=OverrideEquals=false" -p"=TypeName=JsonDate" -p"=JsonTypeName=date" -p"=ValidateMethodName=TypeDate" ./Templates/FormattedStringType.Core.tt
 t4 -o ./GeneratedFormatTypes/JsonDate.Basics.cs -p"=TypeName=JsonDate" -p"=JsonTypeName=date" ./Templates/FormattedStringType.Basics.tt
 t4 -o ./GeneratedFormatTypes/JsonDateTime.Core.cs -p"=OverrideEquals=true" -p"=TypeName=JsonDateTime" -p"=JsonTypeName=dateTime" -p"=ValidateMethodName=TypeDateTime" ./Templates/FormattedStringType.Core.tt

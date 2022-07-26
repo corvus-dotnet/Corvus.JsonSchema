@@ -121,7 +121,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 <#  }
     if (IsJsonBase64String)
     { #>
-        return Corvus.Json.Validate.TypeBase64String(this, result, level);
+        return Corvus.Json.Validate.TypeBase64String(this, result, level, false);
 <#  }
     if (IsJsonContent)
     { #>

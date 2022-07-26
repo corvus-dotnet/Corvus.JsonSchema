@@ -228,7 +228,8 @@ public abstract class TypeDeclaration<TSchema, TPropertyDeclaration, TTypeDeclar
     /// <summary>
     /// Sets a built-in type name and namespace.
     /// </summary>
-    public void SetBuiltInTypeNameAndNamespace()
+    /// <param name="pre201909">Whether to get custom pre-201909 types.</param>
+    public void SetBuiltInTypeNameAndNamespace(bool pre201909 = false)
     {
         if (this.SchemaIsBuiltInType)
         {
@@ -249,7 +250,7 @@ public abstract class TypeDeclaration<TSchema, TPropertyDeclaration, TTypeDeclar
             }
             else
             {
-                (ns, type) = BuiltInTypes.GetTypeNameFor(this.SchemaSimpleType, this.SchemaFormat, this.SchemaContentEncoding, this.SchemaContentMediaType);
+                (ns, type) = BuiltInTypes.GetTypeNameFor(this.SchemaSimpleType, this.SchemaFormat, this.SchemaContentEncoding, this.SchemaContentMediaType, pre201909);
             }
 
             this.SetNamespaceAndTypeName(ns, type);

@@ -407,7 +407,8 @@ namespace ");
             #line hidden
             
             #line 124 "./Templates/CodeGenerator.Validate.Format.tt"
-            this.Write("        return Corvus.Json.Validate.TypeBase64String(this, result, level);\r\n");
+            this.Write("        return Corvus.Json.Validate.TypeBase64String(this, result, level, false);" +
+                    "\r\n");
             
             #line default
             #line hidden

@@ -225,7 +225,7 @@ public class JsonSchemaBuilder : IJsonSchemaBuilder
             }
             else
             {
-                item.Value.SetBuiltInTypeNameAndNamespace();
+                item.Value.SetBuiltInTypeNameAndNamespace(true);
             }
         }
 
