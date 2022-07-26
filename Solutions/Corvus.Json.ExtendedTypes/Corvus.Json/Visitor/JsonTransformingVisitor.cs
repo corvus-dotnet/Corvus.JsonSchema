@@ -141,9 +141,7 @@ public static partial class JsonTransformingVisitor
             path.CopyTo(itemPath);
             itemPath[path.Length] = '/';
 
-#pragma warning disable SA1009 // Closing parenthesis should be spaced correctly
             index.TryFormat(itemPath[(path.Length + 1)..], out int digitsWritten);
-#pragma warning restore SA1009 // Closing parenthesis should be spaced correctly
 
             // Visit the array item, and determine whether we've transformed it.
             Visit(itemPath, item, visitor, ref pathBuffer, ref result);

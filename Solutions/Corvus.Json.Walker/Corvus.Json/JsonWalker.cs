@@ -17,7 +17,6 @@ public class JsonWalker
     /// </summary>
     public const string DefaultContent = "application/vnd.Corvus.element-default";
 
-#pragma warning disable SA1000 // Keywords should be spaced correctly
     private readonly List<Func<JsonWalker, JsonElement, Task<bool>>> handlers = new();
     private readonly List<Func<JsonWalker, JsonReference, bool, bool, Func<Task<LocatedElement?>>, Task<LocatedElement?>>> resolvers = new();
 
@@ -29,7 +28,6 @@ public class JsonWalker
     private readonly List<(string, bool, bool, List<string>, Action<JsonWalker, LocatedElement>)> unresolvedReferences = new();
 
     private Stack<string> scopedLocationStack = new();
-#pragma warning restore SA1000 // Keywords should be spaced correctly
 
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonWalker"/> class.
@@ -129,9 +127,7 @@ public class JsonWalker
         {
             if (e.TryGetProperty(propertyName, out JsonElement uri) && uri.ValueKind == JsonValueKind.String)
             {
-#pragma warning disable SA1009 // Closing parenthesis should be spaced correctly
                 string outputUri = uri.GetString()!;
-#pragma warning restore SA1009 // Closing parenthesis should be spaced correctly
                 var outputUriRef = new JsonReference(outputUri);
                 if (!outputUriRef.HasFragment)
                 {
@@ -227,7 +223,7 @@ public class JsonWalker
     /// <param name="location">The location for which to find the element.</param>
     /// <param name="locatedElement">The element that was found.</param>
     /// <returns>True if the element was located.</returns>
-    public bool TryGetLocatedElement(string location, [NotNullWhen(true)]out LocatedElement? locatedElement)
+    public bool TryGetLocatedElement(string location, [NotNullWhen(true)] out LocatedElement? locatedElement)
     {
         return this.locatedElements.TryGetValue(location, out locatedElement);
     }

@@ -69,7 +69,5 @@ public class TestSelector
     /// <param name="TestsToIgnoreIndices">
     /// Indices of tests to ignore in a JSON Schema Test Suite input file, grouped by scenario name.
     /// </param>
-#pragma warning disable SA1313 // Parameter names should begin with lower-case letter - StyleCop doesn't understand
     public record TestExclusion(IReadOnlyList<int> TestsToIgnoreIndices);
-#pragma warning restore SA1313 // Parameter names should begin with lower-case letter
 }

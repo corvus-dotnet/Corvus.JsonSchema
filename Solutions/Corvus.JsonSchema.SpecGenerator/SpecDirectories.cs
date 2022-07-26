@@ -202,11 +202,9 @@ internal struct SpecDirectories
     }
 
     public record TestSet(
-#pragma warning disable SA1313 // Parameter names should begin with lower-case letter - StyleCop failing to understand records here
         string TestSetName,
         string InputFile,
         string InputFileSpecFolderRelativePath,
         string OutputFile,
         IReadOnlyDictionary<string, IReadOnlySet<int>> TestsToIgnoreIndicesByScenarioName);
-#pragma warning restore SA1313 // Parameter names should begin with lower-case letter
 }

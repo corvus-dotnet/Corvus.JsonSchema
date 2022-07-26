@@ -135,7 +135,6 @@ public readonly partial struct JsonArray
         return new(this.GetImmutableListWith(index, items));
     }
 
-#pragma warning disable SA1648 // inheritdoc should be used with inheriting class
     /// <inheritdoc/>
     public JsonArray Replace<TItem>(in TItem oldValue, in TItem newValue)
         where TItem : struct, IJsonValue
@@ -149,5 +148,4 @@ public readonly partial struct JsonArray
     {
         return this.GetImmutableListSetting(index, value.AsAny);
     }
-#pragma warning restore SA1648 // inheritdoc should be used with inheriting class
 }
