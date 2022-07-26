@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 
 namespace Corvus.Json;
@@ -218,6 +219,17 @@ public class JsonWalker
         }
 
         throw new ArgumentException($"Unable to find the element at location '{location}'", nameof(location));
+    }
+
+    /// <summary>
+    /// Gets a previously located element.
+    /// </summary>
+    /// <param name="location">The location for which to find the element.</param>
+    /// <param name="locatedElement">The element that was found.</param>
+    /// <returns>True if the element was located.</returns>
+    public bool TryGetLocatedElement(string location, [NotNullWhen(true)]out LocatedElement? locatedElement)
+    {
+        return this.locatedElements.TryGetValue(location, out locatedElement);
     }
 
     /// <summary>

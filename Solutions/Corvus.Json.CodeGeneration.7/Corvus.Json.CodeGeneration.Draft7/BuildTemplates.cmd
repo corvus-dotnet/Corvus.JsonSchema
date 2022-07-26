@@ -36,6 +36,7 @@ t4 -o Generators/CodeGenerator.Validate.Array.cs -c Corvus.Json.CodeGeneration.G
 t4 -o Generators/CodeGenerator.Validate.AnyOf.cs -c Corvus.Json.CodeGeneration.Generators.Draft7.CodeGeneratorValidateAnyOf ./Templates/CodeGenerator.Validate.AnyOf.tt
 t4 -o Generators/CodeGenerator.Validate.OneOf.cs -c Corvus.Json.CodeGeneration.Generators.Draft7.CodeGeneratorValidateOneOf ./Templates/CodeGenerator.Validate.OneOf.tt
 t4 -o Generators/CodeGenerator.Validate.Object.cs -c Corvus.Json.CodeGeneration.Generators.Draft7.CodeGeneratorValidateObject ./Templates/CodeGenerator.Validate.Object.tt
+t4 -o Generators/CodeGenerator.Validate.Format.cs -c Corvus.Json.CodeGeneration.Generators.Draft7.CodeGeneratorValidateFormat ./Templates/CodeGenerator.Validate.Format.tt
 
 REM Partials
 t4 -o Generators/CodeGenerator.Array.Add.Partial.cs -p=PartialClassName=CodeGeneratorArrayAdd -p"=PartialFileName=CodeGenerator.Array.Add.Partial.cs" ./Templates/CodeGeneratorPartial.tt

@@ -3,8 +3,10 @@
 // </copyright>
 
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
+using System.Text.Json;
 using Corvus.Json.CodeGeneration.Generators.Draft7;
 using Corvus.Json.JsonSchema.Draft7;
 
@@ -46,6 +48,8 @@ public class JsonSchemaBuilder : IJsonSchemaBuilder
         LocatedElement? rootElement = await this.walker.ResolveReference(new JsonReference(reference), false, false).ConfigureAwait(false);
 
         await this.walker.ResolveUnresolvedReferences();
+
+        await this.ResolveUnresolvedReferences();
 
         if (rootElement is null)
         {
@@ -678,6 +682,49 @@ public class JsonSchemaBuilder : IJsonSchemaBuilder
         this.locatedTypeDeclarations.Add(location, result);
 
         return result;
+    }
+
+    private Task ResolveUnresolvedReferences()
+    {
+        List<(string AbsoluteLocation, LocatedElement LocatedElement)> updated = new();
+
+        foreach (LocatedElement locatedElement in this.walker.EnumerateLocatedElements())
+        {
+            if (locatedElement.ContentType != JsonSchemaWalker.SchemaContent && locatedElement.AbsoluteLocation.EndsWith("$ref") && locatedElement.Element.ValueKind == JsonValueKind.String)
+            {
+                // This was an unresolved $ref due to a folder change in a subschema
+                JsonReference target = new JsonReference(locatedElement.AbsoluteLocation).Apply(new JsonReference(locatedElement.Element.ToString()));
+
+                JsonReference current = target;
+
+                // We need to find the target element and follow its folder changes to locate our actual element. Start at the base.
+                while (current.HasFragment)
+                {
+                    if (this.walker.TryGetLocatedElement(current, out LocatedElement? subschema))
+                    {
+                        var schema = Schema.FromJson(subschema.Element);
+                        if (schema.IsValid() && schema.Id.IsNotNullOrUndefined())
+                        {
+                            current = target.Apply(new JsonReference(schema.Id)).Apply(new JsonReference("#" + target.ToString()[current.ToString().Length..]));
+                            if (this.walker.TryGetLocatedElement(current, out LocatedElement? targetSchema))
+                            {
+                                updated.Add((locatedElement.AbsoluteLocation, targetSchema));
+                                break;
+                            }
+                        }
+                    }
+
+                    current = current.MoveToParentFragment();
+                }
+            }
+        }
+
+        foreach ((string AbsoluteLocation, LocatedElement LocatedElement) update in updated)
+        {
+            this.walker.AddOrUpdateLocatedElement(update.AbsoluteLocation, update.LocatedElement);
+        }
+
+        return Task.CompletedTask;
     }
 
     private bool TryReduceSchema(string absoluteLocation, Schema draft7Schema, [NotNullWhen(true)] out TypeDeclaration? reducedTypeDeclaration)
