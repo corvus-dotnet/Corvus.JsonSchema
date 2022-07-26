@@ -1885,8 +1885,9 @@ public static partial class Validate
     /// <param name="value">The instance to validate.</param>
     /// <param name="validationContext">The current validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="alwaysPassAndAnnotateFailuresInContentDecodingChecks">Always pass failures in content decoding, but annotate.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeContent<TValue>(in TValue value, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeContent<TValue>(in TValue value, in ValidationContext validationContext, ValidationLevel level, bool alwaysPassAndAnnotateFailuresInContentDecodingChecks = true)
         where TValue : struct, IJsonValue<TValue>
     {
         ValidationContext result = validationContext;
@@ -1931,15 +1932,15 @@ public static partial class Validate
             // Should be Valid, but we just annotate.
             if (level >= ValidationLevel.Detailed)
             {
-                return result.WithResult(isValid: true, "Validation 8.4 contentMediaType - should have been a 'string' with contentMediaType 'application/json'.");
+                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks, "Validation 8.4 contentMediaType - should have been a 'string' with contentMediaType 'application/json'.");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return result.WithResult(isValid: true, "Validation 8.4 contentMediaType - should have been a 'string' with contentMediaType 'application/json'.");
+                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks, "Validation 8.4 contentMediaType - should have been a 'string' with contentMediaType 'application/json'.");
             }
             else
             {
-                return result.WithResult(isValid: true);
+                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks);
             }
         }
         else if (level == ValidationLevel.Verbose)
@@ -1958,8 +1959,9 @@ public static partial class Validate
     /// <param name="value">The instance to validate.</param>
     /// <param name="validationContext">The current validation context.</param>
     /// <param name="level">The validation level.</param>
+    /// <param name="alwaysPassAndAnnotateFailuresInContentDecodingChecks">Always pass failures in content decoding, but annotate.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext TypeBase64Content<TValue>(in TValue value, in ValidationContext validationContext, ValidationLevel level)
+    public static ValidationContext TypeBase64Content<TValue>(in TValue value, in ValidationContext validationContext, ValidationLevel level, bool alwaysPassAndAnnotateFailuresInContentDecodingChecks = true)
         where TValue : struct, IJsonValue<TValue>
     {
         ValidationContext result = validationContext;
@@ -1989,15 +1991,15 @@ public static partial class Validate
             // Is valid, but we annotate
             if (level >= ValidationLevel.Detailed)
             {
-                return result.WithResult(isValid: true, "Validation 8.3 contentEncoding - should have been a base64 encoded 'string'.");
+                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks, "Validation 8.3 contentEncoding - should have been a base64 encoded 'string'.");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return result.WithResult(isValid: true, "Validation 8.3 contentEncoding - should have been a base64 encoded 'string'.");
+                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks, "Validation 8.3 contentEncoding - should have been a base64 encoded 'string'.");
             }
             else
             {
-                return result.WithResult(isValid: true);
+                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks);
             }
         }
         else if (status == EncodedContentMediaTypeParseStatus.UnableToParseToMediaType)
@@ -2005,15 +2007,15 @@ public static partial class Validate
             // Validates true, but we will annotate ite
             if (level >= ValidationLevel.Detailed)
             {
-                return result.WithResult(isValid: true, "Validation 8.4 contentMediaType - valid, but should have been a base64 encoded 'string' of type 'application/json'.");
+                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks, "Validation 8.4 contentMediaType - valid, but should have been a base64 encoded 'string' of type 'application/json'.");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                return result.WithResult(isValid: true, "Validation 8.4 contentMediaType - valid, but should have been a base64 encoded 'string' of type 'application/json'.");
+                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks, "Validation 8.4 contentMediaType - valid, but should have been a base64 encoded 'string' of type 'application/json'.");
             }
             else
             {
-                return result.WithResult(isValid: true);
+                return result.WithResult(isValid: alwaysPassAndAnnotateFailuresInContentDecodingChecks);
             }
         }
         else if (level == ValidationLevel.Verbose)
