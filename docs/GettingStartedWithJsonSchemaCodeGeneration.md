@@ -2,7 +2,7 @@ TL;DR - this is a getting started Hands-On-Lab that walks you through our new JS
 
 ## Goals
 
-- Understand how to generate C# code from JSON schema, supporting the full capabilities of JSON Schema, using the `Corvus.Json.JsonSchema.TypeGeneratorTool`
+- Understand how to generate C# code from JSON schema, supporting the full capabilities of JSON Schema, using the `Corvus.Json.CodeGenerator` tool.
 - Understand how to serialize and deserialize JSON documents using the generated code
 - Understand how to validate JSON documents against schema using the generated code
 - Understand how to navigate a JSON document using the generated code
@@ -28,7 +28,7 @@ If you want to incorporate this into your tool chain, read on!
 
 This is a hands-on-lab. While you'll get a lot from reading this as "documentation", you'll get a whole lot more from following along and working through code as you go.
 
-Other than that, there are no rules. Pause, stop, go and explore things for yourself as you go along, make lists of questions and post them here. We're around to help you get familiar with the tools and code. 
+Other than that, there are no rules. Pause, stop, go and explore things for yourself as you go along, make lists of questions and post them here. We're around to help you get familiar with the tools and code.
 
 Also, you don't have to use exactly the tools we recommend. If you are proficient with another IDE, go ahead and use that instead.
 
@@ -108,7 +108,7 @@ When the editor loads up the project file, it should look something like this. N
 
 We are going to start with a JSON schema document. The first one we will be working with is a simple representation of a "person". Maybe it is the schema from a CRM service's API?
 
-Here's the whole thing, and we'll break it down in more detail in a second. 
+Here's the whole thing, and we'll break it down in more detail in a second.
 
 ```json
 {
@@ -150,7 +150,7 @@ Here's the whole thing, and we'll break it down in more detail in a second.
         "oneOf": [
             { "$ref": "#/$defs/PersonNameElement" },
             { "$ref": "#/$defs/PersonNameElementArray" }
-        ] 
+        ]
     },
     "PersonNameElementArray": {
       "type": "array",
@@ -233,15 +233,15 @@ First, you can see that it is a draft2020-12 schema.
 "$schema": "https://json-schema.org/draft/2020-12/schema",
 ```
 
-We support [draft 2020-12](http://json-schema.org/draft/2020-12/json-schema-core.html) and [draft 2019-09](http://json-schema.org/draft/2019-09/json-schema-core.html) with the tooling. 
+We support [draft 2020-12](http://json-schema.org/draft/2020-12/json-schema-core.html) and [draft 2019-09](http://json-schema.org/draft/2019-09/json-schema-core.html) with the tooling.
 
-> If people wanted to extend the tools and libraries to support backlevel schema versions, it would not be too difficult; the older revisions are largely subsets of the later ones. It's well outside the scope of this introductory tutorial, but [PRs are gratefully received](https://github.com/corvus-dotnet/Corvus.JsonSchema)! 
+> If people wanted to extend the tools and libraries to support backlevel schema versions, it would not be too difficult; the older revisions are largely subsets of the later ones. It's well outside the scope of this introductory tutorial, but [PRs are gratefully received](https://github.com/corvus-dotnet/Corvus.JsonSchema)!
 
 You'll then notice that I'm not defining any particular object at the root level - the interesting types are all in the `$defs` section.
 
 This is a matter of style and habit - I tend to use document fragments that are then included by `$ref` in other places (e.g. OpenAPI documents). So everything goes in the `$defs` section.
 
-> This does have some implications for how code is generated. Personally I prefer what is emitted if you do things this way, but your mileage may vary! We'll see the differences later on. 
+> This does have some implications for how code is generated. Personally I prefer what is emitted if you do things this way, but your mileage may vary! We'll see the differences later on.
 
 The first entity we encounter in the `$defs` section is a `Person` with a required `name` property, and an optional `dateOfBirth`.
 
@@ -305,7 +305,7 @@ This turns out to be a string which, if present, must be at least 1 character lo
         "oneOf": [
             { "$ref": "#/$defs/PersonNameElement" },
             { "$ref": "#/$defs/PersonNameElementArray" }
-        ] 
+        ]
     }
 ```
 
@@ -403,7 +403,7 @@ Second, we can provide a `--rootPath` to locate the schema in the document for w
 We want to generate the code for the schema at `'#/$defs/Person'`.
 
  You'll probably recognize this as the syntax you use for specifying a `$ref` within a JSON schema document. It is part of the [JSON Pointer specification](https://www.rfc-editor.org/rfc/rfc6901).
- 
+
  (And technically, it is in the *URI Fragment Identifier Representation* of that format.)
 
 > Note also that in most terminals, you will have to wrap the pointer in single quotes to ensure that the command line is parsed correctly, as above.
@@ -432,7 +432,7 @@ Let's run that now. When it has completed, list the C# files in the directory, u
 ls *.cs
 ```
 
-> Remember that I'm using Powershell, so, as with Linux distros, I have access to `ls`. Windows Command Prompt users might want `dir`. 
+> Remember that I'm using Powershell, so, as with Linux distros, I have access to `ls`. Windows Command Prompt users might want `dir`.
 
 You should see the following file names listed (plus whatever other detail your particular shell adds to its output):
 ```
@@ -463,7 +463,7 @@ Remember the `Link` schema we saw earlier that was *not* referenced by the `Pers
 
 > If you want to generate types that are *not* directly referenced from that root element, then you can place them into a `$defs` object *within* your root element.
 >
-> If you don't want to do this (or can't), the tool is idempotent when run against the same source document. This means that you can happily run the tool multiple times, with a different `--rootPath` for each element you want to generate. 
+> If you don't want to do this (or can't), the tool is idempotent when run against the same source document. This means that you can happily run the tool multiple times, with a different `--rootPath` for each element you want to generate.
 
 Before we dive into the details, let's build the code and find out what we can do with it.
 
@@ -490,7 +490,7 @@ This emits an executable in the bin folder. We can run it...
  Hello, World!
  ```
 
-> If you don't see the output, double check that you've followed all the steps correctly up to this point. If it still doesn't work, ping us a comment and we will see if we can help you. 
+> If you don't see the output, double check that you've followed all the steps correctly up to this point. If it still doesn't work, ping us a comment and we will see if we can help you.
 
 Let's put the types we've generated to work.
 
@@ -699,7 +699,7 @@ Oldroyd, Michael: 14 July 1944
 ```
 
 > ### The same but different
-> 
+>
 > It is worth pausing for a quick sidebar on performance characteristics. Feel free to skip ahead if you don't really care right now.
 >
 > This code is the same *in effect*, and slightly simpler to write, but a little different under the hood.
@@ -767,7 +767,7 @@ Similarly for `PersonName.DateOfBirth`
 public Corvus.Json.JsonDate DateOfBirth
 ```
 
-`JsonDate` is part of our extended JSON type model and it is implicitly covertible to-and-from `NodaTime.LocalDate` for the same reason. 
+`JsonDate` is part of our extended JSON type model and it is implicitly covertible to-and-from `NodaTime.LocalDate` for the same reason.
 
 So conversions are really useful in that they let us write idiomatic dotnet code, while maintaining the benefits of our JSON data model.
 
@@ -861,7 +861,7 @@ bool isValid2 = invalidOldroyd.IsValid();
 Console.WriteLine($"invalidOldroyd {(isValid2 ? "is" : "is not")} valid.");
 ```
 
-Notice that we have omitted the `familyName` property from the `name` object. This makes it invalid according to the schema (because `familyName` is a `required` property.) 
+Notice that we have omitted the `familyName` property from the `name` object. This makes it invalid according to the schema (because `familyName` is a `required` property.)
 
 Build and run...
 
@@ -989,7 +989,7 @@ Let's replace the code that extracts the given name with the following:
 
 ```csharp
 string givenName =
-    michaelOldroyd.Name.GivenName.IsNotUndefined() 
+    michaelOldroyd.Name.GivenName.IsNotUndefined()
         ? michaelOldroyd.Name.GivenName
         : "[no given name specified]";
 ```
@@ -1028,7 +1028,7 @@ We can demonstrate this with an addition to our JSON text.
 string jsonText = @"{
     ""name"": {
       ""familyName"": ""Oldroyd"",
-      ""givenName"": ""Michael"",    
+      ""givenName"": ""Michael"",
       ""otherNames"": [""Francis"", ""James""]
     },
     ""occupation"": ""Farrier"",
@@ -1056,7 +1056,7 @@ So how can we get hold of the `occupation` property?
 
 Well, any type which represents a JSON `object` implements our `IJsonObject<T>` interface, and that gives us the ability to inspect all of the properties of the object.
 
-> As with `IJsonValue` you should not be using this interface directly, as it would cause your value to be boxed. 
+> As with `IJsonValue` you should not be using this interface directly, as it would cause your value to be boxed.
 
 In particular, we can search for a well-known additional property with the `TryGetProperty()` method.
 
@@ -1074,7 +1074,7 @@ if (michaelOldroyd.TryGetProperty("occupation", out JsonAny occupation) &&
 bool isValid = michaelOldroyd.IsValid();
 ```
 
-`TryGetProperty` uses the familiar `TryXXX` pattern used throughout the dotnet framework. We pass in the name of the property we wish to receive (as it appears in the JSON document). If it finds such a property, it returns `true` and sets the output value. 
+`TryGetProperty` uses the familiar `TryXXX` pattern used throughout the dotnet framework. We pass in the name of the property we wish to receive (as it appears in the JSON document). If it finds such a property, it returns `true` and sets the output value.
 
 Notice how we are also checking that the value provided is a JSON `string`, using the `ValueKind` property. If it is, we know that we can use the `JsonAny.AsString` property to convert to a string.
 
@@ -1109,7 +1109,7 @@ Let's add a few more *additional properties* to our JSON document.
 string jsonText = @"{
     ""name"": {
       ""familyName"": ""Oldroyd"",
-      ""givenName"": ""Michael"",    
+      ""givenName"": ""Michael"",
       ""otherNames"": [""Francis"", ""James""]
     },
     ""occupation"": ""Farrier"",
@@ -1196,7 +1196,7 @@ foreach(Property property in michaelOldroyd.EnumerateObject())
         // Skip the properties we already know about
         continue;
     }
-    
+
     Console.WriteLine($"{property.Name}: {property.Value}");
 }
 ```
@@ -1232,7 +1232,7 @@ Using standard code-first serializers, if you are faced with additional properti
 
 With most code-first C#-to-JSON (de-)serialization, you lose this characteristic unless it has been explicitly designed-in to your C# classes.
 
-With our generated code and extended type model, we preserve as much information as possible through any transformations. That's true even when we convert between types which are not valid for the underlying data. 
+With our generated code and extended type model, we preserve as much information as possible through any transformations. That's true even when we convert between types which are not valid for the underlying data.
 
 > There are edge cases where you can devise a conversion and manipulation process that is *not* information preserving. However, for any `JsonElement`-backed use case like this, all information is preserved between conversions.
 
@@ -1386,7 +1386,7 @@ we could use anonymous types like this:
 
 ```csharp
 var jsonAnon = new {
-    name = new { 
+    name = new {
       familyName = "Oldroyd",
       givenName = "Michael",
       otherNames = new [] { "Francis", "James" }
@@ -1634,7 +1634,7 @@ if (michaelOldroyd.Name.OtherNames.ValueKind == JsonValueKind.Array)
 }
 ```
 
-Both of those techniques depend on us knowing that "being an array type" is enough to tell us how to treat the value. That means having an intimiate knowledge of the existing schema. 
+Both of those techniques depend on us knowing that "being an array type" is enough to tell us how to treat the value. That means having an intimiate knowledge of the existing schema.
 
 A more general approach might be to cast to the desired target type (`PersonNameElementArray`) and check whether it is valid
 
@@ -1658,7 +1658,7 @@ Let's remind ourselves of the schema for `OtherNames` again.
     "oneOf": [
         { "$ref": "#/$defs/PersonNameElement" },
         { "$ref": "#/$defs/PersonNameElementArray" }
-    ] 
+    ]
 }
 ```
 
@@ -1676,7 +1676,7 @@ OtherNames otherNames;
 if (otherNames.IsPersonNameElementArray)
 {
     PersonNameElementArray otherNamesArray = otherNames.AsPersonNameElementArray;
-    
+
     // Use the array
     otherNamesArray.EnumerateItems();
 }
