@@ -212,6 +212,8 @@ Benchmark Dotnet Nightlies
 
 [You can find the benchmark dotnet nightlies here.](https://ci.appveyor.com/nuget/benchmarkdotnet)
 
+(For normal builds, this is done for you in the nuget.config found in the root of the project.)
+
 ## Organization of the repository
 
 ### Corvus.Json.CodeGenerator
@@ -237,19 +239,23 @@ Common code to assist with building code generators for various flavours of JSON
 
 Specific implementations of the code generators for various JSON schema dialects.
 
-The `BuildTemplates.cmd` is used to generate the T4 code generators for specific schema, with customizations included in the local `Templates/*.tt` for those elements which vary in that particular schema.
-
 The code in `JsonSchemaBuilder` uses the `JsonSchemaWalker` to build the appropriate `TypeDeclaration` instances for the particular schema.
 
 It then passes those to the various T4 code generators to generate the partial classes for each type discovered. It only generates partials for the features needed for that type.
 
-The "code-behind" partials for the T4 generators themselves are generated from a T4 template called `Templates/CodeGeneratorPartial.tt` which can be customized for the generator context required by your own generators.
+The code for those T4 code generators is produced using the `BuildTemplates.cmd`. This automates the process of taking the T4 templates, both from the SharedTemplates folder in `Corvus.Json.CodeGeneration.Abstractions` and custom templates that are included in the local `Templates/*.tt` for those elements which vary in that particular schema.
+
+If you are building your own generators, or modifying the existing ones, pointers to instructions for using this tool can be found in `BuildTemplates.cmd`.
+
+The T4 templates need "code-behind" partials to provide the context for the generator. These are also generated from a T4 template called `Templates/CodeGeneratorPartial.tt`, by the `BuildTemplates.cmd` command. Again, these can be customized to extend the generator context required by your own generators.
+
+You would not normally need to run those commands to build the solution, as their output is checked into the repository.
 
 ### Corvus.Json.Walker
 
-A visitor for arbitrary JSON documents, with the ability to follow JSON references and load documents from multiple sources, including the local filesystem, and over HTTP. This resolution is extensible to arbitrary sources.
+A visitor for arbitrary JSON documents, with the ability to follow JSON references and load documents from multiple sources, including the local filesystem, and over HTTP. This resolution is extensible to arbitrary sources by implementing `IDocumentResovler`.
 
-It is used by the `JsonSchemaBuilder` implementations.
+It is used by the `JsonSchemaBuilder` implementations to walk the schema and populate the `TypeDeclaration` instances for the schema.
 
 ### Corvus.Json.Patch
 
