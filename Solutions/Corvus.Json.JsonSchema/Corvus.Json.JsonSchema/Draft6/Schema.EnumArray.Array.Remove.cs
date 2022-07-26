@@ -16,18 +16,18 @@ public readonly partial struct Schema
     /// <summary>
     /// A type generated from a JsonSchema specification.
     /// </summary>
-    public readonly partial struct EnumJsonAnyArray
+    public readonly partial struct EnumArray
     {
         /// <inheritdoc/>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public EnumJsonAnyArray Remove(in JsonAny item1)
+        public EnumArray Remove(in JsonAny item1)
         {
             return new(this.GetImmutableListWithout(item1));
         }
 
         /// <inheritdoc/>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public EnumJsonAnyArray Remove<TItem1>(in TItem1 item1)
+        public EnumArray Remove<TItem1>(in TItem1 item1)
             where TItem1 : struct, IJsonValue<TItem1>
         {
             return this.Remove(item1.AsAny);
@@ -35,14 +35,14 @@ public readonly partial struct Schema
 
         /// <inheritdoc/>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public EnumJsonAnyArray RemoveAt(int index)
+        public EnumArray RemoveAt(int index)
         {
             return new(this.GetImmutableListWithoutRange(index, 1));
         }
 
         /// <inheritdoc/>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public EnumJsonAnyArray RemoveRange(int index, int count)
+        public EnumArray RemoveRange(int index, int count)
         {
             return new(this.GetImmutableListWithoutRange(index, count));
         }

@@ -61,6 +61,42 @@ public static class SchemaExtensions
     }
 
     /// <summary>
+    /// Gets the content media type for the draft 6 schema.
+    /// </summary>
+    /// <param name="draft6Schema">The schema for which to get the value.</param>
+    /// <returns>The value, which may be undefined.</returns>
+    public static JsonString GetContentMediaType(this Schema draft6Schema)
+    {
+        if (draft6Schema.TryGetProperty("media", out JsonAny media) && media.ValueKind == JsonValueKind.Object)
+        {
+            if (media.TryGetProperty("type", out JsonAny type) && type.ValueKind == JsonValueKind.String)
+            {
+                return type.AsString;
+            }
+        }
+
+        return JsonString.Undefined;
+    }
+
+    /// <summary>
+    /// Gets the content media type for the draft 6 schema.
+    /// </summary>
+    /// <param name="draft6Schema">The schema for which to get the value.</param>
+    /// <returns>The value, which may be undefined.</returns>
+    public static JsonString GetContentEncoding(this Schema draft6Schema)
+    {
+        if (draft6Schema.TryGetProperty("media", out JsonAny media) && media.ValueKind == JsonValueKind.Object)
+        {
+            if (media.TryGetProperty("binaryEncoding", out JsonAny encoding) && encoding.ValueKind == JsonValueKind.String)
+            {
+                return encoding.AsString;
+            }
+        }
+
+        return JsonString.Undefined;
+    }
+
+    /// <summary>
     /// Determines if this is an explicit object type.
     /// </summary>
     /// <param name="draft6Schema">The schema to test.</param>
@@ -356,11 +392,9 @@ public static class SchemaExtensions
             draft6Schema.PatternProperties.IsUndefined() &&
             draft6Schema.Properties.IsUndefined() &&
             draft6Schema.PropertyNames.IsUndefined() &&
-            draft6Schema.ReadOnly.IsUndefined() &&
             draft6Schema.Ref.IsUndefined() &&
             draft6Schema.Required.IsUndefined() &&
-            draft6Schema.UniqueItems.IsUndefined() &&
-            draft6Schema.WriteOnly.IsUndefined());
+            draft6Schema.UniqueItems.IsUndefined());
     }
 
     /// <summary>
@@ -371,15 +405,14 @@ public static class SchemaExtensions
     public static bool IsEmpty(this Schema draft6Schema)
     {
         return
-            draft6Schema.Comment.IsUndefined() &&
             draft6Schema.AdditionalItems.IsUndefined() &&
             draft6Schema.AdditionalProperties.IsUndefined() &&
             draft6Schema.AllOf.IsUndefined() &&
             draft6Schema.AnyOf.IsUndefined() &&
             draft6Schema.Const.IsUndefined() &&
             draft6Schema.Contains.IsUndefined() &&
-            draft6Schema.ContentEncoding.IsUndefined() &&
-            draft6Schema.ContentMediaType.IsUndefined() &&
+            draft6Schema.GetContentEncoding().IsUndefined() &&
+            draft6Schema.GetContentMediaType().IsUndefined() &&
             draft6Schema.Default.IsUndefined() &&
             draft6Schema.Definitions.IsUndefined() &&
             draft6Schema.Dependencies.IsUndefined() &&
@@ -405,13 +438,11 @@ public static class SchemaExtensions
             draft6Schema.PatternProperties.IsUndefined() &&
             draft6Schema.Properties.IsUndefined() &&
             draft6Schema.PropertyNames.IsUndefined() &&
-            draft6Schema.ReadOnly.IsUndefined() &&
             draft6Schema.Ref.IsUndefined() &&
             draft6Schema.Required.IsUndefined() &&
             draft6Schema.Title.IsUndefined() &&
             draft6Schema.Type.IsUndefined() &&
-            draft6Schema.UniqueItems.IsUndefined() &&
-            draft6Schema.WriteOnly.IsUndefined();
+            draft6Schema.UniqueItems.IsUndefined();
     }
 
     /// <summary>

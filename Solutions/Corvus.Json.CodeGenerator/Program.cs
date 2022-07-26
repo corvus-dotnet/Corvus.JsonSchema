@@ -111,6 +111,7 @@ class Program
             IJsonSchemaBuilder builder =
                 schemaVariant switch
                 {
+                    SchemaVariant.Draft6 => new CodeGeneration.Draft6.JsonSchemaBuilder(walker),
                     SchemaVariant.Draft7 => new CodeGeneration.Draft7.JsonSchemaBuilder(walker),
                     SchemaVariant.Draft202012 => new CodeGeneration.Draft202012.JsonSchemaBuilder(walker),
                     SchemaVariant.Draft201909 => new CodeGeneration.Draft201909.JsonSchemaBuilder(walker),
@@ -191,26 +192,34 @@ class Program
     private static async Task<SchemaVariant?> TryGetSchemaFrom(JsonWalker walker, string resolvedReference)
     {
         JsonElement? rootElement = await walker.GetDocumentElement(resolvedReference).ConfigureAwait(false);
-        if (rootElement is JsonElement re && re.TryGetProperty("$schema", out JsonElement schema))
+        if (rootElement is JsonElement re)
         {
-            if (schema.ValueKind == JsonValueKind.String)
+            if (re.TryGetProperty("$schema", out JsonElement schema))
             {
-                string? schemaValue = schema.GetString();
-                if (schemaValue is string sv)
+                if (schema.ValueKind == JsonValueKind.String)
                 {
-                    if (sv == "http://json-schema.org/draft-07/schema" || sv == "http://json-schema.org/draft-07/schema#")
+                    string? schemaValue = schema.GetString();
+                    if (schemaValue is string sv)
                     {
-                        return SchemaVariant.Draft7;
-                    }
+                        if (sv == "http://json-schema.org/draft-06/schema" || sv == "http://json-schema.org/draft-06/schema#")
+                        {
+                            return SchemaVariant.Draft6;
+                        }
 
-                    if (sv == "https://json-schema.org/draft/2019-09/schema")
-                    {
-                        return SchemaVariant.Draft201909;
-                    }
+                        if (sv == "http://json-schema.org/draft-07/schema" || sv == "http://json-schema.org/draft-07/schema#")
+                        {
+                            return SchemaVariant.Draft7;
+                        }
 
-                    if (sv == "https://json-schema.org/draft/2020-12/schema")
-                    {
-                        return SchemaVariant.Draft202012;
+                        if (sv == "https://json-schema.org/draft/2019-09/schema")
+                        {
+                            return SchemaVariant.Draft201909;
+                        }
+
+                        if (sv == "https://json-schema.org/draft/2020-12/schema")
+                        {
+                            return SchemaVariant.Draft202012;
+                        }
                     }
                 }
             }

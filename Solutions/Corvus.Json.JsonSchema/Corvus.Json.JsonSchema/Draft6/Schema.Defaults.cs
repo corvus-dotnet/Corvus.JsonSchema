@@ -70,19 +70,17 @@ public readonly partial struct Schema
     private static ImmutableDictionary<JsonPropertyName, JsonAny> BuildDefaults()
     {
         ImmutableDictionary<JsonPropertyName, JsonAny>.Builder builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
-        builder.Add(ReadOnlyJsonPropertyName, JsonAny.Parse("false"));
-        builder.Add(WriteOnlyJsonPropertyName, JsonAny.Parse("false"));
-        builder.Add(AdditionalItemsJsonPropertyName, JsonAny.Parse("true"));
-        builder.Add(ItemsJsonPropertyName, JsonAny.Parse("true"));
+        builder.Add(AdditionalItemsJsonPropertyName, JsonAny.Parse("{}"));
+        builder.Add(ItemsJsonPropertyName, JsonAny.Parse("{}"));
         builder.Add(UniqueItemsJsonPropertyName, JsonAny.Parse("false"));
-        builder.Add(ContainsJsonPropertyName, JsonAny.Parse("true"));
+        builder.Add(ContainsJsonPropertyName, JsonAny.Parse("{}"));
         builder.Add(RequiredJsonPropertyName, JsonAny.Parse("[]"));
-        builder.Add(AdditionalPropertiesJsonPropertyName, JsonAny.Parse("true"));
+        builder.Add(AdditionalPropertiesJsonPropertyName, JsonAny.Parse("{}"));
         builder.Add(DefinitionsJsonPropertyName, JsonAny.Parse("{}"));
         builder.Add(PropertiesJsonPropertyName, JsonAny.Parse("{}"));
         builder.Add(PatternPropertiesJsonPropertyName, JsonAny.Parse("{}"));
-        builder.Add(PropertyNamesJsonPropertyName, JsonAny.Parse("true"));
-        builder.Add(NotJsonPropertyName, JsonAny.Parse("true"));
+        builder.Add(PropertyNamesJsonPropertyName, JsonAny.Parse("{}"));
+        builder.Add(NotJsonPropertyName, JsonAny.Parse("{}"));
         return builder.ToImmutable();
     }
 }

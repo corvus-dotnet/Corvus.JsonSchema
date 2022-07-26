@@ -70,10 +70,10 @@ public class TypeDeclaration : TypeDeclaration<Schema, PropertyDeclaration, Type
     protected override bool SchemaIsFalse => this.Schema.ValueKind == System.Text.Json.JsonValueKind.False;
 
     /// <inheritdoc/>
-    protected override string? SchemaContentEncoding => this.Schema.ContentEncoding.AsOptionalString();
+    protected override string? SchemaContentEncoding => this.Schema.GetContentEncoding().AsOptionalString();
 
     /// <inheritdoc/>
-    protected override string? SchemaContentMediaType => this.Schema.ContentMediaType.AsOptionalString();
+    protected override string? SchemaContentMediaType => this.Schema.GetContentMediaType().AsOptionalString();
 
     /// <inheritdoc/>
     protected override bool SchemaHasEnum => this.Schema.Enum.IsNotUndefined();

@@ -20,17 +20,17 @@ public readonly partial struct Schema
     /// <summary>
     /// A type generated from a JsonSchema specification.
     /// </summary>
-    public readonly partial struct EnumJsonAnyArray : IJsonArray<EnumJsonAnyArray>
+    public readonly partial struct EnumArray : IJsonArray<EnumArray>
     {
         /// <summary>
         /// Gets an empty array.
         /// </summary>
-        public static readonly EnumJsonAnyArray EmptyArray = FromItems(ImmutableList<JsonAny>.Empty);
+        public static readonly EnumArray EmptyArray = FromItems(ImmutableList<JsonAny>.Empty);
         /// <summary>
-        /// Initializes a new instance of the <see cref = "EnumJsonAnyArray"/> struct.
+        /// Initializes a new instance of the <see cref = "EnumArray"/> struct.
         /// </summary>
         /// <param name = "value">The value from which to construct the instance.</param>
-        public EnumJsonAnyArray(ImmutableList<JsonAny> value)
+        public EnumArray(ImmutableList<JsonAny> value)
         {
             this.jsonElementBacking = default;
             this.backing = Backing.Array;
@@ -38,10 +38,10 @@ public readonly partial struct Schema
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref = "EnumJsonAnyArray"/> struct.
+        /// Initializes a new instance of the <see cref = "EnumArray"/> struct.
         /// </summary>
         /// <param name = "value">The value from which to construct the instance.</param>
-        public EnumJsonAnyArray(IEnumerable<JsonAny> value)
+        public EnumArray(IEnumerable<JsonAny> value)
         {
             this.jsonElementBacking = default;
             this.backing = Backing.Array;
@@ -78,7 +78,7 @@ public readonly partial struct Schema
         /// Conversion from JsonArray.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator JsonArray(EnumJsonAnyArray value)
+        public static implicit operator JsonArray(EnumArray value)
         {
             return value.AsArray;
         }
@@ -87,7 +87,7 @@ public readonly partial struct Schema
         /// Conversion to JsonArray.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator EnumJsonAnyArray(JsonArray value)
+        public static implicit operator EnumArray(JsonArray value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -101,7 +101,7 @@ public readonly partial struct Schema
         /// Conversion from immutable list.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator ImmutableList<JsonAny>(EnumJsonAnyArray value)
+        public static implicit operator ImmutableList<JsonAny>(EnumArray value)
         {
             return value.GetImmutableList();
         }
@@ -110,39 +110,39 @@ public readonly partial struct Schema
         /// Conversion to immutable list.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator EnumJsonAnyArray(ImmutableList<JsonAny> value)
+        public static implicit operator EnumArray(ImmutableList<JsonAny> value)
         {
             return new(value);
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref = "EnumJsonAnyArray"/> struct.
+        /// Initializes a new instance of the <see cref = "EnumArray"/> struct.
         /// </summary>
         /// <param name = "items">The list of items from which to construct the array.</param>
         /// <returns>An instance of the array constructed from the list.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static EnumJsonAnyArray FromItems(ImmutableList<JsonAny> items)
+        public static EnumArray FromItems(ImmutableList<JsonAny> items)
         {
             return new(items);
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref = "EnumJsonAnyArray"/> struct.
+        /// Initializes a new instance of the <see cref = "EnumArray"/> struct.
         /// </summary>
         /// <param name = "value">The value from which to construct the instance.</param>
         /// <returns>A JsonAny instantiated from the given items.</returns>
-        public static EnumJsonAnyArray FromItems(params JsonAny[] value)
+        public static EnumArray FromItems(params JsonAny[] value)
         {
             return new(value.ToImmutableList());
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref = "EnumJsonAnyArray"/> struct.
+        /// Initializes a new instance of the <see cref = "EnumArray"/> struct.
         /// </summary>
         /// <typeparam name = "TItem">The type of the items in the list.</typeparam>
         /// <param name = "value">The value from which to construct the instance.</param>
-        /// <returns>A EnumJsonAnyArray instantiated from the given items.</returns>
-        public static EnumJsonAnyArray FromItems<TItem>(params TItem[] value)
+        /// <returns>A EnumArray instantiated from the given items.</returns>
+        public static EnumArray FromItems<TItem>(params TItem[] value)
             where TItem : struct, IJsonValue<TItem>
         {
             ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
@@ -155,12 +155,12 @@ public readonly partial struct Schema
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref = "EnumJsonAnyArray"/> struct.
+        /// Initializes a new instance of the <see cref = "EnumArray"/> struct.
         /// </summary>
         /// <typeparam name = "TItem1">The type of the items in the list.</typeparam>
         /// <param name = "value1">The first value from which to construct the instance.</param>
-        /// <returns>A EnumJsonAnyArray instantiated from the given items.</returns>
-        public static EnumJsonAnyArray FromItems<TItem1>(in TItem1 value1)
+        /// <returns>A EnumArray instantiated from the given items.</returns>
+        public static EnumArray FromItems<TItem1>(in TItem1 value1)
             where TItem1 : struct, IJsonValue<TItem1>
         {
             ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
@@ -169,14 +169,14 @@ public readonly partial struct Schema
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref = "EnumJsonAnyArray"/> struct.
+        /// Initializes a new instance of the <see cref = "EnumArray"/> struct.
         /// </summary>
         /// <typeparam name = "TItem1">The type of the first item in the list.</typeparam>
         /// <typeparam name = "TItem2">The type of the second item in the list.</typeparam>
         /// <param name = "value1">The first value from which to construct the instance.</param>
         /// <param name = "value2">The second value from which to construct the instance.</param>
-        /// <returns>A EnumJsonAnyArray instantiated from the given items.</returns>
-        public static EnumJsonAnyArray FromItems<TItem1, TItem2>(in TItem1 value1, in TItem2 value2)
+        /// <returns>A EnumArray instantiated from the given items.</returns>
+        public static EnumArray FromItems<TItem1, TItem2>(in TItem1 value1, in TItem2 value2)
             where TItem1 : struct, IJsonValue<TItem1> where TItem2 : struct, IJsonValue<TItem2>
         {
             ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
@@ -186,7 +186,7 @@ public readonly partial struct Schema
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref = "EnumJsonAnyArray"/> struct.
+        /// Initializes a new instance of the <see cref = "EnumArray"/> struct.
         /// </summary>
         /// <typeparam name = "TItem1">The type of the first item in the list.</typeparam>
         /// <typeparam name = "TItem2">The type of the second item in the list.</typeparam>
@@ -194,8 +194,8 @@ public readonly partial struct Schema
         /// <param name = "value1">The first value from which to construct the instance.</param>
         /// <param name = "value2">The second value from which to construct the instance.</param>
         /// <param name = "value3">The thirdvalue from which to construct the instance.</param>
-        /// <returns>A EnumJsonAnyArray instantiated from the given items.</returns>
-        public static EnumJsonAnyArray FromItems<TItem1, TItem2, TItem3>(in TItem1 value1, in TItem2 value2, in TItem3 value3)
+        /// <returns>A EnumArray instantiated from the given items.</returns>
+        public static EnumArray FromItems<TItem1, TItem2, TItem3>(in TItem1 value1, in TItem2 value2, in TItem3 value3)
             where TItem1 : struct, IJsonValue<TItem1> where TItem2 : struct, IJsonValue<TItem2> where TItem3 : struct, IJsonValue<TItem3>
         {
             ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
@@ -215,7 +215,7 @@ public readonly partial struct Schema
         /// This will serialize the items to create the underlying JsonArray. Note the
         /// other overloads which avoid this serialization step.
         /// </remarks>
-        public static EnumJsonAnyArray FromRange<T>(IEnumerable<T> items)
+        public static EnumArray FromRange<T>(IEnumerable<T> items)
         {
             ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
             foreach (T item in items)
@@ -227,7 +227,7 @@ public readonly partial struct Schema
                 builder.Add(JsonAny.Parse(abw.WrittenMemory));
             }
 
-            return new EnumJsonAnyArray(builder.ToImmutable());
+            return new EnumArray(builder.ToImmutable());
         }
 
         /// <summary>
@@ -235,7 +235,7 @@ public readonly partial struct Schema
         /// </summary>
         /// <param name = "items">The items from which to create the array.</param>
         /// <returns>The new array created from the items.</returns>
-        public static EnumJsonAnyArray FromItems(IEnumerable<IJsonValue> items)
+        public static EnumArray FromItems(IEnumerable<IJsonValue> items)
         {
             ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
             foreach (IJsonValue item in items)
@@ -243,7 +243,7 @@ public readonly partial struct Schema
                 builder.Add(item.AsAny);
             }
 
-            return new EnumJsonAnyArray(builder.ToImmutable());
+            return new EnumArray(builder.ToImmutable());
         }
 
         /// <summary>
@@ -251,7 +251,7 @@ public readonly partial struct Schema
         /// </summary>
         /// <param name = "items">The items from which to create the array.</param>
         /// <returns>The new array created from the items.</returns>
-        public static EnumJsonAnyArray FromItems(IEnumerable<string> items)
+        public static EnumArray FromItems(IEnumerable<string> items)
         {
             ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
             foreach (string item in items)
@@ -259,7 +259,7 @@ public readonly partial struct Schema
                 builder.Add(new JsonAny(item));
             }
 
-            return new EnumJsonAnyArray(builder.ToImmutable());
+            return new EnumArray(builder.ToImmutable());
         }
 
         /// <summary>
@@ -267,7 +267,7 @@ public readonly partial struct Schema
         /// </summary>
         /// <param name = "items">The items from which to create the array.</param>
         /// <returns>The new array created from the items.</returns>
-        public static EnumJsonAnyArray FromItems(IEnumerable<double> items)
+        public static EnumArray FromItems(IEnumerable<double> items)
         {
             ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
             foreach (double item in items)
@@ -275,7 +275,7 @@ public readonly partial struct Schema
                 builder.Add(new JsonAny(item));
             }
 
-            return new EnumJsonAnyArray(builder.ToImmutable());
+            return new EnumArray(builder.ToImmutable());
         }
 
         /// <summary>
@@ -283,7 +283,7 @@ public readonly partial struct Schema
         /// </summary>
         /// <param name = "items">The items from which to create the array.</param>
         /// <returns>The new array created from the items.</returns>
-        public static EnumJsonAnyArray FromItems(IEnumerable<float> items)
+        public static EnumArray FromItems(IEnumerable<float> items)
         {
             ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
             foreach (float item in items)
@@ -291,7 +291,7 @@ public readonly partial struct Schema
                 builder.Add(new JsonAny(item));
             }
 
-            return new EnumJsonAnyArray(builder.ToImmutable());
+            return new EnumArray(builder.ToImmutable());
         }
 
         /// <summary>
@@ -299,7 +299,7 @@ public readonly partial struct Schema
         /// </summary>
         /// <param name = "items">The items from which to create the array.</param>
         /// <returns>The new array created from the items.</returns>
-        public static EnumJsonAnyArray FromItems(IEnumerable<int> items)
+        public static EnumArray FromItems(IEnumerable<int> items)
         {
             ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
             foreach (int item in items)
@@ -307,7 +307,7 @@ public readonly partial struct Schema
                 builder.Add(new JsonAny(item));
             }
 
-            return new EnumJsonAnyArray(builder.ToImmutable());
+            return new EnumArray(builder.ToImmutable());
         }
 
         /// <summary>
@@ -315,7 +315,7 @@ public readonly partial struct Schema
         /// </summary>
         /// <param name = "items">The items from which to create the array.</param>
         /// <returns>The new array created from the items.</returns>
-        public static EnumJsonAnyArray FromItems(IEnumerable<long> items)
+        public static EnumArray FromItems(IEnumerable<long> items)
         {
             ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
             foreach (long item in items)
@@ -323,7 +323,7 @@ public readonly partial struct Schema
                 builder.Add(new JsonAny(item));
             }
 
-            return new EnumJsonAnyArray(builder.ToImmutable());
+            return new EnumArray(builder.ToImmutable());
         }
 
         /// <summary>
@@ -331,7 +331,7 @@ public readonly partial struct Schema
         /// </summary>
         /// <param name = "items">The items from which to create the array.</param>
         /// <returns>The new array created from the items.</returns>
-        public static EnumJsonAnyArray FromItems(IEnumerable<bool> items)
+        public static EnumArray FromItems(IEnumerable<bool> items)
         {
             ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
             foreach (bool item in items)
@@ -339,15 +339,15 @@ public readonly partial struct Schema
                 builder.Add(new JsonAny(item));
             }
 
-            return new EnumJsonAnyArray(builder.ToImmutable());
+            return new EnumArray(builder.ToImmutable());
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref = "EnumJsonAnyArray"/> struct.
+        /// Initializes a new instance of the <see cref = "EnumArray"/> struct.
         /// </summary>
         /// <param name = "value1">The first value from which to construct the instance.</param>
-        /// <returns>A EnumJsonAnyArray instantiated from the given items.</returns>
-        public static EnumJsonAnyArray FromItems(in JsonAny value1)
+        /// <returns>A EnumArray instantiated from the given items.</returns>
+        public static EnumArray FromItems(in JsonAny value1)
         {
             ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
             builder.Add(value1);
@@ -355,12 +355,12 @@ public readonly partial struct Schema
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref = "EnumJsonAnyArray"/> struct.
+        /// Initializes a new instance of the <see cref = "EnumArray"/> struct.
         /// </summary>
         /// <param name = "value1">The first value from which to construct the instance.</param>
         /// <param name = "value2">The second value from which to construct the instance.</param>
-        /// <returns>A EnumJsonAnyArray instantiated from the given items.</returns>
-        public static EnumJsonAnyArray FromItems(in JsonAny value1, in JsonAny value2)
+        /// <returns>A EnumArray instantiated from the given items.</returns>
+        public static EnumArray FromItems(in JsonAny value1, in JsonAny value2)
         {
             ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
             builder.Add(value1);
@@ -369,13 +369,13 @@ public readonly partial struct Schema
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref = "EnumJsonAnyArray"/> struct.
+        /// Initializes a new instance of the <see cref = "EnumArray"/> struct.
         /// </summary>
         /// <param name = "value1">The first value from which to construct the instance.</param>
         /// <param name = "value2">The second value from which to construct the instance.</param>
         /// <param name = "value3">The thirdvalue from which to construct the instance.</param>
-        /// <returns>A EnumJsonAnyArray instantiated from the given items.</returns>
-        public static EnumJsonAnyArray FromItems(in JsonAny value1, in JsonAny value2, in JsonAny value3)
+        /// <returns>A EnumArray instantiated from the given items.</returns>
+        public static EnumArray FromItems(in JsonAny value1, in JsonAny value2, in JsonAny value3)
         {
             ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
             builder.Add(value1);

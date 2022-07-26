@@ -441,7 +441,7 @@ public partial class CodeGeneratorPattern
     {
         get
         {
-            return this.TypeDeclaration.Schema.Format.IsNotUndefined() || this.TypeDeclaration.Schema.ContentEncoding.IsNotUndefined();
+            return this.TypeDeclaration.Schema.Format.IsNotUndefined() || this.TypeDeclaration.Schema.GetContentEncoding().IsNotUndefined();
         }
     }
 
@@ -452,7 +452,7 @@ public partial class CodeGeneratorPattern
     {
         get
         {
-            return this.TypeDeclaration.Schema.ContentMediaType.IsNotUndefined() || this.TypeDeclaration.Schema.ContentEncoding.IsNotUndefined();
+            return this.TypeDeclaration.Schema.GetContentMediaType().IsNotUndefined() || this.TypeDeclaration.Schema.GetContentEncoding().IsNotUndefined();
         }
     }
 
@@ -1327,9 +1327,9 @@ public partial class CodeGeneratorPattern
     {
         get
         {
-            if (this.TypeDeclaration.Schema.ContentMediaType.IsNotUndefined() && this.TypeDeclaration.Schema.ContentEncoding.IsNotUndefined())
+            if (this.TypeDeclaration.Schema.GetContentMediaType().IsNotUndefined() && this.TypeDeclaration.Schema.GetContentEncoding().IsNotUndefined())
             {
-                return this.TypeDeclaration.Schema.ContentMediaType == "application/json" && this.TypeDeclaration.Schema.ContentEncoding == "base64";
+                return this.TypeDeclaration.Schema.GetContentMediaType() == "application/json" && this.TypeDeclaration.Schema.GetContentEncoding() == "base64";
             }
 
             return false;
@@ -1343,9 +1343,9 @@ public partial class CodeGeneratorPattern
     {
         get
         {
-            if (this.TypeDeclaration.Schema.ContentMediaType.IsUndefined() && this.TypeDeclaration.Schema.ContentEncoding.IsNotUndefined())
+            if (this.TypeDeclaration.Schema.GetContentMediaType().IsUndefined() && this.TypeDeclaration.Schema.GetContentEncoding().IsNotUndefined())
             {
-                return this.TypeDeclaration.Schema.ContentEncoding == "base64";
+                return this.TypeDeclaration.Schema.GetContentEncoding() == "base64";
             }
 
             return false;
@@ -1359,9 +1359,9 @@ public partial class CodeGeneratorPattern
     {
         get
         {
-            if (this.TypeDeclaration.Schema.ContentMediaType.IsNotUndefined() && this.TypeDeclaration.Schema.ContentEncoding.IsUndefined())
+            if (this.TypeDeclaration.Schema.GetContentMediaType().IsNotUndefined() && this.TypeDeclaration.Schema.GetContentEncoding().IsUndefined())
             {
-                return this.TypeDeclaration.Schema.ContentMediaType == "application/json";
+                return this.TypeDeclaration.Schema.GetContentMediaType() == "application/json";
             }
 
             return false;
