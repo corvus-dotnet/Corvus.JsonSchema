@@ -20,7 +20,7 @@ class Program
         var useSchema = new Option<SchemaVariant>(
                             "--useSchema",
                             getDefaultValue: () => SchemaVariant.NotSpecified,
-                            description: "Override the schema variant to use. This will default to draft2019-09 if it cannot be picked up from the schema itself.");
+                            description: "Override the schema variant to use. If NotSpecified, and it cannot be picked up from the schema itself, it will use Draft2020-12.");
         var outputMapFile = new Option<string>(
                             "--outputMapFile",
                             description: "The name to use for a map file which includes details of the files that were written.");
