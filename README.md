@@ -224,7 +224,7 @@ Builds on System.Text.Json to provide a rich object model over JSON data, with v
 
 ### Corvus.Json.JsonSchema
 
-An object model for working with JSON Schema documents. *This does not provide validation of data - it is purely a model for reading and writing JSON Schema documents of various flavours.*
+An object model for working with JSON Schema documents. *This does not provide validation of data - it is purely a model for reading,  writing, and validating JSON Schema documents of various flavours.*
 
 ### Corvus.Json.CodeGeneration.Abstractions
 
@@ -243,7 +243,7 @@ The code in `JsonSchemaBuilder` uses the `JsonSchemaWalker` to build the appropr
 
 It then passes those to the various T4 code generators to generate the partial classes for each type discovered. It only generates partials for the features needed for that type.
 
-The partials for the T4 generators themselves are generated from a T4 template called `Templates/CodeGeneratorPartial.tt` which can be customized for the context required by your own generators.
+The "code-behind" partials for the T4 generators themselves are generated from a T4 template called `Templates/CodeGeneratorPartial.tt` which can be customized for the generator context required by your own generators.
 
 ### Corvus.Json.Walker
 

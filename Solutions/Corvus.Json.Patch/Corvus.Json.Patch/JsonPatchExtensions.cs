@@ -14,12 +14,12 @@ namespace Corvus.Json.Patch;
 [System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.SpacingRules", "SA1000:Keywords should be spaced correctly", Justification = "new() syntax not supported by current version of StyleCop")]
 public static partial class JsonPatchExtensions
 {
-    private static readonly ReadOnlyMemory<byte> AddAsUtf8 = "add"u8.ToArray();
-    private static readonly ReadOnlyMemory<byte> CopyAsUtf8 = "copy"u8.ToArray();
-    private static readonly ReadOnlyMemory<byte> MoveAsUtf8 = "move"u8.ToArray();
-    private static readonly ReadOnlyMemory<byte> RemoveAsUtf8 = "remove"u8.ToArray();
-    private static readonly ReadOnlyMemory<byte> ReplaceAsUtf8 = "replace"u8.ToArray();
-    private static readonly ReadOnlyMemory<byte> TestAsUtf8 = "test"u8.ToArray();
+    private static readonly ReadOnlyMemory<byte> AddAsUtf8 = new byte[] { 0x61, 0x64, 0x64 };
+    private static readonly ReadOnlyMemory<byte> CopyAsUtf8 = new byte[] { 0x63, 0x6f, 0x70, 0x79 };
+    private static readonly ReadOnlyMemory<byte> MoveAsUtf8 = new byte[] { 0x6d, 0x6f, 0x76, 0x65 };
+    private static readonly ReadOnlyMemory<byte> RemoveAsUtf8 = new byte[] { 0x72, 0x65, 0x6d, 0x6f, 0x76, 0x65 };
+    private static readonly ReadOnlyMemory<byte> ReplaceAsUtf8 = new byte[] { 0x72, 0x65, 0x70, 0x6c, 0x61, 0x63, 0x65 };
+    private static readonly ReadOnlyMemory<byte> TestAsUtf8 = new byte[] { 0x74, 0x65, 0x73, 0x74 };
 
     /// <summary>
     /// Begin gathering a <see cref="PatchOperationArray"/> by applying successive patch operations to an initial <see cref="IJsonValue"/>.
