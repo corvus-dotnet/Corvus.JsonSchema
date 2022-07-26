@@ -105,7 +105,7 @@ public readonly record struct JsonPropertyName(string Name) : IEquatable<string>
         try
         {
             int written = Encoding.UTF8.GetChars(value, buffer);
-            return this.Name.AsSpan().SequenceEqual(buffer);
+            return this.Name.AsSpan().SequenceEqual(buffer[..written]);
         }
         finally
         {
