@@ -22,6 +22,7 @@ public static partial class JsonPatchExtensions
             this.TerminatingPathBegin = path.LastIndexOf('/') + 1;
             this.Added = false;
             this.Removed = false;
+            this.Nop = false;
             this.SourceElement = sourceElement;
         }
 
