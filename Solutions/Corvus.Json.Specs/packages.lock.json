@@ -1574,6 +1574,16 @@
           "System.CodeDom": "[6.0.0, )"
         }
       },
+      "corvus.json.codegeneration.6": {
+        "type": "Project",
+        "dependencies": {
+          "Corvus.Extensions": "[1.1.4, )",
+          "Corvus.Json.CodeGeneration.Abstractions": "[1.0.0, )",
+          "Corvus.Json.JsonSchema": "[1.0.0, )",
+          "Corvus.Json.Walker": "[1.0.0, )",
+          "System.CodeDom": "[6.0.0, )"
+        }
+      },
       "corvus.json.codegeneration.7": {
         "type": "Project",
         "dependencies": {

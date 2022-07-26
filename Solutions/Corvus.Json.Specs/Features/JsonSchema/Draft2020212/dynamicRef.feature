@@ -548,7 +548,7 @@ Scenario Outline: Tests for implementation dynamic anchor and reference link. Re
         | #/014/tests/001/data | false | incorrect extended schema                                                        |
         | #/014/tests/002/data | true  | correct extended schema                                                          |
 
-Scenario Outline: Tests for implementation dynamic anchor and reference link. Reference should be independent of any possible ordering 2.
+Scenario Outline: Tests for implementation dynamic anchor and reference link. Reference should be independent of any possible ordering. [2]
 /* Schema: 
 {
             "$id": "http://localhost:1234/strict-extendible-allof-ref-first.json",

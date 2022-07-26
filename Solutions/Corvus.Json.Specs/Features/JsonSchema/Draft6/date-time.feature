@@ -1,9 +1,9 @@
-@draft7
+@draft6
 
-Feature: date-time draft7
+Feature: date-time draft6
     In order to use json-schema
     As a developer
-    I want to support date-time in draft7
+    I want to support date-time in draft6
 
 Scenario Outline: validation of date-time strings
 /* Schema: 

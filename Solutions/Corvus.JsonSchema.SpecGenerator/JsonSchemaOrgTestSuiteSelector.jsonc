@@ -4,6 +4,41 @@
 
   "includeInThisDirectory": [],
   "subdirectories": {
+    "draft6": {
+      "testSet": "draft6",
+      "outputFolder": "Draft6",
+      "excludeFromThisDirectory": [
+        "unknownKeyword\\.json"
+      ],
+      "subdirectories": {
+        "optional": {
+          "excludeFromThisDirectory": [
+            "bignum\\.json",
+            "ecmascript-regex\\.json",
+            "non-bmp-regex\\.json"
+          ],
+          "subdirectories": {
+            "format": {
+              "excludeFromThisDirectory": [
+                "unknown\\.json"
+              ],
+              "testExclusions": {
+                "optional/format/date-time.json": {
+                  "validation of date-time strings": {
+                    "testsToIgnoreIndices": [ 10, 11 ]
+                  }
+                }
+                // Probably want to fix this one for real.
+                //"optional/format/duration.json": {
+                //  "testsToIgnoreIndices": [ 23 ]
+                //}
+              }
+
+            }
+          }
+        }
+      }
+    },
 
     "draft7": {
       "testSet": "draft7",
