@@ -12,7 +12,6 @@ resources:
     - repository: recommended_practices
       type: github
       name: endjin/Endjin.RecommendedPractices.AzureDevopsPipelines.GitHub
-      ref: 'refs/heads/feature/enable-preview-netsdk'
       endpoint: corvus-dotnet-github
 
 jobs:
@@ -22,6 +21,5 @@ jobs:
     service_connection_nuget_org: $(Endjin_Service_Connection_NuGet_Org)
     service_connection_github: $(Endjin_Service_Connection_GitHub)
     solution_to_build: $(Endjin_Solution_To_Build)
-    netSdkVersion: '6.0.400-preview.22330.6'
-    includePreviewVersions: true
+    netSdkVersion: '6.x'
 
