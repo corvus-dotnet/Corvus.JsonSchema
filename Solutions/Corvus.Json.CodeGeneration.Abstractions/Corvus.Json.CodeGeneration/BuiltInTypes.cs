@@ -125,6 +125,11 @@ public static class BuiltInTypes
     public static readonly (string Ns, string Type) ClrBase64StringTypeDeclaration = ("Corvus.Json", "JsonBase64String");
 
     /// <summary>
+    /// A clr base64 encoded string type.
+    /// </summary>
+    public static readonly (string Ns, string Type) ClrBase64StringTypeDeclarationPre201909 = ("Corvus.Json", "JsonBase64StringPre201909");
+
+    /// <summary>
     /// A clr base64 encoded JsonDocument type.
     /// </summary>
     public static readonly (string Ns, string Type) ClrBase64ContentTypeDeclaration = ("Corvus.Json", "JsonBase64Content");
@@ -267,7 +272,7 @@ public static class BuiltInTypes
         return (contentMediaType, contentEncoding) switch
         {
             ("application/json", "base64") => pre201909 ? ClrBase64ContentTypeDeclarationPre201909 : ClrBase64ContentTypeDeclaration,
-            (_, "base64") => ClrBase64StringTypeDeclaration,
+            (_, "base64") => pre201909 ? ClrBase64StringTypeDeclarationPre201909 : ClrBase64StringTypeDeclaration,
             ("application/json", null) => pre201909 ? ClrContentTypeDeclarationPre201909 : ClrContentTypeDeclaration,
             (null, null) => ClrStringTypeDeclaration,
             _ => null,
