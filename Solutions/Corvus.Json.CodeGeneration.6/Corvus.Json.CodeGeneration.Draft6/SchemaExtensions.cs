@@ -1,0 +1,428 @@
+﻿// <copyright file="SchemaExtensions.cs" company="Endjin Limited">
+// Copyright (c) Endjin Limited. All rights reserved.
+// </copyright>
+
+using System.Text.Json;
+using Corvus.Json.JsonSchema.Draft6;
+
+namespace Corvus.Json.CodeGeneration.Draft6;
+
+/// <summary>
+/// Extension methods for Draft6-related schema types.
+/// </summary>
+public static class SchemaExtensions
+{
+    /////// <summary>
+    /////// COMPATIBILITY: Gets the string value.
+    /////// </summary>
+    /////// <param name="that">The string for which to get the value as a nullable string.</param>
+    /////// <returns><c>The string if this value represents a string</c>, otherwise <c>null</c>.</returns>
+    ////public static string? AsOptionalString(this JsonString that)
+    ////{
+    ////    if (that.TryGetString(out string? value))
+    ////    {
+    ////        return value;
+    ////    }
+
+    ////    return null;
+    ////}
+
+    /////// <summary>
+    /////// COMPATIBILITY: Gets the array length.
+    /////// </summary>
+    /////// <typeparam name="T">The type of the array.</typeparam>
+    /////// <param name="that">The array for which to get the array length as a nullable string.</param>
+    /////// <returns><c>The string if this value represents a string</c>, otherwise <c>null</c>.</returns>
+    ////public static int GetArrayLength<T>(this T that)
+    ////    where T : struct, IJsonValue
+    ////{
+    ////    return that.AsArray().Length;
+    ////}
+
+    /// <summary>
+    /// Determines if this schema is empty of known items, but contains unknown extensions.
+    /// </summary>
+    /// <param name="draft6Schema">The schema to test.</param>
+    /// <returns><c>True</c> if all the known items are empty, but there are additional properties on the JsonElement.</returns>
+    public static bool EmptyButWithUnknownExtensions(this Schema draft6Schema)
+    {
+        return draft6Schema.ValueKind == JsonValueKind.Object && IsEmpty(draft6Schema) && draft6Schema.EnumerateObject().MoveNext();
+    }
+
+    /// <summary>
+    /// Determines if this is an explicit array type.
+    /// </summary>
+    /// <param name="draft6Schema">The schema to test.</param>
+    /// <returns><c>True</c> if the schema has a single type value, or no type value but a format value.</returns>
+    public static bool IsExplicitArrayType(this Schema draft6Schema)
+    {
+        return
+            draft6Schema.Type.IsSimpleTypesEntity && draft6Schema.Type.Equals(Schema.SimpleTypesEntity.EnumValues.Array);
+    }
+
+    /// <summary>
+    /// Determines if this is an explicit object type.
+    /// </summary>
+    /// <param name="draft6Schema">The schema to test.</param>
+    /// <returns><c>True</c> if the schema has a single type value, or no type value but a format value.</returns>
+    public static bool IsExplicitObjectType(this Schema draft6Schema)
+    {
+        return
+            draft6Schema.Type.IsSimpleTypesEntity && draft6Schema.Type.Equals(Schema.SimpleTypesEntity.EnumValues.Object);
+    }
+
+    /// <summary>
+    /// Determines if this is an explicit number type.
+    /// </summary>
+    /// <param name="draft6Schema">The schema to test.</param>
+    /// <returns><c>True</c> if the schema has a single type value, or no type value but a format value.</returns>
+    public static bool IsExplicitNumberType(this Schema draft6Schema)
+    {
+        return
+            draft6Schema.Type.IsSimpleTypesEntity && (draft6Schema.Type.Equals(Schema.SimpleTypesEntity.EnumValues.Number) || draft6Schema.Type.Equals(Schema.SimpleTypesEntity.EnumValues.Integer));
+    }
+
+    /// <summary>
+    /// Determines if this is an explicit boolean type.
+    /// </summary>
+    /// <param name="draft6Schema">The schema to test.</param>
+    /// <returns><c>True</c> if the schema has a single type value.</returns>
+    public static bool IsExplicitBooleanType(this Schema draft6Schema)
+    {
+        return
+            draft6Schema.Type.IsSimpleTypesEntity && draft6Schema.Type.Equals(Schema.SimpleTypesEntity.EnumValues.Boolean);
+    }
+
+    /// <summary>
+    /// Determines if this is an explicit null type.
+    /// </summary>
+    /// <param name="draft6Schema">The schema to test.</param>
+    /// <returns><c>True</c> if the schema has a single type value.</returns>
+    public static bool IsExplicitNullType(this Schema draft6Schema)
+    {
+        return
+            draft6Schema.Type.IsSimpleTypesEntity && draft6Schema.Type.Equals(Schema.SimpleTypesEntity.EnumValues.Null);
+    }
+
+    /// <summary>
+    /// Determines if this is an explicit string type.
+    /// </summary>
+    /// <param name="draft6Schema">The schema to test.</param>
+    /// <returns><c>True</c> if the schema has a single type value, or no type value but a format value.</returns>
+    public static bool IsExplicitStringType(this Schema draft6Schema)
+    {
+        return
+            draft6Schema.Type.IsSimpleTypesEntity && draft6Schema.Type.Equals(Schema.SimpleTypesEntity.EnumValues.String);
+    }
+
+    /// <summary>
+    /// Determines if this can be an object type.
+    /// </summary>
+    /// <param name="draft6Schema">The schema to test.</param>
+    /// <returns><c>True</c> if the schema has a single type value, or no type value but a format value.</returns>
+    public static bool IsObjectType(this Schema draft6Schema)
+    {
+        return
+            draft6Schema.IsExplicitObjectType() || (draft6Schema.Type.IsSimpleTypesEntityArray && draft6Schema.Type.AsSimpleTypesEntityArray.EnumerateArray().Any(type => type.Equals(Schema.SimpleTypesEntity.EnumValues.Object))) || draft6Schema.Properties.IsNotUndefined() || draft6Schema.Required.IsNotUndefined() || draft6Schema.AdditionalProperties.IsNotUndefined() || draft6Schema.MaxProperties.IsNotUndefined() || draft6Schema.MinProperties.IsNotUndefined() || draft6Schema.PatternProperties.IsNotUndefined() || draft6Schema.PropertyNames.IsNotUndefined() || draft6Schema.Dependencies.IsNotUndefined() || draft6Schema.HasObjectEnum() || draft6Schema.HasObjectConst();
+    }
+
+    /// <summary>
+    /// Determines if this can be an array type.
+    /// </summary>
+    /// <param name="draft6Schema">The schema to test.</param>
+    /// <returns><c>True</c> if the schema has a single type value, or no type value but a format value.</returns>
+    public static bool IsArrayType(this Schema draft6Schema)
+    {
+        return
+            draft6Schema.IsExplicitArrayType() || (draft6Schema.Type.IsSimpleTypesEntityArray && draft6Schema.Type.AsSimpleTypesEntityArray.EnumerateArray().Any(type => type.Equals(Schema.SimpleTypesEntity.EnumValues.Array))) || draft6Schema.AdditionalItems.IsNotUndefined() || draft6Schema.Contains.IsNotUndefined() || draft6Schema.Items.IsNotUndefined() || draft6Schema.MaxItems.IsNotUndefined() || draft6Schema.MinItems.IsNotUndefined() || draft6Schema.UniqueItems.IsNotUndefined() || draft6Schema.HasArrayEnum() || draft6Schema.HasArrayConst();
+    }
+
+    /// <summary>
+    /// Determines if this can be a number type.
+    /// </summary>
+    /// <param name="draft6Schema">The schema to test.</param>
+    /// <returns><c>True</c> if the schema has a single type value, or no type value but a format value.</returns>
+    public static bool IsNumberType(this Schema draft6Schema)
+    {
+        return
+            draft6Schema.IsExplicitNumberType() || (draft6Schema.Type.IsSimpleTypesEntityArray && draft6Schema.Type.AsSimpleTypesEntityArray.EnumerateArray().Any(type => type.Equals(Schema.SimpleTypesEntity.EnumValues.Number) || type.Equals(Schema.SimpleTypesEntity.EnumValues.Integer))) || draft6Schema.Minimum.IsNotUndefined() || draft6Schema.Maximum.IsNotUndefined() || draft6Schema.ExclusiveMaximum.IsNotUndefined() || draft6Schema.ExclusiveMinimum.IsNotUndefined() || draft6Schema.MultipleOf.IsNotUndefined() || draft6Schema.HasNumberEnum() || draft6Schema.HasNumberConst();
+    }
+
+    /// <summary>
+    /// Determines if this can be a boolean type.
+    /// </summary>
+    /// <param name="draft6Schema">The schema to test.</param>
+    /// <returns><c>True</c> if the schema has a single type value, or no type value but a format value.</returns>
+    public static bool IsBooleanType(this Schema draft6Schema)
+    {
+        return
+            draft6Schema.IsExplicitBooleanType() || (draft6Schema.Type.IsSimpleTypesEntityArray && draft6Schema.Type.AsSimpleTypesEntityArray.EnumerateArray().Any(type => type.Equals(Schema.SimpleTypesEntity.EnumValues.Boolean))) || draft6Schema.HasBooleanEnum() || draft6Schema.HasBooleanConst();
+    }
+
+    /// <summary>
+    /// Determines if this can be a null type.
+    /// </summary>
+    /// <param name="draft6Schema">The schema to test.</param>
+    /// <returns><c>True</c> if the schema has a single type value, or no type value but a format value.</returns>
+    public static bool IsNullType(this Schema draft6Schema)
+    {
+        return
+            draft6Schema.IsExplicitNullType() || (draft6Schema.Type.IsSimpleTypesEntityArray && draft6Schema.Type.AsSimpleTypesEntityArray.EnumerateArray().Any(type => type.Equals(Schema.SimpleTypesEntity.EnumValues.Null))) || draft6Schema.HasNullEnum() || draft6Schema.HasNullConst();
+    }
+
+    /// <summary>
+    /// Determines if this can be a boolean type.
+    /// </summary>
+    /// <param name="draft6Schema">The schema to test.</param>
+    /// <returns><c>True</c> if the schema has a single type value, or no type value but a format value.</returns>
+    public static bool IsStringType(this Schema draft6Schema)
+    {
+        return
+            draft6Schema.IsExplicitStringType() || (draft6Schema.Type.IsSimpleTypesEntityArray && draft6Schema.Type.AsSimpleTypesEntityArray.EnumerateArray().Any(type => type.Equals(Schema.SimpleTypesEntity.EnumValues.String))) || draft6Schema.MinLength.IsNotUndefined() || draft6Schema.MaxLength.IsNotUndefined() || draft6Schema.Pattern.IsNotUndefined() || draft6Schema.HasStringEnum() || draft6Schema.HasStringConst();
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether is has an object enum type.
+    /// </summary>
+    /// <param name="draft6Schema">The schema to validate.</param>
+    /// <returns>True if the schema has at least one enum value of the correct type.</returns>
+    public static bool HasObjectEnum(this Schema draft6Schema)
+    {
+        return draft6Schema.Enum.ValueKind == JsonValueKind.Array &&
+            draft6Schema.Enum.EnumerateArray().Any(e => e.ValueKind == JsonValueKind.Object);
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether is has an array enum type.
+    /// </summary>
+    /// <param name="draft6Schema">The schema to validate.</param>
+    /// <returns>True if the schema has at least one enum value of the correct type.</returns>
+    public static bool HasArrayEnum(this Schema draft6Schema)
+    {
+        return draft6Schema.Enum.ValueKind == JsonValueKind.Array &&
+            draft6Schema.Enum.EnumerateArray().Any(e => e.ValueKind == JsonValueKind.Array);
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether is has an number enum type.
+    /// </summary>
+    /// <param name="draft6Schema">The schema to validate.</param>
+    /// <returns>True if the schema has at least one enum value of the correct type.</returns>
+    public static bool HasNumberEnum(this Schema draft6Schema)
+    {
+        return draft6Schema.Enum.ValueKind == JsonValueKind.Array &&
+            draft6Schema.Enum.EnumerateArray().Any(e => e.ValueKind == JsonValueKind.Number);
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether is has an null enum type.
+    /// </summary>
+    /// <param name="draft6Schema">The schema to validate.</param>
+    /// <returns>True if the schema has at least one enum value of the correct type.</returns>
+    public static bool HasNullEnum(this Schema draft6Schema)
+    {
+        return draft6Schema.Enum.ValueKind == JsonValueKind.Array &&
+            draft6Schema.Enum.EnumerateArray().Any(e => e.ValueKind == JsonValueKind.Null);
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether is has an array enum type.
+    /// </summary>
+    /// <param name="draft6Schema">The schema to validate.</param>
+    /// <returns>True if the schema has at least one enum value of the correct type.</returns>
+    public static bool HasStringEnum(this Schema draft6Schema)
+    {
+        return draft6Schema.Enum.ValueKind == JsonValueKind.Array &&
+            draft6Schema.Enum.EnumerateArray().Any(e => e.ValueKind == JsonValueKind.String);
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether is has a boolean enum type.
+    /// </summary>
+    /// <param name="draft6Schema">The schema to validate.</param>
+    /// <returns>True if the schema has at least one enum value of the correct type.</returns>
+    public static bool HasBooleanEnum(this Schema draft6Schema)
+    {
+        return draft6Schema.Enum.ValueKind == JsonValueKind.Array &&
+            draft6Schema.Enum.EnumerateArray().Any(e => e.ValueKind == JsonValueKind.True || e.ValueKind == JsonValueKind.False);
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether is has an object const type.
+    /// </summary>
+    /// <param name="draft6Schema">The schema to validate.</param>
+    /// <returns>True if the schema has a const value of the correct type.</returns>
+    public static bool HasObjectConst(this Schema draft6Schema)
+    {
+        return draft6Schema.Const.ValueKind == JsonValueKind.Object;
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether is has an array const type.
+    /// </summary>
+    /// <param name="draft6Schema">The schema to validate.</param>
+    /// <returns>True if the schema has a const value of the correct type.</returns>
+    public static bool HasArrayConst(this Schema draft6Schema)
+    {
+        return draft6Schema.Const.ValueKind == JsonValueKind.Array;
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether is has a string const type.
+    /// </summary>
+    /// <param name="draft6Schema">The schema to validate.</param>
+    /// <returns>True if the schema has a const value of the correct type.</returns>
+    public static bool HasStringConst(this Schema draft6Schema)
+    {
+        return draft6Schema.Const.ValueKind == JsonValueKind.String;
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether is has a number const type.
+    /// </summary>
+    /// <param name="draft6Schema">The schema to validate.</param>
+    /// <returns>True if the schema has a const value of the correct type.</returns>
+    public static bool HasNumberConst(this Schema draft6Schema)
+    {
+        return draft6Schema.Const.ValueKind == JsonValueKind.Number;
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether is has a null const type.
+    /// </summary>
+    /// <param name="draft6Schema">The schema to validate.</param>
+    /// <returns>True if the schema has a const value of the correct type.</returns>
+    public static bool HasNullConst(this Schema draft6Schema)
+    {
+        return draft6Schema.Const.ValueKind == JsonValueKind.Null;
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether is has a boolean const type.
+    /// </summary>
+    /// <param name="draft6Schema">The schema to validate.</param>
+    /// <returns>True if the schema has a const value of the correct type.</returns>
+    public static bool HasBooleanConst(this Schema draft6Schema)
+    {
+        return draft6Schema.Const.ValueKind == JsonValueKind.True || draft6Schema.Const.ValueKind == JsonValueKind.False;
+    }
+
+    /// <summary>
+    /// Determines if this schema is a simple type.
+    /// </summary>
+    /// <param name="draft6Schema">The schema to test.</param>
+    /// <returns><c>True</c> if the schema has a single type value, or no type value but a format value.</returns>
+    public static bool IsSimpleType(this Schema draft6Schema)
+    {
+        return draft6Schema.Type.IsSimpleTypesEntity;
+    }
+
+    /// <summary>
+    /// Determines if this schema is empty of non-extension items.
+    /// </summary>
+    /// <param name="draft6Schema">The schema to test.</param>
+    /// <returns><c>True</c> if all the non-extension items are empty.</returns>
+    public static bool IsBuiltInType(this Schema draft6Schema)
+    {
+        return
+            draft6Schema.ValueKind == JsonValueKind.True ||
+            draft6Schema.ValueKind == JsonValueKind.False ||
+            draft6Schema.IsEmpty() ||
+            (draft6Schema.IsSimpleType() &&
+            draft6Schema.AdditionalItems.IsUndefined() &&
+            draft6Schema.AdditionalProperties.IsUndefined() &&
+            draft6Schema.AllOf.IsUndefined() &&
+            draft6Schema.AnyOf.IsUndefined() &&
+            draft6Schema.Const.IsUndefined() &&
+            draft6Schema.Contains.IsUndefined() &&
+            draft6Schema.Default.IsUndefined() &&
+            draft6Schema.Dependencies.IsUndefined() &&
+            draft6Schema.Enum.IsUndefined() &&
+            draft6Schema.ExclusiveMaximum.IsUndefined() &&
+            draft6Schema.ExclusiveMinimum.IsUndefined() &&
+            draft6Schema.Items.IsUndefined() &&
+            draft6Schema.Maximum.IsUndefined() &&
+            draft6Schema.MaxItems.IsUndefined() &&
+            draft6Schema.MaxLength.IsUndefined() &&
+            draft6Schema.MaxProperties.IsUndefined() &&
+            draft6Schema.Minimum.IsUndefined() &&
+            draft6Schema.MinItems.IsUndefined() &&
+            draft6Schema.MinLength.IsUndefined() &&
+            draft6Schema.MinProperties.IsUndefined() &&
+            draft6Schema.MultipleOf.IsUndefined() &&
+            draft6Schema.Not.IsUndefined() &&
+            draft6Schema.OneOf.IsUndefined() &&
+            draft6Schema.Pattern.IsUndefined() &&
+            draft6Schema.PatternProperties.IsUndefined() &&
+            draft6Schema.Properties.IsUndefined() &&
+            draft6Schema.PropertyNames.IsUndefined() &&
+            draft6Schema.ReadOnly.IsUndefined() &&
+            draft6Schema.Ref.IsUndefined() &&
+            draft6Schema.Required.IsUndefined() &&
+            draft6Schema.UniqueItems.IsUndefined() &&
+            draft6Schema.WriteOnly.IsUndefined());
+    }
+
+    /// <summary>
+    /// Determines if this schema is empty of non-extension items.
+    /// </summary>
+    /// <param name="draft6Schema">The schema to test.</param>
+    /// <returns><c>True</c> if all the non-extension items are empty.</returns>
+    public static bool IsEmpty(this Schema draft6Schema)
+    {
+        return
+            draft6Schema.Comment.IsUndefined() &&
+            draft6Schema.AdditionalItems.IsUndefined() &&
+            draft6Schema.AdditionalProperties.IsUndefined() &&
+            draft6Schema.AllOf.IsUndefined() &&
+            draft6Schema.AnyOf.IsUndefined() &&
+            draft6Schema.Const.IsUndefined() &&
+            draft6Schema.Contains.IsUndefined() &&
+            draft6Schema.ContentEncoding.IsUndefined() &&
+            draft6Schema.ContentMediaType.IsUndefined() &&
+            draft6Schema.Default.IsUndefined() &&
+            draft6Schema.Definitions.IsUndefined() &&
+            draft6Schema.Dependencies.IsUndefined() &&
+            draft6Schema.Description.IsUndefined() &&
+            draft6Schema.Examples.IsUndefined() &&
+            draft6Schema.Enum.IsUndefined() &&
+            draft6Schema.ExclusiveMaximum.IsUndefined() &&
+            draft6Schema.ExclusiveMinimum.IsUndefined() &&
+            draft6Schema.Format.IsUndefined() &&
+            draft6Schema.Items.IsUndefined() &&
+            draft6Schema.Maximum.IsUndefined() &&
+            draft6Schema.MaxItems.IsUndefined() &&
+            draft6Schema.MaxLength.IsUndefined() &&
+            draft6Schema.MaxProperties.IsUndefined() &&
+            draft6Schema.Minimum.IsUndefined() &&
+            draft6Schema.MinItems.IsUndefined() &&
+            draft6Schema.MinLength.IsUndefined() &&
+            draft6Schema.MinProperties.IsUndefined() &&
+            draft6Schema.MultipleOf.IsUndefined() &&
+            draft6Schema.Not.IsUndefined() &&
+            draft6Schema.OneOf.IsUndefined() &&
+            draft6Schema.Pattern.IsUndefined() &&
+            draft6Schema.PatternProperties.IsUndefined() &&
+            draft6Schema.Properties.IsUndefined() &&
+            draft6Schema.PropertyNames.IsUndefined() &&
+            draft6Schema.ReadOnly.IsUndefined() &&
+            draft6Schema.Ref.IsUndefined() &&
+            draft6Schema.Required.IsUndefined() &&
+            draft6Schema.Title.IsUndefined() &&
+            draft6Schema.Type.IsUndefined() &&
+            draft6Schema.UniqueItems.IsUndefined() &&
+            draft6Schema.WriteOnly.IsUndefined();
+    }
+
+    /// <summary>
+    /// Determines if this schema is a naked reference.
+    /// </summary>
+    /// <param name="draft6Schema">The schema to test.</param>
+    /// <returns><c>True</c> if the schema has a $ref and no other substantive properties.</returns>
+    public static bool IsNakedReference(this Schema draft6Schema)
+    {
+        // If we have a reference, we are always naked.
+        return
+            draft6Schema.Ref.IsNotUndefined();
+    }
+}
