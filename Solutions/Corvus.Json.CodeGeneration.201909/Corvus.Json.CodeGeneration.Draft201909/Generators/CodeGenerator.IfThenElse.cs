@@ -222,7 +222,7 @@ namespace ");
     /// Gets a value indicating whether this matches an If/Then case, return the value as the type defined for the then case.
     /// </summary>
     /// <param name=""result"">This value cast to the 'then' type, when the 'if' schema matches, otherwise an Undefined instance of the 'then' type.</param>
-    /// <returns><c>True if the 'if' case matched, and the 'else' instance was provided.</returns>
+    /// <returns><c>True</c> if the 'if' case matched, and the 'else' instance was provided.</returns>
     public bool TryMatch");
             
             #line default
@@ -302,7 +302,7 @@ namespace ");
     /// Gets a value indicating whether this matches an If/Then/Else case, providing the 'else' type when the 'if' schema does not match.
     /// </summary>
     /// <param name=""result"">This value cast to the 'else' type, when the 'if' schema does not match, otherwise an Undefined instance of the else type.</param>
-    /// <returns><c>True if the if case did not match, and the else instance was provided.</returns>
+    /// <returns><c>True</c> if the if case did not match, and the else instance was provided.</returns>
     public bool TryNotMatched");
             
             #line default
