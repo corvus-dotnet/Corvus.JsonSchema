@@ -17,7 +17,7 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft7 {
     public partial class CodeGeneratorArrayRemove : CodeGeneratorArrayRemoveBase {
         
         
-        #line 62 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Remove.tt"
+        #line 54 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Remove.tt"
 
     public bool ShouldGenerate
     {
@@ -124,20 +124,6 @@ namespace ");
             #line hidden
             
             #line 41 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Remove.tt"
-            this.Write(" Remove<TItem1>(in TItem1 item1)\r\n        where TItem1 : struct, IJsonValue<TItem" +
-                    "1>\r\n    {\r\n        return this.Remove(item1.AsAny);\r\n    }\r\n\r\n    /// <inheritdo" +
-                    "c/>\r\n    [MethodImpl(MethodImplOptions.AggressiveInlining)]\r\n    public ");
-            
-            #line default
-            #line hidden
-            
-            #line 49 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Remove.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
-            
-            #line default
-            #line hidden
-            
-            #line 49 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Remove.tt"
             this.Write(" RemoveAt(int index)\r\n    {\r\n        return new(this.GetImmutableListWithoutRange" +
                     "(index, 1));\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    [MethodImpl(MethodImplOptions." +
                     "AggressiveInlining)]\r\n    public ");
@@ -145,20 +131,20 @@ namespace ");
             #line default
             #line hidden
             
-            #line 56 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Remove.tt"
+            #line 48 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Remove.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 56 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Remove.tt"
+            #line 48 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Remove.tt"
             this.Write(" RemoveRange(int index, int count)\r\n    {\r\n        return new(this.GetImmutableLi" +
                     "stWithoutRange(index, count));\r\n    }\r\n}\r\n");
             
             #line default
             #line hidden
             
-            #line 61 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Remove.tt"
+            #line 53 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Remove.tt"
  EndNesting(); 
             
             #line default

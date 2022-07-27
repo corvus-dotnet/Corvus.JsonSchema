@@ -2,9 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Runtime.CompilerServices;
 using System.Text.Json;
-using Corvus.Json.Patch.Model;
 using Corvus.Json.Visitor;
 
 namespace Corvus.Json.Patch;

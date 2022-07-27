@@ -7,7 +7,6 @@ using System.Text.Json;
 using Corvus.Json;
 using NUnit.Framework;
 using TechTalk.SpecFlow;
-using TechTalk.SpecFlow.CommonModels;
 
 namespace Steps;
 

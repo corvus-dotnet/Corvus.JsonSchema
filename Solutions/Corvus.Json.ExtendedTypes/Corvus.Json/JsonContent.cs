@@ -6,7 +6,6 @@ using System.Buffers;
 using System.Text;
 using System.Text.Json;
 using Corvus.Json.Internal;
-using NodaTime;
 
 namespace Corvus.Json;
 

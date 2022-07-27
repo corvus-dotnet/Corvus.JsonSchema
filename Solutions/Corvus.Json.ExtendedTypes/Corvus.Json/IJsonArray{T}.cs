@@ -79,16 +79,6 @@ public interface IJsonArray<T> : IJsonValue<T>
     T Add(in JsonAny item1);
 
     /// <summary>
-    /// Add an item to the array.
-    /// </summary>
-    /// <typeparam name="TItem1">The type of the item to add.</typeparam>
-    /// <param name="item1">The item to add.</param>
-    /// <returns>An instance of the array with the item added.</returns>
-    /// <exception cref="InvalidOperationException">The value was not an array.</exception>
-    T Add<TItem1>(in TItem1 item1)
-        where TItem1 : struct, IJsonValue<TItem1>;
-
-    /// <summary>
     /// Add items to the array.
     /// </summary>
     /// <param name="item1">The first item to add.</param>
@@ -96,29 +86,6 @@ public interface IJsonArray<T> : IJsonValue<T>
     /// <returns>An instance of the array with the items added.</returns>
     /// <exception cref="InvalidOperationException">The value was not an array.</exception>
     T Add(in JsonAny item1, in JsonAny item2);
-
-    /// <summary>
-    /// Add items to the array.
-    /// </summary>
-    /// <typeparam name="TItem1">The type of the first item to add.</typeparam>
-    /// <typeparam name="TItem2">The type of the second item to add.</typeparam>
-    /// <param name="item1">The first item to add.</param>
-    /// <param name="item2">The second item to add.</param>
-    /// <returns>An instance of the array with the items added.</returns>
-    /// <exception cref="InvalidOperationException">The value was not an array.</exception>
-    T Add<TItem1, TItem2>(in TItem1 item1, in TItem2 item2)
-        where TItem1 : struct, IJsonValue<TItem1>
-        where TItem2 : struct, IJsonValue<TItem2>;
-
-    /// <summary>
-    /// Add a set of items to the array.
-    /// </summary>
-    /// <typeparam name="TItem">The type of the items to add.</typeparam>
-    /// <param name="items">The items to add.</param>
-    /// <returns>An instance of the array with the items added.</returns>
-    /// <exception cref="InvalidOperationException">The value was not an array.</exception>
-    T Add<TItem>(params TItem[] items)
-        where TItem : struct, IJsonValue<TItem>;
 
     /// <summary>
     /// Add a set of items to the array.
@@ -166,18 +133,6 @@ public interface IJsonArray<T> : IJsonValue<T>
     T Insert(int index, in JsonAny item1);
 
     /// <summary>
-    /// Insert an item into the array at the given index.
-    /// </summary>
-    /// <typeparam name="TItem1">The type of the item to add.</typeparam>
-    /// <param name="index">The index at which to add the item.</param>
-    /// <param name="item1">The item to add.</param>
-    /// <returns>An instance of the array with the item added.</returns>
-    /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
-    /// <exception cref="InvalidOperationException">The value was not an array.</exception>
-    T Insert<TItem1>(int index, in TItem1 item1)
-        where TItem1 : struct, IJsonValue<TItem1>;
-
-    /// <summary>
     /// Insert items into the array at the given index.
     /// </summary>
     /// <typeparam name="TArray">The type of the array containing the items to add.</typeparam>
@@ -220,16 +175,6 @@ public interface IJsonArray<T> : IJsonValue<T>
     T Remove(in JsonAny item);
 
     /// <summary>
-    /// Remove the specified item from the array.
-    /// </summary>
-    /// <typeparam name="TItem">The type of the item to remove.</typeparam>
-    /// <param name="item">The item to remove.</param>
-    /// <returns>An instance of the array with the item removed.</returns>
-    /// <exception cref="InvalidOperationException">The value was not an array.</exception>
-    T Remove<TItem>(in TItem item)
-        where TItem : struct, IJsonValue<TItem>;
-
-    /// <summary>
     /// Remove the item at the index from the array.
     /// </summary>
     /// <param name="index">The index at which to remove the item.</param>
@@ -251,23 +196,19 @@ public interface IJsonArray<T> : IJsonValue<T>
     /// <summary>
     /// Replace the first instance of the given value with the new value, even if the items are identical.
     /// </summary>
-    /// <typeparam name="TItem">The type of the item to replace.</typeparam>
     /// <param name="oldValue">The item to remove.</param>
     /// <param name="newValue">The item to insert.</param>
     /// <returns>An instance of the array with the item replaced.</returns>
     /// <exception cref="InvalidOperationException">The value was not an array.</exception>
-    T Replace<TItem>(in TItem oldValue, in TItem newValue)
-        where TItem : struct, IJsonValue;
+    T Replace(in JsonAny oldValue, in JsonAny newValue);
 
     /// <summary>
     /// Set the item at the given index.
     /// </summary>
-    /// <typeparam name="TItem">The type of the item to set.</typeparam>
     /// <param name="index">The index at which to set the item.</param>
     /// <param name="value">The value to set.</param>
     /// <returns>An instance of the array with the item set to the given value.</returns>
-    T SetItem<TItem>(int index, in TItem value)
-        where TItem : struct, IJsonValue;
+    T SetItem(int index, in JsonAny value);
 
     /// <summary>
     /// Construct an instance of the array from a list of json values.

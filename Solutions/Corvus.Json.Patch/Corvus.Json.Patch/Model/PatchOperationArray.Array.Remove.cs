@@ -25,14 +25,6 @@ public readonly partial struct PatchOperationArray
 
     /// <inheritdoc/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public PatchOperationArray Remove<TItem1>(in TItem1 item1)
-        where TItem1 : struct, IJsonValue<TItem1>
-    {
-        return this.Remove(item1.AsAny);
-    }
-
-    /// <inheritdoc/>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public PatchOperationArray RemoveAt(int index)
     {
         return new(this.GetImmutableListWithoutRange(index, 1));

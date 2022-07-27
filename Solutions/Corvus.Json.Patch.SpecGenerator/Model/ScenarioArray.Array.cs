@@ -182,6 +182,22 @@ public readonly partial struct ScenarioArray : IJsonArray<ScenarioArray>
         return new(builder.ToImmutable());
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref = "ScenarioArray"/> struct.
+    /// </summary>
+    /// <param name = "value">The value from which to construct the instance.</param>
+    /// <returns>A JsonAny instantiated from the given items.</returns>
+    public static ScenarioArray FromItems(IEnumerable<Corvus.Json.Patch.SpecGenerator.Scenario> value)
+    {
+        ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
+        foreach (Corvus.Json.Patch.SpecGenerator.Scenario item in value)
+        {
+            builder.Add(item.AsAny);
+        }
+
+        return new(builder.ToImmutable());
+    }
+
     /// <inheritdoc/>
     public ImmutableList<JsonAny> AsImmutableList()
     {

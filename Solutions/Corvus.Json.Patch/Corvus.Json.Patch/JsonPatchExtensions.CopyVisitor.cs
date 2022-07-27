@@ -3,7 +3,6 @@
 // </copyright>
 
 using System.Runtime.CompilerServices;
-using Corvus.Json.Patch.Model;
 using Corvus.Json.Visitor;
 
 namespace Corvus.Json.Patch;
