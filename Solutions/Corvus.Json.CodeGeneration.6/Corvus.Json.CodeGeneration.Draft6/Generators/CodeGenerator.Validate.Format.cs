@@ -17,7 +17,7 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft6 {
     public partial class CodeGeneratorValidateFormat : CodeGeneratorValidateFormatBase {
         
         
-        #line 137 "./Templates/CodeGenerator.Validate.Format.tt"
+        #line 141 "./Templates/CodeGenerator.Validate.Format.tt"
 
     public bool ShouldGenerate
     {
@@ -119,7 +119,7 @@ namespace ");
             
             #line 41 "./Templates/CodeGenerator.Validate.Format.tt"
   }
-    if (IsJsonDate)
+    else if (IsJsonDate)
     { 
             
             #line default
@@ -133,7 +133,7 @@ namespace ");
             
             #line 45 "./Templates/CodeGenerator.Validate.Format.tt"
   }
-    if (IsJsonDateTime)
+    else if (IsJsonDateTime)
     { 
             
             #line default
@@ -147,7 +147,7 @@ namespace ");
             
             #line 49 "./Templates/CodeGenerator.Validate.Format.tt"
   }
-    if (IsJsonDuration)
+    else if (IsJsonDuration)
     { 
             
             #line default
@@ -161,7 +161,7 @@ namespace ");
             
             #line 53 "./Templates/CodeGenerator.Validate.Format.tt"
   }
-    if (IsJsonTime)
+    else if (IsJsonTime)
     { 
             
             #line default
@@ -175,7 +175,7 @@ namespace ");
             
             #line 57 "./Templates/CodeGenerator.Validate.Format.tt"
   }
-    if (IsJsonEmail)
+    else if (IsJsonEmail)
     { 
             
             #line default
@@ -189,7 +189,7 @@ namespace ");
             
             #line 61 "./Templates/CodeGenerator.Validate.Format.tt"
   }
-    if (IsJsonHostname)
+    else if (IsJsonHostname)
     { 
             
             #line default
@@ -203,7 +203,7 @@ namespace ");
             
             #line 65 "./Templates/CodeGenerator.Validate.Format.tt"
   }
-    if (IsJsonIdnEmail)
+    else if (IsJsonIdnEmail)
     { 
             
             #line default
@@ -217,7 +217,7 @@ namespace ");
             
             #line 69 "./Templates/CodeGenerator.Validate.Format.tt"
   }
-    if (IsJsonIdnHostname)
+    else if (IsJsonIdnHostname)
     { 
             
             #line default
@@ -231,7 +231,7 @@ namespace ");
             
             #line 73 "./Templates/CodeGenerator.Validate.Format.tt"
   }
-    if (IsJsonInteger)
+    else if (IsJsonInteger)
     { 
             
             #line default
@@ -245,7 +245,7 @@ namespace ");
             
             #line 77 "./Templates/CodeGenerator.Validate.Format.tt"
   }
-    if (IsJsonIpV4)
+    else if (IsJsonIpV4)
     { 
             
             #line default
@@ -259,7 +259,7 @@ namespace ");
             
             #line 81 "./Templates/CodeGenerator.Validate.Format.tt"
   }
-    if (IsJsonIpV6)
+    else if (IsJsonIpV6)
     { 
             
             #line default
@@ -273,7 +273,7 @@ namespace ");
             
             #line 85 "./Templates/CodeGenerator.Validate.Format.tt"
   }
-    if (IsJsonIri)
+    else if (IsJsonIri)
     { 
             
             #line default
@@ -287,7 +287,7 @@ namespace ");
             
             #line 89 "./Templates/CodeGenerator.Validate.Format.tt"
   }
-    if (IsJsonIriReference)
+    else if (IsJsonIriReference)
     { 
             
             #line default
@@ -301,7 +301,7 @@ namespace ");
             
             #line 93 "./Templates/CodeGenerator.Validate.Format.tt"
   }
-    if (IsJsonPointer)
+    else if (IsJsonPointer)
     { 
             
             #line default
@@ -315,7 +315,7 @@ namespace ");
             
             #line 97 "./Templates/CodeGenerator.Validate.Format.tt"
   }
-    if (IsJsonRegex)
+    else if (IsJsonRegex)
     { 
             
             #line default
@@ -329,7 +329,7 @@ namespace ");
             
             #line 101 "./Templates/CodeGenerator.Validate.Format.tt"
   }
-    if (IsJsonTime)
+    else if (IsJsonTime)
     { 
             
             #line default
@@ -343,7 +343,7 @@ namespace ");
             
             #line 105 "./Templates/CodeGenerator.Validate.Format.tt"
   }
-    if (IsJsonUri)
+    else if (IsJsonUri)
     { 
             
             #line default
@@ -357,7 +357,7 @@ namespace ");
             
             #line 109 "./Templates/CodeGenerator.Validate.Format.tt"
   }
-    if (IsJsonUriReference)
+    else if (IsJsonUriReference)
     { 
             
             #line default
@@ -371,7 +371,7 @@ namespace ");
             
             #line 113 "./Templates/CodeGenerator.Validate.Format.tt"
   }
-    if (IsJsonUriTemplate)
+    else if (IsJsonUriTemplate)
     { 
             
             #line default
@@ -385,7 +385,7 @@ namespace ");
             
             #line 117 "./Templates/CodeGenerator.Validate.Format.tt"
   }
-    if (IsJsonBase64Content)
+    else if (IsJsonBase64Content)
     { 
             
             #line default
@@ -400,7 +400,7 @@ namespace ");
             
             #line 121 "./Templates/CodeGenerator.Validate.Format.tt"
   }
-    if (IsJsonBase64String)
+    else if (IsJsonBase64String)
     { 
             
             #line default
@@ -415,7 +415,7 @@ namespace ");
             
             #line 125 "./Templates/CodeGenerator.Validate.Format.tt"
   }
-    if (IsJsonContent)
+    else if (IsJsonContent)
     { 
             
             #line default
@@ -429,7 +429,7 @@ namespace ");
             
             #line 129 "./Templates/CodeGenerator.Validate.Format.tt"
   }
-    if (IsJsonUuid)
+    else if (IsJsonUuid)
     { 
             
             #line default
@@ -442,18 +442,32 @@ namespace ");
             #line hidden
             
             #line 133 "./Templates/CodeGenerator.Validate.Format.tt"
-  } 
-            
-            #line default
-            #line hidden
-            
-            #line 134 "./Templates/CodeGenerator.Validate.Format.tt"
-            this.Write("    }\r\n}\r\n");
+  }
+    else
+    { 
             
             #line default
             #line hidden
             
             #line 136 "./Templates/CodeGenerator.Validate.Format.tt"
+            this.Write("        return result;\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 137 "./Templates/CodeGenerator.Validate.Format.tt"
+  } 
+            
+            #line default
+            #line hidden
+            
+            #line 138 "./Templates/CodeGenerator.Validate.Format.tt"
+            this.Write("    }\r\n}\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 140 "./Templates/CodeGenerator.Validate.Format.tt"
  EndNesting(); 
             
             #line default

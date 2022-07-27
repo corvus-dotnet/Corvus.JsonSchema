@@ -39,97 +39,101 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     { #>
         return Corvus.Json.Validate.TypeRelativePointer(this, result, level);
 <#  }
-    if (IsJsonDate)
+    else if (IsJsonDate)
     { #>
         return Corvus.Json.Validate.TypeDate(this, result, level);
 <#  }
-    if (IsJsonDateTime)
+    else if (IsJsonDateTime)
     { #>
         return Corvus.Json.Validate.TypeDateTime(this, result, level);
 <#  }
-    if (IsJsonDuration)
+    else if (IsJsonDuration)
     { #>
         return Corvus.Json.Validate.TypeDuration(this, result, level);
 <#  }
-    if (IsJsonTime)
+    else if (IsJsonTime)
     { #>
         return Corvus.Json.Validate.TypeTime(this, result, level);
 <#  }
-    if (IsJsonEmail)
+    else if (IsJsonEmail)
     { #>
         return Corvus.Json.Validate.TypeEmail(this, result, level);
 <#  }
-    if (IsJsonHostname)
+    else if (IsJsonHostname)
     { #>
         return Corvus.Json.Validate.TypeHostname(this, result, level);
 <#  }
-    if (IsJsonIdnEmail)
+    else if (IsJsonIdnEmail)
     { #>
         return Corvus.Json.Validate.TypeIdnEmail(this, result, level);
 <#  }
-    if (IsJsonIdnHostname)
+    else if (IsJsonIdnHostname)
     { #>
         return Corvus.Json.Validate.TypeIdnHostName(this, result, level);
 <#  }
-    if (IsJsonInteger)
+    else if (IsJsonInteger)
     { #>
         return Corvus.Json.Validate.TypeInteger(this, result, level);
 <#  }
-    if (IsJsonIpV4)
+    else if (IsJsonIpV4)
     { #>
         return Corvus.Json.Validate.TypeIpV4(this, result, level);
 <#  }
-    if (IsJsonIpV6)
+    else if (IsJsonIpV6)
     { #>
         return Corvus.Json.Validate.TypeIpV6(this, result, level);
 <#  }
-    if (IsJsonIri)
+    else if (IsJsonIri)
     { #>
         return Corvus.Json.Validate.TypeIri(this, result, level);
 <#  }
-    if (IsJsonIriReference)
+    else if (IsJsonIriReference)
     { #>
         return Corvus.Json.Validate.TypeIriReference(this, result, level);
 <#  }
-    if (IsJsonPointer)
+    else if (IsJsonPointer)
     { #>
         return Corvus.Json.Validate.TypePointer(this, result, level);
 <#  }
-    if (IsJsonRegex)
+    else if (IsJsonRegex)
     { #>
         return Corvus.Json.Validate.TypeRegex(this, result, level);
 <#  }
-    if (IsJsonTime)
+    else if (IsJsonTime)
     { #>
         return Corvus.Json.Validate.TypeTime(this, result, level);
 <#  }
-    if (IsJsonUri)
+    else if (IsJsonUri)
     { #>
         return Corvus.Json.Validate.TypeUri(this, result, level);
 <#  }
-    if (IsJsonUriReference)
+    else if (IsJsonUriReference)
     { #>
         return Corvus.Json.Validate.TypeUriReference(this, result, level);
 <#  }
-    if (IsJsonUriTemplate)
+    else if (IsJsonUriTemplate)
     { #>
         return Corvus.Json.Validate.TypeUriTemplate(this, result, level);
 <#  }
-    if (IsJsonBase64Content)
+    else if (IsJsonBase64Content)
     { #>
         return Corvus.Json.Validate.TypeBase64Content(this, result, level);
 <#  }
-    if (IsJsonBase64String)
+    else if (IsJsonBase64String)
     { #>
         return Corvus.Json.Validate.TypeBase64String(this, result, level);
 <#  }
-    if (IsJsonContent)
+    else if (IsJsonContent)
     { #>
         return Corvus.Json.Validate.TypeContent(this, result, level);
 <#  }
-    if (IsJsonUuid)
+    else if (IsJsonUuid)
     { #>
         return Corvus.Json.Validate.TypeUuid(this, result, level);
+<#  }
+    else
+    { #>
+        return result;
 <#  } #>
     }
 }
