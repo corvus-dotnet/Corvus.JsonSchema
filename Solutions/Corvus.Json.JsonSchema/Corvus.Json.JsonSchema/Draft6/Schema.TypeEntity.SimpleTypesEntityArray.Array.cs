@@ -186,6 +186,22 @@ public readonly partial struct Schema
                 return new(builder.ToImmutable());
             }
 
+            /// <summary>
+            /// Initializes a new instance of the <see cref = "SimpleTypesEntityArray"/> struct.
+            /// </summary>
+            /// <param name = "value">The value from which to construct the instance.</param>
+            /// <returns>A JsonAny instantiated from the given items.</returns>
+            public static SimpleTypesEntityArray FromItems(IEnumerable<Corvus.Json.JsonSchema.Draft6.Schema.SimpleTypesEntity> value)
+            {
+                ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
+                foreach (Corvus.Json.JsonSchema.Draft6.Schema.SimpleTypesEntity item in value)
+                {
+                    builder.Add(item.AsAny);
+                }
+
+                return new(builder.ToImmutable());
+            }
+
             /// <inheritdoc/>
             public ImmutableList<JsonAny> AsImmutableList()
             {

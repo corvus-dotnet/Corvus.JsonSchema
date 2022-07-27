@@ -28,7 +28,6 @@ public readonly partial struct Schema
             }
 
             result = result.UsingEvaluatedProperties();
-            result = result.UsingEvaluatedItems();
             JsonValueKind valueKind = this.ValueKind;
             result = this.ValidateType(valueKind, result, level);
             if (level == ValidationLevel.Flag && !result.IsValid)

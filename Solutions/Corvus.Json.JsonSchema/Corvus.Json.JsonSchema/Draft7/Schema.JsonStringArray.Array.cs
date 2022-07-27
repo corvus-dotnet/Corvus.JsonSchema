@@ -184,6 +184,22 @@ public readonly partial struct Schema
             return new(builder.ToImmutable());
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref = "JsonStringArray"/> struct.
+        /// </summary>
+        /// <param name = "value">The value from which to construct the instance.</param>
+        /// <returns>A JsonAny instantiated from the given items.</returns>
+        public static JsonStringArray FromItems(IEnumerable<Corvus.Json.JsonString> value)
+        {
+            ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
+            foreach (Corvus.Json.JsonString item in value)
+            {
+                builder.Add(item.AsAny);
+            }
+
+            return new(builder.ToImmutable());
+        }
+
         /// <inheritdoc/>
         public ImmutableList<JsonAny> AsImmutableList()
         {
