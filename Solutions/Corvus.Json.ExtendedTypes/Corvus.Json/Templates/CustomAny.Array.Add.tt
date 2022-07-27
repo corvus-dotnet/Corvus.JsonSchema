@@ -33,19 +33,6 @@ public readonly partial struct <#= TypeName #>
     }
 
     /// <inheritdoc/>
-    public <#= TypeName #> Add<TItem>(params TItem[] items)
-        where TItem : struct, IJsonValue<TItem>
-    {
-        ImmutableList<JsonAny>.Builder builder = this.GetImmutableListBuilder();
-        foreach (TItem item in items)
-        {
-            builder.Add(item.AsAny);
-        }
-
-        return new(builder.ToImmutable());
-    }
-
-    /// <inheritdoc/>
     public <#= TypeName #> Add(params JsonAny[] items)
     {
         ImmutableList<JsonAny>.Builder builder = this.GetImmutableListBuilder();

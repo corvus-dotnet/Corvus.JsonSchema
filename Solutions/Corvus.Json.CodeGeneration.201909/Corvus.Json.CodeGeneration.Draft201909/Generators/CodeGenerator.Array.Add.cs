@@ -280,9 +280,9 @@ namespace ");
             #line hidden
             
             #line 119 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Add.tt"
-            this.Write(" Replace(in JsonAny oldValue, in JsonAny newValue)\r\n    {\r\n        return this.GetI" +
-                    "mmutableListReplacing(oldValue.AsAny, newValue.AsAny);\r\n    }\r\n\r\n    /// <inheri" +
-                    "tdoc/>\r\n    public ");
+            this.Write(" Replace(in JsonAny oldValue, in JsonAny newValue)\r\n    {\r\n        return this.Ge" +
+                    "tImmutableListReplacing(oldValue.AsAny, newValue.AsAny);\r\n    }\r\n\r\n    /// <inhe" +
+                    "ritdoc/>\r\n    public ");
             
             #line default
             #line hidden

@@ -189,7 +189,7 @@ public readonly partial struct Applicator
         /// </summary>
         /// <param name = "value">The value from which to construct the instance.</param>
         /// <returns>A JsonAny instantiated from the given items.</returns>
-        public static SchemaArray FromItems(IEnumerable<Corvus.Json.JsonSchema.Draft201909.Schema> value)
+        public static SchemaArray FromRange(IEnumerable<Corvus.Json.JsonSchema.Draft201909.Schema> value)
         {
             ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
             foreach (Corvus.Json.JsonSchema.Draft201909.Schema item in value)

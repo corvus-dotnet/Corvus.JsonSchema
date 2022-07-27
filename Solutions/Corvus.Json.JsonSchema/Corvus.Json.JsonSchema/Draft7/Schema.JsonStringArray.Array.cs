@@ -189,7 +189,7 @@ public readonly partial struct Schema
         /// </summary>
         /// <param name = "value">The value from which to construct the instance.</param>
         /// <returns>A JsonAny instantiated from the given items.</returns>
-        public static JsonStringArray FromItems(IEnumerable<Corvus.Json.JsonString> value)
+        public static JsonStringArray FromRange(IEnumerable<Corvus.Json.JsonString> value)
         {
             ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
             foreach (Corvus.Json.JsonString item in value)

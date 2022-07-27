@@ -351,7 +351,7 @@ public readonly struct UriTemplate
     /// <returns>An instance of the template with the updated parameters.</returns>
     public UriTemplate SetParameter(string name, IEnumerable<string> value)
     {
-        return new UriTemplate(this.template, this.resolvePartially, this.parameters.SetItem(name, JsonAny.FromItems(value)), this.parameterRegex);
+        return new UriTemplate(this.template, this.resolvePartially, this.parameters.SetItem(name, JsonAny.FromRange(value)), this.parameterRegex);
     }
 
     /// <summary>

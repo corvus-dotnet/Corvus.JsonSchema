@@ -191,7 +191,7 @@ public readonly partial struct Validation
             /// </summary>
             /// <param name = "value">The value from which to construct the instance.</param>
             /// <returns>A JsonAny instantiated from the given items.</returns>
-            public static SimpleTypesEntityArray FromItems(IEnumerable<Corvus.Json.JsonSchema.Draft201909.Validation.SimpleTypesEntity> value)
+            public static SimpleTypesEntityArray FromRange(IEnumerable<Corvus.Json.JsonSchema.Draft201909.Validation.SimpleTypesEntity> value)
             {
                 ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
                 foreach (Corvus.Json.JsonSchema.Draft201909.Validation.SimpleTypesEntity item in value)

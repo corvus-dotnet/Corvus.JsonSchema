@@ -187,7 +187,7 @@ public readonly partial struct PatchOperationArray : IJsonArray<PatchOperationAr
     /// </summary>
     /// <param name = "value">The value from which to construct the instance.</param>
     /// <returns>A JsonAny instantiated from the given items.</returns>
-    public static PatchOperationArray FromItems(IEnumerable<Corvus.Json.Patch.Model.PatchOperation> value)
+    public static PatchOperationArray FromRange(IEnumerable<Corvus.Json.Patch.Model.PatchOperation> value)
     {
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         foreach (Corvus.Json.Patch.Model.PatchOperation item in value)

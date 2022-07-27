@@ -241,7 +241,7 @@ public readonly partial struct Schema
             /// </summary>
             /// <param name = "items">The items from which to create the array.</param>
             /// <returns>The new array created from the items.</returns>
-            public static AdditionalPropertiesEntity FromItems(IEnumerable<IJsonValue> items)
+            public static AdditionalPropertiesEntity FromRange(IEnumerable<IJsonValue> items)
             {
                 ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
                 foreach (IJsonValue item in items)
@@ -257,7 +257,7 @@ public readonly partial struct Schema
             /// </summary>
             /// <param name = "items">The items from which to create the array.</param>
             /// <returns>The new array created from the items.</returns>
-            public static AdditionalPropertiesEntity FromItems(IEnumerable<string> items)
+            public static AdditionalPropertiesEntity FromRange(IEnumerable<string> items)
             {
                 ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
                 foreach (string item in items)
@@ -273,7 +273,7 @@ public readonly partial struct Schema
             /// </summary>
             /// <param name = "items">The items from which to create the array.</param>
             /// <returns>The new array created from the items.</returns>
-            public static AdditionalPropertiesEntity FromItems(IEnumerable<double> items)
+            public static AdditionalPropertiesEntity FromRange(IEnumerable<double> items)
             {
                 ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
                 foreach (double item in items)
@@ -289,7 +289,7 @@ public readonly partial struct Schema
             /// </summary>
             /// <param name = "items">The items from which to create the array.</param>
             /// <returns>The new array created from the items.</returns>
-            public static AdditionalPropertiesEntity FromItems(IEnumerable<float> items)
+            public static AdditionalPropertiesEntity FromRange(IEnumerable<float> items)
             {
                 ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
                 foreach (float item in items)
@@ -305,7 +305,7 @@ public readonly partial struct Schema
             /// </summary>
             /// <param name = "items">The items from which to create the array.</param>
             /// <returns>The new array created from the items.</returns>
-            public static AdditionalPropertiesEntity FromItems(IEnumerable<int> items)
+            public static AdditionalPropertiesEntity FromRange(IEnumerable<int> items)
             {
                 ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
                 foreach (int item in items)
@@ -321,7 +321,7 @@ public readonly partial struct Schema
             /// </summary>
             /// <param name = "items">The items from which to create the array.</param>
             /// <returns>The new array created from the items.</returns>
-            public static AdditionalPropertiesEntity FromItems(IEnumerable<long> items)
+            public static AdditionalPropertiesEntity FromRange(IEnumerable<long> items)
             {
                 ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
                 foreach (long item in items)
@@ -337,7 +337,7 @@ public readonly partial struct Schema
             /// </summary>
             /// <param name = "items">The items from which to create the array.</param>
             /// <returns>The new array created from the items.</returns>
-            public static AdditionalPropertiesEntity FromItems(IEnumerable<bool> items)
+            public static AdditionalPropertiesEntity FromRange(IEnumerable<bool> items)
             {
                 ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
                 foreach (bool item in items)

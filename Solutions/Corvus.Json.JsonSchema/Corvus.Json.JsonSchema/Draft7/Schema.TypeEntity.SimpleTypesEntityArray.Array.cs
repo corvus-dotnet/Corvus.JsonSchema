@@ -191,7 +191,7 @@ public readonly partial struct Schema
             /// </summary>
             /// <param name = "value">The value from which to construct the instance.</param>
             /// <returns>A JsonAny instantiated from the given items.</returns>
-            public static SimpleTypesEntityArray FromItems(IEnumerable<Corvus.Json.JsonSchema.Draft7.Schema.SimpleTypesEntity> value)
+            public static SimpleTypesEntityArray FromRange(IEnumerable<Corvus.Json.JsonSchema.Draft7.Schema.SimpleTypesEntity> value)
             {
                 ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
                 foreach (Corvus.Json.JsonSchema.Draft7.Schema.SimpleTypesEntity item in value)

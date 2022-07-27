@@ -128,78 +128,6 @@ public readonly partial struct JsonArray
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonAny"/> struct.
     /// </summary>
-    /// <typeparam name="TItem">The type of the items in the list.</typeparam>
-    /// <param name="value">The value from which to construct the instance.</param>
-    /// <returns>A JsonAny instantiated from the given array.</returns>
-    public static JsonArray FromItems<TItem>(params TItem[] value)
-        where TItem : struct, IJsonValue<TItem>
-    {
-        ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
-        foreach (TItem item in value)
-        {
-            builder.Add(item.AsAny);
-        }
-
-        return new(builder.ToImmutable());
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="JsonAny"/> struct.
-    /// </summary>
-    /// <typeparam name="TItem1">The type of the items in the list.</typeparam>
-    /// <param name="value1">The first value from which to construct the instance.</param>
-    /// <returns>A JsonAny instantiated from the given array.</returns>
-    public static JsonArray FromItems<TItem1>(in TItem1 value1)
-        where TItem1 : struct, IJsonValue<TItem1>
-    {
-        ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
-        builder.Add(value1.AsAny);
-        return new(builder.ToImmutable());
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="JsonAny"/> struct.
-    /// </summary>
-    /// <typeparam name="TItem1">The type of the first item in the list.</typeparam>
-    /// <typeparam name="TItem2">The type of the second item in the list.</typeparam>
-    /// <param name="value1">The first value from which to construct the instance.</param>
-    /// <param name="value2">The second value from which to construct the instance.</param>
-    /// <returns>A JsonAny instantiated from the given array.</returns>
-    public static JsonArray FromItems<TItem1, TItem2>(in TItem1 value1, in TItem2 value2)
-        where TItem1 : struct, IJsonValue<TItem1>
-        where TItem2 : struct, IJsonValue<TItem2>
-    {
-        ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
-        builder.Add(value1.AsAny);
-        builder.Add(value2.AsAny);
-        return new(builder.ToImmutable());
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="JsonAny"/> struct.
-    /// </summary>
-    /// <typeparam name="TItem1">The type of the first item in the list.</typeparam>
-    /// <typeparam name="TItem2">The type of the second item in the list.</typeparam>
-    /// <typeparam name="TItem3">The type of the third item in the list.</typeparam>
-    /// <param name="value1">The first value from which to construct the instance.</param>
-    /// <param name="value2">The second value from which to construct the instance.</param>
-    /// <param name="value3">The thirdvalue from which to construct the instance.</param>
-    /// <returns>A JsonAny instantiated from the given array.</returns>
-    public static JsonArray FromItems<TItem1, TItem2, TItem3>(in TItem1 value1, in TItem2 value2, in TItem3 value3)
-        where TItem1 : struct, IJsonValue<TItem1>
-        where TItem2 : struct, IJsonValue<TItem2>
-        where TItem3 : struct, IJsonValue<TItem3>
-    {
-        ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
-        builder.Add(value1.AsAny);
-        builder.Add(value2.AsAny);
-        builder.Add(value3.AsAny);
-        return new(builder.ToImmutable());
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="JsonAny"/> struct.
-    /// </summary>
     /// <param name="value1">The first value from which to construct the instance.</param>
     /// <returns>A JsonAny instantiated from the given array.</returns>
     public static JsonArray FromItems(in JsonAny value1)
@@ -267,14 +195,16 @@ public readonly partial struct JsonArray
     /// <summary>
     /// Create an array from the given items.
     /// </summary>
+    /// <typeparam name="T">The type of the items in the array.</typeparam>
     /// <param name="items">The items from which to create the array.</param>
     /// <returns>The new array created from the items.</returns>
-    public static JsonArray FromItems(IEnumerable<IJsonValue> items)
+    public static JsonArray FromItems<T>(IEnumerable<JsonAny> items)
+        where T : struct, IJsonValue
     {
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
-        foreach (IJsonValue item in items)
+        foreach (JsonAny item in items)
         {
-            builder.Add(item.AsAny);
+            builder.Add(item);
         }
 
         return new JsonArray(builder.ToImmutable());
@@ -285,7 +215,7 @@ public readonly partial struct JsonArray
     /// </summary>
     /// <param name="items">The items from which to create the array.</param>
     /// <returns>The new array created from the items.</returns>
-    public static JsonArray FromItems(IEnumerable<string> items)
+    public static JsonArray FromRange(IEnumerable<string> items)
     {
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         foreach (string item in items)
@@ -301,7 +231,7 @@ public readonly partial struct JsonArray
     /// </summary>
     /// <param name="items">The items from which to create the array.</param>
     /// <returns>The new array created from the items.</returns>
-    public static JsonArray FromItems(IEnumerable<double> items)
+    public static JsonArray FromRange(IEnumerable<double> items)
     {
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         foreach (double item in items)
@@ -317,7 +247,7 @@ public readonly partial struct JsonArray
     /// </summary>
     /// <param name="items">The items from which to create the array.</param>
     /// <returns>The new array created from the items.</returns>
-    public static JsonArray FromItems(IEnumerable<float> items)
+    public static JsonArray FromRange(IEnumerable<float> items)
     {
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         foreach (float item in items)
@@ -333,7 +263,7 @@ public readonly partial struct JsonArray
     /// </summary>
     /// <param name="items">The items from which to create the array.</param>
     /// <returns>The new array created from the items.</returns>
-    public static JsonArray FromItems(IEnumerable<int> items)
+    public static JsonArray FromRange(IEnumerable<int> items)
     {
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         foreach (int item in items)
@@ -349,7 +279,7 @@ public readonly partial struct JsonArray
     /// </summary>
     /// <param name="items">The items from which to create the array.</param>
     /// <returns>The new array created from the items.</returns>
-    public static JsonArray FromItems(IEnumerable<long> items)
+    public static JsonArray FromRange(IEnumerable<long> items)
     {
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         foreach (long item in items)
@@ -365,7 +295,7 @@ public readonly partial struct JsonArray
     /// </summary>
     /// <param name="items">The items from which to create the array.</param>
     /// <returns>The new array created from the items.</returns>
-    public static JsonArray FromItems(IEnumerable<bool> items)
+    public static JsonArray FromRange(IEnumerable<bool> items)
     {
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         foreach (bool item in items)

@@ -235,7 +235,7 @@ public readonly partial struct Schema
         /// </summary>
         /// <param name = "items">The items from which to create the array.</param>
         /// <returns>The new array created from the items.</returns>
-        public static JsonAnyArray FromItems(IEnumerable<IJsonValue> items)
+        public static JsonAnyArray FromRange(IEnumerable<IJsonValue> items)
         {
             ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
             foreach (IJsonValue item in items)
@@ -251,7 +251,7 @@ public readonly partial struct Schema
         /// </summary>
         /// <param name = "items">The items from which to create the array.</param>
         /// <returns>The new array created from the items.</returns>
-        public static JsonAnyArray FromItems(IEnumerable<string> items)
+        public static JsonAnyArray FromRange(IEnumerable<string> items)
         {
             ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
             foreach (string item in items)
@@ -267,7 +267,7 @@ public readonly partial struct Schema
         /// </summary>
         /// <param name = "items">The items from which to create the array.</param>
         /// <returns>The new array created from the items.</returns>
-        public static JsonAnyArray FromItems(IEnumerable<double> items)
+        public static JsonAnyArray FromRange(IEnumerable<double> items)
         {
             ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
             foreach (double item in items)
@@ -283,7 +283,7 @@ public readonly partial struct Schema
         /// </summary>
         /// <param name = "items">The items from which to create the array.</param>
         /// <returns>The new array created from the items.</returns>
-        public static JsonAnyArray FromItems(IEnumerable<float> items)
+        public static JsonAnyArray FromRange(IEnumerable<float> items)
         {
             ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
             foreach (float item in items)
@@ -299,7 +299,7 @@ public readonly partial struct Schema
         /// </summary>
         /// <param name = "items">The items from which to create the array.</param>
         /// <returns>The new array created from the items.</returns>
-        public static JsonAnyArray FromItems(IEnumerable<int> items)
+        public static JsonAnyArray FromRange(IEnumerable<int> items)
         {
             ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
             foreach (int item in items)
@@ -315,7 +315,7 @@ public readonly partial struct Schema
         /// </summary>
         /// <param name = "items">The items from which to create the array.</param>
         /// <returns>The new array created from the items.</returns>
-        public static JsonAnyArray FromItems(IEnumerable<long> items)
+        public static JsonAnyArray FromRange(IEnumerable<long> items)
         {
             ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
             foreach (long item in items)
@@ -331,7 +331,7 @@ public readonly partial struct Schema
         /// </summary>
         /// <param name = "items">The items from which to create the array.</param>
         /// <returns>The new array created from the items.</returns>
-        public static JsonAnyArray FromItems(IEnumerable<bool> items)
+        public static JsonAnyArray FromRange(IEnumerable<bool> items)
         {
             ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
             foreach (bool item in items)

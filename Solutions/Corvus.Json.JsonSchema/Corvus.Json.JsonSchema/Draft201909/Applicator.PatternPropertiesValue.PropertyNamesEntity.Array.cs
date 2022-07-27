@@ -245,7 +245,7 @@ public readonly partial struct Applicator
             /// </summary>
             /// <param name = "items">The items from which to create the array.</param>
             /// <returns>The new array created from the items.</returns>
-            public static PropertyNamesEntity FromItems(IEnumerable<IJsonValue> items)
+            public static PropertyNamesEntity FromRange(IEnumerable<IJsonValue> items)
             {
                 ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
                 foreach (IJsonValue item in items)
@@ -261,7 +261,7 @@ public readonly partial struct Applicator
             /// </summary>
             /// <param name = "items">The items from which to create the array.</param>
             /// <returns>The new array created from the items.</returns>
-            public static PropertyNamesEntity FromItems(IEnumerable<string> items)
+            public static PropertyNamesEntity FromRange(IEnumerable<string> items)
             {
                 ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
                 foreach (string item in items)
@@ -277,7 +277,7 @@ public readonly partial struct Applicator
             /// </summary>
             /// <param name = "items">The items from which to create the array.</param>
             /// <returns>The new array created from the items.</returns>
-            public static PropertyNamesEntity FromItems(IEnumerable<double> items)
+            public static PropertyNamesEntity FromRange(IEnumerable<double> items)
             {
                 ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
                 foreach (double item in items)
@@ -293,7 +293,7 @@ public readonly partial struct Applicator
             /// </summary>
             /// <param name = "items">The items from which to create the array.</param>
             /// <returns>The new array created from the items.</returns>
-            public static PropertyNamesEntity FromItems(IEnumerable<float> items)
+            public static PropertyNamesEntity FromRange(IEnumerable<float> items)
             {
                 ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
                 foreach (float item in items)
@@ -309,7 +309,7 @@ public readonly partial struct Applicator
             /// </summary>
             /// <param name = "items">The items from which to create the array.</param>
             /// <returns>The new array created from the items.</returns>
-            public static PropertyNamesEntity FromItems(IEnumerable<int> items)
+            public static PropertyNamesEntity FromRange(IEnumerable<int> items)
             {
                 ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
                 foreach (int item in items)
@@ -325,7 +325,7 @@ public readonly partial struct Applicator
             /// </summary>
             /// <param name = "items">The items from which to create the array.</param>
             /// <returns>The new array created from the items.</returns>
-            public static PropertyNamesEntity FromItems(IEnumerable<long> items)
+            public static PropertyNamesEntity FromRange(IEnumerable<long> items)
             {
                 ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
                 foreach (long item in items)
@@ -341,7 +341,7 @@ public readonly partial struct Applicator
             /// </summary>
             /// <param name = "items">The items from which to create the array.</param>
             /// <returns>The new array created from the items.</returns>
-            public static PropertyNamesEntity FromItems(IEnumerable<bool> items)
+            public static PropertyNamesEntity FromRange(IEnumerable<bool> items)
             {
                 ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
                 foreach (bool item in items)

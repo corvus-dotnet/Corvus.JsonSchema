@@ -280,17 +280,12 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
         return new <#= TypeDeclaration.DotnetTypeName #>(builder.ToImmutable());
     }
 
-    /// <summary>
-    /// Create an array from the given items.
-    /// </summary>
-    /// <param name="items">The items from which to create the array.</param>
-    /// <returns>The new array created from the items.</returns>
-    public static <#= TypeDeclaration.DotnetTypeName #> FromItems(IEnumerable<IJsonValue> items)
+    public static <#= TypeDeclaration.DotnetTypeName #> FromRange(IEnumerable<JsonAny> items)
     {
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
-        foreach (IJsonValue item in items)
+        foreach (JsonAny item in items)
         {
-            builder.Add(item.AsAny);
+            builder.Add(item);
         }
 
         return new <#= TypeDeclaration.DotnetTypeName #>(builder.ToImmutable());
@@ -301,7 +296,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
     /// </summary>
     /// <param name="items">The items from which to create the array.</param>
     /// <returns>The new array created from the items.</returns>
-    public static <#= TypeDeclaration.DotnetTypeName #> FromItems(IEnumerable<string> items)
+    public static <#= TypeDeclaration.DotnetTypeName #> FromRange(IEnumerable<string> items)
     {
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         foreach (string item in items)
@@ -317,7 +312,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
     /// </summary>
     /// <param name="items">The items from which to create the array.</param>
     /// <returns>The new array created from the items.</returns>
-    public static <#= TypeDeclaration.DotnetTypeName #> FromItems(IEnumerable<double> items)
+    public static <#= TypeDeclaration.DotnetTypeName #> FromRange(IEnumerable<double> items)
     {
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         foreach (double item in items)
@@ -333,7 +328,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
     /// </summary>
     /// <param name="items">The items from which to create the array.</param>
     /// <returns>The new array created from the items.</returns>
-    public static <#= TypeDeclaration.DotnetTypeName #> FromItems(IEnumerable<float> items)
+    public static <#= TypeDeclaration.DotnetTypeName #> FromRange(IEnumerable<float> items)
     {
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         foreach (float item in items)
@@ -349,7 +344,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
     /// </summary>
     /// <param name="items">The items from which to create the array.</param>
     /// <returns>The new array created from the items.</returns>
-    public static <#= TypeDeclaration.DotnetTypeName #> FromItems(IEnumerable<int> items)
+    public static <#= TypeDeclaration.DotnetTypeName #> FromRange(IEnumerable<int> items)
     {
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         foreach (int item in items)
@@ -365,7 +360,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
     /// </summary>
     /// <param name="items">The items from which to create the array.</param>
     /// <returns>The new array created from the items.</returns>
-    public static <#= TypeDeclaration.DotnetTypeName #> FromItems(IEnumerable<long> items)
+    public static <#= TypeDeclaration.DotnetTypeName #> FromRange(IEnumerable<long> items)
     {
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         foreach (long item in items)
@@ -381,7 +376,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
     /// </summary>
     /// <param name="items">The items from which to create the array.</param>
     /// <returns>The new array created from the items.</returns>
-    public static <#= TypeDeclaration.DotnetTypeName #> FromItems(IEnumerable<bool> items)
+    public static <#= TypeDeclaration.DotnetTypeName #> FromRange(IEnumerable<bool> items)
     {
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         foreach (bool item in items)
@@ -391,7 +386,6 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
 
         return new <#= TypeDeclaration.DotnetTypeName #>(builder.ToImmutable());
     }
-
 
     /// <summary>
     /// Initializes a new instance of the <see cref="<#= TypeDeclaration.DotnetTypeName #>"/> struct.
@@ -500,7 +494,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
     /// </summary>
     /// <param name="value">The value from which to construct the instance.</param>
     /// <returns>A JsonAny instantiated from the given items.</returns>
-    public static <#= TypeDeclaration.DotnetTypeName #> FromItems(IEnumerable<<#= SingleItemsDotnetTypeName #>> value)
+    public static <#= TypeDeclaration.DotnetTypeName #> FromRange(IEnumerable<<#= SingleItemsDotnetTypeName #>> value)
     {
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         foreach (<#= SingleItemsDotnetTypeName #> item in value)
