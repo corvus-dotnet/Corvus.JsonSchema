@@ -17,7 +17,7 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft7 {
     public partial class CodeGeneratorArrayAdd : CodeGeneratorArrayAddBase {
         
         
-        #line 132 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Add.tt"
+        #line 123 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Add.tt"
 
     public bool ShouldGenerate
     {
@@ -124,27 +124,6 @@ namespace ");
             #line hidden
             
             #line 42 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Add.tt"
-            this.Write(@" Add(in JsonAny item1, in JsonAny item2)
-    {
-        ImmutableList<JsonAny>.Builder builder = this.GetImmutableListBuilder();
-        builder.Add(item1);
-        builder.Add(item2);
-        return new(builder.ToImmutable());
-    }
-
-    /// <inheritdoc/>
-    public ");
-            
-            #line default
-            #line hidden
-            
-            #line 51 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Add.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
-            
-            #line default
-            #line hidden
-            
-            #line 51 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Add.tt"
             this.Write(" Add(params JsonAny[] items)\r\n    {\r\n        ImmutableList<JsonAny>.Builder build" +
                     "er = this.GetImmutableListBuilder();\r\n        builder.AddRange(items);\r\n        " +
                     "return new(builder.ToImmutable());\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public ");
@@ -152,13 +131,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 59 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Add.tt"
+            #line 50 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Add.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 59 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Add.tt"
+            #line 50 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Add.tt"
             this.Write(@" AddRange<TArray>(in TArray items)
         where TArray : struct, IJsonArray<TArray>
     {
@@ -177,13 +156,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 72 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Add.tt"
+            #line 63 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Add.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 72 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Add.tt"
+            #line 63 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Add.tt"
             this.Write(@" AddRange<TItem>(IEnumerable<TItem> items)
         where TItem : struct, IJsonValue<TItem>
     {
@@ -202,13 +181,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 85 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Add.tt"
+            #line 76 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Add.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 85 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Add.tt"
+            #line 76 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Add.tt"
             this.Write(" AddRange(IEnumerable<JsonAny> items)\r\n    {\r\n        ImmutableList<JsonAny>.Buil" +
                     "der builder = this.GetImmutableListBuilder();\r\n        builder.AddRange(items);\r" +
                     "\n        return new(builder.ToImmutable());\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n   " +
@@ -217,26 +196,26 @@ namespace ");
             #line default
             #line hidden
             
-            #line 93 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Add.tt"
+            #line 84 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Add.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 93 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Add.tt"
+            #line 84 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Add.tt"
             this.Write(" Insert(int index, in JsonAny item1)\r\n    {\r\n        return new(this.GetImmutable" +
                     "ListWith(index, item1));\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public ");
             
             #line default
             #line hidden
             
-            #line 99 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Add.tt"
+            #line 90 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Add.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 99 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Add.tt"
+            #line 90 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Add.tt"
             this.Write(" InsertRange<TArray>(int index, in TArray items)\r\n        where TArray : struct, " +
                     "IJsonArray<TArray>\r\n    {\r\n        return new(this.GetImmutableListWith(index, i" +
                     "tems.EnumerateArray()));\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public ");
@@ -244,13 +223,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 106 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Add.tt"
+            #line 97 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Add.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 106 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Add.tt"
+            #line 97 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Add.tt"
             this.Write(" InsertRange<TItem>(int index, IEnumerable<TItem> items)\r\n        where TItem : s" +
                     "truct, IJsonValue<TItem>\r\n    {\r\n        return new(this.GetImmutableListWith(in" +
                     "dex, items.Select(item => item.AsAny)));\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    pu" +
@@ -259,13 +238,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 113 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Add.tt"
+            #line 104 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Add.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 113 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Add.tt"
+            #line 104 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Add.tt"
             this.Write(" InsertRange(int index, IEnumerable<JsonAny> items)\r\n    {\r\n        return new(th" +
                     "is.GetImmutableListWith(index, items));\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    pub" +
                     "lic ");
@@ -273,13 +252,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 119 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Add.tt"
+            #line 110 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Add.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 119 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Add.tt"
+            #line 110 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Add.tt"
             this.Write(" Replace(in JsonAny oldValue, in JsonAny newValue)\r\n    {\r\n        return this.Ge" +
                     "tImmutableListReplacing(oldValue.AsAny, newValue.AsAny);\r\n    }\r\n\r\n    /// <inhe" +
                     "ritdoc/>\r\n    public ");
@@ -287,26 +266,26 @@ namespace ");
             #line default
             #line hidden
             
-            #line 125 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Add.tt"
+            #line 116 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Add.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 125 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Add.tt"
+            #line 116 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Add.tt"
             this.Write(" SetItem(int index, in JsonAny value)\r\n    {\r\n        return this.GetImmutableLis" +
                     "tSetting(index, value.AsAny);\r\n    }\r\n}\r\n");
             
             #line default
             #line hidden
             
-            #line 130 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Add.tt"
+            #line 121 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Add.tt"
  EndNesting(); 
             
             #line default
             #line hidden
             
-            #line 131 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Add.tt"
+            #line 122 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Add.tt"
             this.Write("\r\n");
             
             #line default

@@ -25,7 +25,7 @@ public readonly partial struct Applicator
         /// <summary>
         /// Gets an empty array.
         /// </summary>
-        public static readonly PropertiesEntity EmptyArray = FromItems(ImmutableList<JsonAny>.Empty);
+        public static readonly PropertiesEntity EmptyArray = From(ImmutableList<JsonAny>.Empty);
         /// <summary>
         /// Initializes a new instance of the <see cref = "PropertiesEntity"/> struct.
         /// </summary>
@@ -125,7 +125,7 @@ public readonly partial struct Applicator
         /// <param name = "items">The list of items from which to construct the array.</param>
         /// <returns>An instance of the array constructed from the list.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static PropertiesEntity FromItems(ImmutableList<JsonAny> items)
+        public static PropertiesEntity From(ImmutableList<JsonAny> items)
         {
             return new(items);
         }
@@ -219,7 +219,7 @@ public readonly partial struct Applicator
         /// This will serialize the items to create the underlying JsonArray. Note the
         /// other overloads which avoid this serialization step.
         /// </remarks>
-        public static PropertiesEntity FromRange<T>(IEnumerable<T> items)
+        public static PropertiesEntity From<T>(IEnumerable<T> items)
         {
             ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
             foreach (T item in items)
@@ -239,10 +239,35 @@ public readonly partial struct Applicator
         /// </summary>
         /// <param name = "items">The items from which to create the array.</param>
         /// <returns>The new array created from the items.</returns>
-        public static PropertiesEntity FromRange(IEnumerable<IJsonValue> items)
+        /// <remarks>
+        /// This will serialize the items to create the underlying JsonArray. Note the
+        /// other overloads which avoid this serialization step.
+        /// </remarks>
+        public static PropertiesEntity FromRange(IEnumerable<JsonAny> items)
         {
             ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
-            foreach (IJsonValue item in items)
+            foreach (JsonAny item in items)
+            {
+                builder.Add(item);
+            }
+
+            return new PropertiesEntity(builder.ToImmutable());
+        }
+
+        /// <summary>
+        /// Create an array from the given items.
+        /// </summary>
+        /// <param name = "items">The items from which to create the array.</param>
+        /// <returns>The new array created from the items.</returns>
+        /// <remarks>
+        /// This will serialize the items to create the underlying JsonArray. Note the
+        /// other overloads which avoid this serialization step.
+        /// </remarks>
+        public static PropertiesEntity FromRange<T>(IEnumerable<T> items)
+            where T : struct, IJsonValue<T>
+        {
+            ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
+            foreach (T item in items)
             {
                 builder.Add(item.AsAny);
             }

@@ -18,7 +18,7 @@ public readonly partial struct JsonArray
     /// <summary>
     /// Gets an empty array.
     /// </summary>
-    public static readonly JsonArray EmptyArray = FromItems(ImmutableList<JsonAny>.Empty);
+    public static readonly JsonArray EmptyArray = From(ImmutableList<JsonAny>.Empty);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonArray"/> struct.
@@ -110,7 +110,7 @@ public readonly partial struct JsonArray
     /// <param name="items">The list of items from which to construct the array.</param>
     /// <returns>An instance of the array constructed from the list.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static JsonArray FromItems(ImmutableList<JsonAny> items)
+    public static JsonArray From(ImmutableList<JsonAny> items)
     {
         return new(items);
     }
@@ -177,7 +177,7 @@ public readonly partial struct JsonArray
     /// This will serialize the items to create the underlying JsonArray. Note the
     /// other overloads which avoid this serialization step.
     /// </remarks>
-    public static JsonArray FromRange<T>(IEnumerable<T> items)
+    public static JsonArray From<T>(IEnumerable<T> items)
     {
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         foreach (T item in items)
@@ -198,8 +198,24 @@ public readonly partial struct JsonArray
     /// <typeparam name="T">The type of the items in the array.</typeparam>
     /// <param name="items">The items from which to create the array.</param>
     /// <returns>The new array created from the items.</returns>
-    public static JsonArray FromItems<T>(IEnumerable<JsonAny> items)
-        where T : struct, IJsonValue
+    public static JsonArray FromRange<T>(IEnumerable<T> items)
+        where T : struct, IJsonValue<T>
+    {
+        ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
+        foreach (T item in items)
+        {
+            builder.Add(item.AsAny);
+        }
+
+        return new JsonArray(builder.ToImmutable());
+    }
+
+    /// <summary>
+    /// Create an array from the given items.
+    /// </summary>
+    /// <param name="items">The items from which to create the array.</param>
+    /// <returns>The new array created from the items.</returns>
+    public static JsonArray FromRange(IEnumerable<JsonAny> items)
     {
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         foreach (JsonAny item in items)

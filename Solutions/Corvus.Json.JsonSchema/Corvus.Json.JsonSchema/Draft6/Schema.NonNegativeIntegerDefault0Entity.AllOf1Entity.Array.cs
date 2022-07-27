@@ -27,7 +27,7 @@ public readonly partial struct Schema
             /// <summary>
             /// Gets an empty array.
             /// </summary>
-            public static readonly AllOf1Entity EmptyArray = FromItems(ImmutableList<JsonAny>.Empty);
+            public static readonly AllOf1Entity EmptyArray = From(ImmutableList<JsonAny>.Empty);
             /// <summary>
             /// Initializes a new instance of the <see cref = "AllOf1Entity"/> struct.
             /// </summary>
@@ -131,7 +131,7 @@ public readonly partial struct Schema
             /// <param name = "items">The list of items from which to construct the array.</param>
             /// <returns>An instance of the array constructed from the list.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static AllOf1Entity FromItems(ImmutableList<JsonAny> items)
+            public static AllOf1Entity From(ImmutableList<JsonAny> items)
             {
                 return new(items);
             }
@@ -225,7 +225,7 @@ public readonly partial struct Schema
             /// This will serialize the items to create the underlying JsonArray. Note the
             /// other overloads which avoid this serialization step.
             /// </remarks>
-            public static AllOf1Entity FromRange<T>(IEnumerable<T> items)
+            public static AllOf1Entity From<T>(IEnumerable<T> items)
             {
                 ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
                 foreach (T item in items)
@@ -245,10 +245,35 @@ public readonly partial struct Schema
             /// </summary>
             /// <param name = "items">The items from which to create the array.</param>
             /// <returns>The new array created from the items.</returns>
-            public static AllOf1Entity FromRange(IEnumerable<IJsonValue> items)
+            /// <remarks>
+            /// This will serialize the items to create the underlying JsonArray. Note the
+            /// other overloads which avoid this serialization step.
+            /// </remarks>
+            public static AllOf1Entity FromRange(IEnumerable<JsonAny> items)
             {
                 ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
-                foreach (IJsonValue item in items)
+                foreach (JsonAny item in items)
+                {
+                    builder.Add(item);
+                }
+
+                return new AllOf1Entity(builder.ToImmutable());
+            }
+
+            /// <summary>
+            /// Create an array from the given items.
+            /// </summary>
+            /// <param name = "items">The items from which to create the array.</param>
+            /// <returns>The new array created from the items.</returns>
+            /// <remarks>
+            /// This will serialize the items to create the underlying JsonArray. Note the
+            /// other overloads which avoid this serialization step.
+            /// </remarks>
+            public static AllOf1Entity FromRange<T>(IEnumerable<T> items)
+                where T : struct, IJsonValue<T>
+            {
+                ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
+                foreach (T item in items)
                 {
                     builder.Add(item.AsAny);
                 }

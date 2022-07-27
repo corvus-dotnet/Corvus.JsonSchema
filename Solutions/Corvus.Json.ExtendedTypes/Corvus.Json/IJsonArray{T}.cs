@@ -79,15 +79,6 @@ public interface IJsonArray<T> : IJsonValue<T>
     T Add(in JsonAny item1);
 
     /// <summary>
-    /// Add items to the array.
-    /// </summary>
-    /// <param name="item1">The first item to add.</param>
-    /// <param name="item2">The second item to add.</param>
-    /// <returns>An instance of the array with the items added.</returns>
-    /// <exception cref="InvalidOperationException">The value was not an array.</exception>
-    T Add(in JsonAny item1, in JsonAny item2);
-
-    /// <summary>
     /// Add a set of items to the array.
     /// </summary>
     /// <param name="items">The items to add.</param>
@@ -215,5 +206,21 @@ public interface IJsonArray<T> : IJsonValue<T>
     /// </summary>
     /// <param name="items">The list of items from which to construct the array.</param>
     /// <returns>An instance of the array constructed from the list.</returns>
-    static abstract T FromItems(ImmutableList<JsonAny> items);
+    static abstract T From(ImmutableList<JsonAny> items);
+
+    /// <summary>
+    /// Construct an instance of the array from a list of json values.
+    /// </summary>
+    /// <param name="items">The list of items from which to construct the array.</param>
+    /// <returns>An instance of the array constructed from the list.</returns>
+    static abstract T FromRange(IEnumerable<JsonAny> items);
+
+    /// <summary>
+    /// Construct an instance of the array from a list of json values.
+    /// </summary>
+    /// <typeparam name="TItem">The type of the items in the enumerable.</typeparam>
+    /// <param name="items">The list of items from which to construct the array.</param>
+    /// <returns>An instance of the array constructed from the list.</returns>
+    static abstract T FromRange<TItem>(IEnumerable<TItem> items)
+        where TItem : struct, IJsonValue<TItem>;
 }

@@ -21,15 +21,6 @@ public readonly partial struct JsonAny
     }
 
     /// <inheritdoc/>
-    public JsonAny Add(in JsonAny item1, in JsonAny item2)
-    {
-        ImmutableList<JsonAny>.Builder builder = this.GetImmutableListBuilder();
-        builder.Add(item1);
-        builder.Add(item2);
-        return new(builder.ToImmutable());
-    }
-
-    /// <inheritdoc/>
     public JsonAny Add(params JsonAny[] items)
     {
         ImmutableList<JsonAny>.Builder builder = this.GetImmutableListBuilder();
