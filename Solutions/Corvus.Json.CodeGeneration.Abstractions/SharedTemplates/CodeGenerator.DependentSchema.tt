@@ -34,6 +34,21 @@ namespace <#= Namespace #>;
 public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 {
     private static readonly ImmutableDictionary<JsonPropertyName, PropertyValidator<<#= TypeDeclaration.DotnetTypeName #>>> __CorvusDependentSchema = CreateDependentSchemaValidators();
+<#  foreach (var dependentSchema in DependentSchemas)
+    { #>
+
+    public bool TryAsDependentSchemaFor<#= Formatting.ToPascalCaseWithReservedWords(dependentSchema.Name).ToString() #>(out <#= dependentSchema.DotnetTypeName #> result)
+    {
+        if (this.HasProperty("<#= dependentSchema.Name #>"))
+        {
+            result = this.As<<#= dependentSchema.DotnetTypeName #>>();
+            return true;
+        }
+
+        result = <#= dependentSchema.DotnetTypeName #>.Undefined;
+        return false;
+    }
+<#  } #>
 
     private static ImmutableDictionary<JsonPropertyName, PropertyValidator<<#= TypeDeclaration.DotnetTypeName #>>> CreateDependentSchemaValidators()
     {
