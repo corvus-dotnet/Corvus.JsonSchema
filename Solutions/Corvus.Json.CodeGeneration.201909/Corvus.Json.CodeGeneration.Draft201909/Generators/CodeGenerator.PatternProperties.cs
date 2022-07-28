@@ -17,7 +17,7 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft201909 {
     public partial class CodeGeneratorPatternProperties : CodeGeneratorPatternPropertiesBase {
         
         
-        #line 88 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
+        #line 106 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
 
     public bool ShouldGenerate
     {
@@ -261,19 +261,7 @@ namespace ");
             #line hidden
             
             #line 57 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
-            this.Write("\" />.\r\n    /// </summary>\r\n    public ");
-            
-            #line default
-            #line hidden
-            
-            #line 59 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( patternProperty.DotnetTypeName ));
-            
-            #line default
-            #line hidden
-            
-            #line 59 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
-            this.Write(" AsPattern");
+            this.Write("\" />.\r\n    /// </summary>\r\n    public bool TryAsPattern");
             
             #line default
             #line hidden
@@ -285,30 +273,129 @@ namespace ");
             #line hidden
             
             #line 59 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
-            this.Write("(in JsonObjectProperty property)\r\n    {\r\n        return property.ValueAs<");
+            this.Write("(in JsonObjectProperty property, out  ");
             
             #line default
             #line hidden
             
-            #line 61 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
+            #line 59 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( patternProperty.DotnetTypeName ));
             
             #line default
             #line hidden
             
+            #line 59 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
+            this.Write(" result)\r\n    {\r\n        if (PatternProperty");
+            
+            #line default
+            #line hidden
+            
             #line 61 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
-            this.Write(">();\r\n    }\r\n");
+            this.Write(this.ToStringHelper.ToStringWithCulture( PatternPropertySuffix(patternProperty) ));
+            
+            #line default
+            #line hidden
+            
+            #line 61 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
+            this.Write(".IsMatch(property.Name))\r\n        {\r\n            result = property.ValueAs<");
             
             #line default
             #line hidden
             
             #line 63 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( patternProperty.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 63 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
+            this.Write(">();\r\n            return true;\r\n        }\r\n        else\r\n        {\r\n            r" +
+                    "esult = ");
+            
+            #line default
+            #line hidden
+            
+            #line 68 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( patternProperty.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 68 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
+            this.Write(".Undefined;\r\n            return false;\r\n        }\r\n    }\r\n\r\n    /// <summary>\r\n  " +
+                    "  /// Try to get a property value as the type matching the given pattern propert" +
+                    "y ");
+            
+            #line default
+            #line hidden
+            
+            #line 74 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( Formatting.FormatLiteralOrNull(patternProperty.Pattern, true).Trim('"')));
+            
+            #line default
+            #line hidden
+            
+            #line 74 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
+            this.Write(" as a <see cref=\"");
+            
+            #line default
+            #line hidden
+            
+            #line 74 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( patternProperty.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 74 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
+            this.Write("\" />.\r\n    /// </summary>\r\n    public ");
+            
+            #line default
+            #line hidden
+            
+            #line 76 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( patternProperty.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 76 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
+            this.Write(" AsPattern");
+            
+            #line default
+            #line hidden
+            
+            #line 76 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( PatternPropertySuffix(patternProperty) ));
+            
+            #line default
+            #line hidden
+            
+            #line 76 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
+            this.Write("(in JsonObjectProperty property)\r\n    {\r\n        return property.ValueAs<");
+            
+            #line default
+            #line hidden
+            
+            #line 78 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( patternProperty.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 78 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
+            this.Write(">();\r\n    }\r\n\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 81 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 64 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
+            #line 82 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
             this.Write(@"
     private static ImmutableDictionary<Regex, PatternPropertyValidator> CreatePatternPropertiesValidators()
     {
@@ -320,106 +407,106 @@ namespace ");
             #line default
             #line hidden
             
-            #line 70 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
+            #line 88 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
   foreach (var patternProperty in PatternProperties)
     { 
             
             #line default
             #line hidden
             
-            #line 72 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
+            #line 90 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
             this.Write("        builder.Add(\r\n            PatternProperty");
             
             #line default
             #line hidden
             
-            #line 73 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
+            #line 91 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( PatternPropertySuffix(patternProperty) ));
             
             #line default
             #line hidden
             
-            #line 73 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
+            #line 91 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
             this.Write(",__CorvusValidatePatternProperty");
             
             #line default
             #line hidden
             
-            #line 73 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
+            #line 91 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( PatternPropertySuffix(patternProperty) ));
             
             #line default
             #line hidden
             
-            #line 73 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
+            #line 91 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
             this.Write(");\r\n");
             
             #line default
             #line hidden
             
-            #line 74 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
+            #line 92 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 75 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
+            #line 93 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
             this.Write("\r\n        return builder.ToImmutable();\r\n    }\r\n\r\n");
             
             #line default
             #line hidden
             
-            #line 79 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
+            #line 97 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
   foreach (var patternProperty in PatternProperties)
     { 
             
             #line default
             #line hidden
             
-            #line 81 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
+            #line 99 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
             this.Write("    private static ValidationContext __CorvusValidatePatternProperty");
             
             #line default
             #line hidden
             
-            #line 81 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
+            #line 99 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( PatternPropertySuffix(patternProperty) ));
             
             #line default
             #line hidden
             
-            #line 81 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
+            #line 99 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
             this.Write("(in JsonObjectProperty that, in ValidationContext validationContext, ValidationLe" +
                     "vel level)\r\n    {\r\n        return that.ValueAs<");
             
             #line default
             #line hidden
             
-            #line 83 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
+            #line 101 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( patternProperty.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 83 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
+            #line 101 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
             this.Write(">().Validate(validationContext, level);\r\n    }\r\n");
             
             #line default
             #line hidden
             
-            #line 85 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
+            #line 103 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 86 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
+            #line 104 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
             this.Write("}\r\n");
             
             #line default
             #line hidden
             
-            #line 87 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
+            #line 105 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
  EndNesting(); 
             
             #line default

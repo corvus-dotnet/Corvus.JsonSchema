@@ -56,10 +56,28 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     /// <summary>
     /// Get a property value as the type matching the given pattern property <#= Formatting.FormatLiteralOrNull(patternProperty.Pattern, true).Trim('"')#> as a <see cref="<#= patternProperty.DotnetTypeName #>" />.
     /// </summary>
+    public bool TryAsPattern<#= PatternPropertySuffix(patternProperty) #>(in JsonObjectProperty property, out  <#= patternProperty.DotnetTypeName #> result)
+    {
+        if (PatternProperty<#= PatternPropertySuffix(patternProperty) #>.IsMatch(property.Name))
+        {
+            result = property.ValueAs<<#= patternProperty.DotnetTypeName #>>();
+            return true;
+        }
+        else
+        {
+            result = <#= patternProperty.DotnetTypeName #>.Undefined;
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Try to get a property value as the type matching the given pattern property <#= Formatting.FormatLiteralOrNull(patternProperty.Pattern, true).Trim('"')#> as a <see cref="<#= patternProperty.DotnetTypeName #>" />.
+    /// </summary>
     public <#= patternProperty.DotnetTypeName #> AsPattern<#= PatternPropertySuffix(patternProperty) #>(in JsonObjectProperty property)
     {
         return property.ValueAs<<#= patternProperty.DotnetTypeName #>>();
     }
+
 <#  } #>
 
     private static ImmutableDictionary<Regex, PatternPropertyValidator> CreatePatternPropertiesValidators()
