@@ -65,6 +65,12 @@ public static partial class JsonTransformingVisitor
         // First, visit the entity itself
         visitor(path, nodeToVisit, ref result);
 
+        if (result.Walk == Walk.RemoveAndContinue)
+        {
+            // We will just return immediately, and this case will be dealt with by VisitObject() or VisitArray().
+            return;
+        }
+
         if (result.Walk == Walk.TerminateAtThisNodeAndAbandonAllChanges)
         {
             // We're terminating, and abandoning changes, so just return this node.
@@ -116,6 +122,7 @@ public static partial class JsonTransformingVisitor
             builder = asArray.AsImmutableListBuilder();
         }
 
+        int builderIndex = 0;
         int index = 0;
         foreach (JsonAny item in asArray.EnumerateArray())
         {
@@ -125,6 +132,7 @@ public static partial class JsonTransformingVisitor
                 {
                     builder.Add(item);
                     index++;
+                    builderIndex++;
                     continue;
                 }
                 else
@@ -145,6 +153,7 @@ public static partial class JsonTransformingVisitor
 
             // Visit the array item, and determine whether we've transformed it.
             Visit(itemPath, item, visitor, ref pathBuffer, ref result);
+
             if (result.Walk == Walk.TerminateAtThisNodeAndAbandonAllChanges)
             {
                 // We didn't transform any items, and we are baling out right now
@@ -168,12 +177,24 @@ public static partial class JsonTransformingVisitor
             {
                 if (result.IsTransformed)
                 {
-                    builder[index] = result.Output;
+                    if (result.Walk != Walk.RemoveAndContinue)
+                    {
+                        builder[builderIndex] = result.Output;
+                        ++builderIndex;
+                    }
+                    else
+                    {
+                        builder.RemoveAt(index);
+                    }
                 }
             }
             else
             {
-                builder.Add(result.Output);
+                if (result.Walk != Walk.RemoveAndContinue)
+                {
+                    builder.Add(result.Output);
+                    ++builderIndex;
+                }
             }
 
             ++index;
@@ -281,7 +302,14 @@ public static partial class JsonTransformingVisitor
             hasTransformedProperties = hasTransformedProperties || result.IsTransformed;
 
             // We need to build up the set of properties, whether we have transformed them or not
-            builder[property.Name] = result.Output;
+            if (result.Walk != Walk.RemoveAndContinue)
+            {
+                builder[property.Name] = result.Output;
+            }
+            else
+            {
+                builder.Remove(property.Name);
+            }
         }
 
         if (terminateEntireWalkApplyingChanges)

@@ -17,7 +17,7 @@ internal class Program
 {
     private static void Main(string[] args)
     {
-        BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).RunAll(
+        BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).RunAllJoined(
                 ManualConfig.Create(DefaultConfig.Instance)
                 .AddJob(Job.Dry
                     .WithRuntime(CoreRuntime.Core60)
