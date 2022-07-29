@@ -158,8 +158,19 @@ public readonly struct UriTemplate
     /// <returns>True if the parameters were successfully decomposed, otherwise false.</returns>
     public bool TryGetParameters(Uri uri, [NotNullWhen(true)] out ImmutableDictionary<string, JsonAny>? parameters)
     {
+        return this.TryGetParameters(uri.OriginalString, out parameters);
+    }
+
+    /// <summary>
+    /// Gets the parameters from the given URI.
+    /// </summary>
+    /// <param name="uri">The URI from which to get the parameters.</param>
+    /// <param name="parameters">The parameters decomposed from the Uri.</param>
+    /// <returns>True if the parameters were successfully decomposed, otherwise false.</returns>
+    public bool TryGetParameters(string uri, out ImmutableDictionary<string, JsonAny>? parameters)
+    {
         Regex regex = this.parameterRegex ?? new Regex(CreateMatchingRegex(this.template));
-        Match match = regex.Match(uri.OriginalString);
+        Match match = regex.Match(uri);
         if (match.Success)
         {
             ImmutableDictionary<string, JsonAny>.Builder result = ImmutableDictionary.CreateBuilder<string, JsonAny>();
@@ -209,7 +220,7 @@ public readonly struct UriTemplate
     /// <param name="parameters">The parameters to set.</param>
     /// <returns>An instance of the template with the updated parameters.</returns>
     /// <remarks>This treats each property on the <see cref="JsonObject"/> as a named parameter value.</remarks>
-    public UriTemplate SetParameters(JsonAny parameters)
+    public UriTemplate SetParameters(in JsonAny parameters)
     {
         if (parameters.ValueKind != JsonValueKind.Object)
         {
@@ -225,7 +236,7 @@ public readonly struct UriTemplate
     /// <param name="parameters">The parameters to set.</param>
     /// <returns>An instance of the template with the updated parameters.</returns>
     /// <remarks>This treats each property on the <see cref="JsonObject"/> as a named parameter value.</remarks>
-    public UriTemplate SetParameters(JsonObject parameters)
+    public UriTemplate SetParameters(in JsonObject parameters)
     {
         ImmutableDictionary<string, JsonAny>.Builder builder = ImmutableDictionary.CreateBuilder<string, JsonAny>(this.parameters.KeyComparer);
         builder.AddRange(this.parameters);
