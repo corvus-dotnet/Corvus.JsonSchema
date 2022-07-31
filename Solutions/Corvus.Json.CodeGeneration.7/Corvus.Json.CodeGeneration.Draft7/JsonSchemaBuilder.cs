@@ -792,7 +792,7 @@ public class JsonSchemaBuilder : IJsonSchemaBuilder
         foreach (TypeDeclaration type in typesForGenerationByLocation.Values)
         {
             var typesVisited = new HashSet<string>();
-            this.AddPropertiesFromType(type, type, typesVisited);
+            this.AddPropertiesFromType(type, type, typesVisited, false);
         }
 
         // Once we've got the whole set, set the dotnet property names.
@@ -802,7 +802,7 @@ public class JsonSchemaBuilder : IJsonSchemaBuilder
         }
     }
 
-    private void AddPropertiesFromType(TypeDeclaration source, TypeDeclaration target, HashSet<string> typesVisited)
+    private void AddPropertiesFromType(TypeDeclaration source, TypeDeclaration target, HashSet<string> typesVisited, bool treatRequiredAsOptional)
     {
         if (typesVisited.Contains(source.Location))
         {
@@ -817,7 +817,7 @@ public class JsonSchemaBuilder : IJsonSchemaBuilder
         {
             foreach (JsonString requiredName in source.Schema.Required.EnumerateArray())
             {
-                target.AddOrReplaceProperty(new PropertyDeclaration(AnyTypeDeclarationInstance, requiredName!, true, source.Location == target.Location));
+                target.AddOrReplaceProperty(new PropertyDeclaration(AnyTypeDeclarationInstance, requiredName!, !treatRequiredAsOptional, source.Location == target.Location));
             }
         }
 
@@ -827,15 +827,38 @@ public class JsonSchemaBuilder : IJsonSchemaBuilder
             foreach (Schema schema in source.Schema.AllOf.EnumerateArray())
             {
                 TypeDeclaration allOfTypeDeclaration = this.GetTypeDeclarationForPropertyArrayIndex(source.Location, "allOf", index);
-                this.AddPropertiesFromType(allOfTypeDeclaration, target, typesVisited);
+                this.AddPropertiesFromType(allOfTypeDeclaration, target, typesVisited, treatRequiredAsOptional);
                 index++;
             }
+        }
+
+        if (source.Schema.AllOf.IsNotUndefined())
+        {
+            int index = 0;
+            foreach (Schema schema in source.Schema.AllOf.EnumerateArray())
+            {
+                TypeDeclaration allOfTypeDeclaration = this.GetTypeDeclarationForPropertyArrayIndex(source.Location, "allOf", index);
+                this.AddPropertiesFromType(allOfTypeDeclaration, target, typesVisited, treatRequiredAsOptional);
+                index++;
+            }
+        }
+
+        if (source.Schema.Then.IsNotUndefined())
+        {
+            TypeDeclaration thenTypeDeclaration = this.GetTypeDeclarationForProperty(source.Location, source.LexicalLocation, "then");
+            this.AddPropertiesFromType(thenTypeDeclaration, target, typesVisited, true);
+        }
+
+        if (source.Schema.Else.IsNotUndefined())
+        {
+            TypeDeclaration elseTypeDeclaration = this.GetTypeDeclarationForProperty(source.Location, source.LexicalLocation, "else");
+            this.AddPropertiesFromType(elseTypeDeclaration, target, typesVisited, true);
         }
 
         if (source.Schema.Ref.IsNotUndefined() && !source.Schema.IsNakedReference())
         {
             TypeDeclaration refTypeDeclaration = this.GetTypeDeclarationForProperty(source.Location, source.LexicalLocation, "$ref");
-            this.AddPropertiesFromType(refTypeDeclaration, target, typesVisited);
+            this.AddPropertiesFromType(refTypeDeclaration, target, typesVisited, treatRequiredAsOptional);
         }
 
         // Then we add our own properties.
@@ -850,7 +873,7 @@ public class JsonSchemaBuilder : IJsonSchemaBuilder
                 {
                     if (source.Schema.Required.EnumerateArray().Any(r => propertyName == r))
                     {
-                        isRequired = true;
+                        isRequired = !treatRequiredAsOptional;
                     }
                 }
 
