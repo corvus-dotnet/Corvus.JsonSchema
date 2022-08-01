@@ -37,6 +37,11 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 <#  foreach (var dependentSchema in DependentSchemas)
     { #>
 
+    /// <summary>
+    /// Try to match the instance with the dependent schema for property <#= dependentSchema.Name #>, and get it as a <see cref="<#= dependentSchema.DotnetTypeName #>" /> if the property is present.
+    /// </summary>
+    /// <param name="result">The value as a <see cref="<#= dependentSchema.DotnetTypeName #>" />.</param>.
+    /// <returns><c>True</c> if the property was present.</returns>
     public bool TryAsDependentSchemaFor<#= Formatting.ToPascalCaseWithReservedWords(dependentSchema.Name).ToString() #>(out <#= dependentSchema.DotnetTypeName #> result)
     {
         if (this.HasProperty("<#= dependentSchema.Name #>"))
