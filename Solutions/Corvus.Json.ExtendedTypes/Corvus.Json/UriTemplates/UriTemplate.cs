@@ -167,7 +167,7 @@ public readonly struct UriTemplate
     /// <param name="uri">The URI from which to get the parameters.</param>
     /// <param name="parameters">The parameters decomposed from the Uri.</param>
     /// <returns>True if the parameters were successfully decomposed, otherwise false.</returns>
-    public bool TryGetParameters(string uri, out ImmutableDictionary<string, JsonAny>? parameters)
+    public bool TryGetParameters(string uri, [NotNullWhen(true)] out ImmutableDictionary<string, JsonAny>? parameters)
     {
         Regex regex = this.parameterRegex ?? new Regex(CreateMatchingRegex(this.template));
         Match match = regex.Match(uri);
