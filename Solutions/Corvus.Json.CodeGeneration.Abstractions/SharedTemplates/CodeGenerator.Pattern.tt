@@ -33,7 +33,7 @@ namespace <#= Namespace #>;
 /// </summary>
 public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 {
-    private static Regex __CorvusPatternExpression => new Regex(<#= Formatting.FormatLiteralOrNull(Pattern, true) #>, RegexOptions.Compiled);
+    private static Regex __CorvusPatternExpression => new Regex(<#= Formatting.FormatLiteralOrNull(Pattern, true) #>, RegexOptions.Compiled, TimeSpan.FromSeconds(1));
 }
 <# EndNesting(); #>
 <#+

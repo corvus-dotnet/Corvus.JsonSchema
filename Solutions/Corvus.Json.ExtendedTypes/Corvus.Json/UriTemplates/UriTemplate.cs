@@ -21,8 +21,8 @@ public readonly struct UriTemplate
     private const string Op = "(?<op>[+#./;?&]?)";
     private const string Var = "(?<var>(?:(?<lvar>" + Varname + ")[*]?,?)*)";
     private const string Varspec = "(?<varspec>{" + Op + Var + "})";
-    private static readonly Regex FindParam = new(Varspec, RegexOptions.Compiled);
-    private static readonly Regex TemplateConversion = new(@"([^{]|^)\?", RegexOptions.Compiled);
+    private static readonly Regex FindParam = new(Varspec, RegexOptions.Compiled, TimeSpan.FromSeconds(1));
+    private static readonly Regex TemplateConversion = new(@"([^{]|^)\?", RegexOptions.Compiled, TimeSpan.FromSeconds(1));
 
     private static readonly Dictionary<char, OperatorInfo> Operators = new()
         {
@@ -75,7 +75,7 @@ public readonly struct UriTemplate
 
         if (createParameterRegex)
         {
-            this.parameterRegex = new Regex(CreateMatchingRegex(template), RegexOptions.Compiled);
+            this.parameterRegex = new Regex(CreateMatchingRegex(template), RegexOptions.Compiled, TimeSpan.FromSeconds(1));
         }
         else
         {

@@ -22,6 +22,6 @@ public readonly partial struct Core
     /// </summary>
     public readonly partial struct IdValue
     {
-        private static Regex __CorvusPatternExpression => new Regex("^[^#]*#?$", RegexOptions.Compiled);
+        private static Regex __CorvusPatternExpression => new Regex("^[^#]*#?$", RegexOptions.Compiled, TimeSpan.FromSeconds(1));
     }
 }

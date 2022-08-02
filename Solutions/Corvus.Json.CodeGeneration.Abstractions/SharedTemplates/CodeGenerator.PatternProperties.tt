@@ -38,7 +38,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     /// <summary>
     /// A pattern property matching <#= Formatting.FormatLiteralOrNull(patternProperty.Pattern, true).Trim('"')#> producing a <see cref="<#= patternProperty.DotnetTypeName #>" />.
     /// </summary>
-    public static Regex PatternProperty<#= PatternPropertySuffix(patternProperty) #> => new(<#= Formatting.FormatLiteralOrNull(patternProperty.Pattern, true) #>, RegexOptions.Compiled);
+    public static Regex PatternProperty<#= PatternPropertySuffix(patternProperty) #> => new(<#= Formatting.FormatLiteralOrNull(patternProperty.Pattern, true) #>, RegexOptions.Compiled, TimeSpan.FromSeconds(1));
 <#  } #>
 
     private static readonly ImmutableDictionary<Regex, PatternPropertyValidator> __CorvusPatternProperties = CreatePatternPropertiesValidators();

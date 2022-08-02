@@ -14,7 +14,7 @@ namespace Corvus.Json.UriTemplates;
 /// </summary>
 public static class UriExtensions
 {
-    private static readonly Regex UnreservedCharacters = new(@"([-A-Za-z0-9._~]*)=([^&]*)&?", RegexOptions.Compiled);       //// Unreserved characters: http://tools.ietf.org/html/rfc3986#section-2.3
+    private static readonly Regex UnreservedCharacters = new(@"([-A-Za-z0-9._~]*)=([^&]*)&?", RegexOptions.Compiled, TimeSpan.FromSeconds(1));       //// Unreserved characters: http://tools.ietf.org/html/rfc3986#section-2.3
 
     /// <summary>
     /// Make a template from a URI and its query string parameters.

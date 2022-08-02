@@ -162,7 +162,7 @@ namespace ");
             #line hidden
             
             #line 41 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
-            this.Write(", RegexOptions.Compiled);\r\n");
+            this.Write(", RegexOptions.Compiled, TimeSpan.FromSeconds(1));\r\n");
             
             #line default
             #line hidden

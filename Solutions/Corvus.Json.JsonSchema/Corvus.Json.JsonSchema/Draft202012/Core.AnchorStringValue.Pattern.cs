@@ -22,6 +22,6 @@ public readonly partial struct Core
     /// </summary>
     public readonly partial struct AnchorStringValue
     {
-        private static Regex __CorvusPatternExpression => new Regex("^[A-Za-z_][-A-Za-z0-9._]*$", RegexOptions.Compiled);
+        private static Regex __CorvusPatternExpression => new Regex("^[A-Za-z_][-A-Za-z0-9._]*$", RegexOptions.Compiled, TimeSpan.FromSeconds(1));
     }
 }
