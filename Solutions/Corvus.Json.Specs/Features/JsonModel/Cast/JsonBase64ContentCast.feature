@@ -34,12 +34,12 @@ Scenario: Cast from JsonString for json element backed value as an base64Content
 Scenario: Cast to ReadOnlySpan<char> for json element backed value as an base64Content
 	Given the JsonElement backed JsonBase64Content "eyAiaGVsbG8iOiAid29ybGQiIH0="
 	When I cast the JsonBase64Content to ReadOnlySpan<char>
-	Then the result should equal the ReadOnlySpan<char> eyAiaGVsbG8iOiAid29ybGQiIH0=
+	Then the result should equal the ReadOnlySpan<char> "eyAiaGVsbG8iOiAid29ybGQiIH0="
 
 Scenario: Cast to ReadOnlySpan<char> for dotnet backed value as an base64Content
 	Given the dotnet backed JsonBase64Content "eyAiaGVsbG8iOiAid29ybGQiIH0="
 	When I cast the JsonBase64Content to ReadOnlySpan<char>
-	Then the result should equal the ReadOnlySpan<char> eyAiaGVsbG8iOiAid29ybGQiIH0=
+	Then the result should equal the ReadOnlySpan<char> "eyAiaGVsbG8iOiAid29ybGQiIH0="
 
 Scenario: Cast from ReadOnlySpan<char> for json element backed value as an base64Content
 	Given the ReadOnlyMemory<char> for "eyAiaGVsbG8iOiAid29ybGQiIH0="

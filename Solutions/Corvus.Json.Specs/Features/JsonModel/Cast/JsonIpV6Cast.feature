@@ -34,15 +34,15 @@ Scenario: Cast from JsonString for json element backed value as an ipV6
 Scenario: Cast to IPAddress for json element backed value as an ipV6
 	Given the JsonElement backed JsonIpV6 "0:0:0:0:0:ffff:c0a8:0001"
 	When I cast the JsonIpV6 to IPAddress
-	Then the result should equal the IPAddress 0:0:0:0:0:ffff:c0a8:0001
+	Then the result should equal the IPAddress "0:0:0:0:0:ffff:c0a8:0001"
 
 Scenario: Cast to IPAddress for dotnet backed value as an ipV6
 	Given the dotnet backed JsonIpV6 "0:0:0:0:0:ffff:c0a8:0001"
 	When I cast the JsonIpV6 to IPAddress
-	Then the result should equal the IPAddress 0:0:0:0:0:ffff:c0a8:0001
+	Then the result should equal the IPAddress "0:0:0:0:0:ffff:c0a8:0001"
 
 Scenario: Cast from IPAddress for json element backed value as an ipV6
-	Given the IPAddress for ::ffff:192.168.0.1
+	Given the IPAddress for "::ffff:192.168.0.1"
 	When I cast the IPAddress to JsonIpV6
 	Then the result should equal the JsonIpV6 "::ffff:192.168.0.1"
 

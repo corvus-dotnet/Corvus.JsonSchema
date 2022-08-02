@@ -14,7 +14,7 @@ Scenario: Change an existing parameter within multiple
 Scenario: Change an existing parameter
 	Given the target uri "http://example/customer?view=false&foo=bar"
 	And I make a template for the target uri
-	When I set the template parameter called "view" to "true"
+	When I set the template parameter called "view" to the bool true
 	Then the resolved template should be one of
 		| values                                    |
 		| http://example/customer?view=true&foo=bar |
@@ -55,7 +55,7 @@ Scenario: Add parameters to query string with URI ignoring path parameter
 	When I get the query string parameters for the target uri
 	And I set the parameter called "context" to "detail"
 	And I make a template for the target uri from the parameters
-	When I set the template parameter called "id" to "99"
+	When I set the template parameter called "id" to the integer 99
 	Then the resolved template should be one of
 		| values                                              |
 		| http://example/customer/99?view=true&context=detail |

@@ -34,12 +34,12 @@ Scenario: Cast from JsonString for json element backed value as a JsonAny
 Scenario: Cast to ReadOnlySpan<char> for json element backed value as a JsonAny
 	Given the JsonElement backed JsonAny "hello@endjin.com"
 	When I cast the JsonAny to ReadOnlySpan<char>
-	Then the result should equal the ReadOnlySpan<char> hello@endjin.com
+	Then the result should equal the ReadOnlySpan<char> "hello@endjin.com"
 
 Scenario: Cast to ReadOnlySpan<char> for dotnet backed value as a JsonAny
 	Given the string backed JsonAny "hello@endjin.com"
 	When I cast the JsonAny to ReadOnlySpan<char>
-	Then the result should equal the ReadOnlySpan<char> hello@endjin.com
+	Then the result should equal the ReadOnlySpan<char> "hello@endjin.com"
 
 Scenario: Cast from ReadOnlySpan<char> for json element backed value as a JsonAny
 	Given the ReadOnlyMemory<char> for "hello@endjin.com"

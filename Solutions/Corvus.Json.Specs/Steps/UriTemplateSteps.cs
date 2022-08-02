@@ -41,7 +41,7 @@ public class UriTemplateSteps
     /// </summary>
     /// <param name="name">The parmaeter name.</param>
     /// <param name="value">The new value.</param>
-    [When(@"I set the template parameter called ""(.*)"" to the integer ""(.*)""")]
+    [When(@"I set the template parameter called ""(.*)"" to the integer (.*)")]
     public void WhenISetTheTemplateParameterCalledToTheInteger(string name, int value)
     {
         this.scenarioContext.Set(this.scenarioContext.Get<UriTemplate>(TemplateKey).SetParameter(name, value), TemplateKey);
@@ -52,7 +52,7 @@ public class UriTemplateSteps
     /// </summary>
     /// <param name="name">The parmaeter name.</param>
     /// <param name="value">The new value.</param>
-    [When(@"I set the template parameter called ""(.*)"" to the double ""(.*)""")]
+    [When(@"I set the template parameter called ""(.*)"" to the double (.*)")]
     public void WhenISetTheTemplateParameterCalledToTheDouble(string name, double value)
     {
         this.scenarioContext.Set(this.scenarioContext.Get<UriTemplate>(TemplateKey).SetParameter(name, value), TemplateKey);
@@ -63,7 +63,7 @@ public class UriTemplateSteps
     /// </summary>
     /// <param name="name">The parmaeter name.</param>
     /// <param name="value">The new value.</param>
-    [When(@"I set the template parameter called ""(.*)"" to the bool ""(.*)""")]
+    [When(@"I set the template parameter called ""(.*)"" to the bool (.*)")]
     public void WhenISetTheTemplateParameterCalledToTheBool(string name, bool value)
     {
         this.scenarioContext.Set(this.scenarioContext.Get<UriTemplate>(TemplateKey).SetParameter(name, value), TemplateKey);
@@ -107,7 +107,7 @@ public class UriTemplateSteps
     /// </summary>
     /// <param name="name">The parmaeter name.</param>
     /// <param name="value">The new value.</param>
-    [When(@"I set the template parameter called ""(.*)"" to the float ""(.*)""")]
+    [When(@"I set the template parameter called ""(.*)"" to the float (.*)")]
     public void WhenISetTheTemplateParameterCalledToTheFloat(string name, float value)
     {
         this.scenarioContext.Set(this.scenarioContext.Get<UriTemplate>(TemplateKey).SetParameter(name, value), TemplateKey);
@@ -118,7 +118,7 @@ public class UriTemplateSteps
     /// </summary>
     /// <param name="name">The parmaeter name.</param>
     /// <param name="value">The new value.</param>
-    [When(@"I set the template parameter called ""(.*)"" to the long ""(.*)""")]
+    [When(@"I set the template parameter called ""(.*)"" to the long (.*)")]
     public void WhenISetTheTemplateParameterCalledToTheLong(string name, long value)
     {
         this.scenarioContext.Set(this.scenarioContext.Get<UriTemplate>(TemplateKey).SetParameter(name, value), TemplateKey);
@@ -128,7 +128,7 @@ public class UriTemplateSteps
     /// Set the template parameters from a JsonObject on the UriTemplate in the context variable called <c>Template</c> and store it back to the context.
     /// </summary>
     /// <param name="json">The json string for the JSON object.</param>
-    [When("I set the template parameters from the JsonObject '(.*)'")]
+    [When("I set the template parameters from the JsonObject (.*)")]
     public void WhenISetTheTemplateParametersFromTheJsonObject(string json)
     {
         JsonObject jsonObject = JsonAny.Parse(json);
@@ -211,7 +211,7 @@ public class UriTemplateSteps
     /// </summary>
     /// <param name="name">The name of the parameter.</param>
     /// <param name="value">The value of the parameter, in JSON format.</param>
-    [When(@"I set the parameter called ""(.*)"" to ""(.*)""")]
+    [When(@"I set the parameter called ""(.*)"" to (.*)")]
     public void WhenISetTheParameterCalledTo(string name, string value)
     {
         ImmutableDictionary<string, JsonAny> parameters = this.scenarioContext.Get<ImmutableDictionary<string, JsonAny>>(ParametersKey);
@@ -262,7 +262,7 @@ public class UriTemplateSteps
     /// </summary>
     /// <param name="name">The parmaeter name.</param>
     /// <param name="value">The new value, in JSON form.</param>
-    [When(@"I set the template parameter called ""(.*)"" to ""(.*)""")]
+    [When(@"I set the template parameter called ""(.*)"" to the JsonAny (.*)")]
     public void WhenISetTheTemplateParameterCalledTo(string name, string value)
     {
         this.scenarioContext.Set(this.scenarioContext.Get<UriTemplate>(TemplateKey).SetParameter(name, JsonAny.Parse(value)), TemplateKey);
