@@ -48,10 +48,10 @@ public class JsonValueCastSteps
     /// Gets the value store in <see cref="CastResultKey"/> and matches it against the JsonNotAny serialized in <paramref name="match"/>.
     /// </summary>
     /// <param name="match">The serialized form of the result to match.</param>
-    [Then("the result should equal the JsonNotAny '(.*)'")]
+    [Then("the result should equal the JsonNotAny (.*)")]
     public void ThenTheResultShouldEqualTheJsonNotAny(string match)
     {
-        Assert.AreEqual((JsonNotAny)JsonAny.ParseUriValue(match), this.scenarioContext.Get<JsonNotAny>(CastResultKey));
+        Assert.AreEqual((JsonNotAny)JsonAny.Parse(match), this.scenarioContext.Get<JsonNotAny>(CastResultKey));
     }
 
     /// <summary>
@@ -59,20 +59,20 @@ public class JsonValueCastSteps
     /// </summary>
     /// <param name="match">The serialized form of the result to match.</param>
     /// <param name="margin">The precision with which to match the JsonAny value.</param>
-    [Then("the result should equal the JsonNotAny '(.*)' within (.*)")]
+    [Then("the result should equal within (.*) the JsonNotAny (.*)")]
     public void ThenTheResultShouldEqualTheJsonNotAnyWithin(string match, double margin)
     {
-        Assert.AreEqual((double)(JsonNotAny)JsonAny.ParseUriValue(match), (double)this.scenarioContext.Get<JsonNotAny>(CastResultKey), margin);
+        Assert.AreEqual((double)(JsonNotAny)JsonAny.Parse(match), (double)this.scenarioContext.Get<JsonNotAny>(CastResultKey), margin);
     }
 
     /// <summary>
     /// Gets the value store in <see cref="CastResultKey"/> and matches it against the JsonAny serialized in <paramref name="match"/>.
     /// </summary>
     /// <param name="match">The serialized form of the result to match.</param>
-    [Then("the result should equal the JsonAny '(.*)'")]
+    [Then("the result should equal the JsonAny (.*)")]
     public void ThenTheResultShouldEqualTheJsonAny(string match)
     {
-        Assert.AreEqual(JsonAny.ParseUriValue(match), this.scenarioContext.Get<JsonAny>(CastResultKey));
+        Assert.AreEqual(JsonAny.Parse(match), this.scenarioContext.Get<JsonAny>(CastResultKey));
     }
 
     /// <summary>
@@ -80,10 +80,10 @@ public class JsonValueCastSteps
     /// </summary>
     /// <param name="match">The serialized form of the result to match.</param>
     /// <param name="margin">The precision with which to match the JsonAny value.</param>
-    [Then("the result should equal the JsonAny '(.*)' within (.*)")]
+    [Then("the result should equal within (.*) the JsonAny (.*)")]
     public void ThenTheResultShouldEqualTheJsonAnyWithin(string match, double margin)
     {
-        Assert.AreEqual((double)JsonAny.ParseUriValue(match), (double)this.scenarioContext.Get<JsonAny>(CastResultKey), margin);
+        Assert.AreEqual((double)JsonAny.Parse(match), (double)this.scenarioContext.Get<JsonAny>(CastResultKey), margin);
     }
 
     /// <summary>
@@ -99,20 +99,20 @@ public class JsonValueCastSteps
     /// Comparse the IJsonValue in the <see cref="CastResultKey"/> with the serialized <paramref name="jsonArray"/>.
     /// </summary>
     /// <param name="jsonArray">The serialized JsonArray with which to compare the result.</param>
-    [Then("the result should equal the JsonArray '(.*)'")]
+    [Then("the result should equal the JsonArray (.*)")]
     public void ThenTheResultShouldEqualTheJsonArray(string jsonArray)
     {
-        Assert.AreEqual(JsonAny.ParseUriValue(jsonArray).AsArray, this.scenarioContext.Get<IJsonValue>(CastResultKey));
+        Assert.AreEqual(JsonAny.Parse(jsonArray).AsArray, this.scenarioContext.Get<IJsonValue>(CastResultKey));
     }
 
     /// <summary>
     /// Compares the two lists.
     /// </summary>
     /// <param name="immutableList">The immutable list with which to compare the result.</param>
-    [Then("the result should equal the ImmutableList<JsonAny> '(.*)'")]
+    [Then("the result should equal the ImmutableList<JsonAny> (.*)")]
     public void ThenTheResultShouldEqualTheImmutableList(string immutableList)
     {
-        ImmutableList<JsonAny> expected = JsonAny.ParseUriValue(immutableList).AsImmutableList();
+        ImmutableList<JsonAny> expected = JsonAny.Parse(immutableList).AsImmutableList();
         ImmutableList<JsonAny> actual = this.scenarioContext.Get<ImmutableList<JsonAny>>(CastResultKey);
         CollectionAssert.AreEqual(expected, actual);
     }
@@ -545,20 +545,20 @@ public class JsonValueCastSteps
     /// Comparse the IJsonValue in the <see cref="CastResultKey"/> with the serialized <paramref name="jsonObject"/>.
     /// </summary>
     /// <param name="jsonObject">The serialized JsonObject with which to compare the result.</param>
-    [Then("the result should equal the JsonObject '(.*)'")]
+    [Then("the result should equal the JsonObject (.*)")]
     public void ThenTheResultShouldEqualTheJsonObject(string jsonObject)
     {
-        Assert.AreEqual(JsonAny.ParseUriValue(jsonObject).AsObject, this.scenarioContext.Get<IJsonValue>(CastResultKey));
+        Assert.AreEqual(JsonAny.Parse(jsonObject).AsObject, this.scenarioContext.Get<IJsonValue>(CastResultKey));
     }
 
     /// <summary>
     /// Compares the two dictionaries.
     /// </summary>
     /// <param name="immutableDictionary">The immutable dictionary with which to compare the result.</param>
-    [Then("the result should equal the ImmutableDictionary<JsonPropertyName,JsonAny> '(.*)'")]
+    [Then("the result should equal the ImmutableDictionary<JsonPropertyName,JsonAny> (.*)")]
     public void ThenTheResultShouldEqualTheImmutablDictionary(string immutableDictionary)
     {
-        ImmutableDictionary<JsonPropertyName, JsonAny> expected = JsonAny.ParseUriValue(immutableDictionary).AsImmutableDictionary();
+        ImmutableDictionary<JsonPropertyName, JsonAny> expected = JsonAny.Parse(immutableDictionary).AsImmutableDictionary();
         ImmutableDictionary<JsonPropertyName, JsonAny> actual = this.scenarioContext.Get<ImmutableDictionary<JsonPropertyName, JsonAny>>(CastResultKey);
         CollectionAssert.AreEqual(expected, actual);
     }
@@ -587,10 +587,10 @@ public class JsonValueCastSteps
     /// Compares the two <see cref="JsonString"/> instances.
     /// </summary>
     /// <param name="expectedString">The string with which to compare the result.</param>
-    [Then("the result should equal the JsonString '(.*)'")]
+    [Then("the result should equal the JsonString (.*)")]
     public void ThenTheResultShouldEqualTheJsonString(string expectedString)
     {
-        JsonString expected = JsonAny.ParseUriValue(expectedString);
+        JsonString expected = JsonAny.Parse(expectedString);
         JsonString actual = this.scenarioContext.Get<JsonString>(CastResultKey);
         Assert.AreEqual(expected, actual);
     }
@@ -599,7 +599,7 @@ public class JsonValueCastSteps
     /// Compares a <see cref="ReadOnlyMemory{Char}"/> built from the <see cref="ReadOnlySpan{Char}"/> and stored in <see cref="CastResultKey"/> against the <see cref="ReadOnlyMemory{Char}"/> built from the expected string.
     /// </summary>
     /// <param name="expectedString">The string with which to compare the result.</param>
-    [Then("the result should equal the ReadOnlySpan<char> '(.*)'")]
+    [Then("the result should equal the ReadOnlySpan<char> \"(.*)\"")]
     public void ThenTheResultShouldEqualTheReadOnlySpanOfChar(string expectedString)
     {
         ReadOnlyMemory<char> expected = expectedString.AsMemory();
@@ -611,7 +611,7 @@ public class JsonValueCastSteps
     /// Compares a <see cref="ReadOnlyMemory{Byte}"/> built from the <see cref="ReadOnlySpan{Byte}"/> and stored in <see cref="CastResultKey"/> against the <see cref="ReadOnlyMemory{Byte}"/> built from the expected string.
     /// </summary>
     /// <param name="expectedString">The string with which to compare the result.</param>
-    [Then("the result should equal the ReadOnlySpan<byte> '(.*)'")]
+    [Then("the result should equal the ReadOnlySpan<byte> \"(.*)\"")]
     public void ThenTheResultShouldEqualTheReadOnlySpanOfByte(string expectedString)
     {
         byte[] expected = Encoding.UTF8.GetBytes(expectedString);
@@ -623,7 +623,7 @@ public class JsonValueCastSteps
     /// Compares a string stored in <see cref="CastResultKey"/> against the expected string.
     /// </summary>
     /// <param name="expected">The string with which to compare the result.</param>
-    [Then("the result should equal the string '(.*)'")]
+    [Then("the result should equal the string \"(.*)\"")]
     public void ThenTheResultShouldEqualTheString(string expected)
     {
         string actual = this.scenarioContext.Get<string>(CastResultKey);
@@ -654,10 +654,10 @@ public class JsonValueCastSteps
     /// Compares the <see cref="JsonBase64Content"/> in the context value <see cref="CastResultKey"/> with the given JsonBase64Content.
     /// </summary>
     /// <param name="expectedValue">The serialized form of the <see cref="JsonBase64Content"/>.</param>
-    [Then("the result should equal the JsonBase64Content '(.*)'")]
+    [Then("the result should equal the JsonBase64Content (.*)")]
     public void ThenTheResultShouldEqualTheJsonBase64Content(string expectedValue)
     {
-        JsonBase64Content expected = JsonAny.ParseUriValue(expectedValue).AsString;
+        JsonBase64Content expected = JsonAny.Parse(expectedValue);
         Assert.AreEqual(expected, this.scenarioContext.Get<JsonBase64Content>(CastResultKey));
     }
 
@@ -739,10 +739,10 @@ public class JsonValueCastSteps
     /// Compares the <see cref="JsonBase64String"/> in the context value <see cref="CastResultKey"/> with the given JsonBase64String.
     /// </summary>
     /// <param name="expectedValue">The serialized form of the <see cref="JsonBase64String"/>.</param>
-    [Then("the result should equal the JsonBase64String '(.*)'")]
+    [Then("the result should equal the JsonBase64String (.*)")]
     public void ThenTheResultShouldEqualTheJsonBase64String(string expectedValue)
     {
-        JsonBase64String expected = JsonAny.ParseUriValue(expectedValue).AsString;
+        JsonBase64String expected = JsonAny.Parse(expectedValue);
         Assert.AreEqual(expected, this.scenarioContext.Get<JsonBase64String>(CastResultKey));
     }
 
@@ -824,10 +824,10 @@ public class JsonValueCastSteps
     /// Compares the <see cref="JsonContent"/> in the context value <see cref="CastResultKey"/> with the given JsonContent.
     /// </summary>
     /// <param name="expectedValue">The serialized form of the <see cref="JsonContent"/>.</param>
-    [Then("the result should equal the JsonContent '(.*)'")]
+    [Then("the result should equal the JsonContent (.*)")]
     public void ThenTheResultShouldEqualTheJsonContent(string expectedValue)
     {
-        JsonContent expected = JsonAny.ParseUriValue(expectedValue);
+        JsonContent expected = JsonAny.Parse(expectedValue);
         Assert.AreEqual(expected, this.scenarioContext.Get<JsonContent>(CastResultKey));
     }
 
@@ -909,10 +909,10 @@ public class JsonValueCastSteps
     /// Compares the <see cref="JsonEmail"/> in the context value <see cref="CastResultKey"/> with the given JsonEmail.
     /// </summary>
     /// <param name="expectedValue">The serialized form of the <see cref="JsonEmail"/>.</param>
-    [Then("the result should equal the JsonEmail '(.*)'")]
+    [Then("the result should equal the JsonEmail (.*)")]
     public void ThenTheResultShouldEqualTheJsonEmail(string expectedValue)
     {
-        JsonEmail expected = JsonAny.ParseUriValue(expectedValue).AsString;
+        JsonEmail expected = JsonAny.Parse(expectedValue);
         Assert.AreEqual(expected, this.scenarioContext.Get<JsonEmail>(CastResultKey));
     }
 
@@ -994,10 +994,10 @@ public class JsonValueCastSteps
     /// Compares the <see cref="JsonUriTemplate"/> in the context value <see cref="CastResultKey"/> with the given JsonUriTemplate.
     /// </summary>
     /// <param name="expectedValue">The serialized form of the <see cref="JsonUriTemplate"/>.</param>
-    [Then("the result should equal the JsonUriTemplate '(.*)'")]
+    [Then("the result should equal the JsonUriTemplate (.*)")]
     public void ThenTheResultShouldEqualTheJsonUriTemplate(string expectedValue)
     {
-        JsonUriTemplate expected = JsonAny.ParseUriValue(expectedValue).AsString;
+        JsonUriTemplate expected = JsonAny.Parse(expectedValue);
         Assert.AreEqual(expected, this.scenarioContext.Get<JsonUriTemplate>(CastResultKey));
     }
 
@@ -1079,10 +1079,10 @@ public class JsonValueCastSteps
     /// Compares the <see cref="JsonPointer"/> in the context value <see cref="CastResultKey"/> with the given JsonPointer.
     /// </summary>
     /// <param name="expectedValue">The serialized form of the <see cref="JsonPointer"/>.</param>
-    [Then("the result should equal the JsonPointer '(.*)'")]
+    [Then("the result should equal the JsonPointer (.*)")]
     public void ThenTheResultShouldEqualTheJsonPointer(string expectedValue)
     {
-        JsonPointer expected = JsonAny.ParseUriValue(expectedValue).AsString;
+        JsonPointer expected = JsonAny.Parse(expectedValue);
         Assert.AreEqual(expected, this.scenarioContext.Get<JsonPointer>(CastResultKey));
     }
 
@@ -1164,10 +1164,10 @@ public class JsonValueCastSteps
     /// Compares the <see cref="JsonRelativePointer"/> in the context value <see cref="CastResultKey"/> with the given JsonRelativePointer.
     /// </summary>
     /// <param name="expectedValue">The serialized form of the <see cref="JsonRelativePointer"/>.</param>
-    [Then("the result should equal the JsonRelativePointer '(.*)'")]
+    [Then("the result should equal the JsonRelativePointer (.*)")]
     public void ThenTheResultShouldEqualTheJsonRelativePointer(string expectedValue)
     {
-        JsonRelativePointer expected = JsonAny.ParseUriValue(expectedValue).AsString;
+        JsonRelativePointer expected = JsonAny.Parse(expectedValue);
         Assert.AreEqual(expected, this.scenarioContext.Get<JsonRelativePointer>(CastResultKey));
     }
 
@@ -1249,10 +1249,10 @@ public class JsonValueCastSteps
     /// Compares the <see cref="JsonBoolean"/> in the context value <see cref="CastResultKey"/> with the given JsonBoolean.
     /// </summary>
     /// <param name="expectedValue">The serialized form of the <see cref="JsonContent"/>.</param>
-    [Then("the result should equal the JsonBoolean '(.*)'")]
+    [Then("the result should equal the JsonBoolean (.*)")]
     public void ThenTheResultShouldEqualTheJsonBoolean(string expectedValue)
     {
-        Assert.AreEqual(JsonAny.ParseUriValue(expectedValue).AsBoolean, this.scenarioContext.Get<IJsonValue>(CastResultKey));
+        Assert.AreEqual(JsonAny.Parse(expectedValue).AsBoolean, this.scenarioContext.Get<IJsonValue>(CastResultKey));
     }
 
     /// <summary>
@@ -1307,10 +1307,10 @@ public class JsonValueCastSteps
     /// Compares the <see cref="JsonDate"/> in the context value <see cref="CastResultKey"/> with the given JsonDate.
     /// </summary>
     /// <param name="value">The string representation of the date.</param>
-    [Then("the result should equal the JsonDate '(.*)'")]
+    [Then("the result should equal the JsonDate (.*)")]
     public void ThenTheResultShouldEqualTheJsonDate(string value)
     {
-        Assert.AreEqual(new JsonDate(value), this.scenarioContext.Get<IJsonValue>(CastResultKey));
+        Assert.AreEqual((JsonDate)JsonAny.Parse(value), this.scenarioContext.Get<IJsonValue>(CastResultKey));
     }
 
     /// <summary>
@@ -1344,10 +1344,10 @@ public class JsonValueCastSteps
     /// Compares the <see cref="JsonDate"/> in the context value <see cref="CastResultKey"/> with the given LocalDate.
     /// </summary>
     /// <param name="expectedValue">The serialized form of the <see cref="LocalDate"/>.</param>
-    [Then("the result should equal the LocalDate '(.*)'")]
+    [Then("the result should equal the LocalDate (.*)")]
     public void ThenTheResultShouldEqualTheLocalDate(string expectedValue)
     {
-        Assert.AreEqual(LocalDatePattern.Iso.Parse(expectedValue).Value, this.scenarioContext.Get<LocalDate>(CastResultKey));
+        Assert.AreEqual(LocalDatePattern.Iso.Parse(expectedValue.Trim('"')).Value, this.scenarioContext.Get<LocalDate>(CastResultKey));
     }
 
     /// <summary>
@@ -1419,10 +1419,10 @@ public class JsonValueCastSteps
     /// Compares the <see cref="JsonTime"/> in the context value <see cref="CastResultKey"/> with the given JsonTime.
     /// </summary>
     /// <param name="value">The string representation of the time.</param>
-    [Then("the result should equal the JsonTime '(.*)'")]
+    [Then("the result should equal the JsonTime (.*)")]
     public void ThenTheResultShouldEqualTheJsonTime(string value)
     {
-        Assert.AreEqual(new JsonTime(value), this.scenarioContext.Get<IJsonValue>(CastResultKey));
+        Assert.AreEqual((JsonTime)JsonAny.Parse(value), this.scenarioContext.Get<IJsonValue>(CastResultKey));
     }
 
     /// <summary>
@@ -1456,10 +1456,10 @@ public class JsonValueCastSteps
     /// Compares the <see cref="JsonTime"/> in the context value <see cref="CastResultKey"/> with the given OffsetTime.
     /// </summary>
     /// <param name="expectedValue">The serialized form of the <see cref="OffsetTime"/>.</param>
-    [Then("the result should equal the OffsetTime '(.*)'")]
+    [Then("the result should equal the OffsetTime (.*)")]
     public void ThenTheResultShouldEqualTheOffsetTime(string expectedValue)
     {
-        Assert.AreEqual(OffsetTimePattern.ExtendedIso.Parse(expectedValue).Value, this.scenarioContext.Get<OffsetTime>(CastResultKey));
+        Assert.AreEqual(OffsetTimePattern.ExtendedIso.Parse(expectedValue.Trim('"')).Value, this.scenarioContext.Get<OffsetTime>(CastResultKey));
     }
 
     /// <summary>
@@ -1531,10 +1531,10 @@ public class JsonValueCastSteps
     /// Compares the <see cref="JsonDateTime"/> in the context value <see cref="CastResultKey"/> with the given JsonDateTime.
     /// </summary>
     /// <param name="value">The string representation of the dateTime.</param>
-    [Then("the result should equal the JsonDateTime '(.*)'")]
+    [Then("the result should equal the JsonDateTime (.*)")]
     public void ThenTheResultShouldEqualTheJsonDateTime(string value)
     {
-        Assert.AreEqual(new JsonDateTime(value), this.scenarioContext.Get<JsonDateTime>(CastResultKey));
+        Assert.AreEqual((JsonDateTime)JsonAny.Parse(value), this.scenarioContext.Get<JsonDateTime>(CastResultKey));
     }
 
     /// <summary>
@@ -1568,10 +1568,10 @@ public class JsonValueCastSteps
     /// Compares the <see cref="JsonDateTime"/> in the context value <see cref="CastResultKey"/> with the given OffsetDateTime.
     /// </summary>
     /// <param name="expectedValue">The serialized form of the <see cref="OffsetDateTime"/>.</param>
-    [Then("the result should equal the OffsetDateTime '(.*)'")]
+    [Then("the result should equal the OffsetDateTime (.*)")]
     public void ThenTheResultShouldEqualTheOffsetDateTime(string expectedValue)
     {
-        Assert.AreEqual(OffsetDateTimePattern.ExtendedIso.Parse(expectedValue).Value, this.scenarioContext.Get<OffsetDateTime>(CastResultKey));
+        Assert.AreEqual(OffsetDateTimePattern.ExtendedIso.Parse(expectedValue.Trim('"')).Value, this.scenarioContext.Get<OffsetDateTime>(CastResultKey));
     }
 
     /// <summary>
@@ -1641,10 +1641,10 @@ public class JsonValueCastSteps
     /// Compares the <see cref="JsonDuration"/> in the context value <see cref="CastResultKey"/> with the given JsonDuration.
     /// </summary>
     /// <param name="value">The string representation of the duration.</param>
-    [Then("the result should equal the JsonDuration '(.*)'")]
+    [Then("the result should equal the JsonDuration (.*)")]
     public void ThenTheResultShouldEqualTheJsonDuration(string value)
     {
-        Assert.AreEqual(new JsonDuration(value), this.scenarioContext.Get<IJsonValue>(CastResultKey));
+        Assert.AreEqual((JsonDuration)JsonAny.Parse(value), this.scenarioContext.Get<IJsonValue>(CastResultKey));
     }
 
     /// <summary>
@@ -1678,10 +1678,10 @@ public class JsonValueCastSteps
     /// Compares the <see cref="JsonDuration"/> in the context value <see cref="CastResultKey"/> with the given Period.
     /// </summary>
     /// <param name="expectedValue">The serialized form of the <see cref="Period"/>.</param>
-    [Then("the result should equal the Period '(.*)'")]
+    [Then("the result should equal the Period (.*)")]
     public void ThenTheResultShouldEqualThePeriod(string expectedValue)
     {
-        Assert.AreEqual(PeriodPattern.NormalizingIso.Parse(expectedValue).Value, this.scenarioContext.Get<Period>(CastResultKey));
+        Assert.AreEqual(PeriodPattern.NormalizingIso.Parse(expectedValue.Trim('"')).Value, this.scenarioContext.Get<Period>(CastResultKey));
     }
 
     /// <summary>
@@ -1883,10 +1883,10 @@ public class JsonValueCastSteps
     /// Compares the <see cref="JsonHostname"/> in the context value <see cref="CastResultKey"/> with the given JsonHostname.
     /// </summary>
     /// <param name="expectedValue">The serialized form of the <see cref="JsonHostname"/>.</param>
-    [Then("the result should equal the JsonHostname '(.*)'")]
+    [Then("the result should equal the JsonHostname (.*)")]
     public void ThenTheResultShouldEqualTheJsonHostname(string expectedValue)
     {
-        JsonHostname expected = JsonAny.ParseUriValue(expectedValue);
+        JsonHostname expected = JsonAny.Parse(expectedValue);
         Assert.AreEqual(expected, this.scenarioContext.Get<JsonHostname>(CastResultKey));
     }
 
@@ -1968,10 +1968,10 @@ public class JsonValueCastSteps
     /// Compares the <see cref="JsonIdnEmail"/> in the context value <see cref="CastResultKey"/> with the given JsonIdnEmail.
     /// </summary>
     /// <param name="expectedValue">The serialized form of the <see cref="JsonIdnEmail"/>.</param>
-    [Then("the result should equal the JsonIdnEmail '(.*)'")]
+    [Then("the result should equal the JsonIdnEmail (.*)")]
     public void ThenTheResultShouldEqualTheJsonIdnEmail(string expectedValue)
     {
-        JsonIdnEmail expected = JsonAny.ParseUriValue(expectedValue).AsString;
+        JsonIdnEmail expected = JsonAny.Parse(expectedValue);
         Assert.AreEqual(expected, this.scenarioContext.Get<JsonIdnEmail>(CastResultKey));
     }
 
@@ -2053,10 +2053,10 @@ public class JsonValueCastSteps
     /// Compares the <see cref="JsonIdnHostname"/> in the context value <see cref="CastResultKey"/> with the given JsonIdnHostname.
     /// </summary>
     /// <param name="expectedValue">The serialized form of the <see cref="JsonIdnHostname"/>.</param>
-    [Then("the result should equal the JsonIdnHostname '(.*)'")]
+    [Then("the result should equal the JsonIdnHostname (.*)")]
     public void ThenTheResultShouldEqualTheJsonIdnHostname(string expectedValue)
     {
-        JsonIdnHostname expected = JsonAny.ParseUriValue(expectedValue).AsString;
+        JsonIdnHostname expected = JsonAny.Parse(expectedValue);
         Assert.AreEqual(expected, this.scenarioContext.Get<JsonIdnHostname>(CastResultKey));
     }
 
@@ -2138,10 +2138,10 @@ public class JsonValueCastSteps
     /// Compares the <see cref="JsonInteger"/> in the context value <see cref="CastResultKey"/> with the given JsonInteger.
     /// </summary>
     /// <param name="expectedValue">The serialized form of the <see cref="JsonContent"/>.</param>
-    [Then("the result should equal the JsonInteger '(.*)'")]
+    [Then("the result should equal the JsonInteger (.*)")]
     public void ThenTheResultShouldEqualTheJsonInteger(string expectedValue)
     {
-        Assert.AreEqual((JsonInteger)JsonAny.ParseUriValue(expectedValue), this.scenarioContext.Get<IJsonValue>(CastResultKey));
+        Assert.AreEqual((JsonInteger)JsonAny.Parse(expectedValue), this.scenarioContext.Get<IJsonValue>(CastResultKey));
     }
 
     /// <summary>
@@ -2195,7 +2195,7 @@ public class JsonValueCastSteps
     /// Compares the <see cref="IPAddress"/> in the context value <see cref="CastResultKey"/> with the given IPAddress.
     /// </summary>
     /// <param name="expectedValue">The serialized form of the <see cref="IPAddress"/>.</param>
-    [Then("the result should equal the IPAddress (.*)")]
+    [Then("the result should equal the IPAddress \"(.*)\"")]
     public void ThenTheResultShouldEqualTheIPAddress(string expectedValue)
     {
         Assert.AreEqual(IPAddress.Parse(expectedValue), this.scenarioContext.Get<IPAddress>(CastResultKey));
@@ -2205,7 +2205,7 @@ public class JsonValueCastSteps
     /// Compares the <see cref="Uri"/> in the context value <see cref="CastResultKey"/> with the given IPAddress.
     /// </summary>
     /// <param name="expectedValue">The serialized form of the <see cref="Uri"/>.</param>
-    [Then("the result should equal the Uri (.*)")]
+    [Then("the result should equal the Uri \"(.*)\"")]
     public void ThenTheResultShouldEqualTheUri(string expectedValue)
     {
         Assert.AreEqual(new Uri(expectedValue, UriKind.RelativeOrAbsolute), this.scenarioContext.Get<Uri>(CastResultKey));
@@ -2318,10 +2318,10 @@ public class JsonValueCastSteps
     /// Compares the <see cref="JsonNumber"/> in the context value <see cref="CastResultKey"/> with the given JsonNumber.
     /// </summary>
     /// <param name="expectedValue">The serialized form of the <see cref="JsonContent"/>.</param>
-    [Then("the result should equal the JsonNumber '(.*)'")]
+    [Then("the result should equal the JsonNumber (.*)")]
     public void ThenTheResultShouldEqualTheJsonNumber(string expectedValue)
     {
-        Assert.AreEqual((JsonNumber)JsonAny.ParseUriValue(expectedValue), this.scenarioContext.Get<IJsonValue>(CastResultKey).AsAny, 0.00001);
+        Assert.AreEqual((JsonNumber)JsonAny.Parse(expectedValue), this.scenarioContext.Get<IJsonValue>(CastResultKey).AsAny, 0.00001);
     }
 
     /// <summary>
@@ -2420,10 +2420,10 @@ public class JsonValueCastSteps
     /// Compares the <see cref="JsonUuid"/> in the context value <see cref="CastResultKey"/> with the given JsonUuid.
     /// </summary>
     /// <param name="expectedValue">The serialized form of the <see cref="JsonUuid"/>.</param>
-    [Then("the result should equal the JsonUuid '(.*)'")]
+    [Then("the result should equal the JsonUuid (.*)")]
     public void ThenTheResultShouldEqualTheJsonUuid(string expectedValue)
     {
-        JsonUuid expected = JsonAny.ParseUriValue(expectedValue).AsString;
+        JsonUuid expected = JsonAny.Parse(expectedValue);
         Assert.AreEqual(expected, this.scenarioContext.Get<JsonUuid>(CastResultKey));
     }
 
@@ -2503,7 +2503,7 @@ public class JsonValueCastSteps
     /// Compares the <see cref="Guid"/> in the context value <see cref="CastResultKey"/> with the given long.
     /// </summary>
     /// <param name="expectedValue">The serialized form of the <see cref="JsonContent"/>.</param>
-    [Then("the result should equal the Guid (.*)")]
+    [Then("the result should equal the Guid \"(.*)\"")]
     public void ThenTheResultShouldEqualTheGuid(Guid expectedValue)
     {
         Assert.AreEqual(expectedValue, this.scenarioContext.Get<Guid>(CastResultKey));
@@ -2533,10 +2533,10 @@ public class JsonValueCastSteps
     /// Compares the <see cref="JsonIpV4"/> in the context value <see cref="CastResultKey"/> with the given JsonIpV4.
     /// </summary>
     /// <param name="expectedValue">The serialized form of the <see cref="JsonIpV4"/>.</param>
-    [Then("the result should equal the JsonIpV4 '(.*)'")]
+    [Then("the result should equal the JsonIpV4 (.*)")]
     public void ThenTheResultShouldEqualTheJsonIpV4(string expectedValue)
     {
-        JsonIpV4 expected = JsonAny.ParseUriValue(expectedValue).AsString;
+        JsonIpV4 expected = JsonAny.Parse(expectedValue);
         Assert.AreEqual(expected, this.scenarioContext.Get<JsonIpV4>(CastResultKey));
     }
 
@@ -2636,10 +2636,10 @@ public class JsonValueCastSteps
     /// Compares the <see cref="JsonIpV6"/> in the context value <see cref="CastResultKey"/> with the given JsonIpV6.
     /// </summary>
     /// <param name="expectedValue">The serialized form of the <see cref="JsonIpV6"/>.</param>
-    [Then("the result should equal the JsonIpV6 '(.*)'")]
+    [Then("the result should equal the JsonIpV6 (.*)")]
     public void ThenTheResultShouldEqualTheJsonIpV6(string expectedValue)
     {
-        JsonIpV6 expected = JsonAny.ParseUriValue(expectedValue).AsString;
+        JsonIpV6 expected = JsonAny.Parse(expectedValue);
         Assert.AreEqual(expected, this.scenarioContext.Get<JsonIpV6>(CastResultKey));
     }
 
@@ -2749,10 +2749,10 @@ public class JsonValueCastSteps
     /// Compares the <see cref="JsonRegex"/> in the context value <see cref="CastResultKey"/> with the given JsonRegex.
     /// </summary>
     /// <param name="expectedValue">The serialized form of the <see cref="JsonRegex"/>.</param>
-    [Then("the result should equal the JsonRegex '(.*)'")]
+    [Then("the result should equal the JsonRegex (.*)")]
     public void ThenTheResultShouldEqualTheJsonRegex(string expectedValue)
     {
-        JsonRegex expected = JsonAny.ParseUriValue(expectedValue).AsString;
+        JsonRegex expected = JsonAny.Parse(expectedValue);
         Assert.AreEqual(expected, this.scenarioContext.Get<JsonRegex>(CastResultKey));
     }
 
@@ -2852,10 +2852,10 @@ public class JsonValueCastSteps
     /// Compares the <see cref="JsonIri"/> in the context value <see cref="CastResultKey"/> with the given JsonIri.
     /// </summary>
     /// <param name="expectedValue">The serialized form of the <see cref="JsonIri"/>.</param>
-    [Then("the result should equal the JsonIri '(.*)'")]
+    [Then("the result should equal the JsonIri (.*)")]
     public void ThenTheResultShouldEqualTheJsonIri(string expectedValue)
     {
-        JsonIri expected = JsonAny.ParseUriValue(expectedValue).AsString;
+        JsonIri expected = JsonAny.Parse(expectedValue);
         Assert.AreEqual(expected, this.scenarioContext.Get<JsonIri>(CastResultKey));
     }
 
@@ -2955,10 +2955,10 @@ public class JsonValueCastSteps
     /// Compares the <see cref="JsonIriReference"/> in the context value <see cref="CastResultKey"/> with the given JsonIriReference.
     /// </summary>
     /// <param name="expectedValue">The serialized form of the <see cref="JsonIriReference"/>.</param>
-    [Then("the result should equal the JsonIriReference '(.*)'")]
+    [Then("the result should equal the JsonIriReference (.*)")]
     public void ThenTheResultShouldEqualTheJsonIriReference(string expectedValue)
     {
-        JsonIriReference expected = JsonAny.ParseUriValue(expectedValue).AsString;
+        JsonIriReference expected = JsonAny.Parse(expectedValue);
         Assert.AreEqual(expected, this.scenarioContext.Get<JsonIriReference>(CastResultKey));
     }
 
@@ -3058,10 +3058,10 @@ public class JsonValueCastSteps
     /// Compares the <see cref="JsonUri"/> in the context value <see cref="CastResultKey"/> with the given JsonUri.
     /// </summary>
     /// <param name="expectedValue">The serialized form of the <see cref="JsonUri"/>.</param>
-    [Then("the result should equal the JsonUri '(.*)'")]
+    [Then("the result should equal the JsonUri (.*)")]
     public void ThenTheResultShouldEqualTheJsonUri(string expectedValue)
     {
-        JsonUri expected = JsonAny.ParseUriValue(expectedValue);
+        JsonUri expected = JsonAny.Parse(expectedValue);
         Assert.AreEqual(expected, this.scenarioContext.Get<JsonUri>(CastResultKey));
     }
 
@@ -3161,10 +3161,10 @@ public class JsonValueCastSteps
     /// Compares the <see cref="JsonUriReference"/> in the context value <see cref="CastResultKey"/> with the given JsonUriReference.
     /// </summary>
     /// <param name="expectedValue">The serialized form of the <see cref="JsonUriReference"/>.</param>
-    [Then("the result should equal the JsonUriReference '(.*)'")]
+    [Then("the result should equal the JsonUriReference (.*)")]
     public void ThenTheResultShouldEqualTheJsonUriReference(string expectedValue)
     {
-        JsonUriReference expected = JsonAny.ParseUriValue(expectedValue).AsString;
+        JsonUriReference expected = JsonAny.Parse(expectedValue);
         Assert.AreEqual(expected, this.scenarioContext.Get<JsonUriReference>(CastResultKey));
     }
 

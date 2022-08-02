@@ -114,7 +114,7 @@ public class JsonValueSteps
         sut.WriteTo(writer);
         writer.Flush();
 
-        this.scenarioContext.Set(JsonAny.ParseUriValue(abw.WrittenMemory), SerializationResult);
+        this.scenarioContext.Set(JsonAny.Parse(abw.WrittenMemory), SerializationResult);
     }
 
     /// <summary>
@@ -124,7 +124,7 @@ public class JsonValueSteps
     public void WhenTheJsonValueIsRound_TripSerializedViaAString()
     {
         JsonAny sut = this.scenarioContext.Get<IJsonValue>(SubjectUnderTest).AsAny;
-        this.scenarioContext.Set(JsonAny.ParseUriValue(sut.Serialize()), SerializationResult);
+        this.scenarioContext.Set(JsonAny.Parse(sut.Serialize()), SerializationResult);
     }
 
     /// <summary>
@@ -134,7 +134,7 @@ public class JsonValueSteps
     [Then("the round-tripped result should be equal to the JsonAny (.*)")]
     public void ThenTheRound_TrippedResultShouldBeEqualToTheJsonAny(string expected)
     {
-        Assert.AreEqual(JsonAny.ParseUriValue(expected), this.scenarioContext.Get<JsonAny>(SerializationResult));
+        Assert.AreEqual(JsonAny.Parse(expected), this.scenarioContext.Get<JsonAny>(SerializationResult));
     }
 
     /* notAny */
@@ -152,7 +152,7 @@ public class JsonValueSteps
         }
         else
         {
-            this.scenarioContext.Set((JsonNotAny)JsonAny.ParseUriValue(value), SubjectUnderTest);
+            this.scenarioContext.Set((JsonNotAny)JsonAny.Parse(value), SubjectUnderTest);
         }
     }
 
@@ -169,7 +169,7 @@ public class JsonValueSteps
         }
         else
         {
-            this.scenarioContext.Set(JsonNotAny.ParseUriValue(value).AsDotnetBackedValue(), SubjectUnderTest);
+            this.scenarioContext.Set(JsonNotAny.Parse(value).AsDotnetBackedValue(), SubjectUnderTest);
         }
     }
 
@@ -186,7 +186,7 @@ public class JsonValueSteps
         }
         else
         {
-            this.scenarioContext.Set<JsonNotAny>(JsonNotAny.ParseUriValue(value).AsDotnetBackedValue(), SubjectUnderTest);
+            this.scenarioContext.Set<JsonNotAny>(JsonNotAny.Parse(value).AsDotnetBackedValue(), SubjectUnderTest);
         }
     }
 
@@ -203,7 +203,7 @@ public class JsonValueSteps
         }
         else
         {
-            this.scenarioContext.Set(JsonNotAny.ParseUriValue(value).AsDotnetBackedValue(), SubjectUnderTest);
+            this.scenarioContext.Set(JsonNotAny.Parse(value).AsDotnetBackedValue(), SubjectUnderTest);
         }
     }
 
@@ -220,7 +220,7 @@ public class JsonValueSteps
         }
         else
         {
-            this.scenarioContext.Set(JsonNotAny.ParseUriValue(value).AsDotnetBackedValue(), SubjectUnderTest);
+            this.scenarioContext.Set(JsonNotAny.Parse(value).AsDotnetBackedValue(), SubjectUnderTest);
         }
     }
 
@@ -237,7 +237,7 @@ public class JsonValueSteps
         }
         else
         {
-            this.scenarioContext.Set(JsonNotAny.ParseUriValue(value).AsDotnetBackedValue(), SubjectUnderTest);
+            this.scenarioContext.Set(JsonNotAny.Parse(value).AsDotnetBackedValue(), SubjectUnderTest);
         }
     }
 
@@ -254,7 +254,7 @@ public class JsonValueSteps
         }
         else
         {
-            this.scenarioContext.Set(JsonNotAny.ParseUriValue(value).AsDotnetBackedValue(), SubjectUnderTest);
+            this.scenarioContext.Set(JsonNotAny.Parse(value).AsDotnetBackedValue(), SubjectUnderTest);
         }
     }
 
@@ -273,7 +273,7 @@ public class JsonValueSteps
         }
         else
         {
-            this.scenarioContext.Set(JsonAny.ParseUriValue(value), SubjectUnderTest);
+            this.scenarioContext.Set(JsonAny.Parse(value), SubjectUnderTest);
         }
     }
 
@@ -290,7 +290,7 @@ public class JsonValueSteps
         }
         else
         {
-            this.scenarioContext.Set(JsonAny.ParseUriValue(value).AsDotnetBackedValue(), SubjectUnderTest);
+            this.scenarioContext.Set(JsonAny.Parse(value).AsDotnetBackedValue(), SubjectUnderTest);
         }
     }
 
@@ -307,7 +307,7 @@ public class JsonValueSteps
         }
         else
         {
-            this.scenarioContext.Set(new JsonAny(JsonAny.ParseUriValue(value).AsImmutableDictionary()), SubjectUnderTest);
+            this.scenarioContext.Set(new JsonAny(JsonAny.Parse(value).AsImmutableDictionary()), SubjectUnderTest);
         }
     }
 
@@ -324,7 +324,7 @@ public class JsonValueSteps
         }
         else
         {
-            this.scenarioContext.Set(new JsonAny((double)JsonAny.ParseUriValue(value).AsNumber), SubjectUnderTest);
+            this.scenarioContext.Set(new JsonAny((double)JsonAny.Parse(value).AsNumber), SubjectUnderTest);
         }
     }
 
@@ -341,7 +341,7 @@ public class JsonValueSteps
         }
         else
         {
-            this.scenarioContext.Set(new JsonAny(JsonAny.ParseUriValue(value).AsArray.AsImmutableList()), SubjectUnderTest);
+            this.scenarioContext.Set(new JsonAny(JsonAny.Parse(value).AsArray.AsImmutableList()), SubjectUnderTest);
         }
     }
 
@@ -358,7 +358,7 @@ public class JsonValueSteps
         }
         else
         {
-            this.scenarioContext.Set(new JsonAny((string)JsonAny.ParseUriValue(value).AsString), SubjectUnderTest);
+            this.scenarioContext.Set(new JsonAny((string)JsonAny.Parse(value).AsString), SubjectUnderTest);
         }
     }
 
@@ -375,7 +375,7 @@ public class JsonValueSteps
         }
         else
         {
-            this.scenarioContext.Set(new JsonAny((bool)JsonAny.ParseUriValue(value).AsBoolean), SubjectUnderTest);
+            this.scenarioContext.Set(new JsonAny((bool)JsonAny.Parse(value).AsBoolean), SubjectUnderTest);
         }
     }
 
@@ -388,7 +388,7 @@ public class JsonValueSteps
     [Given("the JsonElement backed JsonString (.*)")]
     public void GivenTheJsonElementBackedJsonString(string value)
     {
-        this.scenarioContext.Set<JsonString>(JsonAny.ParseUriValue(value), SubjectUnderTest);
+        this.scenarioContext.Set<JsonString>(JsonAny.Parse(value), SubjectUnderTest);
     }
 
     /// <summary>
@@ -404,7 +404,7 @@ public class JsonValueSteps
         }
         else
         {
-            this.scenarioContext.Set(JsonAny.ParseUriValue(value).AsString.AsDotnetBackedValue(), SubjectUnderTest);
+            this.scenarioContext.Set(JsonAny.Parse(value).AsString.AsDotnetBackedValue(), SubjectUnderTest);
         }
     }
 
@@ -417,7 +417,7 @@ public class JsonValueSteps
     [Given("the JsonElement backed JsonBoolean (.*)")]
     public void GivenTheJsonElementBackedJsonBoolean(string value)
     {
-        this.scenarioContext.Set<JsonBoolean>(JsonAny.ParseUriValue(value), SubjectUnderTest);
+        this.scenarioContext.Set<JsonBoolean>(JsonAny.Parse(value), SubjectUnderTest);
     }
 
     /// <summary>
@@ -446,7 +446,7 @@ public class JsonValueSteps
     [Given("the JsonElement backed JsonArray (.*)")]
     public void GivenTheJsonElementBackedJsonArray(string value)
     {
-        this.scenarioContext.Set<JsonArray>(JsonAny.ParseUriValue(value), SubjectUnderTest);
+        this.scenarioContext.Set<JsonArray>(JsonAny.Parse(value), SubjectUnderTest);
     }
 
     /// <summary>
@@ -462,7 +462,7 @@ public class JsonValueSteps
         }
         else
         {
-            this.scenarioContext.Set(JsonAny.ParseUriValue(value).AsArray.AsDotnetBackedValue(), SubjectUnderTest);
+            this.scenarioContext.Set(JsonAny.Parse(value).AsArray.AsDotnetBackedValue(), SubjectUnderTest);
         }
     }
 
@@ -475,7 +475,7 @@ public class JsonValueSteps
     [Given("the JsonElement backed JsonBase64Content (.*)")]
     public void GivenTheJsonElementBackedJsonBase64Content(string value)
     {
-        this.scenarioContext.Set<JsonBase64Content>(JsonAny.ParseUriValue(value), SubjectUnderTest);
+        this.scenarioContext.Set<JsonBase64Content>(JsonAny.Parse(value), SubjectUnderTest);
     }
 
     /// <summary>
@@ -491,7 +491,7 @@ public class JsonValueSteps
         }
         else
         {
-            this.scenarioContext.Set(JsonAny.ParseUriValue(value).As<JsonBase64Content>().AsDotnetBackedValue(), SubjectUnderTest);
+            this.scenarioContext.Set(JsonAny.Parse(value).As<JsonBase64Content>().AsDotnetBackedValue(), SubjectUnderTest);
         }
     }
 
@@ -504,7 +504,7 @@ public class JsonValueSteps
     [Given("the JsonElement backed JsonBase64String (.*)")]
     public void GivenTheJsonElementBackedJsonBase64String(string value)
     {
-        this.scenarioContext.Set<JsonBase64String>(JsonAny.ParseUriValue(value), SubjectUnderTest);
+        this.scenarioContext.Set<JsonBase64String>(JsonAny.Parse(value), SubjectUnderTest);
     }
 
     /// <summary>
@@ -520,7 +520,7 @@ public class JsonValueSteps
         }
         else
         {
-            this.scenarioContext.Set(JsonAny.ParseUriValue(value).As<JsonBase64String>().AsDotnetBackedValue(), SubjectUnderTest);
+            this.scenarioContext.Set(JsonAny.Parse(value).As<JsonBase64String>().AsDotnetBackedValue(), SubjectUnderTest);
         }
     }
 
@@ -533,7 +533,7 @@ public class JsonValueSteps
     [Given("the JsonElement backed JsonContent (.*)")]
     public void GivenTheJsonElementBackedJsonContent(string value)
     {
-        this.scenarioContext.Set<JsonContent>(JsonAny.ParseUriValue(value), SubjectUnderTest);
+        this.scenarioContext.Set<JsonContent>(JsonAny.Parse(value), SubjectUnderTest);
     }
 
     /// <summary>
@@ -549,7 +549,7 @@ public class JsonValueSteps
         }
         else
         {
-            this.scenarioContext.Set(JsonAny.ParseUriValue(value).As<JsonContent>().AsDotnetBackedValue(), SubjectUnderTest);
+            this.scenarioContext.Set(JsonAny.Parse(value).As<JsonContent>().AsDotnetBackedValue(), SubjectUnderTest);
         }
     }
 
@@ -562,7 +562,7 @@ public class JsonValueSteps
     [Given("the JsonElement backed JsonDate (.*)")]
     public void GivenTheJsonElementBackedJsonDate(string value)
     {
-        this.scenarioContext.Set<JsonDate>(JsonAny.ParseUriValue(value), SubjectUnderTest);
+        this.scenarioContext.Set<JsonDate>(JsonAny.Parse(value), SubjectUnderTest);
     }
 
     /// <summary>
@@ -578,7 +578,7 @@ public class JsonValueSteps
         }
         else
         {
-            this.scenarioContext.Set(JsonAny.ParseUriValue(value).As<JsonDate>().AsDotnetBackedValue(), SubjectUnderTest);
+            this.scenarioContext.Set(JsonAny.Parse(value).As<JsonDate>().AsDotnetBackedValue(), SubjectUnderTest);
         }
     }
 
@@ -591,7 +591,7 @@ public class JsonValueSteps
     [Given("the JsonElement backed JsonDateTime (.*)")]
     public void GivenTheJsonElementBackedJsonDateTime(string value)
     {
-        this.scenarioContext.Set<JsonDateTime>(JsonAny.ParseUriValue(value), SubjectUnderTest);
+        this.scenarioContext.Set<JsonDateTime>(JsonAny.Parse(value), SubjectUnderTest);
     }
 
     /// <summary>
@@ -607,7 +607,7 @@ public class JsonValueSteps
         }
         else
         {
-            this.scenarioContext.Set(JsonAny.ParseUriValue(value).As<JsonDateTime>().AsDotnetBackedValue(), SubjectUnderTest);
+            this.scenarioContext.Set(JsonAny.Parse(value).As<JsonDateTime>().AsDotnetBackedValue(), SubjectUnderTest);
         }
     }
 
@@ -620,7 +620,7 @@ public class JsonValueSteps
     [Given("the JsonElement backed JsonDuration (.*)")]
     public void GivenTheJsonElementBackedJsonDuration(string value)
     {
-        this.scenarioContext.Set<JsonDuration>(JsonAny.ParseUriValue(value), SubjectUnderTest);
+        this.scenarioContext.Set<JsonDuration>(JsonAny.Parse(value), SubjectUnderTest);
     }
 
     /// <summary>
@@ -636,7 +636,7 @@ public class JsonValueSteps
         }
         else
         {
-            this.scenarioContext.Set(JsonAny.ParseUriValue(value).As<JsonDuration>().AsDotnetBackedValue(), SubjectUnderTest);
+            this.scenarioContext.Set(JsonAny.Parse(value).As<JsonDuration>().AsDotnetBackedValue(), SubjectUnderTest);
         }
     }
 
@@ -649,7 +649,7 @@ public class JsonValueSteps
     [Given("the JsonElement backed JsonEmail (.*)")]
     public void GivenTheJsonElementBackedJsonEmail(string value)
     {
-        this.scenarioContext.Set<JsonEmail>(JsonAny.ParseUriValue(value), SubjectUnderTest);
+        this.scenarioContext.Set<JsonEmail>(JsonAny.Parse(value), SubjectUnderTest);
     }
 
     /// <summary>
@@ -665,7 +665,7 @@ public class JsonValueSteps
         }
         else
         {
-            this.scenarioContext.Set(JsonAny.ParseUriValue(value).As<JsonEmail>().AsDotnetBackedValue(), SubjectUnderTest);
+            this.scenarioContext.Set(JsonAny.Parse(value).As<JsonEmail>().AsDotnetBackedValue(), SubjectUnderTest);
         }
     }
 
@@ -678,7 +678,7 @@ public class JsonValueSteps
     [Given("the JsonElement backed JsonIdnEmail (.*)")]
     public void GivenTheJsonElementBackedJsonIdnEmail(string value)
     {
-        this.scenarioContext.Set<JsonIdnEmail>(JsonAny.ParseUriValue(value), SubjectUnderTest);
+        this.scenarioContext.Set<JsonIdnEmail>(JsonAny.Parse(value), SubjectUnderTest);
     }
 
     /// <summary>
@@ -694,7 +694,7 @@ public class JsonValueSteps
         }
         else
         {
-            this.scenarioContext.Set(JsonAny.ParseUriValue(value).As<JsonIdnEmail>().AsDotnetBackedValue(), SubjectUnderTest);
+            this.scenarioContext.Set(JsonAny.Parse(value).As<JsonIdnEmail>().AsDotnetBackedValue(), SubjectUnderTest);
         }
     }
 
@@ -707,7 +707,7 @@ public class JsonValueSteps
     [Given("the JsonElement backed JsonHostname (.*)")]
     public void GivenTheJsonElementBackedJsonHostname(string value)
     {
-        this.scenarioContext.Set<JsonHostname>(JsonAny.ParseUriValue(value), SubjectUnderTest);
+        this.scenarioContext.Set<JsonHostname>(JsonAny.Parse(value), SubjectUnderTest);
     }
 
     /// <summary>
@@ -723,7 +723,7 @@ public class JsonValueSteps
         }
         else
         {
-            this.scenarioContext.Set(JsonAny.ParseUriValue(value).As<JsonHostname>().AsDotnetBackedValue(), SubjectUnderTest);
+            this.scenarioContext.Set(JsonAny.Parse(value).As<JsonHostname>().AsDotnetBackedValue(), SubjectUnderTest);
         }
     }
 
@@ -736,7 +736,7 @@ public class JsonValueSteps
     [Given("the JsonElement backed JsonIdnHostname (.*)")]
     public void GivenTheJsonElementBackedJsonIdnHostname(string value)
     {
-        this.scenarioContext.Set<JsonIdnHostname>(JsonAny.ParseUriValue(value), SubjectUnderTest);
+        this.scenarioContext.Set<JsonIdnHostname>(JsonAny.Parse(value), SubjectUnderTest);
     }
 
     /// <summary>
@@ -752,7 +752,7 @@ public class JsonValueSteps
         }
         else
         {
-            this.scenarioContext.Set(JsonAny.ParseUriValue(value).As<JsonIdnHostname>().AsDotnetBackedValue(), SubjectUnderTest);
+            this.scenarioContext.Set(JsonAny.Parse(value).As<JsonIdnHostname>().AsDotnetBackedValue(), SubjectUnderTest);
         }
     }
 
@@ -765,7 +765,7 @@ public class JsonValueSteps
     [Given("the JsonElement backed JsonInteger (.*)")]
     public void GivenTheJsonElementBackedJsonInteger(string value)
     {
-        this.scenarioContext.Set<JsonInteger>(JsonAny.ParseUriValue(value), SubjectUnderTest);
+        this.scenarioContext.Set<JsonInteger>(JsonAny.Parse(value), SubjectUnderTest);
     }
 
     /// <summary>
@@ -781,7 +781,7 @@ public class JsonValueSteps
         }
         else
         {
-            this.scenarioContext.Set(JsonAny.ParseUriValue(value).As<JsonInteger>().AsDotnetBackedValue(), SubjectUnderTest);
+            this.scenarioContext.Set(JsonAny.Parse(value).As<JsonInteger>().AsDotnetBackedValue(), SubjectUnderTest);
         }
     }
 
@@ -794,7 +794,7 @@ public class JsonValueSteps
     [Given("the JsonElement backed JsonNumber (.*)")]
     public void GivenTheJsonElementBackedJsonNumber(string value)
     {
-        this.scenarioContext.Set<JsonNumber>(JsonAny.ParseUriValue(value), SubjectUnderTest);
+        this.scenarioContext.Set<JsonNumber>(JsonAny.Parse(value), SubjectUnderTest);
     }
 
     /// <summary>
@@ -810,7 +810,7 @@ public class JsonValueSteps
         }
         else
         {
-            this.scenarioContext.Set(JsonAny.ParseUriValue(value).As<JsonNumber>().AsDotnetBackedValue(), SubjectUnderTest);
+            this.scenarioContext.Set(JsonAny.Parse(value).As<JsonNumber>().AsDotnetBackedValue(), SubjectUnderTest);
         }
     }
 
@@ -823,7 +823,7 @@ public class JsonValueSteps
     [Given("the JsonElement backed JsonIpV4 (.*)")]
     public void GivenTheJsonElementBackedJsonIpV4(string value)
     {
-        this.scenarioContext.Set<JsonIpV4>(JsonAny.ParseUriValue(value), SubjectUnderTest);
+        this.scenarioContext.Set<JsonIpV4>(JsonAny.Parse(value), SubjectUnderTest);
     }
 
     /// <summary>
@@ -839,7 +839,7 @@ public class JsonValueSteps
         }
         else
         {
-            this.scenarioContext.Set(JsonAny.ParseUriValue(value).As<JsonIpV4>().AsDotnetBackedValue(), SubjectUnderTest);
+            this.scenarioContext.Set(JsonAny.Parse(value).As<JsonIpV4>().AsDotnetBackedValue(), SubjectUnderTest);
         }
     }
 
@@ -852,7 +852,7 @@ public class JsonValueSteps
     [Given("the JsonElement backed JsonIpV6 (.*)")]
     public void GivenTheJsonElementBackedJsonIpV6(string value)
     {
-        this.scenarioContext.Set<JsonIpV6>(JsonAny.ParseUriValue(value), SubjectUnderTest);
+        this.scenarioContext.Set<JsonIpV6>(JsonAny.Parse(value), SubjectUnderTest);
     }
 
     /// <summary>
@@ -868,7 +868,7 @@ public class JsonValueSteps
         }
         else
         {
-            this.scenarioContext.Set(JsonAny.ParseUriValue(value).As<JsonIpV6>().AsDotnetBackedValue(), SubjectUnderTest);
+            this.scenarioContext.Set(JsonAny.Parse(value).As<JsonIpV6>().AsDotnetBackedValue(), SubjectUnderTest);
         }
     }
 
@@ -881,7 +881,7 @@ public class JsonValueSteps
     [Given("the JsonElement backed JsonUri (.*)")]
     public void GivenTheJsonElementBackedJsonUri(string value)
     {
-        this.scenarioContext.Set<JsonUri>(JsonAny.ParseUriValue(value), SubjectUnderTest);
+        this.scenarioContext.Set<JsonUri>(JsonAny.Parse(value), SubjectUnderTest);
     }
 
     /// <summary>
@@ -897,7 +897,7 @@ public class JsonValueSteps
         }
         else
         {
-            this.scenarioContext.Set(JsonAny.ParseUriValue(value).As<JsonUri>().AsDotnetBackedValue(), SubjectUnderTest);
+            this.scenarioContext.Set(JsonAny.Parse(value).As<JsonUri>().AsDotnetBackedValue(), SubjectUnderTest);
         }
     }
 
@@ -910,7 +910,7 @@ public class JsonValueSteps
     [Given("the JsonElement backed JsonUriReference (.*)")]
     public void GivenTheJsonElementBackedJsonUriReference(string value)
     {
-        this.scenarioContext.Set<JsonUriReference>(JsonAny.ParseUriValue(value), SubjectUnderTest);
+        this.scenarioContext.Set<JsonUriReference>(JsonAny.Parse(value), SubjectUnderTest);
     }
 
     /// <summary>
@@ -926,7 +926,7 @@ public class JsonValueSteps
         }
         else
         {
-            this.scenarioContext.Set(JsonAny.ParseUriValue(value).As<JsonUriReference>().AsDotnetBackedValue(), SubjectUnderTest);
+            this.scenarioContext.Set(JsonAny.Parse(value).As<JsonUriReference>().AsDotnetBackedValue(), SubjectUnderTest);
         }
     }
 
@@ -939,7 +939,7 @@ public class JsonValueSteps
     [Given("the JsonElement backed JsonIri (.*)")]
     public void GivenTheJsonElementBackedJsonIri(string value)
     {
-        this.scenarioContext.Set<JsonIri>(JsonAny.ParseUriValue(value), SubjectUnderTest);
+        this.scenarioContext.Set<JsonIri>(JsonAny.Parse(value), SubjectUnderTest);
     }
 
     /// <summary>
@@ -955,7 +955,7 @@ public class JsonValueSteps
         }
         else
         {
-            this.scenarioContext.Set(JsonAny.ParseUriValue(value).As<JsonIri>().AsDotnetBackedValue(), SubjectUnderTest);
+            this.scenarioContext.Set(JsonAny.Parse(value).As<JsonIri>().AsDotnetBackedValue(), SubjectUnderTest);
         }
     }
 
@@ -968,7 +968,7 @@ public class JsonValueSteps
     [Given("the JsonElement backed JsonIriReference (.*)")]
     public void GivenTheJsonElementBackedJsonIriReference(string value)
     {
-        this.scenarioContext.Set<JsonIriReference>(JsonAny.ParseUriValue(value), SubjectUnderTest);
+        this.scenarioContext.Set<JsonIriReference>(JsonAny.Parse(value), SubjectUnderTest);
     }
 
     /// <summary>
@@ -984,7 +984,7 @@ public class JsonValueSteps
         }
         else
         {
-            this.scenarioContext.Set(JsonAny.ParseUriValue(value).As<JsonIriReference>().AsDotnetBackedValue(), SubjectUnderTest);
+            this.scenarioContext.Set(JsonAny.Parse(value).As<JsonIriReference>().AsDotnetBackedValue(), SubjectUnderTest);
         }
     }
 
@@ -1003,7 +1003,7 @@ public class JsonValueSteps
         }
         else
         {
-            this.scenarioContext.Set<JsonObject>(JsonAny.ParseUriValue(value), SubjectUnderTest);
+            this.scenarioContext.Set<JsonObject>(JsonAny.Parse(value), SubjectUnderTest);
         }
     }
 
@@ -1024,7 +1024,7 @@ public class JsonValueSteps
         }
         else
         {
-            this.scenarioContext.Set(JsonAny.ParseUriValue(value).AsObject.AsDotnetBackedValue(), SubjectUnderTest);
+            this.scenarioContext.Set(JsonAny.Parse(value).AsObject.AsDotnetBackedValue(), SubjectUnderTest);
         }
     }
 
@@ -1037,7 +1037,7 @@ public class JsonValueSteps
     [Given("the JsonElement backed JsonPointer (.*)")]
     public void GivenTheJsonElementBackedJsonPointer(string value)
     {
-        this.scenarioContext.Set<JsonPointer>(JsonAny.ParseUriValue(value), SubjectUnderTest);
+        this.scenarioContext.Set<JsonPointer>(JsonAny.Parse(value), SubjectUnderTest);
     }
 
     /// <summary>
@@ -1053,7 +1053,7 @@ public class JsonValueSteps
         }
         else
         {
-            this.scenarioContext.Set(JsonAny.ParseUriValue(value).As<JsonPointer>().AsDotnetBackedValue(), SubjectUnderTest);
+            this.scenarioContext.Set(JsonAny.Parse(value).As<JsonPointer>().AsDotnetBackedValue(), SubjectUnderTest);
         }
     }
 
@@ -1066,7 +1066,7 @@ public class JsonValueSteps
     [Given("the JsonElement backed JsonRelativePointer (.*)")]
     public void GivenTheJsonElementBackedJsonRelativePointer(string value)
     {
-        this.scenarioContext.Set<JsonRelativePointer>(JsonAny.ParseUriValue(value), SubjectUnderTest);
+        this.scenarioContext.Set<JsonRelativePointer>(JsonAny.Parse(value), SubjectUnderTest);
     }
 
     /// <summary>
@@ -1082,7 +1082,7 @@ public class JsonValueSteps
         }
         else
         {
-            this.scenarioContext.Set(JsonAny.ParseUriValue(value).As<JsonRelativePointer>().AsDotnetBackedValue(), SubjectUnderTest);
+            this.scenarioContext.Set(JsonAny.Parse(value).As<JsonRelativePointer>().AsDotnetBackedValue(), SubjectUnderTest);
         }
     }
 
@@ -1095,7 +1095,7 @@ public class JsonValueSteps
     [Given("the JsonElement backed JsonRegex (.*)")]
     public void GivenTheJsonElementBackedJsonRegex(string value)
     {
-        this.scenarioContext.Set<JsonRegex>(JsonAny.ParseUriValue(value), SubjectUnderTest);
+        this.scenarioContext.Set<JsonRegex>(JsonAny.Parse(value), SubjectUnderTest);
     }
 
     /// <summary>
@@ -1111,7 +1111,7 @@ public class JsonValueSteps
         }
         else
         {
-            this.scenarioContext.Set(JsonAny.ParseUriValue(value).As<JsonRegex>().AsDotnetBackedValue(), SubjectUnderTest);
+            this.scenarioContext.Set(JsonAny.Parse(value).As<JsonRegex>().AsDotnetBackedValue(), SubjectUnderTest);
         }
     }
 
@@ -1124,7 +1124,7 @@ public class JsonValueSteps
     [Given("the JsonElement backed JsonUriTemplate (.*)")]
     public void GivenTheJsonElementBackedJsonUriTemplate(string value)
     {
-        this.scenarioContext.Set<JsonUriTemplate>(JsonAny.ParseUriValue(value), SubjectUnderTest);
+        this.scenarioContext.Set<JsonUriTemplate>(JsonAny.Parse(value), SubjectUnderTest);
     }
 
     /// <summary>
@@ -1140,7 +1140,7 @@ public class JsonValueSteps
         }
         else
         {
-            this.scenarioContext.Set(JsonAny.ParseUriValue(value).As<JsonUriTemplate>().AsDotnetBackedValue(), SubjectUnderTest);
+            this.scenarioContext.Set(JsonAny.Parse(value).As<JsonUriTemplate>().AsDotnetBackedValue(), SubjectUnderTest);
         }
     }
 
@@ -1153,7 +1153,7 @@ public class JsonValueSteps
     [Given("the JsonElement backed JsonTime (.*)")]
     public void GivenTheJsonElementBackedJsonTime(string value)
     {
-        this.scenarioContext.Set<JsonTime>(JsonAny.ParseUriValue(value), SubjectUnderTest);
+        this.scenarioContext.Set<JsonTime>(JsonAny.Parse(value), SubjectUnderTest);
     }
 
     /// <summary>
@@ -1169,7 +1169,7 @@ public class JsonValueSteps
         }
         else
         {
-            this.scenarioContext.Set(JsonAny.ParseUriValue(value).As<JsonTime>().AsDotnetBackedValue(), SubjectUnderTest);
+            this.scenarioContext.Set(JsonAny.Parse(value).As<JsonTime>().AsDotnetBackedValue(), SubjectUnderTest);
         }
     }
 
@@ -1182,7 +1182,7 @@ public class JsonValueSteps
     [Given("the JsonElement backed JsonUuid (.*)")]
     public void GivenTheJsonElementBackedJsonUuid(string value)
     {
-        this.scenarioContext.Set<JsonUuid>(JsonAny.ParseUriValue(value), SubjectUnderTest);
+        this.scenarioContext.Set<JsonUuid>(JsonAny.Parse(value), SubjectUnderTest);
     }
 
     /// <summary>
@@ -1198,7 +1198,7 @@ public class JsonValueSteps
         }
         else
         {
-            this.scenarioContext.Set(JsonAny.ParseUriValue(value).As<JsonUuid>().AsDotnetBackedValue(), SubjectUnderTest);
+            this.scenarioContext.Set(JsonAny.Parse(value).As<JsonUuid>().AsDotnetBackedValue(), SubjectUnderTest);
         }
     }
 
@@ -1209,7 +1209,7 @@ public class JsonValueSteps
     [Given("the JsonAny for (.*)")]
     public void GivenTheJsonAnyFor(string value)
     {
-        this.scenarioContext.Set(JsonAny.ParseUriValue(value), SubjectUnderTest);
+        this.scenarioContext.Set(JsonAny.Parse(value), SubjectUnderTest);
     }
 
     /// <summary>
@@ -1219,7 +1219,7 @@ public class JsonValueSteps
     [Given("the ImmutableDictionary<JsonPropertyName,JsonAny> for (.*)")]
     public void GivenTheImmutableDictionaryOfStringToJsonAnyFor(string value)
     {
-        this.scenarioContext.Set(JsonAny.ParseUriValue(value).AsObject.AsImmutableDictionary(), SubjectUnderTest);
+        this.scenarioContext.Set(JsonAny.Parse(value).AsObject.AsImmutableDictionary(), SubjectUnderTest);
     }
 
     /// <summary>
@@ -1229,7 +1229,7 @@ public class JsonValueSteps
     [Given("the ImmutableList<JsonAny> for (.*)")]
     public void GivenTheImmutableListOfJsonAnyFor(string list)
     {
-        this.scenarioContext.Set(JsonAny.ParseUriValue(list).AsArray.AsImmutableList(), SubjectUnderTest);
+        this.scenarioContext.Set(JsonAny.Parse(list).AsArray.AsImmutableList(), SubjectUnderTest);
     }
 
     /// <summary>
@@ -1246,7 +1246,7 @@ public class JsonValueSteps
     /// Stores the <see cref="Regex"/> <paramref name="value"/> in the context key <see cref="SubjectUnderTest"/>.
     /// </summary>
     /// <param name="value">The string value.</param>
-    [Given("the Regex for (.*)")]
+    [Given("the Regex for \"(.*)\"")]
     public void GivenTheRegexFor(string value)
     {
         this.scenarioContext.Set(new Regex(value), SubjectUnderTest);
@@ -1259,14 +1259,14 @@ public class JsonValueSteps
     [Given("the JsonString for (.*)")]
     public void GivenTheJsonStringFor(string value)
     {
-        this.scenarioContext.Set<JsonString>(JsonAny.ParseUriValue(value), SubjectUnderTest);
+        this.scenarioContext.Set<JsonString>(JsonAny.Parse(value), SubjectUnderTest);
     }
 
     /// <summary>
     /// Stores the <see cref="IPAddress"/> <paramref name="value"/> in the context key <see cref="SubjectUnderTest"/>.
     /// </summary>
     /// <param name="value">The string value.</param>
-    [Given("the IPAddress for (.*)")]
+    [Given("the IPAddress for \"(.*)\"")]
     public void GivenTheIpAddressFor(string value)
     {
         this.scenarioContext.Set(IPAddress.Parse(value), SubjectUnderTest);
@@ -1276,7 +1276,7 @@ public class JsonValueSteps
     /// Stores the <see cref="Guid"/> <paramref name="value"/> in the context key <see cref="SubjectUnderTest"/>.
     /// </summary>
     /// <param name="value">The string value.</param>
-    [Given("the Guid for (.*)")]
+    [Given("the Guid for \"(.*)\"")]
     public void GivenTheGuidFor(string value)
     {
         this.scenarioContext.Set(Guid.Parse(value), SubjectUnderTest);
@@ -1286,7 +1286,7 @@ public class JsonValueSteps
     /// Stores the <see cref="Uri"/> <paramref name="value"/> in the context key <see cref="SubjectUnderTest"/>.
     /// </summary>
     /// <param name="value">The string value.</param>
-    [Given("the Uri for (.*)")]
+    [Given("the Uri for \"(.*)\"")]
     public void GivenTheUriFor(string value)
     {
         this.scenarioContext.Set(new Uri(value, UriKind.RelativeOrAbsolute), SubjectUnderTest);

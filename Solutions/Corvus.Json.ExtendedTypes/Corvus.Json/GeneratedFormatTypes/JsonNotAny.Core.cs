@@ -604,40 +604,26 @@ public readonly partial struct JsonNotAny
     /// Parses a naked value from a URI string.
     /// </summary>
     /// <param name="value">The value to parse.</param>
-    /// <param name="options">The (optional) JsonDocumentOptions.</param>
-    /// <returns>A <see cref="JsonNotAny"/> instance representing the value.</returns>
-    public static JsonNotAny ParseUriValue(string value, JsonDocumentOptions options = default)
+    /// <returns>A <see cref="JsonAny"/> instance representing the value.</returns>
+    /// <remarks>Note that this only applies to <c>null</c>, <c>bool</c>, <c>number</c> and <c>string</c> types.</remarks>
+    public static JsonNotAny ParseUriValue(string value)
     {
-        try
+        if (value == "null")
         {
-            // Try to parse the naked value from the URI
-            return Parse(value, options);
+            return JsonNotAny.Null;
         }
-        catch (Exception)
-        {
-            // In the event of being unable to parse, treat it as a string.
-            return value;
-        }
-    }
 
-    /// <summary>
-    /// Parses a naked value from a URI UTF8-encoded byte array.
-    /// </summary>
-    /// <param name="value">The value to parse.</param>
-    /// <param name="options">The (optional) JsonDocumentOptions.</param>
-    /// <returns>A <see cref="JsonNotAny"/> instance representing the value.</returns>
-    public static JsonNotAny ParseUriValue(ReadOnlyMemory<byte> value, JsonDocumentOptions options = default)
-    {
-        try
+        if (bool.TryParse(value, out bool boolResult))
         {
-            // Try to parse the naked value from the URI
-            return Parse(value, options);
+            return new(boolResult);
         }
-        catch (Exception)
+
+        if (double.TryParse(value, out double numberResult))
         {
-            // In the event of being unable to parse, treat it as a string.
-            return new(value.Span);
+            return new(numberResult);
         }
+
+        return new(value);
     }
 
     /// <summary>
@@ -645,19 +631,27 @@ public readonly partial struct JsonNotAny
     /// </summary>
     /// <param name="value">The value to parse.</param>
     /// <param name="options">The (optional) JsonDocumentOptions.</param>
-    /// <returns>A <see cref="JsonNotAny"/> instance representing the value.</returns>
+    /// <returns>A <see cref="JsonAny"/> instance representing the value.</returns>
+    /// <remarks>Note that this only applies to <c>null</c>, <c>bool</c>, <c>number</c> and <c>string</c> types.</remarks>
     public static JsonNotAny ParseUriValue(ReadOnlyMemory<char> value, JsonDocumentOptions options = default)
     {
-        try
+        ReadOnlySpan<char> valueSpan = value.Span;
+        if (valueSpan.SequenceEqual("null"))
         {
-            // Try to parse the naked value from the URI
-            return Parse(value, options);
+            return JsonNotAny.Null;
         }
-        catch (Exception)
+
+        if (bool.TryParse(valueSpan, out bool boolResult))
         {
-            // In the event of being unable to parse, treat it as a string.
-            return new(value.Span);
+            return new(boolResult);
         }
+
+        if (double.TryParse(valueSpan, out double numberResult))
+        {
+            return new(numberResult);
+        }
+
+        return new(valueSpan);
     }
 
     /// <summary>

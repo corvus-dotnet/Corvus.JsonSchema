@@ -145,7 +145,7 @@ public class UriTemplateSteps
         ImmutableDictionary<string, JsonAny>.Builder parameters = ImmutableDictionary.CreateBuilder<string, JsonAny>();
         foreach (TableRow row in table.Rows)
         {
-            parameters.Add(row["name"], JsonAny.ParseUriValue(row["value"]));
+            parameters.Add(row["name"], JsonAny.Parse(row["value"]));
         }
 
         this.scenarioContext.Set(this.scenarioContext.Get<Uri>(TargetUriKey).MakeTemplate(parameters.ToImmutable()), TemplateKey);
@@ -162,7 +162,7 @@ public class UriTemplateSteps
         int index = 0;
         foreach (TableRow row in table.Rows)
         {
-            parameters[index] = (row["name"], JsonAny.ParseUriValue(row["value"]));
+            parameters[index] = (row["name"], JsonAny.Parse(row["value"]));
             index++;
         }
 
@@ -180,7 +180,7 @@ public class UriTemplateSteps
         int index = 0;
         foreach (TableRow row in table.Rows)
         {
-            parameters[index] = (row["name"], JsonAny.ParseUriValue(row["value"]));
+            parameters[index] = (row["name"], JsonAny.Parse(row["value"]));
             ++index;
         }
 
@@ -215,7 +215,7 @@ public class UriTemplateSteps
     public void WhenISetTheParameterCalledTo(string name, string value)
     {
         ImmutableDictionary<string, JsonAny> parameters = this.scenarioContext.Get<ImmutableDictionary<string, JsonAny>>(ParametersKey);
-        this.scenarioContext.Set(parameters.SetItem(name, JsonAny.ParseUriValue(value)), ParametersKey);
+        this.scenarioContext.Set(parameters.SetItem(name, JsonAny.Parse(value)), ParametersKey);
     }
 
     /// <summary>
@@ -265,7 +265,7 @@ public class UriTemplateSteps
     [When(@"I set the template parameter called ""(.*)"" to ""(.*)""")]
     public void WhenISetTheTemplateParameterCalledTo(string name, string value)
     {
-        this.scenarioContext.Set(this.scenarioContext.Get<UriTemplate>(TemplateKey).SetParameter(name, JsonAny.ParseUriValue(value)), TemplateKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<UriTemplate>(TemplateKey).SetParameter(name, JsonAny.Parse(value)), TemplateKey);
     }
 
     /// <summary>
@@ -347,7 +347,7 @@ public class UriTemplateSteps
             Assert.AreEqual(parameters.RowCount, actual.Count);
             foreach (TableRow row in parameters.Rows)
             {
-                Assert.AreEqual(JsonAny.ParseUriValue(row["value"]), actual[row["name"]]);
+                Assert.AreEqual(JsonAny.Parse(row["value"]), actual[row["name"]]);
             }
         }
         else

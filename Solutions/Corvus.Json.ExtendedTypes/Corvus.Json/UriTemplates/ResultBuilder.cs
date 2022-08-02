@@ -221,9 +221,9 @@ internal ref struct ResultBuilder
         {
             JsonValueKind.True => "true",
             JsonValueKind.False => "false",
+            JsonValueKind.Null => "null",
             JsonValueKind.Number => ((double)value).ToString(),
             JsonValueKind.String => (string)value,
-            JsonValueKind.Null => "null",
             _ => string.Empty,
         };
     }

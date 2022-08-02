@@ -446,40 +446,26 @@ public readonly partial struct JsonAny
     /// Parses a naked value from a URI string.
     /// </summary>
     /// <param name="value">The value to parse.</param>
-    /// <param name="options">The (optional) JsonDocumentOptions.</param>
     /// <returns>A <see cref="JsonAny"/> instance representing the value.</returns>
-    public static JsonAny ParseUriValue(string value, JsonDocumentOptions options = default)
+    /// <remarks>Note that this only applies to <c>null</c>, <c>bool</c>, <c>number</c> and <c>string</c> types.</remarks>
+    public static JsonAny ParseUriValue(string value)
     {
-        try
+        if (value == "null")
         {
-            // Try to parse the naked value from the URI
-            return Parse(value, options);
+            return JsonAny.Null;
         }
-        catch (Exception)
-        {
-            // In the event of being unable to parse, treat it as a string.
-            return value;
-        }
-    }
 
-    /// <summary>
-    /// Parses a naked value from a URI UTF8-encoded byte array.
-    /// </summary>
-    /// <param name="value">The value to parse.</param>
-    /// <param name="options">The (optional) JsonDocumentOptions.</param>
-    /// <returns>A <see cref="JsonAny"/> instance representing the value.</returns>
-    public static JsonAny ParseUriValue(ReadOnlyMemory<byte> value, JsonDocumentOptions options = default)
-    {
-        try
+        if (bool.TryParse(value, out bool boolResult))
         {
-            // Try to parse the naked value from the URI
-            return Parse(value, options);
+            return new(boolResult);
         }
-        catch (Exception)
+
+        if (double.TryParse(value, out double numberResult))
         {
-            // In the event of being unable to parse, treat it as a string.
-            return new(value.Span);
+            return new(numberResult);
         }
+
+        return new(value);
     }
 
     /// <summary>
@@ -488,18 +474,26 @@ public readonly partial struct JsonAny
     /// <param name="value">The value to parse.</param>
     /// <param name="options">The (optional) JsonDocumentOptions.</param>
     /// <returns>A <see cref="JsonAny"/> instance representing the value.</returns>
+    /// <remarks>Note that this only applies to <c>null</c>, <c>bool</c>, <c>number</c> and <c>string</c> types.</remarks>
     public static JsonAny ParseUriValue(ReadOnlyMemory<char> value, JsonDocumentOptions options = default)
     {
-        try
+        ReadOnlySpan<char> valueSpan = value.Span;
+        if (valueSpan.SequenceEqual("null"))
         {
-            // Try to parse the naked value from the URI
-            return Parse(value, options);
+            return JsonAny.Null;
         }
-        catch (Exception)
+
+        if (bool.TryParse(valueSpan, out bool boolResult))
         {
-            // In the event of being unable to parse, treat it as a string.
-            return new(value.Span);
+            return new(boolResult);
         }
+
+        if (double.TryParse(valueSpan, out double numberResult))
+        {
+            return new(numberResult);
+        }
+
+        return new(valueSpan);
     }
 
     /// <summary>
