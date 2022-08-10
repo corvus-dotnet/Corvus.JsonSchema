@@ -32,8 +32,6 @@ namespace <#= Namespace #>;
 /// </summary>
 public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 {
-    private static readonly ImmutableDictionary<JsonPropertyName, PropertyValidator<<#= TypeDeclaration.DotnetTypeName #>>> __CorvusLocalProperties = CreateLocalPropertyValidators();
-
 <#  foreach(var property in Properties)
     { #>
     /// <summary>
@@ -82,6 +80,46 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
         }
     }
 <#  } #>
+
+    /// <summary>
+    /// Tries to get the validator for the given property.
+    /// </summary>
+    /// <param name="property">The property for which to get the validator.</param>
+    /// <param name="hasJsonElementBacking"><c>True</c> if the object containing the property has a JsonElement backing.</param>
+    /// <param name="propertyValidator">The validator for the property, if provided by this schema.</param>
+    /// <returns><c>True</c> if the validator was found.</returns>
+    public bool __TryGetCorvusLocalPropertiesValidator(in JsonObjectProperty property, bool hasJsonElementBacking, out PropertyValidator<<#= TypeDeclaration.DotnetTypeName #>>? propertyValidator)
+    {
+        if (hasJsonElementBacking)
+        {
+<#  bool isFirst = true;
+    foreach (var property in LocalProperties)
+    { #>
+            <#= isFirst ? string.Empty : "else " #>if (property.NameEquals(<#= property.DotnetPropertyName #>Utf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidate<#= property.DotnetPropertyName #>;
+                return true;
+            }
+<#      isFirst = false;
+    } #>
+        }
+        else
+        {
+<#  isFirst = true;
+    foreach (var property in LocalProperties)
+    { #>
+            <#= isFirst ? string.Empty : "else " #>if (property.NameEquals(<#= property.DotnetPropertyName #>JsonPropertyName))
+            {
+                propertyValidator = __CorvusValidate<#= property.DotnetPropertyName #>;
+                return true;
+            }
+<#      isFirst = false;
+    } #>
+        }
+
+        propertyValidator = null;
+        return false;
+    }
 
     /// <summary>
     /// Creates an instance of a <see cref="<#= TypeDeclaration.DotnetTypeName #>"/>.
@@ -161,18 +199,6 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     }
 <#  } #>
 
-    private static ImmutableDictionary<JsonPropertyName, PropertyValidator<<#= TypeDeclaration.DotnetTypeName #>>> CreateLocalPropertyValidators()
-    {
-        ImmutableDictionary<JsonPropertyName, PropertyValidator<<#= TypeDeclaration.DotnetTypeName #>>>.Builder builder =
-            ImmutableDictionary.CreateBuilder<JsonPropertyName, PropertyValidator<<#= TypeDeclaration.DotnetTypeName #>>>();
-
-<#  foreach (var property in LocalProperties)
-    { #>
-        builder.Add(<#= property.DotnetPropertyName #>JsonPropertyName, __CorvusValidate<#= property.DotnetPropertyName #>);
-<#  } #>
-
-        return builder.ToImmutable();
-    }
 <#  foreach (var property in LocalProperties)
     { #>
 

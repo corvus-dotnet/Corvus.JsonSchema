@@ -19,6 +19,7 @@
 #nullable enable
 
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -33,9 +34,17 @@ namespace <#= Namespace #>;
 /// </summary>
 public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 {
-    private static readonly ImmutableDictionary<JsonPropertyName, PropertyValidator<<#= TypeDeclaration.DotnetTypeName #>>> __CorvusDependentSchema = CreateDependentSchemaValidators();
-<#  foreach (var dependentSchema in DependentSchemas)
-    { #>
+<#  int dsIndexV = 0;
+    foreach( var dependentSchema in DependentSchemas)
+    {
+        ++dsIndexV; #>
+    private static readonly ReadOnlyMemory<byte> __DependentSchema<#= dsIndexV #>Utf8JsonPropertyName = new byte[] { <#= GetEncodedBytes(dependentSchema.Name) #> };
+    private const string __DependentSchema<#= dsIndexV #>JsonPropertyName = <#= Formatting.FormatLiteralOrNull(dependentSchema.Name, true)#>;
+<#  }
+    dsIndexV = 0;
+    foreach (var dependentSchema in DependentSchemas)
+    {
+        ++dsIndexV; #>
 
     /// <summary>
     /// Try to match the instance with the dependent schema for property <#= dependentSchema.Name #>, and get it as a <see cref="<#= dependentSchema.DotnetTypeName #>" /> if the property is present.
@@ -44,7 +53,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     /// <returns><c>True</c> if the property was present.</returns>
     public bool TryAsDependentSchemaFor<#= Formatting.ToPascalCaseWithReservedWords(dependentSchema.Name).ToString() #>(out <#= dependentSchema.DotnetTypeName #> result)
     {
-        if (this.HasProperty("<#= dependentSchema.Name #>"))
+        if ((this.HasJsonElementBacking && this.HasProperty(__DependentSchema<#= dsIndexV #>Utf8JsonPropertyName.Span) || (!this.HasJsonElementBacking && this.HasProperty(__DependentSchema<#= dsIndexV #>JsonPropertyName))))
         {
             result = this.As<<#= dependentSchema.DotnetTypeName #>>();
             return true;
@@ -55,21 +64,48 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     }
 <#  } #>
 
-    private static ImmutableDictionary<JsonPropertyName, PropertyValidator<<#= TypeDeclaration.DotnetTypeName #>>> CreateDependentSchemaValidators()
+    /// <summary>
+    /// Tries to get the validator for the given property.
+    /// </summary>
+    /// <param name="property">The property for which to get the validator.</param>
+    /// <param name="hasJsonElementBacking"><c>True</c> if the object containing the property has a JsonElement backing.</param>
+    /// <param name="propertyValidator">The validator for the property, if provided by this schema.</param>
+    /// <returns><c>True</c> if the validator was found.</returns>
+    public bool __TryGetCorvusDependentSchemaValidator(in JsonObjectProperty property, bool hasJsonElementBacking, [NotNullWhen(true)]out PropertyValidator<<#= TypeDeclaration.DotnetTypeName #>>? propertyValidator)
     {
-        ImmutableDictionary<JsonPropertyName, PropertyValidator<<#= TypeDeclaration.DotnetTypeName #>>>.Builder builder =
-            ImmutableDictionary.CreateBuilder<JsonPropertyName, PropertyValidator<<#= TypeDeclaration.DotnetTypeName #>>>();
-
- <# int dsIndex = 0;
+        if (hasJsonElementBacking)
+        {
+<#  dsIndexV = 0;
     foreach (var dependentSchema in DependentSchemas)
     {
-        dsIndex++; #>
-        builder.Add("<#= dependentSchema.Name #>", __CorvusValidateDependentSchema<#= dsIndex #>);
+        dsIndexV++; #>
+            <#= dsIndexV == 1 ? string.Empty : "else " #>if (property.NameEquals(__DependentSchema<#= dsIndexV #>Utf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateDependentSchema<#= dsIndexV #>;
+                return true;
+            }
 <#  } #>
+        }
+        else
+        {
+<#  dsIndexV = 0;
+    foreach (var dependentSchema in DependentSchemas)
+    {
+        ++dsIndexV; #>
+            <#= dsIndexV == 1 ? string.Empty : "else " #>if (property.NameEquals(__DependentSchema<#= dsIndexV #>JsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateDependentSchema<#= dsIndexV #>;
+                return true;
+            }
+<#
+    } #>
+        }
 
-        return builder.ToImmutable();
+        propertyValidator = null;
+        return false;
     }
-<#  int dsIndexV = 0;
+
+<#  dsIndexV = 0;
     foreach (var dependentSchema in DependentSchemas)
     {
         dsIndexV++; #>

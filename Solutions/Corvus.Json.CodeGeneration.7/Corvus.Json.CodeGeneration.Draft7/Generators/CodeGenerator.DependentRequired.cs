@@ -17,7 +17,7 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft7 {
     public partial class CodeGeneratorDependentRequired : CodeGeneratorDependentRequiredBase {
         
         
-        #line 69 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentRequired.tt"
+        #line 87 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentRequired.tt"
 
     public bool ShouldGenerate
     {
@@ -103,12 +103,12 @@ namespace ");
             #line 34 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentRequired.tt"
             this.Write(@"
 {
-    private static readonly ImmutableDictionary<JsonPropertyName, ImmutableArray<JsonPropertyName>> __CorvusDependentRequired = BuildDependentRequired();
+    private static readonly ImmutableList<__CorvusDependency> __CorvusDependentRequired = BuildDependentRequired();
 
-    private static ImmutableDictionary<JsonPropertyName, ImmutableArray<JsonPropertyName>> BuildDependentRequired()
+    private static ImmutableList<__CorvusDependency> BuildDependentRequired()
     {
-        ImmutableDictionary<JsonPropertyName, ImmutableArray<JsonPropertyName>>.Builder builder =
-            ImmutableDictionary.CreateBuilder<JsonPropertyName, ImmutableArray<JsonPropertyName>>();
+        ImmutableList<__CorvusDependency>.Builder builder =
+            ImmutableList.CreateBuilder<__CorvusDependency>();
 
 ");
             
@@ -123,25 +123,39 @@ namespace ");
             #line hidden
             
             #line 45 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentRequired.tt"
-            this.Write("        builder.Add(\r\n                ");
+            this.Write("        builder.Add(\r\n            new __CorvusDependency(\r\n                new by" +
+                    "te[] { ");
             
             #line default
             #line hidden
             
-            #line 46 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentRequired.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( Formatting.FormatLiteralOrNull(dependentRequired.Name, true) ));
+            #line 47 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentRequired.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( GetEncodedBytes(dependentRequired.Name) ));
             
             #line default
             #line hidden
             
-            #line 46 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentRequired.tt"
-            this.Write(",\r\n                ImmutableArray.Create<JsonPropertyName>(\r\n");
+            #line 47 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentRequired.tt"
+            this.Write(" },\r\n                ");
             
             #line default
             #line hidden
             
             #line 48 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentRequired.tt"
-      bool isFirst = true;
+            this.Write(this.ToStringHelper.ToStringWithCulture( Formatting.FormatLiteralOrNull(dependentRequired.Name, true) ));
+            
+            #line default
+            #line hidden
+            
+            #line 48 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentRequired.tt"
+            this.Write(",\r\n                ImmutableArray.Create<ReadOnlyMemory<byte>>(");
+            
+            #line default
+            #line hidden
+            
+            #line 49 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentRequired.tt"
+
+        bool isFirst = true;
         foreach (var dependentRequiredValue in dependentRequired.RequiredNames)
         {
             if (!isFirst)
@@ -150,13 +164,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 53 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentRequired.tt"
+            #line 55 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentRequired.tt"
             this.Write(",\r\n");
             
             #line default
             #line hidden
             
-            #line 54 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentRequired.tt"
+            #line 56 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentRequired.tt"
           }
             else
             {
@@ -166,37 +180,88 @@ namespace ");
             #line default
             #line hidden
             
-            #line 59 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentRequired.tt"
-            this.Write("                    ");
-            
-            #line default
-            #line hidden
-            
-            #line 59 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentRequired.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( Formatting.FormatLiteralOrNull(dependentRequiredValue, true) ));
-            
-            #line default
-            #line hidden
-            
-            #line 59 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentRequired.tt"
-            this.Write("\r\n");
-            
-            #line default
-            #line hidden
-            
-            #line 60 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentRequired.tt"
-      } 
+            #line 61 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentRequired.tt"
+            this.Write("                   new byte[] { ");
             
             #line default
             #line hidden
             
             #line 61 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentRequired.tt"
-            this.Write(" ));\r\n    ");
+            this.Write(this.ToStringHelper.ToStringWithCulture( GetEncodedBytes(dependentRequiredValue) ));
+            
+            #line default
+            #line hidden
+            
+            #line 61 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentRequired.tt"
+            this.Write(" }\r\n");
             
             #line default
             #line hidden
             
             #line 62 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentRequired.tt"
+      } 
+            
+            #line default
+            #line hidden
+            
+            #line 63 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentRequired.tt"
+            this.Write("),\r\n                ImmutableArray.Create<string>(");
+            
+            #line default
+            #line hidden
+            
+            #line 64 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentRequired.tt"
+
+        isFirst = true;
+        foreach (var dependentRequiredValue in dependentRequired.RequiredNames)
+        {
+            if (!isFirst)
+            { 
+            
+            #line default
+            #line hidden
+            
+            #line 70 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentRequired.tt"
+            this.Write(",\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 71 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentRequired.tt"
+          }
+            else
+            {
+                isFirst = false;
+            } 
+            
+            #line default
+            #line hidden
+            
+            #line 76 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentRequired.tt"
+            this.Write("                   ");
+            
+            #line default
+            #line hidden
+            
+            #line 76 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentRequired.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( Formatting.FormatLiteralOrNull(dependentRequired.Name, true) ));
+            
+            #line default
+            #line hidden
+            
+            #line 76 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentRequired.tt"
+      } 
+            
+            #line default
+            #line hidden
+            
+            #line 77 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentRequired.tt"
+            this.Write(")));\r\n    ");
+            
+            #line default
+            #line hidden
+            
+            #line 78 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentRequired.tt"
 
     }
     
@@ -204,13 +269,15 @@ namespace ");
             #line default
             #line hidden
             
-            #line 65 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentRequired.tt"
-            this.Write("        return builder.ToImmutable();\r\n    }\r\n}\r\n");
+            #line 81 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentRequired.tt"
+            this.Write("        return builder.ToImmutable();\r\n    }\r\n\r\n    private readonly record struc" +
+                    "t __CorvusDependency(ReadOnlyMemory<byte> Utf8Name, string Name, ImmutableArray<" +
+                    "ReadOnlyMemory<byte>> Utf8Dependency, ImmutableArray<string> Dependency);\r\n}\r\n");
             
             #line default
             #line hidden
             
-            #line 68 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentRequired.tt"
+            #line 86 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentRequired.tt"
  EndNesting(); 
             
             #line default

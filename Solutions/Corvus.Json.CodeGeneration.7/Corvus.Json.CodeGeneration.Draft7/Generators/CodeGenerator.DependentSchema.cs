@@ -17,7 +17,7 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft7 {
     public partial class CodeGeneratorDependentSchema : CodeGeneratorDependentSchemaBase {
         
         
-        #line 84 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+        #line 120 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
 
     public bool ShouldGenerate
     {
@@ -58,6 +58,7 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft7 {
 #nullable enable
 
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -69,271 +70,269 @@ namespace ");
             #line default
             #line hidden
             
-            #line 28 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            #line 29 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( Namespace ));
             
             #line default
             #line hidden
             
-            #line 28 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            #line 29 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
             this.Write(";\r\n\r\n");
             
             #line default
             #line hidden
             
-            #line 30 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            #line 31 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
  BeginNesting(); 
             
             #line default
             #line hidden
             
-            #line 31 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            #line 32 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
             this.Write("/// <summary>\r\n/// A type generated from a JsonSchema specification.\r\n/// </summa" +
                     "ry>\r\npublic readonly partial struct ");
             
             #line default
             #line hidden
             
-            #line 34 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            #line 35 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 34 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
-            this.Write("\r\n{\r\n    private static readonly ImmutableDictionary<JsonPropertyName, PropertyVa" +
-                    "lidator<");
-            
-            #line default
-            #line hidden
-            
-            #line 36 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
-            
-            #line default
-            #line hidden
-            
-            #line 36 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
-            this.Write(">> __CorvusDependentSchema = CreateDependentSchemaValidators();\r\n");
+            #line 35 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            this.Write("\r\n{\r\n");
             
             #line default
             #line hidden
             
             #line 37 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
-  foreach (var dependentSchema in DependentSchemas)
-    { 
+  int dsIndexV = 0;
+    foreach( var dependentSchema in DependentSchemas)
+    {
+        ++dsIndexV; 
             
             #line default
             #line hidden
             
-            #line 39 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            #line 41 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            this.Write("    private static readonly ReadOnlyMemory<byte> __DependentSchema");
+            
+            #line default
+            #line hidden
+            
+            #line 41 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( dsIndexV ));
+            
+            #line default
+            #line hidden
+            
+            #line 41 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            this.Write("Utf8JsonPropertyName = new byte[] { ");
+            
+            #line default
+            #line hidden
+            
+            #line 41 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( GetEncodedBytes(dependentSchema.Name) ));
+            
+            #line default
+            #line hidden
+            
+            #line 41 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            this.Write(" };\r\n    private const string __DependentSchema");
+            
+            #line default
+            #line hidden
+            
+            #line 42 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( dsIndexV ));
+            
+            #line default
+            #line hidden
+            
+            #line 42 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            this.Write("JsonPropertyName = ");
+            
+            #line default
+            #line hidden
+            
+            #line 42 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( Formatting.FormatLiteralOrNull(dependentSchema.Name, true)));
+            
+            #line default
+            #line hidden
+            
+            #line 42 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            this.Write(";\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 43 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+  }
+    dsIndexV = 0;
+    foreach (var dependentSchema in DependentSchemas)
+    {
+        ++dsIndexV; 
+            
+            #line default
+            #line hidden
+            
+            #line 48 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
             this.Write("\r\n    /// <summary>\r\n    /// Try to match the instance with the dependent schema " +
                     "for property ");
             
             #line default
             #line hidden
             
-            #line 41 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            #line 50 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( dependentSchema.Name ));
             
             #line default
             #line hidden
             
-            #line 41 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            #line 50 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
             this.Write(", and get it as a <see cref=\"");
             
             #line default
             #line hidden
             
-            #line 41 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            #line 50 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( dependentSchema.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 41 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            #line 50 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
             this.Write("\" /> if the property is present.\r\n    /// </summary>\r\n    /// <param name=\"result" +
                     "\">The value as a <see cref=\"");
             
             #line default
             #line hidden
             
-            #line 43 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            #line 52 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( dependentSchema.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 43 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            #line 52 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
             this.Write("\" />.</param>.\r\n    /// <returns><c>True</c> if the property was present.</return" +
                     "s>\r\n    public bool TryAsDependentSchemaFor");
             
             #line default
             #line hidden
             
-            #line 45 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            #line 54 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( Formatting.ToPascalCaseWithReservedWords(dependentSchema.Name).ToString() ));
             
             #line default
             #line hidden
             
-            #line 45 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            #line 54 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
             this.Write("(out ");
             
             #line default
             #line hidden
             
-            #line 45 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            #line 54 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( dependentSchema.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 45 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
-            this.Write(" result)\r\n    {\r\n        if (this.HasProperty(\"");
-            
-            #line default
-            #line hidden
-            
-            #line 47 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( dependentSchema.Name ));
-            
-            #line default
-            #line hidden
-            
-            #line 47 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
-            this.Write("\"))\r\n        {\r\n            result = this.As<");
-            
-            #line default
-            #line hidden
-            
-            #line 49 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( dependentSchema.DotnetTypeName ));
-            
-            #line default
-            #line hidden
-            
-            #line 49 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
-            this.Write(">();\r\n            return true;\r\n        }\r\n\r\n        result = ");
-            
-            #line default
-            #line hidden
-            
-            #line 53 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( dependentSchema.DotnetTypeName ));
-            
-            #line default
-            #line hidden
-            
-            #line 53 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
-            this.Write(".Undefined;\r\n        return false;\r\n    }\r\n");
+            #line 54 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            this.Write(" result)\r\n    {\r\n        if ((this.HasJsonElementBacking && this.HasProperty(__De" +
+                    "pendentSchema");
             
             #line default
             #line hidden
             
             #line 56 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
-  } 
+            this.Write(this.ToStringHelper.ToStringWithCulture( dsIndexV ));
             
             #line default
             #line hidden
             
-            #line 57 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
-            this.Write("\r\n    private static ImmutableDictionary<JsonPropertyName, PropertyValidator<");
+            #line 56 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            this.Write("Utf8JsonPropertyName.Span) || (!this.HasJsonElementBacking && this.HasProperty(__" +
+                    "DependentSchema");
+            
+            #line default
+            #line hidden
+            
+            #line 56 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( dsIndexV ));
+            
+            #line default
+            #line hidden
+            
+            #line 56 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            this.Write("JsonPropertyName))))\r\n        {\r\n            result = this.As<");
             
             #line default
             #line hidden
             
             #line 58 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            this.Write(this.ToStringHelper.ToStringWithCulture( dependentSchema.DotnetTypeName ));
             
             #line default
             #line hidden
             
             #line 58 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
-            this.Write(">> CreateDependentSchemaValidators()\r\n    {\r\n        ImmutableDictionary<JsonProp" +
-                    "ertyName, PropertyValidator<");
+            this.Write(">();\r\n            return true;\r\n        }\r\n\r\n        result = ");
             
             #line default
             #line hidden
             
-            #line 60 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            #line 62 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( dependentSchema.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 60 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
-            this.Write(">>.Builder builder =\r\n            ImmutableDictionary.CreateBuilder<JsonPropertyN" +
-                    "ame, PropertyValidator<");
+            #line 62 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            this.Write(".Undefined;\r\n        return false;\r\n    }\r\n");
             
             #line default
             #line hidden
             
-            #line 61 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
-            
-            #line default
-            #line hidden
-            
-            #line 61 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
-            this.Write(">>();\r\n\r\n ");
-            
-            #line default
-            #line hidden
-            
-            #line 63 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
- int dsIndex = 0;
-    foreach (var dependentSchema in DependentSchemas)
-    {
-        dsIndex++; 
-            
-            #line default
-            #line hidden
-            
-            #line 67 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
-            this.Write("        builder.Add(\"");
-            
-            #line default
-            #line hidden
-            
-            #line 67 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( dependentSchema.Name ));
-            
-            #line default
-            #line hidden
-            
-            #line 67 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
-            this.Write("\", __CorvusValidateDependentSchema");
-            
-            #line default
-            #line hidden
-            
-            #line 67 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( dsIndex ));
-            
-            #line default
-            #line hidden
-            
-            #line 67 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
-            this.Write(");\r\n");
-            
-            #line default
-            #line hidden
-            
-            #line 68 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            #line 65 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 69 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
-            this.Write("\r\n        return builder.ToImmutable();\r\n    }\r\n");
+            #line 66 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            this.Write(@"
+    /// <summary>
+    /// Tries to get the validator for the given property.
+    /// </summary>
+    /// <param name=""property"">The property for which to get the validator.</param>
+    /// <param name=""hasJsonElementBacking""><c>True</c> if the object containing the property has a JsonElement backing.</param>
+    /// <param name=""propertyValidator"">The validator for the property, if provided by this schema.</param>
+    /// <returns><c>True</c> if the validator was found.</returns>
+    public bool __TryGetCorvusDependentSchemaValidator(in JsonObjectProperty property, bool hasJsonElementBacking, [NotNullWhen(true)]out PropertyValidator<");
             
             #line default
             #line hidden
             
-            #line 72 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
-  int dsIndexV = 0;
+            #line 74 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 74 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            this.Write(">? propertyValidator)\r\n    {\r\n        if (hasJsonElementBacking)\r\n        {\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 78 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+  dsIndexV = 0;
     foreach (var dependentSchema in DependentSchemas)
     {
         dsIndexV++; 
@@ -341,62 +340,191 @@ namespace ");
             #line default
             #line hidden
             
-            #line 76 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
-            this.Write("\r\n    private static ValidationContext __CorvusValidateDependentSchema");
+            #line 82 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            this.Write("            ");
             
             #line default
             #line hidden
             
-            #line 77 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            #line 82 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( dsIndexV == 1 ? string.Empty : "else " ));
+            
+            #line default
+            #line hidden
+            
+            #line 82 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            this.Write("if (property.NameEquals(__DependentSchema");
+            
+            #line default
+            #line hidden
+            
+            #line 82 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( dsIndexV ));
             
             #line default
             #line hidden
             
-            #line 77 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            #line 82 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            this.Write("Utf8JsonPropertyName.Span))\r\n            {\r\n                propertyValidator = _" +
+                    "_CorvusValidateDependentSchema");
+            
+            #line default
+            #line hidden
+            
+            #line 84 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( dsIndexV ));
+            
+            #line default
+            #line hidden
+            
+            #line 84 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            this.Write(";\r\n                return true;\r\n            }\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 87 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+  } 
+            
+            #line default
+            #line hidden
+            
+            #line 88 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            this.Write("        }\r\n        else\r\n        {\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 91 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+  dsIndexV = 0;
+    foreach (var dependentSchema in DependentSchemas)
+    {
+        ++dsIndexV; 
+            
+            #line default
+            #line hidden
+            
+            #line 95 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            this.Write("            ");
+            
+            #line default
+            #line hidden
+            
+            #line 95 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( dsIndexV == 1 ? string.Empty : "else " ));
+            
+            #line default
+            #line hidden
+            
+            #line 95 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            this.Write("if (property.NameEquals(__DependentSchema");
+            
+            #line default
+            #line hidden
+            
+            #line 95 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( dsIndexV ));
+            
+            #line default
+            #line hidden
+            
+            #line 95 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            this.Write("JsonPropertyName))\r\n            {\r\n                propertyValidator = __CorvusVa" +
+                    "lidateDependentSchema");
+            
+            #line default
+            #line hidden
+            
+            #line 97 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( dsIndexV ));
+            
+            #line default
+            #line hidden
+            
+            #line 97 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            this.Write(";\r\n                return true;\r\n            }\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 100 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+
+    } 
+            
+            #line default
+            #line hidden
+            
+            #line 102 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            this.Write("        }\r\n\r\n        propertyValidator = null;\r\n        return false;\r\n    }\r\n\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 108 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+  dsIndexV = 0;
+    foreach (var dependentSchema in DependentSchemas)
+    {
+        dsIndexV++; 
+            
+            #line default
+            #line hidden
+            
+            #line 112 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            this.Write("\r\n    private static ValidationContext __CorvusValidateDependentSchema");
+            
+            #line default
+            #line hidden
+            
+            #line 113 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( dsIndexV ));
+            
+            #line default
+            #line hidden
+            
+            #line 113 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
             this.Write("(in ");
             
             #line default
             #line hidden
             
-            #line 77 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            #line 113 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 77 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            #line 113 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
             this.Write(" that, in ValidationContext validationContext, ValidationLevel level)\r\n    {\r\n   " +
                     "     return that.As<");
             
             #line default
             #line hidden
             
-            #line 79 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            #line 115 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( dependentSchema.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 79 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            #line 115 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
             this.Write(">().Validate(validationContext, level);\r\n    }\r\n");
             
             #line default
             #line hidden
             
-            #line 81 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            #line 117 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 82 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            #line 118 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
             this.Write("}\r\n");
             
             #line default
             #line hidden
             
-            #line 83 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
+            #line 119 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.DependentSchema.tt"
  EndNesting(); 
             
             #line default

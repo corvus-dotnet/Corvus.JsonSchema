@@ -33,19 +33,21 @@ namespace <#= Namespace #>;
 /// </summary>
 public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 {
-    private static readonly ImmutableDictionary<JsonPropertyName, ImmutableArray<JsonPropertyName>> __CorvusDependentRequired = BuildDependentRequired();
+    private static readonly ImmutableList<__CorvusDependency> __CorvusDependentRequired = BuildDependentRequired();
 
-    private static ImmutableDictionary<JsonPropertyName, ImmutableArray<JsonPropertyName>> BuildDependentRequired()
+    private static ImmutableList<__CorvusDependency> BuildDependentRequired()
     {
-        ImmutableDictionary<JsonPropertyName, ImmutableArray<JsonPropertyName>>.Builder builder =
-            ImmutableDictionary.CreateBuilder<JsonPropertyName, ImmutableArray<JsonPropertyName>>();
+        ImmutableList<__CorvusDependency>.Builder builder =
+            ImmutableList.CreateBuilder<__CorvusDependency>();
 
 <#  foreach (var dependentRequired in DependentRequired)
     { #>
         builder.Add(
+            new __CorvusDependency(
+                new byte[] { <#= GetEncodedBytes(dependentRequired.Name) #> },
                 <#= Formatting.FormatLiteralOrNull(dependentRequired.Name, true) #>,
-                ImmutableArray.Create<JsonPropertyName>(
-<#      bool isFirst = true;
+                ImmutableArray.Create<ReadOnlyMemory<byte>>(<#
+        bool isFirst = true;
         foreach (var dependentRequiredValue in dependentRequired.RequiredNames)
         {
             if (!isFirst)
@@ -55,13 +57,27 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
             {
                 isFirst = false;
             } #>
-                    <#= Formatting.FormatLiteralOrNull(dependentRequiredValue, true) #>
-<#      } #> ));
+                   new byte[] { <#= GetEncodedBytes(dependentRequiredValue) #> }
+<#      } #>),
+                ImmutableArray.Create<string>(<#
+        isFirst = true;
+        foreach (var dependentRequiredValue in dependentRequired.RequiredNames)
+        {
+            if (!isFirst)
+            { #>,
+<#          }
+            else
+            {
+                isFirst = false;
+            } #>
+                   <#= Formatting.FormatLiteralOrNull(dependentRequired.Name, true) #><#      } #>)));
     <#
     }
     #>
         return builder.ToImmutable();
     }
+
+    private readonly record struct __CorvusDependency(ReadOnlyMemory<byte> Utf8Name, string Name, ImmutableArray<ReadOnlyMemory<byte>> Utf8Dependency, ImmutableArray<string> Dependency);
 }
 <# EndNesting(); #>
 <#+
