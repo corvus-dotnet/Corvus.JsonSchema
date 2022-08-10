@@ -8,6 +8,7 @@
 //------------------------------------------------------------------------------
 #nullable enable
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
@@ -19,7 +20,6 @@ namespace Corvus.Json.JsonSchema.Draft202012;
 /// </summary>
 public readonly partial struct Unevaluated
 {
-    private static readonly ImmutableDictionary<JsonPropertyName, PropertyValidator<Unevaluated>> __CorvusLocalProperties = CreateLocalPropertyValidators();
     /// <summary>
     /// JSON property name for <see cref = "UnevaluatedItems"/>.
     /// </summary>
@@ -101,6 +101,46 @@ public readonly partial struct Unevaluated
     }
 
     /// <summary>
+    /// Tries to get the validator for the given property.
+    /// </summary>
+    /// <param name = "property">The property for which to get the validator.</param>
+    /// <param name = "hasJsonElementBacking"><c>True</c> if the object containing the property has a JsonElement backing.</param>
+    /// <param name = "propertyValidator">The validator for the property, if provided by this schema.</param>
+    /// <returns><c>True</c> if the validator was found.</returns>
+    public bool __TryGetCorvusLocalPropertiesValidator(in JsonObjectProperty property, bool hasJsonElementBacking, [NotNullWhen(true)] out PropertyValidator<Unevaluated>? propertyValidator)
+    {
+        if (hasJsonElementBacking)
+        {
+            if (property.NameEquals(UnevaluatedItemsUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateUnevaluatedItems;
+                return true;
+            }
+            else if (property.NameEquals(UnevaluatedPropertiesUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateUnevaluatedProperties;
+                return true;
+            }
+        }
+        else
+        {
+            if (property.NameEquals(UnevaluatedItemsJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateUnevaluatedItems;
+                return true;
+            }
+            else if (property.NameEquals(UnevaluatedPropertiesJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateUnevaluatedProperties;
+                return true;
+            }
+        }
+
+        propertyValidator = null;
+        return false;
+    }
+
+    /// <summary>
     /// Creates an instance of a <see cref = "Unevaluated"/>.
     /// </summary>
     public static Unevaluated Create(Corvus.Json.JsonSchema.Draft202012.Schema? unevaluatedItems = null, Corvus.Json.JsonSchema.Draft202012.Schema? unevaluatedProperties = null)
@@ -137,14 +177,6 @@ public readonly partial struct Unevaluated
     public Unevaluated WithUnevaluatedProperties(in Corvus.Json.JsonSchema.Draft202012.Schema value)
     {
         return this.SetProperty(UnevaluatedPropertiesJsonPropertyName, value);
-    }
-
-    private static ImmutableDictionary<JsonPropertyName, PropertyValidator<Unevaluated>> CreateLocalPropertyValidators()
-    {
-        ImmutableDictionary<JsonPropertyName, PropertyValidator<Unevaluated>>.Builder builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, PropertyValidator<Unevaluated>>();
-        builder.Add(UnevaluatedItemsJsonPropertyName, __CorvusValidateUnevaluatedItems);
-        builder.Add(UnevaluatedPropertiesJsonPropertyName, __CorvusValidateUnevaluatedProperties);
-        return builder.ToImmutable();
     }
 
     private static ValidationContext __CorvusValidateUnevaluatedItems(in Unevaluated that, in ValidationContext validationContext, ValidationLevel level)

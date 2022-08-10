@@ -8,6 +8,7 @@
 //------------------------------------------------------------------------------
 #nullable enable
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
@@ -19,7 +20,6 @@ namespace Corvus.Json.JsonSchema.Draft201909;
 /// </summary>
 public readonly partial struct Format
 {
-    private static readonly ImmutableDictionary<JsonPropertyName, PropertyValidator<Format>> __CorvusLocalProperties = CreateLocalPropertyValidators();
     /// <summary>
     /// JSON property name for <see cref = "Format1"/>.
     /// </summary>
@@ -61,6 +61,36 @@ public readonly partial struct Format
     }
 
     /// <summary>
+    /// Tries to get the validator for the given property.
+    /// </summary>
+    /// <param name = "property">The property for which to get the validator.</param>
+    /// <param name = "hasJsonElementBacking"><c>True</c> if the object containing the property has a JsonElement backing.</param>
+    /// <param name = "propertyValidator">The validator for the property, if provided by this schema.</param>
+    /// <returns><c>True</c> if the validator was found.</returns>
+    public bool __TryGetCorvusLocalPropertiesValidator(in JsonObjectProperty property, bool hasJsonElementBacking, [NotNullWhen(true)] out PropertyValidator<Format>? propertyValidator)
+    {
+        if (hasJsonElementBacking)
+        {
+            if (property.NameEquals(Format1Utf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateFormat1;
+                return true;
+            }
+        }
+        else
+        {
+            if (property.NameEquals(Format1JsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateFormat1;
+                return true;
+            }
+        }
+
+        propertyValidator = null;
+        return false;
+    }
+
+    /// <summary>
     /// Creates an instance of a <see cref = "Format"/>.
     /// </summary>
     public static Format Create(Corvus.Json.JsonString? format1 = null)
@@ -82,13 +112,6 @@ public readonly partial struct Format
     public Format WithFormat1(in Corvus.Json.JsonString value)
     {
         return this.SetProperty(Format1JsonPropertyName, value);
-    }
-
-    private static ImmutableDictionary<JsonPropertyName, PropertyValidator<Format>> CreateLocalPropertyValidators()
-    {
-        ImmutableDictionary<JsonPropertyName, PropertyValidator<Format>>.Builder builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, PropertyValidator<Format>>();
-        builder.Add(Format1JsonPropertyName, __CorvusValidateFormat1);
-        return builder.ToImmutable();
     }
 
     private static ValidationContext __CorvusValidateFormat1(in Format that, in ValidationContext validationContext, ValidationLevel level)

@@ -8,6 +8,7 @@
 //------------------------------------------------------------------------------
 #nullable enable
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
@@ -19,7 +20,6 @@ namespace Corvus.Json.JsonSchema.Draft202012;
 /// </summary>
 public readonly partial struct Core
 {
-    private static readonly ImmutableDictionary<JsonPropertyName, PropertyValidator<Core>> __CorvusLocalProperties = CreateLocalPropertyValidators();
     /// <summary>
     /// JSON property name for <see cref = "Id"/>.
     /// </summary>
@@ -381,6 +381,116 @@ public readonly partial struct Core
     }
 
     /// <summary>
+    /// Tries to get the validator for the given property.
+    /// </summary>
+    /// <param name = "property">The property for which to get the validator.</param>
+    /// <param name = "hasJsonElementBacking"><c>True</c> if the object containing the property has a JsonElement backing.</param>
+    /// <param name = "propertyValidator">The validator for the property, if provided by this schema.</param>
+    /// <returns><c>True</c> if the validator was found.</returns>
+    public bool __TryGetCorvusLocalPropertiesValidator(in JsonObjectProperty property, bool hasJsonElementBacking, [NotNullWhen(true)] out PropertyValidator<Core>? propertyValidator)
+    {
+        if (hasJsonElementBacking)
+        {
+            if (property.NameEquals(IdUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateId;
+                return true;
+            }
+            else if (property.NameEquals(SchemaUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateSchema;
+                return true;
+            }
+            else if (property.NameEquals(RefUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateRef;
+                return true;
+            }
+            else if (property.NameEquals(AnchorUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateAnchor;
+                return true;
+            }
+            else if (property.NameEquals(DynamicRefUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateDynamicRef;
+                return true;
+            }
+            else if (property.NameEquals(DynamicAnchorUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateDynamicAnchor;
+                return true;
+            }
+            else if (property.NameEquals(VocabularyUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateVocabulary;
+                return true;
+            }
+            else if (property.NameEquals(CommentUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateComment;
+                return true;
+            }
+            else if (property.NameEquals(DefsUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateDefs;
+                return true;
+            }
+        }
+        else
+        {
+            if (property.NameEquals(IdJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateId;
+                return true;
+            }
+            else if (property.NameEquals(SchemaJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateSchema;
+                return true;
+            }
+            else if (property.NameEquals(RefJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateRef;
+                return true;
+            }
+            else if (property.NameEquals(AnchorJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateAnchor;
+                return true;
+            }
+            else if (property.NameEquals(DynamicRefJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateDynamicRef;
+                return true;
+            }
+            else if (property.NameEquals(DynamicAnchorJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateDynamicAnchor;
+                return true;
+            }
+            else if (property.NameEquals(VocabularyJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateVocabulary;
+                return true;
+            }
+            else if (property.NameEquals(CommentJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateComment;
+                return true;
+            }
+            else if (property.NameEquals(DefsJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateDefs;
+                return true;
+            }
+        }
+
+        propertyValidator = null;
+        return false;
+    }
+
+    /// <summary>
     /// Creates an instance of a <see cref = "Core"/>.
     /// </summary>
     public static Core Create(Corvus.Json.JsonSchema.Draft202012.Core.IdEntity? id = null, Corvus.Json.JsonUri? schema = null, Corvus.Json.JsonUriReference? @ref = null, Corvus.Json.JsonSchema.Draft202012.Core.AnchorStringValue? anchor = null, Corvus.Json.JsonUriReference? dynamicRef = null, Corvus.Json.JsonSchema.Draft202012.Core.AnchorStringValue? dynamicAnchor = null, Corvus.Json.JsonSchema.Draft202012.Core.VocabularyValue? vocabulary = null, Corvus.Json.JsonString? comment = null, Corvus.Json.JsonSchema.Draft202012.Core.DefsValue? defs = null)
@@ -522,21 +632,6 @@ public readonly partial struct Core
     public Core WithDefs(in Corvus.Json.JsonSchema.Draft202012.Core.DefsValue value)
     {
         return this.SetProperty(DefsJsonPropertyName, value);
-    }
-
-    private static ImmutableDictionary<JsonPropertyName, PropertyValidator<Core>> CreateLocalPropertyValidators()
-    {
-        ImmutableDictionary<JsonPropertyName, PropertyValidator<Core>>.Builder builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, PropertyValidator<Core>>();
-        builder.Add(IdJsonPropertyName, __CorvusValidateId);
-        builder.Add(SchemaJsonPropertyName, __CorvusValidateSchema);
-        builder.Add(RefJsonPropertyName, __CorvusValidateRef);
-        builder.Add(AnchorJsonPropertyName, __CorvusValidateAnchor);
-        builder.Add(DynamicRefJsonPropertyName, __CorvusValidateDynamicRef);
-        builder.Add(DynamicAnchorJsonPropertyName, __CorvusValidateDynamicAnchor);
-        builder.Add(VocabularyJsonPropertyName, __CorvusValidateVocabulary);
-        builder.Add(CommentJsonPropertyName, __CorvusValidateComment);
-        builder.Add(DefsJsonPropertyName, __CorvusValidateDefs);
-        return builder.ToImmutable();
     }
 
     private static ValidationContext __CorvusValidateId(in Core that, in ValidationContext validationContext, ValidationLevel level)

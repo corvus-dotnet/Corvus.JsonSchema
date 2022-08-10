@@ -8,6 +8,7 @@
 //------------------------------------------------------------------------------
 #nullable enable
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
@@ -19,7 +20,6 @@ namespace Corvus.Json.JsonSchema.Draft201909;
 /// </summary>
 public readonly partial struct Schema
 {
-    private static readonly ImmutableDictionary<JsonPropertyName, PropertyValidator<Schema>> __CorvusLocalProperties = CreateLocalPropertyValidators();
     /// <summary>
     /// JSON property name for <see cref = "Id"/>.
     /// </summary>
@@ -2381,6 +2381,46 @@ public readonly partial struct Schema
     }
 
     /// <summary>
+    /// Tries to get the validator for the given property.
+    /// </summary>
+    /// <param name = "property">The property for which to get the validator.</param>
+    /// <param name = "hasJsonElementBacking"><c>True</c> if the object containing the property has a JsonElement backing.</param>
+    /// <param name = "propertyValidator">The validator for the property, if provided by this schema.</param>
+    /// <returns><c>True</c> if the validator was found.</returns>
+    public bool __TryGetCorvusLocalPropertiesValidator(in JsonObjectProperty property, bool hasJsonElementBacking, [NotNullWhen(true)] out PropertyValidator<Schema>? propertyValidator)
+    {
+        if (hasJsonElementBacking)
+        {
+            if (property.NameEquals(DefinitionsUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateDefinitions;
+                return true;
+            }
+            else if (property.NameEquals(DependenciesUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateDependencies;
+                return true;
+            }
+        }
+        else
+        {
+            if (property.NameEquals(DefinitionsJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateDefinitions;
+                return true;
+            }
+            else if (property.NameEquals(DependenciesJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateDependencies;
+                return true;
+            }
+        }
+
+        propertyValidator = null;
+        return false;
+    }
+
+    /// <summary>
     /// Creates an instance of a <see cref = "Schema"/>.
     /// </summary>
     public static Schema Create(Corvus.Json.JsonSchema.Draft201909.Core.IdValue? id = null, Corvus.Json.JsonUri? schema1 = null, Corvus.Json.JsonSchema.Draft201909.Core.AnchorValue? anchor = null, Corvus.Json.JsonUriReference? @ref = null, Corvus.Json.JsonUriReference? recursiveRef = null, Corvus.Json.JsonSchema.Draft201909.Core.RecursiveAnchorValue? recursiveAnchor = null, Corvus.Json.JsonSchema.Draft201909.Core.VocabularyValue? vocabulary = null, Corvus.Json.JsonString? comment = null, Corvus.Json.JsonSchema.Draft201909.Core.DefsValue? defs = null, Corvus.Json.JsonSchema.Draft201909.Schema? additionalItems = null, Corvus.Json.JsonSchema.Draft201909.Schema? unevaluatedItems = null, Corvus.Json.JsonSchema.Draft201909.Applicator.PropertiesEntity? items = null, Corvus.Json.JsonSchema.Draft201909.Schema? contains = null, Corvus.Json.JsonSchema.Draft201909.Schema? additionalProperties = null, Corvus.Json.JsonSchema.Draft201909.Schema? unevaluatedProperties = null, Corvus.Json.JsonSchema.Draft201909.Applicator.PropertiesValue? properties = null, Corvus.Json.JsonSchema.Draft201909.Applicator.PatternPropertiesValue? patternProperties = null, Corvus.Json.JsonSchema.Draft201909.Applicator.DependentSchemasValue? dependentSchemas = null, Corvus.Json.JsonSchema.Draft201909.Schema? propertyNames = null, Corvus.Json.JsonSchema.Draft201909.Schema? @if = null, Corvus.Json.JsonSchema.Draft201909.Schema? then = null, Corvus.Json.JsonSchema.Draft201909.Schema? @else = null, Corvus.Json.JsonSchema.Draft201909.Applicator.SchemaArray? allOf = null, Corvus.Json.JsonSchema.Draft201909.Applicator.SchemaArray? anyOf = null, Corvus.Json.JsonSchema.Draft201909.Applicator.SchemaArray? oneOf = null, Corvus.Json.JsonSchema.Draft201909.Schema? not = null, Corvus.Json.JsonSchema.Draft201909.Validation.MultipleOfValue? multipleOf = null, Corvus.Json.JsonNumber? maximum = null, Corvus.Json.JsonNumber? exclusiveMaximum = null, Corvus.Json.JsonNumber? minimum = null, Corvus.Json.JsonNumber? exclusiveMinimum = null, Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeIntegerValue? maxLength = null, Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeIntegerDefault0Entity? minLength = null, Corvus.Json.JsonRegex? pattern = null, Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeIntegerValue? maxItems = null, Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeIntegerDefault0Entity? minItems = null, Corvus.Json.JsonSchema.Draft201909.Validation.UniqueItemsValue? uniqueItems = null, Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeIntegerValue? maxContains = null, Corvus.Json.JsonSchema.Draft201909.Validation.MinContainsEntity? minContains = null, Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeIntegerValue? maxProperties = null, Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeIntegerDefault0Entity? minProperties = null, Corvus.Json.JsonSchema.Draft201909.Validation.JsonStringArray? required = null, Corvus.Json.JsonSchema.Draft201909.Validation.DependentRequiredValue? dependentRequired = null, Corvus.Json.JsonAny? @const = null, Corvus.Json.JsonSchema.Draft201909.Validation.JsonAnyArray? @enum = null, Corvus.Json.JsonSchema.Draft201909.Validation.TypeEntity? type = null, Corvus.Json.JsonString? title = null, Corvus.Json.JsonString? description = null, Corvus.Json.JsonAny? @default = null, Corvus.Json.JsonSchema.Draft201909.MetaData.DeprecatedValue? deprecated = null, Corvus.Json.JsonSchema.Draft201909.MetaData.ReadOnlyValue? readOnly = null, Corvus.Json.JsonSchema.Draft201909.MetaData.WriteOnlyValue? writeOnly = null, Corvus.Json.JsonSchema.Draft201909.MetaData.JsonAnyArray? examples = null, Corvus.Json.JsonString? format = null, Corvus.Json.JsonString? contentMediaType = null, Corvus.Json.JsonString? contentEncoding = null, Corvus.Json.JsonSchema.Draft201909.Schema? contentSchema = null, Corvus.Json.JsonSchema.Draft201909.Schema.DefinitionsValue? definitions = null, Corvus.Json.JsonSchema.Draft201909.Schema.DependenciesValue? dependencies = null)
@@ -3272,14 +3312,6 @@ public readonly partial struct Schema
     public Schema WithDependencies(in Corvus.Json.JsonSchema.Draft201909.Schema.DependenciesValue value)
     {
         return this.SetProperty(DependenciesJsonPropertyName, value);
-    }
-
-    private static ImmutableDictionary<JsonPropertyName, PropertyValidator<Schema>> CreateLocalPropertyValidators()
-    {
-        ImmutableDictionary<JsonPropertyName, PropertyValidator<Schema>>.Builder builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, PropertyValidator<Schema>>();
-        builder.Add(DefinitionsJsonPropertyName, __CorvusValidateDefinitions);
-        builder.Add(DependenciesJsonPropertyName, __CorvusValidateDependencies);
-        return builder.ToImmutable();
     }
 
     private static ValidationContext __CorvusValidateDefinitions(in Schema that, in ValidationContext validationContext, ValidationLevel level)

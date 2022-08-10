@@ -8,6 +8,7 @@
 //------------------------------------------------------------------------------
 #nullable enable
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
@@ -19,7 +20,6 @@ namespace Corvus.Json.JsonSchema.Draft202012;
 /// </summary>
 public readonly partial struct Schema
 {
-    private static readonly ImmutableDictionary<JsonPropertyName, PropertyValidator<Schema>> __CorvusLocalProperties = CreateLocalPropertyValidators();
     /// <summary>
     /// JSON property name for <see cref = "Id"/>.
     /// </summary>
@@ -2461,6 +2461,66 @@ public readonly partial struct Schema
     }
 
     /// <summary>
+    /// Tries to get the validator for the given property.
+    /// </summary>
+    /// <param name = "property">The property for which to get the validator.</param>
+    /// <param name = "hasJsonElementBacking"><c>True</c> if the object containing the property has a JsonElement backing.</param>
+    /// <param name = "propertyValidator">The validator for the property, if provided by this schema.</param>
+    /// <returns><c>True</c> if the validator was found.</returns>
+    public bool __TryGetCorvusLocalPropertiesValidator(in JsonObjectProperty property, bool hasJsonElementBacking, [NotNullWhen(true)] out PropertyValidator<Schema>? propertyValidator)
+    {
+        if (hasJsonElementBacking)
+        {
+            if (property.NameEquals(DefinitionsUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateDefinitions;
+                return true;
+            }
+            else if (property.NameEquals(DependenciesUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateDependencies;
+                return true;
+            }
+            else if (property.NameEquals(RecursiveAnchorUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateRecursiveAnchor;
+                return true;
+            }
+            else if (property.NameEquals(RecursiveRefUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateRecursiveRef;
+                return true;
+            }
+        }
+        else
+        {
+            if (property.NameEquals(DefinitionsJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateDefinitions;
+                return true;
+            }
+            else if (property.NameEquals(DependenciesJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateDependencies;
+                return true;
+            }
+            else if (property.NameEquals(RecursiveAnchorJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateRecursiveAnchor;
+                return true;
+            }
+            else if (property.NameEquals(RecursiveRefJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateRecursiveRef;
+                return true;
+            }
+        }
+
+        propertyValidator = null;
+        return false;
+    }
+
+    /// <summary>
     /// Creates an instance of a <see cref = "Schema"/>.
     /// </summary>
     public static Schema Create(Corvus.Json.JsonSchema.Draft202012.Core.IdEntity? id = null, Corvus.Json.JsonUri? schema1 = null, Corvus.Json.JsonUriReference? @ref = null, Corvus.Json.JsonSchema.Draft202012.Core.AnchorStringValue? anchor = null, Corvus.Json.JsonUriReference? dynamicRef = null, Corvus.Json.JsonSchema.Draft202012.Core.AnchorStringValue? dynamicAnchor = null, Corvus.Json.JsonSchema.Draft202012.Core.VocabularyValue? vocabulary = null, Corvus.Json.JsonString? comment = null, Corvus.Json.JsonSchema.Draft202012.Core.DefsValue? defs = null, Corvus.Json.JsonSchema.Draft202012.Applicator.SchemaArray? prefixItems = null, Corvus.Json.JsonSchema.Draft202012.Schema? items = null, Corvus.Json.JsonSchema.Draft202012.Schema? contains = null, Corvus.Json.JsonSchema.Draft202012.Schema? additionalProperties = null, Corvus.Json.JsonSchema.Draft202012.Applicator.PropertiesValue? properties = null, Corvus.Json.JsonSchema.Draft202012.Applicator.PatternPropertiesValue? patternProperties = null, Corvus.Json.JsonSchema.Draft202012.Applicator.DependentSchemasValue? dependentSchemas = null, Corvus.Json.JsonSchema.Draft202012.Schema? propertyNames = null, Corvus.Json.JsonSchema.Draft202012.Schema? @if = null, Corvus.Json.JsonSchema.Draft202012.Schema? then = null, Corvus.Json.JsonSchema.Draft202012.Schema? @else = null, Corvus.Json.JsonSchema.Draft202012.Applicator.SchemaArray? allOf = null, Corvus.Json.JsonSchema.Draft202012.Applicator.SchemaArray? anyOf = null, Corvus.Json.JsonSchema.Draft202012.Applicator.SchemaArray? oneOf = null, Corvus.Json.JsonSchema.Draft202012.Schema? not = null, Corvus.Json.JsonSchema.Draft202012.Schema? unevaluatedItems = null, Corvus.Json.JsonSchema.Draft202012.Schema? unevaluatedProperties = null, Corvus.Json.JsonSchema.Draft202012.Validation.TypeEntity? type = null, Corvus.Json.JsonAny? @const = null, Corvus.Json.JsonSchema.Draft202012.Validation.JsonAnyArray? @enum = null, Corvus.Json.JsonSchema.Draft202012.Validation.MultipleOfValue? multipleOf = null, Corvus.Json.JsonNumber? maximum = null, Corvus.Json.JsonNumber? exclusiveMaximum = null, Corvus.Json.JsonNumber? minimum = null, Corvus.Json.JsonNumber? exclusiveMinimum = null, Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeIntegerValue? maxLength = null, Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeIntegerDefault0Entity? minLength = null, Corvus.Json.JsonRegex? pattern = null, Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeIntegerValue? maxItems = null, Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeIntegerDefault0Entity? minItems = null, Corvus.Json.JsonSchema.Draft202012.Validation.UniqueItemsValue? uniqueItems = null, Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeIntegerValue? maxContains = null, Corvus.Json.JsonSchema.Draft202012.Validation.MinContainsEntity? minContains = null, Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeIntegerValue? maxProperties = null, Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeIntegerDefault0Entity? minProperties = null, Corvus.Json.JsonSchema.Draft202012.Validation.JsonStringArray? required = null, Corvus.Json.JsonSchema.Draft202012.Validation.DependentRequiredValue? dependentRequired = null, Corvus.Json.JsonString? title = null, Corvus.Json.JsonString? description = null, Corvus.Json.JsonAny? @default = null, Corvus.Json.JsonSchema.Draft202012.MetaData.DeprecatedValue? deprecated = null, Corvus.Json.JsonSchema.Draft202012.MetaData.ReadOnlyValue? readOnly = null, Corvus.Json.JsonSchema.Draft202012.MetaData.WriteOnlyValue? writeOnly = null, Corvus.Json.JsonSchema.Draft202012.MetaData.JsonAnyArray? examples = null, Corvus.Json.JsonString? format = null, Corvus.Json.JsonString? contentEncoding = null, Corvus.Json.JsonString? contentMediaType = null, Corvus.Json.JsonSchema.Draft202012.Schema? contentSchema = null, Corvus.Json.JsonSchema.Draft202012.Schema.DefinitionsValue? definitions = null, Corvus.Json.JsonSchema.Draft202012.Schema.DependenciesValue? dependencies = null, Corvus.Json.JsonSchema.Draft202012.Core.AnchorStringValue? recursiveAnchor = null, Corvus.Json.JsonUriReference? recursiveRef = null)
@@ -3382,16 +3442,6 @@ public readonly partial struct Schema
     public Schema WithRecursiveRef(in Corvus.Json.JsonUriReference value)
     {
         return this.SetProperty(RecursiveRefJsonPropertyName, value);
-    }
-
-    private static ImmutableDictionary<JsonPropertyName, PropertyValidator<Schema>> CreateLocalPropertyValidators()
-    {
-        ImmutableDictionary<JsonPropertyName, PropertyValidator<Schema>>.Builder builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, PropertyValidator<Schema>>();
-        builder.Add(DefinitionsJsonPropertyName, __CorvusValidateDefinitions);
-        builder.Add(DependenciesJsonPropertyName, __CorvusValidateDependencies);
-        builder.Add(RecursiveAnchorJsonPropertyName, __CorvusValidateRecursiveAnchor);
-        builder.Add(RecursiveRefJsonPropertyName, __CorvusValidateRecursiveRef);
-        return builder.ToImmutable();
     }
 
     private static ValidationContext __CorvusValidateDefinitions(in Schema that, in ValidationContext validationContext, ValidationLevel level)

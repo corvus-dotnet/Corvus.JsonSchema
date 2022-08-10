@@ -8,6 +8,7 @@
 //------------------------------------------------------------------------------
 #nullable enable
 using System.Collections.Immutable;
+using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Corvus.Json;
@@ -30,8 +31,7 @@ public readonly partial struct Core
         int propertyCount = 0;
         foreach (JsonObjectProperty property in this.EnumerateObject())
         {
-            JsonPropertyName propertyName = property.Name;
-            if (__CorvusLocalProperties.TryGetValue(propertyName, out PropertyValidator<Core>? propertyValidator))
+            if (__TryGetCorvusLocalPropertiesValidator(property, this.HasJsonElementBacking, out PropertyValidator<Core>? propertyValidator))
             {
                 result = result.WithLocalProperty(propertyCount);
                 var propertyResult = propertyValidator(this, result.CreateChildContext(), level);

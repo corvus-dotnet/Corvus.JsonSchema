@@ -8,6 +8,7 @@
 //------------------------------------------------------------------------------
 #nullable enable
 using System.Collections.Immutable;
+using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Corvus.Json;
@@ -32,7 +33,6 @@ public readonly partial struct Validation
             int propertyCount = 0;
             foreach (JsonObjectProperty property in this.EnumerateObject())
             {
-                JsonPropertyName propertyName = property.Name;
                 if (!result.HasEvaluatedLocalProperty(propertyCount))
                 {
                     result = property.ValueAs<Corvus.Json.JsonSchema.Draft201909.Validation.JsonStringArray>().Validate(result, level);

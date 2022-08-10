@@ -8,6 +8,7 @@
 //------------------------------------------------------------------------------
 #nullable enable
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
@@ -19,7 +20,6 @@ namespace Corvus.Json.JsonSchema.Draft202012;
 /// </summary>
 public readonly partial struct FormatAnnotation
 {
-    private static readonly ImmutableDictionary<JsonPropertyName, PropertyValidator<FormatAnnotation>> __CorvusLocalProperties = CreateLocalPropertyValidators();
     /// <summary>
     /// JSON property name for <see cref = "Format"/>.
     /// </summary>
@@ -61,6 +61,36 @@ public readonly partial struct FormatAnnotation
     }
 
     /// <summary>
+    /// Tries to get the validator for the given property.
+    /// </summary>
+    /// <param name = "property">The property for which to get the validator.</param>
+    /// <param name = "hasJsonElementBacking"><c>True</c> if the object containing the property has a JsonElement backing.</param>
+    /// <param name = "propertyValidator">The validator for the property, if provided by this schema.</param>
+    /// <returns><c>True</c> if the validator was found.</returns>
+    public bool __TryGetCorvusLocalPropertiesValidator(in JsonObjectProperty property, bool hasJsonElementBacking, [NotNullWhen(true)] out PropertyValidator<FormatAnnotation>? propertyValidator)
+    {
+        if (hasJsonElementBacking)
+        {
+            if (property.NameEquals(FormatUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateFormat;
+                return true;
+            }
+        }
+        else
+        {
+            if (property.NameEquals(FormatJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateFormat;
+                return true;
+            }
+        }
+
+        propertyValidator = null;
+        return false;
+    }
+
+    /// <summary>
     /// Creates an instance of a <see cref = "FormatAnnotation"/>.
     /// </summary>
     public static FormatAnnotation Create(Corvus.Json.JsonString? format = null)
@@ -82,13 +112,6 @@ public readonly partial struct FormatAnnotation
     public FormatAnnotation WithFormat(in Corvus.Json.JsonString value)
     {
         return this.SetProperty(FormatJsonPropertyName, value);
-    }
-
-    private static ImmutableDictionary<JsonPropertyName, PropertyValidator<FormatAnnotation>> CreateLocalPropertyValidators()
-    {
-        ImmutableDictionary<JsonPropertyName, PropertyValidator<FormatAnnotation>>.Builder builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, PropertyValidator<FormatAnnotation>>();
-        builder.Add(FormatJsonPropertyName, __CorvusValidateFormat);
-        return builder.ToImmutable();
     }
 
     private static ValidationContext __CorvusValidateFormat(in FormatAnnotation that, in ValidationContext validationContext, ValidationLevel level)

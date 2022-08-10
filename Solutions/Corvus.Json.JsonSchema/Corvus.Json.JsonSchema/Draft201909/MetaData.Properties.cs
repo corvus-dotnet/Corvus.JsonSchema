@@ -8,6 +8,7 @@
 //------------------------------------------------------------------------------
 #nullable enable
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
@@ -19,7 +20,6 @@ namespace Corvus.Json.JsonSchema.Draft201909;
 /// </summary>
 public readonly partial struct MetaData
 {
-    private static readonly ImmutableDictionary<JsonPropertyName, PropertyValidator<MetaData>> __CorvusLocalProperties = CreateLocalPropertyValidators();
     /// <summary>
     /// JSON property name for <see cref = "Title"/>.
     /// </summary>
@@ -301,6 +301,96 @@ public readonly partial struct MetaData
     }
 
     /// <summary>
+    /// Tries to get the validator for the given property.
+    /// </summary>
+    /// <param name = "property">The property for which to get the validator.</param>
+    /// <param name = "hasJsonElementBacking"><c>True</c> if the object containing the property has a JsonElement backing.</param>
+    /// <param name = "propertyValidator">The validator for the property, if provided by this schema.</param>
+    /// <returns><c>True</c> if the validator was found.</returns>
+    public bool __TryGetCorvusLocalPropertiesValidator(in JsonObjectProperty property, bool hasJsonElementBacking, [NotNullWhen(true)] out PropertyValidator<MetaData>? propertyValidator)
+    {
+        if (hasJsonElementBacking)
+        {
+            if (property.NameEquals(TitleUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateTitle;
+                return true;
+            }
+            else if (property.NameEquals(DescriptionUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateDescription;
+                return true;
+            }
+            else if (property.NameEquals(DefaultUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateDefault;
+                return true;
+            }
+            else if (property.NameEquals(DeprecatedUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateDeprecated;
+                return true;
+            }
+            else if (property.NameEquals(ReadOnlyUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateReadOnly;
+                return true;
+            }
+            else if (property.NameEquals(WriteOnlyUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateWriteOnly;
+                return true;
+            }
+            else if (property.NameEquals(ExamplesUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateExamples;
+                return true;
+            }
+        }
+        else
+        {
+            if (property.NameEquals(TitleJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateTitle;
+                return true;
+            }
+            else if (property.NameEquals(DescriptionJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateDescription;
+                return true;
+            }
+            else if (property.NameEquals(DefaultJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateDefault;
+                return true;
+            }
+            else if (property.NameEquals(DeprecatedJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateDeprecated;
+                return true;
+            }
+            else if (property.NameEquals(ReadOnlyJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateReadOnly;
+                return true;
+            }
+            else if (property.NameEquals(WriteOnlyJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateWriteOnly;
+                return true;
+            }
+            else if (property.NameEquals(ExamplesJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateExamples;
+                return true;
+            }
+        }
+
+        propertyValidator = null;
+        return false;
+    }
+
+    /// <summary>
     /// Creates an instance of a <see cref = "MetaData"/>.
     /// </summary>
     public static MetaData Create(Corvus.Json.JsonString? title = null, Corvus.Json.JsonString? description = null, Corvus.Json.JsonAny? @default = null, Corvus.Json.JsonSchema.Draft201909.MetaData.DeprecatedValue? deprecated = null, Corvus.Json.JsonSchema.Draft201909.MetaData.ReadOnlyValue? readOnly = null, Corvus.Json.JsonSchema.Draft201909.MetaData.WriteOnlyValue? writeOnly = null, Corvus.Json.JsonSchema.Draft201909.MetaData.JsonAnyArray? examples = null)
@@ -412,19 +502,6 @@ public readonly partial struct MetaData
     public MetaData WithExamples(in Corvus.Json.JsonSchema.Draft201909.MetaData.JsonAnyArray value)
     {
         return this.SetProperty(ExamplesJsonPropertyName, value);
-    }
-
-    private static ImmutableDictionary<JsonPropertyName, PropertyValidator<MetaData>> CreateLocalPropertyValidators()
-    {
-        ImmutableDictionary<JsonPropertyName, PropertyValidator<MetaData>>.Builder builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, PropertyValidator<MetaData>>();
-        builder.Add(TitleJsonPropertyName, __CorvusValidateTitle);
-        builder.Add(DescriptionJsonPropertyName, __CorvusValidateDescription);
-        builder.Add(DefaultJsonPropertyName, __CorvusValidateDefault);
-        builder.Add(DeprecatedJsonPropertyName, __CorvusValidateDeprecated);
-        builder.Add(ReadOnlyJsonPropertyName, __CorvusValidateReadOnly);
-        builder.Add(WriteOnlyJsonPropertyName, __CorvusValidateWriteOnly);
-        builder.Add(ExamplesJsonPropertyName, __CorvusValidateExamples);
-        return builder.ToImmutable();
     }
 
     private static ValidationContext __CorvusValidateTitle(in MetaData that, in ValidationContext validationContext, ValidationLevel level)

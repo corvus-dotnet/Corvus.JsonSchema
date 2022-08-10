@@ -8,6 +8,7 @@
 //------------------------------------------------------------------------------
 #nullable enable
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
@@ -19,7 +20,6 @@ namespace Corvus.Json.JsonSchema.Draft201909;
 /// </summary>
 public readonly partial struct Content
 {
-    private static readonly ImmutableDictionary<JsonPropertyName, PropertyValidator<Content>> __CorvusLocalProperties = CreateLocalPropertyValidators();
     /// <summary>
     /// JSON property name for <see cref = "ContentMediaType"/>.
     /// </summary>
@@ -141,6 +141,56 @@ public readonly partial struct Content
     }
 
     /// <summary>
+    /// Tries to get the validator for the given property.
+    /// </summary>
+    /// <param name = "property">The property for which to get the validator.</param>
+    /// <param name = "hasJsonElementBacking"><c>True</c> if the object containing the property has a JsonElement backing.</param>
+    /// <param name = "propertyValidator">The validator for the property, if provided by this schema.</param>
+    /// <returns><c>True</c> if the validator was found.</returns>
+    public bool __TryGetCorvusLocalPropertiesValidator(in JsonObjectProperty property, bool hasJsonElementBacking, [NotNullWhen(true)] out PropertyValidator<Content>? propertyValidator)
+    {
+        if (hasJsonElementBacking)
+        {
+            if (property.NameEquals(ContentMediaTypeUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateContentMediaType;
+                return true;
+            }
+            else if (property.NameEquals(ContentEncodingUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateContentEncoding;
+                return true;
+            }
+            else if (property.NameEquals(ContentSchemaUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateContentSchema;
+                return true;
+            }
+        }
+        else
+        {
+            if (property.NameEquals(ContentMediaTypeJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateContentMediaType;
+                return true;
+            }
+            else if (property.NameEquals(ContentEncodingJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateContentEncoding;
+                return true;
+            }
+            else if (property.NameEquals(ContentSchemaJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateContentSchema;
+                return true;
+            }
+        }
+
+        propertyValidator = null;
+        return false;
+    }
+
+    /// <summary>
     /// Creates an instance of a <see cref = "Content"/>.
     /// </summary>
     public static Content Create(Corvus.Json.JsonString? contentMediaType = null, Corvus.Json.JsonString? contentEncoding = null, Corvus.Json.JsonSchema.Draft201909.Schema? contentSchema = null)
@@ -192,15 +242,6 @@ public readonly partial struct Content
     public Content WithContentSchema(in Corvus.Json.JsonSchema.Draft201909.Schema value)
     {
         return this.SetProperty(ContentSchemaJsonPropertyName, value);
-    }
-
-    private static ImmutableDictionary<JsonPropertyName, PropertyValidator<Content>> CreateLocalPropertyValidators()
-    {
-        ImmutableDictionary<JsonPropertyName, PropertyValidator<Content>>.Builder builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, PropertyValidator<Content>>();
-        builder.Add(ContentMediaTypeJsonPropertyName, __CorvusValidateContentMediaType);
-        builder.Add(ContentEncodingJsonPropertyName, __CorvusValidateContentEncoding);
-        builder.Add(ContentSchemaJsonPropertyName, __CorvusValidateContentSchema);
-        return builder.ToImmutable();
     }
 
     private static ValidationContext __CorvusValidateContentMediaType(in Content that, in ValidationContext validationContext, ValidationLevel level)

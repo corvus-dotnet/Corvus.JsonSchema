@@ -19,6 +19,7 @@
 #nullable enable
 
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
@@ -88,7 +89,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     /// <param name="hasJsonElementBacking"><c>True</c> if the object containing the property has a JsonElement backing.</param>
     /// <param name="propertyValidator">The validator for the property, if provided by this schema.</param>
     /// <returns><c>True</c> if the validator was found.</returns>
-    public bool __TryGetCorvusLocalPropertiesValidator(in JsonObjectProperty property, bool hasJsonElementBacking, out PropertyValidator<<#= TypeDeclaration.DotnetTypeName #>>? propertyValidator)
+    public bool __TryGetCorvusLocalPropertiesValidator(in JsonObjectProperty property, bool hasJsonElementBacking, [NotNullWhen(true)] out PropertyValidator<<#= TypeDeclaration.DotnetTypeName #>>? propertyValidator)
     {
         if (hasJsonElementBacking)
         {
