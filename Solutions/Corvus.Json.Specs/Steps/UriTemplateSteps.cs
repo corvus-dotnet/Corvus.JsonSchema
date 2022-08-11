@@ -392,7 +392,7 @@ public class UriTemplateSteps
     {
         try
         {
-            var uriTemplate = new UriTemplate(template, parameters: this.scenarioContext.Get<ImmutableDictionary<string, JsonAny>>(VariablesKey));
+            var uriTemplate = new UriTemplate(template, createParameterRegex: false, parameters: this.scenarioContext.Get<ImmutableDictionary<string, JsonAny>>(VariablesKey));
             this.scenarioContext.Set(uriTemplate.Resolve(), ResultKey);
         }
         catch (Exception ex)
