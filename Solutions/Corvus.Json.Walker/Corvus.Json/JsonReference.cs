@@ -366,7 +366,7 @@ public readonly struct JsonReference : IEquatable<JsonReference>
             {
                 resultScheme = scheme;
                 resultAuthority = authority;
-                resultPath = RemoveDotSegments(ref path, in pathMemory);
+                resultPath = pathMemory.Span[..RemoveDotSegments(path, in pathMemory)];
                 resultQuery = query;
             }
             else
@@ -374,7 +374,7 @@ public readonly struct JsonReference : IEquatable<JsonReference>
                 if (authority.Length > 0)
                 {
                     resultAuthority = authority;
-                    resultPath = RemoveDotSegments(ref path, in pathMemory);
+                    resultPath = pathMemory.Span[..RemoveDotSegments(path, in pathMemory)];
                     resultQuery = query;
                 }
                 else
@@ -395,13 +395,13 @@ public readonly struct JsonReference : IEquatable<JsonReference>
                     {
                         if (path[0] == '/')
                         {
-                            resultPath = RemoveDotSegments(ref path, in pathMemory);
+                            resultPath = pathMemory.Span[..RemoveDotSegments(path, in pathMemory)];
                         }
                         else
                         {
-                            int mergedLength = Merge(baseReference.Path, ref path, baseReference.Authority.Length > 0, in pathMemory);
+                            int mergedLength = Merge(baseReference.Path, path, baseReference.Authority.Length > 0, in pathMemory);
                             ReadOnlySpan<char> mergedPaths = pathMemory[..mergedLength].Span;
-                            resultPath = RemoveDotSegments(ref mergedPaths, in pathMemory);
+                            resultPath = pathMemory.Span[..RemoveDotSegments(mergedPaths, in pathMemory)];
                         }
 
                         resultQuery = query;
@@ -424,7 +424,7 @@ public readonly struct JsonReference : IEquatable<JsonReference>
     }
 
     [SuppressMessage("StyleCop.CSharp.SpacingRules", "SA1009:Closing parenthesis should be spaced correctly", Justification = "Stylecop does not yet support ..")]
-    private static int Merge(ReadOnlySpan<char> basePath, ref ReadOnlySpan<char> path, bool baseHasAuthority, in Memory<char> pathMemory)
+    private static int Merge(ReadOnlySpan<char> basePath, ReadOnlySpan<char> path, bool baseHasAuthority, in Memory<char> pathMemory)
     {
         if (baseHasAuthority && basePath.Length == 0)
         {
@@ -445,7 +445,7 @@ public readonly struct JsonReference : IEquatable<JsonReference>
         return path.Length;
     }
 
-    private static ReadOnlySpan<char> RemoveDotSegments(ref ReadOnlySpan<char> path, in Memory<char> mergedPath)
+    private static int RemoveDotSegments(ReadOnlySpan<char> path, in Memory<char> mergedPath)
     {
         int readIndex = 0;
         int writeIndex = 0;
@@ -602,7 +602,7 @@ public readonly struct JsonReference : IEquatable<JsonReference>
             }
         }
 
-        return mergedPath[..writeIndex].Span;
+        return writeIndex;
 
         static void WritePath(ReadOnlySpan<char> path, Memory<char> mergedPath, ref int readIndex, ref int writeIndex, ref bool hasLeadingSlash)
         {
