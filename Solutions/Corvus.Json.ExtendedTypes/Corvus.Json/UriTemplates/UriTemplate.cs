@@ -21,8 +21,8 @@ public readonly struct UriTemplate
     private const string Op = "(?<op>[+#./;?&]?)";
     private const string Var = "(?<var>(?:(?<lvar>" + Varname + ")[*]?,?)*)";
     private const string Varspec = "(?<varspec>{" + Op + Var + "})";
-    private static readonly Regex FindParam = new(Varspec, RegexOptions.Compiled, TimeSpan.FromSeconds(1));
-    private static readonly Regex TemplateConversion = new(@"([^{]|^)\?", RegexOptions.Compiled, TimeSpan.FromSeconds(1));
+    private static readonly Regex FindParam = new(Varspec, RegexOptions.Compiled, TimeSpan.FromSeconds(2));
+    private static readonly Regex TemplateConversion = new(@"([^{]|^)\?", RegexOptions.Compiled, TimeSpan.FromSeconds(2));
 
     private static readonly Dictionary<char, OperatorInfo> Operators = new()
         {
@@ -75,7 +75,7 @@ public readonly struct UriTemplate
 
         if (createParameterRegex)
         {
-            this.parameterRegex = new Regex(CreateMatchingRegex(template), RegexOptions.Compiled, TimeSpan.FromSeconds(1));
+            this.parameterRegex = new Regex(CreateMatchingRegex(template), RegexOptions.Compiled, TimeSpan.FromSeconds(2));
         }
         else
         {
@@ -169,7 +169,7 @@ public readonly struct UriTemplate
     /// <returns>True if the parameters were successfully decomposed, otherwise false.</returns>
     public bool TryGetParameters(string uri, [NotNullWhen(true)] out ImmutableDictionary<string, JsonAny>? parameters)
     {
-        Regex regex = this.parameterRegex ?? new Regex(CreateMatchingRegex(this.template));
+        Regex regex = this.parameterRegex ?? new Regex(CreateMatchingRegex(this.template), RegexOptions.None, TimeSpan.FromSeconds(2));
         Match match = regex.Match(uri);
         if (match.Success)
         {
