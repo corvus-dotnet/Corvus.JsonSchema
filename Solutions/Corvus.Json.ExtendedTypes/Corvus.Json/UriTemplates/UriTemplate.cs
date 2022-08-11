@@ -16,7 +16,7 @@ namespace Corvus.Json.UriTemplates;
 /// A UriTemplate conforming to http://tools.ietf.org/html/rfc6570.
 /// </summary>
 public readonly struct UriTemplate
-{   
+{
     private const string Varname = "[a-zA-Z0-9_]*";
     private const string Op = "(?<op>[+#./;?&]?)";
     private const string Var = "(?<var>(?:(?<lvar>" + Varname + ")[*]?,?)*)";
