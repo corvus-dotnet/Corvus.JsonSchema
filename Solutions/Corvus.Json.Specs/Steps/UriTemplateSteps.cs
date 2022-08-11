@@ -422,7 +422,7 @@ public class UriTemplateSteps
             }
         }
 
-        Assert.False(this.scenarioContext.ContainsKey(ExceptionKey), $"The scenario contains an exception:\r\n{this.scenarioContext.Get<Exception>(ExceptionKey)}");
+        Assert.False(this.scenarioContext.ContainsKey(ExceptionKey), this.scenarioContext.ContainsKey(ExceptionKey) ? $"The scenario contains an exception:\r\n{this.scenarioContext.Get<Exception>(ExceptionKey)}" : "No error.");
         string actual = this.scenarioContext.Get<string>(ResultKey);
         foreach (string expected in array.EnumerateArray())
         {
