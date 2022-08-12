@@ -8,6 +8,7 @@
 //------------------------------------------------------------------------------
 #nullable enable
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
@@ -19,7 +20,6 @@ namespace Corvus.Json.Patch.SpecGenerator;
 /// </summary>
 public readonly partial struct ScenarioCommon
 {
-    private static readonly ImmutableDictionary<JsonPropertyName, PropertyValidator<ScenarioCommon>> __CorvusLocalProperties = CreateLocalPropertyValidators();
     /// <summary>
     /// JSON property name for <see cref = "Doc"/>.
     /// </summary>
@@ -141,6 +141,56 @@ public readonly partial struct ScenarioCommon
     }
 
     /// <summary>
+    /// Tries to get the validator for the given property.
+    /// </summary>
+    /// <param name = "property">The property for which to get the validator.</param>
+    /// <param name = "hasJsonElementBacking"><c>True</c> if the object containing the property has a JsonElement backing.</param>
+    /// <param name = "propertyValidator">The validator for the property, if provided by this schema.</param>
+    /// <returns><c>True</c> if the validator was found.</returns>
+    public bool __TryGetCorvusLocalPropertiesValidator(in JsonObjectProperty property, bool hasJsonElementBacking, [NotNullWhen(true)] out ObjectPropertyValidator? propertyValidator)
+    {
+        if (hasJsonElementBacking)
+        {
+            if (property.NameEquals(DocUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateDoc;
+                return true;
+            }
+            else if (property.NameEquals(PatchUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidatePatch;
+                return true;
+            }
+            else if (property.NameEquals(CommentUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateComment;
+                return true;
+            }
+        }
+        else
+        {
+            if (property.NameEquals(DocJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateDoc;
+                return true;
+            }
+            else if (property.NameEquals(PatchJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidatePatch;
+                return true;
+            }
+            else if (property.NameEquals(CommentJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateComment;
+                return true;
+            }
+        }
+
+        propertyValidator = null;
+        return false;
+    }
+
+    /// <summary>
     /// Creates an instance of a <see cref = "ScenarioCommon"/>.
     /// </summary>
     public static ScenarioCommon Create(Corvus.Json.JsonAny doc, Corvus.Json.JsonAny patch, Corvus.Json.JsonString? comment = null)
@@ -186,30 +236,18 @@ public readonly partial struct ScenarioCommon
         return this.SetProperty(CommentJsonPropertyName, value);
     }
 
-    private static ImmutableDictionary<JsonPropertyName, PropertyValidator<ScenarioCommon>> CreateLocalPropertyValidators()
+    private static ValidationContext __CorvusValidateDoc(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        ImmutableDictionary<JsonPropertyName, PropertyValidator<ScenarioCommon>>.Builder builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, PropertyValidator<ScenarioCommon>>();
-        builder.Add(DocJsonPropertyName, __CorvusValidateDoc);
-        builder.Add(PatchJsonPropertyName, __CorvusValidatePatch);
-        builder.Add(CommentJsonPropertyName, __CorvusValidateComment);
-        return builder.ToImmutable();
+        return property.ValueAs<Corvus.Json.JsonAny>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateDoc(in ScenarioCommon that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidatePatch(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonAny property = that.Doc;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonAny>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidatePatch(in ScenarioCommon that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateComment(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonAny property = that.Patch;
-        return property.Validate(validationContext, level);
-    }
-
-    private static ValidationContext __CorvusValidateComment(in ScenarioCommon that, in ValidationContext validationContext, ValidationLevel level)
-    {
-        Corvus.Json.JsonString property = that.Comment;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonString>().Validate(validationContext, level);
     }
 }

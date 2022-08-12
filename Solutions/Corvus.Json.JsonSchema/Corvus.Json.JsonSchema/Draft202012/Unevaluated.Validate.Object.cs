@@ -31,10 +31,10 @@ public readonly partial struct Unevaluated
         int propertyCount = 0;
         foreach (JsonObjectProperty property in this.EnumerateObject())
         {
-            if (__TryGetCorvusLocalPropertiesValidator(property, this.HasJsonElementBacking, out PropertyValidator<Unevaluated>? propertyValidator))
+            if (__TryGetCorvusLocalPropertiesValidator(property, this.HasJsonElementBacking, out ObjectPropertyValidator? propertyValidator))
             {
                 result = result.WithLocalProperty(propertyCount);
-                var propertyResult = propertyValidator(this, result.CreateChildContext(), level);
+                var propertyResult = propertyValidator(property, result.CreateChildContext(), level);
                 result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
                 if (level == ValidationLevel.Flag && !result.IsValid)
                 {

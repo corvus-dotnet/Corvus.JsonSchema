@@ -147,7 +147,7 @@ public readonly partial struct Content
     /// <param name = "hasJsonElementBacking"><c>True</c> if the object containing the property has a JsonElement backing.</param>
     /// <param name = "propertyValidator">The validator for the property, if provided by this schema.</param>
     /// <returns><c>True</c> if the validator was found.</returns>
-    public bool __TryGetCorvusLocalPropertiesValidator(in JsonObjectProperty property, bool hasJsonElementBacking, [NotNullWhen(true)] out PropertyValidator<Content>? propertyValidator)
+    public bool __TryGetCorvusLocalPropertiesValidator(in JsonObjectProperty property, bool hasJsonElementBacking, [NotNullWhen(true)] out ObjectPropertyValidator? propertyValidator)
     {
         if (hasJsonElementBacking)
         {
@@ -244,21 +244,18 @@ public readonly partial struct Content
         return this.SetProperty(ContentSchemaJsonPropertyName, value);
     }
 
-    private static ValidationContext __CorvusValidateContentEncoding(in Content that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateContentEncoding(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonString property = that.ContentEncoding;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonString>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateContentMediaType(in Content that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateContentMediaType(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonString property = that.ContentMediaType;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonString>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateContentSchema(in Content that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateContentSchema(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonSchema.Draft202012.Schema property = that.ContentSchema;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft202012.Schema>().Validate(validationContext, level);
     }
 }

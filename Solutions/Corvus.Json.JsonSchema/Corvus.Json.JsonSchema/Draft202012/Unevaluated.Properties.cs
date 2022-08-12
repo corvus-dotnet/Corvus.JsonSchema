@@ -107,7 +107,7 @@ public readonly partial struct Unevaluated
     /// <param name = "hasJsonElementBacking"><c>True</c> if the object containing the property has a JsonElement backing.</param>
     /// <param name = "propertyValidator">The validator for the property, if provided by this schema.</param>
     /// <returns><c>True</c> if the validator was found.</returns>
-    public bool __TryGetCorvusLocalPropertiesValidator(in JsonObjectProperty property, bool hasJsonElementBacking, [NotNullWhen(true)] out PropertyValidator<Unevaluated>? propertyValidator)
+    public bool __TryGetCorvusLocalPropertiesValidator(in JsonObjectProperty property, bool hasJsonElementBacking, [NotNullWhen(true)] out ObjectPropertyValidator? propertyValidator)
     {
         if (hasJsonElementBacking)
         {
@@ -179,15 +179,13 @@ public readonly partial struct Unevaluated
         return this.SetProperty(UnevaluatedPropertiesJsonPropertyName, value);
     }
 
-    private static ValidationContext __CorvusValidateUnevaluatedItems(in Unevaluated that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateUnevaluatedItems(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonSchema.Draft202012.Schema property = that.UnevaluatedItems;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft202012.Schema>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateUnevaluatedProperties(in Unevaluated that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateUnevaluatedProperties(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonSchema.Draft202012.Schema property = that.UnevaluatedProperties;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft202012.Schema>().Validate(validationContext, level);
     }
 }

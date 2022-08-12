@@ -8,6 +8,7 @@
 //------------------------------------------------------------------------------
 #nullable enable
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
@@ -19,7 +20,6 @@ namespace Corvus.Json.Patch.SpecGenerator;
 /// </summary>
 public readonly partial struct ScenarioWithResult
 {
-    private static readonly ImmutableDictionary<JsonPropertyName, PropertyValidator<ScenarioWithResult>> __CorvusLocalProperties = CreateLocalPropertyValidators();
     /// <summary>
     /// JSON property name for <see cref = "Expected"/>.
     /// </summary>
@@ -221,6 +221,36 @@ public readonly partial struct ScenarioWithResult
     }
 
     /// <summary>
+    /// Tries to get the validator for the given property.
+    /// </summary>
+    /// <param name = "property">The property for which to get the validator.</param>
+    /// <param name = "hasJsonElementBacking"><c>True</c> if the object containing the property has a JsonElement backing.</param>
+    /// <param name = "propertyValidator">The validator for the property, if provided by this schema.</param>
+    /// <returns><c>True</c> if the validator was found.</returns>
+    public bool __TryGetCorvusLocalPropertiesValidator(in JsonObjectProperty property, bool hasJsonElementBacking, [NotNullWhen(true)] out ObjectPropertyValidator? propertyValidator)
+    {
+        if (hasJsonElementBacking)
+        {
+            if (property.NameEquals(ExpectedUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateExpected;
+                return true;
+            }
+        }
+        else
+        {
+            if (property.NameEquals(ExpectedJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateExpected;
+                return true;
+            }
+        }
+
+        propertyValidator = null;
+        return false;
+    }
+
+    /// <summary>
     /// Creates an instance of a <see cref = "ScenarioWithResult"/>.
     /// </summary>
     public static ScenarioWithResult Create(Corvus.Json.JsonAny expected, Corvus.Json.JsonAny doc, Corvus.Json.JsonAny patch, Corvus.Json.JsonString? comment = null, Corvus.Json.JsonNotAny? disabled = null)
@@ -292,16 +322,8 @@ public readonly partial struct ScenarioWithResult
         return this.SetProperty(DisabledJsonPropertyName, value);
     }
 
-    private static ImmutableDictionary<JsonPropertyName, PropertyValidator<ScenarioWithResult>> CreateLocalPropertyValidators()
+    private static ValidationContext __CorvusValidateExpected(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        ImmutableDictionary<JsonPropertyName, PropertyValidator<ScenarioWithResult>>.Builder builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, PropertyValidator<ScenarioWithResult>>();
-        builder.Add(ExpectedJsonPropertyName, __CorvusValidateExpected);
-        return builder.ToImmutable();
-    }
-
-    private static ValidationContext __CorvusValidateExpected(in ScenarioWithResult that, in ValidationContext validationContext, ValidationLevel level)
-    {
-        Corvus.Json.JsonAny property = that.Expected;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonAny>().Validate(validationContext, level);
     }
 }

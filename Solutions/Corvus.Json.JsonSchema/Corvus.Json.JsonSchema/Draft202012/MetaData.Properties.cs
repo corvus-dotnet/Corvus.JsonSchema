@@ -307,7 +307,7 @@ public readonly partial struct MetaData
     /// <param name = "hasJsonElementBacking"><c>True</c> if the object containing the property has a JsonElement backing.</param>
     /// <param name = "propertyValidator">The validator for the property, if provided by this schema.</param>
     /// <returns><c>True</c> if the validator was found.</returns>
-    public bool __TryGetCorvusLocalPropertiesValidator(in JsonObjectProperty property, bool hasJsonElementBacking, [NotNullWhen(true)] out PropertyValidator<MetaData>? propertyValidator)
+    public bool __TryGetCorvusLocalPropertiesValidator(in JsonObjectProperty property, bool hasJsonElementBacking, [NotNullWhen(true)] out ObjectPropertyValidator? propertyValidator)
     {
         if (hasJsonElementBacking)
         {
@@ -504,45 +504,38 @@ public readonly partial struct MetaData
         return this.SetProperty(ExamplesJsonPropertyName, value);
     }
 
-    private static ValidationContext __CorvusValidateTitle(in MetaData that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateTitle(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonString property = that.Title;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonString>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateDescription(in MetaData that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateDescription(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonString property = that.Description;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonString>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateDefault(in MetaData that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateDefault(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonAny property = that.Default;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonAny>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateDeprecated(in MetaData that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateDeprecated(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonSchema.Draft202012.MetaData.DeprecatedValue property = that.Deprecated;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft202012.MetaData.DeprecatedValue>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateReadOnly(in MetaData that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateReadOnly(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonSchema.Draft202012.MetaData.ReadOnlyValue property = that.ReadOnly;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft202012.MetaData.ReadOnlyValue>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateWriteOnly(in MetaData that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateWriteOnly(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonSchema.Draft202012.MetaData.WriteOnlyValue property = that.WriteOnly;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft202012.MetaData.WriteOnlyValue>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateExamples(in MetaData that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateExamples(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonSchema.Draft202012.MetaData.JsonAnyArray property = that.Examples;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft202012.MetaData.JsonAnyArray>().Validate(validationContext, level);
     }
 }

@@ -8,6 +8,7 @@
 //------------------------------------------------------------------------------
 #nullable enable
 using System.Collections.Immutable;
+using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Corvus.Json;
@@ -32,22 +33,21 @@ public readonly partial struct ScenarioCommon
         bool foundPatch = false;
         foreach (JsonObjectProperty property in this.EnumerateObject())
         {
-            JsonPropertyName propertyName = property.Name;
-            if (__CorvusLocalProperties.TryGetValue(propertyName, out PropertyValidator<ScenarioCommon>? propertyValidator))
+            if (__TryGetCorvusLocalPropertiesValidator(property, this.HasJsonElementBacking, out ObjectPropertyValidator? propertyValidator))
             {
                 result = result.WithLocalProperty(propertyCount);
-                var propertyResult = propertyValidator(this, result.CreateChildContext(), level);
+                var propertyResult = propertyValidator(property, result.CreateChildContext(), level);
                 result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
                 if (level == ValidationLevel.Flag && !result.IsValid)
                 {
                     return result;
                 }
 
-                if (DocJsonPropertyName.Equals(propertyName))
+                if ((this.HasJsonElementBacking && property.NameEquals(DocUtf8JsonPropertyName.Span)) || (!this.HasJsonElementBacking && property.NameEquals(DocJsonPropertyName)))
                 {
                     foundDoc = true;
                 }
-                else if (PatchJsonPropertyName.Equals(propertyName))
+                else if ((this.HasJsonElementBacking && property.NameEquals(PatchUtf8JsonPropertyName.Span)) || (!this.HasJsonElementBacking && property.NameEquals(PatchJsonPropertyName)))
                 {
                     foundPatch = true;
                 }

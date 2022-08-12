@@ -8,6 +8,7 @@
 //------------------------------------------------------------------------------
 #nullable enable
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
@@ -19,7 +20,6 @@ namespace Corvus.Json.Patch.SpecGenerator;
 /// </summary>
 public readonly partial struct DisabledScenario
 {
-    private static readonly ImmutableDictionary<JsonPropertyName, PropertyValidator<DisabledScenario>> __CorvusLocalProperties = CreateLocalPropertyValidators();
     /// <summary>
     /// JSON property name for <see cref = "Disabled"/>.
     /// </summary>
@@ -181,6 +181,36 @@ public readonly partial struct DisabledScenario
     }
 
     /// <summary>
+    /// Tries to get the validator for the given property.
+    /// </summary>
+    /// <param name = "property">The property for which to get the validator.</param>
+    /// <param name = "hasJsonElementBacking"><c>True</c> if the object containing the property has a JsonElement backing.</param>
+    /// <param name = "propertyValidator">The validator for the property, if provided by this schema.</param>
+    /// <returns><c>True</c> if the validator was found.</returns>
+    public bool __TryGetCorvusLocalPropertiesValidator(in JsonObjectProperty property, bool hasJsonElementBacking, [NotNullWhen(true)] out ObjectPropertyValidator? propertyValidator)
+    {
+        if (hasJsonElementBacking)
+        {
+            if (property.NameEquals(DisabledUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateDisabled;
+                return true;
+            }
+        }
+        else
+        {
+            if (property.NameEquals(DisabledJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateDisabled;
+                return true;
+            }
+        }
+
+        propertyValidator = null;
+        return false;
+    }
+
+    /// <summary>
     /// Creates an instance of a <see cref = "DisabledScenario"/>.
     /// </summary>
     public static DisabledScenario Create(Corvus.Json.JsonAny disabled, Corvus.Json.JsonAny doc, Corvus.Json.JsonAny patch, Corvus.Json.JsonString? comment = null)
@@ -237,16 +267,8 @@ public readonly partial struct DisabledScenario
         return this.SetProperty(CommentJsonPropertyName, value);
     }
 
-    private static ImmutableDictionary<JsonPropertyName, PropertyValidator<DisabledScenario>> CreateLocalPropertyValidators()
+    private static ValidationContext __CorvusValidateDisabled(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        ImmutableDictionary<JsonPropertyName, PropertyValidator<DisabledScenario>>.Builder builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, PropertyValidator<DisabledScenario>>();
-        builder.Add(DisabledJsonPropertyName, __CorvusValidateDisabled);
-        return builder.ToImmutable();
-    }
-
-    private static ValidationContext __CorvusValidateDisabled(in DisabledScenario that, in ValidationContext validationContext, ValidationLevel level)
-    {
-        Corvus.Json.JsonAny property = that.Disabled;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonAny>().Validate(validationContext, level);
     }
 }

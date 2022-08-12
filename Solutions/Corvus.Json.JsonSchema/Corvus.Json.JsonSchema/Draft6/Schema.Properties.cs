@@ -1547,7 +1547,7 @@ public readonly partial struct Schema
     /// <param name = "hasJsonElementBacking"><c>True</c> if the object containing the property has a JsonElement backing.</param>
     /// <param name = "propertyValidator">The validator for the property, if provided by this schema.</param>
     /// <returns><c>True</c> if the validator was found.</returns>
-    public bool __TryGetCorvusLocalPropertiesValidator(in JsonObjectProperty property, bool hasJsonElementBacking, [NotNullWhen(true)] out PropertyValidator<Schema>? propertyValidator)
+    public bool __TryGetCorvusLocalPropertiesValidator(in JsonObjectProperty property, bool hasJsonElementBacking, [NotNullWhen(true)] out ObjectPropertyValidator? propertyValidator)
     {
         if (hasJsonElementBacking)
         {
@@ -2519,231 +2519,193 @@ public readonly partial struct Schema
         return this.SetProperty(NotJsonPropertyName, value);
     }
 
-    private static ValidationContext __CorvusValidateId(in Schema that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateId(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonUriReference property = that.Id;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonUriReference>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateSchema1(in Schema that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateSchema1(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonUri property = that.Schema1;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonUri>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateRef(in Schema that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateRef(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonUriReference property = that.Ref;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonUriReference>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateTitle(in Schema that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateTitle(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonString property = that.Title;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonString>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateDescription(in Schema that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateDescription(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonString property = that.Description;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonString>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateDefault(in Schema that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateDefault(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonAny property = that.Default;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonAny>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateExamples(in Schema that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateExamples(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonSchema.Draft6.Schema.JsonAnyArray property = that.Examples;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft6.Schema.JsonAnyArray>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateMultipleOf(in Schema that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateMultipleOf(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonSchema.Draft6.Schema.MultipleOfValue property = that.MultipleOf;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft6.Schema.MultipleOfValue>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateMaximum(in Schema that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateMaximum(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonNumber property = that.Maximum;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonNumber>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateExclusiveMaximum(in Schema that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateExclusiveMaximum(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonNumber property = that.ExclusiveMaximum;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonNumber>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateMinimum(in Schema that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateMinimum(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonNumber property = that.Minimum;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonNumber>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateExclusiveMinimum(in Schema that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateExclusiveMinimum(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonNumber property = that.ExclusiveMinimum;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonNumber>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateMaxLength(in Schema that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateMaxLength(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonSchema.Draft6.Schema.NonNegativeIntegerValue property = that.MaxLength;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft6.Schema.NonNegativeIntegerValue>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateMinLength(in Schema that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateMinLength(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonSchema.Draft6.Schema.NonNegativeIntegerDefault0Entity property = that.MinLength;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft6.Schema.NonNegativeIntegerDefault0Entity>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidatePattern(in Schema that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidatePattern(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonRegex property = that.Pattern;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonRegex>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateAdditionalItems(in Schema that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateAdditionalItems(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonSchema.Draft6.Schema property = that.AdditionalItems;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft6.Schema>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateItems(in Schema that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateItems(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonSchema.Draft6.Schema.PropertiesEntity property = that.Items;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft6.Schema.PropertiesEntity>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateMaxItems(in Schema that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateMaxItems(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonSchema.Draft6.Schema.NonNegativeIntegerValue property = that.MaxItems;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft6.Schema.NonNegativeIntegerValue>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateMinItems(in Schema that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateMinItems(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonSchema.Draft6.Schema.NonNegativeIntegerDefault0Entity property = that.MinItems;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft6.Schema.NonNegativeIntegerDefault0Entity>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateUniqueItems(in Schema that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateUniqueItems(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonSchema.Draft6.Schema.UniqueItemsValue property = that.UniqueItems;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft6.Schema.UniqueItemsValue>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateContains(in Schema that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateContains(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonSchema.Draft6.Schema property = that.Contains;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft6.Schema>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateMaxProperties(in Schema that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateMaxProperties(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonSchema.Draft6.Schema.NonNegativeIntegerValue property = that.MaxProperties;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft6.Schema.NonNegativeIntegerValue>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateMinProperties(in Schema that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateMinProperties(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonSchema.Draft6.Schema.NonNegativeIntegerDefault0Entity property = that.MinProperties;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft6.Schema.NonNegativeIntegerDefault0Entity>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateRequired(in Schema that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateRequired(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonSchema.Draft6.Schema.JsonStringArray property = that.Required;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft6.Schema.JsonStringArray>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateAdditionalProperties(in Schema that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateAdditionalProperties(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonSchema.Draft6.Schema property = that.AdditionalProperties;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft6.Schema>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateDefinitions(in Schema that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateDefinitions(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonSchema.Draft6.Schema.DefinitionsValue property = that.Definitions;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft6.Schema.DefinitionsValue>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateProperties(in Schema that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateProperties(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonSchema.Draft6.Schema.PropertiesValue property = that.Properties;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft6.Schema.PropertiesValue>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidatePatternProperties(in Schema that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidatePatternProperties(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonSchema.Draft6.Schema.PatternPropertiesValue property = that.PatternProperties;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft6.Schema.PatternPropertiesValue>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateDependencies(in Schema that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateDependencies(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonSchema.Draft6.Schema.DependenciesValue property = that.Dependencies;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft6.Schema.DependenciesValue>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidatePropertyNames(in Schema that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidatePropertyNames(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonSchema.Draft6.Schema property = that.PropertyNames;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft6.Schema>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateConst(in Schema that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateConst(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonAny property = that.Const;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonAny>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateEnum(in Schema that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateEnum(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonSchema.Draft6.Schema.EnumArray property = that.Enum;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft6.Schema.EnumArray>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateType(in Schema that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateType(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonSchema.Draft6.Schema.TypeEntity property = that.Type;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft6.Schema.TypeEntity>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateFormat(in Schema that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateFormat(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonString property = that.Format;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonString>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateAllOf(in Schema that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateAllOf(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonSchema.Draft6.Schema.SchemaArray property = that.AllOf;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft6.Schema.SchemaArray>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateAnyOf(in Schema that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateAnyOf(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonSchema.Draft6.Schema.SchemaArray property = that.AnyOf;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft6.Schema.SchemaArray>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateOneOf(in Schema that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateOneOf(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonSchema.Draft6.Schema.SchemaArray property = that.OneOf;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft6.Schema.SchemaArray>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateNot(in Schema that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateNot(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonSchema.Draft6.Schema property = that.Not;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft6.Schema>().Validate(validationContext, level);
     }
 }

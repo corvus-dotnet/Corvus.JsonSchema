@@ -8,6 +8,7 @@
 //------------------------------------------------------------------------------
 #nullable enable
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
@@ -19,7 +20,6 @@ namespace Corvus.Json.Patch.Model;
 /// </summary>
 public readonly partial struct PatchOperation
 {
-    private static readonly ImmutableDictionary<JsonPropertyName, PropertyValidator<PatchOperation>> __CorvusLocalProperties = CreateLocalPropertyValidators();
     /// <summary>
     /// JSON property name for <see cref = "Path"/>.
     /// </summary>
@@ -101,6 +101,26 @@ public readonly partial struct PatchOperation
     }
 
     /// <summary>
+    /// Tries to get the validator for the given property.
+    /// </summary>
+    /// <param name = "property">The property for which to get the validator.</param>
+    /// <param name = "hasJsonElementBacking"><c>True</c> if the object containing the property has a JsonElement backing.</param>
+    /// <param name = "propertyValidator">The validator for the property, if provided by this schema.</param>
+    /// <returns><c>True</c> if the validator was found.</returns>
+    public bool __TryGetCorvusLocalPropertiesValidator(in JsonObjectProperty property, bool hasJsonElementBacking, [NotNullWhen(true)] out ObjectPropertyValidator? propertyValidator)
+    {
+        if (hasJsonElementBacking)
+        {
+        }
+        else
+        {
+        }
+
+        propertyValidator = null;
+        return false;
+    }
+
+    /// <summary>
     /// Creates an instance of a <see cref = "PatchOperation"/>.
     /// </summary>
     public static PatchOperation Create(Corvus.Json.JsonPointer path, Corvus.Json.JsonString op)
@@ -129,11 +149,5 @@ public readonly partial struct PatchOperation
     public PatchOperation WithOp(in Corvus.Json.JsonString value)
     {
         return this.SetProperty(OpJsonPropertyName, value);
-    }
-
-    private static ImmutableDictionary<JsonPropertyName, PropertyValidator<PatchOperation>> CreateLocalPropertyValidators()
-    {
-        ImmutableDictionary<JsonPropertyName, PropertyValidator<PatchOperation>>.Builder builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, PropertyValidator<PatchOperation>>();
-        return builder.ToImmutable();
     }
 }

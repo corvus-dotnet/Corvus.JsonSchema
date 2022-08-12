@@ -8,6 +8,7 @@
 //------------------------------------------------------------------------------
 #nullable enable
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
@@ -19,7 +20,6 @@ namespace Corvus.Json.Patch.SpecGenerator;
 /// </summary>
 public readonly partial struct Scenario
 {
-    private static readonly ImmutableDictionary<JsonPropertyName, PropertyValidator<Scenario>> __CorvusLocalProperties = CreateLocalPropertyValidators();
     /// <summary>
     /// JSON property name for <see cref = "Doc"/>.
     /// </summary>
@@ -141,6 +141,26 @@ public readonly partial struct Scenario
     }
 
     /// <summary>
+    /// Tries to get the validator for the given property.
+    /// </summary>
+    /// <param name = "property">The property for which to get the validator.</param>
+    /// <param name = "hasJsonElementBacking"><c>True</c> if the object containing the property has a JsonElement backing.</param>
+    /// <param name = "propertyValidator">The validator for the property, if provided by this schema.</param>
+    /// <returns><c>True</c> if the validator was found.</returns>
+    public bool __TryGetCorvusLocalPropertiesValidator(in JsonObjectProperty property, bool hasJsonElementBacking, [NotNullWhen(true)] out ObjectPropertyValidator? propertyValidator)
+    {
+        if (hasJsonElementBacking)
+        {
+        }
+        else
+        {
+        }
+
+        propertyValidator = null;
+        return false;
+    }
+
+    /// <summary>
     /// Creates an instance of a <see cref = "Scenario"/>.
     /// </summary>
     public static Scenario Create(Corvus.Json.JsonAny doc, Corvus.Json.JsonAny patch, Corvus.Json.JsonString? comment = null)
@@ -184,11 +204,5 @@ public readonly partial struct Scenario
     public Scenario WithComment(in Corvus.Json.JsonString value)
     {
         return this.SetProperty(CommentJsonPropertyName, value);
-    }
-
-    private static ImmutableDictionary<JsonPropertyName, PropertyValidator<Scenario>> CreateLocalPropertyValidators()
-    {
-        ImmutableDictionary<JsonPropertyName, PropertyValidator<Scenario>>.Builder builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, PropertyValidator<Scenario>>();
-        return builder.ToImmutable();
     }
 }

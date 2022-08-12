@@ -8,6 +8,7 @@
 //------------------------------------------------------------------------------
 #nullable enable
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
@@ -19,7 +20,6 @@ namespace Corvus.Json.Patch.Model;
 /// </summary>
 public readonly partial struct Add
 {
-    private static readonly ImmutableDictionary<JsonPropertyName, PropertyValidator<Add>> __CorvusLocalProperties = CreateLocalPropertyValidators();
     /// <summary>
     /// JSON property name for <see cref = "Value"/>.
     /// </summary>
@@ -141,6 +141,46 @@ public readonly partial struct Add
     }
 
     /// <summary>
+    /// Tries to get the validator for the given property.
+    /// </summary>
+    /// <param name = "property">The property for which to get the validator.</param>
+    /// <param name = "hasJsonElementBacking"><c>True</c> if the object containing the property has a JsonElement backing.</param>
+    /// <param name = "propertyValidator">The validator for the property, if provided by this schema.</param>
+    /// <returns><c>True</c> if the validator was found.</returns>
+    public bool __TryGetCorvusLocalPropertiesValidator(in JsonObjectProperty property, bool hasJsonElementBacking, [NotNullWhen(true)] out ObjectPropertyValidator? propertyValidator)
+    {
+        if (hasJsonElementBacking)
+        {
+            if (property.NameEquals(ValueUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateValue;
+                return true;
+            }
+            else if (property.NameEquals(OpUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateOp;
+                return true;
+            }
+        }
+        else
+        {
+            if (property.NameEquals(ValueJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateValue;
+                return true;
+            }
+            else if (property.NameEquals(OpJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateOp;
+                return true;
+            }
+        }
+
+        propertyValidator = null;
+        return false;
+    }
+
+    /// <summary>
     /// Creates an instance of a <see cref = "Add"/>.
     /// </summary>
     public static Add Create(Corvus.Json.JsonAny value, Corvus.Json.JsonPointer path)
@@ -172,23 +212,13 @@ public readonly partial struct Add
         return this.SetProperty(PathJsonPropertyName, value);
     }
 
-    private static ImmutableDictionary<JsonPropertyName, PropertyValidator<Add>> CreateLocalPropertyValidators()
+    private static ValidationContext __CorvusValidateValue(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        ImmutableDictionary<JsonPropertyName, PropertyValidator<Add>>.Builder builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, PropertyValidator<Add>>();
-        builder.Add(ValueJsonPropertyName, __CorvusValidateValue);
-        builder.Add(OpJsonPropertyName, __CorvusValidateOp);
-        return builder.ToImmutable();
+        return property.ValueAs<Corvus.Json.JsonAny>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateValue(in Add that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateOp(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonAny property = that.Value;
-        return property.Validate(validationContext, level);
-    }
-
-    private static ValidationContext __CorvusValidateOp(in Add that, in ValidationContext validationContext, ValidationLevel level)
-    {
-        Corvus.Json.Patch.Model.Add.OpEntity property = that.Op;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.Patch.Model.Add.OpEntity>().Validate(validationContext, level);
     }
 }

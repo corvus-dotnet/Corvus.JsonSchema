@@ -8,6 +8,7 @@
 //------------------------------------------------------------------------------
 #nullable enable
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
@@ -19,7 +20,6 @@ namespace Corvus.Json.Patch.Model;
 /// </summary>
 public readonly partial struct Remove
 {
-    private static readonly ImmutableDictionary<JsonPropertyName, PropertyValidator<Remove>> __CorvusLocalProperties = CreateLocalPropertyValidators();
     /// <summary>
     /// JSON property name for <see cref = "Path"/>.
     /// </summary>
@@ -101,6 +101,36 @@ public readonly partial struct Remove
     }
 
     /// <summary>
+    /// Tries to get the validator for the given property.
+    /// </summary>
+    /// <param name = "property">The property for which to get the validator.</param>
+    /// <param name = "hasJsonElementBacking"><c>True</c> if the object containing the property has a JsonElement backing.</param>
+    /// <param name = "propertyValidator">The validator for the property, if provided by this schema.</param>
+    /// <returns><c>True</c> if the validator was found.</returns>
+    public bool __TryGetCorvusLocalPropertiesValidator(in JsonObjectProperty property, bool hasJsonElementBacking, [NotNullWhen(true)] out ObjectPropertyValidator? propertyValidator)
+    {
+        if (hasJsonElementBacking)
+        {
+            if (property.NameEquals(OpUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateOp;
+                return true;
+            }
+        }
+        else
+        {
+            if (property.NameEquals(OpJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateOp;
+                return true;
+            }
+        }
+
+        propertyValidator = null;
+        return false;
+    }
+
+    /// <summary>
     /// Creates an instance of a <see cref = "Remove"/>.
     /// </summary>
     public static Remove Create(Corvus.Json.JsonPointer path)
@@ -121,16 +151,8 @@ public readonly partial struct Remove
         return this.SetProperty(PathJsonPropertyName, value);
     }
 
-    private static ImmutableDictionary<JsonPropertyName, PropertyValidator<Remove>> CreateLocalPropertyValidators()
+    private static ValidationContext __CorvusValidateOp(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        ImmutableDictionary<JsonPropertyName, PropertyValidator<Remove>>.Builder builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, PropertyValidator<Remove>>();
-        builder.Add(OpJsonPropertyName, __CorvusValidateOp);
-        return builder.ToImmutable();
-    }
-
-    private static ValidationContext __CorvusValidateOp(in Remove that, in ValidationContext validationContext, ValidationLevel level)
-    {
-        Corvus.Json.Patch.Model.Remove.OpEntity property = that.Op;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.Patch.Model.Remove.OpEntity>().Validate(validationContext, level);
     }
 }

@@ -2387,7 +2387,7 @@ public readonly partial struct Schema
     /// <param name = "hasJsonElementBacking"><c>True</c> if the object containing the property has a JsonElement backing.</param>
     /// <param name = "propertyValidator">The validator for the property, if provided by this schema.</param>
     /// <returns><c>True</c> if the validator was found.</returns>
-    public bool __TryGetCorvusLocalPropertiesValidator(in JsonObjectProperty property, bool hasJsonElementBacking, [NotNullWhen(true)] out PropertyValidator<Schema>? propertyValidator)
+    public bool __TryGetCorvusLocalPropertiesValidator(in JsonObjectProperty property, bool hasJsonElementBacking, [NotNullWhen(true)] out ObjectPropertyValidator? propertyValidator)
     {
         if (hasJsonElementBacking)
         {
@@ -3314,15 +3314,13 @@ public readonly partial struct Schema
         return this.SetProperty(DependenciesJsonPropertyName, value);
     }
 
-    private static ValidationContext __CorvusValidateDefinitions(in Schema that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateDefinitions(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonSchema.Draft201909.Schema.DefinitionsValue property = that.Definitions;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft201909.Schema.DefinitionsValue>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateDependencies(in Schema that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateDependencies(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonSchema.Draft201909.Schema.DependenciesValue property = that.Dependencies;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft201909.Schema.DependenciesValue>().Validate(validationContext, level);
     }
 }

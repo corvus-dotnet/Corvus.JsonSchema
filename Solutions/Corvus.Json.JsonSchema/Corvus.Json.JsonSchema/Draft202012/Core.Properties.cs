@@ -387,7 +387,7 @@ public readonly partial struct Core
     /// <param name = "hasJsonElementBacking"><c>True</c> if the object containing the property has a JsonElement backing.</param>
     /// <param name = "propertyValidator">The validator for the property, if provided by this schema.</param>
     /// <returns><c>True</c> if the validator was found.</returns>
-    public bool __TryGetCorvusLocalPropertiesValidator(in JsonObjectProperty property, bool hasJsonElementBacking, [NotNullWhen(true)] out PropertyValidator<Core>? propertyValidator)
+    public bool __TryGetCorvusLocalPropertiesValidator(in JsonObjectProperty property, bool hasJsonElementBacking, [NotNullWhen(true)] out ObjectPropertyValidator? propertyValidator)
     {
         if (hasJsonElementBacking)
         {
@@ -634,57 +634,48 @@ public readonly partial struct Core
         return this.SetProperty(DefsJsonPropertyName, value);
     }
 
-    private static ValidationContext __CorvusValidateId(in Core that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateId(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonSchema.Draft202012.Core.IdEntity property = that.Id;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft202012.Core.IdEntity>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateSchema(in Core that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateSchema(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonUri property = that.Schema;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonUri>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateRef(in Core that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateRef(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonUriReference property = that.Ref;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonUriReference>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateAnchor(in Core that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateAnchor(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonSchema.Draft202012.Core.AnchorStringValue property = that.Anchor;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft202012.Core.AnchorStringValue>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateDynamicRef(in Core that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateDynamicRef(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonUriReference property = that.DynamicRef;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonUriReference>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateDynamicAnchor(in Core that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateDynamicAnchor(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonSchema.Draft202012.Core.AnchorStringValue property = that.DynamicAnchor;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft202012.Core.AnchorStringValue>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateVocabulary(in Core that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateVocabulary(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonSchema.Draft202012.Core.VocabularyValue property = that.Vocabulary;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft202012.Core.VocabularyValue>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateComment(in Core that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateComment(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonString property = that.Comment;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonString>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateDefs(in Core that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateDefs(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonSchema.Draft202012.Core.DefsValue property = that.Defs;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft202012.Core.DefsValue>().Validate(validationContext, level);
     }
 }

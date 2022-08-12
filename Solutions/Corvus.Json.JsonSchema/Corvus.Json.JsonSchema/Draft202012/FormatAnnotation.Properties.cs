@@ -67,7 +67,7 @@ public readonly partial struct FormatAnnotation
     /// <param name = "hasJsonElementBacking"><c>True</c> if the object containing the property has a JsonElement backing.</param>
     /// <param name = "propertyValidator">The validator for the property, if provided by this schema.</param>
     /// <returns><c>True</c> if the validator was found.</returns>
-    public bool __TryGetCorvusLocalPropertiesValidator(in JsonObjectProperty property, bool hasJsonElementBacking, [NotNullWhen(true)] out PropertyValidator<FormatAnnotation>? propertyValidator)
+    public bool __TryGetCorvusLocalPropertiesValidator(in JsonObjectProperty property, bool hasJsonElementBacking, [NotNullWhen(true)] out ObjectPropertyValidator? propertyValidator)
     {
         if (hasJsonElementBacking)
         {
@@ -114,9 +114,8 @@ public readonly partial struct FormatAnnotation
         return this.SetProperty(FormatJsonPropertyName, value);
     }
 
-    private static ValidationContext __CorvusValidateFormat(in FormatAnnotation that, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateFormat(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        Corvus.Json.JsonString property = that.Format;
-        return property.Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonString>().Validate(validationContext, level);
     }
 }
