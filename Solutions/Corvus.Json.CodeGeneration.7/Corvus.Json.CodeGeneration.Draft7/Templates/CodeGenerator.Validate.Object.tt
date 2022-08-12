@@ -115,10 +115,10 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 <#  if (HasLocalProperties || HasRequired)
     { #>
 
-            if (__TryGetCorvusLocalPropertiesValidator(property, this.HasJsonElementBacking, out PropertyValidator<<#= TypeDeclaration.DotnetTypeName #>>? propertyValidator))
+            if (__TryGetCorvusLocalPropertiesValidator(property, this.HasJsonElementBacking, out ObjectPropertyValidator? propertyValidator))
             {
                 result = result.WithLocalProperty(propertyCount);
-                var propertyResult = propertyValidator(this, result.CreateChildContext(), level);
+                var propertyResult = propertyValidator(property, result.CreateChildContext(), level);
                 result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
                 if (level == ValidationLevel.Flag && !result.IsValid)
                 {

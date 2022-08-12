@@ -14,3 +14,12 @@ namespace Corvus.Json.Internal;
 /// <returns>The updated validation context.</returns>
 public delegate ValidationContext PropertyValidator<T>(in T that, in ValidationContext validationContext, ValidationLevel level)
     where T : struct, IJsonObject<T>;
+
+/// <summary>
+/// A delegate for property validators.
+/// </summary>
+/// <param name="that">An instnace of the entity containing the property to validate.</param>
+/// <param name="validationContext">The validation context.</param>
+/// <param name="level">The validation level.</param>
+/// <returns>The updated validation context.</returns>
+public delegate ValidationContext ObjectPropertyValidator(in JsonObjectProperty that, in ValidationContext validationContext, ValidationLevel level);
