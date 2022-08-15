@@ -21,7 +21,7 @@
 		</PackageReference>
 		<PackageReference Include="BenchmarkDotNet" Version="0.13.1" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="6.0.0" />
-		<PackageReference Include="JsonPatch.Net" Version="2.0.2" />
+		<PackageReference Include="JsonPatch.Net" Version="2.0.3" />
 	</ItemGroup>
 
 	<ItemGroup>
