@@ -18,6 +18,8 @@ namespace Corvus.Json
 {
     internal static partial class JsonReaderHelper
     {
+        public static readonly UTF8Encoding s_utf8Encoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
+
         public static ReadOnlySpan<byte> GetUnescapedSpan(ReadOnlySpan<byte> utf8Source, int idx)
         {
             // The escaped name is always >= than the unescaped, so it is safe to use escaped name for the buffer length.
@@ -152,6 +154,29 @@ namespace Corvus.Json
                 {
                     destination[written++] = currentByte;
                 }
+            }
+        }
+
+        public static int TranscodeHelper(ReadOnlySpan<byte> utf8Unescaped, Span<char> destination)
+        {
+            try
+            {
+                return s_utf8Encoding.GetChars(utf8Unescaped, destination);
+            }
+            catch (DecoderFallbackException dfe)
+            {
+                // We want to be consistent with the exception being thrown
+                // so the user only has to catch a single exception.
+                // Since we already throw InvalidOperationException for mismatch token type,
+                // and while unescaping, using that exception for failure to decode invalid UTF-8 bytes as well.
+                // Therefore, wrapping the DecoderFallbackException around an InvalidOperationException.
+                throw new InvalidOperationException("Cannot transcode invalid UTF8 bytes.", dfe);
+            }
+            catch (ArgumentException)
+            {
+                // Destination buffer was too small; clear it up since the encoder might have not.
+                destination.Clear();
+                throw;
             }
         }
     }
