@@ -170,7 +170,7 @@ public readonly struct JsonObjectProperty : IEquatable<JsonObjectProperty>
 
         if ((this.backing & Backing.NameValue) != 0)
         {
-            this.name.Equals(utf8Name);
+            return this.name.Equals(utf8Name);
         }
 
         return false;
@@ -190,7 +190,7 @@ public readonly struct JsonObjectProperty : IEquatable<JsonObjectProperty>
 
         if ((this.backing & Backing.NameValue) != 0)
         {
-            this.name.Equals(name);
+            return this.name.Equals(name);
         }
 
         return false;
@@ -210,7 +210,7 @@ public readonly struct JsonObjectProperty : IEquatable<JsonObjectProperty>
 
         if ((this.backing & Backing.NameValue) != 0)
         {
-            this.name.Equals(name);
+            return this.name.Equals(name);
         }
 
         return false;

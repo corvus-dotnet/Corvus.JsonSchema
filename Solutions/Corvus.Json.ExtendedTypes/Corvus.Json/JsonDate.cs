@@ -5,6 +5,7 @@
 using System.Text.Json;
 using Corvus.Json.Internal;
 using NodaTime;
+using NodaTime.Calendars;
 using NodaTime.Text;
 
 namespace Corvus.Json;
@@ -90,16 +91,12 @@ public readonly partial struct JsonDate
     {
         if ((this.backing & Backing.String) != 0)
         {
-            return TryParseDate(this.stringBacking, out result);
+            return DateParser(this.stringBacking, default, out result);
         }
 
         if (this.jsonElementBacking.ValueKind == JsonValueKind.String)
         {
-            string? str = this.jsonElementBacking.GetString();
-            if (str is not null)
-            {
-                return TryParseDate(str!, out result);
-            }
+            return this.jsonElementBacking.TryGetValue(DateParser, default(object?), out result);
         }
 
         result = default;
@@ -111,16 +108,40 @@ public readonly partial struct JsonDate
         return LocalDatePattern.Iso.Format(value);
     }
 
-    private static bool TryParseDate(string text, out LocalDate value)
+    private static bool DateParser(ReadOnlySpan<char> text, in object? state, out LocalDate value)
     {
-        ParseResult<LocalDate> parseResult = LocalDatePattern.Iso.Parse(text);
-        if (parseResult.Success)
+        if (text.Length != 10 ||
+            text[4] != '-' ||
+            text[7] != '-' ||
+            IsNotNumeric(text[0]) ||
+            IsNotNumeric(text[1]) ||
+            IsNotNumeric(text[2]) ||
+            IsNotNumeric(text[3]) ||
+            IsNotNumeric(text[5]) ||
+            IsNotNumeric(text[6]) ||
+            IsNotNumeric(text[8]) ||
+            IsNotNumeric(text[9]))
         {
-            value = parseResult.Value;
-            return true;
+            value = default;
+            return false;
         }
 
-        value = default;
-        return false;
+        int year = ((text[0] - '0') * 1000) + ((text[1] - '0') * 100) + ((text[2] - '0') * 10) + (text[3] - '0');
+        int month = ((text[5] - '0') * 10) + (text[6] - '0');
+        int day = ((text[8] - '0') * 10) + (text[9] - '0');
+
+        if (!GregorianYearMonthDayCalculator.TryValidateGregorianYearMonthDay(year, month, day))
+        {
+            value = default;
+            return false;
+        }
+
+        value = new LocalDate(year, month, day);
+        return true;
+    }
+
+    private static bool IsNotNumeric(char v)
+    {
+        return v < '0' || v > '9';
     }
 }
