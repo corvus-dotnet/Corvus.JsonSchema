@@ -36,7 +36,7 @@ public static class JsonElementExtensions
     /// <exception cref="ObjectDisposedException">
     ///   The parent <see cref="JsonDocument"/> has been disposed.
     /// </exception>
-    public static bool TryGetValue<TState, TResult>(this JsonElement element, Utf8Parser<TState, TResult> parser, in TState state, [NotNullWhen(true)] out TResult? value)
+    public static bool TryGetValue<TState, TResult>(this JsonElement element, in Utf8Parser<TState, TResult> parser, in TState state, [NotNullWhen(true)] out TResult? value)
     {
         return element.TryGetValue(parser, state, true, out value);
     }
@@ -64,7 +64,7 @@ public static class JsonElementExtensions
     /// <exception cref="ObjectDisposedException">
     ///   The parent <see cref="JsonDocument"/> has been disposed.
     /// </exception>
-    public static bool TryGetValue<TState, TResult>(this JsonElement element, Utf8Parser<TState, TResult> parser, in TState state, bool decode, [NotNullWhen(true)] out TResult? value)
+    public static bool TryGetValue<TState, TResult>(this JsonElement element, in Utf8Parser<TState, TResult> parser, in TState state, bool decode, [NotNullWhen(true)] out TResult? value)
     {
         if (element.ValueKind != JsonValueKind.String)
         {
@@ -96,7 +96,7 @@ public static class JsonElementExtensions
     /// <exception cref="ObjectDisposedException">
     ///   The parent <see cref="JsonDocument"/> has been disposed.
     /// </exception>
-    public static bool TryGetValue<TState, TResult>(this JsonElement element, Parser<TState, TResult> parser, in TState state, [NotNullWhen(true)] out TResult? value)
+    public static bool TryGetValue<TState, TResult>(this JsonElement element, in Parser<TState, TResult> parser, in TState state, [NotNullWhen(true)] out TResult? value)
     {
         if (element.ValueKind != JsonValueKind.String)
         {
@@ -217,9 +217,9 @@ public static class JsonElementExtensions
     /// <summary>
     /// Wraps up the state for the UTF8 parser and the parser's native state into a compound state entity.
     /// </summary>
-    private readonly record struct Utf8ParserStateWrapper<TState, TResult>(Utf8Parser<TState, TResult> Parser, TState State, bool Decode);
+    private readonly record struct Utf8ParserStateWrapper<TState, TResult>(Utf8Parser<TState, TResult> Parser, in TState State, bool Decode);
     /// <summary>
     /// Wraps up the state for the parser and the parser's native state into a compound state entity.
     /// </summary>
-    private readonly record struct ParserStateWrapper<TState, TResult>(Parser<TState, TResult> Parser, TState State);
+    private readonly record struct ParserStateWrapper<TState, TResult>(Parser<TState, TResult> Parser, in TState State);
 }

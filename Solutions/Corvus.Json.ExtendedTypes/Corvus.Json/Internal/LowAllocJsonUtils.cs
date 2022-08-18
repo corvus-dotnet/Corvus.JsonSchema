@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using CommunityToolkit.HighPerformance.Buffers;
 using Microsoft.Extensions.ObjectPool;
@@ -33,7 +34,7 @@ internal static class LowAllocJsonUtils
     public static bool ProcessRawText<TState, TResult>(
         this JsonElement element,
         in TState state,
-        Utf8Parser<TState, TResult> callback,
+        in Utf8Parser<TState, TResult> callback,
         [NotNullWhen(true)] out TResult? result)
     {
         PooledWriter? writerPair = null;
@@ -58,6 +59,8 @@ internal static class LowAllocJsonUtils
     {
         private static readonly ObjectPool<ArrayPoolBufferWriter<byte>> ArrayPoolWriterPool =
             new DefaultObjectPoolProvider().Create<ArrayPoolBufferWriter<byte>>();
+
+        private static readonly JsonWriterOptions Options = new() { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, Indented = false, SkipValidation = true };
 
         private Utf8JsonWriter? writer;
         private (Utf8JsonWriter JsonWriter, ArrayPoolBufferWriter<byte> BufferWriter)? value;
@@ -85,7 +88,7 @@ internal static class LowAllocJsonUtils
             bufferWriter.Clear();
             if (this.writer is null)
             {
-                this.writer = new(bufferWriter);
+                this.writer = new(bufferWriter, Options);
             }
             else
             {

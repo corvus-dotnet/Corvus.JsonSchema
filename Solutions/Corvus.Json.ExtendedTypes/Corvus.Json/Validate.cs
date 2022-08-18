@@ -2793,5 +2793,5 @@ public static partial class Validate
         return validationContext;
     }
 
-    private readonly record struct StringValidationContextWrapper(ValidationContext Context, ValidationLevel Level, int? MinLength, int? MaxLength);
+    private readonly record struct StringValidationContextWrapper(in ValidationContext Context, ValidationLevel Level, int? MinLength, int? MaxLength);
 }
