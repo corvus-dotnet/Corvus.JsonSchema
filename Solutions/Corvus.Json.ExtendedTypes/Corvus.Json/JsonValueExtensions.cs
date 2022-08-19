@@ -182,4 +182,21 @@ public static class JsonValueExtensions
 
             return value;
     }
+
+    /// <summary>
+    /// Gets the instance as a dotnet backed value.
+    /// </summary>
+    /// <typeparam name="T">The type of the value to convert.</typeparam>
+    /// <param name="value">The value to convert.</param>
+    /// <returns>An instance of the given value, backed by a dotnet value rather than a JsonElement.</returns>
+    public static T AsJsonElementBackedValue<T>(this T value)
+        where T : struct, IJsonValue<T>
+    {
+        if (!value.HasJsonElementBacking)
+        {
+            return T.FromJson(value.AsJsonElement);
+        }
+
+        return value;
+    }
 }

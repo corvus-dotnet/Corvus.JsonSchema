@@ -41,10 +41,10 @@ public class ValidateDocument
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         for (int i = 0; i < 10000; ++i)
         {
-            builder.Add(Person.FromJson(this.objectDocument.RootElement.Clone()).AsDotnetBackedValue());
+            builder.Add(Person.FromJson(this.objectDocument.RootElement).AsDotnetBackedValue());
         }
 
-        this.personArray = PersonArray.From(builder.ToImmutable());
+        this.personArray = PersonArray.From(builder.ToImmutable()).AsDotnetBackedValue();
         return Task.CompletedTask;
     }
 

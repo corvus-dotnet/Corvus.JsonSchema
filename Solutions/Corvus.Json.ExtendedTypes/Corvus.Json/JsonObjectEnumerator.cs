@@ -74,12 +74,12 @@ public struct JsonObjectEnumerator : IEnumerable, IEnumerator, IEnumerable<JsonO
     {
         if ((this.backing & Backing.JsonElementEnumerator) != 0)
         {
-            this.dictionaryEnumerator.Dispose();
+            this.jsonElementEnumerator.Dispose();
         }
 
         if ((this.backing & Backing.DictionaryEnumerator) != 0)
         {
-            this.jsonElementEnumerator.Dispose();
+            this.dictionaryEnumerator.Dispose();
         }
     }
 
