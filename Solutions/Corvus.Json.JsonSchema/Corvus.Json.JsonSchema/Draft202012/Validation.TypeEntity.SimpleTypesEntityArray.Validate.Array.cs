@@ -29,10 +29,10 @@ public readonly partial struct Validation
                 }
 
                 int arrayLength = 0;
-                JsonArrayEnumerator<Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypesEntity> arrayEnumerator = this.EnumerateArray();
+                using JsonArrayEnumerator<Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypesEntity> arrayEnumerator = this.EnumerateArray();
                 while (arrayEnumerator.MoveNext())
                 {
-                    JsonArrayEnumerator<Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypesEntity> innerEnumerator = this.EnumerateArray();
+                    using JsonArrayEnumerator<Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypesEntity> innerEnumerator = this.EnumerateArray();
                     int innerIndex = -1;
                     while (innerIndex < arrayLength && innerEnumerator.MoveNext())
                     {

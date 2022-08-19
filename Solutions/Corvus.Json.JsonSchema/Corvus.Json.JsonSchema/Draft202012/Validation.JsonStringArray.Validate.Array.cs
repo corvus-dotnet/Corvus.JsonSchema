@@ -27,10 +27,10 @@ public readonly partial struct Validation
             }
 
             int arrayLength = 0;
-            JsonArrayEnumerator<Corvus.Json.JsonString> arrayEnumerator = this.EnumerateArray();
+            using JsonArrayEnumerator<Corvus.Json.JsonString> arrayEnumerator = this.EnumerateArray();
             while (arrayEnumerator.MoveNext())
             {
-                JsonArrayEnumerator<Corvus.Json.JsonString> innerEnumerator = this.EnumerateArray();
+                using JsonArrayEnumerator<Corvus.Json.JsonString> innerEnumerator = this.EnumerateArray();
                 int innerIndex = -1;
                 while (innerIndex < arrayLength && innerEnumerator.MoveNext())
                 {

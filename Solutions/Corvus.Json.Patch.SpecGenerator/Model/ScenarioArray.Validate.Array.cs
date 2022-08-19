@@ -25,7 +25,7 @@ public readonly partial struct ScenarioArray
         }
 
         int arrayLength = 0;
-        JsonArrayEnumerator<Corvus.Json.Patch.SpecGenerator.Scenario> arrayEnumerator = this.EnumerateArray();
+        using JsonArrayEnumerator<Corvus.Json.Patch.SpecGenerator.Scenario> arrayEnumerator = this.EnumerateArray();
         while (arrayEnumerator.MoveNext())
         {
             result = arrayEnumerator.Current.Validate(result, level);

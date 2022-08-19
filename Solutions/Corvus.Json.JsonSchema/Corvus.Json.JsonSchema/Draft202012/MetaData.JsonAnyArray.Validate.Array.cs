@@ -27,7 +27,7 @@ public readonly partial struct MetaData
             }
 
             int arrayLength = 0;
-            JsonArrayEnumerator arrayEnumerator = this.EnumerateArray();
+            using JsonArrayEnumerator arrayEnumerator = this.EnumerateArray();
             while (arrayEnumerator.MoveNext())
             {
                 result = arrayEnumerator.Current.Validate(result, level);

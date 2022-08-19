@@ -588,7 +588,7 @@ public readonly partial struct Person : IJsonObject<Person>
         if ((this.backing & Backing.JsonElement) != 0 && this.jsonElementBacking.ValueKind == JsonValueKind.Object)
         {
             ImmutableDictionary<JsonPropertyName, JsonAny>.Builder builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
-            JsonElement.ObjectEnumerator enumerator = this.jsonElementBacking.EnumerateObject();
+            using JsonElement.ObjectEnumerator enumerator = this.jsonElementBacking.EnumerateObject();
             while (enumerator.MoveNext())
             {
                 // Use string for the current implementation of JsonPropertyName

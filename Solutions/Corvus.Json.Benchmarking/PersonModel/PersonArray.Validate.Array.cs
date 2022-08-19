@@ -25,7 +25,7 @@ public readonly partial struct PersonArray
         }
 
         int arrayLength = 0;
-        JsonArrayEnumerator<Corvus.Json.Benchmarking.Models.Person> arrayEnumerator = this.EnumerateArray();
+        using JsonArrayEnumerator<Corvus.Json.Benchmarking.Models.Person> arrayEnumerator = this.EnumerateArray();
         while (arrayEnumerator.MoveNext())
         {
             result = arrayEnumerator.Current.Validate(result, level);

@@ -175,7 +175,7 @@ namespace ");
             #line hidden
             
             #line 58 "./Templates/CodeGenerator.Validate.Array.tt"
-            this.Write("\r\n        JsonArrayEnumerator arrayEnumerator = this.EnumerateArray();\r\n");
+            this.Write("\r\n        using JsonArrayEnumerator arrayEnumerator = this.EnumerateArray();\r\n");
             
             #line default
             #line hidden
@@ -189,7 +189,7 @@ namespace ");
             #line hidden
             
             #line 63 "./Templates/CodeGenerator.Validate.Array.tt"
-            this.Write("\r\n        JsonArrayEnumerator<");
+            this.Write("\r\n        using JsonArrayEnumerator<");
             
             #line default
             #line hidden
@@ -233,7 +233,8 @@ namespace ");
             #line hidden
             
             #line 73 "./Templates/CodeGenerator.Validate.Array.tt"
-            this.Write("\r\n            JsonArrayEnumerator innerEnumerator = this.EnumerateArray();\r\n");
+            this.Write("\r\n            using JsonArrayEnumerator innerEnumerator = this.EnumerateArray();\r" +
+                    "\n");
             
             #line default
             #line hidden
@@ -247,7 +248,7 @@ namespace ");
             #line hidden
             
             #line 78 "./Templates/CodeGenerator.Validate.Array.tt"
-            this.Write("\r\n            JsonArrayEnumerator<");
+            this.Write("\r\n            using JsonArrayEnumerator<");
             
             #line default
             #line hidden

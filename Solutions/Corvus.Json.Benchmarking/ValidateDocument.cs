@@ -41,7 +41,7 @@ public class ValidateDocument
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         for (int i = 0; i < 10000; ++i)
         {
-            builder.Add(Person.FromJson(this.objectDocument.RootElement.Clone()));
+            builder.Add(Person.FromJson(this.objectDocument.RootElement.Clone()).AsDotnetBackedValue());
         }
 
         this.personArray = PersonArray.From(builder.ToImmutable());
