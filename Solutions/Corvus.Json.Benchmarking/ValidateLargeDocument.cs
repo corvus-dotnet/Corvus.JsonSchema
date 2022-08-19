@@ -1,11 +1,13 @@
-﻿// <copyright file="ValidateDocument.cs" company="Endjin Limited">
+﻿// <copyright file="ValidateLargeDocument.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
 using System.Collections.Immutable;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using BenchmarkDotNet.Attributes;
 using Corvus.Json.Benchmarking.Models;
+using JsonEverything = global::Json.Schema;
 
 namespace Corvus.Json.Benchmarking;
 
@@ -13,7 +15,7 @@ namespace Corvus.Json.Benchmarking;
 /// Construct elements from a JSON element.
 /// </summary>
 [MemoryDiagnoser]
-public class ValidateDocument
+public class ValidateLargeDocument
 {
     private const string JsonText = @"{
     ""name"": {
@@ -24,9 +26,13 @@ public class ValidateDocument
     ""dateOfBirth"": ""1944-07-14""
 }";
 
+    private static readonly JsonEverything.ValidationOptions Options = new JsonEverything.ValidationOptions() { OutputFormat = JsonEverything.OutputFormat.Flag };
+
     private JsonDocument? objectDocument;
     private Person person;
     private PersonArray personArray;
+    private JsonNode? node;
+    private JsonEverything.JsonSchema? schema;
 
     /// <summary>
     /// Global setup.
@@ -41,10 +47,13 @@ public class ValidateDocument
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         for (int i = 0; i < 10000; ++i)
         {
-            builder.Add(Person.FromJson(this.objectDocument.RootElement).AsDotnetBackedValue());
+            builder.Add(Person.FromJson(this.objectDocument.RootElement));
         }
 
-        this.personArray = PersonArray.From(builder.ToImmutable()).AsDotnetBackedValue();
+        this.personArray = PersonArray.From(builder.ToImmutable()).AsJsonElementBackedValue();
+
+        this.schema = JsonEverything.JsonSchema.FromFile("./PersonModel/person-array-schema.json");
+        this.node = System.Text.Json.Nodes.JsonArray.Create(this.personArray.AsJsonElement.Clone());
         return Task.CompletedTask;
     }
 
@@ -63,22 +72,35 @@ public class ValidateDocument
         return Task.CompletedTask;
     }
 
-    /// <summary>
-    /// Validates using the Corvus types.
-    /// </summary>
-    [Benchmark]
-    public void ValidateSmallDocument()
-    {
-        ValidationContext result = this.person.Validate(ValidationContext.ValidContext);
-    }
+    /////// <summary>
+    /////// Validates using the Corvus types.
+    /////// </summary>
+    ////[Benchmark]
+    ////public void ValidateSmallDocument()
+    ////{
+    ////    ValidationContext result = this.person.Validate(ValidationContext.ValidContext);
+    ////}
 
     /// <summary>
     /// Validates using the Corvus types.
     /// </summary>
     [Benchmark]
-    public void ValidateLargeArray()
+    public void ValidateLargeArrayCorvus()
     {
         ValidationContext result = this.personArray.Validate(ValidationContext.ValidContext);
+        if (!result.IsValid)
+        {
+            throw new InvalidOperationException();
+        }
+    }
+
+    /// <summary>
+    /// Validates using the Corvus types.
+    /// </summary>
+    [Benchmark(Baseline = true)]
+    public void ValidateLargeArrayJsonEveything()
+    {
+        JsonEverything.ValidationResults result = this.schema!.Validate(this.node, Options);
         if (!result.IsValid)
         {
             throw new InvalidOperationException();
