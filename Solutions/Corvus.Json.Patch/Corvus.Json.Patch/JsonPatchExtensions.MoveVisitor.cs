@@ -50,8 +50,10 @@ public static partial class JsonPatchExtensions
             // We have fallen through because we have either Added already, or we have just added and not yet removed
             if (!this.Removed)
             {
+                ReadOnlySpan<char> span = this.From.AsSpan();
+
                 // Otherwise, this is a remove operation at the source location.
-                RemoveVisitor.VisitForRemove(path, nodeToVisit, this.From, this.From[this.TerminatingFromBegin..], ref result);
+                RemoveVisitor.VisitForRemove(path, nodeToVisit, span, span[this.TerminatingFromBegin..], ref result);
 
                 if (result.Walk == Walk.TerminateAtThisNodeAndAbandonAllChanges)
                 {
@@ -81,7 +83,8 @@ public static partial class JsonPatchExtensions
             if (!this.Added)
             {
                 // Otherwise, this is an add operation with the node we found.
-                AddVisitor.VisitForAdd(path, result.Output, this.SourceElement, this.Path, this.Path[this.TerminatingPathBegin..], ref result);
+                ReadOnlySpan<char> span = this.Path.AsSpan();
+                AddVisitor.VisitForAdd(path, result.Output, this.SourceElement, span, span[this.TerminatingPathBegin..], ref result);
                 if (result.Walk == Walk.TerminateAtThisNodeAndAbandonAllChanges)
                 {
                     // We failed, so fail

@@ -29,7 +29,8 @@ public static partial class JsonPatchExtensions
 
         public void Visit(ReadOnlySpan<char> path, in JsonAny nodeToVisit, ref VisitResult result)
         {
-            VisitForAdd(path, nodeToVisit, this.Value, this.Path, this.Path[this.TerminatingPathIndexBegin..], ref result);
+            ReadOnlySpan<char> span = this.Path.AsSpan();
+            VisitForAdd(path, nodeToVisit, this.Value, span, span[this.TerminatingPathIndexBegin..], ref result);
         }
 
         // This is used by AddVisitor, CopyVistor and MoveVisitor

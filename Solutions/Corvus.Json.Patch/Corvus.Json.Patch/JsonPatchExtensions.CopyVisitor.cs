@@ -31,7 +31,8 @@ public static partial class JsonPatchExtensions
         public void Visit(ReadOnlySpan<char> path, in JsonAny nodeToVisit, ref VisitResult result)
         {
             // This is an add operation with the node we found.
-            AddVisitor.VisitForAdd(path, nodeToVisit, this.SourceElement, this.Path, this.Path[this.TerminatingPathElementBegin..], ref result);
+            ReadOnlySpan<char> span = this.Path.AsSpan();
+            AddVisitor.VisitForAdd(path, nodeToVisit, this.SourceElement, span, span[this.TerminatingPathElementBegin..], ref result);
         }
     }
 }

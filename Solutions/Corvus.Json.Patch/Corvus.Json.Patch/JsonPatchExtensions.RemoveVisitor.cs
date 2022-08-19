@@ -29,7 +29,8 @@ public static partial class JsonPatchExtensions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Visit(ReadOnlySpan<char> path, in JsonAny nodeToVisit, ref VisitResult result)
         {
-            VisitForRemove(path, nodeToVisit, this.Path, this.Path[this.BeginTerminator..], ref result);
+            ReadOnlySpan<char> span = this.Path.AsSpan();
+            VisitForRemove(path, nodeToVisit, span, span[this.BeginTerminator..], ref result);
         }
 
         // This is used by Remove and Move
