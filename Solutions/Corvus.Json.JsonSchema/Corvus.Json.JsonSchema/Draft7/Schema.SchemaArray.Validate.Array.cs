@@ -27,7 +27,7 @@ public readonly partial struct Schema
             }
 
             int arrayLength = 0;
-            var arrayEnumerator = this.EnumerateArray();
+            using var arrayEnumerator = this.EnumerateArray();
             while (arrayEnumerator.MoveNext())
             {
                 result = arrayEnumerator.Current.As<Corvus.Json.JsonSchema.Draft7.Schema>().Validate(result, level);

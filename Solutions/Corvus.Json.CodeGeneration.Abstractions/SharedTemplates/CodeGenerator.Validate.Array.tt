@@ -56,12 +56,12 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 <#  if (!CanEnumerateAsSpecificType)
     { #>
 
-        JsonArrayEnumerator arrayEnumerator = this.EnumerateArray();
+        using JsonArrayEnumerator arrayEnumerator = this.EnumerateArray();
 <#  }
     else
     { #>
 
-        JsonArrayEnumerator<<#= SingleItemsDotnetTypeName #>> arrayEnumerator = this.EnumerateArray();
+        using JsonArrayEnumerator<<#= SingleItemsDotnetTypeName #>> arrayEnumerator = this.EnumerateArray();
 <#  } #>
 
         while (arrayEnumerator.MoveNext())
@@ -71,12 +71,12 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 <#  if (!CanEnumerateAsSpecificType)
     { #>
 
-            JsonArrayEnumerator innerEnumerator = this.EnumerateArray();
+            using JsonArrayEnumerator innerEnumerator = this.EnumerateArray();
 <#  }
     else
     { #>
 
-            JsonArrayEnumerator<<#= SingleItemsDotnetTypeName #>> innerEnumerator = this.EnumerateArray();
+            using JsonArrayEnumerator<<#= SingleItemsDotnetTypeName #>> innerEnumerator = this.EnumerateArray();
 <#  } #>
             int innerIndex = -1;
             while (innerIndex < arrayLength && innerEnumerator.MoveNext())

@@ -162,8 +162,8 @@ namespace ");
             #line hidden
             
             #line 55 "./Templates/CodeGenerator.Validate.Array.tt"
-            this.Write("        var arrayEnumerator = this.EnumerateArray();\r\n\r\n        while (arrayEnume" +
-                    "rator.MoveNext())\r\n        {\r\n");
+            this.Write("        using var arrayEnumerator = this.EnumerateArray();\r\n\r\n        while (arra" +
+                    "yEnumerator.MoveNext())\r\n        {\r\n");
             
             #line default
             #line hidden
@@ -176,7 +176,7 @@ namespace ");
             #line hidden
             
             #line 61 "./Templates/CodeGenerator.Validate.Array.tt"
-            this.Write(@"            var innerEnumerator = this.EnumerateArray();
+            this.Write(@"            using var innerEnumerator = this.EnumerateArray();
             int innerIndex = -1;
             while (innerIndex < arrayLength && innerEnumerator.MoveNext())
             {

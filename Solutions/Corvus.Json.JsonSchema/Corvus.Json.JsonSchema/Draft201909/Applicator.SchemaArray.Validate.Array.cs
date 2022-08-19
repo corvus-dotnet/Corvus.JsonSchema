@@ -27,7 +27,7 @@ public readonly partial struct Applicator
             }
 
             int arrayLength = 0;
-            var arrayEnumerator = this.EnumerateArray();
+            using var arrayEnumerator = this.EnumerateArray();
             while (arrayEnumerator.MoveNext())
             {
                 result = arrayEnumerator.Current.As<Corvus.Json.JsonSchema.Draft201909.Schema>().Validate(result, level);

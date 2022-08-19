@@ -28,7 +28,7 @@ objectDocument = JsonDocument.Parse(JsonText);
 ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
 for (int i = 0; i < 10000; ++i)
 {
-    builder.Add(Person.FromJson(objectDocument.RootElement.Clone()));
+    builder.Add(Person.FromJson(objectDocument.RootElement).AsDotnetBackedValue());
 }
 
 personArray = PersonArray.From(builder.ToImmutable());

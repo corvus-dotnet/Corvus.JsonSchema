@@ -29,10 +29,10 @@ public readonly partial struct Schema
                 }
 
                 int arrayLength = 0;
-                var arrayEnumerator = this.EnumerateArray();
+                using var arrayEnumerator = this.EnumerateArray();
                 while (arrayEnumerator.MoveNext())
                 {
-                    var innerEnumerator = this.EnumerateArray();
+                    using var innerEnumerator = this.EnumerateArray();
                     int innerIndex = -1;
                     while (innerIndex < arrayLength && innerEnumerator.MoveNext())
                     {
