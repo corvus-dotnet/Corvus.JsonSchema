@@ -15,7 +15,7 @@
 
   <ItemGroup>
     <PackageReference Include="Corvus.Extensions" Version="1.1.4" />
-    <PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.1">
+    <PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.2">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
