@@ -45,15 +45,7 @@ namespace Benchmarks
         [Benchmark(Baseline = true)]
         public void PatchJsonEverything()
         {
-            try
-            {
-               Json.Patch.PatchResult? patchResult = this.jePatch?.Apply(ElementAsNode());
-            }
-            catch(Exception)
-            {
-                // Swallow failures until we can diagnose the issue with running inside BMDN
-                // https://github.com/dotnet/BenchmarkDotNet/issues/2032
-            }
+            Json.Patch.PatchResult? patchResult = this.jePatch?.Apply(ElementAsNode());
         }
 
         

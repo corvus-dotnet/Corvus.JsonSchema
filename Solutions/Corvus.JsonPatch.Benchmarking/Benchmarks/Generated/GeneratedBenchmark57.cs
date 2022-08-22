@@ -26,7 +26,7 @@ namespace Benchmarks
         {
             this.jePatch = BuildJEPatch("[{\"op\":\"test\",\"path\":\"/foo\",\"value\":{\"bar\":2,\"foo\":1}}]");
                 
-            this.corvusPatch = Corvus.Json.JsonAny.Parse("[{\"op\":\"test\",\"path\":\"/foo\",\"value\":{\"bar\":2,\"foo\":1}}]");
+            this.corvusPatch = Corvus.Json.Patch.Model.PatchOperationArray.Parse("[{\"op\":\"test\",\"path\":\"/foo\",\"value\":{\"bar\":2,\"foo\":1}}]");
 
             await this.GlobalSetupJson("{\"foo\":{\"foo\":1,\"bar\":2}}").ConfigureAwait(false);
         }
@@ -54,6 +54,7 @@ namespace Benchmarks
             {
                 // Swallow failures until we can diagnose the issue with running inside BMDN
                 // https://github.com/dotnet/BenchmarkDotNet/issues/2032
+                throw;
             }
         }
     }

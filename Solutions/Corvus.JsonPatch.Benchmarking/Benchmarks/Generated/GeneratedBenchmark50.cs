@@ -54,6 +54,7 @@ namespace Benchmarks
             {
                 // Swallow failures until we can diagnose the issue with running inside BMDN
                 // https://github.com/dotnet/BenchmarkDotNet/issues/2032
+                throw;
             }
         }
     }
