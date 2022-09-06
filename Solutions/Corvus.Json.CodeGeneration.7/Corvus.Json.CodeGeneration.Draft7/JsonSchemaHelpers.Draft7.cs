@@ -89,49 +89,8 @@ public static class JsonSchemaHelpers
     /// </returns>
     private static ImmutableHashSet<string> CreateDraft7IrreducibleKeywords()
     {
-        return ImmutableHashSet.Create(
-            "additionalProperties",
-            "additionalItems",
-            "allOf",
-            "anyOf",
-            "const",
-            "contains",
-            "contentEncoding",
-            "contentMediaType",
-            "contentSchema",
-            "default",
-            "dependencies",
-            "else",
-            "enum",
-            "exclusiveMaximum",
-            "exclusiveMinimum",
-            "format",
-            "if",
-            "items",
-            "maxContains",
-            "minContains",
-            "maxItems",
-            "maxLength",
-            "maxProperties",
-            "minContains",
-            "minimum",
-            "minItems",
-            "minLength",
-            "minProperties",
-            "multipleOf",
-            "not",
-            "oneOf",
-            "pattern",
-            "patternProperties",
-            "prefixItems",
-            "properties",
-            "propertyNames",
-            "required",
-            "then",
-            "type",
-            "unevaluatedItems",
-            "unevaluatedProperties",
-            "uniqueItems");
+        // $ref always reduces in draft7.
+        return ImmutableHashSet<string>.Empty;
     }
 
     /// <summary>

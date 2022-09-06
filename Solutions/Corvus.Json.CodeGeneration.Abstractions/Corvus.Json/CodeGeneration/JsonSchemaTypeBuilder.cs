@@ -1675,7 +1675,14 @@ public class JsonSchemaTypeBuilder
             {
                 if (currentLocation.HasFragment)
                 {
-                    this.AddNamedAnchor(new JsonReference(currentLocation.Uri.ToString()), currentLocation.Fragment.ToString());
+                    if (!this.locatedSchema.TryGetValue(previousLocation, out LocatedSchema? previousSchema))
+                    {
+                        throw new InvalidOperationException($"The previously registered schema for '{previousLocation}' was not found.");
+                    }
+
+                    this.locatedSchema.TryAdd(currentLocation, previousSchema);
+
+                    this.AddNamedAnchor(currentLocation, currentLocation.Fragment[1..].ToString());
                 }
                 else
                 {
