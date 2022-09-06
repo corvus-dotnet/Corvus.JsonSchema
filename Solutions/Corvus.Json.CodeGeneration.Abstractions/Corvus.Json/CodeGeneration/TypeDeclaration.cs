@@ -43,7 +43,7 @@ public class TypeDeclaration
     /// <summary>
     /// Gets the schema for the type declaration.
     /// </summary>
-    public LocatedSchema LocatedSchema { get; }
+    public LocatedSchema LocatedSchema { get; private set; }
 
     /// <summary>
     /// Gets the dotnet property declarations for the type.
@@ -254,6 +254,15 @@ public class TypeDeclaration
             fragment = fragment[..lastSlash];
             return new JsonReference(reference.Uri, fragment);
         }
+    }
+
+    /// <summary>
+    /// Updates the located schema associated with this type to present a new dynamic location.
+    /// </summary>
+    /// <param name="dynamicScopeLocation">The new dynamic scope location.</param>
+    internal void UpdateDynamicLocation(JsonReference dynamicScopeLocation)
+    {
+        this.LocatedSchema = this.LocatedSchema.WithLocation(new JsonReference(this.LocatedSchema.Location + "?dynamicScope=" + Uri.EscapeDataString(dynamicScopeLocation.ToString())));
     }
 
     private void AddChild(TypeDeclaration typeDeclaration)

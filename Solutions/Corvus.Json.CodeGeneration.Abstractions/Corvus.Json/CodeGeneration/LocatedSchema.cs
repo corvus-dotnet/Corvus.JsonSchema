@@ -24,6 +24,13 @@ public class LocatedSchema
         this.Schema = schema;
     }
 
+    private LocatedSchema(JsonReference location, JsonAny schema, Dictionary<string, Anchor> anchors)
+    {
+        this.Location = location;
+        this.Schema = schema;
+        this.anchors = anchors;
+    }
+
     /// <summary>
     /// Gets the scoped location of the located schema.
     /// </summary>
@@ -88,5 +95,15 @@ public class LocatedSchema
     internal bool TryGetAnchor(string anchor, [NotNullWhen(true)] out Anchor? registeredAnchor)
     {
         return this.anchors.TryGetValue(anchor, out registeredAnchor);
+    }
+
+    /// <summary>
+    /// Returns a new located schema with an updated location.
+    /// </summary>
+    /// <param name="location">The updated location.</param>
+    /// <returns>The located schema with the updated location.</returns>
+    internal LocatedSchema WithLocation(JsonReference location)
+    {
+        return new LocatedSchema(location, this.Schema, this.anchors);
     }
 }

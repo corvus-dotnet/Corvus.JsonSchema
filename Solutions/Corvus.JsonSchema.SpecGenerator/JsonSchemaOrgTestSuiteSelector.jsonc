@@ -159,11 +159,6 @@
         "refOfUnknownKeyword\\.json"
       ],
       "testExclusions": {
-        "dynamicRef.json": {
-          "after leaving a dynamic scope, it should not be used by a $dynamicRef": {
-            "testsToIgnoreIndices": [ 0, 2 ]
-          }
-        }
       },
       "subdirectories": {
         "optional": {

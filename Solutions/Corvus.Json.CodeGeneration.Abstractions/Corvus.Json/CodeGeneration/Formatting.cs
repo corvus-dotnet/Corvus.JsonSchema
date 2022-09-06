@@ -25,7 +25,7 @@ public static class Formatting
         "finally".AsMemory(), "fixed".AsMemory(), "float".AsMemory(), "for".AsMemory(),
         "foreach".AsMemory(), "goto".AsMemory(), "if".AsMemory(), "implicit".AsMemory(),
         "in".AsMemory(), "int".AsMemory(), "interface".AsMemory(), "internal".AsMemory(),
-        "is".AsMemory(), "lock".AsMemory(), "long".AsMemory(), "namespace".AsMemory(),
+        "is".AsMemory(),  "item".AsMemory(), "lock".AsMemory(), "long".AsMemory(), "namespace".AsMemory(),
         "new".AsMemory(), "null".AsMemory(), "object".AsMemory(), "operator".AsMemory(),
         "out".AsMemory(), "override".AsMemory(), "params".AsMemory(), "private".AsMemory(),
         "protected".AsMemory(), "public".AsMemory(), "readonly".AsMemory(), "ref".AsMemory(),

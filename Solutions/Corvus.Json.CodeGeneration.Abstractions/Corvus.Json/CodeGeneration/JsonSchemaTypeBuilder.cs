@@ -536,6 +536,12 @@ public class JsonSchemaTypeBuilder
         // Tell ourselves early that we are visiting this type declaration already.
         visitedTypeDeclarations.Add(typeDeclaration);
 
+        if (typeDeclaration.IsBuiltInType)
+        {
+            // This has already been established as a built in type.
+            return;
+        }
+
         (string Ns, string TypeName)? builtInTypeName = this.GetBuiltInTypeName(typeDeclaration.LocatedSchema.Schema, this.ValidatingAs);
 
         if (builtInTypeName is (string, string) bitn)
@@ -560,6 +566,12 @@ public class JsonSchemaTypeBuilder
 
         // Tell ourselves early that we are visiting this type declaration already.
         visitedTypeDeclarations.Add(typeDeclaration);
+
+        if (typeDeclaration.IsBuiltInType)
+        {
+            // We've already set this as a built-in type.
+            return;
+        }
 
         string? ns;
         if (baseUriToNamespaceMap is ImmutableDictionary<string, string> butnmp)
@@ -702,29 +714,26 @@ public class JsonSchemaTypeBuilder
                 typename = fallbackBaseName;
             }
 
-            if (!this.IsNamedDefinitionOrDynamicScopeRoot(typeDeclaration))
+            if (this.IsExplicitArrayType(typeDeclaration.LocatedSchema.Schema) && !typename.EndsWith("Array".AsSpan()))
             {
-                if (this.IsExplicitArrayType(typeDeclaration.LocatedSchema.Schema))
-                {
-                    Span<char> dnt = stackalloc char[typename.Length + 5];
-                    typename.CopyTo(dnt);
-                    "Array".AsSpan().CopyTo(dnt[typename.Length..]);
-                    typeDeclaration.SetDotnetTypeName(dnt.ToString());
-                }
-                else if (this.IsSimpleType(typeDeclaration.LocatedSchema.Schema))
-                {
-                    Span<char> dnt = stackalloc char[typename.Length + 5];
-                    typename.CopyTo(dnt);
-                    "Value".AsSpan().CopyTo(dnt[typename.Length..]);
-                    typeDeclaration.SetDotnetTypeName(dnt.ToString());
-                }
-                else
-                {
-                    Span<char> dnt = stackalloc char[typename.Length + 6];
-                    typename.CopyTo(dnt);
-                    "Entity".AsSpan().CopyTo(dnt[typename.Length..]);
-                    typeDeclaration.SetDotnetTypeName(dnt.ToString());
-                }
+                Span<char> dnt = stackalloc char[typename.Length + 5];
+                typename.CopyTo(dnt);
+                "Array".AsSpan().CopyTo(dnt[typename.Length..]);
+                typeDeclaration.SetDotnetTypeName(dnt.ToString());
+            }
+            else if (this.IsSimpleType(typeDeclaration.LocatedSchema.Schema) && !typename.EndsWith("Value".AsSpan()))
+            {
+                Span<char> dnt = stackalloc char[typename.Length + 5];
+                typename.CopyTo(dnt);
+                "Value".AsSpan().CopyTo(dnt[typename.Length..]);
+                typeDeclaration.SetDotnetTypeName(dnt.ToString());
+            }
+            else if (!typename.EndsWith("Entity".AsSpan()))
+            {
+                Span<char> dnt = stackalloc char[typename.Length + 6];
+                typename.CopyTo(dnt);
+                "Entity".AsSpan().CopyTo(dnt[typename.Length..]);
+                typeDeclaration.SetDotnetTypeName(dnt.ToString());
             }
             else
             {
@@ -733,28 +742,6 @@ public class JsonSchemaTypeBuilder
 
             typeDeclaration.SetNamespace(rootNamespace);
         }
-    }
-
-    private bool IsNamedDefinitionOrDynamicScopeRoot(TypeDeclaration typeDeclaration)
-    {
-        if (typeDeclaration.LocatedSchema.Location.HasFragment)
-        {
-            ReadOnlySpan<char> fragment = typeDeclaration.LocatedSchema.Location.Fragment;
-            foreach (string defsKeyword in this.DefinitionKeywords)
-            {
-                int defsIndex = fragment.IndexOf(defsKeyword);
-                if (defsIndex > 0)
-                {
-                    int nextSlash = fragment[(defsIndex + defsKeyword.Length + 1)..].IndexOf('/');
-                    if (nextSlash > 0)
-                    {
-                        return false;
-                    }
-                }
-            }
-        }
-
-        return true;
     }
 
     //// Reduce type declarations
@@ -841,19 +828,38 @@ public class JsonSchemaTypeBuilder
         // Are we already building the type here?
         if (this.locatedTypeDeclarations.TryGetValue(context.SubschemaLocation, out TypeDeclaration? existingTypeDeclaration))
         {
-            // If this is not a dynamic type declaration, we can just return it
-            if (!existingTypeDeclaration.HasDynamicReference)
-            {
-                return existingTypeDeclaration;
-            }
-            else
+            // We need to determine if it has a dynamic reference to a dynamic anchor
+            // owned by this type
+            if (this.TryGetNewDynamicScope(existingTypeDeclaration, context, out JsonReference? dynamicScope))
             {
                 // We remove the existing one and replace it, for this context.
                 this.locatedTypeDeclarations.Remove(context.SubschemaLocation);
+
+                // Update the dynamic location
+                typeDeclaration.UpdateDynamicLocation(dynamicScope.Value);
+
+                if (this.locatedTypeDeclarations.TryGetValue(typeDeclaration.LocatedSchema.Location, out TypeDeclaration? existingDynamicDeclaration))
+                {
+                    // If we already exist in the dynamic location
+                    // Add it to the current locatedTypeDeclarations for this subschema, and return it.
+                    this.locatedTypeDeclarations.Add(context.SubschemaLocation, existingDynamicDeclaration);
+                    return existingDynamicDeclaration;
+                }
+
+                this.locatedSchema.Add(typeDeclaration.LocatedSchema.Location, typeDeclaration.LocatedSchema);
+                this.locatedTypeDeclarations.Add(context.SubschemaLocation, typeDeclaration);
+                this.locatedTypeDeclarations.Add(typeDeclaration.LocatedSchema.Location, typeDeclaration);
+            }
+            else
+            {
+                // We can just use the existing type.
+                return existingTypeDeclaration;
             }
         }
-
-        this.locatedTypeDeclarations.Add(context.SubschemaLocation, typeDeclaration);
+        else
+        {
+            this.locatedTypeDeclarations.Add(context.SubschemaLocation, typeDeclaration);
+        }
 
         // Capture the original location before potentially entering a dynamic scope.
         JsonReference currentLocation = context.SubschemaLocation;
@@ -913,6 +919,75 @@ public class JsonSchemaTypeBuilder
 
             booleanTypeDeclaration = null;
             return false;
+        }
+    }
+
+    private bool TryGetNewDynamicScope(TypeDeclaration existingTypeDeclaration, WalkContext context, [NotNullWhen(true)] out JsonReference? dynamicScope)
+    {
+        HashSet<string> dynamicReferences = this.GetDynamicReferences(existingTypeDeclaration);
+
+        if (dynamicReferences.Count == 0)
+        {
+            dynamicScope = null;
+            return false;
+        }
+
+        foreach (string dynamicAnchor in dynamicReferences)
+        {
+            if (context.TryGetScopeForFirstDynamicAnchor(dynamicAnchor, out JsonReference? baseScopeLocation))
+            {
+                // We have found a new dynamic anchor in the containing scope, so we cannot share a type
+                // declaration with the previous instance.
+                if (context.TryGetPreviousScope(out JsonReference? location) && location == baseScopeLocation)
+                {
+                    dynamicScope = location;
+                    return true;
+                }
+            }
+        }
+
+        dynamicScope = null;
+        return false;
+    }
+
+    private HashSet<string> GetDynamicReferences(TypeDeclaration typeDeclaration)
+    {
+        HashSet<string> result = new();
+        HashSet<TypeDeclaration> visitedTypes = new();
+        this.GetDynamicReferences(typeDeclaration, result, visitedTypes);
+        return result;
+    }
+
+    private void GetDynamicReferences(TypeDeclaration type, HashSet<string> result, HashSet<TypeDeclaration> visitedTypes)
+    {
+        if (visitedTypes.Contains(type))
+        {
+            return;
+        }
+
+        visitedTypes.Add(type);
+
+        var dynamicRefKeywords = this.RefKeywords.Where(k => k.RefKind == RefKind.DynamicRef).ToDictionary(k => (string)new JsonReference("#").AppendUnencodedPropertyNameToFragment(k.Name), v => v);
+
+        foreach (KeyValuePair<string, TypeDeclaration> prop in type.RefResolvablePropertyDeclarations)
+        {
+            if (dynamicRefKeywords.TryGetValue(prop.Key, out RefKeyword? refKeyword))
+            {
+                if (type.LocatedSchema.Schema.TryGetProperty(refKeyword.Name, out JsonAny value))
+                {
+                    var reference = new JsonReference(value);
+                    if (reference.HasFragment)
+                    {
+                        ReadOnlySpan<char> fragmentWithoutLeadingHash = reference.Fragment[1..];
+                        if (AnchorPattern.IsMatch(fragmentWithoutLeadingHash))
+                        {
+                            result.Add(fragmentWithoutLeadingHash.ToString());
+                        }
+                    }
+                }
+            }
+
+            this.GetDynamicReferences(prop.Value, result, visitedTypes);
         }
     }
 

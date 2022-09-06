@@ -159,4 +159,27 @@ internal class WalkContext
         baseScopeLocation = null;
         return false;
     }
+
+    /// <summary>
+    /// Finds the previous scope Location in the stack, collapsing any identical scopes.
+    /// </summary>
+    /// <param name="previousScope">The previous scope Location.</param>
+    /// <returns><see langword="true"/> if there was a previous scope.</returns>
+    internal bool TryGetPreviousScope([NotNullWhen(true)] out JsonReference? previousScope)
+    {
+        JsonReference current = this.Scope.Location;
+        foreach (JsonSchemaScope scope in this.scopeStack)
+        {
+            if (scope.Location == current)
+            {
+                continue;
+            }
+
+            previousScope = scope.Location;
+            return true;
+        }
+
+        previousScope = null;
+        return false;
+    }
 }
