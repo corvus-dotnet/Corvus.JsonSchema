@@ -1445,6 +1445,9 @@ public class JsonSchemaTypeBuilder
                     case RefResolvablePropertyKind.MapOfSchema:
                         await this.AddSubschemaFromMapOfSchemaForRefResolvableKeyword(subschemaPath, value, context, typeDeclaration).ConfigureAwait(false);
                         break;
+                    case RefResolvablePropertyKind.MapOfSchemaIfValueIsSchemaLike:
+                        await this.AddSubschemaFromMapOfSchemaIfValueIsSchemaLikeForRefResolvableKeyword(subschemaPath, value, context, typeDeclaration).ConfigureAwait(false);
+                        break;
                     case RefResolvablePropertyKind.Schema:
                         await this.AddSubschemaFromSchemaForRefResolvableKeyword(subschemaPath, value, context, typeDeclaration).ConfigureAwait(false);
                         break;
@@ -1510,6 +1513,24 @@ public class JsonSchemaTypeBuilder
             context.EnterSubschemaScopeForUnencodedPropertyName(item.Name);
             await this.AddSubschemaFromSchemaForRefResolvableKeyword(subschemaPath.AppendUnencodedPropertyNameToFragment(item.Name), item.Value, context, typeDeclaration).ConfigureAwait(false);
             context.LeaveScope();
+        }
+    }
+
+    private async Task AddSubschemaFromMapOfSchemaIfValueIsSchemaLikeForRefResolvableKeyword(JsonReference subschemaPath, JsonAny map, WalkContext context, TypeDeclaration typeDeclaration)
+    {
+        if (map.ValueKind != JsonValueKind.Object)
+        {
+            throw new InvalidOperationException($"The value at {context.SubschemaLocation} was not an object.");
+        }
+
+        foreach (JsonObjectProperty item in map.EnumerateObject())
+        {
+            if (item.ValueKind == JsonValueKind.Object || item.ValueKind == JsonValueKind.True || item.ValueKind == JsonValueKind.False)
+            {
+                context.EnterSubschemaScopeForUnencodedPropertyName(item.Name);
+                await this.AddSubschemaFromSchemaForRefResolvableKeyword(subschemaPath.AppendUnencodedPropertyNameToFragment(item.Name), item.Value, context, typeDeclaration).ConfigureAwait(false);
+                context.LeaveScope();
+            }
         }
     }
 
@@ -1748,6 +1769,9 @@ public class JsonSchemaTypeBuilder
                 case RefResolvablePropertyKind.MapOfSchema:
                     AddSubschemasForMapOfSchemaProperty(keyword.Name, value, currentLocation);
                     break;
+                case RefResolvablePropertyKind.MapOfSchemaIfValueIsSchemaLike:
+                    AddSubschemasForMapOfSchemaIfValueIsSchemaLikeProperty(keyword.Name, value, currentLocation);
+                    break;
                 case RefResolvablePropertyKind.SchemaIfValueIsSchemaLike:
                     AddSubschemasForSchemaIfValueIsASchemaLikeKindProperty(keyword.Name, value, currentLocation);
                     break;
@@ -1799,6 +1823,26 @@ public class JsonSchemaTypeBuilder
             {
                 JsonReference propertyLocation = currentLocation.AppendUnencodedPropertyNameToFragment(propertyName);
                 throw new InvalidOperationException($"The property at {propertyLocation} was expected to be either a schema object, or an array of schema objects.");
+            }
+        }
+
+        void AddSubschemasForMapOfSchemaIfValueIsSchemaLikeProperty(string propertyName, JsonAny value, JsonReference currentLocation)
+        {
+            JsonReference propertyLocation = currentLocation.AppendUnencodedPropertyNameToFragment(propertyName);
+            if (value.ValueKind != JsonValueKind.Object)
+            {
+                throw new InvalidOperationException($"The property at {propertyLocation} was expected to be a map of schema objects.");
+            }
+
+            int index = 0;
+            foreach (JsonObjectProperty property in value.EnumerateObject())
+            {
+                if (property.ValueKind == JsonValueKind.Object || property.ValueKind == JsonValueKind.True || property.ValueKind == JsonValueKind.False)
+                {
+                    JsonReference subschemaLocation = propertyLocation.AppendUnencodedPropertyNameToFragment(property.Name);
+                    this.AddLocatedSchemaAndSubschema(subschemaLocation, property.Value);
+                    ++index;
+                }
             }
         }
 

@@ -50,8 +50,7 @@ public static class JsonSchemaHelpers
     /// <returns>An array of keywords that represent anchors in draft 2020-12.</returns>
     private static ImmutableArray<AnchorKeyword> CreateDraft7AnchorKeywords()
     {
-        return ImmutableArray.Create(
-            new AnchorKeyword(Name: "$anchor", IsDynamic: false, IsRecursive: false));
+        return ImmutableArray<AnchorKeyword>.Empty;
     }
 
     /// <summary>
@@ -92,6 +91,7 @@ public static class JsonSchemaHelpers
     {
         return ImmutableHashSet.Create(
             "additionalProperties",
+            "additionalItems",
             "allOf",
             "anyOf",
             "const",
@@ -100,8 +100,7 @@ public static class JsonSchemaHelpers
             "contentMediaType",
             "contentSchema",
             "default",
-            "dependentRequired",
-            "dependentSchemas",
+            "dependencies",
             "else",
             "enum",
             "exclusiveMaximum",
@@ -136,13 +135,13 @@ public static class JsonSchemaHelpers
     }
 
     /// <summary>
-    /// Creates the draft7 keywords that are resolvable to a schema.
+    /// Creates the draft2019-09 keywords that are resolvable to a schema.
     /// </summary>
     /// <returns>An array of <see cref="RefResolvableKeyword"/> instances.</returns>
     private static ImmutableArray<RefResolvableKeyword> CreateDraft7RefResolvableKeywords()
     {
         return ImmutableArray.Create<RefResolvableKeyword>(
-            new("$defs", RefResolvablePropertyKind.MapOfSchema),
+            new("definitions", RefResolvablePropertyKind.MapOfSchema),
             new("items", RefResolvablePropertyKind.SchemaOrArrayOfSchema),
             new("contains", RefResolvablePropertyKind.Schema),
             new("if", RefResolvablePropertyKind.Schema),
@@ -150,7 +149,8 @@ public static class JsonSchemaHelpers
             new("patternProperties", RefResolvablePropertyKind.MapOfSchema),
             new("properties", RefResolvablePropertyKind.MapOfSchema),
             new("additionalProperties", RefResolvablePropertyKind.Schema),
-            new("dependentSchemas", RefResolvablePropertyKind.MapOfSchema),
+            new("additionalItems", RefResolvablePropertyKind.Schema),
+            new("dependencies", RefResolvablePropertyKind.MapOfSchemaIfValueIsSchemaLike),
             new("else", RefResolvablePropertyKind.Schema),
             new("then", RefResolvablePropertyKind.Schema),
             new("propertyNames", RefResolvablePropertyKind.Schema),
@@ -170,9 +170,7 @@ public static class JsonSchemaHelpers
     private static ImmutableArray<RefKeyword> CreateDraft7RefKeywords()
     {
         return ImmutableArray.Create(
-            new RefKeyword("$ref", RefKind.Ref),
-            new RefKeyword("$recursiveRef", RefKind.RecursiveRef),
-            new RefKeyword("$dynamicRef", RefKind.DynamicRef));
+            new RefKeyword("$ref", RefKind.Ref));
     }
 
     /// <summary>
@@ -282,6 +280,14 @@ public static class JsonSchemaHelpers
             if (source.RefResolvablePropertyDeclarations.TryGetValue("#/else", out TypeDeclaration? elseTypeDeclaration))
             {
                 builder.FindAndBuildProperties(elseTypeDeclaration, target, typesVisited, true);
+            }
+
+            if (schema.Dependencies.IsNotUndefined())
+            {
+                foreach (TypeDeclaration dependentypeDeclaration in source.RefResolvablePropertyDeclarations.Where(k => k.Key.StartsWith("#/dependencies")).Select(k => k.Value))
+                {
+                    builder.FindAndBuildProperties(dependentypeDeclaration, target, typesVisited, true);
+                }
             }
 
             if (source.RefResolvablePropertyDeclarations.TryGetValue("#/$ref", out TypeDeclaration? refTypeDeclaration))

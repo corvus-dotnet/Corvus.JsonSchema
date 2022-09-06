@@ -41,4 +41,12 @@ public enum RefResolvablePropertyKind
     /// This is a legacy construct from draft6 and draft7 and has been eliminated from 2019-09 onwards.
     /// </remarks>
     SchemaIfValueIsSchemaLike,
+
+    /// <summary>
+    /// The property value is a map of schema if the values are objects.
+    /// </summary>
+    /// <remarks>
+    /// This is a legacy construct from draft6 and draft7 and has been eliminated from 2019-09 onwards.
+    /// </remarks>
+    MapOfSchemaIfValueIsSchemaLike,
 }
