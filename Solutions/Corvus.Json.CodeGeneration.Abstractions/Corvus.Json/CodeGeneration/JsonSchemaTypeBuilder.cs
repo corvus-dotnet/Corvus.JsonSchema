@@ -899,6 +899,26 @@ public class JsonSchemaTypeBuilder
                 this.locatedTypeDeclarations.Add(context.SubschemaLocation, typeDeclaration);
                 this.locatedTypeDeclarations.Add(typeDeclaration.LocatedSchema.Location, typeDeclaration);
             }
+            else if (this.TryGetNewRecursiveScope(existingTypeDeclaration, context, out JsonReference? recursiveScope))
+            {
+                // We remove the existing one and replace it, for this context.
+                this.locatedTypeDeclarations.Remove(context.SubschemaLocation);
+
+                // Update the dynamic location
+                typeDeclaration.UpdateDynamicLocation(recursiveScope.Value);
+
+                if (this.locatedTypeDeclarations.TryGetValue(typeDeclaration.LocatedSchema.Location, out TypeDeclaration? existingREcursiveDeclaration))
+                {
+                    // If we already exist in the dynamic location
+                    // Add it to the current locatedTypeDeclarations for this subschema, and return it.
+                    this.locatedTypeDeclarations.Add(context.SubschemaLocation, existingREcursiveDeclaration);
+                    return existingREcursiveDeclaration;
+                }
+
+                this.locatedSchema.Add(typeDeclaration.LocatedSchema.Location, typeDeclaration.LocatedSchema);
+                this.locatedTypeDeclarations.Add(context.SubschemaLocation, typeDeclaration);
+                this.locatedTypeDeclarations.Add(typeDeclaration.LocatedSchema.Location, typeDeclaration);
+            }
             else
             {
                 // We can just use the existing type.
@@ -999,12 +1019,73 @@ public class JsonSchemaTypeBuilder
         return false;
     }
 
+    private bool TryGetNewRecursiveScope(TypeDeclaration existingTypeDeclaration, WalkContext context, [NotNullWhen(true)] out JsonReference? recursiveScope)
+    {
+        bool hasRecursiveReferences = this.HasRecursiveReferences(existingTypeDeclaration);
+
+        if (!hasRecursiveReferences)
+        {
+            recursiveScope = null;
+            return false;
+        }
+
+        if (context.TryGetScopeForFirstRecursiveAnchor(out JsonReference? baseScopeLocation))
+        {
+            // We have found a new dynamic anchor in the containing scope, so we cannot share a type
+            // declaration with the previous instance.
+            if (context.TryGetPreviousScope(out JsonReference? location) && location == baseScopeLocation)
+            {
+                recursiveScope = location;
+                return true;
+            }
+        }
+
+        recursiveScope = null;
+        return false;
+    }
+
+    private bool HasRecursiveReferences(TypeDeclaration typeDeclaration)
+    {
+        HashSet<TypeDeclaration> visitedTypes = new();
+        return this.HasRecursiveReferences(typeDeclaration, visitedTypes);
+    }
+
     private HashSet<string> GetDynamicReferences(TypeDeclaration typeDeclaration)
     {
         HashSet<string> result = new();
         HashSet<TypeDeclaration> visitedTypes = new();
         this.GetDynamicReferences(typeDeclaration, result, visitedTypes);
         return result;
+    }
+
+    private bool HasRecursiveReferences(TypeDeclaration type, HashSet<TypeDeclaration> visitedTypes)
+    {
+        if (visitedTypes.Contains(type))
+        {
+            return false;
+        }
+
+        visitedTypes.Add(type);
+
+        var recursiveRefKeywords = this.RefKeywords.Where(k => k.RefKind == RefKind.RecursiveRef).ToDictionary(k => (string)new JsonReference("#").AppendUnencodedPropertyNameToFragment(k.Name), v => v);
+
+        foreach (KeyValuePair<string, TypeDeclaration> prop in type.RefResolvablePropertyDeclarations)
+        {
+            if (recursiveRefKeywords.TryGetValue(prop.Key, out RefKeyword? refKeyword))
+            {
+                if (type.LocatedSchema.Schema.TryGetProperty(refKeyword.Name, out JsonAny value) && value.ValueKind == JsonValueKind.True)
+                {
+                    return true;
+                }
+            }
+
+            if (this.HasRecursiveReferences(prop.Value, visitedTypes))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void GetDynamicReferences(TypeDeclaration type, HashSet<string> result, HashSet<TypeDeclaration> visitedTypes)
