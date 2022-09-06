@@ -673,6 +673,9 @@ public class JsonSchemaTypeBuilder
     {
         var reference = JsonReferenceBuilder.From(typeDeclaration.LocatedSchema.Location);
 
+        // Remove the query.
+        reference = new JsonReferenceBuilder(reference.Scheme, reference.Authority, reference.Path, ReadOnlySpan<char>.Empty, reference.Fragment);
+
         if (typeDeclaration.Parent is null)
         {
             if (reference.HasFragment)
