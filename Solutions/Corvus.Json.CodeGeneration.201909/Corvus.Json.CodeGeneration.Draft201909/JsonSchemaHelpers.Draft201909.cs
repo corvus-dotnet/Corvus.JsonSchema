@@ -122,6 +122,8 @@ public static class JsonSchemaHelpers
             "required",
             "then",
             "type",
+            "unevaluatedItems",
+            "unevaluatedProperties",
             "uniqueItems");
     }
 
@@ -149,7 +151,9 @@ public static class JsonSchemaHelpers
             new("anyOf", RefResolvablePropertyKind.ArrayOfSchema),
             new("oneOf", RefResolvablePropertyKind.ArrayOfSchema),
             new("not", RefResolvablePropertyKind.Schema),
-            new("contentSchema", RefResolvablePropertyKind.Schema));
+            new("contentSchema", RefResolvablePropertyKind.Schema),
+            new("unevaluatedItems", RefResolvablePropertyKind.Schema),
+            new("unevaluatedProperties", RefResolvablePropertyKind.Schema));
     }
 
     /// <summary>
