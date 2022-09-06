@@ -907,12 +907,12 @@ public class JsonSchemaTypeBuilder
                 // Update the dynamic location
                 typeDeclaration.UpdateDynamicLocation(recursiveScope.Value);
 
-                if (this.locatedTypeDeclarations.TryGetValue(typeDeclaration.LocatedSchema.Location, out TypeDeclaration? existingREcursiveDeclaration))
+                if (this.locatedTypeDeclarations.TryGetValue(typeDeclaration.LocatedSchema.Location, out TypeDeclaration? existingRecursiveDeclaration))
                 {
                     // If we already exist in the dynamic location
                     // Add it to the current locatedTypeDeclarations for this subschema, and return it.
-                    this.locatedTypeDeclarations.Add(context.SubschemaLocation, existingREcursiveDeclaration);
-                    return existingREcursiveDeclaration;
+                    this.locatedTypeDeclarations.Add(context.SubschemaLocation, existingRecursiveDeclaration);
+                    return existingRecursiveDeclaration;
                 }
 
                 this.locatedSchema.Add(typeDeclaration.LocatedSchema.Location, typeDeclaration.LocatedSchema);
@@ -1073,7 +1073,7 @@ public class JsonSchemaTypeBuilder
         {
             if (recursiveRefKeywords.TryGetValue(prop.Key, out RefKeyword? refKeyword))
             {
-                if (type.LocatedSchema.Schema.TryGetProperty(refKeyword.Name, out JsonAny value) && value.ValueKind == JsonValueKind.True)
+                if (type.LocatedSchema.Schema.TryGetProperty(refKeyword.Name, out JsonAny value))
                 {
                     return true;
                 }
