@@ -1573,7 +1573,7 @@ public class JsonSchemaTypeBuilder
             {
                 if (currentLocation.HasFragment)
                 {
-                    this.AddAnchor(new JsonReference(currentLocation.Uri.ToString()), currentLocation.Fragment.ToString());
+                    this.AddNamedAnchor(new JsonReference(currentLocation.Uri.ToString()), currentLocation.Fragment.ToString());
                 }
                 else
                 {
@@ -1622,7 +1622,10 @@ public class JsonSchemaTypeBuilder
             {
                 if (schema.TryGetProperty(anchorKeyword.Name, out JsonAny value))
                 {
-                    this.AddAnchor(currentLocation, value);
+                    if (value.ValueKind == JsonValueKind.String)
+                    {
+                        this.AddNamedAnchor(currentLocation, value);
+                    }
 
                     if (anchorKeyword.IsDynamic)
                     {
@@ -1755,7 +1758,7 @@ public class JsonSchemaTypeBuilder
         return this.locatedSchema.TryAdd(location, new(location, schema));
     }
 
-    private void AddAnchor(JsonReference location, string anchorName)
+    private void AddNamedAnchor(JsonReference location, string anchorName)
     {
         // Go back up to root
         JsonReference rootLocation = MakeAbsolute(location.WithFragment(string.Empty));

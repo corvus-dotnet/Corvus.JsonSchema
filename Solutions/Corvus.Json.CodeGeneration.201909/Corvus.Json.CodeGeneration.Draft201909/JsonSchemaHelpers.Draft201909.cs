@@ -52,7 +52,7 @@ public static class JsonSchemaHelpers
     {
         return ImmutableArray.Create(
             new AnchorKeyword(Name: "$anchor", IsDynamic: false, IsRecursive: false),
-            new AnchorKeyword(Name: "recursiveAnchor", IsDynamic: true, IsRecursive: false));
+            new AnchorKeyword(Name: "$recursiveAnchor", IsDynamic: true, IsRecursive: false));
     }
 
     /// <summary>
