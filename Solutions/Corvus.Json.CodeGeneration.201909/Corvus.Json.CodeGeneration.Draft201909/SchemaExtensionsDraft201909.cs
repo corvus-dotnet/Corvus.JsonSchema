@@ -1,4 +1,4 @@
-﻿// <copyright file="SchemaExtensions.cs" company="Endjin Limited">
+﻿// <copyright file="SchemaExtensionsDraft201909.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
@@ -10,34 +10,17 @@ namespace Corvus.Json.CodeGeneration.Draft201909;
 /// <summary>
 /// Extension methods for Draft201909-related schema types.
 /// </summary>
-public static class SchemaExtensions
+public static class SchemaExtensionsDraft201909
 {
-    /////// <summary>
-    /////// COMPATIBILITY: Gets the string value.
-    /////// </summary>
-    /////// <param name="that">The string for which to get the value as a nullable string.</param>
-    /////// <returns><c>The string if this value represents a string</c>, otherwise <c>null</c>.</returns>
-    ////public static string? AsOptionalString(this JsonString that)
-    ////{
-    ////    if (that.TryGetString(out string? value))
-    ////    {
-    ////        return value;
-    ////    }
-
-    ////    return null;
-    ////}
-
-    /////// <summary>
-    /////// COMPATIBILITY: Gets the array length.
-    /////// </summary>
-    /////// <typeparam name="T">The type of the array.</typeparam>
-    /////// <param name="that">The array for which to get the array length as a nullable string.</param>
-    /////// <returns><c>The string if this value represents a string</c>, otherwise <c>null</c>.</returns>
-    ////public static int GetArrayLength<T>(this T that)
-    ////    where T : struct, IJsonValue
-    ////{
-    ////    return that.AsArray().Length;
-    ////}
+    /// <summary>
+    /// Gets the given type declaration's schema as a draft-2019-09 schema instance.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration for which to get the schema.</param>
+    /// <returns>The schema as a draft-2019-09 instance.</returns>
+    public static Schema Schema(this TypeDeclaration typeDeclaration)
+    {
+        return typeDeclaration.LocatedSchema.Schema.As<Schema>();
+    }
 
     /// <summary>
     /// Determines if this schema is empty of known items, but contains unknown extensions.

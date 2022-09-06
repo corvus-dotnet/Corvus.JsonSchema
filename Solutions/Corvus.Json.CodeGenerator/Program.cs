@@ -84,41 +84,20 @@ class Program
     {
         try
         {
-            var walker = new JsonWalker(new CompoundDocumentResolver(new FileSystemDocumentResolver(), new HttpClientDocumentResolver(new HttpClient())));
-            var uri = new JsonUri(schemaFile);
-            if (!uri.IsValid() || uri.GetUri().IsFile)
-            {
-                // If this is, in fact, a local file path, not a uri, then convert to a fullpath and URI-style separators.
-                if (!Path.IsPathFullyQualified(schemaFile))
-                {
-                    schemaFile = Path.GetFullPath(schemaFile);
-                }
-
-                schemaFile = schemaFile.Replace('\\', '/');
-            }
-
+            var typeBuilder = new JsonSchemaTypeBuilder(new CompoundDocumentResolver(new FileSystemDocumentResolver(), new HttpClientDocumentResolver(new HttpClient())));
             JsonReference reference = new JsonReference(schemaFile).Apply(new JsonReference(rootPath));
-            string resolvedReference = await walker.TryRebaseDocumentToPropertyValue(reference, "$id").ConfigureAwait(false);
-
-            if (schemaVariant == SchemaVariant.NotSpecified)
-            {
-                if (await TryGetSchemaFrom(walker, resolvedReference).ConfigureAwait(false) is SchemaVariant variant)
-                {
-                    schemaVariant = variant;
-                }
-            }
-
+            schemaVariant = ValidationSemanticsToSchemaVariant(await typeBuilder.GetValidationSemantics(reference, rebaseToRootPath).ConfigureAwait(false));
             IJsonSchemaBuilder builder =
                 schemaVariant switch
                 {
-                    SchemaVariant.Draft6 => new CodeGeneration.Draft6.JsonSchemaBuilder(walker),
-                    SchemaVariant.Draft7 => new CodeGeneration.Draft7.JsonSchemaBuilder(walker),
-                    SchemaVariant.Draft202012 => new CodeGeneration.Draft202012.JsonSchemaBuilder(walker),
-                    SchemaVariant.Draft201909 => new CodeGeneration.Draft201909.JsonSchemaBuilder(walker),
-                    _ => new CodeGeneration.Draft202012.JsonSchemaBuilder(walker)
+                    SchemaVariant.Draft6 => new CodeGeneration.Draft6.JsonSchemaBuilder(typeBuilder),
+                    SchemaVariant.Draft7 => new CodeGeneration.Draft7.JsonSchemaBuilder(typeBuilder),
+                    SchemaVariant.Draft202012 => new CodeGeneration.Draft202012.JsonSchemaBuilder(typeBuilder),
+                    SchemaVariant.Draft201909 => new CodeGeneration.Draft201909.JsonSchemaBuilder(typeBuilder),
+                    _ => new CodeGeneration.Draft202012.JsonSchemaBuilder(typeBuilder)
                 };
 
-            (string RootType, ImmutableDictionary<string, TypeAndCode> GeneratedTypes) result = await builder.BuildTypesFor(resolvedReference, rootNamespace, rebaseToRootPath, rootTypeName: rootTypeName).ConfigureAwait(false);
+            (string RootType, ImmutableDictionary<JsonReference, TypeAndCode> GeneratedTypes) = await builder.BuildTypesFor(reference, rootNamespace, rebaseToRootPath, rootTypeName: rootTypeName).ConfigureAwait(false);
 
             if (!string.IsNullOrEmpty(outputPath))
             {
@@ -138,7 +117,7 @@ class Program
 
             bool first = true;
 
-            foreach (KeyValuePair<string, TypeAndCode> generatedType in result.GeneratedTypes)
+            foreach (KeyValuePair<JsonReference, TypeAndCode> generatedType in GeneratedTypes)
             {
                 Console.WriteLine($"Generating: {generatedType.Value.DotnetTypeName}");
                 foreach (CodeAndFilename typeAndCode in generatedType.Value.Code)
@@ -189,42 +168,33 @@ class Program
         return 0;
     }
 
-    private static async Task<SchemaVariant?> TryGetSchemaFrom(JsonWalker walker, string resolvedReference)
+    private static SchemaVariant ValidationSemanticsToSchemaVariant(ValidationSemantics validationSemantics)
     {
-        JsonElement? rootElement = await walker.GetDocumentElement(resolvedReference).ConfigureAwait(false);
-        if (rootElement is JsonElement re)
+        if (validationSemantics == ValidationSemantics.Unknown)
         {
-            if (re.TryGetProperty("$schema", out JsonElement schema))
-            {
-                if (schema.ValueKind == JsonValueKind.String)
-                {
-                    string? schemaValue = schema.GetString();
-                    if (schemaValue is string sv)
-                    {
-                        if (sv == "http://json-schema.org/draft-06/schema" || sv == "http://json-schema.org/draft-06/schema#")
-                        {
-                            return SchemaVariant.Draft6;
-                        }
-
-                        if (sv == "http://json-schema.org/draft-07/schema" || sv == "http://json-schema.org/draft-07/schema#")
-                        {
-                            return SchemaVariant.Draft7;
-                        }
-
-                        if (sv == "https://json-schema.org/draft/2019-09/schema")
-                        {
-                            return SchemaVariant.Draft201909;
-                        }
-
-                        if (sv == "https://json-schema.org/draft/2020-12/schema")
-                        {
-                            return SchemaVariant.Draft202012;
-                        }
-                    }
-                }
-            }
+            return SchemaVariant.NotSpecified;
         }
 
-        return null;
+        if ((validationSemantics & ValidationSemantics.Draft6) != 0)
+        {
+            return SchemaVariant.Draft6;
+        }
+
+        if ((validationSemantics & ValidationSemantics.Draft7) != 0)
+        {
+            return SchemaVariant.Draft7;
+        }
+
+        if ((validationSemantics & ValidationSemantics.Draft201909) != 0)
+        {
+            return SchemaVariant.Draft201909;
+        }
+
+        if ((validationSemantics & ValidationSemantics.Draft202012) != 0)
+        {
+            return SchemaVariant.Draft202012;
+        }
+        
+        return SchemaVariant.NotSpecified;
     }
 }

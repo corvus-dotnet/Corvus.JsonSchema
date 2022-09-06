@@ -12,7 +12,7 @@ using Corvus.Json;
 
 namespace Corvus.Json.Patch.Model;
 /// <summary>
-/// A type generated from a JsonSchema specification.
+/// A type generated from a JsonSchema() specification.
 /// </summary>
 public readonly partial struct Move
 {

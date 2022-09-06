@@ -1,7 +1,7 @@
 {
   "version": 1,
   "dependencies": {
-    "net6.0": {
+    "net7.0": {
       "Corvus.Testing.SpecFlow.NUnit": {
         "type": "Direct",
         "requested": "[1.5.1, )",
@@ -1565,7 +1565,6 @@
           "Corvus.Extensions": "[1.1.4, )",
           "Corvus.Json.CodeGeneration.Abstractions": "[1.0.0, )",
           "Corvus.Json.JsonSchema": "[1.0.0, )",
-          "Corvus.Json.Walker": "[1.0.0, )",
           "System.CodeDom": "[6.0.0, )"
         }
       },
@@ -1575,7 +1574,6 @@
           "Corvus.Extensions": "[1.1.4, )",
           "Corvus.Json.CodeGeneration.Abstractions": "[1.0.0, )",
           "Corvus.Json.JsonSchema": "[1.0.0, )",
-          "Corvus.Json.Walker": "[1.0.0, )",
           "System.CodeDom": "[6.0.0, )"
         }
       },
@@ -1585,7 +1583,6 @@
           "Corvus.Extensions": "[1.1.4, )",
           "Corvus.Json.CodeGeneration.Abstractions": "[1.0.0, )",
           "Corvus.Json.JsonSchema": "[1.0.0, )",
-          "Corvus.Json.Walker": "[1.0.0, )",
           "System.CodeDom": "[6.0.0, )"
         }
       },
@@ -1595,7 +1592,6 @@
           "Corvus.Extensions": "[1.1.4, )",
           "Corvus.Json.CodeGeneration.Abstractions": "[1.0.0, )",
           "Corvus.Json.JsonSchema": "[1.0.0, )",
-          "Corvus.Json.Walker": "[1.0.0, )",
           "System.CodeDom": "[6.0.0, )"
         }
       },
@@ -1603,7 +1599,7 @@
         "type": "Project",
         "dependencies": {
           "Corvus.Extensions": "[1.1.4, )",
-          "Corvus.Json.Walker": "[1.0.0, )",
+          "Corvus.Json.ExtendedTypes": "[1.0.0, )",
           "Microsoft.CodeAnalysis.CSharp": "[4.2.0, )",
           "System.CodeDom": "[6.0.0, )"
         }
@@ -1643,16 +1639,6 @@
           "Microsoft.Extensions.ObjectPool": "[6.0.7, )",
           "NodaTime": "[3.1.0, )",
           "System.Buffers": "[4.5.1, )",
-          "System.Collections.Immutable": "[6.0.0, )",
-          "System.Text.Json": "[6.0.5, )"
-        }
-      },
-      "corvus.json.walker": {
-        "type": "Project",
-        "dependencies": {
-          "Corvus.Extensions": "[1.1.4, )",
-          "Microsoft.CodeAnalysis.CSharp": "[4.2.0, )",
-          "Microsoft.Extensions.Http": "[6.0.0, )",
           "System.Collections.Immutable": "[6.0.0, )",
           "System.Text.Json": "[6.0.5, )"
         }

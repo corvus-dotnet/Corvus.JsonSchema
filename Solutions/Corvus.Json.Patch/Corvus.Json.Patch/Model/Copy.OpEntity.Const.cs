@@ -17,7 +17,7 @@ namespace Corvus.Json.Patch.Model;
 public readonly partial struct Copy
 {
     /// <summary>
-    /// A type generated from a JsonSchema specification.
+    /// A type generated from a JsonSchema() specification.
     /// </summary>
     public readonly partial struct OpEntity
     {

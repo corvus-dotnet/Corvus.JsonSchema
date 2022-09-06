@@ -1,4 +1,4 @@
-﻿// <copyright file="SchemaExtensions.cs" company="Endjin Limited">
+﻿// <copyright file="SchemaExtensionsDraft6.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
@@ -10,34 +10,17 @@ namespace Corvus.Json.CodeGeneration.Draft6;
 /// <summary>
 /// Extension methods for Draft6-related schema types.
 /// </summary>
-public static class SchemaExtensions
+public static class SchemaExtensionsDraft6
 {
-    /////// <summary>
-    /////// COMPATIBILITY: Gets the string value.
-    /////// </summary>
-    /////// <param name="that">The string for which to get the value as a nullable string.</param>
-    /////// <returns><c>The string if this value represents a string</c>, otherwise <c>null</c>.</returns>
-    ////public static string? AsOptionalString(this JsonString that)
-    ////{
-    ////    if (that.TryGetString(out string? value))
-    ////    {
-    ////        return value;
-    ////    }
-
-    ////    return null;
-    ////}
-
-    /////// <summary>
-    /////// COMPATIBILITY: Gets the array length.
-    /////// </summary>
-    /////// <typeparam name="T">The type of the array.</typeparam>
-    /////// <param name="that">The array for which to get the array length as a nullable string.</param>
-    /////// <returns><c>The string if this value represents a string</c>, otherwise <c>null</c>.</returns>
-    ////public static int GetArrayLength<T>(this T that)
-    ////    where T : struct, IJsonValue
-    ////{
-    ////    return that.AsArray().Length;
-    ////}
+    /// <summary>
+    /// Gets the given type declaration's schema as a draft-6 schema instance.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration for which to get the schema.</param>
+    /// <returns>The schema as a draft-6 instance.</returns>
+    public static Schema Schema(this TypeDeclaration typeDeclaration)
+    {
+        return typeDeclaration.LocatedSchema.Schema.As<Schema>();
+    }
 
     /// <summary>
     /// Determines if this schema is empty of known items, but contains unknown extensions.
@@ -57,7 +40,7 @@ public static class SchemaExtensions
     public static bool IsExplicitArrayType(this Schema draft6Schema)
     {
         return
-            draft6Schema.Type.IsSimpleTypesEntity && draft6Schema.Type.Equals(Schema.SimpleTypesEntity.EnumValues.Array);
+            draft6Schema.Type.IsSimpleTypesEntity && draft6Schema.Type.Equals(JsonSchema.Draft6.Schema.SimpleTypesEntity.EnumValues.Array);
     }
 
     /// <summary>
@@ -79,7 +62,7 @@ public static class SchemaExtensions
     }
 
     /// <summary>
-    /// Gets the content media type for the draft 6 schema.
+    /// Gets the content encoding for the draft 6 schema.
     /// </summary>
     /// <param name="draft6Schema">The schema for which to get the value.</param>
     /// <returns>The value, which may be undefined.</returns>
@@ -104,7 +87,7 @@ public static class SchemaExtensions
     public static bool IsExplicitObjectType(this Schema draft6Schema)
     {
         return
-            draft6Schema.Type.IsSimpleTypesEntity && draft6Schema.Type.Equals(Schema.SimpleTypesEntity.EnumValues.Object);
+            draft6Schema.Type.IsSimpleTypesEntity && draft6Schema.Type.Equals(JsonSchema.Draft6.Schema.SimpleTypesEntity.EnumValues.Object);
     }
 
     /// <summary>
@@ -115,7 +98,7 @@ public static class SchemaExtensions
     public static bool IsExplicitNumberType(this Schema draft6Schema)
     {
         return
-            draft6Schema.Type.IsSimpleTypesEntity && (draft6Schema.Type.Equals(Schema.SimpleTypesEntity.EnumValues.Number) || draft6Schema.Type.Equals(Schema.SimpleTypesEntity.EnumValues.Integer));
+            draft6Schema.Type.IsSimpleTypesEntity && (draft6Schema.Type.Equals(JsonSchema.Draft6.Schema.SimpleTypesEntity.EnumValues.Number) || draft6Schema.Type.Equals(JsonSchema.Draft6.Schema.SimpleTypesEntity.EnumValues.Integer));
     }
 
     /// <summary>
@@ -126,7 +109,7 @@ public static class SchemaExtensions
     public static bool IsExplicitBooleanType(this Schema draft6Schema)
     {
         return
-            draft6Schema.Type.IsSimpleTypesEntity && draft6Schema.Type.Equals(Schema.SimpleTypesEntity.EnumValues.Boolean);
+            draft6Schema.Type.IsSimpleTypesEntity && draft6Schema.Type.Equals(JsonSchema.Draft6.Schema.SimpleTypesEntity.EnumValues.Boolean);
     }
 
     /// <summary>
@@ -137,7 +120,7 @@ public static class SchemaExtensions
     public static bool IsExplicitNullType(this Schema draft6Schema)
     {
         return
-            draft6Schema.Type.IsSimpleTypesEntity && draft6Schema.Type.Equals(Schema.SimpleTypesEntity.EnumValues.Null);
+            draft6Schema.Type.IsSimpleTypesEntity && draft6Schema.Type.Equals(JsonSchema.Draft6.Schema.SimpleTypesEntity.EnumValues.Null);
     }
 
     /// <summary>
@@ -148,7 +131,7 @@ public static class SchemaExtensions
     public static bool IsExplicitStringType(this Schema draft6Schema)
     {
         return
-            draft6Schema.Type.IsSimpleTypesEntity && draft6Schema.Type.Equals(Schema.SimpleTypesEntity.EnumValues.String);
+            draft6Schema.Type.IsSimpleTypesEntity && draft6Schema.Type.Equals(JsonSchema.Draft6.Schema.SimpleTypesEntity.EnumValues.String);
     }
 
     /// <summary>
@@ -159,7 +142,7 @@ public static class SchemaExtensions
     public static bool IsObjectType(this Schema draft6Schema)
     {
         return
-            draft6Schema.IsExplicitObjectType() || (draft6Schema.Type.IsSimpleTypesEntityArray && draft6Schema.Type.AsSimpleTypesEntityArray.EnumerateArray().Any(type => type.Equals(Schema.SimpleTypesEntity.EnumValues.Object))) || draft6Schema.Properties.IsNotUndefined() || draft6Schema.Required.IsNotUndefined() || draft6Schema.AdditionalProperties.IsNotUndefined() || draft6Schema.MaxProperties.IsNotUndefined() || draft6Schema.MinProperties.IsNotUndefined() || draft6Schema.PatternProperties.IsNotUndefined() || draft6Schema.PropertyNames.IsNotUndefined() || draft6Schema.Dependencies.IsNotUndefined() || draft6Schema.HasObjectEnum() || draft6Schema.HasObjectConst();
+            draft6Schema.IsExplicitObjectType() || (draft6Schema.Type.IsSimpleTypesEntityArray && draft6Schema.Type.AsSimpleTypesEntityArray.EnumerateArray().Any(type => type.Equals(JsonSchema.Draft6.Schema.SimpleTypesEntity.EnumValues.Object))) || draft6Schema.Properties.IsNotUndefined() || draft6Schema.Required.IsNotUndefined() || draft6Schema.AdditionalProperties.IsNotUndefined() || draft6Schema.MaxProperties.IsNotUndefined() || draft6Schema.MinProperties.IsNotUndefined() || draft6Schema.PatternProperties.IsNotUndefined() || draft6Schema.PropertyNames.IsNotUndefined() || draft6Schema.Dependencies.IsNotUndefined() || draft6Schema.HasObjectEnum() || draft6Schema.HasObjectConst();
     }
 
     /// <summary>
@@ -170,7 +153,7 @@ public static class SchemaExtensions
     public static bool IsArrayType(this Schema draft6Schema)
     {
         return
-            draft6Schema.IsExplicitArrayType() || (draft6Schema.Type.IsSimpleTypesEntityArray && draft6Schema.Type.AsSimpleTypesEntityArray.EnumerateArray().Any(type => type.Equals(Schema.SimpleTypesEntity.EnumValues.Array))) || draft6Schema.AdditionalItems.IsNotUndefined() || draft6Schema.Contains.IsNotUndefined() || draft6Schema.Items.IsNotUndefined() || draft6Schema.MaxItems.IsNotUndefined() || draft6Schema.MinItems.IsNotUndefined() || draft6Schema.UniqueItems.IsNotUndefined() || draft6Schema.HasArrayEnum() || draft6Schema.HasArrayConst();
+            draft6Schema.IsExplicitArrayType() || (draft6Schema.Type.IsSimpleTypesEntityArray && draft6Schema.Type.AsSimpleTypesEntityArray.EnumerateArray().Any(type => type.Equals(JsonSchema.Draft6.Schema.SimpleTypesEntity.EnumValues.Array))) || draft6Schema.AdditionalItems.IsNotUndefined() || draft6Schema.Contains.IsNotUndefined() || draft6Schema.Items.IsNotUndefined() || draft6Schema.MaxItems.IsNotUndefined() || draft6Schema.MinItems.IsNotUndefined() || draft6Schema.UniqueItems.IsNotUndefined() || draft6Schema.HasArrayEnum() || draft6Schema.HasArrayConst();
     }
 
     /// <summary>
@@ -181,7 +164,7 @@ public static class SchemaExtensions
     public static bool IsNumberType(this Schema draft6Schema)
     {
         return
-            draft6Schema.IsExplicitNumberType() || (draft6Schema.Type.IsSimpleTypesEntityArray && draft6Schema.Type.AsSimpleTypesEntityArray.EnumerateArray().Any(type => type.Equals(Schema.SimpleTypesEntity.EnumValues.Number) || type.Equals(Schema.SimpleTypesEntity.EnumValues.Integer))) || draft6Schema.Minimum.IsNotUndefined() || draft6Schema.Maximum.IsNotUndefined() || draft6Schema.ExclusiveMaximum.IsNotUndefined() || draft6Schema.ExclusiveMinimum.IsNotUndefined() || draft6Schema.MultipleOf.IsNotUndefined() || draft6Schema.HasNumberEnum() || draft6Schema.HasNumberConst();
+            draft6Schema.IsExplicitNumberType() || (draft6Schema.Type.IsSimpleTypesEntityArray && draft6Schema.Type.AsSimpleTypesEntityArray.EnumerateArray().Any(type => type.Equals(JsonSchema.Draft6.Schema.SimpleTypesEntity.EnumValues.Number) || type.Equals(JsonSchema.Draft6.Schema.SimpleTypesEntity.EnumValues.Integer))) || draft6Schema.Minimum.IsNotUndefined() || draft6Schema.Maximum.IsNotUndefined() || draft6Schema.ExclusiveMaximum.IsNotUndefined() || draft6Schema.ExclusiveMinimum.IsNotUndefined() || draft6Schema.MultipleOf.IsNotUndefined() || draft6Schema.HasNumberEnum() || draft6Schema.HasNumberConst();
     }
 
     /// <summary>
@@ -192,7 +175,7 @@ public static class SchemaExtensions
     public static bool IsBooleanType(this Schema draft6Schema)
     {
         return
-            draft6Schema.IsExplicitBooleanType() || (draft6Schema.Type.IsSimpleTypesEntityArray && draft6Schema.Type.AsSimpleTypesEntityArray.EnumerateArray().Any(type => type.Equals(Schema.SimpleTypesEntity.EnumValues.Boolean))) || draft6Schema.HasBooleanEnum() || draft6Schema.HasBooleanConst();
+            draft6Schema.IsExplicitBooleanType() || (draft6Schema.Type.IsSimpleTypesEntityArray && draft6Schema.Type.AsSimpleTypesEntityArray.EnumerateArray().Any(type => type.Equals(JsonSchema.Draft6.Schema.SimpleTypesEntity.EnumValues.Boolean))) || draft6Schema.HasBooleanEnum() || draft6Schema.HasBooleanConst();
     }
 
     /// <summary>
@@ -203,7 +186,7 @@ public static class SchemaExtensions
     public static bool IsNullType(this Schema draft6Schema)
     {
         return
-            draft6Schema.IsExplicitNullType() || (draft6Schema.Type.IsSimpleTypesEntityArray && draft6Schema.Type.AsSimpleTypesEntityArray.EnumerateArray().Any(type => type.Equals(Schema.SimpleTypesEntity.EnumValues.Null))) || draft6Schema.HasNullEnum() || draft6Schema.HasNullConst();
+            draft6Schema.IsExplicitNullType() || (draft6Schema.Type.IsSimpleTypesEntityArray && draft6Schema.Type.AsSimpleTypesEntityArray.EnumerateArray().Any(type => type.Equals(JsonSchema.Draft6.Schema.SimpleTypesEntity.EnumValues.Null))) || draft6Schema.HasNullEnum() || draft6Schema.HasNullConst();
     }
 
     /// <summary>
@@ -214,7 +197,7 @@ public static class SchemaExtensions
     public static bool IsStringType(this Schema draft6Schema)
     {
         return
-            draft6Schema.IsExplicitStringType() || (draft6Schema.Type.IsSimpleTypesEntityArray && draft6Schema.Type.AsSimpleTypesEntityArray.EnumerateArray().Any(type => type.Equals(Schema.SimpleTypesEntity.EnumValues.String))) || draft6Schema.MinLength.IsNotUndefined() || draft6Schema.MaxLength.IsNotUndefined() || draft6Schema.Pattern.IsNotUndefined() || draft6Schema.HasStringEnum() || draft6Schema.HasStringConst();
+            draft6Schema.IsExplicitStringType() || (draft6Schema.Type.IsSimpleTypesEntityArray && draft6Schema.Type.AsSimpleTypesEntityArray.EnumerateArray().Any(type => type.Equals(JsonSchema.Draft6.Schema.SimpleTypesEntity.EnumValues.String))) || draft6Schema.MinLength.IsNotUndefined() || draft6Schema.MaxLength.IsNotUndefined() || draft6Schema.Pattern.IsNotUndefined() || draft6Schema.HasStringEnum() || draft6Schema.HasStringConst();
     }
 
     /// <summary>

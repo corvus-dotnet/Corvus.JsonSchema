@@ -2,7 +2,7 @@
 	<Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
 
 	<PropertyGroup>
-		<TargetFramework>net6.0</TargetFramework>
+		<TargetFramework>net7.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 	</PropertyGroup>
@@ -22,6 +22,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <None Remove="Corvus.Json.CodeGeneration.Draft202012\Generators\CodeGenerator.Validate.AllOf.Partial.cs~RF1264d695.TMP" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<PackageReference Include="Corvus.Extensions" Version="1.1.4" />
 		<PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.1">
 			<PrivateAssets>all</PrivateAssets>
@@ -33,7 +37,6 @@
 	<ItemGroup>
 	  <ProjectReference Include="..\Corvus.Json.CodeGeneration.Abstractions\Corvus.Json.CodeGeneration.Abstractions.csproj" />
 	  <ProjectReference Include="..\Corvus.Json.JsonSchema\Corvus.Json.JsonSchema.csproj" />
-	  <ProjectReference Include="..\Corvus.Json.Walker\Corvus.Json.Walker.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

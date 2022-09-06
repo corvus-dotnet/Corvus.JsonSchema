@@ -59,7 +59,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.IsObjectType() || this.HasProperties || this.DirectConversions.Any(c => c.IsObject) || this.HasConstObject;
+            return this.TypeDeclaration.Schema().IsObjectType() || this.HasProperties || this.DirectConversions.Any(c => c.IsObject) || this.HasConstObject;
         }
     }
 
@@ -70,7 +70,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.IsArrayType() || this.DirectConversions.Any(c => c.IsArray) || this.HasConstArray;
+            return this.TypeDeclaration.Schema().IsArrayType() || this.DirectConversions.Any(c => c.IsArray) || this.HasConstArray;
         }
     }
 
@@ -81,7 +81,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.IsNumberType() || this.DirectConversions.Any(c => c.IsNumber) || this.HasConstNumber;
+            return this.TypeDeclaration.Schema().IsNumberType() || this.DirectConversions.Any(c => c.IsNumber) || this.HasConstNumber;
         }
     }
 
@@ -92,7 +92,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.IsStringType() || this.DirectConversions.Any(c => c.IsString) || this.HasConstString;
+            return this.TypeDeclaration.Schema().IsStringType() || this.DirectConversions.Any(c => c.IsString) || this.HasConstString;
         }
     }
 
@@ -103,7 +103,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.IsBooleanType() || this.DirectConversions.Any(c => c.IsBoolean) || this.HasConstBoolean;
+            return this.TypeDeclaration.Schema().IsBooleanType() || this.DirectConversions.Any(c => c.IsBoolean) || this.HasConstBoolean;
         }
     }
 
@@ -224,7 +224,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.Const.ValueKind == JsonValueKind.String;
+            return this.TypeDeclaration.Schema().Const.ValueKind == JsonValueKind.String;
         }
     }
 
@@ -235,7 +235,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.Const.ValueKind == JsonValueKind.True || this.TypeDeclaration.Schema.Const.ValueKind == JsonValueKind.False;
+            return this.TypeDeclaration.Schema().Const.ValueKind == JsonValueKind.True || this.TypeDeclaration.Schema().Const.ValueKind == JsonValueKind.False;
         }
     }
 
@@ -246,7 +246,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.Const.ValueKind == JsonValueKind.Number;
+            return this.TypeDeclaration.Schema().Const.ValueKind == JsonValueKind.Number;
         }
     }
 
@@ -257,7 +257,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.Const.ValueKind == JsonValueKind.Object;
+            return this.TypeDeclaration.Schema().Const.ValueKind == JsonValueKind.Object;
         }
     }
 
@@ -268,7 +268,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.Const.ValueKind == JsonValueKind.Array;
+            return this.TypeDeclaration.Schema().Const.ValueKind == JsonValueKind.Array;
         }
     }
 
@@ -279,7 +279,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.Const.ValueKind == JsonValueKind.Null;
+            return this.TypeDeclaration.Schema().Const.ValueKind == JsonValueKind.Null;
         }
     }
 
@@ -292,7 +292,7 @@ public partial class CodeGeneratorValidateAllOf
         {
             if (this.HasConstString)
             {
-                return GetRawTextAsQuotedString(this.TypeDeclaration.Schema.Const);
+                return GetRawTextAsQuotedString(this.TypeDeclaration.Schema().Const);
             }
 
             return string.Empty;
@@ -308,7 +308,7 @@ public partial class CodeGeneratorValidateAllOf
         {
             if (this.HasConstBoolean)
             {
-                return GetRawTextAsQuotedString(this.TypeDeclaration.Schema.Const);
+                return GetRawTextAsQuotedString(this.TypeDeclaration.Schema().Const);
             }
 
             return string.Empty;
@@ -324,7 +324,7 @@ public partial class CodeGeneratorValidateAllOf
         {
             if (this.HasConstNumber)
             {
-                return GetRawTextAsQuotedString(this.TypeDeclaration.Schema.Const);
+                return GetRawTextAsQuotedString(this.TypeDeclaration.Schema().Const);
             }
 
             return string.Empty;
@@ -340,7 +340,7 @@ public partial class CodeGeneratorValidateAllOf
         {
             if (this.HasConstObject)
             {
-                return GetRawTextAsQuotedString(this.TypeDeclaration.Schema.Const);
+                return GetRawTextAsQuotedString(this.TypeDeclaration.Schema().Const);
             }
 
             return string.Empty;
@@ -356,7 +356,7 @@ public partial class CodeGeneratorValidateAllOf
         {
             if (this.HasConstArray)
             {
-                return GetRawTextAsQuotedString(this.TypeDeclaration.Schema.Const);
+                return GetRawTextAsQuotedString(this.TypeDeclaration.Schema().Const);
             }
 
             return string.Empty;
@@ -370,7 +370,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.Pattern.IsNotUndefined();
+            return this.TypeDeclaration.Schema().Pattern.IsNotUndefined();
         }
     }
 
@@ -383,7 +383,7 @@ public partial class CodeGeneratorValidateAllOf
         {
             if (this.HasPattern)
             {
-                return this.TypeDeclaration.Schema.Pattern;
+                return this.TypeDeclaration.Schema().Pattern;
             }
 
             return string.Empty;
@@ -397,7 +397,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.Dependencies.IsNotUndefined() && this.TypeDeclaration.Schema.Dependencies.EnumerateObject().Any(t => t.Value.ValueKind == JsonValueKind.Array);
+            return this.TypeDeclaration.Schema().Dependencies.IsNotUndefined() && this.TypeDeclaration.Schema().Dependencies.EnumerateObject().Any(t => t.Value.ValueKind == JsonValueKind.Array);
         }
     }
 
@@ -408,7 +408,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.Dependencies.IsNotUndefined() && this.TypeDeclaration.Schema.Dependencies.EnumerateObject().Any(t => t.Value.As<Schema>().IsValid());
+            return this.TypeDeclaration.Schema().Dependencies.IsNotUndefined() && this.TypeDeclaration.Schema().Dependencies.EnumerateObject().Any(t => t.Value.As<Schema>().IsValid());
         }
     }
 
@@ -419,7 +419,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.PatternProperties.IsNotUndefined();
+            return this.TypeDeclaration.Schema().PatternProperties.IsNotUndefined();
         }
     }
 
@@ -430,7 +430,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.Type.IsNotUndefined();
+            return this.TypeDeclaration.Schema().Type.IsNotUndefined();
         }
     }
 
@@ -441,7 +441,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.Format.IsNotUndefined() || this.TypeDeclaration.Schema.GetContentEncoding().IsNotUndefined();
+            return this.TypeDeclaration.Schema().Format.IsNotUndefined() || this.TypeDeclaration.Schema().GetContentEncoding().IsNotUndefined();
         }
     }
 
@@ -452,7 +452,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.GetContentMediaType().IsNotUndefined() || this.TypeDeclaration.Schema.GetContentEncoding().IsNotUndefined();
+            return this.TypeDeclaration.Schema().GetContentMediaType().IsNotUndefined() || this.TypeDeclaration.Schema().GetContentEncoding().IsNotUndefined();
         }
     }
 
@@ -463,7 +463,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.Const.IsNotUndefined();
+            return this.TypeDeclaration.Schema().Const.IsNotUndefined();
         }
     }
 
@@ -474,7 +474,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.Enum.IsNotUndefined();
+            return this.TypeDeclaration.Schema().Enum.IsNotUndefined();
         }
     }
 
@@ -486,9 +486,9 @@ public partial class CodeGeneratorValidateAllOf
         get
         {
             ImmutableArray<EnumValue>.Builder builder = ImmutableArray.CreateBuilder<EnumValue>();
-            if (this.TypeDeclaration.Schema.Enum.IsNotUndefined())
+            if (this.TypeDeclaration.Schema().Enum.IsNotUndefined())
             {
-                foreach (JsonAny value in this.TypeDeclaration.Schema.Enum.EnumerateArray())
+                foreach (JsonAny value in this.TypeDeclaration.Schema().Enum.EnumerateArray())
                 {
                     builder.Add(new EnumValue(value));
                 }
@@ -505,7 +505,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.MultipleOf.IsNotUndefined();
+            return this.TypeDeclaration.Schema().MultipleOf.IsNotUndefined();
         }
     }
 
@@ -516,7 +516,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.ExclusiveMaximum.IsNotUndefined();
+            return this.TypeDeclaration.Schema().ExclusiveMaximum.IsNotUndefined();
         }
     }
 
@@ -527,7 +527,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.Maximum.IsNotUndefined();
+            return this.TypeDeclaration.Schema().Maximum.IsNotUndefined();
         }
     }
 
@@ -538,7 +538,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.MaxItems.IsNotUndefined();
+            return this.TypeDeclaration.Schema().MaxItems.IsNotUndefined();
         }
     }
 
@@ -549,7 +549,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.MinItems.IsNotUndefined();
+            return this.TypeDeclaration.Schema().MinItems.IsNotUndefined();
         }
     }
 
@@ -560,7 +560,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.HasMaxItems ? this.TypeDeclaration.Schema.MaxItems : default;
+            return this.HasMaxItems ? this.TypeDeclaration.Schema().MaxItems : default;
         }
     }
 
@@ -571,7 +571,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.HasMinItems ? this.TypeDeclaration.Schema.MinItems : default;
+            return this.HasMinItems ? this.TypeDeclaration.Schema().MinItems : default;
         }
     }
 
@@ -582,7 +582,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.ExclusiveMinimum.IsNotUndefined();
+            return this.TypeDeclaration.Schema().ExclusiveMinimum.IsNotUndefined();
         }
     }
 
@@ -593,7 +593,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.Minimum.IsNotUndefined();
+            return this.TypeDeclaration.Schema().Minimum.IsNotUndefined();
         }
     }
 
@@ -604,9 +604,9 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            if (this.TypeDeclaration.Schema.MultipleOf.IsNotUndefined())
+            if (this.TypeDeclaration.Schema().MultipleOf.IsNotUndefined())
             {
-                return this.TypeDeclaration.Schema.MultipleOf.AsJsonElement.GetRawText();
+                return this.TypeDeclaration.Schema().MultipleOf.AsJsonElement.GetRawText();
             }
 
             return string.Empty;
@@ -620,9 +620,9 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            if (this.TypeDeclaration.Schema.ExclusiveMaximum.IsNotUndefined())
+            if (this.TypeDeclaration.Schema().ExclusiveMaximum.IsNotUndefined())
             {
-                return this.TypeDeclaration.Schema.ExclusiveMaximum.AsJsonElement.GetRawText();
+                return this.TypeDeclaration.Schema().ExclusiveMaximum.AsJsonElement.GetRawText();
             }
 
             return string.Empty;
@@ -636,9 +636,9 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            if (this.TypeDeclaration.Schema.Maximum.IsNotUndefined())
+            if (this.TypeDeclaration.Schema().Maximum.IsNotUndefined())
             {
-                return this.TypeDeclaration.Schema.Maximum.AsJsonElement.GetRawText();
+                return this.TypeDeclaration.Schema().Maximum.AsJsonElement.GetRawText();
             }
 
             return string.Empty;
@@ -652,9 +652,9 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            if (this.TypeDeclaration.Schema.ExclusiveMinimum.IsNotUndefined())
+            if (this.TypeDeclaration.Schema().ExclusiveMinimum.IsNotUndefined())
             {
-                return this.TypeDeclaration.Schema.ExclusiveMinimum.AsJsonElement.GetRawText();
+                return this.TypeDeclaration.Schema().ExclusiveMinimum.AsJsonElement.GetRawText();
             }
 
             return string.Empty;
@@ -668,9 +668,9 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            if (this.TypeDeclaration.Schema.Minimum.IsNotUndefined())
+            if (this.TypeDeclaration.Schema().Minimum.IsNotUndefined())
             {
-                return this.TypeDeclaration.Schema.Minimum.AsJsonElement.GetRawText();
+                return this.TypeDeclaration.Schema().Minimum.AsJsonElement.GetRawText();
             }
 
             return string.Empty;
@@ -684,7 +684,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.MaxLength.IsNotUndefined();
+            return this.TypeDeclaration.Schema().MaxLength.IsNotUndefined();
         }
     }
 
@@ -695,7 +695,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.MinLength.IsNotUndefined();
+            return this.TypeDeclaration.Schema().MinLength.IsNotUndefined();
         }
     }
 
@@ -706,9 +706,9 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            if (this.TypeDeclaration.Schema.MaxLength.IsNotUndefined())
+            if (this.TypeDeclaration.Schema().MaxLength.IsNotUndefined())
             {
-                return this.TypeDeclaration.Schema.MaxLength.AsJsonElement.GetRawText();
+                return this.TypeDeclaration.Schema().MaxLength.AsJsonElement.GetRawText();
             }
 
             return string.Empty;
@@ -722,9 +722,9 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            if (this.TypeDeclaration.Schema.MinLength.IsNotUndefined())
+            if (this.TypeDeclaration.Schema().MinLength.IsNotUndefined())
             {
-                return this.TypeDeclaration.Schema.MinLength.AsJsonElement.GetRawText();
+                return this.TypeDeclaration.Schema().MinLength.AsJsonElement.GetRawText();
             }
 
             return string.Empty;
@@ -738,7 +738,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.Not.IsNotUndefined();
+            return this.TypeDeclaration.Schema().Not.IsNotUndefined();
         }
     }
 
@@ -749,7 +749,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.AllOf.IsNotUndefined();
+            return this.TypeDeclaration.Schema().AllOf.IsNotUndefined();
         }
     }
 
@@ -760,7 +760,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.AnyOf.IsNotUndefined();
+            return this.TypeDeclaration.Schema().AnyOf.IsNotUndefined();
         }
     }
 
@@ -771,7 +771,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.OneOf.IsNotUndefined();
+            return this.TypeDeclaration.Schema().OneOf.IsNotUndefined();
         }
     }
 
@@ -782,7 +782,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.Required.IsNotUndefined();
+            return this.TypeDeclaration.Schema().Required.IsNotUndefined();
         }
     }
 
@@ -793,7 +793,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.Ref.IsNotUndefined() && !this.TypeDeclaration.Schema.IsNakedReference();
+            return this.TypeDeclaration.Schema().Ref.IsNotUndefined() && !this.TypeDeclaration.Schema().IsNakedReference();
         }
     }
 
@@ -816,7 +816,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.MaxProperties.IsNotUndefined();
+            return this.TypeDeclaration.Schema().MaxProperties.IsNotUndefined();
         }
     }
 
@@ -827,7 +827,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.MinProperties.IsNotUndefined();
+            return this.TypeDeclaration.Schema().MinProperties.IsNotUndefined();
         }
     }
 
@@ -838,7 +838,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.PropertyNames.IsNotUndefined();
+            return this.TypeDeclaration.Schema().PropertyNames.IsNotUndefined();
         }
     }
 
@@ -849,15 +849,15 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            if (this.TypeDeclaration.Schema.AdditionalProperties.IsNullOrUndefined())
+            if (this.TypeDeclaration.Schema().AdditionalProperties.IsNullOrUndefined())
             {
                 return true;
             }
 
             TypeDeclaration typeDeclaration = this.Builder.GetTypeDeclarationForProperty(this.TypeDeclaration, "additionalProperties");
-            return typeDeclaration.Schema.IsUndefined() ||
-                typeDeclaration.Schema.ValueKind == JsonValueKind.True ||
-                typeDeclaration.Schema.ValueKind == JsonValueKind.Object;
+            return typeDeclaration.Schema().IsUndefined() ||
+                typeDeclaration.Schema().ValueKind == JsonValueKind.True ||
+                typeDeclaration.Schema().ValueKind == JsonValueKind.Object;
         }
     }
 
@@ -868,15 +868,15 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            if (this.TypeDeclaration.Schema.AdditionalProperties.IsNullOrUndefined())
+            if (this.TypeDeclaration.Schema().AdditionalProperties.IsNullOrUndefined())
             {
                 return false;
             }
 
             TypeDeclaration typeDeclaration = this.Builder.GetTypeDeclarationForProperty(this.TypeDeclaration, "additionalProperties");
-            return typeDeclaration.Schema.ValueKind == JsonValueKind.Object ||
-                typeDeclaration.Schema.ValueKind == JsonValueKind.True ||
-                typeDeclaration.Schema.ValueKind == JsonValueKind.False;
+            return typeDeclaration.Schema().ValueKind == JsonValueKind.Object ||
+                typeDeclaration.Schema().ValueKind == JsonValueKind.True ||
+                typeDeclaration.Schema().ValueKind == JsonValueKind.False;
         }
     }
 
@@ -887,14 +887,14 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            if (this.TypeDeclaration.Schema.AdditionalProperties.IsNullOrUndefined())
+            if (this.TypeDeclaration.Schema().AdditionalProperties.IsNullOrUndefined())
             {
                 return false;
             }
 
             TypeDeclaration typeDeclaration = this.Builder.GetTypeDeclarationForProperty(this.TypeDeclaration, "additionalProperties");
 
-            return typeDeclaration.Schema.ValueKind == JsonValueKind.Object;
+            return typeDeclaration.Schema().ValueKind == JsonValueKind.Object;
         }
     }
 
@@ -905,7 +905,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.Items.IsNotUndefined();
+            return this.TypeDeclaration.Schema().Items.IsNotUndefined();
         }
     }
 
@@ -916,9 +916,9 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.AdditionalItems.ValueKind == JsonValueKind.Object ||
-                 this.TypeDeclaration.Schema.AdditionalItems.ValueKind == JsonValueKind.True ||
-                 this.TypeDeclaration.Schema.AdditionalItems.ValueKind == JsonValueKind.False;
+            return this.TypeDeclaration.Schema().AdditionalItems.ValueKind == JsonValueKind.Object ||
+                 this.TypeDeclaration.Schema().AdditionalItems.ValueKind == JsonValueKind.True ||
+                 this.TypeDeclaration.Schema().AdditionalItems.ValueKind == JsonValueKind.False;
         }
     }
 
@@ -929,9 +929,9 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.AdditionalItems.IsUndefined() ||
-                this.TypeDeclaration.Schema.AdditionalItems.ValueKind == JsonValueKind.True ||
-                this.TypeDeclaration.Schema.AdditionalItems.ValueKind == JsonValueKind.Object;
+            return this.TypeDeclaration.Schema().AdditionalItems.IsUndefined() ||
+                this.TypeDeclaration.Schema().AdditionalItems.ValueKind == JsonValueKind.True ||
+                this.TypeDeclaration.Schema().AdditionalItems.ValueKind == JsonValueKind.Object;
         }
     }
 
@@ -942,7 +942,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.AdditionalItems.ValueKind == JsonValueKind.Object;
+            return this.TypeDeclaration.Schema().AdditionalItems.ValueKind == JsonValueKind.Object;
         }
     }
 
@@ -953,7 +953,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            if (this.TypeDeclaration.Schema.AdditionalItems.IsNotUndefined())
+            if (this.TypeDeclaration.Schema().AdditionalItems.IsNotUndefined())
             {
                 TypeDeclaration td = this.Builder.GetTypeDeclarationForProperty(this.TypeDeclaration, "additionalItems");
                 return td.FullyQualifiedDotnetTypeName ?? string.Empty;
@@ -970,7 +970,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.UniqueItems.ValueKind == JsonValueKind.True;
+            return this.TypeDeclaration.Schema().UniqueItems.ValueKind == JsonValueKind.True;
         }
     }
 
@@ -981,7 +981,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.Contains.IsNotUndefined();
+            return this.TypeDeclaration.Schema().Contains.IsNotUndefined();
         }
     }
 
@@ -992,7 +992,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            if (this.TypeDeclaration.Schema.Contains.IsNotUndefined())
+            if (this.TypeDeclaration.Schema().Contains.IsNotUndefined())
             {
                 TypeDeclaration typeDeclaration = this.Builder.GetTypeDeclarationForProperty(this.TypeDeclaration, "contains");
                 return typeDeclaration.FullyQualifiedDotnetTypeName!;
@@ -1010,9 +1010,9 @@ public partial class CodeGeneratorValidateAllOf
         get
         {
             ImmutableArray<PatternProperty>.Builder builder = ImmutableArray.CreateBuilder<PatternProperty>();
-            if (this.TypeDeclaration.Schema.PatternProperties.IsNotUndefined())
+            if (this.TypeDeclaration.Schema().PatternProperties.IsNotUndefined())
             {
-                foreach (JsonObjectProperty property in this.TypeDeclaration.Schema.PatternProperties.EnumerateObject())
+                foreach (JsonObjectProperty property in this.TypeDeclaration.Schema().PatternProperties.EnumerateObject())
                 {
                     TypeDeclaration typeDeclaration = this.Builder.GetTypeDeclarationForPatternProperty(this.TypeDeclaration, property.Name);
                     builder.Add(new PatternProperty(property.Name, typeDeclaration.FullyQualifiedDotnetTypeName!));
@@ -1031,9 +1031,9 @@ public partial class CodeGeneratorValidateAllOf
         get
         {
             ImmutableArray<DependentSchema>.Builder builder = ImmutableArray.CreateBuilder<DependentSchema>();
-            if (this.TypeDeclaration.Schema.Dependencies.IsNotUndefined())
+            if (this.TypeDeclaration.Schema().Dependencies.IsNotUndefined())
             {
-                foreach (JsonObjectProperty property in this.TypeDeclaration.Schema.Dependencies.EnumerateObject())
+                foreach (JsonObjectProperty property in this.TypeDeclaration.Schema().Dependencies.EnumerateObject())
                 {
                     if (property.Value.As<Schema>().IsValid())
                     {
@@ -1054,9 +1054,9 @@ public partial class CodeGeneratorValidateAllOf
         get
         {
             ImmutableArray<DependentRequiredValue>.Builder builder = ImmutableArray.CreateBuilder<DependentRequiredValue>();
-            if (this.TypeDeclaration.Schema.Dependencies.IsNotUndefined())
+            if (this.TypeDeclaration.Schema().Dependencies.IsNotUndefined())
             {
-                foreach (JsonObjectProperty property in this.TypeDeclaration.Schema.Dependencies.EnumerateObject())
+                foreach (JsonObjectProperty property in this.TypeDeclaration.Schema().Dependencies.EnumerateObject())
                 {
                     if (property.Value.ValueKind == JsonValueKind.Array)
                     {
@@ -1093,7 +1093,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.Items.As<Schema>().IsValid();
+            return this.TypeDeclaration.Schema().Items.As<Schema>().IsValid();
         }
     }
 
@@ -1104,7 +1104,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.Items.IsSchemaArray;
+            return this.TypeDeclaration.Schema().Items.IsSchemaArray;
         }
     }
 
@@ -1116,9 +1116,9 @@ public partial class CodeGeneratorValidateAllOf
         get
         {
             ImmutableArray<string>.Builder builder = ImmutableArray.CreateBuilder<string>();
-            if (this.TypeDeclaration.Schema.Items.IsSchemaArray)
+            if (this.TypeDeclaration.Schema().Items.IsSchemaArray)
             {
-                for (int i = 0; i < this.TypeDeclaration.Schema.Items.GetArrayLength(); ++i)
+                for (int i = 0; i < this.TypeDeclaration.Schema().Items.GetArrayLength(); ++i)
                 {
                     TypeDeclaration td = this.Builder.GetTypeDeclarationForPropertyArrayIndex(this.TypeDeclaration, "items", i);
                     builder.Add(td.FullyQualifiedDotnetTypeName ?? string.Empty);
@@ -1147,20 +1147,20 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            if (this.TypeDeclaration.Schema.Items.IsNotUndefined())
+            if (this.TypeDeclaration.Schema().Items.IsNotUndefined())
             {
-                if (this.TypeDeclaration.Schema.Items.ValueKind == JsonValueKind.Object)
+                if (this.TypeDeclaration.Schema().Items.ValueKind == JsonValueKind.Object)
                 {
                     TypeDeclaration itemsType = this.Builder.GetTypeDeclarationForProperty(this.TypeDeclaration, "items");
                     return itemsType.FullyQualifiedDotnetTypeName ?? string.Empty;
                 }
 
-                if (this.TypeDeclaration.Schema.Items.ValueKind == JsonValueKind.True)
+                if (this.TypeDeclaration.Schema().Items.ValueKind == JsonValueKind.True)
                 {
                     return $"{BuiltInTypes.AnyTypeDeclaration.Ns}.{BuiltInTypes.AnyTypeDeclaration.Type}";
                 }
 
-                if (this.TypeDeclaration.Schema.Items.ValueKind == JsonValueKind.False)
+                if (this.TypeDeclaration.Schema().Items.ValueKind == JsonValueKind.False)
                 {
                     return $"{BuiltInTypes.NotAnyTypeDeclaration.Ns}.{BuiltInTypes.NotAnyTypeDeclaration.Type}";
                 }
@@ -1199,7 +1199,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.MaxProperties.IsNotUndefined() ? this.TypeDeclaration.Schema.MaxProperties : default;
+            return this.TypeDeclaration.Schema().MaxProperties.IsNotUndefined() ? this.TypeDeclaration.Schema().MaxProperties : default;
         }
     }
 
@@ -1210,7 +1210,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.MinProperties.IsNotUndefined() ? this.TypeDeclaration.Schema.MinProperties : default;
+            return this.TypeDeclaration.Schema().MinProperties.IsNotUndefined() ? this.TypeDeclaration.Schema().MinProperties : default;
         }
     }
 
@@ -1222,9 +1222,9 @@ public partial class CodeGeneratorValidateAllOf
         get
         {
             ImmutableArray<string>.Builder builder = ImmutableArray.CreateBuilder<string>();
-            if (this.TypeDeclaration.Schema.OneOf.IsNotUndefined())
+            if (this.TypeDeclaration.Schema().OneOf.IsNotUndefined())
             {
-                for (int i = 0; i < this.TypeDeclaration.Schema.OneOf.GetArrayLength(); ++i)
+                for (int i = 0; i < this.TypeDeclaration.Schema().OneOf.GetArrayLength(); ++i)
                 {
                     TypeDeclaration td = this.Builder.GetTypeDeclarationForPropertyArrayIndex(this.TypeDeclaration, "oneOf", i);
                     builder.Add(td.FullyQualifiedDotnetTypeName!);
@@ -1243,9 +1243,9 @@ public partial class CodeGeneratorValidateAllOf
         get
         {
             ImmutableArray<string>.Builder builder = ImmutableArray.CreateBuilder<string>();
-            if (this.TypeDeclaration.Schema.AnyOf.IsNotUndefined())
+            if (this.TypeDeclaration.Schema().AnyOf.IsNotUndefined())
             {
-                for (int i = 0; i < this.TypeDeclaration.Schema.AnyOf.GetArrayLength(); ++i)
+                for (int i = 0; i < this.TypeDeclaration.Schema().AnyOf.GetArrayLength(); ++i)
                 {
                     TypeDeclaration td = this.Builder.GetTypeDeclarationForPropertyArrayIndex(this.TypeDeclaration, "anyOf", i);
                     builder.Add(td.FullyQualifiedDotnetTypeName!);
@@ -1264,9 +1264,9 @@ public partial class CodeGeneratorValidateAllOf
         get
         {
             ImmutableArray<string>.Builder builder = ImmutableArray.CreateBuilder<string>();
-            if (this.TypeDeclaration.Schema.AllOf.IsNotUndefined())
+            if (this.TypeDeclaration.Schema().AllOf.IsNotUndefined())
             {
-                for (int i = 0; i < this.TypeDeclaration.Schema.AllOf.GetArrayLength(); ++i)
+                for (int i = 0; i < this.TypeDeclaration.Schema().AllOf.GetArrayLength(); ++i)
                 {
                     TypeDeclaration td = this.Builder.GetTypeDeclarationForPropertyArrayIndex(this.TypeDeclaration, "allOf", i);
                     builder.Add(td.FullyQualifiedDotnetTypeName!);
@@ -1327,9 +1327,9 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            if (this.TypeDeclaration.Schema.GetContentMediaType().IsNotUndefined() && this.TypeDeclaration.Schema.GetContentEncoding().IsNotUndefined())
+            if (this.TypeDeclaration.Schema().GetContentMediaType().IsNotUndefined() && this.TypeDeclaration.Schema().GetContentEncoding().IsNotUndefined())
             {
-                return this.TypeDeclaration.Schema.GetContentMediaType() == "application/json" && this.TypeDeclaration.Schema.GetContentEncoding() == "base64";
+                return this.TypeDeclaration.Schema().GetContentMediaType() == "application/json" && this.TypeDeclaration.Schema().GetContentEncoding() == "base64";
             }
 
             return false;
@@ -1343,9 +1343,9 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            if (this.TypeDeclaration.Schema.GetContentMediaType().IsUndefined() && this.TypeDeclaration.Schema.GetContentEncoding().IsNotUndefined())
+            if (this.TypeDeclaration.Schema().GetContentMediaType().IsUndefined() && this.TypeDeclaration.Schema().GetContentEncoding().IsNotUndefined())
             {
-                return this.TypeDeclaration.Schema.GetContentEncoding() == "base64";
+                return this.TypeDeclaration.Schema().GetContentEncoding() == "base64";
             }
 
             return false;
@@ -1359,9 +1359,9 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            if (this.TypeDeclaration.Schema.GetContentMediaType().IsNotUndefined() && this.TypeDeclaration.Schema.GetContentEncoding().IsUndefined())
+            if (this.TypeDeclaration.Schema().GetContentMediaType().IsNotUndefined() && this.TypeDeclaration.Schema().GetContentEncoding().IsUndefined())
             {
-                return this.TypeDeclaration.Schema.GetContentMediaType() == "application/json";
+                return this.TypeDeclaration.Schema().GetContentMediaType() == "application/json";
             }
 
             return false;
@@ -1375,9 +1375,9 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            if (this.TypeDeclaration.Schema.Format.IsNotUndefined())
+            if (this.TypeDeclaration.Schema().Format.IsNotUndefined())
             {
-                return this.TypeDeclaration.Schema.Format == "date";
+                return this.TypeDeclaration.Schema().Format == "date";
             }
 
             return false;
@@ -1391,9 +1391,9 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            if (this.TypeDeclaration.Schema.Format.IsNotUndefined())
+            if (this.TypeDeclaration.Schema().Format.IsNotUndefined())
             {
-                return this.TypeDeclaration.Schema.Format == "date-time";
+                return this.TypeDeclaration.Schema().Format == "date-time";
             }
 
             return false;
@@ -1407,9 +1407,9 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            if (this.TypeDeclaration.Schema.Format.IsNotUndefined())
+            if (this.TypeDeclaration.Schema().Format.IsNotUndefined())
             {
-                return this.TypeDeclaration.Schema.Format == "duration";
+                return this.TypeDeclaration.Schema().Format == "duration";
             }
 
             return false;
@@ -1423,9 +1423,9 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            if (this.TypeDeclaration.Schema.Format.IsNotUndefined())
+            if (this.TypeDeclaration.Schema().Format.IsNotUndefined())
             {
-                return this.TypeDeclaration.Schema.Format == "time";
+                return this.TypeDeclaration.Schema().Format == "time";
             }
 
             return false;
@@ -1439,9 +1439,9 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            if (this.TypeDeclaration.Schema.Format.IsNotUndefined())
+            if (this.TypeDeclaration.Schema().Format.IsNotUndefined())
             {
-                return this.TypeDeclaration.Schema.Format == "email";
+                return this.TypeDeclaration.Schema().Format == "email";
             }
 
             return false;
@@ -1455,9 +1455,9 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            if (this.TypeDeclaration.Schema.Format.IsNotUndefined())
+            if (this.TypeDeclaration.Schema().Format.IsNotUndefined())
             {
-                return this.TypeDeclaration.Schema.Format == "hostname";
+                return this.TypeDeclaration.Schema().Format == "hostname";
             }
 
             return false;
@@ -1471,9 +1471,9 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            if (this.TypeDeclaration.Schema.Format.IsNotUndefined())
+            if (this.TypeDeclaration.Schema().Format.IsNotUndefined())
             {
-                return this.TypeDeclaration.Schema.Format == "idn-email";
+                return this.TypeDeclaration.Schema().Format == "idn-email";
             }
 
             return false;
@@ -1487,9 +1487,9 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            if (this.TypeDeclaration.Schema.Format.IsNotUndefined())
+            if (this.TypeDeclaration.Schema().Format.IsNotUndefined())
             {
-                return this.TypeDeclaration.Schema.Format == "idn-hostname";
+                return this.TypeDeclaration.Schema().Format == "idn-hostname";
             }
 
             return false;
@@ -1503,9 +1503,9 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            if (this.TypeDeclaration.Schema.Format.IsNotUndefined())
+            if (this.TypeDeclaration.Schema().Format.IsNotUndefined())
             {
-                return this.TypeDeclaration.Schema.Format == "integer";
+                return this.TypeDeclaration.Schema().Format == "integer";
             }
 
             return false;
@@ -1519,9 +1519,9 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            if (this.TypeDeclaration.Schema.Format.IsNotUndefined())
+            if (this.TypeDeclaration.Schema().Format.IsNotUndefined())
             {
-                return this.TypeDeclaration.Schema.Format == "ipv4";
+                return this.TypeDeclaration.Schema().Format == "ipv4";
             }
 
             return false;
@@ -1535,9 +1535,9 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            if (this.TypeDeclaration.Schema.Format.IsNotUndefined())
+            if (this.TypeDeclaration.Schema().Format.IsNotUndefined())
             {
-                return this.TypeDeclaration.Schema.Format == "ipv6";
+                return this.TypeDeclaration.Schema().Format == "ipv6";
             }
 
             return false;
@@ -1551,9 +1551,9 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            if (this.TypeDeclaration.Schema.Format.IsNotUndefined())
+            if (this.TypeDeclaration.Schema().Format.IsNotUndefined())
             {
-                return this.TypeDeclaration.Schema.Format == "iri";
+                return this.TypeDeclaration.Schema().Format == "iri";
             }
 
             return false;
@@ -1567,9 +1567,9 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            if (this.TypeDeclaration.Schema.Format.IsNotUndefined())
+            if (this.TypeDeclaration.Schema().Format.IsNotUndefined())
             {
-                return this.TypeDeclaration.Schema.Format == "iri-reference";
+                return this.TypeDeclaration.Schema().Format == "iri-reference";
             }
 
             return false;
@@ -1583,9 +1583,9 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            if (this.TypeDeclaration.Schema.Format.IsNotUndefined())
+            if (this.TypeDeclaration.Schema().Format.IsNotUndefined())
             {
-                return this.TypeDeclaration.Schema.Format == "json-pointer";
+                return this.TypeDeclaration.Schema().Format == "json-pointer";
             }
 
             return false;
@@ -1599,9 +1599,9 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            if (this.TypeDeclaration.Schema.Format.IsNotUndefined())
+            if (this.TypeDeclaration.Schema().Format.IsNotUndefined())
             {
-                return this.TypeDeclaration.Schema.Format == "regex";
+                return this.TypeDeclaration.Schema().Format == "regex";
             }
 
             return false;
@@ -1615,9 +1615,9 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            if (this.TypeDeclaration.Schema.Format.IsNotUndefined())
+            if (this.TypeDeclaration.Schema().Format.IsNotUndefined())
             {
-                return this.TypeDeclaration.Schema.Format == "relative-json-pointer";
+                return this.TypeDeclaration.Schema().Format == "relative-json-pointer";
             }
 
             return false;
@@ -1631,9 +1631,9 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            if (this.TypeDeclaration.Schema.Format.IsNotUndefined())
+            if (this.TypeDeclaration.Schema().Format.IsNotUndefined())
             {
-                return this.TypeDeclaration.Schema.Format == "uri";
+                return this.TypeDeclaration.Schema().Format == "uri";
             }
 
             return false;
@@ -1647,9 +1647,9 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            if (this.TypeDeclaration.Schema.Format.IsNotUndefined())
+            if (this.TypeDeclaration.Schema().Format.IsNotUndefined())
             {
-                return this.TypeDeclaration.Schema.Format == "uri-reference";
+                return this.TypeDeclaration.Schema().Format == "uri-reference";
             }
 
             return false;
@@ -1663,9 +1663,9 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            if (this.TypeDeclaration.Schema.Format.IsNotUndefined())
+            if (this.TypeDeclaration.Schema().Format.IsNotUndefined())
             {
-                return this.TypeDeclaration.Schema.Format == "uri-template";
+                return this.TypeDeclaration.Schema().Format == "uri-template";
             }
 
             return false;
@@ -1679,9 +1679,9 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            if (this.TypeDeclaration.Schema.Format.IsNotUndefined())
+            if (this.TypeDeclaration.Schema().Format.IsNotUndefined())
             {
-                return this.TypeDeclaration.Schema.Format == "uuid";
+                return this.TypeDeclaration.Schema().Format == "uuid";
             }
 
             return false;
@@ -1695,7 +1695,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.TypeDeclaration.Schema.Type.IsNotUndefined();
+            return this.TypeDeclaration.Schema().Type.IsNotUndefined();
         }
     }
 
@@ -1750,7 +1750,7 @@ public partial class CodeGeneratorValidateAllOf
     {
         get
         {
-            return this.MatchType("integer") || (this.MatchType("number") && (this.TypeDeclaration.Schema.Format == "int32" || this.TypeDeclaration.Schema.Format == "int64"));
+            return this.MatchType("integer") || (this.MatchType("number") && (this.TypeDeclaration.Schema().Format == "int32" || this.TypeDeclaration.Schema().Format == "int64"));
         }
     }
 
@@ -1777,17 +1777,6 @@ public partial class CodeGeneratorValidateAllOf
     }
 
     /// <summary>
-    /// Gets the nested types of this parent type.
-    /// </summary>
-    public ImmutableArray<TypeDeclaration> NestedTypes
-    {
-        get
-        {
-            return this.TypeDeclaration.Children;
-        }
-    }
-
-    /// <summary>
     /// Emits code for the UTF8 encoded byte array for the given string.
     /// </summary>
     /// <param name="name">The string to encode.</param>
@@ -1804,7 +1793,7 @@ public partial class CodeGeneratorValidateAllOf
     /// <returns><c>True</c> if the type declaration represents a const value.</returns>
     public static bool IsConst(TypeDeclaration typeDeclaration)
     {
-        return typeDeclaration.Schema.Const.IsNotUndefined();
+        return typeDeclaration.Schema().Const.IsNotUndefined();
     }
 
     /// <summary>
@@ -1877,15 +1866,15 @@ public partial class CodeGeneratorValidateAllOf
 
     private bool MatchType(string typeToMatch)
     {
-        if (this.TypeDeclaration.Schema.Type.IsNotUndefined())
+        if (this.TypeDeclaration.Schema().Type.IsNotUndefined())
         {
-            if (this.TypeDeclaration.Schema.Type.IsSimpleTypesEntity)
+            if (this.TypeDeclaration.Schema().Type.IsSimpleTypesEntity)
             {
-                return this.TypeDeclaration.Schema.Type.AsSimpleTypesEntity == typeToMatch;
+                return this.TypeDeclaration.Schema().Type.AsSimpleTypesEntity == typeToMatch;
             }
-            else if (this.TypeDeclaration.Schema.Type.IsSimpleTypesEntityArray)
+            else if (this.TypeDeclaration.Schema().Type.IsSimpleTypesEntityArray)
             {
-                return this.TypeDeclaration.Schema.Type.AsSimpleTypesEntityArray.EnumerateArray().Any(t => t.AsString == typeToMatch);
+                return this.TypeDeclaration.Schema().Type.AsSimpleTypesEntityArray.EnumerateArray().Any(t => t.AsString == typeToMatch);
             }
         }
 
@@ -1895,9 +1884,9 @@ public partial class CodeGeneratorValidateAllOf
     private void AddConversionsFor(TypeDeclaration typeDeclaration, Dictionary<TypeDeclaration, Conversion> conversions, TypeDeclaration? parent)
     {
         // First, look in the allOfs
-        if (typeDeclaration.Schema.AllOf.IsNotUndefined())
+        if (typeDeclaration.Schema().AllOf.IsNotUndefined())
         {
-            for (int i = 0; i < typeDeclaration.Schema.AllOf.GetArrayLength(); ++i)
+            for (int i = 0; i < typeDeclaration.Schema().AllOf.GetArrayLength(); ++i)
             {
                 TypeDeclaration td = this.Builder.GetTypeDeclarationForPropertyArrayIndex(typeDeclaration, "allOf", i);
 
@@ -1909,9 +1898,9 @@ public partial class CodeGeneratorValidateAllOf
             }
         }
 
-        if (typeDeclaration.Schema.AnyOf.IsNotUndefined())
+        if (typeDeclaration.Schema().AnyOf.IsNotUndefined())
         {
-            for (int i = 0; i < typeDeclaration.Schema.AnyOf.GetArrayLength(); ++i)
+            for (int i = 0; i < typeDeclaration.Schema().AnyOf.GetArrayLength(); ++i)
             {
                 TypeDeclaration td = this.Builder.GetTypeDeclarationForPropertyArrayIndex(typeDeclaration, "anyOf", i);
 
@@ -1923,9 +1912,9 @@ public partial class CodeGeneratorValidateAllOf
             }
         }
 
-        if (typeDeclaration.Schema.OneOf.IsNotUndefined())
+        if (typeDeclaration.Schema().OneOf.IsNotUndefined())
         {
-            for (int i = 0; i < typeDeclaration.Schema.OneOf.GetArrayLength(); ++i)
+            for (int i = 0; i < typeDeclaration.Schema().OneOf.GetArrayLength(); ++i)
             {
                 TypeDeclaration td = this.Builder.GetTypeDeclarationForPropertyArrayIndex(typeDeclaration, "oneOf", i);
 
@@ -1937,7 +1926,7 @@ public partial class CodeGeneratorValidateAllOf
             }
         }
 
-        if (typeDeclaration.Schema.Ref.IsNotUndefined() && !typeDeclaration.Schema.IsNakedReference())
+        if (typeDeclaration.Schema().Ref.IsNotUndefined() && !typeDeclaration.Schema().IsNakedReference())
         {
             TypeDeclaration td = this.Builder.GetTypeDeclarationForProperty(typeDeclaration, "$ref");
 
@@ -2092,32 +2081,32 @@ public partial class CodeGeneratorValidateAllOf
         /// <summary>
         /// Gets a value indicating whether this is a string value.
         /// </summary>
-        public bool IsString => this.typeDeclaration.Schema.IsStringType();
+        public bool IsString => this.typeDeclaration.Schema().IsStringType();
 
         /// <summary>
         /// Gets a value indicating whether this is an object value.
         /// </summary>
-        public bool IsObject => this.typeDeclaration.Schema.IsObjectType() || this.typeDeclaration.Properties.Length > 0;
+        public bool IsObject => this.typeDeclaration.Schema().IsObjectType() || this.typeDeclaration.Properties.Length > 0;
 
         /// <summary>
         /// Gets a value indicating whether this is an array value.
         /// </summary>
-        public bool IsArray => this.typeDeclaration.Schema.IsArrayType();
+        public bool IsArray => this.typeDeclaration.Schema().IsArrayType();
 
         /// <summary>
         /// Gets a value indicating whether this is a boolean value.
         /// </summary>
-        public bool IsBoolean => this.typeDeclaration.Schema.IsBooleanType();
+        public bool IsBoolean => this.typeDeclaration.Schema().IsBooleanType();
 
         /// <summary>
         /// Gets a value indicating whether this is a number value.
         /// </summary>
-        public bool IsNumber => this.typeDeclaration.Schema.IsNumberType();
+        public bool IsNumber => this.typeDeclaration.Schema().IsNumberType();
 
         /// <summary>
         /// Gets a value indicating whether this is a built-in type.
         /// </summary>
-        public bool IsBuiltInType => this.typeDeclaration.Schema.IsBuiltInType();
+        public bool IsBuiltInType => this.typeDeclaration.Schema().IsBuiltInType();
 
         /// <summary>
         /// Gets the fully qualified dotnet type name.

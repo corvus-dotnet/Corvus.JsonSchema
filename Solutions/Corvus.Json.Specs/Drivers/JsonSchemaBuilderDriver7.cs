@@ -82,12 +82,12 @@ global using global::System.Threading.Tasks;";
     }
 
     /// <summary>
-    /// Generates a type for the given root schema element.
+    /// Generates a type for the given root Schema element.
     /// </summary>
     /// <param name="writeBenchmarks">If <c>true</c>, write benchmark files.</param>
     /// <param name="index">The index of the scenario example.</param>
-    /// <param name="filename">The filename containing the schema.</param>
-    /// <param name="schemaPath">The path to the schema in the file.</param>
+    /// <param name="filename">The filename containing the Schema.</param>
+    /// <param name="schemaPath">The path to the Schema in the file.</param>
     /// <param name="dataPath">The path to the data in the file.</param>
     /// <param name="featureName">The feature name for the type.</param>
     /// <param name="scenarioName">The scenario name for the type.</param>
@@ -98,9 +98,7 @@ global using global::System.Threading.Tasks;";
         string baseDirectory = this.configuration["jsonSchemaBuilder7DriverSettings:testBaseDirectory"];
         string path = Path.Combine(baseDirectory, filename) + schemaPath;
 
-        path = await this.builder.RebaseReferenceAsRootDocument(path).ConfigureAwait(false);
-
-        (string RootType, ImmutableDictionary<string, TypeAndCode> GeneratedTypes) generatedTypes = await this.builder.BuildTypesFor(path, $"{featureName}Feature.{scenarioName}").ConfigureAwait(false);
+        (string RootType, ImmutableDictionary<JsonReference, TypeAndCode> GeneratedTypes) generatedTypes = await this.builder.BuildTypesFor(new JsonReference(path), $"{featureName}Feature.{scenarioName}", rebase: true).ConfigureAwait(false);
 
         bool isCorvusType = generatedTypes.RootType.StartsWith("Corvus.");
 
@@ -181,13 +179,13 @@ global using global::System.Threading.Tasks;";
                select MetadataReference.CreateFromFile(r);
     }
 
-    private static IEnumerable<SyntaxTree> ParseSyntaxTrees(ImmutableDictionary<string, TypeAndCode> generatedTypes)
+    private static IEnumerable<SyntaxTree> ParseSyntaxTrees(ImmutableDictionary<JsonReference, TypeAndCode> generatedTypes)
     {
         CSharpParseOptions parseOptions = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Preview);
         yield return CSharpSyntaxTree.ParseText(GlobalUsings, path: "GlobalUsings.cs", options: parseOptions);
         yield return CSharpSyntaxTree.ParseText(RequiresPreviewFeatures, path: "RequiresPreviewFeatures.cs", options: parseOptions);
 
-        foreach (KeyValuePair<string, TypeAndCode> type in generatedTypes)
+        foreach (KeyValuePair<JsonReference, TypeAndCode> type in generatedTypes)
         {
             foreach (CodeAndFilename codeAndFilename in type.Value.Code)
             {

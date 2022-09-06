@@ -117,7 +117,7 @@ public static class JsonPointerExtensions
     /// <param name="encodedFragment">The encoded reference.</param>
     /// <param name="fragment">The span into which to write the result.</param>
     /// <returns>The length of the decoded reference.</returns>
-    private static int DecodePointer(ReadOnlySpan<char> encodedFragment, Span<char> fragment)
+    public static int DecodePointer(ReadOnlySpan<char> encodedFragment, Span<char> fragment)
     {
         int readIndex = 0;
         int writeIndex = 0;

@@ -15,7 +15,7 @@ using Corvus.Json.Internal;
 
 namespace Corvus.Json.Patch.Model;
 /// <summary>
-/// A type generated from a JsonSchema specification.
+/// A type generated from a JsonSchema() specification.
 /// </summary>
 public readonly partial struct Copy
 {
@@ -27,11 +27,11 @@ public readonly partial struct Copy
         {
             if (level >= ValidationLevel.Detailed)
             {
-                result = result.MergeChildContext(allOfResult0, true).WithResult(isValid: false, "Validation 10.2.1.1. allOf - failed to validate against the allOf schema.");
+                result = result.MergeChildContext(allOfResult0, true).WithResult(isValid: false, "Validation 10.2.1.1. allOf - failed to validate against the allOf Schema().");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                result = result.MergeChildContext(allOfResult0, true).WithResult(isValid: false, "Validation 10.2.1.1. allOf - failed to validate against the allOf schema.");
+                result = result.MergeChildContext(allOfResult0, true).WithResult(isValid: false, "Validation 10.2.1.1. allOf - failed to validate against the allOf Schema().");
             }
             else
             {

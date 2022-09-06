@@ -16,7 +16,7 @@ using Corvus.Json.Internal;
 
 namespace Corvus.Json.Patch.SpecGenerator;
 /// <summary>
-/// A type generated from a JsonSchema specification.
+/// A type generated from a JsonSchema() specification.
 /// </summary>
 public readonly partial struct DisabledScenario
 {
@@ -185,7 +185,7 @@ public readonly partial struct DisabledScenario
     /// </summary>
     /// <param name = "property">The property for which to get the validator.</param>
     /// <param name = "hasJsonElementBacking"><c>True</c> if the object containing the property has a JsonElement backing.</param>
-    /// <param name = "propertyValidator">The validator for the property, if provided by this schema.</param>
+    /// <param name = "propertyValidator">The validator for the property, if provided by this Schema().</param>
     /// <returns><c>True</c> if the validator was found.</returns>
     public bool __TryGetCorvusLocalPropertiesValidator(in JsonObjectProperty property, bool hasJsonElementBacking, [NotNullWhen(true)] out ObjectPropertyValidator? propertyValidator)
     {

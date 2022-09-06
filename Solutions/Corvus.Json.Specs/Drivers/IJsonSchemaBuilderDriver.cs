@@ -31,12 +31,12 @@ public interface IJsonSchemaBuilderDriver : IDisposable
     IJsonValue CreateInstance(Type type, string data);
 
     /// <summary>
-    /// Generates a type for the given root schema element.
+    /// Generates a type for the given root Schema element.
     /// </summary>
     /// <param name="writeBenchmarks">If <c>true</c>, write benchmark files.</param>
     /// <param name="index">The index of the scenario example.</param>
-    /// <param name="filename">The filename containing the schema.</param>
-    /// <param name="schemaPath">The path to the schema in the file.</param>
+    /// <param name="filename">The filename containing the Schema.</param>
+    /// <param name="schemaPath">The path to the Schema in the file.</param>
     /// <param name="dataPath">The path to the data in the file.</param>
     /// <param name="featureName">The feature name for the type.</param>
     /// <param name="scenarioName">The scenario name for the type.</param>

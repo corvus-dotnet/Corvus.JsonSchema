@@ -17,8 +17,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Corvus.Json.Patch", "Corvus
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Corvus.Json.Patch.SpecGenerator", "Corvus.Json.Patch.SpecGenerator\Corvus.Json.Patch.SpecGenerator.csproj", "{94B53FC6-F80E-4ADB-BB44-A7B12520177A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Corvus.Json.Walker", "Corvus.Json.Walker\Corvus.Json.Walker.csproj", "{2AD57FD3-F51C-43DE-9A83-9736B52D42D6}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Benchmarks", "Benchmarks", "{911B0F4F-E689-48AA-8D4B-44AFBA1DF850}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Corvus.JsonPatch.Benchmarking", "Corvus.JsonPatch.Benchmarking\Corvus.JsonPatch.Benchmarking.csproj", "{A67E1B7C-0990-4CA0-846A-F4DA4FCA20BF}"
@@ -37,7 +35,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Corvus.JsonSchema.SpecGener
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Corvus.Json.CodeGeneration.7", "Corvus.Json.CodeGeneration.7\Corvus.Json.CodeGeneration.7.csproj", "{8609C15E-C2AF-4053-9376-1A466B63C43B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Corvus.Json.CodeGeneration.6", "Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.6.csproj", "{46A43FF5-A8F1-42F9-A978-27E86590300B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Corvus.Json.CodeGeneration.6", "Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.6.csproj", "{46A43FF5-A8F1-42F9-A978-27E86590300B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -69,10 +67,6 @@ Global
 		{94B53FC6-F80E-4ADB-BB44-A7B12520177A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{94B53FC6-F80E-4ADB-BB44-A7B12520177A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{94B53FC6-F80E-4ADB-BB44-A7B12520177A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{2AD57FD3-F51C-43DE-9A83-9736B52D42D6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2AD57FD3-F51C-43DE-9A83-9736B52D42D6}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2AD57FD3-F51C-43DE-9A83-9736B52D42D6}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2AD57FD3-F51C-43DE-9A83-9736B52D42D6}.Release|Any CPU.Build.0 = Release|Any CPU
 		{A67E1B7C-0990-4CA0-846A-F4DA4FCA20BF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{A67E1B7C-0990-4CA0-846A-F4DA4FCA20BF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A67E1B7C-0990-4CA0-846A-F4DA4FCA20BF}.Release|Any CPU.ActiveCfg = Release|Any CPU

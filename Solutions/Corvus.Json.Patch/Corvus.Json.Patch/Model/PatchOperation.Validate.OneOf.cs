@@ -11,7 +11,7 @@ using Corvus.Json;
 
 namespace Corvus.Json.Patch.Model;
 /// <summary>
-/// A type generated from a JsonSchema specification.
+/// A type generated from a JsonSchema() specification.
 /// </summary>
 public readonly partial struct PatchOperation
 {
@@ -185,18 +185,18 @@ public readonly partial struct PatchOperation
         {
             if (level >= ValidationLevel.Detailed)
             {
-                result = result.WithResult(isValid: true, "Validation 10.2.1.3. onef - validated against the oneOf schema.");
+                result = result.WithResult(isValid: true, "Validation 10.2.1.3. onef - validated against the oneOf Schema().");
             }
         }
         else if (oneOfCount == 0)
         {
             if (level >= ValidationLevel.Detailed)
             {
-                result = result.WithResult(isValid: false, "Validation 10.2.1.3. oneOf - failed to validate against any of the oneOf schema.");
+                result = result.WithResult(isValid: false, "Validation 10.2.1.3. oneOf - failed to validate against any of the oneOf Schema().");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                result = result.WithResult(isValid: false, "Validation 10.2.1.3. oneOf - failed to validate against any of the oneOf schema.");
+                result = result.WithResult(isValid: false, "Validation 10.2.1.3. oneOf - failed to validate against any of the oneOf Schema().");
             }
             else
             {
@@ -207,11 +207,11 @@ public readonly partial struct PatchOperation
         {
             if (level >= ValidationLevel.Detailed)
             {
-                result = result.WithResult(isValid: false, "Validation 10.2.1.3. oneOf - validated against more than one of the oneOf schema.");
+                result = result.WithResult(isValid: false, "Validation 10.2.1.3. oneOf - validated against more than one of the oneOf Schema().");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                result = result.WithResult(isValid: false, "Validation 10.2.1.3. oneOf - failed to validate against more than one of the oneOf schema.");
+                result = result.WithResult(isValid: false, "Validation 10.2.1.3. oneOf - failed to validate against more than one of the oneOf Schema().");
             }
             else
             {

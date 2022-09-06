@@ -11,7 +11,6 @@ using Corvus.Json.Benchmarking.Models;
 using Microsoft.Extensions.ObjectPool;
 
 JsonDocument? objectDocument;
-Person person;
 PersonArray personArray;
 
 string JsonText = @"{
