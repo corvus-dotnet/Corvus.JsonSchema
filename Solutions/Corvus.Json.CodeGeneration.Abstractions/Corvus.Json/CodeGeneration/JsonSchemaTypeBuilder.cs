@@ -48,6 +48,11 @@ public class JsonSchemaTypeBuilder
     public string IdKeyword { get; set; } = string.Empty;
 
     /// <summary>
+    /// Gets or sets the items keyword for the schema model.
+    /// </summary>
+    public string ItemsKeyword { get; set; } = string.Empty;
+
+    /// <summary>
     /// Gets the (required, non-dynamic) reference keyword for the schema model.
     /// </summary>
     public string RefKeyword => this.RefKeywords.Single(k => k.RefKind == RefKind.Ref).Name;
@@ -523,6 +528,47 @@ public class JsonSchemaTypeBuilder
     {
         HashSet<TypeDeclaration> visitedTypeDeclarations = new();
         this.SetTypeNamesAndNamespaces(rootTypeDeclaration, rootNamespace, baseUriToNamespaceMap, rootTypeName, visitedTypeDeclarations, index: null, isRootTypeDeclaration: true);
+        visitedTypeDeclarations.Clear();
+        this.RecursivelyFixArrayNames(rootTypeDeclaration, visitedTypeDeclarations, true);
+    }
+
+    private void RecursivelyFixArrayNames(TypeDeclaration type, HashSet<TypeDeclaration> visitedTypes, bool skipRoot = false)
+    {
+        if (visitedTypes.Contains(type))
+        {
+            return;
+        }
+
+        visitedTypes.Add(type);
+
+        if (!skipRoot && this.IsExplicitArrayType(type.LocatedSchema.Schema))
+        {
+            if (type.LocatedSchema.Schema.TryGetProperty(this.ItemsKeyword, out JsonAny value) && value.ValueKind != JsonValueKind.Array)
+            {
+                TypeDeclaration itemsDeclaration = this.GetTypeDeclarationForProperty(type, this.ItemsKeyword);
+
+                string targetName = $"{itemsDeclaration.DotnetTypeName}Array";
+                if (type.Parent is TypeDeclaration p)
+                {
+                    if (type.Parent.Children.Any(c => c.DotnetTypeName == targetName))
+                    {
+                        targetName = $"{type.DotnetTypeName.AsSpan()[..^5].ToString()}{targetName}";
+                    }
+
+                    if (type.Parent.DotnetTypeName == targetName)
+                    {
+                        targetName = $"{type.DotnetTypeName.AsSpan()[..^5].ToString()}{targetName}";
+                    }
+                }
+
+                type.SetDotnetTypeName(targetName);
+            }
+        }
+
+        foreach (TypeDeclaration child in type.RefResolvablePropertyDeclarations.Values)
+        {
+            this.RecursivelyFixArrayNames(child, visitedTypes);
+        }
     }
 
     private void SetBuiltInTypeNamesAndNamespaces(TypeDeclaration typeDeclaration, HashSet<TypeDeclaration> visitedTypeDeclarations)

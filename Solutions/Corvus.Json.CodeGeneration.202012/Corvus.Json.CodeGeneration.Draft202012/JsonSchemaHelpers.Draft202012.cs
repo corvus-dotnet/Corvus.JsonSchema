@@ -22,6 +22,7 @@ public static class JsonSchemaHelpers
         builder.ValidatingAs = ValidationSemantics.Draft202012;
         builder.AnchorKeywords = CreateDraft202012AnchorKeywords();
         builder.IdKeyword = CreateDraft202012IdKeyword();
+        builder.ItemsKeyword = CreateDraft202012ItemsKeyword();
         builder.SchemaKeyword = CreateDraft202012SchemaKeyword();
         builder.IrreducibleKeywords = CreateDraft202012IrreducibleKeywords();
         builder.RefKeywords = CreateDraft202012RefKeywords();
@@ -35,10 +36,19 @@ public static class JsonSchemaHelpers
     }
 
     /// <summary>
+    /// Creates the draft2020-12 items keyword.
+    /// </summary>
+    /// <returns>The items keyword.</returns>
+    private static string CreateDraft202012ItemsKeyword()
+    {
+        return "items";
+    }
+
+    /// <summary>
     /// Creates the list of draft2020-12 anchor keywords.
     /// </summary>
     /// <returns>An array of keywords that represent anchors in draft 2020-12.</returns>
-    internal static ImmutableArray<AnchorKeyword> CreateDraft202012AnchorKeywords()
+    private static ImmutableArray<AnchorKeyword> CreateDraft202012AnchorKeywords()
     {
         return ImmutableArray.Create(
             new AnchorKeyword(Name: "$anchor", IsDynamic: false, IsRecursive: false),
@@ -49,7 +59,7 @@ public static class JsonSchemaHelpers
     /// Gets the draft2020-12 <c>$id</c> keyword.
     /// </summary>
     /// <returns>Return <c>"$id"</c>.</returns>
-    internal static string CreateDraft202012IdKeyword()
+    private static string CreateDraft202012IdKeyword()
     {
         return "$id";
     }
@@ -58,7 +68,7 @@ public static class JsonSchemaHelpers
     /// Gets the draft2020-12 <c>$defs</c> keyword.
     /// </summary>
     /// <returns>Return <c>"$defs"</c>.</returns>
-    internal static ImmutableHashSet<string> CreateDraft202012DefsKeywords()
+    private static ImmutableHashSet<string> CreateDraft202012DefsKeywords()
     {
         return ImmutableHashSet.Create("$defs");
     }
@@ -70,7 +80,7 @@ public static class JsonSchemaHelpers
     /// A list of the keywords that, if applied alongside a reference
     /// keyword, mean that the type cannot by reduced to the referenced type.
     /// </returns>
-    internal static ImmutableHashSet<string> CreateDraft202012IrreducibleKeywords()
+    private static ImmutableHashSet<string> CreateDraft202012IrreducibleKeywords()
     {
         return ImmutableHashSet.Create(
             "additionalProperties",
@@ -121,7 +131,7 @@ public static class JsonSchemaHelpers
     /// Creates the draft2020-12 keywords that are resolvable to a Schema().
     /// </summary>
     /// <returns>An array of <see cref="RefResolvableKeyword"/> instances.</returns>
-    internal static ImmutableArray<RefResolvableKeyword> CreateDraft202012RefResolvableKeywords()
+    private static ImmutableArray<RefResolvableKeyword> CreateDraft202012RefResolvableKeywords()
     {
         return ImmutableArray.Create<RefResolvableKeyword>(
             new("$defs", RefResolvablePropertyKind.MapOfSchema),
@@ -149,7 +159,7 @@ public static class JsonSchemaHelpers
     /// Creates the draft2020-12 reference keywords.
     /// </summary>
     /// <returns>An array of <see cref="RefKeyword"/> instances.</returns>
-    internal static ImmutableArray<RefKeyword> CreateDraft202012RefKeywords()
+    private static ImmutableArray<RefKeyword> CreateDraft202012RefKeywords()
     {
         return ImmutableArray.Create(
             new RefKeyword("$ref", RefKind.Ref),
@@ -161,7 +171,7 @@ public static class JsonSchemaHelpers
     /// Creates the predicate that validates a Schema() against draft 2020-12 metaSchema().
     /// </summary>
     /// <returns><see langword="true"/> if the Schema() is a valid draft 2020-12 Schema().</returns>
-    internal static Predicate<JsonAny> CreateDraft202012ValidateSchema()
+    private static Predicate<JsonAny> CreateDraft202012ValidateSchema()
     {
         return static s => s.As<JsonSchema.Draft202012.Schema>().IsValid();
     }
@@ -170,7 +180,7 @@ public static class JsonSchemaHelpers
     /// Creates the predicate that determines whether this Schema() represents an explicit array type.
     /// </summary>
     /// <returns><see langword="true"/> if the Schema() is an explicit array type.</returns>
-    internal static Predicate<JsonAny> CreateDraft202012IsExplicitArrayType()
+    private static Predicate<JsonAny> CreateDraft202012IsExplicitArrayType()
     {
         return static s => s.As<JsonSchema.Draft202012.Schema>().IsExplicitArrayType();
     }
@@ -179,7 +189,7 @@ public static class JsonSchemaHelpers
     /// Creates the predicate that determiens whether this Schema() represents a simple type.
     /// </summary>
     /// <returns><see langword="true"/> if the Schema() is a simple type.</returns>
-    internal static Predicate<JsonAny> CreateDraft202012IsSimpleType()
+    private static Predicate<JsonAny> CreateDraft202012IsSimpleType()
     {
         return static s => s.As<JsonSchema.Draft202012.Schema>().IsSimpleType();
     }
@@ -188,7 +198,7 @@ public static class JsonSchemaHelpers
     /// Creates the function that provides the dotnet type name and namespace for a built in type.
     /// </summary>
     /// <returns>The dotnet type name and namespace for the built-in type declaration, or null if it is not a built-in type.</returns>
-    internal static Func<JsonAny, ValidationSemantics, (string Ns, string TypeName)?> CreateDraft202012GetBuiltInTypeNameFunction()
+    private static Func<JsonAny, ValidationSemantics, (string Ns, string TypeName)?> CreateDraft202012GetBuiltInTypeNameFunction()
     {
         return static (schemaAny, validateAs) =>
         {
@@ -225,7 +235,7 @@ public static class JsonSchemaHelpers
     /// Creates the function that builds the dotnet properties for the type declaration.
     /// </summary>
     /// <returns>An action that adds the properties to the given type declaration.</returns>
-    internal static Action<JsonSchemaTypeBuilder, TypeDeclaration, TypeDeclaration, HashSet<TypeDeclaration>, bool> CreateDraft202012FindAndBuildPropertiesAdapter()
+    private static Action<JsonSchemaTypeBuilder, TypeDeclaration, TypeDeclaration, HashSet<TypeDeclaration>, bool> CreateDraft202012FindAndBuildPropertiesAdapter()
     {
         return static (builder, source, target, typesVisited, treatRequiredAsOptional) =>
         {
@@ -320,7 +330,7 @@ public static class JsonSchemaHelpers
     /// Create the schema-identifying keyword.
     /// </summary>
     /// <returns>The schema keyword.</returns>
-    internal static string CreateDraft202012SchemaKeyword()
+    private static string CreateDraft202012SchemaKeyword()
     {
         return "$schema";
     }
