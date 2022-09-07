@@ -9,6 +9,7 @@ using System.Net;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Web;
+using Microsoft.CodeAnalysis;
 
 namespace Corvus.Json.CodeGeneration;
 
@@ -60,7 +61,7 @@ public class JsonSchemaTypeBuilder
     /// <summary>
     /// Gets or sets the schema keyword for the schema model.
     /// </summary>
-    public string SchemaKeyword { get; set; } = string.Empty;
+    public string SchemaKeyword { get; set; } = "$schema"; // We default to $schema so we can inspect a json-schema document and figure it out in the "we are not yet set" case
 
     /// <summary>
     /// Gets or sets the reference keywords for the schema model.
@@ -892,6 +893,13 @@ public class JsonSchemaTypeBuilder
         TypeDeclaration typeDeclaration = new(this, schema);
         bool isNewDynamicScopeType = false;
 
+        // Check to see if we have a recursive scope
+        if (context.TryGetScopeForFirstRecursiveAnchor(out JsonReference? baseScopeLocation))
+        {
+            // Set the recursive scope if we have one, for the root entity.
+            typeDeclaration.SetRecursiveScope(baseScopeLocation.Value);
+        }
+
         // Are we already building the type here?
         if (this.locatedTypeDeclarations.TryGetValue(context.SubschemaLocation, out TypeDeclaration? existingTypeDeclaration))
         {
@@ -928,8 +936,8 @@ public class JsonSchemaTypeBuilder
                     this.locatedTypeDeclarations.Remove(context.SubschemaLocation);
                 }
 
-                // Update the dynamic location
-                typeDeclaration.UpdateDynamicLocation(recursiveScope.Value);
+                // Update the recursive location
+                typeDeclaration.UpdateRecursiveLocation(recursiveScope.Value);
 
                 if (this.locatedTypeDeclarations.TryGetValue(typeDeclaration.LocatedSchema.Location, out TypeDeclaration? existingRecursiveDeclaration))
                 {
@@ -1065,7 +1073,7 @@ public class JsonSchemaTypeBuilder
             return false;
         }
 
-        if (context.TryGetScopeForFirstRecursiveAnchor(out JsonReference? baseScopeLocation))
+        if (context.TryGetScopeForFirstRecursiveAnchor(out JsonReference? baseScopeLocation) && existingTypeDeclaration.RecursiveScope != baseScopeLocation)
         {
             recursiveScope = baseScopeLocation;
             return true;

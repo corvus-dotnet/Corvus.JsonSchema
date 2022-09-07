@@ -46,6 +46,11 @@ public class TypeDeclaration
     public LocatedSchema LocatedSchema { get; private set; }
 
     /// <summary>
+    /// Gets the recursive scope for the type declaration.
+    /// </summary>
+    public JsonReference? RecursiveScope { get; private set; }
+
+    /// <summary>
     /// Gets the dotnet property declarations for the type.
     /// </summary>
     public ImmutableArray<PropertyDeclaration> Properties { get; private set; } = ImmutableArray<PropertyDeclaration>.Empty;
@@ -284,6 +289,27 @@ public class TypeDeclaration
         JsonReferenceBuilder builder = this.LocatedSchema.Location.AsBuilder();
         builder = new JsonReferenceBuilder(builder.Scheme, builder.Authority, builder.Path, "dynamicScope=" + Uri.EscapeDataString(dynamicScopeLocation.ToString()), builder.Fragment);
         this.LocatedSchema = this.LocatedSchema.WithLocation(builder.AsReference());
+    }
+
+    /// <summary>
+    /// Updates the located schema associated with this type to present a new dynamic location.
+    /// </summary>
+    /// <param name="recursiveScopeLocation">The new dynamic scope location.</param>
+    internal void UpdateRecursiveLocation(JsonReference recursiveScopeLocation)
+    {
+        JsonReferenceBuilder builder = this.LocatedSchema.Location.AsBuilder();
+        builder = new JsonReferenceBuilder(builder.Scheme, builder.Authority, builder.Path, "dynamicScope=" + Uri.EscapeDataString(recursiveScopeLocation.ToString()), builder.Fragment);
+        this.LocatedSchema = this.LocatedSchema.WithLocation(builder.AsReference());
+        this.RecursiveScope = recursiveScopeLocation;
+    }
+
+    /// <summary>
+    /// Sets the recursive scope.
+    /// </summary>
+    /// <param name="recursiveScope">The recursive scope.</param>
+    internal void SetRecursiveScope(JsonReference recursiveScope)
+    {
+        this.RecursiveScope = recursiveScope;
     }
 
     private void AddChild(TypeDeclaration typeDeclaration)
