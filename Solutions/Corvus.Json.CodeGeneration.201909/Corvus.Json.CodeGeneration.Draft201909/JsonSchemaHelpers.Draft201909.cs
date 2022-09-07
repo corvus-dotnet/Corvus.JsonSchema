@@ -22,6 +22,7 @@ public static class JsonSchemaHelpers
         builder.ValidatingAs = ValidationSemantics.Draft201909;
         builder.AnchorKeywords = CreateDraft201909AnchorKeywords();
         builder.IdKeyword = CreateDraft201909IdKeyword();
+        builder.DefinitionKeywords = CreateDraft201909DefsKeywords();
         builder.ItemsKeyword = CreateDraft201909ItemsKeyword();
         builder.SchemaKeyword = CreateDraft201909SchemaKeyword();
         builder.IrreducibleKeywords = CreateDraft201909IrreducibleKeywords();

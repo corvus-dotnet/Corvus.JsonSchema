@@ -25,6 +25,7 @@ public static class JsonSchemaHelpers
         builder.ItemsKeyword = CreateDraft6ItemsKeyword();
         builder.SchemaKeyword = CreateDraft6SchemaKeyword();
         builder.IrreducibleKeywords = CreateDraft6IrreducibleKeywords();
+        builder.DefinitionKeywords = CreateDraft6DefsKeywords();
         builder.RefKeywords = CreateDraft6RefKeywords();
         builder.RefResolvableKeywords = CreateDraft6RefResolvableKeywords();
         builder.ValidateSchema = CreateDraft6ValidateSchema();
