@@ -36,7 +36,7 @@ public static class JsonSchemaHelpers
     }
 
     /// <summary>
-    /// Creates the draft6 items keyword.
+    /// Creates the draft7 items keyword.
     /// </summary>
     /// <returns>The items keyword.</returns>
     private static string CreateDraft6ItemsKeyword()
@@ -45,18 +45,16 @@ public static class JsonSchemaHelpers
     }
 
     /// <summary>
-    /// Creates the list of draft6 anchor keywords.
+    /// Creates the list of draft7 anchor keywords.
     /// </summary>
     /// <returns>An array of keywords that represent anchors in draft 2020-12.</returns>
     private static ImmutableArray<AnchorKeyword> CreateDraft6AnchorKeywords()
     {
-        return ImmutableArray.Create(
-            new AnchorKeyword(Name: "$anchor", IsDynamic: false, IsRecursive: false),
-            new AnchorKeyword(Name: "$dynamicAnchor", IsDynamic: true, IsRecursive: false));
+        return ImmutableArray<AnchorKeyword>.Empty;
     }
 
     /// <summary>
-    /// Gets the draft6 <c>$id</c> keyword.
+    /// Gets the draft7 <c>$id</c> keyword.
     /// </summary>
     /// <returns>Return <c>"$id"</c>.</returns>
     private static string CreateDraft6IdKeyword()
@@ -74,12 +72,12 @@ public static class JsonSchemaHelpers
     }
 
     /// <summary>
-    /// Gets the draft6 <c>$defs</c> keyword.
+    /// Gets the draft7 <c>$defs</c> keyword.
     /// </summary>
     /// <returns>Return <c>"$defs"</c>.</returns>
     private static ImmutableHashSet<string> CreateDraft6DefsKeywords()
     {
-        return ImmutableHashSet.Create("$defs");
+        return ImmutableHashSet.Create("definitions");
     }
 
     /// <summary>
@@ -91,69 +89,26 @@ public static class JsonSchemaHelpers
     /// </returns>
     private static ImmutableHashSet<string> CreateDraft6IrreducibleKeywords()
     {
-        return ImmutableHashSet.Create(
-            "additionalProperties",
-            "allOf",
-            "anyOf",
-            "const",
-            "contains",
-            "contentEncoding",
-            "contentMediaType",
-            "contentSchema",
-            "default",
-            "dependentRequired",
-            "dependentSchemas",
-            "else",
-            "enum",
-            "exclusiveMaximum",
-            "exclusiveMinimum",
-            "format",
-            "if",
-            "items",
-            "maxContains",
-            "minContains",
-            "maxItems",
-            "maxLength",
-            "maxProperties",
-            "minContains",
-            "minimum",
-            "minItems",
-            "minLength",
-            "minProperties",
-            "multipleOf",
-            "not",
-            "oneOf",
-            "pattern",
-            "patternProperties",
-            "prefixItems",
-            "properties",
-            "propertyNames",
-            "required",
-            "then",
-            "type",
-            "unevaluatedItems",
-            "unevaluatedProperties",
-            "uniqueItems");
+        // $ref always reduces in draft7.
+        return ImmutableHashSet<string>.Empty;
     }
 
     /// <summary>
-    /// Creates the draft6 keywords that are resolvable to a Schema().
+    /// Creates the draft2019-09 keywords that are resolvable to a schema.
     /// </summary>
     /// <returns>An array of <see cref="RefResolvableKeyword"/> instances.</returns>
     private static ImmutableArray<RefResolvableKeyword> CreateDraft6RefResolvableKeywords()
     {
         return ImmutableArray.Create<RefResolvableKeyword>(
-            new("$defs", RefResolvablePropertyKind.MapOfSchema),
+            new("definitions", RefResolvablePropertyKind.MapOfSchema),
             new("items", RefResolvablePropertyKind.SchemaOrArrayOfSchema),
             new("contains", RefResolvablePropertyKind.Schema),
-            new("if", RefResolvablePropertyKind.Schema),
             new("prefixItems", RefResolvablePropertyKind.ArrayOfSchema),
             new("patternProperties", RefResolvablePropertyKind.MapOfSchema),
             new("properties", RefResolvablePropertyKind.MapOfSchema),
             new("additionalProperties", RefResolvablePropertyKind.Schema),
-            new("dependentSchemas", RefResolvablePropertyKind.MapOfSchema),
-            new("else", RefResolvablePropertyKind.Schema),
-            new("then", RefResolvablePropertyKind.Schema),
+            new("additionalItems", RefResolvablePropertyKind.Schema),
+            new("dependencies", RefResolvablePropertyKind.MapOfSchemaIfValueIsSchemaLike),
             new("propertyNames", RefResolvablePropertyKind.Schema),
             new("allOf", RefResolvablePropertyKind.ArrayOfSchema),
             new("anyOf", RefResolvablePropertyKind.ArrayOfSchema),
@@ -165,39 +120,37 @@ public static class JsonSchemaHelpers
     }
 
     /// <summary>
-    /// Creates the draft6 reference keywords.
+    /// Creates the draft7 reference keywords.
     /// </summary>
     /// <returns>An array of <see cref="RefKeyword"/> instances.</returns>
     private static ImmutableArray<RefKeyword> CreateDraft6RefKeywords()
     {
         return ImmutableArray.Create(
-            new RefKeyword("$ref", RefKind.Ref),
-            new RefKeyword("$recursiveRef", RefKind.RecursiveRef),
-            new RefKeyword("$dynamicRef", RefKind.DynamicRef));
+            new RefKeyword("$ref", RefKind.Ref));
     }
 
     /// <summary>
-    /// Creates the predicate that validates a Schema() against draft 7 metaSchema().
+    /// Creates the predicate that validates a schema against draft 7 metaschema.
     /// </summary>
-    /// <returns><see langword="true"/> if the Schema() is a valid draft 7 Schema().</returns>
+    /// <returns><see langword="true"/> if the schema is a valid draft 7 schema.</returns>
     private static Predicate<JsonAny> CreateDraft6ValidateSchema()
     {
-        return s => s.As<JsonSchema.Draft6.Schema>().IsValid();
+        return static s => s.As<JsonSchema.Draft6.Schema>().IsValid();
     }
 
     /// <summary>
-    /// Creates the predicate that determines whether this Schema() represents an explicit array type.
+    /// Creates the predicate that determines whether this schema represents an explicit array type.
     /// </summary>
-    /// <returns><see langword="true"/> if the Schema() is an explicit array type.</returns>
+    /// <returns><see langword="true"/> if the schema is an explicit array type.</returns>
     private static Predicate<JsonAny> CreateDraft6IsExplicitArrayType()
     {
         return static s => s.As<JsonSchema.Draft6.Schema>().IsExplicitArrayType();
     }
 
     /// <summary>
-    /// Creates the predicate that determiens whether this Schema() represents a simple type.
+    /// Creates the predicate that determiens whether this schema represents a simple type.
     /// </summary>
-    /// <returns><see langword="true"/> if the Schema() is a simple type.</returns>
+    /// <returns><see langword="true"/> if the schema is a simple type.</returns>
     private static Predicate<JsonAny> CreateDraft6IsSimpleType()
     {
         return static s => s.As<JsonSchema.Draft6.Schema>().IsSimpleType();
@@ -234,8 +187,8 @@ public static class JsonSchemaHelpers
             return BuiltInTypes.GetTypeNameFor(
                 schema.Type.AsSimpleTypesEntity,
                 schema.Format.AsOptionalString(),
-                schema.GetContentEncoding().AsOptionalString(),
-                schema.GetContentMediaType().AsOptionalString(),
+                schema.GetContentEncoding(),
+                schema.GetContentMediaType(),
                 (validateAs & ValidationSemantics.Draft201909) != 0);
         };
     }
@@ -272,6 +225,24 @@ public static class JsonSchemaHelpers
                 foreach (TypeDeclaration allOfTypeDeclaration in source.RefResolvablePropertyDeclarations.Where(k => k.Key.StartsWith("#/allOf")).Select(k => k.Value))
                 {
                     builder.FindAndBuildProperties(allOfTypeDeclaration, target, typesVisited, treatRequiredAsOptional);
+                }
+            }
+
+            if (source.RefResolvablePropertyDeclarations.TryGetValue("#/then", out TypeDeclaration? thenTypeDeclaration))
+            {
+                builder.FindAndBuildProperties(thenTypeDeclaration, target, typesVisited, true);
+            }
+
+            if (source.RefResolvablePropertyDeclarations.TryGetValue("#/else", out TypeDeclaration? elseTypeDeclaration))
+            {
+                builder.FindAndBuildProperties(elseTypeDeclaration, target, typesVisited, true);
+            }
+
+            if (schema.Dependencies.IsNotUndefined())
+            {
+                foreach (TypeDeclaration dependentypeDeclaration in source.RefResolvablePropertyDeclarations.Where(k => k.Key.StartsWith("#/dependencies")).Select(k => k.Value))
+                {
+                    builder.FindAndBuildProperties(dependentypeDeclaration, target, typesVisited, true);
                 }
             }
 
