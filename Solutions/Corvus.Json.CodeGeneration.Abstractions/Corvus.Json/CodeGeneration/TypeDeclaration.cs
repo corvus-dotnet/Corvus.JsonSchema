@@ -201,6 +201,25 @@ public class TypeDeclaration
         }
 
         JsonReference currentLocation = this.LocatedSchema.Location;
+        JsonReferenceBuilder builder = currentLocation.AsBuilder();
+        if (builder.HasQuery)
+        {
+            // We were created in a dynamic scope, so our parent will be that dynamic scope.
+            currentLocation = new JsonReference(Uri.UnescapeDataString(builder.Query[(builder.Query.IndexOf('=') + 1)..].ToString()));
+
+            if (this.typeBuilder.TryGetReducedTypeDeclarationFor(currentLocation, out TypeDeclaration? reducedTypeDeclaration))
+            {
+                if (reducedTypeDeclaration.Equals(this) || reducedTypeDeclaration.IsBuiltInType)
+                {
+                    this.Parent = null;
+                    return;
+                }
+
+                this.Parent = reducedTypeDeclaration;
+                reducedTypeDeclaration.AddChild(this);
+                return;
+            }
+        }
 
         while (true)
         {
@@ -262,7 +281,9 @@ public class TypeDeclaration
     /// <param name="dynamicScopeLocation">The new dynamic scope location.</param>
     internal void UpdateDynamicLocation(JsonReference dynamicScopeLocation)
     {
-        this.LocatedSchema = this.LocatedSchema.WithLocation(new JsonReference(this.LocatedSchema.Location + "?dynamicScope=" + Uri.EscapeDataString(dynamicScopeLocation.ToString())));
+        JsonReferenceBuilder builder = this.LocatedSchema.Location.AsBuilder();
+        builder = new JsonReferenceBuilder(builder.Scheme, builder.Authority, builder.Path, "dynamicScope=" + Uri.EscapeDataString(dynamicScopeLocation.ToString()), builder.Fragment);
+        this.LocatedSchema = this.LocatedSchema.WithLocation(builder.AsReference());
     }
 
     private void AddChild(TypeDeclaration typeDeclaration)

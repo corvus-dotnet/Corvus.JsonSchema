@@ -302,6 +302,20 @@ public class JsonSchemaTypeBuilder
     }
 
     /// <summary>
+    /// Replaces a located type declaration.
+    /// </summary>
+    /// <param name="location">The location for the replacement.</param>
+    /// <param name="type">The type to replace.</param>
+    /// <remarks>
+    /// This is used by the <see cref="WalkContext"/> to replace the dynamic types when the scope is popped.
+    /// </remarks>
+    internal void ReplaceLocatedTypeDeclaration(JsonReference location, TypeDeclaration type)
+    {
+        this.locatedTypeDeclarations.Remove(location);
+        this.locatedTypeDeclarations.Add(location, type);
+    }
+
+    /// <summary>
     /// Gets the reduced type declaration for the specified location.
     /// </summary>
     /// <param name="location">The location for which to get the type declaration.</param>
@@ -673,8 +687,11 @@ public class JsonSchemaTypeBuilder
     {
         var reference = JsonReferenceBuilder.From(typeDeclaration.LocatedSchema.Location);
 
-        // Remove the query.
-        reference = new JsonReferenceBuilder(reference.Scheme, reference.Authority, reference.Path, ReadOnlySpan<char>.Empty, reference.Fragment);
+        if (reference.HasQuery)
+        {
+            // Remove the query.
+            reference = new JsonReferenceBuilder(reference.Scheme, reference.Authority, reference.Path, ReadOnlySpan<char>.Empty, reference.Fragment);
+        }
 
         if (typeDeclaration.Parent is null)
         {
@@ -849,7 +866,7 @@ public class JsonSchemaTypeBuilder
 
     private async Task<TypeDeclaration> BuildTypeDeclarationFor(LocatedSchema baseSchema)
     {
-        WalkContext context = new(baseSchema);
+        WalkContext context = new(this, baseSchema);
         return await this.BuildTypeDeclarationFor(context).ConfigureAwait(false);
     }
 
@@ -873,6 +890,7 @@ public class JsonSchemaTypeBuilder
 
         // Create a type declaration for this location
         TypeDeclaration typeDeclaration = new(this, schema);
+        bool isNewDynamicScopeType = false;
 
         // Are we already building the type here?
         if (this.locatedTypeDeclarations.TryGetValue(context.SubschemaLocation, out TypeDeclaration? existingTypeDeclaration))
@@ -882,6 +900,7 @@ public class JsonSchemaTypeBuilder
             if (this.TryGetNewDynamicScope(existingTypeDeclaration, context, out JsonReference? dynamicScope))
             {
                 // We remove the existing one and replace it, for this context.
+                context.ReplaceDeclarationInScope(context.SubschemaLocation, existingTypeDeclaration);
                 this.locatedTypeDeclarations.Remove(context.SubschemaLocation);
 
                 // Update the dynamic location
@@ -898,11 +917,16 @@ public class JsonSchemaTypeBuilder
                 this.locatedSchema.Add(typeDeclaration.LocatedSchema.Location, typeDeclaration.LocatedSchema);
                 this.locatedTypeDeclarations.Add(context.SubschemaLocation, typeDeclaration);
                 this.locatedTypeDeclarations.Add(typeDeclaration.LocatedSchema.Location, typeDeclaration);
+                isNewDynamicScopeType = true;
             }
             else if (this.TryGetNewRecursiveScope(existingTypeDeclaration, context, out JsonReference? recursiveScope))
             {
                 // We remove the existing one and replace it, for this context.
-                this.locatedTypeDeclarations.Remove(context.SubschemaLocation);
+                if (this.locatedTypeDeclarations.TryGetValue(context.SubschemaLocation, out TypeDeclaration? previousRecursiveDefinition))
+                {
+                    context.ReplaceDeclarationInScope(context.SubschemaLocation, previousRecursiveDefinition);
+                    this.locatedTypeDeclarations.Remove(context.SubschemaLocation);
+                }
 
                 // Update the dynamic location
                 typeDeclaration.UpdateDynamicLocation(recursiveScope.Value);
@@ -918,6 +942,7 @@ public class JsonSchemaTypeBuilder
                 this.locatedSchema.Add(typeDeclaration.LocatedSchema.Location, typeDeclaration.LocatedSchema);
                 this.locatedTypeDeclarations.Add(context.SubschemaLocation, typeDeclaration);
                 this.locatedTypeDeclarations.Add(typeDeclaration.LocatedSchema.Location, typeDeclaration);
+                isNewDynamicScopeType = true;
             }
             else
             {
@@ -948,9 +973,20 @@ public class JsonSchemaTypeBuilder
                     // and then return the version we were already building/had already built.
                     if (this.locatedTypeDeclarations.TryGetValue(context.SubschemaLocation, out TypeDeclaration? alreadyBuildingDynamicTypeDeclaration))
                     {
-                        this.locatedTypeDeclarations.Remove(currentLocation);
-                        this.locatedTypeDeclarations.Add(currentLocation, alreadyBuildingDynamicTypeDeclaration);
-                        return alreadyBuildingDynamicTypeDeclaration;
+                        if (!isNewDynamicScopeType || alreadyBuildingDynamicTypeDeclaration.LocatedSchema.Location == typeDeclaration.LocatedSchema.Location)
+                        {
+                            this.locatedTypeDeclarations.Remove(currentLocation);
+                            this.locatedTypeDeclarations.Add(currentLocation, alreadyBuildingDynamicTypeDeclaration);
+                            return alreadyBuildingDynamicTypeDeclaration;
+                        }
+                        else
+                        {
+                            if (this.locatedTypeDeclarations.TryGetValue(context.SubschemaLocation, out TypeDeclaration? previousDefinition))
+                            {
+                                context.ReplaceDeclarationInScope(context.SubschemaLocation, previousDefinition);
+                                this.locatedTypeDeclarations.Remove(context.SubschemaLocation);
+                            }
+                        }
                     }
 
                     this.locatedTypeDeclarations.Add(context.SubschemaLocation, typeDeclaration);
@@ -1031,13 +1067,8 @@ public class JsonSchemaTypeBuilder
 
         if (context.TryGetScopeForFirstRecursiveAnchor(out JsonReference? baseScopeLocation))
         {
-            // We have found a new dynamic anchor in the containing scope, so we cannot share a type
-            // declaration with the previous instance.
-            if (context.TryGetPreviousScope(out JsonReference? location) && location == baseScopeLocation)
-            {
-                recursiveScope = location;
-                return true;
-            }
+            recursiveScope = baseScopeLocation;
+            return true;
         }
 
         recursiveScope = null;

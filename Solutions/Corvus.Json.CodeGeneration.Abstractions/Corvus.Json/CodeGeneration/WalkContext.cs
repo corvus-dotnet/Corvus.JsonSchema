@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
@@ -13,14 +14,17 @@ namespace Corvus.Json.CodeGeneration;
 internal class WalkContext
 {
     private readonly Stack<JsonSchemaScope> scopeStack = new();
+    private readonly JsonSchemaTypeBuilder typeBuilder;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="WalkContext"/> class.
     /// </summary>
+    /// <param name="typeBuilder">The type builder for the context.</param>
     /// <param name="rootSchema">The root schema for the context.</param>
-    public WalkContext(LocatedSchema rootSchema)
+    public WalkContext(JsonSchemaTypeBuilder typeBuilder, LocatedSchema rootSchema)
     {
-        this.scopeStack.Push((rootSchema.Location, new JsonReference("#"), rootSchema, false));
+        this.scopeStack.Push((rootSchema.Location, new JsonReference("#"), rootSchema, false, ImmutableList<(JsonReference Location, TypeDeclaration Type)>.Empty));
+        this.typeBuilder = typeBuilder;
         this.RootSchema = rootSchema;
     }
 
@@ -45,7 +49,13 @@ internal class WalkContext
     /// <returns>The scope we have just left.</returns>
     public JsonSchemaScope LeaveScope()
     {
-        return this.scopeStack.Pop();
+        JsonSchemaScope currentScope = this.scopeStack.Pop();
+        foreach ((JsonReference location, TypeDeclaration type) in currentScope.ReplacedDynamicTypes)
+        {
+            this.typeBuilder.ReplaceLocatedTypeDeclaration(location, type);
+        }
+
+        return currentScope;
     }
 
     /// <summary>
@@ -57,7 +67,7 @@ internal class WalkContext
         Debug.Assert(!pointer.HasUri, "The pointer must not have a URI.");
         Debug.Assert(pointer.HasFragment, "The pointer must have a fragment.");
         JsonSchemaScope currentScope = this.scopeStack.Peek();
-        this.scopeStack.Push((currentScope.Location, pointer, currentScope.Schema, false));
+        this.scopeStack.Push((currentScope.Location, pointer, currentScope.Schema, false, ImmutableList<(JsonReference Location, TypeDeclaration Type)>.Empty));
     }
 
     /// <summary>
@@ -67,7 +77,7 @@ internal class WalkContext
     /// <param name="schema">The schema to become the base schema.</param>
     public void EnterDynamicScope(JsonReference newScopeLocation, LocatedSchema schema)
     {
-        this.scopeStack.Push((newScopeLocation, new JsonReference("#"), schema, false));
+        this.scopeStack.Push((newScopeLocation, new JsonReference("#"), schema, false, ImmutableList<(JsonReference Location, TypeDeclaration Type)>.Empty));
     }
 
     /// <summary>
@@ -78,7 +88,7 @@ internal class WalkContext
     /// <param name="subschemaPointer">The pointer to the subschema.</param>
     public void EnterReferenceScope(JsonReference referenceBaseLocation, LocatedSchema baseSchema, JsonReference subschemaPointer)
     {
-        this.scopeStack.Push((referenceBaseLocation, subschemaPointer, baseSchema, false));
+        this.scopeStack.Push((referenceBaseLocation, subschemaPointer, baseSchema, false, ImmutableList<(JsonReference Location, TypeDeclaration Type)>.Empty));
     }
 
     /// <summary>
@@ -181,5 +191,16 @@ internal class WalkContext
 
         previousScope = null;
         return false;
+    }
+
+    /// <summary>
+    /// Stashes away a subschema replacement that was made for a dynamic context.
+    /// </summary>
+    /// <param name="subschemaLocation">The subschema location.</param>
+    /// <param name="previousDeclaration">The previous type declaration.</param>
+    internal void ReplaceDeclarationInScope(JsonReference subschemaLocation, TypeDeclaration previousDeclaration)
+    {
+        JsonSchemaScope currentScope = this.scopeStack.Pop();
+        this.scopeStack.Push(new(currentScope.Location, currentScope.Pointer, currentScope.Schema, currentScope.IsDynamicScope, currentScope.ReplacedDynamicTypes.Add((subschemaLocation, previousDeclaration))));
     }
 }
