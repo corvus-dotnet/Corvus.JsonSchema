@@ -13,7 +13,7 @@ namespace Benchmarks;
 [MemoryDiagnoser]
 public class LargeFileBenchmark : BenchmarkBase
 {
-    private Corvus.Json.Patch.Model.PatchOperationArray corvusPatch;
+    private Corvus.Json.Patch.Model.JsonPatchDocument corvusPatch;
     private Json.Patch.JsonPatch? jePatch;
 
     /// <summary>
@@ -126,40 +126,40 @@ public class LargeFileBenchmark : BenchmarkBase
                     Json.Pointer.JsonPointer.Parse("/46/actor/id")));
 
         this.corvusPatch =
-            Corvus.Json.Patch.Model.PatchOperationArray.FromItems(
-                Corvus.Json.Patch.Model.Copy.Create("/11/actor/id", "/14/actor/id"),
-                Corvus.Json.Patch.Model.Copy.Create("/12/actor/id", "/15/actor/id"),
-                Corvus.Json.Patch.Model.Copy.Create("/13/actor/id", "/16/actor/id"),
-                Corvus.Json.Patch.Model.Copy.Create("/14/actor/id", "/17/actor/id"),
-                Corvus.Json.Patch.Model.Copy.Create("/15/actor/id", "/18/actor/id"),
-                Corvus.Json.Patch.Model.Copy.Create("/16/actor/id", "/19/actor/id"),
-                Corvus.Json.Patch.Model.Copy.Create("/17/actor/id", "/20/actor/id"),
-                Corvus.Json.Patch.Model.Copy.Create("/18/actor/id", "/21/actor/id"),
-                Corvus.Json.Patch.Model.Copy.Create("/19/actor/id", "/22/actor/id"),
-                Corvus.Json.Patch.Model.Copy.Create("/20/actor/id", "/23/actor/id"),
-                Corvus.Json.Patch.Model.Copy.Create("/21/actor/id", "/24/actor/id"),
-                Corvus.Json.Patch.Model.Copy.Create("/22/actor/id", "/25/actor/id"),
-                Corvus.Json.Patch.Model.Copy.Create("/23/actor/id", "/26/actor/id"),
-                Corvus.Json.Patch.Model.Copy.Create("/24/actor/id", "/27/actor/id"),
-                Corvus.Json.Patch.Model.Copy.Create("/25/actor/id", "/28/actor/id"),
-                Corvus.Json.Patch.Model.Copy.Create("/26/actor/id", "/29/actor/id"),
-                Corvus.Json.Patch.Model.Copy.Create("/27/actor/id", "/30/actor/id"),
-                Corvus.Json.Patch.Model.Copy.Create("/28/actor/id", "/31/actor/id"),
-                Corvus.Json.Patch.Model.Copy.Create("/29/actor/id", "/32/actor/id"),
-                Corvus.Json.Patch.Model.Copy.Create("/30/actor/id", "/33/actor/id"),
-                Corvus.Json.Patch.Model.Copy.Create("/31/actor/id", "/34/actor/id"),
-                Corvus.Json.Patch.Model.Copy.Create("/31/actor/id", "/35/actor/id"),
-                Corvus.Json.Patch.Model.Copy.Create("/33/actor/id", "/36/actor/id"),
-                Corvus.Json.Patch.Model.Copy.Create("/34/actor/id", "/37/actor/id"),
-                Corvus.Json.Patch.Model.Copy.Create("/35/actor/id", "/38/actor/id"),
-                Corvus.Json.Patch.Model.Copy.Create("/36/actor/id", "/39/actor/id"),
-                Corvus.Json.Patch.Model.Copy.Create("/37/actor/id", "/40/actor/id"),
-                Corvus.Json.Patch.Model.Copy.Create("/38/actor/id", "/41/actor/id"),
-                Corvus.Json.Patch.Model.Copy.Create("/39/actor/id", "/42/actor/id"),
-                Corvus.Json.Patch.Model.Copy.Create("/40/actor/id", "/43/actor/id"),
-                Corvus.Json.Patch.Model.Copy.Create("/41/actor/id", "/44/actor/id"),
-                Corvus.Json.Patch.Model.Copy.Create("/42/actor/id", "/45/actor/id"),
-                Corvus.Json.Patch.Model.Copy.Create("/43/actor/id", "/46/actor/id"));
+            Corvus.Json.Patch.Model.JsonPatchDocument.FromItems(
+                Corvus.Json.Patch.Model.JsonPatchDocument.CopyEntity.Create("/11/actor/id", "/14/actor/id"),
+                Corvus.Json.Patch.Model.JsonPatchDocument.CopyEntity.Create("/12/actor/id", "/15/actor/id"),
+                Corvus.Json.Patch.Model.JsonPatchDocument.CopyEntity.Create("/13/actor/id", "/16/actor/id"),
+                Corvus.Json.Patch.Model.JsonPatchDocument.CopyEntity.Create("/14/actor/id", "/17/actor/id"),
+                Corvus.Json.Patch.Model.JsonPatchDocument.CopyEntity.Create("/15/actor/id", "/18/actor/id"),
+                Corvus.Json.Patch.Model.JsonPatchDocument.CopyEntity.Create("/16/actor/id", "/19/actor/id"),
+                Corvus.Json.Patch.Model.JsonPatchDocument.CopyEntity.Create("/17/actor/id", "/20/actor/id"),
+                Corvus.Json.Patch.Model.JsonPatchDocument.CopyEntity.Create("/18/actor/id", "/21/actor/id"),
+                Corvus.Json.Patch.Model.JsonPatchDocument.CopyEntity.Create("/19/actor/id", "/22/actor/id"),
+                Corvus.Json.Patch.Model.JsonPatchDocument.CopyEntity.Create("/20/actor/id", "/23/actor/id"),
+                Corvus.Json.Patch.Model.JsonPatchDocument.CopyEntity.Create("/21/actor/id", "/24/actor/id"),
+                Corvus.Json.Patch.Model.JsonPatchDocument.CopyEntity.Create("/22/actor/id", "/25/actor/id"),
+                Corvus.Json.Patch.Model.JsonPatchDocument.CopyEntity.Create("/23/actor/id", "/26/actor/id"),
+                Corvus.Json.Patch.Model.JsonPatchDocument.CopyEntity.Create("/24/actor/id", "/27/actor/id"),
+                Corvus.Json.Patch.Model.JsonPatchDocument.CopyEntity.Create("/25/actor/id", "/28/actor/id"),
+                Corvus.Json.Patch.Model.JsonPatchDocument.CopyEntity.Create("/26/actor/id", "/29/actor/id"),
+                Corvus.Json.Patch.Model.JsonPatchDocument.CopyEntity.Create("/27/actor/id", "/30/actor/id"),
+                Corvus.Json.Patch.Model.JsonPatchDocument.CopyEntity.Create("/28/actor/id", "/31/actor/id"),
+                Corvus.Json.Patch.Model.JsonPatchDocument.CopyEntity.Create("/29/actor/id", "/32/actor/id"),
+                Corvus.Json.Patch.Model.JsonPatchDocument.CopyEntity.Create("/30/actor/id", "/33/actor/id"),
+                Corvus.Json.Patch.Model.JsonPatchDocument.CopyEntity.Create("/31/actor/id", "/34/actor/id"),
+                Corvus.Json.Patch.Model.JsonPatchDocument.CopyEntity.Create("/31/actor/id", "/35/actor/id"),
+                Corvus.Json.Patch.Model.JsonPatchDocument.CopyEntity.Create("/33/actor/id", "/36/actor/id"),
+                Corvus.Json.Patch.Model.JsonPatchDocument.CopyEntity.Create("/34/actor/id", "/37/actor/id"),
+                Corvus.Json.Patch.Model.JsonPatchDocument.CopyEntity.Create("/35/actor/id", "/38/actor/id"),
+                Corvus.Json.Patch.Model.JsonPatchDocument.CopyEntity.Create("/36/actor/id", "/39/actor/id"),
+                Corvus.Json.Patch.Model.JsonPatchDocument.CopyEntity.Create("/37/actor/id", "/40/actor/id"),
+                Corvus.Json.Patch.Model.JsonPatchDocument.CopyEntity.Create("/38/actor/id", "/41/actor/id"),
+                Corvus.Json.Patch.Model.JsonPatchDocument.CopyEntity.Create("/39/actor/id", "/42/actor/id"),
+                Corvus.Json.Patch.Model.JsonPatchDocument.CopyEntity.Create("/40/actor/id", "/43/actor/id"),
+                Corvus.Json.Patch.Model.JsonPatchDocument.CopyEntity.Create("/41/actor/id", "/44/actor/id"),
+                Corvus.Json.Patch.Model.JsonPatchDocument.CopyEntity.Create("/42/actor/id", "/45/actor/id"),
+                Corvus.Json.Patch.Model.JsonPatchDocument.CopyEntity.Create("/43/actor/id", "/46/actor/id"));
 
         await this.GlobalSetup("large-array-file.json").ConfigureAwait(false);
     }

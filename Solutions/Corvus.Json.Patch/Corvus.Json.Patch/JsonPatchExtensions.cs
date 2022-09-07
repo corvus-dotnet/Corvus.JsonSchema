@@ -22,7 +22,7 @@ public static partial class JsonPatchExtensions
     private static readonly ReadOnlyMemory<byte> TestAsUtf8 = new byte[] { 0x74, 0x65, 0x73, 0x74 };
 
     /// <summary>
-    /// Begin gathering a <see cref="PatchOperationArray"/> by applying successive patch operations to an initial <see cref="IJsonValue"/>.
+    /// Begin gathering a <see cref="JsonPatchDocument"/> by applying successive patch operations to an initial <see cref="IJsonValue"/>.
     /// </summary>
     /// <typeparam name="T">The type of the <see cref="IJsonValue"/> to patch.</typeparam>
     /// <param name="value">The value to patch.</param>
@@ -30,7 +30,7 @@ public static partial class JsonPatchExtensions
     public static PatchBuilder BeginPatch<T>(this T value)
         where T : struct, IJsonValue
     {
-        return new(value.AsAny, PatchOperationArray.EmptyArray);
+        return new(value.AsAny, JsonPatchDocument.EmptyArray);
     }
 
     /// <summary>
@@ -41,7 +41,7 @@ public static partial class JsonPatchExtensions
     /// <param name="patchOperations">The patch operations to apply.</param>
     /// <param name="result">The result of applying the patch.</param>
     /// <returns><c>True</c> is the patch was applied.</returns>
-    public static bool TryApplyPatch<T>(this T value, in PatchOperationArray patchOperations, out JsonAny result)
+    public static bool TryApplyPatch<T>(this T value, in JsonPatchDocument patchOperations, out JsonAny result)
         where T : struct, IJsonValue
     {
         JsonAny current = value.AsAny;
@@ -52,7 +52,7 @@ public static partial class JsonPatchExtensions
             return false;
         }
 
-        foreach (PatchOperation patchOperation in patchOperations.EnumerateArray())
+        foreach (JsonPatchDocument.PatchOperationEntity patchOperation in patchOperations.EnumerateArray())
         {
             if (!TryApplyPatchOperation(current, patchOperation, out current))
             {
@@ -66,7 +66,7 @@ public static partial class JsonPatchExtensions
         return true;
     }
 
-    private static bool TryApplyPatchOperation(in JsonAny node, in PatchOperation patchOperation, out JsonAny result)
+    private static bool TryApplyPatchOperation(in JsonAny node, in JsonPatchDocument.PatchOperationEntity patchOperation, out JsonAny result)
     {
         JsonString op = patchOperation.Op;
 
@@ -185,10 +185,10 @@ public static partial class JsonPatchExtensions
         return true;
     }
 
-    private static bool TryApplyAdd(in JsonAny node, in PatchOperation patchOperation, out JsonAny result)
+    private static bool TryApplyAdd(in JsonAny node, in JsonPatchDocument.PatchOperationEntity patchOperation, out JsonAny result)
     {
-        patchOperation.TryGetProperty(Add.PathUtf8JsonPropertyName.Span, out JsonAny pathAny);
-        patchOperation.TryGetProperty(Add.ValueUtf8JsonPropertyName.Span, out JsonAny value);
+        patchOperation.TryGetProperty(JsonPatchDocument.AddEntity.PathUtf8JsonPropertyName.Span, out JsonAny pathAny);
+        patchOperation.TryGetProperty(JsonPatchDocument.AddEntity.ValueUtf8JsonPropertyName.Span, out JsonAny value);
         string path = pathAny;
         if (path.Length == 0)
         {
@@ -203,10 +203,10 @@ public static partial class JsonPatchExtensions
         return transformed;
     }
 
-    private static bool TryApplyCopy(in JsonAny node, in PatchOperation patchOperation, out JsonAny result)
+    private static bool TryApplyCopy(in JsonAny node, in JsonPatchDocument.PatchOperationEntity patchOperation, out JsonAny result)
     {
-        patchOperation.TryGetProperty(Copy.FromUtf8JsonPropertyName.Span, out JsonAny fromAny);
-        patchOperation.TryGetProperty(Copy.PathUtf8JsonPropertyName.Span, out JsonAny pathAny);
+        patchOperation.TryGetProperty(JsonPatchDocument.CopyEntity.FromUtf8JsonPropertyName.Span, out JsonAny fromAny);
+        patchOperation.TryGetProperty(JsonPatchDocument.CopyEntity.PathUtf8JsonPropertyName.Span, out JsonAny pathAny);
         string from = fromAny;
         string path = pathAny;
 
@@ -232,10 +232,10 @@ public static partial class JsonPatchExtensions
         return node.Visit(visitor.Visit, out result);
     }
 
-    private static bool TryApplyMove(in JsonAny node, in PatchOperation patchOperation, out JsonAny result)
+    private static bool TryApplyMove(in JsonAny node, in JsonPatchDocument.PatchOperationEntity patchOperation, out JsonAny result)
     {
-        patchOperation.TryGetProperty(Move.FromUtf8JsonPropertyName.Span, out JsonAny fromAny);
-        patchOperation.TryGetProperty(Move.PathUtf8JsonPropertyName.Span, out JsonAny pathAny);
+        patchOperation.TryGetProperty(JsonPatchDocument.MoveEntity.FromUtf8JsonPropertyName.Span, out JsonAny fromAny);
+        patchOperation.TryGetProperty(JsonPatchDocument.MoveEntity.PathUtf8JsonPropertyName.Span, out JsonAny pathAny);
         string from = fromAny;
         string path = pathAny;
 
@@ -261,7 +261,7 @@ public static partial class JsonPatchExtensions
         return node.Visit(visitor.Visit, out result);
     }
 
-    private static bool TryApplyRemove(in JsonAny node, in PatchOperation patchOperation, out JsonAny result)
+    private static bool TryApplyRemove(in JsonAny node, in JsonPatchDocument.PatchOperationEntity patchOperation, out JsonAny result)
     {
         RemoveVisitor visitor = new(patchOperation);
         bool transformed = node.Visit(visitor.Visit, out JsonAny transformedResult);
@@ -269,7 +269,7 @@ public static partial class JsonPatchExtensions
         return transformed;
     }
 
-    private static bool TryApplyReplace(in JsonAny node, in PatchOperation patchOperation, out JsonAny result)
+    private static bool TryApplyReplace(in JsonAny node, in JsonPatchDocument.PatchOperationEntity patchOperation, out JsonAny result)
     {
         ReplaceVisitor visitor = new(patchOperation);
 
@@ -284,14 +284,14 @@ public static partial class JsonPatchExtensions
         return transformed;
     }
 
-    private static bool TryApplyTest(in JsonAny node, in PatchOperation patchOperation, out JsonAny result)
+    private static bool TryApplyTest(in JsonAny node, in JsonPatchDocument.PatchOperationEntity patchOperation, out JsonAny result)
     {
         result = node;
 
         // Find the node to test.
         if (node.TryResolvePointer(patchOperation.Path, out JsonAny itemToTest))
         {
-            if (patchOperation.TryGetProperty(Test.ValueUtf8JsonPropertyName.Span, out JsonAny value))
+            if (patchOperation.TryGetProperty(JsonPatchDocument.TestEntity.ValueUtf8JsonPropertyName.Span, out JsonAny value))
             {
                 // Verify that the value of the node is the one supplied in the test operation.
                 return itemToTest.Equals(value);

@@ -84,7 +84,7 @@ namespace Benchmarks
         #line 23 "Benchmark.tt"
         this.Write(@" : BenchmarkBase
     {
-        private Corvus.Json.Patch.Model.PatchOperationArray corvusPatch;
+        private Corvus.Json.Patch.Model.JsonPatchDocument corvusPatch;
         private Json.Patch.JsonPatch? jePatch;
 
         /// <summary>

@@ -14,7 +14,7 @@ namespace Benchmarks
     [MemoryDiagnoser]
     public class GeneratedBenchmark3 : BenchmarkBase
     {
-        private Corvus.Json.Patch.Model.PatchOperationArray corvusPatch;
+        private Corvus.Json.Patch.Model.JsonPatchDocument corvusPatch;
         private Json.Patch.JsonPatch? jePatch;
 
         /// <summary>

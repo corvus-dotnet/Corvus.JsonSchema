@@ -14,7 +14,7 @@ namespace Benchmarks
     [MemoryDiagnoser]
     public class GeneratedBenchmark57 : BenchmarkBase
     {
-        private Corvus.Json.Patch.Model.PatchOperationArray corvusPatch;
+        private Corvus.Json.Patch.Model.JsonPatchDocument corvusPatch;
         private Json.Patch.JsonPatch? jePatch;
 
         /// <summary>
@@ -26,7 +26,7 @@ namespace Benchmarks
         {
             this.jePatch = BuildJEPatch("[{\"op\":\"test\",\"path\":\"/foo\",\"value\":{\"bar\":2,\"foo\":1}}]");
                 
-            this.corvusPatch = Corvus.Json.Patch.Model.PatchOperationArray.Parse("[{\"op\":\"test\",\"path\":\"/foo\",\"value\":{\"bar\":2,\"foo\":1}}]");
+            this.corvusPatch = Corvus.Json.Patch.Model.JsonPatchDocument.Parse("[{\"op\":\"test\",\"path\":\"/foo\",\"value\":{\"bar\":2,\"foo\":1}}]");
 
             await this.GlobalSetupJson("{\"foo\":{\"foo\":1,\"bar\":2}}").ConfigureAwait(false);
         }

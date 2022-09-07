@@ -15,7 +15,7 @@ public static partial class JsonPatchExtensions
 {
     private readonly struct ReplaceVisitor
     {
-        public ReplaceVisitor(Replace patchOperation)
+        public ReplaceVisitor(in JsonPatchDocument.ReplaceEntity patchOperation)
         {
             this.Value = patchOperation.Value;
             this.Path = patchOperation.Path;
