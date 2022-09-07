@@ -187,8 +187,8 @@ public static class JsonSchemaHelpers
             return BuiltInTypes.GetTypeNameFor(
                 schema.Type.AsSimpleTypesEntity,
                 schema.Format.AsOptionalString(),
-                schema.GetContentEncoding(),
-                schema.GetContentMediaType(),
+                schema.GetContentEncoding().AsOptionalString(),
+                schema.GetContentMediaType().AsOptionalString(),
                 (validateAs & ValidationSemantics.Draft201909) != 0);
         };
     }
