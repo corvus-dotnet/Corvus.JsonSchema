@@ -891,7 +891,6 @@ public class JsonSchemaTypeBuilder
 
         // Create a type declaration for this location
         TypeDeclaration typeDeclaration = new(this, schema);
-        bool isNewDynamicScopeType = false;
 
         // Check to see if we have a recursive scope
         if (context.TryGetScopeForFirstRecursiveAnchor(out JsonReference? baseScopeLocation))
@@ -925,7 +924,6 @@ public class JsonSchemaTypeBuilder
                 this.locatedSchema.Add(typeDeclaration.LocatedSchema.Location, typeDeclaration.LocatedSchema);
                 this.locatedTypeDeclarations.Add(context.SubschemaLocation, typeDeclaration);
                 this.locatedTypeDeclarations.Add(typeDeclaration.LocatedSchema.Location, typeDeclaration);
-                isNewDynamicScopeType = true;
             }
             else if (this.TryGetNewRecursiveScope(existingTypeDeclaration, context, out JsonReference? recursiveScope))
             {
@@ -950,7 +948,6 @@ public class JsonSchemaTypeBuilder
                 this.locatedSchema.Add(typeDeclaration.LocatedSchema.Location, typeDeclaration.LocatedSchema);
                 this.locatedTypeDeclarations.Add(context.SubschemaLocation, typeDeclaration);
                 this.locatedTypeDeclarations.Add(typeDeclaration.LocatedSchema.Location, typeDeclaration);
-                isNewDynamicScopeType = true;
             }
             else
             {
@@ -981,7 +978,7 @@ public class JsonSchemaTypeBuilder
                     // and then return the version we were already building/had already built.
                     if (this.locatedTypeDeclarations.TryGetValue(context.SubschemaLocation, out TypeDeclaration? alreadyBuildingDynamicTypeDeclaration))
                     {
-                        if (!isNewDynamicScopeType || alreadyBuildingDynamicTypeDeclaration.LocatedSchema.Location == typeDeclaration.LocatedSchema.Location)
+                        if (alreadyBuildingDynamicTypeDeclaration.LocatedSchema.Location == typeDeclaration.LocatedSchema.Location)
                         {
                             this.locatedTypeDeclarations.Remove(currentLocation);
                             this.locatedTypeDeclarations.Add(currentLocation, alreadyBuildingDynamicTypeDeclaration);

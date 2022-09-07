@@ -408,6 +408,11 @@ public static class JsonPointerUtilities
                 ++index;
             }
 
+            if (index >= fragment.Length)
+            {
+                break;
+            }
+
             if (fragment[index] == '/')
             {
                 ++index;
@@ -436,7 +441,7 @@ public static class JsonPointerUtilities
                 if (current.TryGetProperty(component, out JsonElement next))
                 {
                     current = next;
-                    handleSegment(IsLastSegment(index, component), component, current, ref state);
+                    handleSegment(IsLastSegment(index, fragment.Length), component, current, ref state);
                 }
                 else
                 {
@@ -467,7 +472,7 @@ public static class JsonPointerUtilities
                     if (arrayIndex == targetArrayIndex && enumerator.Current.ValueKind != JsonValueKind.Undefined)
                     {
                         current = enumerator.Current;
-                        handleSegment(IsLastSegment(index, component), component, current, ref state);
+                        handleSegment(IsLastSegment(index, fragment.Length), component, current, ref state);
                     }
                     else
                     {
@@ -502,9 +507,9 @@ public static class JsonPointerUtilities
         element = current;
         return true;
 
-        static bool IsLastSegment(int index, ReadOnlySpan<char> component)
+        static bool IsLastSegment(int index, int length)
         {
-            return index + 2 >= component.Length;
+            return index + 2 >= length;
         }
     }
 }
