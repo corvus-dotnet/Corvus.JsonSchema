@@ -16,24 +16,30 @@ public readonly partial struct Schema
     /// <summary>
     /// A type generated from a JsonSchema specification.
     /// </summary>
-    public readonly partial struct EnumJsonAnyArray
+    public readonly partial struct ExamplesJsonAnyArray
     {
-        private ValidationContext ValidateType(JsonValueKind valueKind, in ValidationContext validationContext, ValidationLevel level)
+        private ValidationContext ValidateArray(JsonValueKind valueKind, in ValidationContext validationContext, ValidationLevel level)
         {
             ValidationContext result = validationContext;
-            bool isValid = false;
-            ValidationContext localResultArray = Corvus.Json.Validate.TypeArray(valueKind, result, level);
-            if (level == ValidationLevel.Flag && localResultArray.IsValid)
+            if (valueKind != JsonValueKind.Array)
             {
-                return validationContext;
+                return result;
             }
 
-            if (localResultArray.IsValid)
+            int arrayLength = 0;
+            using var arrayEnumerator = this.EnumerateArray();
+            while (arrayEnumerator.MoveNext())
             {
-                isValid = true;
+                result = arrayEnumerator.Current.As<Corvus.Json.JsonAny>().Validate(result, level);
+                if (level == ValidationLevel.Flag && !result.IsValid)
+                {
+                    return result;
+                }
+
+                result = result.WithLocalItemIndex(arrayLength);
+                arrayLength++;
             }
 
-            result = result.MergeResults(isValid, level, localResultArray);
             return result;
         }
     }

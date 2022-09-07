@@ -17,10 +17,10 @@ public readonly partial struct Schema
     /// <summary>
     /// A type generated from a JsonSchema specification.
     /// </summary>
-    public readonly partial struct EnumJsonAnyArray
+    public readonly partial struct ExamplesJsonAnyArray
     {
         /// <inheritdoc/>
-        public EnumJsonAnyArray Add(in JsonAny item1)
+        public ExamplesJsonAnyArray Add(in JsonAny item1)
         {
             ImmutableList<JsonAny>.Builder builder = this.GetImmutableListBuilder();
             builder.Add(item1);
@@ -28,7 +28,7 @@ public readonly partial struct Schema
         }
 
         /// <inheritdoc/>
-        public EnumJsonAnyArray Add(params JsonAny[] items)
+        public ExamplesJsonAnyArray Add(params JsonAny[] items)
         {
             ImmutableList<JsonAny>.Builder builder = this.GetImmutableListBuilder();
             builder.AddRange(items);
@@ -36,7 +36,7 @@ public readonly partial struct Schema
         }
 
         /// <inheritdoc/>
-        public EnumJsonAnyArray AddRange<TArray>(in TArray items)
+        public ExamplesJsonAnyArray AddRange<TArray>(in TArray items)
             where TArray : struct, IJsonArray<TArray>
         {
             ImmutableList<JsonAny>.Builder builder = this.GetImmutableListBuilder();
@@ -49,7 +49,7 @@ public readonly partial struct Schema
         }
 
         /// <inheritdoc/>
-        public EnumJsonAnyArray AddRange<TItem>(IEnumerable<TItem> items)
+        public ExamplesJsonAnyArray AddRange<TItem>(IEnumerable<TItem> items)
             where TItem : struct, IJsonValue<TItem>
         {
             ImmutableList<JsonAny>.Builder builder = this.GetImmutableListBuilder();
@@ -62,7 +62,7 @@ public readonly partial struct Schema
         }
 
         /// <inheritdoc/>
-        public EnumJsonAnyArray AddRange(IEnumerable<JsonAny> items)
+        public ExamplesJsonAnyArray AddRange(IEnumerable<JsonAny> items)
         {
             ImmutableList<JsonAny>.Builder builder = this.GetImmutableListBuilder();
             builder.AddRange(items);
@@ -70,39 +70,39 @@ public readonly partial struct Schema
         }
 
         /// <inheritdoc/>
-        public EnumJsonAnyArray Insert(int index, in JsonAny item1)
+        public ExamplesJsonAnyArray Insert(int index, in JsonAny item1)
         {
             return new(this.GetImmutableListWith(index, item1));
         }
 
         /// <inheritdoc/>
-        public EnumJsonAnyArray InsertRange<TArray>(int index, in TArray items)
+        public ExamplesJsonAnyArray InsertRange<TArray>(int index, in TArray items)
             where TArray : struct, IJsonArray<TArray>
         {
             return new(this.GetImmutableListWith(index, items.EnumerateArray()));
         }
 
         /// <inheritdoc/>
-        public EnumJsonAnyArray InsertRange<TItem>(int index, IEnumerable<TItem> items)
+        public ExamplesJsonAnyArray InsertRange<TItem>(int index, IEnumerable<TItem> items)
             where TItem : struct, IJsonValue<TItem>
         {
             return new(this.GetImmutableListWith(index, items.Select(item => item.AsAny)));
         }
 
         /// <inheritdoc/>
-        public EnumJsonAnyArray InsertRange(int index, IEnumerable<JsonAny> items)
+        public ExamplesJsonAnyArray InsertRange(int index, IEnumerable<JsonAny> items)
         {
             return new(this.GetImmutableListWith(index, items));
         }
 
         /// <inheritdoc/>
-        public EnumJsonAnyArray Replace(in JsonAny oldValue, in JsonAny newValue)
+        public ExamplesJsonAnyArray Replace(in JsonAny oldValue, in JsonAny newValue)
         {
             return this.GetImmutableListReplacing(oldValue.AsAny, newValue.AsAny);
         }
 
         /// <inheritdoc/>
-        public EnumJsonAnyArray SetItem(int index, in JsonAny value)
+        public ExamplesJsonAnyArray SetItem(int index, in JsonAny value)
         {
             return this.GetImmutableListSetting(index, value.AsAny);
         }
