@@ -6,6 +6,7 @@ using System.Buffers;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
+using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Web;
@@ -1262,7 +1263,7 @@ public class JsonSchemaTypeBuilder
         }
         else
         {
-            schemaForRefPointer = this.GetPointerForReference(baseSchemaForReference, baseSchemaForReferenceLocation, reference);
+            (baseSchemaForReferenceLocation, schemaForRefPointer) = this.GetPointerForReference(baseSchemaForReference, baseSchemaForReferenceLocation, reference);
         }
 
         context.EnterReferenceScope(baseSchemaForReferenceLocation, baseSchemaForReference, schemaForRefPointer);
@@ -1331,7 +1332,7 @@ public class JsonSchemaTypeBuilder
         }
         else
         {
-            schemaForRefPointer = this.GetPointerForReference(baseSchemaForReference, baseSchemaForReferenceLocation, reference);
+            (baseSchemaForReferenceLocation, schemaForRefPointer) = this.GetPointerForReference(baseSchemaForReference, baseSchemaForReferenceLocation, reference);
         }
 
         context.EnterReferenceScope(baseSchemaForReferenceLocation, baseSchemaForReference, schemaForRefPointer);
@@ -1399,7 +1400,7 @@ public class JsonSchemaTypeBuilder
         }
         else
         {
-            schemaForRefPointer = this.GetPointerForReference(baseSchemaForReference, baseSchemaForReferenceLocation, reference);
+            (baseSchemaForReferenceLocation, schemaForRefPointer) = this.GetPointerForReference(baseSchemaForReference, baseSchemaForReferenceLocation, reference);
         }
 
         context.EnterReferenceScope(baseSchemaForReferenceLocation, baseSchemaForReference, schemaForRefPointer);
@@ -1408,7 +1409,7 @@ public class JsonSchemaTypeBuilder
         context.LeaveScope();
     }
 
-    private JsonReference GetPointerForReference(LocatedSchema baseSchemaForReference, JsonReference baseSchemaForReferenceLocation, JsonReference reference)
+    private (JsonReference Location, JsonReference Pointer) GetPointerForReference(LocatedSchema baseSchemaForReference, JsonReference baseSchemaForReferenceLocation, JsonReference reference)
     {
         JsonReference schemaForRefPointer;
         if (reference.HasFragment)
@@ -1421,13 +1422,12 @@ public class JsonSchemaTypeBuilder
             else
             {
                 // Resolve the pointer, and add the type
-                if (!JsonPointerUtilities.TryResolvePointer(baseSchemaForReference.Schema.AsJsonElement, reference.Fragment, out JsonElement? resolvedElement))
+                if (this.TryResolvePointer(baseSchemaForReferenceLocation, baseSchemaForReference.Schema.AsJsonElement, reference.Fragment, out (JsonReference Location, JsonReference Pointer)? result))
                 {
-                    throw new InvalidOperationException($"Unable to resolve the schema from the base element '{baseSchemaForReferenceLocation}' with the pointer '{reference.Fragment.ToString()}'");
+                    return result.Value;
                 }
 
-                schemaForRefPointer = new JsonReference(ReadOnlySpan<char>.Empty, reference.Fragment);
-                this.AddLocatedSchemaAndSubschema(baseSchemaForReferenceLocation.Apply(schemaForRefPointer), JsonAny.FromJson(resolvedElement.Value));
+                throw new InvalidOperationException($"Unable to resolve the schema from the base element '{baseSchemaForReferenceLocation}' with the pointer '{reference.Fragment.ToString()}'");
             }
         }
         else
@@ -1435,7 +1435,62 @@ public class JsonSchemaTypeBuilder
             schemaForRefPointer = new JsonReference("#");
         }
 
-        return schemaForRefPointer;
+        return (baseSchemaForReferenceLocation, schemaForRefPointer);
+    }
+
+    private bool TryResolvePointer(JsonReference baseSchemaForReferenceLocation, JsonElement rootElement, ReadOnlySpan<char> fragment, [NotNullWhen(true)] out (JsonReference Location, JsonReference Pointer)? result)
+    {
+        string[] segments = fragment.ToString().Split('/');
+        var currentBuilder = new StringBuilder();
+        bool failed = false;
+        foreach (string segment in segments)
+        {
+            if (currentBuilder.Length > 0)
+            {
+                currentBuilder.Append("/");
+            }
+
+            Span<char> decodedSegment = new char[segment.Length];
+            int written = JsonPointerUtilities.DecodePointer(segment, decodedSegment);
+            currentBuilder.Append(decodedSegment[..written]);
+            if (this.locatedSchema.TryGetValue(baseSchemaForReferenceLocation.WithFragment(currentBuilder.ToString()), out LocatedSchema? locatedSchema))
+            {
+                failed = false;
+                if (locatedSchema.Schema.TryGetProperty(this.IdKeyword, out JsonAny value))
+                {
+                    // Update the base location and element for the found schema;
+                    baseSchemaForReferenceLocation = baseSchemaForReferenceLocation.Apply(new JsonReference(value));
+                    rootElement = locatedSchema.Schema.AsJsonElement;
+                    currentBuilder.Clear();
+                    currentBuilder.Append("#");
+                }
+            }
+            else
+            {
+                failed = true;
+            }
+        }
+
+        if (failed)
+        {
+            string pointer = currentBuilder.ToString();
+            if (JsonPointerUtilities.TryResolvePointer(rootElement, pointer, out JsonElement? resolvedElement))
+            {
+                var pointerRef = new JsonReference(pointer);
+                JsonReference location = baseSchemaForReferenceLocation.Apply(pointerRef);
+                this.AddLocatedSchemaAndSubschema(location, JsonAny.FromJson(resolvedElement.Value));
+                result = (baseSchemaForReferenceLocation, pointerRef);
+                return true;
+            }
+        }
+        else
+        {
+            result = (baseSchemaForReferenceLocation, new JsonReference(currentBuilder.ToString()));
+            return true;
+        }
+
+        result = null;
+        return false;
     }
 
     private async Task<LocatedSchema?> ResolveBaseReference(JsonReference baseSchemaForReferenceLocation)
@@ -1718,6 +1773,9 @@ public class JsonSchemaTypeBuilder
 
                     this.locatedSchema.TryAdd(currentLocation, previousSchema);
 
+                    // Update the location to reflect the ID
+                    previousSchema.Location = currentLocation;
+
                     this.AddNamedAnchor(currentLocation, currentLocation.Fragment[1..].ToString());
                 }
                 else
@@ -1740,6 +1798,9 @@ public class JsonSchemaTypeBuilder
             {
                 throw new InvalidOperationException($"The previously registered schema for '{previousLocation}' was not found.");
             }
+
+            // Update the location to reflect the ID
+            previousSchema.Location = location;
 
             // Also add the dynamic located schema for the root.
             this.locatedSchema.TryAdd(location, previousSchema);
