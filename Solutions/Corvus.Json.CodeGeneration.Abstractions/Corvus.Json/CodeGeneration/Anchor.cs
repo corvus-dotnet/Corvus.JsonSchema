@@ -7,7 +7,7 @@ namespace Corvus.Json.CodeGeneration;
 /// <summary>
 /// An anchor in a schema.
 /// </summary>
-public class Anchor
+internal class Anchor
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="Anchor"/> class.

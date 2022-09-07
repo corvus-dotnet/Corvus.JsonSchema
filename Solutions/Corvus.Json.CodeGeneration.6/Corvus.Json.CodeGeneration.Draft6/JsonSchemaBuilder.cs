@@ -27,7 +27,7 @@ public class JsonSchemaBuilder : IJsonSchemaBuilder
     /// <inheritdoc/>
     public async Task<(string RootTypeName, ImmutableDictionary<JsonReference, TypeAndCode> GeneratedTypes)> BuildTypesFor(JsonReference reference, string rootNamespace, bool rebase = false, ImmutableDictionary<string, string>? baseUriToNamespaceMap = null, string? rootTypeName = null)
     {
-        TypeDeclaration? rootTypeDeclaration = await this.typeBuilder.AddTypeDeclarationsFor(rebase ? reference : reference.WithFragment(string.Empty), rootNamespace, rebase, baseUriToNamespaceMap, rootTypeName, (reference.HasFragment && !rebase) ? new JsonReference(ReadOnlySpan<char>.Empty, reference.Fragment) : null);
+        TypeDeclaration? rootTypeDeclaration = await this.typeBuilder.AddTypeDeclarationsFor(rebase ? reference : reference.WithFragment(string.Empty), rootNamespace, rebase, baseUriToNamespaceMap, rootTypeName);
 
         if (rootTypeDeclaration is null)
         {
@@ -35,7 +35,7 @@ public class JsonSchemaBuilder : IJsonSchemaBuilder
         }
 
         rootTypeName = rootTypeDeclaration.FullyQualifiedDotnetTypeName!;
-        ImmutableArray<TypeDeclaration> typesToGenerate = this.typeBuilder.GetTypesToGenerate(rootTypeDeclaration);
+        ImmutableArray<TypeDeclaration> typesToGenerate = rootTypeDeclaration.GetTypesToGenerate();
 
         return (
             rootTypeName,
@@ -50,7 +50,7 @@ public class JsonSchemaBuilder : IJsonSchemaBuilder
     /// <returns>The given type declaration.</returns>
     internal TypeDeclaration GetTypeDeclarationForProperty(TypeDeclaration typeDeclaration, string property)
     {
-        return this.typeBuilder.GetTypeDeclarationForProperty(typeDeclaration, property);
+        return typeDeclaration.GetTypeDeclarationForProperty(property);
     }
 
     /// <summary>
@@ -61,7 +61,7 @@ public class JsonSchemaBuilder : IJsonSchemaBuilder
     /// <returns>The given type declaration.</returns>
     internal TypeDeclaration GetTypeDeclarationForPatternProperty(TypeDeclaration typeDeclaration, string patternProperty)
     {
-        return this.typeBuilder.GetTypeDeclarationForMappedProperty(typeDeclaration, "patternProperties", patternProperty);
+        return typeDeclaration.GetTypeDeclarationForMappedProperty("patternProperties", patternProperty);
     }
 
     /// <summary>
@@ -72,7 +72,7 @@ public class JsonSchemaBuilder : IJsonSchemaBuilder
     /// <returns>The given type declaration.</returns>
     internal TypeDeclaration GetTypeDeclarationForDependentSchema(TypeDeclaration typeDeclaration, string dependentSchema)
     {
-        return this.typeBuilder.GetTypeDeclarationForMappedProperty(typeDeclaration, "dependencies", dependentSchema);
+        return typeDeclaration.GetTypeDeclarationForMappedProperty("dependencies", dependentSchema);
     }
 
     /// <summary>
@@ -84,7 +84,7 @@ public class JsonSchemaBuilder : IJsonSchemaBuilder
     /// <returns>The given type declaration.</returns>
     internal TypeDeclaration GetTypeDeclarationForPropertyArrayIndex(TypeDeclaration typeDeclaration, string property, int index)
     {
-        return this.typeBuilder.GetTypeDeclarationForPropertyArrayIndex(typeDeclaration, property, index);
+        return typeDeclaration.GetTypeDeclarationForPropertyArrayIndex(property, index);
     }
 
     private static string GetDottedFileNameFor(TypeDeclaration typeDeclaration)

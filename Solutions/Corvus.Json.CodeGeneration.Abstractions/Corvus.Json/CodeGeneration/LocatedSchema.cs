@@ -7,7 +7,7 @@ using System.Diagnostics.CodeAnalysis;
 namespace Corvus.Json.CodeGeneration;
 
 /// <summary>
-/// An located schema.
+/// A located schema.
 /// </summary>
 public class LocatedSchema
 {
@@ -18,7 +18,7 @@ public class LocatedSchema
     /// </summary>
     /// <param name="location">The scoped location of the located schema.</param>
     /// <param name="schema">The JSON schema at the location.</param>
-    public LocatedSchema(JsonReference location, JsonAny schema)
+    internal LocatedSchema(JsonReference location, JsonAny schema)
     {
         this.Location = location;
         this.Schema = schema;
@@ -44,19 +44,19 @@ public class LocatedSchema
     /// <summary>
     /// Gets the named anchors for the located schema.
     /// </summary>
-    public IEnumerable<(string Name, Anchor Anchor)> NamedAnchors => this.anchors.Select(kvp => (kvp.Key, kvp.Value));
+    internal IEnumerable<(string Name, Anchor Anchor)> NamedAnchors => this.anchors.Select(kvp => (kvp.Key, kvp.Value));
 
     /// <summary>
-    ///  Gets a value indicating whether this schema has a recursive anchor.
+    ///  Gets or sets a value indicating whether this schema has a recursive anchor.
     /// </summary>
-    public bool IsRecursiveAnchor { get; internal set; }
+    internal bool IsRecursiveAnchor { get; set; }
 
     /// <summary>
     /// Gets a value indicating whether the schema has an anchor with the given name.
     /// </summary>
     /// <param name="anchorName">The name of the anchor.</param>
     /// <returns><see langword="true"/> if the schema has an anchor of the specified name.</returns>
-    public bool HasAnchor(string anchorName)
+    internal bool HasAnchor(string anchorName)
     {
         return this.anchors.ContainsKey(anchorName);
     }

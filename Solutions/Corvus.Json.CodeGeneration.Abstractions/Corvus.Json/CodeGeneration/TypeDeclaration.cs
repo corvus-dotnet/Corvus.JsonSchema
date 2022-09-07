@@ -63,7 +63,7 @@ public class TypeDeclaration
     /// <summary>
     /// Gets a value indicating whether the type declaration has a dynamic reference.
     /// </summary>
-    public bool HasDynamicReference => this.RefResolvablePropertyDeclarations.Any(r => this.typeBuilder.RefKeywords.Any(k => (k.RefKind == RefKind.DynamicRef || k.RefKind == RefKind.RecursiveRef) && new JsonReference("#").AppendUnencodedPropertyNameToFragment(k.Name) == r.Key));
+    public bool HasDynamicReference => this.RefResolvablePropertyDeclarations.Any(r => this.typeBuilder.JsonSchemaConfiguration.RefKeywords.Any(k => (k.RefKind == RefKind.DynamicRef || k.RefKind == RefKind.RecursiveRef) && new JsonReference("#").AppendUnencodedPropertyNameToFragment(k.Name) == r.Key));
 
     /// <summary>
     /// Gets the parent type declaration for this type declaration, or null if this is a root type declaration.
@@ -112,13 +112,24 @@ public class TypeDeclaration
     /// The path may be a compound path for e.g. array or map properties.
     /// </para>
     /// <para>
-    /// This will include all the properties for <see cref="JsonSchemaTypeBuilder.RefResolvableKeywords"/>, and for irreducible reference
+    /// This will include all the properties for <see cref="JsonSchemaConfiguration.RefResolvableKeywords"/>, and for irreducible reference
     /// properties.
     /// </para>
     /// </remarks>
     public void AddRefResolvablePropertyDeclaration(string propertyPath, TypeDeclaration type)
     {
         this.RefResolvablePropertyDeclarations = this.RefResolvablePropertyDeclarations.Add(propertyPath, type);
+    }
+
+    /// <summary>
+    /// Gets the set of types to build, given we start at the given root type declaration.
+    /// </summary>
+    /// <returns>A set of types that need to be built.</returns>
+    public ImmutableArray<TypeDeclaration> GetTypesToGenerate()
+    {
+        HashSet<TypeDeclaration> typesToGenerate = new();
+        GetTypesToGenerateCore(this, typesToGenerate);
+        return typesToGenerate.ToImmutableArray();
     }
 
     /// <summary>
@@ -162,7 +173,7 @@ public class TypeDeclaration
             return false;
         }
 
-        foreach (RefKeyword refKeyword in this.typeBuilder.RefKeywords)
+        foreach (RefKeyword refKeyword in this.typeBuilder.JsonSchemaConfiguration.RefKeywords)
         {
             if (this.RefResolvablePropertyDeclarations.TryGetValue(new JsonReference("#").AppendUnencodedPropertyNameToFragment(refKeyword.Name), out TypeDeclaration? rr))
             {
@@ -174,6 +185,56 @@ public class TypeDeclaration
 
         reducedType = this;
         return false;
+    }
+
+    /// <summary>
+    /// Gets the type declaration for the specified property.
+    /// </summary>
+    /// <param name="propertyName">The name of the property.</param>
+    /// <returns>The type declaration for the named property.</returns>
+    /// <exception cref="InvalidOperationException">There was no property at the given location.</exception>
+    public TypeDeclaration GetTypeDeclarationForProperty(string propertyName)
+    {
+        if (this.RefResolvablePropertyDeclarations.TryGetValue(JsonReference.RootFragment.AppendUnencodedPropertyNameToFragment(propertyName), out TypeDeclaration? propertyType))
+        {
+            return propertyType;
+        }
+
+        throw new InvalidOperationException($"Unable to get the type declaration for property '{propertyName}' from the type at {this.LocatedSchema.Location}");
+    }
+
+    /// <summary>
+    /// Gets the type declaration for the specified array-like property and the array index.
+    /// </summary>
+    /// <param name="propertyName">The name of the property.</param>
+    /// <param name="arrayIndex">The index of the array.</param>
+    /// <returns>The type declaration for the named property.</returns>
+    /// <exception cref="InvalidOperationException">There was no property at the given location.</exception>
+    public TypeDeclaration GetTypeDeclarationForPropertyArrayIndex(string propertyName, int arrayIndex)
+    {
+        if (this.RefResolvablePropertyDeclarations.TryGetValue(JsonReference.RootFragment.AppendUnencodedPropertyNameToFragment(propertyName).AppendArrayIndexToFragment(arrayIndex), out TypeDeclaration? propertyType))
+        {
+            return propertyType;
+        }
+
+        throw new InvalidOperationException($"Unable to get the type declaration for array property '{propertyName}' at the array index '{arrayIndex}' from the type at {this.LocatedSchema.Location}");
+    }
+
+    /// <summary>
+    /// Gets the type declaration for the specified mapped property.
+    /// </summary>
+    /// <param name="propertyName">The name of the map property.</param>
+    /// <param name="mapName">The name of the property in the map.</param>
+    /// <returns>The type declaration for the named mapped property.</returns>
+    /// <exception cref="InvalidOperationException">There was no property at the given location.</exception>
+    public TypeDeclaration GetTypeDeclarationForMappedProperty(string propertyName, string mapName)
+    {
+        if (this.RefResolvablePropertyDeclarations.TryGetValue(JsonReference.RootFragment.AppendUnencodedPropertyNameToFragment(propertyName).AppendUnencodedPropertyNameToFragment(mapName), out TypeDeclaration? propertyType))
+        {
+            return propertyType;
+        }
+
+        throw new InvalidOperationException($"Unable to get the type declaration map value '{mapName}' in the property '{propertyName}' from the type at {this.LocatedSchema.Location}");
     }
 
     /// <summary>
@@ -267,7 +328,7 @@ public class TypeDeclaration
 
             if (fragment[lastSlash - 1] == '#')
             {
-                lastSlash -= 1;
+                lastSlash--;
             }
 
             if (lastSlash <= 0)
@@ -312,6 +373,20 @@ public class TypeDeclaration
         this.RecursiveScope = recursiveScope;
     }
 
+    private static void GetTypesToGenerateCore(TypeDeclaration type, HashSet<TypeDeclaration> typesToGenerate)
+    {
+        if (typesToGenerate.Contains(type) || type.IsBuiltInType)
+        {
+            return;
+        }
+
+        typesToGenerate.Add(type);
+        foreach (TypeDeclaration child in type.RefResolvablePropertyDeclarations.Values)
+        {
+            GetTypesToGenerateCore(child, typesToGenerate);
+        }
+    }
+
     private void AddChild(TypeDeclaration typeDeclaration)
     {
         this.Children = this.Children.Add(typeDeclaration);
@@ -338,7 +413,7 @@ public class TypeDeclaration
 
         foreach (JsonObjectProperty property in this.LocatedSchema.Schema.EnumerateObject())
         {
-            if (this.typeBuilder.IrreducibleKeywords.Contains(property.Name))
+            if (this.typeBuilder.JsonSchemaConfiguration.IrreducibleKeywords.Contains(property.Name))
             {
                 return false;
             }

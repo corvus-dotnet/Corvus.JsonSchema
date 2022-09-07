@@ -14,7 +14,7 @@ namespace Corvus.Json.CodeGeneration;
 /// <param name="Schema">The schema associated with the root location of the scope.</param>
 /// <param name="IsDynamicScope">Whether it is a dynamic scope.</param>
 /// <param name="ReplacedDynamicTypes">The dynamic types that were replaced in the scope.</param>
-public record struct JsonSchemaScope(JsonReference Location, JsonReference Pointer, LocatedSchema Schema, bool IsDynamicScope, ImmutableList<(JsonReference Location, TypeDeclaration Type)> ReplacedDynamicTypes)
+internal record struct JsonSchemaScope(JsonReference Location, JsonReference Pointer, LocatedSchema Schema, bool IsDynamicScope, ImmutableList<(JsonReference Location, TypeDeclaration Type)> ReplacedDynamicTypes)
 {
     /// <summary>
     /// Tuple conversion operator.

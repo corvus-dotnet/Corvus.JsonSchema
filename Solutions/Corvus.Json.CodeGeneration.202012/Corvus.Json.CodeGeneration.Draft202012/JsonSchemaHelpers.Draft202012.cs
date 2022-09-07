@@ -19,20 +19,21 @@ public static class JsonSchemaHelpers
     /// <returns>The configured type builder.</returns>
     public static JsonSchemaTypeBuilder UseDraft202012(this JsonSchemaTypeBuilder builder)
     {
-        builder.ValidatingAs = ValidationSemantics.Draft202012;
-        builder.AnchorKeywords = CreateDraft202012AnchorKeywords();
-        builder.IdKeyword = CreateDraft202012IdKeyword();
-        builder.ItemsKeyword = CreateDraft202012ItemsKeyword();
-        builder.SchemaKeyword = CreateDraft202012SchemaKeyword();
-        builder.DefinitionKeywords = CreateDraft202012DefsKeywords();
-        builder.IrreducibleKeywords = CreateDraft202012IrreducibleKeywords();
-        builder.RefKeywords = CreateDraft202012RefKeywords();
-        builder.RefResolvableKeywords = CreateDraft202012RefResolvableKeywords();
-        builder.ValidateSchema = CreateDraft202012ValidateSchema();
-        builder.GetBuiltInTypeName = CreateDraft202012GetBuiltInTypeNameFunction();
-        builder.IsExplicitArrayType = CreateDraft202012IsExplicitArrayType();
-        builder.IsSimpleType = CreateDraft202012IsSimpleType();
-        builder.FindAndBuildPropertiesAdapter = CreateDraft202012FindAndBuildPropertiesAdapter();
+        JsonSchemaConfiguration configuration = builder.JsonSchemaConfiguration;
+        configuration.ValidatingAs = ValidationSemantics.Draft202012;
+        configuration.AnchorKeywords = CreateDraft202012AnchorKeywords();
+        configuration.IdKeyword = CreateDraft202012IdKeyword();
+        configuration.ItemsKeyword = CreateDraft202012ItemsKeyword();
+        configuration.SchemaKeyword = CreateDraft202012SchemaKeyword();
+        configuration.DefinitionKeywords = CreateDraft202012DefsKeywords();
+        configuration.IrreducibleKeywords = CreateDraft202012IrreducibleKeywords();
+        configuration.RefKeywords = CreateDraft202012RefKeywords();
+        configuration.RefResolvableKeywords = CreateDraft202012RefResolvableKeywords();
+        configuration.ValidateSchema = CreateDraft202012ValidateSchema();
+        configuration.GetBuiltInTypeName = CreateDraft202012GetBuiltInTypeNameFunction();
+        configuration.IsExplicitArrayType = CreateDraft202012IsExplicitArrayType();
+        configuration.IsSimpleType = CreateDraft202012IsSimpleType();
+        configuration.FindAndBuildPropertiesAdapter = CreateDraft202012FindAndBuildPropertiesAdapter();
         return builder;
     }
 
@@ -236,7 +237,7 @@ public static class JsonSchemaHelpers
     /// Creates the function that builds the dotnet properties for the type declaration.
     /// </summary>
     /// <returns>An action that adds the properties to the given type declaration.</returns>
-    private static Action<JsonSchemaTypeBuilder, TypeDeclaration, TypeDeclaration, HashSet<TypeDeclaration>, bool> CreateDraft202012FindAndBuildPropertiesAdapter()
+    private static Action<IPropertyBuilder, TypeDeclaration, TypeDeclaration, HashSet<TypeDeclaration>, bool> CreateDraft202012FindAndBuildPropertiesAdapter()
     {
         return static (builder, source, target, typesVisited, treatRequiredAsOptional) =>
         {
