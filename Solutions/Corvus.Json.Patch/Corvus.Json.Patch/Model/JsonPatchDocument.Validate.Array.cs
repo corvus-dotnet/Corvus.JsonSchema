@@ -25,7 +25,7 @@ public readonly partial struct JsonPatchDocument
         }
 
         int arrayLength = 0;
-        using JsonArrayEnumerator<Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationEntity> arrayEnumerator = this.EnumerateArray();
+        using JsonArrayEnumerator<Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperation> arrayEnumerator = this.EnumerateArray();
         while (arrayEnumerator.MoveNext())
         {
             result = arrayEnumerator.Current.Validate(result, level);

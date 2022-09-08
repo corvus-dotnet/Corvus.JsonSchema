@@ -69,7 +69,7 @@ public class JsonPatchSteps
             JsonAny document = this.scenarioContext.Get<JsonAny>(DocumentKey);
             PatchBuilder builder = document.BeginPatch();
 
-            foreach (JsonPatchDocument.PatchOperationEntity operation in patchOperationArray.EnumerateArray())
+            foreach (JsonPatchDocument.PatchOperation operation in patchOperationArray.EnumerateArray())
             {
                 string op = operation.Op;
                 switch (op)
@@ -85,7 +85,7 @@ public class JsonPatchSteps
                         builder = builder.Add(add.Value, operation.Path);
                         break;
                     case "copy":
-                        JsonPatchDocument.CopyEntity copy = operation.AsCopyEntity;
+                        JsonPatchDocument.Copy copy = operation.AsCopy;
 
                         if (!copy.IsValid())
                         {
@@ -95,7 +95,7 @@ public class JsonPatchSteps
                         builder = builder.Copy(copy.From, operation.Path);
                         break;
                     case "move":
-                        JsonPatchDocument.MoveEntity move = operation.AsMoveEntity;
+                        JsonPatchDocument.Move move = operation.AsMove;
 
                         if (!move.IsValid())
                         {
@@ -118,7 +118,7 @@ public class JsonPatchSteps
                         builder = builder.Replace(replace.Value, operation.Path);
                         break;
                     case "test":
-                        JsonPatchDocument.TestEntity test = operation.AsTestEntity;
+                        JsonPatchDocument.Test test = operation.AsTest;
 
                         if (!test.IsValid())
                         {

@@ -129,7 +129,7 @@ public readonly partial struct JsonPatchDocument : IJsonArray<JsonPatchDocument>
     /// </summary>
     /// <param name = "value1">The first value from which to construct the instance.</param>
     /// <returns>A JsonPatchDocument instantiated from the given items.</returns>
-    public static JsonPatchDocument FromItems(in Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationEntity value1)
+    public static JsonPatchDocument FromItems(in Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperation value1)
     {
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         builder.Add(value1.AsAny);
@@ -142,7 +142,7 @@ public readonly partial struct JsonPatchDocument : IJsonArray<JsonPatchDocument>
     /// <param name = "value1">The first value from which to construct the instance.</param>
     /// <param name = "value2">The second value from which to construct the instance.</param>
     /// <returns>A JsonPatchDocument instantiated from the given items.</returns>
-    public static JsonPatchDocument FromItems(in Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationEntity value1, in Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationEntity value2)
+    public static JsonPatchDocument FromItems(in Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperation value1, in Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperation value2)
     {
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         builder.Add(value1.AsAny);
@@ -157,7 +157,7 @@ public readonly partial struct JsonPatchDocument : IJsonArray<JsonPatchDocument>
     /// <param name = "value2">The second value from which to construct the instance.</param>
     /// <param name = "value3">The thirdvalue from which to construct the instance.</param>
     /// <returns>A JsonPatchDocument instantiated from the given items.</returns>
-    public static JsonPatchDocument FromItems(in Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationEntity value1, in Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationEntity value2, in Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationEntity value3)
+    public static JsonPatchDocument FromItems(in Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperation value1, in Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperation value2, in Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperation value3)
     {
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         builder.Add(value1.AsAny);
@@ -171,10 +171,10 @@ public readonly partial struct JsonPatchDocument : IJsonArray<JsonPatchDocument>
     /// </summary>
     /// <param name = "value">The value from which to construct the instance.</param>
     /// <returns>A JsonAny instantiated from the given items.</returns>
-    public static JsonPatchDocument FromItems(params Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationEntity[] value)
+    public static JsonPatchDocument FromItems(params Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperation[] value)
     {
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
-        foreach (Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationEntity item in value)
+        foreach (Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperation item in value)
         {
             builder.Add(item.AsAny);
         }
@@ -187,10 +187,10 @@ public readonly partial struct JsonPatchDocument : IJsonArray<JsonPatchDocument>
     /// </summary>
     /// <param name = "value">The value from which to construct the instance.</param>
     /// <returns>A JsonAny instantiated from the given items.</returns>
-    public static JsonPatchDocument FromRange(IEnumerable<Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationEntity> value)
+    public static JsonPatchDocument FromRange(IEnumerable<Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperation> value)
     {
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
-        foreach (Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationEntity item in value)
+        foreach (Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperation item in value)
         {
             builder.Add(item.AsAny);
         }
@@ -293,16 +293,16 @@ public readonly partial struct JsonPatchDocument : IJsonArray<JsonPatchDocument>
     }
 
     /// <inheritdoc/>
-    public JsonArrayEnumerator<Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationEntity> EnumerateArray()
+    public JsonArrayEnumerator<Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperation> EnumerateArray()
     {
         if ((this.backing & Backing.JsonElement) != 0)
         {
-            return new JsonArrayEnumerator<Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationEntity>(this.jsonElementBacking);
+            return new JsonArrayEnumerator<Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperation>(this.jsonElementBacking);
         }
 
         if ((this.backing & Backing.Array) != 0)
         {
-            return new JsonArrayEnumerator<Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationEntity>(this.arrayBacking);
+            return new JsonArrayEnumerator<Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperation>(this.arrayBacking);
         }
 
         throw new InvalidOperationException();

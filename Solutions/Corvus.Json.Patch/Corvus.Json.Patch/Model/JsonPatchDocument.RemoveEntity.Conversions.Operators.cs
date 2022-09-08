@@ -21,10 +21,10 @@ public readonly partial struct JsonPatchDocument
     public readonly partial struct RemoveEntity
     {
         /// <summary>
-        /// Conversion from <see cref = "Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommonEntity"/>.
+        /// Conversion from <see cref = "Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator RemoveEntity(Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommonEntity value)
+        public static implicit operator RemoveEntity(Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -39,10 +39,10 @@ public readonly partial struct JsonPatchDocument
         }
 
         /// <summary>
-        /// Conversion to <see cref = "Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommonEntity"/>.
+        /// Conversion to <see cref = "Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommonEntity(RemoveEntity value)
+        public static implicit operator Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon(RemoveEntity value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -54,7 +54,7 @@ public readonly partial struct JsonPatchDocument
                 return new(value.objectBacking);
             }
 
-            return Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommonEntity.Undefined;
+            return Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon.Undefined;
         }
     }
 }

@@ -24,7 +24,7 @@ public readonly partial struct JsonPatchDocument
         private ValidationContext ValidateAllOf(in ValidationContext validationContext, ValidationLevel level)
         {
             ValidationContext result = validationContext;
-            ValidationContext allOfResult0 = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommonEntity>().Validate(validationContext.CreateChildContext(), level);
+            ValidationContext allOfResult0 = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon>().Validate(validationContext.CreateChildContext(), level);
             if (!allOfResult0.IsValid)
             {
                 if (level >= ValidationLevel.Detailed)

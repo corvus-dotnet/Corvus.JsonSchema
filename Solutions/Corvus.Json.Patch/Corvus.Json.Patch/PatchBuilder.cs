@@ -37,7 +37,7 @@ public readonly record struct PatchBuilder(JsonAny Value, JsonPatchDocument Patc
     /// <exception cref="JsonPatchException">Thrown if the value cannot be copied from the source to the path.</exception>
     public PatchBuilder Copy(JsonPointer from, JsonPointer path)
     {
-        var operation = JsonPatchDocument.CopyEntity.Create(from, path);
+        var operation = JsonPatchDocument.Copy.Create(from, path);
         if (this.Value.TryApplyPatch(JsonPatchDocument.FromItems(operation), out JsonAny result))
         {
             return new(result, this.PatchOperations.Add(operation));
@@ -55,7 +55,7 @@ public readonly record struct PatchBuilder(JsonAny Value, JsonPatchDocument Patc
     /// <exception cref="JsonPatchException">Thrown if the value cannot be moved from the source location to the path.</exception>
     public PatchBuilder Move(JsonPointer from, JsonPointer path)
     {
-        var operation = JsonPatchDocument.MoveEntity.Create(from, path);
+        var operation = JsonPatchDocument.Move.Create(from, path);
         if (this.Value.TryApplyPatch(JsonPatchDocument.FromItems(operation), out JsonAny result))
         {
             return new(result, this.PatchOperations.Add(operation));
@@ -108,7 +108,7 @@ public readonly record struct PatchBuilder(JsonAny Value, JsonPatchDocument Patc
     /// <exception cref="JsonPatchException">Thrown if the value cannot be replaced at the given path.</exception>
     public PatchBuilder Test(JsonAny value, JsonPointer path)
     {
-        var operation = JsonPatchDocument.TestEntity.Create(value, path);
+        var operation = JsonPatchDocument.Test.Create(value, path);
         if (this.Value.TryApplyPatch(JsonPatchDocument.FromItems(operation), out JsonAny result))
         {
             return new(result, this.PatchOperations.Add(operation));

@@ -15,7 +15,7 @@ public readonly partial struct JsonPatchDocument
     /// <summary>
     /// A type generated from a JsonSchema specification.
     /// </summary>
-    public readonly partial struct ReplaceEntity
+    public readonly partial struct Copy
     {
         /// <summary>
         /// Gets the value as a <see cref = "Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon"/>.

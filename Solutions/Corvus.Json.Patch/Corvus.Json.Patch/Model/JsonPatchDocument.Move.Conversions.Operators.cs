@@ -18,13 +18,13 @@ public readonly partial struct JsonPatchDocument
     /// <summary>
     /// A type generated from a JsonSchema specification.
     /// </summary>
-    public readonly partial struct ReplaceEntity
+    public readonly partial struct Move
     {
         /// <summary>
         /// Conversion from <see cref = "Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator ReplaceEntity(Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon value)
+        public static implicit operator Move(Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -42,7 +42,7 @@ public readonly partial struct JsonPatchDocument
         /// Conversion to <see cref = "Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon(ReplaceEntity value)
+        public static implicit operator Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon(Move value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {

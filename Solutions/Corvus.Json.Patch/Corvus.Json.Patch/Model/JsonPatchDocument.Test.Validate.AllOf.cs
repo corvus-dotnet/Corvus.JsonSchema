@@ -19,7 +19,7 @@ public readonly partial struct JsonPatchDocument
     /// <summary>
     /// A type generated from a JsonSchema specification.
     /// </summary>
-    public readonly partial struct AddEntity
+    public readonly partial struct Test
     {
         private ValidationContext ValidateAllOf(in ValidationContext validationContext, ValidationLevel level)
         {
