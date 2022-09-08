@@ -18,68 +18,68 @@ public readonly partial struct Validation
     public readonly partial struct TypeEntity
     {
         /// <summary>
-        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypesEntity"/>.
+        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypes"/>.
         /// </summary>
-        public Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypesEntity AsSimpleTypesEntity
+        public Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypes AsSimpleTypes
         {
             get
             {
-                return (Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypesEntity)this;
+                return (Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypes)this;
             }
         }
 
         /// <summary>
-        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypesEntity"/>.
+        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypes"/>.
         /// </summary>
-        public bool IsSimpleTypesEntity
+        public bool IsSimpleTypes
         {
             get
             {
-                return ((Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypesEntity)this).IsValid();
+                return ((Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypes)this).IsValid();
             }
         }
 
         /// <summary>
-        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypesEntity"/>.
+        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypes"/>.
         /// </summary>
         /// <param name = "result">The result of the conversion.</param>
         /// <returns><c>True</c> if the conversion was valid.</returns>
-        public bool TryGetAsSimpleTypesEntity(out Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypesEntity result)
+        public bool TryGetAsSimpleTypes(out Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypes result)
         {
-            result = (Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypesEntity)this;
+            result = (Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypes)this;
             return result.IsValid();
         }
 
         /// <summary>
-        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.Draft202012.Validation.TypeEntity.SimpleTypesEntityArray"/>.
+        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.Draft202012.Validation.TypeEntity.SimpleTypesArray"/>.
         /// </summary>
-        public Corvus.Json.JsonSchema.Draft202012.Validation.TypeEntity.SimpleTypesEntityArray AsSimpleTypesEntityArray
+        public Corvus.Json.JsonSchema.Draft202012.Validation.TypeEntity.SimpleTypesArray AsSimpleTypesArray
         {
             get
             {
-                return (Corvus.Json.JsonSchema.Draft202012.Validation.TypeEntity.SimpleTypesEntityArray)this;
+                return (Corvus.Json.JsonSchema.Draft202012.Validation.TypeEntity.SimpleTypesArray)this;
             }
         }
 
         /// <summary>
-        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.JsonSchema.Draft202012.Validation.TypeEntity.SimpleTypesEntityArray"/>.
+        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.JsonSchema.Draft202012.Validation.TypeEntity.SimpleTypesArray"/>.
         /// </summary>
-        public bool IsSimpleTypesEntityArray
+        public bool IsSimpleTypesArray
         {
             get
             {
-                return ((Corvus.Json.JsonSchema.Draft202012.Validation.TypeEntity.SimpleTypesEntityArray)this).IsValid();
+                return ((Corvus.Json.JsonSchema.Draft202012.Validation.TypeEntity.SimpleTypesArray)this).IsValid();
             }
         }
 
         /// <summary>
-        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.Draft202012.Validation.TypeEntity.SimpleTypesEntityArray"/>.
+        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.Draft202012.Validation.TypeEntity.SimpleTypesArray"/>.
         /// </summary>
         /// <param name = "result">The result of the conversion.</param>
         /// <returns><c>True</c> if the conversion was valid.</returns>
-        public bool TryGetAsSimpleTypesEntityArray(out Corvus.Json.JsonSchema.Draft202012.Validation.TypeEntity.SimpleTypesEntityArray result)
+        public bool TryGetAsSimpleTypesArray(out Corvus.Json.JsonSchema.Draft202012.Validation.TypeEntity.SimpleTypesArray result)
         {
-            result = (Corvus.Json.JsonSchema.Draft202012.Validation.TypeEntity.SimpleTypesEntityArray)this;
+            result = (Corvus.Json.JsonSchema.Draft202012.Validation.TypeEntity.SimpleTypesArray)this;
             return result.IsValid();
         }
     }

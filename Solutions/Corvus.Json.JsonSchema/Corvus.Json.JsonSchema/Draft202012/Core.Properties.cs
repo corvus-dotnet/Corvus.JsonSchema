@@ -191,7 +191,7 @@ public readonly partial struct Core
     /// <summary>
     /// Gets Anchor.
     /// </summary>
-    public Corvus.Json.JsonSchema.Draft202012.Core.AnchorStringValue Anchor
+    public Corvus.Json.JsonSchema.Draft202012.Core.AnchorString Anchor
     {
         get
         {
@@ -204,7 +204,7 @@ public readonly partial struct Core
 
                 if (this.jsonElementBacking.TryGetProperty(AnchorUtf8JsonPropertyName.Span, out JsonElement result))
                 {
-                    return new Corvus.Json.JsonSchema.Draft202012.Core.AnchorStringValue(result);
+                    return new Corvus.Json.JsonSchema.Draft202012.Core.AnchorString(result);
                 }
             }
 
@@ -212,7 +212,7 @@ public readonly partial struct Core
             {
                 if (this.objectBacking.TryGetValue(AnchorJsonPropertyName, out JsonAny result))
                 {
-                    return result.As<Corvus.Json.JsonSchema.Draft202012.Core.AnchorStringValue>();
+                    return result.As<Corvus.Json.JsonSchema.Draft202012.Core.AnchorString>();
                 }
             }
 
@@ -255,7 +255,7 @@ public readonly partial struct Core
     /// <summary>
     /// Gets DynamicAnchor.
     /// </summary>
-    public Corvus.Json.JsonSchema.Draft202012.Core.AnchorStringValue DynamicAnchor
+    public Corvus.Json.JsonSchema.Draft202012.Core.AnchorString DynamicAnchor
     {
         get
         {
@@ -268,7 +268,7 @@ public readonly partial struct Core
 
                 if (this.jsonElementBacking.TryGetProperty(DynamicAnchorUtf8JsonPropertyName.Span, out JsonElement result))
                 {
-                    return new Corvus.Json.JsonSchema.Draft202012.Core.AnchorStringValue(result);
+                    return new Corvus.Json.JsonSchema.Draft202012.Core.AnchorString(result);
                 }
             }
 
@@ -276,7 +276,7 @@ public readonly partial struct Core
             {
                 if (this.objectBacking.TryGetValue(DynamicAnchorJsonPropertyName, out JsonAny result))
                 {
-                    return result.As<Corvus.Json.JsonSchema.Draft202012.Core.AnchorStringValue>();
+                    return result.As<Corvus.Json.JsonSchema.Draft202012.Core.AnchorString>();
                 }
             }
 
@@ -287,7 +287,7 @@ public readonly partial struct Core
     /// <summary>
     /// Gets Vocabulary.
     /// </summary>
-    public Corvus.Json.JsonSchema.Draft202012.Core.VocabularyValue Vocabulary
+    public Corvus.Json.JsonSchema.Draft202012.Core.VocabularyEntity Vocabulary
     {
         get
         {
@@ -300,7 +300,7 @@ public readonly partial struct Core
 
                 if (this.jsonElementBacking.TryGetProperty(VocabularyUtf8JsonPropertyName.Span, out JsonElement result))
                 {
-                    return new Corvus.Json.JsonSchema.Draft202012.Core.VocabularyValue(result);
+                    return new Corvus.Json.JsonSchema.Draft202012.Core.VocabularyEntity(result);
                 }
             }
 
@@ -308,7 +308,7 @@ public readonly partial struct Core
             {
                 if (this.objectBacking.TryGetValue(VocabularyJsonPropertyName, out JsonAny result))
                 {
-                    return result.As<Corvus.Json.JsonSchema.Draft202012.Core.VocabularyValue>();
+                    return result.As<Corvus.Json.JsonSchema.Draft202012.Core.VocabularyEntity>();
                 }
             }
 
@@ -351,7 +351,7 @@ public readonly partial struct Core
     /// <summary>
     /// Gets Defs.
     /// </summary>
-    public Corvus.Json.JsonSchema.Draft202012.Core.DefsValue Defs
+    public Corvus.Json.JsonSchema.Draft202012.Core.DefsEntity Defs
     {
         get
         {
@@ -364,7 +364,7 @@ public readonly partial struct Core
 
                 if (this.jsonElementBacking.TryGetProperty(DefsUtf8JsonPropertyName.Span, out JsonElement result))
                 {
-                    return new Corvus.Json.JsonSchema.Draft202012.Core.DefsValue(result);
+                    return new Corvus.Json.JsonSchema.Draft202012.Core.DefsEntity(result);
                 }
             }
 
@@ -372,7 +372,7 @@ public readonly partial struct Core
             {
                 if (this.objectBacking.TryGetValue(DefsJsonPropertyName, out JsonAny result))
                 {
-                    return result.As<Corvus.Json.JsonSchema.Draft202012.Core.DefsValue>();
+                    return result.As<Corvus.Json.JsonSchema.Draft202012.Core.DefsEntity>();
                 }
             }
 
@@ -493,7 +493,7 @@ public readonly partial struct Core
     /// <summary>
     /// Creates an instance of a <see cref = "Core"/>.
     /// </summary>
-    public static Core Create(Corvus.Json.JsonSchema.Draft202012.Core.IdEntity? id = null, Corvus.Json.JsonUri? schema = null, Corvus.Json.JsonUriReference? @ref = null, Corvus.Json.JsonSchema.Draft202012.Core.AnchorStringValue? anchor = null, Corvus.Json.JsonUriReference? dynamicRef = null, Corvus.Json.JsonSchema.Draft202012.Core.AnchorStringValue? dynamicAnchor = null, Corvus.Json.JsonSchema.Draft202012.Core.VocabularyValue? vocabulary = null, Corvus.Json.JsonString? comment = null, Corvus.Json.JsonSchema.Draft202012.Core.DefsValue? defs = null)
+    public static Core Create(Corvus.Json.JsonSchema.Draft202012.Core.IdEntity? id = null, Corvus.Json.JsonUri? schema = null, Corvus.Json.JsonUriReference? @ref = null, Corvus.Json.JsonSchema.Draft202012.Core.AnchorString? anchor = null, Corvus.Json.JsonUriReference? dynamicRef = null, Corvus.Json.JsonSchema.Draft202012.Core.AnchorString? dynamicAnchor = null, Corvus.Json.JsonSchema.Draft202012.Core.VocabularyEntity? vocabulary = null, Corvus.Json.JsonString? comment = null, Corvus.Json.JsonSchema.Draft202012.Core.DefsEntity? defs = null)
     {
         var builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
         if (id is Corvus.Json.JsonSchema.Draft202012.Core.IdEntity id__)
@@ -511,7 +511,7 @@ public readonly partial struct Core
             builder.Add(RefJsonPropertyName, @ref__.AsAny);
         }
 
-        if (anchor is Corvus.Json.JsonSchema.Draft202012.Core.AnchorStringValue anchor__)
+        if (anchor is Corvus.Json.JsonSchema.Draft202012.Core.AnchorString anchor__)
         {
             builder.Add(AnchorJsonPropertyName, anchor__.AsAny);
         }
@@ -521,12 +521,12 @@ public readonly partial struct Core
             builder.Add(DynamicRefJsonPropertyName, dynamicRef__.AsAny);
         }
 
-        if (dynamicAnchor is Corvus.Json.JsonSchema.Draft202012.Core.AnchorStringValue dynamicAnchor__)
+        if (dynamicAnchor is Corvus.Json.JsonSchema.Draft202012.Core.AnchorString dynamicAnchor__)
         {
             builder.Add(DynamicAnchorJsonPropertyName, dynamicAnchor__.AsAny);
         }
 
-        if (vocabulary is Corvus.Json.JsonSchema.Draft202012.Core.VocabularyValue vocabulary__)
+        if (vocabulary is Corvus.Json.JsonSchema.Draft202012.Core.VocabularyEntity vocabulary__)
         {
             builder.Add(VocabularyJsonPropertyName, vocabulary__.AsAny);
         }
@@ -536,7 +536,7 @@ public readonly partial struct Core
             builder.Add(CommentJsonPropertyName, comment__.AsAny);
         }
 
-        if (defs is Corvus.Json.JsonSchema.Draft202012.Core.DefsValue defs__)
+        if (defs is Corvus.Json.JsonSchema.Draft202012.Core.DefsEntity defs__)
         {
             builder.Add(DefsJsonPropertyName, defs__.AsAny);
         }
@@ -579,7 +579,7 @@ public readonly partial struct Core
     /// </summary>
     /// <param name = "value">The value to set.</param>
     /// <returns>The entity with the updated property.</returns>
-    public Core WithAnchor(in Corvus.Json.JsonSchema.Draft202012.Core.AnchorStringValue value)
+    public Core WithAnchor(in Corvus.Json.JsonSchema.Draft202012.Core.AnchorString value)
     {
         return this.SetProperty(AnchorJsonPropertyName, value);
     }
@@ -599,7 +599,7 @@ public readonly partial struct Core
     /// </summary>
     /// <param name = "value">The value to set.</param>
     /// <returns>The entity with the updated property.</returns>
-    public Core WithDynamicAnchor(in Corvus.Json.JsonSchema.Draft202012.Core.AnchorStringValue value)
+    public Core WithDynamicAnchor(in Corvus.Json.JsonSchema.Draft202012.Core.AnchorString value)
     {
         return this.SetProperty(DynamicAnchorJsonPropertyName, value);
     }
@@ -609,7 +609,7 @@ public readonly partial struct Core
     /// </summary>
     /// <param name = "value">The value to set.</param>
     /// <returns>The entity with the updated property.</returns>
-    public Core WithVocabulary(in Corvus.Json.JsonSchema.Draft202012.Core.VocabularyValue value)
+    public Core WithVocabulary(in Corvus.Json.JsonSchema.Draft202012.Core.VocabularyEntity value)
     {
         return this.SetProperty(VocabularyJsonPropertyName, value);
     }
@@ -629,7 +629,7 @@ public readonly partial struct Core
     /// </summary>
     /// <param name = "value">The value to set.</param>
     /// <returns>The entity with the updated property.</returns>
-    public Core WithDefs(in Corvus.Json.JsonSchema.Draft202012.Core.DefsValue value)
+    public Core WithDefs(in Corvus.Json.JsonSchema.Draft202012.Core.DefsEntity value)
     {
         return this.SetProperty(DefsJsonPropertyName, value);
     }
@@ -651,7 +651,7 @@ public readonly partial struct Core
 
     private static ValidationContext __CorvusValidateAnchor(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        return property.ValueAs<Corvus.Json.JsonSchema.Draft202012.Core.AnchorStringValue>().Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft202012.Core.AnchorString>().Validate(validationContext, level);
     }
 
     private static ValidationContext __CorvusValidateDynamicRef(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
@@ -661,12 +661,12 @@ public readonly partial struct Core
 
     private static ValidationContext __CorvusValidateDynamicAnchor(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        return property.ValueAs<Corvus.Json.JsonSchema.Draft202012.Core.AnchorStringValue>().Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft202012.Core.AnchorString>().Validate(validationContext, level);
     }
 
     private static ValidationContext __CorvusValidateVocabulary(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        return property.ValueAs<Corvus.Json.JsonSchema.Draft202012.Core.VocabularyValue>().Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft202012.Core.VocabularyEntity>().Validate(validationContext, level);
     }
 
     private static ValidationContext __CorvusValidateComment(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
@@ -676,6 +676,6 @@ public readonly partial struct Core
 
     private static ValidationContext __CorvusValidateDefs(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        return property.ValueAs<Corvus.Json.JsonSchema.Draft202012.Core.DefsValue>().Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft202012.Core.DefsEntity>().Validate(validationContext, level);
     }
 }

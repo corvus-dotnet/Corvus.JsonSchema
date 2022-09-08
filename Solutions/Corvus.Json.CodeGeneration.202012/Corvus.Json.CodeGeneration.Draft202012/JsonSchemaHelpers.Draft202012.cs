@@ -325,7 +325,7 @@ public static class JsonSchemaHelpers
             }
 
             return BuiltInTypes.GetTypeNameFor(
-                schema.Type.AsSimpleTypesEntity,
+                schema.Type.AsSimpleTypes,
                 schema.Format.AsOptionalString(),
                 schema.ContentEncoding.AsOptionalString(),
                 schema.ContentMediaType.AsOptionalString(),

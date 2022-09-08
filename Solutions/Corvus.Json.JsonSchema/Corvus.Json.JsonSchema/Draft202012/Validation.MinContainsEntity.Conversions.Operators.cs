@@ -21,10 +21,10 @@ public readonly partial struct Validation
     public readonly partial struct MinContainsEntity
     {
         /// <summary>
-        /// Conversion from <see cref = "Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeIntegerValue"/>.
+        /// Conversion from <see cref = "Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeInteger"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator MinContainsEntity(Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeIntegerValue value)
+        public static implicit operator MinContainsEntity(Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeInteger value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -39,10 +39,10 @@ public readonly partial struct Validation
         }
 
         /// <summary>
-        /// Conversion to <see cref = "Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeIntegerValue"/>.
+        /// Conversion to <see cref = "Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeInteger"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeIntegerValue(MinContainsEntity value)
+        public static implicit operator Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeInteger(MinContainsEntity value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -54,7 +54,7 @@ public readonly partial struct Validation
                 return new(value.numberBacking);
             }
 
-            return Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeIntegerValue.Undefined;
+            return Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeInteger.Undefined;
         }
     }
 }

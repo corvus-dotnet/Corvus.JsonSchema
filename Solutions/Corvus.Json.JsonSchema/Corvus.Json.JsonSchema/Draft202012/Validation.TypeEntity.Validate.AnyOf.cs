@@ -21,7 +21,7 @@ public readonly partial struct Validation
         {
             ValidationContext result = validationContext;
             bool foundValid = false;
-            ValidationContext anyOfResult0 = this.As<Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypesEntity>().Validate(validationContext.CreateChildContext(), level);
+            ValidationContext anyOfResult0 = this.As<Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypes>().Validate(validationContext.CreateChildContext(), level);
             if (anyOfResult0.IsValid)
             {
                 result = result.MergeChildContext(anyOfResult0, level >= ValidationLevel.Detailed);
@@ -46,7 +46,7 @@ public readonly partial struct Validation
                 }
             }
 
-            ValidationContext anyOfResult1 = this.As<Corvus.Json.JsonSchema.Draft202012.Validation.TypeEntity.SimpleTypesEntityArray>().Validate(validationContext.CreateChildContext(), level);
+            ValidationContext anyOfResult1 = this.As<Corvus.Json.JsonSchema.Draft202012.Validation.TypeEntity.SimpleTypesArray>().Validate(validationContext.CreateChildContext(), level);
             if (anyOfResult1.IsValid)
             {
                 result = result.MergeChildContext(anyOfResult1, level >= ValidationLevel.Detailed);

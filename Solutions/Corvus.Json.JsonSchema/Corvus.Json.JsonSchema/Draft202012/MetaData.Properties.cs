@@ -175,7 +175,7 @@ public readonly partial struct MetaData
     /// <summary>
     /// Gets Deprecated.
     /// </summary>
-    public Corvus.Json.JsonSchema.Draft202012.MetaData.DeprecatedValue Deprecated
+    public Corvus.Json.JsonSchema.Draft202012.MetaData.DeprecatedEntity Deprecated
     {
         get
         {
@@ -188,7 +188,7 @@ public readonly partial struct MetaData
 
                 if (this.jsonElementBacking.TryGetProperty(DeprecatedUtf8JsonPropertyName.Span, out JsonElement result))
                 {
-                    return new Corvus.Json.JsonSchema.Draft202012.MetaData.DeprecatedValue(result);
+                    return new Corvus.Json.JsonSchema.Draft202012.MetaData.DeprecatedEntity(result);
                 }
             }
 
@@ -196,7 +196,7 @@ public readonly partial struct MetaData
             {
                 if (this.objectBacking.TryGetValue(DeprecatedJsonPropertyName, out JsonAny result))
                 {
-                    return result.As<Corvus.Json.JsonSchema.Draft202012.MetaData.DeprecatedValue>();
+                    return result.As<Corvus.Json.JsonSchema.Draft202012.MetaData.DeprecatedEntity>();
                 }
             }
 
@@ -207,7 +207,7 @@ public readonly partial struct MetaData
     /// <summary>
     /// Gets ReadOnly.
     /// </summary>
-    public Corvus.Json.JsonSchema.Draft202012.MetaData.ReadOnlyValue ReadOnly
+    public Corvus.Json.JsonSchema.Draft202012.MetaData.ReadOnlyEntity ReadOnly
     {
         get
         {
@@ -220,7 +220,7 @@ public readonly partial struct MetaData
 
                 if (this.jsonElementBacking.TryGetProperty(ReadOnlyUtf8JsonPropertyName.Span, out JsonElement result))
                 {
-                    return new Corvus.Json.JsonSchema.Draft202012.MetaData.ReadOnlyValue(result);
+                    return new Corvus.Json.JsonSchema.Draft202012.MetaData.ReadOnlyEntity(result);
                 }
             }
 
@@ -228,7 +228,7 @@ public readonly partial struct MetaData
             {
                 if (this.objectBacking.TryGetValue(ReadOnlyJsonPropertyName, out JsonAny result))
                 {
-                    return result.As<Corvus.Json.JsonSchema.Draft202012.MetaData.ReadOnlyValue>();
+                    return result.As<Corvus.Json.JsonSchema.Draft202012.MetaData.ReadOnlyEntity>();
                 }
             }
 
@@ -239,7 +239,7 @@ public readonly partial struct MetaData
     /// <summary>
     /// Gets WriteOnly.
     /// </summary>
-    public Corvus.Json.JsonSchema.Draft202012.MetaData.WriteOnlyValue WriteOnly
+    public Corvus.Json.JsonSchema.Draft202012.MetaData.WriteOnlyEntity WriteOnly
     {
         get
         {
@@ -252,7 +252,7 @@ public readonly partial struct MetaData
 
                 if (this.jsonElementBacking.TryGetProperty(WriteOnlyUtf8JsonPropertyName.Span, out JsonElement result))
                 {
-                    return new Corvus.Json.JsonSchema.Draft202012.MetaData.WriteOnlyValue(result);
+                    return new Corvus.Json.JsonSchema.Draft202012.MetaData.WriteOnlyEntity(result);
                 }
             }
 
@@ -260,7 +260,7 @@ public readonly partial struct MetaData
             {
                 if (this.objectBacking.TryGetValue(WriteOnlyJsonPropertyName, out JsonAny result))
                 {
-                    return result.As<Corvus.Json.JsonSchema.Draft202012.MetaData.WriteOnlyValue>();
+                    return result.As<Corvus.Json.JsonSchema.Draft202012.MetaData.WriteOnlyEntity>();
                 }
             }
 
@@ -393,7 +393,7 @@ public readonly partial struct MetaData
     /// <summary>
     /// Creates an instance of a <see cref = "MetaData"/>.
     /// </summary>
-    public static MetaData Create(Corvus.Json.JsonString? title = null, Corvus.Json.JsonString? description = null, Corvus.Json.JsonAny? @default = null, Corvus.Json.JsonSchema.Draft202012.MetaData.DeprecatedValue? deprecated = null, Corvus.Json.JsonSchema.Draft202012.MetaData.ReadOnlyValue? readOnly = null, Corvus.Json.JsonSchema.Draft202012.MetaData.WriteOnlyValue? writeOnly = null, Corvus.Json.JsonSchema.Draft202012.MetaData.JsonAnyArray? examples = null)
+    public static MetaData Create(Corvus.Json.JsonString? title = null, Corvus.Json.JsonString? description = null, Corvus.Json.JsonAny? @default = null, Corvus.Json.JsonSchema.Draft202012.MetaData.DeprecatedEntity? deprecated = null, Corvus.Json.JsonSchema.Draft202012.MetaData.ReadOnlyEntity? readOnly = null, Corvus.Json.JsonSchema.Draft202012.MetaData.WriteOnlyEntity? writeOnly = null, Corvus.Json.JsonSchema.Draft202012.MetaData.JsonAnyArray? examples = null)
     {
         var builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
         if (title is Corvus.Json.JsonString title__)
@@ -411,17 +411,17 @@ public readonly partial struct MetaData
             builder.Add(DefaultJsonPropertyName, @default__.AsAny);
         }
 
-        if (deprecated is Corvus.Json.JsonSchema.Draft202012.MetaData.DeprecatedValue deprecated__)
+        if (deprecated is Corvus.Json.JsonSchema.Draft202012.MetaData.DeprecatedEntity deprecated__)
         {
             builder.Add(DeprecatedJsonPropertyName, deprecated__.AsAny);
         }
 
-        if (readOnly is Corvus.Json.JsonSchema.Draft202012.MetaData.ReadOnlyValue readOnly__)
+        if (readOnly is Corvus.Json.JsonSchema.Draft202012.MetaData.ReadOnlyEntity readOnly__)
         {
             builder.Add(ReadOnlyJsonPropertyName, readOnly__.AsAny);
         }
 
-        if (writeOnly is Corvus.Json.JsonSchema.Draft202012.MetaData.WriteOnlyValue writeOnly__)
+        if (writeOnly is Corvus.Json.JsonSchema.Draft202012.MetaData.WriteOnlyEntity writeOnly__)
         {
             builder.Add(WriteOnlyJsonPropertyName, writeOnly__.AsAny);
         }
@@ -469,7 +469,7 @@ public readonly partial struct MetaData
     /// </summary>
     /// <param name = "value">The value to set.</param>
     /// <returns>The entity with the updated property.</returns>
-    public MetaData WithDeprecated(in Corvus.Json.JsonSchema.Draft202012.MetaData.DeprecatedValue value)
+    public MetaData WithDeprecated(in Corvus.Json.JsonSchema.Draft202012.MetaData.DeprecatedEntity value)
     {
         return this.SetProperty(DeprecatedJsonPropertyName, value);
     }
@@ -479,7 +479,7 @@ public readonly partial struct MetaData
     /// </summary>
     /// <param name = "value">The value to set.</param>
     /// <returns>The entity with the updated property.</returns>
-    public MetaData WithReadOnly(in Corvus.Json.JsonSchema.Draft202012.MetaData.ReadOnlyValue value)
+    public MetaData WithReadOnly(in Corvus.Json.JsonSchema.Draft202012.MetaData.ReadOnlyEntity value)
     {
         return this.SetProperty(ReadOnlyJsonPropertyName, value);
     }
@@ -489,7 +489,7 @@ public readonly partial struct MetaData
     /// </summary>
     /// <param name = "value">The value to set.</param>
     /// <returns>The entity with the updated property.</returns>
-    public MetaData WithWriteOnly(in Corvus.Json.JsonSchema.Draft202012.MetaData.WriteOnlyValue value)
+    public MetaData WithWriteOnly(in Corvus.Json.JsonSchema.Draft202012.MetaData.WriteOnlyEntity value)
     {
         return this.SetProperty(WriteOnlyJsonPropertyName, value);
     }
@@ -521,17 +521,17 @@ public readonly partial struct MetaData
 
     private static ValidationContext __CorvusValidateDeprecated(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        return property.ValueAs<Corvus.Json.JsonSchema.Draft202012.MetaData.DeprecatedValue>().Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft202012.MetaData.DeprecatedEntity>().Validate(validationContext, level);
     }
 
     private static ValidationContext __CorvusValidateReadOnly(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        return property.ValueAs<Corvus.Json.JsonSchema.Draft202012.MetaData.ReadOnlyValue>().Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft202012.MetaData.ReadOnlyEntity>().Validate(validationContext, level);
     }
 
     private static ValidationContext __CorvusValidateWriteOnly(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        return property.ValueAs<Corvus.Json.JsonSchema.Draft202012.MetaData.WriteOnlyValue>().Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft202012.MetaData.WriteOnlyEntity>().Validate(validationContext, level);
     }
 
     private static ValidationContext __CorvusValidateExamples(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)

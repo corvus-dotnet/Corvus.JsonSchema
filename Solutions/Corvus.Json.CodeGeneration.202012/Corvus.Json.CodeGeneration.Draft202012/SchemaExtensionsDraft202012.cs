@@ -40,7 +40,7 @@ public static class SchemaExtensionsDraft202012
     public static bool IsExplicitArrayType(this Schema draft202012Schema)
     {
         return
-            draft202012Schema.Type.IsSimpleTypesEntity && draft202012Schema.Type.Equals(Validation.SimpleTypesEntity.EnumValues.Array);
+            draft202012Schema.Type.IsSimpleTypes && draft202012Schema.Type.Equals(Validation.SimpleTypes.EnumValues.Array);
     }
 
     /// <summary>
@@ -51,7 +51,7 @@ public static class SchemaExtensionsDraft202012
     public static bool IsExplicitObjectType(this Schema draft202012Schema)
     {
         return
-            draft202012Schema.Type.IsSimpleTypesEntity && draft202012Schema.Type.Equals(Validation.SimpleTypesEntity.EnumValues.Object);
+            draft202012Schema.Type.IsSimpleTypes && draft202012Schema.Type.Equals(Validation.SimpleTypes.EnumValues.Object);
     }
 
     /// <summary>
@@ -62,7 +62,7 @@ public static class SchemaExtensionsDraft202012
     public static bool IsExplicitNumberType(this Schema draft202012Schema)
     {
         return
-            draft202012Schema.Type.IsSimpleTypesEntity && (draft202012Schema.Type.Equals(Validation.SimpleTypesEntity.EnumValues.Number) || draft202012Schema.Type.Equals(Validation.SimpleTypesEntity.EnumValues.Integer));
+            draft202012Schema.Type.IsSimpleTypes && (draft202012Schema.Type.Equals(Validation.SimpleTypes.EnumValues.Number) || draft202012Schema.Type.Equals(Validation.SimpleTypes.EnumValues.Integer));
     }
 
     /// <summary>
@@ -73,7 +73,7 @@ public static class SchemaExtensionsDraft202012
     public static bool IsExplicitBooleanType(this Schema draft202012Schema)
     {
         return
-            draft202012Schema.Type.IsSimpleTypesEntity && draft202012Schema.Type.Equals(Validation.SimpleTypesEntity.EnumValues.Boolean);
+            draft202012Schema.Type.IsSimpleTypes && draft202012Schema.Type.Equals(Validation.SimpleTypes.EnumValues.Boolean);
     }
 
     /// <summary>
@@ -84,7 +84,7 @@ public static class SchemaExtensionsDraft202012
     public static bool IsExplicitStringType(this Schema draft202012Schema)
     {
         return
-            draft202012Schema.Type.IsSimpleTypesEntity && draft202012Schema.Type.Equals(Validation.SimpleTypesEntity.EnumValues.String);
+            draft202012Schema.Type.IsSimpleTypes && draft202012Schema.Type.Equals(Validation.SimpleTypes.EnumValues.String);
     }
 
     /// <summary>
@@ -95,7 +95,7 @@ public static class SchemaExtensionsDraft202012
     public static bool IsObjectType(this Schema draft202012Schema)
     {
         return
-            draft202012Schema.IsExplicitObjectType() || (draft202012Schema.Type.IsSimpleTypesEntityArray && draft202012Schema.Type.AsSimpleTypesEntityArray.EnumerateArray().Any(type => type.Equals(Validation.SimpleTypesEntity.EnumValues.Object))) || draft202012Schema.Properties.IsNotUndefined() || draft202012Schema.Required.IsNotUndefined() || draft202012Schema.DependentRequired.IsNotUndefined() || draft202012Schema.AdditionalProperties.IsNotUndefined() || draft202012Schema.DependentSchemas.IsNotUndefined() || draft202012Schema.MaxProperties.IsNotUndefined() || draft202012Schema.MinProperties.IsNotUndefined() || draft202012Schema.PatternProperties.IsNotUndefined() || draft202012Schema.PropertyNames.IsNotUndefined() || draft202012Schema.UnevaluatedProperties.IsNotUndefined() || draft202012Schema.HasObjectEnum() || draft202012Schema.HasObjectConst();
+            draft202012Schema.IsExplicitObjectType() || (draft202012Schema.Type.IsSimpleTypesArray && draft202012Schema.Type.AsSimpleTypesArray.EnumerateArray().Any(type => type.Equals(Validation.SimpleTypes.EnumValues.Object))) || draft202012Schema.Properties.IsNotUndefined() || draft202012Schema.Required.IsNotUndefined() || draft202012Schema.DependentRequired.IsNotUndefined() || draft202012Schema.AdditionalProperties.IsNotUndefined() || draft202012Schema.DependentSchemas.IsNotUndefined() || draft202012Schema.MaxProperties.IsNotUndefined() || draft202012Schema.MinProperties.IsNotUndefined() || draft202012Schema.PatternProperties.IsNotUndefined() || draft202012Schema.PropertyNames.IsNotUndefined() || draft202012Schema.UnevaluatedProperties.IsNotUndefined() || draft202012Schema.HasObjectEnum() || draft202012Schema.HasObjectConst();
     }
 
     /// <summary>
@@ -106,7 +106,7 @@ public static class SchemaExtensionsDraft202012
     public static bool IsArrayType(this Schema draft202012Schema)
     {
         return
-            draft202012Schema.IsExplicitArrayType() || (draft202012Schema.Type.IsSimpleTypesEntityArray && draft202012Schema.Type.AsSimpleTypesEntityArray.EnumerateArray().Any(type => type.Equals(Validation.SimpleTypesEntity.EnumValues.Array))) || draft202012Schema.PrefixItems.IsNotUndefined() || draft202012Schema.Contains.IsNotUndefined() || draft202012Schema.Items.IsNotUndefined() || draft202012Schema.MaxContains.IsNotUndefined() || draft202012Schema.MaxItems.IsNotUndefined() || draft202012Schema.MinContains.IsNotUndefined() || draft202012Schema.MinItems.IsNotUndefined() || draft202012Schema.UnevaluatedItems.IsNotUndefined() || draft202012Schema.UniqueItems.IsNotUndefined() || draft202012Schema.HasArrayEnum() || draft202012Schema.HasArrayConst();
+            draft202012Schema.IsExplicitArrayType() || (draft202012Schema.Type.IsSimpleTypesArray && draft202012Schema.Type.AsSimpleTypesArray.EnumerateArray().Any(type => type.Equals(Validation.SimpleTypes.EnumValues.Array))) || draft202012Schema.PrefixItems.IsNotUndefined() || draft202012Schema.Contains.IsNotUndefined() || draft202012Schema.Items.IsNotUndefined() || draft202012Schema.MaxContains.IsNotUndefined() || draft202012Schema.MaxItems.IsNotUndefined() || draft202012Schema.MinContains.IsNotUndefined() || draft202012Schema.MinItems.IsNotUndefined() || draft202012Schema.UnevaluatedItems.IsNotUndefined() || draft202012Schema.UniqueItems.IsNotUndefined() || draft202012Schema.HasArrayEnum() || draft202012Schema.HasArrayConst();
     }
 
     /// <summary>
@@ -117,7 +117,7 @@ public static class SchemaExtensionsDraft202012
     public static bool IsNumberType(this Schema draft202012Schema)
     {
         return
-            draft202012Schema.IsExplicitNumberType() || (draft202012Schema.Type.IsSimpleTypesEntityArray && draft202012Schema.Type.AsSimpleTypesEntityArray.EnumerateArray().Any(type => type.Equals(Validation.SimpleTypesEntity.EnumValues.Number) || type.Equals(Validation.SimpleTypesEntity.EnumValues.Integer))) || draft202012Schema.Minimum.IsNotUndefined() || draft202012Schema.Maximum.IsNotUndefined() || draft202012Schema.ExclusiveMaximum.IsNotUndefined() || draft202012Schema.ExclusiveMinimum.IsNotUndefined() || draft202012Schema.MultipleOf.IsNotUndefined() || draft202012Schema.HasNumberEnum() || draft202012Schema.HasNumberConst();
+            draft202012Schema.IsExplicitNumberType() || (draft202012Schema.Type.IsSimpleTypesArray && draft202012Schema.Type.AsSimpleTypesArray.EnumerateArray().Any(type => type.Equals(Validation.SimpleTypes.EnumValues.Number) || type.Equals(Validation.SimpleTypes.EnumValues.Integer))) || draft202012Schema.Minimum.IsNotUndefined() || draft202012Schema.Maximum.IsNotUndefined() || draft202012Schema.ExclusiveMaximum.IsNotUndefined() || draft202012Schema.ExclusiveMinimum.IsNotUndefined() || draft202012Schema.MultipleOf.IsNotUndefined() || draft202012Schema.HasNumberEnum() || draft202012Schema.HasNumberConst();
     }
 
     /// <summary>
@@ -128,7 +128,7 @@ public static class SchemaExtensionsDraft202012
     public static bool IsBooleanType(this Schema draft202012Schema)
     {
         return
-            draft202012Schema.IsExplicitBooleanType() || (draft202012Schema.Type.IsSimpleTypesEntityArray && draft202012Schema.Type.AsSimpleTypesEntityArray.EnumerateArray().Any(type => type.Equals(Validation.SimpleTypesEntity.EnumValues.Boolean))) || draft202012Schema.HasBooleanEnum() || draft202012Schema.HasBooleanConst();
+            draft202012Schema.IsExplicitBooleanType() || (draft202012Schema.Type.IsSimpleTypesArray && draft202012Schema.Type.AsSimpleTypesArray.EnumerateArray().Any(type => type.Equals(Validation.SimpleTypes.EnumValues.Boolean))) || draft202012Schema.HasBooleanEnum() || draft202012Schema.HasBooleanConst();
     }
 
     /// <summary>
@@ -139,7 +139,7 @@ public static class SchemaExtensionsDraft202012
     public static bool IsStringType(this Schema draft202012Schema)
     {
         return
-            draft202012Schema.IsExplicitStringType() || (draft202012Schema.Type.IsSimpleTypesEntityArray && draft202012Schema.Type.AsSimpleTypesEntityArray.EnumerateArray().Any(type => type.Equals(Validation.SimpleTypesEntity.EnumValues.String))) || draft202012Schema.MinLength.IsNotUndefined() || draft202012Schema.MaxLength.IsNotUndefined() || draft202012Schema.Pattern.IsNotUndefined() || draft202012Schema.HasStringEnum() || draft202012Schema.HasStringConst() || draft202012Schema.HasStringFormat();
+            draft202012Schema.IsExplicitStringType() || (draft202012Schema.Type.IsSimpleTypesArray && draft202012Schema.Type.AsSimpleTypesArray.EnumerateArray().Any(type => type.Equals(Validation.SimpleTypes.EnumValues.String))) || draft202012Schema.MinLength.IsNotUndefined() || draft202012Schema.MaxLength.IsNotUndefined() || draft202012Schema.Pattern.IsNotUndefined() || draft202012Schema.HasStringEnum() || draft202012Schema.HasStringConst() || draft202012Schema.HasStringFormat();
     }
 
     /// <summary>
@@ -264,7 +264,7 @@ public static class SchemaExtensionsDraft202012
     /// <returns><c>True</c> if the schema has a single type value, or no type value but a format value.</returns>
     public static bool IsSimpleType(this Schema draft202012Schema)
     {
-        return draft202012Schema.Type.IsSimpleTypesEntity;
+        return draft202012Schema.Type.IsSimpleTypes;
     }
 
     /// <summary>
