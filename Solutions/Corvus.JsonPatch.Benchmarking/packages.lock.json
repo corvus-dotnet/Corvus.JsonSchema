@@ -4,11 +4,11 @@
     "net7.0": {
       "BenchmarkDotNet": {
         "type": "Direct",
-        "requested": "[0.13.1.1821, )",
-        "resolved": "0.13.1.1821",
-        "contentHash": "J46/bvvVQDTU0POUMdaUUw/63RjeerYmDd3iPkSmiHSJ9BxlAZKdOZeyTD1lcTiF1AbbGGNvxvlX7A5hwhjkGQ==",
+        "requested": "[0.13.2, )",
+        "resolved": "0.13.2",
+        "contentHash": "82IflYxY8qnQXEA3kXtqC9pntrkJYJZbQ9PV7hEV/XcfCtOdwLz84ilyO8tLRVbiliWttvmt/v44P+visN+fPQ==",
         "dependencies": {
-          "BenchmarkDotNet.Annotations": "0.13.1.1821",
+          "BenchmarkDotNet.Annotations": "0.13.2",
           "CommandLineParser": "2.4.3",
           "Iced": "1.17.0",
           "Microsoft.CodeAnalysis.CSharp": "3.0.0",
@@ -24,29 +24,29 @@
       },
       "BenchmarkDotNet.Diagnostics.Windows": {
         "type": "Direct",
-        "requested": "[0.13.1.1821, )",
-        "resolved": "0.13.1.1821",
-        "contentHash": "rSd0GRg7Q0cNtHGxSSya5BAI87etcL9hDNn7FHXZTCRJBG+SuO8mFO9mdRSArYvRM8uWG+E2yR+3T6+n14BjPg==",
+        "requested": "[0.13.2, )",
+        "resolved": "0.13.2",
+        "contentHash": "COcdJcVt036U8cYHyHhq5ymI24AoV5h5BKHBzl5fbY0PUWF32immWWnSd66taOJRoe0Fr5ikimHNBVNXgV3KqA==",
         "dependencies": {
-          "BenchmarkDotNet": "0.13.1.1821",
+          "BenchmarkDotNet": "0.13.2",
           "Microsoft.Diagnostics.Tracing.TraceEvent": "3.0.2"
         }
       },
       "Endjin.RecommendedPractices.GitHub": {
         "type": "Direct",
-        "requested": "[2.1.1, )",
-        "resolved": "2.1.1",
-        "contentHash": "f+fDu+C3yh+fuPrlm3ZOytILw/nl1IYjLSjs8cjf37K8IU45elqsbFM3Q7lkNsUz8v4tG3Ags+WPS7t2c8zH1w==",
+        "requested": "[2.1.2, )",
+        "resolved": "2.1.2",
+        "contentHash": "mBUCmeSdWWrIQKuuYd9zflcwupRDmpF39dsbb07e6azlNIQqaE1J5TQa17c3SFVRXn9IZrClsmKoMporRTAWwQ==",
         "dependencies": {
-          "Endjin.RecommendedPractices": "2.1.1",
+          "Endjin.RecommendedPractices": "2.1.2",
           "Microsoft.SourceLink.GitHub": "1.1.1"
         }
       },
       "JsonPatch.Net": {
         "type": "Direct",
-        "requested": "[2.0.2, )",
-        "resolved": "2.0.2",
-        "contentHash": "f6eqYm1ggHOg7b94NtJLj7MpL2FuiCpPLGrvX9wQ5+dKeQ8SlFVcavS/yHuqqsS/zpP0SxiLei0XrS5k4/by4g==",
+        "requested": "[2.0.4, )",
+        "resolved": "2.0.4",
+        "contentHash": "Pr0lHxEYOpa2r6cEJaji9HTamKrp3pIey8Cxg0sV7EovGFf/e24TemwLPHjJD/zZ2q2YDFf/53VQCbPoDh3kPw==",
         "dependencies": {
           "JsonPointer.Net": "2.2.1"
         }
@@ -66,23 +66,23 @@
       },
       "Roslynator.Analyzers": {
         "type": "Direct",
-        "requested": "[4.1.0, )",
-        "resolved": "4.1.0",
-        "contentHash": "xTSs7KdwhIUOTqEubcfW043o0dpSjKpNF+C6Aj5OuJv69rVJ0ypjChNeeXRALB2I1S9W1+qmgbVWYg7qftgoCA=="
+        "requested": "[4.1.1, )",
+        "resolved": "4.1.1",
+        "contentHash": "3cPVlrB1PytlO1ztZZBOExDKQWpMZgI15ZDa0BqLu0l6xv+xIRfEpqjNRcpvUy3aLxWTkPgSKZbbaO+VoFEJ1g=="
       },
       "StyleCop.Analyzers": {
         "type": "Direct",
-        "requested": "[1.2.0-beta.406, )",
-        "resolved": "1.2.0-beta.406",
-        "contentHash": "YbsYoczQPZyz+4nmQ7bBiU9uQkk7Q2KUizQWEv01S4/ImCdJFiHvJfm8HAINNS0cvSLOA7xM9Y+KWQ2FOYjgkA==",
+        "requested": "[1.2.0-beta.435, )",
+        "resolved": "1.2.0-beta.435",
+        "contentHash": "TADk7vdGXtfTnYCV7GyleaaRTQjfoSfZXprQrVMm7cSJtJbFc1QIbWPyLvrgrfGdfHbGmUPvaN4ODKNxg2jgPQ==",
         "dependencies": {
-          "StyleCop.Analyzers.Unstable": "1.2.0.406"
+          "StyleCop.Analyzers.Unstable": "1.2.0.435"
         }
       },
       "BenchmarkDotNet.Annotations": {
         "type": "Transitive",
-        "resolved": "0.13.1.1821",
-        "contentHash": "vJ2meeYRKGRvw2MwH9XQxgx8ob8PCRPcb5gs42ZP5dwHIKfpuGpzme2YJrk67u0JyPKvswjPLvIfR1ZPsxdtCg=="
+        "resolved": "0.13.2",
+        "contentHash": "+SGOYyXT6fiagbtrni38B8BqBgjruYKU3PfROI0lDIYo8jQ+APUmLKMEswK7zwR5fEOCrDmoAHSH6oykBkqPgA=="
       },
       "CommandLineParser": {
         "type": "Transitive",
@@ -104,8 +104,8 @@
       },
       "Endjin.RecommendedPractices": {
         "type": "Transitive",
-        "resolved": "2.1.1",
-        "contentHash": "GfoEmy/55R7LmnBQbxIbYdGAxYfMaOQCTCOeVS9WKpPBA37YO/vuGMGd0OY8jaolKvsSd02V9jp2qdzQDX6CFw==",
+        "resolved": "2.1.2",
+        "contentHash": "Nbj0WS3zVDD2wjfU2/nbkWIWS9Ljg8VN+SSpaCuf5lHBOIEb0Ra201lGcyJHtRHybAciz+hQA9lHj7TnG52qqw==",
         "dependencies": {
           "Microsoft.Build.Tasks.Git": "1.1.1"
         }
@@ -296,8 +296,8 @@
       },
       "Microsoft.Extensions.ObjectPool": {
         "type": "Transitive",
-        "resolved": "6.0.7",
-        "contentHash": "vItr+MUI5PPOo/HFk6p87v0+C8Zl7TLaFAyY543VJLYy/OKEWJCSiHIOLNFOpohR9QDr4d2BTUX8JiWXr3Y+4w=="
+        "resolved": "6.0.8",
+        "contentHash": "2oOTyJVVQM+HMZSI6vPeX/ZIRO0yT8HN4V3p7ipDUsbaEUlK4tCLCRNf5NChXxpXCKR3HL22XHIkDUBu7DJrnw=="
       },
       "Microsoft.Extensions.Options": {
         "type": "Transitive",
@@ -337,8 +337,8 @@
       },
       "NodaTime": {
         "type": "Transitive",
-        "resolved": "3.1.0",
-        "contentHash": "x5IqJNff9ITRaw83P8IbdudB1tpMDbTqdeVlppBx346ywmLj2ZhE+kf7GJfkCks1piJazxDr2+0EYKc7l1K2WA==",
+        "resolved": "3.1.2",
+        "contentHash": "KAlnzQ2EtrrRhFoVePf2kMc24CXX3mAslfp+LmVQnk6HSZ8whgsHNpfUfO+jWCdMgGKQQKMjNCDgmTopjTPFFA==",
         "dependencies": {
           "System.Runtime.CompilerServices.Unsafe": "4.7.1"
         }
@@ -353,8 +353,8 @@
       },
       "StyleCop.Analyzers.Unstable": {
         "type": "Transitive",
-        "resolved": "1.2.0.406",
-        "contentHash": "FclNdBR81ynIo9l1QNlo+l0I/PaFIYaPQPlMram8XVIMh6G6G43KTa1aCxfwTj13uKlAJS/LhLy6KjOPOeAU4w=="
+        "resolved": "1.2.0.435",
+        "contentHash": "ouwPWZxbOV3SmCZxIRqHvljkSzkCyi1tDoMzQtDb/bRP8ctASV/iRJr+A2Gdj0QLaLmWnqTWDrH82/iP+X80Lg=="
       },
       "System.Buffers": {
         "type": "Transitive",
@@ -457,8 +457,8 @@
           "CommunityToolkit.HighPerformance": "[8.0.0, )",
           "Corvus.Extensions": "[1.1.4, )",
           "Microsoft.Extensions.Http": "[6.0.0, )",
-          "Microsoft.Extensions.ObjectPool": "[6.0.7, )",
-          "NodaTime": "[3.1.0, )",
+          "Microsoft.Extensions.ObjectPool": "[6.0.8, )",
+          "NodaTime": "[3.1.2, )",
           "System.Buffers": "[4.5.1, )",
           "System.Collections.Immutable": "[6.0.0, )",
           "System.Text.Json": "[6.0.5, )"
@@ -470,8 +470,8 @@
           "Corvus.Extensions": "[1.1.4, )",
           "Corvus.Json.ExtendedTypes": "[1.0.0, )",
           "Microsoft.Extensions.Http": "[6.0.0, )",
-          "Microsoft.Extensions.ObjectPool": "[6.0.7, )",
-          "NodaTime": "[3.1.0, )",
+          "Microsoft.Extensions.ObjectPool": "[6.0.8, )",
+          "NodaTime": "[3.1.2, )",
           "System.Buffers": "[4.5.1, )",
           "System.Collections.Immutable": "[6.0.0, )",
           "System.Text.Json": "[6.0.5, )"
