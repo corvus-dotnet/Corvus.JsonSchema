@@ -351,7 +351,7 @@ public readonly partial struct Applicator
     /// <summary>
     /// Gets Properties.
     /// </summary>
-    public Corvus.Json.JsonSchema.Draft201909.Applicator.PropertiesValue Properties
+    public Corvus.Json.JsonSchema.Draft201909.Applicator.PropertiesEntity1 Properties
     {
         get
         {
@@ -364,7 +364,7 @@ public readonly partial struct Applicator
 
                 if (this.jsonElementBacking.TryGetProperty(PropertiesUtf8JsonPropertyName.Span, out JsonElement result))
                 {
-                    return new Corvus.Json.JsonSchema.Draft201909.Applicator.PropertiesValue(result);
+                    return new Corvus.Json.JsonSchema.Draft201909.Applicator.PropertiesEntity1(result);
                 }
             }
 
@@ -372,7 +372,7 @@ public readonly partial struct Applicator
             {
                 if (this.objectBacking.TryGetValue(PropertiesJsonPropertyName, out JsonAny result))
                 {
-                    return result.As<Corvus.Json.JsonSchema.Draft201909.Applicator.PropertiesValue>();
+                    return result.As<Corvus.Json.JsonSchema.Draft201909.Applicator.PropertiesEntity1>();
                 }
             }
 
@@ -383,7 +383,7 @@ public readonly partial struct Applicator
     /// <summary>
     /// Gets PatternProperties.
     /// </summary>
-    public Corvus.Json.JsonSchema.Draft201909.Applicator.PatternPropertiesValue PatternProperties
+    public Corvus.Json.JsonSchema.Draft201909.Applicator.PatternPropertiesEntity PatternProperties
     {
         get
         {
@@ -396,7 +396,7 @@ public readonly partial struct Applicator
 
                 if (this.jsonElementBacking.TryGetProperty(PatternPropertiesUtf8JsonPropertyName.Span, out JsonElement result))
                 {
-                    return new Corvus.Json.JsonSchema.Draft201909.Applicator.PatternPropertiesValue(result);
+                    return new Corvus.Json.JsonSchema.Draft201909.Applicator.PatternPropertiesEntity(result);
                 }
             }
 
@@ -404,7 +404,7 @@ public readonly partial struct Applicator
             {
                 if (this.objectBacking.TryGetValue(PatternPropertiesJsonPropertyName, out JsonAny result))
                 {
-                    return result.As<Corvus.Json.JsonSchema.Draft201909.Applicator.PatternPropertiesValue>();
+                    return result.As<Corvus.Json.JsonSchema.Draft201909.Applicator.PatternPropertiesEntity>();
                 }
             }
 
@@ -415,7 +415,7 @@ public readonly partial struct Applicator
     /// <summary>
     /// Gets DependentSchemas.
     /// </summary>
-    public Corvus.Json.JsonSchema.Draft201909.Applicator.DependentSchemasValue DependentSchemas
+    public Corvus.Json.JsonSchema.Draft201909.Applicator.DependentSchemasEntity DependentSchemas
     {
         get
         {
@@ -428,7 +428,7 @@ public readonly partial struct Applicator
 
                 if (this.jsonElementBacking.TryGetProperty(DependentSchemasUtf8JsonPropertyName.Span, out JsonElement result))
                 {
-                    return new Corvus.Json.JsonSchema.Draft201909.Applicator.DependentSchemasValue(result);
+                    return new Corvus.Json.JsonSchema.Draft201909.Applicator.DependentSchemasEntity(result);
                 }
             }
 
@@ -436,7 +436,7 @@ public readonly partial struct Applicator
             {
                 if (this.objectBacking.TryGetValue(DependentSchemasJsonPropertyName, out JsonAny result))
                 {
-                    return result.As<Corvus.Json.JsonSchema.Draft201909.Applicator.DependentSchemasValue>();
+                    return result.As<Corvus.Json.JsonSchema.Draft201909.Applicator.DependentSchemasEntity>();
                 }
             }
 
@@ -893,7 +893,7 @@ public readonly partial struct Applicator
     /// <summary>
     /// Creates an instance of a <see cref = "Applicator"/>.
     /// </summary>
-    public static Applicator Create(Corvus.Json.JsonSchema.Draft201909.Schema? additionalItems = null, Corvus.Json.JsonSchema.Draft201909.Schema? unevaluatedItems = null, Corvus.Json.JsonSchema.Draft201909.Applicator.PropertiesEntity? items = null, Corvus.Json.JsonSchema.Draft201909.Schema? contains = null, Corvus.Json.JsonSchema.Draft201909.Schema? additionalProperties = null, Corvus.Json.JsonSchema.Draft201909.Schema? unevaluatedProperties = null, Corvus.Json.JsonSchema.Draft201909.Applicator.PropertiesValue? properties = null, Corvus.Json.JsonSchema.Draft201909.Applicator.PatternPropertiesValue? patternProperties = null, Corvus.Json.JsonSchema.Draft201909.Applicator.DependentSchemasValue? dependentSchemas = null, Corvus.Json.JsonSchema.Draft201909.Schema? propertyNames = null, Corvus.Json.JsonSchema.Draft201909.Schema? @if = null, Corvus.Json.JsonSchema.Draft201909.Schema? then = null, Corvus.Json.JsonSchema.Draft201909.Schema? @else = null, Corvus.Json.JsonSchema.Draft201909.Applicator.SchemaArray? allOf = null, Corvus.Json.JsonSchema.Draft201909.Applicator.SchemaArray? anyOf = null, Corvus.Json.JsonSchema.Draft201909.Applicator.SchemaArray? oneOf = null, Corvus.Json.JsonSchema.Draft201909.Schema? not = null)
+    public static Applicator Create(Corvus.Json.JsonSchema.Draft201909.Schema? additionalItems = null, Corvus.Json.JsonSchema.Draft201909.Schema? unevaluatedItems = null, Corvus.Json.JsonSchema.Draft201909.Applicator.PropertiesEntity? items = null, Corvus.Json.JsonSchema.Draft201909.Schema? contains = null, Corvus.Json.JsonSchema.Draft201909.Schema? additionalProperties = null, Corvus.Json.JsonSchema.Draft201909.Schema? unevaluatedProperties = null, Corvus.Json.JsonSchema.Draft201909.Applicator.PropertiesEntity1? properties = null, Corvus.Json.JsonSchema.Draft201909.Applicator.PatternPropertiesEntity? patternProperties = null, Corvus.Json.JsonSchema.Draft201909.Applicator.DependentSchemasEntity? dependentSchemas = null, Corvus.Json.JsonSchema.Draft201909.Schema? propertyNames = null, Corvus.Json.JsonSchema.Draft201909.Schema? @if = null, Corvus.Json.JsonSchema.Draft201909.Schema? then = null, Corvus.Json.JsonSchema.Draft201909.Schema? @else = null, Corvus.Json.JsonSchema.Draft201909.Applicator.SchemaArray? allOf = null, Corvus.Json.JsonSchema.Draft201909.Applicator.SchemaArray? anyOf = null, Corvus.Json.JsonSchema.Draft201909.Applicator.SchemaArray? oneOf = null, Corvus.Json.JsonSchema.Draft201909.Schema? not = null)
     {
         var builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
         if (additionalItems is Corvus.Json.JsonSchema.Draft201909.Schema additionalItems__)
@@ -926,17 +926,17 @@ public readonly partial struct Applicator
             builder.Add(UnevaluatedPropertiesJsonPropertyName, unevaluatedProperties__.AsAny);
         }
 
-        if (properties is Corvus.Json.JsonSchema.Draft201909.Applicator.PropertiesValue properties__)
+        if (properties is Corvus.Json.JsonSchema.Draft201909.Applicator.PropertiesEntity1 properties__)
         {
             builder.Add(PropertiesJsonPropertyName, properties__.AsAny);
         }
 
-        if (patternProperties is Corvus.Json.JsonSchema.Draft201909.Applicator.PatternPropertiesValue patternProperties__)
+        if (patternProperties is Corvus.Json.JsonSchema.Draft201909.Applicator.PatternPropertiesEntity patternProperties__)
         {
             builder.Add(PatternPropertiesJsonPropertyName, patternProperties__.AsAny);
         }
 
-        if (dependentSchemas is Corvus.Json.JsonSchema.Draft201909.Applicator.DependentSchemasValue dependentSchemas__)
+        if (dependentSchemas is Corvus.Json.JsonSchema.Draft201909.Applicator.DependentSchemasEntity dependentSchemas__)
         {
             builder.Add(DependentSchemasJsonPropertyName, dependentSchemas__.AsAny);
         }
@@ -1049,7 +1049,7 @@ public readonly partial struct Applicator
     /// </summary>
     /// <param name = "value">The value to set.</param>
     /// <returns>The entity with the updated property.</returns>
-    public Applicator WithProperties(in Corvus.Json.JsonSchema.Draft201909.Applicator.PropertiesValue value)
+    public Applicator WithProperties(in Corvus.Json.JsonSchema.Draft201909.Applicator.PropertiesEntity1 value)
     {
         return this.SetProperty(PropertiesJsonPropertyName, value);
     }
@@ -1059,7 +1059,7 @@ public readonly partial struct Applicator
     /// </summary>
     /// <param name = "value">The value to set.</param>
     /// <returns>The entity with the updated property.</returns>
-    public Applicator WithPatternProperties(in Corvus.Json.JsonSchema.Draft201909.Applicator.PatternPropertiesValue value)
+    public Applicator WithPatternProperties(in Corvus.Json.JsonSchema.Draft201909.Applicator.PatternPropertiesEntity value)
     {
         return this.SetProperty(PatternPropertiesJsonPropertyName, value);
     }
@@ -1069,7 +1069,7 @@ public readonly partial struct Applicator
     /// </summary>
     /// <param name = "value">The value to set.</param>
     /// <returns>The entity with the updated property.</returns>
-    public Applicator WithDependentSchemas(in Corvus.Json.JsonSchema.Draft201909.Applicator.DependentSchemasValue value)
+    public Applicator WithDependentSchemas(in Corvus.Json.JsonSchema.Draft201909.Applicator.DependentSchemasEntity value)
     {
         return this.SetProperty(DependentSchemasJsonPropertyName, value);
     }
@@ -1186,17 +1186,17 @@ public readonly partial struct Applicator
 
     private static ValidationContext __CorvusValidateProperties(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        return property.ValueAs<Corvus.Json.JsonSchema.Draft201909.Applicator.PropertiesValue>().Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft201909.Applicator.PropertiesEntity1>().Validate(validationContext, level);
     }
 
     private static ValidationContext __CorvusValidatePatternProperties(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        return property.ValueAs<Corvus.Json.JsonSchema.Draft201909.Applicator.PatternPropertiesValue>().Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft201909.Applicator.PatternPropertiesEntity>().Validate(validationContext, level);
     }
 
     private static ValidationContext __CorvusValidateDependentSchemas(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        return property.ValueAs<Corvus.Json.JsonSchema.Draft201909.Applicator.DependentSchemasValue>().Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft201909.Applicator.DependentSchemasEntity>().Validate(validationContext, level);
     }
 
     private static ValidationContext __CorvusValidatePropertyNames(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)

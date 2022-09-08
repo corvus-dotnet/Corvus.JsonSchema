@@ -95,7 +95,7 @@ public readonly partial struct Core
     /// <summary>
     /// Gets Id.
     /// </summary>
-    public Corvus.Json.JsonSchema.Draft201909.Core.IdValue Id
+    public Corvus.Json.JsonSchema.Draft201909.Core.IdEntity Id
     {
         get
         {
@@ -108,7 +108,7 @@ public readonly partial struct Core
 
                 if (this.jsonElementBacking.TryGetProperty(IdUtf8JsonPropertyName.Span, out JsonElement result))
                 {
-                    return new Corvus.Json.JsonSchema.Draft201909.Core.IdValue(result);
+                    return new Corvus.Json.JsonSchema.Draft201909.Core.IdEntity(result);
                 }
             }
 
@@ -116,7 +116,7 @@ public readonly partial struct Core
             {
                 if (this.objectBacking.TryGetValue(IdJsonPropertyName, out JsonAny result))
                 {
-                    return result.As<Corvus.Json.JsonSchema.Draft201909.Core.IdValue>();
+                    return result.As<Corvus.Json.JsonSchema.Draft201909.Core.IdEntity>();
                 }
             }
 
@@ -159,7 +159,7 @@ public readonly partial struct Core
     /// <summary>
     /// Gets Anchor.
     /// </summary>
-    public Corvus.Json.JsonSchema.Draft201909.Core.AnchorValue Anchor
+    public Corvus.Json.JsonSchema.Draft201909.Core.AnchorEntity Anchor
     {
         get
         {
@@ -172,7 +172,7 @@ public readonly partial struct Core
 
                 if (this.jsonElementBacking.TryGetProperty(AnchorUtf8JsonPropertyName.Span, out JsonElement result))
                 {
-                    return new Corvus.Json.JsonSchema.Draft201909.Core.AnchorValue(result);
+                    return new Corvus.Json.JsonSchema.Draft201909.Core.AnchorEntity(result);
                 }
             }
 
@@ -180,7 +180,7 @@ public readonly partial struct Core
             {
                 if (this.objectBacking.TryGetValue(AnchorJsonPropertyName, out JsonAny result))
                 {
-                    return result.As<Corvus.Json.JsonSchema.Draft201909.Core.AnchorValue>();
+                    return result.As<Corvus.Json.JsonSchema.Draft201909.Core.AnchorEntity>();
                 }
             }
 
@@ -255,7 +255,7 @@ public readonly partial struct Core
     /// <summary>
     /// Gets RecursiveAnchor.
     /// </summary>
-    public Corvus.Json.JsonSchema.Draft201909.Core.RecursiveAnchorValue RecursiveAnchor
+    public Corvus.Json.JsonSchema.Draft201909.Core.RecursiveAnchorEntity RecursiveAnchor
     {
         get
         {
@@ -268,7 +268,7 @@ public readonly partial struct Core
 
                 if (this.jsonElementBacking.TryGetProperty(RecursiveAnchorUtf8JsonPropertyName.Span, out JsonElement result))
                 {
-                    return new Corvus.Json.JsonSchema.Draft201909.Core.RecursiveAnchorValue(result);
+                    return new Corvus.Json.JsonSchema.Draft201909.Core.RecursiveAnchorEntity(result);
                 }
             }
 
@@ -276,7 +276,7 @@ public readonly partial struct Core
             {
                 if (this.objectBacking.TryGetValue(RecursiveAnchorJsonPropertyName, out JsonAny result))
                 {
-                    return result.As<Corvus.Json.JsonSchema.Draft201909.Core.RecursiveAnchorValue>();
+                    return result.As<Corvus.Json.JsonSchema.Draft201909.Core.RecursiveAnchorEntity>();
                 }
             }
 
@@ -287,7 +287,7 @@ public readonly partial struct Core
     /// <summary>
     /// Gets Vocabulary.
     /// </summary>
-    public Corvus.Json.JsonSchema.Draft201909.Core.VocabularyValue Vocabulary
+    public Corvus.Json.JsonSchema.Draft201909.Core.VocabularyEntity Vocabulary
     {
         get
         {
@@ -300,7 +300,7 @@ public readonly partial struct Core
 
                 if (this.jsonElementBacking.TryGetProperty(VocabularyUtf8JsonPropertyName.Span, out JsonElement result))
                 {
-                    return new Corvus.Json.JsonSchema.Draft201909.Core.VocabularyValue(result);
+                    return new Corvus.Json.JsonSchema.Draft201909.Core.VocabularyEntity(result);
                 }
             }
 
@@ -308,7 +308,7 @@ public readonly partial struct Core
             {
                 if (this.objectBacking.TryGetValue(VocabularyJsonPropertyName, out JsonAny result))
                 {
-                    return result.As<Corvus.Json.JsonSchema.Draft201909.Core.VocabularyValue>();
+                    return result.As<Corvus.Json.JsonSchema.Draft201909.Core.VocabularyEntity>();
                 }
             }
 
@@ -351,7 +351,7 @@ public readonly partial struct Core
     /// <summary>
     /// Gets Defs.
     /// </summary>
-    public Corvus.Json.JsonSchema.Draft201909.Core.DefsValue Defs
+    public Corvus.Json.JsonSchema.Draft201909.Core.DefsEntity Defs
     {
         get
         {
@@ -364,7 +364,7 @@ public readonly partial struct Core
 
                 if (this.jsonElementBacking.TryGetProperty(DefsUtf8JsonPropertyName.Span, out JsonElement result))
                 {
-                    return new Corvus.Json.JsonSchema.Draft201909.Core.DefsValue(result);
+                    return new Corvus.Json.JsonSchema.Draft201909.Core.DefsEntity(result);
                 }
             }
 
@@ -372,7 +372,7 @@ public readonly partial struct Core
             {
                 if (this.objectBacking.TryGetValue(DefsJsonPropertyName, out JsonAny result))
                 {
-                    return result.As<Corvus.Json.JsonSchema.Draft201909.Core.DefsValue>();
+                    return result.As<Corvus.Json.JsonSchema.Draft201909.Core.DefsEntity>();
                 }
             }
 
@@ -493,10 +493,10 @@ public readonly partial struct Core
     /// <summary>
     /// Creates an instance of a <see cref = "Core"/>.
     /// </summary>
-    public static Core Create(Corvus.Json.JsonSchema.Draft201909.Core.IdValue? id = null, Corvus.Json.JsonUri? schema = null, Corvus.Json.JsonSchema.Draft201909.Core.AnchorValue? anchor = null, Corvus.Json.JsonUriReference? @ref = null, Corvus.Json.JsonUriReference? recursiveRef = null, Corvus.Json.JsonSchema.Draft201909.Core.RecursiveAnchorValue? recursiveAnchor = null, Corvus.Json.JsonSchema.Draft201909.Core.VocabularyValue? vocabulary = null, Corvus.Json.JsonString? comment = null, Corvus.Json.JsonSchema.Draft201909.Core.DefsValue? defs = null)
+    public static Core Create(Corvus.Json.JsonSchema.Draft201909.Core.IdEntity? id = null, Corvus.Json.JsonUri? schema = null, Corvus.Json.JsonSchema.Draft201909.Core.AnchorEntity? anchor = null, Corvus.Json.JsonUriReference? @ref = null, Corvus.Json.JsonUriReference? recursiveRef = null, Corvus.Json.JsonSchema.Draft201909.Core.RecursiveAnchorEntity? recursiveAnchor = null, Corvus.Json.JsonSchema.Draft201909.Core.VocabularyEntity? vocabulary = null, Corvus.Json.JsonString? comment = null, Corvus.Json.JsonSchema.Draft201909.Core.DefsEntity? defs = null)
     {
         var builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
-        if (id is Corvus.Json.JsonSchema.Draft201909.Core.IdValue id__)
+        if (id is Corvus.Json.JsonSchema.Draft201909.Core.IdEntity id__)
         {
             builder.Add(IdJsonPropertyName, id__.AsAny);
         }
@@ -506,7 +506,7 @@ public readonly partial struct Core
             builder.Add(SchemaJsonPropertyName, schema__.AsAny);
         }
 
-        if (anchor is Corvus.Json.JsonSchema.Draft201909.Core.AnchorValue anchor__)
+        if (anchor is Corvus.Json.JsonSchema.Draft201909.Core.AnchorEntity anchor__)
         {
             builder.Add(AnchorJsonPropertyName, anchor__.AsAny);
         }
@@ -521,12 +521,12 @@ public readonly partial struct Core
             builder.Add(RecursiveRefJsonPropertyName, recursiveRef__.AsAny);
         }
 
-        if (recursiveAnchor is Corvus.Json.JsonSchema.Draft201909.Core.RecursiveAnchorValue recursiveAnchor__)
+        if (recursiveAnchor is Corvus.Json.JsonSchema.Draft201909.Core.RecursiveAnchorEntity recursiveAnchor__)
         {
             builder.Add(RecursiveAnchorJsonPropertyName, recursiveAnchor__.AsAny);
         }
 
-        if (vocabulary is Corvus.Json.JsonSchema.Draft201909.Core.VocabularyValue vocabulary__)
+        if (vocabulary is Corvus.Json.JsonSchema.Draft201909.Core.VocabularyEntity vocabulary__)
         {
             builder.Add(VocabularyJsonPropertyName, vocabulary__.AsAny);
         }
@@ -536,7 +536,7 @@ public readonly partial struct Core
             builder.Add(CommentJsonPropertyName, comment__.AsAny);
         }
 
-        if (defs is Corvus.Json.JsonSchema.Draft201909.Core.DefsValue defs__)
+        if (defs is Corvus.Json.JsonSchema.Draft201909.Core.DefsEntity defs__)
         {
             builder.Add(DefsJsonPropertyName, defs__.AsAny);
         }
@@ -549,7 +549,7 @@ public readonly partial struct Core
     /// </summary>
     /// <param name = "value">The value to set.</param>
     /// <returns>The entity with the updated property.</returns>
-    public Core WithId(in Corvus.Json.JsonSchema.Draft201909.Core.IdValue value)
+    public Core WithId(in Corvus.Json.JsonSchema.Draft201909.Core.IdEntity value)
     {
         return this.SetProperty(IdJsonPropertyName, value);
     }
@@ -569,7 +569,7 @@ public readonly partial struct Core
     /// </summary>
     /// <param name = "value">The value to set.</param>
     /// <returns>The entity with the updated property.</returns>
-    public Core WithAnchor(in Corvus.Json.JsonSchema.Draft201909.Core.AnchorValue value)
+    public Core WithAnchor(in Corvus.Json.JsonSchema.Draft201909.Core.AnchorEntity value)
     {
         return this.SetProperty(AnchorJsonPropertyName, value);
     }
@@ -599,7 +599,7 @@ public readonly partial struct Core
     /// </summary>
     /// <param name = "value">The value to set.</param>
     /// <returns>The entity with the updated property.</returns>
-    public Core WithRecursiveAnchor(in Corvus.Json.JsonSchema.Draft201909.Core.RecursiveAnchorValue value)
+    public Core WithRecursiveAnchor(in Corvus.Json.JsonSchema.Draft201909.Core.RecursiveAnchorEntity value)
     {
         return this.SetProperty(RecursiveAnchorJsonPropertyName, value);
     }
@@ -609,7 +609,7 @@ public readonly partial struct Core
     /// </summary>
     /// <param name = "value">The value to set.</param>
     /// <returns>The entity with the updated property.</returns>
-    public Core WithVocabulary(in Corvus.Json.JsonSchema.Draft201909.Core.VocabularyValue value)
+    public Core WithVocabulary(in Corvus.Json.JsonSchema.Draft201909.Core.VocabularyEntity value)
     {
         return this.SetProperty(VocabularyJsonPropertyName, value);
     }
@@ -629,14 +629,14 @@ public readonly partial struct Core
     /// </summary>
     /// <param name = "value">The value to set.</param>
     /// <returns>The entity with the updated property.</returns>
-    public Core WithDefs(in Corvus.Json.JsonSchema.Draft201909.Core.DefsValue value)
+    public Core WithDefs(in Corvus.Json.JsonSchema.Draft201909.Core.DefsEntity value)
     {
         return this.SetProperty(DefsJsonPropertyName, value);
     }
 
     private static ValidationContext __CorvusValidateId(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        return property.ValueAs<Corvus.Json.JsonSchema.Draft201909.Core.IdValue>().Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft201909.Core.IdEntity>().Validate(validationContext, level);
     }
 
     private static ValidationContext __CorvusValidateSchema(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
@@ -646,7 +646,7 @@ public readonly partial struct Core
 
     private static ValidationContext __CorvusValidateAnchor(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        return property.ValueAs<Corvus.Json.JsonSchema.Draft201909.Core.AnchorValue>().Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft201909.Core.AnchorEntity>().Validate(validationContext, level);
     }
 
     private static ValidationContext __CorvusValidateRef(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
@@ -661,12 +661,12 @@ public readonly partial struct Core
 
     private static ValidationContext __CorvusValidateRecursiveAnchor(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        return property.ValueAs<Corvus.Json.JsonSchema.Draft201909.Core.RecursiveAnchorValue>().Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft201909.Core.RecursiveAnchorEntity>().Validate(validationContext, level);
     }
 
     private static ValidationContext __CorvusValidateVocabulary(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        return property.ValueAs<Corvus.Json.JsonSchema.Draft201909.Core.VocabularyValue>().Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft201909.Core.VocabularyEntity>().Validate(validationContext, level);
     }
 
     private static ValidationContext __CorvusValidateComment(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
@@ -676,6 +676,6 @@ public readonly partial struct Core
 
     private static ValidationContext __CorvusValidateDefs(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        return property.ValueAs<Corvus.Json.JsonSchema.Draft201909.Core.DefsValue>().Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft201909.Core.DefsEntity>().Validate(validationContext, level);
     }
 }

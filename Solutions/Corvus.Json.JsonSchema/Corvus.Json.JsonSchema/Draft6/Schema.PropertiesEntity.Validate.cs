@@ -27,7 +27,15 @@ public readonly partial struct Schema
                 result = result.UsingStack();
             }
 
-            result = this.ValidateAnyOf(result, level);
+            result = result.UsingEvaluatedProperties();
+            JsonValueKind valueKind = this.ValueKind;
+            result = this.ValidateType(valueKind, result, level);
+            if (level == ValidationLevel.Flag && !result.IsValid)
+            {
+                return result;
+            }
+
+            result = this.ValidateObject(valueKind, result, level);
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;

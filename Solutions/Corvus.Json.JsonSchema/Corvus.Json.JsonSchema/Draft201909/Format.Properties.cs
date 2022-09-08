@@ -21,17 +21,17 @@ namespace Corvus.Json.JsonSchema.Draft201909;
 public readonly partial struct Format
 {
     /// <summary>
-    /// JSON property name for <see cref = "Format1"/>.
+    /// JSON property name for <see cref = "FormatValue"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> Format1Utf8JsonPropertyName = new byte[]{102, 111, 114, 109, 97, 116};
+    public static readonly ReadOnlyMemory<byte> FormatValueUtf8JsonPropertyName = new byte[]{102, 111, 114, 109, 97, 116};
     /// <summary>
-    /// JSON property name for <see cref = "Format1"/>.
+    /// JSON property name for <see cref = "FormatValue"/>.
     /// </summary>
-    public const string Format1JsonPropertyName = "format";
+    public const string FormatValueJsonPropertyName = "format";
     /// <summary>
-    /// Gets Format1.
+    /// Gets FormatValue.
     /// </summary>
-    public Corvus.Json.JsonString Format1
+    public Corvus.Json.JsonString FormatValue
     {
         get
         {
@@ -42,7 +42,7 @@ public readonly partial struct Format
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(Format1Utf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(FormatValueUtf8JsonPropertyName.Span, out JsonElement result))
                 {
                     return new Corvus.Json.JsonString(result);
                 }
@@ -50,7 +50,7 @@ public readonly partial struct Format
 
             if ((this.backing & Backing.Object) != 0)
             {
-                if (this.objectBacking.TryGetValue(Format1JsonPropertyName, out JsonAny result))
+                if (this.objectBacking.TryGetValue(FormatValueJsonPropertyName, out JsonAny result))
                 {
                     return result.As<Corvus.Json.JsonString>();
                 }
@@ -71,17 +71,17 @@ public readonly partial struct Format
     {
         if (hasJsonElementBacking)
         {
-            if (property.NameEquals(Format1Utf8JsonPropertyName.Span))
+            if (property.NameEquals(FormatValueUtf8JsonPropertyName.Span))
             {
-                propertyValidator = __CorvusValidateFormat1;
+                propertyValidator = __CorvusValidateFormatValue;
                 return true;
             }
         }
         else
         {
-            if (property.NameEquals(Format1JsonPropertyName))
+            if (property.NameEquals(FormatValueJsonPropertyName))
             {
-                propertyValidator = __CorvusValidateFormat1;
+                propertyValidator = __CorvusValidateFormatValue;
                 return true;
             }
         }
@@ -93,12 +93,12 @@ public readonly partial struct Format
     /// <summary>
     /// Creates an instance of a <see cref = "Format"/>.
     /// </summary>
-    public static Format Create(Corvus.Json.JsonString? format1 = null)
+    public static Format Create(Corvus.Json.JsonString? formatValue = null)
     {
         var builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
-        if (format1 is Corvus.Json.JsonString format1__)
+        if (formatValue is Corvus.Json.JsonString formatValue__)
         {
-            builder.Add(Format1JsonPropertyName, format1__.AsAny);
+            builder.Add(FormatValueJsonPropertyName, formatValue__.AsAny);
         }
 
         return builder.ToImmutable();
@@ -109,12 +109,12 @@ public readonly partial struct Format
     /// </summary>
     /// <param name = "value">The value to set.</param>
     /// <returns>The entity with the updated property.</returns>
-    public Format WithFormat1(in Corvus.Json.JsonString value)
+    public Format WithFormatValue(in Corvus.Json.JsonString value)
     {
-        return this.SetProperty(Format1JsonPropertyName, value);
+        return this.SetProperty(FormatValueJsonPropertyName, value);
     }
 
-    private static ValidationContext __CorvusValidateFormat1(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
+    private static ValidationContext __CorvusValidateFormatValue(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
         return property.ValueAs<Corvus.Json.JsonString>().Validate(validationContext, level);
     }

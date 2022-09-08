@@ -20,7 +20,7 @@ public readonly partial struct Validation
         private ValidationContext ValidateRef(in ValidationContext validationContext, ValidationLevel level)
         {
             ValidationContext result = validationContext;
-            ValidationContext refResult = this.As<Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeIntegerValue>().Validate(validationContext.CreateChildContext(), level);
+            ValidationContext refResult = this.As<Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger>().Validate(validationContext.CreateChildContext(), level);
             if (!refResult.IsValid)
             {
                 if (level >= ValidationLevel.Detailed)

@@ -18,35 +18,35 @@ public readonly partial struct Validation
     public readonly partial struct MinContainsEntity
     {
         /// <summary>
-        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeIntegerValue"/>.
+        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger"/>.
         /// </summary>
-        public Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeIntegerValue AsNonNegativeIntegerValue
+        public Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger AsNonNegativeInteger
         {
             get
             {
-                return (Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeIntegerValue)this;
+                return (Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger)this;
             }
         }
 
         /// <summary>
-        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeIntegerValue"/>.
+        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger"/>.
         /// </summary>
-        public bool IsNonNegativeIntegerValue
+        public bool IsNonNegativeInteger
         {
             get
             {
-                return ((Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeIntegerValue)this).IsValid();
+                return ((Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger)this).IsValid();
             }
         }
 
         /// <summary>
-        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeIntegerValue"/>.
+        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger"/>.
         /// </summary>
         /// <param name = "result">The result of the conversion.</param>
         /// <returns><c>True</c> if the conversion was valid.</returns>
-        public bool TryGetAsNonNegativeIntegerValue(out Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeIntegerValue result)
+        public bool TryGetAsNonNegativeInteger(out Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger result)
         {
-            result = (Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeIntegerValue)this;
+            result = (Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger)this;
             return result.IsValid();
         }
     }
