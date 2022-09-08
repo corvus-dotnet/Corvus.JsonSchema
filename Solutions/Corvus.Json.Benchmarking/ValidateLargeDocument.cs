@@ -29,8 +29,8 @@ public class ValidateLargeDocument
     private static readonly JsonEverything.ValidationOptions Options = new JsonEverything.ValidationOptions() { OutputFormat = JsonEverything.OutputFormat.Flag };
 
     private JsonDocument? objectDocument;
-    private PersonSchemaJson.Person person;
-    private PersonSchemaJson.PersonArray personArray;
+    private Schema.Person person;
+    private Schema.PersonArray personArray;
     private JsonNode? node;
     private JsonEverything.JsonSchema? schema;
 
@@ -42,15 +42,15 @@ public class ValidateLargeDocument
     public Task GlobalSetup()
     {
         this.objectDocument = JsonDocument.Parse(JsonText);
-        this.person = PersonSchemaJson.Person.FromJson(this.objectDocument.RootElement);
+        this.person = Schema.Person.FromJson(this.objectDocument.RootElement);
 
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         for (int i = 0; i < 10000; ++i)
         {
-            builder.Add(PersonSchemaJson.Person.FromJson(this.objectDocument.RootElement));
+            builder.Add(Schema.Person.FromJson(this.objectDocument.RootElement));
         }
 
-        this.personArray = PersonSchemaJson.PersonArray.From(builder.ToImmutable()).AsJsonElementBackedValue();
+        this.personArray = Schema.PersonArray.From(builder.ToImmutable()).AsJsonElementBackedValue();
 
         this.schema = JsonEverything.JsonSchema.FromFile("./PersonModel/person-array-schema.json");
         this.node = System.Text.Json.Nodes.JsonArray.Create(this.personArray.AsJsonElement.Clone());

@@ -11,7 +11,7 @@ using Corvus.Json.Benchmarking.Models;
 using Microsoft.Extensions.ObjectPool;
 
 JsonDocument? objectDocument;
-PersonSchemaJson.PersonArray personArray;
+Schema.PersonArray personArray;
 
 string JsonText = @"{
     ""name"": {
@@ -27,10 +27,10 @@ objectDocument = JsonDocument.Parse(JsonText);
 ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
 for (int i = 0; i < 10000; ++i)
 {
-    builder.Add(PersonSchemaJson.Person.FromJson(objectDocument.RootElement).AsDotnetBackedValue());
+    builder.Add(Schema.Person.FromJson(objectDocument.RootElement).AsDotnetBackedValue());
 }
 
-personArray = PersonSchemaJson.PersonArray.From(builder.ToImmutable());
+personArray = Schema.PersonArray.From(builder.ToImmutable());
 
 await Task.Delay(5000);
 
