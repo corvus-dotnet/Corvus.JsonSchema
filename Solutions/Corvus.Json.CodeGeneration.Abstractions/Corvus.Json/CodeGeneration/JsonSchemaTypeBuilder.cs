@@ -70,10 +70,10 @@ public partial class JsonSchemaTypeBuilder
         // Then, set the parent type names.
         this.SetParents(rootTypeDeclaration);
 
-        // Next, we figure out which are built in types, and which need new types and namespaces for the custom types.
+        // Finally, we figure out which are built in types, and which need new types and namespaces for the custom types.
         this.SetTypeNamesAndNamespaces(rootTypeDeclaration, rootNamespace, baseUriToNamespaceMap, rootTypeName);
 
-        // Finally, we walk the tree finding and building properties from the properties themselves, and any conditionally applied subschema.
+        // Next, we walk the tree finding and building properties from the properties themselves, and any conditionally applied subschema.
         this.FindAndBuildPropertiesCore(rootTypeDeclaration);
 
         return rootTypeDeclaration;

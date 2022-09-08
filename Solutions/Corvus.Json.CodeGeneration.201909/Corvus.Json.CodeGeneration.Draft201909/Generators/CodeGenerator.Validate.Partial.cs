@@ -2087,13 +2087,13 @@ public partial class CodeGeneratorValidate
     {
         if (this.TypeDeclaration.Schema().Type.IsNotUndefined())
         {
-            if (this.TypeDeclaration.Schema().Type.IsSimpleTypesEntity)
+            if (this.TypeDeclaration.Schema().Type.IsSimpleTypes)
             {
-                return this.TypeDeclaration.Schema().Type.AsSimpleTypesEntity == typeToMatch;
+                return this.TypeDeclaration.Schema().Type.AsSimpleTypes == typeToMatch;
             }
-            else if (this.TypeDeclaration.Schema().Type.IsSimpleTypesEntityArray)
+            else if (this.TypeDeclaration.Schema().Type.IsSimpleTypesArray)
             {
-                return this.TypeDeclaration.Schema().Type.AsSimpleTypesEntityArray.EnumerateArray().Any(t => t.AsString == typeToMatch);
+                return this.TypeDeclaration.Schema().Type.AsSimpleTypesArray.EnumerateArray().Any(t => t.AsString == typeToMatch);
             }
         }
 

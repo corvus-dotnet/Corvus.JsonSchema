@@ -19,7 +19,7 @@ public readonly partial struct Validation
     /// <summary>
     /// A type generated from a JsonSchema specification.
     /// </summary>
-    public readonly partial struct SimpleTypesEntity
+    public readonly partial struct SimpleTypes
     {
         /// <summary>
         /// Permitted values.
@@ -32,98 +32,98 @@ public readonly partial struct Validation
             /// <remarks>
             /// {Description}.
             /// </remarks>
-            public static readonly SimpleTypesEntity Array = SimpleTypesEntity.Parse("\"array\"");
+            public static readonly SimpleTypes Array = SimpleTypes.Parse("\"array\"");
             /// <summary>
             /// Boolean.
             /// </summary>
             /// <remarks>
             /// {Description}.
             /// </remarks>
-            public static readonly SimpleTypesEntity Boolean = SimpleTypesEntity.Parse("\"boolean\"");
+            public static readonly SimpleTypes Boolean = SimpleTypes.Parse("\"boolean\"");
             /// <summary>
             /// Integer.
             /// </summary>
             /// <remarks>
             /// {Description}.
             /// </remarks>
-            public static readonly SimpleTypesEntity Integer = SimpleTypesEntity.Parse("\"integer\"");
+            public static readonly SimpleTypes Integer = SimpleTypes.Parse("\"integer\"");
             /// <summary>
             /// Null.
             /// </summary>
             /// <remarks>
             /// {Description}.
             /// </remarks>
-            public static readonly SimpleTypesEntity Null = SimpleTypesEntity.Parse("\"null\"");
+            public static readonly SimpleTypes Null = SimpleTypes.Parse("\"null\"");
             /// <summary>
             /// Number.
             /// </summary>
             /// <remarks>
             /// {Description}.
             /// </remarks>
-            public static readonly SimpleTypesEntity Number = SimpleTypesEntity.Parse("\"number\"");
+            public static readonly SimpleTypes Number = SimpleTypes.Parse("\"number\"");
             /// <summary>
             /// Object.
             /// </summary>
             /// <remarks>
             /// {Description}.
             /// </remarks>
-            public static readonly SimpleTypesEntity Object = SimpleTypesEntity.Parse("\"object\"");
+            public static readonly SimpleTypes Object = SimpleTypes.Parse("\"object\"");
             /// <summary>
             /// String.
             /// </summary>
             /// <remarks>
             /// {Description}.
             /// </remarks>
-            public static readonly SimpleTypesEntity String = SimpleTypesEntity.Parse("\"string\"");
+            public static readonly SimpleTypes String = SimpleTypes.Parse("\"string\"");
             /// <summary>
             /// [{Title} || Item 0] (with predictable naming).
             /// </summary>
             /// <remarks>
             /// {Description}.
             /// </remarks>
-            internal static readonly SimpleTypesEntity Item0 = SimpleTypesEntity.Parse("\"array\"");
+            internal static readonly SimpleTypes Item0 = SimpleTypes.Parse("\"array\"");
             /// <summary>
             /// [{Title} || Item 1] (with predictable naming).
             /// </summary>
             /// <remarks>
             /// {Description}.
             /// </remarks>
-            internal static readonly SimpleTypesEntity Item1 = SimpleTypesEntity.Parse("\"boolean\"");
+            internal static readonly SimpleTypes Item1 = SimpleTypes.Parse("\"boolean\"");
             /// <summary>
             /// [{Title} || Item 2] (with predictable naming).
             /// </summary>
             /// <remarks>
             /// {Description}.
             /// </remarks>
-            internal static readonly SimpleTypesEntity Item2 = SimpleTypesEntity.Parse("\"integer\"");
+            internal static readonly SimpleTypes Item2 = SimpleTypes.Parse("\"integer\"");
             /// <summary>
             /// [{Title} || Item 3] (with predictable naming).
             /// </summary>
             /// <remarks>
             /// {Description}.
             /// </remarks>
-            internal static readonly SimpleTypesEntity Item3 = SimpleTypesEntity.Parse("\"null\"");
+            internal static readonly SimpleTypes Item3 = SimpleTypes.Parse("\"null\"");
             /// <summary>
             /// [{Title} || Item 4] (with predictable naming).
             /// </summary>
             /// <remarks>
             /// {Description}.
             /// </remarks>
-            internal static readonly SimpleTypesEntity Item4 = SimpleTypesEntity.Parse("\"number\"");
+            internal static readonly SimpleTypes Item4 = SimpleTypes.Parse("\"number\"");
             /// <summary>
             /// [{Title} || Item 5] (with predictable naming).
             /// </summary>
             /// <remarks>
             /// {Description}.
             /// </remarks>
-            internal static readonly SimpleTypesEntity Item5 = SimpleTypesEntity.Parse("\"object\"");
+            internal static readonly SimpleTypes Item5 = SimpleTypes.Parse("\"object\"");
             /// <summary>
             /// [{Title} || Item 6] (with predictable naming).
             /// </summary>
             /// <remarks>
             /// {Description}.
             /// </remarks>
-            internal static readonly SimpleTypesEntity Item6 = SimpleTypesEntity.Parse("\"string\"");
+            internal static readonly SimpleTypes Item6 = SimpleTypes.Parse("\"string\"");
         }
     }
 }

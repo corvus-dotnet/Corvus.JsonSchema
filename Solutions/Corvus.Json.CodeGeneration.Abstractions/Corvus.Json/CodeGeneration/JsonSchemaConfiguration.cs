@@ -63,6 +63,11 @@ public class JsonSchemaConfiguration
     public ImmutableHashSet<string> DefinitionKeywords { get; set; } = ImmutableHashSet<string>.Empty;
 
     /// <summary>
+    /// Gets or sets the list of words reserved by the generator, which may not be used as names.
+    /// </summary>
+    public ImmutableHashSet<string> GeneratorReservedWords { get; set; } = ImmutableHashSet<string>.Empty;
+
+    /// <summary>
     /// Gets or sets the validation semantic model to use.
     /// </summary>
     public ValidationSemantics ValidatingAs { get; set; } = ValidationSemantics.Unknown;

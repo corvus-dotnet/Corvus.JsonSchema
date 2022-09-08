@@ -21,15 +21,15 @@ public readonly partial struct Schema
     /// <summary>
     /// A type generated from a JsonSchema specification.
     /// </summary>
-    public readonly partial struct SimpleTypesEntity
+    public readonly partial struct SimpleTypes
     {
         private readonly Backing backing;
         private readonly JsonElement jsonElementBacking;
         private readonly string stringBacking;
         /// <summary>
-        /// Initializes a new instance of the <see cref = "SimpleTypesEntity"/> struct.
+        /// Initializes a new instance of the <see cref = "SimpleTypes"/> struct.
         /// </summary>
-        public SimpleTypesEntity()
+        public SimpleTypes()
         {
             this.jsonElementBacking = default;
             this.backing = Backing.JsonElement;
@@ -37,10 +37,10 @@ public readonly partial struct Schema
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref = "SimpleTypesEntity"/> struct.
+        /// Initializes a new instance of the <see cref = "SimpleTypes"/> struct.
         /// </summary>
         /// <param name = "value">The value from which to construct the instance.</param>
-        public SimpleTypesEntity(in JsonElement value)
+        public SimpleTypes(in JsonElement value)
         {
             this.jsonElementBacking = value;
             this.backing = Backing.JsonElement;
@@ -50,11 +50,11 @@ public readonly partial struct Schema
         /// <summary>
         /// Gets a Null instance.
         /// </summary>
-        public static SimpleTypesEntity Null { get; } = new(JsonValueHelpers.NullElement);
+        public static SimpleTypes Null { get; } = new(JsonValueHelpers.NullElement);
         /// <summary>
         /// Gets an Undefined instance.
         /// </summary>
-        public static SimpleTypesEntity Undefined { get; } = default;
+        public static SimpleTypes Undefined { get; } = default;
         /// <inheritdoc/>
         public JsonAny AsAny
         {
@@ -228,9 +228,9 @@ public readonly partial struct Schema
         /// Conversion from JsonAny.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator SimpleTypesEntity(JsonAny value)
+        public static implicit operator SimpleTypes(JsonAny value)
         {
-            return SimpleTypesEntity.FromAny(value);
+            return SimpleTypes.FromAny(value);
         }
 
         /// <summary>
@@ -238,7 +238,7 @@ public readonly partial struct Schema
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
         /// <exception cref = "InvalidOperationException">The value was not compatible with this type.</exception>
-        public static implicit operator JsonAny(in SimpleTypesEntity value)
+        public static implicit operator JsonAny(in SimpleTypes value)
         {
             return value.AsAny;
         }
@@ -249,7 +249,7 @@ public readonly partial struct Schema
         /// <param name = "left">The lhs.</param>
         /// <param name = "right">The rhs.</param>
         /// <returns><c>True</c> if the values are equal.</returns>
-        public static bool operator ==(in SimpleTypesEntity left, in SimpleTypesEntity right)
+        public static bool operator ==(in SimpleTypes left, in SimpleTypes right)
         {
             return left.Equals(right);
         }
@@ -260,7 +260,7 @@ public readonly partial struct Schema
         /// <param name = "left">The lhs.</param>
         /// <param name = "right">The rhs.</param>
         /// <returns><c>True</c> if the values are equal.</returns>
-        public static bool operator !=(in SimpleTypesEntity left, in SimpleTypesEntity right)
+        public static bool operator !=(in SimpleTypes left, in SimpleTypes right)
         {
             return !left.Equals(right);
         }
@@ -274,7 +274,7 @@ public readonly partial struct Schema
         /// value cannot be constructed from the given instance (e.g. because they have an incompatible dotnet backing type.
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static SimpleTypesEntity FromAny(in JsonAny value)
+        public static SimpleTypes FromAny(in JsonAny value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -296,7 +296,7 @@ public readonly partial struct Schema
         /// <param name = "value">The <see cref = "JsonElement"/> value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the <see cref = "JsonElement"/>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static SimpleTypesEntity FromJson(in JsonElement value)
+        public static SimpleTypes FromJson(in JsonElement value)
         {
             return new(value);
         }
@@ -307,10 +307,10 @@ public readonly partial struct Schema
         /// <typeparam name = "TValue">The type of the value.</typeparam>
         /// <param name = "value">The value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the value.</returns>
-        /// <remarks>This will be SimpleTypesEntity.Undefined if the type is not compatible.</remarks>
+        /// <remarks>This will be SimpleTypes.Undefined if the type is not compatible.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public static SimpleTypesEntity FromBoolean<TValue>(in TValue value)
+        public static SimpleTypes FromBoolean<TValue>(in TValue value)
             where TValue : struct, IJsonBoolean<TValue>
         {
             if (value.HasJsonElementBacking)
@@ -327,9 +327,9 @@ public readonly partial struct Schema
         /// <typeparam name = "TValue">The type of the value.</typeparam>
         /// <param name = "value">The value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the value.</returns>
-        /// <remarks>This will be SimpleTypesEntity.Undefined if the type is not compatible.</remarks>
+        /// <remarks>This will be SimpleTypes.Undefined if the type is not compatible.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static SimpleTypesEntity FromString<TValue>(in TValue value)
+        public static SimpleTypes FromString<TValue>(in TValue value)
             where TValue : struct, IJsonString<TValue>
         {
             if (value.HasJsonElementBacking)
@@ -351,10 +351,10 @@ public readonly partial struct Schema
         /// <typeparam name = "TValue">The type of the value.</typeparam>
         /// <param name = "value">The value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the value.</returns>
-        /// <remarks>This will be SimpleTypesEntity.Undefined if the type is not compatible.</remarks>
+        /// <remarks>This will be SimpleTypes.Undefined if the type is not compatible.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public static SimpleTypesEntity FromNumber<TValue>(in TValue value)
+        public static SimpleTypes FromNumber<TValue>(in TValue value)
             where TValue : struct, IJsonNumber<TValue>
         {
             if (value.HasJsonElementBacking)
@@ -371,10 +371,10 @@ public readonly partial struct Schema
         /// <typeparam name = "TValue">The type of the value.</typeparam>
         /// <param name = "value">The value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the value.</returns>
-        /// <remarks>This will be SimpleTypesEntity.Undefined if the type is not compatible.</remarks>
+        /// <remarks>This will be SimpleTypes.Undefined if the type is not compatible.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public static SimpleTypesEntity FromArray<TValue>(in TValue value)
+        public static SimpleTypes FromArray<TValue>(in TValue value)
             where TValue : struct, IJsonArray<TValue>
         {
             if (value.HasJsonElementBacking)
@@ -391,10 +391,10 @@ public readonly partial struct Schema
         /// <typeparam name = "TValue">The type of the value.</typeparam>
         /// <param name = "value">The value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the value.</returns>
-        /// <remarks>This will be SimpleTypesEntity.Undefined if the type is not compatible.</remarks>
+        /// <remarks>This will be SimpleTypes.Undefined if the type is not compatible.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public static SimpleTypesEntity FromObject<TValue>(in TValue value)
+        public static SimpleTypes FromObject<TValue>(in TValue value)
             where TValue : struct, IJsonObject<TValue>
         {
             if (value.HasJsonElementBacking)
@@ -406,63 +406,63 @@ public readonly partial struct Schema
         }
 
         /// <summary>
-        /// Parses a JSON string into a SimpleTypesEntity.
+        /// Parses a JSON string into a SimpleTypes.
         /// </summary>
         /// <param name = "json">The json string to parse.</param>
         /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "SimpleTypesEntity"/> instance built from the JSON string.</returns>
-        public static SimpleTypesEntity Parse(string json, JsonDocumentOptions options = default)
+        /// <returns>A <see cref = "SimpleTypes"/> instance built from the JSON string.</returns>
+        public static SimpleTypes Parse(string json, JsonDocumentOptions options = default)
         {
             using var jsonDocument = JsonDocument.Parse(json, options);
-            return new SimpleTypesEntity(jsonDocument.RootElement.Clone());
+            return new SimpleTypes(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses a JSON string into a SimpleTypesEntity.
+        /// Parses a JSON string into a SimpleTypes.
         /// </summary>
         /// <param name = "utf8Json">The json string to parse.</param>
         /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "SimpleTypesEntity"/> instance built from the JSON string.</returns>
-        public static SimpleTypesEntity Parse(Stream utf8Json, JsonDocumentOptions options = default)
+        /// <returns>A <see cref = "SimpleTypes"/> instance built from the JSON string.</returns>
+        public static SimpleTypes Parse(Stream utf8Json, JsonDocumentOptions options = default)
         {
             using var jsonDocument = JsonDocument.Parse(utf8Json, options);
-            return new SimpleTypesEntity(jsonDocument.RootElement.Clone());
+            return new SimpleTypes(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses a JSON string into a SimpleTypesEntity.
+        /// Parses a JSON string into a SimpleTypes.
         /// </summary>
         /// <param name = "utf8Json">The json string to parse.</param>
         /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "SimpleTypesEntity"/> instance built from the JSON string.</returns>
-        public static SimpleTypesEntity Parse(ReadOnlyMemory<byte> utf8Json, JsonDocumentOptions options = default)
+        /// <returns>A <see cref = "SimpleTypes"/> instance built from the JSON string.</returns>
+        public static SimpleTypes Parse(ReadOnlyMemory<byte> utf8Json, JsonDocumentOptions options = default)
         {
             using var jsonDocument = JsonDocument.Parse(utf8Json, options);
-            return new SimpleTypesEntity(jsonDocument.RootElement.Clone());
+            return new SimpleTypes(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses a JSON string into a SimpleTypesEntity.
+        /// Parses a JSON string into a SimpleTypes.
         /// </summary>
         /// <param name = "json">The json string to parse.</param>
         /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "SimpleTypesEntity"/> instance built from the JSON string.</returns>
-        public static SimpleTypesEntity Parse(ReadOnlyMemory<char> json, JsonDocumentOptions options = default)
+        /// <returns>A <see cref = "SimpleTypes"/> instance built from the JSON string.</returns>
+        public static SimpleTypes Parse(ReadOnlyMemory<char> json, JsonDocumentOptions options = default)
         {
             using var jsonDocument = JsonDocument.Parse(json, options);
-            return new SimpleTypesEntity(jsonDocument.RootElement.Clone());
+            return new SimpleTypes(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses a JSON string into a SimpleTypesEntity.
+        /// Parses a JSON string into a SimpleTypes.
         /// </summary>
         /// <param name = "utf8Json">The json string to parse.</param>
         /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "SimpleTypesEntity"/> instance built from the JSON string.</returns>
-        public static SimpleTypesEntity Parse(ReadOnlySequence<byte> utf8Json, JsonDocumentOptions options = default)
+        /// <returns>A <see cref = "SimpleTypes"/> instance built from the JSON string.</returns>
+        public static SimpleTypes Parse(ReadOnlySequence<byte> utf8Json, JsonDocumentOptions options = default)
         {
             using var jsonDocument = JsonDocument.Parse(utf8Json, options);
-            return new SimpleTypesEntity(jsonDocument.RootElement.Clone());
+            return new SimpleTypes(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
@@ -506,7 +506,7 @@ public readonly partial struct Schema
         }
 
         /// <inheritdoc/>
-        public bool Equals(SimpleTypesEntity other)
+        public bool Equals(SimpleTypes other)
         {
             return JsonValueHelpers.CompareValues(this, other);
         }

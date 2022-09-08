@@ -18,7 +18,7 @@ public readonly partial struct Schema
         /// <summary>
         /// A type generated from a JsonSchema specification.
         /// </summary>
-        public readonly partial struct SimpleTypesEntityArray
+        public readonly partial struct SimpleTypesArray
         {
             private ValidationContext ValidateType(JsonValueKind valueKind, in ValidationContext validationContext, ValidationLevel level)
             {

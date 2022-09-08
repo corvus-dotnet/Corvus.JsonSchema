@@ -21,10 +21,10 @@ public readonly partial struct Schema
     public readonly partial struct TypeEntity
     {
         /// <summary>
-        /// Conversion from <see cref = "Corvus.Json.JsonSchema.Draft7.Schema.SimpleTypesEntity"/>.
+        /// Conversion from <see cref = "Corvus.Json.JsonSchema.Draft7.Schema.SimpleTypes"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator TypeEntity(Corvus.Json.JsonSchema.Draft7.Schema.SimpleTypesEntity value)
+        public static implicit operator TypeEntity(Corvus.Json.JsonSchema.Draft7.Schema.SimpleTypes value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -39,10 +39,10 @@ public readonly partial struct Schema
         }
 
         /// <summary>
-        /// Conversion to <see cref = "Corvus.Json.JsonSchema.Draft7.Schema.SimpleTypesEntity"/>.
+        /// Conversion to <see cref = "Corvus.Json.JsonSchema.Draft7.Schema.SimpleTypes"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator Corvus.Json.JsonSchema.Draft7.Schema.SimpleTypesEntity(TypeEntity value)
+        public static implicit operator Corvus.Json.JsonSchema.Draft7.Schema.SimpleTypes(TypeEntity value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -54,14 +54,14 @@ public readonly partial struct Schema
                 return new(value.stringBacking);
             }
 
-            return Corvus.Json.JsonSchema.Draft7.Schema.SimpleTypesEntity.Undefined;
+            return Corvus.Json.JsonSchema.Draft7.Schema.SimpleTypes.Undefined;
         }
 
         /// <summary>
-        /// Conversion from <see cref = "Corvus.Json.JsonSchema.Draft7.Schema.TypeEntity.SimpleTypesEntityArray"/>.
+        /// Conversion from <see cref = "Corvus.Json.JsonSchema.Draft7.Schema.TypeEntity.SimpleTypesArray"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator TypeEntity(Corvus.Json.JsonSchema.Draft7.Schema.TypeEntity.SimpleTypesEntityArray value)
+        public static implicit operator TypeEntity(Corvus.Json.JsonSchema.Draft7.Schema.TypeEntity.SimpleTypesArray value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -76,10 +76,10 @@ public readonly partial struct Schema
         }
 
         /// <summary>
-        /// Conversion to <see cref = "Corvus.Json.JsonSchema.Draft7.Schema.TypeEntity.SimpleTypesEntityArray"/>.
+        /// Conversion to <see cref = "Corvus.Json.JsonSchema.Draft7.Schema.TypeEntity.SimpleTypesArray"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator Corvus.Json.JsonSchema.Draft7.Schema.TypeEntity.SimpleTypesEntityArray(TypeEntity value)
+        public static implicit operator Corvus.Json.JsonSchema.Draft7.Schema.TypeEntity.SimpleTypesArray(TypeEntity value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -91,7 +91,7 @@ public readonly partial struct Schema
                 return new(value.arrayBacking);
             }
 
-            return Corvus.Json.JsonSchema.Draft7.Schema.TypeEntity.SimpleTypesEntityArray.Undefined;
+            return Corvus.Json.JsonSchema.Draft7.Schema.TypeEntity.SimpleTypesArray.Undefined;
         }
     }
 }

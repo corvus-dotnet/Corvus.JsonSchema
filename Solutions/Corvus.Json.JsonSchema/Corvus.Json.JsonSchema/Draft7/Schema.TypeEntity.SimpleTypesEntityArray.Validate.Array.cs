@@ -18,7 +18,7 @@ public readonly partial struct Schema
         /// <summary>
         /// A type generated from a JsonSchema specification.
         /// </summary>
-        public readonly partial struct SimpleTypesEntityArray
+        public readonly partial struct SimpleTypesArray
         {
             private ValidationContext ValidateArray(JsonValueKind valueKind, in ValidationContext validationContext, ValidationLevel level)
             {
@@ -58,7 +58,7 @@ public readonly partial struct Schema
                         }
                     }
 
-                    result = arrayEnumerator.Current.As<Corvus.Json.JsonSchema.Draft7.Schema.SimpleTypesEntity>().Validate(result, level);
+                    result = arrayEnumerator.Current.As<Corvus.Json.JsonSchema.Draft7.Schema.SimpleTypes>().Validate(result, level);
                     if (level == ValidationLevel.Flag && !result.IsValid)
                     {
                         return result;

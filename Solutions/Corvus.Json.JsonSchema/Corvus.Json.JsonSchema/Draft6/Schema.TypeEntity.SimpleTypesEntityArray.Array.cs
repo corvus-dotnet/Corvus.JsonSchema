@@ -22,17 +22,17 @@ public readonly partial struct Schema
         /// <summary>
         /// A type generated from a JsonSchema specification.
         /// </summary>
-        public readonly partial struct SimpleTypesEntityArray : IJsonArray<SimpleTypesEntityArray>
+        public readonly partial struct SimpleTypesArray : IJsonArray<SimpleTypesArray>
         {
             /// <summary>
             /// Gets an empty array.
             /// </summary>
-            public static readonly SimpleTypesEntityArray EmptyArray = From(ImmutableList<JsonAny>.Empty);
+            public static readonly SimpleTypesArray EmptyArray = From(ImmutableList<JsonAny>.Empty);
             /// <summary>
-            /// Initializes a new instance of the <see cref = "SimpleTypesEntityArray"/> struct.
+            /// Initializes a new instance of the <see cref = "SimpleTypesArray"/> struct.
             /// </summary>
             /// <param name = "value">The value from which to construct the instance.</param>
-            public SimpleTypesEntityArray(ImmutableList<JsonAny> value)
+            public SimpleTypesArray(ImmutableList<JsonAny> value)
             {
                 this.jsonElementBacking = default;
                 this.backing = Backing.Array;
@@ -40,10 +40,10 @@ public readonly partial struct Schema
             }
 
             /// <summary>
-            /// Initializes a new instance of the <see cref = "SimpleTypesEntityArray"/> struct.
+            /// Initializes a new instance of the <see cref = "SimpleTypesArray"/> struct.
             /// </summary>
             /// <param name = "value">The value from which to construct the instance.</param>
-            public SimpleTypesEntityArray(IEnumerable<JsonAny> value)
+            public SimpleTypesArray(IEnumerable<JsonAny> value)
             {
                 this.jsonElementBacking = default;
                 this.backing = Backing.Array;
@@ -80,7 +80,7 @@ public readonly partial struct Schema
             /// Conversion from JsonArray.
             /// </summary>
             /// <param name = "value">The value from which to convert.</param>
-            public static implicit operator JsonArray(SimpleTypesEntityArray value)
+            public static implicit operator JsonArray(SimpleTypesArray value)
             {
                 return value.AsArray;
             }
@@ -89,7 +89,7 @@ public readonly partial struct Schema
             /// Conversion to JsonArray.
             /// </summary>
             /// <param name = "value">The value from which to convert.</param>
-            public static implicit operator SimpleTypesEntityArray(JsonArray value)
+            public static implicit operator SimpleTypesArray(JsonArray value)
             {
                 if (value.HasJsonElementBacking)
                 {
@@ -103,7 +103,7 @@ public readonly partial struct Schema
             /// Conversion from immutable list.
             /// </summary>
             /// <param name = "value">The value from which to convert.</param>
-            public static implicit operator ImmutableList<JsonAny>(SimpleTypesEntityArray value)
+            public static implicit operator ImmutableList<JsonAny>(SimpleTypesArray value)
             {
                 return value.GetImmutableList();
             }
@@ -112,28 +112,28 @@ public readonly partial struct Schema
             /// Conversion to immutable list.
             /// </summary>
             /// <param name = "value">The value from which to convert.</param>
-            public static implicit operator SimpleTypesEntityArray(ImmutableList<JsonAny> value)
+            public static implicit operator SimpleTypesArray(ImmutableList<JsonAny> value)
             {
                 return new(value);
             }
 
             /// <summary>
-            /// Initializes a new instance of the <see cref = "SimpleTypesEntityArray"/> struct.
+            /// Initializes a new instance of the <see cref = "SimpleTypesArray"/> struct.
             /// </summary>
             /// <param name = "items">The list of items from which to construct the array.</param>
             /// <returns>An instance of the array constructed from the list.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static SimpleTypesEntityArray From(ImmutableList<JsonAny> items)
+            public static SimpleTypesArray From(ImmutableList<JsonAny> items)
             {
                 return new(items);
             }
 
             /// <summary>
-            /// Initializes a new instance of the <see cref = "SimpleTypesEntityArray"/> struct.
+            /// Initializes a new instance of the <see cref = "SimpleTypesArray"/> struct.
             /// </summary>
             /// <param name = "value1">The first value from which to construct the instance.</param>
-            /// <returns>A SimpleTypesEntityArray instantiated from the given items.</returns>
-            public static SimpleTypesEntityArray FromItems(in Corvus.Json.JsonSchema.Draft6.Schema.SimpleTypesEntity value1)
+            /// <returns>A SimpleTypesArray instantiated from the given items.</returns>
+            public static SimpleTypesArray FromItems(in Corvus.Json.JsonSchema.Draft6.Schema.SimpleTypes value1)
             {
                 ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
                 builder.Add(value1.AsAny);
@@ -141,12 +141,12 @@ public readonly partial struct Schema
             }
 
             /// <summary>
-            /// Initializes a new instance of the <see cref = "SimpleTypesEntityArray"/> struct.
+            /// Initializes a new instance of the <see cref = "SimpleTypesArray"/> struct.
             /// </summary>
             /// <param name = "value1">The first value from which to construct the instance.</param>
             /// <param name = "value2">The second value from which to construct the instance.</param>
-            /// <returns>A SimpleTypesEntityArray instantiated from the given items.</returns>
-            public static SimpleTypesEntityArray FromItems(in Corvus.Json.JsonSchema.Draft6.Schema.SimpleTypesEntity value1, in Corvus.Json.JsonSchema.Draft6.Schema.SimpleTypesEntity value2)
+            /// <returns>A SimpleTypesArray instantiated from the given items.</returns>
+            public static SimpleTypesArray FromItems(in Corvus.Json.JsonSchema.Draft6.Schema.SimpleTypes value1, in Corvus.Json.JsonSchema.Draft6.Schema.SimpleTypes value2)
             {
                 ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
                 builder.Add(value1.AsAny);
@@ -155,13 +155,13 @@ public readonly partial struct Schema
             }
 
             /// <summary>
-            /// Initializes a new instance of the <see cref = "SimpleTypesEntityArray"/> struct.
+            /// Initializes a new instance of the <see cref = "SimpleTypesArray"/> struct.
             /// </summary>
             /// <param name = "value1">The first value from which to construct the instance.</param>
             /// <param name = "value2">The second value from which to construct the instance.</param>
             /// <param name = "value3">The thirdvalue from which to construct the instance.</param>
-            /// <returns>A SimpleTypesEntityArray instantiated from the given items.</returns>
-            public static SimpleTypesEntityArray FromItems(in Corvus.Json.JsonSchema.Draft6.Schema.SimpleTypesEntity value1, in Corvus.Json.JsonSchema.Draft6.Schema.SimpleTypesEntity value2, in Corvus.Json.JsonSchema.Draft6.Schema.SimpleTypesEntity value3)
+            /// <returns>A SimpleTypesArray instantiated from the given items.</returns>
+            public static SimpleTypesArray FromItems(in Corvus.Json.JsonSchema.Draft6.Schema.SimpleTypes value1, in Corvus.Json.JsonSchema.Draft6.Schema.SimpleTypes value2, in Corvus.Json.JsonSchema.Draft6.Schema.SimpleTypes value3)
             {
                 ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
                 builder.Add(value1.AsAny);
@@ -171,14 +171,14 @@ public readonly partial struct Schema
             }
 
             /// <summary>
-            /// Initializes a new instance of the <see cref = "SimpleTypesEntityArray"/> struct.
+            /// Initializes a new instance of the <see cref = "SimpleTypesArray"/> struct.
             /// </summary>
             /// <param name = "value">The value from which to construct the instance.</param>
             /// <returns>A JsonAny instantiated from the given items.</returns>
-            public static SimpleTypesEntityArray FromItems(params Corvus.Json.JsonSchema.Draft6.Schema.SimpleTypesEntity[] value)
+            public static SimpleTypesArray FromItems(params Corvus.Json.JsonSchema.Draft6.Schema.SimpleTypes[] value)
             {
                 ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
-                foreach (Corvus.Json.JsonSchema.Draft6.Schema.SimpleTypesEntity item in value)
+                foreach (Corvus.Json.JsonSchema.Draft6.Schema.SimpleTypes item in value)
                 {
                     builder.Add(item.AsAny);
                 }
@@ -187,14 +187,14 @@ public readonly partial struct Schema
             }
 
             /// <summary>
-            /// Initializes a new instance of the <see cref = "SimpleTypesEntityArray"/> struct.
+            /// Initializes a new instance of the <see cref = "SimpleTypesArray"/> struct.
             /// </summary>
             /// <param name = "value">The value from which to construct the instance.</param>
             /// <returns>A JsonAny instantiated from the given items.</returns>
-            public static SimpleTypesEntityArray FromRange(IEnumerable<Corvus.Json.JsonSchema.Draft6.Schema.SimpleTypesEntity> value)
+            public static SimpleTypesArray FromRange(IEnumerable<Corvus.Json.JsonSchema.Draft6.Schema.SimpleTypes> value)
             {
                 ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
-                foreach (Corvus.Json.JsonSchema.Draft6.Schema.SimpleTypesEntity item in value)
+                foreach (Corvus.Json.JsonSchema.Draft6.Schema.SimpleTypes item in value)
                 {
                     builder.Add(item.AsAny);
                 }
@@ -212,7 +212,7 @@ public readonly partial struct Schema
             /// This will serialize the items to create the underlying JsonArray. Note the
             /// other overloads which avoid this serialization step.
             /// </remarks>
-            public static SimpleTypesEntityArray From<T>(IEnumerable<T> items)
+            public static SimpleTypesArray From<T>(IEnumerable<T> items)
             {
                 ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
                 foreach (T item in items)
@@ -224,7 +224,7 @@ public readonly partial struct Schema
                     builder.Add(JsonAny.Parse(abw.WrittenMemory));
                 }
 
-                return new SimpleTypesEntityArray(builder.ToImmutable());
+                return new SimpleTypesArray(builder.ToImmutable());
             }
 
             /// <summary>
@@ -236,7 +236,7 @@ public readonly partial struct Schema
             /// This will serialize the items to create the underlying JsonArray. Note the
             /// other overloads which avoid this serialization step.
             /// </remarks>
-            public static SimpleTypesEntityArray FromRange(IEnumerable<JsonAny> items)
+            public static SimpleTypesArray FromRange(IEnumerable<JsonAny> items)
             {
                 ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
                 foreach (JsonAny item in items)
@@ -244,7 +244,7 @@ public readonly partial struct Schema
                     builder.Add(item);
                 }
 
-                return new SimpleTypesEntityArray(builder.ToImmutable());
+                return new SimpleTypesArray(builder.ToImmutable());
             }
 
             /// <summary>
@@ -256,7 +256,7 @@ public readonly partial struct Schema
             /// This will serialize the items to create the underlying JsonArray. Note the
             /// other overloads which avoid this serialization step.
             /// </remarks>
-            public static SimpleTypesEntityArray FromRange<T>(IEnumerable<T> items)
+            public static SimpleTypesArray FromRange<T>(IEnumerable<T> items)
                 where T : struct, IJsonValue<T>
             {
                 ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
@@ -265,7 +265,7 @@ public readonly partial struct Schema
                     builder.Add(item.AsAny);
                 }
 
-                return new SimpleTypesEntityArray(builder.ToImmutable());
+                return new SimpleTypesArray(builder.ToImmutable());
             }
 
             /// <inheritdoc/>
@@ -297,23 +297,23 @@ public readonly partial struct Schema
             }
 
             /// <inheritdoc/>
-            public JsonArrayEnumerator<Corvus.Json.JsonSchema.Draft6.Schema.SimpleTypesEntity> EnumerateArray()
+            public JsonArrayEnumerator<Corvus.Json.JsonSchema.Draft6.Schema.SimpleTypes> EnumerateArray()
             {
                 if ((this.backing & Backing.JsonElement) != 0)
                 {
-                    return new JsonArrayEnumerator<Corvus.Json.JsonSchema.Draft6.Schema.SimpleTypesEntity>(this.jsonElementBacking);
+                    return new JsonArrayEnumerator<Corvus.Json.JsonSchema.Draft6.Schema.SimpleTypes>(this.jsonElementBacking);
                 }
 
                 if ((this.backing & Backing.Array) != 0)
                 {
-                    return new JsonArrayEnumerator<Corvus.Json.JsonSchema.Draft6.Schema.SimpleTypesEntity>(this.arrayBacking);
+                    return new JsonArrayEnumerator<Corvus.Json.JsonSchema.Draft6.Schema.SimpleTypes>(this.arrayBacking);
                 }
 
                 throw new InvalidOperationException();
             }
 
             /// <inheritdoc/>
-            JsonArrayEnumerator IJsonArray<SimpleTypesEntityArray>.EnumerateArray()
+            JsonArrayEnumerator IJsonArray<SimpleTypesArray>.EnumerateArray()
             {
                 if ((this.backing & Backing.JsonElement) != 0)
                 {
@@ -329,7 +329,7 @@ public readonly partial struct Schema
             }
 
             /// <inheritdoc/>
-            JsonArrayEnumerator<TItem> IJsonArray<SimpleTypesEntityArray>.EnumerateArray<TItem>()
+            JsonArrayEnumerator<TItem> IJsonArray<SimpleTypesArray>.EnumerateArray<TItem>()
             {
                 if ((this.backing & Backing.JsonElement) != 0)
                 {

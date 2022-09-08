@@ -26,6 +26,7 @@ public static class JsonSchemaHelpers
         configuration.ItemsKeyword = CreateDraft6ItemsKeyword();
         configuration.SchemaKeyword = CreateDraft6SchemaKeyword();
         configuration.IrreducibleKeywords = CreateDraft6IrreducibleKeywords();
+        configuration.GeneratorReservedWords = CreateDraft6GeneratorReservedWords();
         configuration.DefinitionKeywords = CreateDraft6DefsKeywords();
         configuration.RefKeywords = CreateDraft6RefKeywords();
         configuration.RefResolvableKeywords = CreateDraft6RefResolvableKeywords();
@@ -93,6 +94,109 @@ public static class JsonSchemaHelpers
     {
         // $ref always reduces in draft7.
         return ImmutableHashSet<string>.Empty;
+    }
+
+    /// <summary>
+    /// Gets a set of the words used in the code generator that cannot be used for type names.
+    /// </summary>
+    /// <returns>The immutable set of reserved words.</returns>
+    private static ImmutableHashSet<string> CreateDraft6GeneratorReservedWords()
+    {
+        return ImmutableHashSet.Create(
+            "Item",
+            "Add",
+            "AddRange",
+            "Insert",
+            "InsertRange",
+            "Replace",
+            "SetItem",
+            "Remove",
+            "RemoveAt",
+            "RemoveRange",
+            "EmptyArray",
+            "FromItems",
+            "From",
+            "FromRange",
+            "AsImmutableList",
+            "AsImmutableListBuilder",
+            "GetArrayLength",
+            "EnumerateArray",
+            "GetImmutableList",
+            "GetImmutableListBuilder",
+            "GetImmutableListSetting",
+            "GetImmutableListReplacing",
+            "GetImmutableListWithout",
+            "GetImmutableListWithoutRange",
+            "GetImmutableListWith",
+            "__CorvusConstValue",
+            "ConstInstance",
+            "__CorvusDefaults",
+            "TryGetDefault",
+            "HasDefault",
+            "BuildDefaults",
+            "__CorvusDependentRequired",
+            "__CorvusDependency",
+            "__TryGetCorvusDependentSchemaValidator",
+            "EnumValues",
+            "FromProperties",
+            "EnumerateObject",
+            "HasProperties",
+            "HasProperty",
+            "TryGetProperty",
+            "SetProperty",
+            "RemoveProperty",
+            "GetImmutableDictionary",
+            "GetImmutableDictionaryWithout",
+            "GetImmutableDictionaryWith",
+            "GetImmutableDictionaryBuilder",
+            "GetImmutableDictionaryBuilderWithout",
+            "__CorvusPatternExpression",
+            "__CorvusPatternProperties",
+            "CreatePatternPropertiesValidators",
+            "__TryGetCorvusLocalPropertiesValidator",
+            "Create",
+            "TryGetString",
+            "AsSpan",
+            "AsOptionalString",
+            "EqualsUtf8Bytes",
+            "EqualsString",
+            "Null",
+            "Undefined",
+            "AsAny",
+            "AsJsonElement",
+            "AsString",
+            "AsBoolean",
+            "AsNumber",
+            "AsObject",
+            "AsArray",
+            "HasJsonElementBacking",
+            "HasDotnetBacking",
+            "ValueKind",
+            "FromAny",
+            "FromJson",
+            "FromBoolean",
+            "FromString",
+            "FromNumber",
+            "FromArray",
+            "FromObject",
+            "Parse",
+            "As",
+            "Equals",
+            "WriteTo",
+            "GetHashCode",
+            "ToString",
+            "ValidateAllOf",
+            "ValidateAnyOf",
+            "ValidateArray",
+            "ValidateFormat",
+            "ValidateIfThenElse",
+            "ValidateMediaTypeAndEncoding",
+            "ValidateNot",
+            "ValidateObject",
+            "ValidateOneOf",
+            "ValidateRef",
+            "Validate",
+            "ValidateType");
     }
 
     /// <summary>
@@ -187,7 +291,7 @@ public static class JsonSchemaHelpers
             }
 
             return BuiltInTypes.GetTypeNameFor(
-                schema.Type.AsSimpleTypesEntity,
+                schema.Type.AsSimpleTypes,
                 schema.Format.AsOptionalString(),
                 schema.GetContentEncoding().AsOptionalString(),
                 schema.GetContentMediaType().AsOptionalString(),

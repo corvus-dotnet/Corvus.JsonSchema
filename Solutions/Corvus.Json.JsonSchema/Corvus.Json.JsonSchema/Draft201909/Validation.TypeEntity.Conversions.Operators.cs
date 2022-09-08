@@ -21,10 +21,10 @@ public readonly partial struct Validation
     public readonly partial struct TypeEntity
     {
         /// <summary>
-        /// Conversion from <see cref = "Corvus.Json.JsonSchema.Draft201909.Validation.SimpleTypesEntity"/>.
+        /// Conversion from <see cref = "Corvus.Json.JsonSchema.Draft201909.Validation.SimpleTypes"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator TypeEntity(Corvus.Json.JsonSchema.Draft201909.Validation.SimpleTypesEntity value)
+        public static implicit operator TypeEntity(Corvus.Json.JsonSchema.Draft201909.Validation.SimpleTypes value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -39,10 +39,10 @@ public readonly partial struct Validation
         }
 
         /// <summary>
-        /// Conversion to <see cref = "Corvus.Json.JsonSchema.Draft201909.Validation.SimpleTypesEntity"/>.
+        /// Conversion to <see cref = "Corvus.Json.JsonSchema.Draft201909.Validation.SimpleTypes"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator Corvus.Json.JsonSchema.Draft201909.Validation.SimpleTypesEntity(TypeEntity value)
+        public static implicit operator Corvus.Json.JsonSchema.Draft201909.Validation.SimpleTypes(TypeEntity value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -54,14 +54,14 @@ public readonly partial struct Validation
                 return new(value.stringBacking);
             }
 
-            return Corvus.Json.JsonSchema.Draft201909.Validation.SimpleTypesEntity.Undefined;
+            return Corvus.Json.JsonSchema.Draft201909.Validation.SimpleTypes.Undefined;
         }
 
         /// <summary>
-        /// Conversion from <see cref = "Corvus.Json.JsonSchema.Draft201909.Validation.TypeEntity.SimpleTypesEntityArray"/>.
+        /// Conversion from <see cref = "Corvus.Json.JsonSchema.Draft201909.Validation.TypeEntity.SimpleTypesArray"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator TypeEntity(Corvus.Json.JsonSchema.Draft201909.Validation.TypeEntity.SimpleTypesEntityArray value)
+        public static implicit operator TypeEntity(Corvus.Json.JsonSchema.Draft201909.Validation.TypeEntity.SimpleTypesArray value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -76,10 +76,10 @@ public readonly partial struct Validation
         }
 
         /// <summary>
-        /// Conversion to <see cref = "Corvus.Json.JsonSchema.Draft201909.Validation.TypeEntity.SimpleTypesEntityArray"/>.
+        /// Conversion to <see cref = "Corvus.Json.JsonSchema.Draft201909.Validation.TypeEntity.SimpleTypesArray"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator Corvus.Json.JsonSchema.Draft201909.Validation.TypeEntity.SimpleTypesEntityArray(TypeEntity value)
+        public static implicit operator Corvus.Json.JsonSchema.Draft201909.Validation.TypeEntity.SimpleTypesArray(TypeEntity value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -91,7 +91,7 @@ public readonly partial struct Validation
                 return new(value.arrayBacking);
             }
 
-            return Corvus.Json.JsonSchema.Draft201909.Validation.TypeEntity.SimpleTypesEntityArray.Undefined;
+            return Corvus.Json.JsonSchema.Draft201909.Validation.TypeEntity.SimpleTypesArray.Undefined;
         }
     }
 }

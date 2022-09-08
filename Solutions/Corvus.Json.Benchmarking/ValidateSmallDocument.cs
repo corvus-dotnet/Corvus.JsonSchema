@@ -29,7 +29,7 @@ public class ValidateSmallDocument
     private static readonly JsonEverything.ValidationOptions Options = new JsonEverything.ValidationOptions() { OutputFormat = JsonEverything.OutputFormat.Flag };
 
     private JsonDocument? objectDocument;
-    private Person person;
+    private PersonSchemaJson.Person person;
     private JsonNode? node;
     private JsonEverything.JsonSchema? schema;
 
@@ -41,7 +41,7 @@ public class ValidateSmallDocument
     public Task GlobalSetup()
     {
         this.objectDocument = JsonDocument.Parse(JsonText);
-        this.person = Person.FromJson(this.objectDocument.RootElement);
+        this.person = PersonSchemaJson.Person.FromJson(this.objectDocument.RootElement);
         this.schema = JsonEverything.JsonSchema.FromFile("./PersonModel/person-schema.json");
         this.node = System.Text.Json.Nodes.JsonObject.Create(this.person.AsJsonElement.Clone());
         return Task.CompletedTask;

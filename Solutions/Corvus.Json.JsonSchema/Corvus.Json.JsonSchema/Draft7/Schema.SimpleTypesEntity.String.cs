@@ -21,13 +21,13 @@ public readonly partial struct Schema
     /// <summary>
     /// A type generated from a JsonSchema specification.
     /// </summary>
-    public readonly partial struct SimpleTypesEntity : IJsonString<SimpleTypesEntity>
+    public readonly partial struct SimpleTypes : IJsonString<SimpleTypes>
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref = "SimpleTypesEntity"/> struct.
+        /// Initializes a new instance of the <see cref = "SimpleTypes"/> struct.
         /// </summary>
         /// <param name = "value">The value from which to construct the instance.</param>
-        public SimpleTypesEntity(string value)
+        public SimpleTypes(string value)
         {
             this.jsonElementBacking = default;
             this.backing = Backing.String;
@@ -35,10 +35,10 @@ public readonly partial struct Schema
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref = "SimpleTypesEntity"/> struct.
+        /// Initializes a new instance of the <see cref = "SimpleTypes"/> struct.
         /// </summary>
         /// <param name = "value">The value from which to construct the instance.</param>
-        public SimpleTypesEntity(in ReadOnlySpan<char> value)
+        public SimpleTypes(in ReadOnlySpan<char> value)
         {
             this.jsonElementBacking = default;
             this.backing = Backing.String;
@@ -46,10 +46,10 @@ public readonly partial struct Schema
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref = "SimpleTypesEntity"/> struct.
+        /// Initializes a new instance of the <see cref = "SimpleTypes"/> struct.
         /// </summary>
         /// <param name = "utf8Value">The value from which to construct the instance.</param>
-        public SimpleTypesEntity(in ReadOnlySpan<byte> utf8Value)
+        public SimpleTypes(in ReadOnlySpan<byte> utf8Value)
         {
             this.jsonElementBacking = default;
             this.backing = Backing.String;
@@ -60,7 +60,7 @@ public readonly partial struct Schema
         /// Conversion from JsonString.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator JsonString(SimpleTypesEntity value)
+        public static implicit operator JsonString(SimpleTypes value)
         {
             return value.AsString;
         }
@@ -69,7 +69,7 @@ public readonly partial struct Schema
         /// Conversion to JsonString.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator SimpleTypesEntity(JsonString value)
+        public static implicit operator SimpleTypes(JsonString value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -83,7 +83,7 @@ public readonly partial struct Schema
         /// Conversion from string.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator SimpleTypesEntity(string value)
+        public static implicit operator SimpleTypes(string value)
         {
             return new(value);
         }
@@ -93,7 +93,7 @@ public readonly partial struct Schema
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
         /// <exception cref = "InvalidOperationException">The value was not a string.</exception>
-        public static implicit operator string (SimpleTypesEntity value)
+        public static implicit operator string (SimpleTypes value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -117,7 +117,7 @@ public readonly partial struct Schema
         /// Conversion from string.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator SimpleTypesEntity(ReadOnlySpan<char> value)
+        public static implicit operator SimpleTypes(ReadOnlySpan<char> value)
         {
             return new(value);
         }
@@ -127,7 +127,7 @@ public readonly partial struct Schema
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
         /// <exception cref = "InvalidOperationException">The value was not a string.</exception>
-        public static implicit operator ReadOnlySpan<char>(SimpleTypesEntity value)
+        public static implicit operator ReadOnlySpan<char>(SimpleTypes value)
         {
             return ((string)value).AsSpan();
         }
@@ -136,7 +136,7 @@ public readonly partial struct Schema
         /// Conversion from string.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator SimpleTypesEntity(ReadOnlySpan<byte> value)
+        public static implicit operator SimpleTypes(ReadOnlySpan<byte> value)
         {
             return new(value);
         }

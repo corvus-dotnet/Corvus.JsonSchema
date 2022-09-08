@@ -27,6 +27,7 @@ public static class JsonSchemaHelpers
         configuration.ItemsKeyword = CreateDraft201909ItemsKeyword();
         configuration.SchemaKeyword = CreateDraft201909SchemaKeyword();
         configuration.IrreducibleKeywords = CreateDraft201909IrreducibleKeywords();
+        configuration.GeneratorReservedWords = CreateDraft201909GeneratorReservedWords();
         configuration.RefKeywords = CreateDraft201909RefKeywords();
         configuration.RefResolvableKeywords = CreateDraft201909RefResolvableKeywords();
         configuration.ValidateSchema = CreateDraft201909ValidateSchema();
@@ -140,6 +141,109 @@ public static class JsonSchemaHelpers
     }
 
     /// <summary>
+    /// These are the words used in the code generator that cannot be used for types.
+    /// </summary>
+    /// <returns>The immutable set of reserved words.</returns>
+    private static ImmutableHashSet<string> CreateDraft201909GeneratorReservedWords()
+    {
+        return ImmutableHashSet.Create(
+            "Item",
+            "Add",
+            "AddRange",
+            "Insert",
+            "InsertRange",
+            "Replace",
+            "SetItem",
+            "Remove",
+            "RemoveAt",
+            "RemoveRange",
+            "EmptyArray",
+            "FromItems",
+            "From",
+            "FromRange",
+            "AsImmutableList",
+            "AsImmutableListBuilder",
+            "GetArrayLength",
+            "EnumerateArray",
+            "GetImmutableList",
+            "GetImmutableListBuilder",
+            "GetImmutableListSetting",
+            "GetImmutableListReplacing",
+            "GetImmutableListWithout",
+            "GetImmutableListWithoutRange",
+            "GetImmutableListWith",
+            "__CorvusConstValue",
+            "ConstInstance",
+            "__CorvusDefaults",
+            "TryGetDefault",
+            "HasDefault",
+            "BuildDefaults",
+            "__CorvusDependentRequired",
+            "__CorvusDependency",
+            "__TryGetCorvusDependentSchemaValidator",
+            "EnumValues",
+            "FromProperties",
+            "EnumerateObject",
+            "HasProperties",
+            "HasProperty",
+            "TryGetProperty",
+            "SetProperty",
+            "RemoveProperty",
+            "GetImmutableDictionary",
+            "GetImmutableDictionaryWithout",
+            "GetImmutableDictionaryWith",
+            "GetImmutableDictionaryBuilder",
+            "GetImmutableDictionaryBuilderWithout",
+            "__CorvusPatternExpression",
+            "__CorvusPatternProperties",
+            "CreatePatternPropertiesValidators",
+            "__TryGetCorvusLocalPropertiesValidator",
+            "Create",
+            "TryGetString",
+            "AsSpan",
+            "AsOptionalString",
+            "EqualsUtf8Bytes",
+            "EqualsString",
+            "Null",
+            "Undefined",
+            "AsAny",
+            "AsJsonElement",
+            "AsString",
+            "AsBoolean",
+            "AsNumber",
+            "AsObject",
+            "AsArray",
+            "HasJsonElementBacking",
+            "HasDotnetBacking",
+            "ValueKind",
+            "FromAny",
+            "FromJson",
+            "FromBoolean",
+            "FromString",
+            "FromNumber",
+            "FromArray",
+            "FromObject",
+            "Parse",
+            "As",
+            "Equals",
+            "WriteTo",
+            "GetHashCode",
+            "ToString",
+            "ValidateAllOf",
+            "ValidateAnyOf",
+            "ValidateArray",
+            "ValidateFormat",
+            "ValidateIfThenElse",
+            "ValidateMediaTypeAndEncoding",
+            "ValidateNot",
+            "ValidateObject",
+            "ValidateOneOf",
+            "ValidateRef",
+            "Validate",
+            "ValidateType");
+    }
+
+    /// <summary>
     /// Creates the draft2019-09 keywords that are resolvable to a schema.
     /// </summary>
     /// <returns>An array of <see cref="RefResolvableKeyword"/> instances.</returns>
@@ -235,7 +339,7 @@ public static class JsonSchemaHelpers
             }
 
             return BuiltInTypes.GetTypeNameFor(
-                schema.Type.AsSimpleTypesEntity,
+                schema.Type.AsSimpleTypes,
                 schema.Format.AsOptionalString(),
                 schema.ContentEncoding.AsOptionalString(),
                 schema.ContentMediaType.AsOptionalString(),

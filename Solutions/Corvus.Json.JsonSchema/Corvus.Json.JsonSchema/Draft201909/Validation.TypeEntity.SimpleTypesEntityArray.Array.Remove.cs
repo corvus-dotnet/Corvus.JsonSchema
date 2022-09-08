@@ -18,25 +18,25 @@ public readonly partial struct Validation
         /// <summary>
         /// A type generated from a JsonSchema specification.
         /// </summary>
-        public readonly partial struct SimpleTypesEntityArray
+        public readonly partial struct SimpleTypesArray
         {
             /// <inheritdoc/>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public SimpleTypesEntityArray Remove(in JsonAny item1)
+            public SimpleTypesArray Remove(in JsonAny item1)
             {
                 return new(this.GetImmutableListWithout(item1));
             }
 
             /// <inheritdoc/>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public SimpleTypesEntityArray RemoveAt(int index)
+            public SimpleTypesArray RemoveAt(int index)
             {
                 return new(this.GetImmutableListWithoutRange(index, 1));
             }
 
             /// <inheritdoc/>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public SimpleTypesEntityArray RemoveRange(int index, int count)
+            public SimpleTypesArray RemoveRange(int index, int count)
             {
                 return new(this.GetImmutableListWithoutRange(index, count));
             }
