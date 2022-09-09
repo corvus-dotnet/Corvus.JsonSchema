@@ -90,9 +90,15 @@ public readonly partial struct JsonBase64String
 
         if (this.jsonElementBacking.ValueKind == JsonValueKind.String)
         {
-            return this.jsonElementBacking.TryGetBytesFromBase64(out byte[]? _);
+            return this.AsJsonElement.TryGetValue(this.HasBase64BytesCore, (object?)null, true, out bool result);
         }
 
         return false;
+    }
+
+    private bool HasBase64BytesCore(ReadOnlySpan<byte> span, in object? state, out bool result)
+    {
+        result = JsonReaderHelper.CanDecodeBase64(span);
+        return result;
     }
 }

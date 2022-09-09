@@ -20,6 +20,37 @@ namespace Corvus.Json
     {
         public static readonly UTF8Encoding s_utf8Encoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
 
+        public static bool CanDecodeBase64(ReadOnlySpan<byte> utf8Unescaped)
+        {
+            byte[]? pooledArray = null;
+
+            Span<byte> byteSpan = utf8Unescaped.Length <= JsonConstants.StackallocThreshold ?
+                stackalloc byte[JsonConstants.StackallocThreshold] :
+                (pooledArray = ArrayPool<byte>.Shared.Rent(utf8Unescaped.Length));
+
+            OperationStatus status = Base64.DecodeFromUtf8(utf8Unescaped, byteSpan, out int bytesConsumed, out int bytesWritten);
+
+            if (status != OperationStatus.Done)
+            {
+                if (pooledArray != null)
+                {
+                    byteSpan.Clear();
+                    ArrayPool<byte>.Shared.Return(pooledArray);
+                }
+
+                return false;
+            }
+            Debug.Assert(bytesConsumed == utf8Unescaped.Length);
+
+            if (pooledArray != null)
+            {
+                byteSpan.Clear();
+                ArrayPool<byte>.Shared.Return(pooledArray);
+            }
+
+            return true;
+        }
+
         public static ReadOnlySpan<byte> GetUnescapedSpan(ReadOnlySpan<byte> utf8Source, int idx)
         {
             // The escaped name is always >= than the unescaped, so it is safe to use escaped name for the buffer length.
