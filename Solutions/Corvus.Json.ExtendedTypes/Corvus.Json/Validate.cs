@@ -508,51 +508,73 @@ public static partial class Validate
             }
         }
 
-        string value = instance.AsString;
+        ValidationContext result = validationContext;
 
-        bool isMatch;
-        if (value.StartsWith("xn--"))
+        if (instance.HasJsonElementBacking)
         {
-            string decodedValue;
-
-            try
-            {
-                decodedValue = IdnMapping.GetUnicode(value);
-                isMatch = HostnamePattern.IsMatch(decodedValue);
-            }
-            catch (ArgumentException)
-            {
-                isMatch = false;
-            }
+            // We know it is a string, so we should always return true, no need to check the result.
+            instance.AsJsonElement.TryGetValue(HostnameValidator, new ValidationContextWrapper(result, level), out result);
         }
         else
         {
-            isMatch = HostnamePattern.IsMatch(value);
+            HostnameValidator(instance.AsString.AsSpan(), new ValidationContextWrapper(result, level), out result);
         }
 
-        if (!isMatch)
+        if (level == ValidationLevel.Flag && !result.IsValid)
         {
-            if (level >= ValidationLevel.Detailed)
+            return result;
+        }
+
+        return result;
+
+        static bool HostnameValidator(ReadOnlySpan<char> input, in ValidationContextWrapper context, out ValidationContext result)
+        {
+            bool isMatch;
+            result = context.Context;
+
+            if (input.StartsWith("xn--"))
             {
-                return validationContext.WithResult(isValid: false, $"Validation 6.1.1 type - should have been 'string' with format 'hostname', but was '{value}'.");
-            }
-            else if (level >= ValidationLevel.Basic)
-            {
-                return validationContext.WithResult(isValid: false, "Validation 6.1.1 type - should have been a 'string' with format 'hostname'.");
+                try
+                {
+                    // Sadly there's no support for readonly span in IdnMapping.
+                    string decodedValue = IdnMapping.GetUnicode(input.ToString());
+                    isMatch = HostnamePattern.IsMatch(decodedValue);
+                }
+                catch (ArgumentException)
+                {
+                    isMatch = false;
+                }
             }
             else
             {
-                return validationContext.WithResult(isValid: false);
+                isMatch = HostnamePattern.IsMatch(input);
             }
-        }
 
-        if (level == ValidationLevel.Verbose)
-        {
-            return validationContext
-                .WithResult(isValid: true, "Validation 6.1.1 type - was a 'string' with format 'hostname'.");
-        }
+            if (!isMatch)
+            {
+                if (context.Level >= ValidationLevel.Detailed)
+                {
+                    result = context.Context.WithResult(isValid: false, $"Validation 6.1.1 type - should have been 'string' with format 'hostname', but was '{input}'.");
+                }
+                else if (context.Level >= ValidationLevel.Basic)
+                {
+                    result = context.Context.WithResult(isValid: false, "Validation 6.1.1 type - should have been a 'string' with format 'hostname'.");
+                }
+                else
+                {
+                    result = context.Context.WithResult(isValid: false);
+                }
 
-        return validationContext;
+                return false;
+            }
+
+            if (context.Level == ValidationLevel.Verbose)
+            {
+                result = context.Context.WithResult(isValid: true, "Validation 6.1.1 type - was a 'string' with format 'hostname'.");
+            }
+
+            return true;
+        }
     }
 
     /// <summary>
