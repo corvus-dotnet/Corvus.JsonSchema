@@ -37,23 +37,32 @@ internal static class SpecWriter
         var builder = new StringBuilder();
 
         WriteFeatureHeading(testSet.TestSetName, Path.GetFileNameWithoutExtension(testSet.InputFile), builder);
-
+        HashSet<string> writtenScenarios = new();
         int index = 0;
         foreach (JsonElement scenarioDefinition in testDocument.RootElement.EnumerateArray())
         {
-            WriteScenario(testSet, index, scenarioDefinition, builder);
+            WriteScenario(testSet, index, scenarioDefinition, builder, writtenScenarios);
             ++index;
         }
 
         File.WriteAllText(testSet.OutputFile, builder.ToString());
     }
 
-    private static void WriteScenario(SpecDirectories.TestSet testSet, int scenarioIndex, JsonElement scenarioDefinition, StringBuilder builder)
+    private static void WriteScenario(SpecDirectories.TestSet testSet, int scenarioIndex, JsonElement scenarioDefinition, StringBuilder builder, HashSet<string> writtenScenarios)
     {
         string inputSchemaReference = $"#/{scenarioIndex}/schema";
 
-        string? scenarioTitle = scenarioDefinition.GetProperty("description").GetString();
-        scenarioTitle = NormalizeTitleForDeduplication(scenarioTitle!);
+        string scenarioTitleBase = scenarioDefinition.GetProperty("description").GetString()!;
+        scenarioTitleBase = NormalizeTitleForDeduplication(scenarioTitleBase!);
+        string scenarioTitle = scenarioTitleBase;
+        int dupIndex = 1;
+        while (writtenScenarios.Contains(scenarioTitle))
+        {
+            scenarioTitle = $"{scenarioTitleBase} [{dupIndex}]";
+            ++dupIndex;
+        }
+
+        writtenScenarios.Add(scenarioTitle);
 
         builder.AppendLine();
         builder.AppendLine($"Scenario Outline: {scenarioTitle}");

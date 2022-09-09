@@ -8,7 +8,6 @@
       "testSet": "draft6",
       "outputFolder": "Draft6",
       "excludeFromThisDirectory": [
-        "unknownKeyword\\.json"
       ],
       "subdirectories": {
         "optional": {
@@ -24,13 +23,10 @@
               "testExclusions": {
                 "optional/format/date-time.json": {
                   "validation of date-time strings": {
+                    // Leap seconds
                     "testsToIgnoreIndices": [ 10, 11 ]
                   }
                 }
-                // Probably want to fix this one for real.
-                //"optional/format/duration.json": {
-                //  "testsToIgnoreIndices": [ 23 ]
-                //}
               }
 
             }
@@ -43,7 +39,6 @@
       "testSet": "draft7",
       "outputFolder": "Draft7",
       "excludeFromThisDirectory": [
-        "unknownKeyword\\.json"
       ],
       "subdirectories": {
         "optional": {
@@ -55,7 +50,6 @@
           "subdirectories": {
             "format": {
               "excludeFromThisDirectory": [
-                "unknown\\.json"
               ],
               "testExclusions": {
                 "optional/format/date-time.json": {
@@ -93,17 +87,14 @@
       "outputFolder": "Draft201909",
       "excludeFromThisDirectory": [
         // We don't support custom metaschema
-        "vocabulary\\.json",
-
-        "unknownKeyword\\.json"
+        "vocabulary\\.json"
       ],
       "subdirectories": {
         "optional": {
           "excludeFromThisDirectory": [
             "bignum\\.json",
             "ecmascript-regex\\.json",
-            "non-bmp-regex\\.json",
-            "refOfUnknownKeyword\\.json"
+            "non-bmp-regex\\.json"
           ],
           "subdirectories": {
             "format": {
@@ -145,7 +136,7 @@
       "testSet": "draft2020-12",
       "outputFolder": "Draft2020212",
       "excludeFromThisDirectory": [
-        // We don't support custom metaschema
+        // We don't support custom metaschema (yet!)
         "vocabulary\\.json"
       ],
       "testExclusions": {
@@ -164,13 +155,10 @@
               "testExclusions": {
                 "optional/format/date-time.json": {
                   "validation of date-time strings": {
+                    // Leap seconds
                     "testsToIgnoreIndices": [ 10, 11 ]
                   }
                 },
-                // Probably want to fix this one for real.
-                //"optional/format/duration.json": {
-                //  "testsToIgnoreIndices": [ 23 ]
-                //}
                 "optional/format/time.json": {
                   "validation of time strings": {
                     "testsToIgnoreIndices": [

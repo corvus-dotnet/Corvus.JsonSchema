@@ -192,7 +192,7 @@ Scenario Outline: nested anyOf, to check validation semantics
         | #/007/tests/000/data | true  | null is valid                                                                    |
         | #/007/tests/001/data | false | anything non-null is invalid                                                     |
 
-Scenario Outline: nested anyOf, to check validation semantics [2]
+Scenario Outline: nested anyOf, to check validation semantics [1]
 /* Schema: 
 {
             "anyOf": [
