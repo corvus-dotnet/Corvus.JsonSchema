@@ -5,6 +5,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Text.Json;
+using System.Transactions;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json;
@@ -68,14 +69,33 @@ public readonly partial struct JsonIpV6
     {
         if ((this.backing & Backing.String) != 0)
         {
-            return IPAddress.TryParse(this.stringBacking, out result);
+            return IPAddressParser(this.stringBacking.AsSpan(), null, out result);
         }
         else if (this.jsonElementBacking.ValueKind == JsonValueKind.String)
         {
-            return IPAddress.TryParse(this.jsonElementBacking.GetString(), out result);
+            return this.jsonElementBacking.TryGetValue(IPAddressParser, (object?)null, out result);
         }
 
         result = IPAddress.None;
+        return false;
+    }
+
+    /// <summary>
+    /// Parse an IP address.
+    /// </summary>
+    /// <param name="span">The span to parse.</param>
+    /// <param name="state">The state object (expects null).</param>
+    /// <param name="value">The parsed IP address.</param>
+    /// <returns><see langword="true"/> if the address was parsed successfully.</returns>
+    internal static bool IPAddressParser(ReadOnlySpan<char> span, in object? state, out IPAddress value)
+    {
+        if (IPAddress.TryParse(span, out IPAddress? address))
+        {
+            value = address;
+            return true;
+        }
+
+        value = IPAddress.None;
         return false;
     }
 }

@@ -2,16 +2,11 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.Net;
-using System.Reflection.Emit;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using Corvus.Json.UriTemplates;
-using Microsoft.Extensions.Primitives;
-using NodaTime.Text;
 
 namespace Corvus.Json;
 
@@ -20,16 +15,16 @@ namespace Corvus.Json;
 /// </summary>
 public static partial class Validate
 {
-    private static readonly Regex IpV4Pattern = new("^(?:(?:^|\\.)(?:2(?:5[0-5]|[0-4]\\d)|1?\\d?\\d)){4}$", RegexOptions.Compiled, TimeSpan.FromSeconds(1));
-    private static readonly Regex ZoneIdExpression = new("%.*$", RegexOptions.Compiled, TimeSpan.FromSeconds(1));
-    private static readonly Regex EmailPattern = new(@"^(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|""(?:[ \x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*"")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|IPv6:(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])))\])$", RegexOptions.Compiled, TimeSpan.FromSeconds(1));
-    private static readonly Regex DurationPattern = new(@"^P(?!$)((\d+(?:\.\d+)?Y)?(\d+(?:\.\d+)?M)?|(\d+(?:\.\d+)?W)?)?(\d+(?:\.\d+)?D)?(T(?=\d)(\d+(?:\.\d+)?H)?(\d+(?:\.\d+)?M)?(\d+(?:\.\d+)?S)?)?$", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.ECMAScript); // ECMAScript mode stops \d matching non-ASCII digits
-    private static readonly Regex HostnamePattern = new("^(?=.{1,255}$)((?!_)\\w)((((?!_)\\w)|\\b-){0,61}((?!_)\\w))?(\\.((?!_)\\w)((((?!_)\\w)|\\b-){0,61}((?!_)\\w))?)*\\.?$", RegexOptions.Compiled, TimeSpan.FromSeconds(1));
-    private static readonly Regex InvalidIdnHostNamePattern = new(@"(^[\p{Mn}\p{Mc}\p{Me}\u302E\u00b7])|.*\u302E.*|.*[^l]\u00b7.*|.*\u00b7[^l].*|.*\u00b7$|\u0374$|\u0375$|\u0374[^\p{IsGreekandCoptic}]|\u0375[^\p{IsGreekandCoptic}]|^\u05F3|[^\p{IsHebrew}]\u05f3|^\u05f4|[^\p{IsHebrew}]\u05f4|[\u0660-\u0669][\u06F0-\u06F9]|[\u06F0-\u06F9][\u0660-\u0669]|^\u200D|[^\uA953\u094d\u0acd\u0c4d\u0d3b\u09cd\u0a4d\u0b4d\u0bcd\u0ccd\u0d4d\u1039\u0d3c\u0eba\ua8f3\ua8f4]\u200D|^\u30fb$|[^\p{IsHiragana}\p{IsKatakana}\p{IsCJKUnifiedIdeographs}]\u30fb|\u30fb[^\p{IsHiragana}\p{IsKatakana}\p{IsCJKUnifiedIdeographs}]|[\u0640\u07fa\u3031\u3032\u3033\u3034\u3035\u302e\u302f\u303b]|..--", RegexOptions.Compiled, TimeSpan.FromSeconds(1));
-    private static readonly Regex UriTemplatePattern = new(@"^([^\x00-\x20\x7f""'%<>\\^`{|}]|%[0-9A-Fa-f]{2}|{[+#./;?&=,!@|]?((\w|%[0-9A-Fa-f]{2})(\.?(\w|%[0-9A-Fa-f]{2}))*(:[1-9]\d{0,3}|\*)?)(,((\w|%[0-9A-Fa-f]{2})(\.?(\w|%[0-9A-Fa-f]{2}))*(:[1-9]\d{0,3}|\*)?))*})*$", RegexOptions.Compiled, TimeSpan.FromSeconds(1));
-    private static readonly Regex UuidTemplatePattern = new(@"[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}", RegexOptions.Compiled, TimeSpan.FromSeconds(1));
-    private static readonly Regex JsonPointerPattern = new("^((/(([^/~])|(~[01]))*))*$", RegexOptions.Compiled, TimeSpan.FromSeconds(1));
-    private static readonly Regex RelativeJsonPointerPattern = new("^(0|[1-9]+)(#|(/(/|[^/~]|(~[01]))*))?$", RegexOptions.Compiled, TimeSpan.FromSeconds(1));
+    private static readonly Regex IpV4Pattern = CreateIpV4Pattern();
+    private static readonly Regex ZoneIdExpression = CreateZoneIdExpression();
+    private static readonly Regex EmailPattern = CreateEmailPattern();
+    private static readonly Regex DurationPattern = CreateDurationPattern(); // ECMAScript mode stops \d matching non-ASCII digits
+    private static readonly Regex HostnamePattern = CreateHostnamePattern();
+    private static readonly Regex InvalidIdnHostNamePattern = CreateInvalidIdnHostNamePattern();
+    private static readonly Regex UriTemplatePattern = CreateUriTemplatePattern();
+    private static readonly Regex UuidTemplatePattern = CreateUuidTemplatePattern();
+    private static readonly Regex JsonPointerPattern = CreateJsonPointerPattern();
+    private static readonly Regex RelativeJsonPointerPattern = CreateRelativeJsonPointerPattern();
 
     private static readonly IdnMapping IdnMapping = new() { AllowUnassigned = true, UseStd3AsciiRules = true };
 
@@ -2751,33 +2746,56 @@ public static partial class Validate
             }
         }
 
-        JsonIpV6 ipv6 = instance.As<JsonIpV6>();
+        ValidationContext result = validationContext;
 
-        if (ipv6.TryGetIPAddress(out IPAddress? address) &&
-            address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6 &&
-            !ZoneIdExpression.IsMatch(ipv6))
+        if (instance.HasJsonElementBacking)
         {
-            if (level == ValidationLevel.Verbose)
-            {
-                return validationContext
-                    .WithResult(isValid: true, "Validation 6.1.1 type - was a 'string' with format 'ipv6'.");
-            }
-
-            return validationContext;
+            // We know it is a string, so we should always return true, no need to check the result.
+            instance.AsJsonElement.TryGetValue(IPV6Validator, new ValidationContextWrapper(result, level), out result);
         }
         else
         {
-            if (level >= ValidationLevel.Detailed)
+            IPV6Validator(instance.AsString.AsSpan(), new ValidationContextWrapper(result, level), out result);
+        }
+
+        if (level == ValidationLevel.Flag && !result.IsValid)
+        {
+            return result;
+        }
+
+        return result;
+
+        static bool IPV6Validator(ReadOnlySpan<char> input, in ValidationContextWrapper context, out ValidationContext result)
+        {
+            result = context.Context;
+
+            if (JsonIpV6.IPAddressParser(input, null, out IPAddress? address) &&
+                address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6 &&
+                !ZoneIdExpression.IsMatch(input))
             {
-                return validationContext.WithResult(isValid: false, $"Validation 6.1.1 type - should have been 'string' with format 'ipv6', but was '{ipv6}'.");
-            }
-            else if (level >= ValidationLevel.Basic)
-            {
-                return validationContext.WithResult(isValid: false, "Validation 6.1.1 type - should have been a 'string' with format 'ipv6'.");
+                if (context.Level == ValidationLevel.Verbose)
+                {
+                    result = context.Context.WithResult(isValid: true, "Validation 6.1.1 type - was a 'string' with format 'ipv6'.");
+                }
+
+                return true;
             }
             else
             {
-                return validationContext.WithResult(isValid: false);
+                if (context.Level >= ValidationLevel.Detailed)
+                {
+                    result = context.Context.WithResult(isValid: false, $"Validation 6.1.1 type - should have been 'string' with format 'ipv6', but was '{input}'.");
+                }
+                else if (context.Level >= ValidationLevel.Basic)
+                {
+                    result = context.Context.WithResult(isValid: false, "Validation 6.1.1 type - should have been a 'string' with format 'ipv6'.");
+                }
+                else
+                {
+                    result = context.Context.WithResult(isValid: false);
+                }
+
+                return false;
             }
         }
     }
@@ -2810,33 +2828,56 @@ public static partial class Validate
             }
         }
 
-        JsonIpV4 ipv4 = instance.As<JsonIpV4>();
+        ValidationContext result = validationContext;
 
-        if (ipv4.TryGetIPAddress(out IPAddress? address) &&
-            address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork &&
-            IpV4Pattern.IsMatch(ipv4))
+        if (instance.HasJsonElementBacking)
         {
-            if (level == ValidationLevel.Verbose)
-            {
-                return validationContext
-                    .WithResult(isValid: true, "Validation 6.1.1 type - was a 'string' with format 'ipv4'.");
-            }
-
-            return validationContext;
+            // We know it is a string, so we should always return true, no need to check the result.
+            instance.AsJsonElement.TryGetValue(IPV6Validator, new ValidationContextWrapper(result, level), out result);
         }
         else
         {
-            if (level >= ValidationLevel.Detailed)
+            IPV6Validator(instance.AsString.AsSpan(), new ValidationContextWrapper(result, level), out result);
+        }
+
+        if (level == ValidationLevel.Flag && !result.IsValid)
+        {
+            return result;
+        }
+
+        return result;
+
+        static bool IPV6Validator(ReadOnlySpan<char> input, in ValidationContextWrapper context, out ValidationContext result)
+        {
+            result = context.Context;
+
+            if (JsonIpV4.IPAddressParser(input, null, out IPAddress? address) &&
+                address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork &&
+                IpV4Pattern.IsMatch(input))
             {
-                return validationContext.WithResult(isValid: false, $"Validation 6.1.1 type - should have been 'string' with format 'ipv4', but was '{ipv4}'.");
-            }
-            else if (level >= ValidationLevel.Basic)
-            {
-                return validationContext.WithResult(isValid: false, "Validation 6.1.1 type - should have been a 'string' with format 'ipv4'.");
+                if (context.Level == ValidationLevel.Verbose)
+                {
+                    result = context.Context.WithResult(isValid: true, "Validation 6.1.1 type - was a 'string' with format 'ipv4'.");
+                }
+
+                return true;
             }
             else
             {
-                return validationContext.WithResult(isValid: false);
+                if (context.Level >= ValidationLevel.Detailed)
+                {
+                    result = context.Context.WithResult(isValid: false, $"Validation 6.1.1 type - should have been 'string' with format 'ipv4', but was '{input}'.");
+                }
+                else if (context.Level >= ValidationLevel.Basic)
+                {
+                    result = context.Context.WithResult(isValid: false, "Validation 6.1.1 type - should have been a 'string' with format 'ipv4'.");
+                }
+                else
+                {
+                    result = context.Context.WithResult(isValid: false);
+                }
+
+                return false;
             }
         }
     }
@@ -2895,6 +2936,36 @@ public static partial class Validate
 
         return validationContext;
     }
+
+    [RegexGenerator("^(?:(?:^|\\.)(?:2(?:5[0-5]|[0-4]\\d)|1?\\d?\\d)){4}$", RegexOptions.Compiled)]
+    private static partial Regex CreateIpV4Pattern();
+
+    [RegexGenerator("%.*$", RegexOptions.Compiled)]
+    private static partial Regex CreateZoneIdExpression();
+
+    [RegexGenerator("^(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[ \\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\\[(((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|IPv6:(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])))\\])$", RegexOptions.Compiled)]
+    private static partial Regex CreateEmailPattern();
+
+    [RegexGenerator("^P(?!$)((\\d+(?:\\.\\d+)?Y)?(\\d+(?:\\.\\d+)?M)?|(\\d+(?:\\.\\d+)?W)?)?(\\d+(?:\\.\\d+)?D)?(T(?=\\d)(\\d+(?:\\.\\d+)?H)?(\\d+(?:\\.\\d+)?M)?(\\d+(?:\\.\\d+)?S)?)?$", RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.ECMAScript)]
+    private static partial Regex CreateDurationPattern();
+
+    [RegexGenerator("^(?=.{1,255}$)((?!_)\\w)((((?!_)\\w)|\\b-){0,61}((?!_)\\w))?(\\.((?!_)\\w)((((?!_)\\w)|\\b-){0,61}((?!_)\\w))?)*\\.?$", RegexOptions.Compiled)]
+    private static partial Regex CreateHostnamePattern();
+
+    [RegexGenerator("(^[\\p{Mn}\\p{Mc}\\p{Me}\\u302E\\u00b7])|.*\\u302E.*|.*[^l]\\u00b7.*|.*\\u00b7[^l].*|.*\\u00b7$|\\u0374$|\\u0375$|\\u0374[^\\p{IsGreekandCoptic}]|\\u0375[^\\p{IsGreekandCoptic}]|^\\u05F3|[^\\p{IsHebrew}]\\u05f3|^\\u05f4|[^\\p{IsHebrew}]\\u05f4|[\\u0660-\\u0669][\\u06F0-\\u06F9]|[\\u06F0-\\u06F9][\\u0660-\\u0669]|^\\u200D|[^\\uA953\\u094d\\u0acd\\u0c4d\\u0d3b\\u09cd\\u0a4d\\u0b4d\\u0bcd\\u0ccd\\u0d4d\\u1039\\u0d3c\\u0eba\\ua8f3\\ua8f4]\\u200D|^\\u30fb$|[^\\p{IsHiragana}\\p{IsKatakana}\\p{IsCJKUnifiedIdeographs}]\\u30fb|\\u30fb[^\\p{IsHiragana}\\p{IsKatakana}\\p{IsCJKUnifiedIdeographs}]|[\\u0640\\u07fa\\u3031\\u3032\\u3033\\u3034\\u3035\\u302e\\u302f\\u303b]|..--", RegexOptions.Compiled)]
+    private static partial Regex CreateInvalidIdnHostNamePattern();
+
+    [RegexGenerator("^([^\\x00-\\x20\\x7f\"'%<>\\\\^`{|}]|%[0-9A-Fa-f]{2}|{[+#./;?&=,!@|]?((\\w|%[0-9A-Fa-f]{2})(\\.?(\\w|%[0-9A-Fa-f]{2}))*(:[1-9]\\d{0,3}|\\*)?)(,((\\w|%[0-9A-Fa-f]{2})(\\.?(\\w|%[0-9A-Fa-f]{2}))*(:[1-9]\\d{0,3}|\\*)?))*})*$", RegexOptions.Compiled)]
+    private static partial Regex CreateUriTemplatePattern();
+
+    [RegexGenerator("[0-9a-fA-F]{8}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{12}", RegexOptions.Compiled)]
+    private static partial Regex CreateUuidTemplatePattern();
+
+    [RegexGenerator("^((/(([^/~])|(~[01]))*))*$", RegexOptions.Compiled)]
+    private static partial Regex CreateJsonPointerPattern();
+
+    [RegexGenerator("^(0|[1-9]+)(#|(/(/|[^/~]|(~[01]))*))?$", RegexOptions.Compiled)]
+    private static partial Regex CreateRelativeJsonPointerPattern();
 
     private readonly record struct ValidationContextWrapper(in ValidationContext Context, ValidationLevel Level);
 

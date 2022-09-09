@@ -13,7 +13,7 @@ namespace Corvus.Json;
 /// </summary>
 public readonly partial struct JsonRegex
 {
-    private static readonly Regex Empty = new(".*", RegexOptions.None);
+    private static readonly Regex Empty = MyRegex();
 
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonRegex"/> struct.
@@ -104,4 +104,7 @@ public readonly partial struct JsonRegex
             return false;
         }
     }
+
+    [RegexGenerator(".*", RegexOptions.None)]
+    private static partial Regex MyRegex();
 }
