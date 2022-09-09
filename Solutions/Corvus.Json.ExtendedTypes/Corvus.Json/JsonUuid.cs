@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Net;
 using System.Text.Json;
 using Corvus.Json.Internal;
 
@@ -66,29 +67,38 @@ public readonly partial struct JsonUuid
     {
         if ((this.backing & Backing.String) != 0)
         {
-            return TryParseGuid(this.stringBacking, out result);
+            return GuidParser(this.stringBacking.AsSpan(), null, out result);
         }
-
-        if (this.jsonElementBacking.ValueKind == JsonValueKind.String)
+        else if (this.jsonElementBacking.ValueKind == JsonValueKind.String)
         {
-            string? str = this.jsonElementBacking.GetString();
-            if (str is not null)
-            {
-                return TryParseGuid(str, out result);
-            }
+            return this.jsonElementBacking.TryGetValue(GuidParser, (object?)null, out result);
         }
 
         result = Guid.Empty;
         return false;
     }
 
+    /// <summary>
+    /// Parse an IP address.
+    /// </summary>
+    /// <param name="span">The span to parse.</param>
+    /// <param name="state">The state object (expects null).</param>
+    /// <param name="value">The parsed IP address.</param>
+    /// <returns><see langword="true"/> if the address was parsed successfully.</returns>
+    internal static bool GuidParser(ReadOnlySpan<char> span, in object? state, out Guid value)
+    {
+        if (Guid.TryParse(span, out Guid guid))
+        {
+            value = guid;
+            return true;
+        }
+
+        value = Guid.Empty;
+        return false;
+    }
+
     private static string FormatGuid(Guid value)
     {
         return value.ToString("D");
-    }
-
-    private static bool TryParseGuid(string text, out Guid value)
-    {
-        return Guid.TryParse(text, out value);
     }
 }
