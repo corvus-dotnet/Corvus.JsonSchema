@@ -9,7 +9,9 @@ using System.Reflection.Emit;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Corvus.Json.UriTemplates;
 using Microsoft.Extensions.Primitives;
+using NodaTime.Text;
 
 namespace Corvus.Json;
 
@@ -242,31 +244,62 @@ public static partial class Validate
             }
         }
 
-        JsonString uriTemplate = instance.AsString;
+        ValidationContext result = validationContext;
 
-        if (!UriTemplatePattern.IsMatch(uriTemplate))
+        if (instance.HasJsonElementBacking)
         {
-            if (level >= ValidationLevel.Detailed)
-            {
-                return validationContext.WithResult(isValid: false, $"Validation 6.1.1 type - should have been 'string' with format 'uri-template', but was '{uriTemplate}'.");
-            }
-            else if (level >= ValidationLevel.Basic)
-            {
-                return validationContext.WithResult(isValid: false, "Validation 6.1.1 type - should have been a 'string' with format 'uri-template'.");
-            }
-            else
-            {
-                return validationContext.WithResult(isValid: false);
-            }
+            // We know it is a string, so we should always return true, no need to check the result.
+            instance.AsJsonElement.TryGetValue(UriTemplateValidator, new ValidationContextWrapper(result, level), out result);
+        }
+        else
+        {
+            UriTemplateValidator(instance.AsString.AsSpan(), new ValidationContextWrapper(result, level), out result);
         }
 
-        if (level == ValidationLevel.Verbose)
+        if (level == ValidationLevel.Flag && !result.IsValid)
         {
-            return validationContext
-                .WithResult(isValid: true, "Validation 6.1.1 type - was a 'string' with format 'uri-template'.");
+            return result;
         }
 
-        return validationContext;
+        return result;
+
+        static bool UriTemplateValidator(ReadOnlySpan<char> input, in ValidationContextWrapper context, out ValidationContext result)
+        {
+            // Emitted if minLength or maxLength
+            int length = 0;
+            SpanRuneEnumerator enumerator = input.EnumerateRunes();
+            while (enumerator.MoveNext())
+            {
+                length++;
+            }
+
+            result = context.Context;
+
+            if (!UriTemplatePattern.IsMatch(input))
+            {
+                if (context.Level >= ValidationLevel.Detailed)
+                {
+                    result = context.Context.WithResult(isValid: false, $"Validation 6.1.1 type - should have been 'string' with format 'uri-template', but was '{input}'.");
+                }
+                else if (context.Level >= ValidationLevel.Basic)
+                {
+                    result = context.Context.WithResult(isValid: false, "Validation 6.1.1 type - should have been a 'string' with format 'uri-template'.");
+                }
+                else
+                {
+                    result = context.Context.WithResult(isValid: false);
+                }
+
+                return false;
+            }
+
+            if (context.Level == ValidationLevel.Verbose)
+            {
+                result = context.Context.WithResult(isValid: true, "Validation 6.1.1 type - was a 'string' with format 'uri-template'.");
+            }
+
+            return true;
+        }
     }
 
     /// <summary>
@@ -2719,6 +2752,8 @@ public static partial class Validate
 
         return validationContext;
     }
+
+    private readonly record struct ValidationContextWrapper(in ValidationContext Context, ValidationLevel Level);
 
     private readonly record struct StringValidationContextWrapper(in ValidationContext Context, ValidationLevel Level, int? MinLength, int? MaxLength, Regex? Pattern);
 }
