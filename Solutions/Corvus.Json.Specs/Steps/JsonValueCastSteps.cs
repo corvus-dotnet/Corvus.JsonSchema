@@ -1666,31 +1666,59 @@ public class JsonValueCastSteps
     }
 
     /// <summary>
-    /// Casts the <see cref="JsonDuration"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="Period"/> and stores it in <see cref="CastResultKey"/>.
+    /// Casts the <see cref="JsonDuration"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="NodaTime.Period"/> and stores it in <see cref="CastResultKey"/>.
     /// </summary>
     [When("I cast the JsonDuration to Period")]
     public void WhenICastTheJsonDurationToPeriod()
     {
-        this.scenarioContext.Set((Period)this.scenarioContext.Get<JsonDuration>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+        this.scenarioContext.Set((NodaTime.Period)this.scenarioContext.Get<JsonDuration>(JsonValueSteps.SubjectUnderTest), CastResultKey);
     }
 
     /// <summary>
     /// Compares the <see cref="JsonDuration"/> in the context value <see cref="CastResultKey"/> with the given Period.
     /// </summary>
-    /// <param name="expectedValue">The serialized form of the <see cref="Period"/>.</param>
+    /// <param name="expectedValue">The serialized form of the <see cref="NodaTime.Period"/>.</param>
     [Then("the result should equal the Period (.*)")]
     public void ThenTheResultShouldEqualThePeriod(string expectedValue)
     {
-        Assert.AreEqual(PeriodPattern.NormalizingIso.Parse(expectedValue.Trim('"')).Value, this.scenarioContext.Get<Period>(CastResultKey));
+        Assert.AreEqual(PeriodPattern.NormalizingIso.Parse(expectedValue.Trim('"')).Value, this.scenarioContext.Get<NodaTime.Period>(CastResultKey));
     }
 
     /// <summary>
-    /// Casts the <see cref="Period"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="JsonDuration"/> and stores it in <see cref="CastResultKey"/>.
+    /// Casts the <see cref="NodaTime.Period"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="JsonDuration"/> and stores it in <see cref="CastResultKey"/>.
     /// </summary>
     [When("I cast the Period to JsonDuration")]
     public void WhenICastThePeriodToJsonDuration()
     {
-        this.scenarioContext.Set((JsonDuration)this.scenarioContext.Get<Period>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+        this.scenarioContext.Set((JsonDuration)this.scenarioContext.Get<NodaTime.Period>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /// <summary>
+    /// Casts the <see cref="JsonDuration"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="Corvus.Json.Period"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the JsonDuration to Corvus Period")]
+    public void WhenICastTheJsonDurationToCorvusPeriod()
+    {
+        this.scenarioContext.Set((Corvus.Json.Period)this.scenarioContext.Get<JsonDuration>(JsonValueSteps.SubjectUnderTest), CastResultKey);
+    }
+
+    /// <summary>
+    /// Compares the <see cref="JsonDuration"/> in the context value <see cref="CastResultKey"/> with the given Period.
+    /// </summary>
+    /// <param name="expectedValue">The serialized form of the <see cref="Corvus.Json.Period"/>.</param>
+    [Then("the result should equal the Corvus Period (.*)")]
+    public void ThenTheResultShouldEqualTheCorvusPeriod(string expectedValue)
+    {
+        Assert.AreEqual(Corvus.Json.Period.Parse(expectedValue.Trim('"').AsSpan()), this.scenarioContext.Get<Corvus.Json.Period>(CastResultKey));
+    }
+
+    /// <summary>
+    /// Casts the <see cref="Corvus.Json.Period"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="JsonDuration"/> and stores it in <see cref="CastResultKey"/>.
+    /// </summary>
+    [When("I cast the Corvus Period to JsonDuration")]
+    public void WhenICastTheCorvusPeriodToJsonDuration()
+    {
+        this.scenarioContext.Set((JsonDuration)this.scenarioContext.Get<Corvus.Json.Period>(JsonValueSteps.SubjectUnderTest), CastResultKey);
     }
 
     /// <summary>

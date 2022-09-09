@@ -1403,14 +1403,24 @@ public class JsonValueSteps
     }
 
     /// <summary>
-    /// Stores the <see cref="Period"/> <paramref name="value"/> in the context key <see cref="SubjectUnderTest"/>.
+    /// Stores the <see cref="NodaTime.Period"/> <paramref name="value"/> in the context key <see cref="SubjectUnderTest"/>.
     /// </summary>
     /// <param name="value">The string value of the <see cref="LocalDate"/>.</param>
     [Given(@"the Period for ""(.*)""")]
     public void GivenThePeriodFor(string value)
     {
-        ParseResult<Period> parseResult = PeriodPattern.NormalizingIso.Parse(value.ToUpperInvariant());
+        ParseResult<NodaTime.Period> parseResult = PeriodPattern.NormalizingIso.Parse(value.ToUpperInvariant());
         this.scenarioContext.Set(parseResult.Value, SubjectUnderTest);
+    }
+
+    /// <summary>
+    /// Stores the <see cref="Corvus.Json.Period"/> <paramref name="value"/> in the context key <see cref="SubjectUnderTest"/>.
+    /// </summary>
+    /// <param name="value">The string value of the <see cref="LocalDate"/>.</param>
+    [Given(@"the Corvus Period for ""(.*)""")]
+    public void GivenTheCorvusPeriodFor(string value)
+    {
+        this.scenarioContext.Set(Corvus.Json.Period.Parse(value.ToUpperInvariant()), SubjectUnderTest);
     }
 
     /// <summary>
