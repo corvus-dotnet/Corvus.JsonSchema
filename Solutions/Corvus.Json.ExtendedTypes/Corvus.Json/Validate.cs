@@ -917,30 +917,54 @@ public static partial class Validate
             }
         }
 
-        JsonString jsonPointer = instance.AsString;
-        if (!JsonPointerPattern.IsMatch(jsonPointer))
+        ValidationContext result = validationContext;
+
+        if (instance.HasJsonElementBacking)
         {
-            if (level >= ValidationLevel.Detailed)
-            {
-                return validationContext.WithResult(isValid: false, $"Validation 6.1.1 type - should have been 'string' with format 'json-pointer' but was '{jsonPointer}'.");
-            }
-            else if (level >= ValidationLevel.Basic)
-            {
-                return validationContext.WithResult(isValid: false, "Validation 6.1.1 type - should have been a 'string' with format 'json-pointer'.");
-            }
-            else
-            {
-                return validationContext.WithResult(isValid: false);
-            }
+            // We know it is a string, so we should always return true, no need to check the result.
+            instance.AsJsonElement.TryGetValue(PointerValidator, new ValidationContextWrapper(result, level), out result);
+        }
+        else
+        {
+            PointerValidator(instance.AsString.AsSpan(), new ValidationContextWrapper(result, level), out result);
         }
 
-        if (level == ValidationLevel.Verbose)
+        if (level == ValidationLevel.Flag && !result.IsValid)
         {
-            return validationContext
-                .WithResult(isValid: true, "Validation 6.1.1 type - was a 'string' with format 'json-pointer'.");
+            return result;
         }
 
-        return validationContext;
+        return result;
+
+        static bool PointerValidator(ReadOnlySpan<char> input, in ValidationContextWrapper context, out ValidationContext result)
+        {
+            result = context.Context;
+
+            if (!JsonPointerPattern.IsMatch(input))
+            {
+                if (context.Level >= ValidationLevel.Detailed)
+                {
+                    result = context.Context.WithResult(isValid: false, $"Validation 6.1.1 type - should have been 'string' with format 'json-pointer', but was '{input}'.");
+                }
+                else if (context.Level >= ValidationLevel.Basic)
+                {
+                    result = context.Context.WithResult(isValid: false, "Validation 6.1.1 type - should have been a 'string' with format 'json-pointer'.");
+                }
+                else
+                {
+                    result = context.Context.WithResult(isValid: false);
+                }
+
+                return false;
+            }
+
+            if (context.Level == ValidationLevel.Verbose)
+            {
+                result = context.Context.WithResult(isValid: true, "Validation 6.1.1 type - was a 'string' with format 'json-pointer'.");
+            }
+
+            return true;
+        }
     }
 
     /// <summary>

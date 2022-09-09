@@ -127,7 +127,6 @@ public static class JsonElementExtensions
             stackalloc byte[JsonConstants.StackallocThreshold] :
             (sourceArray = ArrayPool<byte>.Shared.Rent(length));
             JsonReaderHelper.Unescape(rawInput, sourceUnescaped, 0, out int written);
-            Debug.Assert(written > 0, "0 bytes were written.");
             sourceUnescaped = sourceUnescaped[..written];
 
             try
@@ -162,7 +161,6 @@ public static class JsonElementExtensions
 
             JsonReaderHelper.Unescape(rawInput, utf8Unescaped, idx, out int written);
             utf8Unescaped = utf8Unescaped[..written];
-            Debug.Assert(!utf8Unescaped.IsEmpty, "The unescaped value should have been written.");
 
             try
             {
@@ -191,7 +189,6 @@ public static class JsonElementExtensions
         stackalloc char[JsonConstants.StackallocThreshold] :
         (sourceTranscodedArray = ArrayPool<char>.Shared.Rent(length));
         int writtenTranscoded = JsonReaderHelper.TranscodeHelper(decodedUtf8String, sourceTranscoded);
-        Debug.Assert(writtenTranscoded > 0, "Bytes should have been written");
         sourceTranscoded = sourceTranscoded[..writtenTranscoded];
 
         bool success = false;
