@@ -20,7 +20,6 @@
           "subdirectories": {
             "format": {
               "excludeFromThisDirectory": [
-                "unknown\\.json"
               ],
               "testExclusions": {
                 "optional/format/date-time.json": {
@@ -147,16 +146,7 @@
       "outputFolder": "Draft2020212",
       "excludeFromThisDirectory": [
         // We don't support custom metaschema
-        "vocabulary\\.json",
-
-        // ID shenanigans - because we support reference to islands of schema regardless of
-        // whether they are, in their full global context, part of a schema (which is an
-        // optionally allowed feature) we don't pass these tests, which verify that you
-        // can't do that! But it's possible that we could handle these cases with more subtle
-        // checks in JsonSchemaWalker.HandleElement in which we look up the stack to
-        // understand whether an $id we're seeing might be inside an unknown keyword.
-        "unknownKeyword\\.json",
-        "refOfUnknownKeyword\\.json"
+        "vocabulary\\.json"
       ],
       "testExclusions": {
       },
@@ -165,13 +155,11 @@
           "excludeFromThisDirectory": [
             "bignum\\.json",
             "ecmascript-regex\\.json",
-            "non-bmp-regex\\.json",
-            "refOfUnknownKeyword\\.json"
+            "non-bmp-regex\\.json"
           ],
           "subdirectories": {
             "format": {
               "excludeFromThisDirectory": [
-                "unknown\\.json"
               ],
               "testExclusions": {
                 "optional/format/date-time.json": {
