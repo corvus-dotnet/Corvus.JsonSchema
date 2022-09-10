@@ -14,13 +14,11 @@ public readonly struct ValidationResult
     /// </summary>
     /// <param name="valid">A value indicating whether this is a valid result.</param>
     /// <param name="message">The error message.</param>
-    /// <param name="absoluteKeywordLocation">The absolute keyword location of the result.</param>
     /// <param name="location">The location of the result.</param>
-    public ValidationResult(bool valid, string? message = null, string? absoluteKeywordLocation = null, string? location = null)
+    public ValidationResult(bool valid, string? message = null, (string SchemaLocation, string DocumentLocation)? location = null)
     {
         this.Valid = valid;
         this.Message = message;
-        this.AbsoluteKeywordLocation = absoluteKeywordLocation;
         this.Location = location;
     }
 
@@ -38,12 +36,7 @@ public readonly struct ValidationResult
     public string? Message { get; }
 
     /// <summary>
-    /// Gets the absolute keyword location.
-    /// </summary>
-    public string? AbsoluteKeywordLocation { get; }
-
-    /// <summary>
     /// Gets the location.
     /// </summary>
-    public string? Location { get; }
+    public (string SchemaLocation, string DocumentLocation)? Location { get; }
 }
