@@ -5,7 +5,7 @@
 using System.Text;
 using Microsoft.Extensions.ObjectPool;
 
-namespace Corvus.Json.UriTemplates;
+namespace Corvus.Json.Internal;
 
 /// <summary>
 /// A <see cref="StringBuilder"/> provider.

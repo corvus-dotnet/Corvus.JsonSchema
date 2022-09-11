@@ -6,6 +6,7 @@
 using System.Collections.Immutable;
 using System.Text;
 using System.Text.Json;
+using Corvus.Json.Internal;
 
 namespace Corvus.Json.UriTemplates;
 
