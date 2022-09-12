@@ -55,7 +55,6 @@ public readonly struct JsonReference : IEquatable<JsonReference>
     /// </summary>
     /// <param name="uri">The uri component of the reference.</param>
     /// <param name="pointer">The pointer component of the reference.</param>
-    [SuppressMessage("StyleCop.CSharp.SpacingRules", "SA1009:Closing parenthesis should be spaced correctly", Justification = "Stylecop does not yet support ..")]
     public JsonReference(ReadOnlySpan<char> uri, ReadOnlySpan<char> pointer)
     {
         int extra = pointer.Length == 0 || pointer[0] == '#' ? 0 : 1;
@@ -220,7 +219,7 @@ public readonly struct JsonReference : IEquatable<JsonReference>
         bool hasHash = hi is not null;
         if (!hasHash)
         {
-            requiredLength += 1;
+            requiredLength++;
         }
 
         Span<char> encodedValue = stackalloc char[requiredLength];
@@ -423,7 +422,6 @@ public readonly struct JsonReference : IEquatable<JsonReference>
         }
     }
 
-    [SuppressMessage("StyleCop.CSharp.SpacingRules", "SA1009:Closing parenthesis should be spaced correctly", Justification = "Stylecop does not yet support ..")]
     private static int Merge(ReadOnlySpan<char> basePath, ReadOnlySpan<char> path, bool baseHasAuthority, in Memory<char> pathMemory)
     {
         if (baseHasAuthority && basePath.Length == 0)
@@ -488,7 +486,7 @@ public readonly struct JsonReference : IEquatable<JsonReference>
                 else
                 {
                     // Skip to the end
-                    readIndex += 1;
+                    readIndex++;
                 }
             }
             else if (hasLeadingSlash || path[readIndex] == '/')
@@ -504,7 +502,7 @@ public readonly struct JsonReference : IEquatable<JsonReference>
                                 // Skip '/.' leaving us at the trailing '/' as required.
                                 if (hasLeadingSlash)
                                 {
-                                    readIndex += 1;
+                                    readIndex++;
                                 }
                                 else
                                 {
@@ -572,7 +570,7 @@ public readonly struct JsonReference : IEquatable<JsonReference>
                                 // Skip the '/.' and give us a virtual trailing slash
                                 if (!hasLeadingSlash)
                                 {
-                                    readIndex += 1;
+                                    readIndex++;
                                 }
 
                                 hasLeadingSlash = true;
@@ -665,7 +663,6 @@ public readonly struct JsonReference : IEquatable<JsonReference>
         return ReadOnlySpan<char>.Empty;
     }
 
-    [SuppressMessage("StyleCop.CSharp.SpacingRules", "SA1009:Closing parenthesis should be spaced correctly", Justification = "Stylecop does not yet support ..")]
     private ReadOnlySpan<char> FindFragment(int start)
     {
         int index = start;

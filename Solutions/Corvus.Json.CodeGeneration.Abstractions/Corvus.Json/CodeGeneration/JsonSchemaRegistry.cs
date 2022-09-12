@@ -15,6 +15,7 @@ internal class JsonSchemaRegistry
 {
     private static readonly JsonReference DefaultAbsoluteLocation = new("https://endjin.com/");
     private readonly Dictionary<string, LocatedSchema> locatedSchema = new();
+    private readonly Dictionary<string, string> dynamicToAbsoluteLocations = new();
     private readonly IDocumentResolver documentResolver;
 
     /// <summary>
@@ -175,22 +176,6 @@ internal class JsonSchemaRegistry
                     this.locatedSchema.TryAdd(currentLocation, previousSchema);
                 }
             }
-        }
-        else if (schema.TryGetProperty(this.JsonSchemaConfiguration.IdKeyword, out JsonAny id2))
-        {
-            JsonReference previousLocation = currentLocation;
-            JsonReference location = currentLocation.Apply(new JsonReference(id2));
-
-            if (!this.locatedSchema.TryGetValue(previousLocation, out LocatedSchema? previousSchema))
-            {
-                throw new InvalidOperationException($"The previously registered schema for '{previousLocation}' was not found.");
-            }
-
-            // Update the location to reflect the ID
-            previousSchema.Location = location;
-
-            // Also add the dynamic located schema for the root.
-            this.locatedSchema.TryAdd(location, previousSchema);
         }
 
         // Having (possibly) updated the current location for the ID we can now leave.

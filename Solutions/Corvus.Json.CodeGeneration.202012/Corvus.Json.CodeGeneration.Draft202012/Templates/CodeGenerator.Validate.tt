@@ -30,6 +30,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
         if (level != ValidationLevel.Flag)
         {
             result = result.UsingStack();
+            result = result.PushSchemaLocation("<#= TypeDeclaration.LocatedSchema.Location #>");
         }
 <#  if (HasAdditionalProperties || HasUnevaluatedProperties)
     { #>
@@ -206,6 +207,11 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
             return result;
         }
 <#  } #>
+        if (level != ValidationLevel.Flag)
+        {
+            result = result.PopLocation();
+        }
+
         return result;
     }
 }
