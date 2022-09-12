@@ -29,12 +29,14 @@ public readonly partial struct Schema
                 result = result.PushValidationLocationProperty("allOf");
             }
 
+            ValidationContext childContextBase = result;
+            ValidationContext childContext0 = childContextBase;
             if (level > ValidationLevel.Basic)
             {
-                result = result.PushValidationLocationArrayIndex(0);
+                childContext0 = childContext0.PushValidationLocationArrayIndex(0);
             }
 
-            ValidationContext allOfResult0 = this.As<Corvus.Json.JsonSchema.Draft7.Schema.NonNegativeInteger>().Validate(validationContext.CreateChildContext(), level);
+            ValidationContext allOfResult0 = this.As<Corvus.Json.JsonSchema.Draft7.Schema.NonNegativeInteger>().Validate(childContext0.CreateChildContext(), level);
             if (!allOfResult0.IsValid)
             {
                 if (level >= ValidationLevel.Detailed)
@@ -56,17 +58,13 @@ public readonly partial struct Schema
                 result = result.MergeChildContext(allOfResult0, level >= ValidationLevel.Detailed);
             }
 
+            ValidationContext childContext1 = childContextBase;
             if (level > ValidationLevel.Basic)
             {
-                result = result.PopLocation(); // Index
+                childContext1 = childContext1.PushValidationLocationArrayIndex(1);
             }
 
-            if (level > ValidationLevel.Basic)
-            {
-                result = result.PushValidationLocationArrayIndex(1);
-            }
-
-            ValidationContext allOfResult1 = this.As<Corvus.Json.JsonSchema.Draft7.Schema.NonNegativeIntegerDefault0.AllOf1Entity>().Validate(validationContext.CreateChildContext(), level);
+            ValidationContext allOfResult1 = this.As<Corvus.Json.JsonSchema.Draft7.Schema.NonNegativeIntegerDefault0.AllOf1Entity>().Validate(childContext1.CreateChildContext(), level);
             if (!allOfResult1.IsValid)
             {
                 if (level >= ValidationLevel.Detailed)
@@ -86,11 +84,6 @@ public readonly partial struct Schema
             else
             {
                 result = result.MergeChildContext(allOfResult1, level >= ValidationLevel.Detailed);
-            }
-
-            if (level > ValidationLevel.Basic)
-            {
-                result = result.PopLocation(); // Index
             }
 
             if (level > ValidationLevel.Basic)

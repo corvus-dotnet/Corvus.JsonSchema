@@ -17,7 +17,7 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft201909 {
     public partial class CodeGeneratorValidateIfThenElse : CodeGeneratorValidateIfThenElseBase {
         
         
-        #line 158 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.IfThenElse.tt"
+        #line 156 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.IfThenElse.tt"
 
     public bool ShouldGenerate
     {
@@ -123,23 +123,21 @@ namespace ");
 
         if (!ifResult.IsValid)
         {
-            if (level >= ValidationLevel.Detailed)
-            {
-                result = validationContext.MergeResults(false, level, ifResult, ifResult);
-            }
-            else if (level >= ValidationLevel.Basic)
+            if (level >= ValidationLevel.Verbose)
             {
                 result = validationContext.MergeResults(false, level, ifResult, ifResult);
             }
         }
         else
         {
-            if (level >= ValidationLevel.Basic)
+            if (level >= ValidationLevel.Verbose)
             {
                 result = result.MergeChildContext(ifResult, true);
             }
-
-            result = result.MergeChildContext(ifResult, false);
+            else
+            {
+                result = result.MergeChildContext(ifResult, false);
+            }
         }
 
         if (level > ValidationLevel.Basic)
@@ -151,14 +149,14 @@ namespace ");
             #line default
             #line hidden
             
-            #line 67 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.IfThenElse.tt"
+            #line 65 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.IfThenElse.tt"
   if (HasThen)
     { 
             
             #line default
             #line hidden
             
-            #line 69 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.IfThenElse.tt"
+            #line 67 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.IfThenElse.tt"
             this.Write("\r\n        if (ifResult.IsValid)\r\n        {\r\n            if (level > ValidationLev" +
                     "el.Basic)\r\n            {\r\n                result = result.PushValidationLocation" +
                     "Property(\"then\");\r\n            }\r\n\r\n            ValidationContext thenResult = t" +
@@ -167,13 +165,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 77 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.IfThenElse.tt"
+            #line 75 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.IfThenElse.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( ThenFullyQualifiedDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 77 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.IfThenElse.tt"
+            #line 75 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.IfThenElse.tt"
             this.Write(@">().Validate(validationContext.CreateChildContext(), level);
 
             if (!thenResult.IsValid)
@@ -211,7 +209,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 109 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.IfThenElse.tt"
+            #line 107 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.IfThenElse.tt"
   }
     if (HasElse)
     { 
@@ -219,7 +217,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 112 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.IfThenElse.tt"
+            #line 110 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.IfThenElse.tt"
             this.Write("\r\n        if (!ifResult.IsValid)\r\n        {\r\n            if (level > ValidationLe" +
                     "vel.Basic)\r\n            {\r\n                result = result.PushValidationLocatio" +
                     "nProperty(\"else\");\r\n            }\r\n\r\n            ValidationContext elseResult = " +
@@ -228,13 +226,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 120 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.IfThenElse.tt"
+            #line 118 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.IfThenElse.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( ElseFullyQualifiedDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 120 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.IfThenElse.tt"
+            #line 118 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.IfThenElse.tt"
             this.Write(@">().Validate(validationContext.CreateChildContext(), level);
 
             if (!elseResult.IsValid)
@@ -272,19 +270,19 @@ namespace ");
             #line default
             #line hidden
             
-            #line 152 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.IfThenElse.tt"
+            #line 150 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.IfThenElse.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 153 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.IfThenElse.tt"
+            #line 151 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.IfThenElse.tt"
             this.Write("\r\n        return result;\r\n    }\r\n}\r\n");
             
             #line default
             #line hidden
             
-            #line 157 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.IfThenElse.tt"
+            #line 155 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.IfThenElse.tt"
  EndNesting(); 
             
             #line default

@@ -17,7 +17,7 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft7 {
     public partial class CodeGeneratorValidateAllOf : CodeGeneratorValidateAllOfBase {
         
         
-        #line 92 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
+        #line 91 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
 
     public bool ShouldGenerate
     {
@@ -111,12 +111,14 @@ namespace ");
             result = result.PushValidationLocationProperty(""allOf"");
         }
 
+        ValidationContext childContextBase = result;
+
 ");
             
             #line default
             #line hidden
             
-            #line 44 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
+            #line 46 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
   int allOfIndex = 0;
     foreach (var allOf in AllOf)
     { 
@@ -124,9 +126,8 @@ namespace ");
             #line default
             #line hidden
             
-            #line 47 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
-            this.Write("\r\n        if (level > ValidationLevel.Basic)\r\n        {\r\n            result = res" +
-                    "ult.PushValidationLocationArrayIndex(");
+            #line 49 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
+            this.Write("\r\n        ValidationContext childContext");
             
             #line default
             #line hidden
@@ -138,56 +139,104 @@ namespace ");
             #line hidden
             
             #line 50 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
+            this.Write(" = childContextBase;\r\n        if (level > ValidationLevel.Basic)\r\n        {\r\n    " +
+                    "        childContext");
+            
+            #line default
+            #line hidden
+            
+            #line 53 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( allOfIndex ));
+            
+            #line default
+            #line hidden
+            
+            #line 53 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
+            this.Write(" = childContext");
+            
+            #line default
+            #line hidden
+            
+            #line 53 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( allOfIndex ));
+            
+            #line default
+            #line hidden
+            
+            #line 53 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
+            this.Write(".PushValidationLocationArrayIndex(");
+            
+            #line default
+            #line hidden
+            
+            #line 53 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( allOfIndex ));
+            
+            #line default
+            #line hidden
+            
+            #line 53 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
             this.Write(");\r\n        }\r\n\r\n        ValidationContext allOfResult");
             
             #line default
             #line hidden
             
-            #line 53 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
+            #line 56 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( allOfIndex ));
             
             #line default
             #line hidden
             
-            #line 53 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
+            #line 56 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
             this.Write(" = this.As<");
             
             #line default
             #line hidden
             
-            #line 53 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
+            #line 56 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( allOf ));
             
             #line default
             #line hidden
             
-            #line 53 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
-            this.Write(">().Validate(validationContext.CreateChildContext(), level);\r\n\r\n        if (!allO" +
-                    "fResult");
+            #line 56 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
+            this.Write(">().Validate(childContext");
             
             #line default
             #line hidden
             
-            #line 55 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
+            #line 56 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( allOfIndex ));
             
             #line default
             #line hidden
             
-            #line 55 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
+            #line 56 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
+            this.Write(".CreateChildContext(), level);\r\n\r\n        if (!allOfResult");
+            
+            #line default
+            #line hidden
+            
+            #line 58 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( allOfIndex ));
+            
+            #line default
+            #line hidden
+            
+            #line 58 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
             this.Write(".IsValid)\r\n        {\r\n            if (level >= ValidationLevel.Detailed)\r\n       " +
                     "     {\r\n                result = result.MergeChildContext(allOfResult");
             
             #line default
             #line hidden
             
-            #line 59 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
+            #line 62 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( allOfIndex ));
             
             #line default
             #line hidden
             
-            #line 59 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
+            #line 62 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
             this.Write(@", true).WithResult(isValid: false, ""Validation 10.2.1.1. allOf - failed to validate against the allOf schema."");
             }
             else if (level >= ValidationLevel.Basic)
@@ -197,13 +246,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 63 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
+            #line 66 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( allOfIndex ));
             
             #line default
             #line hidden
             
-            #line 63 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
+            #line 66 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
             this.Write(", true).WithResult(isValid: false, \"Validation 10.2.1.1. allOf - failed to valida" +
                     "te against the allOf schema.\");\r\n            }\r\n            else\r\n            {\r" +
                     "\n                result = result.MergeChildContext(allOfResult");
@@ -211,13 +260,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 67 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
+            #line 70 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( allOfIndex ));
             
             #line default
             #line hidden
             
-            #line 67 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
+            #line 70 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
             this.Write(", false).WithResult(isValid: false);\r\n                return result;\r\n           " +
                     " }\r\n        }\r\n        else\r\n        {\r\n            result = result.MergeChildCo" +
                     "ntext(allOfResult");
@@ -225,35 +274,33 @@ namespace ");
             #line default
             #line hidden
             
-            #line 73 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
+            #line 76 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( allOfIndex ));
             
             #line default
             #line hidden
             
-            #line 73 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
-            this.Write(", level >= ValidationLevel.Detailed);\r\n        }\r\n\r\n        if (level > Validatio" +
-                    "nLevel.Basic)\r\n        {\r\n            result = result.PopLocation(); // Index\r\n " +
-                    "       }\r\n");
+            #line 76 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
+            this.Write(", level >= ValidationLevel.Detailed);\r\n        }\r\n\r\n");
             
             #line default
             #line hidden
             
-            #line 80 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
+            #line 79 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
       allOfIndex++;
     } 
             
             #line default
             #line hidden
             
-            #line 82 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
+            #line 81 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
             this.Write("\r\n        if (level > ValidationLevel.Basic)\r\n        {\r\n            result = res" +
                     "ult.PopLocation(); // allOf\r\n        }\r\n\r\n        return result;\r\n    }\r\n}\r\n");
             
             #line default
             #line hidden
             
-            #line 91 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
+            #line 90 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
  EndNesting(); 
             
             #line default

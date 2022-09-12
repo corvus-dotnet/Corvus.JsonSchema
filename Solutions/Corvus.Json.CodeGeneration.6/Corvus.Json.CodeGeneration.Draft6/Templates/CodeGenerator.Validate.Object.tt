@@ -119,7 +119,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
             {
                 if (level > ValidationLevel.Basic)
                 {
-                    result = result.PushDocumentProperty(property.Name);
+                    result = result.PushDocumentProperty("properties", property.Name);
                 }
 
                 result = result.WithLocalProperty(propertyCount);
@@ -164,11 +164,11 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 <#  }
     if (HasPropertyNames || HasPatternProperties)
     { #>
-            string propertyName = property.Name;
+            string validateObjectPropertyName = property.Name;
 <#      if (HasPropertyNames)
         { #>
 
-            result = new <#= PropertyNamesDotnetTypeName #>(propertyName).Validate(result, level);
+            result = new <#= PropertyNamesDotnetTypeName #>(validateObjectPropertyName).Validate(result, level);
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
@@ -179,7 +179,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 
             foreach (System.Collections.Generic.KeyValuePair<Regex, PatternPropertyValidator> patternProperty in __CorvusPatternProperties)
             {
-                if (patternProperty.Key.IsMatch(propertyName))
+                if (patternProperty.Key.IsMatch(validateObjectPropertyName))
                 {
                     result = result.WithLocalProperty(propertyCount);
                     result = patternProperty.Value(property, result, level);

@@ -13,7 +13,7 @@ string JsonText = @"{
       ""givenName"": ""Michael"",
       ""otherNames"": [""Francis"", ""James""]
     },
-    ""dateOfBirth"": ""Not very valid""
+    ""dateOfBirth"": ""Not likely!""
 }";
 
 objectDocument = JsonDocument.Parse(JsonText);
@@ -25,8 +25,6 @@ for (int i = 0; i < 10000; ++i)
 }
 
 personArray = PersonArray.From(builder.ToImmutable()).AsJsonElementBackedValue();
-
-await Task.Delay(5000);
 
 var result = personArray.Validate(ValidationContext.ValidContext, ValidationLevel.Detailed);
 

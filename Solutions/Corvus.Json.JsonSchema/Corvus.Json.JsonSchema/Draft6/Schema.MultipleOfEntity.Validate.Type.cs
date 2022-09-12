@@ -22,7 +22,7 @@ public readonly partial struct Schema
         {
             ValidationContext result = validationContext;
             bool isValid = false;
-            ValidationContext localResultNumber = Corvus.Json.Validate.TypeNumber(valueKind, result, level);
+            ValidationContext localResultNumber = Corvus.Json.Validate.TypeNumber(valueKind, result.CreateChildContext(), level);
             if (level == ValidationLevel.Flag && localResultNumber.IsValid)
             {
                 return validationContext;

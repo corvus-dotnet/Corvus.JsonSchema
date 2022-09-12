@@ -287,7 +287,7 @@ namespace ");
 
                 if (level > ValidationLevel.Basic)
                 {
-                    result = result.PushDocumentProperty(property.Name);
+                    result = result.PushDocumentProperty(""properties"", property.Name);
                 }
 
                 var propertyResult = propertyValidator(property, result.CreateChildContext(), level);

@@ -20,7 +20,7 @@ public readonly partial struct Format
     {
         ValidationContext result = validationContext;
         bool isValid = false;
-        ValidationContext localResultObject = Corvus.Json.Validate.TypeObject(valueKind, result, level);
+        ValidationContext localResultObject = Corvus.Json.Validate.TypeObject(valueKind, result.CreateChildContext(), level);
         if (level == ValidationLevel.Flag && localResultObject.IsValid)
         {
             return validationContext;
@@ -31,7 +31,7 @@ public readonly partial struct Format
             isValid = true;
         }
 
-        ValidationContext localResultBoolean = Corvus.Json.Validate.TypeBoolean(valueKind, result, level);
+        ValidationContext localResultBoolean = Corvus.Json.Validate.TypeBoolean(valueKind, result.CreateChildContext(), level);
         if (level == ValidationLevel.Flag && localResultBoolean.IsValid)
         {
             return validationContext;

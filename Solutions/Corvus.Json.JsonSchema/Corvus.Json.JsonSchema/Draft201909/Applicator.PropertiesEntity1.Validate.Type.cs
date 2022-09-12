@@ -22,7 +22,7 @@ public readonly partial struct Applicator
         {
             ValidationContext result = validationContext;
             bool isValid = false;
-            ValidationContext localResultObject = Corvus.Json.Validate.TypeObject(valueKind, result, level);
+            ValidationContext localResultObject = Corvus.Json.Validate.TypeObject(valueKind, result.CreateChildContext(), level);
             if (level == ValidationLevel.Flag && localResultObject.IsValid)
             {
                 return validationContext;

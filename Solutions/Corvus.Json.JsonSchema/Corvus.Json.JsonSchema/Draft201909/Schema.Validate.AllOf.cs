@@ -27,12 +27,14 @@ public readonly partial struct Schema
             result = result.PushValidationLocationProperty("allOf");
         }
 
+        ValidationContext childContextBase = result;
+        ValidationContext childContext0 = childContextBase;
         if (level > ValidationLevel.Basic)
         {
-            result = result.PushValidationLocationArrayIndex(0);
+            childContext0 = childContext0.PushValidationLocationArrayIndex(0);
         }
 
-        ValidationContext allOfResult0 = this.As<Corvus.Json.JsonSchema.Draft201909.Core>().Validate(validationContext.CreateChildContext(), level);
+        ValidationContext allOfResult0 = this.As<Corvus.Json.JsonSchema.Draft201909.Core>().Validate(childContext0.CreateChildContext(), level);
         if (!allOfResult0.IsValid)
         {
             if (level >= ValidationLevel.Detailed)
@@ -54,17 +56,13 @@ public readonly partial struct Schema
             result = result.MergeChildContext(allOfResult0, level >= ValidationLevel.Detailed);
         }
 
+        ValidationContext childContext1 = childContextBase;
         if (level > ValidationLevel.Basic)
         {
-            result = result.PopLocation(); // Index
+            childContext1 = childContext1.PushValidationLocationArrayIndex(1);
         }
 
-        if (level > ValidationLevel.Basic)
-        {
-            result = result.PushValidationLocationArrayIndex(1);
-        }
-
-        ValidationContext allOfResult1 = this.As<Corvus.Json.JsonSchema.Draft201909.Applicator>().Validate(validationContext.CreateChildContext(), level);
+        ValidationContext allOfResult1 = this.As<Corvus.Json.JsonSchema.Draft201909.Applicator>().Validate(childContext1.CreateChildContext(), level);
         if (!allOfResult1.IsValid)
         {
             if (level >= ValidationLevel.Detailed)
@@ -86,17 +84,13 @@ public readonly partial struct Schema
             result = result.MergeChildContext(allOfResult1, level >= ValidationLevel.Detailed);
         }
 
+        ValidationContext childContext2 = childContextBase;
         if (level > ValidationLevel.Basic)
         {
-            result = result.PopLocation(); // Index
+            childContext2 = childContext2.PushValidationLocationArrayIndex(2);
         }
 
-        if (level > ValidationLevel.Basic)
-        {
-            result = result.PushValidationLocationArrayIndex(2);
-        }
-
-        ValidationContext allOfResult2 = this.As<Corvus.Json.JsonSchema.Draft201909.Validation>().Validate(validationContext.CreateChildContext(), level);
+        ValidationContext allOfResult2 = this.As<Corvus.Json.JsonSchema.Draft201909.Validation>().Validate(childContext2.CreateChildContext(), level);
         if (!allOfResult2.IsValid)
         {
             if (level >= ValidationLevel.Detailed)
@@ -118,17 +112,13 @@ public readonly partial struct Schema
             result = result.MergeChildContext(allOfResult2, level >= ValidationLevel.Detailed);
         }
 
+        ValidationContext childContext3 = childContextBase;
         if (level > ValidationLevel.Basic)
         {
-            result = result.PopLocation(); // Index
+            childContext3 = childContext3.PushValidationLocationArrayIndex(3);
         }
 
-        if (level > ValidationLevel.Basic)
-        {
-            result = result.PushValidationLocationArrayIndex(3);
-        }
-
-        ValidationContext allOfResult3 = this.As<Corvus.Json.JsonSchema.Draft201909.MetaData>().Validate(validationContext.CreateChildContext(), level);
+        ValidationContext allOfResult3 = this.As<Corvus.Json.JsonSchema.Draft201909.MetaData>().Validate(childContext3.CreateChildContext(), level);
         if (!allOfResult3.IsValid)
         {
             if (level >= ValidationLevel.Detailed)
@@ -150,17 +140,13 @@ public readonly partial struct Schema
             result = result.MergeChildContext(allOfResult3, level >= ValidationLevel.Detailed);
         }
 
+        ValidationContext childContext4 = childContextBase;
         if (level > ValidationLevel.Basic)
         {
-            result = result.PopLocation(); // Index
+            childContext4 = childContext4.PushValidationLocationArrayIndex(4);
         }
 
-        if (level > ValidationLevel.Basic)
-        {
-            result = result.PushValidationLocationArrayIndex(4);
-        }
-
-        ValidationContext allOfResult4 = this.As<Corvus.Json.JsonSchema.Draft201909.Format>().Validate(validationContext.CreateChildContext(), level);
+        ValidationContext allOfResult4 = this.As<Corvus.Json.JsonSchema.Draft201909.Format>().Validate(childContext4.CreateChildContext(), level);
         if (!allOfResult4.IsValid)
         {
             if (level >= ValidationLevel.Detailed)
@@ -182,17 +168,13 @@ public readonly partial struct Schema
             result = result.MergeChildContext(allOfResult4, level >= ValidationLevel.Detailed);
         }
 
+        ValidationContext childContext5 = childContextBase;
         if (level > ValidationLevel.Basic)
         {
-            result = result.PopLocation(); // Index
+            childContext5 = childContext5.PushValidationLocationArrayIndex(5);
         }
 
-        if (level > ValidationLevel.Basic)
-        {
-            result = result.PushValidationLocationArrayIndex(5);
-        }
-
-        ValidationContext allOfResult5 = this.As<Corvus.Json.JsonSchema.Draft201909.Content>().Validate(validationContext.CreateChildContext(), level);
+        ValidationContext allOfResult5 = this.As<Corvus.Json.JsonSchema.Draft201909.Content>().Validate(childContext5.CreateChildContext(), level);
         if (!allOfResult5.IsValid)
         {
             if (level >= ValidationLevel.Detailed)
@@ -212,11 +194,6 @@ public readonly partial struct Schema
         else
         {
             result = result.MergeChildContext(allOfResult5, level >= ValidationLevel.Detailed);
-        }
-
-        if (level > ValidationLevel.Basic)
-        {
-            result = result.PopLocation(); // Index
         }
 
         if (level > ValidationLevel.Basic)

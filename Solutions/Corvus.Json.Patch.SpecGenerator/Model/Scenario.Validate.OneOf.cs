@@ -102,7 +102,7 @@ public readonly partial struct Scenario
 
         if (oneOfCount == 1)
         {
-            if (level >= ValidationLevel.Detailed)
+            if (level >= ValidationLevel.Verbose)
             {
                 result = result.WithResult(isValid: true, "Validation 10.2.1.3. onef - validated against the oneOf schema.");
             }

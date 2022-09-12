@@ -41,23 +41,21 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 
         if (!ifResult.IsValid)
         {
-            if (level >= ValidationLevel.Detailed)
-            {
-                result = validationContext.MergeResults(false, level, ifResult, ifResult);
-            }
-            else if (level >= ValidationLevel.Basic)
+            if (level >= ValidationLevel.Verbose)
             {
                 result = validationContext.MergeResults(false, level, ifResult, ifResult);
             }
         }
         else
         {
-            if (level >= ValidationLevel.Basic)
+            if (level >= ValidationLevel.Verbose)
             {
                 result = result.MergeChildContext(ifResult, true);
             }
-
-            result = result.MergeChildContext(ifResult, false);
+            else
+            {
+                result = result.MergeChildContext(ifResult, false);
+            }
         }
 
         if (level > ValidationLevel.Basic)

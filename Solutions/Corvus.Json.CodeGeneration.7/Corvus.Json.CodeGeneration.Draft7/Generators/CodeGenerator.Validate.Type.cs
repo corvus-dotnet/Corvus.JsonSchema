@@ -113,7 +113,7 @@ namespace ");
             
             #line 38 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Type.tt"
             this.Write(@"
-        ValidationContext localResultString = Corvus.Json.Validate.TypeString(valueKind, result, level);
+        ValidationContext localResultString = Corvus.Json.Validate.TypeString(valueKind, result.CreateChildContext(), level);
         if (level == ValidationLevel.Flag && localResultString.IsValid)
         {
             return validationContext;
@@ -138,7 +138,7 @@ namespace ");
             
             #line 52 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Type.tt"
             this.Write(@"
-        ValidationContext localResultObject = Corvus.Json.Validate.TypeObject(valueKind, result, level);
+        ValidationContext localResultObject = Corvus.Json.Validate.TypeObject(valueKind, result.CreateChildContext(), level);
         if (level == ValidationLevel.Flag && localResultObject.IsValid)
         {
             return validationContext;
@@ -163,7 +163,7 @@ namespace ");
             
             #line 66 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Type.tt"
             this.Write(@"
-        ValidationContext localResultArray = Corvus.Json.Validate.TypeArray(valueKind, result, level);
+        ValidationContext localResultArray = Corvus.Json.Validate.TypeArray(valueKind, result.CreateChildContext(), level);
         if (level == ValidationLevel.Flag && localResultArray.IsValid)
         {
             return validationContext;
@@ -188,7 +188,7 @@ namespace ");
             
             #line 80 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Type.tt"
             this.Write(@"
-        ValidationContext localResultNumber = Corvus.Json.Validate.TypeNumber(valueKind, result, level);
+        ValidationContext localResultNumber = Corvus.Json.Validate.TypeNumber(valueKind, result.CreateChildContext(), level);
         if (level == ValidationLevel.Flag && localResultNumber.IsValid)
         {
             return validationContext;
@@ -213,7 +213,7 @@ namespace ");
             
             #line 94 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Type.tt"
             this.Write(@"
-        ValidationContext localResultInteger = Corvus.Json.Validate.TypeInteger(this, result, level);
+        ValidationContext localResultInteger = Corvus.Json.Validate.TypeInteger(this, result.CreateChildContext(), level);
         if (level == ValidationLevel.Flag && localResultInteger.IsValid)
         {
             return validationContext;
@@ -238,7 +238,7 @@ namespace ");
             
             #line 108 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Type.tt"
             this.Write(@"
-        ValidationContext localResultBoolean = Corvus.Json.Validate.TypeBoolean(valueKind, result, level);
+        ValidationContext localResultBoolean = Corvus.Json.Validate.TypeBoolean(valueKind, result.CreateChildContext(), level);
         if (level == ValidationLevel.Flag && localResultBoolean.IsValid)
         {
             return validationContext;
@@ -263,7 +263,7 @@ namespace ");
             
             #line 122 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Type.tt"
             this.Write(@"
-        ValidationContext localResultNull = Corvus.Json.Validate.TypeNull(valueKind, result, level);
+        ValidationContext localResultNull = Corvus.Json.Validate.TypeNull(valueKind, result.CreateChildContext(), level);
         if (level == ValidationLevel.Flag && localResultNull.IsValid)
         {
             return validationContext;

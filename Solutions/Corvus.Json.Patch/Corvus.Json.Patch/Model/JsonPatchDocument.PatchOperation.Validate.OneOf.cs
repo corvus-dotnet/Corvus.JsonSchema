@@ -25,16 +25,18 @@ public readonly partial struct JsonPatchDocument
                 result = result.PushValidationLocationProperty("oneOf");
             }
 
+            ValidationContext childContextBase = result;
             int oneOfCount = 0;
+            ValidationContext childContext0 = childContextBase;
             if (level > ValidationLevel.Basic)
             {
-                result = result.PushValidationLocationArrayIndex(0);
+                childContext0 = childContext0.PushValidationLocationArrayIndex(0);
             }
 
-            ValidationContext oneOfResult0 = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.AddEntity>().Validate(validationContext.CreateChildContext(), level);
+            ValidationContext oneOfResult0 = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.AddEntity>().Validate(childContext0.CreateChildContext(), level);
             if (oneOfResult0.IsValid)
             {
-                result = result.MergeChildContext(oneOfResult0, level >= ValidationLevel.Detailed);
+                result = result.MergeChildContext(oneOfResult0, level >= ValidationLevel.Verbose);
                 oneOfCount += 1;
                 if (oneOfCount > 1 && level == ValidationLevel.Flag)
                 {
@@ -44,34 +46,22 @@ public readonly partial struct JsonPatchDocument
             }
             else
             {
-                if (level >= ValidationLevel.Detailed)
-                {
-                    result = result.MergeResults(result.IsValid, level, oneOfResult0);
-                }
-                else if (level >= ValidationLevel.Basic)
-                {
-                    result = result.MergeResults(result.IsValid, level, oneOfResult0);
-                }
-                else
+                if (level >= ValidationLevel.Verbose)
                 {
                     result = result.MergeResults(result.IsValid, level, oneOfResult0);
                 }
             }
 
+            ValidationContext childContext1 = childContextBase;
             if (level > ValidationLevel.Basic)
             {
-                result = result.PopLocation(); // Index
+                childContext1 = childContext1.PushValidationLocationArrayIndex(1);
             }
 
-            if (level > ValidationLevel.Basic)
-            {
-                result = result.PushValidationLocationArrayIndex(1);
-            }
-
-            ValidationContext oneOfResult1 = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.RemoveEntity>().Validate(validationContext.CreateChildContext(), level);
+            ValidationContext oneOfResult1 = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.RemoveEntity>().Validate(childContext1.CreateChildContext(), level);
             if (oneOfResult1.IsValid)
             {
-                result = result.MergeChildContext(oneOfResult1, level >= ValidationLevel.Detailed);
+                result = result.MergeChildContext(oneOfResult1, level >= ValidationLevel.Verbose);
                 oneOfCount += 1;
                 if (oneOfCount > 1 && level == ValidationLevel.Flag)
                 {
@@ -81,34 +71,22 @@ public readonly partial struct JsonPatchDocument
             }
             else
             {
-                if (level >= ValidationLevel.Detailed)
-                {
-                    result = result.MergeResults(result.IsValid, level, oneOfResult1);
-                }
-                else if (level >= ValidationLevel.Basic)
-                {
-                    result = result.MergeResults(result.IsValid, level, oneOfResult1);
-                }
-                else
+                if (level >= ValidationLevel.Verbose)
                 {
                     result = result.MergeResults(result.IsValid, level, oneOfResult1);
                 }
             }
 
+            ValidationContext childContext2 = childContextBase;
             if (level > ValidationLevel.Basic)
             {
-                result = result.PopLocation(); // Index
+                childContext2 = childContext2.PushValidationLocationArrayIndex(2);
             }
 
-            if (level > ValidationLevel.Basic)
-            {
-                result = result.PushValidationLocationArrayIndex(2);
-            }
-
-            ValidationContext oneOfResult2 = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceEntity>().Validate(validationContext.CreateChildContext(), level);
+            ValidationContext oneOfResult2 = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceEntity>().Validate(childContext2.CreateChildContext(), level);
             if (oneOfResult2.IsValid)
             {
-                result = result.MergeChildContext(oneOfResult2, level >= ValidationLevel.Detailed);
+                result = result.MergeChildContext(oneOfResult2, level >= ValidationLevel.Verbose);
                 oneOfCount += 1;
                 if (oneOfCount > 1 && level == ValidationLevel.Flag)
                 {
@@ -118,34 +96,22 @@ public readonly partial struct JsonPatchDocument
             }
             else
             {
-                if (level >= ValidationLevel.Detailed)
-                {
-                    result = result.MergeResults(result.IsValid, level, oneOfResult2);
-                }
-                else if (level >= ValidationLevel.Basic)
-                {
-                    result = result.MergeResults(result.IsValid, level, oneOfResult2);
-                }
-                else
+                if (level >= ValidationLevel.Verbose)
                 {
                     result = result.MergeResults(result.IsValid, level, oneOfResult2);
                 }
             }
 
+            ValidationContext childContext3 = childContextBase;
             if (level > ValidationLevel.Basic)
             {
-                result = result.PopLocation(); // Index
+                childContext3 = childContext3.PushValidationLocationArrayIndex(3);
             }
 
-            if (level > ValidationLevel.Basic)
-            {
-                result = result.PushValidationLocationArrayIndex(3);
-            }
-
-            ValidationContext oneOfResult3 = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.Move>().Validate(validationContext.CreateChildContext(), level);
+            ValidationContext oneOfResult3 = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.Move>().Validate(childContext3.CreateChildContext(), level);
             if (oneOfResult3.IsValid)
             {
-                result = result.MergeChildContext(oneOfResult3, level >= ValidationLevel.Detailed);
+                result = result.MergeChildContext(oneOfResult3, level >= ValidationLevel.Verbose);
                 oneOfCount += 1;
                 if (oneOfCount > 1 && level == ValidationLevel.Flag)
                 {
@@ -155,34 +121,22 @@ public readonly partial struct JsonPatchDocument
             }
             else
             {
-                if (level >= ValidationLevel.Detailed)
-                {
-                    result = result.MergeResults(result.IsValid, level, oneOfResult3);
-                }
-                else if (level >= ValidationLevel.Basic)
-                {
-                    result = result.MergeResults(result.IsValid, level, oneOfResult3);
-                }
-                else
+                if (level >= ValidationLevel.Verbose)
                 {
                     result = result.MergeResults(result.IsValid, level, oneOfResult3);
                 }
             }
 
+            ValidationContext childContext4 = childContextBase;
             if (level > ValidationLevel.Basic)
             {
-                result = result.PopLocation(); // Index
+                childContext4 = childContext4.PushValidationLocationArrayIndex(4);
             }
 
-            if (level > ValidationLevel.Basic)
-            {
-                result = result.PushValidationLocationArrayIndex(4);
-            }
-
-            ValidationContext oneOfResult4 = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.Copy>().Validate(validationContext.CreateChildContext(), level);
+            ValidationContext oneOfResult4 = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.Copy>().Validate(childContext4.CreateChildContext(), level);
             if (oneOfResult4.IsValid)
             {
-                result = result.MergeChildContext(oneOfResult4, level >= ValidationLevel.Detailed);
+                result = result.MergeChildContext(oneOfResult4, level >= ValidationLevel.Verbose);
                 oneOfCount += 1;
                 if (oneOfCount > 1 && level == ValidationLevel.Flag)
                 {
@@ -192,34 +146,22 @@ public readonly partial struct JsonPatchDocument
             }
             else
             {
-                if (level >= ValidationLevel.Detailed)
-                {
-                    result = result.MergeResults(result.IsValid, level, oneOfResult4);
-                }
-                else if (level >= ValidationLevel.Basic)
-                {
-                    result = result.MergeResults(result.IsValid, level, oneOfResult4);
-                }
-                else
+                if (level >= ValidationLevel.Verbose)
                 {
                     result = result.MergeResults(result.IsValid, level, oneOfResult4);
                 }
             }
 
+            ValidationContext childContext5 = childContextBase;
             if (level > ValidationLevel.Basic)
             {
-                result = result.PopLocation(); // Index
+                childContext5 = childContext5.PushValidationLocationArrayIndex(5);
             }
 
-            if (level > ValidationLevel.Basic)
-            {
-                result = result.PushValidationLocationArrayIndex(5);
-            }
-
-            ValidationContext oneOfResult5 = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.Test>().Validate(validationContext.CreateChildContext(), level);
+            ValidationContext oneOfResult5 = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.Test>().Validate(childContext5.CreateChildContext(), level);
             if (oneOfResult5.IsValid)
             {
-                result = result.MergeChildContext(oneOfResult5, level >= ValidationLevel.Detailed);
+                result = result.MergeChildContext(oneOfResult5, level >= ValidationLevel.Verbose);
                 oneOfCount += 1;
                 if (oneOfCount > 1 && level == ValidationLevel.Flag)
                 {
@@ -229,28 +171,15 @@ public readonly partial struct JsonPatchDocument
             }
             else
             {
-                if (level >= ValidationLevel.Detailed)
+                if (level >= ValidationLevel.Verbose)
                 {
                     result = result.MergeResults(result.IsValid, level, oneOfResult5);
                 }
-                else if (level >= ValidationLevel.Basic)
-                {
-                    result = result.MergeResults(result.IsValid, level, oneOfResult5);
-                }
-                else
-                {
-                    result = result.MergeResults(result.IsValid, level, oneOfResult5);
-                }
-            }
-
-            if (level > ValidationLevel.Basic)
-            {
-                result = result.PopLocation(); // Index
             }
 
             if (oneOfCount == 1)
             {
-                if (level >= ValidationLevel.Detailed)
+                if (level >= ValidationLevel.Verbose)
                 {
                     result = result.WithResult(isValid: true, "Validation 10.2.1.3. onef - validated against the oneOf schema.");
                 }

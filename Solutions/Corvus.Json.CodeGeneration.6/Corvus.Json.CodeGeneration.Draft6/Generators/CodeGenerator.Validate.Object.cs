@@ -285,7 +285,7 @@ namespace ");
             {
                 if (level > ValidationLevel.Basic)
                 {
-                    result = result.PushDocumentProperty(property.Name);
+                    result = result.PushDocumentProperty(""properties"", property.Name);
                 }
 
                 result = result.WithLocalProperty(propertyCount);
@@ -441,7 +441,7 @@ namespace ");
             #line hidden
             
             #line 167 "./Templates/CodeGenerator.Validate.Object.tt"
-            this.Write("            string propertyName = property.Name;\r\n");
+            this.Write("            string validateObjectPropertyName = property.Name;\r\n");
             
             #line default
             #line hidden
@@ -466,9 +466,9 @@ namespace ");
             #line hidden
             
             #line 171 "./Templates/CodeGenerator.Validate.Object.tt"
-            this.Write("(propertyName).Validate(result, level);\r\n            if (level == ValidationLevel" +
-                    ".Flag && !result.IsValid)\r\n            {\r\n                return result;\r\n      " +
-                    "      }\r\n");
+            this.Write("(validateObjectPropertyName).Validate(result, level);\r\n            if (level == V" +
+                    "alidationLevel.Flag && !result.IsValid)\r\n            {\r\n                return r" +
+                    "esult;\r\n            }\r\n");
             
             #line default
             #line hidden
@@ -485,7 +485,7 @@ namespace ");
             this.Write(@"
             foreach (System.Collections.Generic.KeyValuePair<Regex, PatternPropertyValidator> patternProperty in __CorvusPatternProperties)
             {
-                if (patternProperty.Key.IsMatch(propertyName))
+                if (patternProperty.Key.IsMatch(validateObjectPropertyName))
                 {
                     result = result.WithLocalProperty(propertyCount);
                     result = patternProperty.Value(property, result, level);

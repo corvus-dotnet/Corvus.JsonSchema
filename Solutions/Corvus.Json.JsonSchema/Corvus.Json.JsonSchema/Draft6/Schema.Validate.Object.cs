@@ -35,7 +35,7 @@ public readonly partial struct Schema
             {
                 if (level > ValidationLevel.Basic)
                 {
-                    result = result.PushDocumentProperty(property.Name);
+                    result = result.PushDocumentProperty("properties", property.Name);
                 }
 
                 result = result.WithLocalProperty(propertyCount);

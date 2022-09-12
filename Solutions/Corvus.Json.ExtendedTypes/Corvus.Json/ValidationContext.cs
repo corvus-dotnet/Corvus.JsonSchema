@@ -278,16 +278,18 @@ public readonly struct ValidationContext
     /// <summary>
     /// Pushes a location onto the location stack for the context.
     /// </summary>
+    /// <param name="propertiesMapName">The name of the properties map containing the property name to be validated, in the schema.</param>
     /// <param name="propertyName">The property name to push.</param>
     /// <returns>The context updated with the given location.</returns>
-    public ValidationContext PushDocumentProperty(string propertyName)
+    public ValidationContext PushDocumentProperty(string propertiesMapName, string propertyName)
     {
         if ((this.usingFeatures & UsingFeatures.Stack) == 0)
         {
             return this;
         }
 
-        return new ValidationContext(this.IsValid, this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack.Push((this.locationStack.Peek().ValidationLocation, this.locationStack.Peek().SchemaLocation, this.locationStack.Peek().DocumentLocation.AppendUnencodedPropertyNameToFragment(propertyName))), this.Results, this.usingFeatures);
+        // We push both the document property, and the fact that we are validating a "properties" value.
+        return new ValidationContext(this.IsValid, this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack.Push((this.locationStack.Peek().ValidationLocation.AppendUnencodedPropertyNameToFragment(propertiesMapName).AppendUnencodedPropertyNameToFragment(propertyName), this.locationStack.Peek().SchemaLocation.AppendUnencodedPropertyNameToFragment(propertiesMapName).AppendUnencodedPropertyNameToFragment(propertyName), this.locationStack.Peek().DocumentLocation.AppendUnencodedPropertyNameToFragment(propertyName))), this.Results, this.usingFeatures);
     }
 
     /// <summary>
@@ -302,7 +304,7 @@ public readonly struct ValidationContext
             return this;
         }
 
-        return new ValidationContext(this.IsValid, this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack.Push((this.locationStack.Peek().ValidationLocation, this.locationStack.Peek().SchemaLocation, this.locationStack.Peek().DocumentLocation.AppendArrayIndexToFragment(arrayIndex))), this.Results, this.usingFeatures);
+        return new ValidationContext(this.IsValid, this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack.Push((this.locationStack.Peek().ValidationLocation, this.locationStack.Peek().SchemaLocation.AppendArrayIndexToFragment(arrayIndex), this.locationStack.Peek().DocumentLocation.AppendArrayIndexToFragment(arrayIndex))), this.Results, this.usingFeatures);
     }
 
     /// <summary>
@@ -358,7 +360,7 @@ public readonly struct ValidationContext
         bool usingEvaluatedItems = (this.usingFeatures & UsingFeatures.EvaluatedItems) != 0;
         bool usingEvaluatedProperties = (this.usingFeatures & UsingFeatures.EvaluatedProperties) != 0;
 
-        return new ValidationContext(this.IsValid, usingEvaluatedItems ? ImmutableArray.Create<ulong>(0) : ImmutableArray<ulong>.Empty, usingEvaluatedProperties ? ImmutableArray.Create<ulong>(0) : ImmutableArray<ulong>.Empty, usingEvaluatedItems ? ImmutableArray.Create<ulong>(0) : ImmutableArray<ulong>.Empty, usingEvaluatedProperties ? ImmutableArray.Create<ulong>(0) : ImmutableArray<ulong>.Empty, this.locationStack, ImmutableArray<ValidationResult>.Empty, this.usingFeatures);
+        return new ValidationContext(true, usingEvaluatedItems ? ImmutableArray.Create<ulong>(0) : ImmutableArray<ulong>.Empty, usingEvaluatedProperties ? ImmutableArray.Create<ulong>(0) : ImmutableArray<ulong>.Empty, usingEvaluatedItems ? ImmutableArray.Create<ulong>(0) : ImmutableArray<ulong>.Empty, usingEvaluatedProperties ? ImmutableArray.Create<ulong>(0) : ImmutableArray<ulong>.Empty, this.locationStack, ImmutableArray<ValidationResult>.Empty, this.usingFeatures);
     }
 
     /// <summary>
@@ -401,9 +403,18 @@ public readonly struct ValidationContext
                 this.usingFeatures);
         }
 
-        var builder = this.Results.ToBuilder();
+        ImmutableArray<ValidationResult> results = this.Results;
+        if (results.IsEmpty)
+        {
+            results = result1.Results;
+        }
+        else if (!result1.Results.IsEmpty)
+        {
+            var builder = this.Results.ToBuilder();
 
-        builder.AddRange(result1.Results);
+            builder.AddRange(result1.Results);
+            results = builder.ToImmutable();
+        }
 
         return new ValidationContext(
             isValid,
@@ -412,7 +423,7 @@ public readonly struct ValidationContext
             this.appliedEvaluatedItemIndex,
             this.appliedEvaluatedProperties,
             this.locationStack,
-            builder.ToImmutable(),
+            results,
             this.usingFeatures);
     }
 

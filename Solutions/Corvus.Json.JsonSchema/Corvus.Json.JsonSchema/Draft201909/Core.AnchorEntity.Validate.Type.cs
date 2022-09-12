@@ -22,7 +22,7 @@ public readonly partial struct Core
         {
             ValidationContext result = validationContext;
             bool isValid = false;
-            ValidationContext localResultString = Corvus.Json.Validate.TypeString(valueKind, result, level);
+            ValidationContext localResultString = Corvus.Json.Validate.TypeString(valueKind, result.CreateChildContext(), level);
             if (level == ValidationLevel.Flag && localResultString.IsValid)
             {
                 return validationContext;

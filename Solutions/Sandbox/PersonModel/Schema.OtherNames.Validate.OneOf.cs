@@ -25,16 +25,18 @@ public readonly partial struct Schema
                 result = result.PushValidationLocationProperty("oneOf");
             }
 
+            ValidationContext childContextBase = result;
             int oneOfCount = 0;
+            ValidationContext childContext0 = childContextBase;
             if (level > ValidationLevel.Basic)
             {
-                result = result.PushValidationLocationArrayIndex(0);
+                childContext0 = childContext0.PushValidationLocationArrayIndex(0);
             }
 
-            ValidationContext oneOfResult0 = this.As<Corvus.Json.Benchmarking.Models.Schema.PersonNameElement>().Validate(validationContext.CreateChildContext(), level);
+            ValidationContext oneOfResult0 = this.As<Corvus.Json.Benchmarking.Models.Schema.PersonNameElement>().Validate(childContext0.CreateChildContext(), level);
             if (oneOfResult0.IsValid)
             {
-                result = result.MergeChildContext(oneOfResult0, level >= ValidationLevel.Detailed);
+                result = result.MergeChildContext(oneOfResult0, level >= ValidationLevel.Verbose);
                 oneOfCount += 1;
                 if (oneOfCount > 1 && level == ValidationLevel.Flag)
                 {
@@ -44,34 +46,22 @@ public readonly partial struct Schema
             }
             else
             {
-                if (level >= ValidationLevel.Detailed)
-                {
-                    result = result.MergeResults(result.IsValid, level, oneOfResult0);
-                }
-                else if (level >= ValidationLevel.Basic)
-                {
-                    result = result.MergeResults(result.IsValid, level, oneOfResult0);
-                }
-                else
+                if (level >= ValidationLevel.Verbose)
                 {
                     result = result.MergeResults(result.IsValid, level, oneOfResult0);
                 }
             }
 
+            ValidationContext childContext1 = childContextBase;
             if (level > ValidationLevel.Basic)
             {
-                result = result.PopLocation(); // Index
+                childContext1 = childContext1.PushValidationLocationArrayIndex(1);
             }
 
-            if (level > ValidationLevel.Basic)
-            {
-                result = result.PushValidationLocationArrayIndex(1);
-            }
-
-            ValidationContext oneOfResult1 = this.As<Corvus.Json.Benchmarking.Models.Schema.PersonNameElementArray>().Validate(validationContext.CreateChildContext(), level);
+            ValidationContext oneOfResult1 = this.As<Corvus.Json.Benchmarking.Models.Schema.PersonNameElementArray>().Validate(childContext1.CreateChildContext(), level);
             if (oneOfResult1.IsValid)
             {
-                result = result.MergeChildContext(oneOfResult1, level >= ValidationLevel.Detailed);
+                result = result.MergeChildContext(oneOfResult1, level >= ValidationLevel.Verbose);
                 oneOfCount += 1;
                 if (oneOfCount > 1 && level == ValidationLevel.Flag)
                 {
@@ -81,28 +71,15 @@ public readonly partial struct Schema
             }
             else
             {
-                if (level >= ValidationLevel.Detailed)
+                if (level >= ValidationLevel.Verbose)
                 {
                     result = result.MergeResults(result.IsValid, level, oneOfResult1);
                 }
-                else if (level >= ValidationLevel.Basic)
-                {
-                    result = result.MergeResults(result.IsValid, level, oneOfResult1);
-                }
-                else
-                {
-                    result = result.MergeResults(result.IsValid, level, oneOfResult1);
-                }
-            }
-
-            if (level > ValidationLevel.Basic)
-            {
-                result = result.PopLocation(); // Index
             }
 
             if (oneOfCount == 1)
             {
-                if (level >= ValidationLevel.Detailed)
+                if (level >= ValidationLevel.Verbose)
                 {
                     result = result.WithResult(isValid: true, "Validation 10.2.1.3. onef - validated against the oneOf schema.");
                 }

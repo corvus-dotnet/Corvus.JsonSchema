@@ -18,13 +18,13 @@ public readonly partial struct Schema
     /// <summary>
     /// A type generated from a JsonSchema specification.
     /// </summary>
-    public readonly partial struct PropertiesEntity
+    public readonly partial struct PropertiesEntity1
     {
         /// <summary>
         /// Conversion from <see cref = "Corvus.Json.JsonSchema.Draft6.Schema"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator PropertiesEntity(Corvus.Json.JsonSchema.Draft6.Schema value)
+        public static implicit operator PropertiesEntity1(Corvus.Json.JsonSchema.Draft6.Schema value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -44,7 +44,7 @@ public readonly partial struct Schema
         /// Conversion to <see cref = "Corvus.Json.JsonSchema.Draft6.Schema"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator Corvus.Json.JsonSchema.Draft6.Schema(PropertiesEntity value)
+        public static implicit operator Corvus.Json.JsonSchema.Draft6.Schema(PropertiesEntity1 value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -68,7 +68,7 @@ public readonly partial struct Schema
         /// Conversion from <see cref = "Corvus.Json.JsonSchema.Draft6.Schema.SchemaArray"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator PropertiesEntity(Corvus.Json.JsonSchema.Draft6.Schema.SchemaArray value)
+        public static implicit operator PropertiesEntity1(Corvus.Json.JsonSchema.Draft6.Schema.SchemaArray value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -86,7 +86,7 @@ public readonly partial struct Schema
         /// Conversion to <see cref = "Corvus.Json.JsonSchema.Draft6.Schema.SchemaArray"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator Corvus.Json.JsonSchema.Draft6.Schema.SchemaArray(PropertiesEntity value)
+        public static implicit operator Corvus.Json.JsonSchema.Draft6.Schema.SchemaArray(PropertiesEntity1 value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {

@@ -24,7 +24,7 @@ public readonly partial struct Validation
             {
                 ValidationContext result = validationContext;
                 bool isValid = false;
-                ValidationContext localResultArray = Corvus.Json.Validate.TypeArray(valueKind, result, level);
+                ValidationContext localResultArray = Corvus.Json.Validate.TypeArray(valueKind, result.CreateChildContext(), level);
                 if (level == ValidationLevel.Flag && localResultArray.IsValid)
                 {
                     return validationContext;
