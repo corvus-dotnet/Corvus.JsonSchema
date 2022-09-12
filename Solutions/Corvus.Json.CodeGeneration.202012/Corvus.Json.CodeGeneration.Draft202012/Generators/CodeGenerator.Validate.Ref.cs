@@ -102,7 +102,7 @@ namespace ");
     {        
         ValidationContext result = validationContext;
 
-        if (level > ValidationLevel.Flag)
+        if (level > ValidationLevel.Basic)
         {
             result = result.PushValidationLocationProperty(""$ref"");
         }
@@ -146,7 +146,7 @@ namespace ");
             result = result.MergeChildContext(refResult, false);
         }
 
-        if (level > ValidationLevel.Flag)
+        if (level > ValidationLevel.Basic)
         {
             result = result.PopLocation();
         }

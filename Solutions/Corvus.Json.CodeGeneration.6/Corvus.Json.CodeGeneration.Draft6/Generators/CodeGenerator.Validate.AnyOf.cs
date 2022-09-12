@@ -101,7 +101,7 @@ namespace ");
     private ValidationContext ValidateAnyOf(in ValidationContext validationContext, ValidationLevel level)
     {
         ValidationContext result = validationContext;
-        if (level > ValidationLevel.Flag)
+        if (level > ValidationLevel.Basic)
         {
             result = result.PushValidationLocationProperty(""anyOf"");
         }
@@ -121,8 +121,8 @@ namespace ");
             #line hidden
             
             #line 43 "./Templates/CodeGenerator.Validate.AnyOf.tt"
-            this.Write("\r\n        if (level > ValidationLevel.Flag)\r\n        {\r\n            result = resu" +
-                    "lt.PushValidationLocationArrayIndex(");
+            this.Write("\r\n        if (level > ValidationLevel.Basic)\r\n        {\r\n            result = res" +
+                    "ult.PushValidationLocationArrayIndex(");
             
             #line default
             #line hidden
@@ -212,8 +212,8 @@ namespace ");
             #line hidden
             
             #line 64 "./Templates/CodeGenerator.Validate.AnyOf.tt"
-            this.Write(");\r\n            }\r\n        }\r\n\r\n        if (level > ValidationLevel.Flag)\r\n      " +
-                    "  {\r\n            result = result.PopLocation(); // Index\r\n        }\r\n");
+            this.Write(");\r\n            }\r\n        }\r\n\r\n        if (level > ValidationLevel.Basic)\r\n     " +
+                    "   {\r\n            result = result.PopLocation(); // Index\r\n        }\r\n");
             
             #line default
             #line hidden
@@ -250,7 +250,7 @@ namespace ");
             }
         }
 
-        if (level > ValidationLevel.Flag)
+        if (level > ValidationLevel.Basic)
         {
             result = result.PopLocation(); // anyOf
         }

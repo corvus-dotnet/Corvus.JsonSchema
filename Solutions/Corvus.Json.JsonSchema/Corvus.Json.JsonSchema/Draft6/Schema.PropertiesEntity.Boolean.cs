@@ -19,13 +19,13 @@ public readonly partial struct Schema
     /// <summary>
     /// A type generated from a JsonSchema specification.
     /// </summary>
-    public readonly partial struct PropertiesEntity1 : IJsonBoolean<PropertiesEntity1>
+    public readonly partial struct PropertiesEntity : IJsonBoolean<PropertiesEntity>
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref = "PropertiesEntity1"/> struct.
+        /// Initializes a new instance of the <see cref = "PropertiesEntity"/> struct.
         /// </summary>
         /// <param name = "value">The value from which to construct the instance.</param>
-        public PropertiesEntity1(bool value)
+        public PropertiesEntity(bool value)
         {
             this.jsonElementBacking = default;
             this.backing = Backing.Bool;
@@ -38,7 +38,7 @@ public readonly partial struct Schema
         /// Conversion from JsonBoolean.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator JsonBoolean(PropertiesEntity1 value)
+        public static implicit operator JsonBoolean(PropertiesEntity value)
         {
             return value.AsBoolean;
         }
@@ -47,7 +47,7 @@ public readonly partial struct Schema
         /// Conversion to JsonBoolean.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator PropertiesEntity1(JsonBoolean value)
+        public static implicit operator PropertiesEntity(JsonBoolean value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -61,7 +61,7 @@ public readonly partial struct Schema
         /// Conversion from bool.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator PropertiesEntity1(bool value)
+        public static implicit operator PropertiesEntity(bool value)
         {
             return new(value);
         }
@@ -71,7 +71,7 @@ public readonly partial struct Schema
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
         /// <exception cref = "InvalidOperationException">The value was not a string.</exception>
-        public static implicit operator bool (PropertiesEntity1 value)
+        public static implicit operator bool (PropertiesEntity value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {

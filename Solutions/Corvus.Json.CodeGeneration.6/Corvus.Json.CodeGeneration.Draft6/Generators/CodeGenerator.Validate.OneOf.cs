@@ -102,7 +102,7 @@ namespace ");
     {
         ValidationContext result = validationContext;
 
-        if (level > ValidationLevel.Flag)
+        if (level > ValidationLevel.Basic)
         {
             result = result.PushValidationLocationProperty(""oneOf"");
         }
@@ -122,8 +122,8 @@ namespace ");
             #line hidden
             
             #line 44 "./Templates/CodeGenerator.Validate.OneOf.tt"
-            this.Write("\r\n        if (level > ValidationLevel.Flag)\r\n        {\r\n            result = resu" +
-                    "lt.PushValidationLocationArrayIndex(");
+            this.Write("\r\n        if (level > ValidationLevel.Basic)\r\n        {\r\n            result = res" +
+                    "ult.PushValidationLocationArrayIndex(");
             
             #line default
             #line hidden
@@ -235,8 +235,8 @@ namespace ");
             #line hidden
             
             #line 74 "./Templates/CodeGenerator.Validate.OneOf.tt"
-            this.Write(");\r\n            }\r\n        }\r\n\r\n        if (level > ValidationLevel.Flag)\r\n      " +
-                    "  {\r\n            result = result.PopLocation(); // Index\r\n        }\r\n");
+            this.Write(");\r\n            }\r\n        }\r\n\r\n        if (level > ValidationLevel.Basic)\r\n     " +
+                    "   {\r\n            result = result.PopLocation(); // Index\r\n        }\r\n");
             
             #line default
             #line hidden
@@ -268,8 +268,8 @@ namespace ");
                     "2.1.3. oneOf - failed to validate against more than one of the oneOf schema.\");\r" +
                     "\n            }\r\n            else\r\n            {\r\n                result = result" +
                     ".WithResult(isValid: false);\r\n            }\r\n        }\r\n\r\n        if (level > Va" +
-                    "lidationLevel.Flag)\r\n        {\r\n            result = result.PopLocation(); // on" +
-                    "eOf\r\n        }\r\n\r\n        return result;\r\n    }\r\n}\r\n");
+                    "lidationLevel.Basic)\r\n        {\r\n            result = result.PopLocation(); // o" +
+                    "neOf\r\n        }\r\n\r\n        return result;\r\n    }\r\n}\r\n");
             
             #line default
             #line hidden

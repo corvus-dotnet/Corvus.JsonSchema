@@ -16,25 +16,25 @@ public readonly partial struct Schema
     /// <summary>
     /// A type generated from a JsonSchema specification.
     /// </summary>
-    public readonly partial struct PropertiesEntity1
+    public readonly partial struct PropertiesEntity
     {
         /// <inheritdoc/>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public PropertiesEntity1 Remove(in JsonAny item1)
+        public PropertiesEntity Remove(in JsonAny item1)
         {
             return new(this.GetImmutableListWithout(item1));
         }
 
         /// <inheritdoc/>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public PropertiesEntity1 RemoveAt(int index)
+        public PropertiesEntity RemoveAt(int index)
         {
             return new(this.GetImmutableListWithoutRange(index, 1));
         }
 
         /// <inheritdoc/>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public PropertiesEntity1 RemoveRange(int index, int count)
+        public PropertiesEntity RemoveRange(int index, int count)
         {
             return new(this.GetImmutableListWithoutRange(index, count));
         }

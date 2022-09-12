@@ -106,7 +106,7 @@ namespace ");
     {
         ValidationContext result = validationContext;
 
-        if (level > ValidationLevel.Flag)
+        if (level > ValidationLevel.Basic)
         {
             result = result.PushValidationLocationProperty(""allOf"");
         }
@@ -125,8 +125,8 @@ namespace ");
             #line hidden
             
             #line 47 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
-            this.Write("\r\n        if (level > ValidationLevel.Flag)\r\n        {\r\n            result = resu" +
-                    "lt.PushValidationLocationArrayIndex(");
+            this.Write("\r\n        if (level > ValidationLevel.Basic)\r\n        {\r\n            result = res" +
+                    "ult.PushValidationLocationArrayIndex(");
             
             #line default
             #line hidden
@@ -233,8 +233,8 @@ namespace ");
             
             #line 73 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
             this.Write(", level >= ValidationLevel.Detailed);\r\n        }\r\n\r\n        if (level > Validatio" +
-                    "nLevel.Flag)\r\n        {\r\n            result = result.PopLocation(); // Index\r\n  " +
-                    "      }\r\n");
+                    "nLevel.Basic)\r\n        {\r\n            result = result.PopLocation(); // Index\r\n " +
+                    "       }\r\n");
             
             #line default
             #line hidden
@@ -247,8 +247,8 @@ namespace ");
             #line hidden
             
             #line 82 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt"
-            this.Write("\r\n        if (level > ValidationLevel.Flag)\r\n        {\r\n            result = resu" +
-                    "lt.PopLocation(); // allOf\r\n        }\r\n\r\n        return result;\r\n    }\r\n}\r\n");
+            this.Write("\r\n        if (level > ValidationLevel.Basic)\r\n        {\r\n            result = res" +
+                    "ult.PopLocation(); // allOf\r\n        }\r\n\r\n        return result;\r\n    }\r\n}\r\n");
             
             #line default
             #line hidden

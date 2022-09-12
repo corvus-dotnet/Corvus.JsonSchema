@@ -56,7 +56,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 
         while (arrayEnumerator.MoveNext())
         {
-            if (level > ValidationLevel.Flag)
+            if (level > ValidationLevel.Basic)
             {
                 result = result.PushValidationLocationArrayIndex(arrayLength);
             }
@@ -166,7 +166,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
                 }
 <#      } #>
 
-            if (level > ValidationLevel.Flag)
+            if (level > ValidationLevel.Basic)
             {
                 result = result.PopLocation(); // array index
             }

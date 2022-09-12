@@ -36,7 +36,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     {
         ValidationContext result = validationContext;
 
-        if (level > ValidationLevel.Flag)
+        if (level > ValidationLevel.Basic)
         {
             result = result.PushValidationLocationProperty("allOf");
         }
@@ -45,7 +45,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     foreach (var allOf in AllOf)
     { #>
 
-        if (level > ValidationLevel.Flag)
+        if (level > ValidationLevel.Basic)
         {
             result = result.PushValidationLocationArrayIndex(<#= allOfIndex #>);
         }
@@ -73,14 +73,14 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
             result = result.MergeChildContext(allOfResult<#= allOfIndex #>, level >= ValidationLevel.Detailed);
         }
 
-        if (level > ValidationLevel.Flag)
+        if (level > ValidationLevel.Basic)
         {
             result = result.PopLocation(); // Index
         }
 <#      allOfIndex++;
     } #>
 
-        if (level > ValidationLevel.Flag)
+        if (level > ValidationLevel.Basic)
         {
             result = result.PopLocation(); // allOf
         }

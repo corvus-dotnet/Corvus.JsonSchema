@@ -29,6 +29,8 @@ public readonly partial struct Schema
         {
             this.jsonElementBacking = default;
             this.backing = Backing.Object;
+            this.boolBacking = default;
+            this.arrayBacking = ImmutableList<JsonAny>.Empty;
             this.objectBacking = value;
         }
 

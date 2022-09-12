@@ -102,7 +102,7 @@ namespace ");
     {
         ValidationContext result = validationContext;
 
-        if (level > ValidationLevel.Flag)
+        if (level > ValidationLevel.Basic)
         {
             result = result.PushValidationLocationProperty(""if"");
         }
@@ -142,7 +142,7 @@ namespace ");
             result = result.MergeChildContext(ifResult, false);
         }
 
-        if (level > ValidationLevel.Flag)
+        if (level > ValidationLevel.Basic)
         {
             result = result.PopLocation(); // if
         }
@@ -160,9 +160,9 @@ namespace ");
             
             #line 69 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.IfThenElse.tt"
             this.Write("\r\n        if (ifResult.IsValid)\r\n        {\r\n            if (level > ValidationLev" +
-                    "el.Flag)\r\n            {\r\n                result = result.PushValidationLocationP" +
-                    "roperty(\"then\");\r\n            }\r\n\r\n            ValidationContext thenResult = th" +
-                    "is.As<");
+                    "el.Basic)\r\n            {\r\n                result = result.PushValidationLocation" +
+                    "Property(\"then\");\r\n            }\r\n\r\n            ValidationContext thenResult = t" +
+                    "his.As<");
             
             #line default
             #line hidden
@@ -201,7 +201,7 @@ namespace ");
                 result = result.MergeChildContext(thenResult, false);
             }
 
-            if (level > ValidationLevel.Flag)
+            if (level > ValidationLevel.Basic)
             {
                 result = result.PopLocation(); // then
             }
@@ -221,9 +221,9 @@ namespace ");
             
             #line 112 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.IfThenElse.tt"
             this.Write("\r\n        if (!ifResult.IsValid)\r\n        {\r\n            if (level > ValidationLe" +
-                    "vel.Flag)\r\n            {\r\n                result = result.PushValidationLocation" +
-                    "Property(\"else\");\r\n            }\r\n\r\n            ValidationContext elseResult = t" +
-                    "his.As<");
+                    "vel.Basic)\r\n            {\r\n                result = result.PushValidationLocatio" +
+                    "nProperty(\"else\");\r\n            }\r\n\r\n            ValidationContext elseResult = " +
+                    "this.As<");
             
             #line default
             #line hidden
@@ -262,7 +262,7 @@ namespace ");
                 result = result.MergeChildContext(elseResult, false);
             }
 
-            if (level > ValidationLevel.Flag)
+            if (level > ValidationLevel.Basic)
             {
                 result = result.PopLocation(); // else
             }

@@ -24,12 +24,12 @@ public readonly partial struct JsonPatchDocument
         private ValidationContext ValidateAllOf(in ValidationContext validationContext, ValidationLevel level)
         {
             ValidationContext result = validationContext;
-            if (level > ValidationLevel.Flag)
+            if (level > ValidationLevel.Basic)
             {
                 result = result.PushValidationLocationProperty("allOf");
             }
 
-            if (level > ValidationLevel.Flag)
+            if (level > ValidationLevel.Basic)
             {
                 result = result.PushValidationLocationArrayIndex(0);
             }
@@ -56,12 +56,12 @@ public readonly partial struct JsonPatchDocument
                 result = result.MergeChildContext(allOfResult0, level >= ValidationLevel.Detailed);
             }
 
-            if (level > ValidationLevel.Flag)
+            if (level > ValidationLevel.Basic)
             {
                 result = result.PopLocation(); // Index
             }
 
-            if (level > ValidationLevel.Flag)
+            if (level > ValidationLevel.Basic)
             {
                 result = result.PopLocation(); // allOf
             }

@@ -22,12 +22,12 @@ public readonly partial struct Schema
     private ValidationContext ValidateAllOf(in ValidationContext validationContext, ValidationLevel level)
     {
         ValidationContext result = validationContext;
-        if (level > ValidationLevel.Flag)
+        if (level > ValidationLevel.Basic)
         {
             result = result.PushValidationLocationProperty("allOf");
         }
 
-        if (level > ValidationLevel.Flag)
+        if (level > ValidationLevel.Basic)
         {
             result = result.PushValidationLocationArrayIndex(0);
         }
@@ -54,12 +54,12 @@ public readonly partial struct Schema
             result = result.MergeChildContext(allOfResult0, level >= ValidationLevel.Detailed);
         }
 
-        if (level > ValidationLevel.Flag)
+        if (level > ValidationLevel.Basic)
         {
             result = result.PopLocation(); // Index
         }
 
-        if (level > ValidationLevel.Flag)
+        if (level > ValidationLevel.Basic)
         {
             result = result.PushValidationLocationArrayIndex(1);
         }
@@ -86,12 +86,12 @@ public readonly partial struct Schema
             result = result.MergeChildContext(allOfResult1, level >= ValidationLevel.Detailed);
         }
 
-        if (level > ValidationLevel.Flag)
+        if (level > ValidationLevel.Basic)
         {
             result = result.PopLocation(); // Index
         }
 
-        if (level > ValidationLevel.Flag)
+        if (level > ValidationLevel.Basic)
         {
             result = result.PushValidationLocationArrayIndex(2);
         }
@@ -118,12 +118,12 @@ public readonly partial struct Schema
             result = result.MergeChildContext(allOfResult2, level >= ValidationLevel.Detailed);
         }
 
-        if (level > ValidationLevel.Flag)
+        if (level > ValidationLevel.Basic)
         {
             result = result.PopLocation(); // Index
         }
 
-        if (level > ValidationLevel.Flag)
+        if (level > ValidationLevel.Basic)
         {
             result = result.PushValidationLocationArrayIndex(3);
         }
@@ -150,12 +150,12 @@ public readonly partial struct Schema
             result = result.MergeChildContext(allOfResult3, level >= ValidationLevel.Detailed);
         }
 
-        if (level > ValidationLevel.Flag)
+        if (level > ValidationLevel.Basic)
         {
             result = result.PopLocation(); // Index
         }
 
-        if (level > ValidationLevel.Flag)
+        if (level > ValidationLevel.Basic)
         {
             result = result.PushValidationLocationArrayIndex(4);
         }
@@ -182,12 +182,12 @@ public readonly partial struct Schema
             result = result.MergeChildContext(allOfResult4, level >= ValidationLevel.Detailed);
         }
 
-        if (level > ValidationLevel.Flag)
+        if (level > ValidationLevel.Basic)
         {
             result = result.PopLocation(); // Index
         }
 
-        if (level > ValidationLevel.Flag)
+        if (level > ValidationLevel.Basic)
         {
             result = result.PushValidationLocationArrayIndex(5);
         }
@@ -214,12 +214,12 @@ public readonly partial struct Schema
             result = result.MergeChildContext(allOfResult5, level >= ValidationLevel.Detailed);
         }
 
-        if (level > ValidationLevel.Flag)
+        if (level > ValidationLevel.Basic)
         {
             result = result.PopLocation(); // Index
         }
 
-        if (level > ValidationLevel.Flag)
+        if (level > ValidationLevel.Basic)
         {
             result = result.PopLocation(); // allOf
         }

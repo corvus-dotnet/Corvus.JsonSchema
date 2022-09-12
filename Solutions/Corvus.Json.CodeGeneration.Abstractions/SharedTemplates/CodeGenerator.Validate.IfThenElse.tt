@@ -32,7 +32,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     {
         ValidationContext result = validationContext;
 
-        if (level > ValidationLevel.Flag)
+        if (level > ValidationLevel.Basic)
         {
             result = result.PushValidationLocationProperty("if");
         }
@@ -60,7 +60,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
             result = result.MergeChildContext(ifResult, false);
         }
 
-        if (level > ValidationLevel.Flag)
+        if (level > ValidationLevel.Basic)
         {
             result = result.PopLocation(); // if
         }
@@ -69,7 +69,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 
         if (ifResult.IsValid)
         {
-            if (level > ValidationLevel.Flag)
+            if (level > ValidationLevel.Basic)
             {
                 result = result.PushValidationLocationProperty("then");
             }
@@ -101,7 +101,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
                 result = result.MergeChildContext(thenResult, false);
             }
 
-            if (level > ValidationLevel.Flag)
+            if (level > ValidationLevel.Basic)
             {
                 result = result.PopLocation(); // then
             }
@@ -112,7 +112,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 
         if (!ifResult.IsValid)
         {
-            if (level > ValidationLevel.Flag)
+            if (level > ValidationLevel.Basic)
             {
                 result = result.PushValidationLocationProperty("else");
             }
@@ -144,7 +144,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
                 result = result.MergeChildContext(elseResult, false);
             }
 
-            if (level > ValidationLevel.Flag)
+            if (level > ValidationLevel.Basic)
             {
                 result = result.PopLocation(); // else
             }

@@ -18,7 +18,7 @@ public readonly partial struct Schema
     private ValidationContext ValidateRef(in ValidationContext validationContext, ValidationLevel level)
     {
         ValidationContext result = validationContext;
-        if (level > ValidationLevel.Flag)
+        if (level > ValidationLevel.Basic)
         {
             result = result.PushValidationLocationProperty("$ref");
         }
@@ -49,7 +49,7 @@ public readonly partial struct Schema
             result = result.MergeChildContext(refResult, false);
         }
 
-        if (level > ValidationLevel.Flag)
+        if (level > ValidationLevel.Basic)
         {
             result = result.PopLocation();
         }

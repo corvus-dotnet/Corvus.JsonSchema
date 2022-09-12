@@ -13,7 +13,7 @@ string JsonText = @"{
       ""givenName"": ""Michael"",
       ""otherNames"": [""Francis"", ""James""]
     },
-    ""dateOfBirth"": ""1944-07-14""
+    ""dateOfBirth"": ""Not very valid""
 }";
 
 objectDocument = JsonDocument.Parse(JsonText);
@@ -28,4 +28,6 @@ personArray = PersonArray.From(builder.ToImmutable()).AsJsonElementBackedValue()
 
 await Task.Delay(5000);
 
-personArray.Validate(ValidationContext.ValidContext);
+var result = personArray.Validate(ValidationContext.ValidContext, ValidationLevel.Detailed);
+
+Console.WriteLine("Validated!");

@@ -22,7 +22,12 @@ public readonly partial struct JsonPatchDocument
         public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
         {
             ValidationContext result = validationContext;
-            if (level != ValidationLevel.Flag)
+            if (level > ValidationLevel.Flag)
+            {
+                result = result.UsingResults();
+            }
+
+            if (level > ValidationLevel.Basic)
             {
                 result = result.UsingStack();
                 result = result.PushSchemaLocation("C:/Users/matth/source/repos/Corvus.JsonSchema/Solutions/Corvus.Json.Patch/Corvus.Json.Patch/Model/json-patch.json#/$defs/Test");

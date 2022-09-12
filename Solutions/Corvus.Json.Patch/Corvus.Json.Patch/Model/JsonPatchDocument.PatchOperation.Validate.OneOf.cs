@@ -20,13 +20,13 @@ public readonly partial struct JsonPatchDocument
         private ValidationContext ValidateOneOf(in ValidationContext validationContext, ValidationLevel level)
         {
             ValidationContext result = validationContext;
-            if (level > ValidationLevel.Flag)
+            if (level > ValidationLevel.Basic)
             {
                 result = result.PushValidationLocationProperty("oneOf");
             }
 
             int oneOfCount = 0;
-            if (level > ValidationLevel.Flag)
+            if (level > ValidationLevel.Basic)
             {
                 result = result.PushValidationLocationArrayIndex(0);
             }
@@ -58,12 +58,12 @@ public readonly partial struct JsonPatchDocument
                 }
             }
 
-            if (level > ValidationLevel.Flag)
+            if (level > ValidationLevel.Basic)
             {
                 result = result.PopLocation(); // Index
             }
 
-            if (level > ValidationLevel.Flag)
+            if (level > ValidationLevel.Basic)
             {
                 result = result.PushValidationLocationArrayIndex(1);
             }
@@ -95,12 +95,12 @@ public readonly partial struct JsonPatchDocument
                 }
             }
 
-            if (level > ValidationLevel.Flag)
+            if (level > ValidationLevel.Basic)
             {
                 result = result.PopLocation(); // Index
             }
 
-            if (level > ValidationLevel.Flag)
+            if (level > ValidationLevel.Basic)
             {
                 result = result.PushValidationLocationArrayIndex(2);
             }
@@ -132,12 +132,12 @@ public readonly partial struct JsonPatchDocument
                 }
             }
 
-            if (level > ValidationLevel.Flag)
+            if (level > ValidationLevel.Basic)
             {
                 result = result.PopLocation(); // Index
             }
 
-            if (level > ValidationLevel.Flag)
+            if (level > ValidationLevel.Basic)
             {
                 result = result.PushValidationLocationArrayIndex(3);
             }
@@ -169,12 +169,12 @@ public readonly partial struct JsonPatchDocument
                 }
             }
 
-            if (level > ValidationLevel.Flag)
+            if (level > ValidationLevel.Basic)
             {
                 result = result.PopLocation(); // Index
             }
 
-            if (level > ValidationLevel.Flag)
+            if (level > ValidationLevel.Basic)
             {
                 result = result.PushValidationLocationArrayIndex(4);
             }
@@ -206,12 +206,12 @@ public readonly partial struct JsonPatchDocument
                 }
             }
 
-            if (level > ValidationLevel.Flag)
+            if (level > ValidationLevel.Basic)
             {
                 result = result.PopLocation(); // Index
             }
 
-            if (level > ValidationLevel.Flag)
+            if (level > ValidationLevel.Basic)
             {
                 result = result.PushValidationLocationArrayIndex(5);
             }
@@ -243,7 +243,7 @@ public readonly partial struct JsonPatchDocument
                 }
             }
 
-            if (level > ValidationLevel.Flag)
+            if (level > ValidationLevel.Basic)
             {
                 result = result.PopLocation(); // Index
             }
@@ -286,7 +286,7 @@ public readonly partial struct JsonPatchDocument
                 }
             }
 
-            if (level > ValidationLevel.Flag)
+            if (level > ValidationLevel.Basic)
             {
                 result = result.PopLocation(); // oneOf
             }

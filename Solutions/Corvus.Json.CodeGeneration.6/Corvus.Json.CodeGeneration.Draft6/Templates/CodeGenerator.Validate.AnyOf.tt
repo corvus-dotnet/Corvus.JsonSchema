@@ -31,7 +31,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     private ValidationContext ValidateAnyOf(in ValidationContext validationContext, ValidationLevel level)
     {
         ValidationContext result = validationContext;
-        if (level > ValidationLevel.Flag)
+        if (level > ValidationLevel.Basic)
         {
             result = result.PushValidationLocationProperty("anyOf");
         }
@@ -41,7 +41,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     foreach (var anyOf in AnyOf)
     { #>
 
-        if (level > ValidationLevel.Flag)
+        if (level > ValidationLevel.Basic)
         {
             result = result.PushValidationLocationArrayIndex(<#= anyOfIndex #>);
         }
@@ -65,7 +65,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
             }
         }
 
-        if (level > ValidationLevel.Flag)
+        if (level > ValidationLevel.Basic)
         {
             result = result.PopLocation(); // Index
         }
@@ -95,7 +95,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
             }
         }
 
-        if (level > ValidationLevel.Flag)
+        if (level > ValidationLevel.Basic)
         {
             result = result.PopLocation(); // anyOf
         }

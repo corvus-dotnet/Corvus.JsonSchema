@@ -15,7 +15,7 @@ public readonly partial struct Schema
     /// <summary>
     /// A type generated from a JsonSchema specification.
     /// </summary>
-    public readonly partial struct PropertiesEntity1
+    public readonly partial struct PropertiesEntity
     {
         /// <summary>
         /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.Draft6.Schema"/>.

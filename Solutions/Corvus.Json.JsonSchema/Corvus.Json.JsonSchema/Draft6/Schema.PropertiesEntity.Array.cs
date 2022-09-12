@@ -20,17 +20,17 @@ public readonly partial struct Schema
     /// <summary>
     /// A type generated from a JsonSchema specification.
     /// </summary>
-    public readonly partial struct PropertiesEntity1 : IJsonArray<PropertiesEntity1>
+    public readonly partial struct PropertiesEntity : IJsonArray<PropertiesEntity>
     {
         /// <summary>
         /// Gets an empty array.
         /// </summary>
-        public static readonly PropertiesEntity1 EmptyArray = From(ImmutableList<JsonAny>.Empty);
+        public static readonly PropertiesEntity EmptyArray = From(ImmutableList<JsonAny>.Empty);
         /// <summary>
-        /// Initializes a new instance of the <see cref = "PropertiesEntity1"/> struct.
+        /// Initializes a new instance of the <see cref = "PropertiesEntity"/> struct.
         /// </summary>
         /// <param name = "value">The value from which to construct the instance.</param>
-        public PropertiesEntity1(ImmutableList<JsonAny> value)
+        public PropertiesEntity(ImmutableList<JsonAny> value)
         {
             this.jsonElementBacking = default;
             this.backing = Backing.Array;
@@ -40,10 +40,10 @@ public readonly partial struct Schema
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref = "PropertiesEntity1"/> struct.
+        /// Initializes a new instance of the <see cref = "PropertiesEntity"/> struct.
         /// </summary>
         /// <param name = "value">The value from which to construct the instance.</param>
-        public PropertiesEntity1(IEnumerable<JsonAny> value)
+        public PropertiesEntity(IEnumerable<JsonAny> value)
         {
             this.jsonElementBacking = default;
             this.backing = Backing.Array;
@@ -82,7 +82,7 @@ public readonly partial struct Schema
         /// Conversion from JsonArray.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator JsonArray(PropertiesEntity1 value)
+        public static implicit operator JsonArray(PropertiesEntity value)
         {
             return value.AsArray;
         }
@@ -91,7 +91,7 @@ public readonly partial struct Schema
         /// Conversion to JsonArray.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator PropertiesEntity1(JsonArray value)
+        public static implicit operator PropertiesEntity(JsonArray value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -105,7 +105,7 @@ public readonly partial struct Schema
         /// Conversion from immutable list.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator ImmutableList<JsonAny>(PropertiesEntity1 value)
+        public static implicit operator ImmutableList<JsonAny>(PropertiesEntity value)
         {
             return value.GetImmutableList();
         }
@@ -114,39 +114,39 @@ public readonly partial struct Schema
         /// Conversion to immutable list.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator PropertiesEntity1(ImmutableList<JsonAny> value)
+        public static implicit operator PropertiesEntity(ImmutableList<JsonAny> value)
         {
             return new(value);
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref = "PropertiesEntity1"/> struct.
+        /// Initializes a new instance of the <see cref = "PropertiesEntity"/> struct.
         /// </summary>
         /// <param name = "items">The list of items from which to construct the array.</param>
         /// <returns>An instance of the array constructed from the list.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static PropertiesEntity1 From(ImmutableList<JsonAny> items)
+        public static PropertiesEntity From(ImmutableList<JsonAny> items)
         {
             return new(items);
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref = "PropertiesEntity1"/> struct.
+        /// Initializes a new instance of the <see cref = "PropertiesEntity"/> struct.
         /// </summary>
         /// <param name = "value">The value from which to construct the instance.</param>
         /// <returns>A JsonAny instantiated from the given items.</returns>
-        public static PropertiesEntity1 FromItems(params JsonAny[] value)
+        public static PropertiesEntity FromItems(params JsonAny[] value)
         {
             return new(value.ToImmutableList());
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref = "PropertiesEntity1"/> struct.
+        /// Initializes a new instance of the <see cref = "PropertiesEntity"/> struct.
         /// </summary>
         /// <typeparam name = "TItem">The type of the items in the list.</typeparam>
         /// <param name = "value">The value from which to construct the instance.</param>
-        /// <returns>A PropertiesEntity1 instantiated from the given items.</returns>
-        public static PropertiesEntity1 FromItems<TItem>(params TItem[] value)
+        /// <returns>A PropertiesEntity instantiated from the given items.</returns>
+        public static PropertiesEntity FromItems<TItem>(params TItem[] value)
             where TItem : struct, IJsonValue<TItem>
         {
             ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
@@ -159,12 +159,12 @@ public readonly partial struct Schema
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref = "PropertiesEntity1"/> struct.
+        /// Initializes a new instance of the <see cref = "PropertiesEntity"/> struct.
         /// </summary>
         /// <typeparam name = "TItem1">The type of the items in the list.</typeparam>
         /// <param name = "value1">The first value from which to construct the instance.</param>
-        /// <returns>A PropertiesEntity1 instantiated from the given items.</returns>
-        public static PropertiesEntity1 FromItems<TItem1>(in TItem1 value1)
+        /// <returns>A PropertiesEntity instantiated from the given items.</returns>
+        public static PropertiesEntity FromItems<TItem1>(in TItem1 value1)
             where TItem1 : struct, IJsonValue<TItem1>
         {
             ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
@@ -173,14 +173,14 @@ public readonly partial struct Schema
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref = "PropertiesEntity1"/> struct.
+        /// Initializes a new instance of the <see cref = "PropertiesEntity"/> struct.
         /// </summary>
         /// <typeparam name = "TItem1">The type of the first item in the list.</typeparam>
         /// <typeparam name = "TItem2">The type of the second item in the list.</typeparam>
         /// <param name = "value1">The first value from which to construct the instance.</param>
         /// <param name = "value2">The second value from which to construct the instance.</param>
-        /// <returns>A PropertiesEntity1 instantiated from the given items.</returns>
-        public static PropertiesEntity1 FromItems<TItem1, TItem2>(in TItem1 value1, in TItem2 value2)
+        /// <returns>A PropertiesEntity instantiated from the given items.</returns>
+        public static PropertiesEntity FromItems<TItem1, TItem2>(in TItem1 value1, in TItem2 value2)
             where TItem1 : struct, IJsonValue<TItem1> where TItem2 : struct, IJsonValue<TItem2>
         {
             ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
@@ -190,7 +190,7 @@ public readonly partial struct Schema
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref = "PropertiesEntity1"/> struct.
+        /// Initializes a new instance of the <see cref = "PropertiesEntity"/> struct.
         /// </summary>
         /// <typeparam name = "TItem1">The type of the first item in the list.</typeparam>
         /// <typeparam name = "TItem2">The type of the second item in the list.</typeparam>
@@ -198,8 +198,8 @@ public readonly partial struct Schema
         /// <param name = "value1">The first value from which to construct the instance.</param>
         /// <param name = "value2">The second value from which to construct the instance.</param>
         /// <param name = "value3">The thirdvalue from which to construct the instance.</param>
-        /// <returns>A PropertiesEntity1 instantiated from the given items.</returns>
-        public static PropertiesEntity1 FromItems<TItem1, TItem2, TItem3>(in TItem1 value1, in TItem2 value2, in TItem3 value3)
+        /// <returns>A PropertiesEntity instantiated from the given items.</returns>
+        public static PropertiesEntity FromItems<TItem1, TItem2, TItem3>(in TItem1 value1, in TItem2 value2, in TItem3 value3)
             where TItem1 : struct, IJsonValue<TItem1> where TItem2 : struct, IJsonValue<TItem2> where TItem3 : struct, IJsonValue<TItem3>
         {
             ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
@@ -219,7 +219,7 @@ public readonly partial struct Schema
         /// This will serialize the items to create the underlying JsonArray. Note the
         /// other overloads which avoid this serialization step.
         /// </remarks>
-        public static PropertiesEntity1 From<T>(IEnumerable<T> items)
+        public static PropertiesEntity From<T>(IEnumerable<T> items)
         {
             ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
             foreach (T item in items)
@@ -231,7 +231,7 @@ public readonly partial struct Schema
                 builder.Add(JsonAny.Parse(abw.WrittenMemory));
             }
 
-            return new PropertiesEntity1(builder.ToImmutable());
+            return new PropertiesEntity(builder.ToImmutable());
         }
 
         /// <summary>
@@ -243,7 +243,7 @@ public readonly partial struct Schema
         /// This will serialize the items to create the underlying JsonArray. Note the
         /// other overloads which avoid this serialization step.
         /// </remarks>
-        public static PropertiesEntity1 FromRange(IEnumerable<JsonAny> items)
+        public static PropertiesEntity FromRange(IEnumerable<JsonAny> items)
         {
             ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
             foreach (JsonAny item in items)
@@ -251,7 +251,7 @@ public readonly partial struct Schema
                 builder.Add(item);
             }
 
-            return new PropertiesEntity1(builder.ToImmutable());
+            return new PropertiesEntity(builder.ToImmutable());
         }
 
         /// <summary>
@@ -263,7 +263,7 @@ public readonly partial struct Schema
         /// This will serialize the items to create the underlying JsonArray. Note the
         /// other overloads which avoid this serialization step.
         /// </remarks>
-        public static PropertiesEntity1 FromRange<T>(IEnumerable<T> items)
+        public static PropertiesEntity FromRange<T>(IEnumerable<T> items)
             where T : struct, IJsonValue<T>
         {
             ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
@@ -272,7 +272,7 @@ public readonly partial struct Schema
                 builder.Add(item.AsAny);
             }
 
-            return new PropertiesEntity1(builder.ToImmutable());
+            return new PropertiesEntity(builder.ToImmutable());
         }
 
         /// <summary>
@@ -280,7 +280,7 @@ public readonly partial struct Schema
         /// </summary>
         /// <param name = "items">The items from which to create the array.</param>
         /// <returns>The new array created from the items.</returns>
-        public static PropertiesEntity1 FromRange(IEnumerable<string> items)
+        public static PropertiesEntity FromRange(IEnumerable<string> items)
         {
             ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
             foreach (string item in items)
@@ -288,7 +288,7 @@ public readonly partial struct Schema
                 builder.Add(new JsonAny(item));
             }
 
-            return new PropertiesEntity1(builder.ToImmutable());
+            return new PropertiesEntity(builder.ToImmutable());
         }
 
         /// <summary>
@@ -296,7 +296,7 @@ public readonly partial struct Schema
         /// </summary>
         /// <param name = "items">The items from which to create the array.</param>
         /// <returns>The new array created from the items.</returns>
-        public static PropertiesEntity1 FromRange(IEnumerable<double> items)
+        public static PropertiesEntity FromRange(IEnumerable<double> items)
         {
             ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
             foreach (double item in items)
@@ -304,7 +304,7 @@ public readonly partial struct Schema
                 builder.Add(new JsonAny(item));
             }
 
-            return new PropertiesEntity1(builder.ToImmutable());
+            return new PropertiesEntity(builder.ToImmutable());
         }
 
         /// <summary>
@@ -312,7 +312,7 @@ public readonly partial struct Schema
         /// </summary>
         /// <param name = "items">The items from which to create the array.</param>
         /// <returns>The new array created from the items.</returns>
-        public static PropertiesEntity1 FromRange(IEnumerable<float> items)
+        public static PropertiesEntity FromRange(IEnumerable<float> items)
         {
             ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
             foreach (float item in items)
@@ -320,7 +320,7 @@ public readonly partial struct Schema
                 builder.Add(new JsonAny(item));
             }
 
-            return new PropertiesEntity1(builder.ToImmutable());
+            return new PropertiesEntity(builder.ToImmutable());
         }
 
         /// <summary>
@@ -328,7 +328,7 @@ public readonly partial struct Schema
         /// </summary>
         /// <param name = "items">The items from which to create the array.</param>
         /// <returns>The new array created from the items.</returns>
-        public static PropertiesEntity1 FromRange(IEnumerable<int> items)
+        public static PropertiesEntity FromRange(IEnumerable<int> items)
         {
             ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
             foreach (int item in items)
@@ -336,7 +336,7 @@ public readonly partial struct Schema
                 builder.Add(new JsonAny(item));
             }
 
-            return new PropertiesEntity1(builder.ToImmutable());
+            return new PropertiesEntity(builder.ToImmutable());
         }
 
         /// <summary>
@@ -344,7 +344,7 @@ public readonly partial struct Schema
         /// </summary>
         /// <param name = "items">The items from which to create the array.</param>
         /// <returns>The new array created from the items.</returns>
-        public static PropertiesEntity1 FromRange(IEnumerable<long> items)
+        public static PropertiesEntity FromRange(IEnumerable<long> items)
         {
             ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
             foreach (long item in items)
@@ -352,7 +352,7 @@ public readonly partial struct Schema
                 builder.Add(new JsonAny(item));
             }
 
-            return new PropertiesEntity1(builder.ToImmutable());
+            return new PropertiesEntity(builder.ToImmutable());
         }
 
         /// <summary>
@@ -360,7 +360,7 @@ public readonly partial struct Schema
         /// </summary>
         /// <param name = "items">The items from which to create the array.</param>
         /// <returns>The new array created from the items.</returns>
-        public static PropertiesEntity1 FromRange(IEnumerable<bool> items)
+        public static PropertiesEntity FromRange(IEnumerable<bool> items)
         {
             ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
             foreach (bool item in items)
@@ -368,15 +368,15 @@ public readonly partial struct Schema
                 builder.Add(new JsonAny(item));
             }
 
-            return new PropertiesEntity1(builder.ToImmutable());
+            return new PropertiesEntity(builder.ToImmutable());
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref = "PropertiesEntity1"/> struct.
+        /// Initializes a new instance of the <see cref = "PropertiesEntity"/> struct.
         /// </summary>
         /// <param name = "value1">The first value from which to construct the instance.</param>
-        /// <returns>A PropertiesEntity1 instantiated from the given items.</returns>
-        public static PropertiesEntity1 FromItems(in JsonAny value1)
+        /// <returns>A PropertiesEntity instantiated from the given items.</returns>
+        public static PropertiesEntity FromItems(in JsonAny value1)
         {
             ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
             builder.Add(value1);
@@ -384,12 +384,12 @@ public readonly partial struct Schema
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref = "PropertiesEntity1"/> struct.
+        /// Initializes a new instance of the <see cref = "PropertiesEntity"/> struct.
         /// </summary>
         /// <param name = "value1">The first value from which to construct the instance.</param>
         /// <param name = "value2">The second value from which to construct the instance.</param>
-        /// <returns>A PropertiesEntity1 instantiated from the given items.</returns>
-        public static PropertiesEntity1 FromItems(in JsonAny value1, in JsonAny value2)
+        /// <returns>A PropertiesEntity instantiated from the given items.</returns>
+        public static PropertiesEntity FromItems(in JsonAny value1, in JsonAny value2)
         {
             ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
             builder.Add(value1);
@@ -398,13 +398,13 @@ public readonly partial struct Schema
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref = "PropertiesEntity1"/> struct.
+        /// Initializes a new instance of the <see cref = "PropertiesEntity"/> struct.
         /// </summary>
         /// <param name = "value1">The first value from which to construct the instance.</param>
         /// <param name = "value2">The second value from which to construct the instance.</param>
         /// <param name = "value3">The thirdvalue from which to construct the instance.</param>
-        /// <returns>A PropertiesEntity1 instantiated from the given items.</returns>
-        public static PropertiesEntity1 FromItems(in JsonAny value1, in JsonAny value2, in JsonAny value3)
+        /// <returns>A PropertiesEntity instantiated from the given items.</returns>
+        public static PropertiesEntity FromItems(in JsonAny value1, in JsonAny value2, in JsonAny value3)
         {
             ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
             builder.Add(value1);

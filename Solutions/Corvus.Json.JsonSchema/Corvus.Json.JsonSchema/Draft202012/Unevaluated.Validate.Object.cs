@@ -34,14 +34,14 @@ public readonly partial struct Unevaluated
             if (__TryGetCorvusLocalPropertiesValidator(property, this.HasJsonElementBacking, out ObjectPropertyValidator? propertyValidator))
             {
                 result = result.WithLocalProperty(propertyCount);
-                if (level > ValidationLevel.Flag)
+                if (level > ValidationLevel.Basic)
                 {
                     result = result.PushDocumentProperty(property.Name);
                 }
 
                 var propertyResult = propertyValidator(property, result.CreateChildContext(), level);
                 result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
-                if (level > ValidationLevel.Flag)
+                if (level > ValidationLevel.Basic)
                 {
                     result = result.PopLocation(); // property name
                 }

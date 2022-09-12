@@ -22,13 +22,26 @@ public readonly partial struct Schema
         public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
         {
             ValidationContext result = validationContext;
-            if (level != ValidationLevel.Flag)
+            if (level > ValidationLevel.Flag)
             {
-                result = result.UsingStack();
-                result = result.PushSchemaLocation("http://json-schema.org/draft-06/schema#/properties/items");
+                result = result.UsingResults();
             }
 
-            result = this.ValidateAnyOf(result, level);
+            if (level > ValidationLevel.Basic)
+            {
+                result = result.UsingStack();
+                result = result.PushSchemaLocation("http://json-schema.org/draft-06/schema#/properties/properties");
+            }
+
+            result = result.UsingEvaluatedProperties();
+            JsonValueKind valueKind = this.ValueKind;
+            result = this.ValidateType(valueKind, result, level);
+            if (level == ValidationLevel.Flag && !result.IsValid)
+            {
+                return result;
+            }
+
+            result = this.ValidateObject(valueKind, result, level);
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;

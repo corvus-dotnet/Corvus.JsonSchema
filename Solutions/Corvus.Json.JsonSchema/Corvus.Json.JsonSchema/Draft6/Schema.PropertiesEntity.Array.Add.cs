@@ -17,10 +17,10 @@ public readonly partial struct Schema
     /// <summary>
     /// A type generated from a JsonSchema specification.
     /// </summary>
-    public readonly partial struct PropertiesEntity1
+    public readonly partial struct PropertiesEntity
     {
         /// <inheritdoc/>
-        public PropertiesEntity1 Add(in JsonAny item1)
+        public PropertiesEntity Add(in JsonAny item1)
         {
             ImmutableList<JsonAny>.Builder builder = this.GetImmutableListBuilder();
             builder.Add(item1);
@@ -28,7 +28,7 @@ public readonly partial struct Schema
         }
 
         /// <inheritdoc/>
-        public PropertiesEntity1 Add(params JsonAny[] items)
+        public PropertiesEntity Add(params JsonAny[] items)
         {
             ImmutableList<JsonAny>.Builder builder = this.GetImmutableListBuilder();
             builder.AddRange(items);
@@ -36,7 +36,7 @@ public readonly partial struct Schema
         }
 
         /// <inheritdoc/>
-        public PropertiesEntity1 AddRange<TArray>(in TArray items)
+        public PropertiesEntity AddRange<TArray>(in TArray items)
             where TArray : struct, IJsonArray<TArray>
         {
             ImmutableList<JsonAny>.Builder builder = this.GetImmutableListBuilder();
@@ -49,7 +49,7 @@ public readonly partial struct Schema
         }
 
         /// <inheritdoc/>
-        public PropertiesEntity1 AddRange<TItem>(IEnumerable<TItem> items)
+        public PropertiesEntity AddRange<TItem>(IEnumerable<TItem> items)
             where TItem : struct, IJsonValue<TItem>
         {
             ImmutableList<JsonAny>.Builder builder = this.GetImmutableListBuilder();
@@ -62,7 +62,7 @@ public readonly partial struct Schema
         }
 
         /// <inheritdoc/>
-        public PropertiesEntity1 AddRange(IEnumerable<JsonAny> items)
+        public PropertiesEntity AddRange(IEnumerable<JsonAny> items)
         {
             ImmutableList<JsonAny>.Builder builder = this.GetImmutableListBuilder();
             builder.AddRange(items);
@@ -70,39 +70,39 @@ public readonly partial struct Schema
         }
 
         /// <inheritdoc/>
-        public PropertiesEntity1 Insert(int index, in JsonAny item1)
+        public PropertiesEntity Insert(int index, in JsonAny item1)
         {
             return new(this.GetImmutableListWith(index, item1));
         }
 
         /// <inheritdoc/>
-        public PropertiesEntity1 InsertRange<TArray>(int index, in TArray items)
+        public PropertiesEntity InsertRange<TArray>(int index, in TArray items)
             where TArray : struct, IJsonArray<TArray>
         {
             return new(this.GetImmutableListWith(index, items.EnumerateArray()));
         }
 
         /// <inheritdoc/>
-        public PropertiesEntity1 InsertRange<TItem>(int index, IEnumerable<TItem> items)
+        public PropertiesEntity InsertRange<TItem>(int index, IEnumerable<TItem> items)
             where TItem : struct, IJsonValue<TItem>
         {
             return new(this.GetImmutableListWith(index, items.Select(item => item.AsAny)));
         }
 
         /// <inheritdoc/>
-        public PropertiesEntity1 InsertRange(int index, IEnumerable<JsonAny> items)
+        public PropertiesEntity InsertRange(int index, IEnumerable<JsonAny> items)
         {
             return new(this.GetImmutableListWith(index, items));
         }
 
         /// <inheritdoc/>
-        public PropertiesEntity1 Replace(in JsonAny oldValue, in JsonAny newValue)
+        public PropertiesEntity Replace(in JsonAny oldValue, in JsonAny newValue)
         {
             return this.GetImmutableListReplacing(oldValue.AsAny, newValue.AsAny);
         }
 
         /// <inheritdoc/>
-        public PropertiesEntity1 SetItem(int index, in JsonAny value)
+        public PropertiesEntity SetItem(int index, in JsonAny value)
         {
             return this.GetImmutableListSetting(index, value.AsAny);
         }

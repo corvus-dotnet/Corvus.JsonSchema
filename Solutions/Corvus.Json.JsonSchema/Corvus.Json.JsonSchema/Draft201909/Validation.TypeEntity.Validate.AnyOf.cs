@@ -20,13 +20,13 @@ public readonly partial struct Validation
         private ValidationContext ValidateAnyOf(in ValidationContext validationContext, ValidationLevel level)
         {
             ValidationContext result = validationContext;
-            if (level > ValidationLevel.Flag)
+            if (level > ValidationLevel.Basic)
             {
                 result = result.PushValidationLocationProperty("anyOf");
             }
 
             bool foundValid = false;
-            if (level > ValidationLevel.Flag)
+            if (level > ValidationLevel.Basic)
             {
                 result = result.PushValidationLocationArrayIndex(0);
             }
@@ -56,12 +56,12 @@ public readonly partial struct Validation
                 }
             }
 
-            if (level > ValidationLevel.Flag)
+            if (level > ValidationLevel.Basic)
             {
                 result = result.PopLocation(); // Index
             }
 
-            if (level > ValidationLevel.Flag)
+            if (level > ValidationLevel.Basic)
             {
                 result = result.PushValidationLocationArrayIndex(1);
             }
@@ -91,7 +91,7 @@ public readonly partial struct Validation
                 }
             }
 
-            if (level > ValidationLevel.Flag)
+            if (level > ValidationLevel.Basic)
             {
                 result = result.PopLocation(); // Index
             }
@@ -119,7 +119,7 @@ public readonly partial struct Validation
                 }
             }
 
-            if (level > ValidationLevel.Flag)
+            if (level > ValidationLevel.Basic)
             {
                 result = result.PopLocation(); // anyOf
             }

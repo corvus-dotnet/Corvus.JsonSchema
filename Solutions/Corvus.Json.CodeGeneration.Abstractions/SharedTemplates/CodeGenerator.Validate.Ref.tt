@@ -32,7 +32,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     {        
         ValidationContext result = validationContext;
 
-        if (level > ValidationLevel.Flag)
+        if (level > ValidationLevel.Basic)
         {
             result = result.PushValidationLocationProperty("$ref");
         }
@@ -64,7 +64,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
             result = result.MergeChildContext(refResult, false);
         }
 
-        if (level > ValidationLevel.Flag)
+        if (level > ValidationLevel.Basic)
         {
             result = result.PopLocation();
         }

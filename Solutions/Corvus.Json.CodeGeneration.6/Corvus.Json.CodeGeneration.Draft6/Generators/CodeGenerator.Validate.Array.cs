@@ -166,7 +166,7 @@ namespace ");
 
         while (arrayEnumerator.MoveNext())
         {
-            if (level > ValidationLevel.Flag)
+            if (level > ValidationLevel.Basic)
             {
                 result = result.PushValidationLocationArrayIndex(arrayLength);
             }
@@ -432,9 +432,9 @@ namespace ");
             #line hidden
             
             #line 168 "./Templates/CodeGenerator.Validate.Array.tt"
-            this.Write("\r\n            if (level > ValidationLevel.Flag)\r\n            {\r\n                r" +
-                    "esult = result.PopLocation(); // array index\r\n            }\r\n\r\n            array" +
-                    "Length++;\r\n        }\r\n");
+            this.Write("\r\n            if (level > ValidationLevel.Basic)\r\n            {\r\n                " +
+                    "result = result.PopLocation(); // array index\r\n            }\r\n\r\n            arra" +
+                    "yLength++;\r\n        }\r\n");
             
             #line default
             #line hidden

@@ -283,7 +283,7 @@ namespace ");
             this.Write(@"
             if (__TryGetCorvusLocalPropertiesValidator(property, this.HasJsonElementBacking, out ObjectPropertyValidator? propertyValidator))
             {
-                if (level > ValidationLevel.Flag)
+                if (level > ValidationLevel.Basic)
                 {
                     result = result.PushDocumentProperty(property.Name);
                 }
@@ -292,7 +292,7 @@ namespace ");
                 var propertyResult = propertyValidator(property, result.CreateChildContext(), level);
                 result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
 
-                if (level > ValidationLevel.Flag)
+                if (level > ValidationLevel.Basic)
                 {
                     result = result.PopLocation(); // property name
                 }

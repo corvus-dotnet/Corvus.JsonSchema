@@ -223,10 +223,10 @@ public readonly struct ValidationContext
 
         if ((this.usingFeatures & UsingFeatures.Stack) == 0)
         {
-            return new ValidationContext(this.IsValid && isValid, this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack, message is string msg1 ? this.Results.Add(new ValidationResult(isValid, msg1, null)) : this.Results, this.usingFeatures);
+            return new ValidationContext(this.IsValid && isValid, this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack, this.Results.Add(new ValidationResult(isValid, message ?? string.Empty, null)), this.usingFeatures);
         }
 
-        return new ValidationContext(this.IsValid && isValid, this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack, message is string msg2 ? this.Results.Add(new ValidationResult(isValid, msg2, this.locationStack.Peek())) : this.Results, this.usingFeatures);
+        return new ValidationContext(this.IsValid && isValid, this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack, this.Results.Add(new ValidationResult(isValid, message ?? string.Empty, this.locationStack.Peek())), this.usingFeatures);
     }
 
     /// <summary>
@@ -346,7 +346,7 @@ public readonly struct ValidationContext
             return this;
         }
 
-        return new ValidationContext(this.IsValid, this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack.Pop().Pop(), this.Results, this.usingFeatures);
+        return new ValidationContext(this.IsValid, this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack.Pop(), this.Results, this.usingFeatures);
     }
 
     /// <summary>

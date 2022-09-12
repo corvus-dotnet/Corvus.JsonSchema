@@ -103,7 +103,7 @@ namespace ");
     {
         ValidationContext result = validationContext;
 
-        if (level > ValidationLevel.Flag)
+        if (level > ValidationLevel.Basic)
         {
             result = result.PushValidationLocationProperty(""not"");
         }
@@ -141,7 +141,7 @@ namespace ");
             result = result.MergeResults(result.IsValid, level, notResult);
         }
 
-        if (level > ValidationLevel.Flag)
+        if (level > ValidationLevel.Basic)
         {
             result = result.PopLocation(); // not
         }

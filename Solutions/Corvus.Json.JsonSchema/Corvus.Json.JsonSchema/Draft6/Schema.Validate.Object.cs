@@ -33,7 +33,7 @@ public readonly partial struct Schema
         {
             if (__TryGetCorvusLocalPropertiesValidator(property, this.HasJsonElementBacking, out ObjectPropertyValidator? propertyValidator))
             {
-                if (level > ValidationLevel.Flag)
+                if (level > ValidationLevel.Basic)
                 {
                     result = result.PushDocumentProperty(property.Name);
                 }
@@ -41,7 +41,7 @@ public readonly partial struct Schema
                 result = result.WithLocalProperty(propertyCount);
                 var propertyResult = propertyValidator(property, result.CreateChildContext(), level);
                 result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
-                if (level > ValidationLevel.Flag)
+                if (level > ValidationLevel.Basic)
                 {
                     result = result.PopLocation(); // property name
                 }
