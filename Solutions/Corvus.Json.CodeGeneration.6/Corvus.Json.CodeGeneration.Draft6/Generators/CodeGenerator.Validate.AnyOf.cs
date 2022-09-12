@@ -17,7 +17,7 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft6 {
     public partial class CodeGeneratorValidateAnyOf : CodeGeneratorValidateAnyOfBase {
         
         
-        #line 87 "./Templates/CodeGenerator.Validate.AnyOf.tt"
+        #line 107 "./Templates/CodeGenerator.Validate.AnyOf.tt"
 
     public bool ShouldGenerate
     {
@@ -96,14 +96,23 @@ namespace ");
             #line hidden
             
             #line 29 "./Templates/CodeGenerator.Validate.AnyOf.tt"
-            this.Write("\r\n{\r\n    private ValidationContext ValidateAnyOf(in ValidationContext validationC" +
-                    "ontext, ValidationLevel level)\r\n    {\r\n        ValidationContext result = valida" +
-                    "tionContext;\r\n        bool foundValid = false;\r\n");
+            this.Write(@"
+{
+    private ValidationContext ValidateAnyOf(in ValidationContext validationContext, ValidationLevel level)
+    {
+        ValidationContext result = validationContext;
+        if (level > ValidationLevel.Flag)
+        {
+            result = result.PushValidationLocationProperty(""anyOf"");
+        }
+
+        bool foundValid = false;
+");
             
             #line default
             #line hidden
             
-            #line 35 "./Templates/CodeGenerator.Validate.AnyOf.tt"
+            #line 40 "./Templates/CodeGenerator.Validate.AnyOf.tt"
   int anyOfIndex = 0;
     foreach (var anyOf in AnyOf)
     { 
@@ -111,56 +120,69 @@ namespace ");
             #line default
             #line hidden
             
-            #line 38 "./Templates/CodeGenerator.Validate.AnyOf.tt"
-            this.Write("\r\n        ValidationContext anyOfResult");
+            #line 43 "./Templates/CodeGenerator.Validate.AnyOf.tt"
+            this.Write("\r\n        if (level > ValidationLevel.Flag)\r\n        {\r\n            result = resu" +
+                    "lt.PushValidationLocationArrayIndex(");
             
             #line default
             #line hidden
             
-            #line 39 "./Templates/CodeGenerator.Validate.AnyOf.tt"
+            #line 46 "./Templates/CodeGenerator.Validate.AnyOf.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( anyOfIndex ));
             
             #line default
             #line hidden
             
-            #line 39 "./Templates/CodeGenerator.Validate.AnyOf.tt"
+            #line 46 "./Templates/CodeGenerator.Validate.AnyOf.tt"
+            this.Write(");\r\n        }\r\n\r\n        ValidationContext anyOfResult");
+            
+            #line default
+            #line hidden
+            
+            #line 49 "./Templates/CodeGenerator.Validate.AnyOf.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( anyOfIndex ));
+            
+            #line default
+            #line hidden
+            
+            #line 49 "./Templates/CodeGenerator.Validate.AnyOf.tt"
             this.Write(" = this.As<");
             
             #line default
             #line hidden
             
-            #line 39 "./Templates/CodeGenerator.Validate.AnyOf.tt"
+            #line 49 "./Templates/CodeGenerator.Validate.AnyOf.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( anyOf ));
             
             #line default
             #line hidden
             
-            #line 39 "./Templates/CodeGenerator.Validate.AnyOf.tt"
+            #line 49 "./Templates/CodeGenerator.Validate.AnyOf.tt"
             this.Write(">().Validate(validationContext.CreateChildContext(), level);\r\n\r\n        if (anyOf" +
                     "Result");
             
             #line default
             #line hidden
             
-            #line 41 "./Templates/CodeGenerator.Validate.AnyOf.tt"
+            #line 51 "./Templates/CodeGenerator.Validate.AnyOf.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( anyOfIndex ));
             
             #line default
             #line hidden
             
-            #line 41 "./Templates/CodeGenerator.Validate.AnyOf.tt"
+            #line 51 "./Templates/CodeGenerator.Validate.AnyOf.tt"
             this.Write(".IsValid)\r\n        {\r\n            result = result.MergeChildContext(anyOfResult");
             
             #line default
             #line hidden
             
-            #line 43 "./Templates/CodeGenerator.Validate.AnyOf.tt"
+            #line 53 "./Templates/CodeGenerator.Validate.AnyOf.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( anyOfIndex ));
             
             #line default
             #line hidden
             
-            #line 43 "./Templates/CodeGenerator.Validate.AnyOf.tt"
+            #line 53 "./Templates/CodeGenerator.Validate.AnyOf.tt"
             this.Write(", level >= ValidationLevel.Detailed);\r\n            foundValid = true;\r\n        }\r" +
                     "\n        else\r\n        {\r\n            if (level >= ValidationLevel.Detailed)\r\n  " +
                     "          {\r\n                result = result.MergeResults(result.IsValid, level," +
@@ -169,13 +191,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 50 "./Templates/CodeGenerator.Validate.AnyOf.tt"
+            #line 60 "./Templates/CodeGenerator.Validate.AnyOf.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( anyOfIndex ));
             
             #line default
             #line hidden
             
-            #line 50 "./Templates/CodeGenerator.Validate.AnyOf.tt"
+            #line 60 "./Templates/CodeGenerator.Validate.AnyOf.tt"
             this.Write(");\r\n            }\r\n            else if (level >= ValidationLevel.Basic)\r\n        " +
                     "    {\r\n                result = result.MergeResults(result.IsValid, level, anyOf" +
                     "Result");
@@ -183,26 +205,27 @@ namespace ");
             #line default
             #line hidden
             
-            #line 54 "./Templates/CodeGenerator.Validate.AnyOf.tt"
+            #line 64 "./Templates/CodeGenerator.Validate.AnyOf.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( anyOfIndex ));
             
             #line default
             #line hidden
             
-            #line 54 "./Templates/CodeGenerator.Validate.AnyOf.tt"
-            this.Write(");\r\n            }\r\n        }\r\n");
+            #line 64 "./Templates/CodeGenerator.Validate.AnyOf.tt"
+            this.Write(");\r\n            }\r\n        }\r\n\r\n        if (level > ValidationLevel.Flag)\r\n      " +
+                    "  {\r\n            result = result.PopLocation(); // Index\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 57 "./Templates/CodeGenerator.Validate.AnyOf.tt"
+            #line 72 "./Templates/CodeGenerator.Validate.AnyOf.tt"
       anyOfIndex++;
     } 
             
             #line default
             #line hidden
             
-            #line 59 "./Templates/CodeGenerator.Validate.AnyOf.tt"
+            #line 74 "./Templates/CodeGenerator.Validate.AnyOf.tt"
             this.Write(@"
         if (foundValid)
         {
@@ -227,6 +250,11 @@ namespace ");
             }
         }
 
+        if (level > ValidationLevel.Flag)
+        {
+            result = result.PopLocation(); // anyOf
+        }
+
         return result;
     }
 }
@@ -235,7 +263,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 86 "./Templates/CodeGenerator.Validate.AnyOf.tt"
+            #line 106 "./Templates/CodeGenerator.Validate.AnyOf.tt"
  EndNesting(); 
             
             #line default

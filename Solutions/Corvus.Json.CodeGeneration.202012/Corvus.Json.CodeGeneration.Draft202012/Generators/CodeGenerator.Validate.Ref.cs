@@ -17,7 +17,7 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft202012 {
     public partial class CodeGeneratorValidateRef : CodeGeneratorValidateRefBase {
         
         
-        #line 66 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Ref.tt"
+        #line 76 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Ref.tt"
 
     public bool ShouldGenerate
     {
@@ -96,20 +96,29 @@ namespace ");
             #line hidden
             
             #line 29 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Ref.tt"
-            this.Write("\r\n{\r\n    private ValidationContext ValidateRef(in ValidationContext validationCon" +
-                    "text, ValidationLevel level)\r\n    {\r\n        ValidationContext result = validati" +
-                    "onContext;\r\n\r\n        ValidationContext refResult = this.As<");
+            this.Write(@"
+{
+    private ValidationContext ValidateRef(in ValidationContext validationContext, ValidationLevel level)
+    {        
+        ValidationContext result = validationContext;
+
+        if (level > ValidationLevel.Flag)
+        {
+            result = result.PushValidationLocationProperty(""$ref"");
+        }
+
+        ValidationContext refResult = this.As<");
             
             #line default
             #line hidden
             
-            #line 35 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Ref.tt"
+            #line 40 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Ref.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( RefDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 35 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Ref.tt"
+            #line 40 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Ref.tt"
             this.Write(@">().Validate(validationContext.CreateChildContext(), level);
 
         if (!refResult.IsValid)
@@ -137,6 +146,11 @@ namespace ");
             result = result.MergeChildContext(refResult, false);
         }
 
+        if (level > ValidationLevel.Flag)
+        {
+            result = result.PopLocation();
+        }
+
         return result;
     }
 }
@@ -145,7 +159,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 65 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Ref.tt"
+            #line 75 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Ref.tt"
  EndNesting(); 
             
             #line default

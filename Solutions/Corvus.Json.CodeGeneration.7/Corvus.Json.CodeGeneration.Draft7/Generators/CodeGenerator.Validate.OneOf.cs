@@ -17,7 +17,7 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft7 {
     public partial class CodeGeneratorValidateOneOf : CodeGeneratorValidateOneOfBase {
         
         
-        #line 111 "./Templates/CodeGenerator.Validate.OneOf.tt"
+        #line 133 "./Templates/CodeGenerator.Validate.OneOf.tt"
 
     public bool ShouldGenerate
     {
@@ -96,14 +96,24 @@ namespace ");
             #line hidden
             
             #line 29 "./Templates/CodeGenerator.Validate.OneOf.tt"
-            this.Write("\r\n{\r\n    private ValidationContext ValidateOneOf(in ValidationContext validationC" +
-                    "ontext, ValidationLevel level)\r\n    {\r\n        ValidationContext result = valida" +
-                    "tionContext;\r\n        int oneOfCount = 0;\r\n");
+            this.Write(@"
+{
+    private ValidationContext ValidateOneOf(in ValidationContext validationContext, ValidationLevel level)
+    {
+        ValidationContext result = validationContext;
+
+        if (level > ValidationLevel.Flag)
+        {
+            result = result.PushValidationLocationProperty(""oneOf"");
+        }
+
+        int oneOfCount = 0;
+");
             
             #line default
             #line hidden
             
-            #line 35 "./Templates/CodeGenerator.Validate.OneOf.tt"
+            #line 41 "./Templates/CodeGenerator.Validate.OneOf.tt"
   int oneOfIndex = 0;
     foreach (var oneOf in OneOf)
     { 
@@ -111,56 +121,69 @@ namespace ");
             #line default
             #line hidden
             
-            #line 38 "./Templates/CodeGenerator.Validate.OneOf.tt"
-            this.Write("\r\n        ValidationContext oneOfResult");
+            #line 44 "./Templates/CodeGenerator.Validate.OneOf.tt"
+            this.Write("\r\n        if (level > ValidationLevel.Flag)\r\n        {\r\n            result = resu" +
+                    "lt.PushValidationLocationArrayIndex(");
             
             #line default
             #line hidden
             
-            #line 39 "./Templates/CodeGenerator.Validate.OneOf.tt"
+            #line 47 "./Templates/CodeGenerator.Validate.OneOf.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( oneOfIndex ));
+            
+            #line default
+            #line hidden
+            
+            #line 47 "./Templates/CodeGenerator.Validate.OneOf.tt"
+            this.Write(");\r\n        }\r\n\r\n        ValidationContext oneOfResult");
+            
+            #line default
+            #line hidden
+            
+            #line 50 "./Templates/CodeGenerator.Validate.OneOf.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( oneOfIndex));
             
             #line default
             #line hidden
             
-            #line 39 "./Templates/CodeGenerator.Validate.OneOf.tt"
+            #line 50 "./Templates/CodeGenerator.Validate.OneOf.tt"
             this.Write(" = this.As<");
             
             #line default
             #line hidden
             
-            #line 39 "./Templates/CodeGenerator.Validate.OneOf.tt"
+            #line 50 "./Templates/CodeGenerator.Validate.OneOf.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( oneOf ));
             
             #line default
             #line hidden
             
-            #line 39 "./Templates/CodeGenerator.Validate.OneOf.tt"
+            #line 50 "./Templates/CodeGenerator.Validate.OneOf.tt"
             this.Write(">().Validate(validationContext.CreateChildContext(), level);\r\n\r\n        if (oneOf" +
                     "Result");
             
             #line default
             #line hidden
             
-            #line 41 "./Templates/CodeGenerator.Validate.OneOf.tt"
+            #line 52 "./Templates/CodeGenerator.Validate.OneOf.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( oneOfIndex ));
             
             #line default
             #line hidden
             
-            #line 41 "./Templates/CodeGenerator.Validate.OneOf.tt"
+            #line 52 "./Templates/CodeGenerator.Validate.OneOf.tt"
             this.Write(".IsValid)\r\n        {\r\n            result = result.MergeChildContext(oneOfResult");
             
             #line default
             #line hidden
             
-            #line 43 "./Templates/CodeGenerator.Validate.OneOf.tt"
+            #line 54 "./Templates/CodeGenerator.Validate.OneOf.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( oneOfIndex ));
             
             #line default
             #line hidden
             
-            #line 43 "./Templates/CodeGenerator.Validate.OneOf.tt"
+            #line 54 "./Templates/CodeGenerator.Validate.OneOf.tt"
             this.Write(@", level >= ValidationLevel.Detailed);
             oneOfCount += 1;
             if (oneOfCount > 1 && level == ValidationLevel.Flag)
@@ -178,13 +201,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 55 "./Templates/CodeGenerator.Validate.OneOf.tt"
+            #line 66 "./Templates/CodeGenerator.Validate.OneOf.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( oneOfIndex ));
             
             #line default
             #line hidden
             
-            #line 55 "./Templates/CodeGenerator.Validate.OneOf.tt"
+            #line 66 "./Templates/CodeGenerator.Validate.OneOf.tt"
             this.Write(");\r\n            }\r\n            else if (level >= ValidationLevel.Basic)\r\n        " +
                     "    {\r\n                result = result.MergeResults(result.IsValid, level, oneOf" +
                     "Result");
@@ -192,39 +215,40 @@ namespace ");
             #line default
             #line hidden
             
-            #line 59 "./Templates/CodeGenerator.Validate.OneOf.tt"
+            #line 70 "./Templates/CodeGenerator.Validate.OneOf.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( oneOfIndex ));
             
             #line default
             #line hidden
             
-            #line 59 "./Templates/CodeGenerator.Validate.OneOf.tt"
+            #line 70 "./Templates/CodeGenerator.Validate.OneOf.tt"
             this.Write(");\r\n            }\r\n            else\r\n            {\r\n                result = resu" +
                     "lt.MergeResults(result.IsValid, level, oneOfResult");
             
             #line default
             #line hidden
             
-            #line 63 "./Templates/CodeGenerator.Validate.OneOf.tt"
+            #line 74 "./Templates/CodeGenerator.Validate.OneOf.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( oneOfIndex ));
             
             #line default
             #line hidden
             
-            #line 63 "./Templates/CodeGenerator.Validate.OneOf.tt"
-            this.Write(");\r\n            }\r\n        }\r\n");
+            #line 74 "./Templates/CodeGenerator.Validate.OneOf.tt"
+            this.Write(");\r\n            }\r\n        }\r\n        \r\n        if (level > ValidationLevel.Flag)" +
+                    "\r\n        {\r\n            result = result.PopLocation(); // Index\r\n        }\r\n\r\n");
             
             #line default
             #line hidden
             
-            #line 66 "./Templates/CodeGenerator.Validate.OneOf.tt"
+            #line 83 "./Templates/CodeGenerator.Validate.OneOf.tt"
       oneOfIndex++;
     } 
             
             #line default
             #line hidden
             
-            #line 68 "./Templates/CodeGenerator.Validate.OneOf.tt"
+            #line 85 "./Templates/CodeGenerator.Validate.OneOf.tt"
             this.Write("\r\n        if (oneOfCount == 1)\r\n        {\r\n            if (level >= ValidationLev" +
                     "el.Detailed)\r\n            {\r\n                result = result.WithResult(isValid:" +
                     " true, \"Validation 10.2.1.3. onef - validated against the oneOf schema.\");\r\n    " +
@@ -243,13 +267,14 @@ namespace ");
                     "   {\r\n                result = result.WithResult(isValid: false, \"Validation 10." +
                     "2.1.3. oneOf - failed to validate against more than one of the oneOf schema.\");\r" +
                     "\n            }\r\n            else\r\n            {\r\n                result = result" +
-                    ".WithResult(isValid: false);\r\n            }\r\n        }\r\n\r\n        return result;" +
-                    "\r\n    }\r\n}\r\n");
+                    ".WithResult(isValid: false);\r\n            }\r\n        }\r\n\r\n        if (level > Va" +
+                    "lidationLevel.Flag)\r\n        {\r\n            result = result.PopLocation(); // on" +
+                    "eOf\r\n        }\r\n\r\n        return result;\r\n    }\r\n}\r\n");
             
             #line default
             #line hidden
             
-            #line 110 "./Templates/CodeGenerator.Validate.OneOf.tt"
+            #line 132 "./Templates/CodeGenerator.Validate.OneOf.tt"
  EndNesting(); 
             
             #line default

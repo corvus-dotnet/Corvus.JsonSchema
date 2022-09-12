@@ -17,7 +17,7 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft201909 {
     public partial class CodeGeneratorValidateObject : CodeGeneratorValidateObjectBase {
         
         
-        #line 304 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+        #line 316 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
 
     public bool ShouldGenerate
     {
@@ -284,8 +284,20 @@ namespace ");
             if (__TryGetCorvusLocalPropertiesValidator(property, this.HasJsonElementBacking, out ObjectPropertyValidator? propertyValidator))
             {
                 result = result.WithLocalProperty(propertyCount);
+
+                if (level > ValidationLevel.Flag)
+                {
+                    result = result.PushDocumentProperty(property.Name);
+                }
+
                 var propertyResult = propertyValidator(property, result.CreateChildContext(), level);
                 result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                if (level > ValidationLevel.Flag)
+                {
+                    result = result.PopLocation(); // property name
+                }
+
                 if (level == ValidationLevel.Flag && !result.IsValid)
                 {
                     return result;
@@ -295,20 +307,20 @@ namespace ");
             #line default
             #line hidden
             
-            #line 127 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 139 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
       if (HasRequired)
         { 
             
             #line default
             #line hidden
             
-            #line 129 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 141 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
             this.Write("\r\n");
             
             #line default
             #line hidden
             
-            #line 130 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 142 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
           int requiredIndex = 0 ;
             foreach (var property in RequiredProperties)
             { 
@@ -316,62 +328,62 @@ namespace ");
             #line default
             #line hidden
             
-            #line 133 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 145 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
             this.Write("                ");
             
             #line default
             #line hidden
             
-            #line 133 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 145 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( requiredIndex != 0 ? "else " : "" ));
             
             #line default
             #line hidden
             
-            #line 133 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 145 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
             this.Write("if ((this.HasJsonElementBacking && property.NameEquals(");
             
             #line default
             #line hidden
             
-            #line 133 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 145 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( property.DotnetPropertyName ));
             
             #line default
             #line hidden
             
-            #line 133 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 145 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
             this.Write("Utf8JsonPropertyName.Span)) || (!this.HasJsonElementBacking && property.NameEqual" +
                     "s(");
             
             #line default
             #line hidden
             
-            #line 133 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 145 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( property.DotnetPropertyName ));
             
             #line default
             #line hidden
             
-            #line 133 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 145 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
             this.Write("JsonPropertyName)))\r\n                {\r\n                    found");
             
             #line default
             #line hidden
             
-            #line 135 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 147 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( property.DotnetPropertyName ));
             
             #line default
             #line hidden
             
-            #line 135 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 147 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
             this.Write(" = true;\r\n                }\r\n");
             
             #line default
             #line hidden
             
-            #line 137 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 149 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
           requiredIndex++;
             }
         } 
@@ -379,13 +391,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 140 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 152 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
             this.Write("            }\r\n");
             
             #line default
             #line hidden
             
-            #line 141 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 153 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
   }
     if (HasDependentSchemas)
     { 
@@ -393,20 +405,20 @@ namespace ");
             #line default
             #line hidden
             
-            #line 144 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 156 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
             this.Write("            if (__TryGetCorvusDependentSchemaValidator(property, this.HasJsonElem" +
                     "entBacking, out PropertyValidator<");
             
             #line default
             #line hidden
             
-            #line 144 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 156 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 144 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 156 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
             this.Write(@">? dependentSchemaValidator))
             {
                 result = result.WithLocalProperty(propertyCount);
@@ -421,7 +433,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 153 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 165 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
   }
     if (HasPropertyNames || HasPatternProperties)
     { 
@@ -429,32 +441,32 @@ namespace ");
             #line default
             #line hidden
             
-            #line 156 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 168 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
             this.Write("            string propertyName = property.Name;\r\n");
             
             #line default
             #line hidden
             
-            #line 157 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 169 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
       if (HasPropertyNames)
         { 
             
             #line default
             #line hidden
             
-            #line 159 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 171 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
             this.Write("\r\n            result = new ");
             
             #line default
             #line hidden
             
-            #line 160 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 172 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( PropertyNamesDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 160 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 172 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
             this.Write("(propertyName).Validate(result, level);\r\n            if (level == ValidationLevel" +
                     ".Flag && !result.IsValid)\r\n            {\r\n                return result;\r\n      " +
                     "      }\r\n");
@@ -462,7 +474,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 165 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 177 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
       }
         if (HasPatternProperties)
         { 
@@ -470,7 +482,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 168 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 180 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
             this.Write(@"
             foreach (System.Collections.Generic.KeyValuePair<Regex, PatternPropertyValidator> patternProperty in __CorvusPatternProperties)
             {
@@ -489,7 +501,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 181 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 193 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
       }
     }
     if (AllowsAdditionalProperties && HasAdditionalProperties)
@@ -498,20 +510,20 @@ namespace ");
             #line default
             #line hidden
             
-            #line 185 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 197 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
             this.Write("\r\n            if (!result.HasEvaluatedLocalProperty(propertyCount))\r\n            " +
                     "{\r\n                result = property.ValueAs<");
             
             #line default
             #line hidden
             
-            #line 188 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 200 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( AdditionalPropertiesDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 188 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 200 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
             this.Write(@">().Validate(result, level);
                 if (level == ValidationLevel.Flag && !result.IsValid)
                 {
@@ -524,7 +536,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 195 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 207 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
   }
     if (AllowsAdditionalProperties && HasUnevaluatedProperties)
     { 
@@ -532,20 +544,20 @@ namespace ");
             #line default
             #line hidden
             
-            #line 198 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 210 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
             this.Write("\r\n            if (!result.HasEvaluatedLocalOrAppliedProperty(propertyCount))\r\n   " +
                     "         {\r\n\r\n                result = property.ValueAs<");
             
             #line default
             #line hidden
             
-            #line 202 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 214 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( UnevaluatedPropertiesDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 202 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 214 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
             this.Write(@">().Validate(result, level);
                 if (level == ValidationLevel.Flag && !result.IsValid)
                 {
@@ -559,7 +571,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 210 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 222 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
   }
     if (!AllowsAdditionalProperties)
     { 
@@ -567,7 +579,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 213 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 225 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
             this.Write(@"
             if (!result.HasEvaluatedLocalProperty(propertyCount))
             {
@@ -589,7 +601,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 229 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 241 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
   }
     if (HasMaxProperties || HasMinProperties || HasLocalProperties || HasRequired || HasDependentSchemas || HasPatternProperties || HasAdditionalProperties || HasUnevaluatedProperties)
     { 
@@ -597,25 +609,25 @@ namespace ");
             #line default
             #line hidden
             
-            #line 232 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 244 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
             this.Write("\r\n            propertyCount++;\r\n");
             
             #line default
             #line hidden
             
-            #line 234 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 246 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 235 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 247 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
             this.Write("        }\r\n");
             
             #line default
             #line hidden
             
-            #line 236 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 248 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
   if (HasRequired)
     {
         foreach (var property in RequiredProperties)
@@ -626,19 +638,19 @@ namespace ");
             #line default
             #line hidden
             
-            #line 242 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 254 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
             this.Write("\r\n        if (!found");
             
             #line default
             #line hidden
             
-            #line 243 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 255 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( property.DotnetPropertyName ));
             
             #line default
             #line hidden
             
-            #line 243 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 255 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
             this.Write(")\r\n        {\r\n            if (level >= ValidationLevel.Detailed)\r\n            {\r\n" +
                     "                result = result.WithResult(isValid: false, $\"6.5.3. required - r" +
                     "equired property \\\"");
@@ -646,13 +658,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 247 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 259 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( Formatting.FormatLiteralOrNull(property.JsonPropertyName, true).Trim('"') ));
             
             #line default
             #line hidden
             
-            #line 247 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 259 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
             this.Write(@"\"" not present."");
             }
             else if (level >= ValidationLevel.Basic)
@@ -669,7 +681,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 258 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 270 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
           }
         }
     }
@@ -679,19 +691,19 @@ namespace ");
             #line default
             #line hidden
             
-            #line 263 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 275 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
             this.Write("\r\n        if (propertyCount > ");
             
             #line default
             #line hidden
             
-            #line 264 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 276 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( MaxProperties ));
             
             #line default
             #line hidden
             
-            #line 264 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 276 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
             this.Write(")\r\n        {\r\n            if (level >= ValidationLevel.Detailed)\r\n            {\r\n" +
                     "                result = result.WithResult(isValid: false, $\"6.5.1. maxPropertie" +
                     "s - property count of {propertyCount} is greater than ");
@@ -699,13 +711,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 268 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 280 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( MaxProperties ));
             
             #line default
             #line hidden
             
-            #line 268 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 280 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
             this.Write(".\");\r\n            }\r\n            else if (level >= ValidationLevel.Basic)\r\n      " +
                     "      {\r\n                result = result.WithResult(isValid: false, \"6.5.1. maxP" +
                     "roperties - property count greater than ");
@@ -713,20 +725,20 @@ namespace ");
             #line default
             #line hidden
             
-            #line 272 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 284 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( MaxProperties ));
             
             #line default
             #line hidden
             
-            #line 272 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 284 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
             this.Write(".\");\r\n            }\r\n            else\r\n            {\r\n                return resu" +
                     "lt.WithResult(isValid: false);\r\n            }\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 279 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 291 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
   }
     if (HasMinProperties)
     { 
@@ -734,19 +746,19 @@ namespace ");
             #line default
             #line hidden
             
-            #line 282 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 294 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
             this.Write("\r\n        if (propertyCount < ");
             
             #line default
             #line hidden
             
-            #line 283 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 295 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( MinProperties ));
             
             #line default
             #line hidden
             
-            #line 283 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 295 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
             this.Write(")\r\n        {\r\n            if (level >= ValidationLevel.Detailed)\r\n            {\r\n" +
                     "                result = result.WithResult(isValid: false, $\"6.5.2. minPropertie" +
                     "s - property count of {propertyCount} is lezs than ");
@@ -754,13 +766,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 287 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 299 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( MinProperties ));
             
             #line default
             #line hidden
             
-            #line 287 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 299 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
             this.Write(".\");\r\n            }\r\n            else if (level >= ValidationLevel.Basic)\r\n      " +
                     "      {\r\n                result = result.WithResult(isValid: false, \"6.5.2. minP" +
                     "roperties - property count less than ");
@@ -768,32 +780,32 @@ namespace ");
             #line default
             #line hidden
             
-            #line 291 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 303 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( MinProperties ));
             
             #line default
             #line hidden
             
-            #line 291 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 303 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
             this.Write(".\");\r\n            }\r\n            else\r\n            {\r\n                return resu" +
                     "lt.WithResult(isValid: false);\r\n            }\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 298 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 310 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 299 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 311 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
             this.Write("\r\n        return result;\r\n    }\r\n}\r\n");
             
             #line default
             #line hidden
             
-            #line 303 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
+            #line 315 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
  EndNesting(); 
             
             #line default

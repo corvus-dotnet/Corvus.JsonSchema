@@ -17,7 +17,7 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft6 {
     public partial class CodeGeneratorValidateNot : CodeGeneratorValidateNotBase {
         
         
-        #line 61 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Not.tt"
+        #line 71 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Not.tt"
 
     public bool ShouldGenerate
     {
@@ -97,20 +97,29 @@ namespace ");
             #line hidden
             
             #line 30 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Not.tt"
-            this.Write("\r\n{\r\n    private ValidationContext ValidateNot(ValidationContext validationContex" +
-                    "t, ValidationLevel level)\r\n    {\r\n        ValidationContext result = validationC" +
-                    "ontext;\r\n\r\n        ValidationContext notResult = this.As<");
+            this.Write(@"
+{
+    private ValidationContext ValidateNot(ValidationContext validationContext, ValidationLevel level)
+    {
+        ValidationContext result = validationContext;
+
+        if (level > ValidationLevel.Flag)
+        {
+            result = result.PushValidationLocationProperty(""not"");
+        }
+
+        ValidationContext notResult = this.As<");
             
             #line default
             #line hidden
             
-            #line 36 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Not.tt"
+            #line 41 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Not.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( NotDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 36 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Not.tt"
+            #line 41 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Not.tt"
             this.Write(@">().Validate(validationContext.CreateChildContext(), level);
         if (notResult.IsValid)
         {
@@ -132,6 +141,11 @@ namespace ");
             result = result.MergeResults(result.IsValid, level, notResult);
         }
 
+        if (level > ValidationLevel.Flag)
+        {
+            result = result.PopLocation(); // not
+        }
+
         return result;
     }
 }
@@ -140,7 +154,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 60 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Not.tt"
+            #line 70 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Not.tt"
  EndNesting(); 
             
             #line default

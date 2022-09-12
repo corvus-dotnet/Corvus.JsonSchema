@@ -17,7 +17,7 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft6 {
     public partial class CodeGeneratorValidateObject : CodeGeneratorValidateObjectBase {
         
         
-        #line 289 "./Templates/CodeGenerator.Validate.Object.tt"
+        #line 300 "./Templates/CodeGenerator.Validate.Object.tt"
 
     public bool ShouldGenerate
     {
@@ -283,9 +283,20 @@ namespace ");
             this.Write(@"
             if (__TryGetCorvusLocalPropertiesValidator(property, this.HasJsonElementBacking, out ObjectPropertyValidator? propertyValidator))
             {
+                if (level > ValidationLevel.Flag)
+                {
+                    result = result.PushDocumentProperty(property.Name);
+                }
+
                 result = result.WithLocalProperty(propertyCount);
                 var propertyResult = propertyValidator(property, result.CreateChildContext(), level);
                 result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+
+                if (level > ValidationLevel.Flag)
+                {
+                    result = result.PopLocation(); // property name
+                }
+
                 if (level == ValidationLevel.Flag && !result.IsValid)
                 {
                     return result;
@@ -295,20 +306,20 @@ namespace ");
             #line default
             #line hidden
             
-            #line 127 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 138 "./Templates/CodeGenerator.Validate.Object.tt"
       if (HasRequired)
         { 
             
             #line default
             #line hidden
             
-            #line 129 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 140 "./Templates/CodeGenerator.Validate.Object.tt"
             this.Write("\r\n");
             
             #line default
             #line hidden
             
-            #line 130 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 141 "./Templates/CodeGenerator.Validate.Object.tt"
           int requiredIndex = 0 ;
             foreach (var property in RequiredProperties)
             { 
@@ -316,62 +327,62 @@ namespace ");
             #line default
             #line hidden
             
-            #line 133 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 144 "./Templates/CodeGenerator.Validate.Object.tt"
             this.Write("                ");
             
             #line default
             #line hidden
             
-            #line 133 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 144 "./Templates/CodeGenerator.Validate.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( requiredIndex != 0 ? "else " : "" ));
             
             #line default
             #line hidden
             
-            #line 133 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 144 "./Templates/CodeGenerator.Validate.Object.tt"
             this.Write("if ((this.HasJsonElementBacking && property.NameEquals(");
             
             #line default
             #line hidden
             
-            #line 133 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 144 "./Templates/CodeGenerator.Validate.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( property.DotnetPropertyName ));
             
             #line default
             #line hidden
             
-            #line 133 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 144 "./Templates/CodeGenerator.Validate.Object.tt"
             this.Write("Utf8JsonPropertyName.Span)) || (!this.HasJsonElementBacking && property.NameEqual" +
                     "s(");
             
             #line default
             #line hidden
             
-            #line 133 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 144 "./Templates/CodeGenerator.Validate.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( property.DotnetPropertyName ));
             
             #line default
             #line hidden
             
-            #line 133 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 144 "./Templates/CodeGenerator.Validate.Object.tt"
             this.Write("JsonPropertyName)))\r\n                {\r\n                    found");
             
             #line default
             #line hidden
             
-            #line 135 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 146 "./Templates/CodeGenerator.Validate.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( property.DotnetPropertyName ));
             
             #line default
             #line hidden
             
-            #line 135 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 146 "./Templates/CodeGenerator.Validate.Object.tt"
             this.Write(" = true;\r\n                }\r\n");
             
             #line default
             #line hidden
             
-            #line 137 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 148 "./Templates/CodeGenerator.Validate.Object.tt"
           requiredIndex++;
             }
         } 
@@ -379,13 +390,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 140 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 151 "./Templates/CodeGenerator.Validate.Object.tt"
             this.Write("            }\r\n");
             
             #line default
             #line hidden
             
-            #line 141 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 152 "./Templates/CodeGenerator.Validate.Object.tt"
   }
     if (HasDependentSchemas)
     { 
@@ -393,20 +404,20 @@ namespace ");
             #line default
             #line hidden
             
-            #line 144 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 155 "./Templates/CodeGenerator.Validate.Object.tt"
             this.Write("            if (__TryGetCorvusDependentSchemaValidator(property, this.HasJsonElem" +
                     "entBacking, out PropertyValidator<");
             
             #line default
             #line hidden
             
-            #line 144 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 155 "./Templates/CodeGenerator.Validate.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 144 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 155 "./Templates/CodeGenerator.Validate.Object.tt"
             this.Write(@">? dependentSchemaValidator))
             {
                 result = result.WithLocalProperty(propertyCount);
@@ -421,7 +432,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 153 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 164 "./Templates/CodeGenerator.Validate.Object.tt"
   }
     if (HasPropertyNames || HasPatternProperties)
     { 
@@ -429,32 +440,32 @@ namespace ");
             #line default
             #line hidden
             
-            #line 156 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 167 "./Templates/CodeGenerator.Validate.Object.tt"
             this.Write("            string propertyName = property.Name;\r\n");
             
             #line default
             #line hidden
             
-            #line 157 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 168 "./Templates/CodeGenerator.Validate.Object.tt"
       if (HasPropertyNames)
         { 
             
             #line default
             #line hidden
             
-            #line 159 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 170 "./Templates/CodeGenerator.Validate.Object.tt"
             this.Write("\r\n            result = new ");
             
             #line default
             #line hidden
             
-            #line 160 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 171 "./Templates/CodeGenerator.Validate.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( PropertyNamesDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 160 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 171 "./Templates/CodeGenerator.Validate.Object.tt"
             this.Write("(propertyName).Validate(result, level);\r\n            if (level == ValidationLevel" +
                     ".Flag && !result.IsValid)\r\n            {\r\n                return result;\r\n      " +
                     "      }\r\n");
@@ -462,7 +473,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 165 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 176 "./Templates/CodeGenerator.Validate.Object.tt"
       }
         if (HasPatternProperties)
         { 
@@ -470,7 +481,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 168 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 179 "./Templates/CodeGenerator.Validate.Object.tt"
             this.Write(@"
             foreach (System.Collections.Generic.KeyValuePair<Regex, PatternPropertyValidator> patternProperty in __CorvusPatternProperties)
             {
@@ -489,7 +500,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 181 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 192 "./Templates/CodeGenerator.Validate.Object.tt"
       }
     }
     if (AllowsAdditionalProperties && HasAdditionalProperties)
@@ -498,20 +509,20 @@ namespace ");
             #line default
             #line hidden
             
-            #line 185 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 196 "./Templates/CodeGenerator.Validate.Object.tt"
             this.Write("\r\n            if (!result.HasEvaluatedLocalProperty(propertyCount))\r\n            " +
                     "{\r\n                result = property.ValueAs<");
             
             #line default
             #line hidden
             
-            #line 188 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 199 "./Templates/CodeGenerator.Validate.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( AdditionalPropertiesDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 188 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 199 "./Templates/CodeGenerator.Validate.Object.tt"
             this.Write(@">().Validate(result, level);
                 if (level == ValidationLevel.Flag && !result.IsValid)
                 {
@@ -524,7 +535,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 195 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 206 "./Templates/CodeGenerator.Validate.Object.tt"
   }
     if (!AllowsAdditionalProperties)
     { 
@@ -532,7 +543,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 198 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 209 "./Templates/CodeGenerator.Validate.Object.tt"
             this.Write(@"
             if (!result.HasEvaluatedLocalProperty(propertyCount))
             {
@@ -554,7 +565,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 214 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 225 "./Templates/CodeGenerator.Validate.Object.tt"
   }
     if (HasMaxProperties || HasMinProperties || HasLocalProperties || HasRequired || HasDependentSchemas || HasPatternProperties || HasAdditionalProperties)
     { 
@@ -562,25 +573,25 @@ namespace ");
             #line default
             #line hidden
             
-            #line 217 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 228 "./Templates/CodeGenerator.Validate.Object.tt"
             this.Write("\r\n            propertyCount++;\r\n");
             
             #line default
             #line hidden
             
-            #line 219 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 230 "./Templates/CodeGenerator.Validate.Object.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 220 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 231 "./Templates/CodeGenerator.Validate.Object.tt"
             this.Write("        }\r\n");
             
             #line default
             #line hidden
             
-            #line 221 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 232 "./Templates/CodeGenerator.Validate.Object.tt"
   if (HasRequired)
     {
         foreach (var property in RequiredProperties)
@@ -591,19 +602,19 @@ namespace ");
             #line default
             #line hidden
             
-            #line 227 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 238 "./Templates/CodeGenerator.Validate.Object.tt"
             this.Write("\r\n        if (!found");
             
             #line default
             #line hidden
             
-            #line 228 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 239 "./Templates/CodeGenerator.Validate.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( property.DotnetPropertyName ));
             
             #line default
             #line hidden
             
-            #line 228 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 239 "./Templates/CodeGenerator.Validate.Object.tt"
             this.Write(")\r\n        {\r\n            if (level >= ValidationLevel.Detailed)\r\n            {\r\n" +
                     "                result = result.WithResult(isValid: false, $\"6.5.3. required - r" +
                     "equired property \\\"");
@@ -611,13 +622,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 232 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 243 "./Templates/CodeGenerator.Validate.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( Formatting.FormatLiteralOrNull(property.JsonPropertyName, true).Trim('"') ));
             
             #line default
             #line hidden
             
-            #line 232 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 243 "./Templates/CodeGenerator.Validate.Object.tt"
             this.Write(@"\"" not present."");
             }
             else if (level >= ValidationLevel.Basic)
@@ -634,7 +645,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 243 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 254 "./Templates/CodeGenerator.Validate.Object.tt"
           }
         }
     }
@@ -644,19 +655,19 @@ namespace ");
             #line default
             #line hidden
             
-            #line 248 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 259 "./Templates/CodeGenerator.Validate.Object.tt"
             this.Write("\r\n        if (propertyCount > ");
             
             #line default
             #line hidden
             
-            #line 249 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 260 "./Templates/CodeGenerator.Validate.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( MaxProperties ));
             
             #line default
             #line hidden
             
-            #line 249 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 260 "./Templates/CodeGenerator.Validate.Object.tt"
             this.Write(")\r\n        {\r\n            if (level >= ValidationLevel.Detailed)\r\n            {\r\n" +
                     "                result = result.WithResult(isValid: false, $\"6.5.1. maxPropertie" +
                     "s - property count of {propertyCount} is greater than ");
@@ -664,13 +675,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 253 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 264 "./Templates/CodeGenerator.Validate.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( MaxProperties ));
             
             #line default
             #line hidden
             
-            #line 253 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 264 "./Templates/CodeGenerator.Validate.Object.tt"
             this.Write(".\");\r\n            }\r\n            else if (level >= ValidationLevel.Basic)\r\n      " +
                     "      {\r\n                result = result.WithResult(isValid: false, \"6.5.1. maxP" +
                     "roperties - property count greater than ");
@@ -678,20 +689,20 @@ namespace ");
             #line default
             #line hidden
             
-            #line 257 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 268 "./Templates/CodeGenerator.Validate.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( MaxProperties ));
             
             #line default
             #line hidden
             
-            #line 257 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 268 "./Templates/CodeGenerator.Validate.Object.tt"
             this.Write(".\");\r\n            }\r\n            else\r\n            {\r\n                return resu" +
                     "lt.WithResult(isValid: false);\r\n            }\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 264 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 275 "./Templates/CodeGenerator.Validate.Object.tt"
   }
     if (HasMinProperties)
     { 
@@ -699,19 +710,19 @@ namespace ");
             #line default
             #line hidden
             
-            #line 267 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 278 "./Templates/CodeGenerator.Validate.Object.tt"
             this.Write("\r\n        if (propertyCount < ");
             
             #line default
             #line hidden
             
-            #line 268 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 279 "./Templates/CodeGenerator.Validate.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( MinProperties ));
             
             #line default
             #line hidden
             
-            #line 268 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 279 "./Templates/CodeGenerator.Validate.Object.tt"
             this.Write(")\r\n        {\r\n            if (level >= ValidationLevel.Detailed)\r\n            {\r\n" +
                     "                result = result.WithResult(isValid: false, $\"6.5.2. minPropertie" +
                     "s - property count of {propertyCount} is lezs than ");
@@ -719,13 +730,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 272 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 283 "./Templates/CodeGenerator.Validate.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( MinProperties ));
             
             #line default
             #line hidden
             
-            #line 272 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 283 "./Templates/CodeGenerator.Validate.Object.tt"
             this.Write(".\");\r\n            }\r\n            else if (level >= ValidationLevel.Basic)\r\n      " +
                     "      {\r\n                result = result.WithResult(isValid: false, \"6.5.2. minP" +
                     "roperties - property count less than ");
@@ -733,32 +744,32 @@ namespace ");
             #line default
             #line hidden
             
-            #line 276 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 287 "./Templates/CodeGenerator.Validate.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( MinProperties ));
             
             #line default
             #line hidden
             
-            #line 276 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 287 "./Templates/CodeGenerator.Validate.Object.tt"
             this.Write(".\");\r\n            }\r\n            else\r\n            {\r\n                return resu" +
                     "lt.WithResult(isValid: false);\r\n            }\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 283 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 294 "./Templates/CodeGenerator.Validate.Object.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 284 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 295 "./Templates/CodeGenerator.Validate.Object.tt"
             this.Write("\r\n        return result;\r\n    }\r\n}\r\n");
             
             #line default
             #line hidden
             
-            #line 288 "./Templates/CodeGenerator.Validate.Object.tt"
+            #line 299 "./Templates/CodeGenerator.Validate.Object.tt"
  EndNesting(); 
             
             #line default

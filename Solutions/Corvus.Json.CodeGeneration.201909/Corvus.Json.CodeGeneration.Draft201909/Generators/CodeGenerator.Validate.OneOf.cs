@@ -17,7 +17,7 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft201909 {
     public partial class CodeGeneratorValidateOneOf : CodeGeneratorValidateOneOfBase {
         
         
-        #line 114 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
+        #line 135 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
 
     public bool ShouldGenerate
     {
@@ -96,14 +96,24 @@ namespace ");
             #line hidden
             
             #line 29 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
-            this.Write("\r\n{\r\n    private ValidationContext ValidateOneOf(in ValidationContext validationC" +
-                    "ontext, ValidationLevel level)\r\n    {\r\n        ValidationContext result = valida" +
-                    "tionContext;\r\n        int oneOfCount = 0;\r\n");
+            this.Write(@"
+{
+    private ValidationContext ValidateOneOf(in ValidationContext validationContext, ValidationLevel level)
+    {
+        ValidationContext result = validationContext;
+
+        if (level > ValidationLevel.Flag)
+        {
+            result = result.PushValidationLocationProperty(""oneOf"");
+        }
+
+        int oneOfCount = 0;
+");
             
             #line default
             #line hidden
             
-            #line 35 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
+            #line 41 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
   int oneOfIndex = 0;
     foreach (var oneOf in OneOf)
     { 
@@ -111,69 +121,82 @@ namespace ");
             #line default
             #line hidden
             
-            #line 38 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
-            this.Write("\r\n        ValidationContext oneOfResult");
+            #line 44 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
+            this.Write("\r\n        if (level > ValidationLevel.Flag)\r\n        {\r\n            result = resu" +
+                    "lt.PushValidationLocationArrayIndex(");
             
             #line default
             #line hidden
             
-            #line 39 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
+            #line 47 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( oneOfIndex ));
+            
+            #line default
+            #line hidden
+            
+            #line 47 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
+            this.Write(");\r\n        }\r\n\r\n        ValidationContext oneOfResult");
+            
+            #line default
+            #line hidden
+            
+            #line 50 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( oneOfIndex));
             
             #line default
             #line hidden
             
-            #line 39 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
+            #line 50 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
             this.Write(" = this.As<");
             
             #line default
             #line hidden
             
-            #line 39 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
+            #line 50 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( oneOf ));
             
             #line default
             #line hidden
             
-            #line 39 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
+            #line 50 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
             this.Write(">().Validate(validationContext.CreateChildContext(), level);\r\n\r\n        if (oneOf" +
                     "Result");
             
             #line default
             #line hidden
             
-            #line 41 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
+            #line 52 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( oneOfIndex ));
             
             #line default
             #line hidden
             
-            #line 41 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
+            #line 52 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
             this.Write(".IsValid)\r\n        {\r\n            result = result.MergeChildContext(oneOfResult");
             
             #line default
             #line hidden
             
-            #line 43 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
+            #line 54 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( oneOfIndex ));
             
             #line default
             #line hidden
             
-            #line 43 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
+            #line 54 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
             this.Write(", level >= ValidationLevel.Detailed);\r\n            oneOfCount += 1;\r\n");
             
             #line default
             #line hidden
             
-            #line 45 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
+            #line 56 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
       if (!HasUnevaluatedItems && !HasUnevaluatedProperties)
         { 
             
             #line default
             #line hidden
             
-            #line 47 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
+            #line 58 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
             this.Write("            if (oneOfCount > 1 && level == ValidationLevel.Flag)\r\n            {\r\n" +
                     "                result = result.WithResult(isValid: false);\r\n                ret" +
                     "urn result;\r\n            }\r\n");
@@ -181,13 +204,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 52 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
+            #line 63 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
       } 
             
             #line default
             #line hidden
             
-            #line 53 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
+            #line 64 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
             this.Write("        }\r\n        else\r\n        {\r\n            if (level >= ValidationLevel.Deta" +
                     "iled)\r\n            {\r\n                result = result.MergeResults(result.IsVali" +
                     "d, level, oneOfResult");
@@ -195,13 +218,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 58 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
+            #line 69 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( oneOfIndex ));
             
             #line default
             #line hidden
             
-            #line 58 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
+            #line 69 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
             this.Write(");\r\n            }\r\n            else if (level >= ValidationLevel.Basic)\r\n        " +
                     "    {\r\n                result = result.MergeResults(result.IsValid, level, oneOf" +
                     "Result");
@@ -209,39 +232,40 @@ namespace ");
             #line default
             #line hidden
             
-            #line 62 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
+            #line 73 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( oneOfIndex ));
             
             #line default
             #line hidden
             
-            #line 62 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
+            #line 73 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
             this.Write(");\r\n            }\r\n            else\r\n            {\r\n                result = resu" +
                     "lt.MergeResults(result.IsValid, level, oneOfResult");
             
             #line default
             #line hidden
             
-            #line 66 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
+            #line 77 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( oneOfIndex ));
             
             #line default
             #line hidden
             
-            #line 66 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
-            this.Write(");\r\n            }\r\n        }\r\n");
+            #line 77 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
+            this.Write(");\r\n            }\r\n        }\r\n        \r\n        if (level > ValidationLevel.Flag)" +
+                    "\r\n        {\r\n            result = result.PopLocation(); // Index\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 69 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
+            #line 85 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
       oneOfIndex++;
     } 
             
             #line default
             #line hidden
             
-            #line 71 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
+            #line 87 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
             this.Write("\r\n        if (oneOfCount == 1)\r\n        {\r\n            if (level >= ValidationLev" +
                     "el.Detailed)\r\n            {\r\n                result = result.WithResult(isValid:" +
                     " true, \"Validation 10.2.1.3. onef - validated against the oneOf schema.\");\r\n    " +
@@ -260,13 +284,14 @@ namespace ");
                     "   {\r\n                result = result.WithResult(isValid: false, \"Validation 10." +
                     "2.1.3. oneOf - failed to validate against more than one of the oneOf schema.\");\r" +
                     "\n            }\r\n            else\r\n            {\r\n                result = result" +
-                    ".WithResult(isValid: false);\r\n            }\r\n        }\r\n\r\n        return result;" +
-                    "\r\n    }\r\n}\r\n");
+                    ".WithResult(isValid: false);\r\n            }\r\n        }\r\n\r\n        if (level > Va" +
+                    "lidationLevel.Flag)\r\n        {\r\n            result = result.PopLocation(); // on" +
+                    "eOf\r\n        }\r\n\r\n        return result;\r\n    }\r\n}\r\n");
             
             #line default
             #line hidden
             
-            #line 113 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
+            #line 134 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.OneOf.tt"
  EndNesting(); 
             
             #line default
