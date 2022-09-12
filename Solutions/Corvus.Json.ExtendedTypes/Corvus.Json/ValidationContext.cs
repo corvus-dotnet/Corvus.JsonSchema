@@ -16,21 +16,21 @@ public readonly struct ValidationContext
     /// <summary>
     /// Gets a valid context.
     /// </summary>
-    public static readonly ValidationContext ValidContext = new(true, ImmutableArray<ulong>.Empty, ImmutableArray<ulong>.Empty, ImmutableArray<ulong>.Empty, ImmutableArray<ulong>.Empty, ImmutableStack<(JsonReference SchemaLocation, JsonReference DocumentLocation)>.Empty, ImmutableArray<ValidationResult>.Empty, UsingFeatures.None);
+    public static readonly ValidationContext ValidContext = new(true, ImmutableArray<ulong>.Empty, ImmutableArray<ulong>.Empty, ImmutableArray<ulong>.Empty, ImmutableArray<ulong>.Empty, ImmutableStack<(JsonReference ValidationLocation, JsonReference SchemaLocation, JsonReference DocumentLocation)>.Empty, ImmutableArray<ValidationResult>.Empty, UsingFeatures.None);
 
     /// <summary>
     /// Gets an invalid context.
     /// </summary>
-    public static readonly ValidationContext InvalidContext = new(false, ImmutableArray<ulong>.Empty, ImmutableArray<ulong>.Empty, ImmutableArray<ulong>.Empty, ImmutableArray<ulong>.Empty, ImmutableStack<(JsonReference SchemaLocation, JsonReference DocumentLocation)>.Empty, ImmutableArray<ValidationResult>.Empty, UsingFeatures.None);
+    public static readonly ValidationContext InvalidContext = new(false, ImmutableArray<ulong>.Empty, ImmutableArray<ulong>.Empty, ImmutableArray<ulong>.Empty, ImmutableArray<ulong>.Empty, ImmutableStack<(JsonReference ValidationLocation, JsonReference SchemaLocation, JsonReference DocumentLocation)>.Empty, ImmutableArray<ValidationResult>.Empty, UsingFeatures.None);
 
-    private static readonly ImmutableStack<(JsonReference SchemaLocation, JsonReference DocumentLocation)> RootLocationStack = ImmutableStack.Create((JsonReference.RootFragment, JsonReference.RootFragment));
+    private static readonly ImmutableStack<(JsonReference ValidationLocation, JsonReference SchemaLocation, JsonReference DocumentLocation)> RootLocationStack = ImmutableStack.Create((JsonReference.RootFragment, JsonReference.RootFragment, JsonReference.RootFragment));
 
     private readonly UsingFeatures usingFeatures;
     private readonly ImmutableArray<ulong> localEvaluatedItemIndex;
     private readonly ImmutableArray<ulong> localEvaluatedProperties;
     private readonly ImmutableArray<ulong> appliedEvaluatedItemIndex;
     private readonly ImmutableArray<ulong> appliedEvaluatedProperties;
-    private readonly ImmutableStack<(JsonReference SchemaLocation, JsonReference DocumentLocation)> locationStack;
+    private readonly ImmutableStack<(JsonReference ValidationLocation, JsonReference SchemaLocation, JsonReference DocumentLocation)> locationStack;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ValidationContext"/> struct.
@@ -43,7 +43,7 @@ public readonly struct ValidationContext
     /// <param name="locationStack">The current location stack.</param>
     /// <param name="results">The validation results.</param>
     /// <param name="usingFeatures">Indicates which features are being used.</param>
-    private ValidationContext(bool isValid, in ImmutableArray<ulong> localEvaluatedItemIndex, in ImmutableArray<ulong> localEvaluatedProperties, in ImmutableArray<ulong> appliedEvaluatedItemIndex, in ImmutableArray<ulong> appliedEvaluatedProperties, in ImmutableStack<(JsonReference SchemaLocation, JsonReference DocumentLocation)> locationStack, in ImmutableArray<ValidationResult> results, UsingFeatures usingFeatures)
+    private ValidationContext(bool isValid, in ImmutableArray<ulong> localEvaluatedItemIndex, in ImmutableArray<ulong> localEvaluatedProperties, in ImmutableArray<ulong> appliedEvaluatedItemIndex, in ImmutableArray<ulong> appliedEvaluatedProperties, in ImmutableStack<(JsonReference ValidationLocation, JsonReference SchemaLocation, JsonReference DocumentLocation)> locationStack, in ImmutableArray<ValidationResult> results, UsingFeatures usingFeatures)
     {
         this.localEvaluatedItemIndex = localEvaluatedItemIndex;
         this.localEvaluatedProperties = localEvaluatedProperties;
@@ -226,7 +226,7 @@ public readonly struct ValidationContext
             return new ValidationContext(this.IsValid && isValid, this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack, message is string msg1 ? this.Results.Add(new ValidationResult(isValid, msg1, null)) : this.Results, this.usingFeatures);
         }
 
-        return new ValidationContext(this.IsValid && isValid, this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack, message is string msg2 ? this.Results.Add(new ValidationResult(isValid, msg2, this.BuildLocation())) : this.Results, this.usingFeatures);
+        return new ValidationContext(this.IsValid && isValid, this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack, message is string msg2 ? this.Results.Add(new ValidationResult(isValid, msg2, this.locationStack.Peek())) : this.Results, this.usingFeatures);
     }
 
     /// <summary>
@@ -272,7 +272,7 @@ public readonly struct ValidationContext
             return this;
         }
 
-        return new ValidationContext(this.IsValid, this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack.Push((new JsonReference(schemaLocation), this.locationStack.Peek().DocumentLocation)), this.Results, this.usingFeatures);
+        return new ValidationContext(this.IsValid, this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack.Push((this.locationStack.Peek().ValidationLocation, new JsonReference(schemaLocation), this.locationStack.Peek().DocumentLocation)), this.Results, this.usingFeatures);
     }
 
     /// <summary>
@@ -287,7 +287,7 @@ public readonly struct ValidationContext
             return this;
         }
 
-        return new ValidationContext(this.IsValid, this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack.Push((this.locationStack.Peek().SchemaLocation, this.locationStack.Peek().DocumentLocation.AppendUnencodedPropertyNameToFragment(propertyName))), this.Results, this.usingFeatures);
+        return new ValidationContext(this.IsValid, this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack.Push((this.locationStack.Peek().ValidationLocation, this.locationStack.Peek().SchemaLocation, this.locationStack.Peek().DocumentLocation.AppendUnencodedPropertyNameToFragment(propertyName))), this.Results, this.usingFeatures);
     }
 
     /// <summary>
@@ -302,7 +302,37 @@ public readonly struct ValidationContext
             return this;
         }
 
-        return new ValidationContext(this.IsValid, this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack.Push((this.locationStack.Peek().SchemaLocation, this.locationStack.Peek().DocumentLocation.AppendArrayIndexToFragment(arrayIndex))), this.Results, this.usingFeatures);
+        return new ValidationContext(this.IsValid, this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack.Push((this.locationStack.Peek().ValidationLocation, this.locationStack.Peek().SchemaLocation, this.locationStack.Peek().DocumentLocation.AppendArrayIndexToFragment(arrayIndex))), this.Results, this.usingFeatures);
+    }
+
+    /// <summary>
+    /// Pushes a location onto the location stack for the context.
+    /// </summary>
+    /// <param name="propertyName">The property name to push.</param>
+    /// <returns>The context updated with the given location.</returns>
+    public ValidationContext PushValidationLocationProperty(string propertyName)
+    {
+        if ((this.usingFeatures & UsingFeatures.Stack) == 0)
+        {
+            return this;
+        }
+
+        return new ValidationContext(this.IsValid, this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack.Push((this.locationStack.Peek().ValidationLocation.AppendUnencodedPropertyNameToFragment(propertyName), this.locationStack.Peek().SchemaLocation, this.locationStack.Peek().DocumentLocation)), this.Results, this.usingFeatures);
+    }
+
+    /// <summary>
+    /// Pushes a location onto the location stack for the context.
+    /// </summary>
+    /// <param name="arrayIndex">The array index to push.</param>
+    /// <returns>The context updated with the given location.</returns>
+    public ValidationContext PushValidationLocationArrayIndex(int arrayIndex)
+    {
+        if ((this.usingFeatures & UsingFeatures.Stack) == 0)
+        {
+            return this;
+        }
+
+        return new ValidationContext(this.IsValid, this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack.Push((this.locationStack.Peek().ValidationLocation.AppendArrayIndexToFragment(arrayIndex), this.locationStack.Peek().SchemaLocation, this.locationStack.Peek().DocumentLocation)), this.Results, this.usingFeatures);
     }
 
     /// <summary>
@@ -910,38 +940,6 @@ public readonly struct ValidationContext
                 result.Add(items[i]);
             }
         }
-    }
-
-    private (string SchemaLocation, string DocumentLocation) BuildLocation()
-    {
-        StringBuilder schemaBuilder = StringBuilderPool.Shared.Get();
-        StringBuilder documentBuilder = StringBuilderPool.Shared.Get();
-
-        foreach ((string? schemaLocation, string? documentLocation) in this.locationStack.Reverse())
-        {
-            AppendItem(schemaBuilder, schemaLocation);
-            AppendItem(documentBuilder, documentLocation);
-        }
-
-        static void AppendItem(StringBuilder builder, string? location)
-        {
-            if (location is string loc)
-            {
-                if (builder.Length > 0)
-                {
-                    builder.Append('/');
-                }
-
-                builder.Append(loc);
-            }
-        }
-
-        var result = (schemaBuilder.ToString(), documentBuilder.ToString());
-
-        StringBuilderPool.Shared.Return(schemaBuilder);
-        StringBuilderPool.Shared.Return(documentBuilder);
-
-        return result;
     }
 
     private ImmutableArray<ulong> AddLocalEvaluatedProperty(int index)

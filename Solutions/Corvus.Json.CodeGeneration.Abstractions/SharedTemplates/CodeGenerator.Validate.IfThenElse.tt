@@ -32,6 +32,11 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     {
         ValidationContext result = validationContext;
 
+        if (level > ValidationLevel.Flag)
+        {
+            result = result.PushValidationLocationProperty("if");
+        }
+
         ValidationContext ifResult = this.As<<#= IfFullyQualifiedDotnetTypeName #>>().Validate(validationContext.CreateChildContext(), level);
 
         if (!ifResult.IsValid)
@@ -54,11 +59,21 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 
             result = result.MergeChildContext(ifResult, false);
         }
+
+        if (level > ValidationLevel.Flag)
+        {
+            result = result.PopLocation(); // if
+        }
 <#  if (HasThen)
     { #>
 
         if (ifResult.IsValid)
         {
+            if (level > ValidationLevel.Flag)
+            {
+                result = result.PushValidationLocationProperty("then");
+            }
+
             ValidationContext thenResult = this.As<<#= ThenFullyQualifiedDotnetTypeName #>>().Validate(validationContext.CreateChildContext(), level);
 
             if (!thenResult.IsValid)
@@ -85,6 +100,11 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 
                 result = result.MergeChildContext(thenResult, false);
             }
+
+            if (level > ValidationLevel.Flag)
+            {
+                result = result.PopLocation(); // then
+            }
         }
 <#  }
     if (HasElse)
@@ -92,6 +112,11 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 
         if (!ifResult.IsValid)
         {
+            if (level > ValidationLevel.Flag)
+            {
+                result = result.PushValidationLocationProperty("else");
+            }
+
             ValidationContext elseResult = this.As<<#= ElseFullyQualifiedDotnetTypeName #>>().Validate(validationContext.CreateChildContext(), level);
 
             if (!elseResult.IsValid)
@@ -117,6 +142,11 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
                 }
 
                 result = result.MergeChildContext(elseResult, false);
+            }
+
+            if (level > ValidationLevel.Flag)
+            {
+                result = result.PopLocation(); // else
             }
         }
 <#  } #>

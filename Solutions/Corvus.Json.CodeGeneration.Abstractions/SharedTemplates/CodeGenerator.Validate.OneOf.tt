@@ -31,10 +31,21 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     private ValidationContext ValidateOneOf(in ValidationContext validationContext, ValidationLevel level)
     {
         ValidationContext result = validationContext;
+
+        if (level > ValidationLevel.Flag)
+        {
+            result = result.PushValidationLocationProperty("oneOf");
+        }
+
         int oneOfCount = 0;
 <#  int oneOfIndex = 0;
     foreach (var oneOf in OneOf)
     { #>
+
+        if (level > ValidationLevel.Flag)
+        {
+            result = result.PushValidationLocationArrayIndex(<#= oneOfIndex #>);
+        }
 
         ValidationContext oneOfResult<#= oneOfIndex#> = this.As<<#= oneOf #>>().Validate(validationContext.CreateChildContext(), level);
 
@@ -65,6 +76,11 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
             {
                 result = result.MergeResults(result.IsValid, level, oneOfResult<#= oneOfIndex #>);
             }
+        }
+        
+        if (level > ValidationLevel.Flag)
+        {
+            result = result.PopLocation(); // Index
         }
 <#      oneOfIndex++;
     } #>
@@ -105,6 +121,11 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
             {
                 result = result.WithResult(isValid: false);
             }
+        }
+
+        if (level > ValidationLevel.Flag)
+        {
+            result = result.PopLocation(); // oneOf
         }
 
         return result;

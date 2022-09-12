@@ -15,7 +15,7 @@ public readonly struct ValidationResult
     /// <param name="valid">A value indicating whether this is a valid result.</param>
     /// <param name="message">The error message.</param>
     /// <param name="location">The location of the result.</param>
-    public ValidationResult(bool valid, string? message = null, (string SchemaLocation, string DocumentLocation)? location = null)
+    public ValidationResult(bool valid, string? message = null, (JsonReference ValidationLocation, JsonReference SchemaLocation, JsonReference DocumentLocation)? location = null)
     {
         this.Valid = valid;
         this.Message = message;
@@ -38,5 +38,5 @@ public readonly struct ValidationResult
     /// <summary>
     /// Gets the location.
     /// </summary>
-    public (string SchemaLocation, string DocumentLocation)? Location { get; }
+    public (JsonReference ValidationLocation, JsonReference SchemaLocation, JsonReference DocumentLocation)? Location { get; }
 }

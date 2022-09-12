@@ -66,6 +66,10 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 
         while (arrayEnumerator.MoveNext())
         {
+            if (level > ValidationLevel.Flag)
+            {
+                result = result.PushValidationLocationArrayIndex(arrayLength);
+            }
 <#      if (HasUniqueItems)
         { #>
 <#  if (!CanEnumerateAsSpecificType)
@@ -195,6 +199,11 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
                 result = result.WithLocalItemIndex(arrayLength);
             }
 <#      } #>
+
+            if (level > ValidationLevel.Flag)
+            {
+                result = result.PopLocation(); // array index
+            }
 
             arrayLength++;
         }

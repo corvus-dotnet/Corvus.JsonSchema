@@ -29,8 +29,13 @@ namespace <#= Namespace #>;
 public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 {
     private ValidationContext ValidateRef(in ValidationContext validationContext, ValidationLevel level)
-    {
+    {        
         ValidationContext result = validationContext;
+
+        if (level > ValidationLevel.Flag)
+        {
+            result = result.PushValidationLocationProperty("$ref");
+        }
 
         ValidationContext refResult = this.As<<#= RefDotnetTypeName #>>().Validate(validationContext.CreateChildContext(), level);
 
@@ -57,6 +62,11 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
             }
 
             result = result.MergeChildContext(refResult, false);
+        }
+
+        if (level > ValidationLevel.Flag)
+        {
+            result = result.PopLocation();
         }
 
         return result;
