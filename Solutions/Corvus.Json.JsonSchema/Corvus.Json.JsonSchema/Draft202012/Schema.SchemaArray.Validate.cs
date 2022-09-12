@@ -25,6 +25,7 @@ public readonly partial struct Schema
             if (level != ValidationLevel.Flag)
             {
                 result = result.UsingStack();
+                result = result.PushSchemaLocation("https://json-schema.org/draft/2020-12/meta/applicator?dynamicScope=https%3A%2F%2Fjson-schema.org%2Fdraft%2F2020-12%2Fschema#/$defs/schemaArray");
             }
 
             JsonValueKind valueKind = this.ValueKind;
@@ -38,6 +39,11 @@ public readonly partial struct Schema
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
+            }
+
+            if (level != ValidationLevel.Flag)
+            {
+                result = result.PopLocation();
             }
 
             return result;

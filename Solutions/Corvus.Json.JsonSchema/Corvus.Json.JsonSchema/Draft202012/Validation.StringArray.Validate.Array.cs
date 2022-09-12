@@ -30,6 +30,11 @@ public readonly partial struct Validation
             using JsonArrayEnumerator<Corvus.Json.JsonString> arrayEnumerator = this.EnumerateArray();
             while (arrayEnumerator.MoveNext())
             {
+                if (level > ValidationLevel.Flag)
+                {
+                    result = result.PushValidationLocationArrayIndex(arrayLength);
+                }
+
                 using JsonArrayEnumerator<Corvus.Json.JsonString> innerEnumerator = this.EnumerateArray();
                 int innerIndex = -1;
                 while (innerIndex < arrayLength && innerEnumerator.MoveNext())
@@ -63,6 +68,11 @@ public readonly partial struct Validation
                 }
 
                 result = result.WithLocalItemIndex(arrayLength);
+                if (level > ValidationLevel.Flag)
+                {
+                    result = result.PopLocation(); // array index
+                }
+
                 arrayLength++;
             }
 

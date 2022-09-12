@@ -162,7 +162,7 @@ internal class JsonSchemaRegistry
                     this.locatedSchema.TryAdd(currentLocation, previousSchema);
 
                     // Update the location to reflect the ID
-                    previousSchema.Location = currentLocation;
+                    ////previousSchema.Location = currentLocation;
 
                     this.AddNamedAnchor(currentLocation, currentLocation.Fragment[1..].ToString());
                 }

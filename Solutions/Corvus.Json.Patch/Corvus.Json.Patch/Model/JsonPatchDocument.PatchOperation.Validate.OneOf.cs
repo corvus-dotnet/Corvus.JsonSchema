@@ -20,7 +20,17 @@ public readonly partial struct JsonPatchDocument
         private ValidationContext ValidateOneOf(in ValidationContext validationContext, ValidationLevel level)
         {
             ValidationContext result = validationContext;
+            if (level > ValidationLevel.Flag)
+            {
+                result = result.PushValidationLocationProperty("oneOf");
+            }
+
             int oneOfCount = 0;
+            if (level > ValidationLevel.Flag)
+            {
+                result = result.PushValidationLocationArrayIndex(0);
+            }
+
             ValidationContext oneOfResult0 = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.AddEntity>().Validate(validationContext.CreateChildContext(), level);
             if (oneOfResult0.IsValid)
             {
@@ -46,6 +56,16 @@ public readonly partial struct JsonPatchDocument
                 {
                     result = result.MergeResults(result.IsValid, level, oneOfResult0);
                 }
+            }
+
+            if (level > ValidationLevel.Flag)
+            {
+                result = result.PopLocation(); // Index
+            }
+
+            if (level > ValidationLevel.Flag)
+            {
+                result = result.PushValidationLocationArrayIndex(1);
             }
 
             ValidationContext oneOfResult1 = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.RemoveEntity>().Validate(validationContext.CreateChildContext(), level);
@@ -75,6 +95,16 @@ public readonly partial struct JsonPatchDocument
                 }
             }
 
+            if (level > ValidationLevel.Flag)
+            {
+                result = result.PopLocation(); // Index
+            }
+
+            if (level > ValidationLevel.Flag)
+            {
+                result = result.PushValidationLocationArrayIndex(2);
+            }
+
             ValidationContext oneOfResult2 = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceEntity>().Validate(validationContext.CreateChildContext(), level);
             if (oneOfResult2.IsValid)
             {
@@ -100,6 +130,16 @@ public readonly partial struct JsonPatchDocument
                 {
                     result = result.MergeResults(result.IsValid, level, oneOfResult2);
                 }
+            }
+
+            if (level > ValidationLevel.Flag)
+            {
+                result = result.PopLocation(); // Index
+            }
+
+            if (level > ValidationLevel.Flag)
+            {
+                result = result.PushValidationLocationArrayIndex(3);
             }
 
             ValidationContext oneOfResult3 = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.Move>().Validate(validationContext.CreateChildContext(), level);
@@ -129,6 +169,16 @@ public readonly partial struct JsonPatchDocument
                 }
             }
 
+            if (level > ValidationLevel.Flag)
+            {
+                result = result.PopLocation(); // Index
+            }
+
+            if (level > ValidationLevel.Flag)
+            {
+                result = result.PushValidationLocationArrayIndex(4);
+            }
+
             ValidationContext oneOfResult4 = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.Copy>().Validate(validationContext.CreateChildContext(), level);
             if (oneOfResult4.IsValid)
             {
@@ -156,6 +206,16 @@ public readonly partial struct JsonPatchDocument
                 }
             }
 
+            if (level > ValidationLevel.Flag)
+            {
+                result = result.PopLocation(); // Index
+            }
+
+            if (level > ValidationLevel.Flag)
+            {
+                result = result.PushValidationLocationArrayIndex(5);
+            }
+
             ValidationContext oneOfResult5 = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.Test>().Validate(validationContext.CreateChildContext(), level);
             if (oneOfResult5.IsValid)
             {
@@ -181,6 +241,11 @@ public readonly partial struct JsonPatchDocument
                 {
                     result = result.MergeResults(result.IsValid, level, oneOfResult5);
                 }
+            }
+
+            if (level > ValidationLevel.Flag)
+            {
+                result = result.PopLocation(); // Index
             }
 
             if (oneOfCount == 1)
@@ -219,6 +284,11 @@ public readonly partial struct JsonPatchDocument
                 {
                     result = result.WithResult(isValid: false);
                 }
+            }
+
+            if (level > ValidationLevel.Flag)
+            {
+                result = result.PopLocation(); // oneOf
             }
 
             return result;

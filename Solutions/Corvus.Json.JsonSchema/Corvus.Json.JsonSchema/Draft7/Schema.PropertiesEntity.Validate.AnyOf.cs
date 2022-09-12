@@ -20,7 +20,17 @@ public readonly partial struct Schema
         private ValidationContext ValidateAnyOf(in ValidationContext validationContext, ValidationLevel level)
         {
             ValidationContext result = validationContext;
+            if (level > ValidationLevel.Flag)
+            {
+                result = result.PushValidationLocationProperty("anyOf");
+            }
+
             bool foundValid = false;
+            if (level > ValidationLevel.Flag)
+            {
+                result = result.PushValidationLocationArrayIndex(0);
+            }
+
             ValidationContext anyOfResult0 = this.As<Corvus.Json.JsonSchema.Draft7.Schema>().Validate(validationContext.CreateChildContext(), level);
             if (anyOfResult0.IsValid)
             {
@@ -39,6 +49,16 @@ public readonly partial struct Schema
                 }
             }
 
+            if (level > ValidationLevel.Flag)
+            {
+                result = result.PopLocation(); // Index
+            }
+
+            if (level > ValidationLevel.Flag)
+            {
+                result = result.PushValidationLocationArrayIndex(1);
+            }
+
             ValidationContext anyOfResult1 = this.As<Corvus.Json.JsonSchema.Draft7.Schema.SchemaArray>().Validate(validationContext.CreateChildContext(), level);
             if (anyOfResult1.IsValid)
             {
@@ -55,6 +75,11 @@ public readonly partial struct Schema
                 {
                     result = result.MergeResults(result.IsValid, level, anyOfResult1);
                 }
+            }
+
+            if (level > ValidationLevel.Flag)
+            {
+                result = result.PopLocation(); // Index
             }
 
             if (foundValid)
@@ -78,6 +103,11 @@ public readonly partial struct Schema
                 {
                     result = result.WithResult(isValid: false);
                 }
+            }
+
+            if (level > ValidationLevel.Flag)
+            {
+                result = result.PopLocation(); // anyOf
             }
 
             return result;

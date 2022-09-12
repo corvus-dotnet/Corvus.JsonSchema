@@ -27,12 +27,18 @@ public readonly partial struct Schema
                 if (level != ValidationLevel.Flag)
                 {
                     result = result.UsingStack();
+                    result = result.PushSchemaLocation("https://json-schema.org/draft/2019-09/schema#/properties/dependencies/additionalProperties");
                 }
 
                 result = this.ValidateAnyOf(result, level);
                 if (level == ValidationLevel.Flag && !result.IsValid)
                 {
                     return result;
+                }
+
+                if (level != ValidationLevel.Flag)
+                {
+                    result = result.PopLocation();
                 }
 
                 return result;

@@ -30,6 +30,11 @@ public readonly partial struct Schema
             using JsonArrayEnumerator<Corvus.Json.Benchmarking.Models.Schema.PersonNameElement> arrayEnumerator = this.EnumerateArray();
             while (arrayEnumerator.MoveNext())
             {
+                if (level > ValidationLevel.Flag)
+                {
+                    result = result.PushValidationLocationArrayIndex(arrayLength);
+                }
+
                 result = arrayEnumerator.Current.Validate(result, level);
                 if (level == ValidationLevel.Flag && !result.IsValid)
                 {
@@ -37,6 +42,11 @@ public readonly partial struct Schema
                 }
 
                 result = result.WithLocalItemIndex(arrayLength);
+                if (level > ValidationLevel.Flag)
+                {
+                    result = result.PopLocation(); // array index
+                }
+
                 arrayLength++;
             }
 

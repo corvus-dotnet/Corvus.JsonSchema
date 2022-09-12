@@ -20,7 +20,17 @@ public readonly partial struct Schema
         private ValidationContext ValidateOneOf(in ValidationContext validationContext, ValidationLevel level)
         {
             ValidationContext result = validationContext;
+            if (level > ValidationLevel.Flag)
+            {
+                result = result.PushValidationLocationProperty("oneOf");
+            }
+
             int oneOfCount = 0;
+            if (level > ValidationLevel.Flag)
+            {
+                result = result.PushValidationLocationArrayIndex(0);
+            }
+
             ValidationContext oneOfResult0 = this.As<Corvus.Json.Benchmarking.Models.Schema.PersonNameElement>().Validate(validationContext.CreateChildContext(), level);
             if (oneOfResult0.IsValid)
             {
@@ -48,6 +58,16 @@ public readonly partial struct Schema
                 }
             }
 
+            if (level > ValidationLevel.Flag)
+            {
+                result = result.PopLocation(); // Index
+            }
+
+            if (level > ValidationLevel.Flag)
+            {
+                result = result.PushValidationLocationArrayIndex(1);
+            }
+
             ValidationContext oneOfResult1 = this.As<Corvus.Json.Benchmarking.Models.Schema.PersonNameElementArray>().Validate(validationContext.CreateChildContext(), level);
             if (oneOfResult1.IsValid)
             {
@@ -73,6 +93,11 @@ public readonly partial struct Schema
                 {
                     result = result.MergeResults(result.IsValid, level, oneOfResult1);
                 }
+            }
+
+            if (level > ValidationLevel.Flag)
+            {
+                result = result.PopLocation(); // Index
             }
 
             if (oneOfCount == 1)
@@ -111,6 +136,11 @@ public readonly partial struct Schema
                 {
                     result = result.WithResult(isValid: false);
                 }
+            }
+
+            if (level > ValidationLevel.Flag)
+            {
+                result = result.PopLocation(); // oneOf
             }
 
             return result;

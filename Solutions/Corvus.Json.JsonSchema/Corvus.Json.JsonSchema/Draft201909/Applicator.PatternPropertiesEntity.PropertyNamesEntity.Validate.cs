@@ -27,6 +27,7 @@ public readonly partial struct Applicator
                 if (level != ValidationLevel.Flag)
                 {
                     result = result.UsingStack();
+                    result = result.PushSchemaLocation("https://json-schema.org/draft/2019-09/meta/applicator#/properties/patternProperties/propertyNames");
                 }
 
                 JsonValueKind valueKind = this.ValueKind;
@@ -34,6 +35,11 @@ public readonly partial struct Applicator
                 if (level == ValidationLevel.Flag && !result.IsValid)
                 {
                     return result;
+                }
+
+                if (level != ValidationLevel.Flag)
+                {
+                    result = result.PopLocation();
                 }
 
                 return result;

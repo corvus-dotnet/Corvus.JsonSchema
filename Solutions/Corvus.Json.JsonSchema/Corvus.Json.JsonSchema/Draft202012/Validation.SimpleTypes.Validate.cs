@@ -25,12 +25,18 @@ public readonly partial struct Validation
             if (level != ValidationLevel.Flag)
             {
                 result = result.UsingStack();
+                result = result.PushSchemaLocation("https://json-schema.org/draft/2020-12/meta/validation#/$defs/simpleTypes");
             }
 
             result = Corvus.Json.Validate.ValidateEnum(this, result, level, EnumValues.Item0, EnumValues.Item1, EnumValues.Item2, EnumValues.Item3, EnumValues.Item4, EnumValues.Item5, EnumValues.Item6);
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
+            }
+
+            if (level != ValidationLevel.Flag)
+            {
+                result = result.PopLocation();
             }
 
             return result;

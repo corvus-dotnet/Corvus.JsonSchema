@@ -30,6 +30,11 @@ public readonly partial struct MetaData
             using var arrayEnumerator = this.EnumerateArray();
             while (arrayEnumerator.MoveNext())
             {
+                if (level > ValidationLevel.Flag)
+                {
+                    result = result.PushValidationLocationArrayIndex(arrayLength);
+                }
+
                 result = arrayEnumerator.Current.As<Corvus.Json.JsonAny>().Validate(result, level);
                 if (level == ValidationLevel.Flag && !result.IsValid)
                 {
@@ -37,6 +42,11 @@ public readonly partial struct MetaData
                 }
 
                 result = result.WithLocalItemIndex(arrayLength);
+                if (level > ValidationLevel.Flag)
+                {
+                    result = result.PopLocation(); // array index
+                }
+
                 arrayLength++;
             }
 

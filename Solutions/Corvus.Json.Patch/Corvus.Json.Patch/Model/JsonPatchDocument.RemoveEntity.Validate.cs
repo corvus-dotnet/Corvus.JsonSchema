@@ -25,6 +25,7 @@ public readonly partial struct JsonPatchDocument
             if (level != ValidationLevel.Flag)
             {
                 result = result.UsingStack();
+                result = result.PushSchemaLocation("C:/Users/matth/source/repos/Corvus.JsonSchema/Solutions/Corvus.Json.Patch/Corvus.Json.Patch/Model/json-patch.json#/$defs/Remove");
             }
 
             JsonValueKind valueKind = this.ValueKind;
@@ -38,6 +39,11 @@ public readonly partial struct JsonPatchDocument
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
+            }
+
+            if (level != ValidationLevel.Flag)
+            {
+                result = result.PopLocation();
             }
 
             return result;

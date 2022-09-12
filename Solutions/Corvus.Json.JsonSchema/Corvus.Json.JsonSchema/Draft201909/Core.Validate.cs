@@ -23,6 +23,7 @@ public readonly partial struct Core
         if (level != ValidationLevel.Flag)
         {
             result = result.UsingStack();
+            result = result.PushSchemaLocation("https://json-schema.org/draft/2019-09/meta/core");
         }
 
         JsonValueKind valueKind = this.ValueKind;
@@ -36,6 +37,11 @@ public readonly partial struct Core
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
             return result;
+        }
+
+        if (level != ValidationLevel.Flag)
+        {
+            result = result.PopLocation();
         }
 
         return result;

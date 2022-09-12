@@ -24,6 +24,16 @@ public readonly partial struct JsonPatchDocument
         private ValidationContext ValidateAllOf(in ValidationContext validationContext, ValidationLevel level)
         {
             ValidationContext result = validationContext;
+            if (level > ValidationLevel.Flag)
+            {
+                result = result.PushValidationLocationProperty("allOf");
+            }
+
+            if (level > ValidationLevel.Flag)
+            {
+                result = result.PushValidationLocationArrayIndex(0);
+            }
+
             ValidationContext allOfResult0 = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon>().Validate(validationContext.CreateChildContext(), level);
             if (!allOfResult0.IsValid)
             {
@@ -44,6 +54,16 @@ public readonly partial struct JsonPatchDocument
             else
             {
                 result = result.MergeChildContext(allOfResult0, level >= ValidationLevel.Detailed);
+            }
+
+            if (level > ValidationLevel.Flag)
+            {
+                result = result.PopLocation(); // Index
+            }
+
+            if (level > ValidationLevel.Flag)
+            {
+                result = result.PopLocation(); // allOf
             }
 
             return result;

@@ -28,6 +28,11 @@ public readonly partial struct JsonPatchDocument
         using JsonArrayEnumerator<Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperation> arrayEnumerator = this.EnumerateArray();
         while (arrayEnumerator.MoveNext())
         {
+            if (level > ValidationLevel.Flag)
+            {
+                result = result.PushValidationLocationArrayIndex(arrayLength);
+            }
+
             result = arrayEnumerator.Current.Validate(result, level);
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
@@ -35,6 +40,11 @@ public readonly partial struct JsonPatchDocument
             }
 
             result = result.WithLocalItemIndex(arrayLength);
+            if (level > ValidationLevel.Flag)
+            {
+                result = result.PopLocation(); // array index
+            }
+
             arrayLength++;
         }
 

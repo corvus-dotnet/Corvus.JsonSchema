@@ -38,8 +38,18 @@ public readonly partial struct JsonPatchDocument
                 if (__TryGetCorvusLocalPropertiesValidator(property, this.HasJsonElementBacking, out ObjectPropertyValidator? propertyValidator))
                 {
                     result = result.WithLocalProperty(propertyCount);
+                    if (level > ValidationLevel.Flag)
+                    {
+                        result = result.PushDocumentProperty(property.Name);
+                    }
+
                     var propertyResult = propertyValidator(property, result.CreateChildContext(), level);
                     result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+                    if (level > ValidationLevel.Flag)
+                    {
+                        result = result.PopLocation(); // property name
+                    }
+
                     if (level == ValidationLevel.Flag && !result.IsValid)
                     {
                         return result;

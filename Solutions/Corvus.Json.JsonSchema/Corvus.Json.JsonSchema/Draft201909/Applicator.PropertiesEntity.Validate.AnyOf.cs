@@ -20,7 +20,17 @@ public readonly partial struct Applicator
         private ValidationContext ValidateAnyOf(in ValidationContext validationContext, ValidationLevel level)
         {
             ValidationContext result = validationContext;
+            if (level > ValidationLevel.Flag)
+            {
+                result = result.PushValidationLocationProperty("anyOf");
+            }
+
             bool foundValid = false;
+            if (level > ValidationLevel.Flag)
+            {
+                result = result.PushValidationLocationArrayIndex(0);
+            }
+
             ValidationContext anyOfResult0 = this.As<Corvus.Json.JsonSchema.Draft201909.Schema>().Validate(validationContext.CreateChildContext(), level);
             if (anyOfResult0.IsValid)
             {
@@ -44,6 +54,16 @@ public readonly partial struct Applicator
                 {
                     result = result.MergeResults(result.IsValid, level, anyOfResult0);
                 }
+            }
+
+            if (level > ValidationLevel.Flag)
+            {
+                result = result.PopLocation(); // Index
+            }
+
+            if (level > ValidationLevel.Flag)
+            {
+                result = result.PushValidationLocationArrayIndex(1);
             }
 
             ValidationContext anyOfResult1 = this.As<Corvus.Json.JsonSchema.Draft201909.Applicator.SchemaArray>().Validate(validationContext.CreateChildContext(), level);
@@ -71,6 +91,11 @@ public readonly partial struct Applicator
                 }
             }
 
+            if (level > ValidationLevel.Flag)
+            {
+                result = result.PopLocation(); // Index
+            }
+
             if (foundValid)
             {
                 if (level >= ValidationLevel.Detailed)
@@ -92,6 +117,11 @@ public readonly partial struct Applicator
                 {
                     result = result.WithResult(isValid: false);
                 }
+            }
+
+            if (level > ValidationLevel.Flag)
+            {
+                result = result.PopLocation(); // anyOf
             }
 
             return result;

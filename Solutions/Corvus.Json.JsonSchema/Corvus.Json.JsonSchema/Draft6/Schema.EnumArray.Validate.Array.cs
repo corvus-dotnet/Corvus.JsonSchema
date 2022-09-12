@@ -30,6 +30,11 @@ public readonly partial struct Schema
             using var arrayEnumerator = this.EnumerateArray();
             while (arrayEnumerator.MoveNext())
             {
+                if (level > ValidationLevel.Flag)
+                {
+                    result = result.PushValidationLocationArrayIndex(arrayLength);
+                }
+
                 using var innerEnumerator = this.EnumerateArray();
                 int innerIndex = -1;
                 while (innerIndex < arrayLength && innerEnumerator.MoveNext())
@@ -54,6 +59,11 @@ public readonly partial struct Schema
                             return result.WithResult(isValid: false);
                         }
                     }
+                }
+
+                if (level > ValidationLevel.Flag)
+                {
+                    result = result.PopLocation(); // array index
                 }
 
                 arrayLength++;

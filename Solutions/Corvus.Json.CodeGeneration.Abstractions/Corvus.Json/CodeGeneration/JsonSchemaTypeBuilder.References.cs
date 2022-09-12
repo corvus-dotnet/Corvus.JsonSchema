@@ -431,7 +431,7 @@ public partial class JsonSchemaTypeBuilder
             if (this.schemaRegistry.TryGetValue(baseSchemaForReferenceLocation.WithFragment(currentBuilder.ToString()), out LocatedSchema? locatedSchema))
             {
                 failed = false;
-                if (locatedSchema.Schema.TryGetProperty(this.JsonSchemaConfiguration.IdKeyword, out JsonAny value))
+                if (!RefMatters(locatedSchema.Schema) && locatedSchema.Schema.TryGetProperty(this.JsonSchemaConfiguration.IdKeyword, out JsonAny value))
                 {
                     // Update the base location and element for the found schema;
                     baseSchemaForReferenceLocation = baseSchemaForReferenceLocation.Apply(new JsonReference(value));
@@ -466,6 +466,11 @@ public partial class JsonSchemaTypeBuilder
 
         result = null;
         return false;
+
+        bool RefMatters(JsonAny schema)
+        {
+            return (this.JsonSchemaConfiguration.ValidatingAs & ValidationSemantics.Pre201909) != 0 && schema.HasProperty(this.JsonSchemaConfiguration.RefKeyword);
+        }
     }
 
     private async Task<LocatedSchema?> ResolveBaseReference(JsonReference baseSchemaForReferenceLocation)

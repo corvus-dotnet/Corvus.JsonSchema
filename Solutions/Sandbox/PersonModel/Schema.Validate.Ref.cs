@@ -18,6 +18,11 @@ public readonly partial struct Schema
     private ValidationContext ValidateRef(in ValidationContext validationContext, ValidationLevel level)
     {
         ValidationContext result = validationContext;
+        if (level > ValidationLevel.Flag)
+        {
+            result = result.PushValidationLocationProperty("$ref");
+        }
+
         ValidationContext refResult = this.As<Corvus.Json.Benchmarking.Models.Schema.PersonArray>().Validate(validationContext.CreateChildContext(), level);
         if (!refResult.IsValid)
         {
@@ -42,6 +47,11 @@ public readonly partial struct Schema
             }
 
             result = result.MergeChildContext(refResult, false);
+        }
+
+        if (level > ValidationLevel.Flag)
+        {
+            result = result.PopLocation();
         }
 
         return result;

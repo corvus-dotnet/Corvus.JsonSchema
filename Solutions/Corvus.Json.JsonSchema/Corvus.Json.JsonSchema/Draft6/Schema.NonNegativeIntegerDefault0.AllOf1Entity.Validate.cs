@@ -27,6 +27,12 @@ public readonly partial struct Schema
                 if (level != ValidationLevel.Flag)
                 {
                     result = result.UsingStack();
+                    result = result.PushSchemaLocation("http://json-schema.org/draft-06/schema#/definitions/nonNegativeIntegerDefault0/allOf/1");
+                }
+
+                if (level != ValidationLevel.Flag)
+                {
+                    result = result.PopLocation();
                 }
 
                 return result;

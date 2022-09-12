@@ -25,6 +25,7 @@ public readonly partial struct Core
             if (level != ValidationLevel.Flag)
             {
                 result = result.UsingStack();
+                result = result.PushSchemaLocation("https://json-schema.org/draft/2020-12/meta/core#/properties/$id");
             }
 
             result = this.ValidateRef(result, level);
@@ -37,6 +38,11 @@ public readonly partial struct Core
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
+            }
+
+            if (level != ValidationLevel.Flag)
+            {
+                result = result.PopLocation();
             }
 
             return result;

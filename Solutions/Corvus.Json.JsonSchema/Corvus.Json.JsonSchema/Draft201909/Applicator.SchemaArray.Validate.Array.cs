@@ -30,6 +30,11 @@ public readonly partial struct Applicator
             using var arrayEnumerator = this.EnumerateArray();
             while (arrayEnumerator.MoveNext())
             {
+                if (level > ValidationLevel.Flag)
+                {
+                    result = result.PushValidationLocationArrayIndex(arrayLength);
+                }
+
                 result = arrayEnumerator.Current.As<Corvus.Json.JsonSchema.Draft201909.Schema>().Validate(result, level);
                 if (level == ValidationLevel.Flag && !result.IsValid)
                 {
@@ -37,6 +42,11 @@ public readonly partial struct Applicator
                 }
 
                 result = result.WithLocalItemIndex(arrayLength);
+                if (level > ValidationLevel.Flag)
+                {
+                    result = result.PopLocation(); // array index
+                }
+
                 arrayLength++;
             }
 

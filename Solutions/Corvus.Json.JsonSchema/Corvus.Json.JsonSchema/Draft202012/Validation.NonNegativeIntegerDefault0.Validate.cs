@@ -25,12 +25,18 @@ public readonly partial struct Validation
             if (level != ValidationLevel.Flag)
             {
                 result = result.UsingStack();
+                result = result.PushSchemaLocation("https://json-schema.org/draft/2020-12/meta/validation#/$defs/nonNegativeIntegerDefault0");
             }
 
             result = this.ValidateRef(result, level);
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
+            }
+
+            if (level != ValidationLevel.Flag)
+            {
+                result = result.PopLocation();
             }
 
             return result;

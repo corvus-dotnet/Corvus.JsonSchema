@@ -25,12 +25,18 @@ public readonly partial struct Schema
             if (level != ValidationLevel.Flag)
             {
                 result = result.UsingStack();
+                result = result.PushSchemaLocation("C:/Users/matth/source/repos/Corvus.JsonSchema/Solutions/Sandbox/PersonModel/person-schema.json#/$defs/OtherNames");
             }
 
             result = this.ValidateOneOf(result, level);
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
+            }
+
+            if (level != ValidationLevel.Flag)
+            {
+                result = result.PopLocation();
             }
 
             return result;
