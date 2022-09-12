@@ -303,7 +303,16 @@ public partial class JsonSchemaTypeBuilder
                 else if (reference.Fragment[(lastSlash + 1)..].SequenceEqual("items") && lastSlash > 0)
                 {
                     int previousSlash = reference.Fragment[..(lastSlash - 1)].LastIndexOf('/');
-                    typename = Formatting.ToPascalCaseWithReservedWords(reference.Fragment[(previousSlash + 1)..lastSlash].ToString());
+                    if (reference.Fragment[(previousSlash + 1)..lastSlash].SequenceEqual("properties"))
+                    {
+                        // If it is a property called "Items" then use the property name.
+                        typename = Formatting.ToPascalCaseWithReservedWords(reference.Fragment[(lastSlash + 1)..].ToString());
+                    }
+                    else
+                    {
+                        // Otherwise, wind back to the parent to create the name.
+                        typename = Formatting.ToPascalCaseWithReservedWords(reference.Fragment[(previousSlash + 1)..lastSlash].ToString());
+                    }
                 }
                 else
                 {

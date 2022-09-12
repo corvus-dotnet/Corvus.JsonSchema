@@ -15,46 +15,52 @@ using System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.Internal;
 
-namespace Corvus.Json.JsonSchema.Draft7;
+namespace Corvus.Json.JsonSchema.Draft6;
 public readonly partial struct Schema
 {
     /// <summary>
     /// A type generated from a JsonSchema specification.
     /// </summary>
-    public readonly partial struct PropertiesEntity
+    public readonly partial struct ItemsEntity
     {
         private readonly Backing backing;
         private readonly JsonElement jsonElementBacking;
+        private readonly bool boolBacking;
+        private readonly ImmutableList<JsonAny> arrayBacking;
         private readonly ImmutableDictionary<JsonPropertyName, JsonAny> objectBacking;
         /// <summary>
-        /// Initializes a new instance of the <see cref = "PropertiesEntity"/> struct.
+        /// Initializes a new instance of the <see cref = "ItemsEntity"/> struct.
         /// </summary>
-        public PropertiesEntity()
+        public ItemsEntity()
         {
             this.jsonElementBacking = default;
             this.backing = Backing.JsonElement;
+            this.boolBacking = default;
+            this.arrayBacking = ImmutableList<JsonAny>.Empty;
             this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref = "PropertiesEntity"/> struct.
+        /// Initializes a new instance of the <see cref = "ItemsEntity"/> struct.
         /// </summary>
         /// <param name = "value">The value from which to construct the instance.</param>
-        public PropertiesEntity(in JsonElement value)
+        public ItemsEntity(in JsonElement value)
         {
             this.jsonElementBacking = value;
             this.backing = Backing.JsonElement;
+            this.boolBacking = default;
+            this.arrayBacking = ImmutableList<JsonAny>.Empty;
             this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
         }
 
         /// <summary>
         /// Gets a Null instance.
         /// </summary>
-        public static PropertiesEntity Null { get; } = new(JsonValueHelpers.NullElement);
+        public static ItemsEntity Null { get; } = new(JsonValueHelpers.NullElement);
         /// <summary>
         /// Gets an Undefined instance.
         /// </summary>
-        public static PropertiesEntity Undefined { get; } = default;
+        public static ItemsEntity Undefined { get; } = default;
         /// <inheritdoc/>
         public JsonAny AsAny
         {
@@ -63,6 +69,16 @@ public readonly partial struct Schema
                 if ((this.backing & Backing.JsonElement) != 0)
                 {
                     return new(this.jsonElementBacking);
+                }
+
+                if ((this.backing & Backing.Bool) != 0)
+                {
+                    return new(this.boolBacking);
+                }
+
+                if ((this.backing & Backing.Array) != 0)
+                {
+                    return new(this.arrayBacking);
                 }
 
                 if ((this.backing & Backing.Object) != 0)
@@ -87,6 +103,16 @@ public readonly partial struct Schema
                 if ((this.backing & Backing.JsonElement) != 0)
                 {
                     return this.jsonElementBacking;
+                }
+
+                if ((this.backing & Backing.Bool) != 0)
+                {
+                    return JsonValueHelpers.BoolToJsonElement(this.boolBacking);
+                }
+
+                if ((this.backing & Backing.Array) != 0)
+                {
+                    return JsonValueHelpers.ArrayToJsonElement(this.arrayBacking);
                 }
 
                 if ((this.backing & Backing.Object) != 0)
@@ -119,7 +145,6 @@ public readonly partial struct Schema
         }
 
         /// <inheritdoc/>
-        [EditorBrowsable(EditorBrowsableState.Never)]
         public JsonBoolean AsBoolean
         {
             get
@@ -127,6 +152,11 @@ public readonly partial struct Schema
                 if ((this.backing & Backing.JsonElement) != 0)
                 {
                     return new(this.jsonElementBacking);
+                }
+
+                if ((this.backing & Backing.Bool) != 0)
+                {
+                    return new(this.boolBacking);
                 }
 
                 throw new InvalidOperationException();
@@ -168,7 +198,6 @@ public readonly partial struct Schema
         }
 
         /// <inheritdoc/>
-        [EditorBrowsable(EditorBrowsableState.Never)]
         public JsonArray AsArray
         {
             get
@@ -176,6 +205,11 @@ public readonly partial struct Schema
                 if ((this.backing & Backing.JsonElement) != 0)
                 {
                     return new(this.jsonElementBacking);
+                }
+
+                if ((this.backing & Backing.Array) != 0)
+                {
+                    return new(this.arrayBacking);
                 }
 
                 throw new InvalidOperationException();
@@ -210,6 +244,16 @@ public readonly partial struct Schema
                     return this.jsonElementBacking.ValueKind;
                 }
 
+                if ((this.backing & Backing.Bool) != 0)
+                {
+                    return this.boolBacking ? JsonValueKind.True : JsonValueKind.False;
+                }
+
+                if ((this.backing & Backing.Array) != 0)
+                {
+                    return JsonValueKind.Array;
+                }
+
                 if ((this.backing & Backing.Object) != 0)
                 {
                     return JsonValueKind.Object;
@@ -228,9 +272,9 @@ public readonly partial struct Schema
         /// Conversion from JsonAny.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator PropertiesEntity(JsonAny value)
+        public static implicit operator ItemsEntity(JsonAny value)
         {
-            return PropertiesEntity.FromAny(value);
+            return ItemsEntity.FromAny(value);
         }
 
         /// <summary>
@@ -238,7 +282,7 @@ public readonly partial struct Schema
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
         /// <exception cref = "InvalidOperationException">The value was not compatible with this type.</exception>
-        public static implicit operator JsonAny(in PropertiesEntity value)
+        public static implicit operator JsonAny(in ItemsEntity value)
         {
             return value.AsAny;
         }
@@ -249,7 +293,7 @@ public readonly partial struct Schema
         /// <param name = "left">The lhs.</param>
         /// <param name = "right">The rhs.</param>
         /// <returns><c>True</c> if the values are equal.</returns>
-        public static bool operator ==(in PropertiesEntity left, in PropertiesEntity right)
+        public static bool operator ==(in ItemsEntity left, in ItemsEntity right)
         {
             return left.Equals(right);
         }
@@ -260,7 +304,7 @@ public readonly partial struct Schema
         /// <param name = "left">The lhs.</param>
         /// <param name = "right">The rhs.</param>
         /// <returns><c>True</c> if the values are equal.</returns>
-        public static bool operator !=(in PropertiesEntity left, in PropertiesEntity right)
+        public static bool operator !=(in ItemsEntity left, in ItemsEntity right)
         {
             return !left.Equals(right);
         }
@@ -274,7 +318,7 @@ public readonly partial struct Schema
         /// value cannot be constructed from the given instance (e.g. because they have an incompatible dotnet backing type.
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static PropertiesEntity FromAny(in JsonAny value)
+        public static ItemsEntity FromAny(in JsonAny value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -284,6 +328,9 @@ public readonly partial struct Schema
             JsonValueKind valueKind = value.ValueKind;
             return valueKind switch
             {
+                JsonValueKind.True => new(true),
+                JsonValueKind.False => new(false),
+                JsonValueKind.Array => new((ImmutableList<JsonAny>)value),
                 JsonValueKind.Object => new((ImmutableDictionary<JsonPropertyName, JsonAny>)value),
                 JsonValueKind.Null => Null,
                 _ => Undefined,
@@ -296,7 +343,7 @@ public readonly partial struct Schema
         /// <param name = "value">The <see cref = "JsonElement"/> value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the <see cref = "JsonElement"/>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static PropertiesEntity FromJson(in JsonElement value)
+        public static ItemsEntity FromJson(in JsonElement value)
         {
             return new(value);
         }
@@ -307,15 +354,24 @@ public readonly partial struct Schema
         /// <typeparam name = "TValue">The type of the value.</typeparam>
         /// <param name = "value">The value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the value.</returns>
-        /// <remarks>This will be PropertiesEntity.Undefined if the type is not compatible.</remarks>
+        /// <remarks>This will be ItemsEntity.Undefined if the type is not compatible.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static PropertiesEntity FromBoolean<TValue>(in TValue value)
+        public static ItemsEntity FromBoolean<TValue>(in TValue value)
             where TValue : struct, IJsonBoolean<TValue>
         {
             if (value.HasJsonElementBacking)
             {
                 return new(value.AsJsonElement);
+            }
+
+            if (value.ValueKind == JsonValueKind.True)
+            {
+                return new(true);
+            }
+
+            if (value.ValueKind == JsonValueKind.False)
+            {
+                return new(false);
             }
 
             return Undefined;
@@ -327,10 +383,10 @@ public readonly partial struct Schema
         /// <typeparam name = "TValue">The type of the value.</typeparam>
         /// <param name = "value">The value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the value.</returns>
-        /// <remarks>This will be PropertiesEntity.Undefined if the type is not compatible.</remarks>
+        /// <remarks>This will be ItemsEntity.Undefined if the type is not compatible.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public static PropertiesEntity FromString<TValue>(in TValue value)
+        public static ItemsEntity FromString<TValue>(in TValue value)
             where TValue : struct, IJsonString<TValue>
         {
             if (value.HasJsonElementBacking)
@@ -347,10 +403,10 @@ public readonly partial struct Schema
         /// <typeparam name = "TValue">The type of the value.</typeparam>
         /// <param name = "value">The value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the value.</returns>
-        /// <remarks>This will be PropertiesEntity.Undefined if the type is not compatible.</remarks>
+        /// <remarks>This will be ItemsEntity.Undefined if the type is not compatible.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public static PropertiesEntity FromNumber<TValue>(in TValue value)
+        public static ItemsEntity FromNumber<TValue>(in TValue value)
             where TValue : struct, IJsonNumber<TValue>
         {
             if (value.HasJsonElementBacking)
@@ -367,15 +423,19 @@ public readonly partial struct Schema
         /// <typeparam name = "TValue">The type of the value.</typeparam>
         /// <param name = "value">The value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the value.</returns>
-        /// <remarks>This will be PropertiesEntity.Undefined if the type is not compatible.</remarks>
+        /// <remarks>This will be ItemsEntity.Undefined if the type is not compatible.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static PropertiesEntity FromArray<TValue>(in TValue value)
+        public static ItemsEntity FromArray<TValue>(in TValue value)
             where TValue : struct, IJsonArray<TValue>
         {
             if (value.HasJsonElementBacking)
             {
                 return new(value.AsJsonElement);
+            }
+
+            if (value.ValueKind == JsonValueKind.Array)
+            {
+                return new((ImmutableList<JsonAny>)value);
             }
 
             return Undefined;
@@ -387,9 +447,9 @@ public readonly partial struct Schema
         /// <typeparam name = "TValue">The type of the value.</typeparam>
         /// <param name = "value">The value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the value.</returns>
-        /// <remarks>This will be PropertiesEntity.Undefined if the type is not compatible.</remarks>
+        /// <remarks>This will be ItemsEntity.Undefined if the type is not compatible.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static PropertiesEntity FromObject<TValue>(in TValue value)
+        public static ItemsEntity FromObject<TValue>(in TValue value)
             where TValue : struct, IJsonObject<TValue>
         {
             if (value.HasJsonElementBacking)
@@ -406,63 +466,63 @@ public readonly partial struct Schema
         }
 
         /// <summary>
-        /// Parses a JSON string into a PropertiesEntity.
+        /// Parses a JSON string into a ItemsEntity.
         /// </summary>
         /// <param name = "json">The json string to parse.</param>
         /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "PropertiesEntity"/> instance built from the JSON string.</returns>
-        public static PropertiesEntity Parse(string json, JsonDocumentOptions options = default)
+        /// <returns>A <see cref = "ItemsEntity"/> instance built from the JSON string.</returns>
+        public static ItemsEntity Parse(string json, JsonDocumentOptions options = default)
         {
             using var jsonDocument = JsonDocument.Parse(json, options);
-            return new PropertiesEntity(jsonDocument.RootElement.Clone());
+            return new ItemsEntity(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses a JSON string into a PropertiesEntity.
+        /// Parses a JSON string into a ItemsEntity.
         /// </summary>
         /// <param name = "utf8Json">The json string to parse.</param>
         /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "PropertiesEntity"/> instance built from the JSON string.</returns>
-        public static PropertiesEntity Parse(Stream utf8Json, JsonDocumentOptions options = default)
+        /// <returns>A <see cref = "ItemsEntity"/> instance built from the JSON string.</returns>
+        public static ItemsEntity Parse(Stream utf8Json, JsonDocumentOptions options = default)
         {
             using var jsonDocument = JsonDocument.Parse(utf8Json, options);
-            return new PropertiesEntity(jsonDocument.RootElement.Clone());
+            return new ItemsEntity(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses a JSON string into a PropertiesEntity.
+        /// Parses a JSON string into a ItemsEntity.
         /// </summary>
         /// <param name = "utf8Json">The json string to parse.</param>
         /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "PropertiesEntity"/> instance built from the JSON string.</returns>
-        public static PropertiesEntity Parse(ReadOnlyMemory<byte> utf8Json, JsonDocumentOptions options = default)
+        /// <returns>A <see cref = "ItemsEntity"/> instance built from the JSON string.</returns>
+        public static ItemsEntity Parse(ReadOnlyMemory<byte> utf8Json, JsonDocumentOptions options = default)
         {
             using var jsonDocument = JsonDocument.Parse(utf8Json, options);
-            return new PropertiesEntity(jsonDocument.RootElement.Clone());
+            return new ItemsEntity(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses a JSON string into a PropertiesEntity.
+        /// Parses a JSON string into a ItemsEntity.
         /// </summary>
         /// <param name = "json">The json string to parse.</param>
         /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "PropertiesEntity"/> instance built from the JSON string.</returns>
-        public static PropertiesEntity Parse(ReadOnlyMemory<char> json, JsonDocumentOptions options = default)
+        /// <returns>A <see cref = "ItemsEntity"/> instance built from the JSON string.</returns>
+        public static ItemsEntity Parse(ReadOnlyMemory<char> json, JsonDocumentOptions options = default)
         {
             using var jsonDocument = JsonDocument.Parse(json, options);
-            return new PropertiesEntity(jsonDocument.RootElement.Clone());
+            return new ItemsEntity(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses a JSON string into a PropertiesEntity.
+        /// Parses a JSON string into a ItemsEntity.
         /// </summary>
         /// <param name = "utf8Json">The json string to parse.</param>
         /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "PropertiesEntity"/> instance built from the JSON string.</returns>
-        public static PropertiesEntity Parse(ReadOnlySequence<byte> utf8Json, JsonDocumentOptions options = default)
+        /// <returns>A <see cref = "ItemsEntity"/> instance built from the JSON string.</returns>
+        public static ItemsEntity Parse(ReadOnlySequence<byte> utf8Json, JsonDocumentOptions options = default)
         {
             using var jsonDocument = JsonDocument.Parse(utf8Json, options);
-            return new PropertiesEntity(jsonDocument.RootElement.Clone());
+            return new ItemsEntity(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
@@ -477,6 +537,16 @@ public readonly partial struct Schema
             if ((this.backing & Backing.JsonElement) != 0)
             {
                 return TTarget.FromJson(this.jsonElementBacking);
+            }
+
+            if ((this.backing & Backing.Bool) != 0)
+            {
+                return TTarget.FromBoolean(this);
+            }
+
+            if ((this.backing & Backing.Array) != 0)
+            {
+                return TTarget.FromArray(this);
             }
 
             if ((this.backing & Backing.Object) != 0)
@@ -506,7 +576,7 @@ public readonly partial struct Schema
         }
 
         /// <inheritdoc/>
-        public bool Equals(PropertiesEntity other)
+        public bool Equals(ItemsEntity other)
         {
             return JsonValueHelpers.CompareValues(this, other);
         }
@@ -521,6 +591,18 @@ public readonly partial struct Schema
                     this.jsonElementBacking.WriteTo(writer);
                 }
 
+                return;
+            }
+
+            if ((this.backing & Backing.Array) != 0)
+            {
+                JsonValueHelpers.WriteItems(this.arrayBacking, writer);
+                return;
+            }
+
+            if ((this.backing & Backing.Bool) != 0)
+            {
+                writer.WriteBooleanValue(this.boolBacking);
                 return;
             }
 

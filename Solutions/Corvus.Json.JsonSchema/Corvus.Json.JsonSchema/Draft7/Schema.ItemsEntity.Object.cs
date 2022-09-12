@@ -19,16 +19,18 @@ public readonly partial struct Schema
     /// <summary>
     /// A type generated from a JsonSchema specification.
     /// </summary>
-    public readonly partial struct PropertiesEntity : IJsonObject<PropertiesEntity>
+    public readonly partial struct ItemsEntity : IJsonObject<ItemsEntity>
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref = "PropertiesEntity"/> struct.
+        /// Initializes a new instance of the <see cref = "ItemsEntity"/> struct.
         /// </summary>
         /// <param name = "value">The value from which to construct the instance.</param>
-        public PropertiesEntity(ImmutableDictionary<JsonPropertyName, JsonAny> value)
+        public ItemsEntity(ImmutableDictionary<JsonPropertyName, JsonAny> value)
         {
             this.jsonElementBacking = default;
             this.backing = Backing.Object;
+            this.boolBacking = default;
+            this.arrayBacking = ImmutableList<JsonAny>.Empty;
             this.objectBacking = value;
         }
 
@@ -62,7 +64,7 @@ public readonly partial struct Schema
         /// Conversion from JsonObject.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator JsonObject(PropertiesEntity value)
+        public static implicit operator JsonObject(ItemsEntity value)
         {
             return value.AsObject;
         }
@@ -71,7 +73,7 @@ public readonly partial struct Schema
         /// Conversion to JsonObject.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator PropertiesEntity(JsonObject value)
+        public static implicit operator ItemsEntity(JsonObject value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -85,7 +87,7 @@ public readonly partial struct Schema
         /// Conversion from immutable dictionary.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator PropertiesEntity(ImmutableDictionary<JsonPropertyName, JsonAny> value)
+        public static implicit operator ItemsEntity(ImmutableDictionary<JsonPropertyName, JsonAny> value)
         {
             return new(value);
         }
@@ -94,7 +96,7 @@ public readonly partial struct Schema
         /// Conversion to immutable dictionary.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator ImmutableDictionary<JsonPropertyName, JsonAny>(PropertiesEntity value)
+        public static implicit operator ImmutableDictionary<JsonPropertyName, JsonAny>(ItemsEntity value)
         {
             return value.GetImmutableDictionary();
         }
@@ -104,7 +106,7 @@ public readonly partial struct Schema
         /// </summary>
         /// <param name = "source">The dictionary of properties.</param>
         /// <returns>An instance of the type initialized from the dictionary of properties.</returns>
-        public static PropertiesEntity FromProperties(IDictionary<JsonPropertyName, JsonAny> source)
+        public static ItemsEntity FromProperties(IDictionary<JsonPropertyName, JsonAny> source)
         {
             return new(source.ToImmutableDictionary());
         }
@@ -114,7 +116,7 @@ public readonly partial struct Schema
         /// </summary>
         /// <param name = "source">The dictionary of properties.</param>
         /// <returns>An instance of the type initialized from the dictionary of properties.</returns>
-        public static PropertiesEntity FromProperties(ImmutableDictionary<JsonPropertyName, JsonAny> source)
+        public static ItemsEntity FromProperties(ImmutableDictionary<JsonPropertyName, JsonAny> source)
         {
             return new(source);
         }
@@ -124,7 +126,7 @@ public readonly partial struct Schema
         /// </summary>
         /// <param name = "source">The dictionary of properties.</param>
         /// <returns>An instance of the type initialized from the dictionary of properties.</returns>
-        public static PropertiesEntity FromProperties(params (JsonPropertyName Name, JsonAny Value)[] source)
+        public static ItemsEntity FromProperties(params (JsonPropertyName Name, JsonAny Value)[] source)
         {
             return new(source.ToImmutableDictionary(k => k.Name, v => v.Value));
         }
@@ -451,53 +453,53 @@ public readonly partial struct Schema
         }
 
         /// <inheritdoc/>
-        public PropertiesEntity SetProperty<TValue>(in JsonPropertyName name, TValue value)
+        public ItemsEntity SetProperty<TValue>(in JsonPropertyName name, TValue value)
             where TValue : struct, IJsonValue
         {
             return new(this.GetImmutableDictionaryWith(name, value.AsAny));
         }
 
         /// <inheritdoc/>
-        public PropertiesEntity SetProperty<TValue>(string name, TValue value)
+        public ItemsEntity SetProperty<TValue>(string name, TValue value)
             where TValue : struct, IJsonValue
         {
             return new(this.GetImmutableDictionaryWith(name, value.AsAny));
         }
 
         /// <inheritdoc/>
-        public PropertiesEntity SetProperty<TValue>(ReadOnlySpan<char> name, TValue value)
+        public ItemsEntity SetProperty<TValue>(ReadOnlySpan<char> name, TValue value)
             where TValue : struct, IJsonValue
         {
             return new(this.GetImmutableDictionaryWith(name, value.AsAny));
         }
 
         /// <inheritdoc/>
-        public PropertiesEntity SetProperty<TValue>(ReadOnlySpan<byte> utf8Name, TValue value)
+        public ItemsEntity SetProperty<TValue>(ReadOnlySpan<byte> utf8Name, TValue value)
             where TValue : struct, IJsonValue
         {
             return new(this.GetImmutableDictionaryWith(utf8Name, value.AsAny));
         }
 
         /// <inheritdoc/>
-        public PropertiesEntity RemoveProperty(in JsonPropertyName name)
+        public ItemsEntity RemoveProperty(in JsonPropertyName name)
         {
             return new(this.GetImmutableDictionaryWithout(name));
         }
 
         /// <inheritdoc/>
-        public PropertiesEntity RemoveProperty(string name)
+        public ItemsEntity RemoveProperty(string name)
         {
             return new(this.GetImmutableDictionaryWithout(name));
         }
 
         /// <inheritdoc/>
-        public PropertiesEntity RemoveProperty(ReadOnlySpan<char> name)
+        public ItemsEntity RemoveProperty(ReadOnlySpan<char> name)
         {
             return new(this.GetImmutableDictionaryWithout(name));
         }
 
         /// <inheritdoc/>
-        public PropertiesEntity RemoveProperty(ReadOnlySpan<byte> utf8Name)
+        public ItemsEntity RemoveProperty(ReadOnlySpan<byte> utf8Name)
         {
             return new(this.GetImmutableDictionaryWithout(utf8Name));
         }

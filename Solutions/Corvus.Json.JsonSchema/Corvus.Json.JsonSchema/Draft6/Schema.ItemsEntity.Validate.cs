@@ -10,13 +10,13 @@
 using System.Text.Json;
 using Corvus.Json;
 
-namespace Corvus.Json.JsonSchema.Draft201909;
-public readonly partial struct Applicator
+namespace Corvus.Json.JsonSchema.Draft6;
+public readonly partial struct Schema
 {
     /// <summary>
     /// A type generated from a JsonSchema specification.
     /// </summary>
-    public readonly partial struct PropertiesEntity
+    public readonly partial struct ItemsEntity
     {
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
@@ -30,18 +30,10 @@ public readonly partial struct Applicator
             if (level > ValidationLevel.Basic)
             {
                 result = result.UsingStack();
-                result = result.PushSchemaLocation("https://json-schema.org/draft/2019-09/meta/applicator#/properties/properties");
+                result = result.PushSchemaLocation("http://json-schema.org/draft-06/schema#/properties/items");
             }
 
-            result = result.UsingEvaluatedProperties();
-            JsonValueKind valueKind = this.ValueKind;
-            result = this.ValidateType(valueKind, result, level);
-            if (level == ValidationLevel.Flag && !result.IsValid)
-            {
-                return result;
-            }
-
-            result = this.ValidateObject(valueKind, result, level);
+            result = this.ValidateAnyOf(result, level);
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
