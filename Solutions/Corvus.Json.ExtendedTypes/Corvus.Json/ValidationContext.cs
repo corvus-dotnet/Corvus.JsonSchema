@@ -391,7 +391,7 @@ public readonly struct ValidationContext
         if ((this.usingFeatures & UsingFeatures.Results) == 0)
         {
             return new ValidationContext(
-                isValid,
+                this.IsValid && isValid,
                 this.localEvaluatedItemIndex,
                 this.localEvaluatedProperties,
                 this.appliedEvaluatedItemIndex,
@@ -415,7 +415,7 @@ public readonly struct ValidationContext
         }
 
         return new ValidationContext(
-            isValid,
+            this.IsValid && isValid,
             this.localEvaluatedItemIndex,
             this.localEvaluatedProperties,
             this.appliedEvaluatedItemIndex,
@@ -456,7 +456,7 @@ public readonly struct ValidationContext
         if ((this.usingFeatures & UsingFeatures.Results) == 0)
         {
             return new ValidationContext(
-                isValid,
+                this.IsValid && isValid,
                 this.localEvaluatedItemIndex,
                 this.localEvaluatedProperties,
                 this.appliedEvaluatedItemIndex,
@@ -473,7 +473,7 @@ public readonly struct ValidationContext
         builder.AddRange(result2.Results);
 
         return new ValidationContext(
-            isValid,
+            this.IsValid && isValid,
             this.localEvaluatedItemIndex,
             this.localEvaluatedProperties,
             this.appliedEvaluatedItemIndex,
@@ -515,7 +515,7 @@ public readonly struct ValidationContext
         if ((this.usingFeatures & UsingFeatures.Results) == 0)
         {
             return new ValidationContext(
-                isValid,
+                this.IsValid && isValid,
                 this.localEvaluatedItemIndex,
                 this.localEvaluatedProperties,
                 this.appliedEvaluatedItemIndex,
@@ -534,7 +534,7 @@ public readonly struct ValidationContext
         builder.AddRange(result3.Results);
 
         return new ValidationContext(
-            isValid,
+            this.IsValid && isValid,
             this.localEvaluatedItemIndex,
             this.localEvaluatedProperties,
             this.appliedEvaluatedItemIndex,
@@ -577,7 +577,7 @@ public readonly struct ValidationContext
         if ((this.usingFeatures & UsingFeatures.Results) == 0)
         {
             return new ValidationContext(
-                isValid,
+                this.IsValid && isValid,
                 this.localEvaluatedItemIndex,
                 this.localEvaluatedProperties,
                 this.appliedEvaluatedItemIndex,
@@ -598,7 +598,7 @@ public readonly struct ValidationContext
         builder.AddRange(result4.Results);
 
         return new ValidationContext(
-            isValid,
+            this.IsValid && isValid,
             this.localEvaluatedItemIndex,
             this.localEvaluatedProperties,
             this.appliedEvaluatedItemIndex,
@@ -642,7 +642,7 @@ public readonly struct ValidationContext
         if ((this.usingFeatures & UsingFeatures.Results) == 0)
         {
             return new ValidationContext(
-                isValid,
+                this.IsValid && isValid,
                 this.localEvaluatedItemIndex,
                 this.localEvaluatedProperties,
                 this.appliedEvaluatedItemIndex,
@@ -661,7 +661,7 @@ public readonly struct ValidationContext
         builder.AddRange(result5.Results);
 
         return new ValidationContext(
-            isValid,
+            this.IsValid && isValid,
             this.localEvaluatedItemIndex,
             this.localEvaluatedProperties,
             this.appliedEvaluatedItemIndex,
@@ -706,7 +706,7 @@ public readonly struct ValidationContext
         if ((this.usingFeatures & UsingFeatures.Results) == 0)
         {
             return new ValidationContext(
-                isValid,
+                this.IsValid && isValid,
                 this.localEvaluatedItemIndex,
                 this.localEvaluatedProperties,
                 this.appliedEvaluatedItemIndex,
@@ -726,7 +726,7 @@ public readonly struct ValidationContext
         builder.AddRange(result6.Results);
 
         return new ValidationContext(
-            isValid,
+            this.IsValid && isValid,
             this.localEvaluatedItemIndex,
             this.localEvaluatedProperties,
             this.appliedEvaluatedItemIndex,
@@ -772,7 +772,7 @@ public readonly struct ValidationContext
         if ((this.usingFeatures & UsingFeatures.Results) == 0)
         {
             return new ValidationContext(
-                isValid,
+                this.IsValid && isValid,
                 this.localEvaluatedItemIndex,
                 this.localEvaluatedProperties,
                 this.appliedEvaluatedItemIndex,
@@ -793,7 +793,7 @@ public readonly struct ValidationContext
         builder.AddRange(result7.Results);
 
         return new ValidationContext(
-            isValid,
+            this.IsValid && isValid,
             this.localEvaluatedItemIndex,
             this.localEvaluatedProperties,
             this.appliedEvaluatedItemIndex,
@@ -840,7 +840,7 @@ public readonly struct ValidationContext
         if ((this.usingFeatures & UsingFeatures.Results) == 0)
         {
             return new ValidationContext(
-                isValid,
+                this.IsValid && isValid,
                 this.localEvaluatedItemIndex,
                 this.localEvaluatedProperties,
                 this.appliedEvaluatedItemIndex,
@@ -862,7 +862,7 @@ public readonly struct ValidationContext
         builder.AddRange(result8.Results);
 
         return new ValidationContext(
-            isValid,
+            this.IsValid && isValid,
             this.localEvaluatedItemIndex,
             this.localEvaluatedProperties,
             this.appliedEvaluatedItemIndex,
@@ -902,7 +902,7 @@ public readonly struct ValidationContext
         if ((this.usingFeatures & UsingFeatures.Results) == 0)
         {
             return new ValidationContext(
-                isValid,
+                this.IsValid && isValid,
                 this.localEvaluatedItemIndex,
                 this.localEvaluatedProperties,
                 this.appliedEvaluatedItemIndex,
@@ -923,7 +923,7 @@ public readonly struct ValidationContext
         }
 
         return new ValidationContext(
-            isValid,
+            this.IsValid && isValid,
             this.localEvaluatedItemIndex,
             this.localEvaluatedProperties,
             this.appliedEvaluatedItemIndex,
