@@ -32,7 +32,7 @@ public readonly partial struct Schema
             {
                 if (level > ValidationLevel.Basic)
                 {
-                    result = result.PushValidationLocationArrayIndex(arrayLength);
+                    result = result.PushDocumentArrayIndex(arrayLength);
                 }
 
                 using var innerEnumerator = this.EnumerateArray();

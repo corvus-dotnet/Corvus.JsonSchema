@@ -70,8 +70,6 @@ public readonly partial struct Schema
     private static ImmutableDictionary<JsonPropertyName, JsonAny> BuildDefaults()
     {
         ImmutableDictionary<JsonPropertyName, JsonAny>.Builder builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
-        builder.Add(PropertiesJsonPropertyName, JsonAny.Parse("{}"));
-        builder.Add(PatternPropertiesJsonPropertyName, JsonAny.Parse("{}"));
         builder.Add(DeprecatedJsonPropertyName, JsonAny.Parse("false"));
         builder.Add(ReadOnlyJsonPropertyName, JsonAny.Parse("false"));
         builder.Add(WriteOnlyJsonPropertyName, JsonAny.Parse("false"));
@@ -81,6 +79,8 @@ public readonly partial struct Schema
         builder.Add(MinContainsJsonPropertyName, JsonAny.Parse("1"));
         builder.Add(MinPropertiesJsonPropertyName, JsonAny.Parse("0"));
         builder.Add(RequiredJsonPropertyName, JsonAny.Parse("[]"));
+        builder.Add(PropertiesJsonPropertyName, JsonAny.Parse("{}"));
+        builder.Add(PatternPropertiesJsonPropertyName, JsonAny.Parse("{}"));
         builder.Add(RecursiveAnchorJsonPropertyName, JsonAny.Parse("false"));
         builder.Add(DefsJsonPropertyName, JsonAny.Parse("{}"));
         builder.Add(DefinitionsJsonPropertyName, JsonAny.Parse("{}"));

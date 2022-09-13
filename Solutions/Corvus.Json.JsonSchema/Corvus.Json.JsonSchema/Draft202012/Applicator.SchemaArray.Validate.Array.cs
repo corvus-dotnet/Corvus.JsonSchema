@@ -32,13 +32,23 @@ public readonly partial struct Applicator
             {
                 if (level > ValidationLevel.Basic)
                 {
-                    result = result.PushValidationLocationArrayIndex(arrayLength);
+                    result = result.PushDocumentArrayIndex(arrayLength);
+                }
+
+                if (level > ValidationLevel.Basic)
+                {
+                    result = result.PushValidationLocationProperty("items");
                 }
 
                 result = arrayEnumerator.Current.Validate(result, level);
                 if (level == ValidationLevel.Flag && !result.IsValid)
                 {
                     return result;
+                }
+
+                if (level > ValidationLevel.Basic)
+                {
+                    result = result.PopLocation(); // items
                 }
 
                 result = result.WithLocalItemIndex(arrayLength);

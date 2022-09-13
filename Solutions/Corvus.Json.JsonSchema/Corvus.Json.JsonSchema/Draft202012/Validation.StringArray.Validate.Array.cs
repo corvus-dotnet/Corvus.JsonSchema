@@ -32,7 +32,7 @@ public readonly partial struct Validation
             {
                 if (level > ValidationLevel.Basic)
                 {
-                    result = result.PushValidationLocationArrayIndex(arrayLength);
+                    result = result.PushDocumentArrayIndex(arrayLength);
                 }
 
                 using JsonArrayEnumerator<Corvus.Json.JsonString> innerEnumerator = this.EnumerateArray();
@@ -61,10 +61,20 @@ public readonly partial struct Validation
                     }
                 }
 
+                if (level > ValidationLevel.Basic)
+                {
+                    result = result.PushValidationLocationProperty("items");
+                }
+
                 result = arrayEnumerator.Current.Validate(result, level);
                 if (level == ValidationLevel.Flag && !result.IsValid)
                 {
                     return result;
+                }
+
+                if (level > ValidationLevel.Basic)
+                {
+                    result = result.PopLocation(); // items
                 }
 
                 result = result.WithLocalItemIndex(arrayLength);

@@ -158,8 +158,8 @@ namespace ");
             
             #line 67 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.IfThenElse.tt"
             this.Write("\r\n        if (ifResult.IsValid)\r\n        {\r\n            if (level > ValidationLev" +
-                    "el.Basic)\r\n            {\r\n                result = result.PushValidationLocation" +
-                    "Property(\"then\");\r\n            }\r\n\r\n            ValidationContext thenResult = t" +
+                    "el.Basic)\r\n            {\r\n                result = result.PushValidationLocationProperty" +
+                    "(\"then\");\r\n            }\r\n\r\n            ValidationContext thenResult = t" +
                     "his.As<");
             
             #line default

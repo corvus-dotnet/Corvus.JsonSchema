@@ -5,9 +5,10 @@ using Corvus.Json;
 using static Corvus.Json.Benchmarking.Models.Schema;
 
 JsonDocument? objectDocument;
+JsonDocument? invalidObjectDocument;
 PersonArray personArray;
 
-string JsonText = @"{
+string InvalidJsonText = @"{
     ""name"": {
       ""familyName"": ""Oldroyd"",
       ""givenName"": ""Michael"",
@@ -16,12 +17,29 @@ string JsonText = @"{
     ""dateOfBirth"": ""Not likely!""
 }";
 
+string JsonText = @"{
+    ""name"": {
+      ""familyName"": ""Oldroyd"",
+      ""givenName"": ""Michael"",
+      ""otherNames"": [""Francis"", ""James""]
+    },
+    ""dateOfBirth"": ""1944-07-14""
+}";
+
 objectDocument = JsonDocument.Parse(JsonText);
+invalidObjectDocument = JsonDocument.Parse(InvalidJsonText);
 
 ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
 for (int i = 0; i < 10000; ++i)
 {
-    builder.Add(Person.FromJson(objectDocument.RootElement).AsDotnetBackedValue());
+    if (i == 5000)
+    {
+        builder.Add(Person.FromJson(invalidObjectDocument.RootElement).AsDotnetBackedValue());
+    }
+    else
+    {
+        builder.Add(Person.FromJson(objectDocument.RootElement).AsDotnetBackedValue());
+    }
 }
 
 personArray = PersonArray.From(builder.ToImmutable()).AsJsonElementBackedValue();

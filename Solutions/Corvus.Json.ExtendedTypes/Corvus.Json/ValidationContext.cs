@@ -302,7 +302,7 @@ public readonly struct ValidationContext
             return this;
         }
 
-        return new ValidationContext(this.IsValid, this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack.Push((this.locationStack.Peek().ValidationLocation, this.locationStack.Peek().SchemaLocation.AppendArrayIndexToFragment(arrayIndex), this.locationStack.Peek().DocumentLocation.AppendArrayIndexToFragment(arrayIndex))), this.Results, this.usingFeatures);
+        return new ValidationContext(this.IsValid, this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack.Push((this.locationStack.Peek().ValidationLocation, this.locationStack.Peek().SchemaLocation, this.locationStack.Peek().DocumentLocation.AppendArrayIndexToFragment(arrayIndex))), this.Results, this.usingFeatures);
     }
 
     /// <summary>
