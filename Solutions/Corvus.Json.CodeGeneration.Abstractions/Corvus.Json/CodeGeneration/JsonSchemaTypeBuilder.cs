@@ -5,7 +5,6 @@
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 
 namespace Corvus.Json.CodeGeneration;
 

@@ -5,7 +5,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Text.Json;
-using System.Transactions;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json;

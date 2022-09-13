@@ -2,7 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Net;
 using System.Text.Json;
 using Corvus.Json.Internal;
 

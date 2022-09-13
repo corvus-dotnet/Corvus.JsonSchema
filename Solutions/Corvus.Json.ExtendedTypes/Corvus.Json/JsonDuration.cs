@@ -5,8 +5,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using Corvus.Json.Internal;
-using NodaTime;
-using NodaTime.Text;
 
 namespace Corvus.Json;
 

@@ -3,8 +3,6 @@
 // </copyright>
 
 using System.Collections.Immutable;
-using System.Text;
-using Corvus.Json.Internal;
 
 namespace Corvus.Json;
 

@@ -2,7 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Text.Json;
