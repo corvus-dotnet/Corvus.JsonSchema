@@ -36,7 +36,7 @@ public partial class JsonSchemaTypeBuilder
         typeDeclaration.IsBuiltInType = true;
     }
 
-    private static void SetDotnetPropertyNamesCore(TypeDeclaration type)
+    private void SetDotnetPropertyNamesCore(TypeDeclaration type)
     {
         var existingNames = new HashSet<string>
         {
@@ -53,11 +53,11 @@ public partial class JsonSchemaTypeBuilder
             SetDotnetPropertyName(type, existingNames, property);
         }
 
-        static void SetDotnetPropertyName(TypeDeclaration type, HashSet<string> existingNames, PropertyDeclaration property)
+        void SetDotnetPropertyName(TypeDeclaration type, HashSet<string> existingNames, PropertyDeclaration property)
         {
             string baseName = Formatting.ToPascalCaseWithReservedWords(property.JsonPropertyName).ToString();
 
-            if (baseName == type.DotnetTypeName || type.Children.Any(t => t.DotnetTypeName == baseName))
+            if (baseName == type.DotnetTypeName || type.Children.Any(t => t.DotnetTypeName == baseName) || this.JsonSchemaConfiguration.GeneratorReservedWords.Contains(baseName))
             {
                 baseName += "Value";
             }
@@ -84,7 +84,7 @@ public partial class JsonSchemaTypeBuilder
 
         visitedTypes.Add(type);
 
-        SetDotnetPropertyNamesCore(type);
+        this.SetDotnetPropertyNamesCore(type);
 
         foreach (TypeDeclaration child in type.RefResolvablePropertyDeclarations.Values)
         {
