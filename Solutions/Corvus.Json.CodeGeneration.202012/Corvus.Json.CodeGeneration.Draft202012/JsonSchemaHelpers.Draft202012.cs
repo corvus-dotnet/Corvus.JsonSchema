@@ -52,6 +52,7 @@ public static class JsonSchemaHelpers
             "RemoveAt",
             "RemoveRange",
             "EmptyArray",
+            "Encoding",
             "FromItems",
             "From",
             "FromRange",

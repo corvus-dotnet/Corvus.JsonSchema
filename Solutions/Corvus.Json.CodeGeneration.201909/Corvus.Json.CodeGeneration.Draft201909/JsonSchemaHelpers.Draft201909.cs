@@ -182,6 +182,7 @@ public static class JsonSchemaHelpers
             "__CorvusDependentRequired",
             "__CorvusDependency",
             "__TryGetCorvusDependentSchemaValidator",
+            "Encoding",
             "EnumValues",
             "FromProperties",
             "EnumerateObject",

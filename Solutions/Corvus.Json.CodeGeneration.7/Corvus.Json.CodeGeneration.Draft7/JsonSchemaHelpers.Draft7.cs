@@ -113,6 +113,7 @@ public static class JsonSchemaHelpers
             "Remove",
             "RemoveAt",
             "RemoveRange",
+            "Encoding",
             "EmptyArray",
             "FromItems",
             "From",
