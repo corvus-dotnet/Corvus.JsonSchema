@@ -252,8 +252,8 @@ namespace ");
             
             #line 105 "./Templates/CodeGenerator.Validate.Array.tt"
             this.Write("\r\n            if (level > ValidationLevel.Basic)\r\n            {\r\n                " +
-                    "result = result.PushValidationLocationProperty(\"items\");\r\n            }\r\n\r\n            r" +
-                    "esult = arrayEnumerator.Current.As<");
+                    "result = result.PushValidationLocationProperty(\"items\");\r\n            }\r\n\r\n     " +
+                    "       result = arrayEnumerator.Current.As<");
             
             #line default
             #line hidden
@@ -318,8 +318,9 @@ namespace ");
             
             #line 131 "./Templates/CodeGenerator.Validate.Array.tt"
             this.Write(":\r\n                    if (level > ValidationLevel.Basic)\r\n                    {\r" +
-                    "\n                        result = result.PushValidationLocationProperty(\"items\");\r\n     " +
-                    "               }\r\n\r\n                    result = arrayEnumerator.Current.As<");
+                    "\n                        result = result.PushValidationLocationProperty(\"items\")" +
+                    ";\r\n                    }\r\n\r\n                    result = arrayEnumerator.Current" +
+                    ".As<");
             
             #line default
             #line hidden
@@ -402,9 +403,9 @@ namespace ");
             
             #line 176 "./Templates/CodeGenerator.Validate.Array.tt"
             this.Write("                    if (level > ValidationLevel.Basic)\r\n                    {\r\n  " +
-                    "                      result = result.PushValidationLocationProperty(\"additionalItems\");" +
-                    "\r\n                    }\r\n\r\n                    result = arrayEnumerator.Current." +
-                    "As<");
+                    "                      result = result.PushValidationLocationProperty(\"additional" +
+                    "Items\");\r\n                    }\r\n\r\n                    result = arrayEnumerator." +
+                    "Current.As<");
             
             #line default
             #line hidden

@@ -7,7 +7,10 @@ Feature: maximum draft2020-12
 
 Scenario Outline: maximum validation
 /* Schema: 
-{"maximum": 3.0}
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "maximum": 3.0
+        }
 */
     Given the input JSON file "maximum.json"
     And the schema at "#/0/schema"
@@ -26,7 +29,10 @@ Scenario Outline: maximum validation
 
 Scenario Outline: maximum validation with unsigned integer
 /* Schema: 
-{"maximum": 300}
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "maximum": 300
+        }
 */
     Given the input JSON file "maximum.json"
     And the schema at "#/1/schema"

@@ -31,6 +31,6 @@ Scenario Outline: validation of IP addresses
         | #/000/tests/009/data | false | an IP address without 4 components                                               |
         | #/000/tests/010/data | false | an IP address as an integer                                                      |
         | #/000/tests/011/data | false | an IP address as an integer (decimal)                                            |
-        | #/000/tests/012/data | false | leading zeroes should be rejected, as they are treated as octals                 |
+        | #/000/tests/012/data | false | invalid leading zeroes, as they are treated as octals                            |
         | #/000/tests/013/data | true  | value without leading zero is valid                                              |
-        | #/000/tests/014/data | false | non-ascii digits should be rejected                                              |
+        | #/000/tests/014/data | false | invalid non-ASCII '২' (a Bengali 2)                                              |

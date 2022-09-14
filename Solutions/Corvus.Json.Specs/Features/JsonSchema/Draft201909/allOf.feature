@@ -8,6 +8,7 @@ Feature: allOf draft2019-09
 Scenario Outline: allOf
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "allOf": [
                 {
                     "properties": {
@@ -42,6 +43,7 @@ Scenario Outline: allOf
 Scenario Outline: allOf with base schema
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "properties": {"bar": {"type": "integer"}},
             "required": ["bar"],
             "allOf" : [
@@ -79,6 +81,7 @@ Scenario Outline: allOf with base schema
 Scenario Outline: allOf simple types
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "allOf": [
                 {"maximum": 30},
                 {"minimum": 20}
@@ -100,7 +103,10 @@ Scenario Outline: allOf simple types
 
 Scenario Outline: allOf with boolean schemas, all true
 /* Schema: 
-{"allOf": [true, true]}
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "allOf": [true, true]
+        }
 */
     Given the input JSON file "allOf.json"
     And the schema at "#/3/schema"
@@ -116,7 +122,10 @@ Scenario Outline: allOf with boolean schemas, all true
 
 Scenario Outline: allOf with boolean schemas, some false
 /* Schema: 
-{"allOf": [true, false]}
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "allOf": [true, false]
+        }
 */
     Given the input JSON file "allOf.json"
     And the schema at "#/4/schema"
@@ -132,7 +141,10 @@ Scenario Outline: allOf with boolean schemas, some false
 
 Scenario Outline: allOf with boolean schemas, all false
 /* Schema: 
-{"allOf": [false, false]}
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "allOf": [false, false]
+        }
 */
     Given the input JSON file "allOf.json"
     And the schema at "#/5/schema"
@@ -149,6 +161,7 @@ Scenario Outline: allOf with boolean schemas, all false
 Scenario Outline: allOf with one empty schema
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "allOf": [
                 {}
             ]
@@ -169,6 +182,7 @@ Scenario Outline: allOf with one empty schema
 Scenario Outline: allOf with two empty schemas
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "allOf": [
                 {},
                 {}
@@ -190,6 +204,7 @@ Scenario Outline: allOf with two empty schemas
 Scenario Outline: allOf with the first empty schema
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "allOf": [
                 {},
                 { "type": "number" }
@@ -212,6 +227,7 @@ Scenario Outline: allOf with the first empty schema
 Scenario Outline: allOf with the last empty schema
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "allOf": [
                 { "type": "number" },
                 {}
@@ -234,6 +250,7 @@ Scenario Outline: allOf with the last empty schema
 Scenario Outline: nested allOf, to check validation semantics
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "allOf": [
                 {
                     "allOf": [
@@ -261,6 +278,7 @@ Scenario Outline: nested allOf, to check validation semantics
 Scenario Outline: allOf combined with anyOf, oneOf
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "allOf": [ { "multipleOf": 2 } ],
             "anyOf": [ { "multipleOf": 3 } ],
             "oneOf": [ { "multipleOf": 5 } ]

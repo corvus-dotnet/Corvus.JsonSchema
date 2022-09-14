@@ -8,26 +8,27 @@ Feature: unknownKeyword draft2019-09
 Scenario Outline: $id inside an unknown keyword is not a real identifier
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "$defs": {
                 "id_in_unknown0": {
                     "not": {
                         "array_of_schemas": [
                             {
-                              "$id": "https://localhost:1234/unknownKeyword/my_identifier.json",
+                              "$id": "https://localhost:1234/draft2019-09/unknownKeyword/my_identifier.json",
                               "type": "null"
                             }
                         ]
                     }
                 },
                 "real_id_in_schema": {
-                    "$id": "https://localhost:1234/unknownKeyword/my_identifier.json",
+                    "$id": "https://localhost:1234/draft2019-09/unknownKeyword/my_identifier.json",
                     "type": "string"
                 },
                 "id_in_unknown1": {
                     "not": {
                         "object_of_schemas": {
                             "foo": {
-                              "$id": "https://localhost:1234/unknownKeyword/my_identifier.json",
+                              "$id": "https://localhost:1234/draft2019-09/unknownKeyword/my_identifier.json",
                               "type": "integer"
                             }
                         }
@@ -37,7 +38,7 @@ Scenario Outline: $id inside an unknown keyword is not a real identifier
             "anyOf": [
                 { "$ref": "#/$defs/id_in_unknown0" },
                 { "$ref": "#/$defs/id_in_unknown1" },
-                { "$ref": "https://localhost:1234/unknownKeyword/my_identifier.json" }
+                { "$ref": "https://localhost:1234/draft2019-09/unknownKeyword/my_identifier.json" }
             ]
         }
 */

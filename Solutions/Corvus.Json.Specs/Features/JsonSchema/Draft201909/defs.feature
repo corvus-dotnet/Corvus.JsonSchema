@@ -7,7 +7,10 @@ Feature: defs draft2019-09
 
 Scenario Outline: validate definition against metaschema
 /* Schema: 
-{"$ref": "https://json-schema.org/draft/2019-09/schema"}
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "$ref": "https://json-schema.org/draft/2019-09/schema"
+        }
 */
     Given the input JSON file "defs.json"
     And the schema at "#/0/schema"

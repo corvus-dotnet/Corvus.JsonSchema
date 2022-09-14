@@ -708,7 +708,7 @@ public partial class CodeGeneratorValidateRef
         {
             if (this.TypeDeclaration.Schema().MaxLength.IsNotUndefined())
             {
-                return this.TypeDeclaration.Schema().MaxLength.AsJsonElement.GetRawText();
+                return ((int)this.TypeDeclaration.Schema().MaxLength).ToString();
             }
 
             return string.Empty;
@@ -724,7 +724,7 @@ public partial class CodeGeneratorValidateRef
         {
             if (this.TypeDeclaration.Schema().MinLength.IsNotUndefined())
             {
-                return this.TypeDeclaration.Schema().MinLength.AsJsonElement.GetRawText();
+                return ((int)this.TypeDeclaration.Schema().MinLength).ToString();
             }
 
             return string.Empty;

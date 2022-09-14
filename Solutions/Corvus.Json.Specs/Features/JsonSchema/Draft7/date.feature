@@ -61,4 +61,4 @@ Scenario Outline: validation of date strings
         | #/000/tests/039/data | false | invalid month-day combination                                                    |
         | #/000/tests/040/data | false | 2021 is not a leap year                                                          |
         | #/000/tests/041/data | true  | 2020 is a leap year                                                              |
-        | #/000/tests/042/data | false | non-ascii digits should be rejected                                              |
+        | #/000/tests/042/data | false | invalid non-ASCII '৪' (a Bengali 4)                                              |

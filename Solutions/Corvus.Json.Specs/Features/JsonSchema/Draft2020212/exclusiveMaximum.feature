@@ -8,6 +8,7 @@ Feature: exclusiveMaximum draft2020-12
 Scenario Outline: exclusiveMaximum validation
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "exclusiveMaximum": 3.0
         }
 */

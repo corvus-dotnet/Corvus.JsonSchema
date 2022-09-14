@@ -191,30 +191,3 @@ Scenario Outline: nested anyOf, to check validation semantics
         | inputDataReference   | valid | description                                                                      |
         | #/007/tests/000/data | true  | null is valid                                                                    |
         | #/007/tests/001/data | false | anything non-null is invalid                                                     |
-
-Scenario Outline: nested anyOf, to check validation semantics [1]
-/* Schema: 
-{
-            "anyOf": [
-                {
-                    "anyOf": [
-                        {
-                            "type": "null"
-                        }
-                    ]
-                }
-            ]
-        }
-*/
-    Given the input JSON file "anyOf.json"
-    And the schema at "#/8/schema"
-    And the input data at "<inputDataReference>"
-    And I generate a type for the schema
-    And I construct an instance of the schema type from the data
-    When I validate the instance
-    Then the result will be <valid>
-
-    Examples:
-        | inputDataReference   | valid | description                                                                      |
-        | #/008/tests/000/data | true  | null is valid                                                                    |
-        | #/008/tests/001/data | false | anything non-null is invalid                                                     |

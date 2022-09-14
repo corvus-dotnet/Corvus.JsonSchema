@@ -7,7 +7,10 @@ Feature: uri draft2019-09
 
 Scenario Outline: validation of URIs
 /* Schema: 
-{ "format": "uri" }
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "format": "uri"
+        }
 */
     Given the input JSON file "optional/format/uri.json"
     And the schema at "#/0/schema"

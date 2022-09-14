@@ -7,7 +7,10 @@ Feature: idn-email draft2019-09
 
 Scenario Outline: validation of an internationalized e-mail addresses
 /* Schema: 
-{ "format": "idn-email" }
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "format": "idn-email"
+        }
 */
     Given the input JSON file "optional/format/idn-email.json"
     And the schema at "#/0/schema"

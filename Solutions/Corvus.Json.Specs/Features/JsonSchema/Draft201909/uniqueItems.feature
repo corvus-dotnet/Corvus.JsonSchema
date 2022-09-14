@@ -7,7 +7,10 @@ Feature: uniqueItems draft2019-09
 
 Scenario Outline: uniqueItems validation
 /* Schema: 
-{"uniqueItems": true}
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "uniqueItems": true
+        }
 */
     Given the input JSON file "uniqueItems.json"
     And the schema at "#/0/schema"
@@ -50,6 +53,7 @@ Scenario Outline: uniqueItems validation
 Scenario Outline: uniqueItems with an array of items
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "items": [{"type": "boolean"}, {"type": "boolean"}],
             "uniqueItems": true
         }
@@ -76,6 +80,7 @@ Scenario Outline: uniqueItems with an array of items
 Scenario Outline: uniqueItems with an array of items and additionalItems equals false
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "items": [{"type": "boolean"}, {"type": "boolean"}],
             "uniqueItems": true,
             "additionalItems": false
@@ -99,7 +104,10 @@ Scenario Outline: uniqueItems with an array of items and additionalItems equals 
 
 Scenario Outline: uniqueItems equals false validation
 /* Schema: 
-{ "uniqueItems": false }
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "uniqueItems": false
+        }
 */
     Given the input JSON file "uniqueItems.json"
     And the schema at "#/3/schema"
@@ -130,6 +138,7 @@ Scenario Outline: uniqueItems equals false validation
 Scenario Outline: uniqueItems equals false with an array of items
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "items": [{"type": "boolean"}, {"type": "boolean"}],
             "uniqueItems": false
         }
@@ -156,6 +165,7 @@ Scenario Outline: uniqueItems equals false with an array of items
 Scenario Outline: uniqueItems equals false with an array of items and additionalItems equals false
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "items": [{"type": "boolean"}, {"type": "boolean"}],
             "uniqueItems": false,
             "additionalItems": false

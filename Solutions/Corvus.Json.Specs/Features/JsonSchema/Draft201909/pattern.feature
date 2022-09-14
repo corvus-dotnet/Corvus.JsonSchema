@@ -7,7 +7,10 @@ Feature: pattern draft2019-09
 
 Scenario Outline: pattern validation
 /* Schema: 
-{"pattern": "^a*$"}
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "pattern": "^a*$"
+        }
 */
     Given the input JSON file "pattern.json"
     And the schema at "#/0/schema"
@@ -30,7 +33,10 @@ Scenario Outline: pattern validation
 
 Scenario Outline: pattern is not anchored
 /* Schema: 
-{"pattern": "a+"}
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "pattern": "a+"
+        }
 */
     Given the input JSON file "pattern.json"
     And the schema at "#/1/schema"

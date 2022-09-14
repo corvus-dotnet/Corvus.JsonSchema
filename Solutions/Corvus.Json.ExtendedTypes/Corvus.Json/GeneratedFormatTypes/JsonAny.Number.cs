@@ -111,7 +111,7 @@ public readonly partial struct JsonAny : IJsonNumber<JsonAny>
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
-            return value.jsonElementBacking.GetInt32();
+            return value.jsonElementBacking.SafeGetInt32();
         }
 
         if ((value.backing & Backing.Number) != 0)
@@ -146,7 +146,7 @@ public readonly partial struct JsonAny : IJsonNumber<JsonAny>
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
-            return value.jsonElementBacking.GetInt64();
+            return value.jsonElementBacking.SafeGetInt64();
         }
 
         if ((value.backing & Backing.Number) != 0)
@@ -181,7 +181,7 @@ public readonly partial struct JsonAny : IJsonNumber<JsonAny>
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
-            return value.jsonElementBacking.GetUInt32();
+            return value.jsonElementBacking.SafeGetUInt32();
         }
 
         if ((value.backing & Backing.Number) != 0)
@@ -216,7 +216,7 @@ public readonly partial struct JsonAny : IJsonNumber<JsonAny>
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
-            return value.jsonElementBacking.GetUInt16();
+            return value.jsonElementBacking.SafeGetUInt16();
         }
 
         if ((value.backing & Backing.Number) != 0)
@@ -251,7 +251,7 @@ public readonly partial struct JsonAny : IJsonNumber<JsonAny>
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
-            return value.jsonElementBacking.GetUInt64();
+            return value.jsonElementBacking.SafeGetUInt64();
         }
 
         if ((value.backing & Backing.Number) != 0)
@@ -286,7 +286,7 @@ public readonly partial struct JsonAny : IJsonNumber<JsonAny>
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
-            return value.jsonElementBacking.GetByte();
+            return value.jsonElementBacking.SafeGetByte();
         }
 
         if ((value.backing & Backing.Number) != 0)
@@ -321,7 +321,7 @@ public readonly partial struct JsonAny : IJsonNumber<JsonAny>
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
-            return value.jsonElementBacking.GetSByte();
+            return value.jsonElementBacking.SafeGetSByte();
         }
 
         if ((value.backing & Backing.Number) != 0)

@@ -8,6 +8,7 @@ Feature: if-then-else draft2020-12
 Scenario Outline: ignore if without then or else
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "if": {
                 "const": 0
             }
@@ -29,6 +30,7 @@ Scenario Outline: ignore if without then or else
 Scenario Outline: ignore then without if
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "then": {
                 "const": 0
             }
@@ -50,6 +52,7 @@ Scenario Outline: ignore then without if
 Scenario Outline: ignore else without if
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "else": {
                 "const": 0
             }
@@ -71,6 +74,7 @@ Scenario Outline: ignore else without if
 Scenario Outline: if and then without else
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "if": {
                 "exclusiveMaximum": 0
             },
@@ -96,6 +100,7 @@ Scenario Outline: if and then without else
 Scenario Outline: if and else without then
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "if": {
                 "exclusiveMaximum": 0
             },
@@ -121,6 +126,7 @@ Scenario Outline: if and else without then
 Scenario Outline: validate against correct branch, then vs else
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "if": {
                 "exclusiveMaximum": 0
             },
@@ -150,6 +156,7 @@ Scenario Outline: validate against correct branch, then vs else
 Scenario Outline: non-interference across combined schemas
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "allOf": [
                 {
                     "if": {
@@ -185,6 +192,7 @@ Scenario Outline: non-interference across combined schemas
 Scenario Outline: if with boolean schema true
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "if": true,
             "then": { "const": "then" },
             "else": { "const": "else" }
@@ -206,6 +214,7 @@ Scenario Outline: if with boolean schema true
 Scenario Outline: if with boolean schema false
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "if": false,
             "then": { "const": "then" },
             "else": { "const": "else" }
@@ -227,6 +236,7 @@ Scenario Outline: if with boolean schema false
 Scenario Outline: if appears at the end when serialized (keyword processing sequence)
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "then": { "const": "yes" },
             "else": { "const": "other" },
             "if": { "maxLength": 4 }

@@ -8,6 +8,7 @@ Feature: items draft2020-12
 Scenario Outline: a schema given for items
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "items": {"type": "integer"}
         }
 */
@@ -28,7 +29,10 @@ Scenario Outline: a schema given for items
 
 Scenario Outline: items with boolean schema (true)
 /* Schema: 
-{"items": true}
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "items": true
+        }
 */
     Given the input JSON file "items.json"
     And the schema at "#/1/schema"
@@ -45,7 +49,10 @@ Scenario Outline: items with boolean schema (true)
 
 Scenario Outline: items with boolean schema (false)
 /* Schema: 
-{"items": false}
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "items": false
+        }
 */
     Given the input JSON file "items.json"
     And the schema at "#/2/schema"
@@ -63,6 +70,7 @@ Scenario Outline: items with boolean schema (false)
 Scenario Outline: items and subitems
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "$defs": {
                 "item": {
                     "type": "array",
@@ -106,6 +114,7 @@ Scenario Outline: items and subitems
 Scenario Outline: nested items
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "type": "array",
             "items": {
                 "type": "array",
@@ -138,6 +147,7 @@ Scenario Outline: nested items
 Scenario Outline: prefixItems with no additional items allowed
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "prefixItems": [{}, {}, {}],
             "items": false
         }
@@ -158,9 +168,10 @@ Scenario Outline: prefixItems with no additional items allowed
         | #/005/tests/003/data | true  | equal number of items present                                                    |
         | #/005/tests/004/data | false | additional items are not permitted                                               |
 
-Scenario Outline: items should not look in applicators, valid case
+Scenario Outline: items does not look in applicators, valid case
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "allOf": [
                 { "prefixItems": [ { "minimum": 3 } ] }
             ],
@@ -177,12 +188,13 @@ Scenario Outline: items should not look in applicators, valid case
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/006/tests/000/data | false | prefixItems in allOf should not constrain items, invalid case                    |
-        | #/006/tests/001/data | true  | prefixItems in allOf should not constrain items, valid case                      |
+        | #/006/tests/000/data | false | prefixItems in allOf does not constrain items, invalid case                      |
+        | #/006/tests/001/data | true  | prefixItems in allOf does not constrain items, valid case                        |
 
 Scenario Outline: prefixItems validation adjusts the starting index for items
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "prefixItems": [ { "type": "string" } ],
             "items": { "type": "integer" }
         }
@@ -199,3 +211,24 @@ Scenario Outline: prefixItems validation adjusts the starting index for items
         | inputDataReference   | valid | description                                                                      |
         | #/007/tests/000/data | true  | valid items                                                                      |
         | #/007/tests/001/data | false | wrong type of second item                                                        |
+
+Scenario Outline: items with null instance elements
+/* Schema: 
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "items": {
+                "type": "null"
+            }
+        }
+*/
+    Given the input JSON file "items.json"
+    And the schema at "#/8/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/008/tests/000/data | true  | allows null elements                                                             |

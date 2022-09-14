@@ -8,6 +8,7 @@ Feature: maxContains draft2019-09
 Scenario Outline: maxContains without contains is ignored
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "maxContains": 1
         }
 */
@@ -27,6 +28,7 @@ Scenario Outline: maxContains without contains is ignored
 Scenario Outline: maxContains with contains
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "contains": {"const": 1},
             "maxContains": 1
         }
@@ -47,12 +49,12 @@ Scenario Outline: maxContains with contains
         | #/001/tests/003/data | true  | some elements match, valid maxContains                                           |
         | #/001/tests/004/data | false | some elements match, invalid maxContains                                         |
 
-Scenario Outline: minContains  less than  maxContains
+Scenario Outline: maxContains with contains, value with a decimal
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "contains": {"const": 1},
-            "minContains": 1,
-            "maxContains": 3
+            "maxContains": 1.0
         }
 */
     Given the input JSON file "maxContains.json"
@@ -65,6 +67,28 @@ Scenario Outline: minContains  less than  maxContains
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/002/tests/000/data | false | actual < minContains < maxContains                                               |
-        | #/002/tests/001/data | true  | minContains < actual < maxContains                                               |
-        | #/002/tests/002/data | false | minContains < maxContains < actual                                               |
+        | #/002/tests/000/data | true  | one element matches, valid maxContains                                           |
+        | #/002/tests/001/data | false | too many elements match, invalid maxContains                                     |
+
+Scenario Outline: minContains  less than  maxContains
+/* Schema: 
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "contains": {"const": 1},
+            "minContains": 1,
+            "maxContains": 3
+        }
+*/
+    Given the input JSON file "maxContains.json"
+    And the schema at "#/3/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/003/tests/000/data | false | actual < minContains < maxContains                                               |
+        | #/003/tests/001/data | true  | minContains < actual < maxContains                                               |
+        | #/003/tests/002/data | false | minContains < maxContains < actual                                               |

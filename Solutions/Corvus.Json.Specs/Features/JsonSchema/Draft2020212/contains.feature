@@ -8,6 +8,7 @@ Feature: contains draft2020-12
 Scenario Outline: contains keyword validation
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "contains": {"minimum": 5}
         }
 */
@@ -31,6 +32,7 @@ Scenario Outline: contains keyword validation
 Scenario Outline: contains keyword with const keyword
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "contains": { "const": 5 }
         }
 */
@@ -50,7 +52,10 @@ Scenario Outline: contains keyword with const keyword
 
 Scenario Outline: contains keyword with boolean schema true
 /* Schema: 
-{"contains": true}
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "contains": true
+        }
 */
     Given the input JSON file "contains.json"
     And the schema at "#/2/schema"
@@ -67,7 +72,10 @@ Scenario Outline: contains keyword with boolean schema true
 
 Scenario Outline: contains keyword with boolean schema false
 /* Schema: 
-{"contains": false}
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "contains": false
+        }
 */
     Given the input JSON file "contains.json"
     And the schema at "#/3/schema"
@@ -86,6 +94,7 @@ Scenario Outline: contains keyword with boolean schema false
 Scenario Outline: items + contains
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "items": { "multipleOf": 2 },
             "contains": { "multipleOf": 3 }
         }
@@ -108,6 +117,7 @@ Scenario Outline: items + contains
 Scenario Outline: contains with false if subschema
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "contains": {
                 "if": false,
                 "else": true
@@ -126,3 +136,24 @@ Scenario Outline: contains with false if subschema
         | inputDataReference   | valid | description                                                                      |
         | #/005/tests/000/data | true  | any non-empty array is valid                                                     |
         | #/005/tests/001/data | false | empty array is invalid                                                           |
+
+Scenario Outline: contains with null instance elements
+/* Schema: 
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "contains": {
+                "type": "null"
+            }
+        }
+*/
+    Given the input JSON file "contains.json"
+    And the schema at "#/6/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/006/tests/000/data | true  | allows null items                                                                |

@@ -7,7 +7,10 @@ Feature: idn-hostname draft2020-12
 
 Scenario Outline: validation of internationalized host names
 /* Schema: 
-{ "format": "idn-hostname" }
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "idn-hostname"
+        }
 */
     Given the input JSON file "optional/format/idn-hostname.json"
     And the schema at "#/0/schema"

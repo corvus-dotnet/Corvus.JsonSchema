@@ -7,7 +7,10 @@ Feature: date-time draft2020-12
 
 Scenario Outline: validation of date-time strings
 /* Schema: 
-{ "format": "date-time" }
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "date-time"
+        }
 */
     Given the input JSON file "optional/format/date-time.json"
     And the schema at "#/0/schema"
@@ -42,5 +45,5 @@ Scenario Outline: validation of date-time strings
         | #/000/tests/020/data | false | only RFC3339 not all of ISO 8601 are valid                                       |
         | #/000/tests/021/data | false | invalid non-padded month dates                                                   |
         | #/000/tests/022/data | false | invalid non-padded day dates                                                     |
-        | #/000/tests/023/data | false | non-ascii digits should be rejected in the date portion                          |
-        | #/000/tests/024/data | false | non-ascii digits should be rejected in the time portion                          |
+        | #/000/tests/023/data | false | invalid non-ASCII '৪' (a Bengali 4) in date portion                              |
+        | #/000/tests/024/data | false | invalid non-ASCII '৪' (a Bengali 4) in time portion                              |

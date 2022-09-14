@@ -180,3 +180,45 @@ Scenario Outline: nested items
         | #/006/tests/000/data | true  | valid nested array                                                               |
         | #/006/tests/001/data | false | nested array with invalid type                                                   |
         | #/006/tests/002/data | false | not deep enough                                                                  |
+
+Scenario Outline: single-form items with null instance elements
+/* Schema: 
+{
+            "items": {
+                "type": "null"
+            }
+        }
+*/
+    Given the input JSON file "items.json"
+    And the schema at "#/7/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/007/tests/000/data | true  | allows null elements                                                             |
+
+Scenario Outline: array-form items with null instance elements
+/* Schema: 
+{
+            "items": [
+                {
+                    "type": "null"
+                }
+            ]
+        }
+*/
+    Given the input JSON file "items.json"
+    And the schema at "#/8/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/008/tests/000/data | true  | allows null elements                                                             |

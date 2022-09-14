@@ -190,3 +190,44 @@ Scenario Outline: remote ref with ref to definitions
         | inputDataReference   | valid | description                                                                      |
         | #/007/tests/000/data | false | invalid                                                                          |
         | #/007/tests/001/data | true  | valid                                                                            |
+
+Scenario Outline: Location-independent identifier in remote ref
+/* Schema: 
+{
+            "$ref": "http://localhost:1234/locationIndependentIdentifierPre2019.json#/definitions/refToInteger"
+        }
+*/
+    Given the input JSON file "refRemote.json"
+    And the schema at "#/8/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/008/tests/000/data | true  | integer is valid                                                                 |
+        | #/008/tests/001/data | false | string is invalid                                                                |
+
+Scenario Outline: retrieved nested refs resolve relative to their URI not $id
+/* Schema: 
+{
+            "$id": "http://localhost:1234/some-id",
+            "properties": {
+                "name": {"$ref": "nested/foo-ref-string.json"}
+            }
+        }
+*/
+    Given the input JSON file "refRemote.json"
+    And the schema at "#/9/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/009/tests/000/data | false | number is invalid                                                                |
+        | #/009/tests/001/data | true  | string is valid                                                                  |

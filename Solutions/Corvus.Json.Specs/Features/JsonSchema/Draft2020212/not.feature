@@ -8,6 +8,7 @@ Feature: not draft2020-12
 Scenario Outline: not
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "not": {"type": "integer"}
         }
 */
@@ -27,6 +28,7 @@ Scenario Outline: not
 Scenario Outline: not multiple types
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "not": {"type": ["integer", "boolean"]}
         }
 */
@@ -47,6 +49,7 @@ Scenario Outline: not multiple types
 Scenario Outline: not more complex schema
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "not": {
                 "type": "object",
                 "properties": {
@@ -74,6 +77,7 @@ Scenario Outline: not more complex schema
 Scenario Outline: forbidden property
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "properties": {
                 "foo": { 
                     "not": {}
@@ -96,7 +100,10 @@ Scenario Outline: forbidden property
 
 Scenario Outline: not with boolean schema true
 /* Schema: 
-{"not": true}
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "not": true
+        }
 */
     Given the input JSON file "not.json"
     And the schema at "#/4/schema"
@@ -112,7 +119,10 @@ Scenario Outline: not with boolean schema true
 
 Scenario Outline: not with boolean schema false
 /* Schema: 
-{"not": false}
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "not": false
+        }
 */
     Given the input JSON file "not.json"
     And the schema at "#/5/schema"

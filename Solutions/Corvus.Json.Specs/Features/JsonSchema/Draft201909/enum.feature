@@ -7,7 +7,10 @@ Feature: enum draft2019-09
 
 Scenario Outline: simple enum validation
 /* Schema: 
-{"enum": [1, 2, 3]}
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "enum": [1, 2, 3]
+        }
 */
     Given the input JSON file "enum.json"
     And the schema at "#/0/schema"
@@ -24,7 +27,10 @@ Scenario Outline: simple enum validation
 
 Scenario Outline: heterogeneous enum validation
 /* Schema: 
-{"enum": [6, "foo", [], true, {"foo": 12}]}
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "enum": [6, "foo", [], true, {"foo": 12}]
+        }
 */
     Given the input JSON file "enum.json"
     And the schema at "#/1/schema"
@@ -44,7 +50,10 @@ Scenario Outline: heterogeneous enum validation
 
 Scenario Outline: heterogeneous enum-with-null validation
 /* Schema: 
-{ "enum": [6, null] }
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "enum": [6, null]
+        }
 */
     Given the input JSON file "enum.json"
     And the schema at "#/2/schema"
@@ -63,6 +72,7 @@ Scenario Outline: heterogeneous enum-with-null validation
 Scenario Outline: enums in properties
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "type":"object",
             "properties": {
                 "foo": {"enum":["foo"]},
@@ -91,6 +101,7 @@ Scenario Outline: enums in properties
 Scenario Outline: enum with escaped characters
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "enum": ["foo\nbar", "foo\rbar"]
         }
 */
@@ -110,7 +121,10 @@ Scenario Outline: enum with escaped characters
 
 Scenario Outline: enum with false does not match 0
 /* Schema: 
-{"enum": [false]}
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "enum": [false]
+        }
 */
     Given the input JSON file "enum.json"
     And the schema at "#/5/schema"
@@ -128,7 +142,10 @@ Scenario Outline: enum with false does not match 0
 
 Scenario Outline: enum with true does not match 1
 /* Schema: 
-{"enum": [true]}
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "enum": [true]
+        }
 */
     Given the input JSON file "enum.json"
     And the schema at "#/6/schema"
@@ -146,7 +163,10 @@ Scenario Outline: enum with true does not match 1
 
 Scenario Outline: enum with 0 does not match false
 /* Schema: 
-{"enum": [0]}
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "enum": [0]
+        }
 */
     Given the input JSON file "enum.json"
     And the schema at "#/7/schema"
@@ -164,7 +184,10 @@ Scenario Outline: enum with 0 does not match false
 
 Scenario Outline: enum with 1 does not match true
 /* Schema: 
-{"enum": [1]}
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "enum": [1]
+        }
 */
     Given the input JSON file "enum.json"
     And the schema at "#/8/schema"
@@ -182,7 +205,10 @@ Scenario Outline: enum with 1 does not match true
 
 Scenario Outline: nul characters in strings
 /* Schema: 
-{ "enum": [ "hello\u0000there" ] }
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "enum": [ "hello\u0000there" ]
+        }
 */
     Given the input JSON file "enum.json"
     And the schema at "#/9/schema"

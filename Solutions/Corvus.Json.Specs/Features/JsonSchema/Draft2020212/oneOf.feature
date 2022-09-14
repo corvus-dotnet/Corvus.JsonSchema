@@ -8,6 +8,7 @@ Feature: oneOf draft2020-12
 Scenario Outline: oneOf
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "oneOf": [
                 {
                     "type": "integer"
@@ -36,6 +37,7 @@ Scenario Outline: oneOf
 Scenario Outline: oneOf with base schema
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "type": "string",
             "oneOf" : [
                 {
@@ -63,7 +65,10 @@ Scenario Outline: oneOf with base schema
 
 Scenario Outline: oneOf with boolean schemas, all true
 /* Schema: 
-{"oneOf": [true, true, true]}
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "oneOf": [true, true, true]
+        }
 */
     Given the input JSON file "oneOf.json"
     And the schema at "#/2/schema"
@@ -79,7 +84,10 @@ Scenario Outline: oneOf with boolean schemas, all true
 
 Scenario Outline: oneOf with boolean schemas, one true
 /* Schema: 
-{"oneOf": [true, false, false]}
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "oneOf": [true, false, false]
+        }
 */
     Given the input JSON file "oneOf.json"
     And the schema at "#/3/schema"
@@ -95,7 +103,10 @@ Scenario Outline: oneOf with boolean schemas, one true
 
 Scenario Outline: oneOf with boolean schemas, more than one true
 /* Schema: 
-{"oneOf": [true, true, false]}
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "oneOf": [true, true, false]
+        }
 */
     Given the input JSON file "oneOf.json"
     And the schema at "#/4/schema"
@@ -111,7 +122,10 @@ Scenario Outline: oneOf with boolean schemas, more than one true
 
 Scenario Outline: oneOf with boolean schemas, all false
 /* Schema: 
-{"oneOf": [false, false, false]}
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "oneOf": [false, false, false]
+        }
 */
     Given the input JSON file "oneOf.json"
     And the schema at "#/5/schema"
@@ -128,6 +142,7 @@ Scenario Outline: oneOf with boolean schemas, all false
 Scenario Outline: oneOf complex types
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "oneOf": [
                 {
                     "properties": {
@@ -162,6 +177,7 @@ Scenario Outline: oneOf complex types
 Scenario Outline: oneOf with empty schema
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "oneOf": [
                 { "type": "number" },
                 {}
@@ -184,6 +200,7 @@ Scenario Outline: oneOf with empty schema
 Scenario Outline: oneOf with required
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "type": "object",
             "oneOf": [
                 { "required": ["foo", "bar"] },
@@ -209,6 +226,7 @@ Scenario Outline: oneOf with required
 Scenario Outline: oneOf with missing optional property
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "oneOf": [
                 {
                     "properties": {
@@ -244,6 +262,7 @@ Scenario Outline: oneOf with missing optional property
 Scenario Outline: nested oneOf, to check validation semantics
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "oneOf": [
                 {
                     "oneOf": [

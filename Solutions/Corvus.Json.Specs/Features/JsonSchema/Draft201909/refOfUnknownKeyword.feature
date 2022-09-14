@@ -8,6 +8,7 @@ Feature: refOfUnknownKeyword draft2019-09
 Scenario Outline: reference of a root arbitrary keyword 
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "unknown-keyword": {"type": "integer"},
             "properties": {
                 "bar": {"$ref": "#/unknown-keyword"}
@@ -30,6 +31,7 @@ Scenario Outline: reference of a root arbitrary keyword
 Scenario Outline: reference of an arbitrary keyword of a sub-schema
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "properties": {
                 "foo": {"unknown-keyword": {"type": "integer"}},
                 "bar": {"$ref": "#/properties/foo/unknown-keyword"}

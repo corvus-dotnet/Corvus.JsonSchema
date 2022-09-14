@@ -8,6 +8,7 @@ Feature: uuid draft2020-12
 Scenario Outline: uuid format
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "format": "uuid"
         }
 */

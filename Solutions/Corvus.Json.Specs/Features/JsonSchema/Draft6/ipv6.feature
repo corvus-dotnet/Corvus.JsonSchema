@@ -57,5 +57,5 @@ Scenario Outline: validation of IPv6 addresses
         | #/000/tests/035/data | true  | a long valid ipv6                                                                |
         | #/000/tests/036/data | false | a long invalid ipv6, below length limit, first                                   |
         | #/000/tests/037/data | false | a long invalid ipv6, below length limit, second                                  |
-        | #/000/tests/038/data | false | non-ascii digits should be rejected                                              |
-        | #/000/tests/039/data | false | non-ascii digits should be rejected in the ipv4 portion also                     |
+        | #/000/tests/038/data | false | invalid non-ASCII '৪' (a Bengali 4)                                              |
+        | #/000/tests/039/data | false | invalid non-ASCII '৪' (a Bengali 4) in the IPv4 portion                          |

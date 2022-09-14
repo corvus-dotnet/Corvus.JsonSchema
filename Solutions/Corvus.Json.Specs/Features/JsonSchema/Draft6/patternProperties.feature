@@ -105,3 +105,23 @@ Scenario Outline: patternProperties with boolean schemas
         | #/003/tests/002/data | false | object with both properties is invalid                                           |
         | #/003/tests/003/data | false | object with a property matching both true and false is invalid                   |
         | #/003/tests/004/data | true  | empty object is valid                                                            |
+
+Scenario Outline: patternProperties with null valued instance properties
+/* Schema: 
+{
+            "patternProperties": {
+                "^.*bar$": {"type": "null"}
+            }
+        }
+*/
+    Given the input JSON file "patternProperties.json"
+    And the schema at "#/4/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/004/tests/000/data | true  | allows null values                                                               |

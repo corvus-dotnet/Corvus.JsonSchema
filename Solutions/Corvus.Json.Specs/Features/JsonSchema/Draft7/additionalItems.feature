@@ -100,7 +100,7 @@ Scenario Outline: additionalItems are allowed by default
         | inputDataReference   | valid | description                                                                      |
         | #/004/tests/000/data | true  | only the first item is validated                                                 |
 
-Scenario Outline: additionalItems should not look in applicators, valid case
+Scenario Outline: additionalItems does not look in applicators, valid case
 /* Schema: 
 {
             "allOf": [
@@ -121,7 +121,7 @@ Scenario Outline: additionalItems should not look in applicators, valid case
         | inputDataReference   | valid | description                                                                      |
         | #/005/tests/000/data | true  | items defined in allOf are not examined                                          |
 
-Scenario Outline: additionalItems should not look in applicators, invalid case
+Scenario Outline: additionalItems does not look in applicators, invalid case
 /* Schema: 
 {
             "allOf": [
@@ -162,3 +162,23 @@ Scenario Outline: items validation adjusts the starting index for additionalItem
         | inputDataReference   | valid | description                                                                      |
         | #/007/tests/000/data | true  | valid items                                                                      |
         | #/007/tests/001/data | false | wrong type of second item                                                        |
+
+Scenario Outline: additionalItems with null instance elements
+/* Schema: 
+{
+            "additionalItems": {
+                "type": "null"
+            }
+        }
+*/
+    Given the input JSON file "additionalItems.json"
+    And the schema at "#/8/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/008/tests/000/data | true  | allows null elements                                                             |

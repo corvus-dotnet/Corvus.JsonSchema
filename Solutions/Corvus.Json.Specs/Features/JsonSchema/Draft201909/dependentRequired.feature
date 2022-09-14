@@ -7,7 +7,10 @@ Feature: dependentRequired draft2019-09
 
 Scenario Outline: single dependency
 /* Schema: 
-{"dependentRequired": {"bar": ["foo"]}}
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "dependentRequired": {"bar": ["foo"]}
+        }
 */
     Given the input JSON file "dependentRequired.json"
     And the schema at "#/0/schema"
@@ -29,7 +32,10 @@ Scenario Outline: single dependency
 
 Scenario Outline: empty dependents
 /* Schema: 
-{"dependentRequired": {"bar": []}}
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "dependentRequired": {"bar": []}
+        }
 */
     Given the input JSON file "dependentRequired.json"
     And the schema at "#/1/schema"
@@ -47,7 +53,10 @@ Scenario Outline: empty dependents
 
 Scenario Outline: multiple dependents required
 /* Schema: 
-{"dependentRequired": {"quux": ["foo", "bar"]}}
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "dependentRequired": {"quux": ["foo", "bar"]}
+        }
 */
     Given the input JSON file "dependentRequired.json"
     And the schema at "#/2/schema"
@@ -69,6 +78,7 @@ Scenario Outline: multiple dependents required
 Scenario Outline: dependencies with escaped characters
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "dependentRequired": {
                 "foo\nbar": ["foo\rbar"],
                 "foo\"bar": ["foo'bar"]

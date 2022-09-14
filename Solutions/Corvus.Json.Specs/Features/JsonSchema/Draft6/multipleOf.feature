@@ -58,7 +58,7 @@ Scenario Outline: by small number
         | #/002/tests/000/data | true  | 0.0075 is multiple of 0.0001                                                     |
         | #/002/tests/001/data | false | 0.00751 is not multiple of 0.0001                                                |
 
-Scenario Outline: invalid instance should not raise error when float division  equals  inf
+Scenario Outline: float division  equals  inf
 /* Schema: 
 {"type": "integer", "multipleOf": 0.123456789}
 */

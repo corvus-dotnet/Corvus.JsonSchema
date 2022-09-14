@@ -7,7 +7,10 @@ Feature: duration draft2020-12
 
 Scenario Outline: validation of duration strings
 /* Schema: 
-{ "format": "duration" }
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "duration"
+        }
 */
     Given the input JSON file "optional/format/duration.json"
     And the schema at "#/0/schema"
@@ -42,4 +45,4 @@ Scenario Outline: validation of duration strings
         | #/000/tests/020/data | true  | one and a half days, in days and hours                                           |
         | #/000/tests/021/data | true  | two weeks                                                                        |
         | #/000/tests/022/data | false | weeks cannot be combined with other units                                        |
-        | #/000/tests/023/data | false | non-ascii digits should be rejected                                              |
+        | #/000/tests/023/data | false | invalid non-ASCII '২' (a Bengali 2)                                              |

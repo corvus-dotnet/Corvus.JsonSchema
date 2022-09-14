@@ -8,6 +8,7 @@ Feature: additionalItems draft2019-09
 Scenario Outline: additionalItems as schema
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "items": [{}],
             "additionalItems": {"type": "integer"}
         }
@@ -28,6 +29,7 @@ Scenario Outline: additionalItems as schema
 Scenario Outline: when items is schema, additionalItems does nothing
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "items": {},
             "additionalItems": false
         }
@@ -47,6 +49,7 @@ Scenario Outline: when items is schema, additionalItems does nothing
 Scenario Outline: array of items with no additionalItems permitted
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "items": [{}, {}, {}],
             "additionalItems": false
         }
@@ -69,7 +72,10 @@ Scenario Outline: array of items with no additionalItems permitted
 
 Scenario Outline: additionalItems as false without items
 /* Schema: 
-{"additionalItems": false}
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "additionalItems": false
+        }
 */
     Given the input JSON file "additionalItems.json"
     And the schema at "#/3/schema"
@@ -86,7 +92,10 @@ Scenario Outline: additionalItems as false without items
 
 Scenario Outline: additionalItems are allowed by default
 /* Schema: 
-{"items": [{"type": "integer"}]}
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "items": [{"type": "integer"}]
+        }
 */
     Given the input JSON file "additionalItems.json"
     And the schema at "#/4/schema"
@@ -100,9 +109,10 @@ Scenario Outline: additionalItems are allowed by default
         | inputDataReference   | valid | description                                                                      |
         | #/004/tests/000/data | true  | only the first item is validated                                                 |
 
-Scenario Outline: additionalItems should not look in applicators, valid case
+Scenario Outline: additionalItems does not look in applicators, valid case
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "allOf": [
                 { "items": [ { "type": "integer" } ] }
             ],
@@ -121,9 +131,10 @@ Scenario Outline: additionalItems should not look in applicators, valid case
         | inputDataReference   | valid | description                                                                      |
         | #/005/tests/000/data | true  | items defined in allOf are not examined                                          |
 
-Scenario Outline: additionalItems should not look in applicators, invalid case
+Scenario Outline: additionalItems does not look in applicators, invalid case
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "allOf": [
                 { "items": [ { "type": "integer" }, { "type": "string" } ] }
             ],
@@ -146,6 +157,7 @@ Scenario Outline: additionalItems should not look in applicators, invalid case
 Scenario Outline: items validation adjusts the starting index for additionalItems
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "items": [ { "type": "string" } ],
             "additionalItems": { "type": "integer" }
         }
@@ -162,3 +174,24 @@ Scenario Outline: items validation adjusts the starting index for additionalItem
         | inputDataReference   | valid | description                                                                      |
         | #/007/tests/000/data | true  | valid items                                                                      |
         | #/007/tests/001/data | false | wrong type of second item                                                        |
+
+Scenario Outline: additionalItems with null instance elements
+/* Schema: 
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "additionalItems": {
+                "type": "null"
+            }
+        }
+*/
+    Given the input JSON file "additionalItems.json"
+    And the schema at "#/8/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/008/tests/000/data | true  | allows null elements                                                             |

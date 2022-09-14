@@ -7,7 +7,10 @@ Feature: unknown draft2020-12
 
 Scenario Outline: unknown format
 /* Schema: 
-{ "format": "unknown" }
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "unknown"
+        }
 */
     Given the input JSON file "optional/format/unknown.json"
     And the schema at "#/0/schema"

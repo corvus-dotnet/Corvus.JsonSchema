@@ -7,7 +7,10 @@ Feature: const draft2020-12
 
 Scenario Outline: const validation
 /* Schema: 
-{"const": 2}
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "const": 2
+        }
 */
     Given the input JSON file "const.json"
     And the schema at "#/0/schema"
@@ -25,7 +28,10 @@ Scenario Outline: const validation
 
 Scenario Outline: const with object
 /* Schema: 
-{"const": {"foo": "bar", "baz": "bax"}}
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "const": {"foo": "bar", "baz": "bax"}
+        }
 */
     Given the input JSON file "const.json"
     And the schema at "#/1/schema"
@@ -44,7 +50,10 @@ Scenario Outline: const with object
 
 Scenario Outline: const with array
 /* Schema: 
-{"const": [{ "foo": "bar" }]}
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "const": [{ "foo": "bar" }]
+        }
 */
     Given the input JSON file "const.json"
     And the schema at "#/2/schema"
@@ -62,7 +71,10 @@ Scenario Outline: const with array
 
 Scenario Outline: const with null
 /* Schema: 
-{"const": null}
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "const": null
+        }
 */
     Given the input JSON file "const.json"
     And the schema at "#/3/schema"
@@ -79,7 +91,10 @@ Scenario Outline: const with null
 
 Scenario Outline: const with false does not match 0
 /* Schema: 
-{"const": false}
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "const": false
+        }
 */
     Given the input JSON file "const.json"
     And the schema at "#/4/schema"
@@ -97,7 +112,10 @@ Scenario Outline: const with false does not match 0
 
 Scenario Outline: const with true does not match 1
 /* Schema: 
-{"const": true}
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "const": true
+        }
 */
     Given the input JSON file "const.json"
     And the schema at "#/5/schema"
@@ -115,7 +133,10 @@ Scenario Outline: const with true does not match 1
 
 Scenario Outline: const with array[false] does not match array[0]
 /* Schema: 
-{"const": [false]}
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "const": [false]
+        }
 */
     Given the input JSON file "const.json"
     And the schema at "#/6/schema"
@@ -133,7 +154,10 @@ Scenario Outline: const with array[false] does not match array[0]
 
 Scenario Outline: const with array[true] does not match array[1]
 /* Schema: 
-{"const": [true]}
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "const": [true]
+        }
 */
     Given the input JSON file "const.json"
     And the schema at "#/7/schema"
@@ -151,7 +175,10 @@ Scenario Outline: const with array[true] does not match array[1]
 
 Scenario Outline: const with {"a": false} does not match {"a": 0}
 /* Schema: 
-{"const": {"a": false}}
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "const": {"a": false}
+        }
 */
     Given the input JSON file "const.json"
     And the schema at "#/8/schema"
@@ -169,7 +196,10 @@ Scenario Outline: const with {"a": false} does not match {"a": 0}
 
 Scenario Outline: const with {"a": true} does not match {"a": 1}
 /* Schema: 
-{"const": {"a": true}}
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "const": {"a": true}
+        }
 */
     Given the input JSON file "const.json"
     And the schema at "#/9/schema"
@@ -187,7 +217,10 @@ Scenario Outline: const with {"a": true} does not match {"a": 1}
 
 Scenario Outline: const with 0 does not match other zero-like types
 /* Schema: 
-{"const": 0}
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "const": 0
+        }
 */
     Given the input JSON file "const.json"
     And the schema at "#/10/schema"
@@ -208,7 +241,10 @@ Scenario Outline: const with 0 does not match other zero-like types
 
 Scenario Outline: const with 1 does not match true
 /* Schema: 
-{"const": 1}
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "const": 1
+        }
 */
     Given the input JSON file "const.json"
     And the schema at "#/11/schema"
@@ -226,7 +262,10 @@ Scenario Outline: const with 1 does not match true
 
 Scenario Outline: const with -2.0 matches integer and float types
 /* Schema: 
-{"const": -2.0}
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "const": -2.0
+        }
 */
     Given the input JSON file "const.json"
     And the schema at "#/12/schema"
@@ -246,7 +285,10 @@ Scenario Outline: const with -2.0 matches integer and float types
 
 Scenario Outline: float and integers are equal up to 64-bit representation limits
 /* Schema: 
-{"const": 9007199254740992}
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "const": 9007199254740992
+        }
 */
     Given the input JSON file "const.json"
     And the schema at "#/13/schema"
@@ -265,7 +307,10 @@ Scenario Outline: float and integers are equal up to 64-bit representation limit
 
 Scenario Outline: nul characters in strings
 /* Schema: 
-{ "const": "hello\u0000there" }
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "const": "hello\u0000there"
+        }
 */
     Given the input JSON file "const.json"
     And the schema at "#/14/schema"

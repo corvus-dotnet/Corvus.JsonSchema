@@ -126,3 +126,23 @@ Scenario Outline: contains with false if subschema
         | inputDataReference   | valid | description                                                                      |
         | #/005/tests/000/data | true  | any non-empty array is valid                                                     |
         | #/005/tests/001/data | false | empty array is invalid                                                           |
+
+Scenario Outline: contains with null instance elements
+/* Schema: 
+{
+            "contains": {
+                "type": "null"
+            }
+        }
+*/
+    Given the input JSON file "contains.json"
+    And the schema at "#/6/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/006/tests/000/data | true  | allows null items                                                                |

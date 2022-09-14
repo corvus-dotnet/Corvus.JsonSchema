@@ -8,6 +8,7 @@ Feature: recursiveRef draft2019-09
 Scenario Outline: $recursiveRef without $recursiveAnchor works like $ref
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "properties": {
                 "foo": { "$recursiveRef": "#" }
             },
@@ -32,7 +33,8 @@ Scenario Outline: $recursiveRef without $recursiveAnchor works like $ref
 Scenario Outline: $recursiveRef without using nesting
 /* Schema: 
 {
-            "$id": "http://localhost:4242/recursiveRef2/schema.json",
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "$id": "http://localhost:4242/draft2019-09/recursiveRef2/schema.json",
             "$defs": {
                 "myobject": {
                     "$id": "myobject.json",
@@ -71,7 +73,8 @@ Scenario Outline: $recursiveRef without using nesting
 Scenario Outline: $recursiveRef with nesting
 /* Schema: 
 {
-            "$id": "http://localhost:4242/recursiveRef3/schema.json",
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "$id": "http://localhost:4242/draft2019-09/recursiveRef3/schema.json",
             "$recursiveAnchor": true,
             "$defs": {
                 "myobject": {
@@ -111,7 +114,8 @@ Scenario Outline: $recursiveRef with nesting
 Scenario Outline: $recursiveRef with $recursiveAnchor: false works like $ref
 /* Schema: 
 {
-            "$id": "http://localhost:4242/recursiveRef4/schema.json",
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "$id": "http://localhost:4242/draft2019-09/recursiveRef4/schema.json",
             "$recursiveAnchor": false,
             "$defs": {
                 "myobject": {
@@ -151,7 +155,8 @@ Scenario Outline: $recursiveRef with $recursiveAnchor: false works like $ref
 Scenario Outline: $recursiveRef with no $recursiveAnchor works like $ref
 /* Schema: 
 {
-            "$id": "http://localhost:4242/recursiveRef5/schema.json",
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "$id": "http://localhost:4242/draft2019-09/recursiveRef5/schema.json",
             "$defs": {
                 "myobject": {
                     "$id": "myobject.json",
@@ -190,14 +195,15 @@ Scenario Outline: $recursiveRef with no $recursiveAnchor works like $ref
 Scenario Outline: $recursiveRef with no $recursiveAnchor in the initial target schema resource
 /* Schema: 
 {
-            "$id": "http://localhost:4242/recursiveRef6/base.json",
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "$id": "http://localhost:4242/draft2019-09/recursiveRef6/base.json",
             "$recursiveAnchor": true,
             "anyOf": [
                 { "type": "boolean" },
                 {
                     "type": "object",
                     "additionalProperties": {
-                        "$id": "http://localhost:4242/recursiveRef6/inner.json",
+                        "$id": "http://localhost:4242/draft2019-09/recursiveRef6/inner.json",
                         "$comment": "there is no $recursiveAnchor: true here, so we do NOT recurse to the base",
                         "anyOf": [
                             { "type": "integer" },
@@ -225,13 +231,14 @@ Scenario Outline: $recursiveRef with no $recursiveAnchor in the initial target s
 Scenario Outline: $recursiveRef with no $recursiveAnchor in the outer schema resource
 /* Schema: 
 {
-            "$id": "http://localhost:4242/recursiveRef7/base.json",
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "$id": "http://localhost:4242/draft2019-09/recursiveRef7/base.json",
             "anyOf": [
                 { "type": "boolean" },
                 {
                     "type": "object",
                     "additionalProperties": {
-                        "$id": "http://localhost:4242/recursiveRef7/inner.json",
+                        "$id": "http://localhost:4242/draft2019-09/recursiveRef7/inner.json",
                         "$recursiveAnchor": true,
                         "anyOf": [
                             { "type": "integer" },
@@ -259,6 +266,7 @@ Scenario Outline: $recursiveRef with no $recursiveAnchor in the outer schema res
 Scenario Outline: multiple dynamic paths to the $recursiveRef keyword
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "$id": "recursiveRef8_main.json",
             "$defs": {
                 "inner": {
@@ -306,6 +314,7 @@ Scenario Outline: multiple dynamic paths to the $recursiveRef keyword
 Scenario Outline: dynamic $recursiveRef destination (not predictable at schema compile time)
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "$id": "main.json",
             "$defs": {
                 "inner": {

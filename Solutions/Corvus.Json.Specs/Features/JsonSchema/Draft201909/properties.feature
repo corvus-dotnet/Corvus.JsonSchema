@@ -8,6 +8,7 @@ Feature: properties draft2019-09
 Scenario Outline: object properties validation
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "properties": {
                 "foo": {"type": "integer"},
                 "bar": {"type": "string"}
@@ -34,6 +35,7 @@ Scenario Outline: object properties validation
 Scenario Outline: properties, patternProperties, additionalProperties interaction
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "properties": {
                 "foo": {"type": "array", "maxItems": 3},
                 "bar": {"type": "array"}
@@ -64,6 +66,7 @@ Scenario Outline: properties, patternProperties, additionalProperties interactio
 Scenario Outline: properties with boolean schema
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "properties": {
                 "foo": true,
                 "bar": false
@@ -88,6 +91,7 @@ Scenario Outline: properties with boolean schema
 Scenario Outline: properties with escaped characters
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "properties": {
                 "foo\nbar": {"type": "number"},
                 "foo\"bar": {"type": "number"},
@@ -110,3 +114,55 @@ Scenario Outline: properties with escaped characters
         | inputDataReference   | valid | description                                                                      |
         | #/003/tests/000/data | true  | object with all numbers is valid                                                 |
         | #/003/tests/001/data | false | object with strings is invalid                                                   |
+
+Scenario Outline: properties with null valued instance properties
+/* Schema: 
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "properties": {
+                "foo": {"type": "null"}
+            }
+        }
+*/
+    Given the input JSON file "properties.json"
+    And the schema at "#/4/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/004/tests/000/data | true  | allows null values                                                               |
+
+Scenario Outline: properties whose names are Javascript object property names
+/* Schema: 
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "properties": {
+                "__proto__": {"type": "number"},
+                "toString": {
+                    "properties": { "length": { "type": "string" } }
+                },
+                "constructor": {"type": "number"}
+            }
+        }
+*/
+    Given the input JSON file "properties.json"
+    And the schema at "#/5/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/005/tests/000/data | true  | ignores arrays                                                                   |
+        | #/005/tests/001/data | true  | ignores other non-objects                                                        |
+        | #/005/tests/002/data | true  | none of the properties mentioned                                                 |
+        | #/005/tests/003/data | false | __proto__ not valid                                                              |
+        | #/005/tests/004/data | false | toString not valid                                                               |
+        | #/005/tests/005/data | false | constructor not valid                                                            |
+        | #/005/tests/006/data | true  | all present and valid                                                            |
