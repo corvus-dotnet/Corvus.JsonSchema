@@ -43,6 +43,7 @@
       "subdirectories": {
         "optional": {
           "excludeFromThisDirectory": [
+            "cross-draft\\.json",
             "bignum\\.json",
             "ecmascript-regex\\.json",
             "non-bmp-regex\\.json"
@@ -92,6 +93,7 @@
       "subdirectories": {
         "optional": {
           "excludeFromThisDirectory": [
+            "cross-draft\\.json",
             "bignum\\.json",
             "ecmascript-regex\\.json",
             "non-bmp-regex\\.json"
@@ -144,6 +146,7 @@
       "subdirectories": {
         "optional": {
           "excludeFromThisDirectory": [
+            "cross-draft\\.json",
             "bignum\\.json",
             "ecmascript-regex\\.json",
             "non-bmp-regex\\.json"
