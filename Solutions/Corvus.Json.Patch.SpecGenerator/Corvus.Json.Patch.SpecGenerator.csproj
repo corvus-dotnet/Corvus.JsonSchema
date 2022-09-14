@@ -21,10 +21,10 @@
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.3.0" />
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.4.0-1.final" />
 		<PackageReference Include="Mono.TextTemplating" Version="2.2.1" />
-		<PackageReference Include="System.Collections.Immutable" Version="6.0.0" />
-		<PackageReference Include="System.Text.Json" Version="6.0.5" />
+		<PackageReference Include="System.Collections.Immutable" Version="7.0.0-preview.7.22375.6" />
+		<PackageReference Include="System.Text.Json" Version="7.0.0-preview.7.22375.6" />
 	</ItemGroup>
 
 	<ItemGroup>
