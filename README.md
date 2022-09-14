@@ -197,7 +197,7 @@ When updating to newer versions of the test suite, we can update the submodule r
 ```
 cd JSON-Schema-Test-Suite
 git fetch
-git merge origin/master
+git merge origin/main
 cd ..
 git commit - "Updated to latest JSON Schema Test Suite"
 ```
