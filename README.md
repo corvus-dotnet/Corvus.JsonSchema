@@ -199,7 +199,7 @@ cd JSON-Schema-Test-Suite
 git fetch
 git merge origin/main
 cd ..
-git commit - "Updated to latest JSON Schema Test Suite"
+git commit -a -m "Updated to the lastest JSON Schema Test Suite"
 ```
 
 (Or you can use `git submodule update --remote` instead of `cd`ing into the submodule folder and
