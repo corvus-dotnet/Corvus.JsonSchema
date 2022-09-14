@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using Microsoft.CodeAnalysis;
 
@@ -235,6 +236,19 @@ public class TypeDeclaration
         }
 
         throw new InvalidOperationException($"Unable to get the type declaration map value '{mapName}' in the property '{propertyName}' from the type at {this.LocatedSchema.Location}");
+    }
+
+    /// <summary>
+    /// Gets the type declaration for the specified mapped property.
+    /// </summary>
+    /// <param name="propertyName">The name of the map property.</param>
+    /// <param name="mapName">The name of the property in the map.</param>
+    /// <param name="result">The type declaration for the named mapped property.</param>
+    /// <returns><see langword="true"/> if the type declaration was found.</returns>
+    /// <exception cref="InvalidOperationException">There was no property at the given location.</exception>
+    public bool TryGetTypeDeclarationForMappedProperty(string propertyName, string mapName, [NotNullWhen(true)] out TypeDeclaration? result)
+    {
+        return this.RefResolvablePropertyDeclarations.TryGetValue(JsonReference.RootFragment.AppendUnencodedPropertyNameToFragment(propertyName).AppendUnencodedPropertyNameToFragment(mapName), out result);
     }
 
     /// <summary>

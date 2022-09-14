@@ -196,6 +196,7 @@ public static class JsonSchemaHelpers
             "default",
             "dependentRequired",
             "dependentSchemas",
+            "dependencies",
             "else",
             "enum",
             "exclusiveMaximum",
@@ -245,6 +246,7 @@ public static class JsonSchemaHelpers
             new("properties", RefResolvablePropertyKind.MapOfSchema),
             new("additionalProperties", RefResolvablePropertyKind.Schema),
             new("dependentSchemas", RefResolvablePropertyKind.MapOfSchema),
+            new("dependencies", RefResolvablePropertyKind.MapOfSchemaIfValueIsSchemaLike),
             new("else", RefResolvablePropertyKind.Schema),
             new("then", RefResolvablePropertyKind.Schema),
             new("propertyNames", RefResolvablePropertyKind.Schema),
@@ -381,6 +383,14 @@ public static class JsonSchemaHelpers
             if (schema.DependentSchemas.IsNotUndefined())
             {
                 foreach (TypeDeclaration dependentypeDeclaration in source.RefResolvablePropertyDeclarations.Where(k => k.Key.StartsWith("#/dependentSchemas")).Select(k => k.Value))
+                {
+                    builder.FindAndBuildProperties(dependentypeDeclaration, target, typesVisited, true);
+                }
+            }
+
+            if (schema.Dependencies.IsNotUndefined())
+            {
+                foreach (TypeDeclaration dependentypeDeclaration in source.RefResolvablePropertyDeclarations.Where(k => k.Key.StartsWith("#/dependencies")).Select(k => k.Value))
                 {
                     builder.FindAndBuildProperties(dependentypeDeclaration, target, typesVisited, true);
                 }

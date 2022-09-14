@@ -71,7 +71,12 @@ public class JsonSchemaBuilder : IJsonSchemaBuilder
     /// <returns>The given type declaration.</returns>
     internal TypeDeclaration GetTypeDeclarationForDependentSchema(TypeDeclaration typeDeclaration, string dependentSchema)
     {
-        return typeDeclaration.GetTypeDeclarationForMappedProperty("dependentSchemas", dependentSchema);
+        if (typeDeclaration.TryGetTypeDeclarationForMappedProperty("dependentSchemas", dependentSchema, out TypeDeclaration? result))
+        {
+            return result;
+        }
+
+        return typeDeclaration.GetTypeDeclarationForMappedProperty("dependencies", dependentSchema);
     }
 
     /// <summary>

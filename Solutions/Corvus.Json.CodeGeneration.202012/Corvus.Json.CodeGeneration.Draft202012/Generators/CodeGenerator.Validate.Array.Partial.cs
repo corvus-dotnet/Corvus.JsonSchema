@@ -397,7 +397,7 @@ public partial class CodeGeneratorValidateArray
     {
         get
         {
-            return this.TypeDeclaration.Schema().DependentRequired.IsNotUndefined();
+            return this.TypeDeclaration.Schema().DependentRequired.IsNotUndefined() || this.HasDependenciesDependentRequired;
         }
     }
 
@@ -408,7 +408,29 @@ public partial class CodeGeneratorValidateArray
     {
         get
         {
-            return this.TypeDeclaration.Schema().DependentSchemas.IsNotUndefined();
+            return this.TypeDeclaration.Schema().DependentSchemas.IsNotUndefined() || this.HasDependenciesDependentSchemas;
+        }
+    }
+
+        /// <summary>
+    /// Gets a value indicating whether this has a DependentRequired constraint.
+    /// </summary>
+    public bool HasDependenciesDependentRequired
+    {
+        get
+        {
+            return this.TypeDeclaration.Schema().Dependencies.IsNotUndefined() && this.TypeDeclaration.Schema().Dependencies.EnumerateObject().Any(t => t.Value.ValueKind == JsonValueKind.Array);
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether this has a DependentSchema constraint.
+    /// </summary>
+    public bool HasDependenciesDependentSchemas
+    {
+        get
+        {
+            return this.TypeDeclaration.Schema().Dependencies.IsNotUndefined() && this.TypeDeclaration.Schema().Dependencies.EnumerateObject().Any(t => t.Value.As<Schema>().IsValid());
         }
     }
 
@@ -1023,6 +1045,11 @@ public partial class CodeGeneratorValidateArray
     {
         get
         {
+            if (this.HasDependenciesDependentSchemas)
+            {
+                return this.DependenciesDependentSchemas;
+            }
+
             ImmutableArray<DependentSchema>.Builder builder = ImmutableArray.CreateBuilder<DependentSchema>();
             if (this.TypeDeclaration.Schema().DependentSchemas.IsNotUndefined())
             {
@@ -1043,6 +1070,11 @@ public partial class CodeGeneratorValidateArray
     {
         get
         {
+            if (this.HasDependenciesDependentRequired)
+            {
+                return this.DependenciesDependentRequired;
+            }
+
             ImmutableArray<DependentRequiredValue>.Builder builder = ImmutableArray.CreateBuilder<DependentRequiredValue>();
             if (this.TypeDeclaration.Schema().DependentRequired.IsNotUndefined())
             {
@@ -1055,6 +1087,58 @@ public partial class CodeGeneratorValidateArray
                     }
 
                     builder.Add(new DependentRequiredValue(property.Name, innerBuilder.ToImmutable()));
+                }
+            }
+
+            return builder.ToImmutable();
+        }
+    }
+
+        /// <summary>
+    /// Gets the dependent schema for the type.
+    /// </summary>
+    public ImmutableArray<DependentSchema> DependenciesDependentSchemas
+    {
+        get
+        {
+            ImmutableArray<DependentSchema>.Builder builder = ImmutableArray.CreateBuilder<DependentSchema>();
+            if (this.TypeDeclaration.Schema().Dependencies.IsNotUndefined())
+            {
+                foreach (JsonObjectProperty property in this.TypeDeclaration.Schema().Dependencies.EnumerateObject())
+                {
+                    if (property.Value.As<Schema>().IsValid())
+                    {
+                        builder.Add(new DependentSchema(property.Name, this.Builder.GetTypeDeclarationForDependentSchema(this.TypeDeclaration, property.Name).FullyQualifiedDotnetTypeName!));
+                    }
+                }
+            }
+
+            return builder.ToImmutable();
+        }
+    }
+
+    /// <summary>
+    /// Gets the dependent required values for the type.
+    /// </summary>
+    public ImmutableArray<DependentRequiredValue> DependenciesDependentRequired
+    {
+        get
+        {
+            ImmutableArray<DependentRequiredValue>.Builder builder = ImmutableArray.CreateBuilder<DependentRequiredValue>();
+            if (this.TypeDeclaration.Schema().Dependencies.IsNotUndefined())
+            {
+                foreach (JsonObjectProperty property in this.TypeDeclaration.Schema().Dependencies.EnumerateObject())
+                {
+                    if (property.Value.ValueKind == JsonValueKind.Array)
+                    {
+                        ImmutableArray<string>.Builder innerBuilder = ImmutableArray.CreateBuilder<string>();
+                        foreach (JsonAny item in property.Value.EnumerateArray())
+                        {
+                            innerBuilder.Add((string)item);
+                        }
+
+                        builder.Add(new DependentRequiredValue(property.Name, innerBuilder.ToImmutable()));
+                    }
                 }
             }
 
