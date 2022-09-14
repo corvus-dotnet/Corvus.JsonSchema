@@ -78,6 +78,12 @@ public readonly record struct JsonPropertyName(string Name) : IEquatable<string>
         return this.Name.AsSpan().SequenceEqual(value);
     }
 
+    /// <inheritdoc/>
+    public override string ToString()
+    {
+        return this.Name;
+    }
+
     /// <summary>
     /// Equality comparison.
     /// </summary>

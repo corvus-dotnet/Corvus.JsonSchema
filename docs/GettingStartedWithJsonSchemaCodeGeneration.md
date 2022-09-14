@@ -151,7 +151,6 @@ Here's the whole thing, and we'll break it down in more detail in a second.
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "JSON Schema for a Person entity coming back from a 3rd party API (e.g. a storage format in a database)",
-  "$ref": "#/$defs/Person",
   "$defs": {
     "Person": {
       "type": "object",
@@ -274,7 +273,7 @@ We support [draft 2020-12](http://json-schema.org/draft/2020-12/json-schema-core
 
 > If people wanted to extend the tools and libraries to support backlevel schema versions, it would not be too difficult; the older revisions are largely subsets of the later ones. It's well outside the scope of this introductory tutorial, but [PRs are gratefully received](https://github.com/corvus-dotnet/Corvus.JsonSchema)!
 
-You'll then notice that the root of the schema is just a naked `$ref` to one of the types in its own `$defs` section. The interesting types are all in the `$defs` section.
+You'll then notice that the root schema is basically empty, The interesting elements are all in the `$defs` section.
 
 This is a matter of style and habit - I tend to use document fragments that are then included by `$ref` in other places (e.g. OpenAPI documents). So everything goes in the `$defs` section.
 
@@ -433,6 +432,16 @@ The first option we're going to use defines the `--rootNamespace` into which our
 
 We will use `JsonSchemaSample.Api` as the namespace. This matches our project name and folder path.
 
+Second, we can provide a --rootPath to locate the schema in the document for which we are going to generate code.
+
+We want to generate the code for the schema at '#/$defs/Person'.
+
+> You'll probably recognize this as the syntax you use for specifying a $ref within a JSON schema document. It is part of the JSON Pointer specification.
+>
+> (And technically, it is in the URI Fragment Identifier Representation of that format.)
+
+Note also that in most terminals, you will have to wrap the pointer in single quotes to ensure that the command line is parsed correctly, as above.
+
 Finally, we need to provide the path to the json schema document containing the schema for which to generate types. We happen to be in the same directory as the file concerned, so that is just `person-from-api.json`.
 
 > Note that any references to documents either in this parameter on the command line, or in `$ref`s in the documents themselves don't *have* to be in the local file system. You can happily use `http[s]` references to external documents, and it'll work just fine!
@@ -448,7 +457,7 @@ The other defaults mean that we will generate our output files in the same folde
 So we end up with the command.
 
 ```
-generatejsonschematypes --rootNamespace JsonSchemaSample.Api person-from-api.json
+generatejsonschematypes --rootNamespace JsonSchemaSample.Api --rootPath '#/$defs/Person' person-from-api.json
 ```
 
 Let's run that now. When it has completed, list the C# files in the directory, using whatever command is appropriate for your shell.
@@ -463,38 +472,38 @@ You should see the following file names listed (plus whatever other detail your 
 ```
 Name
 ----
+OtherNames.Array.Add.cs
+OtherNames.Array.cs
+OtherNames.Array.Remove.cs
+OtherNames.Conversions.Accessors.cs
+OtherNames.Conversions.Operators.cs
+OtherNames.cs
+OtherNames.String.cs
+OtherNames.Validate.cs
+OtherNames.Validate.OneOf.cs
 Person.cs
 Person.Object.cs
-Person.OtherNames.Array.Add.cs
-Person.OtherNames.Array.cs
-Person.OtherNames.Array.Remove.cs
-Person.OtherNames.Conversions.Accessors.cs
-Person.OtherNames.Conversions.Operators.cs
-Person.OtherNames.cs
-Person.OtherNames.String.cs
-Person.OtherNames.Validate.cs
-Person.OtherNames.Validate.OneOf.cs
-Person.PersonName.cs
-Person.PersonName.Object.cs
-Person.PersonName.Properties.cs
-Person.PersonName.Validate.cs
-Person.PersonName.Validate.Object.cs
-Person.PersonName.Validate.Type.cs
-Person.PersonNameElement.cs
-Person.PersonNameElement.String.cs
-Person.PersonNameElement.Validate.cs
-Person.PersonNameElement.Validate.Type.cs
-Person.PersonNameElementArray.Array.Add.cs
-Person.PersonNameElementArray.Array.cs
-Person.PersonNameElementArray.Array.Remove.cs
-Person.PersonNameElementArray.cs
-Person.PersonNameElementArray.Validate.Array.cs
-Person.PersonNameElementArray.Validate.cs
-Person.PersonNameElementArray.Validate.Type.cs
 Person.Properties.cs
 Person.Validate.cs
 Person.Validate.Object.cs
 Person.Validate.Type.cs
+PersonName.cs
+PersonName.Object.cs
+PersonName.Properties.cs
+PersonName.Validate.cs
+PersonName.Validate.Object.cs
+PersonName.Validate.Type.cs
+PersonNameElement.cs
+PersonNameElement.String.cs
+PersonNameElement.Validate.cs
+PersonNameElement.Validate.Type.cs
+PersonNameElementArray.Array.Add.cs
+PersonNameElementArray.Array.cs
+PersonNameElementArray.Array.Remove.cs
+PersonNameElementArray.cs
+PersonNameElementArray.Validate.Array.cs
+PersonNameElementArray.Validate.cs
+PersonNameElementArray.Validate.Type.cs
 ```
 
 So far so good. Let's have a look at the generated types in more detail.
@@ -506,10 +515,10 @@ The first thing that you'll probably notice is that it has generated files for e
 | Schema location | Files |
 | --- | --- |
 | `#/$defs/Person` | `Person.cs`, `Person.Object.cs`, `Person.Properties.cs`, `Person.Validate.cs`, `Person.ValidateObject.cs`, `Person.ValidateType.cs` |
-| `#/$defs/PersonName` | `Person.PersonName.cs`, `Person.PersonName.Object.cs`, `Person.PersonName.Validate.cs`, `Person.PersonName.Validate.Object.cs`, `Person.PersonName.Validate.Type.cs` |
-| `#/$defs/PersonNameElement` | `Person.PersonNameElement.cs`, `Person.PersonNameElement.String.cs`, `Person.PersonNameLElement.Validate.cs`, `Person.PersonNameElement.Validate.Type.cs` |
-| `#/$defs/OtherNames` | `Person.OtherNames.cs`, `Person.OtherNames.Array.cs`, `Person.OtherNames.Array.Add.cs`, `Person.OtherNames.Array.Remove.cs`, `Person.OtherNames.Conversions.Accessors.cs`, `Person.OtherNames.Conversions.Operators.cs`, `Person.OtherNames.String.cs`, `Person.OtherNames.Validate.cs`, `Person.OtherNames.Validate.OneOf.cs` |
-| `#/$defs/PersonNameElementArray.cs` | `PersonNameElementArray.cs` |
+| `#/$defs/PersonName` | `PersonName.cs`, `PersonName.Object.cs`, `PersonName.Validate.cs`, `PersonName.Validate.Object.cs`, `PersonName.Validate.Type.cs` |
+| `#/$defs/PersonNameElement` | `PersonNameElement.cs`, `PersonNameElement.String.cs`, `PersonNameLElement.Validate.cs`, `PersonNameElement.Validate.Type.cs` |
+| `#/$defs/OtherNames` | `OtherNames.cs`, `OtherNames.Array.cs`, `OtherNames.Array.Add.cs`, `OtherNames.Array.Remove.cs`, `OtherNames.Conversions.Accessors.cs`, `OtherNames.Conversions.Operators.cs`, `OtherNames.String.cs`, `OtherNames.Validate.cs`, `OtherNames.Validate.OneOf.cs` |
+| `#/$defs/PersonNameElementArray` | `PersonNameElementArray.cs`, `PersonNameElementArray.Array.Add.cs`. `PersonNameElementArray.Array.cs`, `PersonNameElementArray.Array.Remove.cs`, `PersonNameElementArray.cs`, `PersonNameElementArray.Validate.Array.cs`, `PersonNameElementArray.Validate.cs`, `PersonNameElementArray.Validate.Type.cs` |
 
 Remember the `Link` schema we saw earlier that was *not* referenced by the `Person` schema? It has *not* been generated. The code generator only generates types for schema elements that it sees as it walks the tree from the element it finds at the `rootPath`.
 
@@ -787,6 +796,8 @@ Person michaelOldroyd = JsonAny.Parse(jsonText);
 
 `Person` has implicit conversion operators to-and-from `JsonAny` to give us an optimised means of converting in either direction.
 
+Note that `Person` itself also has a `Parse()` method - you don't need to go via `JsonAny`, and you can avoid that conversion.
+
 We've actually used other implicit conversions several times already in the code we've written.
 
 Look again at the code that is accessing the values to output them to our Console:
@@ -799,7 +810,7 @@ LocalDate dateOfBirth = michaelOldroyd.DateOfBirth;
 
 The code is assigning to `string` and `LocalDate`, but what type *is* the value returned from `michaelOldroyd.Name.FamilyName`, or `michaelOldroyd.DateOfBirth`?
 
-If you look at the code in `Person.cs` you can find the declaration for the `Person.FamilyName` property.
+If you look at the code in `Person.Properties.cs` you can find the declaration for the `Person.FamilyName` property.
 
 ```csharp
  public JsonSchemaSample.Api.PersonNameElement FamilyName
@@ -860,7 +871,7 @@ When we construct an instance of one of our C# `IJsonValue` types from some JSON
 
 Fortunately (but not coincidentally!), the code generator emits an implementation `IJsonValue.Validate()` to test for this.
 
-Let's try validating our `Person`.
+Let's try validating our `Person`, by adding this code to the end of `Program.cs`
 
 ```csharp
 bool isValid = michaelOldroyd.IsValid();
@@ -1346,9 +1357,9 @@ var michaelOldroyd = Person.Parse(jsonText);
 and now add some code to enumerate the array:
 
 ```csharp
-foreach(JsonAny otherName in michaelOldroyd.Name.OtherNames.EnumerateArray())
+foreach(PersonNameElement otherName in michaelOldroyd.Name.OtherNames.EnumerateArray())
 {
-  Console.WriteLine(otherName.AsString);
+  Console.WriteLine(otherName);
 }
 ```
 
@@ -1368,34 +1379,9 @@ James
 
 > You'll notice that we are just assuming that `OtherNames` is an array type, and calling the `EnumerateArray()` method that it exposes. But what if it was in the string representation? We could always check the `ValueKind` to make sure it was safe to do so, but we'll look at more reliable techniques in our section on Union types later in this Lab.
 
-In addition to enumeration, we can also find the `Length` of the array. We might use this to pre-allocate a working buffer of some kind, before going on to enumerate the array. We can also index directly into the array. The standard `JsonAny IJsonArray.this[int index]` will return you a `JsonAny`. However, if the code generator detected that your array could be constrained to a more specific type, the enumerator and accessors will return instances of that type, and the interface will be implemented explcitly.
+In addition to enumeration, we can also find the `Length` of the array. We might use this to pre-allocate a working buffer of some kind, for example, before going on to enumerate the array.
 
-That's the basic functionality we get for any array-like value.
-
-Let's try that out. Let's change our `foreach` loop to the following:
-
-```csharp
-foreach(Person.PersonNameElement otherName in michaelOldroyd.Name.OtherNames.As<Person.PersonNameElementArray>().EnumerateArray())
-{
-  Console.WriteLine(otherName);
-}
-```
-
-Notice that we are explicitly casting to the `PersonNameElementArray` type, and then using `EnumerateArray()`. The `Current` property of the enumerator is a `PersonNameElement` so we can use that directly (and we don't need to cast our `JsonAny` to a string any more in the `Console.WriteLine()` call).
-
-As you might expect, if we build and run...
-
-```
-dotnet build
-.\bin\Debug\net7.0\JsonSchemaSample.exe
-```
-
-...we get the same output as before.
-
-```
-Francis
-James
-```
+We can also index directly into the array using the standard `myArray[index]` syntax.
 
 ## Creating JSON
 
@@ -1435,11 +1421,15 @@ var jsonAnon = new {
 
 That can be passed to an overload of `JsonAny.From<T>()` which will use the built in `System.Text.Json.Serializer` to round trip the value into our model.
 
+```csharp
+var michaelOldroyd = JsonAny.From(jsonAnon);
+```
+
 ### Building a JSON document
 
 That's all very well if you are creating a whole document in one go, but what if you want to build or compose a document from constituent parts?
 
-In dotnet6, `System.Text.Json` added the `Nodes` namespace with [`JsonObject`](https://docs.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject?view=net-6.0) and [`JsonArray`](https://docs.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonarray?view=net-6.0) types to help you build JSON documents.
+In dotnet7, `System.Text.Json` added the `Nodes` namespace with [`JsonObject`](https://docs.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject?view=net-6.0) and [`JsonArray`](https://docs.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonarray?view=net-6.0) types to help you build JSON documents.
 
 Our extended and generated types *do not* use `JsonObject` under the covers to create new JSON documents, but they *do* build on similar factory patterns. We use our knowledge of the JSON schema from which the types were generated to help us create semantically valid data structures.
 
@@ -1471,7 +1461,7 @@ JsonBoolean myImplicitBoolean = true;
 JsonBoolean myExplicitBoolean = new JsonBoolean(true);
 JsonNull myImplicitNull = default;
 JsonNull myExplicitNull = new JsonNull();
-JsonNull myNull = JsonNull.Instance;
+JsonNull myNull = JsonAny.Null;
 ```
 
 Take a bit of time to explore the other primitive types in the extended type model, like `JsonDateTime`, `JsonInteger` and `JsonEmail`, and see how they can be constructed.
@@ -1482,10 +1472,10 @@ Creating an instance of an array is also fairly simple. Remember that we generat
 
 > Sometimes, the collection of items in an array cannot be described by a single schema. Perhaps there is a different schema for items at different indices, for example. In those cases, this convenience method will *not* be emitted, and you should use `JsonArray.From()` instead. See below for examples of this.
 
-Let's use `PersonNameElementArray.From()` to create an array of name elements.
+Let's use `PersonNameElementArray.FromItems()` to create an array of name elements.
 
 ```csharp
-var otherNames = PersonNameElementArray.From("Margaret", "Nancy");
+var otherNames = PersonNameElementArray.FromItems("Margaret", "Nancy");
 ```
 
 The implicit conversion from `string` to `PersonNameElement` meant we avoided having to `new` elements explicitly.
@@ -1495,19 +1485,24 @@ Although just syntactic sugar, it makes the code much more readable. Compare wit
 *(don't add this - it is for comparison only)*
 ```csharp
 // We avoided having to write...
-var otherNames = PersonNameElementArray.From(new PersonNameElement("Margaret"), new PersonNameElement("Nancy"));
+var otherNames = PersonNameElementArray.FromItems(new PersonNameElement("Margaret"), new PersonNameElement("Nancy"));
 ```
 
 We can also create arrays from existing collections of items. There's a general-purpose type called `JsonArray` which has static factory methods to create arrays from a variety of different primitives. For example, let's take an existing list of strings, and create a `PersonNameElementArray` from them, using `JsonArray.From(IEnumerable<string>)`
 
 ```csharp
 var someNameStrings = new List<string> { "Margaret", "Nancy" };
-PersonNameElementArray array = JsonArray.From(someNameStrings);
+PersonNameElementArray array = PersonNameElementArray.From(someNameStrings);
 ```
 
-Notice that we use one of the the static methods on `JsonArray` called `From`() to construct a generic `JsonArray` of strings, and then implicitly convert that to a `PersonNameElementArray`.
+Or here's a version that uses an enumerable of the appropriate JSON value type.
 
-> There are overloads of `From()` on `JsonArray` to create arrays of all sorts of primitive types, and a generic `From<T>()` method to create an array of any `IJsonValue` based type.
+```csharp
+var someNameValues = new List<PersonNameElement> { "Margaret", "Nancy" };
+PersonNameElementArray valueArray = PersonNameElementArray.FromRange(someNameValues);
+```
+
+> There are various overloads of `From()` (Which may cause serialization) and `FromRange()` (which always operates on `IJsonValue` types) to create arrays of all sorts of primitive types. Take some time to explore the overloads in the `PersonNameElementArray.Array*.cs` files to find out what is available, and what their different characteristics might be.
 
 ### Using `Create()` to create objects
 
@@ -1532,7 +1527,7 @@ Person audreyJones =
     Person.Create(
         name: PersonName.Create(
                 givenName: "Audrey",
-                otherNames: JsonArray.From("Margaret", "Nancy"),
+                otherNames: PersonNameElementArray.FromItems("Margaret", "Nancy"),
                 familyName: "Jones"),
         dateOfBirth: new LocalDate(1947, 11, 7));
 ```
@@ -1592,13 +1587,13 @@ This represents
 { "name": {"familyName": "Jones"} }
 ```
 
-In order to say *set the value for this property to null* we have to use `JsonNull.Instance`.
+In order to say *set the value for this property to null* we have to use `JsonAny.Null`.
 
 *(don't add this code)*
 ```csharp
 Person.Create(
   name: PersonName.Create("Jones"),
-  dateOfBirth: JsonNull.Instance);
+  dateOfBirth: JsonAny.Null);
 ```
 
 This represents
@@ -1610,9 +1605,6 @@ This represents
   "dateOfBirth": null
 }
 ```
-
-(Though, in fact, this would not compile, as the code generator knew that `dateOfBirth` is not allowed to be `null`, and so there is no explicit conversion from `JsonNull` to `JsonDate`.)
-
 
 ## Modifying JSON
 
@@ -1643,7 +1635,7 @@ string jsonText = @"{
     ""dateOfBirth"": ""1944-07-14""
 }";
 
-Person michaelOldroyd = JsonAny.Parse(jsonText);
+var michaelOldroyd = Person.Parse(jsonText);
 ```
 
 Now, let's look at the `OtherNames` property in a bit more detail.
@@ -1710,23 +1702,22 @@ So, the most discoverable way to write the code above might be
 
 ```csharp
 
-OtherNames otherNames;
+OtherNames otherNames = michaelOldroyd.Name.OtherNames;
 if (otherNames.IsPersonNameElementArray)
 {
     PersonNameElementArray otherNamesArray = otherNames.AsPersonNameElementArray;
 
     // Use the array
-    otherNamesArray.EnumerateItems();
+    otherNamesArray.EnumerateArray();
 }
 ```
 
 This test-and-use pattern is so common, that we also add a conditional cast method.
 
 ```csharp
-
-if (michaelOldroyd.Name.OtherNames.TryAsPersonNameElementArray(out PersonNameElementArray otherNamesArray))
+if (michaelOldroyd.Name.OtherNames.TryGetAsPersonNameElementArray(out PersonNameElementArray otherNamesArray))
 {
     // Use the array
-    otherNamesArray.EnumerateItems();
+    otherNamesArray.EnumerateArray();
 }
 ```
