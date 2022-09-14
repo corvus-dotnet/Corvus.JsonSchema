@@ -27,7 +27,7 @@ public static class ContainerConfiguration
     {
         var services = new ServiceCollection();
 
-        services.AddTransient<IDocumentResolver>(serviceProvider => new CompoundDocumentResolver(new FakeWebDocumentResolver(serviceProvider.GetRequiredService<IConfiguration>()["jsonSchemaBuilderDriverSettings:remotesBaseDirectory"]), new FileSystemDocumentResolver(), new HttpClientDocumentResolver(new HttpClient())));
+        services.AddTransient<IDocumentResolver>(serviceProvider => new CompoundDocumentResolver(new FakeWebDocumentResolver(serviceProvider.GetRequiredService<IConfiguration>()["jsonSchemaBuilderDriverSettings:remotesBaseDirectory"]!), new FileSystemDocumentResolver(), new HttpClientDocumentResolver(new HttpClient())));
         services.AddTransient<JsonSchemaTypeBuilder>();
         services.AddTransient<Corvus.Json.CodeGeneration.Draft202012.JsonSchemaBuilder>();
         services.AddTransient<Corvus.Json.CodeGeneration.Draft201909.JsonSchemaBuilder>();

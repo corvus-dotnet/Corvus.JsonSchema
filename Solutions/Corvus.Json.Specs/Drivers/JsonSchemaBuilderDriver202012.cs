@@ -76,7 +76,7 @@ global using global::System.Threading.Tasks;";
     /// <returns>The element, found in the specified document.</returns>
     public Task<JsonElement?> GetElement(string filename, string referenceFragment)
     {
-        string baseDirectory = this.configuration["jsonSchemaBuilder202012DriverSettings:testBaseDirectory"];
+        string baseDirectory = this.configuration["jsonSchemaBuilder202012DriverSettings:testBaseDirectory"]!;
         string path = Path.Combine(baseDirectory, filename);
         return this.documentResolver.TryResolve(new JsonReference(path, referenceFragment));
     }
@@ -95,14 +95,14 @@ global using global::System.Threading.Tasks;";
     /// <returns>The fully qualified type name of the entity we have generated.</returns>
     public async Task<Type> GenerateTypeFor(bool writeBenchmarks, int index, string filename, string schemaPath, string dataPath, string featureName, string scenarioName, bool valid)
     {
-        string baseDirectory = this.configuration["jsonSchemaBuilder202012DriverSettings:testBaseDirectory"];
+        string baseDirectory = this.configuration["jsonSchemaBuilder202012DriverSettings:testBaseDirectory"]!;
         string path = Path.Combine(baseDirectory, filename) + schemaPath;
 
-        (string RootType, ImmutableDictionary<JsonReference, TypeAndCode> GeneratedTypes) generatedTypes = await this.builder.BuildTypesFor(new JsonReference(path), $"{featureName}Feature.{scenarioName}", rebase: true).ConfigureAwait(false);
+        (string rootType, ImmutableDictionary<JsonReference, TypeAndCode> generatedTypes) = await this.builder.BuildTypesFor(new JsonReference(path), $"{featureName}Feature.{scenarioName}", rebase: true).ConfigureAwait(false);
 
-        bool isCorvusType = generatedTypes.RootType.StartsWith("Corvus.");
+        bool isCorvusType = rootType.StartsWith("Corvus.");
 
-        IEnumerable<SyntaxTree> syntaxTrees = ParseSyntaxTrees(generatedTypes.GeneratedTypes);
+        IEnumerable<SyntaxTree> syntaxTrees = ParseSyntaxTrees(generatedTypes);
 
         // We are happy with the defaults (debug etc.)
         var options = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary);
@@ -124,10 +124,10 @@ global using global::System.Threading.Tasks;";
 
         if (isCorvusType)
         {
-            return AssemblyLoadContext.Default.Assemblies.Single(a => a.GetName().Name == "Corvus.Json.ExtendedTypes").ExportedTypes.Single(t => t.FullName == generatedTypes.RootType);
+            return AssemblyLoadContext.Default.Assemblies.Single(a => a.GetName().Name == "Corvus.Json.ExtendedTypes").ExportedTypes.Single(t => t.FullName == rootType);
         }
 
-        return generatedAssembly.ExportedTypes.Single(t => t.FullName == generatedTypes.RootType);
+        return generatedAssembly.ExportedTypes.Single(t => t.FullName == rootType);
     }
 
     /// <summary>
