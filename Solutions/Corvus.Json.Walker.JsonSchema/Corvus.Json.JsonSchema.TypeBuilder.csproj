@@ -22,7 +22,7 @@
     <PackageReference Include="Mono.TextTemplating" Version="2.2.1" />
     <PackageReference Include="NodaTime" Version="3.1.0" />
     <PackageReference Include="System.Collections.Immutable" Version="6.0.0" />
-    <PackageReference Include="System.Text.Json" Version="6.0.5" />
+    <PackageReference Include="System.Text.Json" Version="6.0.6" />
   </ItemGroup>
 	
   <ItemGroup>
