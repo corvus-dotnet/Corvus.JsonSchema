@@ -1,4 +1,4 @@
-﻿// <copyright file="ValidateLargeDocument.cs" company="Endjin Limited">
+﻿// <copyright file="ValidateLargeDocumentWithAnnotationCollection.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
@@ -15,7 +15,7 @@ namespace Corvus.Json.Benchmarking;
 /// Construct elements from a JSON element.
 /// </summary>
 [MemoryDiagnoser]
-public class ValidateLargeDocument
+public class ValidateLargeDocumentWithAnnotationCollection
 {
     private const string JsonText = @"{
     ""name"": {
@@ -26,7 +26,7 @@ public class ValidateLargeDocument
     ""dateOfBirth"": ""1944-07-14""
 }";
 
-    private static readonly JsonEverything.ValidationOptions Options = new JsonEverything.ValidationOptions() { OutputFormat = JsonEverything.OutputFormat.Flag };
+    private static readonly JsonEverything.ValidationOptions Options = new JsonEverything.ValidationOptions() { OutputFormat = JsonEverything.OutputFormat.Basic };
 
     private JsonDocument? objectDocument;
     private Person person;
@@ -87,7 +87,7 @@ public class ValidateLargeDocument
     [Benchmark]
     public void ValidateLargeArrayCorvus()
     {
-        ValidationContext result = this.personArray.Validate(ValidationContext.ValidContext);
+        ValidationContext result = this.personArray.Validate(ValidationContext.ValidContext, ValidationLevel.Basic);
         if (!result.IsValid)
         {
             throw new InvalidOperationException();

@@ -2,7 +2,7 @@
 using System.Text.Json;
 using Corvus.Json;
 
-using static Corvus.Json.Benchmarking.Models.Schema;
+using Corvus.Json.Benchmarking.Models;
 
 JsonDocument? objectDocument;
 JsonDocument? invalidObjectDocument;

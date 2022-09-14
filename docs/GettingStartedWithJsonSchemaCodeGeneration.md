@@ -46,13 +46,13 @@ But this is intended to be a step-by-step guide. Please let us know in the comme
 
 ### You'll need
 
-- the [.NET 6 SDK](https://docs.microsoft.com/en-us/dotnet/core/sdk) (maybe you've already installed [Visual Studio 2022](https://visualstudio.microsoft.com/vs/community/) and acquired it that way; but you don't have to install Visual Studio to get started; you can download these SDK bits and use the completely free/OSS toolchain to follow along.)
+- the [.NET 7 SDK Preview](https://dotnet.microsoft.com/en-us/download/dotnet/7.0) (maybe you've already installed [Visual Studio 2022 17.4 Preview 1](https://visualstudio.microsoft.com/vs/preview/) and acquired it that way; but you don't have to install Visual Studio to get started; you can download these SDK bits and use the completely free/OSS toolchain to follow along.)
 - a shell, with the SDK developer tools in the path. I'm using [PowerShell](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.2) in the [Windows Terminal](https://docs.microsoft.com/en-us/windows/terminal/install), [configured with the Visual Studio "Developer" config for PowerShell](https://blog.yannickreekmans.be/developer-powershell-command-prompt-visual-studio-windows-terminal/).
 - A text editor or IDE. I'm using [VS Code](https://code.visualstudio.com/).
 
 ### Things that would help
 
-- Some familiarity with building C# code with dotnet6.0
+- Some familiarity with building C# code with dotnet7.0
 - Some familiarity with [json-schema](https://json-schema.org/understanding-json-schema/)
 - Some familiarity with JSON reading, writing, and serialization, preferably with `System.Text.Json`
 
@@ -61,20 +61,20 @@ But this is intended to be a step-by-step guide. Please let us know in the comme
 First, you need to install the code generator. I choose to do so globally. From a developer command prompt, use the following syntax:
 
 ```
-dotnet tool install --global Corvus.Json.JsonSchema.TypeGeneratorTool
+dotnet tool install --global Corvus.Json.JsonSchema.TypeGeneratorTool --prerelease
 ```
 
-We'll also create a console app to host our sample, using dotnet6.0 (the current LTS version as of the time of writing.)
+We'll also create a console app to host our sample, using dotnet7.0s
 
 ```
-dotnet new console -o JsonSchemaSample -f net6.0
+dotnet new console -o JsonSchemaSample -f net7.0
 cd JsonSchemaSample
 ```
 
 And we'll add a reference to our JSON object model extensions to the project. We can use the `dotnet add` command to do that, or you could use your favourite package manager, or IDE.
 
 ```
-dotnet add package Corvus.Json.ExtendedTypes
+dotnet add package Corvus.Json.ExtendedTypes --prerelease
 ```
 
 Just to make sure that's all OK, and our editor is also working, let's inspect `JsonSchemaSample.csproj`.
@@ -92,13 +92,50 @@ When the editor loads up the project file, it should look something like this. N
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Corvus.Json.ExtendedTypes" Version="0.1.8" />
+    <PackageReference Include="Corvus.Json.ExtendedTypes" Version="1.0.0-v1-pre1.139" />
+  </ItemGroup>
+
+</Project>
+
+```
+
+While we are in preview mode, we will also need to add something to this project file to allow us to use preview language features.
+
+Insert the following after the initial `<PropertyGroup />` block.
+
+```xml
+	<PropertyGroup>
+		<LangVersion>preview</LangVersion>
+		<EnablePreviewFeatures>true</EnablePreviewFeatures>
+	</PropertyGroup>
+```
+
+It will now look like this. The exact pre-release version of Corvus.Json.ExtendedTypes may, of course, vary.
+
+
+```xml
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net7.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+	<PropertyGroup>
+		<LangVersion>preview</LangVersion>
+		<EnablePreviewFeatures>true</EnablePreviewFeatures>
+	</PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Corvus.Json.ExtendedTypes" Version="1.0.0-v1-pre1.139" />
   </ItemGroup>
 
 </Project>
@@ -114,10 +151,10 @@ Here's the whole thing, and we'll break it down in more detail in a second.
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "JSON Schema for a Person entity coming back from a 3rd party API (e.g. a storage format in a database)",
+  "$ref": "#/$defs/Person",
   "$defs": {
     "Person": {
       "type": "object",
-
       "required":  ["name"],
       "properties": {
         "name": { "$ref": "#/$defs/PersonName" },
@@ -237,11 +274,9 @@ We support [draft 2020-12](http://json-schema.org/draft/2020-12/json-schema-core
 
 > If people wanted to extend the tools and libraries to support backlevel schema versions, it would not be too difficult; the older revisions are largely subsets of the later ones. It's well outside the scope of this introductory tutorial, but [PRs are gratefully received](https://github.com/corvus-dotnet/Corvus.JsonSchema)!
 
-You'll then notice that I'm not defining any particular object at the root level - the interesting types are all in the `$defs` section.
+You'll then notice that the root of the schema is just a naked `$ref` to one of the types in its own `$defs` section. The interesting types are all in the `$defs` section.
 
 This is a matter of style and habit - I tend to use document fragments that are then included by `$ref` in other places (e.g. OpenAPI documents). So everything goes in the `$defs` section.
-
-> This does have some implications for how code is generated. Personally I prefer what is emitted if you do things this way, but your mileage may vary! We'll see the differences later on.
 
 The first entity we encounter in the `$defs` section is a `Person` with a required `name` property, and an optional `dateOfBirth`.
 
@@ -398,16 +433,6 @@ The first option we're going to use defines the `--rootNamespace` into which our
 
 We will use `JsonSchemaSample.Api` as the namespace. This matches our project name and folder path.
 
-Second, we can provide a `--rootPath` to locate the schema in the document for which we are going to generate code.
-
-We want to generate the code for the schema at `'#/$defs/Person'`.
-
- You'll probably recognize this as the syntax you use for specifying a `$ref` within a JSON schema document. It is part of the [JSON Pointer specification](https://www.rfc-editor.org/rfc/rfc6901).
-
- (And technically, it is in the *URI Fragment Identifier Representation* of that format.)
-
-> Note also that in most terminals, you will have to wrap the pointer in single quotes to ensure that the command line is parsed correctly, as above.
-
 Finally, we need to provide the path to the json schema document containing the schema for which to generate types. We happen to be in the same directory as the file concerned, so that is just `person-from-api.json`.
 
 > Note that any references to documents either in this parameter on the command line, or in `$ref`s in the documents themselves don't *have* to be in the local file system. You can happily use `http[s]` references to external documents, and it'll work just fine!
@@ -423,7 +448,7 @@ The other defaults mean that we will generate our output files in the same folde
 So we end up with the command.
 
 ```
-generatejsonschematypes --rootNamespace JsonSchemaSample.Api --rootPath '#/$defs/Person' person-from-api.json
+generatejsonschematypes --rootNamespace JsonSchemaSample.Api person-from-api.json
 ```
 
 Let's run that now. When it has completed, list the C# files in the directory, using whatever command is appropriate for your shell.
@@ -438,11 +463,38 @@ You should see the following file names listed (plus whatever other detail your 
 ```
 Name
 ----
-OtherNames.cs
 Person.cs
-PersonName.cs
-PersonNameElement.cs
-PersonNameElementArray.cs
+Person.Object.cs
+Person.OtherNames.Array.Add.cs
+Person.OtherNames.Array.cs
+Person.OtherNames.Array.Remove.cs
+Person.OtherNames.Conversions.Accessors.cs
+Person.OtherNames.Conversions.Operators.cs
+Person.OtherNames.cs
+Person.OtherNames.String.cs
+Person.OtherNames.Validate.cs
+Person.OtherNames.Validate.OneOf.cs
+Person.PersonName.cs
+Person.PersonName.Object.cs
+Person.PersonName.Properties.cs
+Person.PersonName.Validate.cs
+Person.PersonName.Validate.Object.cs
+Person.PersonName.Validate.Type.cs
+Person.PersonNameElement.cs
+Person.PersonNameElement.String.cs
+Person.PersonNameElement.Validate.cs
+Person.PersonNameElement.Validate.Type.cs
+Person.PersonNameElementArray.Array.Add.cs
+Person.PersonNameElementArray.Array.cs
+Person.PersonNameElementArray.Array.Remove.cs
+Person.PersonNameElementArray.cs
+Person.PersonNameElementArray.Validate.Array.cs
+Person.PersonNameElementArray.Validate.cs
+Person.PersonNameElementArray.Validate.Type.cs
+Person.Properties.cs
+Person.Validate.cs
+Person.Validate.Object.cs
+Person.Validate.Type.cs
 ```
 
 So far so good. Let's have a look at the generated types in more detail.
@@ -451,19 +503,15 @@ So far so good. Let's have a look at the generated types in more detail.
 
 The first thing that you'll probably notice is that it has generated files for each of the schema elements that the `Person` schema referenced, plus the `Person` schema itself.
 
-| Schema location | File |
+| Schema location | Files |
 | --- | --- |
-| `#/$defs/Person` | `Person.cs` |
-| `#/$defs/PersonName` | `PersonName.cs` |
-| `#/$defs/PersonNameElement` | `PersonNameElement.cs` |
-| `#/$defs/OtherNames` | `OtherNames.cs` |
+| `#/$defs/Person` | `Person.cs`, `Person.Object.cs`, `Person.Properties.cs`, `Person.Validate.cs`, `Person.ValidateObject.cs`, `Person.ValidateType.cs` |
+| `#/$defs/PersonName` | `Person.PersonName.cs`, `Person.PersonName.Object.cs`, `Person.PersonName.Validate.cs`, `Person.PersonName.Validate.Object.cs`, `Person.PersonName.Validate.Type.cs` |
+| `#/$defs/PersonNameElement` | `Person.PersonNameElement.cs`, `Person.PersonNameElement.String.cs`, `Person.PersonNameLElement.Validate.cs`, `Person.PersonNameElement.Validate.Type.cs` |
+| `#/$defs/OtherNames` | `Person.OtherNames.cs`, `Person.OtherNames.Array.cs`, `Person.OtherNames.Array.Add.cs`, `Person.OtherNames.Array.Remove.cs`, `Person.OtherNames.Conversions.Accessors.cs`, `Person.OtherNames.Conversions.Operators.cs`, `Person.OtherNames.String.cs`, `Person.OtherNames.Validate.cs`, `Person.OtherNames.Validate.OneOf.cs` |
 | `#/$defs/PersonNameElementArray.cs` | `PersonNameElementArray.cs` |
 
 Remember the `Link` schema we saw earlier that was *not* referenced by the `Person` schema? It has *not* been generated. The code generator only generates types for schema elements that it sees as it walks the tree from the element it finds at the `rootPath`.
-
-> If you want to generate types that are *not* directly referenced from that root element, then you can place them into a `$defs` object *within* your root element.
->
-> If you don't want to do this (or can't), the tool is idempotent when run against the same source document. This means that you can happily run the tool multiple times, with a different `--rootPath` for each element you want to generate.
 
 Before we dive into the details, let's build the code and find out what we can do with it.
 
@@ -481,7 +529,7 @@ dotnet build
 This emits an executable in the bin folder. We can run it...
 
 ```
-.\bin\Debug\net6.0\JsonSchemaSample.exe
+.\bin\Debug\net7.0\JsonSchemaSample.exe
 ```
 
  and check we get the standard `Hello, World!` message.
@@ -587,7 +635,7 @@ Let's build and run that again.
 
 ```
 dotnet build
-.\bin\Debug\net6.0\JsonSchemaSample.exe
+.\bin\Debug\net7.0\JsonSchemaSample.exe
 ```
 
 As we'd hope, it produces (something like) the following output:
@@ -639,7 +687,7 @@ When we build and run...
 
 ```
 dotnet build
-.\bin\Debug\net6.0\JsonSchemaSample.exe
+.\bin\Debug\net7.0\JsonSchemaSample.exe
 ```
 
 We get the following output:
@@ -689,7 +737,7 @@ Build and run again...
 
 ```
 dotnet build
-.\bin\Debug\net6.0\JsonSchemaSample.exe
+.\bin\Debug\net7.0\JsonSchemaSample.exe
 ```
 
 ...and we should see the same result.
@@ -706,7 +754,7 @@ Oldroyd, Michael: 14 July 1944
 >
 > Because we have not explicitly created the `JsonDocument` we are no longer in control of its lifetime.
 >
-> The `JsonAny.Parse()` implementation has used [`JsonElement.Clone()`](https://docs.microsoft.com/en-us/dotnet/api/system.text.json.jsonelement.clone?view=net-6.0) to give us a backing `JsonElement` that outlives the original `JsonDocument`, and has disposed of that underlying document for us.
+> The `JsonAny.Parse()` implementation has used [`JsonElement.Clone()`](https://docs.microsoft.com/en-us/dotnet/api/system.text.json.jsonelement.clone?view=net-7.0) to give us a backing `JsonElement` that outlives the original `JsonDocument`, and has disposed of that underlying document for us.
 >
 > This creates a clone of the relevant segment of the underlying document, and relies on GC to clean it up when it is no longer in use.
 >
@@ -831,7 +879,7 @@ If we build and run again...
 
 ```
 dotnet build
-.\bin\Debug\net6.0\JsonSchemaSample.exe
+.\bin\Debug\net7.0\JsonSchemaSample.exe
 ```
 
 we see the output:
@@ -867,7 +915,7 @@ Build and run...
 
 ```
 dotnet build
-.\bin\Debug\net6.0\JsonSchemaSample.exe
+.\bin\Debug\net7.0\JsonSchemaSample.exe
 ```
 
 ...and we see
@@ -893,7 +941,7 @@ Build and run...
 
 ```
 dotnet build
-.\bin\Debug\net6.0\JsonSchemaSample.exe
+.\bin\Debug\net7.0\JsonSchemaSample.exe
 ```
 
 ...and we see
@@ -937,7 +985,7 @@ LocalDate dateOfBirth2 = invalidOldroyd.DateOfBirth;
 Console.WriteLine($"{givenName2}: {dateOfBirth2}");
 ```
 
-Now, let's adjust our valid JSON text, removing the optional `givenName` property.
+Now, let's adjust our valid JSON text, removing the optional `givenName` property, so the `jsonText` assignment looks like this
 
 ```csharp
 string jsonText = @"{
@@ -953,19 +1001,20 @@ When we build and run...
 
 ```
 dotnet build
-.\bin\Debug\net6.0\JsonSchemaSample.exe
+.\bin\Debug\net7.0\JsonSchemaSample.exe
 ```
 
 We see...
 
 ```
-Oldroyd, : 14 July 1944
-michaelOldroyd is valid.
+Unhandled exception. System.InvalidOperationException: Operation is not valid due to the current state of the object.
+   at JsonSchemaSample.Api.Person.PersonNameElement.op_Implicit(PersonNameElement value) in C:\Users\matth\source\repos\JsonSchemaSample\api\Person.PersonNameElement.String.cs:line 113
+   at Program.<Main>$(String[] args) in C:\Users\matth\source\repos\JsonSchemaSample\Program.cs:line 17
 ```
 
-So what has happened? Well, as we expected, `michaelOldroyd` is still valid.
+What that tells us is that we cannot implictly convert the missing `PersonName` element into a non-nullable string.
 
-But we've got a missing `givenName`, which leads to a trailing comma in our output. What can we about that?
+What can we do about that?
 
 ## Values, Null, and Undefined
 
@@ -1000,7 +1049,7 @@ This time, when we build and run...
 
 ```
 dotnet build
-.\bin\Debug\net6.0\JsonSchemaSample.exe
+.\bin\Debug\net7.0\JsonSchemaSample.exe
 ```
 
 We get:
@@ -1042,7 +1091,7 @@ Let's build and run, to verify the output.
 
 ```
 dotnet build
-.\bin\Debug\net6.0\JsonSchemaSample.exe
+.\bin\Debug\net7.0\JsonSchemaSample.exe
 ```
 
 We are expecting it to produce the usual output, and for the instance still to be valid.
@@ -1088,7 +1137,7 @@ Build and run...
 
 ```
 dotnet build
-.\bin\Debug\net6.0\JsonSchemaSample.exe
+.\bin\Debug\net7.0\JsonSchemaSample.exe
 ```
 
 And we see the `occupation` added to the output.
@@ -1125,7 +1174,7 @@ Now, let's add some code to enumerate the properties in the object. Insert the f
 
 ```csharp
 Console.WriteLine("Additional properties:");
-foreach(Property property in michaelOldroyd.EnumerateObject())
+foreach(JsonObjectProperty property in michaelOldroyd.EnumerateObject())
 {
     Console.WriteLine($"{property.Name}: {property.Value}");
 }
@@ -1135,7 +1184,7 @@ Build and run...
 
 ```
 dotnet build
-.\bin\Debug\net6.0\JsonSchemaSample.exe
+.\bin\Debug\net7.0\JsonSchemaSample.exe
 ```
 
 ...and we can see that this code enumerates all of the properties on the `Person` object, and writes them out to the console.
@@ -1152,9 +1201,11 @@ dateOfBirth: "1944-07-14"
 michaelOldroyd is valid.
 ```
 
-The JSON `Property` type has a `Name` property which gives us the underlying JSON form of the actual property name, as a `string`. Its `Value` property returns the value as a `JsonAny`.
+The JSON `JsonObjectProperty` type has a `Name` property which gives us the underlying JSON form of the actual property name, as a `string`. Its `Value` property returns the value as a `JsonAny`.
 
-It also exposes a `ValueAs<T>()` method to get the value as a specific type of `IJsonValue`, and a family of `ValueAs[Primitive]` properties, plus `ValueKind` if you want to explore its underlying type. These are analagous to the methods on `JsonAny` but you avoid converting to `JsonAny` explicitly, just to examine `Property` information.
+> Note: the name is actually a `JsonPropertyName` which is freely convertible to a string. This allows us to optimize the underlying storage mechanism for property names.
+
+It also exposes a `ValueAs<T>()` method to get the value as a specific type of `IJsonValue`, plus `ValueKind` if you want to explore its underlying type. These are analagous to the methods on `JsonAny` but you avoid converting to `JsonAny` explicitly, just to examine property information.
 
 The result of all this is that we have emitted our additional properties to the Console; but we've also got the "well-known" properties in this list. Is there a way to filter those out?
 
@@ -1188,7 +1239,7 @@ We can use these to add a filter to our enumerator, to eliminate the well-known 
 Replace the `foreach` loop with the following:
 
 ```csharp
-foreach(Property property in michaelOldroyd.EnumerateObject())
+foreach(JsonObjectProperty property in michaelOldroyd.EnumerateObject())
 {
     if (property.NameEquals(Person.DateOfBirthUtf8JsonPropertyName.Span) ||
         property.NameEquals(Person.NameUtf8JsonPropertyName.Span))
@@ -1197,7 +1248,7 @@ foreach(Property property in michaelOldroyd.EnumerateObject())
         continue;
     }
 
-    Console.WriteLine($"{property.Name}: {property.Value}");
+    Console.WriteLine($"{(string)property.Name}: {property.Value}");
 }
 ```
 
@@ -1207,7 +1258,7 @@ OK - let's build and run again...
 
 ```
 dotnet build
-.\bin\Debug\net6.0\JsonSchemaSample.exe
+.\bin\Debug\net7.0\JsonSchemaSample.exe
 ```
 
 and the output looks like this:
@@ -1248,7 +1299,7 @@ Build and run...
 
 ```
 dotnet build
-.\bin\Debug\net6.0\JsonSchemaSample.exe
+.\bin\Debug\net7.0\JsonSchemaSample.exe
 ```
 
 ...and we see the serialized output in the console.
@@ -1270,7 +1321,7 @@ Notice how the additional properties are preserved in the serialized output.
 
 Working with arrays is very similar. Just as with `JsonArray` there is an `EnumerateArray()` method to iterate the items in the array.
 
-To see that in action, let's revert to our starting point.
+To see that in action, let's revert to our starting point. Delete all the text in Program.cs and replace it with this.
 
 ```csharp
 using System.Text.Json;
@@ -1287,8 +1338,10 @@ string jsonText = @"{
     ""dateOfBirth"": ""1944-07-14""
 }";
 
-Person michaelOldroyd = JsonAny.Parse(jsonText);
+var michaelOldroyd = Person.Parse(jsonText);
 ```
+
+> Notice that we are now using the `Person`-specific version of `Parse()` to avoid the implicit cast from `JsonAny`.
 
 and now add some code to enumerate the array:
 
@@ -1303,7 +1356,7 @@ Build and run again...
 
 ```
 dotnet build
-.\bin\Debug\net6.0\JsonSchemaSample.exe
+.\bin\Debug\net7.0\JsonSchemaSample.exe
 ```
 
 ...and we see the other names written to the console.
@@ -1315,41 +1368,26 @@ James
 
 > You'll notice that we are just assuming that `OtherNames` is an array type, and calling the `EnumerateArray()` method that it exposes. But what if it was in the string representation? We could always check the `ValueKind` to make sure it was safe to do so, but we'll look at more reliable techniques in our section on Union types later in this Lab.
 
-In addition to enumeration, we can also find the `Length` of the array. We might use this to pre-allocate a working buffer of some kind, before going on to enumerate the array. We can also index directly into the array. The standard `JsonAny this[int index]` will return you a `JsonAny`.
+In addition to enumeration, we can also find the `Length` of the array. We might use this to pre-allocate a working buffer of some kind, before going on to enumerate the array. We can also index directly into the array. The standard `JsonAny IJsonArray.this[int index]` will return you a `JsonAny`. However, if the code generator detected that your array could be constrained to a more specific type, the enumerator and accessors will return instances of that type, and the interface will be implemented explcitly.
 
 That's the basic functionality we get for any array-like value.
-
-However, if the code generator determined that there was a specific type that could represent the items in the array (e.g. by specifying a single schema for `items`), then it will emit a second method called `EnumerateItems()`.
-
-> The generator will also emit a strongly typed `GetItem(int index)` method to complement the standard indexer, if it detects this "single item type" case.
-
-There are cases where this is not possible. For example, you can use the array form of the items definition which requires specific item schema at specific indices:
-
- ```json
- "items": [{"$ref": "#/$defs/firstItemType"}, {"$ref": "#/$defs/secondItemType"}, {"$ref": "#/$defs/thirdItemType"}]
-```
-
-If you do this, then the generator currently leaves out these extra accessors.
-
 
 Let's try that out. Let's change our `foreach` loop to the following:
 
 ```csharp
-PersonNameElementArray array = michaelOldroyd.Name.OtherNames.As<PersonNameElementArray>();
-
-foreach(PersonNameElement otherName in array.EnumerateItems())
+foreach(Person.PersonNameElement otherName in michaelOldroyd.Name.OtherNames.As<Person.PersonNameElementArray>().EnumerateArray())
 {
   Console.WriteLine(otherName);
 }
 ```
 
-Notice that we are explicitly casting to the `PersonNameElementArray` type, and then using `EnumerateItems()`. The `Current` property of the enumerator is a `PersonNameElement` so we can use that directly (and we don't need to cast our `JsonAny` to a string any more in the `Console.WriteLine()` call).
+Notice that we are explicitly casting to the `PersonNameElementArray` type, and then using `EnumerateArray()`. The `Current` property of the enumerator is a `PersonNameElement` so we can use that directly (and we don't need to cast our `JsonAny` to a string any more in the `Console.WriteLine()` call).
 
 As you might expect, if we build and run...
 
 ```
 dotnet build
-.\bin\Debug\net6.0\JsonSchemaSample.exe
+.\bin\Debug\net7.0\JsonSchemaSample.exe
 ```
 
 ...we get the same output as before.
