@@ -39,13 +39,12 @@ public static partial class JsonTransformingVisitor
         char[] pathBuffer = ArrayPool<char>.Shared.Rent(BufferChunkSize);
         try
         {
-            JsonAny rootAny = root.AsAny;
             VisitResult visitResult = default;
-            Visit(ReadOnlySpan<char>.Empty, rootAny, visitor, ref pathBuffer, ref visitResult);
+            Visit(ReadOnlySpan<char>.Empty, root.AsAny, visitor, pathBuffer, ref visitResult);
 
             if (visitResult.Walk == Walk.TerminateAtThisNodeAndAbandonAllChanges)
             {
-                result = rootAny;
+                result = root.AsAny;
             }
             else
             {
@@ -60,7 +59,7 @@ public static partial class JsonTransformingVisitor
         }
     }
 
-    private static void Visit(ReadOnlySpan<char> path, in JsonAny nodeToVisit, Visitor visitor, ref char[] pathBuffer, ref VisitResult result)
+    private static void Visit(ReadOnlySpan<char> path, in JsonAny nodeToVisit, Visitor visitor, char[] pathBuffer, ref VisitResult result)
     {
         // First, visit the entity itself
         visitor(path, nodeToVisit, ref result);
@@ -99,15 +98,15 @@ public static partial class JsonTransformingVisitor
         switch (result.Output.ValueKind)
         {
             case JsonValueKind.Object:
-                VisitObject(path, result.Output, visitor, ref pathBuffer, ref result);
+                VisitObject(path, result.Output, visitor, pathBuffer, ref result);
                 break;
             case JsonValueKind.Array:
-                VisitArray(path, result.Output, visitor, ref pathBuffer, ref result);
+                VisitArray(path, result.Output, visitor, pathBuffer, ref result);
                 break;
         }
     }
 
-    private static void VisitArray(ReadOnlySpan<char> path, in JsonAny asArray, Visitor visitor, ref char[] pathBuffer, ref VisitResult result)
+    private static void VisitArray(ReadOnlySpan<char> path, in JsonAny asArray, Visitor visitor, char[] pathBuffer, ref VisitResult result)
     {
         bool terminateEntireWalkApplyingChanges = false;
         bool hasTransformedItems = false;
@@ -152,7 +151,7 @@ public static partial class JsonTransformingVisitor
             index.TryFormat(itemPath[(path.Length + 1)..], out int digitsWritten);
 
             // Visit the array item, and determine whether we've transformed it.
-            Visit(itemPath, item, visitor, ref pathBuffer, ref result);
+            Visit(itemPath, item.AsAny, visitor, pathBuffer, ref result);
 
             if (result.Walk == Walk.TerminateAtThisNodeAndAbandonAllChanges)
             {
@@ -235,7 +234,7 @@ public static partial class JsonTransformingVisitor
         result.Walk = Walk.Continue;
     }
 
-    private static void VisitObject(ReadOnlySpan<char> path, in JsonAny asObject, Visitor visitor, ref char[] pathBuffer, ref VisitResult result)
+    private static void VisitObject(ReadOnlySpan<char> path, in JsonAny asObject, Visitor visitor, char[] pathBuffer, ref VisitResult result)
     {
         bool hasTransformedProperties = false;
         bool terminateEntireWalkApplyingChanges = false;
@@ -282,7 +281,7 @@ public static partial class JsonTransformingVisitor
             propertyName.CopyTo(propertyPath[(path.Length + 1)..]);
 
             // Visit the property, and determine whether we've transformed it.
-            Visit(propertyPath, property.Value, visitor, ref pathBuffer, ref result);
+            Visit(propertyPath, property.Value, visitor, pathBuffer, ref result);
             if (result.Walk == Walk.TerminateAtThisNodeAndAbandonAllChanges)
             {
                 // We didn't transform any properties, and we are bailing out right now

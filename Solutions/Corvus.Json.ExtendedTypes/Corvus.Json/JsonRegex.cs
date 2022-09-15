@@ -105,6 +105,6 @@ public readonly partial struct JsonRegex
         }
     }
 
-    [RegexGenerator(".*", RegexOptions.None)]
+    [GeneratedRegex(".*", RegexOptions.None)]
     private static partial Regex MyRegex();
 }

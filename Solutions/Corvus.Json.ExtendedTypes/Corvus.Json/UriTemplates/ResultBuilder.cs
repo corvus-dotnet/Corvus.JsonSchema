@@ -121,7 +121,7 @@ internal ref struct ResultBuilder
     /// <param name="explode">Whether to explode the array.</param>
     /// <param name="variable">The variable name.</param>
     /// <param name="array">The array to add.</param>
-    public void AppendArray<T>(in OperatorInfo op, bool explode, string variable, in T array)
+    public void AppendArray<T>(in OperatorInfo op, bool explode, string variable, T array)
         where T : struct, IJsonArray<T>
     {
         foreach (JsonAny item in array.EnumerateArray())
