@@ -123,6 +123,12 @@ $EnableGitVersionAdoVariableWorkaround = $false
 #
 $SolutionToBuild = (Resolve-Path (Join-Path $here ".\Solutions\Corvus.JsonSchema.sln")).Path
 
+
+#
+# Update to the latest report generator versions
+#
+$ReportGeneratorToolVersion = "5.1.10"
+
 #
 # Specify files to exclude from test coverage
 # This option is for excluding generated code
