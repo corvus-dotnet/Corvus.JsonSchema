@@ -9,6 +9,10 @@
 		<IsPackable>false</IsPackable>
 	</PropertyGroup>
 
+	<PropertyGroup>
+		<LangVersion>11</LangVersion>
+	</PropertyGroup>
+
 	<ItemGroup>
 		<PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.2">
 			<PrivateAssets>all</PrivateAssets>

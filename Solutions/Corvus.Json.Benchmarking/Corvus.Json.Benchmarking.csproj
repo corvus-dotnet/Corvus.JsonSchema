@@ -10,8 +10,7 @@
 	</PropertyGroup>
 
 	<PropertyGroup>
-		<LangVersion>preview</LangVersion>
-		<EnablePreviewFeatures>true</EnablePreviewFeatures>
+		<LangVersion>11</LangVersion>
 	</PropertyGroup>
 
 	<ItemGroup>
