@@ -9,10 +9,6 @@
 		<PreserveCompilationContext>true</PreserveCompilationContext>
 	</PropertyGroup>
 
-	<PropertyGroup>
-		<LangVersion>11</LangVersion>
-	</PropertyGroup>
-
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
 		<NoWarn>RCS1029;CS1591</NoWarn>
 	</PropertyGroup>

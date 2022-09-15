@@ -8,10 +8,6 @@
 	</PropertyGroup>
 
 	<PropertyGroup>
-		<LangVersion>11</LangVersion>
-	</PropertyGroup>
-
-	<PropertyGroup>
 		<PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
 		<Description>Defines .NET types representing data types found in JSON, including numerous types for specialized string forms such as JsonUuid and JsonDateTime.</Description>
 	</PropertyGroup>

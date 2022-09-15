@@ -26,8 +26,4 @@
 	  <ProjectReference Include="..\Corvus.Json.CodeGeneration.7\Corvus.Json.CodeGeneration.7.csproj" />
 	</ItemGroup>
 
-	<PropertyGroup>
-		<LangVersion>11</LangVersion>
-	</PropertyGroup>
-
 </Project>

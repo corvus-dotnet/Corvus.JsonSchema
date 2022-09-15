@@ -10,11 +10,7 @@
 	<PropertyGroup>
 		<NoWarn>CS1591</NoWarn>
 	</PropertyGroup>
-
-	<PropertyGroup>
-		<LangVersion>11</LangVersion>
-	</PropertyGroup>
-
+	
 	<PropertyGroup>
 		<PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
 		<Description>A library for generating code from .NET types representing data types found in JSON.</Description>

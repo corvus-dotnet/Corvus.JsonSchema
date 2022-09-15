@@ -8,10 +8,6 @@
 	</PropertyGroup>
 
 	<PropertyGroup>
-		<LangVersion>11</LangVersion>
-	</PropertyGroup>
-
-	<PropertyGroup>
 		<PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
 		<Description>Support for the Json Patch Specification</Description>
 	</PropertyGroup>

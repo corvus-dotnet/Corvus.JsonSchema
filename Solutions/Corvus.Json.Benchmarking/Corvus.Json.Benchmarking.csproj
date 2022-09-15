@@ -9,10 +9,6 @@
 		<IsPackable>false</IsPackable>
 	</PropertyGroup>
 
-	<PropertyGroup>
-		<LangVersion>11</LangVersion>
-	</PropertyGroup>
-
 	<ItemGroup>
 		<ProjectReference Include="..\Corvus.Json.ExtendedTypes\Corvus.Json.ExtendedTypes.csproj" />
 	</ItemGroup>

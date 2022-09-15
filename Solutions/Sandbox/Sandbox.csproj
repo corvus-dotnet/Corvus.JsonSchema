@@ -8,10 +8,6 @@
 		<IsPackable>false</IsPackable>
 	</PropertyGroup>
 
-	<PropertyGroup>
-		<LangVersion>11</LangVersion>
-	</PropertyGroup>
-
 	<ItemGroup>
 		<PackageReference Include="JsonPatch.Net" Version="2.0.4" />
 	</ItemGroup>
