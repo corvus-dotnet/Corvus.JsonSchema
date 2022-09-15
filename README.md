@@ -205,15 +205,6 @@ git commit -a -m "Updated to the lastest JSON Schema Test Suite"
 (Or you can use `git submodule update --remote` instead of `cd`ing into the submodule folder and
 updating from there.)
 
-## Use of benchmark dotnet
-
-While we are still making use of Preview features, you need to add the benchmark dotnet nightlies package feed to your nuget package sources.
-Benchmark Dotnet Nightlies
-
-[You can find the benchmark dotnet nightlies here.](https://ci.appveyor.com/nuget/benchmarkdotnet)
-
-(For normal builds, this is done for you in the nuget.config found in the root of the project.)
-
 ## Organization of the repository
 
 ### Corvus.Json.CodeGenerator
@@ -250,12 +241,6 @@ If you are building your own generators, or modifying the existing ones, pointer
 The T4 templates need "code-behind" partials to provide the context for the generator. These are also generated from a T4 template called `Templates/CodeGeneratorPartial.tt`, by the `BuildTemplates.cmd` command. Again, these can be customized to extend the generator context required by your own generators.
 
 You would not normally need to run those commands to build the solution, as their output is checked into the repository.
-
-### Corvus.Json.Walker
-
-A visitor for arbitrary JSON documents, with the ability to follow JSON references and load documents from multiple sources, including the local filesystem, and over HTTP. This resolution is extensible to arbitrary sources by implementing `IDocumentResovler`.
-
-It is used by the `JsonSchemaBuilder` implementations to walk the schema and populate the `TypeDeclaration` instances for the schema.
 
 ### Corvus.Json.Patch
 
