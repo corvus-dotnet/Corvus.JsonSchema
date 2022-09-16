@@ -29,7 +29,7 @@ public class JsonSchemaSteps
     private const string SchemaValidationResult = "SchemaValidationResult";
     private readonly FeatureContext featureContext;
     private readonly ScenarioContext scenarioContext;
-    private readonly IJsonSchemaBuilderDriver driver;
+    private readonly JsonSchemaBuilderDriver driver;
     private readonly IConfiguration configuration;
 
     /// <summary>
@@ -39,7 +39,7 @@ public class JsonSchemaSteps
     /// <param name="scenarioContext">The current scenario context.</param>
     /// <param name="driver">The json schema builder driver.</param>
     /// <param name="configuration">Configuration settings.</param>
-    public JsonSchemaSteps(FeatureContext featureContext, ScenarioContext scenarioContext, IJsonSchemaBuilderDriver driver, IConfiguration configuration)
+    public JsonSchemaSteps(FeatureContext featureContext, ScenarioContext scenarioContext, JsonSchemaBuilderDriver driver, IConfiguration configuration)
     {
         this.featureContext = featureContext;
         this.scenarioContext = scenarioContext;
@@ -75,7 +75,7 @@ public class JsonSchemaSteps
     [Given(@"the input data at ""(.*)""")]
     public async Task GivenTheInputDataAt(string referenceFragment)
     {
-        JsonElement? element = await this.driver.GetElement(this.scenarioContext.Get<string>(InputJsonFileName), referenceFragment).ConfigureAwait(false);
+        JsonElement? element = await this.driver.GetElementFromLocalFile(this.scenarioContext.Get<string>(InputJsonFileName), referenceFragment).ConfigureAwait(false);
         Assert.NotNull(
             element,
             $"Failed to load input data at {this.scenarioContext.Get<string>(InputJsonFileName)}, ref {referenceFragment}, jsonSchemaBuilder201909DriverSettings:testBaseDirectory: '{this.configuration["jsonSchemaBuilder201909DriverSettings:testBaseDirectory"]}', jsonSchemaBuilder202012DriverSettings: '{this.configuration["jsonSchemaBuilder202012DriverSettings:testBaseDirectory"]}' CWD: '{Environment.CurrentDirectory}'");

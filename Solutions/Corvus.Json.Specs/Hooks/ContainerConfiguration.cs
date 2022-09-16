@@ -33,36 +33,32 @@ public static class ContainerConfiguration
         services.AddTransient<Corvus.Json.CodeGeneration.Draft201909.JsonSchemaBuilder>();
         services.AddTransient<Corvus.Json.CodeGeneration.Draft7.JsonSchemaBuilder>();
         services.AddTransient<Corvus.Json.CodeGeneration.Draft6.JsonSchemaBuilder>();
-        services.AddTransient<JsonSchemaBuilderDriver202012>();
-        services.AddTransient<JsonSchemaBuilderDriver201909>();
-        services.AddTransient<JsonSchemaBuilderDriver7>();
-        services.AddTransient<JsonSchemaBuilderDriver6>();
 
-        services.AddTransient<IJsonSchemaBuilderDriver>(sp =>
+        services.AddTransient<JsonSchemaBuilderDriver>(sp =>
         {
             ScenarioContext scenarioContext = sp.GetRequiredService<ScenarioContext>();
             if (scenarioContext.ScenarioInfo.ScenarioAndFeatureTags.Any(t => t == "draft2020-12"))
             {
-                return sp.GetRequiredService<JsonSchemaBuilderDriver202012>();
+                return new JsonSchemaBuilderDriver(sp.GetRequiredService<IConfiguration>(), sp.GetRequiredService<Corvus.Json.CodeGeneration.Draft202012.JsonSchemaBuilder>(), "jsonSchemaBuilder202012DriverSettings");
             }
 
             if (scenarioContext.ScenarioInfo.ScenarioAndFeatureTags.Any(t => t == "draft2019-09"))
             {
-                return sp.GetRequiredService<JsonSchemaBuilderDriver201909>();
+                return new JsonSchemaBuilderDriver(sp.GetRequiredService<IConfiguration>(), sp.GetRequiredService<Corvus.Json.CodeGeneration.Draft201909.JsonSchemaBuilder>(), "jsonSchemaBuilder201909DriverSettings");
             }
 
             if (scenarioContext.ScenarioInfo.ScenarioAndFeatureTags.Any(t => t == "draft7"))
             {
-                return sp.GetRequiredService<JsonSchemaBuilderDriver7>();
+                return new JsonSchemaBuilderDriver(sp.GetRequiredService<IConfiguration>(), sp.GetRequiredService<Corvus.Json.CodeGeneration.Draft7.JsonSchemaBuilder>(), "jsonSchemaBuilder7DriverSettings");
             }
 
             if (scenarioContext.ScenarioInfo.ScenarioAndFeatureTags.Any(t => t == "draft6"))
             {
-                return sp.GetRequiredService<JsonSchemaBuilderDriver7>();
+                return new JsonSchemaBuilderDriver(sp.GetRequiredService<IConfiguration>(), sp.GetRequiredService<Corvus.Json.CodeGeneration.Draft6.JsonSchemaBuilder>(), "jsonSchemaBuilder6DriverSettings");
             }
 
             // Default to 202012
-            return sp.GetRequiredService<JsonSchemaBuilderDriver202012>();
+            return new JsonSchemaBuilderDriver(sp.GetRequiredService<IConfiguration>(), sp.GetRequiredService<Corvus.Json.CodeGeneration.Draft202012.JsonSchemaBuilder>(), "jsonSchemaBuilder202012DriverSettings");
         });
 
         services.AddTransient<IConfiguration>(sp =>
