@@ -130,6 +130,11 @@ $SolutionToBuild = (Resolve-Path (Join-Path $here ".\Solutions\Corvus.JsonSchema
 $ReportGeneratorToolVersion = "5.1.10"
 
 #
+# Temporarily skip the test report
+#
+$SkipTestReport = $true
+
+#
 # Specify files to exclude from test coverage
 # This option is for excluding generated code
 $ExcludeFilesFromCodeCoverage = ""
