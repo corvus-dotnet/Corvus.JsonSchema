@@ -16,7 +16,7 @@ using Corvus.Json.Internal;
 
 namespace Corvus.Json.Patch.SpecGenerator;
 /// <summary>
-/// A type generated from a JsonSchema() specification.
+/// A type generated from a JsonSchema specification.
 /// </summary>
 public readonly partial struct DisabledScenario
 {
@@ -35,8 +35,18 @@ public readonly partial struct DisabledScenario
             if (__TryGetCorvusLocalPropertiesValidator(property, this.HasJsonElementBacking, out ObjectPropertyValidator? propertyValidator))
             {
                 result = result.WithLocalProperty(propertyCount);
+                if (level > ValidationLevel.Basic)
+                {
+                    result = result.PushDocumentProperty("properties", property.Name);
+                }
+
                 var propertyResult = propertyValidator(property, result.CreateChildContext(), level);
                 result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+                if (level > ValidationLevel.Basic)
+                {
+                    result = result.PopLocation(); // property name
+                }
+
                 if (level == ValidationLevel.Flag && !result.IsValid)
                 {
                     return result;

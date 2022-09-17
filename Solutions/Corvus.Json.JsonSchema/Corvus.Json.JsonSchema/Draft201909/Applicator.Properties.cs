@@ -701,196 +701,6 @@ public readonly partial struct Applicator
     }
 
     /// <summary>
-    /// Tries to get the validator for the given property.
-    /// </summary>
-    /// <param name = "property">The property for which to get the validator.</param>
-    /// <param name = "hasJsonElementBacking"><c>True</c> if the object containing the property has a JsonElement backing.</param>
-    /// <param name = "propertyValidator">The validator for the property, if provided by this schema.</param>
-    /// <returns><c>True</c> if the validator was found.</returns>
-    public bool __TryGetCorvusLocalPropertiesValidator(in JsonObjectProperty property, bool hasJsonElementBacking, [NotNullWhen(true)] out ObjectPropertyValidator? propertyValidator)
-    {
-        if (hasJsonElementBacking)
-        {
-            if (property.NameEquals(AdditionalItemsUtf8JsonPropertyName.Span))
-            {
-                propertyValidator = __CorvusValidateAdditionalItems;
-                return true;
-            }
-            else if (property.NameEquals(UnevaluatedItemsUtf8JsonPropertyName.Span))
-            {
-                propertyValidator = __CorvusValidateUnevaluatedItems;
-                return true;
-            }
-            else if (property.NameEquals(ItemsUtf8JsonPropertyName.Span))
-            {
-                propertyValidator = __CorvusValidateItems;
-                return true;
-            }
-            else if (property.NameEquals(ContainsUtf8JsonPropertyName.Span))
-            {
-                propertyValidator = __CorvusValidateContains;
-                return true;
-            }
-            else if (property.NameEquals(AdditionalPropertiesUtf8JsonPropertyName.Span))
-            {
-                propertyValidator = __CorvusValidateAdditionalProperties;
-                return true;
-            }
-            else if (property.NameEquals(UnevaluatedPropertiesUtf8JsonPropertyName.Span))
-            {
-                propertyValidator = __CorvusValidateUnevaluatedProperties;
-                return true;
-            }
-            else if (property.NameEquals(PropertiesUtf8JsonPropertyName.Span))
-            {
-                propertyValidator = __CorvusValidateProperties;
-                return true;
-            }
-            else if (property.NameEquals(PatternPropertiesUtf8JsonPropertyName.Span))
-            {
-                propertyValidator = __CorvusValidatePatternProperties;
-                return true;
-            }
-            else if (property.NameEquals(DependentSchemasUtf8JsonPropertyName.Span))
-            {
-                propertyValidator = __CorvusValidateDependentSchemas;
-                return true;
-            }
-            else if (property.NameEquals(PropertyNamesUtf8JsonPropertyName.Span))
-            {
-                propertyValidator = __CorvusValidatePropertyNames;
-                return true;
-            }
-            else if (property.NameEquals(IfUtf8JsonPropertyName.Span))
-            {
-                propertyValidator = __CorvusValidateIf;
-                return true;
-            }
-            else if (property.NameEquals(ThenUtf8JsonPropertyName.Span))
-            {
-                propertyValidator = __CorvusValidateThen;
-                return true;
-            }
-            else if (property.NameEquals(ElseUtf8JsonPropertyName.Span))
-            {
-                propertyValidator = __CorvusValidateElse;
-                return true;
-            }
-            else if (property.NameEquals(AllOfUtf8JsonPropertyName.Span))
-            {
-                propertyValidator = __CorvusValidateAllOf;
-                return true;
-            }
-            else if (property.NameEquals(AnyOfUtf8JsonPropertyName.Span))
-            {
-                propertyValidator = __CorvusValidateAnyOf;
-                return true;
-            }
-            else if (property.NameEquals(OneOfUtf8JsonPropertyName.Span))
-            {
-                propertyValidator = __CorvusValidateOneOf;
-                return true;
-            }
-            else if (property.NameEquals(NotUtf8JsonPropertyName.Span))
-            {
-                propertyValidator = __CorvusValidateNot;
-                return true;
-            }
-        }
-        else
-        {
-            if (property.NameEquals(AdditionalItemsJsonPropertyName))
-            {
-                propertyValidator = __CorvusValidateAdditionalItems;
-                return true;
-            }
-            else if (property.NameEquals(UnevaluatedItemsJsonPropertyName))
-            {
-                propertyValidator = __CorvusValidateUnevaluatedItems;
-                return true;
-            }
-            else if (property.NameEquals(ItemsJsonPropertyName))
-            {
-                propertyValidator = __CorvusValidateItems;
-                return true;
-            }
-            else if (property.NameEquals(ContainsJsonPropertyName))
-            {
-                propertyValidator = __CorvusValidateContains;
-                return true;
-            }
-            else if (property.NameEquals(AdditionalPropertiesJsonPropertyName))
-            {
-                propertyValidator = __CorvusValidateAdditionalProperties;
-                return true;
-            }
-            else if (property.NameEquals(UnevaluatedPropertiesJsonPropertyName))
-            {
-                propertyValidator = __CorvusValidateUnevaluatedProperties;
-                return true;
-            }
-            else if (property.NameEquals(PropertiesJsonPropertyName))
-            {
-                propertyValidator = __CorvusValidateProperties;
-                return true;
-            }
-            else if (property.NameEquals(PatternPropertiesJsonPropertyName))
-            {
-                propertyValidator = __CorvusValidatePatternProperties;
-                return true;
-            }
-            else if (property.NameEquals(DependentSchemasJsonPropertyName))
-            {
-                propertyValidator = __CorvusValidateDependentSchemas;
-                return true;
-            }
-            else if (property.NameEquals(PropertyNamesJsonPropertyName))
-            {
-                propertyValidator = __CorvusValidatePropertyNames;
-                return true;
-            }
-            else if (property.NameEquals(IfJsonPropertyName))
-            {
-                propertyValidator = __CorvusValidateIf;
-                return true;
-            }
-            else if (property.NameEquals(ThenJsonPropertyName))
-            {
-                propertyValidator = __CorvusValidateThen;
-                return true;
-            }
-            else if (property.NameEquals(ElseJsonPropertyName))
-            {
-                propertyValidator = __CorvusValidateElse;
-                return true;
-            }
-            else if (property.NameEquals(AllOfJsonPropertyName))
-            {
-                propertyValidator = __CorvusValidateAllOf;
-                return true;
-            }
-            else if (property.NameEquals(AnyOfJsonPropertyName))
-            {
-                propertyValidator = __CorvusValidateAnyOf;
-                return true;
-            }
-            else if (property.NameEquals(OneOfJsonPropertyName))
-            {
-                propertyValidator = __CorvusValidateOneOf;
-                return true;
-            }
-            else if (property.NameEquals(NotJsonPropertyName))
-            {
-                propertyValidator = __CorvusValidateNot;
-                return true;
-            }
-        }
-
-        propertyValidator = null;
-        return false;
-    }
-
-    /// <summary>
     /// Creates an instance of a <see cref = "Applicator"/>.
     /// </summary>
     public static Applicator Create(Corvus.Json.JsonSchema.Draft201909.Schema? additionalItems = null, Corvus.Json.JsonSchema.Draft201909.Schema? unevaluatedItems = null, Corvus.Json.JsonSchema.Draft201909.Applicator.ItemsEntity? items = null, Corvus.Json.JsonSchema.Draft201909.Schema? contains = null, Corvus.Json.JsonSchema.Draft201909.Schema? additionalProperties = null, Corvus.Json.JsonSchema.Draft201909.Schema? unevaluatedProperties = null, Corvus.Json.JsonSchema.Draft201909.Applicator.PropertiesEntity? properties = null, Corvus.Json.JsonSchema.Draft201909.Applicator.PatternPropertiesEntity? patternProperties = null, Corvus.Json.JsonSchema.Draft201909.Applicator.DependentSchemasEntity? dependentSchemas = null, Corvus.Json.JsonSchema.Draft201909.Schema? propertyNames = null, Corvus.Json.JsonSchema.Draft201909.Schema? @if = null, Corvus.Json.JsonSchema.Draft201909.Schema? then = null, Corvus.Json.JsonSchema.Draft201909.Schema? @else = null, Corvus.Json.JsonSchema.Draft201909.Applicator.SchemaArray? allOf = null, Corvus.Json.JsonSchema.Draft201909.Applicator.SchemaArray? anyOf = null, Corvus.Json.JsonSchema.Draft201909.Applicator.SchemaArray? oneOf = null, Corvus.Json.JsonSchema.Draft201909.Schema? not = null)
@@ -1237,5 +1047,195 @@ public readonly partial struct Applicator
     private static ValidationContext __CorvusValidateNot(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
         return property.ValueAs<Corvus.Json.JsonSchema.Draft201909.Schema>().Validate(validationContext, level);
+    }
+
+    /// <summary>
+    /// Tries to get the validator for the given property.
+    /// </summary>
+    /// <param name = "property">The property for which to get the validator.</param>
+    /// <param name = "hasJsonElementBacking"><c>True</c> if the object containing the property has a JsonElement backing.</param>
+    /// <param name = "propertyValidator">The validator for the property, if provided by this schema.</param>
+    /// <returns><c>True</c> if the validator was found.</returns>
+    private bool __TryGetCorvusLocalPropertiesValidator(in JsonObjectProperty property, bool hasJsonElementBacking, [NotNullWhen(true)] out ObjectPropertyValidator? propertyValidator)
+    {
+        if (hasJsonElementBacking)
+        {
+            if (property.NameEquals(AdditionalItemsUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateAdditionalItems;
+                return true;
+            }
+            else if (property.NameEquals(UnevaluatedItemsUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateUnevaluatedItems;
+                return true;
+            }
+            else if (property.NameEquals(ItemsUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateItems;
+                return true;
+            }
+            else if (property.NameEquals(ContainsUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateContains;
+                return true;
+            }
+            else if (property.NameEquals(AdditionalPropertiesUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateAdditionalProperties;
+                return true;
+            }
+            else if (property.NameEquals(UnevaluatedPropertiesUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateUnevaluatedProperties;
+                return true;
+            }
+            else if (property.NameEquals(PropertiesUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateProperties;
+                return true;
+            }
+            else if (property.NameEquals(PatternPropertiesUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidatePatternProperties;
+                return true;
+            }
+            else if (property.NameEquals(DependentSchemasUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateDependentSchemas;
+                return true;
+            }
+            else if (property.NameEquals(PropertyNamesUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidatePropertyNames;
+                return true;
+            }
+            else if (property.NameEquals(IfUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateIf;
+                return true;
+            }
+            else if (property.NameEquals(ThenUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateThen;
+                return true;
+            }
+            else if (property.NameEquals(ElseUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateElse;
+                return true;
+            }
+            else if (property.NameEquals(AllOfUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateAllOf;
+                return true;
+            }
+            else if (property.NameEquals(AnyOfUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateAnyOf;
+                return true;
+            }
+            else if (property.NameEquals(OneOfUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateOneOf;
+                return true;
+            }
+            else if (property.NameEquals(NotUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateNot;
+                return true;
+            }
+        }
+        else
+        {
+            if (property.NameEquals(AdditionalItemsJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateAdditionalItems;
+                return true;
+            }
+            else if (property.NameEquals(UnevaluatedItemsJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateUnevaluatedItems;
+                return true;
+            }
+            else if (property.NameEquals(ItemsJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateItems;
+                return true;
+            }
+            else if (property.NameEquals(ContainsJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateContains;
+                return true;
+            }
+            else if (property.NameEquals(AdditionalPropertiesJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateAdditionalProperties;
+                return true;
+            }
+            else if (property.NameEquals(UnevaluatedPropertiesJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateUnevaluatedProperties;
+                return true;
+            }
+            else if (property.NameEquals(PropertiesJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateProperties;
+                return true;
+            }
+            else if (property.NameEquals(PatternPropertiesJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidatePatternProperties;
+                return true;
+            }
+            else if (property.NameEquals(DependentSchemasJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateDependentSchemas;
+                return true;
+            }
+            else if (property.NameEquals(PropertyNamesJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidatePropertyNames;
+                return true;
+            }
+            else if (property.NameEquals(IfJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateIf;
+                return true;
+            }
+            else if (property.NameEquals(ThenJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateThen;
+                return true;
+            }
+            else if (property.NameEquals(ElseJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateElse;
+                return true;
+            }
+            else if (property.NameEquals(AllOfJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateAllOf;
+                return true;
+            }
+            else if (property.NameEquals(AnyOfJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateAnyOf;
+                return true;
+            }
+            else if (property.NameEquals(OneOfJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateOneOf;
+                return true;
+            }
+            else if (property.NameEquals(NotJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateNot;
+                return true;
+            }
+        }
+
+        propertyValidator = null;
+        return false;
     }
 }

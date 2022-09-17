@@ -335,16 +335,6 @@ public static class JsonSchemaHelpers
                 }
             }
 
-            if (source.RefResolvablePropertyDeclarations.TryGetValue("#/then", out TypeDeclaration? thenTypeDeclaration))
-            {
-                builder.FindAndBuildProperties(thenTypeDeclaration, target, typesVisited, true);
-            }
-
-            if (source.RefResolvablePropertyDeclarations.TryGetValue("#/else", out TypeDeclaration? elseTypeDeclaration))
-            {
-                builder.FindAndBuildProperties(elseTypeDeclaration, target, typesVisited, true);
-            }
-
             if (schema.Dependencies.IsNotUndefined())
             {
                 foreach (TypeDeclaration dependentypeDeclaration in source.RefResolvablePropertyDeclarations.Where(k => k.Key.StartsWith("#/dependencies")).Select(k => k.Value))

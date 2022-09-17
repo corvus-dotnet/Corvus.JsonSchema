@@ -101,46 +101,6 @@ public readonly partial struct Unevaluated
     }
 
     /// <summary>
-    /// Tries to get the validator for the given property.
-    /// </summary>
-    /// <param name = "property">The property for which to get the validator.</param>
-    /// <param name = "hasJsonElementBacking"><c>True</c> if the object containing the property has a JsonElement backing.</param>
-    /// <param name = "propertyValidator">The validator for the property, if provided by this schema.</param>
-    /// <returns><c>True</c> if the validator was found.</returns>
-    public bool __TryGetCorvusLocalPropertiesValidator(in JsonObjectProperty property, bool hasJsonElementBacking, [NotNullWhen(true)] out ObjectPropertyValidator? propertyValidator)
-    {
-        if (hasJsonElementBacking)
-        {
-            if (property.NameEquals(UnevaluatedItemsUtf8JsonPropertyName.Span))
-            {
-                propertyValidator = __CorvusValidateUnevaluatedItems;
-                return true;
-            }
-            else if (property.NameEquals(UnevaluatedPropertiesUtf8JsonPropertyName.Span))
-            {
-                propertyValidator = __CorvusValidateUnevaluatedProperties;
-                return true;
-            }
-        }
-        else
-        {
-            if (property.NameEquals(UnevaluatedItemsJsonPropertyName))
-            {
-                propertyValidator = __CorvusValidateUnevaluatedItems;
-                return true;
-            }
-            else if (property.NameEquals(UnevaluatedPropertiesJsonPropertyName))
-            {
-                propertyValidator = __CorvusValidateUnevaluatedProperties;
-                return true;
-            }
-        }
-
-        propertyValidator = null;
-        return false;
-    }
-
-    /// <summary>
     /// Creates an instance of a <see cref = "Unevaluated"/>.
     /// </summary>
     public static Unevaluated Create(Corvus.Json.JsonSchema.Draft202012.Schema? unevaluatedItems = null, Corvus.Json.JsonSchema.Draft202012.Schema? unevaluatedProperties = null)
@@ -187,5 +147,45 @@ public readonly partial struct Unevaluated
     private static ValidationContext __CorvusValidateUnevaluatedProperties(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
         return property.ValueAs<Corvus.Json.JsonSchema.Draft202012.Schema>().Validate(validationContext, level);
+    }
+
+    /// <summary>
+    /// Tries to get the validator for the given property.
+    /// </summary>
+    /// <param name = "property">The property for which to get the validator.</param>
+    /// <param name = "hasJsonElementBacking"><c>True</c> if the object containing the property has a JsonElement backing.</param>
+    /// <param name = "propertyValidator">The validator for the property, if provided by this schema.</param>
+    /// <returns><c>True</c> if the validator was found.</returns>
+    private bool __TryGetCorvusLocalPropertiesValidator(in JsonObjectProperty property, bool hasJsonElementBacking, [NotNullWhen(true)] out ObjectPropertyValidator? propertyValidator)
+    {
+        if (hasJsonElementBacking)
+        {
+            if (property.NameEquals(UnevaluatedItemsUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateUnevaluatedItems;
+                return true;
+            }
+            else if (property.NameEquals(UnevaluatedPropertiesUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateUnevaluatedProperties;
+                return true;
+            }
+        }
+        else
+        {
+            if (property.NameEquals(UnevaluatedItemsJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateUnevaluatedItems;
+                return true;
+            }
+            else if (property.NameEquals(UnevaluatedPropertiesJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateUnevaluatedProperties;
+                return true;
+            }
+        }
+
+        propertyValidator = null;
+        return false;
     }
 }

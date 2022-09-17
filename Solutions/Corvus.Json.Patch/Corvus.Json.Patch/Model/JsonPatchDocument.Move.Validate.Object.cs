@@ -31,7 +31,7 @@ public readonly partial struct JsonPatchDocument
             }
 
             int propertyCount = 0;
-            bool foundFrom = false;
+            bool foundFromValue = false;
             bool foundOp = false;
             foreach (JsonObjectProperty property in this.EnumerateObject())
             {
@@ -55,9 +55,9 @@ public readonly partial struct JsonPatchDocument
                         return result;
                     }
 
-                    if ((this.HasJsonElementBacking && property.NameEquals(FromUtf8JsonPropertyName.Span)) || (!this.HasJsonElementBacking && property.NameEquals(FromJsonPropertyName)))
+                    if ((this.HasJsonElementBacking && property.NameEquals(FromValueUtf8JsonPropertyName.Span)) || (!this.HasJsonElementBacking && property.NameEquals(FromValueJsonPropertyName)))
                     {
-                        foundFrom = true;
+                        foundFromValue = true;
                     }
                     else if ((this.HasJsonElementBacking && property.NameEquals(OpUtf8JsonPropertyName.Span)) || (!this.HasJsonElementBacking && property.NameEquals(OpJsonPropertyName)))
                     {
@@ -68,7 +68,7 @@ public readonly partial struct JsonPatchDocument
                 propertyCount++;
             }
 
-            if (!foundFrom)
+            if (!foundFromValue)
             {
                 if (level >= ValidationLevel.Detailed)
                 {

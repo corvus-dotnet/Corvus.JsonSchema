@@ -33,12 +33,12 @@ public readonly partial struct Schema
         {
             if (__TryGetCorvusLocalPropertiesValidator(property, this.HasJsonElementBacking, out ObjectPropertyValidator? propertyValidator))
             {
+                result = result.WithLocalProperty(propertyCount);
                 if (level > ValidationLevel.Basic)
                 {
                     result = result.PushDocumentProperty("properties", property.Name);
                 }
 
-                result = result.WithLocalProperty(propertyCount);
                 var propertyResult = propertyValidator(property, result.CreateChildContext(), level);
                 result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
                 if (level > ValidationLevel.Basic)

@@ -117,12 +117,12 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 
             if (__TryGetCorvusLocalPropertiesValidator(property, this.HasJsonElementBacking, out ObjectPropertyValidator? propertyValidator))
             {
+                result = result.WithLocalProperty(propertyCount);
                 if (level > ValidationLevel.Basic)
                 {
                     result = result.PushDocumentProperty("properties", property.Name);
                 }
 
-                result = result.WithLocalProperty(propertyCount);
                 var propertyResult = propertyValidator(property, result.CreateChildContext(), level);
                 result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
 
@@ -164,11 +164,11 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 <#  }
     if (HasPropertyNames || HasPatternProperties)
     { #>
-            string validateObjectPropertyName = property.Name;
+            string propertyName = property.Name;
 <#      if (HasPropertyNames)
         { #>
 
-            result = new <#= PropertyNamesDotnetTypeName #>(validateObjectPropertyName).Validate(result, level);
+            result = new <#= PropertyNamesDotnetTypeName #>(propertyName).Validate(result, level);
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
@@ -179,7 +179,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 
             foreach (System.Collections.Generic.KeyValuePair<Regex, PatternPropertyValidator> patternProperty in __CorvusPatternProperties)
             {
-                if (patternProperty.Key.IsMatch(validateObjectPropertyName))
+                if (patternProperty.Key.IsMatch(propertyName))
                 {
                     result = result.WithLocalProperty(propertyCount);
                     result = patternProperty.Value(property, result, level);

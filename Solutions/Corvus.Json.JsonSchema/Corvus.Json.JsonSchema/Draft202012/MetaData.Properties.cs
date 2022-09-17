@@ -301,96 +301,6 @@ public readonly partial struct MetaData
     }
 
     /// <summary>
-    /// Tries to get the validator for the given property.
-    /// </summary>
-    /// <param name = "property">The property for which to get the validator.</param>
-    /// <param name = "hasJsonElementBacking"><c>True</c> if the object containing the property has a JsonElement backing.</param>
-    /// <param name = "propertyValidator">The validator for the property, if provided by this schema.</param>
-    /// <returns><c>True</c> if the validator was found.</returns>
-    public bool __TryGetCorvusLocalPropertiesValidator(in JsonObjectProperty property, bool hasJsonElementBacking, [NotNullWhen(true)] out ObjectPropertyValidator? propertyValidator)
-    {
-        if (hasJsonElementBacking)
-        {
-            if (property.NameEquals(TitleUtf8JsonPropertyName.Span))
-            {
-                propertyValidator = __CorvusValidateTitle;
-                return true;
-            }
-            else if (property.NameEquals(DescriptionUtf8JsonPropertyName.Span))
-            {
-                propertyValidator = __CorvusValidateDescription;
-                return true;
-            }
-            else if (property.NameEquals(DefaultUtf8JsonPropertyName.Span))
-            {
-                propertyValidator = __CorvusValidateDefault;
-                return true;
-            }
-            else if (property.NameEquals(DeprecatedUtf8JsonPropertyName.Span))
-            {
-                propertyValidator = __CorvusValidateDeprecated;
-                return true;
-            }
-            else if (property.NameEquals(ReadOnlyUtf8JsonPropertyName.Span))
-            {
-                propertyValidator = __CorvusValidateReadOnly;
-                return true;
-            }
-            else if (property.NameEquals(WriteOnlyUtf8JsonPropertyName.Span))
-            {
-                propertyValidator = __CorvusValidateWriteOnly;
-                return true;
-            }
-            else if (property.NameEquals(ExamplesUtf8JsonPropertyName.Span))
-            {
-                propertyValidator = __CorvusValidateExamples;
-                return true;
-            }
-        }
-        else
-        {
-            if (property.NameEquals(TitleJsonPropertyName))
-            {
-                propertyValidator = __CorvusValidateTitle;
-                return true;
-            }
-            else if (property.NameEquals(DescriptionJsonPropertyName))
-            {
-                propertyValidator = __CorvusValidateDescription;
-                return true;
-            }
-            else if (property.NameEquals(DefaultJsonPropertyName))
-            {
-                propertyValidator = __CorvusValidateDefault;
-                return true;
-            }
-            else if (property.NameEquals(DeprecatedJsonPropertyName))
-            {
-                propertyValidator = __CorvusValidateDeprecated;
-                return true;
-            }
-            else if (property.NameEquals(ReadOnlyJsonPropertyName))
-            {
-                propertyValidator = __CorvusValidateReadOnly;
-                return true;
-            }
-            else if (property.NameEquals(WriteOnlyJsonPropertyName))
-            {
-                propertyValidator = __CorvusValidateWriteOnly;
-                return true;
-            }
-            else if (property.NameEquals(ExamplesJsonPropertyName))
-            {
-                propertyValidator = __CorvusValidateExamples;
-                return true;
-            }
-        }
-
-        propertyValidator = null;
-        return false;
-    }
-
-    /// <summary>
     /// Creates an instance of a <see cref = "MetaData"/>.
     /// </summary>
     public static MetaData Create(Corvus.Json.JsonString? title = null, Corvus.Json.JsonString? description = null, Corvus.Json.JsonAny? @default = null, Corvus.Json.JsonSchema.Draft202012.MetaData.DeprecatedEntity? deprecated = null, Corvus.Json.JsonSchema.Draft202012.MetaData.ReadOnlyEntity? readOnly = null, Corvus.Json.JsonSchema.Draft202012.MetaData.WriteOnlyEntity? writeOnly = null, Corvus.Json.JsonSchema.Draft202012.MetaData.JsonAnyArray? examples = null)
@@ -537,5 +447,95 @@ public readonly partial struct MetaData
     private static ValidationContext __CorvusValidateExamples(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
         return property.ValueAs<Corvus.Json.JsonSchema.Draft202012.MetaData.JsonAnyArray>().Validate(validationContext, level);
+    }
+
+    /// <summary>
+    /// Tries to get the validator for the given property.
+    /// </summary>
+    /// <param name = "property">The property for which to get the validator.</param>
+    /// <param name = "hasJsonElementBacking"><c>True</c> if the object containing the property has a JsonElement backing.</param>
+    /// <param name = "propertyValidator">The validator for the property, if provided by this schema.</param>
+    /// <returns><c>True</c> if the validator was found.</returns>
+    private bool __TryGetCorvusLocalPropertiesValidator(in JsonObjectProperty property, bool hasJsonElementBacking, [NotNullWhen(true)] out ObjectPropertyValidator? propertyValidator)
+    {
+        if (hasJsonElementBacking)
+        {
+            if (property.NameEquals(TitleUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateTitle;
+                return true;
+            }
+            else if (property.NameEquals(DescriptionUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateDescription;
+                return true;
+            }
+            else if (property.NameEquals(DefaultUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateDefault;
+                return true;
+            }
+            else if (property.NameEquals(DeprecatedUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateDeprecated;
+                return true;
+            }
+            else if (property.NameEquals(ReadOnlyUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateReadOnly;
+                return true;
+            }
+            else if (property.NameEquals(WriteOnlyUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateWriteOnly;
+                return true;
+            }
+            else if (property.NameEquals(ExamplesUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateExamples;
+                return true;
+            }
+        }
+        else
+        {
+            if (property.NameEquals(TitleJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateTitle;
+                return true;
+            }
+            else if (property.NameEquals(DescriptionJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateDescription;
+                return true;
+            }
+            else if (property.NameEquals(DefaultJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateDefault;
+                return true;
+            }
+            else if (property.NameEquals(DeprecatedJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateDeprecated;
+                return true;
+            }
+            else if (property.NameEquals(ReadOnlyJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateReadOnly;
+                return true;
+            }
+            else if (property.NameEquals(WriteOnlyJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateWriteOnly;
+                return true;
+            }
+            else if (property.NameEquals(ExamplesJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateExamples;
+                return true;
+            }
+        }
+
+        propertyValidator = null;
+        return false;
     }
 }

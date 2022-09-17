@@ -22,7 +22,19 @@ public readonly partial struct ScenarioWithResult
     private ValidationContext ValidateAllOf(in ValidationContext validationContext, ValidationLevel level)
     {
         ValidationContext result = validationContext;
-        ValidationContext allOfResult0 = this.As<Corvus.Json.Patch.SpecGenerator.ScenarioCommon>().Validate(validationContext.CreateChildContext(), level);
+        if (level > ValidationLevel.Basic)
+        {
+            result = result.PushValidationLocationProperty("allOf");
+        }
+
+        ValidationContext childContextBase = result;
+        ValidationContext childContext0 = childContextBase;
+        if (level > ValidationLevel.Basic)
+        {
+            childContext0 = childContext0.PushValidationLocationArrayIndex(0);
+        }
+
+        ValidationContext allOfResult0 = this.As<Corvus.Json.Patch.SpecGenerator.ScenarioCommon>().Validate(childContext0.CreateChildContext(), level);
         if (!allOfResult0.IsValid)
         {
             if (level >= ValidationLevel.Detailed)
@@ -44,7 +56,13 @@ public readonly partial struct ScenarioWithResult
             result = result.MergeChildContext(allOfResult0, level >= ValidationLevel.Detailed);
         }
 
-        ValidationContext allOfResult1 = this.As<Corvus.Json.Patch.SpecGenerator.NotDisabled>().Validate(validationContext.CreateChildContext(), level);
+        ValidationContext childContext1 = childContextBase;
+        if (level > ValidationLevel.Basic)
+        {
+            childContext1 = childContext1.PushValidationLocationArrayIndex(1);
+        }
+
+        ValidationContext allOfResult1 = this.As<Corvus.Json.Patch.SpecGenerator.NotDisabled>().Validate(childContext1.CreateChildContext(), level);
         if (!allOfResult1.IsValid)
         {
             if (level >= ValidationLevel.Detailed)
@@ -64,6 +82,11 @@ public readonly partial struct ScenarioWithResult
         else
         {
             result = result.MergeChildContext(allOfResult1, level >= ValidationLevel.Detailed);
+        }
+
+        if (level > ValidationLevel.Basic)
+        {
+            result = result.PopLocation(); // allOf
         }
 
         return result;

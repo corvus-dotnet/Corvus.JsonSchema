@@ -15,23 +15,35 @@ using Corvus.Json.Internal;
 
 namespace Corvus.Json.Patch.SpecGenerator;
 /// <summary>
-/// A type generated from a JsonSchema() specification.
+/// A type generated from a JsonSchema specification.
 /// </summary>
 public readonly partial struct DisabledScenario
 {
     private ValidationContext ValidateAllOf(in ValidationContext validationContext, ValidationLevel level)
     {
         ValidationContext result = validationContext;
-        ValidationContext allOfResult0 = this.As<Corvus.Json.Patch.SpecGenerator.ScenarioCommon>().Validate(validationContext.CreateChildContext(), level);
+        if (level > ValidationLevel.Basic)
+        {
+            result = result.PushValidationLocationProperty("allOf");
+        }
+
+        ValidationContext childContextBase = result;
+        ValidationContext childContext0 = childContextBase;
+        if (level > ValidationLevel.Basic)
+        {
+            childContext0 = childContext0.PushValidationLocationArrayIndex(0);
+        }
+
+        ValidationContext allOfResult0 = this.As<Corvus.Json.Patch.SpecGenerator.ScenarioCommon>().Validate(childContext0.CreateChildContext(), level);
         if (!allOfResult0.IsValid)
         {
             if (level >= ValidationLevel.Detailed)
             {
-                result = result.MergeChildContext(allOfResult0, true).WithResult(isValid: false, "Validation 10.2.1.1. allOf - failed to validate against the allOf Schema().");
+                result = result.MergeChildContext(allOfResult0, true).WithResult(isValid: false, "Validation 10.2.1.1. allOf - failed to validate against the allOf schema.");
             }
             else if (level >= ValidationLevel.Basic)
             {
-                result = result.MergeChildContext(allOfResult0, true).WithResult(isValid: false, "Validation 10.2.1.1. allOf - failed to validate against the allOf Schema().");
+                result = result.MergeChildContext(allOfResult0, true).WithResult(isValid: false, "Validation 10.2.1.1. allOf - failed to validate against the allOf schema.");
             }
             else
             {
@@ -42,6 +54,11 @@ public readonly partial struct DisabledScenario
         else
         {
             result = result.MergeChildContext(allOfResult0, level >= ValidationLevel.Detailed);
+        }
+
+        if (level > ValidationLevel.Basic)
+        {
+            result = result.PopLocation(); // allOf
         }
 
         return result;

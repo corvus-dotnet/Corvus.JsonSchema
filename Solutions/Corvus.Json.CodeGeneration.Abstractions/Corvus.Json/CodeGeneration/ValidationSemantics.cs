@@ -16,12 +16,12 @@ public enum ValidationSemantics
     Unknown = 0b0000,
 
     /// <summary>
-    /// Draf6 semantics.
+    /// Draft6 semantics.
     /// </summary>
     Draft6 = 0b0001,
 
     /// <summary>
-    /// Draf7 semantics.
+    /// Draft7 semantics.
     /// </summary>
     Draft7 = 0b0010,
 

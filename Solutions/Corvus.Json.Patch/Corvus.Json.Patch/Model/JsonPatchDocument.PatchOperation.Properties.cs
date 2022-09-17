@@ -103,26 +103,6 @@ public readonly partial struct JsonPatchDocument
         }
 
         /// <summary>
-        /// Tries to get the validator for the given property.
-        /// </summary>
-        /// <param name = "property">The property for which to get the validator.</param>
-        /// <param name = "hasJsonElementBacking"><c>True</c> if the object containing the property has a JsonElement backing.</param>
-        /// <param name = "propertyValidator">The validator for the property, if provided by this schema.</param>
-        /// <returns><c>True</c> if the validator was found.</returns>
-        public bool __TryGetCorvusLocalPropertiesValidator(in JsonObjectProperty property, bool hasJsonElementBacking, [NotNullWhen(true)] out ObjectPropertyValidator? propertyValidator)
-        {
-            if (hasJsonElementBacking)
-            {
-            }
-            else
-            {
-            }
-
-            propertyValidator = null;
-            return false;
-        }
-
-        /// <summary>
         /// Creates an instance of a <see cref = "PatchOperation"/>.
         /// </summary>
         public static PatchOperation Create(Corvus.Json.JsonPointer path, Corvus.Json.JsonString op)
@@ -151,6 +131,26 @@ public readonly partial struct JsonPatchDocument
         public PatchOperation WithOp(in Corvus.Json.JsonString value)
         {
             return this.SetProperty(OpJsonPropertyName, value);
+        }
+
+        /// <summary>
+        /// Tries to get the validator for the given property.
+        /// </summary>
+        /// <param name = "property">The property for which to get the validator.</param>
+        /// <param name = "hasJsonElementBacking"><c>True</c> if the object containing the property has a JsonElement backing.</param>
+        /// <param name = "propertyValidator">The validator for the property, if provided by this schema.</param>
+        /// <returns><c>True</c> if the validator was found.</returns>
+        private bool __TryGetCorvusLocalPropertiesValidator(in JsonObjectProperty property, bool hasJsonElementBacking, [NotNullWhen(true)] out ObjectPropertyValidator? propertyValidator)
+        {
+            if (hasJsonElementBacking)
+            {
+            }
+            else
+            {
+            }
+
+            propertyValidator = null;
+            return false;
         }
     }
 }

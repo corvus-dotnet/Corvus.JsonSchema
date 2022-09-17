@@ -16,7 +16,7 @@ using Corvus.Json.Internal;
 
 namespace Corvus.Json.Patch.SpecGenerator;
 /// <summary>
-/// A type generated from a JsonSchema() specification.
+/// A type generated from a JsonSchema specification.
 /// </summary>
 public readonly partial struct NotDisabled
 {
@@ -61,36 +61,6 @@ public readonly partial struct NotDisabled
     }
 
     /// <summary>
-    /// Tries to get the validator for the given property.
-    /// </summary>
-    /// <param name = "property">The property for which to get the validator.</param>
-    /// <param name = "hasJsonElementBacking"><c>True</c> if the object containing the property has a JsonElement backing.</param>
-    /// <param name = "propertyValidator">The validator for the property, if provided by this Schema().</param>
-    /// <returns><c>True</c> if the validator was found.</returns>
-    public bool __TryGetCorvusLocalPropertiesValidator(in JsonObjectProperty property, bool hasJsonElementBacking, [NotNullWhen(true)] out ObjectPropertyValidator? propertyValidator)
-    {
-        if (hasJsonElementBacking)
-        {
-            if (property.NameEquals(DisabledUtf8JsonPropertyName.Span))
-            {
-                propertyValidator = __CorvusValidateDisabled;
-                return true;
-            }
-        }
-        else
-        {
-            if (property.NameEquals(DisabledJsonPropertyName))
-            {
-                propertyValidator = __CorvusValidateDisabled;
-                return true;
-            }
-        }
-
-        propertyValidator = null;
-        return false;
-    }
-
-    /// <summary>
     /// Creates an instance of a <see cref = "NotDisabled"/>.
     /// </summary>
     public static NotDisabled Create(Corvus.Json.JsonNotAny? disabled = null)
@@ -117,5 +87,35 @@ public readonly partial struct NotDisabled
     private static ValidationContext __CorvusValidateDisabled(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
         return property.ValueAs<Corvus.Json.JsonNotAny>().Validate(validationContext, level);
+    }
+
+    /// <summary>
+    /// Tries to get the validator for the given property.
+    /// </summary>
+    /// <param name = "property">The property for which to get the validator.</param>
+    /// <param name = "hasJsonElementBacking"><c>True</c> if the object containing the property has a JsonElement backing.</param>
+    /// <param name = "propertyValidator">The validator for the property, if provided by this schema.</param>
+    /// <returns><c>True</c> if the validator was found.</returns>
+    private bool __TryGetCorvusLocalPropertiesValidator(in JsonObjectProperty property, bool hasJsonElementBacking, [NotNullWhen(true)] out ObjectPropertyValidator? propertyValidator)
+    {
+        if (hasJsonElementBacking)
+        {
+            if (property.NameEquals(DisabledUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateDisabled;
+                return true;
+            }
+        }
+        else
+        {
+            if (property.NameEquals(DisabledJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateDisabled;
+                return true;
+            }
+        }
+
+        propertyValidator = null;
+        return false;
     }
 }

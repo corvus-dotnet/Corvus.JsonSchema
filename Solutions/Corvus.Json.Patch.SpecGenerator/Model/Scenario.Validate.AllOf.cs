@@ -22,7 +22,19 @@ public readonly partial struct Scenario
     private ValidationContext ValidateAllOf(in ValidationContext validationContext, ValidationLevel level)
     {
         ValidationContext result = validationContext;
-        ValidationContext allOfResult0 = this.As<Corvus.Json.Patch.SpecGenerator.ScenarioCommon>().Validate(validationContext.CreateChildContext(), level);
+        if (level > ValidationLevel.Basic)
+        {
+            result = result.PushValidationLocationProperty("allOf");
+        }
+
+        ValidationContext childContextBase = result;
+        ValidationContext childContext0 = childContextBase;
+        if (level > ValidationLevel.Basic)
+        {
+            childContext0 = childContext0.PushValidationLocationArrayIndex(0);
+        }
+
+        ValidationContext allOfResult0 = this.As<Corvus.Json.Patch.SpecGenerator.ScenarioCommon>().Validate(childContext0.CreateChildContext(), level);
         if (!allOfResult0.IsValid)
         {
             if (level >= ValidationLevel.Detailed)
@@ -42,6 +54,11 @@ public readonly partial struct Scenario
         else
         {
             result = result.MergeChildContext(allOfResult0, level >= ValidationLevel.Detailed);
+        }
+
+        if (level > ValidationLevel.Basic)
+        {
+            result = result.PopLocation(); // allOf
         }
 
         return result;

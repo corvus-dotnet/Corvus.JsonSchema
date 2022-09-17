@@ -23,13 +23,13 @@ public readonly partial struct JsonPatchDocument
     public readonly partial struct Copy
     {
         /// <summary>
-        /// JSON property name for <see cref = "From"/>.
+        /// JSON property name for <see cref = "FromValue"/>.
         /// </summary>
-        public static readonly ReadOnlyMemory<byte> FromUtf8JsonPropertyName = new byte[]{102, 114, 111, 109};
+        public static readonly ReadOnlyMemory<byte> FromValueUtf8JsonPropertyName = new byte[]{102, 114, 111, 109};
         /// <summary>
-        /// JSON property name for <see cref = "From"/>.
+        /// JSON property name for <see cref = "FromValue"/>.
         /// </summary>
-        public const string FromJsonPropertyName = "from";
+        public const string FromValueJsonPropertyName = "from";
         /// <summary>
         /// JSON property name for <see cref = "Path"/>.
         /// </summary>
@@ -47,9 +47,9 @@ public readonly partial struct JsonPatchDocument
         /// </summary>
         public const string OpJsonPropertyName = "op";
         /// <summary>
-        /// Gets From.
+        /// Gets FromValue.
         /// </summary>
-        public Corvus.Json.JsonPointer From
+        public Corvus.Json.JsonPointer FromValue
         {
             get
             {
@@ -60,7 +60,7 @@ public readonly partial struct JsonPatchDocument
                         return default;
                     }
 
-                    if (this.jsonElementBacking.TryGetProperty(FromUtf8JsonPropertyName.Span, out JsonElement result))
+                    if (this.jsonElementBacking.TryGetProperty(FromValueUtf8JsonPropertyName.Span, out JsonElement result))
                     {
                         return new Corvus.Json.JsonPointer(result);
                     }
@@ -68,7 +68,7 @@ public readonly partial struct JsonPatchDocument
 
                 if ((this.backing & Backing.Object) != 0)
                 {
-                    if (this.objectBacking.TryGetValue(FromJsonPropertyName, out JsonAny result))
+                    if (this.objectBacking.TryGetValue(FromValueJsonPropertyName, out JsonAny result))
                     {
                         return result.As<Corvus.Json.JsonPointer>();
                     }
@@ -143,52 +143,12 @@ public readonly partial struct JsonPatchDocument
         }
 
         /// <summary>
-        /// Tries to get the validator for the given property.
-        /// </summary>
-        /// <param name = "property">The property for which to get the validator.</param>
-        /// <param name = "hasJsonElementBacking"><c>True</c> if the object containing the property has a JsonElement backing.</param>
-        /// <param name = "propertyValidator">The validator for the property, if provided by this schema.</param>
-        /// <returns><c>True</c> if the validator was found.</returns>
-        public bool __TryGetCorvusLocalPropertiesValidator(in JsonObjectProperty property, bool hasJsonElementBacking, [NotNullWhen(true)] out ObjectPropertyValidator? propertyValidator)
-        {
-            if (hasJsonElementBacking)
-            {
-                if (property.NameEquals(FromUtf8JsonPropertyName.Span))
-                {
-                    propertyValidator = __CorvusValidateFrom;
-                    return true;
-                }
-                else if (property.NameEquals(OpUtf8JsonPropertyName.Span))
-                {
-                    propertyValidator = __CorvusValidateOp;
-                    return true;
-                }
-            }
-            else
-            {
-                if (property.NameEquals(FromJsonPropertyName))
-                {
-                    propertyValidator = __CorvusValidateFrom;
-                    return true;
-                }
-                else if (property.NameEquals(OpJsonPropertyName))
-                {
-                    propertyValidator = __CorvusValidateOp;
-                    return true;
-                }
-            }
-
-            propertyValidator = null;
-            return false;
-        }
-
-        /// <summary>
         /// Creates an instance of a <see cref = "Copy"/>.
         /// </summary>
-        public static Copy Create(Corvus.Json.JsonPointer from, Corvus.Json.JsonPointer path)
+        public static Copy Create(Corvus.Json.JsonPointer fromValue, Corvus.Json.JsonPointer path)
         {
             var builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
-            builder.Add(FromJsonPropertyName, from.AsAny);
+            builder.Add(FromValueJsonPropertyName, fromValue.AsAny);
             builder.Add(PathJsonPropertyName, path.AsAny);
             builder.Add(OpJsonPropertyName, new Corvus.Json.Patch.Model.JsonPatchDocument.Copy.OpEntity().AsAny);
             return builder.ToImmutable();
@@ -199,9 +159,9 @@ public readonly partial struct JsonPatchDocument
         /// </summary>
         /// <param name = "value">The value to set.</param>
         /// <returns>The entity with the updated property.</returns>
-        public Copy WithFrom(in Corvus.Json.JsonPointer value)
+        public Copy WithFromValue(in Corvus.Json.JsonPointer value)
         {
-            return this.SetProperty(FromJsonPropertyName, value);
+            return this.SetProperty(FromValueJsonPropertyName, value);
         }
 
         /// <summary>
@@ -214,7 +174,7 @@ public readonly partial struct JsonPatchDocument
             return this.SetProperty(PathJsonPropertyName, value);
         }
 
-        private static ValidationContext __CorvusValidateFrom(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
+        private static ValidationContext __CorvusValidateFromValue(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
         {
             return property.ValueAs<Corvus.Json.JsonPointer>().Validate(validationContext, level);
         }
@@ -222,6 +182,46 @@ public readonly partial struct JsonPatchDocument
         private static ValidationContext __CorvusValidateOp(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
         {
             return property.ValueAs<Corvus.Json.Patch.Model.JsonPatchDocument.Copy.OpEntity>().Validate(validationContext, level);
+        }
+
+        /// <summary>
+        /// Tries to get the validator for the given property.
+        /// </summary>
+        /// <param name = "property">The property for which to get the validator.</param>
+        /// <param name = "hasJsonElementBacking"><c>True</c> if the object containing the property has a JsonElement backing.</param>
+        /// <param name = "propertyValidator">The validator for the property, if provided by this schema.</param>
+        /// <returns><c>True</c> if the validator was found.</returns>
+        private bool __TryGetCorvusLocalPropertiesValidator(in JsonObjectProperty property, bool hasJsonElementBacking, [NotNullWhen(true)] out ObjectPropertyValidator? propertyValidator)
+        {
+            if (hasJsonElementBacking)
+            {
+                if (property.NameEquals(FromValueUtf8JsonPropertyName.Span))
+                {
+                    propertyValidator = __CorvusValidateFromValue;
+                    return true;
+                }
+                else if (property.NameEquals(OpUtf8JsonPropertyName.Span))
+                {
+                    propertyValidator = __CorvusValidateOp;
+                    return true;
+                }
+            }
+            else
+            {
+                if (property.NameEquals(FromValueJsonPropertyName))
+                {
+                    propertyValidator = __CorvusValidateFromValue;
+                    return true;
+                }
+                else if (property.NameEquals(OpJsonPropertyName))
+                {
+                    propertyValidator = __CorvusValidateOp;
+                    return true;
+                }
+            }
+
+            propertyValidator = null;
+            return false;
         }
     }
 }

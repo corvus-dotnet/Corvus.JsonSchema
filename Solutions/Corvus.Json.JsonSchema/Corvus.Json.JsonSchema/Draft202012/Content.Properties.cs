@@ -141,56 +141,6 @@ public readonly partial struct Content
     }
 
     /// <summary>
-    /// Tries to get the validator for the given property.
-    /// </summary>
-    /// <param name = "property">The property for which to get the validator.</param>
-    /// <param name = "hasJsonElementBacking"><c>True</c> if the object containing the property has a JsonElement backing.</param>
-    /// <param name = "propertyValidator">The validator for the property, if provided by this schema.</param>
-    /// <returns><c>True</c> if the validator was found.</returns>
-    public bool __TryGetCorvusLocalPropertiesValidator(in JsonObjectProperty property, bool hasJsonElementBacking, [NotNullWhen(true)] out ObjectPropertyValidator? propertyValidator)
-    {
-        if (hasJsonElementBacking)
-        {
-            if (property.NameEquals(ContentEncodingUtf8JsonPropertyName.Span))
-            {
-                propertyValidator = __CorvusValidateContentEncoding;
-                return true;
-            }
-            else if (property.NameEquals(ContentMediaTypeUtf8JsonPropertyName.Span))
-            {
-                propertyValidator = __CorvusValidateContentMediaType;
-                return true;
-            }
-            else if (property.NameEquals(ContentSchemaUtf8JsonPropertyName.Span))
-            {
-                propertyValidator = __CorvusValidateContentSchema;
-                return true;
-            }
-        }
-        else
-        {
-            if (property.NameEquals(ContentEncodingJsonPropertyName))
-            {
-                propertyValidator = __CorvusValidateContentEncoding;
-                return true;
-            }
-            else if (property.NameEquals(ContentMediaTypeJsonPropertyName))
-            {
-                propertyValidator = __CorvusValidateContentMediaType;
-                return true;
-            }
-            else if (property.NameEquals(ContentSchemaJsonPropertyName))
-            {
-                propertyValidator = __CorvusValidateContentSchema;
-                return true;
-            }
-        }
-
-        propertyValidator = null;
-        return false;
-    }
-
-    /// <summary>
     /// Creates an instance of a <see cref = "Content"/>.
     /// </summary>
     public static Content Create(Corvus.Json.JsonString? contentEncoding = null, Corvus.Json.JsonString? contentMediaType = null, Corvus.Json.JsonSchema.Draft202012.Schema? contentSchema = null)
@@ -257,5 +207,55 @@ public readonly partial struct Content
     private static ValidationContext __CorvusValidateContentSchema(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
         return property.ValueAs<Corvus.Json.JsonSchema.Draft202012.Schema>().Validate(validationContext, level);
+    }
+
+    /// <summary>
+    /// Tries to get the validator for the given property.
+    /// </summary>
+    /// <param name = "property">The property for which to get the validator.</param>
+    /// <param name = "hasJsonElementBacking"><c>True</c> if the object containing the property has a JsonElement backing.</param>
+    /// <param name = "propertyValidator">The validator for the property, if provided by this schema.</param>
+    /// <returns><c>True</c> if the validator was found.</returns>
+    private bool __TryGetCorvusLocalPropertiesValidator(in JsonObjectProperty property, bool hasJsonElementBacking, [NotNullWhen(true)] out ObjectPropertyValidator? propertyValidator)
+    {
+        if (hasJsonElementBacking)
+        {
+            if (property.NameEquals(ContentEncodingUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateContentEncoding;
+                return true;
+            }
+            else if (property.NameEquals(ContentMediaTypeUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateContentMediaType;
+                return true;
+            }
+            else if (property.NameEquals(ContentSchemaUtf8JsonPropertyName.Span))
+            {
+                propertyValidator = __CorvusValidateContentSchema;
+                return true;
+            }
+        }
+        else
+        {
+            if (property.NameEquals(ContentEncodingJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateContentEncoding;
+                return true;
+            }
+            else if (property.NameEquals(ContentMediaTypeJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateContentMediaType;
+                return true;
+            }
+            else if (property.NameEquals(ContentSchemaJsonPropertyName))
+            {
+                propertyValidator = __CorvusValidateContentSchema;
+                return true;
+            }
+        }
+
+        propertyValidator = null;
+        return false;
     }
 }

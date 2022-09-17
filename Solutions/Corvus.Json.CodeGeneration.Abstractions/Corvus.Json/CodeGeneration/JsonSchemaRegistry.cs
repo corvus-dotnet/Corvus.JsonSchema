@@ -15,7 +15,6 @@ internal class JsonSchemaRegistry
 {
     private static readonly JsonReference DefaultAbsoluteLocation = new("https://endjin.com/");
     private readonly Dictionary<string, LocatedSchema> locatedSchema = new();
-    private readonly Dictionary<string, string> dynamicToAbsoluteLocations = new();
     private readonly IDocumentResolver documentResolver;
 
     /// <summary>

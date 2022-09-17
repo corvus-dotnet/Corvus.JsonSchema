@@ -59,7 +59,7 @@ public partial class CodeGeneratorValidateType
     {
         get
         {
-            return this.TypeDeclaration.Schema().IsObjectType() || this.HasProperties || this.DirectConversions.Any(c => c.IsObject) || this.HasConstObject;
+            return this.TypeDeclaration.Schema().IsObjectType() || this.HasProperties || this.Conversions.Any(c => c.IsObject) || this.HasConstObject;
         }
     }
 
@@ -70,7 +70,7 @@ public partial class CodeGeneratorValidateType
     {
         get
         {
-            return this.TypeDeclaration.Schema().IsArrayType() || this.DirectConversions.Any(c => c.IsArray) || this.HasConstArray;
+            return this.TypeDeclaration.Schema().IsArrayType() || this.Conversions.Any(c => c.IsArray) || this.HasConstArray;
         }
     }
 
@@ -81,7 +81,7 @@ public partial class CodeGeneratorValidateType
     {
         get
         {
-            return this.TypeDeclaration.Schema().IsNumberType() || this.DirectConversions.Any(c => c.IsNumber) || this.HasConstNumber;
+            return this.TypeDeclaration.Schema().IsNumberType() || this.Conversions.Any(c => c.IsNumber) || this.HasConstNumber;
         }
     }
 
@@ -92,7 +92,7 @@ public partial class CodeGeneratorValidateType
     {
         get
         {
-            return this.TypeDeclaration.Schema().IsStringType() || this.DirectConversions.Any(c => c.IsString) || this.HasConstString;
+            return this.TypeDeclaration.Schema().IsStringType() || this.Conversions.Any(c => c.IsString) || this.HasConstString;
         }
     }
 
@@ -103,7 +103,7 @@ public partial class CodeGeneratorValidateType
     {
         get
         {
-            return this.TypeDeclaration.Schema().IsBooleanType() || this.DirectConversions.Any(c => c.IsBoolean) || this.HasConstBoolean;
+            return this.TypeDeclaration.Schema().IsBooleanType() || this.Conversions.Any(c => c.IsBoolean) || this.HasConstBoolean;
         }
     }
 
