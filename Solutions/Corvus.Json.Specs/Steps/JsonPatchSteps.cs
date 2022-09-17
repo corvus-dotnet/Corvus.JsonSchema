@@ -92,7 +92,7 @@ public class JsonPatchSteps
                             throw new JsonPatchException("Invalid copy operation.");
                         }
 
-                        builder = builder.Copy(copy.From, operation.Path);
+                        builder = builder.Copy(copy.FromValue, operation.Path);
                         break;
                     case "move":
                         JsonPatchDocument.Move move = operation.AsMove;
@@ -102,7 +102,7 @@ public class JsonPatchSteps
                             throw new JsonPatchException("Invalid move operation.");
                         }
 
-                        builder = builder.Move(move.From, operation.Path);
+                        builder = builder.Move(move.FromValue, operation.Path);
                         break;
                     case "remove":
                         builder = builder.Remove(operation.Path);

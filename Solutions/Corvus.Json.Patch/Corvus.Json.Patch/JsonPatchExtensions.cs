@@ -151,40 +151,6 @@ public static partial class JsonPatchExtensions
         return int.TryParse(pathSegment, out index);
     }
 
-    private static bool TryGetTerminatingPathElement(ReadOnlySpan<char> opPathTail, out ReadOnlySpan<char> propertyName)
-    {
-        int index = 0;
-        int start = 0;
-        int length = 0;
-        int opPathTailLength = opPathTail.Length;
-        while (index < opPathTailLength)
-        {
-            // If we hit a separator, we have a potential problem.
-            if (opPathTail[index] == '/')
-            {
-                if (index == 0)
-                {
-                    // Phew! we were at the start, we can just skip it
-                    start++;
-                    index++;
-                    continue;
-                }
-                else
-                {
-                    // Uh-oh! We found another separator - this wasn't for us after all.
-                    propertyName = default;
-                    return false;
-                }
-            }
-
-            length++;
-            index++;
-        }
-
-        propertyName = opPathTail.Slice(start, length);
-        return true;
-    }
-
     private static bool TryApplyAdd(in JsonAny node, in JsonPatchDocument.PatchOperation patchOperation, out JsonAny result)
     {
         patchOperation.TryGetProperty(JsonPatchDocument.AddEntity.PathUtf8JsonPropertyName.Span, out JsonAny pathAny);
@@ -205,7 +171,7 @@ public static partial class JsonPatchExtensions
 
     private static bool TryApplyCopy(in JsonAny node, in JsonPatchDocument.PatchOperation patchOperation, out JsonAny result)
     {
-        patchOperation.TryGetProperty(JsonPatchDocument.Copy.FromUtf8JsonPropertyName.Span, out JsonAny fromAny);
+        patchOperation.TryGetProperty(JsonPatchDocument.Copy.FromValueUtf8JsonPropertyName.Span, out JsonAny fromAny);
         patchOperation.TryGetProperty(JsonPatchDocument.Copy.PathUtf8JsonPropertyName.Span, out JsonAny pathAny);
         string from = fromAny;
         string path = pathAny;
@@ -234,7 +200,7 @@ public static partial class JsonPatchExtensions
 
     private static bool TryApplyMove(in JsonAny node, in JsonPatchDocument.PatchOperation patchOperation, out JsonAny result)
     {
-        patchOperation.TryGetProperty(JsonPatchDocument.Move.FromUtf8JsonPropertyName.Span, out JsonAny fromAny);
+        patchOperation.TryGetProperty(JsonPatchDocument.Move.FromValueUtf8JsonPropertyName.Span, out JsonAny fromAny);
         patchOperation.TryGetProperty(JsonPatchDocument.Move.PathUtf8JsonPropertyName.Span, out JsonAny pathAny);
         string from = fromAny;
         string path = pathAny;
