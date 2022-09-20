@@ -6,10 +6,8 @@
 using System.Buffers;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
-using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using Corvus.Json.Internal;
 
 namespace Corvus.Json.UriTemplates;
 
@@ -18,14 +16,7 @@ namespace Corvus.Json.UriTemplates;
 /// </summary>
 public readonly struct UriTemplate
 {
-    private const string Varname = "[a-zA-Z0-9_]*";
-    private const string Op = "(?<op>[+#./;?&]?)";
-    private const string Var = "(?<var>(?:(?<lvar>" + Varname + ")[*]?,?)*)";
-    private const string Varspec = "(?<varspec>{" + Op + Var + "})";
     private static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(10);
-    private static readonly Regex FindParam = new(Varspec, RegexOptions.Compiled, DefaultTimeout);
-    private static readonly Regex TemplateConversion = new(@"([^{]|^)\?", RegexOptions.Compiled, DefaultTimeout);
-
     private readonly string template;
     private readonly ImmutableDictionary<string, JsonAny> parameters;
     private readonly bool resolvePartially;
@@ -65,7 +56,7 @@ public readonly struct UriTemplate
 
         if (createParameterRegex)
         {
-            this.parameterRegex = new Regex(CreateMatchingRegex(template), RegexOptions.Compiled, DefaultTimeout);
+            this.parameterRegex = new Regex(UriTemplateParser.CreateMatchingRegex(template), RegexOptions.Compiled, DefaultTimeout);
         }
         else
         {
@@ -95,52 +86,6 @@ public readonly struct UriTemplate
     }
 
     /// <summary>
-    /// Creates a regular expression matching the given URI template.
-    /// </summary>
-    /// <param name="uriTemplate">The uri template.</param>
-    /// <returns>The regular expression string matching the URI template.</returns>
-    public static string CreateMatchingRegex(string uriTemplate)
-    {
-        string template = TemplateConversion.Replace(uriTemplate, @"$+\?");
-        string regex = FindParam.Replace(template, Match);
-        return regex + "$";
-
-        static string Match(Match m)
-        {
-            CaptureCollection captures = m.Groups["lvar"].Captures;
-            string[] paramNames = ArrayPool<string>.Shared.Rent(captures.Count);
-            try
-            {
-                int written = 0;
-                foreach (Capture capture in captures)
-                {
-                    if (!string.IsNullOrEmpty(capture.Value))
-                    {
-                        paramNames[written++] = capture.Value;
-                    }
-                }
-
-                ReadOnlySpan<string> paramNamesSpan = paramNames.AsSpan()[0..written];
-
-                string op = m.Groups["op"].Value;
-                return op switch
-                {
-                    "?" => GetQueryExpression(paramNamesSpan, prefix: "?"),
-                    "&" => GetQueryExpression(paramNamesSpan, prefix: "&"),
-                    "#" => GetExpression(paramNamesSpan, prefix: "#"),
-                    "/" => GetExpression(paramNamesSpan, prefix: "/"),
-                    "+" => GetExpression(paramNamesSpan),
-                    _ => GetExpression(paramNamesSpan),
-                };
-            }
-            finally
-            {
-                ArrayPool<string>.Shared.Return(paramNames);
-            }
-        }
-    }
-
-    /// <summary>
     /// Gets the parameters from the given URI.
     /// </summary>
     /// <param name="uri">The URI from which to get the parameters.</param>
@@ -159,7 +104,7 @@ public readonly struct UriTemplate
     /// <returns>True if the parameters were successfully decomposed, otherwise false.</returns>
     public bool TryGetParameters(string uri, [NotNullWhen(true)] out ImmutableDictionary<string, JsonAny>? parameters)
     {
-        Regex regex = this.parameterRegex ?? new Regex(CreateMatchingRegex(this.template), RegexOptions.None, DefaultTimeout);
+        Regex regex = this.parameterRegex ?? new Regex(UriTemplateParser.CreateMatchingRegex(this.template), RegexOptions.None, DefaultTimeout);
         Match match = regex.Match(uri);
         if (match.Success)
         {
@@ -399,90 +344,5 @@ public readonly struct UriTemplate
         }
 
         return output.WrittenSpan.ToString();
-    }
-
-    private static string GetQueryExpression(ReadOnlySpan<string> paramNames, string prefix)
-    {
-        StringBuilder sb = StringBuilderPool.Shared.Get();
-
-        try
-        {
-            foreach (string paramname in paramNames)
-            {
-                sb.Append('\\');
-                sb.Append(prefix);
-                sb.Append('?');
-                if (prefix == "?")
-                {
-                    prefix = "&";
-                }
-
-                sb.Append("(?:");
-                sb.Append(paramname);
-                sb.Append('=');
-
-                sb.Append("(?<");
-                sb.Append(paramname);
-                sb.Append('>');
-                sb.Append("[^/?&]+");
-                sb.Append(')');
-                sb.Append(")?");
-            }
-
-            return sb.ToString();
-        }
-        finally
-        {
-            StringBuilderPool.Shared.Return(sb);
-        }
-    }
-
-    private static string GetExpression(ReadOnlySpan<string> paramNames, string? prefix = null)
-    {
-        StringBuilder sb = StringBuilderPool.Shared.Get();
-
-        try
-        {
-            string paramDelim = prefix switch
-            {
-                "#" => "[^,]+",
-                "/" => "[^/?]+",
-                "?" or "&" => "[^&#]+",
-                ";" => "[^;/?#]+",
-                "." => "[^./?#]+",
-                _ => "[^/?&]+",
-            };
-
-            foreach (string paramname in paramNames)
-            {
-                if (string.IsNullOrEmpty(paramname))
-                {
-                    continue;
-                }
-
-                if (prefix != null)
-                {
-                    sb.Append('\\');
-                    sb.Append(prefix);
-                    sb.Append('?');
-                    if (prefix == "#")
-                    {
-                        prefix = ",";
-                    }
-                }
-
-                sb.Append("(?<");
-                sb.Append(paramname);
-                sb.Append('>');
-                sb.Append(paramDelim); // Param Value
-                sb.Append(")?");
-            }
-
-            return sb.ToString();
-        }
-        finally
-        {
-            StringBuilderPool.Shared.Return(sb);
-        }
     }
 }

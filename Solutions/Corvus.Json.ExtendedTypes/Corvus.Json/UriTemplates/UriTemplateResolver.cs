@@ -338,7 +338,7 @@ public static class UriTemplateResolver
         {
             if (varSpec.OperatorInfo.Named)
             {
-                AppendNameAndStringValue(output, varSpec.VarName, varSpec.OperatorInfo.IfEmpty, value.IsNullOrUndefined(), value, varSpec.PrefixLength, varSpec.OperatorInfo.AllowReserved);
+                AppendNameAndStringValue(output, varSpec.VarName, varSpec.OperatorInfo.IfEmpty, value, varSpec.PrefixLength, varSpec.OperatorInfo.AllowReserved);
             }
             else
             {
@@ -474,11 +474,10 @@ public static class UriTemplateResolver
     /// <param name="output">The output buffer to which to write the value.</param>
     /// <param name="variable">The variable name.</param>
     /// <param name="ifEmpty">The string to add if the value is empty.</param>
-    /// <param name="valueIsEmpty">True if the value is empty.</param>
     /// <param name="value">The value to append.</param>
     /// <param name="prefixLength">The prefix length.</param>
     /// <param name="allowReserved">Whether to allow reserved characters.</param>
-    private static void AppendNameAndStringValue(IBufferWriter<char> output, ReadOnlySpan<char> variable, string ifEmpty, bool valueIsEmpty, JsonAny value, int prefixLength, bool allowReserved)
+    private static void AppendNameAndStringValue(IBufferWriter<char> output, ReadOnlySpan<char> variable, string ifEmpty, JsonAny value, int prefixLength, bool allowReserved)
     {
         output.Write(variable);
 
@@ -668,7 +667,7 @@ public static class UriTemplateResolver
     private ref struct VariableSpec
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="VarSpec"/> struct.
+        /// Initializes a new instance of the <see cref="VariableSpec"/> struct.
         /// </summary>
         /// <param name="operatorInfo">The operator info.</param>
         /// <param name="variableName">The variable name.</param>
