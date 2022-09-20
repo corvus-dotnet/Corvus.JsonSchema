@@ -26,18 +26,6 @@ public readonly struct UriTemplate
     private static readonly Regex FindParam = new(Varspec, RegexOptions.Compiled, DefaultTimeout);
     private static readonly Regex TemplateConversion = new(@"([^{]|^)\?", RegexOptions.Compiled, DefaultTimeout);
 
-    private static readonly Dictionary<char, OperatorInfo> Operators = new()
-        {
-            { '\0', new OperatorInfo(@default: true, first: string.Empty, separator: ',', named: false, ifEmpty: string.Empty, allowReserved: false) },
-            { '+', new OperatorInfo(@default: false, first: string.Empty, separator: ',', named: false, ifEmpty: string.Empty, allowReserved: true) },
-            { '.', new OperatorInfo(@default: false, first: ".", separator: '.', named: false, ifEmpty: string.Empty, allowReserved: false) },
-            { '/', new OperatorInfo(@default: false, first: "/", separator: '/', named: false, ifEmpty: string.Empty, allowReserved: false) },
-            { ';', new OperatorInfo(@default: false, first: ";", separator: ';', named: true, ifEmpty: string.Empty, allowReserved: false) },
-            { '?', new OperatorInfo(@default: false, first: "?", separator: '&', named: true, ifEmpty: "=", allowReserved: false) },
-            { '&', new OperatorInfo(@default: false, first: "&", separator: '&', named: true, ifEmpty: "=", allowReserved: false) },
-            { '#', new OperatorInfo(@default: false, first: "#", separator: ',', named: false, ifEmpty: string.Empty, allowReserved: true) },
-        };
-
     private readonly string template;
     private readonly ImmutableDictionary<string, JsonAny> parameters;
     private readonly bool resolvePartially;
@@ -384,15 +372,16 @@ public readonly struct UriTemplate
     /// <returns>An enumerator for the parameter names.</returns>
     public ImmutableArray<string> GetParameterNames()
     {
-        var result = ResultBuilder.Get();
-        try
+        ImmutableArray<string>.Builder builder = ImmutableArray.CreateBuilder<string>();
+
+        ArrayBufferWriter<char> output = new();
+        var properties = this.parameters.ToImmutableDictionary(k => (JsonPropertyName)k.Key, v => v.Value);
+        UriTemplateResolver.TryResolveResult(this.template.AsSpan(), output, this.resolvePartially, JsonAny.FromProperties(properties), AccumulateParameterNames);
+        return builder.ToImmutable();
+
+        void AccumulateParameterNames(ReadOnlySpan<char> name)
         {
-            this.ResolveResult(ref result);
-            return result.ParameterNames;
-        }
-        finally
-        {
-            ResultBuilder.Return(ref result);
+            builder.Add(name.ToString());
         }
     }
 
@@ -402,25 +391,14 @@ public readonly struct UriTemplate
     /// <returns>The resolved template.</returns>
     public string Resolve()
     {
-        var result = ResultBuilder.Get();
-        try
+        ArrayBufferWriter<char> output = new();
+        var properties = this.parameters.ToImmutableDictionary(k => (JsonPropertyName)k.Key, v => v.Value);
+        if (!UriTemplateResolver.TryResolveResult(this.template.AsSpan(), output, this.resolvePartially, JsonAny.FromProperties(properties)))
         {
-            this.ResolveResult(ref result);
-            return result.ToString();
+            throw new ArgumentException("Malformed template.");
         }
-        finally
-        {
-            ResultBuilder.Return(ref result);
-        }
-    }
 
-    private static bool IsVarNameChar(char c)
-    {
-        return (c >= 'A' && c <= 'z') ////     Alpha
-                || (c >= '0' && c <= '9') //// Digit
-                || c == '_'
-                || c == '%'
-                || c == '.';
+        return output.WrittenSpan.ToString();
     }
 
     private static string GetQueryExpression(ReadOnlySpan<string> paramNames, string prefix)
@@ -506,295 +484,5 @@ public readonly struct UriTemplate
         {
             StringBuilderPool.Shared.Return(sb);
         }
-    }
-
-    private static OperatorInfo GetOperator(char operatorIndicator)
-    {
-        OperatorInfo op = operatorIndicator switch
-        {
-            '+' or ';' or '/' or '#' or '&' or '?' or '.' => Operators[operatorIndicator],
-            _ => Operators['\0'],
-        };
-        return op;
-    }
-
-    private void ResolveResult(ref ResultBuilder result)
-    {
-        States currentState = States.CopyingLiterals;
-        int expressionStart = -1;
-        int expressionEnd = -1;
-        int index = 0;
-        ReadOnlySpan<char> templateSpan = this.template.AsSpan();
-
-        foreach (char character in templateSpan)
-        {
-            switch (currentState)
-            {
-                case States.CopyingLiterals:
-                    if (character == '{')
-                    {
-                        if (expressionStart != -1)
-                        {
-                            result.Append(templateSpan[expressionStart..expressionEnd]);
-                        }
-
-                        currentState = States.ParsingExpression;
-                        expressionStart = index + 1;
-                        expressionEnd = index + 1;
-                    }
-                    else if (character == '}')
-                    {
-                        throw new ArgumentException("Malformed template, unexpected } : " + result.ToString());
-                    }
-                    else
-                    {
-                        if (expressionStart == -1)
-                        {
-                            expressionStart = index;
-                        }
-
-                        expressionEnd = index + 1;
-                    }
-
-                    break;
-                case States.ParsingExpression:
-                    System.Diagnostics.Debug.Assert(expressionStart != -1, "The current expression must be set before parsing the expression.");
-
-                    if (character == '}')
-                    {
-                        this.ProcessExpression(templateSpan[expressionStart..expressionEnd], ref result);
-
-                        expressionStart = -1;
-                        expressionEnd = -1;
-                        currentState = States.CopyingLiterals;
-                    }
-                    else
-                    {
-                        expressionEnd = index + 1;
-                    }
-
-                    break;
-            }
-
-            index++;
-        }
-
-        if (currentState == States.ParsingExpression)
-        {
-            System.Diagnostics.Debug.Assert(expressionStart != -1, "The current expression must be set before parsing the expression.");
-
-            result.Append("{");
-            result.Append(templateSpan[expressionStart..expressionEnd]);
-
-            throw new ArgumentException("Malformed template, missing } : " + result.ToString());
-        }
-        else
-        {
-            if (expressionStart != -1)
-            {
-                result.Append(templateSpan[expressionStart..expressionEnd]);
-            }
-        }
-
-        if (result.ErrorDetected)
-        {
-            throw new ArgumentException("Malformed template : " + result.ToString());
-        }
-    }
-
-    private void ProcessExpression(ReadOnlySpan<char> currentExpression, ref ResultBuilder result)
-    {
-        if (currentExpression.Length == 0)
-        {
-            result.ErrorDetected = true;
-            result.Append("{}");
-            return;
-        }
-
-        OperatorInfo op = GetOperator(currentExpression[0]);
-
-        int firstChar = op.Default ? 0 : 1;
-        bool multivariableExpression = false;
-        int varNameStart = -1;
-        int varNameEnd = -1;
-
-        var varSpec = new VarSpec(op, ReadOnlySpan<char>.Empty);
-        for (int i = firstChar; i < currentExpression.Length; i++)
-        {
-            char currentChar = currentExpression[i];
-            switch (currentChar)
-            {
-                case '*':
-                    if (varSpec.PrefixLength == 0)
-                    {
-                        varSpec.Explode = true;
-                    }
-                    else
-                    {
-                        result.ErrorDetected = true;
-                    }
-
-                    break;
-
-                case ':': // Parse Prefix Modifier
-                    currentChar = currentExpression[++i];
-                    int prefixStart = i;
-                    while (currentChar >= '0' && currentChar <= '9' && i < currentExpression.Length)
-                    {
-                        i++;
-                        if (i < currentExpression.Length)
-                        {
-                            currentChar = currentExpression[i];
-                        }
-                    }
-
-                    varSpec.PrefixLength = int.Parse(currentExpression[prefixStart..i]);
-                    i--;
-                    break;
-
-                case ',':
-                    varSpec.VarName = currentExpression[varNameStart..varNameEnd];
-                    multivariableExpression = true;
-                    bool success = this.ProcessVariable(ref varSpec, ref result, multivariableExpression);
-                    bool isFirst = varSpec.First;
-
-                    // Reset for new variable
-                    varSpec = new VarSpec(op, ReadOnlySpan<char>.Empty);
-                    varNameStart = -1;
-                    varNameEnd = -1;
-                    if (success || !isFirst || this.resolvePartially)
-                    {
-                        varSpec.First = false;
-                    }
-
-                    if (!success && this.resolvePartially)
-                    {
-                        result.Append(",");
-                    }
-
-                    break;
-
-                default:
-                    if (IsVarNameChar(currentChar))
-                    {
-                        if (varNameStart == -1)
-                        {
-                            varNameStart = i;
-                        }
-
-                        varNameEnd = i + 1;
-                    }
-                    else
-                    {
-                        result.ErrorDetected = true;
-                    }
-
-                    break;
-            }
-        }
-
-        if (varNameStart != -1)
-        {
-            varSpec.VarName = currentExpression[varNameStart..varNameEnd];
-        }
-
-        this.ProcessVariable(ref varSpec, ref result, multivariableExpression);
-        if (multivariableExpression && this.resolvePartially)
-        {
-            result.Append("}");
-        }
-    }
-
-    private bool ProcessVariable(ref VarSpec varSpec, ref ResultBuilder result, bool multiVariableExpression = false)
-    {
-        string varname = varSpec.VarName.ToString();
-
-        result.AddParameterName(varname);
-
-        if (!this.parameters.ContainsKey(varname)
-                || this.parameters[varname].IsNullOrUndefined()
-                || (this.parameters[varname].ValueKind == JsonValueKind.Array && this.parameters[varname].GetArrayLength() == 0)
-                || (this.parameters[varname].ValueKind == JsonValueKind.Object && !this.parameters[varname].HasProperties()))
-        {
-            if (this.resolvePartially)
-            {
-                if (multiVariableExpression)
-                {
-                    if (varSpec.First)
-                    {
-                        result.Append("{");
-                    }
-
-                    result.Append(varSpec.ToString());
-                }
-                else
-                {
-                    result.Append("{");
-                    result.Append(varSpec.ToString());
-                    result.Append("}");
-                }
-
-                return false;
-            }
-
-            return false;
-        }
-
-        if (varSpec.First)
-        {
-            result.Append(varSpec.OperatorInfo.First);
-        }
-        else
-        {
-            result.Append(varSpec.OperatorInfo.Separator);
-        }
-
-        JsonAny value = this.parameters[varname];
-
-        JsonValueKind valueKind = value.ValueKind;
-        if (valueKind == JsonValueKind.Array)
-        {
-            if (varSpec.OperatorInfo.Named && !varSpec.Explode) //// exploding will prefix with list name
-            {
-                result.AppendName(varname, varSpec.OperatorInfo, value.GetArrayLength() == 0);
-            }
-
-            result.AppendArray(varSpec.OperatorInfo, varSpec.Explode, varname, value);
-        }
-        else if (valueKind == JsonValueKind.Object)
-        {
-            if (varSpec.PrefixLength != 0)
-            {
-                result.ErrorDetected = true;
-                return false;
-            }
-
-            if (varSpec.OperatorInfo.Named && !varSpec.Explode) //// exploding will prefix with list name
-            {
-                result.AppendName(varname, varSpec.OperatorInfo, !value.HasProperties());
-            }
-
-            result.AppendObject(varSpec.OperatorInfo, varSpec.Explode, value);
-        }
-        else if (valueKind == JsonValueKind.String)
-        {
-            if (varSpec.OperatorInfo.Named)
-            {
-                result.AppendName(varname, varSpec.OperatorInfo, value.IsNullOrUndefined() || string.IsNullOrEmpty(value));
-            }
-
-            result.AppendValue(value, varSpec.PrefixLength, varSpec.OperatorInfo.AllowReserved);
-        }
-        else
-        {
-            if (varSpec.OperatorInfo.Named)
-            {
-                result.AppendName(varname, varSpec.OperatorInfo, value.IsNullOrUndefined());
-            }
-
-            result.AppendValue(value, varSpec.PrefixLength, varSpec.OperatorInfo.AllowReserved);
-        }
-
-        return true;
     }
 }

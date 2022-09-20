@@ -2,7 +2,12 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
+using System.Diagnostics.CodeAnalysis;
+using System.Reflection.Emit;
+using System.Text;
 using System.Text.Json;
+using Corvus.Json.Internal;
 
 namespace Corvus.Json;
 
@@ -154,6 +159,103 @@ public readonly struct JsonObjectProperty : IEquatable<JsonObjectProperty>
         }
 
         return default;
+    }
+
+    /// <summary>
+    ///   Attempts to represent the JSON property name as the given type.
+    /// </summary>
+    /// <typeparam name="TState">The type of the parser state.</typeparam>
+    /// <typeparam name="TResult">The type with which to represent the JSON string.</typeparam>
+    /// <param name="parser">A delegate to the method that parses the JSON string.</param>
+    /// <param name="state">The state for the parser.</param>
+    /// <param name="value">Receives the value.</param>
+    /// <returns>
+    ///   <see langword="true"/> if the string can be represented as the given type,
+    ///   <see langword="false"/> otherwise.
+    /// </returns>
+    /// <exception cref="ObjectDisposedException">
+    ///   The parent <see cref="JsonDocument"/> has been disposed.
+    /// </exception>
+    public bool TryGetName<TState, TResult>(in Utf8Parser<TState, TResult> parser, in TState state, [NotNullWhen(true)] out TResult? value)
+    {
+        return this.TryGetName(parser, state, true, out value);
+    }
+
+    /// <summary>
+    ///   Attempts to represent the current JSON string as the given type.
+    /// </summary>
+    /// <typeparam name="TState">The type of the parser state.</typeparam>
+    /// <typeparam name="TResult">The type with which to represent the JSON string.</typeparam>
+    /// <param name="parser">A delegate to the method that parses the JSON string.</param>
+    /// <param name="state">The state for the parser.</param>
+    /// <param name="decode">Indicates whether the UTF8 JSON string should be decoded.</param>
+    /// <param name="value">Receives the value.</param>
+    /// <remarks>
+    ///   This method does not create a representation of values other than JSON strings.
+    /// </remarks>
+    /// <returns>
+    ///   <see langword="true"/> if the string can be represented as the given type,
+    ///   <see langword="false"/> otherwise.
+    /// </returns>
+    /// <exception cref="ObjectDisposedException">
+    ///   The parent <see cref="JsonDocument"/> has been disposed.
+    /// </exception>
+    public bool TryGetName<TState, TResult>(in Utf8Parser<TState, TResult> parser, in TState state, bool decode, [NotNullWhen(true)] out TResult? value)
+    {
+        if ((this.backing & Backing.JsonProperty) != 0)
+        {
+            return this.jsonProperty.TryGetName(parser, state, decode, out value);
+        }
+
+        int required = Encoding.UTF8.GetMaxByteCount(this.name.Name.Length);
+        byte[]? rentedFromPool = null;
+        Span<byte> buffer =
+            required > JsonValueHelpers.MaxStackAlloc
+            ? (rentedFromPool = ArrayPool<byte>.Shared.Rent(required))
+            : stackalloc byte[JsonValueHelpers.MaxStackAlloc];
+
+        try
+        {
+            int written = Encoding.UTF8.GetBytes(this.name.Name, buffer);
+            return parser(buffer[..written], state, out value);
+        }
+        finally
+        {
+            if (rentedFromPool is not null)
+            {
+                // Clear the buffer on return as property names may be security sensitive
+                buffer.Clear();
+                ArrayPool<byte>.Shared.Return(rentedFromPool, true);
+            }
+        }
+    }
+
+    /// <summary>
+    ///   Attempts to represent the current JSON string as the given type.
+    /// </summary>
+    /// <typeparam name="TState">The type of the parser state.</typeparam>
+    /// <typeparam name="TResult">The type with which to represent the JSON string.</typeparam>
+    /// <param name="parser">A delegate to the method that parses the JSON string.</param>
+    /// <param name="state">The state for the parser.</param>
+    /// <param name="value">Receives the value.</param>
+    /// <remarks>
+    ///   This method does not create a representation of values other than JSON strings.
+    /// </remarks>
+    /// <returns>
+    ///   <see langword="true"/> if the string can be represented as the given type,
+    ///   <see langword="false"/> otherwise.
+    /// </returns>
+    /// <exception cref="ObjectDisposedException">
+    ///   The parent <see cref="JsonDocument"/> has been disposed.
+    /// </exception>
+    public bool TryGetName<TState, TResult>(in Parser<TState, TResult> parser, in TState state, [NotNullWhen(true)] out TResult? value)
+    {
+        if ((this.backing & Backing.JsonProperty) != 0)
+        {
+            return this.jsonProperty.TryGetName(parser, state, out value);
+        }
+
+        return parser(this.Name.Name.AsSpan(), state, out value);
     }
 
     /// <summary>
