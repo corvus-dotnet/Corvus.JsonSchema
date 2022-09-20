@@ -56,7 +56,7 @@ public readonly struct UriTemplate
 
         if (createParameterRegex)
         {
-            this.parameterRegex = new Regex(UriTemplateParser.CreateMatchingRegex(template), RegexOptions.Compiled, DefaultTimeout);
+            this.parameterRegex = new Regex(UriTemplateRegexBuilder.CreateMatchingRegex(template), RegexOptions.Compiled, DefaultTimeout);
         }
         else
         {
@@ -104,7 +104,8 @@ public readonly struct UriTemplate
     /// <returns>True if the parameters were successfully decomposed, otherwise false.</returns>
     public bool TryGetParameters(string uri, [NotNullWhen(true)] out ImmutableDictionary<string, JsonAny>? parameters)
     {
-        Regex regex = this.parameterRegex ?? new Regex(UriTemplateParser.CreateMatchingRegex(this.template), RegexOptions.None, DefaultTimeout);
+        Regex regex = this.parameterRegex ?? new Regex(UriTemplateRegexBuilder.CreateMatchingRegex(this.template), RegexOptions.None, DefaultTimeout);
+
         Match match = regex.Match(uri);
         if (match.Success)
         {

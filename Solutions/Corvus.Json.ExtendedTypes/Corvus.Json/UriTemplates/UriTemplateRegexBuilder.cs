@@ -1,4 +1,4 @@
-﻿// <copyright file="UriTemplateParser.cs" company="Endjin Limited">
+﻿// <copyright file="UriTemplateRegexBuilder.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
@@ -12,7 +12,7 @@ namespace Corvus.Json.UriTemplates;
 /// <summary>
 /// Parses the parameters from a UriTemplate.
 /// </summary>
-public static class UriTemplateParser
+public static class UriTemplateRegexBuilder
 {
     private const string Varname = "[a-zA-Z0-9_]*";
     private const string Op = "(?<op>[+#./;?&]?)";
@@ -35,6 +35,7 @@ public static class UriTemplateParser
     public static string CreateMatchingRegex(string uriTemplate)
     {
         string template = TemplateConversion.Replace(uriTemplate, @"$+\?");
+
         string regex = FindParam.Replace(template, Match);
         return regex + "$";
 

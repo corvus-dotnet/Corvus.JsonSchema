@@ -285,7 +285,7 @@ public class UriTemplateSteps
     [When(@"I create a regex for the template ""(.*)""")]
     public void GivenICreateARegexForTheTemplate(string regex)
     {
-        this.scenarioContext.Set(new Regex(UriTemplateParser.CreateMatchingRegex(regex)), RegexKey);
+        this.scenarioContext.Set(new Regex(UriTemplateRegexBuilder.CreateMatchingRegex(regex)), RegexKey);
     }
 
     /// <summary>
