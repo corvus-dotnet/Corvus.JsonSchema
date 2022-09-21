@@ -14,6 +14,8 @@ namespace Corvus.Json.UriTemplates;
 /// </summary>
 public static class UriTemplateParser
 {
+    //// Note that we use Regular Expressions to build parse sequences, not to parse the actual results.
+    //// That is done using a zero-allocation model, with callbacks for the parameters we find.
     private const string Varname = "[a-zA-Z0-9_]*";
     private const string Op = "(?<op>[+#./;?&]?)";
     private const string Var = "(?<var>(?:(?<lvar>" + Varname + ")[*]?,?)*)";
@@ -25,9 +27,10 @@ public static class UriTemplateParser
     /// <summary>
     /// A callback when a parameter is found.
     /// </summary>
+    /// <param name="reset">Whether to reset the parameters that we have seen so far.</param>
     /// <param name="name">The name of the parameter.</param>
     /// <param name="value">The string representation of the parameter.</param>
-    public delegate void ParameterCallback(ReadOnlySpan<char> name, ReadOnlySpan<char> value);
+    public delegate void ParameterCallback(bool reset, ReadOnlySpan<char> name, ReadOnlySpan<char> value);
 
     /// <summary>
     /// The interface implemented by a URI parser.
@@ -64,8 +67,9 @@ public static class UriTemplateParser
         /// <param name="segment">The segment to consume.</param>
         /// <param name="charsConsumed">The number of characters consumed.</param>
         /// <param name="parameterCallback">The callback when a parameter is discovered.</param>
+        /// <param name="tail">The tail for this segment.</param>
         /// <returns>True if the segment was consumed successfully, otherwise false.</returns>
-        bool Consume(ReadOnlySpan<char> segment, out int charsConsumed, ParameterCallback parameterCallback);
+        bool Consume(ReadOnlySpan<char> segment, out int charsConsumed, ParameterCallback? parameterCallback, ref Consumer tail);
     }
 
     /// <summary>
@@ -189,6 +193,65 @@ public static class UriTemplateParser
         }
     }
 
+    private ref struct Consumer
+    {
+        private readonly ReadOnlySpan<IUriTemplatePatternElement> elements;
+
+        public Consumer(ReadOnlySpan<IUriTemplatePatternElement> elements)
+        {
+            this.elements = elements;
+        }
+
+        public bool Consume(ReadOnlySpan<char> segment, out int charsConsumed, ParameterCallback? parameterCallback)
+        {
+            charsConsumed = 0;
+
+            // First, we attempt to consume, but we don't update parameters as we do so.
+            // Once we find a match, we try to match the rest.
+            int consumedBySequence = 0;
+            while (charsConsumed < segment.Length && !this.ConsumeCore(segment[charsConsumed..], out consumedBySequence, parameterCallback))
+            {
+                parameterCallback?.Invoke(true, ReadOnlySpan<char>.Empty, ReadOnlySpan<char>.Empty);
+                charsConsumed++;
+            }
+
+            if (charsConsumed == segment.Length)
+            {
+                parameterCallback?.Invoke(true, ReadOnlySpan<char>.Empty, ReadOnlySpan<char>.Empty);
+                charsConsumed = 0;
+                return false;
+            }
+
+            charsConsumed += consumedBySequence;
+            return true;
+        }
+
+        public bool MatchesAsTail(ReadOnlySpan<char> segment, out int charsConsumed)
+        {
+            return this.ConsumeCore(segment, out charsConsumed, null);
+        }
+
+        private bool ConsumeCore(ReadOnlySpan<char> segment, out int charsConsumed, ParameterCallback? parameterCallback)
+        {
+            charsConsumed = 0;
+
+            for (int i = 0; i < this.elements.Length; ++i)
+            {
+                IUriTemplatePatternElement element = this.elements[i];
+                Consumer tail = new(this.elements.Length > (i + 1) ? this.elements[(i + 1)..] : ReadOnlySpan<IUriTemplatePatternElement>.Empty);
+                if (!element.Consume(segment[charsConsumed..], out int localConsumed, parameterCallback, ref tail))
+                {
+                    charsConsumed = 0;
+                    return false;
+                }
+
+                charsConsumed += localConsumed;
+            }
+
+            return true;
+        }
+    }
+
     /// <summary>
     /// Represents a sequence of pattern elements.
     /// </summary>
@@ -207,64 +270,12 @@ public static class UriTemplateParser
         /// <inheritdoc/>
         public bool ParseUri(ReadOnlySpan<char> uri, ParameterCallback parameterCallback)
         {
-            bool result = this.Consume(uri, out int charsConsumed, parameterCallback);
+            Consumer sequence = new(this.elements.AsSpan());
+            bool result = sequence.Consume(uri, out int charsConsumed, parameterCallback);
 
             // We have successfully parsed the uri if all of our elements successfully consumed
             // the contents they were expecting, and we have no characters left over.
             return result && charsConsumed == uri.Length;
-        }
-
-        private bool Consume(ReadOnlySpan<char> segment, out int charsConsumed, ParameterCallback parameterCallback)
-        {
-            charsConsumed = 0;
-
-            // First, we attempt to consume, but we don't update parameters as we do so.
-            // Once we find a match, we try to match the rest.
-            while (charsConsumed < segment.Length && !ConsumeCore(segment[charsConsumed..], out _, NopCallback))
-            {
-                charsConsumed++;
-            }
-
-            if (charsConsumed == segment.Length)
-            {
-                charsConsumed = 0;
-                return false;
-            }
-
-            bool result = ConsumeCore(segment[charsConsumed..], out int localConsumed, parameterCallback);
-            if (result)
-            {
-                charsConsumed += localConsumed;
-            }
-            else
-            {
-                charsConsumed = 0;
-            }
-
-            return result;
-
-            bool ConsumeCore(ReadOnlySpan<char> segment, out int charsConsumed, ParameterCallback parameterCallback)
-            {
-                charsConsumed = 0;
-
-                foreach (IUriTemplatePatternElement element in this.elements)
-                {
-                    if (!element.Consume(segment[charsConsumed..], out int localConsumed, parameterCallback))
-                    {
-                        charsConsumed = 0;
-                        return false;
-                    }
-
-                    charsConsumed += localConsumed;
-                }
-
-                return true;
-            }
-
-            static void NopCallback(ReadOnlySpan<char> name, ReadOnlySpan<char> value)
-            {
-                // Do nothing
-            }
         }
     }
 
@@ -281,7 +292,7 @@ public static class UriTemplateParser
         }
 
         /// <inheritdoc/>
-        public bool Consume(ReadOnlySpan<char> segment, out int charsConsumed, ParameterCallback parameterCallback)
+        public bool Consume(ReadOnlySpan<char> segment, out int charsConsumed, ParameterCallback? parameterCallback, ref Consumer tail)
         {
             if (segment.StartsWith(this.sequence.Span))
             {
@@ -337,7 +348,7 @@ public static class UriTemplateParser
         }
 
         /// <inheritdoc/>
-        public bool Consume(ReadOnlySpan<char> segment, out int charsConsumed, ParameterCallback parameterCallback)
+        public bool Consume(ReadOnlySpan<char> segment, out int charsConsumed, ParameterCallback? parameterCallback, ref Consumer tail)
         {
             charsConsumed = 0;
             int parameterIndex = 0;
@@ -400,7 +411,7 @@ public static class UriTemplateParser
                         }
 
                         // Tell the world about this parameter (note that the span for the value could be empty).
-                        parameterCallback(currentParameterName, segment[segmentStart..segmentEnd]);
+                        parameterCallback?.Invoke(false, currentParameterName, segment[segmentStart..segmentEnd]);
                         charsConsumed = segmentEnd;
                         foundMatches = true;
 
@@ -411,6 +422,13 @@ public static class UriTemplateParser
                         if (parameterIndex >= this.parameterNames.Length)
                         {
                             // We found at least this match!
+                            return true;
+                        }
+
+                        // We matched the tail, so we don't want to consume the next one.
+                        if (tail.MatchesAsTail(segment[charsConsumed..], out int tailConsumed) && (tailConsumed + charsConsumed == segment.Length))
+                        {
+                            // The tail matches the rest of the segment, so we will ignore our next parameter.
                             return true;
                         }
 
@@ -447,7 +465,7 @@ public static class UriTemplateParser
         }
 
         /// <inheritdoc/>
-        public bool Consume(ReadOnlySpan<char> segment, out int charsConsumed, ParameterCallback parameterCallback)
+        public bool Consume(ReadOnlySpan<char> segment, out int charsConsumed, ParameterCallback? parameterCallback, ref Consumer tail)
         {
             charsConsumed = 0;
             int parameterIndex = 0;
@@ -578,7 +596,7 @@ public static class UriTemplateParser
                                 }
 
                                 // Tell the world about this parameter (note that the span for the value could be empty).
-                                parameterCallback(currentParameterName, segment[segmentStart..segmentEnd]);
+                                parameterCallback?.Invoke(false, currentParameterName, segment[segmentStart..segmentEnd]);
                                 charsConsumed = segmentEnd;
                                 foundMatches = true;
 

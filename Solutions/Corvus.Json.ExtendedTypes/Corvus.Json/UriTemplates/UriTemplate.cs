@@ -15,7 +15,6 @@ namespace Corvus.Json.UriTemplates;
 /// </summary>
 public readonly struct UriTemplate
 {
-    private static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(10);
     private readonly string template;
     private readonly ImmutableDictionary<string, JsonAny> parameters;
     private readonly bool resolvePartially;
@@ -113,10 +112,17 @@ public readonly struct UriTemplate
             return true;
         }
 
-        void AddResults(ReadOnlySpan<char> name, ReadOnlySpan<char> value)
+        void AddResults(bool reset, ReadOnlySpan<char> name, ReadOnlySpan<char> value)
         {
-            // Note we are making no attempt to make this low-allocation
-            result.Add(name.ToString(), JsonAny.ParseUriValue(Uri.UnescapeDataString(value.ToString())));
+            if (reset)
+            {
+                result.Clear();
+            }
+            else
+            {
+                // Note we are making no attempt to make this low-allocation
+                result.Add(name.ToString(), JsonAny.ParseUriValue(Uri.UnescapeDataString(value.ToString())));
+            }
         }
 
         parameters = null;
