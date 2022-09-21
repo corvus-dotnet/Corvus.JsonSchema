@@ -5,6 +5,7 @@
 using System.Buffers;
 using System.Collections.Immutable;
 using System.Text.RegularExpressions;
+using System.Xml.Linq;
 
 namespace Corvus.Json.UriTemplates;
 
@@ -107,7 +108,7 @@ public static class UriTemplateParser
             if (match.Index > lastIndex)
             {
                 // There must be a literal sequence in this gap
-                elements.Add(new LiteralSequence(templateSpan[lastIndex..(match.Index - 1)]));
+                AddLiteral(templateSpan, elements, lastIndex, match);
             }
 
             elements.Add(Match(match));
@@ -121,6 +122,28 @@ public static class UriTemplateParser
         }
 
         return elements;
+
+        static int UnescapeQuestionMarkInPlace(Span<char> literal)
+        {
+            int readIndex = 0;
+            int writeIndex = 0;
+
+            while (readIndex < literal.Length)
+            {
+                if (readIndex < (literal.Length - 1) && literal[readIndex] == '\\' && literal[readIndex + 1] == '?')
+                {
+                    // Skip the escaping slash
+                    readIndex++;
+                    continue;
+                }
+
+                literal[writeIndex] = literal[readIndex];
+                ++readIndex;
+                ++writeIndex;
+            }
+
+            return writeIndex;
+        }
 
         static IUriTemplatePatternElement Match(Match m)
         {
@@ -155,35 +178,30 @@ public static class UriTemplateParser
                 ArrayPool<string>.Shared.Return(paramNames);
             }
         }
+
+        static void AddLiteral(ReadOnlySpan<char> templateSpan, List<IUriTemplatePatternElement> elements, int lastIndex, Match match)
+        {
+            ReadOnlySpan<char> literal = templateSpan[lastIndex..match.Index];
+            Span<char> unescaped = stackalloc char[literal.Length];
+            literal.CopyTo(unescaped);
+            int written = UnescapeQuestionMarkInPlace(unescaped);
+            elements.Add(new LiteralSequence(unescaped[..written]));
+        }
     }
 
     /// <summary>
     /// Represents a sequence of pattern elements.
     /// </summary>
-    private sealed class Sequence : IUriTemplatePatternElement, IUriParser
+    private sealed class Sequence : IUriParser
     {
+        private readonly IUriTemplatePatternElement firstElement;
         private readonly ImmutableArray<IUriTemplatePatternElement> elements;
 
         public Sequence(IEnumerable<IUriTemplatePatternElement> elements)
         {
-            this.elements = elements.ToImmutableArray();
-        }
-
-        /// <inheritdoc/>
-        public bool Consume(ReadOnlySpan<char> segment, out int charsConsumed, ParameterCallback parameterCallback)
-        {
-            charsConsumed = 0;
-            foreach (IUriTemplatePatternElement element in this.elements)
-            {
-                if (!element.Consume(segment[charsConsumed..], out int localConsumed, parameterCallback))
-                {
-                    return false;
-                }
-
-                charsConsumed += localConsumed;
-            }
-
-            return true;
+            var list = elements.ToList();
+            this.firstElement = list[0];
+            this.elements = list.ToImmutableArray();
         }
 
         /// <inheritdoc/>
@@ -194,6 +212,59 @@ public static class UriTemplateParser
             // We have successfully parsed the uri if all of our elements successfully consumed
             // the contents they were expecting, and we have no characters left over.
             return result && charsConsumed == uri.Length;
+        }
+
+        private bool Consume(ReadOnlySpan<char> segment, out int charsConsumed, ParameterCallback parameterCallback)
+        {
+            charsConsumed = 0;
+
+            // First, we attempt to consume, but we don't update parameters as we do so.
+            // Once we find a match, we try to match the rest.
+            while (charsConsumed < segment.Length && !ConsumeCore(segment[charsConsumed..], out _, NopCallback))
+            {
+                charsConsumed++;
+            }
+
+            if (charsConsumed == segment.Length)
+            {
+                charsConsumed = 0;
+                return false;
+            }
+
+            bool result = ConsumeCore(segment[charsConsumed..], out int localConsumed, parameterCallback);
+            if (result)
+            {
+                charsConsumed += localConsumed;
+            }
+            else
+            {
+                charsConsumed = 0;
+            }
+
+            return result;
+
+            bool ConsumeCore(ReadOnlySpan<char> segment, out int charsConsumed, ParameterCallback parameterCallback)
+            {
+                charsConsumed = 0;
+
+                foreach (IUriTemplatePatternElement element in this.elements)
+                {
+                    if (!element.Consume(segment[charsConsumed..], out int localConsumed, parameterCallback))
+                    {
+                        charsConsumed = 0;
+                        return false;
+                    }
+
+                    charsConsumed += localConsumed;
+                }
+
+                return true;
+            }
+
+            static void NopCallback(ReadOnlySpan<char> name, ReadOnlySpan<char> value)
+            {
+                // Do nothing
+            }
         }
     }
 
@@ -312,7 +383,7 @@ public static class UriTemplateParser
 
                     case State.LookingForParams:
                         // We found the prefix, so we need to find the next block until the terminator.
-                        int segmentStart = charsConsumed + currentParameterName.Length + 1;
+                        int segmentStart = charsConsumed;
                         int segmentEnd = segmentStart;
 
                         // So we did match the parameter and reach '=' now we are looking ahead to the next terminator, or the end of the segment
@@ -321,8 +392,7 @@ public static class UriTemplateParser
                             char terminator = segment[segmentEnd];
                             if (terminatorsSpan.Contains(terminator))
                             {
-                                // Wind back from the terminator, and break out of the while because we've found the end.
-                                segmentEnd--;
+                                // Break out of the while because we've found the end.
                                 break;
                             }
 
@@ -331,7 +401,7 @@ public static class UriTemplateParser
 
                         // Tell the world about this parameter (note that the span for the value could be empty).
                         parameterCallback(currentParameterName, segment[segmentStart..segmentEnd]);
-                        charsConsumed = segmentEnd + 1;
+                        charsConsumed = segmentEnd;
                         foundMatches = true;
 
                         // Start looking for the next parameter.
@@ -346,6 +416,7 @@ public static class UriTemplateParser
 
                         // Otherwise, start looking for the next parameter
                         currentParameterName = this.parameterNames[parameterIndex].Span;
+
                         state = this.prefix != '\0' ? State.LookingForPrefix : State.LookingForParams;
                         break;
                 }
@@ -499,8 +570,7 @@ public static class UriTemplateParser
                                     char terminator = segment[segmentEnd];
                                     if (terminator == '/' || terminator == '?' || terminator == '&')
                                     {
-                                        // Wind back from the terminator, and break out because we've found the end.
-                                        segmentEnd--;
+                                        // Break out because we've found the end.
                                         break;
                                     }
 
@@ -509,7 +579,7 @@ public static class UriTemplateParser
 
                                 // Tell the world about this parameter (note that the span for the value could be empty).
                                 parameterCallback(currentParameterName, segment[segmentStart..segmentEnd]);
-                                charsConsumed = segmentEnd + 1;
+                                charsConsumed = segmentEnd;
                                 foundMatches = true;
 
                                 // Start looking for the next parameter.
@@ -524,6 +594,7 @@ public static class UriTemplateParser
 
                                 // Otherwise, start looking for the next parameter
                                 currentParameterName = this.parameterNames[parameterIndex].Span;
+
                                 state = State.LookingForPrefix;
                             }
                         }

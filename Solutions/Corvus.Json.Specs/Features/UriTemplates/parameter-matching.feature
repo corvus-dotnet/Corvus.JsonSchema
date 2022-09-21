@@ -44,17 +44,6 @@ Scenario: Get parameters from multiple query string with two parameter values
 		| blur | 45    |
 		| blob | 23    |
 
-Scenario: Get parameters from multiple query string with two parameter values out of order
-	When I create a UriTemplate for "http://example.com/{+p1}/{p2*}{?blur,blob}"
-	Then the parameters for "http://example.com/foo/bar?blob=23&blur=45" should be
-		| name | value |
-		| p1   | "foo" |
-		| p2   | "bar" |
-		| blur | 45    |
-		| blob | 23    |
-
-
-
 Scenario: Get parameters from multiple query string with optional and mandatory parameters
 	When I create a UriTemplate for "http://example.com/{+p1}/{p2*}{?blur}{&blob}"
 	Then the parameters for "http://example.com/foo/bar?blur=45&blob=23" should be

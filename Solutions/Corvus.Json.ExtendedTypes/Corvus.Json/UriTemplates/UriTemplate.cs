@@ -7,7 +7,6 @@ using System.Buffers;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 
 namespace Corvus.Json.UriTemplates;
 
@@ -20,7 +19,7 @@ public readonly struct UriTemplate
     private readonly string template;
     private readonly ImmutableDictionary<string, JsonAny> parameters;
     private readonly bool resolvePartially;
-    private readonly Regex? parameterRegex;
+    private readonly UriTemplateParser.IUriParser? parser;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="UriTemplate"/> struct.
@@ -56,11 +55,11 @@ public readonly struct UriTemplate
 
         if (createParameterRegex)
         {
-            this.parameterRegex = new Regex(UriTemplateRegexBuilder.CreateMatchingRegex(template), RegexOptions.Compiled, DefaultTimeout);
+            this.parser = UriTemplateParser.CreateParser(template);
         }
         else
         {
-            this.parameterRegex = null;
+            this.parser = null;
         }
     }
 
@@ -71,12 +70,12 @@ public readonly struct UriTemplate
     /// <param name="resolvePartially">Whether to partially resolve the template.</param>
     /// <param name="parameters">The parameters dictionary.</param>
     /// <param name="parameterRegex">The parameter regular expression.</param>
-    internal UriTemplate(string template, bool resolvePartially, ImmutableDictionary<string, JsonAny> parameters, Regex? parameterRegex)
+    internal UriTemplate(string template, bool resolvePartially, ImmutableDictionary<string, JsonAny> parameters, UriTemplateParser.IUriParser? parameterRegex)
     {
         this.resolvePartially = resolvePartially;
         this.template = template;
         this.parameters = parameters;
-        this.parameterRegex = parameterRegex;
+        this.parser = parameterRegex;
     }
 
     private enum States
@@ -104,27 +103,20 @@ public readonly struct UriTemplate
     /// <returns>True if the parameters were successfully decomposed, otherwise false.</returns>
     public bool TryGetParameters(string uri, [NotNullWhen(true)] out ImmutableDictionary<string, JsonAny>? parameters)
     {
-        Regex regex = this.parameterRegex ?? new Regex(UriTemplateRegexBuilder.CreateMatchingRegex(this.template), RegexOptions.None, DefaultTimeout);
+        UriTemplateParser.IUriParser parser = this.parser ?? UriTemplateParser.CreateParser(this.template);
 
-        Match match = regex.Match(uri);
-        if (match.Success)
+        ImmutableDictionary<string, JsonAny>.Builder result = ImmutableDictionary.CreateBuilder<string, JsonAny>();
+
+        if (parser.ParseUri(uri.AsSpan(), AddResults))
         {
-            ImmutableDictionary<string, JsonAny>.Builder result = ImmutableDictionary.CreateBuilder<string, JsonAny>();
-
-            for (int x = 1; x < match.Groups.Count; x++)
-            {
-                if (match.Groups[x].Success)
-                {
-                    string paramName = regex.GroupNameFromNumber(x);
-                    if (!string.IsNullOrEmpty(paramName))
-                    {
-                        result.Add(paramName, JsonAny.ParseUriValue(Uri.UnescapeDataString(match.Groups[x].Value)));
-                    }
-                }
-            }
-
             parameters = result.ToImmutable();
             return true;
+        }
+
+        void AddResults(ReadOnlySpan<char> name, ReadOnlySpan<char> value)
+        {
+            // Note we are making no attempt to make this low-allocation
+            result.Add(name.ToString(), JsonAny.ParseUriValue(Uri.UnescapeDataString(value.ToString())));
         }
 
         parameters = null;
@@ -187,7 +179,7 @@ public readonly struct UriTemplate
             builder.Add(name, property.Value);
         }
 
-        return new UriTemplate(this.template, this.resolvePartially, builder.ToImmutable(), this.parameterRegex);
+        return new UriTemplate(this.template, this.resolvePartially, builder.ToImmutable(), this.parser);
     }
 
     /// <summary>
@@ -209,7 +201,7 @@ public readonly struct UriTemplate
             builder.Add(name, value);
         }
 
-        return new UriTemplate(this.template, this.resolvePartially, builder.ToImmutable(), this.parameterRegex);
+        return new UriTemplate(this.template, this.resolvePartially, builder.ToImmutable(), this.parser);
     }
 
     /// <summary>
@@ -222,7 +214,7 @@ public readonly struct UriTemplate
     public UriTemplate SetParameter<T>(string name, T value)
         where T : struct, IJsonValue
     {
-        return new UriTemplate(this.template, this.resolvePartially, this.parameters.SetItem(name, value.AsAny), this.parameterRegex);
+        return new UriTemplate(this.template, this.resolvePartially, this.parameters.SetItem(name, value.AsAny), this.parser);
     }
 
     /// <summary>
@@ -232,7 +224,7 @@ public readonly struct UriTemplate
     /// <returns>An instance of the template with the updated parameters.</returns>
     public UriTemplate ClearParameter(string name)
     {
-        return new UriTemplate(this.template, this.resolvePartially, this.parameters.Remove(name), this.parameterRegex);
+        return new UriTemplate(this.template, this.resolvePartially, this.parameters.Remove(name), this.parser);
     }
 
     /// <summary>
@@ -243,7 +235,7 @@ public readonly struct UriTemplate
     /// <returns>An instance of the template with the updated parameters.</returns>
     public UriTemplate SetParameter(string name, string value)
     {
-        return new UriTemplate(this.template, this.resolvePartially, this.parameters.SetItem(name, value), this.parameterRegex);
+        return new UriTemplate(this.template, this.resolvePartially, this.parameters.SetItem(name, value), this.parser);
     }
 
     /// <summary>
@@ -254,7 +246,7 @@ public readonly struct UriTemplate
     /// <returns>An instance of the template with the updated parameters.</returns>
     public UriTemplate SetParameter(string name, double value)
     {
-        return new UriTemplate(this.template, this.resolvePartially, this.parameters.SetItem(name, value), this.parameterRegex);
+        return new UriTemplate(this.template, this.resolvePartially, this.parameters.SetItem(name, value), this.parser);
     }
 
     /// <summary>
@@ -265,7 +257,7 @@ public readonly struct UriTemplate
     /// <returns>An instance of the template with the updated parameters.</returns>
     public UriTemplate SetParameter(string name, int value)
     {
-        return new UriTemplate(this.template, this.resolvePartially, this.parameters.SetItem(name, value), this.parameterRegex);
+        return new UriTemplate(this.template, this.resolvePartially, this.parameters.SetItem(name, value), this.parser);
     }
 
     /// <summary>
@@ -276,7 +268,7 @@ public readonly struct UriTemplate
     /// <returns>An instance of the template with the updated parameters.</returns>
     public UriTemplate SetParameter(string name, long value)
     {
-        return new UriTemplate(this.template, this.resolvePartially, this.parameters.SetItem(name, value), this.parameterRegex);
+        return new UriTemplate(this.template, this.resolvePartially, this.parameters.SetItem(name, value), this.parser);
     }
 
     /// <summary>
@@ -287,7 +279,7 @@ public readonly struct UriTemplate
     /// <returns>An instance of the template with the updated parameters.</returns>
     public UriTemplate SetParameter(string name, bool value)
     {
-        return new UriTemplate(this.template, this.resolvePartially, this.parameters.SetItem(name, value), this.parameterRegex);
+        return new UriTemplate(this.template, this.resolvePartially, this.parameters.SetItem(name, value), this.parser);
     }
 
     /// <summary>
@@ -298,7 +290,7 @@ public readonly struct UriTemplate
     /// <returns>An instance of the template with the updated parameters.</returns>
     public UriTemplate SetParameter(string name, IEnumerable<string> value)
     {
-        return new UriTemplate(this.template, this.resolvePartially, this.parameters.SetItem(name, JsonAny.FromRange(value)), this.parameterRegex);
+        return new UriTemplate(this.template, this.resolvePartially, this.parameters.SetItem(name, JsonAny.FromRange(value)), this.parser);
     }
 
     /// <summary>
@@ -309,7 +301,7 @@ public readonly struct UriTemplate
     /// <returns>An instance of the template with the updated parameters.</returns>
     public UriTemplate SetParameter(string name, IDictionary<string, string> value)
     {
-        return new UriTemplate(this.template, this.resolvePartially, this.parameters.SetItem(name, JsonAny.From(value)), this.parameterRegex);
+        return new UriTemplate(this.template, this.resolvePartially, this.parameters.SetItem(name, JsonAny.From(value)), this.parser);
     }
 
     /// <summary>
