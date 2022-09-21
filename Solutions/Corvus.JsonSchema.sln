@@ -37,6 +37,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Corvus.Json.CodeGeneration.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Corvus.Json.CodeGeneration.6", "Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.6.csproj", "{46A43FF5-A8F1-42F9-A978-27E86590300B}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Corvus.UriTemplate.Benchmarking", "Corvus.UriTemplate.Benchmarking\Corvus.UriTemplate.Benchmarking.csproj", "{5921287D-255C-46D0-8864-5644ABD710D9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -103,6 +105,10 @@ Global
 		{46A43FF5-A8F1-42F9-A978-27E86590300B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{46A43FF5-A8F1-42F9-A978-27E86590300B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{46A43FF5-A8F1-42F9-A978-27E86590300B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5921287D-255C-46D0-8864-5644ABD710D9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5921287D-255C-46D0-8864-5644ABD710D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5921287D-255C-46D0-8864-5644ABD710D9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5921287D-255C-46D0-8864-5644ABD710D9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -113,6 +119,7 @@ Global
 		{A67E1B7C-0990-4CA0-846A-F4DA4FCA20BF} = {911B0F4F-E689-48AA-8D4B-44AFBA1DF850}
 		{70C78E48-B257-4FD1-98E1-61D1F68831C2} = {911B0F4F-E689-48AA-8D4B-44AFBA1DF850}
 		{428FA47D-641B-41B4-A49C-D39CEAF48B0A} = {D9BD60AE-2972-4608-8E0D-16929D42A0D9}
+		{5921287D-255C-46D0-8864-5644ABD710D9} = {911B0F4F-E689-48AA-8D4B-44AFBA1DF850}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {D744631F-1DD6-4290-BF2D-67925BA2341D}

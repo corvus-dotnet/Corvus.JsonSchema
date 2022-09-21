@@ -9,8 +9,8 @@ Scenario: Get parameters
 	When I create a regex for the template "http://example.com/{p1}/{p2}"
 	Then the matches for "http://example.com/foo/bar" should be
 		| group | match |
-		| p1    | foo |
-		| p2    | bar |
+		| p1    | foo   |
+		| p2    | bar   |
 
 Scenario: Get parameters with operators
 	When I create a UriTemplate for "http://example.com/{+p1}/{p2*}"
@@ -265,7 +265,7 @@ Scenario: Add multiple parameters to link
 	Given I create a UriTemplate for "http://localhost/api/{dataset}/customer{?foo,bar,baz}"
 	When I set the template parameters
 		| name    | value |
-		| foo   | "bar" |
+		| foo     | "bar" |
 		| baz     | 99    |
 		| dataset | "bob" |
 	Then the resolved template should be one of
