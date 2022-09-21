@@ -36,6 +36,8 @@ public static class UriTemplateRegexBuilder
     {
         string template = TemplateConversion.Replace(uriTemplate, @"$+\?");
 
+        MatchCollection matches = FindParam.Matches(template);
+
         string regex = FindParam.Replace(template, Match);
         return regex + "$";
 
