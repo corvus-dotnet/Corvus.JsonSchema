@@ -21,7 +21,6 @@ public class UriTemplateParameterSetting
     private static readonly Dictionary<string, string> Values = new() { { "foo", "bar" }, { "bar", "baz" }, { "baz", "bob" } };
 
     private Tavis.UriTemplates.UriTemplate? tavisTemplate;
-    private ArrayBufferWriter<char> output = new();
 
     /// <summary>
     /// Global setup.
@@ -50,7 +49,11 @@ public class UriTemplateParameterSetting
     [Benchmark]
     public void ResolveDictionaryCorvus()
     {
-        UriTemplateResolver.TryResolveResult(UriTemplate.AsSpan(), this.output, false, JsonValues);
+        UriTemplateResolver.TryResolveResult(UriTemplate.AsSpan(), false, JsonValues, HandleResult);
+        static void HandleResult(ReadOnlySpan<char> resolvedTemplate)
+        {
+            // NOP
+        }
     }
 
     /// <summary>

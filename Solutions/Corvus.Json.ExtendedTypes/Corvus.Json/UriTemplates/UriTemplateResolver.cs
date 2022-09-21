@@ -6,7 +6,9 @@ using System.Buffers;
 using System.Text;
 using System.Text.Json;
 using CommunityToolkit.HighPerformance;
+using CommunityToolkit.HighPerformance.Buffers;
 using Corvus.Json.Internal;
+using Microsoft.Extensions.ObjectPool;
 
 namespace Corvus.Json.UriTemplates;
 
@@ -18,6 +20,8 @@ public static class UriTemplateResolver
     private const string UriReservedSymbols = ":/?#[]@!$&'()*+,;=";
     private const string UriUnreservedSymbols = "-._~";
     private static readonly char[] HexDigits = new char[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+    private static readonly ObjectPool<ArrayPoolBufferWriter<char>> ArrayPoolWriterPool =
+     new DefaultObjectPoolProvider().Create<ArrayPoolBufferWriter<char>>();
 
     private static readonly OpInfo OpInfoZero = new(@default: true, first: '\0', separator: ',', named: false, ifEmpty: string.Empty, allowReserved: false);
     private static readonly OpInfo OpInfoPlus = new(@default: false, first: '\0', separator: ',', named: false, ifEmpty: string.Empty, allowReserved: true);
@@ -34,6 +38,12 @@ public static class UriTemplateResolver
     /// <param name="name">The parameter name.</param>
     public delegate void ParameterNameCallback(ReadOnlySpan<char> name);
 
+    /// <summary>
+    /// A delegate for a callback providing a resolved template.
+    /// </summary>
+    /// <param name="resolvedTemplate">The resolved template.</param>
+    public delegate void ResolvedUriTemplateCallback(ReadOnlySpan<char> resolvedTemplate);
+
     private enum States
     {
         CopyingLiterals,
@@ -45,6 +55,34 @@ public static class UriTemplateResolver
         Success,
         NotProcessed,
         Failure,
+    }
+
+    /// <summary>
+    /// Resolve the template into an output result.
+    /// </summary>
+    /// <param name="template">The template to resolve.</param>
+    /// <param name="resolvePartially">If <see langword="true"/> then partially resolve the result.</param>
+    /// <param name="parameters">The parameters to apply to the template.</param>
+    /// <param name="callback">The callback which is provided with the resolved template.</param>
+    /// <param name="parameterNameCallback">An optional callback which is provided each parameter name as they are discovered.</param>
+    /// <returns><see langword="true"/> if the URI matched the template, and the parameters were resolved successfully.</returns>
+    public static bool TryResolveResult(ReadOnlySpan<char> template, bool resolvePartially, in JsonAny parameters, ResolvedUriTemplateCallback callback, ParameterNameCallback? parameterNameCallback = null)
+    {
+        ArrayPoolBufferWriter<char> abw = ArrayPoolWriterPool.Get();
+        try
+        {
+            if (TryResolveResult(template, abw, resolvePartially, parameters, parameterNameCallback))
+            {
+                callback(abw.WrittenSpan);
+                return true;
+            }
+
+            return false;
+        }
+        finally
+        {
+            ArrayPoolWriterPool.Return(abw);
+        }
     }
 
     /// <summary>

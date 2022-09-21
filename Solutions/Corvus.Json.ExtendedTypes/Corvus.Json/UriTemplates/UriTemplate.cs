@@ -13,6 +13,9 @@ namespace Corvus.Json.UriTemplates;
 /// <summary>
 /// A UriTemplate conforming to http://tools.ietf.org/html/rfc6570.
 /// </summary>
+/// <remarks>
+/// Note that this allocates. For low-allocation scenarios, use the low-level <see cref="UriTemplateParser"/> or <see cref="UriTemplateResolver"/>.
+/// </remarks>
 public readonly struct UriTemplate
 {
     private readonly string template;
