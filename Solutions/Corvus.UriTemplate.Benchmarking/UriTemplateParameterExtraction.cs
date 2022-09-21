@@ -44,7 +44,7 @@ public class UriTemplateParameterExtraction
     }
 
     /// <summary>
-    /// Validates using the Corvus types.
+    /// Extract parameters from a URI template using Corvus types.
     /// </summary>
     [Benchmark]
     public void ExtractParametersCorvus()
@@ -58,7 +58,7 @@ public class UriTemplateParameterExtraction
     }
 
     /// <summary>
-    /// Validates using the JsonEverything types.
+    /// Extract parameters from a URI template using Tavis types.
     /// </summary>
     [Benchmark(Baseline = true)]
     public void ExtractParametersTavis()

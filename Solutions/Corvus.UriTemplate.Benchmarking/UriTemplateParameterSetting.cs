@@ -2,9 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Buffers;
-using System.Text.Json;
-using System.Text.Json.Nodes;
 using BenchmarkDotNet.Attributes;
 using Corvus.Json.UriTemplates;
 
@@ -17,7 +14,7 @@ namespace Corvus.Json.Benchmarking;
 public class UriTemplateParameterSetting
 {
     private const string UriTemplate = "http://example.org/location{?value*}";
-    private static readonly JsonAny JsonValues = JsonAny.FromProperties(("foo", "bar"), ("bar", "baz"), ("baz", "bob"));
+    private static readonly JsonAny JsonValues = JsonAny.FromProperties(("foo", "bar"), ("bar", "baz"), ("baz", "bob")).AsJsonElementBackedValue();
     private static readonly Dictionary<string, string> Values = new() { { "foo", "bar" }, { "bar", "baz" }, { "baz", "bob" } };
 
     private Tavis.UriTemplates.UriTemplate? tavisTemplate;

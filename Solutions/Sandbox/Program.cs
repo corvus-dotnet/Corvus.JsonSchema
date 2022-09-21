@@ -1,49 +1,17 @@
-﻿using System.Collections.Immutable;
-using System.Text.Json;
+﻿using System.Text.Json.Nodes;
 using Corvus.Json;
+using Corvus.Json.UriTemplates;
 
-using Corvus.Json.Benchmarking.Models;
+string uriTemplate = "http://example.org/location{?value*}";
+JsonAny jsonValues = JsonAny.FromProperties(("foo", "bar"), ("bar", "baz"), ("baz", "bob")).AsJsonElementBackedValue();
+ReadOnlySpan<char> span = uriTemplate.AsSpan();
 
-JsonDocument? objectDocument;
-JsonDocument? invalidObjectDocument;
-PersonArray personArray;
-
-string InvalidJsonText = @"{
-    ""name"": {
-      ""familyName"": ""Oldroyd"",
-      ""givenName"": ""Michael"",
-      ""otherNames"": [""Francis"", ""James""]
-    },
-    ""dateOfBirth"": ""Not likely!""
-}";
-
-string JsonText = @"{
-    ""name"": {
-      ""familyName"": ""Oldroyd"",
-      ""givenName"": ""Michael"",
-      ""otherNames"": [""Francis"", ""James""]
-    },
-    ""dateOfBirth"": ""1944-07-14""
-}";
-
-objectDocument = JsonDocument.Parse(JsonText);
-invalidObjectDocument = JsonDocument.Parse(InvalidJsonText);
-
-ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
-for (int i = 0; i < 10000; ++i)
+for (int i = 0; i < 10000; i++)
 {
-    if (i == 5000)
-    {
-        builder.Add(Person.FromJson(invalidObjectDocument.RootElement).AsDotnetBackedValue());
-    }
-    else
-    {
-        builder.Add(Person.FromJson(objectDocument.RootElement).AsDotnetBackedValue());
-    }
+    UriTemplateResolver.TryResolveResult(span, false, jsonValues, HandleResult);
 }
 
-personArray = PersonArray.From(builder.ToImmutable()).AsJsonElementBackedValue();
-
-var result = personArray.Validate(ValidationContext.ValidContext, ValidationLevel.Detailed);
-
-Console.WriteLine("Validated!");
+static void HandleResult(ReadOnlySpan<char> resolvedTemplate)
+{
+    // NOP
+}
