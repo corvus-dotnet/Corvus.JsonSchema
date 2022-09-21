@@ -397,7 +397,7 @@ public static class UriTemplateParser
                         int segmentStart = charsConsumed;
                         int segmentEnd = segmentStart;
 
-                        // So we did match the parameter and reach '=' now we are looking ahead to the next terminator, or the end of the segment
+                        // Now we are looking ahead to the next terminator, or the end of the segment
                         while (segmentEnd < segment.Length)
                         {
                             char terminator = segment[segmentEnd];
@@ -425,7 +425,7 @@ public static class UriTemplateParser
                             return true;
                         }
 
-                        // We matched the tail, so we don't want to consume the next one.
+                        // If we match the tail (the remaining segments in the match) we don't want to consume the next one.
                         if (tail.MatchesAsTail(segment[charsConsumed..], out int tailConsumed) && (tailConsumed + charsConsumed == segment.Length))
                         {
                             // The tail matches the rest of the segment, so we will ignore our next parameter.
