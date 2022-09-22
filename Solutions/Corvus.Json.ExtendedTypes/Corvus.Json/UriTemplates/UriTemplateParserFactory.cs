@@ -1,18 +1,17 @@
-﻿// <copyright file="UriTemplateParser.cs" company="Endjin Limited">
+﻿// <copyright file="UriTemplateParserFactory.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
 using System.Buffers;
 using System.Collections.Immutable;
 using System.Text.RegularExpressions;
-using System.Xml.Linq;
 
 namespace Corvus.Json.UriTemplates;
 
 /// <summary>
 /// Parses a UriTemplate.
 /// </summary>
-public static class UriTemplateParser
+public static class UriTemplateParserFactory
 {
     //// Note that we use Regular Expressions to build parse sequences, not to parse the actual results.
     //// That is done using a zero-allocation model, with callbacks for the parameters we find.
@@ -23,38 +22,6 @@ public static class UriTemplateParser
     private static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(10);
     private static readonly Regex FindParam = new(Varspec, RegexOptions.Compiled, DefaultTimeout);
     private static readonly Regex TemplateConversion = new(@"([^{]|^)\?", RegexOptions.Compiled, DefaultTimeout);
-
-    /// <summary>
-    /// A callback when a parameter is found.
-    /// </summary>
-    /// <param name="reset">Whether to reset the parameters that we have seen so far.</param>
-    /// <param name="name">The name of the parameter.</param>
-    /// <param name="value">The string representation of the parameter.</param>
-    public delegate void ParameterCallback(bool reset, ReadOnlySpan<char> name, ReadOnlySpan<char> value);
-
-    /// <summary>
-    /// The interface implemented by a URI parser.
-    /// </summary>
-    public interface IUriParser
-    {
-        /// <summary>
-        /// Parses the given URI, calling your parameter callback for each named parameter discovered.
-        /// </summary>
-        /// <param name="uri">The URI to parse.</param>
-        /// <param name="parameterCallback">Called by the parser for each parameter that is discovered.</param>
-        /// <returns><see langword="true"/> if the uri was successfully parsed, otherwise false.</returns>
-        /// <remarks>
-        /// <para>
-        /// This is a low-allocation operation, but you should take care with your implementation of your
-        /// <see cref="ParameterCallback"/> if you wish to minimize allocation in your call tree.
-        /// </para>
-        /// <para>
-        /// The parameter callbacks occur as the parameters are matched. If the parse operation ultimately fails,
-        /// those parameters are invalid, and should be disregarded.
-        /// </para>
-        /// </remarks>
-        bool ParseUri(ReadOnlySpan<char> uri, ParameterCallback parameterCallback);
-    }
 
     /// <summary>
     /// A pattern element in a URI template.
@@ -78,12 +45,12 @@ public static class UriTemplateParser
     /// <param name="uriTemplate">The URI template for which to create the parser.</param>
     /// <returns>An instance of a parser for the given URI template.</returns>
     /// <remarks>
-    /// Note that this operation allocates memory, but <see cref="IUriParser.ParseUri(ReadOnlySpan{char}, ParameterCallback)"/>
+    /// Note that this operation allocates memory, but <see cref="IUriTemplateParser.ParseUri(ReadOnlySpan{char}, ParameterCallback)"/>
     /// is a low-allocation method. Ideally, you should cache the results of calling this method for a given URI template.
     /// </remarks>
-    public static IUriParser CreateParser(ReadOnlySpan<char> uriTemplate)
+    public static IUriTemplateParser CreateParser(ReadOnlySpan<char> uriTemplate)
     {
-        return new Sequence(CreateParserElements(uriTemplate));
+        return new UriParser(CreateParserElements(uriTemplate));
     }
 
     /// <summary>
@@ -92,12 +59,12 @@ public static class UriTemplateParser
     /// <param name="uriTemplate">The URI template for which to create the parser.</param>
     /// <returns>An instance of a parser for the given URI template.</returns>
     /// <remarks>
-    /// Note that this operation allocates memory, but <see cref="IUriParser.ParseUri(ReadOnlySpan{char}, ParameterCallback)"/>
+    /// Note that this operation allocates memory, but <see cref="IUriTemplateParser.ParseUri(ReadOnlySpan{char}, ParameterCallback)"/>
     /// is a low-allocation method. Ideally, you should cache the results of calling this method for a given URI template.
     /// </remarks>
-    public static IUriParser CreateParser(string uriTemplate)
+    public static IUriTemplateParser CreateParser(string uriTemplate)
     {
-        return new Sequence(CreateParserElements(uriTemplate.AsSpan()));
+        return new UriParser(CreateParserElements(uriTemplate.AsSpan()));
     }
 
     private static IEnumerable<IUriTemplatePatternElement> CreateParserElements(ReadOnlySpan<char> uriTemplate)
@@ -253,18 +220,16 @@ public static class UriTemplateParser
     }
 
     /// <summary>
-    /// Represents a sequence of pattern elements.
+    /// Parses a uri using a set of <see cref="IUriTemplatePatternElement"/>.
     /// </summary>
-    private sealed class Sequence : IUriParser
+    private sealed class UriParser : IUriTemplateParser
     {
-        private readonly IUriTemplatePatternElement firstElement;
-        private readonly ImmutableArray<IUriTemplatePatternElement> elements;
+        private readonly IUriTemplatePatternElement[] elements;
 
-        public Sequence(IEnumerable<IUriTemplatePatternElement> elements)
+        public UriParser(IEnumerable<IUriTemplatePatternElement> elements)
         {
             var list = elements.ToList();
-            this.firstElement = list[0];
-            this.elements = list.ToImmutableArray();
+            this.elements = list.ToArray();
         }
 
         /// <inheritdoc/>

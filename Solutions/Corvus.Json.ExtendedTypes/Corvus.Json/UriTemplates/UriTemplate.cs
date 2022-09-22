@@ -14,14 +14,14 @@ namespace Corvus.Json.UriTemplates;
 /// A UriTemplate conforming to http://tools.ietf.org/html/rfc6570.
 /// </summary>
 /// <remarks>
-/// Note that this allocates. For low-allocation scenarios, use the low-level <see cref="UriTemplateParser"/> or <see cref="UriTemplateResolver"/>.
+/// Note that this allocates. For low-allocation scenarios, use the low-level <see cref="UriTemplateParserFactory"/> or <see cref="UriTemplateResolver"/>.
 /// </remarks>
 public readonly struct UriTemplate
 {
     private readonly string template;
     private readonly ImmutableDictionary<string, JsonAny> parameters;
     private readonly bool resolvePartially;
-    private readonly UriTemplateParser.IUriParser? parser;
+    private readonly IUriTemplateParser? parser;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="UriTemplate"/> struct.
@@ -57,7 +57,7 @@ public readonly struct UriTemplate
 
         if (createParameterRegex)
         {
-            this.parser = UriTemplateParser.CreateParser(template);
+            this.parser = UriTemplateParserFactory.CreateParser(template);
         }
         else
         {
@@ -72,7 +72,7 @@ public readonly struct UriTemplate
     /// <param name="resolvePartially">Whether to partially resolve the template.</param>
     /// <param name="parameters">The parameters dictionary.</param>
     /// <param name="parameterRegex">The parameter regular expression.</param>
-    internal UriTemplate(string template, bool resolvePartially, ImmutableDictionary<string, JsonAny> parameters, UriTemplateParser.IUriParser? parameterRegex)
+    internal UriTemplate(string template, bool resolvePartially, ImmutableDictionary<string, JsonAny> parameters, IUriTemplateParser? parameterRegex)
     {
         this.resolvePartially = resolvePartially;
         this.template = template;
@@ -105,7 +105,7 @@ public readonly struct UriTemplate
     /// <returns>True if the parameters were successfully decomposed, otherwise false.</returns>
     public bool TryGetParameters(string uri, [NotNullWhen(true)] out ImmutableDictionary<string, JsonAny>? parameters)
     {
-        UriTemplateParser.IUriParser parser = this.parser ?? UriTemplateParser.CreateParser(this.template);
+        IUriTemplateParser parser = this.parser ?? UriTemplateParserFactory.CreateParser(this.template);
 
         ImmutableDictionary<string, JsonAny>.Builder result = ImmutableDictionary.CreateBuilder<string, JsonAny>();
 

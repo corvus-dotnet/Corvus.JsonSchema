@@ -13,7 +13,7 @@ using Microsoft.Extensions.ObjectPool;
 namespace Corvus.Json.UriTemplates;
 
 /// <summary>
-/// Resolves a UriTemplate.
+/// Resolves a UriTemplate by (optionally, partially) applying parameters to the template, to create a URI (if fully resolved), or a partially resolved URI template.
 /// </summary>
 public static class UriTemplateResolver
 {

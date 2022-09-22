@@ -10,8 +10,12 @@ using Corvus.Json.Internal;
 namespace Corvus.Json.UriTemplates;
 
 /// <summary>
-/// Parses the parameters from a UriTemplate.
+/// Builds a regular expression that can parse the parameters from a UriTemplate.
 /// </summary>
+/// <remarks>
+/// Note that we have a non-regex-based (low-allocation) equivalent to this in <see cref="UriTemplateParserFactory"/>.
+/// This is provided for applications that require a regex.
+/// </remarks>
 public static class UriTemplateRegexBuilder
 {
     private const string Varname = "[a-zA-Z0-9_]*";

@@ -19,7 +19,7 @@ public class UriTemplateParameterExtraction
     private const string UriTemplate = "http://example.com/Glimpse.axd?n=glimpse_ajax&parentRequestId={parentRequestId}{&hash,callback}";
     private static readonly Uri TavisUri = new(Uri);
     private Tavis.UriTemplates.UriTemplate? tavisTemplate;
-    private UriTemplateParser.IUriParser? corvusTemplate;
+    private IUriTemplateParser? corvusTemplate;
 
     /// <summary>
     /// Global setup.
@@ -29,7 +29,7 @@ public class UriTemplateParameterExtraction
     public Task GlobalSetup()
     {
         this.tavisTemplate = new(UriTemplate);
-        this.corvusTemplate = UriTemplateParser.CreateParser(UriTemplate);
+        this.corvusTemplate = UriTemplateParserFactory.CreateParser(UriTemplate);
         return Task.CompletedTask;
     }
 
