@@ -6,9 +6,7 @@ using System.Buffers;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
-using CommunityToolkit.HighPerformance.Buffers;
 using Corvus.Json.Internal;
-using Microsoft.Extensions.ObjectPool;
 
 namespace Corvus.Json;
 

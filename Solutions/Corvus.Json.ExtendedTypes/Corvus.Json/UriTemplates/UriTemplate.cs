@@ -14,7 +14,7 @@ namespace Corvus.Json.UriTemplates;
 /// A UriTemplate conforming to http://tools.ietf.org/html/rfc6570.
 /// </summary>
 /// <remarks>
-/// Note that this allocates. For low-allocation scenarios, use the low-level <see cref="UriTemplateParserFactory"/> or <see cref="UriTemplateResolver"/>.
+/// Note that this allocates. For low-allocation scenarios, use the low-level <see cref="UriTemplateParserFactory"/> or <see cref="TemplateParameterProvider"/>.
 /// </remarks>
 public readonly struct UriTemplate
 {
@@ -323,7 +323,7 @@ public readonly struct UriTemplate
 
         ArrayBufferWriter<char> output = new();
         var properties = this.parameters.ToImmutableDictionary(k => (JsonPropertyName)k.Key, v => v.Value);
-        UriTemplateResolver.TryResolveResult(this.template.AsSpan(), output, this.resolvePartially, JsonAny.FromProperties(properties), AccumulateParameterNames);
+        UriTemplateResolver<JsonTemplateParameterProvider, JsonAny>.TryResolveResult(this.template.AsSpan(), output, this.resolvePartially, JsonAny.FromProperties(properties), AccumulateParameterNames);
         return builder.ToImmutable();
 
         void AccumulateParameterNames(ReadOnlySpan<char> name)
@@ -340,7 +340,7 @@ public readonly struct UriTemplate
     {
         ArrayBufferWriter<char> output = new();
         var properties = this.parameters.ToImmutableDictionary(k => (JsonPropertyName)k.Key, v => v.Value);
-        if (!UriTemplateResolver.TryResolveResult(this.template.AsSpan(), output, this.resolvePartially, JsonAny.FromProperties(properties)))
+        if (!UriTemplateResolver<JsonTemplateParameterProvider, JsonAny>.TryResolveResult(this.template.AsSpan(), output, this.resolvePartially, JsonAny.FromProperties(properties)))
         {
             throw new ArgumentException("Malformed template.");
         }
