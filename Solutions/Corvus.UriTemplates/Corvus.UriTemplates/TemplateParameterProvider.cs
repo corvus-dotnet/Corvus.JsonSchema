@@ -15,6 +15,7 @@ public static class TemplateParameterProvider
 {
     private const string UriReservedSymbols = ":/?#[]@!$&'()*+,;=";
     private const string UriUnreservedSymbols = "-._~";
+    private static readonly ReadOnlyMemory<char> PossibleHexChars = "0123456789AaBbCcDdEeF".AsMemory();
     private static readonly char[] HexDigits = new char[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
 
     /// <summary>
@@ -25,14 +26,22 @@ public static class TemplateParameterProvider
     /// <param name="allowReserved">A value indicating whether to allow reserved symbols.</param>
     public static void Encode(IBufferWriter<char> output, ReadOnlySpan<char> value, bool allowReserved)
     {
-        foreach (char c in value)
+        for (int i = 0; i < value.Length; ++i)
         {
+            char c = value[i];
             if ((c >= 'A' && c <= 'z') ////                                     Alpha
                 || (c >= '0' && c <= '9') ////                                  Digit
                 || UriUnreservedSymbols.IndexOf(c) != -1 ////                   Unreserved symbols  - These should never be percent encoded
                 || (allowReserved && UriReservedSymbols.IndexOf(c) != -1)) //// Reserved symbols - should be included if requested (+)
             {
                 output.Write(c);
+            }
+            else if (allowReserved && c == '%' && IsEscapeSequence(value, i))
+            {
+                output.Write(value.Slice(i, 3));
+
+                // Skip the next two characters
+                i += 2;
             }
             else
             {
@@ -53,5 +62,20 @@ public static class TemplateParameterProvider
                 output.Write(HexDigits[abyte & 15]);
             }
         }
+    }
+
+    private static bool IsEscapeSequence(ReadOnlySpan<char> value, int i)
+    {
+        if (value.Length <= i + 2)
+        {
+            return false;
+        }
+
+        return IsHex(value[i + 1]) && IsHex(value[i + 2]);
+    }
+
+    private static bool IsHex(char v)
+    {
+        return PossibleHexChars.Span.Contains(v);
     }
 }

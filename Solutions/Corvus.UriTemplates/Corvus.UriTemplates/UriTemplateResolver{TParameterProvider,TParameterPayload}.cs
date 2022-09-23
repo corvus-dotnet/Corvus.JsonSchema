@@ -228,6 +228,12 @@ public static class UriTemplateResolver<TParameterProvider, TParameterPayload>
                         }
                     }
 
+                    if (prefixStart == i)
+                    {
+                        // This is a malformed template
+                        return false;
+                    }
+
                     varSpec.PrefixLength = int.Parse(currentExpression[prefixStart..i]);
                     i--;
                     break;

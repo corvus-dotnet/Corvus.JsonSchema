@@ -18,6 +18,7 @@ public class UriTemplateParameterSetting
     private static readonly Dictionary<string, string> Values = new() { { "foo", "bar" }, { "bar", "baz" }, { "baz", "bob" } };
 
     private Tavis.UriTemplates.UriTemplate? tavisTemplate;
+    private Corvus.UriTemplates.TavisApi.UriTemplate? corvusTavisTemplate;
 
     /// <summary>
     /// Global setup.
@@ -27,6 +28,7 @@ public class UriTemplateParameterSetting
     public Task GlobalSetup()
     {
         this.tavisTemplate = new(UriTemplate);
+        this.corvusTavisTemplate = new(UriTemplate);
         return Task.CompletedTask;
     }
 
@@ -61,5 +63,15 @@ public class UriTemplateParameterSetting
     {
         this.tavisTemplate!.SetParameter("value", Values);
         this.tavisTemplate!.Resolve();
+    }
+
+    /// <summary>
+    /// Resolve a URI from a template and parameter values using Corvus.UriTemplates.TavisApi.UriTemplate.
+    /// </summary>
+    [Benchmark]
+    public void ResolveDictionaryCorvusTavis()
+    {
+        this.corvusTavisTemplate!.SetParameter("value", Values);
+        this.corvusTavisTemplate!.Resolve();
     }
 }

@@ -13,6 +13,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\Corvus.Json.ExtendedTypes\Corvus.Json.ExtendedTypes.csproj" />
+		<ProjectReference Include="..\Corvus.UriTemplates\Corvus.UriTemplates.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

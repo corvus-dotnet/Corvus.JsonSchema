@@ -3,7 +3,6 @@
 // </copyright>
 
 using BenchmarkDotNet.Attributes;
-using Corvus.Json.UriTemplates;
 using Corvus.UriTemplates;
 
 namespace Corvus.Json.Benchmarking;
@@ -18,6 +17,7 @@ public class UriTemplateParameterExtraction
     private const string UriTemplate = "http://example.com/Glimpse.axd?n=glimpse_ajax&parentRequestId={parentRequestId}{&hash,callback}";
     private static readonly Uri TavisUri = new(Uri);
     private Tavis.UriTemplates.UriTemplate? tavisTemplate;
+    private Corvus.UriTemplates.TavisApi.UriTemplate? corvusTavisTemplate;
     private IUriTemplateParser? corvusTemplate;
 
     /// <summary>
@@ -28,9 +28,12 @@ public class UriTemplateParameterExtraction
     public Task GlobalSetup()
     {
         this.tavisTemplate = new(UriTemplate);
+        this.corvusTavisTemplate = new(UriTemplate);
 
         // Warm it up.
         this.tavisTemplate!.GetParameters(TavisUri);
+        this.corvusTavisTemplate!.GetParameters(TavisUri);
+
         this.corvusTemplate = UriTemplateParserFactory.CreateParser(UriTemplate);
         return Task.CompletedTask;
     }
@@ -66,5 +69,14 @@ public class UriTemplateParameterExtraction
     public void ExtractParametersTavis()
     {
         this.tavisTemplate!.GetParameters(TavisUri);
+    }
+
+    /// <summary>
+    /// Extract parameters from a URI template using the Corvus implementation of the Tavis API.
+    /// </summary>
+    [Benchmark]
+    public void ExtractParametersCorvusTavis()
+    {
+        this.corvusTavisTemplate!.GetParameters(TavisUri);
     }
 }

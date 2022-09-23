@@ -188,7 +188,7 @@ haven't yet got the submodules, run this commands:
 git submodule update --init --recursive
 ```
 
-Note that `git pull` does nota utomatically update submodules, so if `git pull` reports that any
+Note that `git pull` does not automatically update submodules, so if `git pull` reports that any
 submodules have changed, you can use the preceding command again, used to update the existing
 submodule reference.
 
