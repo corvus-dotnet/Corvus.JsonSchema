@@ -5,6 +5,7 @@
 using System.Buffers;
 using System.Text.Json;
 using CommunityToolkit.HighPerformance;
+using Corvus.UriTemplates;
 
 namespace Corvus.Json.UriTemplates;
 

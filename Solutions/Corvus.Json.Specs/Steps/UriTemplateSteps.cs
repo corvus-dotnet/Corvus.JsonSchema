@@ -7,6 +7,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using Corvus.Json;
 using Corvus.Json.UriTemplates;
+using Corvus.UriTemplates;
 using NUnit.Framework;
 using TechTalk.SpecFlow;
 

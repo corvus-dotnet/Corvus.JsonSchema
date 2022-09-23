@@ -7,6 +7,7 @@ using System.Buffers;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
+using Corvus.UriTemplates;
 
 namespace Corvus.Json.UriTemplates;
 

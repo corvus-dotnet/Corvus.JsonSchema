@@ -5,9 +5,9 @@
 using System.Buffers;
 using System.Text;
 using System.Text.RegularExpressions;
-using Corvus.Json.Internal;
+using Corvus.UriTemplates.Internal;
 
-namespace Corvus.Json.UriTemplates;
+namespace Corvus.UriTemplates;
 
 /// <summary>
 /// Builds a regular expression that can parse the parameters from a UriTemplate.

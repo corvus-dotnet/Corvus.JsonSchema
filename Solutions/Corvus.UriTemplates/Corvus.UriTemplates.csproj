@@ -9,7 +9,7 @@
 
 	<PropertyGroup>
 		<PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-		<Description>Defines .NET types representing data types found in JSON, including numerous types for specialized string forms such as JsonUuid and JsonDateTime.</Description>
+		<Description>Low allocation implementation of URI template functions conforming to http://tools.ietf.org/html/rfc6570.</Description>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -19,16 +19,9 @@
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.Extensions.Http" Version="7.0.0-rc.1.22426.10" />
-		<PackageReference Include="Microsoft.Extensions.ObjectPool" Version="7.0.0-rc.1.22427.2" />
-		<PackageReference Include="NodaTime" Version="3.1.2" />
 		<PackageReference Include="System.Buffers" Version="4.5.1" />
 		<PackageReference Include="System.Collections.Immutable" Version="7.0.0-rc.1.22426.10" />
-		<PackageReference Include="System.Text.Json" Version="7.0.0-rc.1.22426.10" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <ProjectReference Include="..\Corvus.UriTemplates\Corvus.UriTemplates.csproj" />
+		<PackageReference Include="Microsoft.Extensions.ObjectPool" Version="7.0.0-rc.1.22427.2" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -36,7 +29,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <PackageReference Update="Roslynator.Analyzers" Version="4.1.1" />
+		<PackageReference Update="Roslynator.Analyzers" Version="4.1.1" />
 	</ItemGroup>
 
 </Project>

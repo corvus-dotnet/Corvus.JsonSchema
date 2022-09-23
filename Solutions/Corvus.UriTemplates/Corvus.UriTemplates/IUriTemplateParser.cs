@@ -2,7 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-namespace Corvus.Json.UriTemplates;
+namespace Corvus.UriTemplates;
 
 /// <summary>
 /// A callback when a parameter is found.

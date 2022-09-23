@@ -4,6 +4,7 @@
 
 using BenchmarkDotNet.Attributes;
 using Corvus.Json.UriTemplates;
+using Corvus.UriTemplates;
 
 namespace Corvus.Json.Benchmarking;
 

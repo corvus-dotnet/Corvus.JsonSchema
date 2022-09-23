@@ -7,7 +7,7 @@ using CommunityToolkit.HighPerformance;
 using CommunityToolkit.HighPerformance.Buffers;
 using Microsoft.Extensions.ObjectPool;
 
-namespace Corvus.Json.UriTemplates;
+namespace Corvus.UriTemplates;
 
 /// <summary>
 /// A delegate for a callback providing parameter names as they are discovered.

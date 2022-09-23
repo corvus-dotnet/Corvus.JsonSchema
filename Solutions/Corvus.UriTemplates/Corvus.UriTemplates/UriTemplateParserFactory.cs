@@ -6,7 +6,7 @@ using System.Buffers;
 using System.Collections.Immutable;
 using System.Text.RegularExpressions;
 
-namespace Corvus.Json.UriTemplates;
+namespace Corvus.UriTemplates;
 
 /// <summary>
 /// Parses a UriTemplate.

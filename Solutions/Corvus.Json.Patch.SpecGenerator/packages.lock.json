@@ -245,6 +245,7 @@
         "dependencies": {
           "CommunityToolkit.HighPerformance": "[8.0.0, )",
           "Corvus.Extensions": "[1.1.4, )",
+          "Corvus.UriTemplates": "[1.0.0, )",
           "Microsoft.Extensions.Http": "[7.0.0-rc.1.22426.10, )",
           "Microsoft.Extensions.ObjectPool": "[7.0.0-rc.1.22427.2, )",
           "NodaTime": "[3.1.2, )",
@@ -264,6 +265,16 @@
           "System.Buffers": "[4.5.1, )",
           "System.Collections.Immutable": "[7.0.0-rc.1.22426.10, )",
           "System.Text.Json": "[7.0.0-rc.1.22426.10, )"
+        }
+      },
+      "corvus.uritemplates": {
+        "type": "Project",
+        "dependencies": {
+          "CommunityToolkit.HighPerformance": "[8.0.0, )",
+          "Corvus.Extensions": "[1.1.4, )",
+          "Microsoft.Extensions.ObjectPool": "[7.0.0-rc.1.22427.2, )",
+          "System.Buffers": "[4.5.1, )",
+          "System.Collections.Immutable": "[7.0.0-rc.1.22426.10, )"
         }
       }
     }

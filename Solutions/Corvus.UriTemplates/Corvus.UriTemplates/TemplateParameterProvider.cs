@@ -6,7 +6,7 @@ using System.Buffers;
 using System.Text;
 using CommunityToolkit.HighPerformance;
 
-namespace Corvus.Json.UriTemplates;
+namespace Corvus.UriTemplates;
 
 /// <summary>
 /// Provides helpers for implementers of a <see cref="ITemplateParameterProvider{TParameterPayload}"/>.
