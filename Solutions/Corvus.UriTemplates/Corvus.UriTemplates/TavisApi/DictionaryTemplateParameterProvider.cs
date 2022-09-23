@@ -6,13 +6,14 @@ using System.Buffers;
 using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 using CommunityToolkit.HighPerformance;
+using Corvus.UriTemplates.TemplateParameterProviders;
 
 namespace Corvus.UriTemplates.TavisApi;
 
 /// <summary>
 /// Implements a parameter provider over a JsonAny.
 /// </summary>
-public class DictionaryTemplateParameterProvider : ITemplateParameterProvider<IDictionary<string, object?>>
+internal class DictionaryTemplateParameterProvider : ITemplateParameterProvider<IDictionary<string, object?>>
 {
     /// <summary>
     /// Process the given variable.

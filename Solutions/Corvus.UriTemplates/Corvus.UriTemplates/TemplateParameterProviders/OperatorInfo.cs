@@ -2,7 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-namespace Corvus.UriTemplates;
+namespace Corvus.UriTemplates.TemplateParameterProviders;
 
 /// <summary>
 /// Gets the operator info for a variable specification.

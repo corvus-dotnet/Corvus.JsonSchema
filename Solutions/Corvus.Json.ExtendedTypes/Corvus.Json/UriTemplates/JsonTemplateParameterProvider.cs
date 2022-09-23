@@ -5,14 +5,14 @@
 using System.Buffers;
 using System.Text.Json;
 using CommunityToolkit.HighPerformance;
-using Corvus.UriTemplates;
+using Corvus.UriTemplates.TemplateParameterProviders;
 
 namespace Corvus.Json.UriTemplates;
 
 /// <summary>
 /// Implements a parameter provider over a JsonAny.
 /// </summary>
-public class JsonTemplateParameterProvider : ITemplateParameterProvider<JsonAny>
+internal class JsonTemplateParameterProvider : ITemplateParameterProvider<JsonAny>
 {
     /// <summary>
     /// Process the given variable.

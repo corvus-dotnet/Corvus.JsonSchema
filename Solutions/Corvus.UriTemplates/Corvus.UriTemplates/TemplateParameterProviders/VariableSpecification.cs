@@ -7,7 +7,7 @@ using System.Text;
 using CommunityToolkit.HighPerformance;
 using Corvus.UriTemplates.Internal;
 
-namespace Corvus.UriTemplates;
+namespace Corvus.UriTemplates.TemplateParameterProviders;
 
 /// <summary>
 /// A variable specification.

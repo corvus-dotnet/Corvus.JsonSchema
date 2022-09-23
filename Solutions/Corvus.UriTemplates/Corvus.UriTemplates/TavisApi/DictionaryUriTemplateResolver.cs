@@ -11,7 +11,7 @@ namespace Corvus.UriTemplates.TavisApi;
 /// A wrapper around <see cref="UriTemplateResolver{TParameterProvider, TParameterPayload}"/>
 /// for a <see cref="DictionaryTemplateParameterProvider"/>.
 /// </summary>
-public static class DictionaryUriTemplateResolver
+internal static class DictionaryUriTemplateResolver
 {
     /// <summary>
     /// Resolve the template into an output result.

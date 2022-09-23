@@ -4,7 +4,7 @@
 
 using System.Buffers;
 
-namespace Corvus.UriTemplates;
+namespace Corvus.UriTemplates.TemplateParameterProviders;
 
 /// <summary>
 /// Supplies parameters to the <see cref="UriTemplateResolver{TParameterProvider, TParameterPayload}"/>.

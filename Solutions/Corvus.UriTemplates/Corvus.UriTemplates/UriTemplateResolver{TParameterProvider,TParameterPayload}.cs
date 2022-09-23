@@ -5,6 +5,7 @@
 using System.Buffers;
 using CommunityToolkit.HighPerformance;
 using CommunityToolkit.HighPerformance.Buffers;
+using Corvus.UriTemplates.TemplateParameterProviders;
 using Microsoft.Extensions.ObjectPool;
 
 namespace Corvus.UriTemplates;
