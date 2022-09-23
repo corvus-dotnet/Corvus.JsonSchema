@@ -2,8 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Text.Json;
-using System.Text.Json.Nodes;
 using BenchmarkDotNet.Attributes;
 using Corvus.Json.UriTemplates;
 
@@ -29,6 +27,9 @@ public class UriTemplateParameterExtraction
     public Task GlobalSetup()
     {
         this.tavisTemplate = new(UriTemplate);
+
+        // Warm it up.
+        this.tavisTemplate!.GetParameters(TavisUri);
         this.corvusTemplate = UriTemplateParserFactory.CreateParser(UriTemplate);
         return Task.CompletedTask;
     }
