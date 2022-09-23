@@ -11,10 +11,24 @@ using System.Text.Json;
 namespace Corvus.Json.UriTemplates;
 
 /// <summary>
-/// A UriTemplate conforming to http://tools.ietf.org/html/rfc6570.
+/// Implements a URI template conforming to http://tools.ietf.org/html/rfc6570, built over <see cref="JsonAny"/>.
 /// </summary>
 /// <remarks>
-/// Note that this allocates. For low-allocation scenarios, use the low-level <see cref="UriTemplateParserFactory"/> or <see cref="TemplateParameterProvider"/>.
+/// <para>
+/// This is modelled on the Tavis.UriTemplate API, and offers mechanisms for parsing parameters from a URI according to a URI template
+/// and also resolving a template to a URI based on a provided set of parameters.
+/// </para>
+/// <para>
+/// Note that this is not a low-allocation type. In particular, processing a URI template to create the template extraction
+/// parser is an expensive operation. If you do not need this functionality for a particular instance, you should ensure that you
+/// set the <c>createParameterParser</c> constructor parameter to <see langword="false"/>.
+/// </para>
+/// <para>
+/// For low-allocation scenarios you should use the low-level <see cref="UriTemplateParserFactory"/> to create and cache an <see cref="IUriTemplateParser"/> instance if you are doing parameter extraction.
+/// or use a <see cref="UriTemplateResolver{TParameterProvider, TParameterPayload}"/> if you are resolving a template from parameters.
+/// </para>
+/// <para>
+/// </para>
 /// </remarks>
 public readonly struct UriTemplate
 {
@@ -29,16 +43,16 @@ public readonly struct UriTemplate
     /// <param name="template">The template.</param>
     /// <param name="resolvePartially">Whether to partially resolve the template.</param>
     /// <param name="caseInsensitiveParameterNames">Whether to use case insensitive parameter names.</param>
-    /// <param name="createParameterRegex">Whether to pre-create the parameter extraction regex.</param>
+    /// <param name="createParameterParser">Whether to pre-create the parameter extraction regex.</param>
     /// <param name="parameters">The parameters to use.</param>
     /// <remarks>
     /// <para>
     /// If you know this URI template is to be used purely for URI creation, not parameter extraction,
-    /// then you should set <paramref name="createParameterRegex"/> to <c>false</c>.
+    /// then you should set <paramref name="createParameterParser"/> to <c>false</c>.
     /// You will avoid creating and compiling a regular expression for parameter extraction.
     /// </para>
     /// </remarks>
-    public UriTemplate(string template, bool resolvePartially = false, bool caseInsensitiveParameterNames = false, bool createParameterRegex = true, ImmutableDictionary<string, JsonAny>? parameters = null)
+    public UriTemplate(string template, bool resolvePartially = false, bool caseInsensitiveParameterNames = false, bool createParameterParser = true, ImmutableDictionary<string, JsonAny>? parameters = null)
     {
         this.resolvePartially = resolvePartially;
         this.template = template;
@@ -55,7 +69,7 @@ public readonly struct UriTemplate
                 : ImmutableDictionary<string, JsonAny>.Empty;
         }
 
-        if (createParameterRegex)
+        if (createParameterParser)
         {
             this.parser = UriTemplateParserFactory.CreateParser(template);
         }
@@ -323,7 +337,7 @@ public readonly struct UriTemplate
 
         ArrayBufferWriter<char> output = new();
         var properties = this.parameters.ToImmutableDictionary(k => (JsonPropertyName)k.Key, v => v.Value);
-        UriTemplateResolver<JsonTemplateParameterProvider, JsonAny>.TryResolveResult(this.template.AsSpan(), output, this.resolvePartially, JsonAny.FromProperties(properties), AccumulateParameterNames);
+        JsonUriTemplateResolver.TryResolveResult(this.template.AsSpan(), output, this.resolvePartially, JsonAny.FromProperties(properties), AccumulateParameterNames);
         return builder.ToImmutable();
 
         void AccumulateParameterNames(ReadOnlySpan<char> name)
@@ -340,7 +354,7 @@ public readonly struct UriTemplate
     {
         ArrayBufferWriter<char> output = new();
         var properties = this.parameters.ToImmutableDictionary(k => (JsonPropertyName)k.Key, v => v.Value);
-        if (!UriTemplateResolver<JsonTemplateParameterProvider, JsonAny>.TryResolveResult(this.template.AsSpan(), output, this.resolvePartially, JsonAny.FromProperties(properties)))
+        if (!JsonUriTemplateResolver.TryResolveResult(this.template.AsSpan(), output, this.resolvePartially, JsonAny.FromProperties(properties)))
         {
             throw new ArgumentException("Malformed template.");
         }

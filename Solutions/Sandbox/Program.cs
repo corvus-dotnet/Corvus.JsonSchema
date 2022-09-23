@@ -8,7 +8,7 @@ ReadOnlySpan<char> span = uriTemplate.AsSpan();
 
 for (int i = 0; i < 10000; i++)
 {
-    UriTemplateResolver<JsonTemplateParameterProvider, JsonAny>.TryResolveResult(span, false, jsonValues, HandleResult);
+    JsonUriTemplateResolver.TryResolveResult(span, false, jsonValues, HandleResult);
 }
 
 static void HandleResult(ReadOnlySpan<char> resolvedTemplate)

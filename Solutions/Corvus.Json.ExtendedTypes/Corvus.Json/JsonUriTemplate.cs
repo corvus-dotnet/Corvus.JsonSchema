@@ -10,7 +10,7 @@ using Corvus.Json.UriTemplates;
 namespace Corvus.Json;
 
 /// <summary>
-/// Represents a JSON uriTemplate.
+/// Represents a JSON UriTemplate.
 /// </summary>
 public readonly partial struct JsonUriTemplate : IJsonString<JsonUriTemplate>
 {

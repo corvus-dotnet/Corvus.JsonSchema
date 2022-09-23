@@ -46,7 +46,7 @@ public class UriTemplateParameterSetting
     [Benchmark]
     public void ResolveDictionaryCorvus()
     {
-        UriTemplateResolver<JsonTemplateParameterProvider, JsonAny>.TryResolveResult(UriTemplate.AsSpan(), false, JsonValues, HandleResult);
+        JsonUriTemplateResolver.TryResolveResult(UriTemplate.AsSpan(), false, JsonValues, HandleResult);
         static void HandleResult(ReadOnlySpan<char> resolvedTemplate)
         {
             // NOP

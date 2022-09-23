@@ -10,6 +10,18 @@ using Microsoft.Extensions.ObjectPool;
 namespace Corvus.Json.UriTemplates;
 
 /// <summary>
+/// A delegate for a callback providing parameter names as they are discovered.
+/// </summary>
+/// <param name="name">The parameter name.</param>
+public delegate void ParameterNameCallback(ReadOnlySpan<char> name);
+
+/// <summary>
+/// A delegate for a callback providing a resolved template.
+/// </summary>
+/// <param name="resolvedTemplate">The resolved template.</param>
+public delegate void ResolvedUriTemplateCallback(ReadOnlySpan<char> resolvedTemplate);
+
+/// <summary>
 /// Resolves a UriTemplate by (optionally, partially) applying parameters to the template, to create a URI (if fully resolved), or a partially resolved URI template.
 /// </summary>
 /// <typeparam name="TParameterProvider">The type of the template parameter provider.</typeparam>
@@ -28,18 +40,6 @@ public static class UriTemplateResolver<TParameterProvider, TParameterPayload>
     private static readonly OperatorInfo OpInfoQuery = new(@default: false, first: '?', separator: '&', named: true, ifEmpty: "=", allowReserved: false);
     private static readonly OperatorInfo OpInfoAmpersand = new(@default: false, first: '&', separator: '&', named: true, ifEmpty: "=", allowReserved: false);
     private static readonly OperatorInfo OpInfoHash = new(@default: false, first: '#', separator: ',', named: false, ifEmpty: string.Empty, allowReserved: true);
-
-    /// <summary>
-    /// A delegate for a callback providing parameter names as they are discovered.
-    /// </summary>
-    /// <param name="name">The parameter name.</param>
-    public delegate void ParameterNameCallback(ReadOnlySpan<char> name);
-
-    /// <summary>
-    /// A delegate for a callback providing a resolved template.
-    /// </summary>
-    /// <param name="resolvedTemplate">The resolved template.</param>
-    public delegate void ResolvedUriTemplateCallback(ReadOnlySpan<char> resolvedTemplate);
 
     private enum States
     {
