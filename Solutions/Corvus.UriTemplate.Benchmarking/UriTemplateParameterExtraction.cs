@@ -54,9 +54,10 @@ public class UriTemplateParameterExtraction
     [Benchmark]
     public void ExtractParametersCorvus()
     {
-        this.corvusTemplate!.ParseUri(Uri, HandleParameters);
+        object? state = default;
+        this.corvusTemplate!.ParseUri(Uri, HandleParameters, ref state);
 
-        static void HandleParameters(bool reset, ReadOnlySpan<char> name, ReadOnlySpan<char> value)
+        static void HandleParameters(bool reset, ReadOnlySpan<char> name, ReadOnlySpan<char> value, ref object? state)
         {
             // NOP
         }

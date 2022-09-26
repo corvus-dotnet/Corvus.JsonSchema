@@ -124,22 +124,22 @@ public readonly struct UriTemplate
 
         ImmutableDictionary<string, JsonAny>.Builder result = ImmutableDictionary.CreateBuilder<string, JsonAny>();
 
-        if (parser.ParseUri(uri.AsSpan(), AddResults))
+        if (parser.ParseUri(uri.AsSpan(), AddResults, ref result))
         {
             parameters = result.ToImmutable();
             return true;
         }
 
-        void AddResults(bool reset, ReadOnlySpan<char> name, ReadOnlySpan<char> value)
+        static void AddResults(bool reset, ReadOnlySpan<char> name, ReadOnlySpan<char> value, ref ImmutableDictionary<string, JsonAny>.Builder builder)
         {
             if (reset)
             {
-                result.Clear();
+                builder.Clear();
             }
             else
             {
                 // Note we are making no attempt to make this low-allocation
-                result.Add(name.ToString(), JsonAny.ParseUriValue(Uri.UnescapeDataString(value.ToString())));
+                builder.Add(name.ToString(), JsonAny.ParseUriValue(Uri.UnescapeDataString(value.ToString())));
             }
         }
 

@@ -170,7 +170,7 @@ public class UriTemplate
 
                     var parameters = new Dictionary<string, object?>();
 
-                    if (parser.ParseUri(uri.OriginalString.AsSpan(), AddResults))
+                    if (parser.ParseUri(uri.OriginalString.AsSpan(), AddResults, ref parameters))
                     {
                         return parameters;
                     }
@@ -179,16 +179,16 @@ public class UriTemplate
                         return null;
                     }
 
-                    void AddResults(bool reset, ReadOnlySpan<char> name, ReadOnlySpan<char> value)
+                    static void AddResults(bool reset, ReadOnlySpan<char> name, ReadOnlySpan<char> value, ref Dictionary<string, object?> results)
                     {
                         if (reset)
                         {
-                            parameters.Clear();
+                            results.Clear();
                         }
                         else
                         {
                             // Note we are making no attempt to make this low-allocation
-                            parameters.Add(name.ToString(), Uri.UnescapeDataString(value.ToString()));
+                            results.Add(name.ToString(), Uri.UnescapeDataString(value.ToString()));
                         }
                     }
                 }

@@ -31,12 +31,14 @@ public static class UriTemplateParserFactory
         /// <summary>
         /// Non-greedily consume the given segment.
         /// </summary>
+        /// <typeparam name="TState">The type of the state from the caller.</typeparam>
         /// <param name="segment">The segment to consume.</param>
         /// <param name="charsConsumed">The number of characters consumed.</param>
         /// <param name="parameterCallback">The callback when a parameter is discovered.</param>
         /// <param name="tail">The tail for this segment.</param>
+        /// <param name="state">The state from the caller.</param>
         /// <returns>True if the segment was consumed successfully, otherwise false.</returns>
-        bool Consume(ReadOnlySpan<char> segment, out int charsConsumed, ParameterCallback? parameterCallback, ref Consumer tail);
+        bool Consume<TState>(ReadOnlySpan<char> segment, out int charsConsumed, ParameterCallback<TState>? parameterCallback, ref Consumer tail, ref TState state);
     }
 
     /// <summary>
@@ -45,7 +47,7 @@ public static class UriTemplateParserFactory
     /// <param name="uriTemplate">The URI template for which to create the parser.</param>
     /// <returns>An instance of a parser for the given URI template.</returns>
     /// <remarks>
-    /// Note that this operation allocates memory, but <see cref="IUriTemplateParser.ParseUri(ReadOnlySpan{char}, ParameterCallback)"/>
+    /// Note that this operation allocates memory, but <see cref="IUriTemplateParser.ParseUri{TState}(ReadOnlySpan{char}, ParameterCallback{TState}, ref TState)"/>
     /// is a low-allocation method. Ideally, you should cache the results of calling this method for a given URI template.
     /// </remarks>
     public static IUriTemplateParser CreateParser(ReadOnlySpan<char> uriTemplate)
@@ -59,7 +61,7 @@ public static class UriTemplateParserFactory
     /// <param name="uriTemplate">The URI template for which to create the parser.</param>
     /// <returns>An instance of a parser for the given URI template.</returns>
     /// <remarks>
-    /// Note that this operation allocates memory, but <see cref="IUriTemplateParser.ParseUri(ReadOnlySpan{char}, ParameterCallback)"/>
+    /// Note that this operation allocates memory, but <see cref="IUriTemplateParser.ParseUri{TState}(ReadOnlySpan{char}, ParameterCallback{TState}, ref TState)"/>
     /// is a low-allocation method. Ideally, you should cache the results of calling this method for a given URI template.
     /// </remarks>
     public static IUriTemplateParser CreateParser(string uriTemplate)
@@ -169,18 +171,18 @@ public static class UriTemplateParserFactory
             this.elements = elements;
         }
 
-        public bool Consume(ReadOnlySpan<char> segment, out int charsConsumed, ParameterCallback? parameterCallback)
+        public bool Consume<TState>(ReadOnlySpan<char> segment, out int charsConsumed, ParameterCallback<TState>? parameterCallback, ref TState state)
         {
             charsConsumed = 0;
 
             // First, we attempt to consume, advancing through the span until we reach a match
             // (Recall that a UriTemplate is allowed to match the tail of a string - any prefix can be ignored.)
             int consumedBySequence = 0;
-            while (charsConsumed < segment.Length && !this.ConsumeCore(segment[charsConsumed..], out consumedBySequence, parameterCallback))
+            while (charsConsumed < segment.Length && !this.ConsumeCore(segment[charsConsumed..], out consumedBySequence, parameterCallback, ref state))
             {
                 // We didn't match at that location, so tell the parameter callback to reset the accumulated parameters,
                 // and advance a character
-                parameterCallback?.Invoke(true, ReadOnlySpan<char>.Empty, ReadOnlySpan<char>.Empty);
+                parameterCallback?.Invoke(true, ReadOnlySpan<char>.Empty, ReadOnlySpan<char>.Empty, ref state);
                 charsConsumed++;
             }
 
@@ -188,7 +190,7 @@ public static class UriTemplateParserFactory
             {
                 // We didn't find a match, so we tell the parameter callback to reset the accumulated parameters,
                 // and reset the characters consumed.
-                parameterCallback?.Invoke(true, ReadOnlySpan<char>.Empty, ReadOnlySpan<char>.Empty);
+                parameterCallback?.Invoke(true, ReadOnlySpan<char>.Empty, ReadOnlySpan<char>.Empty, ref state);
                 charsConsumed = 0;
                 return false;
             }
@@ -197,12 +199,12 @@ public static class UriTemplateParserFactory
             return true;
         }
 
-        public bool MatchesAsTail(ReadOnlySpan<char> segment, out int charsConsumed)
+        public bool MatchesAsTail<TState>(ReadOnlySpan<char> segment, out int charsConsumed, ref TState state)
         {
-            return this.ConsumeCore(segment, out charsConsumed, null);
+            return this.ConsumeCore(segment, out charsConsumed, null, ref state);
         }
 
-        private bool ConsumeCore(ReadOnlySpan<char> segment, out int charsConsumed, ParameterCallback? parameterCallback)
+        private bool ConsumeCore<TState>(ReadOnlySpan<char> segment, out int charsConsumed, ParameterCallback<TState>? parameterCallback, ref TState state)
         {
             charsConsumed = 0;
 
@@ -210,7 +212,7 @@ public static class UriTemplateParserFactory
             {
                 IUriTemplatePatternElement element = this.elements[i];
                 Consumer tail = new(this.elements.Length > (i + 1) ? this.elements[(i + 1)..] : ReadOnlySpan<IUriTemplatePatternElement>.Empty);
-                if (!element.Consume(segment[charsConsumed..], out int localConsumed, parameterCallback, ref tail))
+                if (!element.Consume(segment[charsConsumed..], out int localConsumed, parameterCallback, ref tail, ref state))
                 {
                     charsConsumed = 0;
                     return false;
@@ -237,10 +239,10 @@ public static class UriTemplateParserFactory
         }
 
         /// <inheritdoc/>
-        public bool ParseUri(ReadOnlySpan<char> uri, ParameterCallback parameterCallback)
+        public bool ParseUri<TState>(ReadOnlySpan<char> uri, ParameterCallback<TState> parameterCallback, ref TState state)
         {
             Consumer sequence = new(this.elements.AsSpan());
-            bool result = sequence.Consume(uri, out int charsConsumed, parameterCallback);
+            bool result = sequence.Consume(uri, out int charsConsumed, parameterCallback, ref state);
 
             // We have successfully parsed the uri if all of our elements successfully consumed
             // the contents they were expecting, and we have no characters left over.
@@ -261,7 +263,7 @@ public static class UriTemplateParserFactory
         }
 
         /// <inheritdoc/>
-        public bool Consume(ReadOnlySpan<char> segment, out int charsConsumed, ParameterCallback? parameterCallback, ref Consumer tail)
+        public bool Consume<TState>(ReadOnlySpan<char> segment, out int charsConsumed, ParameterCallback<TState>? parameterCallback, ref Consumer tail, ref TState state)
         {
             if (segment.StartsWith(this.sequence.Span))
             {
@@ -317,7 +319,7 @@ public static class UriTemplateParserFactory
         }
 
         /// <inheritdoc/>
-        public bool Consume(ReadOnlySpan<char> segment, out int charsConsumed, ParameterCallback? parameterCallback, ref Consumer tail)
+        public bool Consume<TState>(ReadOnlySpan<char> segment, out int charsConsumed, ParameterCallback<TState>? parameterCallback, ref Consumer tail, ref TState callbackState)
         {
             charsConsumed = 0;
             int parameterIndex = 0;
@@ -380,7 +382,7 @@ public static class UriTemplateParserFactory
                         }
 
                         // Tell the world about this parameter (note that the span for the value could be empty).
-                        parameterCallback?.Invoke(false, currentParameterName, segment[segmentStart..segmentEnd]);
+                        parameterCallback?.Invoke(false, currentParameterName, segment[segmentStart..segmentEnd], ref callbackState);
                         charsConsumed = segmentEnd;
                         foundMatches = true;
 
@@ -395,7 +397,7 @@ public static class UriTemplateParserFactory
                         }
 
                         // If we match the tail (the remaining segments in the match) we don't want to consume the next one.
-                        if (tail.MatchesAsTail(segment[charsConsumed..], out int tailConsumed) && (tailConsumed + charsConsumed == segment.Length))
+                        if (tail.MatchesAsTail(segment[charsConsumed..], out int tailConsumed, ref callbackState) && (tailConsumed + charsConsumed == segment.Length))
                         {
                             // The tail matches the rest of the segment, so we will ignore our next parameter.
                             return true;
@@ -434,7 +436,7 @@ public static class UriTemplateParserFactory
         }
 
         /// <inheritdoc/>
-        public bool Consume(ReadOnlySpan<char> segment, out int charsConsumed, ParameterCallback? parameterCallback, ref Consumer tail)
+        public bool Consume<TState>(ReadOnlySpan<char> segment, out int charsConsumed, ParameterCallback<TState>? parameterCallback, ref Consumer tail, ref TState callbackState)
         {
             charsConsumed = 0;
             int parameterIndex = 0;
@@ -565,7 +567,7 @@ public static class UriTemplateParserFactory
                                 }
 
                                 // Tell the world about this parameter (note that the span for the value could be empty).
-                                parameterCallback?.Invoke(false, currentParameterName, segment[segmentStart..segmentEnd]);
+                                parameterCallback?.Invoke(false, currentParameterName, segment[segmentStart..segmentEnd], ref callbackState);
                                 charsConsumed = segmentEnd;
                                 foundMatches = true;
 
