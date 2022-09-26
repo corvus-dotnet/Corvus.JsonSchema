@@ -3,7 +3,6 @@
 // </copyright>
 
 using System.Buffers;
-using System.Security.Cryptography;
 using CommunityToolkit.HighPerformance;
 using CommunityToolkit.HighPerformance.Buffers;
 using Corvus.UriTemplates.TemplateParameterProviders;

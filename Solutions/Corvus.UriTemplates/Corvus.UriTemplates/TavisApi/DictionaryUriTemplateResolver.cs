@@ -4,7 +4,6 @@
 
 using System.Buffers;
 using System.Runtime.CompilerServices;
-using System.Security.Cryptography;
 
 namespace Corvus.UriTemplates.TavisApi;
 
