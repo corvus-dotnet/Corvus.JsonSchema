@@ -173,17 +173,21 @@ public static class UriTemplateParserFactory
         {
             charsConsumed = 0;
 
-            // First, we attempt to consume, but we don't update parameters as we do so.
-            // Once we find a match, we try to match the rest.
+            // First, we attempt to consume, advancing through the span until we reach a match
+            // (Recall that a UriTemplate is allowed to match the tail of a string - any prefix can be ignored.)
             int consumedBySequence = 0;
             while (charsConsumed < segment.Length && !this.ConsumeCore(segment[charsConsumed..], out consumedBySequence, parameterCallback))
             {
+                // We didn't match at that location, so tell the parameter callback to reset the accumulated parameters,
+                // and advance a character
                 parameterCallback?.Invoke(true, ReadOnlySpan<char>.Empty, ReadOnlySpan<char>.Empty);
                 charsConsumed++;
             }
 
             if (charsConsumed == segment.Length)
             {
+                // We didn't find a match, so we tell the parameter callback to reset the accumulated parameters,
+                // and reset the characters consumed.
                 parameterCallback?.Invoke(true, ReadOnlySpan<char>.Empty, ReadOnlySpan<char>.Empty);
                 charsConsumed = 0;
                 return false;
