@@ -25,7 +25,11 @@ internal class DictionaryTemplateParameterProvider : ITemplateParameterProvider<
     ///     <see cref="VariableProcessingState.Success"/> if the variable was successfully processed,
     ///     <see cref="VariableProcessingState.NotProcessed"/> if the parameter was not present, or
     ///     <see cref="VariableProcessingState.Failure"/> if the parmeter could not be processed because it was incompatible with the variable specification in the template.</returns>
+#if NETSTANDARD2_1
+    public VariableProcessingState ProcessVariable(ref VariableSpecification variableSpecification, in IDictionary<string, object?> parameters, IBufferWriter<char> output)
+#else
     public static VariableProcessingState ProcessVariable(ref VariableSpecification variableSpecification, in IDictionary<string, object?> parameters, IBufferWriter<char> output)
+#endif
     {
         string varName = variableSpecification.VarName.ToString();
         if (!parameters.ContainsKey(varName)
@@ -68,7 +72,7 @@ internal class DictionaryTemplateParameterProvider : ITemplateParameterProvider<
 
             if (variableSpecification.OperatorInfo.Named && !variableSpecification.Explode) //// exploding will prefix with list name
             {
-                AppendName(output, variableSpecification.VarName, variableSpecification.OperatorInfo.IfEmpty, dictionary.Count() == 0);
+                AppendName(output, variableSpecification.VarName, variableSpecification.OperatorInfo.IfEmpty, dictionary.Count == 0);
             }
 
             AppendObject(output, variableSpecification.OperatorInfo, variableSpecification.Explode, dictionary);
@@ -114,9 +118,9 @@ internal class DictionaryTemplateParameterProvider : ITemplateParameterProvider<
     private static bool TryGetList(object? value, [NotNullWhen(true)] out IList? list)
     {
         var result = value as IList;
-        if (result == null && value is IEnumerable<string>)
+        if (result == null && value is IEnumerable<string> enumerable)
         {
-            result = ((IEnumerable<string>)value).ToList();
+            result = enumerable.ToList();
         }
 
         list = result;
@@ -300,8 +304,21 @@ internal class DictionaryTemplateParameterProvider : ITemplateParameterProvider<
         TemplateParameterProvider.Encode(output, valueString, allowReserved);
     }
 
-    private readonly record struct AppendValueState(IBufferWriter<char> Output, int PrefixLength, bool AllowReserved)
+    private readonly struct AppendValueState
     {
+        public AppendValueState(IBufferWriter<char> output, int prefixLength, bool allowReserved)
+        {
+            this.Output = output;
+            this.PrefixLength = prefixLength;
+            this.AllowReserved = allowReserved;
+        }
+
+        public IBufferWriter<char> Output { get; }
+
+        public int PrefixLength { get; }
+
+        public bool AllowReserved { get; }
+
         public static implicit operator (IBufferWriter<char> Output, int PrefixLength, bool AllowReserved)(AppendValueState value)
         {
             return (value.Output, value.PrefixLength, value.AllowReserved);
@@ -313,8 +330,24 @@ internal class DictionaryTemplateParameterProvider : ITemplateParameterProvider<
         }
     }
 
-    private readonly record struct AppendNameAndValueState(IBufferWriter<char> Output, string IfEmpty, int PrefixLength, bool AllowReserved)
+    private readonly struct AppendNameAndValueState
     {
+        public AppendNameAndValueState(IBufferWriter<char> output, string ifEmpty, int prefixLength, bool allowReserved)
+        {
+            this.Output = output;
+            this.IfEmpty = ifEmpty;
+            this.PrefixLength = prefixLength;
+            this.AllowReserved = allowReserved;
+        }
+
+        public IBufferWriter<char> Output { get; }
+
+        public string IfEmpty { get; }
+
+        public int PrefixLength { get; }
+
+        public bool AllowReserved { get; }
+
         public static implicit operator (IBufferWriter<char> Output, string IfEmpty, int PrefixLength, bool AllowReserved)(AppendNameAndValueState value)
         {
             return (value.Output, value.IfEmpty, value.PrefixLength, value.AllowReserved);
@@ -326,8 +359,18 @@ internal class DictionaryTemplateParameterProvider : ITemplateParameterProvider<
         }
     }
 
-    private readonly record struct WriteEncodedPropertyNameState(IBufferWriter<char> Output, bool AllowReserved)
+    private readonly struct WriteEncodedPropertyNameState
     {
+        public WriteEncodedPropertyNameState(IBufferWriter<char> output, bool allowReserved)
+        {
+            this.Output = output;
+            this.AllowReserved = allowReserved;
+        }
+
+        public IBufferWriter<char> Output { get; }
+
+        public bool AllowReserved { get; }
+
         public static implicit operator (IBufferWriter<char> Output, bool AllowReserved)(WriteEncodedPropertyNameState value)
         {
             return (value.Output, value.AllowReserved);

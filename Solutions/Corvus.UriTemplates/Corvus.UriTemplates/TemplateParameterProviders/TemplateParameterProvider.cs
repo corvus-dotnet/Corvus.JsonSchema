@@ -76,6 +76,12 @@ public static class TemplateParameterProvider
 
     private static bool IsHex(char v)
     {
+#if NETSTANDARD2_1
+        Span<char> vSpan = stackalloc char[1];
+        vSpan[0] = v;
+        return PossibleHexChars.Span.Contains(vSpan, StringComparison.Ordinal);
+#else
         return PossibleHexChars.Span.Contains(v);
+#endif
     }
 }

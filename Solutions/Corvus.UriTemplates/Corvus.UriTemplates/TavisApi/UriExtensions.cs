@@ -14,6 +14,8 @@ namespace Corvus.UriTemplates.TavisApi;
 /// </summary>
 public static partial class UriExtensions
 {
+    private static readonly Regex UnreservedCharacters = UnreservedCharacterMatcher();
+
     /// <summary>
     /// Make a template from a URI, by templatizing the existing query string parameters.
     /// </summary>
@@ -55,9 +57,7 @@ public static partial class UriExtensions
         Uri uri = target;
         var parameters = new Dictionary<string, object?>();
 
-        Regex reg = UnreservedCharacterMatcher();
-
-        foreach (Match m in reg.Matches(uri.Query))
+        foreach (Match m in UnreservedCharacters.Matches(uri.Query))
         {
             string key = m.Groups[1].Value.ToLowerInvariant();
             string value = m.Groups[2].Value;
@@ -67,7 +67,14 @@ public static partial class UriExtensions
         return parameters;
     }
 
+#if NETSTANDARD2_1
+    private static Regex UnreservedCharacterMatcher()
+    {
+        return new Regex("([-A-Za-z0-9._~]*)=([^&]*)&?", RegexOptions.Compiled, TimeSpan.FromSeconds(2));
+    }
+#else
     // Unreserved characters: http://tools.ietf.org/html/rfc3986#section-2.3
     [GeneratedRegex("([-A-Za-z0-9._~]*)=([^&]*)&?")]
     private static partial Regex UnreservedCharacterMatcher();
+#endif
 }

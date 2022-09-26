@@ -135,13 +135,18 @@ public class UriTemplate
     /// <returns>The resulting URI or partially-resolved template.</returns>
     public string Resolve()
     {
-        ArrayBufferWriter<char> output = new();
-        if (!DictionaryUriTemplateResolver.TryResolveResult(this.template.AsSpan(), output, this.resolvePartially, this.parameters))
+        string result = string.Empty;
+        if (!DictionaryUriTemplateResolver.TryResolveResult(this.template.AsSpan(), this.resolvePartially, this.parameters, ResolveToString, ref result))
         {
             throw new ArgumentException("Malformed template.");
         }
 
-        return output.WrittenSpan.ToString();
+        return result;
+
+        static void ResolveToString(ReadOnlySpan<char> name, ref string state)
+        {
+            state = name.ToString();
+        }
     }
 
     /// <summary>

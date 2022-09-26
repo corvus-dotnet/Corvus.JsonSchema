@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System;
 using System.Buffers;
 using System.Collections.Immutable;
 using System.Text.RegularExpressions;
@@ -371,8 +372,11 @@ public static class UriTemplateParserFactory
                         // Now we are looking ahead to the next terminator, or the end of the segment
                         while (segmentEnd < segment.Length)
                         {
-                            char terminator = segment[segmentEnd];
-                            if (terminatorsSpan.Contains(terminator))
+#if NETSTANDARD2_1
+                            if (terminatorsSpan.Contains(segment.Slice(segmentEnd, 1), StringComparison.Ordinal))
+#else
+                            if (terminatorsSpan.Contains(segment[segmentEnd]))
+#endif
                             {
                                 // Break out of the while because we've found the end.
                                 break;

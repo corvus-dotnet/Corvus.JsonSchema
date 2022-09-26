@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Buffers;
+using System.Security.Cryptography;
 using CommunityToolkit.HighPerformance;
 using CommunityToolkit.HighPerformance.Buffers;
 using Corvus.UriTemplates.TemplateParameterProviders;
@@ -52,6 +53,21 @@ public static class UriTemplateResolver<TParameterProvider, TParameterPayload>
         ParsingExpression,
     }
 
+#if NETSTANDARD2_1
+    /// <summary>
+    /// Resolve the template into an output result.
+    /// </summary>
+    /// <typeparam name="TState">The type of the state to pass to the callback.</typeparam>
+    /// <param name="parameterProvider">An instance of the parameter provider.</param>
+    /// <param name="template">The template to resolve.</param>
+    /// <param name="resolvePartially">If <see langword="true"/> then partially resolve the result.</param>
+    /// <param name="parameters">The parameters to apply to the template.</param>
+    /// <param name="callback">The callback which is provided with the resolved template.</param>
+    /// <param name="parameterNameCallback">An optional callback which is provided each parameter name as they are discovered.</param>
+    /// <param name="state">The state to pass to the callback.</param>
+    /// <returns><see langword="true"/> if the URI matched the template, and the parameters were resolved successfully.</returns>
+    public static bool TryResolveResult<TState>(TParameterProvider parameterProvider, ReadOnlySpan<char> template, bool resolvePartially, in TParameterPayload parameters, ResolvedUriTemplateCallback<TState> callback, ParameterNameCallback<TState>? parameterNameCallback, ref TState state)
+#else
     /// <summary>
     /// Resolve the template into an output result.
     /// </summary>
@@ -64,11 +80,16 @@ public static class UriTemplateResolver<TParameterProvider, TParameterPayload>
     /// <param name="state">The state to pass to the callback.</param>
     /// <returns><see langword="true"/> if the URI matched the template, and the parameters were resolved successfully.</returns>
     public static bool TryResolveResult<TState>(ReadOnlySpan<char> template, bool resolvePartially, in TParameterPayload parameters, ResolvedUriTemplateCallback<TState> callback, ParameterNameCallback<TState>? parameterNameCallback, ref TState state)
+#endif
     {
         ArrayPoolBufferWriter<char> abw = ArrayPoolWriterPool.Get();
         try
         {
+#if NETSTANDARD2_1
+            if (TryResolveResult(parameterProvider, template, abw, resolvePartially, parameters, parameterNameCallback, ref state))
+#else
             if (TryResolveResult(template, abw, resolvePartially, parameters, parameterNameCallback, ref state))
+#endif
             {
                 callback(abw.WrittenSpan, ref state);
                 return true;
@@ -83,6 +104,21 @@ public static class UriTemplateResolver<TParameterProvider, TParameterPayload>
         }
     }
 
+#if NETSTANDARD2_1
+    /// <summary>
+    /// Resolve the template into an output result.
+    /// </summary>
+    /// <typeparam name="TState">The type of the callback state.</typeparam>
+    /// <param name="parameterProvider">The parameter provider.</param>
+    /// <param name="template">The template to resolve.</param>
+    /// <param name="output">The output buffer into which to resolve the template.</param>
+    /// <param name="resolvePartially">If <see langword="true"/> then partially resolve the result.</param>
+    /// <param name="parameters">The parameters to apply to the template.</param>
+    /// <param name="parameterNameCallback">An optional callback which is provided each parameter name as they are discovered.</param>
+    /// <param name="state">The callback state.</param>
+    /// <returns><see langword="true"/> if the URI matched the template, and the parameters were resolved successfully.</returns>
+    public static bool TryResolveResult<TState>(TParameterProvider parameterProvider, ReadOnlySpan<char> template, IBufferWriter<char> output, bool resolvePartially, in TParameterPayload parameters, ParameterNameCallback<TState>? parameterNameCallback, ref TState state)
+#else
     /// <summary>
     /// Resolve the template into an output result.
     /// </summary>
@@ -95,6 +131,7 @@ public static class UriTemplateResolver<TParameterProvider, TParameterPayload>
     /// <param name="state">The callback state.</param>
     /// <returns><see langword="true"/> if the URI matched the template, and the parameters were resolved successfully.</returns>
     public static bool TryResolveResult<TState>(ReadOnlySpan<char> template, IBufferWriter<char> output, bool resolvePartially, in TParameterPayload parameters, ParameterNameCallback<TState>? parameterNameCallback, ref TState state)
+#endif
     {
         States currentState = States.CopyingLiterals;
         int expressionStart = -1;
@@ -137,7 +174,11 @@ public static class UriTemplateResolver<TParameterProvider, TParameterPayload>
 
                     if (character == '}')
                     {
+#if NETSTANDARD2_1
+                        if (!ProcessExpression(parameterProvider, template[expressionStart..expressionEnd], output, resolvePartially, parameters, parameterNameCallback, ref state))
+#else
                         if (!ProcessExpression(template[expressionStart..expressionEnd], output, resolvePartially, parameters, parameterNameCallback, ref state))
+#endif
                         {
                             return false;
                         }
@@ -194,7 +235,11 @@ public static class UriTemplateResolver<TParameterProvider, TParameterPayload>
                 || c == '.';
     }
 
+#if NETSTANDARD2_1
+    private static bool ProcessExpression<TState>(TParameterProvider parameterProvider, ReadOnlySpan<char> currentExpression, IBufferWriter<char> output, bool resolvePartially, in TParameterPayload parameters, ParameterNameCallback<TState>? parameterNameCallback, ref TState state)
+#else
     private static bool ProcessExpression<TState>(ReadOnlySpan<char> currentExpression, IBufferWriter<char> output, bool resolvePartially, in TParameterPayload parameters, ParameterNameCallback<TState>? parameterNameCallback, ref TState state)
+#endif
     {
         if (currentExpression.Length == 0)
         {
@@ -251,7 +296,11 @@ public static class UriTemplateResolver<TParameterProvider, TParameterPayload>
                 case ',':
                     varSpec.VarName = currentExpression[varNameStart..varNameEnd];
                     multivariableExpression = true;
+#if NETSTANDARD2_1
+                    VariableProcessingState success = ProcessVariable(parameterProvider, ref varSpec, output, multivariableExpression, resolvePartially, parameters, parameterNameCallback, ref state);
+#else
                     VariableProcessingState success = ProcessVariable(ref varSpec, output, multivariableExpression, resolvePartially, parameters, parameterNameCallback, ref state);
+#endif
                     bool isFirst = varSpec.First;
 
                     // Reset for new variable
@@ -294,7 +343,11 @@ public static class UriTemplateResolver<TParameterProvider, TParameterPayload>
             varSpec.VarName = currentExpression[varNameStart..varNameEnd];
         }
 
+#if NETSTANDARD2_1
+        VariableProcessingState outerSuccess = ProcessVariable(parameterProvider, ref varSpec, output, multivariableExpression, resolvePartially, parameters, parameterNameCallback, ref state);
+#else
         VariableProcessingState outerSuccess = ProcessVariable(ref varSpec, output, multivariableExpression, resolvePartially, parameters, parameterNameCallback, ref state);
+#endif
 
         if (outerSuccess == VariableProcessingState.Failure)
         {
@@ -309,14 +362,22 @@ public static class UriTemplateResolver<TParameterProvider, TParameterPayload>
         return true;
     }
 
+#if NETSTANDARD2_1
+    private static VariableProcessingState ProcessVariable<TState>(TParameterProvider parameterProvider, ref VariableSpecification varSpec, IBufferWriter<char> output, bool multiVariableExpression, bool resolvePartially, in TParameterPayload parameters, ParameterNameCallback<TState>? parameterNameCallback, ref TState state)
+#else
     private static VariableProcessingState ProcessVariable<TState>(ref VariableSpecification varSpec, IBufferWriter<char> output, bool multiVariableExpression, bool resolvePartially, in TParameterPayload parameters, ParameterNameCallback<TState>? parameterNameCallback, ref TState state)
+#endif
     {
         if (parameterNameCallback is ParameterNameCallback<TState> callback)
         {
             callback(varSpec.VarName, ref state);
         }
 
+#if NETSTANDARD2_1
+        VariableProcessingState result = parameterProvider.ProcessVariable(ref varSpec, parameters, output);
+#else
         VariableProcessingState result = TParameterProvider.ProcessVariable(ref varSpec, parameters, output);
+#endif
 
         if (result == VariableProcessingState.NotProcessed)
         {
