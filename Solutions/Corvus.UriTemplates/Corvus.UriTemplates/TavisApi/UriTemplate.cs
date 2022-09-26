@@ -118,15 +118,14 @@ public class UriTemplate
     /// <returns>The parameters in the template.</returns>
     public IEnumerable<string> GetParameterNames()
     {
-        ImmutableArray<string>.Builder builder = ImmutableArray.CreateBuilder<string>();
+        List<string> builder = new();
 
-        ArrayBufferWriter<char> output = new();
-        DictionaryUriTemplateResolver.TryResolveResult(this.template.AsSpan(), output, this.resolvePartially, this.parameters, AccumulateParameterNames);
-        return builder.ToImmutable();
+        DictionaryUriTemplateResolver.TryGetParameterNames(this.template.AsSpan(), AccumulateParameterNames, ref builder);
+        return builder;
 
-        void AccumulateParameterNames(ReadOnlySpan<char> name)
+        static void AccumulateParameterNames(ReadOnlySpan<char> name, ref List<string> state)
         {
-            builder.Add(name.ToString());
+            state.Add(name.ToString());
         }
     }
 

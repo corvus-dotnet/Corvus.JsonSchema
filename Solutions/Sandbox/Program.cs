@@ -1,5 +1,4 @@
-﻿using System.Text.Json.Nodes;
-using Corvus.Json;
+﻿using Corvus.Json;
 using Corvus.Json.UriTemplates;
 
 string uriTemplate = "http://example.org/location{?value*}";
@@ -8,10 +7,11 @@ ReadOnlySpan<char> span = uriTemplate.AsSpan();
 
 for (int i = 0; i < 10000; i++)
 {
-    JsonUriTemplateResolver.TryResolveResult(span, false, jsonValues, HandleResult);
+    object? nullState = default;
+    JsonUriTemplateResolver.TryResolveResult(span, false, jsonValues, HandleResult, ref nullState);
 }
 
-static void HandleResult(ReadOnlySpan<char> resolvedTemplate)
+static void HandleResult(ReadOnlySpan<char> resolvedTemplate, ref object? state)
 {
     // NOP
 }

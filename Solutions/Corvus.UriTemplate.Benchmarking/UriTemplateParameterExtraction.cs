@@ -29,12 +29,13 @@ public class UriTemplateParameterExtraction
     {
         this.tavisTemplate = new(UriTemplate);
         this.corvusTavisTemplate = new(UriTemplate);
-
-        // Warm it up.
-        this.tavisTemplate!.GetParameters(TavisUri);
-        this.corvusTavisTemplate!.GetParameters(TavisUri);
-
         this.corvusTemplate = UriTemplateParserFactory.CreateParser(UriTemplate);
+
+        // A manual warm-up
+        this.ExtractParametersTavis();
+        this.ExtractParametersCorvusTavis();
+        this.ExtractParametersCorvus();
+
         return Task.CompletedTask;
     }
 
@@ -46,21 +47,6 @@ public class UriTemplateParameterExtraction
     public Task GlobalCleanup()
     {
         return Task.CompletedTask;
-    }
-
-    /// <summary>
-    /// Extract parameters from a URI template using Corvus types.
-    /// </summary>
-    [Benchmark]
-    public void ExtractParametersCorvus()
-    {
-        object? state = default;
-        this.corvusTemplate!.ParseUri(Uri, HandleParameters, ref state);
-
-        static void HandleParameters(bool reset, ReadOnlySpan<char> name, ReadOnlySpan<char> value, ref object? state)
-        {
-            // NOP
-        }
     }
 
     /// <summary>
@@ -79,5 +65,20 @@ public class UriTemplateParameterExtraction
     public void ExtractParametersCorvusTavis()
     {
         this.corvusTavisTemplate!.GetParameters(TavisUri);
+    }
+
+    /// <summary>
+    /// Extract parameters from a URI template using Corvus types.
+    /// </summary>
+    [Benchmark]
+    public void ExtractParametersCorvus()
+    {
+        object? state = default;
+        this.corvusTemplate!.ParseUri(Uri, HandleParameters, ref state);
+
+        static void HandleParameters(bool reset, ReadOnlySpan<char> name, ReadOnlySpan<char> value, ref object? state)
+        {
+            // NOP
+        }
     }
 }

@@ -335,15 +335,12 @@ public readonly struct UriTemplate
     public ImmutableArray<string> GetParameterNames()
     {
         ImmutableArray<string>.Builder builder = ImmutableArray.CreateBuilder<string>();
-
-        ArrayBufferWriter<char> output = new();
-        var properties = this.parameters.ToImmutableDictionary(k => (JsonPropertyName)k.Key, v => v.Value);
-        JsonUriTemplateResolver.TryResolveResult(this.template.AsSpan(), output, this.resolvePartially, JsonAny.FromProperties(properties), AccumulateParameterNames);
+        JsonUriTemplateResolver.TryGetParameterNames(this.template.AsSpan(), AccumulateParameterNames, ref builder);
         return builder.ToImmutable();
 
-        void AccumulateParameterNames(ReadOnlySpan<char> name)
+        static void AccumulateParameterNames(ReadOnlySpan<char> name, ref ImmutableArray<string>.Builder state)
         {
-            builder.Add(name.ToString());
+            state.Add(name.ToString());
         }
     }
 

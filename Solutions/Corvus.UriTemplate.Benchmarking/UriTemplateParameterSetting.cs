@@ -43,19 +43,6 @@ public class UriTemplateParameterSetting
     }
 
     /// <summary>
-    /// Resolve a URI from a template and parameter values using Corvus.UriTemplateResolver.
-    /// </summary>
-    [Benchmark]
-    public void ResolveDictionaryCorvus()
-    {
-        JsonUriTemplateResolver.TryResolveResult(UriTemplate.AsSpan(), false, JsonValues, HandleResult);
-        static void HandleResult(ReadOnlySpan<char> resolvedTemplate)
-        {
-            // NOP
-        }
-    }
-
-    /// <summary>
     /// Resolve a URI from a template and parameter values using Tavis.UriTemplate.
     /// </summary>
     [Benchmark(Baseline = true)]
@@ -73,5 +60,19 @@ public class UriTemplateParameterSetting
     {
         this.corvusTavisTemplate!.SetParameter("value", Values);
         this.corvusTavisTemplate!.Resolve();
+    }
+
+    /// <summary>
+    /// Resolve a URI from a template and parameter values using Corvus.UriTemplateResolver.
+    /// </summary>
+    [Benchmark]
+    public void ResolveDictionaryCorvus()
+    {
+        object? nullState = default;
+        JsonUriTemplateResolver.TryResolveResult(UriTemplate.AsSpan(), false, JsonValues, HandleResult, ref nullState);
+        static void HandleResult(ReadOnlySpan<char> resolvedTemplate, ref object? state)
+        {
+            // NOP
+        }
     }
 }
