@@ -13,6 +13,7 @@ resources:
       type: github
       name: endjin/Endjin.RecommendedPractices.AzureDevopsPipelines.GitHub
       endpoint: corvus-dotnet-github
+      ref: refs/heads/feature/scripted-build-support-custom-tasks
 
 jobs:
 - template: templates/build.and.release.scripted.yml@recommended_practices
