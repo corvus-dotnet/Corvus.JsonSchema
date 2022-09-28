@@ -129,6 +129,7 @@ $CleanBuild = $Clean
 $SkipTest = $false
 $SkipTestReport = $true     # Temporarily skip the test report due .NET 7 MSBuild issue
 $SkipPackage = $false
+$SkipAnalysis = $true       # Temporary orkaround conflict with .NET 7
 
 
 #
