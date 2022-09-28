@@ -347,3 +347,4 @@ coverage.cobertura.xml
 # Scripted build artifacts
 /_codeCoverage
 /_packages
+*.sbom.*
