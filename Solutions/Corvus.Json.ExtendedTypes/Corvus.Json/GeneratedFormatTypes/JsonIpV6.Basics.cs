@@ -233,7 +233,7 @@ public readonly partial struct JsonIpV6
             {
                 if (pooledChars is not null)
                 {
-                    ArrayPool<char>.Shared.Return(pooledChars);
+                    ArrayPool<char>.Shared.Return(pooledChars, true);
                 }
             }
         }

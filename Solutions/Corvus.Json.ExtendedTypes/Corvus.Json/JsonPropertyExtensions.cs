@@ -206,8 +206,7 @@ public static class JsonPropertyExtensions
             {
                 if (sourceArray != null)
                 {
-                    sourceUnescaped.Clear();
-                    ArrayPool<byte>.Shared.Return(sourceArray);
+                    ArrayPool<byte>.Shared.Return(sourceArray, true);
                 }
             }
         }
@@ -239,8 +238,7 @@ public static class JsonPropertyExtensions
             {
                 if (pooledName != null)
                 {
-                    utf8Unescaped.Clear();
-                    ArrayPool<byte>.Shared.Return(pooledName);
+                    ArrayPool<byte>.Shared.Return(pooledName, true);
                 }
             }
         }
@@ -273,8 +271,7 @@ public static class JsonPropertyExtensions
 
         if (sourceTranscodedArray != null)
         {
-            sourceTranscoded.Clear();
-            ArrayPool<char>.Shared.Return(sourceTranscodedArray);
+            ArrayPool<char>.Shared.Return(sourceTranscodedArray, true);
         }
 
         return success;
@@ -343,14 +340,12 @@ public static class JsonPropertyExtensions
         {
             if (pooledValue is not null)
             {
-                utf8UnescapedValue.Clear();
-                ArrayPool<byte>.Shared.Return(pooledValue);
+                ArrayPool<byte>.Shared.Return(pooledValue, true);
             }
 
             if (pooledName is not null)
             {
-                utf8UnescapedName.Clear();
-                ArrayPool<byte>.Shared.Return(pooledName);
+                ArrayPool<byte>.Shared.Return(pooledName, true);
             }
         }
     }
@@ -377,8 +372,7 @@ public static class JsonPropertyExtensions
         {
             if (pooledValue != null)
             {
-                utf8UnescapedValue.Clear();
-                ArrayPool<byte>.Shared.Return(pooledValue);
+                ArrayPool<byte>.Shared.Return(pooledValue, true);
             }
         }
     }
@@ -405,8 +399,7 @@ public static class JsonPropertyExtensions
         {
             if (pooledName != null)
             {
-                utf8UnescapedName.Clear();
-                ArrayPool<byte>.Shared.Return(pooledName);
+                ArrayPool<byte>.Shared.Return(pooledName, true);
             }
         }
     }
@@ -467,14 +460,12 @@ public static class JsonPropertyExtensions
         {
             if (pooledValue is not null)
             {
-                utf8UnescapedValue.Clear();
-                ArrayPool<byte>.Shared.Return(pooledValue);
+                ArrayPool<byte>.Shared.Return(pooledValue, true);
             }
 
             if (pooledName is not null)
             {
-                utf8UnescapedName.Clear();
-                ArrayPool<byte>.Shared.Return(pooledName);
+                ArrayPool<byte>.Shared.Return(pooledName, true);
             }
         }
     }
@@ -501,8 +492,7 @@ public static class JsonPropertyExtensions
         {
             if (pooledValue != null)
             {
-                utf8UnescapedValue.Clear();
-                ArrayPool<byte>.Shared.Return(pooledValue);
+                ArrayPool<byte>.Shared.Return(pooledValue, true);
             }
         }
     }
@@ -529,8 +519,7 @@ public static class JsonPropertyExtensions
         {
             if (pooledName != null)
             {
-                utf8UnescapedName.Clear();
-                ArrayPool<byte>.Shared.Return(pooledName);
+                ArrayPool<byte>.Shared.Return(pooledName, true);
             }
         }
     }
@@ -566,14 +555,12 @@ public static class JsonPropertyExtensions
 
         if (transcodedNameArray != null)
         {
-            transcodedName.Clear();
-            ArrayPool<char>.Shared.Return(transcodedNameArray);
+            ArrayPool<char>.Shared.Return(transcodedNameArray, true);
         }
 
         if (transcodedValueArray != null)
         {
-            transcodedValue.Clear();
-            ArrayPool<char>.Shared.Return(transcodedValueArray);
+            ArrayPool<char>.Shared.Return(transcodedValueArray, true);
         }
 
         return success;

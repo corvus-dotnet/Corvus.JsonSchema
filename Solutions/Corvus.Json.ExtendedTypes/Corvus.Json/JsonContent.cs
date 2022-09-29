@@ -73,7 +73,7 @@ public readonly partial struct JsonContent
                 {
                     if (rentedFromPool is not null)
                     {
-                        ArrayPool<byte>.Shared.Return(rentedFromPool);
+                        ArrayPool<byte>.Shared.Return(rentedFromPool, true);
                     }
                 }
             }
@@ -121,7 +121,7 @@ public readonly partial struct JsonContent
                 {
                     if (rentedFromPool is not null)
                     {
-                        ArrayPool<byte>.Shared.Return(rentedFromPool);
+                        ArrayPool<byte>.Shared.Return(rentedFromPool, true);
                     }
                 }
             }
@@ -174,7 +174,7 @@ public readonly partial struct JsonContent
             {
                 if (rentedFromPool is not null)
                 {
-                    ArrayPool<byte>.Shared.Return(rentedFromPool);
+                    ArrayPool<byte>.Shared.Return(rentedFromPool, true);
                 }
             }
         }
@@ -228,7 +228,7 @@ public readonly partial struct JsonContent
             {
                 if (rentedFromPool is not null)
                 {
-                    ArrayPool<byte>.Shared.Return(rentedFromPool);
+                    ArrayPool<byte>.Shared.Return(rentedFromPool, true);
                 }
             }
         }

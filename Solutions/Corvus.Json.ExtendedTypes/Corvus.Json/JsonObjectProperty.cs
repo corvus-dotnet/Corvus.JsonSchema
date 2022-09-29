@@ -223,7 +223,6 @@ public readonly struct JsonObjectProperty : IEquatable<JsonObjectProperty>
             if (rentedFromPool is not null)
             {
                 // Clear the buffer on return as property names may be security sensitive
-                buffer.Clear();
                 ArrayPool<byte>.Shared.Return(rentedFromPool, true);
             }
         }

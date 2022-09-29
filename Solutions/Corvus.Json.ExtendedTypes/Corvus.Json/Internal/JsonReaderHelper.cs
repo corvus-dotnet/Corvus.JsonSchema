@@ -34,8 +34,7 @@ namespace Corvus.Json
             {
                 if (pooledArray != null)
                 {
-                    byteSpan.Clear();
-                    ArrayPool<byte>.Shared.Return(pooledArray);
+                    ArrayPool<byte>.Shared.Return(pooledArray, true);
                 }
 
                 return false;
@@ -44,8 +43,7 @@ namespace Corvus.Json
 
             if (pooledArray != null)
             {
-                byteSpan.Clear();
-                ArrayPool<byte>.Shared.Return(pooledArray);
+                ArrayPool<byte>.Shared.Return(pooledArray, true);
             }
 
             return true;
@@ -69,8 +67,7 @@ namespace Corvus.Json
 
             if (pooledName != null)
             {
-                new Span<byte>(pooledName, 0, written).Clear();
-                ArrayPool<byte>.Shared.Return(pooledName);
+                ArrayPool<byte>.Shared.Return(pooledName, true);
             }
 
             return propertyName;

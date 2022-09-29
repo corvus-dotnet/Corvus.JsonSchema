@@ -143,7 +143,7 @@ public readonly partial struct JsonBase64Content
             {
                 if (rentedFromPool is not null)
                 {
-                    ArrayPool<byte>.Shared.Return(rentedFromPool);
+                    ArrayPool<byte>.Shared.Return(rentedFromPool, true);
                 }
             }
         }

@@ -233,7 +233,7 @@ public readonly partial struct JsonDuration
             {
                 if (pooledChars is not null)
                 {
-                    ArrayPool<char>.Shared.Return(pooledChars);
+                    ArrayPool<char>.Shared.Return(pooledChars, true);
                 }
             }
         }

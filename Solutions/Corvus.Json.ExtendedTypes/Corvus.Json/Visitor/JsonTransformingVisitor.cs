@@ -55,7 +55,7 @@ public static partial class JsonTransformingVisitor
         }
         finally
         {
-            ArrayPool<char>.Shared.Return(pathBuffer);
+            ArrayPool<char>.Shared.Return(pathBuffer, true);
         }
     }
 
@@ -355,7 +355,7 @@ public static partial class JsonTransformingVisitor
         int length = propertyPathBuffer.Length;
         if (length < desiredLength)
         {
-            ArrayPool<char>.Shared.Return(propertyPathBuffer);
+            ArrayPool<char>.Shared.Return(propertyPathBuffer, true);
             propertyPathBuffer = ArrayPool<char>.Shared.Rent(Math.Max(desiredLength, length + BufferChunkSize));
         }
     }

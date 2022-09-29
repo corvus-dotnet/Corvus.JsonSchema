@@ -229,7 +229,7 @@ public readonly partial struct JsonPatchTestJson : IJsonString<JsonPatchTestJson
             {
                 if (pooledChars is not null)
                 {
-                    ArrayPool<char>.Shared.Return(pooledChars);
+                    ArrayPool<char>.Shared.Return(pooledChars, true);
                 }
             }
         }

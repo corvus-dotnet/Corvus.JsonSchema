@@ -219,7 +219,7 @@ public readonly partial struct Validation
                 {
                     if (pooledChars is not null)
                     {
-                        ArrayPool<char>.Shared.Return(pooledChars);
+                        ArrayPool<char>.Shared.Return(pooledChars, true);
                     }
                 }
             }

@@ -43,8 +43,7 @@ public static class JsonValueExtensions
 
         if (pooledChars != null)
         {
-            writtenChars.Clear();
-            ArrayPool<char>.Shared.Return(pooledChars);
+            ArrayPool<char>.Shared.Return(pooledChars, true);
         }
 
         return result;

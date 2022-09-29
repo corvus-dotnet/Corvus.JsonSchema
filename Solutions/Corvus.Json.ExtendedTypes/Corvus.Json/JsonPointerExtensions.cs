@@ -295,7 +295,7 @@ public static class JsonPointerExtensions
         {
             if (decodedComponentChars is char[] dcc)
             {
-                ArrayPool<char>.Shared.Return(dcc);
+                ArrayPool<char>.Shared.Return(dcc, true);
             }
         }
     }

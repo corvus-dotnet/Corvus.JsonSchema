@@ -205,7 +205,7 @@ public readonly partial struct JsonAny : IJsonString<JsonAny>
             {
                 if (pooledChars is not null)
                 {
-                    ArrayPool<char>.Shared.Return(pooledChars);
+                    ArrayPool<char>.Shared.Return(pooledChars, true);
                 }
             }
         }

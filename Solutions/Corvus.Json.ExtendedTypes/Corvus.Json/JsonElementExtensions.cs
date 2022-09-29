@@ -136,8 +136,7 @@ public static class JsonElementExtensions
             {
                 if (sourceArray != null)
                 {
-                    sourceUnescaped.Clear();
-                    ArrayPool<byte>.Shared.Return(sourceArray);
+                    ArrayPool<byte>.Shared.Return(sourceArray, true);
                 }
             }
         }
@@ -169,8 +168,7 @@ public static class JsonElementExtensions
             {
                 if (pooledName != null)
                 {
-                    utf8Unescaped.Clear();
-                    ArrayPool<byte>.Shared.Return(pooledName);
+                    ArrayPool<byte>.Shared.Return(pooledName, true);
                 }
             }
         }
@@ -203,8 +201,7 @@ public static class JsonElementExtensions
 
         if (sourceTranscodedArray != null)
         {
-            sourceTranscoded.Clear();
-            ArrayPool<char>.Shared.Return(sourceTranscodedArray);
+            ArrayPool<char>.Shared.Return(sourceTranscodedArray, true);
         }
 
         return success;
