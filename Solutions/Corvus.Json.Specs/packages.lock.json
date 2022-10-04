@@ -2,6 +2,15 @@
   "version": 1,
   "dependencies": {
     "net7.0": {
+      "AzurePipelines.TestLogger": {
+        "type": "Direct",
+        "requested": "[1.2.2, )",
+        "resolved": "1.2.2",
+        "contentHash": "usd+NjXP5T9Czgon2juL1Fjh/IC+Dz0WNrCDeIT9C1ym7xfNJJrvFakSqlJoRJk6RN+0hBY7ZskunCKRFLrJaw==",
+        "dependencies": {
+          "Semver": "2.0.6"
+        }
+      },
       "Corvus.Testing.SpecFlow.NUnit": {
         "type": "Direct",
         "requested": "[1.5.1, )",
@@ -178,6 +187,17 @@
           "NUnit": "3.13.3",
           "SpecFlow": "3.9.74",
           "System.Management": "4.7.0"
+        }
+      },
+      "Corvus.UriTemplates": {
+        "type": "Transitive",
+        "resolved": "1.0.0-preview.1",
+        "contentHash": "D05u8ls4oz5uvZWTowDPcXD362kCwDFlc2hf7yRKXpCLh4T68hk6eumWMQ+q3IwMdnv+AoDo4+6JRysoTdjxkQ==",
+        "dependencies": {
+          "CommunityToolkit.HighPerformance": "8.0.0",
+          "Microsoft.Extensions.ObjectPool": "7.0.0-rc.1.22427.2",
+          "System.Buffers": "4.5.1",
+          "System.Collections.Immutable": "7.0.0-rc.1.22426.10"
         }
       },
       "coverlet.msbuild": {
@@ -591,6 +611,14 @@
         "type": "Transitive",
         "resolved": "4.3.2",
         "contentHash": "leXiwfiIkW7Gmn7cgnNcdtNAU70SjmKW3jxGj1iKHOvdn0zRWsgv/l2OJUO5zdGdiv2VRFnAsxxhDgMzofPdWg=="
+      },
+      "Semver": {
+        "type": "Transitive",
+        "resolved": "2.0.6",
+        "contentHash": "6OD3Gn+ElluZ9xNa0SspcANjvLt0KdSLiR1wl7ls6ykZxdfDBUruY5LMpMk2q8+EAT3DsvX4SjCDi7EVqdA/fA==",
+        "dependencies": {
+          "NETStandard.Library": "1.6.1"
+        }
       },
       "SpecFlow": {
         "type": "Transitive",
@@ -1505,6 +1533,7 @@
         "dependencies": {
           "CommunityToolkit.HighPerformance": "[8.0.0, )",
           "Corvus.Extensions": "[1.1.9, )",
+          "Corvus.UriTemplates": "[1.0.0-preview.1, )",
           "Microsoft.Extensions.Http": "[7.0.0-rc.1.22426.10, )",
           "Microsoft.Extensions.ObjectPool": "[7.0.0-rc.1.22427.2, )",
           "NodaTime": "[3.1.3, )",
