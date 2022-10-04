@@ -75,6 +75,21 @@
           "System.Text.Json": "7.0.0-rc.1.22426.10"
         }
       },
+      "Roslynator.Analyzers": {
+        "type": "Direct",
+        "requested": "[4.1.1, )",
+        "resolved": "4.1.1",
+        "contentHash": "3cPVlrB1PytlO1ztZZBOExDKQWpMZgI15ZDa0BqLu0l6xv+xIRfEpqjNRcpvUy3aLxWTkPgSKZbbaO+VoFEJ1g=="
+      },
+      "StyleCop.Analyzers": {
+        "type": "Direct",
+        "requested": "[1.2.0-beta.435, )",
+        "resolved": "1.2.0-beta.435",
+        "contentHash": "TADk7vdGXtfTnYCV7GyleaaRTQjfoSfZXprQrVMm7cSJtJbFc1QIbWPyLvrgrfGdfHbGmUPvaN4ODKNxg2jgPQ==",
+        "dependencies": {
+          "StyleCop.Analyzers.Unstable": "1.2.0.435"
+        }
+      },
       "BenchmarkDotNet.Annotations": {
         "type": "Transitive",
         "resolved": "0.13.2",
@@ -92,21 +107,10 @@
       },
       "Corvus.Extensions": {
         "type": "Transitive",
-        "resolved": "1.1.4",
-        "contentHash": "WGwNzQDNrlxfH82iRSSXcG92yKhE8xlBMWoSC4dycp0MnH2Mle0TF+Y4keRgDAdDwXg8VC+3paZx64jVG1Jazg==",
+        "resolved": "1.1.9",
+        "contentHash": "sPxdy5JqhtTGamhey3PJl9Y9Qu9nHf9TkZtfNfoADqVIoqpH4l0M/QRTTjdSjJXOKXTjt6uaTwrqAqzgFV6CLw==",
         "dependencies": {
           "System.Interactive": "3.2.0"
-        }
-      },
-      "Corvus.UriTemplates": {
-        "type": "Transitive",
-        "resolved": "1.0.0-PullRequest0001.18",
-        "contentHash": "EIsDgYXKn+t1FriHzIr7QZDyK0OOo6MUcO4zhbydRqVKFPPVQKmV64UR4uGycOe0AtWu1KkCkc4vIv5MgO7TgA==",
-        "dependencies": {
-          "CommunityToolkit.HighPerformance": "8.0.0",
-          "Microsoft.Extensions.ObjectPool": "7.0.0-rc.1.22427.2",
-          "System.Buffers": "4.5.1",
-          "System.Collections.Immutable": "7.0.0-rc.1.22426.10"
         }
       },
       "Endjin.RecommendedPractices": {
@@ -344,8 +348,8 @@
       },
       "NodaTime": {
         "type": "Transitive",
-        "resolved": "3.1.2",
-        "contentHash": "KAlnzQ2EtrrRhFoVePf2kMc24CXX3mAslfp+LmVQnk6HSZ8whgsHNpfUfO+jWCdMgGKQQKMjNCDgmTopjTPFFA==",
+        "resolved": "3.1.3",
+        "contentHash": "uuoPNL26Rvxa1YuLWt5fs6Sc8ItiuUY5CSD0NfHb7Z4ITCgmT4HkwB4vrYlzqWP/gSN9wP/lCawc5/G5ecWERw==",
         "dependencies": {
           "System.Runtime.CompilerServices.Unsafe": "4.7.1"
         }
@@ -357,6 +361,11 @@
         "dependencies": {
           "System.Memory": "4.5.3"
         }
+      },
+      "StyleCop.Analyzers.Unstable": {
+        "type": "Transitive",
+        "resolved": "1.2.0.435",
+        "contentHash": "ouwPWZxbOV3SmCZxIRqHvljkSzkCyi1tDoMzQtDb/bRP8ctASV/iRJr+A2Gdj0QLaLmWnqTWDrH82/iP+X80Lg=="
       },
       "System.Buffers": {
         "type": "Transitive",
@@ -442,11 +451,10 @@
         "type": "Project",
         "dependencies": {
           "CommunityToolkit.HighPerformance": "[8.0.0, )",
-          "Corvus.Extensions": "[1.1.4, )",
-          "Corvus.UriTemplates": "[1.0.0-PullRequest0001.18, )",
+          "Corvus.Extensions": "[1.1.9, )",
           "Microsoft.Extensions.Http": "[7.0.0-rc.1.22426.10, )",
           "Microsoft.Extensions.ObjectPool": "[7.0.0-rc.1.22427.2, )",
-          "NodaTime": "[3.1.2, )",
+          "NodaTime": "[3.1.3, )",
           "System.Buffers": "[4.5.1, )",
           "System.Collections.Immutable": "[7.0.0-rc.1.22426.10, )",
           "System.Text.Json": "[7.0.0-rc.1.22426.10, )"
