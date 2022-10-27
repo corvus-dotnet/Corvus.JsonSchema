@@ -39,7 +39,7 @@
 
 		<PackageReference Include="FluentAssertions" Version="6.7.0" />
 
-		<PackageReference Include="System.Text.Json" Version="7.0.0-rc.1.22426.10" />
+		<PackageReference Include="System.Text.Json" Version="7.0.0-rc.2.22472.3" />
 
 		<ProjectReference Include="..\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.201909.csproj" />
 
