@@ -20,7 +20,7 @@
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 		<PackageReference Include="BenchmarkDotNet" Version="0.13.2" />
-		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="7.0.0-rc.1.22426.10" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="7.0.0" />
 		<PackageReference Include="JsonPatch.Net" Version="2.0.4" />
 	</ItemGroup>
 
@@ -40,7 +40,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <PackageReference Update="Roslynator.Analyzers" Version="4.1.1" />
+	  <PackageReference Update="Roslynator.Analyzers" Version="4.1.2" />
 	</ItemGroup>
 
 </Project>
