@@ -24,4 +24,4 @@ jobs:
     additionalNetSdkVersions:
     - '7.x'
     includeNetSdkPreviewVersions: 'true'
-    analysisOutputSasToken: $(Endjin_AnalysisOutput_SASToken)
+    compileTasksServiceConnection: endjin-acr-reader
