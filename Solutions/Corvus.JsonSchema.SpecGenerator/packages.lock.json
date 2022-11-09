@@ -14,9 +14,9 @@
       },
       "Roslynator.Analyzers": {
         "type": "Direct",
-        "requested": "[4.1.2, )",
-        "resolved": "4.1.2",
-        "contentHash": "bNl3GRSBFjJymYnwq/IRDD9MOSZz9VKdGk9RsN0MWIXoSRnVKQv84f6s9nLE13y20lZgMZKlDqGw2uInBH4JgA=="
+        "requested": "[4.1.1, )",
+        "resolved": "4.1.1",
+        "contentHash": "3cPVlrB1PytlO1ztZZBOExDKQWpMZgI15ZDa0BqLu0l6xv+xIRfEpqjNRcpvUy3aLxWTkPgSKZbbaO+VoFEJ1g=="
       },
       "StyleCop.Analyzers": {
         "type": "Direct",
