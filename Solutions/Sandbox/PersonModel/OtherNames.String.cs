@@ -220,7 +220,7 @@ public readonly partial struct OtherNames : IJsonString<OtherNames>
             {
                 if (pooledChars is not null)
                 {
-                    ArrayPool<char>.Shared.Return(pooledChars, true);
+                    ArrayPool<char>.Shared.Return(pooledChars);
                 }
             }
         }

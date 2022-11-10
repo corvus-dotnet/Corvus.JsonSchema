@@ -66,9 +66,9 @@
       },
       "Roslynator.Analyzers": {
         "type": "Direct",
-        "requested": "[4.1.2, )",
-        "resolved": "4.1.2",
-        "contentHash": "bNl3GRSBFjJymYnwq/IRDD9MOSZz9VKdGk9RsN0MWIXoSRnVKQv84f6s9nLE13y20lZgMZKlDqGw2uInBH4JgA=="
+        "requested": "[4.1.1, )",
+        "resolved": "4.1.1",
+        "contentHash": "3cPVlrB1PytlO1ztZZBOExDKQWpMZgI15ZDa0BqLu0l6xv+xIRfEpqjNRcpvUy3aLxWTkPgSKZbbaO+VoFEJ1g=="
       },
       "StyleCop.Analyzers": {
         "type": "Direct",
@@ -104,13 +104,13 @@
       },
       "Corvus.UriTemplates": {
         "type": "Transitive",
-        "resolved": "1.0.0-preview.2",
-        "contentHash": "a3mY7ePPgUDV8xm0Xzkae/mC7oXV+qIe9Qe/oHL3XUMwu+Cd4LktOaakLqV/WOzZHjzOQX1IyJ4rmGrMtsUaVg==",
+        "resolved": "1.0.0",
+        "contentHash": "hgfehBY1PPfnwVhTW2rv9iqwRLw5Q/gaxcELel7drgvxe8w14FMWXkMtpCsdGwtbr/CH1I0FUhtT9KOhsQH1fg==",
         "dependencies": {
           "CommunityToolkit.HighPerformance": "8.0.0",
-          "Microsoft.Extensions.ObjectPool": "7.0.0-rc.1.22427.2",
+          "Microsoft.Extensions.ObjectPool": "7.0.0",
           "System.Buffers": "4.5.1",
-          "System.Collections.Immutable": "7.0.0-rc.1.22426.10"
+          "System.Collections.Immutable": "7.0.0"
         }
       },
       "Endjin.RecommendedPractices": {
@@ -447,7 +447,7 @@
         "dependencies": {
           "CommunityToolkit.HighPerformance": "[8.0.0, )",
           "Corvus.Extensions": "[1.1.10, )",
-          "Corvus.UriTemplates": "[1.0.0-preview.2, )",
+          "Corvus.UriTemplates": "[1.0.0, )",
           "Microsoft.Extensions.Http": "[7.0.0, )",
           "Microsoft.Extensions.ObjectPool": "[7.0.0, )",
           "NodaTime": "[3.1.5, )",
