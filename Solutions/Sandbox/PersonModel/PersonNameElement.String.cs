@@ -217,7 +217,7 @@ public readonly partial struct PersonNameElement : IJsonString<PersonNameElement
             {
                 if (pooledChars is not null)
                 {
-                    ArrayPool<char>.Shared.Return(pooledChars, true);
+                    ArrayPool<char>.Shared.Return(pooledChars);
                 }
             }
         }
