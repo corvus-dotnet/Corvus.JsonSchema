@@ -17,13 +17,13 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Corvus.Extensions" Version="1.1.9" />
+		<PackageReference Include="Corvus.Extensions" Version="1.1.10" />
 		<PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.2">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.4.0-2.final" />
-		<PackageReference Include="System.CodeDom" Version="7.0.0-rc.1.22426.10" />
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.3.1" />
+		<PackageReference Include="System.CodeDom" Version="7.0.0" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -35,7 +35,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Update="Roslynator.Analyzers" Version="4.1.1" />
+		<PackageReference Update="Roslynator.Analyzers" Version="4.1.2" />
 	</ItemGroup>
 
 </Project>
