@@ -8,6 +8,7 @@ Feature: anyOf draft2020-12
 Scenario Outline: anyOf
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "anyOf": [
                 {
                     "type": "integer"
@@ -36,6 +37,7 @@ Scenario Outline: anyOf
 Scenario Outline: anyOf with base schema
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "type": "string",
             "anyOf" : [
                 {
@@ -63,7 +65,10 @@ Scenario Outline: anyOf with base schema
 
 Scenario Outline: anyOf with boolean schemas, all true
 /* Schema: 
-{"anyOf": [true, true]}
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "anyOf": [true, true]
+        }
 */
     Given the input JSON file "anyOf.json"
     And the schema at "#/2/schema"
@@ -79,7 +84,10 @@ Scenario Outline: anyOf with boolean schemas, all true
 
 Scenario Outline: anyOf with boolean schemas, some true
 /* Schema: 
-{"anyOf": [true, false]}
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "anyOf": [true, false]
+        }
 */
     Given the input JSON file "anyOf.json"
     And the schema at "#/3/schema"
@@ -95,7 +103,10 @@ Scenario Outline: anyOf with boolean schemas, some true
 
 Scenario Outline: anyOf with boolean schemas, all false
 /* Schema: 
-{"anyOf": [false, false]}
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "anyOf": [false, false]
+        }
 */
     Given the input JSON file "anyOf.json"
     And the schema at "#/4/schema"
@@ -112,6 +123,7 @@ Scenario Outline: anyOf with boolean schemas, all false
 Scenario Outline: anyOf complex types
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "anyOf": [
                 {
                     "properties": {
@@ -146,6 +158,7 @@ Scenario Outline: anyOf complex types
 Scenario Outline: anyOf with one empty schema
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "anyOf": [
                 { "type": "number" },
                 {}
@@ -168,6 +181,7 @@ Scenario Outline: anyOf with one empty schema
 Scenario Outline: nested anyOf, to check validation semantics
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "anyOf": [
                 {
                     "anyOf": [

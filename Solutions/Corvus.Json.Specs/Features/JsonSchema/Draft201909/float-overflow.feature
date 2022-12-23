@@ -7,7 +7,10 @@ Feature: float-overflow draft2019-09
 
 Scenario Outline: all integers are multiples of 0.5, if overflow is handled
 /* Schema: 
-{"type": "integer", "multipleOf": 0.5}
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "type": "integer", "multipleOf": 0.5
+        }
 */
     Given the input JSON file "optional/float-overflow.json"
     And the schema at "#/0/schema"

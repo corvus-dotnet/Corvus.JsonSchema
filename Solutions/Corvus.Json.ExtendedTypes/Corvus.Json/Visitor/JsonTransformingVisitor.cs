@@ -2,11 +2,12 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-namespace Corvus.Json.Visitor;
 using System.Buffers;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+
+namespace Corvus.Json.Visitor;
 
 /// <summary>
 /// A type which allows you to transform an existing tree.
@@ -21,8 +22,8 @@ public static partial class JsonTransformingVisitor
     /// </summary>
     /// <param name="path">The path visited.</param>
     /// <param name="nodeToVisit">The node to visit.</param>
-    /// <returns>The result of visiting the node.</returns>
-    public delegate VisitResult Visitor(ReadOnlySpan<char> path, in JsonAny nodeToVisit);
+    /// <param name="result">The result of the visit.</param>
+    public delegate void Visitor(ReadOnlySpan<char> path, in JsonAny nodeToVisit, ref VisitResult result);
 
     /// <summary>
     /// Walk the tree, optionally transforming nodes.
@@ -38,12 +39,12 @@ public static partial class JsonTransformingVisitor
         char[] pathBuffer = ArrayPool<char>.Shared.Rent(BufferChunkSize);
         try
         {
-            JsonAny rootAny = root.AsAny;
-            VisitResult visitResult = Visit(ReadOnlySpan<char>.Empty, rootAny, visitor, ref pathBuffer);
+            VisitResult visitResult = default;
+            Visit(ReadOnlySpan<char>.Empty, root.AsAny, visitor, pathBuffer, ref visitResult);
 
             if (visitResult.Walk == Walk.TerminateAtThisNodeAndAbandonAllChanges)
             {
-                result = rootAny;
+                result = root.AsAny;
             }
             else
             {
@@ -54,71 +55,83 @@ public static partial class JsonTransformingVisitor
         }
         finally
         {
-            ArrayPool<char>.Shared.Return(pathBuffer);
+            ArrayPool<char>.Shared.Return(pathBuffer, true);
         }
     }
 
-    private static VisitResult Visit(ReadOnlySpan<char> path, in JsonAny nodeToVisit, Visitor visitor, ref char[] pathBuffer)
+    private static void Visit(ReadOnlySpan<char> path, in JsonAny nodeToVisit, Visitor visitor, char[] pathBuffer, ref VisitResult result)
     {
         // First, visit the entity itself
-        VisitResult rootResult = visitor(path, nodeToVisit);
-        Walk rootResultWalk = rootResult.Walk;
+        visitor(path, nodeToVisit, ref result);
 
-        if (rootResultWalk == Walk.TerminateAtThisNodeAndAbandonAllChanges)
+        if (result.Walk == Walk.RemoveAndContinue)
         {
-            // We're terminating, and abandoning changes, so just return this node.
-#pragma warning disable SA1000 // Keywords should be spaced correctly
-            return new(nodeToVisit, Transformed.No, Walk.TerminateAtThisNodeAndAbandonAllChanges);
-#pragma warning restore SA1000 // Keywords should be spaced correctly
+            // We will just return immediately, and this case will be dealt with by VisitObject() or VisitArray().
+            return;
         }
 
-        if (rootResultWalk == Walk.SkipChildren)
+        if (result.Walk == Walk.TerminateAtThisNodeAndAbandonAllChanges)
+        {
+            // We're terminating, and abandoning changes, so just return this node.
+            result.Output = nodeToVisit;
+            result.Transformed = Transformed.No;
+            result.Walk = Walk.TerminateAtThisNodeAndAbandonAllChanges;
+            return;
+        }
+
+        if (result.Walk == Walk.SkipChildren)
         {
             // Don't iterate into the children, but do continue the walk.
-#pragma warning disable SA1000 // Keywords should be spaced correctly
-            return new(nodeToVisit, Transformed.No, Walk.Continue);
-#pragma warning restore SA1000 // Keywords should be spaced correctly
+            // We're terminating, and abandoning changes, so just return this node.
+            result.Output = nodeToVisit;
+            result.Transformed = Transformed.No;
+            result.Walk = Walk.Continue;
+            return;
         }
 
         // If we are terminating here, don't visit the children.
-        if (rootResultWalk != Walk.Continue)
+        if (result.Walk != Walk.Continue)
         {
-            return rootResult;
+            return;
         }
 
-        JsonAny rootResultOutput = rootResult.Output;
-        return rootResultOutput.ValueKind switch
+        switch (result.Output.ValueKind)
         {
-            JsonValueKind.Object => VisitObject(path, rootResultOutput, visitor, ref pathBuffer),
-            JsonValueKind.Array => VisitArray(path, rootResultOutput, visitor, ref pathBuffer),
-            _ => rootResult,
-        };
+            case JsonValueKind.Object:
+                VisitObject(path, result.Output, visitor, pathBuffer, ref result);
+                break;
+            case JsonValueKind.Array:
+                VisitArray(path, result.Output, visitor, pathBuffer, ref result);
+                break;
+        }
     }
 
-    private static VisitResult VisitArray(ReadOnlySpan<char> path, in JsonAny asArray, Visitor visitor, ref char[] pathBuffer)
+    private static void VisitArray(ReadOnlySpan<char> path, in JsonAny asArray, Visitor visitor, char[] pathBuffer, ref VisitResult result)
     {
         bool terminateEntireWalkApplyingChanges = false;
         bool hasTransformedItems = false;
         ImmutableList<JsonAny>.Builder builder;
 
-        if (asArray.HasJsonElement)
+        if (asArray.HasJsonElementBacking)
         {
             builder = ImmutableList.CreateBuilder<JsonAny>();
         }
         else
         {
-            builder = asArray.AsItemsList.ToBuilder();
+            builder = asArray.AsImmutableListBuilder();
         }
 
+        int builderIndex = 0;
         int index = 0;
         foreach (JsonAny item in asArray.EnumerateArray())
         {
             if (terminateEntireWalkApplyingChanges)
             {
-                if (asArray.HasJsonElement)
+                if (asArray.HasJsonElementBacking)
                 {
                     builder.Add(item);
                     index++;
+                    builderIndex++;
                     continue;
                 }
                 else
@@ -135,38 +148,52 @@ public static partial class JsonTransformingVisitor
             path.CopyTo(itemPath);
             itemPath[path.Length] = '/';
 
-#pragma warning disable SA1009 // Closing parenthesis should be spaced correctly
             index.TryFormat(itemPath[(path.Length + 1)..], out int digitsWritten);
-#pragma warning restore SA1009 // Closing parenthesis should be spaced correctly
 
             // Visit the array item, and determine whether we've transformed it.
-            VisitResult itemResult = Visit(itemPath, item, visitor, ref pathBuffer);
-            if (itemResult.Walk == Walk.TerminateAtThisNodeAndAbandonAllChanges)
+            Visit(itemPath, item.AsAny, visitor, pathBuffer, ref result);
+
+            if (result.Walk == Walk.TerminateAtThisNodeAndAbandonAllChanges)
             {
                 // We didn't transform any items, and we are baling out right now
-                return new VisitResult(asArray, Transformed.No, Walk.TerminateAtThisNodeAndAbandonAllChanges);
+                result.Output = asArray;
+                result.Transformed = Transformed.No;
+                result.Walk = Walk.TerminateAtThisNodeAndAbandonAllChanges;
+                return;
             }
 
-            if (itemResult.Walk == Walk.TerminateAtThisNodeAndKeepChanges)
+            if (result.Walk == Walk.TerminateAtThisNodeAndKeepChanges)
             {
                 terminateEntireWalkApplyingChanges = true;
 
                 // We still need to add the property which will occur on the fall through path below.
             }
 
-            hasTransformedItems = hasTransformedItems || itemResult.IsTransformed;
+            hasTransformedItems = hasTransformedItems || result.IsTransformed;
 
             // We need to build up the set of items, whether we have transformed them or not
             if (index < builder.Count)
             {
-                if (itemResult.IsTransformed)
+                if (result.IsTransformed)
                 {
-                    builder[index] = itemResult.Output;
+                    if (result.Walk != Walk.RemoveAndContinue)
+                    {
+                        builder[builderIndex] = result.Output;
+                        ++builderIndex;
+                    }
+                    else
+                    {
+                        builder.RemoveAt(index);
+                    }
                 }
             }
             else
             {
-                builder.Add(itemResult.Output);
+                if (result.Walk != Walk.RemoveAndContinue)
+                {
+                    builder.Add(result.Output);
+                    ++builderIndex;
+                }
             }
 
             ++index;
@@ -178,12 +205,17 @@ public static partial class JsonTransformingVisitor
             {
                 // We transformed at least one property, so we have to build a new value from the property
                 // set we created
-                return new VisitResult(new JsonAny(builder.ToImmutable()), Transformed.Yes, Walk.TerminateAtThisNodeAndKeepChanges);
+                result.Output = new JsonAny(builder.ToImmutable());
+                result.Transformed = Transformed.Yes;
+                result.Walk = Walk.TerminateAtThisNodeAndKeepChanges;
+                return;
             }
             else
             {
-                // We didn't transform any properties
-                return new VisitResult(asArray, Transformed.No, Walk.TerminateAtThisNodeAndKeepChanges);
+                result.Output = asArray;
+                result.Transformed = Transformed.No;
+                result.Walk = Walk.TerminateAtThisNodeAndKeepChanges;
+                return;
             }
         }
 
@@ -191,18 +223,22 @@ public static partial class JsonTransformingVisitor
         {
             // We transformed at least one property, so we have to build a new value from the property
             // set we created
-            return new VisitResult(new JsonAny(builder.ToImmutable()), Transformed.Yes, Walk.Continue);
+            result.Output = new JsonAny(builder.ToImmutable());
+            result.Transformed = Transformed.Yes;
+            result.Walk = Walk.Continue;
+            return;
         }
 
-        // We didn't transform any properties
-        return new VisitResult(asArray, Transformed.No, Walk.Continue);
+        result.Output = asArray;
+        result.Transformed = Transformed.No;
+        result.Walk = Walk.Continue;
     }
 
-    private static VisitResult VisitObject(ReadOnlySpan<char> path, JsonAny asObject, Visitor visitor, ref char[] pathBuffer)
+    private static void VisitObject(ReadOnlySpan<char> path, in JsonAny asObject, Visitor visitor, char[] pathBuffer, ref VisitResult result)
     {
         bool hasTransformedProperties = false;
         bool terminateEntireWalkApplyingChanges = false;
-        ImmutableDictionary<string, JsonAny>.Builder builder;
+        ImmutableDictionary<JsonPropertyName, JsonAny>.Builder builder;
 
         // We have two separate strategies in play.
         // If we have a JsonElement backing, and we are going to mutate the object,
@@ -210,20 +246,20 @@ public static partial class JsonTransformingVisitor
         // an empty immutable dictionary builder.
         // If we *already* have a ImmutableDictionary backing, it is more efficient
         // to mutate the existing copy using the .ToBuilder() method.
-        if (asObject.HasJsonElement)
+        if (asObject.HasJsonElementBacking)
         {
-            builder = ImmutableDictionary.CreateBuilder<string, JsonAny>();
+            builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
         }
         else
         {
-            builder = asObject.AsPropertyDictionary.ToBuilder();
+            builder = asObject.AsImmutableDictionaryBuilder();
         }
 
-        foreach (Property property in asObject.EnumerateObject())
+        foreach (JsonObjectProperty property in asObject.EnumerateObject())
         {
             if (terminateEntireWalkApplyingChanges)
             {
-                if (asObject.HasJsonElement)
+                if (asObject.HasJsonElementBacking)
                 {
                     builder[property.Name] = property.Value;
                     continue;
@@ -242,29 +278,37 @@ public static partial class JsonTransformingVisitor
             path.CopyTo(propertyPath);
             propertyPath[path.Length] = '/';
 
-#pragma warning disable SA1009 // Closing parenthesis should be spaced correctly
             propertyName.CopyTo(propertyPath[(path.Length + 1)..]);
-#pragma warning restore SA1009 // Closing parenthesis should be spaced correctly
 
             // Visit the property, and determine whether we've transformed it.
-            VisitResult propertyResult = Visit(propertyPath, property.Value, visitor, ref pathBuffer);
-            if (propertyResult.Walk == Walk.TerminateAtThisNodeAndAbandonAllChanges)
+            Visit(propertyPath, property.Value, visitor, pathBuffer, ref result);
+            if (result.Walk == Walk.TerminateAtThisNodeAndAbandonAllChanges)
             {
                 // We didn't transform any properties, and we are bailing out right now
-                return new VisitResult(asObject, Transformed.No, Walk.TerminateAtThisNodeAndAbandonAllChanges);
+                result.Output = asObject;
+                result.Transformed = Transformed.No;
+                result.Walk = Walk.TerminateAtThisNodeAndAbandonAllChanges;
+                return;
             }
 
-            if (propertyResult.Walk == Walk.TerminateAtThisNodeAndKeepChanges)
+            if (result.Walk == Walk.TerminateAtThisNodeAndKeepChanges)
             {
                 terminateEntireWalkApplyingChanges = true;
 
                 // We need to add our transformed property if applicable, which will happen on the fall-through
             }
 
-            hasTransformedProperties = hasTransformedProperties || propertyResult.IsTransformed;
+            hasTransformedProperties = hasTransformedProperties || result.IsTransformed;
 
             // We need to build up the set of properties, whether we have transformed them or not
-            builder[property.Name] = propertyResult.Output;
+            if (result.Walk != Walk.RemoveAndContinue)
+            {
+                builder[property.Name] = result.Output;
+            }
+            else
+            {
+                builder.Remove(property.Name);
+            }
         }
 
         if (terminateEntireWalkApplyingChanges)
@@ -273,12 +317,18 @@ public static partial class JsonTransformingVisitor
             {
                 // We transformed at least one property, so we have to build a new value from the property
                 // set we created
-                return new VisitResult(new JsonAny(builder.ToImmutable()), Transformed.Yes, Walk.TerminateAtThisNodeAndKeepChanges);
+                result.Output = new JsonAny(builder.ToImmutable());
+                result.Transformed = Transformed.Yes;
+                result.Walk = Walk.TerminateAtThisNodeAndKeepChanges;
+                return;
             }
             else
             {
                 // We didn't transform any properties
-                return new VisitResult(asObject, Transformed.No, Walk.TerminateAtThisNodeAndKeepChanges);
+                result.Output = asObject;
+                result.Transformed = Transformed.No;
+                result.Walk = Walk.TerminateAtThisNodeAndKeepChanges;
+                return;
             }
         }
 
@@ -286,20 +336,27 @@ public static partial class JsonTransformingVisitor
         {
             // We transformed at least one property, so we have to build a new value from the property
             // set we created
-            return new VisitResult(new JsonAny(builder.ToImmutable()), Transformed.Yes, Walk.Continue);
+            result.Output = new JsonAny(builder.ToImmutable());
+            result.Transformed = Transformed.Yes;
+            result.Walk = Walk.Continue;
+            return;
         }
 
         // We didn't transform any properties
-        return new VisitResult(asObject, Transformed.No, Walk.Continue);
+        result.Output = asObject;
+        result.Transformed = Transformed.No;
+        result.Walk = Walk.Continue;
+        return;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void TryExtendBuffer(ref char[] propertyPathBuffer, int desiredLength)
     {
-        if (propertyPathBuffer.Length < desiredLength)
+        int length = propertyPathBuffer.Length;
+        if (length < desiredLength)
         {
-            ArrayPool<char>.Shared.Return(propertyPathBuffer);
-            propertyPathBuffer = ArrayPool<char>.Shared.Rent(Math.Max(desiredLength, propertyPathBuffer.Length + BufferChunkSize));
+            ArrayPool<char>.Shared.Return(propertyPathBuffer, true);
+            propertyPathBuffer = ArrayPool<char>.Shared.Rent(Math.Max(desiredLength, length + BufferChunkSize));
         }
     }
 }

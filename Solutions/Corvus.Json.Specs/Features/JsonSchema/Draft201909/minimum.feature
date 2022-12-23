@@ -7,7 +7,10 @@ Feature: minimum draft2019-09
 
 Scenario Outline: minimum validation
 /* Schema: 
-{"minimum": 1.1}
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "minimum": 1.1
+        }
 */
     Given the input JSON file "minimum.json"
     And the schema at "#/0/schema"
@@ -26,7 +29,10 @@ Scenario Outline: minimum validation
 
 Scenario Outline: minimum validation with signed integer
 /* Schema: 
-{"minimum": -2}
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "minimum": -2
+        }
 */
     Given the input JSON file "minimum.json"
     And the schema at "#/1/schema"

@@ -8,6 +8,7 @@ Feature: default draft2020-12
 Scenario Outline: invalid type for default
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "properties": {
                 "foo": {
                     "type": "integer",
@@ -32,6 +33,7 @@ Scenario Outline: invalid type for default
 Scenario Outline: invalid string value for default
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "properties": {
                 "bar": {
                     "type": "string",
@@ -57,6 +59,7 @@ Scenario Outline: invalid string value for default
 Scenario Outline: the default keyword does not do anything if the property is missing
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "type": "object",
             "properties": {
                 "alpha": {

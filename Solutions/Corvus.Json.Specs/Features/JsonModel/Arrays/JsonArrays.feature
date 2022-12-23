@@ -163,8 +163,8 @@ Examples:
 	| JsonAny       | 0         | ["foo", "bar", 3] | "baz"     | ["baz", "foo", "bar", 3] |
 	| JsonNotAny    | 0         | ["foo", "bar", 3] | "baz"     | ["baz", "foo", "bar", 3] |
 	| JsonArray     | 1         | ["foo", "bar", 3] | "baz"     | ["foo", "baz", "bar", 3] |
-	| JsonNotAny    | 1         | ["foo", "bar", 3] | "baz"     | ["foo", "baz", "bar", 3] |
 	| JsonAny       | 1         | ["foo", "bar", 3] | "baz"     | ["foo", "baz", "bar", 3] |
+	| JsonNotAny    | 1         | ["foo", "bar", 3] | "baz"     | ["foo", "baz", "bar", 3] |
 	| JsonArray     | 2         | ["foo", "bar", 3] | "baz"     | ["foo", "bar", "baz", 3] |
 	| JsonAny       | 2         | ["foo", "bar", 3] | "baz"     | ["foo", "bar", "baz", 3] |
 	| JsonNotAny    | 2         | ["foo", "bar", 3] | "baz"     | ["foo", "bar", "baz", 3] |
@@ -183,8 +183,8 @@ Examples:
 	| JsonAny       | ["foo", "bar", 3] | "foo"    | "baz"    | ["baz", "bar", 3]     |
 	| JsonNotAny    | ["foo", "bar", 3] | "foo"    | "baz"    | ["baz", "bar", 3]     |
 	| JsonArray     | ["foo", "bar", 3] | "bar"    | "baz"    | ["foo", "baz", 3]     |
-	| JsonNotAny    | ["foo", "bar", 3] | "bar"    | "baz"    | ["foo", "baz", 3]     |
 	| JsonAny       | ["foo", "bar", 3] | "bar"    | "baz"    | ["foo", "baz", 3]     |
+	| JsonNotAny    | ["foo", "bar", 3] | "bar"    | "baz"    | ["foo", "baz", 3]     |
 	| JsonArray     | ["foo", "bar", 3] | 3        | "baz"    | ["foo", "bar", "baz"] |
 	| JsonAny       | ["foo", "bar", 3] | 3        | "baz"    | ["foo", "bar", "baz"] |
 	| JsonNotAny    | ["foo", "bar", 3] | 3        | "baz"    | ["foo", "bar", "baz"] |
@@ -237,7 +237,6 @@ Examples:
 	| jsonValueType | newValue1 | newValue2 | newValue3 | value             | result                                 |
 	| JsonArray     | "baz"     | "fip"     | "zip"     | ["foo", "bar", 3] | ["foo", "bar", 3, "baz", "fip", "zip"] |
 	| JsonAny       | "baz"     | "fip"     | "zip"     | ["foo", "bar", 3] | ["foo", "bar", 3, "baz", "fip", "zip"] |
-	| JsonNotAny    | "baz"     | "fip"     | "zip"     | ["foo", "bar", 3] | ["foo", "bar", 3, "baz", "fip", "zip"] |
 
 Scenario Outline: Add four items to a dotnet backed JsonArray
 	Given the dotnet backed <jsonValueType> <value>
@@ -351,8 +350,8 @@ Examples:
 	| JsonAny       | 0         | ["foo", "bar", 3] | "baz"     | ["baz", "foo", "bar", 3] |
 	| JsonNotAny    | 0         | ["foo", "bar", 3] | "baz"     | ["baz", "foo", "bar", 3] |
 	| JsonArray     | 1         | ["foo", "bar", 3] | "baz"     | ["foo", "baz", "bar", 3] |
-	| JsonNotAny    | 1         | ["foo", "bar", 3] | "baz"     | ["foo", "baz", "bar", 3] |
 	| JsonAny       | 1         | ["foo", "bar", 3] | "baz"     | ["foo", "baz", "bar", 3] |
+	| JsonNotAny    | 1         | ["foo", "bar", 3] | "baz"     | ["foo", "baz", "bar", 3] |
 	| JsonArray     | 2         | ["foo", "bar", 3] | "baz"     | ["foo", "bar", "baz", 3] |
 	| JsonAny       | 2         | ["foo", "bar", 3] | "baz"     | ["foo", "bar", "baz", 3] |
 	| JsonNotAny    | 2         | ["foo", "bar", 3] | "baz"     | ["foo", "bar", "baz", 3] |
@@ -371,8 +370,8 @@ Examples:
 	| JsonAny       | ["foo", "bar", 3] | "foo"    | "baz"    | ["baz", "bar", 3]     |
 	| JsonNotAny    | ["foo", "bar", 3] | "foo"    | "baz"    | ["baz", "bar", 3]     |
 	| JsonArray     | ["foo", "bar", 3] | "bar"    | "baz"    | ["foo", "baz", 3]     |
-	| JsonNotAny    | ["foo", "bar", 3] | "bar"    | "baz"    | ["foo", "baz", 3]     |
 	| JsonAny       | ["foo", "bar", 3] | "bar"    | "baz"    | ["foo", "baz", 3]     |
+	| JsonNotAny    | ["foo", "bar", 3] | "bar"    | "baz"    | ["foo", "baz", 3]     |
 	| JsonArray     | ["foo", "bar", 3] | 3        | "baz"    | ["foo", "bar", "baz"] |
 	| JsonAny       | ["foo", "bar", 3] | 3        | "baz"    | ["foo", "bar", "baz"] |
 	| JsonNotAny    | ["foo", "bar", 3] | 3        | "baz"    | ["foo", "bar", "baz"] |

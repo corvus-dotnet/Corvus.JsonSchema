@@ -1,20 +1,17 @@
-﻿using Benchmarks;
+﻿using Corvus.Json;
+using Corvus.Json.UriTemplates;
 
-try
+string uriTemplate = "http://example.org/location{?value*}";
+JsonAny jsonValues = JsonAny.FromProperties(("foo", "bar"), ("bar", "baz"), ("baz", "bob")).AsJsonElementBackedValue();
+ReadOnlySpan<char> span = uriTemplate.AsSpan();
+
+for (int i = 0; i < 10000; i++)
 {
-    var bench = new GeneratedBenchmark28();
-    await bench.GlobalSetup().ConfigureAwait(false);
-
-    // Warmup
-    bench.PatchCorvus();
-
-
-    for (int i = 0; i < 32768; ++i)
-    {
-        bench.PatchCorvus();
-    }
+    object? nullState = default;
+    JsonUriTemplateResolver.TryResolveResult(span, false, jsonValues, HandleResult, ref nullState);
 }
-catch (Exception ex)
+
+static void HandleResult(ReadOnlySpan<char> resolvedTemplate, ref object? state)
 {
-    Console.WriteLine(ex.ToString());
+    // NOP
 }

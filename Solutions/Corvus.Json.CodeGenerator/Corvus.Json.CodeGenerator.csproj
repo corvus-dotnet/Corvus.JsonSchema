@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net7.0</TargetFramework>
+		<AssemblyName>Corvus.Json.JsonSchema.TypeGeneratorTool</AssemblyName>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<PackAsTool>true</PackAsTool>
+		<ToolCommandName>generatejsonschematypes</ToolCommandName>
+		<PackageOutputPath>./nupkg</PackageOutputPath>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+	</PropertyGroup>
+
+	<ItemGroup>
+	  <PackageReference Include="Spectre.Console.Cli" Version="0.45.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.201909.csproj" />
+	  <ProjectReference Include="..\Corvus.Json.CodeGeneration.202012\Corvus.Json.CodeGeneration.202012.csproj" />
+	  <ProjectReference Include="..\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.6.csproj" />
+	  <ProjectReference Include="..\Corvus.Json.CodeGeneration.7\Corvus.Json.CodeGeneration.7.csproj" />
+	</ItemGroup>
+
+</Project>

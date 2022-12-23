@@ -7,7 +7,10 @@ Feature: regex draft2019-09
 
 Scenario Outline: validation of regular expressions
 /* Schema: 
-{ "format": "regex" }
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "format": "regex"
+        }
 */
     Given the input JSON file "optional/format/regex.json"
     And the schema at "#/0/schema"

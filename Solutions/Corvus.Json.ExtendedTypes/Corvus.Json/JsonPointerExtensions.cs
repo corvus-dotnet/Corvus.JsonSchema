@@ -2,12 +2,10 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-namespace Corvus.Json;
-
 using System.Buffers;
-using System.Globalization;
-using System.Text;
 using System.Text.Json;
+
+namespace Corvus.Json;
 
 /// <summary>
 /// Utility function to resolve the JsonElement referenced by a json pointer into a json element.
@@ -54,6 +52,38 @@ public static class JsonPointerExtensions
     /// </summary>
     /// <typeparam name="T">The type of the <see cref="IJsonValue"/> to which to apply the pointer.</typeparam>
     /// <param name="root">The root element from which to start resolving the pointer.</param>
+    /// <param name="pointer">The pointer to resolve.</param>
+    /// <returns><c>true</c> if the element was found.</returns>
+    public static JsonAny ResolvePointer<T>(this T root, in JsonRelativePointer pointer)
+        where T : struct, IJsonValue
+    {
+        if (ResolvePointerInternal(root, pointer.AsSpan(), true, out JsonAny element))
+        {
+            return element;
+        }
+
+        throw new InvalidOperationException("Internal error: ResolvePointerInternal() should have thrown if it failed to resolve a fragment");
+    }
+
+    /// <summary>
+    /// Resolve a json element from a fragment pointer into a json document.
+    /// </summary>
+    /// <typeparam name="T">The type of the <see cref="IJsonValue"/> to which to apply the pointer.</typeparam>
+    /// <param name="root">The root element from which to start resolving the pointer.</param>
+    /// <param name="pointer">The pointer to resolve.</param>
+    /// <param name="element">The element found at the given location.</param>
+    /// <returns><c>true</c> if the element was found.</returns>
+    public static bool TryResolvePointer<T>(this T root, in JsonRelativePointer pointer, out JsonAny element)
+        where T : struct, IJsonValue
+    {
+        return ResolvePointerInternal(root, pointer.AsSpan(), false, out element);
+    }
+
+    /// <summary>
+    /// Resolve a json element from a fragment pointer into a json document.
+    /// </summary>
+    /// <typeparam name="T">The type of the <see cref="IJsonValue"/> to which to apply the pointer.</typeparam>
+    /// <param name="root">The root element from which to start resolving the pointer.</param>
     /// <param name="fragment">The fragment in <c>#/blah/foo/3/bar/baz</c> form.</param>
     /// <returns><c>true</c> if the element was found.</returns>
     public static JsonAny ResolvePointer<T>(this T root, ReadOnlySpan<char> fragment)
@@ -82,107 +112,12 @@ public static class JsonPointerExtensions
     }
 
     /// <summary>
-    /// Encodes the ~ encoding in a pointer.
-    /// </summary>
-    /// <param name="unencodedFragment">The encoded fragment.</param>
-    /// <param name="fragment">The span into which to write the result.</param>
-    /// <returns>The length of the decoded fragment.</returns>
-    private static int EncodePointer(ReadOnlySpan<char> unencodedFragment, ref Span<char> fragment)
-    {
-        int readIndex = 0;
-        int writeIndex = 0;
-
-        while (readIndex < unencodedFragment.Length)
-        {
-            if (unencodedFragment[readIndex] == '~')
-            {
-                fragment[writeIndex] = '~';
-                fragment[writeIndex + 1] = '0';
-                readIndex += 1;
-                writeIndex += 2;
-            }
-            else if (unencodedFragment[readIndex] == '/')
-            {
-                fragment[writeIndex] = '~';
-                fragment[writeIndex + 1] = '1';
-                readIndex += 1;
-                writeIndex += 2;
-            }
-            else
-            {
-                fragment[writeIndex] = unencodedFragment[readIndex];
-                readIndex++;
-                writeIndex++;
-            }
-        }
-
-        return writeIndex;
-    }
-
-    /// <summary>
-    /// Decodes the hex encoding in a reference.
-    /// </summary>
-    /// <param name="encodedFragment">The encoded reference.</param>
-    /// <param name="fragment">The span into which to write the result.</param>
-    /// <returns>The length of the decoded reference.</returns>
-    private static int DecodeHexPointer(ReadOnlySpan<char> encodedFragment, Span<char> fragment)
-    {
-        int readIndex = 0;
-        int writeIndex = 0;
-
-        while (readIndex < encodedFragment.Length)
-        {
-            if (encodedFragment[readIndex] != '%')
-            {
-                fragment[writeIndex] = encodedFragment[readIndex];
-                readIndex++;
-                writeIndex++;
-            }
-            else
-            {
-                DecodeHex(encodedFragment, fragment, ref readIndex, ref writeIndex);
-            }
-        }
-
-        return writeIndex;
-
-        static void DecodeHex(ReadOnlySpan<char> encodedFragment, Span<char> fragment, ref int readIndex, ref int writeIndex)
-        {
-            int writtenBytes = 0;
-            Span<byte> utf8bytes = stackalloc byte[encodedFragment.Length - readIndex];
-
-            while (encodedFragment[readIndex] == '%')
-            {
-                if (readIndex >= encodedFragment.Length - 2)
-                {
-                    throw new JsonException($"Unexpected end of sequence in escaped %. Expected two digits but found the end of the element: {fragment.ToString()}");
-                }
-
-                if (int.TryParse(encodedFragment.Slice(readIndex + 1, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out int characterCode))
-                {
-                    utf8bytes[writtenBytes] = (byte)characterCode;
-                    writtenBytes += 1;
-                }
-                else
-                {
-                    throw new JsonException($"Unexpected end of sequence in escaped %. Expected two digits but could not parse.");
-                }
-
-                readIndex += 3;
-            }
-
-            Encoding.UTF8.GetChars(utf8bytes[..writtenBytes], fragment.Slice(writeIndex, writtenBytes));
-            writeIndex += writtenBytes;
-        }
-    }
-
-    /// <summary>
     /// Decodes the ~ encoding in a reference.
     /// </summary>
     /// <param name="encodedFragment">The encoded reference.</param>
     /// <param name="fragment">The span into which to write the result.</param>
     /// <returns>The length of the decoded reference.</returns>
-    private static int DecodePointer(ReadOnlySpan<char> encodedFragment, Span<char> fragment)
+    public static int DecodePointer(ReadOnlySpan<char> encodedFragment, Span<char> fragment)
     {
         int readIndex = 0;
         int writeIndex = 0;
@@ -216,7 +151,7 @@ public static class JsonPointerExtensions
                 }
 
                 readIndex += 2;
-                writeIndex += 1;
+                writeIndex++;
             }
         }
 
@@ -239,9 +174,7 @@ public static class JsonPointerExtensions
         int index = 0;
         int startRun = 0;
 
-#pragma warning disable SA1011 // Closing square brackets should be spaced correctly
         char[]? decodedComponentChars = null;
-#pragma warning restore SA1011 // Closing square brackets should be spaced correctly
 
         int length = fragment.Length;
         Span<char> decodedComponent = length <= JsonConstants.StackallocThreshold ?
@@ -362,7 +295,7 @@ public static class JsonPointerExtensions
         {
             if (decodedComponentChars is char[] dcc)
             {
-                ArrayPool<char>.Shared.Return(dcc);
+                ArrayPool<char>.Shared.Return(dcc, true);
             }
         }
     }

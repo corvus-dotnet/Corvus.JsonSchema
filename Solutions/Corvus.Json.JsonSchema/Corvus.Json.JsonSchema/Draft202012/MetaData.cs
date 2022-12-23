@@ -7,2735 +7,587 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 #nullable enable
-namespace Corvus.Json.JsonSchema.Draft202012
+using System.Buffers;
+using System.ComponentModel;
+using System.Collections.Immutable;
+using System.Runtime.CompilerServices;
+using System.Text.Json;
+using Corvus.Json;
+using Corvus.Json.Internal;
+
+namespace Corvus.Json.JsonSchema.Draft202012;
+/// <summary>
+/// A type generated from a JsonSchema specification.
+/// </summary>
+public readonly partial struct MetaData
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Collections.Immutable;
-    using System.Text;
-    using System.Text.Json;
-    using System.Text.RegularExpressions;
-    using Corvus.Json;
+    private readonly Backing backing;
+    private readonly JsonElement jsonElementBacking;
+    private readonly bool boolBacking;
+    private readonly ImmutableDictionary<JsonPropertyName, JsonAny> objectBacking;
+    /// <summary>
+    /// Initializes a new instance of the <see cref = "MetaData"/> struct.
+    /// </summary>
+    public MetaData()
+    {
+        this.jsonElementBacking = default;
+        this.backing = Backing.JsonElement;
+        this.boolBacking = default;
+        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+    }
 
     /// <summary>
-    /// A type generated from a JsonSchema specification.
+    /// Initializes a new instance of the <see cref = "MetaData"/> struct.
     /// </summary>
-    public readonly struct MetaData : IJsonObject<MetaData>, IEquatable<MetaData>
+    /// <param name = "value">The value from which to construct the instance.</param>
+    public MetaData(in JsonElement value)
     {
-        /// <summary>
-        /// JSON property name for <see cref = "Title"/>.
-        /// </summary>
-        public static readonly ReadOnlyMemory<byte> TitleUtf8JsonPropertyName = new byte[]{116, 105, 116, 108, 101};
-        /// <summary>
-        /// JSON property name for <see cref = "Title"/>.
-        /// </summary>
-        public static readonly string TitleJsonPropertyName = "title";
-        /// <summary>
-        /// JSON property name for <see cref = "Description"/>.
-        /// </summary>
-        public static readonly ReadOnlyMemory<byte> DescriptionUtf8JsonPropertyName = new byte[]{100, 101, 115, 99, 114, 105, 112, 116, 105, 111, 110};
-        /// <summary>
-        /// JSON property name for <see cref = "Description"/>.
-        /// </summary>
-        public static readonly string DescriptionJsonPropertyName = "description";
-        /// <summary>
-        /// JSON property name for <see cref = "Default"/>.
-        /// </summary>
-        public static readonly ReadOnlyMemory<byte> DefaultUtf8JsonPropertyName = new byte[]{100, 101, 102, 97, 117, 108, 116};
-        /// <summary>
-        /// JSON property name for <see cref = "Default"/>.
-        /// </summary>
-        public static readonly string DefaultJsonPropertyName = "default";
-        /// <summary>
-        /// JSON property name for <see cref = "Deprecated"/>.
-        /// </summary>
-        public static readonly ReadOnlyMemory<byte> DeprecatedUtf8JsonPropertyName = new byte[]{100, 101, 112, 114, 101, 99, 97, 116, 101, 100};
-        /// <summary>
-        /// JSON property name for <see cref = "Deprecated"/>.
-        /// </summary>
-        public static readonly string DeprecatedJsonPropertyName = "deprecated";
-        /// <summary>
-        /// JSON property name for <see cref = "ReadOnly"/>.
-        /// </summary>
-        public static readonly ReadOnlyMemory<byte> ReadOnlyUtf8JsonPropertyName = new byte[]{114, 101, 97, 100, 79, 110, 108, 121};
-        /// <summary>
-        /// JSON property name for <see cref = "ReadOnly"/>.
-        /// </summary>
-        public static readonly string ReadOnlyJsonPropertyName = "readOnly";
-        /// <summary>
-        /// JSON property name for <see cref = "WriteOnly"/>.
-        /// </summary>
-        public static readonly ReadOnlyMemory<byte> WriteOnlyUtf8JsonPropertyName = new byte[]{119, 114, 105, 116, 101, 79, 110, 108, 121};
-        /// <summary>
-        /// JSON property name for <see cref = "WriteOnly"/>.
-        /// </summary>
-        public static readonly string WriteOnlyJsonPropertyName = "writeOnly";
-        /// <summary>
-        /// JSON property name for <see cref = "Examples"/>.
-        /// </summary>
-        public static readonly ReadOnlyMemory<byte> ExamplesUtf8JsonPropertyName = new byte[]{101, 120, 97, 109, 112, 108, 101, 115};
-        /// <summary>
-        /// JSON property name for <see cref = "Examples"/>.
-        /// </summary>
-        public static readonly string ExamplesJsonPropertyName = "examples";
-        private static readonly ImmutableDictionary<string, PropertyValidator<MetaData>> __CorvusLocalProperties = CreateLocalPropertyValidators();
-        private static readonly ImmutableDictionary<string, JsonAny> __CorvusDefaults = BuildDefaults();
-        private readonly JsonElement jsonElementBacking;
-        private readonly ImmutableDictionary<string, JsonAny>? objectBacking;
-        private readonly bool? booleanBacking;
-        /// <summary>
-        /// Initializes a new instance of the <see cref = "MetaData"/> struct.
-        /// </summary>
-        /// <param name = "value">The backing <see cref = "JsonElement"/>.</param>
-        public MetaData(JsonElement value)
-        {
-            this.jsonElementBacking = value;
-            this.objectBacking = default;
-            this.booleanBacking = default;
-        }
+        this.jsonElementBacking = value;
+        this.backing = Backing.JsonElement;
+        this.boolBacking = default;
+        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+    }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref = "MetaData"/> struct.
-        /// </summary>
-        /// <param name = "value">A property dictionary.</param>
-        public MetaData(ImmutableDictionary<string, JsonAny> value)
+    /// <summary>
+    /// Gets a Null instance.
+    /// </summary>
+    public static MetaData Null { get; } = new(JsonValueHelpers.NullElement);
+    /// <summary>
+    /// Gets an Undefined instance.
+    /// </summary>
+    public static MetaData Undefined { get; } = default;
+    /// <inheritdoc/>
+    public JsonAny AsAny
+    {
+        get
         {
-            this.jsonElementBacking = default;
-            this.objectBacking = value;
-            this.booleanBacking = default;
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref = "MetaData"/> struct.
-        /// </summary>
-        /// <param name = "jsonObject">The <see cref = "JsonObject"/> from which to construct the value.</param>
-        public MetaData(JsonObject jsonObject)
-        {
-            if (jsonObject.HasJsonElement)
+            if ((this.backing & Backing.JsonElement) != 0)
             {
-                this.jsonElementBacking = jsonObject.AsJsonElement;
-                this.objectBacking = default;
-            }
-            else
-            {
-                this.jsonElementBacking = default;
-                this.objectBacking = jsonObject.AsPropertyDictionary;
+                return new(this.jsonElementBacking);
             }
 
-            this.booleanBacking = default;
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref = "MetaData"/> struct.
-        /// </summary>
-        /// <param name = "jsonBoolean">The <see cref = "JsonBoolean"/> from which to construct the value.</param>
-        public MetaData(JsonBoolean jsonBoolean)
-        {
-            if (jsonBoolean.HasJsonElement)
+            if ((this.backing & Backing.Bool) != 0)
             {
-                this.jsonElementBacking = jsonBoolean.AsJsonElement;
-                this.booleanBacking = default;
-            }
-            else
-            {
-                this.jsonElementBacking = default;
-                this.booleanBacking = jsonBoolean.GetBoolean();
+                return new(this.boolBacking);
             }
 
-            this.objectBacking = default;
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref = "MetaData"/> struct.
-        /// </summary>
-        /// <param name = "boolean">The <see cref = "bool "/> from which to construct the value.</param>
-        public MetaData(bool boolean)
-        {
-            this.jsonElementBacking = default;
-            this.booleanBacking = boolean;
-            this.objectBacking = default;
-        }
-
-        /// <summary>
-        /// Gets Title.
-        /// </summary>
-        /// <remarks>
-        /// {Property title}.
-        /// {Property description}.
-        /// </remarks>
-        /// <example>
-        /// {Property examples}.
-        /// </example>
-        public Corvus.Json.JsonString Title
-        {
-            get
+            if ((this.backing & Backing.Object) != 0)
             {
-                if (this.objectBacking is ImmutableDictionary<string, JsonAny> properties)
-                {
-                    if (properties.TryGetValue(TitleJsonPropertyName, out JsonAny result))
-                    {
-                        return result;
-                    }
-                }
-
-                if (this.jsonElementBacking.ValueKind == JsonValueKind.Object)
-                {
-                    if (this.jsonElementBacking.TryGetProperty(TitleUtf8JsonPropertyName.Span, out JsonElement result))
-                    {
-                        return new Corvus.Json.JsonString(result);
-                    }
-                }
-
-                return default;
+                return new(this.objectBacking);
             }
-        }
 
-        /// <summary>
-        /// Gets Description.
-        /// </summary>
-        /// <remarks>
-        /// {Property title}.
-        /// {Property description}.
-        /// </remarks>
-        /// <example>
-        /// {Property examples}.
-        /// </example>
-        public Corvus.Json.JsonString Description
-        {
-            get
+            if ((this.backing & Backing.Null) != 0)
             {
-                if (this.objectBacking is ImmutableDictionary<string, JsonAny> properties)
-                {
-                    if (properties.TryGetValue(DescriptionJsonPropertyName, out JsonAny result))
-                    {
-                        return result;
-                    }
-                }
-
-                if (this.jsonElementBacking.ValueKind == JsonValueKind.Object)
-                {
-                    if (this.jsonElementBacking.TryGetProperty(DescriptionUtf8JsonPropertyName.Span, out JsonElement result))
-                    {
-                        return new Corvus.Json.JsonString(result);
-                    }
-                }
-
-                return default;
+                return JsonAny.Null;
             }
+
+            return JsonAny.Undefined;
         }
+    }
 
-        /// <summary>
-        /// Gets Default.
-        /// </summary>
-        /// <remarks>
-        /// {Property title}.
-        /// {Property description}.
-        /// </remarks>
-        /// <example>
-        /// {Property examples}.
-        /// </example>
-        public Corvus.Json.JsonAny Default
+    /// <inheritdoc/>
+    public JsonElement AsJsonElement
+    {
+        get
         {
-            get
+            if ((this.backing & Backing.JsonElement) != 0)
             {
-                if (this.objectBacking is ImmutableDictionary<string, JsonAny> properties)
-                {
-                    if (properties.TryGetValue(DefaultJsonPropertyName, out JsonAny result))
-                    {
-                        return result;
-                    }
-                }
-
-                if (this.jsonElementBacking.ValueKind == JsonValueKind.Object)
-                {
-                    if (this.jsonElementBacking.TryGetProperty(DefaultUtf8JsonPropertyName.Span, out JsonElement result))
-                    {
-                        return new Corvus.Json.JsonAny(result);
-                    }
-                }
-
-                return default;
-            }
-        }
-
-        /// <summary>
-        /// Gets Deprecated.
-        /// </summary>
-        /// <remarks>
-        /// {Property title}.
-        /// {Property description}.
-        /// </remarks>
-        /// <example>
-        /// {Property examples}.
-        /// </example>
-        public Corvus.Json.JsonSchema.Draft202012.MetaData.DeprecatedValue Deprecated
-        {
-            get
-            {
-                if (this.objectBacking is ImmutableDictionary<string, JsonAny> properties)
-                {
-                    if (properties.TryGetValue(DeprecatedJsonPropertyName, out JsonAny result))
-                    {
-                        return result;
-                    }
-                }
-
-                if (this.jsonElementBacking.ValueKind == JsonValueKind.Object)
-                {
-                    if (this.jsonElementBacking.TryGetProperty(DeprecatedUtf8JsonPropertyName.Span, out JsonElement result))
-                    {
-                        return new Corvus.Json.JsonSchema.Draft202012.MetaData.DeprecatedValue(result);
-                    }
-                }
-
-                return default;
-            }
-        }
-
-        /// <summary>
-        /// Gets ReadOnly.
-        /// </summary>
-        /// <remarks>
-        /// {Property title}.
-        /// {Property description}.
-        /// </remarks>
-        /// <example>
-        /// {Property examples}.
-        /// </example>
-        public Corvus.Json.JsonSchema.Draft202012.MetaData.ReadOnlyValue ReadOnly
-        {
-            get
-            {
-                if (this.objectBacking is ImmutableDictionary<string, JsonAny> properties)
-                {
-                    if (properties.TryGetValue(ReadOnlyJsonPropertyName, out JsonAny result))
-                    {
-                        return result;
-                    }
-                }
-
-                if (this.jsonElementBacking.ValueKind == JsonValueKind.Object)
-                {
-                    if (this.jsonElementBacking.TryGetProperty(ReadOnlyUtf8JsonPropertyName.Span, out JsonElement result))
-                    {
-                        return new Corvus.Json.JsonSchema.Draft202012.MetaData.ReadOnlyValue(result);
-                    }
-                }
-
-                return default;
-            }
-        }
-
-        /// <summary>
-        /// Gets WriteOnly.
-        /// </summary>
-        /// <remarks>
-        /// {Property title}.
-        /// {Property description}.
-        /// </remarks>
-        /// <example>
-        /// {Property examples}.
-        /// </example>
-        public Corvus.Json.JsonSchema.Draft202012.MetaData.WriteOnlyValue WriteOnly
-        {
-            get
-            {
-                if (this.objectBacking is ImmutableDictionary<string, JsonAny> properties)
-                {
-                    if (properties.TryGetValue(WriteOnlyJsonPropertyName, out JsonAny result))
-                    {
-                        return result;
-                    }
-                }
-
-                if (this.jsonElementBacking.ValueKind == JsonValueKind.Object)
-                {
-                    if (this.jsonElementBacking.TryGetProperty(WriteOnlyUtf8JsonPropertyName.Span, out JsonElement result))
-                    {
-                        return new Corvus.Json.JsonSchema.Draft202012.MetaData.WriteOnlyValue(result);
-                    }
-                }
-
-                return default;
-            }
-        }
-
-        /// <summary>
-        /// Gets Examples.
-        /// </summary>
-        /// <remarks>
-        /// {Property title}.
-        /// {Property description}.
-        /// </remarks>
-        /// <example>
-        /// {Property examples}.
-        /// </example>
-        public Corvus.Json.JsonSchema.Draft202012.MetaData.JsonAnyArray Examples
-        {
-            get
-            {
-                if (this.objectBacking is ImmutableDictionary<string, JsonAny> properties)
-                {
-                    if (properties.TryGetValue(ExamplesJsonPropertyName, out JsonAny result))
-                    {
-                        return result;
-                    }
-                }
-
-                if (this.jsonElementBacking.ValueKind == JsonValueKind.Object)
-                {
-                    if (this.jsonElementBacking.TryGetProperty(ExamplesUtf8JsonPropertyName.Span, out JsonElement result))
-                    {
-                        return new Corvus.Json.JsonSchema.Draft202012.MetaData.JsonAnyArray(result);
-                    }
-                }
-
-                return default;
-            }
-        }
-
-        /// <summary>
-        /// Gets a value indicating whether this is backed by a JSON element.
-        /// </summary>
-        public bool HasJsonElement => this.objectBacking is null && this.booleanBacking is null;
-        /// <summary>
-        /// Gets the value as a JsonElement.
-        /// </summary>
-        public JsonElement AsJsonElement
-        {
-            get
-            {
-                if (this.objectBacking is ImmutableDictionary<string, JsonAny> objectBacking)
-                {
-                    return JsonObject.PropertiesToJsonElement(objectBacking);
-                }
-
-                if (this.booleanBacking is bool booleanBacking)
-                {
-                    return JsonBoolean.BoolToJsonElement(booleanBacking);
-                }
-
                 return this.jsonElementBacking;
             }
-        }
 
-        /// <inheritdoc/>
-        public JsonValueKind ValueKind
-        {
-            get
+            if ((this.backing & Backing.Bool) != 0)
             {
-                if (this.objectBacking is ImmutableDictionary<string, JsonAny>)
-                {
-                    return JsonValueKind.Object;
-                }
+                return JsonValueHelpers.BoolToJsonElement(this.boolBacking);
+            }
 
-                if (this.booleanBacking is bool booleanBacking)
-                {
-                    return booleanBacking ? JsonValueKind.True : JsonValueKind.False;
-                }
+            if ((this.backing & Backing.Object) != 0)
+            {
+                return JsonValueHelpers.ObjectToJsonElement(this.objectBacking);
+            }
 
+            if ((this.backing & Backing.Null) != 0)
+            {
+                return JsonValueHelpers.NullElement;
+            }
+
+            return default;
+        }
+    }
+
+    /// <inheritdoc/>
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public JsonString AsString
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                return new(this.jsonElementBacking);
+            }
+
+            throw new InvalidOperationException();
+        }
+    }
+
+    /// <inheritdoc/>
+    public JsonBoolean AsBoolean
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                return new(this.jsonElementBacking);
+            }
+
+            if ((this.backing & Backing.Bool) != 0)
+            {
+                return new(this.boolBacking);
+            }
+
+            throw new InvalidOperationException();
+        }
+    }
+
+    /// <inheritdoc/>
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public JsonNumber AsNumber
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                return new(this.jsonElementBacking);
+            }
+
+            throw new InvalidOperationException();
+        }
+    }
+
+    /// <inheritdoc/>
+    public JsonObject AsObject
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                return new(this.jsonElementBacking);
+            }
+
+            if ((this.backing & Backing.Object) != 0)
+            {
+                return new(this.objectBacking);
+            }
+
+            throw new InvalidOperationException();
+        }
+    }
+
+    /// <inheritdoc/>
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public JsonArray AsArray
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                return new(this.jsonElementBacking);
+            }
+
+            throw new InvalidOperationException();
+        }
+    }
+
+    /// <inheritdoc/>
+    public bool HasJsonElementBacking
+    {
+        get
+        {
+            return (this.backing & Backing.JsonElement) != 0;
+        }
+    }
+
+    /// <inheritdoc/>
+    public bool HasDotnetBacking
+    {
+        get
+        {
+            return (this.backing & Backing.Dotnet) != 0;
+        }
+    }
+
+    /// <inheritdoc/>
+    public JsonValueKind ValueKind
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
                 return this.jsonElementBacking.ValueKind;
             }
-        }
 
-        /// <inheritdoc/>
-        public JsonAny AsAny
-        {
-            get
+            if ((this.backing & Backing.Bool) != 0)
             {
-                if (this.objectBacking is ImmutableDictionary<string, JsonAny> objectBacking)
-                {
-                    return new JsonAny(objectBacking);
-                }
-
-                if (this.booleanBacking is bool booleanBacking)
-                {
-                    return new JsonAny(booleanBacking);
-                }
-
-                return new JsonAny(this.jsonElementBacking);
-            }
-        }
-
-        /// <summary>
-        /// Conversion from any.
-        /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator MetaData(JsonAny value)
-        {
-            if (value.HasJsonElement)
-            {
-                return new MetaData(value.AsJsonElement);
+                return this.boolBacking ? JsonValueKind.True : JsonValueKind.False;
             }
 
-            return value.As<MetaData>();
-        }
-
-        /// <summary>
-        /// Conversion to any.
-        /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator JsonAny(MetaData value)
-        {
-            return value.AsAny;
-        }
-
-        /// <summary>
-        /// Conversion from object.
-        /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator MetaData(JsonObject value)
-        {
-            return new MetaData(value);
-        }
-
-        /// <summary>
-        /// Conversion to object.
-        /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator JsonObject(MetaData value)
-        {
-            return value.AsObject;
-        }
-
-        /// <summary>
-        /// Implicit conversion to a property dictionary.
-        /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator ImmutableDictionary<string, JsonAny>(MetaData value)
-        {
-            return value.AsObject.AsPropertyDictionary;
-        }
-
-        /// <summary>
-        /// Implicit conversion from a property dictionary.
-        /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator MetaData(ImmutableDictionary<string, JsonAny> value)
-        {
-            return new MetaData(value);
-        }
-
-        /// <summary>
-        /// Conversion from bool.
-        /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator MetaData(bool value)
-        {
-            return new MetaData(value);
-        }
-
-        /// <summary>
-        /// Conversion to bool.
-        /// </summary>
-        /// <param name = "boolean">The value from which to convert.</param>
-        public static implicit operator bool (MetaData boolean)
-        {
-            return boolean.AsBoolean.GetBoolean();
-        }
-
-        /// <summary>
-        /// Conversion from bool.
-        /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator MetaData(JsonBoolean value)
-        {
-            return new MetaData(value);
-        }
-
-        /// <summary>
-        /// Conversion to bool.
-        /// </summary>
-        /// <param name = "boolean">The value from which to convert.</param>
-        public static implicit operator JsonBoolean(MetaData boolean)
-        {
-            return boolean.AsBoolean;
-        }
-
-        /// <summary>
-        /// Standard equality operator.
-        /// </summary>
-        /// <param name = "lhs">The left hand side of the comparison.</param>
-        /// <param name = "rhs">The right hand side of the comparison.</param>
-        /// <returns>True if they are equal.</returns>
-        public static bool operator ==(MetaData lhs, MetaData rhs)
-        {
-            return lhs.Equals(rhs);
-        }
-
-        /// <summary>
-        /// Standard inequality operator.
-        /// </summary>
-        /// <param name = "lhs">The left hand side of the comparison.</param>
-        /// <param name = "rhs">The right hand side of the comparison.</param>
-        /// <returns>True if they are not equal.</returns>
-        public static bool operator !=(MetaData lhs, MetaData rhs)
-        {
-            return !lhs.Equals(rhs);
-        }
-
-        /// <summary>
-        /// Creates an instance of a <see cref = "MetaData"/>.
-        /// </summary>
-        public static MetaData Create(Corvus.Json.JsonString? title = null, Corvus.Json.JsonString? description = null, Corvus.Json.JsonAny? @default = null, Corvus.Json.JsonSchema.Draft202012.MetaData.DeprecatedValue? deprecated = null, Corvus.Json.JsonSchema.Draft202012.MetaData.ReadOnlyValue? readOnly = null, Corvus.Json.JsonSchema.Draft202012.MetaData.WriteOnlyValue? writeOnly = null, Corvus.Json.JsonSchema.Draft202012.MetaData.JsonAnyArray? examples = null)
-        {
-            var builder = ImmutableDictionary.CreateBuilder<string, JsonAny>();
-            if (title is Corvus.Json.JsonString title__)
+            if ((this.backing & Backing.Object) != 0)
             {
-                builder.Add(TitleJsonPropertyName, title__);
+                return JsonValueKind.Object;
             }
 
-            if (description is Corvus.Json.JsonString description__)
+            if ((this.backing & Backing.Null) != 0)
             {
-                builder.Add(DescriptionJsonPropertyName, description__);
+                return JsonValueKind.Null;
             }
 
-            if (@default is Corvus.Json.JsonAny @default__)
-            {
-                builder.Add(DefaultJsonPropertyName, @default__);
-            }
+            return JsonValueKind.Undefined;
+        }
+    }
 
-            if (deprecated is Corvus.Json.JsonSchema.Draft202012.MetaData.DeprecatedValue deprecated__)
-            {
-                builder.Add(DeprecatedJsonPropertyName, deprecated__);
-            }
+    /// <summary>
+    /// Conversion from JsonAny.
+    /// </summary>
+    /// <param name = "value">The value from which to convert.</param>
+    public static implicit operator MetaData(JsonAny value)
+    {
+        return MetaData.FromAny(value);
+    }
 
-            if (readOnly is Corvus.Json.JsonSchema.Draft202012.MetaData.ReadOnlyValue readOnly__)
-            {
-                builder.Add(ReadOnlyJsonPropertyName, readOnly__);
-            }
+    /// <summary>
+    /// Conversion to JsonAny.
+    /// </summary>
+    /// <param name = "value">The value from which to convert.</param>
+    /// <exception cref = "InvalidOperationException">The value was not compatible with this type.</exception>
+    public static implicit operator JsonAny(in MetaData value)
+    {
+        return value.AsAny;
+    }
 
-            if (writeOnly is Corvus.Json.JsonSchema.Draft202012.MetaData.WriteOnlyValue writeOnly__)
-            {
-                builder.Add(WriteOnlyJsonPropertyName, writeOnly__);
-            }
+    /// <summary>
+    /// Equality operator.
+    /// </summary>
+    /// <param name = "left">The lhs.</param>
+    /// <param name = "right">The rhs.</param>
+    /// <returns><c>True</c> if the values are equal.</returns>
+    public static bool operator ==(in MetaData left, in MetaData right)
+    {
+        return left.Equals(right);
+    }
 
-            if (examples is Corvus.Json.JsonSchema.Draft202012.MetaData.JsonAnyArray examples__)
-            {
-                builder.Add(ExamplesJsonPropertyName, examples__);
-            }
+    /// <summary>
+    /// Inequality operator.
+    /// </summary>
+    /// <param name = "left">The lhs.</param>
+    /// <param name = "right">The rhs.</param>
+    /// <returns><c>True</c> if the values are equal.</returns>
+    public static bool operator !=(in MetaData left, in MetaData right)
+    {
+        return !left.Equals(right);
+    }
 
-            return builder.ToImmutable();
+    /// <summary>
+    /// Gets an instance of the JSON value from a JsonAny value.
+    /// </summary>
+    /// <param name = "value">The <see cref = "JsonAny"/> value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the <see cref = "JsonAny"/>.</returns>
+    /// <remarks>The returned value will have a <see cref = "IJsonValue.ValueKind"/> of <see cref = "JsonValueKind.Undefined"/> if the
+    /// value cannot be constructed from the given instance (e.g. because they have an incompatible dotnet backing type.
+    /// </remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static MetaData FromAny(in JsonAny value)
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
         }
 
-        /// <summary>
-        /// Sets title.
-        /// </summary>
-        /// <param name = "value">The value to set.</param>
-        /// <returns>The entity with the updated property.</returns>
-        public MetaData WithTitle(Corvus.Json.JsonString value)
+        JsonValueKind valueKind = value.ValueKind;
+        return valueKind switch
         {
-            return this.SetProperty(TitleJsonPropertyName, value);
+            JsonValueKind.True => new(true),
+            JsonValueKind.False => new(false),
+            JsonValueKind.Object => new((ImmutableDictionary<JsonPropertyName, JsonAny>)value),
+            JsonValueKind.Null => Null,
+            _ => Undefined,
+        };
+    }
+
+    /// <summary>
+    /// Gets an instance of the JSON value from a <see cref = "JsonElement"/> value.
+    /// </summary>
+    /// <param name = "value">The <see cref = "JsonElement"/> value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the <see cref = "JsonElement"/>.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static MetaData FromJson(in JsonElement value)
+    {
+        return new(value);
+    }
+
+    /// <summary>
+    /// Gets an instance of the JSON value from a boolean value.
+    /// </summary>
+    /// <typeparam name = "TValue">The type of the value.</typeparam>
+    /// <param name = "value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>This will be MetaData.Undefined if the type is not compatible.</remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static MetaData FromBoolean<TValue>(in TValue value)
+        where TValue : struct, IJsonBoolean<TValue>
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
         }
 
-        /// <summary>
-        /// Sets description.
-        /// </summary>
-        /// <param name = "value">The value to set.</param>
-        /// <returns>The entity with the updated property.</returns>
-        public MetaData WithDescription(Corvus.Json.JsonString value)
+        if (value.ValueKind == JsonValueKind.True)
         {
-            return this.SetProperty(DescriptionJsonPropertyName, value);
+            return new(true);
         }
 
-        /// <summary>
-        /// Sets default.
-        /// </summary>
-        /// <param name = "value">The value to set.</param>
-        /// <returns>The entity with the updated property.</returns>
-        public MetaData WithDefault(Corvus.Json.JsonAny value)
+        if (value.ValueKind == JsonValueKind.False)
         {
-            return this.SetProperty(DefaultJsonPropertyName, value);
+            return new(false);
         }
 
-        /// <summary>
-        /// Sets deprecated.
-        /// </summary>
-        /// <param name = "value">The value to set.</param>
-        /// <returns>The entity with the updated property.</returns>
-        public MetaData WithDeprecated(Corvus.Json.JsonSchema.Draft202012.MetaData.DeprecatedValue value)
+        return Undefined;
+    }
+
+    /// <summary>
+    /// Gets an instance of the JSON value from a string value.
+    /// </summary>
+    /// <typeparam name = "TValue">The type of the value.</typeparam>
+    /// <param name = "value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>This will be MetaData.Undefined if the type is not compatible.</remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public static MetaData FromString<TValue>(in TValue value)
+        where TValue : struct, IJsonString<TValue>
+    {
+        if (value.HasJsonElementBacking)
         {
-            return this.SetProperty(DeprecatedJsonPropertyName, value);
+            return new(value.AsJsonElement);
         }
 
-        /// <summary>
-        /// Sets readOnly.
-        /// </summary>
-        /// <param name = "value">The value to set.</param>
-        /// <returns>The entity with the updated property.</returns>
-        public MetaData WithReadOnly(Corvus.Json.JsonSchema.Draft202012.MetaData.ReadOnlyValue value)
+        return Undefined;
+    }
+
+    /// <summary>
+    /// Gets an instance of the JSON value from a number value.
+    /// </summary>
+    /// <typeparam name = "TValue">The type of the value.</typeparam>
+    /// <param name = "value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>This will be MetaData.Undefined if the type is not compatible.</remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public static MetaData FromNumber<TValue>(in TValue value)
+        where TValue : struct, IJsonNumber<TValue>
+    {
+        if (value.HasJsonElementBacking)
         {
-            return this.SetProperty(ReadOnlyJsonPropertyName, value);
+            return new(value.AsJsonElement);
         }
 
-        /// <summary>
-        /// Sets writeOnly.
-        /// </summary>
-        /// <param name = "value">The value to set.</param>
-        /// <returns>The entity with the updated property.</returns>
-        public MetaData WithWriteOnly(Corvus.Json.JsonSchema.Draft202012.MetaData.WriteOnlyValue value)
+        return Undefined;
+    }
+
+    /// <summary>
+    /// Gets an instance of the JSON value from an array value.
+    /// </summary>
+    /// <typeparam name = "TValue">The type of the value.</typeparam>
+    /// <param name = "value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>This will be MetaData.Undefined if the type is not compatible.</remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public static MetaData FromArray<TValue>(in TValue value)
+        where TValue : struct, IJsonArray<TValue>
+    {
+        if (value.HasJsonElementBacking)
         {
-            return this.SetProperty(WriteOnlyJsonPropertyName, value);
+            return new(value.AsJsonElement);
         }
 
-        /// <summary>
-        /// Sets examples.
-        /// </summary>
-        /// <param name = "value">The value to set.</param>
-        /// <returns>The entity with the updated property.</returns>
-        public MetaData WithExamples(Corvus.Json.JsonSchema.Draft202012.MetaData.JsonAnyArray value)
+        return Undefined;
+    }
+
+    /// <summary>
+    /// Gets an instance of the JSON value from an object value.
+    /// </summary>
+    /// <typeparam name = "TValue">The type of the value.</typeparam>
+    /// <param name = "value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>This will be MetaData.Undefined if the type is not compatible.</remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static MetaData FromObject<TValue>(in TValue value)
+        where TValue : struct, IJsonObject<TValue>
+    {
+        if (value.HasJsonElementBacking)
         {
-            return this.SetProperty(ExamplesJsonPropertyName, value);
+            return new(value.AsJsonElement);
         }
 
-        /// <inheritdoc/>
-        public override string ToString()
+        if (value.ValueKind == JsonValueKind.Object)
         {
-            return this.Serialize();
+            return new((ImmutableDictionary<JsonPropertyName, JsonAny>)value);
         }
 
-        /// <inheritdoc/>
-        public override bool Equals(object? obj)
-        {
-            if (obj is IJsonValue jv)
-            {
-                return this.Equals(jv.AsAny);
-            }
+        return Undefined;
+    }
 
-            return obj is null && this.IsNull();
+    /// <summary>
+    /// Parses a JSON string into a MetaData.
+    /// </summary>
+    /// <param name = "json">The json string to parse.</param>
+    /// <param name = "options">The (optional) JsonDocumentOptions.</param>
+    /// <returns>A <see cref = "MetaData"/> instance built from the JSON string.</returns>
+    public static MetaData Parse(string json, JsonDocumentOptions options = default)
+    {
+        using var jsonDocument = JsonDocument.Parse(json, options);
+        return new MetaData(jsonDocument.RootElement.Clone());
+    }
+
+    /// <summary>
+    /// Parses a JSON string into a MetaData.
+    /// </summary>
+    /// <param name = "utf8Json">The json string to parse.</param>
+    /// <param name = "options">The (optional) JsonDocumentOptions.</param>
+    /// <returns>A <see cref = "MetaData"/> instance built from the JSON string.</returns>
+    public static MetaData Parse(Stream utf8Json, JsonDocumentOptions options = default)
+    {
+        using var jsonDocument = JsonDocument.Parse(utf8Json, options);
+        return new MetaData(jsonDocument.RootElement.Clone());
+    }
+
+    /// <summary>
+    /// Parses a JSON string into a MetaData.
+    /// </summary>
+    /// <param name = "utf8Json">The json string to parse.</param>
+    /// <param name = "options">The (optional) JsonDocumentOptions.</param>
+    /// <returns>A <see cref = "MetaData"/> instance built from the JSON string.</returns>
+    public static MetaData Parse(ReadOnlyMemory<byte> utf8Json, JsonDocumentOptions options = default)
+    {
+        using var jsonDocument = JsonDocument.Parse(utf8Json, options);
+        return new MetaData(jsonDocument.RootElement.Clone());
+    }
+
+    /// <summary>
+    /// Parses a JSON string into a MetaData.
+    /// </summary>
+    /// <param name = "json">The json string to parse.</param>
+    /// <param name = "options">The (optional) JsonDocumentOptions.</param>
+    /// <returns>A <see cref = "MetaData"/> instance built from the JSON string.</returns>
+    public static MetaData Parse(ReadOnlyMemory<char> json, JsonDocumentOptions options = default)
+    {
+        using var jsonDocument = JsonDocument.Parse(json, options);
+        return new MetaData(jsonDocument.RootElement.Clone());
+    }
+
+    /// <summary>
+    /// Parses a JSON string into a MetaData.
+    /// </summary>
+    /// <param name = "utf8Json">The json string to parse.</param>
+    /// <param name = "options">The (optional) JsonDocumentOptions.</param>
+    /// <returns>A <see cref = "MetaData"/> instance built from the JSON string.</returns>
+    public static MetaData Parse(ReadOnlySequence<byte> utf8Json, JsonDocumentOptions options = default)
+    {
+        using var jsonDocument = JsonDocument.Parse(utf8Json, options);
+        return new MetaData(jsonDocument.RootElement.Clone());
+    }
+
+    /// <summary>
+    /// Gets the value as the target value.
+    /// </summary>
+    /// <typeparam name = "TTarget">The type of the target.</typeparam>
+    /// <returns>An instance of the target type.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public TTarget As<TTarget>()
+        where TTarget : struct, IJsonValue<TTarget>
+    {
+        if ((this.backing & Backing.JsonElement) != 0)
+        {
+            return TTarget.FromJson(this.jsonElementBacking);
         }
 
-        /// <inheritdoc/>
-        public override int GetHashCode()
+        if ((this.backing & Backing.Bool) != 0)
         {
-            JsonValueKind valueKind = this.ValueKind;
-            return valueKind switch
-            {
-                JsonValueKind.Object => this.AsObject.GetHashCode(),
-                JsonValueKind.Array => this.AsArray().GetHashCode(),
-                JsonValueKind.Number => this.AsNumber().GetHashCode(),
-                JsonValueKind.String => this.AsString().GetHashCode(),
-                JsonValueKind.True or JsonValueKind.False => this.AsBoolean.GetHashCode(),
-                JsonValueKind.Null => JsonNull.NullHashCode,
-                _ => JsonAny.UndefinedHashCode,
-            };
+            return TTarget.FromBoolean(this);
         }
 
-        /// <summary>
-        /// Writes the object to the <see cref = "Utf8JsonWriter"/>.
-        /// </summary>
-        /// <param name = "writer">The writer to which to write the object.</param>
-        public void WriteTo(Utf8JsonWriter writer)
+        if ((this.backing & Backing.Object) != 0)
         {
-            if (this.objectBacking is ImmutableDictionary<string, JsonAny> objectBacking)
-            {
-                JsonObject.WriteProperties(objectBacking, writer);
-                return;
-            }
+            return TTarget.FromObject(this);
+        }
 
-            if (this.booleanBacking is bool booleanBacking)
-            {
-                writer.WriteBooleanValue(booleanBacking);
-                return;
-            }
+        if ((this.backing & Backing.Null) != 0)
+        {
+            return TTarget.Null;
+        }
 
+        return TTarget.Undefined;
+    }
+
+    /// <inheritdoc/>
+    public override bool Equals(object? obj)
+    {
+        return (obj is IJsonValue jv && this.Equals(jv.AsAny)) || (obj is null && this.IsNull());
+    }
+
+    /// <inheritdoc/>
+    public bool Equals<T>(T other)
+        where T : struct, IJsonValue<T>
+    {
+        return JsonValueHelpers.CompareValues(this, other);
+    }
+
+    /// <inheritdoc/>
+    public bool Equals(MetaData other)
+    {
+        return JsonValueHelpers.CompareValues(this, other);
+    }
+
+    /// <inheritdoc/>
+    public void WriteTo(Utf8JsonWriter writer)
+    {
+        if ((this.backing & Backing.JsonElement) != 0)
+        {
             if (this.jsonElementBacking.ValueKind != JsonValueKind.Undefined)
             {
                 this.jsonElementBacking.WriteTo(writer);
-                return;
             }
 
+            return;
+        }
+
+        if ((this.backing & Backing.Bool) != 0)
+        {
+            writer.WriteBooleanValue(this.boolBacking);
+            return;
+        }
+
+        if ((this.backing & Backing.Object) != 0)
+        {
+            JsonValueHelpers.WriteProperties(this.objectBacking, writer);
+            return;
+        }
+
+        if ((this.backing & Backing.Null) != 0)
+        {
             writer.WriteNullValue();
+            return;
         }
-
-        /// <inheritdoc/>
-        public JsonObjectEnumerator EnumerateObject()
-        {
-            return this.AsObject.EnumerateObject();
-        }
-
-        /// <inheritdoc/>
-        public bool TryGetProperty(string name, out JsonAny value)
-        {
-            return this.AsObject.TryGetProperty(name, out value);
-        }
-
-        /// <inheritdoc/>
-        public bool TryGetProperty(ReadOnlySpan<char> name, out JsonAny value)
-        {
-            return this.AsObject.TryGetProperty(name, out value);
-        }
-
-        /// <inheritdoc/>
-        public bool TryGetProperty(ReadOnlySpan<byte> utf8name, out JsonAny value)
-        {
-            return this.AsObject.TryGetProperty(utf8name, out value);
-        }
-
-        /// <inheritdoc/>
-        public bool TryGetDefault(string name, out JsonAny value)
-        {
-            return __CorvusDefaults.TryGetValue(name, out value);
-        }
-
-        /// <inheritdoc/>
-        public bool TryGetDefault(ReadOnlySpan<char> name, out JsonAny value)
-        {
-            return __CorvusDefaults.TryGetValue(name.ToString(), out value);
-        }
-
-        /// <inheritdoc/>
-        public bool TryGetDefault(ReadOnlySpan<byte> utf8name, out JsonAny value)
-        {
-            return __CorvusDefaults.TryGetValue(System.Text.Encoding.UTF8.GetString(utf8name), out value);
-        }
-
-        /// <inheritdoc/>
-        public bool HasDefault(string name)
-        {
-            return __CorvusDefaults.TryGetValue(name, out _);
-        }
-
-        /// <inheritdoc/>
-        public bool HasDefault(ReadOnlySpan<char> name)
-        {
-            return __CorvusDefaults.TryGetValue(name.ToString(), out _);
-        }
-
-        /// <inheritdoc/>
-        public bool HasDefault(ReadOnlySpan<byte> utf8name)
-        {
-            return __CorvusDefaults.TryGetValue(System.Text.Encoding.UTF8.GetString(utf8name), out _);
-        }
-
-        /// <inheritdoc/>
-        public bool Equals<T>(T other)
-            where T : struct, IJsonValue
-        {
-            JsonValueKind valueKind = this.ValueKind;
-            if (other.ValueKind != valueKind)
-            {
-                return false;
-            }
-
-            return valueKind switch
-            {
-                JsonValueKind.Object => this.AsObject.Equals(other.AsObject()),
-                JsonValueKind.Array => this.AsArray().Equals(other.AsArray()),
-                JsonValueKind.Number => this.AsNumber().Equals(other.AsNumber()),
-                JsonValueKind.String => this.AsString().Equals(other.AsString()),
-                JsonValueKind.True or JsonValueKind.False => this.AsBoolean.Equals(other.AsBoolean()),
-                JsonValueKind.Null => true,
-                _ => false,
-            };
-        }
-
-        /// <inheritdoc/>
-        public bool Equals(MetaData other)
-        {
-            JsonValueKind valueKind = this.ValueKind;
-            if (other.ValueKind != valueKind)
-            {
-                return false;
-            }
-
-            return valueKind switch
-            {
-                JsonValueKind.Object => this.AsObject.Equals(other.AsObject),
-                JsonValueKind.Array => this.AsArray().Equals(other.AsArray()),
-                JsonValueKind.Number => this.AsNumber().Equals(other.AsNumber()),
-                JsonValueKind.String => this.AsString().Equals(other.AsString()),
-                JsonValueKind.True or JsonValueKind.False => this.AsBoolean.Equals(other.AsBoolean),
-                JsonValueKind.Null => true,
-                _ => false,
-            };
-        }
-
-        /// <inheritdoc/>
-        public bool HasProperty(string name)
-        {
-            if (this.objectBacking is ImmutableDictionary<string, JsonAny> properties)
-            {
-                return properties.TryGetValue(name, out _);
-            }
-
-            if (this.jsonElementBacking.ValueKind == JsonValueKind.Object)
-            {
-                return this.jsonElementBacking.TryGetProperty(name.ToString(), out JsonElement _);
-            }
-
-            return false;
-        }
-
-        /// <inheritdoc/>
-        public bool HasProperty(ReadOnlySpan<char> name)
-        {
-            if (this.objectBacking is ImmutableDictionary<string, JsonAny> properties)
-            {
-                return properties.TryGetValue(name.ToString(), out _);
-            }
-
-            if (this.jsonElementBacking.ValueKind == JsonValueKind.Object)
-            {
-                return this.jsonElementBacking.TryGetProperty(name, out JsonElement _);
-            }
-
-            return false;
-        }
-
-        /// <inheritdoc/>
-        public bool HasProperty(ReadOnlySpan<byte> utf8name)
-        {
-            if (this.objectBacking is ImmutableDictionary<string, JsonAny> properties)
-            {
-                return properties.TryGetValue(System.Text.Encoding.UTF8.GetString(utf8name), out _);
-            }
-
-            if (this.jsonElementBacking.ValueKind == JsonValueKind.Object)
-            {
-                return this.jsonElementBacking.TryGetProperty(utf8name, out JsonElement _);
-            }
-
-            return false;
-        }
-
-        /// <inheritdoc/>
-        public MetaData SetProperty<TValue>(string name, TValue value)
-            where TValue : struct, IJsonValue
-        {
-            if (this.ValueKind == JsonValueKind.Object || this.ValueKind == JsonValueKind.Undefined)
-            {
-                return this.AsObject.SetProperty(name, value);
-            }
-
-            return this;
-        }
-
-        /// <inheritdoc/>
-        public MetaData SetProperty<TValue>(ReadOnlySpan<char> name, TValue value)
-            where TValue : struct, IJsonValue
-        {
-            if (this.ValueKind == JsonValueKind.Object || this.ValueKind == JsonValueKind.Undefined)
-            {
-                return this.AsObject.SetProperty(name, value);
-            }
-
-            return this;
-        }
-
-        /// <inheritdoc/>
-        public MetaData SetProperty<TValue>(ReadOnlySpan<byte> utf8name, TValue value)
-            where TValue : struct, IJsonValue
-        {
-            if (this.ValueKind == JsonValueKind.Object || this.ValueKind == JsonValueKind.Undefined)
-            {
-                return this.AsObject.SetProperty(utf8name, value);
-            }
-
-            return this;
-        }
-
-        /// <inheritdoc/>
-        public MetaData RemoveProperty(string name)
-        {
-            if (this.ValueKind == JsonValueKind.Object)
-            {
-                return this.AsObject.RemoveProperty(name);
-            }
-
-            return this;
-        }
-
-        /// <inheritdoc/>
-        public MetaData RemoveProperty(ReadOnlySpan<char> name)
-        {
-            if (this.ValueKind == JsonValueKind.Object)
-            {
-                return this.AsObject.RemoveProperty(name);
-            }
-
-            return this;
-        }
-
-        /// <inheritdoc/>
-        public MetaData RemoveProperty(ReadOnlySpan<byte> utf8Name)
-        {
-            if (this.ValueKind == JsonValueKind.Object)
-            {
-                return this.AsObject.RemoveProperty(utf8Name);
-            }
-
-            return this;
-        }
-
-        /// <inheritdoc/>
-        public T As<T>()
-            where T : struct, IJsonValue
-        {
-            return this.As<MetaData, T>();
-        }
-
-        /// <inheritdoc/>
-        public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
-        {
-            ValidationContext result = validationContext;
-            if (level != ValidationLevel.Flag)
-            {
-                result = result.UsingStack();
-            }
-
-            JsonValueKind valueKind = this.ValueKind;
-            result = this.ValidateType(valueKind, result, level);
-            if (level == ValidationLevel.Flag && !result.IsValid)
-            {
-                return result;
-            }
-
-            result = this.ValidateObject(valueKind, result, level);
-            if (level == ValidationLevel.Flag && !result.IsValid)
-            {
-                return result;
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        /// Gets the value as a <see cref = "JsonObject"/>.
-        /// </summary>
-        private JsonObject AsObject
-        {
-            get
-            {
-                if (this.objectBacking is ImmutableDictionary<string, JsonAny> objectBacking)
-                {
-                    return new JsonObject(objectBacking);
-                }
-
-                return new JsonObject(this.jsonElementBacking);
-            }
-        }
-
-        /// <summary>
-        /// Gets the value as a <see cref = "JsonBoolean"/>.
-        /// </summary>
-        private JsonBoolean AsBoolean
-        {
-            get
-            {
-                if (this.booleanBacking is bool booleanBacking)
-                {
-                    return new JsonBoolean(booleanBacking);
-                }
-
-                return new JsonBoolean(this.jsonElementBacking);
-            }
-        }
-
-        private static ImmutableDictionary<string, JsonAny> BuildDefaults()
-        {
-            ImmutableDictionary<string, JsonAny>.Builder builder = ImmutableDictionary.CreateBuilder<string, JsonAny>();
-            builder.Add(DeprecatedJsonPropertyName, JsonAny.Parse("false"));
-            builder.Add(ReadOnlyJsonPropertyName, JsonAny.Parse("false"));
-            builder.Add(WriteOnlyJsonPropertyName, JsonAny.Parse("false"));
-            return builder.ToImmutable();
-        }
-
-        private static ImmutableDictionary<string, PropertyValidator<MetaData>> CreateLocalPropertyValidators()
-        {
-            ImmutableDictionary<string, PropertyValidator<MetaData>>.Builder builder = ImmutableDictionary.CreateBuilder<string, PropertyValidator<MetaData>>();
-            builder.Add(TitleJsonPropertyName, __CorvusValidateTitle);
-            builder.Add(DescriptionJsonPropertyName, __CorvusValidateDescription);
-            builder.Add(DefaultJsonPropertyName, __CorvusValidateDefault);
-            builder.Add(DeprecatedJsonPropertyName, __CorvusValidateDeprecated);
-            builder.Add(ReadOnlyJsonPropertyName, __CorvusValidateReadOnly);
-            builder.Add(WriteOnlyJsonPropertyName, __CorvusValidateWriteOnly);
-            builder.Add(ExamplesJsonPropertyName, __CorvusValidateExamples);
-            return builder.ToImmutable();
-        }
-
-        private static ValidationContext __CorvusValidateTitle(in MetaData that, in ValidationContext validationContext, ValidationLevel level)
-        {
-            Corvus.Json.JsonString property = that.Title;
-            return property.Validate(validationContext, level);
-        }
-
-        private static ValidationContext __CorvusValidateDescription(in MetaData that, in ValidationContext validationContext, ValidationLevel level)
-        {
-            Corvus.Json.JsonString property = that.Description;
-            return property.Validate(validationContext, level);
-        }
-
-        private static ValidationContext __CorvusValidateDefault(in MetaData that, in ValidationContext validationContext, ValidationLevel level)
-        {
-            Corvus.Json.JsonAny property = that.Default;
-            return property.Validate(validationContext, level);
-        }
-
-        private static ValidationContext __CorvusValidateDeprecated(in MetaData that, in ValidationContext validationContext, ValidationLevel level)
-        {
-            Corvus.Json.JsonSchema.Draft202012.MetaData.DeprecatedValue property = that.Deprecated;
-            return property.Validate(validationContext, level);
-        }
-
-        private static ValidationContext __CorvusValidateReadOnly(in MetaData that, in ValidationContext validationContext, ValidationLevel level)
-        {
-            Corvus.Json.JsonSchema.Draft202012.MetaData.ReadOnlyValue property = that.ReadOnly;
-            return property.Validate(validationContext, level);
-        }
-
-        private static ValidationContext __CorvusValidateWriteOnly(in MetaData that, in ValidationContext validationContext, ValidationLevel level)
-        {
-            Corvus.Json.JsonSchema.Draft202012.MetaData.WriteOnlyValue property = that.WriteOnly;
-            return property.Validate(validationContext, level);
-        }
-
-        private static ValidationContext __CorvusValidateExamples(in MetaData that, in ValidationContext validationContext, ValidationLevel level)
-        {
-            Corvus.Json.JsonSchema.Draft202012.MetaData.JsonAnyArray property = that.Examples;
-            return property.Validate(validationContext, level);
-        }
-
-        private ValidationContext ValidateObject(JsonValueKind valueKind, in ValidationContext validationContext, ValidationLevel level)
-        {
-            ValidationContext result = validationContext;
-            if (valueKind != JsonValueKind.Object)
-            {
-                return result;
-            }
-
-            int propertyCount = 0;
-            foreach (Property property in this.EnumerateObject())
-            {
-                string propertyName = property.Name;
-                if (__CorvusLocalProperties.TryGetValue(propertyName, out PropertyValidator<MetaData>? propertyValidator))
-                {
-                    result = result.WithLocalProperty(propertyCount);
-                    var propertyResult = propertyValidator(this, result.CreateChildContext(), level);
-                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
-                    if (level == ValidationLevel.Flag && !result.IsValid)
-                    {
-                        return result;
-                    }
-                }
-
-                propertyCount++;
-            }
-
-            return result;
-        }
-
-        private ValidationContext ValidateType(JsonValueKind valueKind, in ValidationContext validationContext, ValidationLevel level)
-        {
-            ValidationContext result = validationContext;
-            bool isValid = false;
-            ValidationContext localResultObject = Corvus.Json.Validate.TypeObject(valueKind, result, level);
-            if (level == ValidationLevel.Flag && localResultObject.IsValid)
-            {
-                return validationContext;
-            }
-
-            if (localResultObject.IsValid)
-            {
-                isValid = true;
-            }
-
-            ValidationContext localResultBoolean = Corvus.Json.Validate.TypeBoolean(valueKind, result, level);
-            if (level == ValidationLevel.Flag && localResultBoolean.IsValid)
-            {
-                return validationContext;
-            }
-
-            if (localResultBoolean.IsValid)
-            {
-                isValid = true;
-            }
-
-            result = result.MergeResults(isValid, level, localResultObject, localResultBoolean);
-            return result;
-        }
-
-        /// <summary>
-        /// A type generated from a JsonSchema specification.
-        /// </summary>
-        public readonly struct DeprecatedValue : IJsonValue, IEquatable<DeprecatedValue>
-        {
-            private readonly JsonElement jsonElementBacking;
-            private readonly bool? booleanBacking;
-            /// <summary>
-            /// Initializes a new instance of the <see cref = "DeprecatedValue"/> struct.
-            /// </summary>
-            /// <param name = "value">The backing <see cref = "JsonElement"/>.</param>
-            public DeprecatedValue(JsonElement value)
-            {
-                this.jsonElementBacking = value;
-                this.booleanBacking = default;
-            }
-
-            /// <summary>
-            /// Initializes a new instance of the <see cref = "DeprecatedValue"/> struct.
-            /// </summary>
-            /// <param name = "jsonBoolean">The <see cref = "JsonBoolean"/> from which to construct the value.</param>
-            public DeprecatedValue(JsonBoolean jsonBoolean)
-            {
-                if (jsonBoolean.HasJsonElement)
-                {
-                    this.jsonElementBacking = jsonBoolean.AsJsonElement;
-                    this.booleanBacking = default;
-                }
-                else
-                {
-                    this.jsonElementBacking = default;
-                    this.booleanBacking = jsonBoolean.GetBoolean();
-                }
-            }
-
-            /// <summary>
-            /// Initializes a new instance of the <see cref = "DeprecatedValue"/> struct.
-            /// </summary>
-            /// <param name = "boolean">The <see cref = "bool "/> from which to construct the value.</param>
-            public DeprecatedValue(bool boolean)
-            {
-                this.jsonElementBacking = default;
-                this.booleanBacking = boolean;
-            }
-
-            /// <summary>
-            /// Gets a value indicating whether this is backed by a JSON element.
-            /// </summary>
-            public bool HasJsonElement => this.booleanBacking is null;
-            /// <summary>
-            /// Gets the value as a JsonElement.
-            /// </summary>
-            public JsonElement AsJsonElement
-            {
-                get
-                {
-                    if (this.booleanBacking is bool booleanBacking)
-                    {
-                        return JsonBoolean.BoolToJsonElement(booleanBacking);
-                    }
-
-                    return this.jsonElementBacking;
-                }
-            }
-
-            /// <inheritdoc/>
-            public JsonValueKind ValueKind
-            {
-                get
-                {
-                    if (this.booleanBacking is bool booleanBacking)
-                    {
-                        return booleanBacking ? JsonValueKind.True : JsonValueKind.False;
-                    }
-
-                    return this.jsonElementBacking.ValueKind;
-                }
-            }
-
-            /// <inheritdoc/>
-            public JsonAny AsAny
-            {
-                get
-                {
-                    if (this.booleanBacking is bool booleanBacking)
-                    {
-                        return new JsonAny(booleanBacking);
-                    }
-
-                    return new JsonAny(this.jsonElementBacking);
-                }
-            }
-
-            /// <summary>
-            /// Conversion from any.
-            /// </summary>
-            /// <param name = "value">The value from which to convert.</param>
-            public static implicit operator DeprecatedValue(JsonAny value)
-            {
-                if (value.HasJsonElement)
-                {
-                    return new DeprecatedValue(value.AsJsonElement);
-                }
-
-                return value.As<DeprecatedValue>();
-            }
-
-            /// <summary>
-            /// Conversion to any.
-            /// </summary>
-            /// <param name = "value">The value from which to convert.</param>
-            public static implicit operator JsonAny(DeprecatedValue value)
-            {
-                return value.AsAny;
-            }
-
-            /// <summary>
-            /// Conversion from bool.
-            /// </summary>
-            /// <param name = "value">The value from which to convert.</param>
-            public static implicit operator DeprecatedValue(bool value)
-            {
-                return new DeprecatedValue(value);
-            }
-
-            /// <summary>
-            /// Conversion to bool.
-            /// </summary>
-            /// <param name = "boolean">The value from which to convert.</param>
-            public static implicit operator bool (DeprecatedValue boolean)
-            {
-                return boolean.AsBoolean.GetBoolean();
-            }
-
-            /// <summary>
-            /// Conversion from bool.
-            /// </summary>
-            /// <param name = "value">The value from which to convert.</param>
-            public static implicit operator DeprecatedValue(JsonBoolean value)
-            {
-                return new DeprecatedValue(value);
-            }
-
-            /// <summary>
-            /// Conversion to bool.
-            /// </summary>
-            /// <param name = "boolean">The value from which to convert.</param>
-            public static implicit operator JsonBoolean(DeprecatedValue boolean)
-            {
-                return boolean.AsBoolean;
-            }
-
-            /// <summary>
-            /// Standard equality operator.
-            /// </summary>
-            /// <param name = "lhs">The left hand side of the comparison.</param>
-            /// <param name = "rhs">The right hand side of the comparison.</param>
-            /// <returns>True if they are equal.</returns>
-            public static bool operator ==(DeprecatedValue lhs, DeprecatedValue rhs)
-            {
-                return lhs.Equals(rhs);
-            }
-
-            /// <summary>
-            /// Standard inequality operator.
-            /// </summary>
-            /// <param name = "lhs">The left hand side of the comparison.</param>
-            /// <param name = "rhs">The right hand side of the comparison.</param>
-            /// <returns>True if they are not equal.</returns>
-            public static bool operator !=(DeprecatedValue lhs, DeprecatedValue rhs)
-            {
-                return !lhs.Equals(rhs);
-            }
-
-            /// <inheritdoc/>
-            public override string ToString()
-            {
-                return this.Serialize();
-            }
-
-            /// <inheritdoc/>
-            public override bool Equals(object? obj)
-            {
-                if (obj is IJsonValue jv)
-                {
-                    return this.Equals(jv.AsAny);
-                }
-
-                return obj is null && this.IsNull();
-            }
-
-            /// <inheritdoc/>
-            public override int GetHashCode()
-            {
-                JsonValueKind valueKind = this.ValueKind;
-                return valueKind switch
-                {
-                    JsonValueKind.Object => this.AsObject().GetHashCode(),
-                    JsonValueKind.Array => this.AsArray().GetHashCode(),
-                    JsonValueKind.Number => this.AsNumber().GetHashCode(),
-                    JsonValueKind.String => this.AsString().GetHashCode(),
-                    JsonValueKind.True or JsonValueKind.False => this.AsBoolean.GetHashCode(),
-                    JsonValueKind.Null => JsonNull.NullHashCode,
-                    _ => JsonAny.UndefinedHashCode,
-                };
-            }
-
-            /// <summary>
-            /// Writes the object to the <see cref = "Utf8JsonWriter"/>.
-            /// </summary>
-            /// <param name = "writer">The writer to which to write the object.</param>
-            public void WriteTo(Utf8JsonWriter writer)
-            {
-                if (this.booleanBacking is bool booleanBacking)
-                {
-                    writer.WriteBooleanValue(booleanBacking);
-                    return;
-                }
-
-                if (this.jsonElementBacking.ValueKind != JsonValueKind.Undefined)
-                {
-                    this.jsonElementBacking.WriteTo(writer);
-                    return;
-                }
-
-                writer.WriteNullValue();
-            }
-
-            /// <inheritdoc/>
-            public bool Equals<T>(T other)
-                where T : struct, IJsonValue
-            {
-                JsonValueKind valueKind = this.ValueKind;
-                if (other.ValueKind != valueKind)
-                {
-                    return false;
-                }
-
-                return valueKind switch
-                {
-                    JsonValueKind.Object => this.AsObject().Equals(other.AsObject()),
-                    JsonValueKind.Array => this.AsArray().Equals(other.AsArray()),
-                    JsonValueKind.Number => this.AsNumber().Equals(other.AsNumber()),
-                    JsonValueKind.String => this.AsString().Equals(other.AsString()),
-                    JsonValueKind.True or JsonValueKind.False => this.AsBoolean.Equals(other.AsBoolean()),
-                    JsonValueKind.Null => true,
-                    _ => false,
-                };
-            }
-
-            /// <inheritdoc/>
-            public bool Equals(DeprecatedValue other)
-            {
-                JsonValueKind valueKind = this.ValueKind;
-                if (other.ValueKind != valueKind)
-                {
-                    return false;
-                }
-
-                return valueKind switch
-                {
-                    JsonValueKind.Object => this.AsObject().Equals(other.AsObject()),
-                    JsonValueKind.Array => this.AsArray().Equals(other.AsArray()),
-                    JsonValueKind.Number => this.AsNumber().Equals(other.AsNumber()),
-                    JsonValueKind.String => this.AsString().Equals(other.AsString()),
-                    JsonValueKind.True or JsonValueKind.False => this.AsBoolean.Equals(other.AsBoolean),
-                    JsonValueKind.Null => true,
-                    _ => false,
-                };
-            }
-
-            /// <inheritdoc/>
-            public T As<T>()
-                where T : struct, IJsonValue
-            {
-                return this.As<DeprecatedValue, T>();
-            }
-
-            /// <inheritdoc/>
-            public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
-            {
-                ValidationContext result = validationContext;
-                if (level != ValidationLevel.Flag)
-                {
-                    result = result.UsingStack();
-                }
-
-                JsonValueKind valueKind = this.ValueKind;
-                result = this.ValidateType(valueKind, result, level);
-                if (level == ValidationLevel.Flag && !result.IsValid)
-                {
-                    return result;
-                }
-
-                return result;
-            }
-
-            /// <summary>
-            /// Gets the value as a <see cref = "JsonBoolean"/>.
-            /// </summary>
-            private JsonBoolean AsBoolean
-            {
-                get
-                {
-                    if (this.booleanBacking is bool booleanBacking)
-                    {
-                        return new JsonBoolean(booleanBacking);
-                    }
-
-                    return new JsonBoolean(this.jsonElementBacking);
-                }
-            }
-
-            private ValidationContext ValidateType(JsonValueKind valueKind, in ValidationContext validationContext, ValidationLevel level)
-            {
-                ValidationContext result = validationContext;
-                bool isValid = false;
-                ValidationContext localResultBoolean = Corvus.Json.Validate.TypeBoolean(valueKind, result, level);
-                if (level == ValidationLevel.Flag && localResultBoolean.IsValid)
-                {
-                    return validationContext;
-                }
-
-                if (localResultBoolean.IsValid)
-                {
-                    isValid = true;
-                }
-
-                result = result.MergeResults(isValid, level, localResultBoolean);
-                return result;
-            }
-        }
-
-        /// <summary>
-        /// A type generated from a JsonSchema specification.
-        /// </summary>
-        public readonly struct ReadOnlyValue : IJsonValue, IEquatable<ReadOnlyValue>
-        {
-            private readonly JsonElement jsonElementBacking;
-            private readonly bool? booleanBacking;
-            /// <summary>
-            /// Initializes a new instance of the <see cref = "ReadOnlyValue"/> struct.
-            /// </summary>
-            /// <param name = "value">The backing <see cref = "JsonElement"/>.</param>
-            public ReadOnlyValue(JsonElement value)
-            {
-                this.jsonElementBacking = value;
-                this.booleanBacking = default;
-            }
-
-            /// <summary>
-            /// Initializes a new instance of the <see cref = "ReadOnlyValue"/> struct.
-            /// </summary>
-            /// <param name = "jsonBoolean">The <see cref = "JsonBoolean"/> from which to construct the value.</param>
-            public ReadOnlyValue(JsonBoolean jsonBoolean)
-            {
-                if (jsonBoolean.HasJsonElement)
-                {
-                    this.jsonElementBacking = jsonBoolean.AsJsonElement;
-                    this.booleanBacking = default;
-                }
-                else
-                {
-                    this.jsonElementBacking = default;
-                    this.booleanBacking = jsonBoolean.GetBoolean();
-                }
-            }
-
-            /// <summary>
-            /// Initializes a new instance of the <see cref = "ReadOnlyValue"/> struct.
-            /// </summary>
-            /// <param name = "boolean">The <see cref = "bool "/> from which to construct the value.</param>
-            public ReadOnlyValue(bool boolean)
-            {
-                this.jsonElementBacking = default;
-                this.booleanBacking = boolean;
-            }
-
-            /// <summary>
-            /// Gets a value indicating whether this is backed by a JSON element.
-            /// </summary>
-            public bool HasJsonElement => this.booleanBacking is null;
-            /// <summary>
-            /// Gets the value as a JsonElement.
-            /// </summary>
-            public JsonElement AsJsonElement
-            {
-                get
-                {
-                    if (this.booleanBacking is bool booleanBacking)
-                    {
-                        return JsonBoolean.BoolToJsonElement(booleanBacking);
-                    }
-
-                    return this.jsonElementBacking;
-                }
-            }
-
-            /// <inheritdoc/>
-            public JsonValueKind ValueKind
-            {
-                get
-                {
-                    if (this.booleanBacking is bool booleanBacking)
-                    {
-                        return booleanBacking ? JsonValueKind.True : JsonValueKind.False;
-                    }
-
-                    return this.jsonElementBacking.ValueKind;
-                }
-            }
-
-            /// <inheritdoc/>
-            public JsonAny AsAny
-            {
-                get
-                {
-                    if (this.booleanBacking is bool booleanBacking)
-                    {
-                        return new JsonAny(booleanBacking);
-                    }
-
-                    return new JsonAny(this.jsonElementBacking);
-                }
-            }
-
-            /// <summary>
-            /// Conversion from any.
-            /// </summary>
-            /// <param name = "value">The value from which to convert.</param>
-            public static implicit operator ReadOnlyValue(JsonAny value)
-            {
-                if (value.HasJsonElement)
-                {
-                    return new ReadOnlyValue(value.AsJsonElement);
-                }
-
-                return value.As<ReadOnlyValue>();
-            }
-
-            /// <summary>
-            /// Conversion to any.
-            /// </summary>
-            /// <param name = "value">The value from which to convert.</param>
-            public static implicit operator JsonAny(ReadOnlyValue value)
-            {
-                return value.AsAny;
-            }
-
-            /// <summary>
-            /// Conversion from bool.
-            /// </summary>
-            /// <param name = "value">The value from which to convert.</param>
-            public static implicit operator ReadOnlyValue(bool value)
-            {
-                return new ReadOnlyValue(value);
-            }
-
-            /// <summary>
-            /// Conversion to bool.
-            /// </summary>
-            /// <param name = "boolean">The value from which to convert.</param>
-            public static implicit operator bool (ReadOnlyValue boolean)
-            {
-                return boolean.AsBoolean.GetBoolean();
-            }
-
-            /// <summary>
-            /// Conversion from bool.
-            /// </summary>
-            /// <param name = "value">The value from which to convert.</param>
-            public static implicit operator ReadOnlyValue(JsonBoolean value)
-            {
-                return new ReadOnlyValue(value);
-            }
-
-            /// <summary>
-            /// Conversion to bool.
-            /// </summary>
-            /// <param name = "boolean">The value from which to convert.</param>
-            public static implicit operator JsonBoolean(ReadOnlyValue boolean)
-            {
-                return boolean.AsBoolean;
-            }
-
-            /// <summary>
-            /// Standard equality operator.
-            /// </summary>
-            /// <param name = "lhs">The left hand side of the comparison.</param>
-            /// <param name = "rhs">The right hand side of the comparison.</param>
-            /// <returns>True if they are equal.</returns>
-            public static bool operator ==(ReadOnlyValue lhs, ReadOnlyValue rhs)
-            {
-                return lhs.Equals(rhs);
-            }
-
-            /// <summary>
-            /// Standard inequality operator.
-            /// </summary>
-            /// <param name = "lhs">The left hand side of the comparison.</param>
-            /// <param name = "rhs">The right hand side of the comparison.</param>
-            /// <returns>True if they are not equal.</returns>
-            public static bool operator !=(ReadOnlyValue lhs, ReadOnlyValue rhs)
-            {
-                return !lhs.Equals(rhs);
-            }
-
-            /// <inheritdoc/>
-            public override string ToString()
-            {
-                return this.Serialize();
-            }
-
-            /// <inheritdoc/>
-            public override bool Equals(object? obj)
-            {
-                if (obj is IJsonValue jv)
-                {
-                    return this.Equals(jv.AsAny);
-                }
-
-                return obj is null && this.IsNull();
-            }
-
-            /// <inheritdoc/>
-            public override int GetHashCode()
-            {
-                JsonValueKind valueKind = this.ValueKind;
-                return valueKind switch
-                {
-                    JsonValueKind.Object => this.AsObject().GetHashCode(),
-                    JsonValueKind.Array => this.AsArray().GetHashCode(),
-                    JsonValueKind.Number => this.AsNumber().GetHashCode(),
-                    JsonValueKind.String => this.AsString().GetHashCode(),
-                    JsonValueKind.True or JsonValueKind.False => this.AsBoolean.GetHashCode(),
-                    JsonValueKind.Null => JsonNull.NullHashCode,
-                    _ => JsonAny.UndefinedHashCode,
-                };
-            }
-
-            /// <summary>
-            /// Writes the object to the <see cref = "Utf8JsonWriter"/>.
-            /// </summary>
-            /// <param name = "writer">The writer to which to write the object.</param>
-            public void WriteTo(Utf8JsonWriter writer)
-            {
-                if (this.booleanBacking is bool booleanBacking)
-                {
-                    writer.WriteBooleanValue(booleanBacking);
-                    return;
-                }
-
-                if (this.jsonElementBacking.ValueKind != JsonValueKind.Undefined)
-                {
-                    this.jsonElementBacking.WriteTo(writer);
-                    return;
-                }
-
-                writer.WriteNullValue();
-            }
-
-            /// <inheritdoc/>
-            public bool Equals<T>(T other)
-                where T : struct, IJsonValue
-            {
-                JsonValueKind valueKind = this.ValueKind;
-                if (other.ValueKind != valueKind)
-                {
-                    return false;
-                }
-
-                return valueKind switch
-                {
-                    JsonValueKind.Object => this.AsObject().Equals(other.AsObject()),
-                    JsonValueKind.Array => this.AsArray().Equals(other.AsArray()),
-                    JsonValueKind.Number => this.AsNumber().Equals(other.AsNumber()),
-                    JsonValueKind.String => this.AsString().Equals(other.AsString()),
-                    JsonValueKind.True or JsonValueKind.False => this.AsBoolean.Equals(other.AsBoolean()),
-                    JsonValueKind.Null => true,
-                    _ => false,
-                };
-            }
-
-            /// <inheritdoc/>
-            public bool Equals(ReadOnlyValue other)
-            {
-                JsonValueKind valueKind = this.ValueKind;
-                if (other.ValueKind != valueKind)
-                {
-                    return false;
-                }
-
-                return valueKind switch
-                {
-                    JsonValueKind.Object => this.AsObject().Equals(other.AsObject()),
-                    JsonValueKind.Array => this.AsArray().Equals(other.AsArray()),
-                    JsonValueKind.Number => this.AsNumber().Equals(other.AsNumber()),
-                    JsonValueKind.String => this.AsString().Equals(other.AsString()),
-                    JsonValueKind.True or JsonValueKind.False => this.AsBoolean.Equals(other.AsBoolean),
-                    JsonValueKind.Null => true,
-                    _ => false,
-                };
-            }
-
-            /// <inheritdoc/>
-            public T As<T>()
-                where T : struct, IJsonValue
-            {
-                return this.As<ReadOnlyValue, T>();
-            }
-
-            /// <inheritdoc/>
-            public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
-            {
-                ValidationContext result = validationContext;
-                if (level != ValidationLevel.Flag)
-                {
-                    result = result.UsingStack();
-                }
-
-                JsonValueKind valueKind = this.ValueKind;
-                result = this.ValidateType(valueKind, result, level);
-                if (level == ValidationLevel.Flag && !result.IsValid)
-                {
-                    return result;
-                }
-
-                return result;
-            }
-
-            /// <summary>
-            /// Gets the value as a <see cref = "JsonBoolean"/>.
-            /// </summary>
-            private JsonBoolean AsBoolean
-            {
-                get
-                {
-                    if (this.booleanBacking is bool booleanBacking)
-                    {
-                        return new JsonBoolean(booleanBacking);
-                    }
-
-                    return new JsonBoolean(this.jsonElementBacking);
-                }
-            }
-
-            private ValidationContext ValidateType(JsonValueKind valueKind, in ValidationContext validationContext, ValidationLevel level)
-            {
-                ValidationContext result = validationContext;
-                bool isValid = false;
-                ValidationContext localResultBoolean = Corvus.Json.Validate.TypeBoolean(valueKind, result, level);
-                if (level == ValidationLevel.Flag && localResultBoolean.IsValid)
-                {
-                    return validationContext;
-                }
-
-                if (localResultBoolean.IsValid)
-                {
-                    isValid = true;
-                }
-
-                result = result.MergeResults(isValid, level, localResultBoolean);
-                return result;
-            }
-        }
-
-        /// <summary>
-        /// A type generated from a JsonSchema specification.
-        /// </summary>
-        public readonly struct WriteOnlyValue : IJsonValue, IEquatable<WriteOnlyValue>
-        {
-            private readonly JsonElement jsonElementBacking;
-            private readonly bool? booleanBacking;
-            /// <summary>
-            /// Initializes a new instance of the <see cref = "WriteOnlyValue"/> struct.
-            /// </summary>
-            /// <param name = "value">The backing <see cref = "JsonElement"/>.</param>
-            public WriteOnlyValue(JsonElement value)
-            {
-                this.jsonElementBacking = value;
-                this.booleanBacking = default;
-            }
-
-            /// <summary>
-            /// Initializes a new instance of the <see cref = "WriteOnlyValue"/> struct.
-            /// </summary>
-            /// <param name = "jsonBoolean">The <see cref = "JsonBoolean"/> from which to construct the value.</param>
-            public WriteOnlyValue(JsonBoolean jsonBoolean)
-            {
-                if (jsonBoolean.HasJsonElement)
-                {
-                    this.jsonElementBacking = jsonBoolean.AsJsonElement;
-                    this.booleanBacking = default;
-                }
-                else
-                {
-                    this.jsonElementBacking = default;
-                    this.booleanBacking = jsonBoolean.GetBoolean();
-                }
-            }
-
-            /// <summary>
-            /// Initializes a new instance of the <see cref = "WriteOnlyValue"/> struct.
-            /// </summary>
-            /// <param name = "boolean">The <see cref = "bool "/> from which to construct the value.</param>
-            public WriteOnlyValue(bool boolean)
-            {
-                this.jsonElementBacking = default;
-                this.booleanBacking = boolean;
-            }
-
-            /// <summary>
-            /// Gets a value indicating whether this is backed by a JSON element.
-            /// </summary>
-            public bool HasJsonElement => this.booleanBacking is null;
-            /// <summary>
-            /// Gets the value as a JsonElement.
-            /// </summary>
-            public JsonElement AsJsonElement
-            {
-                get
-                {
-                    if (this.booleanBacking is bool booleanBacking)
-                    {
-                        return JsonBoolean.BoolToJsonElement(booleanBacking);
-                    }
-
-                    return this.jsonElementBacking;
-                }
-            }
-
-            /// <inheritdoc/>
-            public JsonValueKind ValueKind
-            {
-                get
-                {
-                    if (this.booleanBacking is bool booleanBacking)
-                    {
-                        return booleanBacking ? JsonValueKind.True : JsonValueKind.False;
-                    }
-
-                    return this.jsonElementBacking.ValueKind;
-                }
-            }
-
-            /// <inheritdoc/>
-            public JsonAny AsAny
-            {
-                get
-                {
-                    if (this.booleanBacking is bool booleanBacking)
-                    {
-                        return new JsonAny(booleanBacking);
-                    }
-
-                    return new JsonAny(this.jsonElementBacking);
-                }
-            }
-
-            /// <summary>
-            /// Conversion from any.
-            /// </summary>
-            /// <param name = "value">The value from which to convert.</param>
-            public static implicit operator WriteOnlyValue(JsonAny value)
-            {
-                if (value.HasJsonElement)
-                {
-                    return new WriteOnlyValue(value.AsJsonElement);
-                }
-
-                return value.As<WriteOnlyValue>();
-            }
-
-            /// <summary>
-            /// Conversion to any.
-            /// </summary>
-            /// <param name = "value">The value from which to convert.</param>
-            public static implicit operator JsonAny(WriteOnlyValue value)
-            {
-                return value.AsAny;
-            }
-
-            /// <summary>
-            /// Conversion from bool.
-            /// </summary>
-            /// <param name = "value">The value from which to convert.</param>
-            public static implicit operator WriteOnlyValue(bool value)
-            {
-                return new WriteOnlyValue(value);
-            }
-
-            /// <summary>
-            /// Conversion to bool.
-            /// </summary>
-            /// <param name = "boolean">The value from which to convert.</param>
-            public static implicit operator bool (WriteOnlyValue boolean)
-            {
-                return boolean.AsBoolean.GetBoolean();
-            }
-
-            /// <summary>
-            /// Conversion from bool.
-            /// </summary>
-            /// <param name = "value">The value from which to convert.</param>
-            public static implicit operator WriteOnlyValue(JsonBoolean value)
-            {
-                return new WriteOnlyValue(value);
-            }
-
-            /// <summary>
-            /// Conversion to bool.
-            /// </summary>
-            /// <param name = "boolean">The value from which to convert.</param>
-            public static implicit operator JsonBoolean(WriteOnlyValue boolean)
-            {
-                return boolean.AsBoolean;
-            }
-
-            /// <summary>
-            /// Standard equality operator.
-            /// </summary>
-            /// <param name = "lhs">The left hand side of the comparison.</param>
-            /// <param name = "rhs">The right hand side of the comparison.</param>
-            /// <returns>True if they are equal.</returns>
-            public static bool operator ==(WriteOnlyValue lhs, WriteOnlyValue rhs)
-            {
-                return lhs.Equals(rhs);
-            }
-
-            /// <summary>
-            /// Standard inequality operator.
-            /// </summary>
-            /// <param name = "lhs">The left hand side of the comparison.</param>
-            /// <param name = "rhs">The right hand side of the comparison.</param>
-            /// <returns>True if they are not equal.</returns>
-            public static bool operator !=(WriteOnlyValue lhs, WriteOnlyValue rhs)
-            {
-                return !lhs.Equals(rhs);
-            }
-
-            /// <inheritdoc/>
-            public override string ToString()
-            {
-                return this.Serialize();
-            }
-
-            /// <inheritdoc/>
-            public override bool Equals(object? obj)
-            {
-                if (obj is IJsonValue jv)
-                {
-                    return this.Equals(jv.AsAny);
-                }
-
-                return obj is null && this.IsNull();
-            }
-
-            /// <inheritdoc/>
-            public override int GetHashCode()
-            {
-                JsonValueKind valueKind = this.ValueKind;
-                return valueKind switch
-                {
-                    JsonValueKind.Object => this.AsObject().GetHashCode(),
-                    JsonValueKind.Array => this.AsArray().GetHashCode(),
-                    JsonValueKind.Number => this.AsNumber().GetHashCode(),
-                    JsonValueKind.String => this.AsString().GetHashCode(),
-                    JsonValueKind.True or JsonValueKind.False => this.AsBoolean.GetHashCode(),
-                    JsonValueKind.Null => JsonNull.NullHashCode,
-                    _ => JsonAny.UndefinedHashCode,
-                };
-            }
-
-            /// <summary>
-            /// Writes the object to the <see cref = "Utf8JsonWriter"/>.
-            /// </summary>
-            /// <param name = "writer">The writer to which to write the object.</param>
-            public void WriteTo(Utf8JsonWriter writer)
-            {
-                if (this.booleanBacking is bool booleanBacking)
-                {
-                    writer.WriteBooleanValue(booleanBacking);
-                    return;
-                }
-
-                if (this.jsonElementBacking.ValueKind != JsonValueKind.Undefined)
-                {
-                    this.jsonElementBacking.WriteTo(writer);
-                    return;
-                }
-
-                writer.WriteNullValue();
-            }
-
-            /// <inheritdoc/>
-            public bool Equals<T>(T other)
-                where T : struct, IJsonValue
-            {
-                JsonValueKind valueKind = this.ValueKind;
-                if (other.ValueKind != valueKind)
-                {
-                    return false;
-                }
-
-                return valueKind switch
-                {
-                    JsonValueKind.Object => this.AsObject().Equals(other.AsObject()),
-                    JsonValueKind.Array => this.AsArray().Equals(other.AsArray()),
-                    JsonValueKind.Number => this.AsNumber().Equals(other.AsNumber()),
-                    JsonValueKind.String => this.AsString().Equals(other.AsString()),
-                    JsonValueKind.True or JsonValueKind.False => this.AsBoolean.Equals(other.AsBoolean()),
-                    JsonValueKind.Null => true,
-                    _ => false,
-                };
-            }
-
-            /// <inheritdoc/>
-            public bool Equals(WriteOnlyValue other)
-            {
-                JsonValueKind valueKind = this.ValueKind;
-                if (other.ValueKind != valueKind)
-                {
-                    return false;
-                }
-
-                return valueKind switch
-                {
-                    JsonValueKind.Object => this.AsObject().Equals(other.AsObject()),
-                    JsonValueKind.Array => this.AsArray().Equals(other.AsArray()),
-                    JsonValueKind.Number => this.AsNumber().Equals(other.AsNumber()),
-                    JsonValueKind.String => this.AsString().Equals(other.AsString()),
-                    JsonValueKind.True or JsonValueKind.False => this.AsBoolean.Equals(other.AsBoolean),
-                    JsonValueKind.Null => true,
-                    _ => false,
-                };
-            }
-
-            /// <inheritdoc/>
-            public T As<T>()
-                where T : struct, IJsonValue
-            {
-                return this.As<WriteOnlyValue, T>();
-            }
-
-            /// <inheritdoc/>
-            public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
-            {
-                ValidationContext result = validationContext;
-                if (level != ValidationLevel.Flag)
-                {
-                    result = result.UsingStack();
-                }
-
-                JsonValueKind valueKind = this.ValueKind;
-                result = this.ValidateType(valueKind, result, level);
-                if (level == ValidationLevel.Flag && !result.IsValid)
-                {
-                    return result;
-                }
-
-                return result;
-            }
-
-            /// <summary>
-            /// Gets the value as a <see cref = "JsonBoolean"/>.
-            /// </summary>
-            private JsonBoolean AsBoolean
-            {
-                get
-                {
-                    if (this.booleanBacking is bool booleanBacking)
-                    {
-                        return new JsonBoolean(booleanBacking);
-                    }
-
-                    return new JsonBoolean(this.jsonElementBacking);
-                }
-            }
-
-            private ValidationContext ValidateType(JsonValueKind valueKind, in ValidationContext validationContext, ValidationLevel level)
-            {
-                ValidationContext result = validationContext;
-                bool isValid = false;
-                ValidationContext localResultBoolean = Corvus.Json.Validate.TypeBoolean(valueKind, result, level);
-                if (level == ValidationLevel.Flag && localResultBoolean.IsValid)
-                {
-                    return validationContext;
-                }
-
-                if (localResultBoolean.IsValid)
-                {
-                    isValid = true;
-                }
-
-                result = result.MergeResults(isValid, level, localResultBoolean);
-                return result;
-            }
-        }
-
-        /// <summary>
-        /// A type generated from a JsonSchema specification.
-        /// </summary>
-        public readonly struct JsonAnyArray : IJsonArray<JsonAnyArray>, IEquatable<JsonAnyArray>
-        {
-            private readonly JsonElement jsonElementBacking;
-            private readonly ImmutableList<JsonAny>? arrayBacking;
-            /// <summary>
-            /// Initializes a new instance of the <see cref = "JsonAnyArray"/> struct.
-            /// </summary>
-            /// <param name = "value">The backing <see cref = "JsonElement"/>.</param>
-            public JsonAnyArray(JsonElement value)
-            {
-                this.jsonElementBacking = value;
-                this.arrayBacking = default;
-            }
-
-            /// <summary>
-            /// Initializes a new instance of the <see cref = "JsonAnyArray"/> struct.
-            /// </summary>
-            /// <param name = "value">An array list.</param>
-            public JsonAnyArray(ImmutableList<JsonAny> value)
-            {
-                this.jsonElementBacking = default;
-                this.arrayBacking = value;
-            }
-
-            /// <summary>
-            /// Initializes a new instance of the <see cref = "JsonAnyArray"/> struct.
-            /// </summary>
-            /// <param name = "jsonArray">The <see cref = "JsonArray"/> from which to construct the value.</param>
-            public JsonAnyArray(JsonArray jsonArray)
-            {
-                if (jsonArray.HasJsonElement)
-                {
-                    this.jsonElementBacking = jsonArray.AsJsonElement;
-                    this.arrayBacking = default;
-                }
-                else
-                {
-                    this.jsonElementBacking = default;
-                    this.arrayBacking = jsonArray.AsItemsList;
-                }
-            }
-
-            /// <inheritdoc/>
-            public int Length
-            {
-                get
-                {
-                    if (this.arrayBacking is ImmutableList<JsonAny> items)
-                    {
-                        return items.Count;
-                    }
-
-                    return this.jsonElementBacking.GetArrayLength();
-                }
-            }
-
-            /// <inheritdoc/>
-            public JsonAny this[int index]
-            {
-                get
-                {
-                    if (this.arrayBacking is ImmutableList<JsonAny> items)
-                    {
-                        return items[index];
-                    }
-
-                    return new JsonAny(this.jsonElementBacking[index]);
-                }
-            }
-
-            /// <summary>
-            /// Gets a value indicating whether this is backed by a JSON element.
-            /// </summary>
-            public bool HasJsonElement => this.arrayBacking is null;
-            /// <summary>
-            /// Gets the value as a JsonElement.
-            /// </summary>
-            public JsonElement AsJsonElement
-            {
-                get
-                {
-                    if (this.arrayBacking is ImmutableList<JsonAny> arrayBacking)
-                    {
-                        return JsonArray.ItemsToJsonElement(arrayBacking);
-                    }
-
-                    return this.jsonElementBacking;
-                }
-            }
-
-            /// <inheritdoc/>
-            public JsonValueKind ValueKind
-            {
-                get
-                {
-                    if (this.arrayBacking is ImmutableList<JsonAny>)
-                    {
-                        return JsonValueKind.Array;
-                    }
-
-                    return this.jsonElementBacking.ValueKind;
-                }
-            }
-
-            /// <inheritdoc/>
-            public JsonAny AsAny
-            {
-                get
-                {
-                    if (this.arrayBacking is ImmutableList<JsonAny> arrayBacking)
-                    {
-                        return new JsonAny(arrayBacking);
-                    }
-
-                    return new JsonAny(this.jsonElementBacking);
-                }
-            }
-
-            /// <summary>
-            /// Conversion from any.
-            /// </summary>
-            /// <param name = "value">The value from which to convert.</param>
-            public static implicit operator JsonAnyArray(JsonAny value)
-            {
-                if (value.HasJsonElement)
-                {
-                    return new JsonAnyArray(value.AsJsonElement);
-                }
-
-                return value.As<JsonAnyArray>();
-            }
-
-            /// <summary>
-            /// Conversion to any.
-            /// </summary>
-            /// <param name = "value">The value from which to convert.</param>
-            public static implicit operator JsonAny(JsonAnyArray value)
-            {
-                return value.AsAny;
-            }
-
-            /// <summary>
-            /// Conversion from array.
-            /// </summary>
-            /// <param name = "value">The value from which to convert.</param>
-            public static implicit operator JsonAnyArray(JsonArray value)
-            {
-                return new JsonAnyArray(value);
-            }
-
-            /// <summary>
-            /// Conversion to array.
-            /// </summary>
-            /// <param name = "value">The value from which to convert.</param>
-            public static implicit operator JsonArray(JsonAnyArray value)
-            {
-                return value.AsArray;
-            }
-
-            /// <summary>
-            /// Implicit conversion to an <see cref = "ImmutableList{T}"/> of <see cref = "JsonAny"/>.
-            /// </summary>
-            /// <param name = "value">The value from which to convert.</param>
-            public static implicit operator ImmutableList<JsonAny>(JsonAnyArray value)
-            {
-                return value.AsArray.AsItemsList;
-            }
-
-            /// <summary>
-            /// Implicit conversion from an <see cref = "ImmutableList{T}"/> of <see cref = "JsonAny"/>.
-            /// </summary>
-            /// <param name = "value">The value from which to convert.</param>
-            public static implicit operator JsonAnyArray(ImmutableList<JsonAny> value)
-            {
-                return new JsonAnyArray(value);
-            }
-
-            /// <summary>
-            /// Standard equality operator.
-            /// </summary>
-            /// <param name = "lhs">The left hand side of the comparison.</param>
-            /// <param name = "rhs">The right hand side of the comparison.</param>
-            /// <returns>True if they are equal.</returns>
-            public static bool operator ==(JsonAnyArray lhs, JsonAnyArray rhs)
-            {
-                return lhs.Equals(rhs);
-            }
-
-            /// <summary>
-            /// Standard inequality operator.
-            /// </summary>
-            /// <param name = "lhs">The left hand side of the comparison.</param>
-            /// <param name = "rhs">The right hand side of the comparison.</param>
-            /// <returns>True if they are not equal.</returns>
-            public static bool operator !=(JsonAnyArray lhs, JsonAnyArray rhs)
-            {
-                return !lhs.Equals(rhs);
-            }
-
-            /// <summary>
-            /// Create an array from the given items.
-            /// </summary>
-            /// <param name = "items">The items from which to create the array.</param>
-            /// <returns>The new array created from the items.</returns>
-            public static JsonAnyArray From(params JsonAny[] items)
-            {
-                return new JsonAnyArray(items.ToImmutableList());
-            }
-
-            /// <summary>
-            /// Create an array from the given items.
-            /// </summary>
-            /// <param name = "item1">The items from which to create the array.</param>
-            /// <returns>The new array created from the items.</returns>
-            public static JsonAnyArray From(JsonAny item1)
-            {
-                return new JsonAnyArray(ImmutableList.Create(item1));
-            }
-
-            /// <summary>
-            /// Create an array from the given items.
-            /// </summary>
-            /// <param name = "item1">The first item from which to create the array.</param>
-            /// <param name = "item2">The second item from which to create the array.</param>
-            /// <returns>The new array created from the items.</returns>
-            public static JsonAnyArray From(JsonAny item1, JsonAny item2)
-            {
-                return new JsonAnyArray(ImmutableList.Create(item1, item2));
-            }
-
-            /// <summary>
-            /// Create an array from the given items.
-            /// </summary>
-            /// <param name = "item1">The first item from which to create the array.</param>
-            /// <param name = "item2">The second item from which to create the array.</param>
-            /// <param name = "item3">The third item from which to create the array.</param>
-            /// <returns>The new array created from the items.</returns>
-            public static JsonAnyArray From(JsonAny item1, JsonAny item2, JsonAny item3)
-            {
-                return new JsonAnyArray(ImmutableList.Create(item1, item2, item3));
-            }
-
-            /// <summary>
-            /// Create an array from the given items.
-            /// </summary>
-            /// <param name = "item1">The first item from which to create the array.</param>
-            /// <param name = "item2">The second item from which to create the array.</param>
-            /// <param name = "item3">The third item from which to create the array.</param>
-            /// <param name = "item4">The fourth item from which to create the array.</param>
-            /// <returns>The new array created from the items.</returns>
-            public static JsonAnyArray From(JsonAny item1, JsonAny item2, JsonAny item3, JsonAny item4)
-            {
-                return new JsonAnyArray(ImmutableList.Create(item1, item2, item3, item4));
-            }
-
-            /// <inheritdoc/>
-            public override string ToString()
-            {
-                return this.Serialize();
-            }
-
-            /// <inheritdoc/>
-            public override bool Equals(object? obj)
-            {
-                if (obj is IJsonValue jv)
-                {
-                    return this.Equals(jv.AsAny);
-                }
-
-                return obj is null && this.IsNull();
-            }
-
-            /// <inheritdoc/>
-            public override int GetHashCode()
-            {
-                JsonValueKind valueKind = this.ValueKind;
-                return valueKind switch
-                {
-                    JsonValueKind.Object => this.AsObject().GetHashCode(),
-                    JsonValueKind.Array => this.AsArray.GetHashCode(),
-                    JsonValueKind.Number => this.AsNumber().GetHashCode(),
-                    JsonValueKind.String => this.AsString().GetHashCode(),
-                    JsonValueKind.True or JsonValueKind.False => this.AsBoolean().GetHashCode(),
-                    JsonValueKind.Null => JsonNull.NullHashCode,
-                    _ => JsonAny.UndefinedHashCode,
-                };
-            }
-
-            /// <summary>
-            /// Writes the object to the <see cref = "Utf8JsonWriter"/>.
-            /// </summary>
-            /// <param name = "writer">The writer to which to write the object.</param>
-            public void WriteTo(Utf8JsonWriter writer)
-            {
-                if (this.arrayBacking is ImmutableList<JsonAny> arrayBacking)
-                {
-                    JsonArray.WriteItems(arrayBacking, writer);
-                    return;
-                }
-
-                if (this.jsonElementBacking.ValueKind != JsonValueKind.Undefined)
-                {
-                    this.jsonElementBacking.WriteTo(writer);
-                    return;
-                }
-
-                writer.WriteNullValue();
-            }
-
-            /// <inheritdoc/>
-            public JsonArrayEnumerator EnumerateArray()
-            {
-                return this.AsArray.EnumerateArray();
-            }
-
-            /// <inheritdoc/>
-            public bool Equals<T>(T other)
-                where T : struct, IJsonValue
-            {
-                JsonValueKind valueKind = this.ValueKind;
-                if (other.ValueKind != valueKind)
-                {
-                    return false;
-                }
-
-                return valueKind switch
-                {
-                    JsonValueKind.Object => this.AsObject().Equals(other.AsObject()),
-                    JsonValueKind.Array => this.AsArray.Equals(other.AsArray()),
-                    JsonValueKind.Number => this.AsNumber().Equals(other.AsNumber()),
-                    JsonValueKind.String => this.AsString().Equals(other.AsString()),
-                    JsonValueKind.True or JsonValueKind.False => this.AsBoolean().Equals(other.AsBoolean()),
-                    JsonValueKind.Null => true,
-                    _ => false,
-                };
-            }
-
-            /// <inheritdoc/>
-            public bool Equals(JsonAnyArray other)
-            {
-                JsonValueKind valueKind = this.ValueKind;
-                if (other.ValueKind != valueKind)
-                {
-                    return false;
-                }
-
-                return valueKind switch
-                {
-                    JsonValueKind.Object => this.AsObject().Equals(other.AsObject()),
-                    JsonValueKind.Array => this.AsArray.Equals(other.AsArray),
-                    JsonValueKind.Number => this.AsNumber().Equals(other.AsNumber()),
-                    JsonValueKind.String => this.AsString().Equals(other.AsString()),
-                    JsonValueKind.True or JsonValueKind.False => this.AsBoolean().Equals(other.AsBoolean()),
-                    JsonValueKind.Null => true,
-                    _ => false,
-                };
-            }
-
-            /// <inheritdoc/>
-            public JsonAnyArray Add<TItem>(TItem item)
-                where TItem : struct, IJsonValue
-            {
-                if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
-                {
-                    return this.AsArray.Add(item);
-                }
-
-                return this;
-            }
-
-            /// <inheritdoc/>
-            public JsonAnyArray Add<TItem1, TItem2>(TItem1 item1, TItem2 item2)
-                where TItem1 : struct, IJsonValue where TItem2 : struct, IJsonValue
-            {
-                if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
-                {
-                    return this.AsArray.Add(item1, item2);
-                }
-
-                return this;
-            }
-
-            /// <inheritdoc/>
-            public JsonAnyArray Add<TItem1, TItem2, TItem3>(TItem1 item1, TItem2 item2, TItem3 item3)
-                where TItem1 : struct, IJsonValue where TItem2 : struct, IJsonValue where TItem3 : struct, IJsonValue
-            {
-                if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
-                {
-                    return this.AsArray.Add(item1, item2, item3);
-                }
-
-                return this;
-            }
-
-            /// <inheritdoc/>
-            public JsonAnyArray Add<TItem1, TItem2, TItem3, TItem4>(TItem1 item1, TItem2 item2, TItem3 item3, TItem4 item4)
-                where TItem1 : struct, IJsonValue where TItem2 : struct, IJsonValue where TItem3 : struct, IJsonValue where TItem4 : struct, IJsonValue
-            {
-                if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
-                {
-                    return this.AsArray.Add(item1, item2, item3, item4);
-                }
-
-                return this;
-            }
-
-            /// <inheritdoc/>
-            public JsonAnyArray Add<TItem>(params TItem[] items)
-                where TItem : struct, IJsonValue
-            {
-                if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
-                {
-                    return this.AsArray.Add(items);
-                }
-
-                return this;
-            }
-
-            /// <inheritdoc/>
-            public JsonAnyArray AddRange<TItem>(IEnumerable<TItem> items)
-                where TItem : struct, IJsonValue
-            {
-                if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
-                {
-                    return this.AsArray.AddRange(items);
-                }
-
-                return this;
-            }
-
-            /// <inheritdoc/>
-            public JsonAnyArray Insert<TItem>(int index, TItem item)
-                where TItem : struct, IJsonValue
-            {
-                if (this.ValueKind == JsonValueKind.Array || this.ValueKind == JsonValueKind.Undefined)
-                {
-                    return this.AsArray.Insert(index, item);
-                }
-
-                return this;
-            }
-
-            /// <inheritdoc/>
-            public JsonAnyArray Replace<TItem>(TItem oldValue, TItem newValue)
-                where TItem : struct, IJsonValue
-            {
-                if (this.ValueKind == JsonValueKind.Array)
-                {
-                    return this.AsArray.Replace(oldValue, newValue);
-                }
-
-                return this;
-            }
-
-            /// <inheritdoc/>
-            public JsonAnyArray RemoveAt(int index)
-            {
-                if (this.ValueKind == JsonValueKind.Array)
-                {
-                    return this.AsArray.RemoveAt(index);
-                }
-
-                return this;
-            }
-
-            /// <inheritdoc/>
-            public JsonAnyArray RemoveRange(int index, int count)
-            {
-                if (this.ValueKind == JsonValueKind.Array)
-                {
-                    return this.AsArray.RemoveRange(index, count);
-                }
-
-                return this;
-            }
-
-            /// <inheritdoc/>
-            public JsonAnyArray SetItem<TItem>(int index, TItem value)
-                where TItem : struct, IJsonValue
-            {
-                if (this.ValueKind == JsonValueKind.Array)
-                {
-                    return this.AsArray.SetItem(index, value);
-                }
-
-                return this;
-            }
-
-            /// <inheritdoc/>
-            public T As<T>()
-                where T : struct, IJsonValue
-            {
-                return this.As<JsonAnyArray, T>();
-            }
-
-            /// <inheritdoc/>
-            public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
-            {
-                ValidationContext result = validationContext;
-                if (level != ValidationLevel.Flag)
-                {
-                    result = result.UsingStack();
-                }
-
-                JsonValueKind valueKind = this.ValueKind;
-                result = this.ValidateType(valueKind, result, level);
-                if (level == ValidationLevel.Flag && !result.IsValid)
-                {
-                    return result;
-                }
-
-                result = this.ValidateArray(valueKind, result, level);
-                if (level == ValidationLevel.Flag && !result.IsValid)
-                {
-                    return result;
-                }
-
-                return result;
-            }
-
-            /// <summary>
-            /// Gets the value as a <see cref = "JsonArray"/>.
-            /// </summary>
-            private JsonArray AsArray
-            {
-                get
-                {
-                    if (this.arrayBacking is ImmutableList<JsonAny> arrayBacking)
-                    {
-                        return new JsonArray(arrayBacking);
-                    }
-
-                    return new JsonArray(this.jsonElementBacking);
-                }
-            }
-
-            private ValidationContext ValidateArray(JsonValueKind valueKind, in ValidationContext validationContext, ValidationLevel level)
-            {
-                ValidationContext result = validationContext;
-                if (valueKind != JsonValueKind.Array)
-                {
-                    return result;
-                }
-
-                int arrayLength = 0;
-                JsonArrayEnumerator arrayEnumerator = this.EnumerateArray();
-                while (arrayEnumerator.MoveNext())
-                {
-                    result = arrayEnumerator.Current.As<Corvus.Json.JsonAny>().Validate(result, level);
-                    if (level == ValidationLevel.Flag && !result.IsValid)
-                    {
-                        return result;
-                    }
-
-                    result = result.WithLocalItemIndex(arrayLength);
-                    arrayLength++;
-                }
-
-                return result;
-            }
-
-            private ValidationContext ValidateType(JsonValueKind valueKind, in ValidationContext validationContext, ValidationLevel level)
-            {
-                ValidationContext result = validationContext;
-                bool isValid = false;
-                ValidationContext localResultArray = Corvus.Json.Validate.TypeArray(valueKind, result, level);
-                if (level == ValidationLevel.Flag && localResultArray.IsValid)
-                {
-                    return validationContext;
-                }
-
-                if (localResultArray.IsValid)
-                {
-                    isValid = true;
-                }
-
-                result = result.MergeResults(isValid, level, localResultArray);
-                return result;
-            }
-        }
+    }
+
+    /// <inheritdoc/>
+    public override int GetHashCode()
+    {
+        return JsonValueHelpers.GetHashCode(this);
+    }
+
+    /// <inheritdoc/>
+    public override string ToString()
+    {
+        return this.Serialize();
     }
 }

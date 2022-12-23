@@ -7,7 +7,10 @@ Feature: email draft2019-09
 
 Scenario Outline: validation of e-mail addresses
 /* Schema: 
-{ "format": "email" }
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "format": "email"
+        }
 */
     Given the input JSON file "optional/format/email.json"
     And the schema at "#/0/schema"

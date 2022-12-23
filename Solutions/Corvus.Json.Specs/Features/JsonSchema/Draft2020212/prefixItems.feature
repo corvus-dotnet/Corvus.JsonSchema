@@ -8,6 +8,7 @@ Feature: prefixItems draft2020-12
 Scenario Outline: a schema given for prefixItems
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "prefixItems": [
                 {"type": "integer"},
                 {"type": "string"}
@@ -34,6 +35,7 @@ Scenario Outline: a schema given for prefixItems
 Scenario Outline: prefixItems with boolean schemas
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "prefixItems": [true, false]
         }
 */
@@ -53,7 +55,10 @@ Scenario Outline: prefixItems with boolean schemas
 
 Scenario Outline: additional items are allowed by default
 /* Schema: 
-{"prefixItems": [{"type": "integer"}]}
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "prefixItems": [{"type": "integer"}]
+        }
 */
     Given the input JSON file "prefixItems.json"
     And the schema at "#/2/schema"
@@ -66,3 +71,26 @@ Scenario Outline: additional items are allowed by default
     Examples:
         | inputDataReference   | valid | description                                                                      |
         | #/002/tests/000/data | true  | only the first item is validated                                                 |
+
+Scenario Outline: prefixItems with null instance elements
+/* Schema: 
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "prefixItems": [
+                {
+                    "type": "null"
+                }
+            ]
+        }
+*/
+    Given the input JSON file "prefixItems.json"
+    And the schema at "#/3/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/003/tests/000/data | true  | allows null elements                                                             |

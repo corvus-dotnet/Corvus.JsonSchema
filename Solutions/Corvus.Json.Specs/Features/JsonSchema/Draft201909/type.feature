@@ -7,7 +7,10 @@ Feature: type draft2019-09
 
 Scenario Outline: integer type matches integers
 /* Schema: 
-{"type": "integer"}
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "type": "integer"
+        }
 */
     Given the input JSON file "type.json"
     And the schema at "#/0/schema"
@@ -31,7 +34,10 @@ Scenario Outline: integer type matches integers
 
 Scenario Outline: number type matches numbers
 /* Schema: 
-{"type": "number"}
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "type": "number"
+        }
 */
     Given the input JSON file "type.json"
     And the schema at "#/1/schema"
@@ -55,7 +61,10 @@ Scenario Outline: number type matches numbers
 
 Scenario Outline: string type matches strings
 /* Schema: 
-{"type": "string"}
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "type": "string"
+        }
 */
     Given the input JSON file "type.json"
     And the schema at "#/2/schema"
@@ -79,7 +88,10 @@ Scenario Outline: string type matches strings
 
 Scenario Outline: object type matches objects
 /* Schema: 
-{"type": "object"}
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "type": "object"
+        }
 */
     Given the input JSON file "type.json"
     And the schema at "#/3/schema"
@@ -101,7 +113,10 @@ Scenario Outline: object type matches objects
 
 Scenario Outline: array type matches arrays
 /* Schema: 
-{"type": "array"}
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "type": "array"
+        }
 */
     Given the input JSON file "type.json"
     And the schema at "#/4/schema"
@@ -123,7 +138,10 @@ Scenario Outline: array type matches arrays
 
 Scenario Outline: boolean type matches booleans
 /* Schema: 
-{"type": "boolean"}
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "type": "boolean"
+        }
 */
     Given the input JSON file "type.json"
     And the schema at "#/5/schema"
@@ -148,7 +166,10 @@ Scenario Outline: boolean type matches booleans
 
 Scenario Outline: null type matches only the null object
 /* Schema: 
-{"type": "null"}
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "type": "null"
+        }
 */
     Given the input JSON file "type.json"
     And the schema at "#/6/schema"
@@ -173,7 +194,10 @@ Scenario Outline: null type matches only the null object
 
 Scenario Outline: multiple types can be specified in an array
 /* Schema: 
-{"type": ["integer", "string"]}
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "type": ["integer", "string"]
+        }
 */
     Given the input JSON file "type.json"
     And the schema at "#/7/schema"
@@ -196,6 +220,7 @@ Scenario Outline: multiple types can be specified in an array
 Scenario Outline: type as array with one item
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "type": ["string"]
         }
 */
@@ -215,6 +240,7 @@ Scenario Outline: type as array with one item
 Scenario Outline: type: array or object
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "type": ["array", "object"]
         }
 */
@@ -237,6 +263,7 @@ Scenario Outline: type: array or object
 Scenario Outline: type: array, object or null
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "type": ["array", "object", "null"]
         }
 */

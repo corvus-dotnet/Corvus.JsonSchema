@@ -2,161 +2,156 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-namespace Corvus.Json
+using System.Text.Json;
+
+namespace Corvus.Json;
+
+/// <summary>
+/// An <see cref="IDocumentResolver"/> that provides
+/// documents based on a url.
+/// </summary>
+public class FakeWebDocumentResolver : IDocumentResolver
 {
-    using System;
-    using System.Collections.Generic;
-    using System.IO;
-    using System.Text.Json;
-    using System.Threading.Tasks;
+    private readonly string baseDirectory;
+    private readonly Dictionary<string, JsonDocument> documents = new();
+    private bool disposedValue;
 
     /// <summary>
-    /// An <see cref="IDocumentResolver"/> that provides
-    /// documents based on a url.
+    /// Initializes a new instance of the <see cref="FakeWebDocumentResolver"/> class.
     /// </summary>
-    public class FakeWebDocumentResolver : IDocumentResolver
+    /// <param name="baseDirectory">The base directory for the file system resolver.</param>
+    public FakeWebDocumentResolver(string baseDirectory)
     {
-        private readonly string baseDirectory;
-        private readonly Dictionary<string, JsonDocument> documents = new();
-        private bool disposedValue;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="FakeWebDocumentResolver"/> class.
-        /// </summary>
-        /// <param name="baseDirectory">The base directory for the file system resolver.</param>
-        public FakeWebDocumentResolver(string baseDirectory)
+        if (string.IsNullOrEmpty(baseDirectory))
         {
-            if (string.IsNullOrEmpty(baseDirectory))
-            {
-                throw new ArgumentException($"'{nameof(baseDirectory)}' cannot be null or empty", nameof(baseDirectory));
-            }
-
-            this.baseDirectory = baseDirectory;
+            throw new ArgumentException($"'{nameof(baseDirectory)}' cannot be null or empty", nameof(baseDirectory));
         }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="FakeWebDocumentResolver"/> class.
-        /// </summary>
-        /// <remarks>The default base directory is <see cref="Environment.CurrentDirectory"/>.</remarks>
-        public FakeWebDocumentResolver()
+        this.baseDirectory = baseDirectory;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="FakeWebDocumentResolver"/> class.
+    /// </summary>
+    /// <remarks>The default base directory is <see cref="Environment.CurrentDirectory"/>.</remarks>
+    public FakeWebDocumentResolver()
+    {
+        this.baseDirectory = Environment.CurrentDirectory;
+    }
+
+    /// <inheritdoc/>
+    public bool AddDocument(string uri, JsonDocument document)
+    {
+        this.CheckDisposed();
+
+        return this.documents.TryAdd(uri, document);
+    }
+
+    /// <inheritdoc/>
+    public void Reset()
+    {
+        this.CheckDisposed();
+        this.DisposeDocumentsAndClear();
+    }
+
+    /// <inheritdoc/>
+    public void Dispose()
+    {
+        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        this.Dispose(disposing: true);
+        System.GC.SuppressFinalize(this);
+    }
+
+    /// <inheritdoc/>
+    public async Task<JsonElement?> TryResolve(JsonReference reference)
+    {
+        this.CheckDisposed();
+
+        if (!IsMatchForFakeUri(reference))
         {
-            this.baseDirectory = Environment.CurrentDirectory;
+            return null;
         }
 
-        /// <inheritdoc/>
-        public bool AddDocument(string uri, JsonDocument document)
-        {
-            this.CheckDisposed();
+        string path = GetPath(reference);
 
-            return this.documents.TryAdd(uri, document);
+        if (this.documents.TryGetValue(path, out JsonDocument? result))
+        {
+            if (JsonPointerUtilities.TryResolvePointer(result, reference.Fragment, out JsonElement? element))
+            {
+                return element;
+            }
+
+            return default;
         }
 
-        /// <inheritdoc/>
-        public void Reset()
+        try
         {
-            this.CheckDisposed();
-            this.DisposeDocumentsAndClear();
+            using Stream stream = File.OpenRead(path);
+            result = await JsonDocument.ParseAsync(stream).ConfigureAwait(false);
+            return JsonPointerUtilities.ResolvePointer(result, reference.Fragment);
+        }
+        catch (Exception)
+        {
+            return default;
         }
 
-        /// <inheritdoc/>
-        public void Dispose()
+        static bool IsMatchForFakeUri(JsonReference reference)
         {
-            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-            this.Dispose(disposing: true);
-            System.GC.SuppressFinalize(this);
+            JsonReferenceBuilder builder = reference.AsBuilder();
+
+            if (!builder.Host.SequenceEqual("localhost".AsSpan()) || !builder.Port.SequenceEqual("1234".AsSpan()))
+            {
+                return false;
+            }
+
+            return true;
         }
 
-        /// <inheritdoc/>
-        public async Task<JsonElement?> TryResolve(JsonReference reference)
+        string GetPath(JsonReference reference)
         {
-            this.CheckDisposed();
+            JsonReferenceBuilder builder = reference.AsBuilder();
 
-            if (!IsMatchForFakeUri(reference))
+            if (builder.Path[0] == '/')
             {
-                return null;
+                return Path.Combine(this.baseDirectory, builder.Path[1..].ToString());
             }
 
-            string path = GetPath(reference);
+            return Path.Combine(this.baseDirectory, builder.Path.ToString());
+        }
+    }
 
-            if (this.documents.TryGetValue(path, out JsonDocument? result))
+    /// <summary>
+    /// Implements the dispose pattern.
+    /// </summary>
+    /// <param name="disposing">True if we are disposing.</param>
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!this.disposedValue)
+        {
+            if (disposing)
             {
-                if (JsonPointerUtilities.TryResolvePointer(result, reference.Fragment, out JsonElement? element))
-                {
-                    return element;
-                }
-
-                return default;
+                this.DisposeDocumentsAndClear();
             }
 
-            try
-            {
-                using Stream stream = File.OpenRead(path);
-                result = await JsonDocument.ParseAsync(stream).ConfigureAwait(false);
-                return JsonPointerUtilities.ResolvePointer(result, reference.Fragment);
-            }
-            catch (Exception)
-            {
-                return default;
-            }
+            this.disposedValue = true;
+        }
+    }
 
-            static bool IsMatchForFakeUri(JsonReference reference)
-            {
-                JsonReferenceBuilder builder = reference.AsBuilder();
-
-                if (!builder.Host.SequenceEqual("localhost".AsSpan()) || !builder.Port.SequenceEqual("1234".AsSpan()))
-                {
-                    return false;
-                }
-
-                return true;
-            }
-
-            string GetPath(JsonReference reference)
-            {
-                JsonReferenceBuilder builder = reference.AsBuilder();
-
-                if (builder.Path[0] == '/')
-                {
-                    return Path.Combine(this.baseDirectory, builder.Path[1..].ToString());
-                }
-
-                return Path.Combine(this.baseDirectory, builder.Path.ToString());
-            }
+    private void DisposeDocumentsAndClear()
+    {
+        foreach (KeyValuePair<string, JsonDocument> document in this.documents)
+        {
+            document.Value.Dispose();
         }
 
-        /// <summary>
-        /// Implements the dispose pattern.
-        /// </summary>
-        /// <param name="disposing">True if we are disposing.</param>
-        protected virtual void Dispose(bool disposing)
+        this.documents.Clear();
+    }
+
+    private void CheckDisposed()
+    {
+        if (this.disposedValue)
         {
-            if (!this.disposedValue)
-            {
-                if (disposing)
-                {
-                    this.DisposeDocumentsAndClear();
-                }
-
-                this.disposedValue = true;
-            }
-        }
-
-        private void DisposeDocumentsAndClear()
-        {
-            foreach (KeyValuePair<string, JsonDocument> document in this.documents)
-            {
-                document.Value.Dispose();
-            }
-
-            this.documents.Clear();
-        }
-
-        private void CheckDisposed()
-        {
-            if (this.disposedValue)
-            {
-                throw new ObjectDisposedException(nameof(CompoundDocumentResolver));
-            }
+            throw new ObjectDisposedException(nameof(CompoundDocumentResolver));
         }
     }
 }

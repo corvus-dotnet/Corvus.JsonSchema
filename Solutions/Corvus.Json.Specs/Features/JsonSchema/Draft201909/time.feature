@@ -7,7 +7,10 @@ Feature: time draft2019-09
 
 Scenario Outline: validation of time strings
 /* Schema: 
-{ "format": "time" }
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "format": "time"
+        }
 */
     Given the input JSON file "optional/format/time.json"
     And the schema at "#/0/schema"
@@ -56,4 +59,4 @@ Scenario Outline: validation of time strings
         | #/000/tests/034/data | false | an invalid offset indicator                                                      |
         | #/000/tests/035/data | false | only RFC3339 not all of ISO 8601 are valid                                       |
         | #/000/tests/036/data | false | no time offset                                                                   |
-        | #/000/tests/037/data | false | non-ascii digits should be rejected                                              |
+        | #/000/tests/037/data | false | invalid non-ASCII '২' (a Bengali 2)                                              |

@@ -1,0 +1,114 @@
+{
+  "title": "JSON Patch",
+  "description": "A JSON Schema describing a JSON Patch",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/JsonPatchDocument",
+  "$defs": {
+    "JsonPatchDocument": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/PatchOperation" }
+    },
+    "JsonPointer": {
+      "type": "string",
+      "format": "json-pointer"
+    },
+    "Add": {
+      "description": "Add operation. Value can be any JSON value.",
+      "allOf": [
+        {
+          "$ref": "#/$defs/PatchOperationCommon"
+        }
+      ],
+      "properties": {
+        "op": { "const": "add" }
+      },
+      "required": [ "value" ]
+    },
+    "Remove": {
+      "description": "Remove operation. Only a path is specified.",
+      "allOf": [
+        {
+          "$ref": "#/$defs/PatchOperationCommon"
+        }
+      ],
+      "properties": {
+        "op": { "const": "remove" }
+      }
+    },
+    "Replace": {
+      "description": "Replace operation. Value can be any JSON value.",
+      "allOf": [
+        {
+          "$ref": "#/$defs/PatchOperationCommon"
+        }
+      ],
+      "properties": {
+        "op": { "const": "replace" }
+      },
+      "required": [ "value" ]
+    },
+    "Move": {
+      "description": "Move operation. \"from\" is a JSON Pointer.",
+      "allOf": [
+        {
+          "$ref": "#/$defs/PatchOperationCommon"
+        }
+      ],
+      "properties": {
+        "op": { "const": "move" },
+        "from": { "$ref": "#/$defs/JsonPointer" }
+      },
+      "required": [ "from" ]
+    },
+    "Copy": {
+      "description": "Copy operation. \"from\" is a JSON Pointer.",
+      "allOf": [
+        {
+          "$ref": "#/$defs/PatchOperationCommon"
+        }
+      ],
+      "properties": {
+        "op": { "const": "copy" },
+        "from": { "$ref": "#/$defs/JsonPointer" }
+      },
+      "required": [ "from" ]
+    },
+    "Test": {
+      "description": "Test operation. Value can be any JSON value.",
+      "allOf": [
+        {
+          "$ref": "#/$defs/PatchOperationCommon"
+        }
+      ],
+      "properties": {
+        "op": { "const": "test" }
+      },
+      "required": [ "value" ]
+    },
+    "PatchOperationCommon": {
+      "required": [ "path", "op" ],
+      "properties": {
+        "path": { "$ref": "#/$defs/JsonPointer" },
+        "op": {
+          "type": "string"
+        }
+      }
+    },
+    "PatchOperation": {
+      "description": "A single JSON Patch operation",
+      "allOf": [
+        {
+          "$ref": "#/$defs/PatchOperationCommon"
+        }
+      ],
+      "oneOf": [
+        { "$ref": "#/$defs/Add" },
+        { "$ref": "#/$defs/Remove" },
+        { "$ref": "#/$defs/Replace" },
+        { "$ref": "#/$defs/Move" },
+        { "$ref": "#/$defs/Copy" },
+        { "$ref": "#/$defs/Test" }
+      ]
+    }
+  }
+}

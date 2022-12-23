@@ -8,6 +8,7 @@ Feature: exclusiveMinimum draft2020-12
 Scenario Outline: exclusiveMinimum validation
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "exclusiveMinimum": 1.1
         }
 */

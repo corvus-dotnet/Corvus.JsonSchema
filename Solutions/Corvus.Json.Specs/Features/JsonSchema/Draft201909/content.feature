@@ -8,6 +8,7 @@ Feature: content draft2019-09
 Scenario Outline: validation of string-encoded content based on media type
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "contentMediaType": "application/json"
         }
 */
@@ -28,6 +29,7 @@ Scenario Outline: validation of string-encoded content based on media type
 Scenario Outline: validation of binary string-encoding
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "contentEncoding": "base64"
         }
 */
@@ -48,6 +50,7 @@ Scenario Outline: validation of binary string-encoding
 Scenario Outline: validation of binary-encoded media type documents
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "contentMediaType": "application/json",
             "contentEncoding": "base64"
         }
@@ -70,6 +73,7 @@ Scenario Outline: validation of binary-encoded media type documents
 Scenario Outline: validation of binary-encoded media type documents with schema
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "contentMediaType": "application/json",
             "contentEncoding": "base64",
             "contentSchema": { "required": ["foo"], "properties": { "foo": { "type": "string" } } }

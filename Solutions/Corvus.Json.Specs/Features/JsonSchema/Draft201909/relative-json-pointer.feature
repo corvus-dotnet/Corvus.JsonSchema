@@ -7,7 +7,10 @@ Feature: relative-json-pointer draft2019-09
 
 Scenario Outline: validation of Relative JSON Pointers (RJP)
 /* Schema: 
-{ "format": "relative-json-pointer" }
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "format": "relative-json-pointer"
+        }
 */
     Given the input JSON file "optional/format/relative-json-pointer.json"
     And the schema at "#/0/schema"

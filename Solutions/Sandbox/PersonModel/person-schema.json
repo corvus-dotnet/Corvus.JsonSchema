@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "JSON Schema for a Person entity coming back from a 3rd party API (e.g. a storage format in a database)",
+  "type": "object",
+  "$defs": {
+    "PersonArray": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Person"
+      }
+    },
+    "Person": {
+      "type": "object",
+
+      "required": [ "name" ],
+      "properties": {
+        "name": { "$ref": "#/$defs/PersonName" },
+        "dateOfBirth": {
+          "type": "string",
+          "format": "date"
+        }
+      }
+    },
+    "PersonName": {
+      "type": "object",
+      "description": "A name of a person.",
+      "required": [ "familyName" ],
+      "properties": {
+        "givenName": {
+          "$ref": "#/$defs/PersonNameElement",
+          "description": "The person's given name."
+        },
+        "familyName": {
+          "$ref": "#/$defs/PersonNameElement",
+          "description": "The person's family name."
+        },
+        "otherNames": {
+          "$ref": "#/$defs/OtherNames",
+          "description": "Other (middle) names for the person"
+        }
+      }
+    },
+    "OtherNames": {
+      "oneOf": [
+        { "$ref": "#/$defs/PersonNameElement" },
+        { "$ref": "#/$defs/PersonNameElementArray" }
+      ]
+    },
+    "PersonNameElementArray": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/PersonNameElement"
+      }
+    },
+    "PersonNameElement": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "Link": {
+      "required": [
+        "href"
+      ],
+      "type": "object",
+      "properties": {
+        "href": {
+          "title": "URI of the target resource",
+          "type": "string",
+          "description": "Either a URI [RFC3986] or URI Template [RFC6570] of the target resource."
+        },
+        "templated": {
+          "title": "URI Template",
+          "type": "boolean",
+          "description": "Is true when the link object's href property is a URI Template. Defaults to false.",
+          "default": false
+        },
+        "type": {
+          "title": "Media type indication of the target resource",
+          "pattern": "^(application|audio|example|image|message|model|multipart|text|video)\\\\/[a-zA-Z0-9!#\\\\$&\\\\.\\\\+-\\\\^_]{1,127}$",
+          "type": "string",
+          "description": "When present, used as a hint to indicate the media type expected when dereferencing the target resource."
+        },
+        "name": {
+          "title": "Secondary key",
+          "type": "string",
+          "description": "When present, may be used as a secondary key for selecting link objects that contain the same relation type."
+        },
+        "profile": {
+          "title": "Additional semantics of the target resource",
+          "type": "string",
+          "description": "A URI that, when dereferenced, results in a profile to allow clients to learn about additional semantics (constraints, conventions, extensions) that are associated with the target resource representation, in addition to those defined by the HAL media type and relations.",
+          "format": "uri"
+        },
+        "description": {
+          "title": "Human-readable identifier",
+          "type": "string",
+          "description": "When present, is used to label the destination of a link such that it can be used as a human-readable identifier (e.g. a menu entry) in the language indicated by the Content-Language header (if present)."
+        },
+        "hreflang": {
+          "title": "Language indication of the target resource [RFC5988]",
+          "pattern": "^([a-zA-Z]{2,3}(-[a-zA-Z]{3}(-[a-zA-Z]{3}){0,2})?(-[a-zA-Z]{4})?(-([a-zA-Z]{2}|[0-9]{3}))?(-([a-zA-Z0-9]{5,8}|[0-9][a-zA-Z0-9]{3}))*([0-9A-WY-Za-wy-z](-[a-zA-Z0-9]{2,8}){1,})*(x-[a-zA-Z0-9]{2,8})?)|(x-[a-zA-Z0-9]{2,8})|(en-GB-oed)|(i-ami)|(i-bnn)|(i-default)|(i-enochian)|(i-hak)|(i-klingon)|(i-lux)|(i-mingo)|(i-navajo)|(i-pwn)|(i-tao)|(i-tay)|(i-tsu)|(sgn-BE-FR)|(sgn-BE-NL)|(sgn-CH-DE)|(art-lojban)|(cel-gaulish)|(no-bok)|(no-nyn)|(zh-guoyu)|(zh-hakka)|(zh-min)|(zh-min-nan)|(zh-xiang)$",
+          "type": "string",
+          "description": "When present, is a hint in RFC5646 format indicating what the language of the result of dereferencing the link should be.  Note that this is only a hint; for example, it does not override the Content-Language header of a HTTP response obtained by actually following the link."
+        }
+      }
+    }
+  }
+}

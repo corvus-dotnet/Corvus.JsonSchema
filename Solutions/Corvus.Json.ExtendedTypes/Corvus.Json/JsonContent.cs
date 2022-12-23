@@ -2,318 +2,66 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-namespace Corvus.Json
+using System.Buffers;
+using System.Text;
+using System.Text.Json;
+using Corvus.Json.Internal;
+
+namespace Corvus.Json;
+
+/// <summary>
+/// Represents a JSON content.
+/// </summary>
+public readonly partial struct JsonContent
 {
-    using System;
-    using System.Buffers;
-    using System.Text;
-    using System.Text.Json;
-    using Corvus.Extensions;
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonContent"/> struct.
+    /// </summary>
+    /// <param name="value">The <see cref="JsonDocument"/> from which to construct the Base64 content.</param>
+    /// <remarks>
+    /// This does not take ownership of the document. The caller should dispose of it in the usual way, once its
+    /// use in this scope is complete.
+    /// </remarks>
+    public JsonContent(JsonDocument value)
+    {
+        // We both serialize it on creation...
+        var abw = new ArrayBufferWriter<byte>();
+        using var writer = new Utf8JsonWriter(abw);
+        value.WriteTo(writer);
+        this.stringBacking = abw.WrittenSpan.ToString();
+        this.jsonElementBacking = default;
+        this.backing = Backing.String;
+    }
 
     /// <summary>
-    /// A JSON object.
+    /// Try to get the JSON document from the content.
     /// </summary>
-    public readonly struct JsonContent : IJsonValue, IEquatable<JsonContent>
+    /// <param name="result">A JSON document produced from the content, or null if the content did not represent a Base64 encoded JSON document.</param>
+    /// <returns><c>True</c> if the document was parsed successfully.</returns>
+    public EncodedContentMediaTypeParseStatus TryGetJsonDocument(out JsonDocument? result)
     {
-        private readonly JsonElement jsonElement;
-        private readonly string? value;
-        private readonly JsonDocument? jsonDocumentValue;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="JsonContent"/> struct.
-        /// </summary>
-        /// <param name="jsonElement">The JSON element from which to construct the object.</param>
-        public JsonContent(JsonElement jsonElement)
+        if ((this.backing & Backing.String) != 0)
         {
-            this.jsonElement = jsonElement;
-            this.value = default;
-            this.jsonDocumentValue = default;
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="JsonContent"/> struct.
-        /// </summary>
-        /// <param name="value">The string value.</param>
-        public JsonContent(JsonString value)
-        {
-            if (value.HasJsonElement)
-            {
-                this.jsonElement = value.AsJsonElement;
-                this.value = default;
-                this.jsonDocumentValue = default;
-            }
-            else
-            {
-                this.jsonElement = default;
-                this.value = value;
-                this.jsonDocumentValue = default;
-            }
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="JsonContent"/> struct.
-        /// </summary>
-        /// <param name="value">The base64 encoded string value.</param>
-        public JsonContent(string value)
-        {
-            this.jsonElement = default;
-            this.value = value;
-            this.jsonDocumentValue = default;
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="JsonContent"/> struct.
-        /// </summary>
-        /// <param name="value">The <see cref="JsonDocument"/> from which to construct the Base64 content.</param>
-        /// <remarks>
-        /// This does not take ownership of the document. The caller should dispose of it in the usual way, once its
-        /// use is in this scope is complete.
-        /// </remarks>
-        public JsonContent(JsonDocument value)
-        {
-            // We both serialize it on creation...
-            var abw = new ArrayBufferWriter<byte>();
-            using var writer = new Utf8JsonWriter(abw);
-            value.WriteTo(writer);
-            this.value = abw.WrittenSpan.ToString();
-            this.jsonElement = default;
-
-            // ...and stash it away so we can return it quickly if required.
-            this.jsonDocumentValue = value;
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="JsonContent"/> struct.
-        /// </summary>
-        /// <param name="value">The string value.</param>
-        public JsonContent(ReadOnlySpan<char> value)
-        {
-            this.jsonElement = default;
-            this.value = value.ToString();
-            this.jsonDocumentValue = default;
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="JsonContent"/> struct.
-        /// </summary>
-        /// <param name="value">The utf8-encoded string value.</param>
-        public JsonContent(ReadOnlySpan<byte> value)
-        {
-            this.jsonElement = default;
-            this.value = Encoding.UTF8.GetString(value);
-            this.jsonDocumentValue = default;
-        }
-
-        /// <summary>
-        /// Gets the <see cref="JsonValueKind"/>.
-        /// </summary>
-        public JsonValueKind ValueKind
-        {
-            get
-            {
-                if (this.value is not null)
-                {
-                    return JsonValueKind.String;
-                }
-
-                return this.jsonElement.ValueKind;
-            }
-        }
-
-        /// <summary>
-        /// Gets a value indicating whether this is backed by a <see cref="JsonElement"/>.
-        /// </summary>
-        public bool HasJsonElement => this.value is null;
-
-        /// <summary>
-        /// Gets the backing <see cref="JsonElement"/>.
-        /// </summary>
-        public JsonElement AsJsonElement
-        {
-            get
-            {
-                if (this.value is string value)
-                {
-                    return JsonString.StringToJsonElement(value);
-                }
-
-                return this.jsonElement;
-            }
-        }
-
-        /// <inheritdoc/>
-        public JsonAny AsAny
-        {
-            get
-            {
-                if (this.value is string value)
-                {
-                    return new JsonAny(value);
-                }
-                else
-                {
-                    return new JsonAny(this.jsonElement);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Implicit conversion to JsonString.
-        /// </summary>
-        /// <param name="value">The value from which to convert.</param>
-        public static implicit operator JsonString(JsonContent value)
-        {
-            if (value.value is string jet)
-            {
-                return new JsonString(jet);
-            }
-            else
-            {
-                return new JsonString(value.jsonElement);
-            }
-        }
-
-        /// <summary>
-        /// Implicit conversion from JsonString.
-        /// </summary>
-        /// <param name="value">The value from which to convert.</param>
-        public static implicit operator JsonContent(JsonString value)
-        {
-            return new JsonContent(value);
-        }
-
-        /// <summary>
-        /// Implicit conversion to JsonAny.
-        /// </summary>
-        /// <param name="value">The value from which to convert.</param>
-        public static implicit operator JsonAny(JsonContent value)
-        {
-            return value.AsAny;
-        }
-
-        /// <summary>
-        /// Implicit conversion from JsonAny.
-        /// </summary>
-        /// <param name="value">The value from which to convert.</param>
-        public static implicit operator JsonContent(JsonAny value)
-        {
-            return value.AsString;
-        }
-
-        /// <summary>
-        /// Conversion from string.
-        /// </summary>
-        /// <param name="value">The value from which to convert.</param>
-        public static implicit operator JsonContent(string value)
-        {
-            return new JsonContent(value);
-        }
-
-        /// <summary>
-        /// Conversion to string.
-        /// </summary>
-        /// <param name="value">The number from which to convert.</param>
-        public static implicit operator string(JsonContent value)
-        {
-            return value.GetString();
-        }
-
-        /// <summary>
-        /// Conversion from string.
-        /// </summary>
-        /// <param name="value">The value from which to convert.</param>
-        public static implicit operator JsonContent(ReadOnlySpan<char> value)
-        {
-            return new JsonContent(value);
-        }
-
-        /// <summary>
-        /// Conversion to string.
-        /// </summary>
-        /// <param name="value">The number from which to convert.</param>
-        public static implicit operator ReadOnlySpan<char>(JsonContent value)
-        {
-            return value.AsSpan();
-        }
-
-        /// <summary>
-        /// Conversion from utf8 bytes.
-        /// </summary>
-        /// <param name="value">The value from which to convert.</param>
-        public static implicit operator JsonContent(ReadOnlySpan<byte> value)
-        {
-            return new JsonContent(value);
-        }
-
-        /// <summary>
-        /// Conversion to utf8 bytes.
-        /// </summary>
-        /// <param name="value">The number from which to convert.</param>
-        public static implicit operator ReadOnlySpan<byte>(JsonContent value)
-        {
-            string result = value.GetString();
-            return Encoding.UTF8.GetBytes(result);
-        }
-
-        /// <summary>
-        /// Standard equality operator.
-        /// </summary>
-        /// <param name="lhs">The left hand side of the comparison.</param>
-        /// <param name="rhs">The right hand side of the comparison.</param>
-        /// <returns>True if they are equal.</returns>
-        public static bool operator ==(JsonContent lhs, JsonContent rhs)
-        {
-            return lhs.Equals(rhs);
-        }
-
-        /// <summary>
-        /// Standard inequality operator.
-        /// </summary>
-        /// <param name="lhs">The left hand side of the comparison.</param>
-        /// <param name="rhs">The right hand side of the comparison.</param>
-        /// <returns>True if they are not equal.</returns>
-        public static bool operator !=(JsonContent lhs, JsonContent rhs)
-        {
-            return !lhs.Equals(rhs);
-        }
-
-        /// <inheritdoc/>
-        public override string ToString()
-        {
-            return this.Serialize();
-        }
-
-        /// <summary>
-        /// Try to get the JSON document from the content.
-        /// </summary>
-        /// <param name="result">A JSON document produced from the content, or null if the content did not represent a Base64 encoded JSON document.</param>
-        /// <returns><c>True</c> if the document was parsed successfully.</returns>
-        public EncodedContentMediaTypeParseStatus TryGetJsonDocument(out JsonDocument? result)
-        {
-            if (this.jsonDocumentValue is JsonDocument jdoc)
-            {
-                result = jdoc;
-                return EncodedContentMediaTypeParseStatus.Success;
-            }
-
-            if (this.value is string value)
-            {
 #pragma warning disable RCS1075 // Avoid empty catch clause that catches System.Exception.
+            try
+            {
+                byte[]? rentedFromPool = null;
+                int required = Encoding.UTF8.GetMaxByteCount(this.stringBacking.Length);
+                Span<byte> utf8SourceBuffer =
+                    required > JsonValueHelpers.MaxStackAlloc
+                    ? (rentedFromPool = ArrayPool<byte>.Shared.Rent(required))
+                    : stackalloc byte[JsonValueHelpers.MaxStackAlloc];
+
                 try
                 {
-                    ReadOnlySpan<byte> utf8Source = Encoding.UTF8.GetBytes(value);
+                    int written = Encoding.UTF8.GetBytes(this.stringBacking, utf8SourceBuffer);
+                    ReadOnlySpan<byte> utf8Source = utf8SourceBuffer[..written];
 
                     int idx = utf8Source.IndexOf(JsonConstants.BackSlash);
 
-                    ReadOnlySpan<byte> utf8Unescaped;
-                    if (idx >= 0)
-                    {
-                        utf8Unescaped = JsonReaderHelper.GetUnescapedSpan(utf8Source, idx);
-                    }
-                    else
-                    {
-                        utf8Unescaped = utf8Source;
-                    }
+                    ReadOnlySpan<byte> utf8Unescaped =
+                        idx >= 0 ? JsonReaderHelper.GetUnescapedSpan(utf8Source, idx)
+                        : utf8Source;
 
                     var reader2 = new Utf8JsonReader(utf8Unescaped);
                     if (JsonDocument.TryParseValue(ref reader2, out result))
@@ -321,311 +69,224 @@ namespace Corvus.Json
                         return EncodedContentMediaTypeParseStatus.Success;
                     }
                 }
-                catch (Exception)
+                finally
                 {
-                    // Fall through to the return...
+                    if (rentedFromPool is not null)
+                    {
+                        ArrayPool<byte>.Shared.Return(rentedFromPool, true);
+                    }
                 }
-#pragma warning restore RCS1075 // Avoid empty catch clause that catches System.Exception.
-
-                result = null;
-                return EncodedContentMediaTypeParseStatus.UnableToParseToMediaType;
             }
-
-            if (this.jsonElement.ValueKind == JsonValueKind.String)
+            catch (Exception)
             {
-#pragma warning disable RCS1075 // Avoid empty catch clause that catches System.Exception.
-                try
-                {
-#pragma warning disable CS8604 // Possible null reference argument - this is not possible if this.jsonElement.ValueKind == JsonValueKind.String as above.
-                    ReadOnlySpan<byte> utf8Source = Encoding.UTF8.GetBytes(this.jsonElement.GetString());
-#pragma warning restore CS8604 // Possible null reference argument.
-
-                    int idx = utf8Source.IndexOf(JsonConstants.BackSlash);
-
-                    ReadOnlySpan<byte> utf8Unescaped;
-                    if (idx >= 0)
-                    {
-                        utf8Unescaped = JsonReaderHelper.GetUnescapedSpan(utf8Source, idx);
-                    }
-                    else
-                    {
-                        utf8Unescaped = utf8Source;
-                    }
-
-                    var reader2 = new Utf8JsonReader(utf8Unescaped);
-                    if (JsonDocument.TryParseValue(ref reader2, out result))
-                    {
-                        return EncodedContentMediaTypeParseStatus.Success;
-                    }
-                }
-                catch (Exception)
-                {
-                    // Fall through to the return...
-                }
-#pragma warning restore RCS1075 // Avoid empty catch clause that catches System.Exception.
-
-                result = default;
-                return EncodedContentMediaTypeParseStatus.UnableToParseToMediaType;
+                // Fall through to the return...
             }
+#pragma warning restore RCS1075 // Avoid empty catch clause that catches System.Exception.
 
             result = null;
-            return EncodedContentMediaTypeParseStatus.UnableToDecode;
+            return EncodedContentMediaTypeParseStatus.UnableToParseToMediaType;
         }
 
-        /// <inheritdoc/>
-        public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
+        if (this.jsonElementBacking.ValueKind == JsonValueKind.String)
         {
-            ValidationContext result = validationContext;
-
-            JsonValueKind valueKind = this.ValueKind;
-
-            if (valueKind != JsonValueKind.String)
+#pragma warning disable RCS1075 // Avoid empty catch clause that catches System.Exception.
+            try
             {
-                if (level >= ValidationLevel.Detailed)
+                string sourceString = this.jsonElementBacking.GetString()!;
+                byte[]? rentedFromPool = null;
+                int required = Encoding.UTF8.GetMaxByteCount(sourceString.Length);
+                Span<byte> utf8SourceBuffer =
+                    required > JsonValueHelpers.MaxStackAlloc
+                    ? (rentedFromPool = ArrayPool<byte>.Shared.Rent(required))
+                    : stackalloc byte[JsonValueHelpers.MaxStackAlloc];
+
+                try
                 {
-                    return result.WithResult(isValid: false, $"Validation 6.1.1 type - should have been 'string' withcontentMediaType 'application/json' but was '{valueKind}'.");
+                    int written = Encoding.UTF8.GetBytes(sourceString, utf8SourceBuffer);
+                    ReadOnlySpan<byte> utf8Source = utf8SourceBuffer[..written];
+
+                    int idx = utf8Source.IndexOf(JsonConstants.BackSlash);
+
+                    ReadOnlySpan<byte> utf8Unescaped =
+                        idx >= 0 ? JsonReaderHelper.GetUnescapedSpan(utf8Source, idx)
+                        : utf8Source;
+
+                    var reader2 = new Utf8JsonReader(utf8Unescaped);
+                    if (JsonDocument.TryParseValue(ref reader2, out result))
+                    {
+                        return EncodedContentMediaTypeParseStatus.Success;
+                    }
                 }
-                else if (level >= ValidationLevel.Basic)
+                finally
                 {
-                    return result.WithResult(isValid: false, "Validation 6.1.1 type - should have been 'string' with contentMediaType 'application/json'.");
-                }
-                else
-                {
-                    return result.WithResult(isValid: false);
+                    if (rentedFromPool is not null)
+                    {
+                        ArrayPool<byte>.Shared.Return(rentedFromPool, true);
+                    }
                 }
             }
+            catch (Exception)
+            {
+                // Fall through to the return...
+            }
+#pragma warning restore RCS1075 // Avoid empty catch clause that catches System.Exception.
 
-            EncodedContentMediaTypeParseStatus status = this.TryGetJsonDocument(out JsonDocument? _);
-            if (status == EncodedContentMediaTypeParseStatus.UnableToDecode)
-            {
-                if (level >= ValidationLevel.Detailed)
-                {
-                    return result.WithResult(isValid: false, $"Validation 8.3 contentEncoding - should have been a 'string' with contentMediaType 'application/json'.");
-                }
-                else if (level >= ValidationLevel.Basic)
-                {
-                    return result.WithResult(isValid: false, "Validation 8.3 contentEncoding - should have been a 'string' with contentMediaType 'application/json'.");
-                }
-                else
-                {
-                    return result.WithResult(isValid: false);
-                }
-            }
-            else if (status == EncodedContentMediaTypeParseStatus.UnableToParseToMediaType)
-            {
-                // Should be Valid, but we just annotate.
-                if (level >= ValidationLevel.Detailed)
-                {
-                    return result.WithResult(isValid: true, $"Validation 8.4 contentMediaType - should have been a 'string' with contentMediaType 'application/json'.");
-                }
-                else if (level >= ValidationLevel.Basic)
-                {
-                    return result.WithResult(isValid: true, "Validation 8.4 contentMediaType - should have been a 'string' with contentMediaType 'application/json'.");
-                }
-                else
-                {
-                    return result.WithResult(isValid: true);
-                }
-            }
-            else if (level == ValidationLevel.Verbose)
-            {
-                return result
-                    .WithResult(isValid: true, "Validation 8.4 contentMediaType - was a'string' with contentMediaType 'application/json'.");
-            }
-
-            return result;
+            result = default;
+            return EncodedContentMediaTypeParseStatus.UnableToParseToMediaType;
         }
 
-        /// <inheritdoc/>
-        public T As<T>()
-            where T : struct, IJsonValue
+        result = null;
+        return EncodedContentMediaTypeParseStatus.UnableToDecode;
+    }
+
+    /// <summary>
+    /// Gets the value as an unescaped string.
+    /// </summary>
+    /// <param name="result">The value as a string.</param>
+    /// <returns><c>True</c> if the value could be retrieved.</returns>
+    public bool TryGetUnescapedString(out string result)
+    {
+        if ((this.backing & Backing.String) != 0)
         {
-            if (typeof(T) == typeof(JsonString))
+            string sourceString = this.stringBacking;
+            byte[]? rentedFromPool = null;
+            int required = Encoding.UTF8.GetMaxByteCount(sourceString.Length);
+            Span<byte> utf8SourceBuffer =
+                required > JsonValueHelpers.MaxStackAlloc
+                ? (rentedFromPool = ArrayPool<byte>.Shared.Rent(required))
+                : stackalloc byte[JsonValueHelpers.MaxStackAlloc];
+
+            try
             {
-                if (this.value is string value)
-                {
-                    return CastTo<T>.From(new JsonString(value));
-                }
-                else
-                {
-                    return CastTo<T>.From(new JsonString(this.jsonElement));
-                }
-            }
-
-            if (typeof(T) == typeof(JsonBase64String))
-            {
-                if (this.value is string value)
-                {
-                    return CastTo<T>.From(new JsonBase64String(value));
-                }
-                else
-                {
-                    return CastTo<T>.From(new JsonBase64String(this.jsonElement));
-                }
-            }
-
-            return this.As<JsonContent, T>();
-        }
-
-        /// <summary>
-        /// Gets the value as a string.
-        /// </summary>
-        /// <returns>The value as a string.</returns>
-        public string GetString()
-        {
-            if (this.TryGetString(out string result))
-            {
-                return result;
-            }
-
-            return string.Empty;
-        }
-
-        /// <summary>
-        /// Gets the value as a string.
-        /// </summary>
-        /// <param name="result">The value as a string.</param>
-        /// <returns><c>True</c> if the value could be retrieved.</returns>
-        public bool TryGetString(out string result)
-        {
-            if (this.value is string value)
-            {
-                ReadOnlySpan<byte> utf8Source = Encoding.UTF8.GetBytes(value);
+                int written = Encoding.UTF8.GetBytes(sourceString, utf8SourceBuffer);
+                ReadOnlySpan<byte> utf8Source = utf8SourceBuffer[..written];
 
                 int idx = utf8Source.IndexOf(JsonConstants.BackSlash);
 
-                ReadOnlySpan<byte> utf8Unescaped;
-                if (idx >= 0)
-                {
-                    utf8Unescaped = JsonReaderHelper.GetUnescapedSpan(utf8Source, idx);
-                }
-                else
-                {
-                    utf8Unescaped = utf8Source;
-                }
+                ReadOnlySpan<byte> utf8Unescaped =
+                    idx >= 0 ? JsonReaderHelper.GetUnescapedSpan(utf8Source, idx)
+                    : utf8Source;
 
                 result = Encoding.UTF8.GetString(utf8Unescaped);
                 return true;
             }
-
-            if (this.jsonElement.ValueKind == JsonValueKind.String)
+            finally
             {
-                string? str = this.jsonElement.GetString();
-                result = str!;
-                return true;
+                if (rentedFromPool is not null)
+                {
+                    ArrayPool<byte>.Shared.Return(rentedFromPool, true);
+                }
             }
-
-            result = string.Empty;
-            return false;
         }
 
-        /// <summary>
-        /// Gets the value as a span.
-        /// </summary>
-        /// <returns>The value as a span of char.</returns>
-        public ReadOnlySpan<char> AsSpan()
+        if (this.jsonElementBacking.ValueKind == JsonValueKind.String)
         {
-            if (this.value is string value)
+            string? str = this.jsonElementBacking.GetString();
+            if (str is not null)
             {
-                ReadOnlySpan<byte> utf8Source = Encoding.UTF8.GetBytes(value);
+                result = str;
+                return true;
+            }
+        }
+
+        result = string.Empty;
+        return false;
+    }
+
+    /// <summary>
+    /// Gets the value as an unescaped span.
+    /// </summary>
+    /// <returns>The unescaped value as a span of char.</returns>
+    public ReadOnlySpan<char> AsUnescapedSpan()
+    {
+        if ((this.backing & Backing.String) != 0)
+        {
+            string sourceString = this.stringBacking;
+            byte[]? rentedFromPool = null;
+            int required = Encoding.UTF8.GetMaxByteCount(sourceString.Length);
+            Span<byte> utf8SourceBuffer =
+                required > JsonValueHelpers.MaxStackAlloc
+                ? (rentedFromPool = ArrayPool<byte>.Shared.Rent(required))
+                : stackalloc byte[JsonValueHelpers.MaxStackAlloc];
+
+            try
+            {
+                int written = Encoding.UTF8.GetBytes(sourceString, utf8SourceBuffer);
+                ReadOnlySpan<byte> utf8Source = utf8SourceBuffer[..written];
 
                 int idx = utf8Source.IndexOf(JsonConstants.BackSlash);
 
-                ReadOnlySpan<byte> utf8Unescaped;
-                if (idx >= 0)
-                {
-                    utf8Unescaped = JsonReaderHelper.GetUnescapedSpan(utf8Source, idx);
-                }
-                else
-                {
-                    utf8Unescaped = utf8Source;
-                }
+                ReadOnlySpan<byte> utf8Unescaped =
+                    idx >= 0 ? JsonReaderHelper.GetUnescapedSpan(utf8Source, idx)
+                    : utf8Source;
 
                 Span<char> result = new char[Encoding.UTF8.GetMaxCharCount(utf8Unescaped.Length)];
-                int written = Encoding.UTF8.GetChars(utf8Unescaped, result);
+                written = Encoding.UTF8.GetChars(utf8Unescaped, result);
                 return result[..written];
             }
-
-            if (this.jsonElement.ValueKind == JsonValueKind.String)
+            finally
             {
-                string? str = this.jsonElement.GetString();
-                return str!.AsSpan();
+                if (rentedFromPool is not null)
+                {
+                    ArrayPool<byte>.Shared.Return(rentedFromPool, true);
+                }
             }
-
-            return ReadOnlySpan<char>.Empty;
         }
 
-        /// <inheritdoc/>
-        public override bool Equals(object? obj)
+        if (this.jsonElementBacking.ValueKind == JsonValueKind.String)
         {
-            if (obj is IJsonValue jv)
-            {
-                return this.Equals(jv.AsAny);
-            }
-
-            return obj is null && this.IsNull();
+            string? str = this.jsonElementBacking.GetString();
+            return str!.AsSpan();
         }
 
-        /// <inheritdoc/>
-        public override int GetHashCode()
+        return ReadOnlySpan<char>.Empty;
+    }
+
+    /// <summary>
+    /// Equality comparison.
+    /// </summary>
+    /// <typeparam name="T">The type of the item with which to compare.</typeparam>
+    /// <param name="other">The item with which to compare.</param>
+    /// <returns><c>True</c> if the items are equal.</returns>
+    public bool Equals<T>(T other)
+        where T : struct, IJsonValue<T>
+    {
+        if (this.IsNull() && other.IsNull())
         {
-            JsonValueKind valueKind = this.ValueKind;
-
-            return valueKind switch
-            {
-                JsonValueKind.String => this.AsString().GetHashCode(),
-                JsonValueKind.Null => JsonNull.NullHashCode,
-                _ => JsonAny.UndefinedHashCode,
-            };
+            return true;
         }
 
-        /// <summary>
-        /// Writes the string to the <see cref="Utf8JsonWriter"/>.
-        /// </summary>
-        /// <param name="writer">The writer to which to write the object.</param>
-        public void WriteTo(Utf8JsonWriter writer)
+        if (other.ValueKind != JsonValueKind.String)
         {
-            if (this.value is string value)
-            {
-                writer.WriteStringValue(value);
-            }
-            else
-            {
-                this.jsonElement.WriteTo(writer);
-            }
+            return false;
         }
 
-        /// <inheritdoc/>
-        public bool Equals<T>(T other)
-            where T : struct, IJsonValue
+        return this.EqualsCore((JsonContent)other.AsString);
+    }
+
+    /// <summary>
+    /// Equality comparison.
+    /// </summary>
+    /// <param name="other">The item with which to compare.</param>
+    /// <returns><c>True</c> if the items are equal.</returns>
+    public bool Equals(JsonContent other)
+    {
+        if (this.IsNull() && other.IsNull())
         {
-            if (this.IsNull() && other.IsNull())
-            {
-                return true;
-            }
-
-            if (other.ValueKind != JsonValueKind.String)
-            {
-                return false;
-            }
-
-            return this.Equals((JsonContent)other.AsString());
+            return true;
         }
 
-        /// <inheritdoc/>
-        public bool Equals(JsonContent other)
+        return this.EqualsCore(other);
+    }
+
+    private bool EqualsCore(JsonContent other)
+    {
+        JsonValueKind valueKind = this.ValueKind;
+        if (valueKind != JsonValueKind.String || other.ValueKind != valueKind)
         {
-            if (this.IsNull() && other.IsNull())
-            {
-                return true;
-            }
-
-            if (other.ValueKind != this.ValueKind || this.ValueKind != JsonValueKind.String)
-            {
-                return false;
-            }
-
-            return this.AsSpan().Equals(other.AsSpan(), StringComparison.Ordinal);
+            return false;
         }
+
+        return this.AsUnescapedSpan().Equals(other.AsUnescapedSpan(), StringComparison.Ordinal);
     }
 }

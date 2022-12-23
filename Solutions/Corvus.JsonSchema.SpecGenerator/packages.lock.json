@@ -1,36 +1,36 @@
 {
   "version": 1,
   "dependencies": {
-    "net6.0": {
+    "net7.0": {
       "Endjin.RecommendedPractices.GitHub": {
         "type": "Direct",
-        "requested": "[2.1.0, )",
-        "resolved": "2.1.0",
-        "contentHash": "I5hRIYqow1UTBh+mlsaC23Pi1ISIbc04HUeDbdnmv4a3tCZyOEYOJF8Q/SVWbSEdh9chEPYSr6qfdltv/GrCPA==",
+        "requested": "[2.1.2, )",
+        "resolved": "2.1.2",
+        "contentHash": "mBUCmeSdWWrIQKuuYd9zflcwupRDmpF39dsbb07e6azlNIQqaE1J5TQa17c3SFVRXn9IZrClsmKoMporRTAWwQ==",
         "dependencies": {
-          "Endjin.RecommendedPractices": "2.1.0",
+          "Endjin.RecommendedPractices": "2.1.2",
           "Microsoft.SourceLink.GitHub": "1.1.1"
         }
       },
       "Roslynator.Analyzers": {
         "type": "Direct",
-        "requested": "[4.0.2, )",
-        "resolved": "4.0.2",
-        "contentHash": "UmKLY06/yIAAkARvvGHjIS5LA0XEeEn7pbRHmsDcxvbLFla2fqrTTPVBUW7HMttBAwFi2WKvkVzGNu3/0JDdxA=="
+        "requested": "[4.1.1, )",
+        "resolved": "4.1.1",
+        "contentHash": "3cPVlrB1PytlO1ztZZBOExDKQWpMZgI15ZDa0BqLu0l6xv+xIRfEpqjNRcpvUy3aLxWTkPgSKZbbaO+VoFEJ1g=="
       },
       "StyleCop.Analyzers": {
         "type": "Direct",
-        "requested": "[1.2.0-beta.406, )",
-        "resolved": "1.2.0-beta.406",
-        "contentHash": "YbsYoczQPZyz+4nmQ7bBiU9uQkk7Q2KUizQWEv01S4/ImCdJFiHvJfm8HAINNS0cvSLOA7xM9Y+KWQ2FOYjgkA==",
+        "requested": "[1.2.0-beta.435, )",
+        "resolved": "1.2.0-beta.435",
+        "contentHash": "TADk7vdGXtfTnYCV7GyleaaRTQjfoSfZXprQrVMm7cSJtJbFc1QIbWPyLvrgrfGdfHbGmUPvaN4ODKNxg2jgPQ==",
         "dependencies": {
-          "StyleCop.Analyzers.Unstable": "1.2.0.406"
+          "StyleCop.Analyzers.Unstable": "1.2.0.435"
         }
       },
       "Endjin.RecommendedPractices": {
         "type": "Transitive",
-        "resolved": "2.1.0",
-        "contentHash": "2h0r1wg2Oc0LPzsW9VAI+yf4hNOk37oi/zi1SmjlCmT1Jin+4dFxbRXc3uTRvD2mrTGC8VOb0OBnyoZ1Qg41dA==",
+        "resolved": "2.1.2",
+        "contentHash": "Nbj0WS3zVDD2wjfU2/nbkWIWS9Ljg8VN+SSpaCuf5lHBOIEb0Ra201lGcyJHtRHybAciz+hQA9lHj7TnG52qqw==",
         "dependencies": {
           "Microsoft.Build.Tasks.Git": "1.1.1"
         }
@@ -56,8 +56,8 @@
       },
       "StyleCop.Analyzers.Unstable": {
         "type": "Transitive",
-        "resolved": "1.2.0.406",
-        "contentHash": "FclNdBR81ynIo9l1QNlo+l0I/PaFIYaPQPlMram8XVIMh6G6G43KTa1aCxfwTj13uKlAJS/LhLy6KjOPOeAU4w=="
+        "resolved": "1.2.0.435",
+        "contentHash": "ouwPWZxbOV3SmCZxIRqHvljkSzkCyi1tDoMzQtDb/bRP8ctASV/iRJr+A2Gdj0QLaLmWnqTWDrH82/iP+X80Lg=="
       }
     }
   }

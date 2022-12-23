@@ -14,7 +14,7 @@ namespace Benchmarks
     [MemoryDiagnoser]
     public class GeneratedBenchmark66 : BenchmarkBase
     {
-        private Corvus.Json.Patch.Model.PatchOperationArray corvusPatch;
+        private Corvus.Json.Patch.Model.JsonPatchDocument corvusPatch;
         private Json.Patch.JsonPatch? jePatch;
 
         /// <summary>
@@ -54,6 +54,7 @@ namespace Benchmarks
             {
                 // Swallow failures until we can diagnose the issue with running inside BMDN
                 // https://github.com/dotnet/BenchmarkDotNet/issues/2032
+                throw;
             }
         }
     }

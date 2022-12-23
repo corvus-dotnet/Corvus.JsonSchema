@@ -63,35 +63,6 @@ Scenario Outline: Write a dotnet-backed JsonAny to a string
 		| null                                    | Null      |
 
 Scenario Outline: Write a jsonelement-backed JsonNotAny to a string
-	Given the JsonElement backed JsonNotAny <jsonValue>
-	When the json value is round-tripped via a string
-	Then the round-tripped result should be <type>
-	And the round-tripped result should be equal to the JsonAny <jsonValue>
-
-	Examples:
-		| jsonValue                               | type      |
-		| {"foo": 3, "bar": "hello", "baz": null} | an Object |
-		| [1,2,"3",4.0]                           | an Array  |
-		| true                                    | a Boolean |
-		| "Hello world"                           | a String  |
-		| 3.2                                     | a Number  |
-		| null                                    | Null      |
-
-Scenario Outline: Write a dotnet-backed JsonNotAny to a string
-	Given the dotnet backed JsonNotAny <jsonValue>
-	When the json value is round-tripped via a string
-	Then the round-tripped result should be <type>
-	And the round-tripped result should be equal to the JsonAny <jsonValue>
-
-	Examples:
-		| jsonValue                               | type      |
-		| {"foo": 3, "bar": "hello", "baz": null} | an Object |
-		| [1,2,"3",4.0]                           | an Array  |
-		| true                                    | a Boolean |
-		| "Hello world"                           | a String  |
-		| 3.2                                     | a Number  |
-		| null                                    | Null      |
-
 Scenario: Write a jsonelement-backed JsonObject to a string
 	Given the JsonElement backed JsonObject {"foo": 3, "bar": "hello", "baz": null}
 	When the json value is round-tripped via a string

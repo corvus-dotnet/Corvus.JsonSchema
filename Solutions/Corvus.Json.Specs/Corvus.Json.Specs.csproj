@@ -2,10 +2,11 @@
 	<Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
 
 	<PropertyGroup>
-		<TargetFramework>net6.0</TargetFramework>
+		<TargetFramework>net7.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<IsPackable>false</IsPackable>
+		<PreserveCompilationContext>true</PreserveCompilationContext>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -17,32 +18,40 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Corvus.Testing.SpecFlow.NUnit" Version="1.5.1" />
-		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="6.0.0" />
-		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.2.0" />
+		<PackageReference Include="Corvus.Testing.SpecFlow.NUnit" Version="2.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="7.0.0" />
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.5.0-preview-20221003-04" />
 		<PackageReference Include="SolidToken.SpecFlow.DependencyInjection" Version="3.9.3" />
-		<PackageReference Include="SpecFlow.Plus.LivingDocPlugin" Version="3.9.57" />
-		<PackageReference Include="System.Text.Encodings.Web" Version="6.0.0" />
+		<PackageReference Include="System.Text.Encodings.Web" Version="7.0.0" />
 
-		<PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.2">
+		<PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.4">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.2.0" />
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.4.0" />
 
 
 		<PackageReference Include="SpecFlow.NUnit" Version="3.9.74" />
 		<PackageReference Include="nunit" Version="3.13.3" />
-		<PackageReference Include="NUnit3TestAdapter" Version="4.2.1" />
+		<PackageReference Include="NUnit3TestAdapter" Version="4.3.1" />
+		<!-- Required for publishing test results directly to Azure Pipelines -->
+		<PackageReference Include="azurepipelines.testlogger" Version="1.2.2" />
 
-		<PackageReference Include="FluentAssertions" Version="6.7.0" />
+		<PackageReference Include="FluentAssertions" Version="6.8.0" />
+
+		<PackageReference Include="System.Text.Json" Version="7.0.1" />
+
+		<ProjectReference Include="..\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.201909.csproj" />
+
+		<ProjectReference Include="..\Corvus.Json.CodeGeneration.202012\Corvus.Json.CodeGeneration.202012.csproj" />
+
+		<ProjectReference Include="..\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.6.csproj" />
+
+		<ProjectReference Include="..\Corvus.Json.CodeGeneration.7\Corvus.Json.CodeGeneration.7.csproj" />
+
+		<ProjectReference Include="..\Corvus.Json.Patch\Corvus.Json.Patch.csproj" />
 		<PackageReference Update="StyleCop.Analyzers" Version="1.2.0-beta.435" />
 
-	</ItemGroup>
-
-	<ItemGroup>
-		<ProjectReference Include="..\Corvus.Json.Patch\Corvus.Json.Patch.csproj" />
-		<ProjectReference Include="..\Corvus.Json.Walker.JsonSchema\Corvus.Json.JsonSchema.TypeBuilder.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -55,5 +64,13 @@
 		<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
 		<RestoreLockedMode Condition="$(ContinuousIntegrationBuild) == 'true'">true</RestoreLockedMode>
 	</PropertyGroup>
+
+	<ItemGroup>
+	  <PackageReference Update="Roslynator.Analyzers" Version="4.2.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Features\JsonSchema\Draft6\" />
+	</ItemGroup>
 
 </Project>

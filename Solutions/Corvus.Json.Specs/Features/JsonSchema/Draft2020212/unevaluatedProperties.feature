@@ -8,6 +8,7 @@ Feature: unevaluatedProperties draft2020-12
 Scenario Outline: unevaluatedProperties true
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "type": "object",
             "unevaluatedProperties": true
         }
@@ -28,6 +29,7 @@ Scenario Outline: unevaluatedProperties true
 Scenario Outline: unevaluatedProperties schema
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "type": "object",
             "unevaluatedProperties": {
                 "type": "string",
@@ -52,6 +54,7 @@ Scenario Outline: unevaluatedProperties schema
 Scenario Outline: unevaluatedProperties false
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "type": "object",
             "unevaluatedProperties": false
         }
@@ -72,6 +75,7 @@ Scenario Outline: unevaluatedProperties false
 Scenario Outline: unevaluatedProperties with adjacent properties
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "type": "object",
             "properties": {
                 "foo": { "type": "string" }
@@ -95,6 +99,7 @@ Scenario Outline: unevaluatedProperties with adjacent properties
 Scenario Outline: unevaluatedProperties with adjacent patternProperties
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "type": "object",
             "patternProperties": {
                 "^foo": { "type": "string" }
@@ -118,6 +123,7 @@ Scenario Outline: unevaluatedProperties with adjacent patternProperties
 Scenario Outline: unevaluatedProperties with adjacent additionalProperties
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "type": "object",
             "properties": {
                 "foo": { "type": "string" }
@@ -142,6 +148,7 @@ Scenario Outline: unevaluatedProperties with adjacent additionalProperties
 Scenario Outline: unevaluatedProperties with nested properties
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "type": "object",
             "properties": {
                 "foo": { "type": "string" }
@@ -172,6 +179,7 @@ Scenario Outline: unevaluatedProperties with nested properties
 Scenario Outline: unevaluatedProperties with nested patternProperties
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "type": "object",
             "properties": {
                 "foo": { "type": "string" }
@@ -202,6 +210,7 @@ Scenario Outline: unevaluatedProperties with nested patternProperties
 Scenario Outline: unevaluatedProperties with nested additionalProperties
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "type": "object",
             "properties": {
                 "foo": { "type": "string" }
@@ -230,6 +239,7 @@ Scenario Outline: unevaluatedProperties with nested additionalProperties
 Scenario Outline: unevaluatedProperties with nested unevaluatedProperties
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "type": "object",
             "properties": {
                 "foo": { "type": "string" }
@@ -261,6 +271,7 @@ Scenario Outline: unevaluatedProperties with nested unevaluatedProperties
 Scenario Outline: unevaluatedProperties with anyOf
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "type": "object",
             "properties": {
                 "foo": { "type": "string" }
@@ -306,6 +317,7 @@ Scenario Outline: unevaluatedProperties with anyOf
 Scenario Outline: unevaluatedProperties with oneOf
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "type": "object",
             "properties": {
                 "foo": { "type": "string" }
@@ -343,6 +355,7 @@ Scenario Outline: unevaluatedProperties with oneOf
 Scenario Outline: unevaluatedProperties with not
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "type": "object",
             "properties": {
                 "foo": { "type": "string" }
@@ -373,6 +386,7 @@ Scenario Outline: unevaluatedProperties with not
 Scenario Outline: unevaluatedProperties with if/then/else
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "type": "object",
             "if": {
                 "properties": {
@@ -413,6 +427,7 @@ Scenario Outline: unevaluatedProperties with if/then/else
 Scenario Outline: unevaluatedProperties with if/then/else, then not defined
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "type": "object",
             "if": {
                 "properties": {
@@ -447,6 +462,7 @@ Scenario Outline: unevaluatedProperties with if/then/else, then not defined
 Scenario Outline: unevaluatedProperties with if/then/else, else not defined
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "type": "object",
             "if": {
                 "properties": {
@@ -481,6 +497,7 @@ Scenario Outline: unevaluatedProperties with if/then/else, else not defined
 Scenario Outline: unevaluatedProperties with dependentSchemas
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "type": "object",
             "properties": {
                 "foo": { "type": "string" }
@@ -512,6 +529,7 @@ Scenario Outline: unevaluatedProperties with dependentSchemas
 Scenario Outline: unevaluatedProperties with boolean schemas
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "type": "object",
             "properties": {
                 "foo": { "type": "string" }
@@ -536,6 +554,7 @@ Scenario Outline: unevaluatedProperties with boolean schemas
 Scenario Outline: unevaluatedProperties with $ref
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "type": "object",
             "$ref": "#/$defs/bar",
             "properties": {
@@ -567,6 +586,7 @@ Scenario Outline: unevaluatedProperties with $ref
 Scenario Outline: unevaluatedProperties can't see inside cousins
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "allOf": [
                 {
                     "properties": {
@@ -594,6 +614,7 @@ Scenario Outline: unevaluatedProperties can't see inside cousins
 Scenario Outline: nested unevaluatedProperties, outer false, inner true, properties outside
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "type": "object",
             "properties": {
                 "foo": { "type": "string" }
@@ -622,6 +643,7 @@ Scenario Outline: nested unevaluatedProperties, outer false, inner true, propert
 Scenario Outline: nested unevaluatedProperties, outer false, inner true, properties inside
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "type": "object",
             "allOf": [
                 {
@@ -650,6 +672,7 @@ Scenario Outline: nested unevaluatedProperties, outer false, inner true, propert
 Scenario Outline: nested unevaluatedProperties, outer true, inner false, properties outside
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "type": "object",
             "properties": {
                 "foo": { "type": "string" }
@@ -678,6 +701,7 @@ Scenario Outline: nested unevaluatedProperties, outer true, inner false, propert
 Scenario Outline: nested unevaluatedProperties, outer true, inner false, properties inside
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "type": "object",
             "allOf": [
                 {
@@ -706,6 +730,7 @@ Scenario Outline: nested unevaluatedProperties, outer true, inner false, propert
 Scenario Outline: cousin unevaluatedProperties, true and false, true with properties
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "type": "object",
             "allOf": [
                 {
@@ -736,6 +761,7 @@ Scenario Outline: cousin unevaluatedProperties, true and false, true with proper
 Scenario Outline: cousin unevaluatedProperties, true and false, false with properties
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "type": "object",
             "allOf": [
                 {
@@ -766,6 +792,7 @@ Scenario Outline: cousin unevaluatedProperties, true and false, false with prope
 Scenario Outline: property is evaluated in an uncle schema to unevaluatedProperties
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "type": "object",
             "properties": {
                 "foo": {
@@ -809,6 +836,7 @@ Scenario Outline: property is evaluated in an uncle schema to unevaluatedPropert
 Scenario Outline: in-place applicator siblings, allOf has unevaluated
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "type": "object",
             "allOf": [
                 {
@@ -844,6 +872,7 @@ Scenario Outline: in-place applicator siblings, allOf has unevaluated
 Scenario Outline: in-place applicator siblings, anyOf has unevaluated
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "type": "object",
             "allOf": [
                 {
@@ -879,6 +908,7 @@ Scenario Outline: in-place applicator siblings, anyOf has unevaluated
 Scenario Outline: unevaluatedProperties + single cyclic ref
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "type": "object",
             "properties": {
                 "x": { "$ref": "#" }
@@ -907,6 +937,7 @@ Scenario Outline: unevaluatedProperties + single cyclic ref
 Scenario Outline: unevaluatedProperties + ref inside allOf / oneOf
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "$defs": {
                 "one": {
                     "properties": { "a": true }
@@ -954,6 +985,7 @@ Scenario Outline: unevaluatedProperties + ref inside allOf / oneOf
 Scenario Outline: dynamic evalation inside nested refs
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "$defs": {
                 "one": {
                     "oneOf": [
@@ -1011,7 +1043,10 @@ Scenario Outline: dynamic evalation inside nested refs
 
 Scenario Outline: non-object instances are valid
 /* Schema: 
-{"unevaluatedProperties": false}
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "unevaluatedProperties": false
+        }
 */
     Given the input JSON file "unevaluatedProperties.json"
     And the schema at "#/32/schema"
@@ -1029,3 +1064,24 @@ Scenario Outline: non-object instances are valid
         | #/032/tests/003/data | true  | ignores arrays                                                                   |
         | #/032/tests/004/data | true  | ignores strings                                                                  |
         | #/032/tests/005/data | true  | ignores null                                                                     |
+
+Scenario Outline: unevaluatedProperties with null valued instance properties
+/* Schema: 
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "unevaluatedProperties": {
+                "type": "null"
+            }
+        }
+*/
+    Given the input JSON file "unevaluatedProperties.json"
+    And the schema at "#/33/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/033/tests/000/data | true  | allows null valued properties                                                    |

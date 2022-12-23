@@ -7,7 +7,10 @@ Feature: uri-template draft2020-12
 
 Scenario Outline: format: uri-template
 /* Schema: 
-{ "format": "uri-template" }
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "uri-template"
+        }
 */
     Given the input JSON file "optional/format/uri-template.json"
     And the schema at "#/0/schema"

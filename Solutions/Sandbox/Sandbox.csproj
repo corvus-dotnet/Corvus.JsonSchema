@@ -2,24 +2,20 @@
 
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
-		<TargetFramework>net6.0</TargetFramework>
+		<TargetFramework>net7.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<IsPackable>false</IsPackable>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="JsonPatch.Net" Version="2.0.2" />
+		<PackageReference Include="JsonPatch.Net" Version="2.0.4" />
 	</ItemGroup>
-
+	
 	<ItemGroup>
-		<ProjectReference Include="..\Corvus.Json.Patch\Corvus.Json.Patch.csproj" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<None Update="large-array-file.json">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
+	  <ProjectReference Include="..\Corvus.Json.ExtendedTypes\Corvus.Json.ExtendedTypes.csproj" />
+	  <ProjectReference Include="..\Corvus.Json.JsonSchema\Corvus.Json.JsonSchema.csproj" />
+	  <ProjectReference Include="..\Corvus.Json.Patch\Corvus.Json.Patch.csproj" />
 	</ItemGroup>
 
 </Project>

@@ -20,7 +20,7 @@ internal class Program
         BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).RunAll(
                 ManualConfig.Create(DefaultConfig.Instance)
                 .AddJob(Job.Dry
-                    .WithRuntime(CoreRuntime.Core60)
+                    .WithRuntime(CoreRuntime.Core70)
                     .WithOutlierMode(OutlierMode.RemoveAll)
                     .WithStrategy(RunStrategy.Throughput)
                     .WithIterationCount(1))

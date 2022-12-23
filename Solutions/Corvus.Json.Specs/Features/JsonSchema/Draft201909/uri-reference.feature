@@ -7,7 +7,10 @@ Feature: uri-reference draft2019-09
 
 Scenario Outline: validation of URI References
 /* Schema: 
-{ "format": "uri-reference" }
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "format": "uri-reference"
+        }
 */
     Given the input JSON file "optional/format/uri-reference.json"
     And the schema at "#/0/schema"

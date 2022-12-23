@@ -8,6 +8,7 @@ Feature: items draft2019-09
 Scenario Outline: a schema given for items
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "items": {"type": "integer"}
         }
 */
@@ -29,6 +30,7 @@ Scenario Outline: a schema given for items
 Scenario Outline: an array of schemas for items
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "items": [
                 {"type": "integer"},
                 {"type": "string"}
@@ -54,7 +56,10 @@ Scenario Outline: an array of schemas for items
 
 Scenario Outline: items with boolean schema (true)
 /* Schema: 
-{"items": true}
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "items": true
+        }
 */
     Given the input JSON file "items.json"
     And the schema at "#/2/schema"
@@ -71,7 +76,10 @@ Scenario Outline: items with boolean schema (true)
 
 Scenario Outline: items with boolean schema (false)
 /* Schema: 
-{"items": false}
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "items": false
+        }
 */
     Given the input JSON file "items.json"
     And the schema at "#/3/schema"
@@ -89,6 +97,7 @@ Scenario Outline: items with boolean schema (false)
 Scenario Outline: items with boolean schemas
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "items": [true, false]
         }
 */
@@ -109,6 +118,7 @@ Scenario Outline: items with boolean schemas
 Scenario Outline: items and subitems
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "$defs": {
                 "item": {
                     "type": "array",
@@ -152,6 +162,7 @@ Scenario Outline: items and subitems
 Scenario Outline: nested items
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "type": "array",
             "items": {
                 "type": "array",
@@ -180,3 +191,47 @@ Scenario Outline: nested items
         | #/006/tests/000/data | true  | valid nested array                                                               |
         | #/006/tests/001/data | false | nested array with invalid type                                                   |
         | #/006/tests/002/data | false | not deep enough                                                                  |
+
+Scenario Outline: single-form items with null instance elements
+/* Schema: 
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "items": {
+                "type": "null"
+            }
+        }
+*/
+    Given the input JSON file "items.json"
+    And the schema at "#/7/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/007/tests/000/data | true  | allows null elements                                                             |
+
+Scenario Outline: array-form items with null instance elements
+/* Schema: 
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "items": [
+                {
+                    "type": "null"
+                }
+            ]
+        }
+*/
+    Given the input JSON file "items.json"
+    And the schema at "#/8/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/008/tests/000/data | true  | allows null elements                                                             |

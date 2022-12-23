@@ -7,7 +7,10 @@ Feature: json-pointer draft2020-12
 
 Scenario Outline: validation of JSON-pointers (JSON String Representation)
 /* Schema: 
-{ "format": "json-pointer" }
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "json-pointer"
+        }
 */
     Given the input JSON file "optional/format/json-pointer.json"
     And the schema at "#/0/schema"

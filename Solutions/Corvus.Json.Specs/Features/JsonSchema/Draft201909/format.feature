@@ -7,7 +7,10 @@ Feature: format draft2019-09
 
 Scenario Outline: email format
 /* Schema: 
-{ "format": "email" }
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "format": "email"
+        }
 */
     Given the input JSON file "format.json"
     And the schema at "#/0/schema"
@@ -28,7 +31,10 @@ Scenario Outline: email format
 
 Scenario Outline: idn-email format
 /* Schema: 
-{ "format": "idn-email" }
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "format": "idn-email"
+        }
 */
     Given the input JSON file "format.json"
     And the schema at "#/1/schema"
@@ -49,7 +55,10 @@ Scenario Outline: idn-email format
 
 Scenario Outline: regex format
 /* Schema: 
-{ "format": "regex" }
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "format": "regex"
+        }
 */
     Given the input JSON file "format.json"
     And the schema at "#/2/schema"
@@ -70,7 +79,10 @@ Scenario Outline: regex format
 
 Scenario Outline: ipv4 format
 /* Schema: 
-{ "format": "ipv4" }
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "format": "ipv4"
+        }
 */
     Given the input JSON file "format.json"
     And the schema at "#/3/schema"
@@ -91,7 +103,10 @@ Scenario Outline: ipv4 format
 
 Scenario Outline: ipv6 format
 /* Schema: 
-{ "format": "ipv6" }
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "format": "ipv6"
+        }
 */
     Given the input JSON file "format.json"
     And the schema at "#/4/schema"
@@ -112,7 +127,10 @@ Scenario Outline: ipv6 format
 
 Scenario Outline: idn-hostname format
 /* Schema: 
-{ "format": "idn-hostname" }
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "format": "idn-hostname"
+        }
 */
     Given the input JSON file "format.json"
     And the schema at "#/5/schema"
@@ -133,7 +151,10 @@ Scenario Outline: idn-hostname format
 
 Scenario Outline: hostname format
 /* Schema: 
-{ "format": "hostname" }
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "format": "hostname"
+        }
 */
     Given the input JSON file "format.json"
     And the schema at "#/6/schema"
@@ -154,7 +175,10 @@ Scenario Outline: hostname format
 
 Scenario Outline: date format
 /* Schema: 
-{ "format": "date" }
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "format": "date"
+        }
 */
     Given the input JSON file "format.json"
     And the schema at "#/7/schema"
@@ -175,7 +199,10 @@ Scenario Outline: date format
 
 Scenario Outline: date-time format
 /* Schema: 
-{ "format": "date-time" }
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "format": "date-time"
+        }
 */
     Given the input JSON file "format.json"
     And the schema at "#/8/schema"
@@ -196,7 +223,10 @@ Scenario Outline: date-time format
 
 Scenario Outline: time format
 /* Schema: 
-{ "format": "time" }
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "format": "time"
+        }
 */
     Given the input JSON file "format.json"
     And the schema at "#/9/schema"
@@ -217,7 +247,10 @@ Scenario Outline: time format
 
 Scenario Outline: json-pointer format
 /* Schema: 
-{ "format": "json-pointer" }
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "format": "json-pointer"
+        }
 */
     Given the input JSON file "format.json"
     And the schema at "#/10/schema"
@@ -238,7 +271,10 @@ Scenario Outline: json-pointer format
 
 Scenario Outline: relative-json-pointer format
 /* Schema: 
-{ "format": "relative-json-pointer" }
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "format": "relative-json-pointer"
+        }
 */
     Given the input JSON file "format.json"
     And the schema at "#/11/schema"
@@ -259,7 +295,10 @@ Scenario Outline: relative-json-pointer format
 
 Scenario Outline: iri format
 /* Schema: 
-{ "format": "iri" }
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "format": "iri"
+        }
 */
     Given the input JSON file "format.json"
     And the schema at "#/12/schema"
@@ -280,7 +319,10 @@ Scenario Outline: iri format
 
 Scenario Outline: iri-reference format
 /* Schema: 
-{ "format": "iri-reference" }
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "format": "iri-reference"
+        }
 */
     Given the input JSON file "format.json"
     And the schema at "#/13/schema"
@@ -301,7 +343,10 @@ Scenario Outline: iri-reference format
 
 Scenario Outline: uri format
 /* Schema: 
-{ "format": "uri" }
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "format": "uri"
+        }
 */
     Given the input JSON file "format.json"
     And the schema at "#/14/schema"
@@ -322,7 +367,10 @@ Scenario Outline: uri format
 
 Scenario Outline: uri-reference format
 /* Schema: 
-{ "format": "uri-reference" }
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "format": "uri-reference"
+        }
 */
     Given the input JSON file "format.json"
     And the schema at "#/15/schema"
@@ -343,7 +391,10 @@ Scenario Outline: uri-reference format
 
 Scenario Outline: uri-template format
 /* Schema: 
-{ "format": "uri-template" }
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "format": "uri-template"
+        }
 */
     Given the input JSON file "format.json"
     And the schema at "#/16/schema"
@@ -364,7 +415,10 @@ Scenario Outline: uri-template format
 
 Scenario Outline: uuid format
 /* Schema: 
-{ "format": "uuid" }
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "format": "uuid"
+        }
 */
     Given the input JSON file "format.json"
     And the schema at "#/17/schema"
@@ -385,7 +439,10 @@ Scenario Outline: uuid format
 
 Scenario Outline: duration format
 /* Schema: 
-{ "format": "duration" }
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "format": "duration"
+        }
 */
     Given the input JSON file "format.json"
     And the schema at "#/18/schema"

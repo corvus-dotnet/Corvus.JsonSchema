@@ -8,6 +8,7 @@ Feature: additionalProperties draft2020-12
 Scenario Outline: additionalProperties being false does not allow other properties
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "properties": {"foo": {}, "bar": {}},
             "patternProperties": { "^v": {} },
             "additionalProperties": false
@@ -33,6 +34,7 @@ Scenario Outline: additionalProperties being false does not allow other properti
 Scenario Outline: non-ASCII pattern with additionalProperties
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "patternProperties": {"^á": {}},
             "additionalProperties": false
         }
@@ -50,9 +52,10 @@ Scenario Outline: non-ASCII pattern with additionalProperties
         | #/001/tests/000/data | true  | matching the pattern is valid                                                    |
         | #/001/tests/001/data | false | not matching the pattern is invalid                                              |
 
-Scenario Outline: additionalProperties allows a schema which should validate
+Scenario Outline: additionalProperties with schema
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "properties": {"foo": {}, "bar": {}},
             "additionalProperties": {"type": "boolean"}
         }
@@ -74,6 +77,7 @@ Scenario Outline: additionalProperties allows a schema which should validate
 Scenario Outline: additionalProperties can exist by itself
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "additionalProperties": {"type": "boolean"}
         }
 */
@@ -92,7 +96,10 @@ Scenario Outline: additionalProperties can exist by itself
 
 Scenario Outline: additionalProperties are allowed by default
 /* Schema: 
-{"properties": {"foo": {}, "bar": {}}}
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "properties": {"foo": {}, "bar": {}}
+        }
 */
     Given the input JSON file "additionalProperties.json"
     And the schema at "#/4/schema"
@@ -106,9 +113,10 @@ Scenario Outline: additionalProperties are allowed by default
         | inputDataReference   | valid | description                                                                      |
         | #/004/tests/000/data | true  | additional properties are allowed                                                |
 
-Scenario Outline: additionalProperties should not look in applicators
+Scenario Outline: additionalProperties does not look in applicators
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "allOf": [
                 {"properties": {"foo": {}}}
             ],
@@ -126,3 +134,24 @@ Scenario Outline: additionalProperties should not look in applicators
     Examples:
         | inputDataReference   | valid | description                                                                      |
         | #/005/tests/000/data | false | properties defined in allOf are not examined                                     |
+
+Scenario Outline: additionalProperties with null valued instance properties
+/* Schema: 
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "additionalProperties": {
+                "type": "null"
+            }
+        }
+*/
+    Given the input JSON file "additionalProperties.json"
+    And the schema at "#/6/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/006/tests/000/data | true  | allows null values                                                               |

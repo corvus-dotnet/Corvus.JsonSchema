@@ -8,7 +8,7 @@ Feature: unevaluatedItems draft2019-09
 Scenario Outline: unevaluatedItems true
 /* Schema: 
 {
-            "type": "array",
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "unevaluatedItems": true
         }
 */
@@ -28,7 +28,7 @@ Scenario Outline: unevaluatedItems true
 Scenario Outline: unevaluatedItems false
 /* Schema: 
 {
-            "type": "array",
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "unevaluatedItems": false
         }
 */
@@ -48,7 +48,7 @@ Scenario Outline: unevaluatedItems false
 Scenario Outline: unevaluatedItems as schema
 /* Schema: 
 {
-            "type": "array",
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "unevaluatedItems": { "type": "string" }
         }
 */
@@ -69,7 +69,7 @@ Scenario Outline: unevaluatedItems as schema
 Scenario Outline: unevaluatedItems with uniform items
 /* Schema: 
 {
-            "type": "array",
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "items": { "type": "string" },
             "unevaluatedItems": false
         }
@@ -89,7 +89,7 @@ Scenario Outline: unevaluatedItems with uniform items
 Scenario Outline: unevaluatedItems with tuple
 /* Schema: 
 {
-            "type": "array",
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "items": [
                 { "type": "string" }
             ],
@@ -112,7 +112,7 @@ Scenario Outline: unevaluatedItems with tuple
 Scenario Outline: unevaluatedItems with additionalItems
 /* Schema: 
 {
-            "type": "array",
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "items": [
                 { "type": "string" }
             ],
@@ -135,7 +135,7 @@ Scenario Outline: unevaluatedItems with additionalItems
 Scenario Outline: unevaluatedItems with nested tuple
 /* Schema: 
 {
-            "type": "array",
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "items": [
                 { "type": "string" }
             ],
@@ -163,19 +163,15 @@ Scenario Outline: unevaluatedItems with nested tuple
         | #/006/tests/000/data | true  | with no unevaluated items                                                        |
         | #/006/tests/001/data | false | with unevaluated items                                                           |
 
-Scenario Outline: unevaluatedItems with nested additionalItems
+Scenario Outline: unevaluatedItems with nested items
 /* Schema: 
 {
-            "type": "array",
-            "allOf": [
-                {
-                    "items": [
-                        { "type": "string" }
-                    ],
-                    "additionalItems": true
-                }
-            ],
-            "unevaluatedItems": false
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "unevaluatedItems": {"type": "boolean"},
+            "anyOf": [
+                { "items": {"type": "string"} },
+                true
+            ]
         }
 */
     Given the input JSON file "unevaluatedItems.json"
@@ -188,21 +184,20 @@ Scenario Outline: unevaluatedItems with nested additionalItems
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/007/tests/000/data | true  | with no additional items                                                         |
-        | #/007/tests/001/data | true  | with additional items                                                            |
+        | #/007/tests/000/data | true  | with only (valid) additional items                                               |
+        | #/007/tests/001/data | true  | with no additional items                                                         |
+        | #/007/tests/002/data | false | with invalid additional item                                                     |
 
-Scenario Outline: unevaluatedItems with nested unevaluatedItems
+Scenario Outline: unevaluatedItems with nested items and additionalItems
 /* Schema: 
 {
-            "type": "array",
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "allOf": [
                 {
                     "items": [
                         { "type": "string" }
-                    ]
-                },
-                {
-                    "unevaluatedItems": true
+                    ],
+                    "additionalItems": true
                 }
             ],
             "unevaluatedItems": false
@@ -221,10 +216,38 @@ Scenario Outline: unevaluatedItems with nested unevaluatedItems
         | #/008/tests/000/data | true  | with no additional items                                                         |
         | #/008/tests/001/data | true  | with additional items                                                            |
 
+Scenario Outline: unevaluatedItems with nested unevaluatedItems
+/* Schema: 
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "allOf": [
+                {
+                    "items": [
+                        { "type": "string" }
+                    ]
+                },
+                { "unevaluatedItems": true }
+            ],
+            "unevaluatedItems": false
+        }
+*/
+    Given the input JSON file "unevaluatedItems.json"
+    And the schema at "#/9/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/009/tests/000/data | true  | with no additional items                                                         |
+        | #/009/tests/001/data | true  | with additional items                                                            |
+
 Scenario Outline: unevaluatedItems with anyOf
 /* Schema: 
 {
-            "type": "array",
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "items": [
                 { "const": "foo" }
             ],
@@ -247,7 +270,7 @@ Scenario Outline: unevaluatedItems with anyOf
         }
 */
     Given the input JSON file "unevaluatedItems.json"
-    And the schema at "#/9/schema"
+    And the schema at "#/10/schema"
     And the input data at "<inputDataReference>"
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
@@ -256,15 +279,15 @@ Scenario Outline: unevaluatedItems with anyOf
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/009/tests/000/data | true  | when one schema matches and has no unevaluated items                             |
-        | #/009/tests/001/data | false | when one schema matches and has unevaluated items                                |
-        | #/009/tests/002/data | true  | when two schemas match and has no unevaluated items                              |
-        | #/009/tests/003/data | false | when two schemas match and has unevaluated items                                 |
+        | #/010/tests/000/data | true  | when one schema matches and has no unevaluated items                             |
+        | #/010/tests/001/data | false | when one schema matches and has unevaluated items                                |
+        | #/010/tests/002/data | true  | when two schemas match and has no unevaluated items                              |
+        | #/010/tests/003/data | false | when two schemas match and has unevaluated items                                 |
 
 Scenario Outline: unevaluatedItems with oneOf
 /* Schema: 
 {
-            "type": "array",
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "items": [
                 { "const": "foo" }
             ],
@@ -286,7 +309,7 @@ Scenario Outline: unevaluatedItems with oneOf
         }
 */
     Given the input JSON file "unevaluatedItems.json"
-    And the schema at "#/10/schema"
+    And the schema at "#/11/schema"
     And the input data at "<inputDataReference>"
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
@@ -295,13 +318,13 @@ Scenario Outline: unevaluatedItems with oneOf
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/010/tests/000/data | true  | with no unevaluated items                                                        |
-        | #/010/tests/001/data | false | with unevaluated items                                                           |
+        | #/011/tests/000/data | true  | with no unevaluated items                                                        |
+        | #/011/tests/001/data | false | with unevaluated items                                                           |
 
 Scenario Outline: unevaluatedItems with not
 /* Schema: 
 {
-            "type": "array",
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "items": [
                 { "const": "foo" }
             ],
@@ -317,7 +340,7 @@ Scenario Outline: unevaluatedItems with not
         }
 */
     Given the input JSON file "unevaluatedItems.json"
-    And the schema at "#/11/schema"
+    And the schema at "#/12/schema"
     And the input data at "<inputDataReference>"
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
@@ -326,15 +349,13 @@ Scenario Outline: unevaluatedItems with not
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/011/tests/000/data | false | with unevaluated items                                                           |
+        | #/012/tests/000/data | false | with unevaluated items                                                           |
 
 Scenario Outline: unevaluatedItems with if/then/else
 /* Schema: 
 {
-            "type": "array",
-            "items": [
-                { "const": "foo" }
-            ],
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "items": [ { "const": "foo" } ],
             "if": {
                 "items": [
                     true,
@@ -360,29 +381,6 @@ Scenario Outline: unevaluatedItems with if/then/else
         }
 */
     Given the input JSON file "unevaluatedItems.json"
-    And the schema at "#/12/schema"
-    And the input data at "<inputDataReference>"
-    And I generate a type for the schema
-    And I construct an instance of the schema type from the data
-    When I validate the instance
-    Then the result will be <valid>
-
-    Examples:
-        | inputDataReference   | valid | description                                                                      |
-        | #/012/tests/000/data | true  | when if matches and it has no unevaluated items                                  |
-        | #/012/tests/001/data | false | when if matches and it has unevaluated items                                     |
-        | #/012/tests/002/data | true  | when if doesn't match and it has no unevaluated items                            |
-        | #/012/tests/003/data | false | when if doesn't match and it has unevaluated items                               |
-
-Scenario Outline: unevaluatedItems with boolean schemas
-/* Schema: 
-{
-            "type": "array",
-            "allOf": [true],
-            "unevaluatedItems": false
-        }
-*/
-    Given the input JSON file "unevaluatedItems.json"
     And the schema at "#/13/schema"
     And the input data at "<inputDataReference>"
     And I generate a type for the schema
@@ -392,13 +390,36 @@ Scenario Outline: unevaluatedItems with boolean schemas
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/013/tests/000/data | true  | with no unevaluated items                                                        |
-        | #/013/tests/001/data | false | with unevaluated items                                                           |
+        | #/013/tests/000/data | true  | when if matches and it has no unevaluated items                                  |
+        | #/013/tests/001/data | false | when if matches and it has unevaluated items                                     |
+        | #/013/tests/002/data | true  | when if doesn't match and it has no unevaluated items                            |
+        | #/013/tests/003/data | false | when if doesn't match and it has unevaluated items                               |
+
+Scenario Outline: unevaluatedItems with boolean schemas
+/* Schema: 
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "allOf": [true],
+            "unevaluatedItems": false
+        }
+*/
+    Given the input JSON file "unevaluatedItems.json"
+    And the schema at "#/14/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/014/tests/000/data | true  | with no unevaluated items                                                        |
+        | #/014/tests/001/data | false | with unevaluated items                                                           |
 
 Scenario Outline: unevaluatedItems with $ref
 /* Schema: 
 {
-            "type": "array",
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "$ref": "#/$defs/bar",
             "items": [
                 { "type": "string" }
@@ -415,32 +436,6 @@ Scenario Outline: unevaluatedItems with $ref
         }
 */
     Given the input JSON file "unevaluatedItems.json"
-    And the schema at "#/14/schema"
-    And the input data at "<inputDataReference>"
-    And I generate a type for the schema
-    And I construct an instance of the schema type from the data
-    When I validate the instance
-    Then the result will be <valid>
-
-    Examples:
-        | inputDataReference   | valid | description                                                                      |
-        | #/014/tests/000/data | true  | with no unevaluated items                                                        |
-        | #/014/tests/001/data | false | with unevaluated items                                                           |
-
-Scenario Outline: unevaluatedItems can't see inside cousins
-/* Schema: 
-{
-            "allOf": [
-                {
-                    "items": [ true ]
-                },
-                {
-                    "unevaluatedItems": false
-                }
-            ]
-        }
-*/
-    Given the input JSON file "unevaluatedItems.json"
     And the schema at "#/15/schema"
     And the input data at "<inputDataReference>"
     And I generate a type for the schema
@@ -450,36 +445,18 @@ Scenario Outline: unevaluatedItems can't see inside cousins
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/015/tests/000/data | false | always fails                                                                     |
+        | #/015/tests/000/data | true  | with no unevaluated items                                                        |
+        | #/015/tests/001/data | false | with unevaluated items                                                           |
 
-Scenario Outline: item is evaluated in an uncle schema to unevaluatedItems
+Scenario Outline: unevaluatedItems can't see inside cousins
 /* Schema: 
 {
-            "type": "object",
-            "properties": {
-                "foo": {
-                    "type": "array",
-                    "items": [
-                        {
-                            "type": "string"
-                        }
-                    ],
-                    "unevaluatedItems": false
-                  }
-            },
-            "anyOf": [
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "allOf": [
                 {
-                    "properties": {
-                        "foo": {
-                            "items": [
-                                true,
-                                {
-                                    "type": "string"
-                                }
-                            ]
-                        }
-                    }
-                }
+                    "items": [ true ]
+                },
+                { "unevaluatedItems": false }
             ]
         }
 */
@@ -493,12 +470,33 @@ Scenario Outline: item is evaluated in an uncle schema to unevaluatedItems
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/016/tests/000/data | true  | no extra items                                                                   |
-        | #/016/tests/001/data | false | uncle keyword evaluation is not significant                                      |
+        | #/016/tests/000/data | false | always fails                                                                     |
 
-Scenario Outline: non-array instances are valid
+Scenario Outline: item is evaluated in an uncle schema to unevaluatedItems
 /* Schema: 
-{"unevaluatedItems": false}
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "properties": {
+                "foo": {
+                    "items": [
+                        { "type": "string" }
+                    ],
+                    "unevaluatedItems": false
+                  }
+            },
+            "anyOf": [
+                {
+                    "properties": {
+                        "foo": {
+                            "items": [
+                                true,
+                                { "type": "string" }
+                            ]
+                        }
+                    }
+                }
+            ]
+        }
 */
     Given the input JSON file "unevaluatedItems.json"
     And the schema at "#/17/schema"
@@ -510,9 +508,50 @@ Scenario Outline: non-array instances are valid
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/017/tests/000/data | true  | ignores booleans                                                                 |
-        | #/017/tests/001/data | true  | ignores integers                                                                 |
-        | #/017/tests/002/data | true  | ignores floats                                                                   |
-        | #/017/tests/003/data | true  | ignores objects                                                                  |
-        | #/017/tests/004/data | true  | ignores strings                                                                  |
-        | #/017/tests/005/data | true  | ignores null                                                                     |
+        | #/017/tests/000/data | true  | no extra items                                                                   |
+        | #/017/tests/001/data | false | uncle keyword evaluation is not significant                                      |
+
+Scenario Outline: non-array instances are valid
+/* Schema: 
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "unevaluatedItems": false
+        }
+*/
+    Given the input JSON file "unevaluatedItems.json"
+    And the schema at "#/18/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/018/tests/000/data | true  | ignores booleans                                                                 |
+        | #/018/tests/001/data | true  | ignores integers                                                                 |
+        | #/018/tests/002/data | true  | ignores floats                                                                   |
+        | #/018/tests/003/data | true  | ignores objects                                                                  |
+        | #/018/tests/004/data | true  | ignores strings                                                                  |
+        | #/018/tests/005/data | true  | ignores null                                                                     |
+
+Scenario Outline: unevaluatedItems with null instance elements
+/* Schema: 
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "unevaluatedItems": {
+                "type": "null"
+            }
+        }
+*/
+    Given the input JSON file "unevaluatedItems.json"
+    And the schema at "#/19/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/019/tests/000/data | true  | allows null elements                                                             |

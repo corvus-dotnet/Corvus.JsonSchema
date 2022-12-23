@@ -7,7 +7,10 @@ Feature: iri-reference draft2019-09
 
 Scenario Outline: validation of IRI References
 /* Schema: 
-{ "format": "iri-reference" }
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "format": "iri-reference"
+        }
 */
     Given the input JSON file "optional/format/iri-reference.json"
     And the schema at "#/0/schema"

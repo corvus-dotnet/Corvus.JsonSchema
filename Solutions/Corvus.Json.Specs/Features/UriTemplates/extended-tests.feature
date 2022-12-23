@@ -96,3 +96,45 @@ Scenario Outline: Additional Examples 4: Numeric Keys at level 0
 		| {1337}     | ["leet,as,it,can,be"]                                                                                       |
 		| {?1337*}   | ["?1337=leet\u00261337=as\u00261337=it\u00261337=can\u00261337=be"]                                         |
 		| {?german*} | ["?11=elf\u002612=zw%C3%B6lf","?12=zw%C3%B6lf\u002611=elf"]                                                 |
+
+Scenario Outline: Additional Examples 5: Explode Combinations
+	Given the variables
+		| name   | value                                                                       |
+		| id     | "admin" |
+		| token   | "12345"|
+		| tab | "overview" |
+		| keys | {"key1": "val1","key2": "val2" }                                              |
+	When I apply the variables to the template <template>
+	Then the result should be one of <result>
+
+	Examples:
+		| template   | result                                                                                                      |
+		| {?id,token,keys*}       | ["?id=admin&token=12345&key1=val1&key2=val2","?id=admin&token=12345&key2=val2&key1=val1"]     |
+		| {/id}{?token,keys*}      | ["/admin?token=12345&key1=val1&key2=val2", "/admin?token=12345&key2=val2&key1=val1"] |
+		| {?id,token}{&keys*}     | ["?id=admin&token=12345&key1=val1&key2=val2","?id=admin&token=12345&key2=val2&key1=val1"]                                                                                       |
+		| /user{/id}{?token,tab}{&keys*}   | ["/user/admin?token=12345&tab=overview&key1=val1&key2=val2", "/user/admin?token=12345&tab=overview&key2=val2&key1=val1"]                                         |
+
+Scenario Outline: Additional Examples 6: Reserved Expansion
+	Given the variables
+		| name    | value									|
+		| id      | "admin%2F"								|
+		| not_pct | "%foo"									|
+		| list    | ["red%25", "%2Fgreen", "blue "]			|
+		| keys    | {"key1": "val1%2F","key2": "val2%2F" }  |
+	When I apply the variables to the template <template>
+	Then the result should be one of <result>
+
+	Examples:
+		| template   | result                                                                                                      |
+		| {+id} |["admin%2F"] |
+		| {#id} |["#admin%2F"] |
+		| {id} |["admin%252F"] |
+		| {+not_pct} |["%25foo"] |
+		| {#not_pct} |["#%25foo"] |
+		| {not_pct} |["%25foo"] |
+		| {+list} |["red%25,%2Fgreen,blue%20"] |
+		| {#list} |["#red%25,%2Fgreen,blue%20"] |
+		| {list} |["red%2525,%252Fgreen,blue%20"] |
+		| {+keys} |["key1,val1%2F,key2,val2%2F"] |
+		| {#keys} |["#key1,val1%2F,key2,val2%2F"] |
+		| {keys} |["key1,val1%252F,key2,val2%252F"] |

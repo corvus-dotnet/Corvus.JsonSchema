@@ -1,0 +1,44 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
+
+	<PropertyGroup>
+		<TargetFramework>net7.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<NoWarn>CS1591</NoWarn>
+	</PropertyGroup>
+	
+	<PropertyGroup>
+		<PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+		<Description>A library for generating code from .NET types representing data types found in JSON.</Description>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Corvus.Extensions" Version="1.1.10" />
+		<PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.4">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="System.CodeDom" Version="7.0.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Corvus.Json.CodeGeneration.Abstractions\Corvus.Json.CodeGeneration.Abstractions.csproj" />
+		<ProjectReference Include="..\Corvus.Json.JsonSchema\Corvus.Json.JsonSchema.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Update="StyleCop.Analyzers" Version="1.2.0-beta.435" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Update="Roslynator.Analyzers" Version="4.2.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Folder Include="Corvus.Json.CodeGeneration.Draft6\Generators\" />
+	</ItemGroup>
+</Project>

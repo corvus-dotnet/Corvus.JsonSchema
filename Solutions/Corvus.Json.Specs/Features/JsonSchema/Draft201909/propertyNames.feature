@@ -8,6 +8,7 @@ Feature: propertyNames draft2019-09
 Scenario Outline: propertyNames validation
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "propertyNames": {"maxLength": 3}
         }
 */
@@ -31,6 +32,7 @@ Scenario Outline: propertyNames validation
 Scenario Outline: propertyNames validation with pattern
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "propertyNames": { "pattern": "^a+$" }
         }
 */
@@ -50,7 +52,10 @@ Scenario Outline: propertyNames validation with pattern
 
 Scenario Outline: propertyNames with boolean schema true
 /* Schema: 
-{"propertyNames": true}
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "propertyNames": true
+        }
 */
     Given the input JSON file "propertyNames.json"
     And the schema at "#/2/schema"
@@ -67,7 +72,10 @@ Scenario Outline: propertyNames with boolean schema true
 
 Scenario Outline: propertyNames with boolean schema false
 /* Schema: 
-{"propertyNames": false}
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "propertyNames": false
+        }
 */
     Given the input JSON file "propertyNames.json"
     And the schema at "#/3/schema"

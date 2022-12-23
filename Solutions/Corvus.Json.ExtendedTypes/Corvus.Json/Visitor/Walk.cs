@@ -7,7 +7,7 @@ namespace Corvus.Json.Visitor;
 /// <summary>
 /// Used by <see cref="VisitResult"/> to determine what action should be taken after visiting a node.
 /// </summary>
-public enum Walk
+public enum Walk : byte
 {
     /// <summary>
     /// Continue to iterate into the children of this node, if present or move to the next available sibling.
@@ -18,6 +18,15 @@ public enum Walk
     /// Skip the children of this node, and move to the next sibling.
     /// </summary>
     SkipChildren,
+
+    /// <summary>
+    /// Remove this node, and continue.
+    /// </summary>
+    /// <remarks>
+    /// You are expected to set the result to an entity with <see cref="System.Text.Json.JsonValueKind.Undefined"/>
+    /// when specifying a remove.
+    /// </remarks>
+    RemoveAndContinue,
 
     /// <summary>
     /// Terminate the walk at this node, but keep any changes (including changes made to this node if indicated in the result.)

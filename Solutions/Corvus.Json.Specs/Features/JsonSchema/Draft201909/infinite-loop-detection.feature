@@ -8,6 +8,7 @@ Feature: infinite-loop-detection draft2019-09
 Scenario Outline: evaluating the same schema location against the same data location twice is not a sign of an infinite loop
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "$defs": {
                 "int": { "type": "integer" }
             },

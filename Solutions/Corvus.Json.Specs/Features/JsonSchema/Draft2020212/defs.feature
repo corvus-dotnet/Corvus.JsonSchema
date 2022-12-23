@@ -8,6 +8,7 @@ Feature: defs draft2020-12
 Scenario Outline: validate definition against metaschema
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "$ref": "https://json-schema.org/draft/2020-12/schema"
         }
 */

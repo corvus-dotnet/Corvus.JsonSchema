@@ -8,6 +8,7 @@ Feature: anchor draft2020-12
 Scenario Outline: Location-independent identifier
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "$ref": "#foo",
             "$defs": {
                 "A": {
@@ -33,10 +34,11 @@ Scenario Outline: Location-independent identifier
 Scenario Outline: Location-independent identifier with absolute URI
 /* Schema: 
 {
-            "$ref": "http://localhost:1234/bar#foo",
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "$ref": "http://localhost:1234/draft2020-12/bar#foo",
             "$defs": {
                 "A": {
-                    "$id": "http://localhost:1234/bar",
+                    "$id": "http://localhost:1234/draft2020-12/bar",
                     "$anchor": "foo",
                     "type": "integer"
                 }
@@ -59,8 +61,9 @@ Scenario Outline: Location-independent identifier with absolute URI
 Scenario Outline: Location-independent identifier with base URI change in subschema
 /* Schema: 
 {
-            "$id": "http://localhost:1234/root",
-            "$ref": "http://localhost:1234/nested.json#foo",
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "$id": "http://localhost:1234/draft2020-12/root",
+            "$ref": "http://localhost:1234/draft2020-12/nested.json#foo",
             "$defs": {
                 "A": {
                     "$id": "nested.json",
@@ -90,6 +93,7 @@ Scenario Outline: Location-independent identifier with base URI change in subsch
 Scenario Outline: $anchor inside an enum is not a real identifier
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "$defs": {
                 "anchor_in_enum": {
                     "enum": [
@@ -134,7 +138,8 @@ Scenario Outline: $anchor inside an enum is not a real identifier
 Scenario Outline: same $anchor with different base uri
 /* Schema: 
 {
-            "$id": "http://localhost:1234/foobar",
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "$id": "http://localhost:1234/draft2020-12/foobar",
             "$defs": {
                 "A": {
                     "$id": "child1",
@@ -164,5 +169,59 @@ Scenario Outline: same $anchor with different base uri
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/004/tests/000/data | true  | $ref should resolve to /$defs/A/allOf/1                                          |
-        | #/004/tests/001/data | false | $ref should not resolve to /$defs/A/allOf/0                                      |
+        | #/004/tests/000/data | true  | $ref resolves to /$defs/A/allOf/1                                                |
+        | #/004/tests/001/data | false | $ref does not resolve to /$defs/A/allOf/0                                        |
+
+Scenario Outline: non-schema object containing an $anchor property
+/* Schema: 
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "$defs": {
+                "const_not_anchor": {
+                    "const": {
+                        "$anchor": "not_a_real_anchor"
+                    }
+                }
+            },
+            "if": {
+                "const": "skip not_a_real_anchor"
+            },
+            "then": true,
+            "else" : {
+                "$ref": "#/$defs/const_not_anchor"
+            }
+        }
+*/
+    Given the input JSON file "anchor.json"
+    And the schema at "#/5/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/005/tests/000/data | true  | skip traversing definition for a valid result                                    |
+        | #/005/tests/001/data | false | const at const_not_anchor does not match                                         |
+
+Scenario Outline: invalid anchors
+/* Schema: 
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "$ref": "https://json-schema.org/draft/2020-12/schema"
+        }
+*/
+    Given the input JSON file "anchor.json"
+    And the schema at "#/6/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/006/tests/000/data | false | MUST start with a letter (and not #)                                             |
+        | #/006/tests/001/data | false | JSON pointers are not valid                                                      |
+        | #/006/tests/002/data | false | invalid with valid beginning                                                     |

@@ -1,34 +1,39 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
+	<Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
 
-  <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net7.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
 
-  <PropertyGroup>
-    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-    <Description>Defines .NET types representing data types found in JSON, including numerous types for specialized string forms such as JsonUuid and JsonDateTime.</Description>
-  </PropertyGroup>
+	<PropertyGroup>
+		<PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+		<Description>Defines .NET types representing data types found in JSON, including numerous types for specialized string forms such as JsonUuid and JsonDateTime.</Description>
+	</PropertyGroup>
 
+	<ItemGroup>
+		<PackageReference Include="CommunityToolkit.HighPerformance" Version="8.0.0" />
+		<PackageReference Include="Corvus.Extensions" Version="1.1.10" />
+		<PackageReference Include="Corvus.UriTemplates" Version="1.0.1" />
+		<PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.4">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.Extensions.Http" Version="7.0.0" />
+		<PackageReference Include="Microsoft.Extensions.ObjectPool" Version="7.0.1" />
+		<PackageReference Include="NodaTime" Version="3.1.6" />
+		<PackageReference Include="System.Buffers" Version="4.5.1" />
+		<PackageReference Include="System.Collections.Immutable" Version="7.0.0" />
+		<PackageReference Include="System.Text.Json" Version="7.0.1" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Corvus.Extensions" Version="1.1.9" />
-    <PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.2">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0" />
-    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="6.0.7" />
-    <PackageReference Include="NodaTime" Version="3.1.0" />
-    <PackageReference Include="System.Buffers" Version="4.5.1" />
-    <PackageReference Include="System.Collections.Immutable" Version="6.0.0" />
-    <PackageReference Include="System.Text.Json" Version="6.0.5" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Update="StyleCop.Analyzers" Version="1.2.0-beta.435" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Update="StyleCop.Analyzers" Version="1.2.0-beta.333" />
-  </ItemGroup>
+	<ItemGroup>
+	  <PackageReference Update="Roslynator.Analyzers" Version="4.2.0" />
+	</ItemGroup>
 
 </Project>

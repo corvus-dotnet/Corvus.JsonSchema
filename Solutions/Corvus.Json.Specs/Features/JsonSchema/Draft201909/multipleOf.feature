@@ -7,7 +7,10 @@ Feature: multipleOf draft2019-09
 
 Scenario Outline: by int
 /* Schema: 
-{"multipleOf": 2}
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "multipleOf": 2
+        }
 */
     Given the input JSON file "multipleOf.json"
     And the schema at "#/0/schema"
@@ -25,7 +28,10 @@ Scenario Outline: by int
 
 Scenario Outline: by number
 /* Schema: 
-{"multipleOf": 1.5}
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "multipleOf": 1.5
+        }
 */
     Given the input JSON file "multipleOf.json"
     And the schema at "#/1/schema"
@@ -43,7 +49,10 @@ Scenario Outline: by number
 
 Scenario Outline: by small number
 /* Schema: 
-{"multipleOf": 0.0001}
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "multipleOf": 0.0001
+        }
 */
     Given the input JSON file "multipleOf.json"
     And the schema at "#/2/schema"
@@ -58,9 +67,12 @@ Scenario Outline: by small number
         | #/002/tests/000/data | true  | 0.0075 is multiple of 0.0001                                                     |
         | #/002/tests/001/data | false | 0.00751 is not multiple of 0.0001                                                |
 
-Scenario Outline: invalid instance should not raise error when float division  equals  inf
+Scenario Outline: float division  equals  inf
 /* Schema: 
-{"type": "integer", "multipleOf": 0.123456789}
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "type": "integer", "multipleOf": 0.123456789
+        }
 */
     Given the input JSON file "multipleOf.json"
     And the schema at "#/3/schema"

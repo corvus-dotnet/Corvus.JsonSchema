@@ -8,6 +8,7 @@ Feature: dependentSchemas draft2020-12
 Scenario Outline: single dependency
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "dependentSchemas": {
                 "bar": {
                     "properties": {
@@ -40,6 +41,7 @@ Scenario Outline: single dependency
 Scenario Outline: boolean subschemas
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "dependentSchemas": {
                 "foo": true,
                 "bar": false
@@ -64,6 +66,7 @@ Scenario Outline: boolean subschemas
 Scenario Outline: dependencies with escaped characters
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "dependentSchemas": {
                 "foo\tbar": {"minProperties": 4},
                 "foo'bar": {"required": ["foo\"bar"]}

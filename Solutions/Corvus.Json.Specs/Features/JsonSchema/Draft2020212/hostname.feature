@@ -7,7 +7,10 @@ Feature: hostname draft2020-12
 
 Scenario Outline: validation of host names
 /* Schema: 
-{ "format": "hostname" }
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "hostname"
+        }
 */
     Given the input JSON file "optional/format/hostname.json"
     And the schema at "#/0/schema"
