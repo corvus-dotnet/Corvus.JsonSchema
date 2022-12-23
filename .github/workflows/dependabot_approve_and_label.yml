@@ -4,7 +4,7 @@ on:
     types: [opened, reopened]
     
 permissions:
-  contents: read
+  contents: write
   issues: write
   pull-requests: write
     
@@ -23,7 +23,7 @@ jobs:
       is_auto_release_candidate: ${{ steps.parse_dependabot_pr_autorelease.outputs.is_interesting_package }}
       semver_increment: ${{ steps.parse_dependabot_pr_automerge.outputs.semver_increment }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Read pr-autoflow configuration
         id: get_pr_autoflow_config
         uses: endjin/pr-autoflow/actions/read-configuration@v1
@@ -71,54 +71,59 @@ jobs:
         if: |
           needs.evaluate_dependabot_pr.outputs.is_auto_merge_candidate == 'True' &&
           (needs.evaluate_dependabot_pr.outputs.semver_increment == 'minor' || needs.evaluate_dependabot_pr.outputs.semver_increment == 'patch')
-        uses: andrewmusgrave/automatic-pull-request-review@0.0.2
-        with:
-          repo-token: '${{ secrets.GITHUB_TOKEN }}'
-          event: APPROVE
-          body: 'Thank you dependabot 🎊'
+        run: |
+          gh pr review "${{ github.event.pull_request.html_url }}" --approve -b "Thank you dependabot 🎊"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: 'Update PR body'
         if: |
           needs.evaluate_dependabot_pr.outputs.is_auto_merge_candidate == 'True' &&
           (needs.evaluate_dependabot_pr.outputs.semver_increment == 'minor' || needs.evaluate_dependabot_pr.outputs.semver_increment == 'patch')
-        uses: actions/github-script@v2
+        uses: actions/github-script@v6
         with:
           github-token: '${{ secrets.GITHUB_TOKEN }}'
           script: |
-            await github.pulls.update({
+            await github.rest.pulls.update({
               owner: context.payload.repository.owner.login,
               repo: context.payload.repository.name,
               pull_number: context.payload.pull_request.number,
               body: "Bumps '${{needs.evaluate_dependabot_pr.outputs.dependency_name}}' from ${{needs.evaluate_dependabot_pr.outputs.version_from}} to ${{needs.evaluate_dependabot_pr.outputs.version_to}}"
             })
-  label:
+
+  label_auto_merge:
     runs-on: ubuntu-latest
     needs: evaluate_dependabot_pr
-    name: Label
+    name: 'Automerge & Label'
     steps:
-      - name: 'Label auto-mergeable dependabot PRs with "autosquash"'
+      # Get a token for a different identity so any auto-merge that happens in the next step is
+      # able to trigger other workflows (i.e. our 'auto_release' workflow)
+      # NOTE: This requires the app details to be defined as 'Dependabot' secrets, rather than
+      #       the usual 'Action' secrets as this workflow is triggered by Dependabot.
+      - name: Generate token
+        id: generate_token
+        uses: tibdex/github-app-token@v1
+        with:
+          app_id: ${{ secrets.DEPENDJINBOT_APP_ID }}
+          private_key: ${{ secrets.DEPENDJINBOT_PRIVATE_KEY }}
+      # Run the auto-merge in the GitHub App context, so the event can trigger other workflows
+      - name: 'Set dependabot PR to auto-merge'
         if: |
           (github.actor == 'dependabot[bot]' || github.actor == 'dependjinbot[bot]' || github.actor == 'nektos/act') &&
           needs.evaluate_dependabot_pr.outputs.is_auto_merge_candidate == 'True' &&
           (needs.evaluate_dependabot_pr.outputs.semver_increment == 'minor' || needs.evaluate_dependabot_pr.outputs.semver_increment == 'patch')
-        uses: actions/github-script@v2
-        with:
-          github-token: '${{ secrets.GITHUB_TOKEN }}'
-          script: |
-            await github.issues.addLabels({
-              owner: context.payload.repository.owner.login,
-              repo: context.payload.repository.name,
-              issue_number: context.payload.pull_request.number,
-              labels: ['autosquash']
-            })
+        run: |
+            gh pr merge ${{ github.event.pull_request.number }} -R ${{ github.repository }} --auto --squash
+        env:
+          GITHUB_TOKEN: '${{ steps.generate_token.outputs.token }}'
       - name: 'Label non-dependabot PRs and auto-releasable dependabot PRs with "pending_release"'
         if: |
           (github.actor != 'dependabot[bot]' && github.actor != 'dependjinbot[bot]') ||
           needs.evaluate_dependabot_pr.outputs.is_auto_release_candidate == 'True'
-        uses: actions/github-script@v2
+        uses: actions/github-script@v6
         with:
           github-token: '${{ secrets.GITHUB_TOKEN }}'
           script: |
-            await github.issues.addLabels({
+            await github.rest.issues.addLabels({
               owner: context.payload.repository.owner.login,
               repo: context.payload.repository.name,
               issue_number: context.payload.pull_request.number,
