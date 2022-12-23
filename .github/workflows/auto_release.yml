@@ -135,7 +135,7 @@ jobs:
     - uses: actions/checkout@v3
     - name: Read pr-autoflow configuration
       id: get_pr_autoflow_config
-      uses: endjin/pr-autoflow/actions/read-configuration@v1
+      uses: endjin/pr-autoflow/actions/read-configuration@v4
       with:
         config_file: .github/config/pr-autoflow.json
 
@@ -148,7 +148,7 @@ jobs:
   
     - name: Watch Dependabot PRs
       id: watch_dependabot_prs      
-      uses: endjin/pr-autoflow/actions/dependabot-pr-watcher@v1
+      uses: endjin/pr-autoflow/actions/dependabot-pr-watcher@v4
       with:
         pr_titles: ${{ steps.get_open_pr_list.outputs.result }}
         package_wildcard_expressions: ${{ steps.get_pr_autoflow_config.outputs.AUTO_MERGE_PACKAGE_WILDCARD_EXPRESSIONS }}
