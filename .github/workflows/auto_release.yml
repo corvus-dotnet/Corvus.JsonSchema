@@ -12,12 +12,12 @@ jobs:
     steps:
     - name: Lookup default branch name
       id: lookup_default_branch
-      uses: actions/github-script@v2
+      uses: actions/github-script@v6
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         result-encoding: string
         script: |
-          const repo = await github.repos.get({
+          const repo = await github.rest.repos.get({
             owner: context.payload.repository.owner.login,
             repo: context.payload.repository.name
           });
@@ -28,12 +28,12 @@ jobs:
 
     - name: Lookup HEAD commit on default branch
       id: lookup_default_branch_head
-      uses: actions/github-script@v2
+      uses: actions/github-script@v6
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         result-encoding: string
         script: |
-          const branch = await github.repos.getBranch({
+          const branch = await github.rest.repos.getBranch({
             owner: context.payload.repository.owner.login,
             repo: context.payload.repository.name,
             branch: '${{ steps.lookup_default_branch.outputs.result }}'
@@ -50,11 +50,11 @@ jobs:
     steps:
     - name: Check for 'no_release' label on PR
       id: check_for_norelease_label
-      uses: actions/github-script@v2
+      uses: actions/github-script@v6
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
-            const labels = await github.issues.listLabelsOnIssue({
+            const labels = await github.rest.issues.listLabelsOnIssue({
               owner: context.payload.repository.owner.login,
               repo: context.payload.repository.name,
               issue_number: context.payload.number
@@ -77,11 +77,11 @@ jobs:
     outputs:
       no_open_prs: ${{ steps.watch_dependabot_prs.outputs.is_complete }}
       pending_release_pr_list: ${{ steps.get_release_pending_pr_list.outputs.result }}
-      ready_to_release: ${{ steps.watch_dependabot_prs.outputs.is_complete == 'True' && steps.get_release_pending_pr_list.outputs.is_release_pending }}
+      ready_to_release: ${{ steps.set_ready_for_release.outputs.result }}
     steps:
     - name: Get Open PRs
       id: get_open_pr_list
-      uses: actions/github-script@v2
+      uses: actions/github-script@v6
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         # find all open PRs that are targetting the default branch (i.e. main/master)
@@ -89,7 +89,7 @@ jobs:
         # Dependabot PRs and whether we should wait for them to be auto-merged before
         # allowing a release event.
         script: |
-          const pulls = await github.pulls.list({
+          const pulls = await github.rest.pulls.list({
             owner: context.payload.repository.owner.login,
             repo: context.payload.repository.name,
             state: 'open',
@@ -103,48 +103,71 @@ jobs:
 
     - name: Get 'pending_release' PRs
       id: get_release_pending_pr_list
-      uses: actions/github-script@v2
+      uses: actions/github-script@v6
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
-          const pulls = await github.search.issuesAndPullRequests({
-            q: 'is:pr is:merged label:pending_release',
+          const repoWithOwner = `${context.payload.repository.owner.login}/${context.payload.repository.name}`;
+          const pulls = await github.rest.search.issuesAndPullRequests({
+            q: `is:pr repo:${repoWithOwner} is:merged`,
           });
-          core.info(`pulls: ${pulls.data.items}`)
-          const repoUrl = `https://api.github.com/repos/${context.payload.repository.owner.login}/${context.payload.repository.name}`
+          allPrs = pulls.data.items.map(p=>`#${p.number} '${p.title}' in ${p.repository_url}`);
+          core.info(`allPrs: ${JSON.stringify(allPrs)}`);
+
+          releasePendingPrDetails = pulls.data.items.
+                            filter(function (x) { return x.labels.map(l=>l.name).includes('pending_release') }).
+                            map(p=>`#${p.number} '${p.title}' in ${p.repository_url}`);
+          core.info(`releasePendingPrDetails: ${JSON.stringify(releasePendingPrDetails)}`);
+
           const release_pending_prs = pulls.data.items.
-                                        filter(function (x) { return x.repository_url == repoUrl; }).
+                                        filter(function (x) { return x.labels.map(l=>l.name).includes('pending_release') }).
                                         map(p=>p.number);
-          core.info(`release_pending_prs: ${release_pending_prs}`)
-          core.setOutput('is_release_pending', (release_pending_prs.length > 0))
-          return JSON.stringify(release_pending_prs)
+          core.info(`release_pending_prs: ${JSON.stringify(release_pending_prs)}`);
+          core.setOutput('is_release_pending', (release_pending_prs.length > 0));
+          return JSON.stringify(release_pending_prs);
         result-encoding: string
+
     - name: Display release_pending_pr_list
       run: |
         echo "release_pending_pr_list : ${{ steps.get_release_pending_pr_list.outputs.result }}"
         echo "is_release_pending : ${{ steps.get_release_pending_pr_list.outputs.is_release_pending }}"
 
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Read pr-autoflow configuration
       id: get_pr_autoflow_config
-      uses: endjin/pr-autoflow/actions/read-configuration@v1
+      uses: endjin/pr-autoflow/actions/read-configuration@v4
       with:
         config_file: .github/config/pr-autoflow.json
 
+    - name: Check Human PR
+      id: is_human_pr
+      uses: actions/github-script@v6
+      with:
+        script: |
+          return context.payload.pull_request.user.login != 'dependabot[bot]' && context.payload.pull_request.user.login != 'dependjinbot[bot]'
+  
     - name: Watch Dependabot PRs
       id: watch_dependabot_prs      
-      uses: endjin/pr-autoflow/actions/dependabot-pr-watcher@v1
+      uses: endjin/pr-autoflow/actions/dependabot-pr-watcher@v4
       with:
         pr_titles: ${{ steps.get_open_pr_list.outputs.result }}
         package_wildcard_expressions: ${{ steps.get_pr_autoflow_config.outputs.AUTO_MERGE_PACKAGE_WILDCARD_EXPRESSIONS }}
         max_semver_increment: minor
         verbose_mode: 'False'
 
+    - name: Set Ready for Release
+      id: set_ready_for_release
+      uses: actions/github-script@v6
+      with:
+        script: |
+          return ( '${{ steps.is_human_pr.outputs.result }}' == 'True' || '${{ steps.watch_dependabot_prs.outputs.is_complete }}' == 'True') && '${{ steps.get_release_pending_pr_list.outputs.is_release_pending }}' == 'True'
+
     - name: Display job outputs
       run: |
         echo "no_open_prs: ${{ steps.watch_dependabot_prs.outputs.is_complete }}"
         echo "pending_release_pr_list: ${{ steps.get_release_pending_pr_list.outputs.result }}"
-        echo "ready_to_release : ${{ steps.watch_dependabot_prs.outputs.is_complete == 'True' && steps.get_release_pending_pr_list.outputs.is_release_pending }}"
+        echo "is_human_pr: ${{ steps.is_human_pr.outputs.result }}"
+        echo "ready_to_release : ${{ steps.set_ready_for_release.outputs.result }}"
 
   tag_for_release:
     runs-on: ubuntu-latest
@@ -154,9 +177,9 @@ jobs:
     steps:
     - uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: '3.1.x'
+        dotnet-version: '6.x'
 
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         # ensure we are creating the release tag on the default branch
         ref: ${{ needs.lookup_default_branch.outputs.branch_name }}
@@ -164,7 +187,7 @@ jobs:
 
     - name: Install GitVersion
       run: |
-        dotnet tool install -g GitVersion.Tool --version 5.6.6
+        dotnet tool install -g GitVersion.Tool --version 5.8.0
         echo "/github/home/.dotnet/tools" >> $GITHUB_PATH
     - name: Run GitVersion
       id: run_gitversion
@@ -180,7 +203,7 @@ jobs:
         private_key: ${{ secrets.ENDJIN_BOT_PRIVATE_KEY }}
 
     - name: Create SemVer tag
-      uses: actions/github-script@v2
+      uses: actions/github-script@v6
       with:
         github-token: ${{ steps.generate_token.outputs.token }}
         script: |
@@ -194,7 +217,7 @@ jobs:
 
     - name: Remove 'release_pending' label from PRs
       id: remove_pending_release_labels
-      uses: actions/github-script@v2
+      uses: actions/github-script@v6
       with:
         github-token: '${{ steps.generate_token.outputs.token }}'
         script: |
@@ -203,7 +226,7 @@ jobs:
           core.info(`pr_list: ${pr_list}`)
           for (const i of pr_list) {
             core.info(`Removing label 'pending_release' from issue #${i}`)
-            github.issues.removeLabel({
+            github.rest.issues.removeLabel({
               owner: context.payload.repository.owner.login,
               repo: context.payload.repository.name,
               issue_number: i,
