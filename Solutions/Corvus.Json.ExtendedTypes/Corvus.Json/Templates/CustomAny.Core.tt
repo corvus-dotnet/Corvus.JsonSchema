@@ -31,6 +31,7 @@ namespace Corvus.Json;
 /// <summary>
 /// <#= Summary #>
 /// </summary>
+[System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonConverter<<#= TypeName #>>))]
 public readonly partial struct <#= TypeName #>
 {
     private readonly Backing backing;

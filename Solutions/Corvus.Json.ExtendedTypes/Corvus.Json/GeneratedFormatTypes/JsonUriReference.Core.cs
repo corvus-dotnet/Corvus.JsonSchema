@@ -13,6 +13,7 @@ namespace Corvus.Json;
 /// <summary>
 /// Represents a JSON uriReference.
 /// </summary>
+[System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonConverter<JsonUriReference>))]
 public readonly partial struct JsonUriReference : IJsonString<JsonUriReference>
 {
     private readonly Backing backing;

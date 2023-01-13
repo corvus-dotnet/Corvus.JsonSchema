@@ -13,6 +13,7 @@ namespace Corvus.Json;
 /// <summary>
 /// Represents a JSON time.
 /// </summary>
+[System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonConverter<JsonTime>))]
 public readonly partial struct JsonTime : IJsonString<JsonTime>
 {
     private readonly Backing backing;

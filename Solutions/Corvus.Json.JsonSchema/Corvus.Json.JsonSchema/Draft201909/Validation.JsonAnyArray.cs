@@ -21,6 +21,7 @@ public readonly partial struct Validation
     /// <summary>
     /// A type generated from a JsonSchema specification.
     /// </summary>
+    [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonConverter<JsonAnyArray>))]
     public readonly partial struct JsonAnyArray
     {
         private readonly Backing backing;

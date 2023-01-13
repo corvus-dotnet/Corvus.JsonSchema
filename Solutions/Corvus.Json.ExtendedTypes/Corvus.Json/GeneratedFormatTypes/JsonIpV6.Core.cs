@@ -13,6 +13,7 @@ namespace Corvus.Json;
 /// <summary>
 /// Represents a JSON ipv6.
 /// </summary>
+[System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonConverter<JsonIpV6>))]
 public readonly partial struct JsonIpV6 : IJsonString<JsonIpV6>
 {
     private readonly Backing backing;

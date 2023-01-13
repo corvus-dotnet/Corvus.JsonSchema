@@ -19,6 +19,7 @@ namespace Corvus.Json.Patch.Model;
 /// <summary>
 /// A type generated from a JsonSchema specification.
 /// </summary>
+[System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonConverter<JsonPatchDocument>))]
 public readonly partial struct JsonPatchDocument
 {
     private readonly Backing backing;

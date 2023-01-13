@@ -21,6 +21,7 @@ public readonly partial struct Core
     /// <summary>
     /// A type generated from a JsonSchema specification.
     /// </summary>
+    [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonConverter<RecursiveAnchorEntity>))]
     public readonly partial struct RecursiveAnchorEntity
     {
         private readonly Backing backing;

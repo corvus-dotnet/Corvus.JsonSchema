@@ -9,6 +9,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Corvus.Json;
+using Corvus.Json.Internal;
 using NodaTime;
 using NodaTime.Text;
 using NUnit.Framework;
@@ -31,6 +32,7 @@ public class JsonValueSteps
     /// The key for a serialization result.
     /// </summary>
     internal const string SerializationResult = "SerializationResult";
+    internal const string SerializationException = "SerializationException";
 
     private readonly ScenarioContext scenarioContext;
 
@@ -103,7 +105,7 @@ public class JsonValueSteps
     /* serialization */
 
     /// <summary>
-    /// Serializes an <see cref="IJsonValue"/> from the context variable <see cref="SubjectUnderTest"/>, deserializaes and stores the resulting <see cref="JsonAny"/> in the context variable <see cref="SerializationResult"/>.
+    /// Serializes an <see cref="IJsonValue"/> from the context variable <see cref="SubjectUnderTest"/>, deserializes and stores the resulting <see cref="JsonAny"/> in the context variable <see cref="SerializationResult"/>.
     /// </summary>
     [When("the json value is round-tripped via a string")]
     public void WhenTheJsonValueIsRound_TrippedViaAString()
@@ -115,6 +117,37 @@ public class JsonValueSteps
         writer.Flush();
 
         this.scenarioContext.Set(JsonAny.Parse(abw.WrittenMemory), SerializationResult);
+    }
+
+    /// <summary>
+    /// Serializes an <see cref="IJsonValue"/> from the context variable <see cref="SubjectUnderTest"/>, deserializes and stores the resulting <see cref="JsonAny"/> in the context variable <see cref="SerializationResult"/>.
+    /// </summary>
+    [When("the json value is round-tripped via Serialization without enabling inefficient serialization")]
+    public void WhenTheJsonValueIsRound_TrippedViaSerializationNoInefficientSerialization()
+    {
+        try
+        {
+            JsonConverter.EnableInefficientDeserializationSupport = false;
+            IJsonValue sut = this.scenarioContext.Get<IJsonValue>(SubjectUnderTest);
+            string json = JsonSerializer.Serialize(sut);
+            this.scenarioContext.Set(JsonSerializer.Deserialize<JsonAny>(json), SerializationResult);
+        }
+        catch (Exception ex)
+        {
+            this.scenarioContext.Set(ex, SerializationException);
+        }
+    }
+
+    /// <summary>
+    /// Serializes an <see cref="IJsonValue"/> from the context variable <see cref="SubjectUnderTest"/>, deserializes and stores the resulting <see cref="JsonAny"/> in the context variable <see cref="SerializationResult"/>.
+    /// </summary>
+    [When("the json value is round-tripped via Serialization enabling inefficient serialization")]
+    public void WhenTheJsonValueIsRound_TrippedViaSerializationWithInefficientSerialization()
+    {
+        JsonConverter.EnableInefficientDeserializationSupport = true;
+        IJsonValue sut = this.scenarioContext.Get<IJsonValue>(SubjectUnderTest);
+        string json = JsonSerializer.Serialize(sut, sut.GetType());
+        this.scenarioContext.Set(JsonSerializer.Deserialize<JsonAny>(json), SerializationResult);
     }
 
     /// <summary>
@@ -135,6 +168,17 @@ public class JsonValueSteps
     public void ThenTheRound_TrippedResultShouldBeEqualToTheJsonAny(string expected)
     {
         Assert.AreEqual(JsonAny.Parse(expected), this.scenarioContext.Get<JsonAny>(SerializationResult));
+    }
+
+    /// <summary>
+    /// Ensures that the <see cref="SerializationException"/> has been set with an <see cref="InvalidOperationException"/>.
+    /// </summary>
+    [Then("the deserialization operation should throw an InvalidOperationException")]
+    public void ThenASerializationInvalidOperationExceptionShouldBeThrown()
+    {
+        Assert.IsTrue(this.scenarioContext.ContainsKey(SerializationException));
+        object ex = this.scenarioContext.Get<object>(SerializationException);
+        Assert.IsInstanceOf<InvalidOperationException>(ex);
     }
 
     /* notAny */

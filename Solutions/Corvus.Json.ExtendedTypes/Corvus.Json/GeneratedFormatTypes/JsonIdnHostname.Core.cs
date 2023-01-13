@@ -13,6 +13,7 @@ namespace Corvus.Json;
 /// <summary>
 /// Represents a JSON idnHostname.
 /// </summary>
+[System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonConverter<JsonIdnHostname>))]
 public readonly partial struct JsonIdnHostname : IJsonString<JsonIdnHostname>
 {
     private readonly Backing backing;
