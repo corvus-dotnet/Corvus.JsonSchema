@@ -13,6 +13,7 @@ namespace Corvus.Json;
 /// <summary>
 /// Represents a JSON email.
 /// </summary>
+[System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonConverter<JsonEmail>))]
 public readonly partial struct JsonEmail : IJsonString<JsonEmail>
 {
     private readonly Backing backing;

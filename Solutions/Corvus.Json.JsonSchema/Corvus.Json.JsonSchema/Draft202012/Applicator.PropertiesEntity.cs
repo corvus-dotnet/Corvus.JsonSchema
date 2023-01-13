@@ -21,6 +21,7 @@ public readonly partial struct Applicator
     /// <summary>
     /// A type generated from a JsonSchema specification.
     /// </summary>
+    [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonConverter<PropertiesEntity>))]
     public readonly partial struct PropertiesEntity
     {
         private readonly Backing backing;

@@ -21,6 +21,7 @@ public readonly partial struct MetaData
     /// <summary>
     /// A type generated from a JsonSchema specification.
     /// </summary>
+    [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonConverter<DeprecatedEntity>))]
     public readonly partial struct DeprecatedEntity
     {
         private readonly Backing backing;

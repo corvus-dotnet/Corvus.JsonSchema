@@ -13,6 +13,7 @@ namespace Corvus.Json;
 /// <summary>
 /// Represents a JSON number.
 /// </summary>
+[System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonConverter<JsonNumber>))]
 public readonly partial struct JsonNumber : IJsonNumber<JsonNumber>
 {
     private readonly Backing backing;

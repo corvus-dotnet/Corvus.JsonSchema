@@ -18,6 +18,11 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <SpecFlowObsoleteCodeBehindFiles Remove="Features\JsonModel\JsonSerialization - Copy.feature.cs" />
+	  <SpecFlowObsoleteCodeBehindFiles Remove="Features\JsonModel\JsonSerializationWithSerializer - Copy.feature.cs" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<PackageReference Include="Corvus.Testing.SpecFlow.NUnit" Version="2.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="7.0.0" />
 		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.5.0-preview-20221003-04" />
@@ -71,6 +76,26 @@
 
 	<ItemGroup>
 	  <Folder Include="Features\JsonSchema\Draft6\" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Compile Update="Features\JsonModel\JsonSerializationWithSerializerDisabled.feature.cs">
+	    <DependentUpon>JsonSerializationWithSerializerDisabled.feature</DependentUpon>
+	  </Compile>
+	  <Compile Update="Features\JsonModel\JsonSerializationWithSerializer.feature.cs">
+	    <DependentUpon>JsonSerializationWithSerializer.feature</DependentUpon>
+	  </Compile>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <SpecFlowFeatureFiles Update="Features\JsonModel\JsonSerializationWithSerializerDisabled.feature">
+	    <Visible>$(UsingMicrosoftNETSdk)</Visible>
+	    <CodeBehindFile>%(RelativeDir)%(Filename).feature$(DefaultLanguageSourceExtension)</CodeBehindFile>
+	  </SpecFlowFeatureFiles>
+	  <SpecFlowFeatureFiles Update="Features\JsonModel\JsonSerializationWithSerializer.feature">
+	    <Visible>$(UsingMicrosoftNETSdk)</Visible>
+	    <CodeBehindFile>%(RelativeDir)%(Filename).feature$(DefaultLanguageSourceExtension)</CodeBehindFile>
+	  </SpecFlowFeatureFiles>
 	</ItemGroup>
 
 </Project>

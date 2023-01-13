@@ -13,6 +13,7 @@ namespace Corvus.Json;
 /// <summary>
 /// Represents a JSON uuid.
 /// </summary>
+[System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonConverter<JsonUuid>))]
 public readonly partial struct JsonUuid : IJsonString<JsonUuid>
 {
     private readonly Backing backing;

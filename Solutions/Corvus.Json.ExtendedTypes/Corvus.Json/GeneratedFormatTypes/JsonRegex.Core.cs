@@ -13,6 +13,7 @@ namespace Corvus.Json;
 /// <summary>
 /// Represents a JSON regex.
 /// </summary>
+[System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonConverter<JsonRegex>))]
 public readonly partial struct JsonRegex : IJsonString<JsonRegex>
 {
     private readonly Backing backing;

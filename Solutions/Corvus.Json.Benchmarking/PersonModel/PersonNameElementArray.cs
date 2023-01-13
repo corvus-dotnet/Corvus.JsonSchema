@@ -19,6 +19,7 @@ namespace Corvus.Json.Benchmarking.Models;
 /// <summary>
 /// A type generated from a JsonSchema specification.
 /// </summary>
+[System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonConverter<PersonNameElementArray>))]
 public readonly partial struct PersonNameElementArray
 {
     private readonly Backing backing;
