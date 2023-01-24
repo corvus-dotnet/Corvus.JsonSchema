@@ -160,7 +160,7 @@ jobs:
       uses: actions/github-script@v6
       with:
         script: |
-          return ( '${{ steps.is_human_pr.outputs.result }}' == 'True' || '${{ steps.watch_dependabot_prs.outputs.is_complete }}' == 'True') && '${{ steps.get_release_pending_pr_list.outputs.is_release_pending }}' == 'True'
+          return ( '${{ steps.is_human_pr.outputs.result }}' == 'true' || '${{ steps.watch_dependabot_prs.outputs.is_complete }}' == 'True') && '${{ steps.get_release_pending_pr_list.outputs.is_release_pending }}' == 'true'
 
     - name: Display job outputs
       run: |
