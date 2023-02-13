@@ -46,3 +46,4 @@ Scenario Outline: validation of duration strings
         | #/000/tests/021/data | true  | two weeks                                                                        |
         | #/000/tests/022/data | false | weeks cannot be combined with other units                                        |
         | #/000/tests/023/data | false | invalid non-ASCII '২' (a Bengali 2)                                              |
+        | #/000/tests/024/data | false | element without unit                                                             |

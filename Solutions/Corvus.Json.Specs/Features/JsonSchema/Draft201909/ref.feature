@@ -551,7 +551,7 @@ Scenario Outline: order of evaluation: $id and $anchor and $ref
             "$ref": "#bigint",
             "$defs": {
                 "bigint": {
-                    "$comment": "canonical uri: /draft2019-09/ref-and-id2/base.json/$defs/bigint; another valid uri for this location: /ref-and-id2/base.json#bigint",
+                    "$comment": "canonical uri: /draft2019-09/ref-and-id2/base.json#/$defs/bigint; another valid uri for this location: /ref-and-id2/base.json#bigint",
                     "$anchor": "bigint",
                     "maximum": 10
                 },
@@ -810,3 +810,72 @@ Scenario Outline: URN ref with nested pointer ref
         | inputDataReference   | valid | description                                                                      |
         | #/028/tests/000/data | true  | a string is valid                                                                |
         | #/028/tests/001/data | false | a non-string is invalid                                                          |
+
+Scenario Outline: ref to if
+/* Schema: 
+{
+            "$ref": "http://example.com/ref/if",
+            "if": {
+                "$id": "http://example.com/ref/if",
+                "type": "integer"
+            }
+        }
+*/
+    Given the input JSON file "ref.json"
+    And the schema at "#/29/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/029/tests/000/data | false | a non-integer is invalid due to the $ref                                         |
+        | #/029/tests/001/data | true  | an integer is valid                                                              |
+
+Scenario Outline: ref to then
+/* Schema: 
+{
+            "$ref": "http://example.com/ref/then",
+            "then": {
+                "$id": "http://example.com/ref/then",
+                "type": "integer"
+            }
+        }
+*/
+    Given the input JSON file "ref.json"
+    And the schema at "#/30/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/030/tests/000/data | false | a non-integer is invalid due to the $ref                                         |
+        | #/030/tests/001/data | true  | an integer is valid                                                              |
+
+Scenario Outline: ref to else
+/* Schema: 
+{
+            "$ref": "http://example.com/ref/else",
+            "else": {
+                "$id": "http://example.com/ref/else",
+                "type": "integer"
+            }
+        }
+*/
+    Given the input JSON file "ref.json"
+    And the schema at "#/31/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/031/tests/000/data | false | a non-integer is invalid due to the $ref                                         |
+        | #/031/tests/001/data | true  | an integer is valid                                                              |

@@ -59,4 +59,7 @@ Scenario Outline: validation of time strings
         | #/000/tests/034/data | false | an invalid offset indicator                                                      |
         | #/000/tests/035/data | false | only RFC3339 not all of ISO 8601 are valid                                       |
         | #/000/tests/036/data | false | no time offset                                                                   |
-        | #/000/tests/037/data | false | invalid non-ASCII '২' (a Bengali 2)                                              |
+        | #/000/tests/037/data | false | no time offset with second fraction                                              |
+        | #/000/tests/038/data | false | invalid non-ASCII '২' (a Bengali 2)                                              |
+        | #/000/tests/039/data | false | offset not starting with plus or minus                                           |
+        | #/000/tests/040/data | false | contains letters                                                                 |

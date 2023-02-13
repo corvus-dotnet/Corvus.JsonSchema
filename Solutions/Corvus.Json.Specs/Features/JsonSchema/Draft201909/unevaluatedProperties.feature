@@ -611,20 +611,20 @@ Scenario Outline: unevaluatedProperties can't see inside cousins
         | inputDataReference   | valid | description                                                                      |
         | #/019/tests/000/data | false | always fails                                                                     |
 
-Scenario Outline: nested unevaluatedProperties, outer false, inner true, properties outside
+Scenario Outline: unevaluatedProperties can't see inside cousins (reverse order)
 /* Schema: 
 {
             "$schema": "https://json-schema.org/draft/2019-09/schema",
-            "type": "object",
-            "properties": {
-                "foo": { "type": "string" }
-            },
             "allOf": [
                 {
-                    "unevaluatedProperties": true
+                    "unevaluatedProperties": false
+                },
+                {
+                    "properties": {
+                        "foo": true
+                    }
                 }
-            ],
-            "unevaluatedProperties": false
+            ]
         }
 */
     Given the input JSON file "unevaluatedProperties.json"
@@ -637,19 +637,18 @@ Scenario Outline: nested unevaluatedProperties, outer false, inner true, propert
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/020/tests/000/data | true  | with no nested unevaluated properties                                            |
-        | #/020/tests/001/data | true  | with nested unevaluated properties                                               |
+        | #/020/tests/000/data | false | always fails                                                                     |
 
-Scenario Outline: nested unevaluatedProperties, outer false, inner true, properties inside
+Scenario Outline: nested unevaluatedProperties, outer false, inner true, properties outside
 /* Schema: 
 {
             "$schema": "https://json-schema.org/draft/2019-09/schema",
             "type": "object",
+            "properties": {
+                "foo": { "type": "string" }
+            },
             "allOf": [
                 {
-                    "properties": {
-                        "foo": { "type": "string" }
-                    },
                     "unevaluatedProperties": true
                 }
             ],
@@ -669,6 +668,35 @@ Scenario Outline: nested unevaluatedProperties, outer false, inner true, propert
         | #/021/tests/000/data | true  | with no nested unevaluated properties                                            |
         | #/021/tests/001/data | true  | with nested unevaluated properties                                               |
 
+Scenario Outline: nested unevaluatedProperties, outer false, inner true, properties inside
+/* Schema: 
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "type": "object",
+            "allOf": [
+                {
+                    "properties": {
+                        "foo": { "type": "string" }
+                    },
+                    "unevaluatedProperties": true
+                }
+            ],
+            "unevaluatedProperties": false
+        }
+*/
+    Given the input JSON file "unevaluatedProperties.json"
+    And the schema at "#/22/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/022/tests/000/data | true  | with no nested unevaluated properties                                            |
+        | #/022/tests/001/data | true  | with nested unevaluated properties                                               |
+
 Scenario Outline: nested unevaluatedProperties, outer true, inner false, properties outside
 /* Schema: 
 {
@@ -686,7 +714,7 @@ Scenario Outline: nested unevaluatedProperties, outer true, inner false, propert
         }
 */
     Given the input JSON file "unevaluatedProperties.json"
-    And the schema at "#/22/schema"
+    And the schema at "#/23/schema"
     And the input data at "<inputDataReference>"
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
@@ -695,8 +723,8 @@ Scenario Outline: nested unevaluatedProperties, outer true, inner false, propert
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/022/tests/000/data | false | with no nested unevaluated properties                                            |
-        | #/022/tests/001/data | false | with nested unevaluated properties                                               |
+        | #/023/tests/000/data | false | with no nested unevaluated properties                                            |
+        | #/023/tests/001/data | false | with nested unevaluated properties                                               |
 
 Scenario Outline: nested unevaluatedProperties, outer true, inner false, properties inside
 /* Schema: 
@@ -715,7 +743,7 @@ Scenario Outline: nested unevaluatedProperties, outer true, inner false, propert
         }
 */
     Given the input JSON file "unevaluatedProperties.json"
-    And the schema at "#/23/schema"
+    And the schema at "#/24/schema"
     And the input data at "<inputDataReference>"
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
@@ -724,8 +752,8 @@ Scenario Outline: nested unevaluatedProperties, outer true, inner false, propert
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/023/tests/000/data | true  | with no nested unevaluated properties                                            |
-        | #/023/tests/001/data | false | with nested unevaluated properties                                               |
+        | #/024/tests/000/data | true  | with no nested unevaluated properties                                            |
+        | #/024/tests/001/data | false | with nested unevaluated properties                                               |
 
 Scenario Outline: cousin unevaluatedProperties, true and false, true with properties
 /* Schema: 
@@ -746,7 +774,7 @@ Scenario Outline: cousin unevaluatedProperties, true and false, true with proper
         }
 */
     Given the input JSON file "unevaluatedProperties.json"
-    And the schema at "#/24/schema"
+    And the schema at "#/25/schema"
     And the input data at "<inputDataReference>"
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
@@ -755,8 +783,8 @@ Scenario Outline: cousin unevaluatedProperties, true and false, true with proper
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/024/tests/000/data | false | with no nested unevaluated properties                                            |
-        | #/024/tests/001/data | false | with nested unevaluated properties                                               |
+        | #/025/tests/000/data | false | with no nested unevaluated properties                                            |
+        | #/025/tests/001/data | false | with nested unevaluated properties                                               |
 
 Scenario Outline: cousin unevaluatedProperties, true and false, false with properties
 /* Schema: 
@@ -777,7 +805,7 @@ Scenario Outline: cousin unevaluatedProperties, true and false, false with prope
         }
 */
     Given the input JSON file "unevaluatedProperties.json"
-    And the schema at "#/25/schema"
+    And the schema at "#/26/schema"
     And the input data at "<inputDataReference>"
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
@@ -786,8 +814,8 @@ Scenario Outline: cousin unevaluatedProperties, true and false, false with prope
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/025/tests/000/data | true  | with no nested unevaluated properties                                            |
-        | #/025/tests/001/data | false | with nested unevaluated properties                                               |
+        | #/026/tests/000/data | true  | with no nested unevaluated properties                                            |
+        | #/026/tests/001/data | false | with nested unevaluated properties                                               |
 
 Scenario Outline: property is evaluated in an uncle schema to unevaluatedProperties
 /* Schema: 
@@ -821,7 +849,7 @@ Scenario Outline: property is evaluated in an uncle schema to unevaluatedPropert
         }
 */
     Given the input JSON file "unevaluatedProperties.json"
-    And the schema at "#/26/schema"
+    And the schema at "#/27/schema"
     And the input data at "<inputDataReference>"
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
@@ -830,8 +858,8 @@ Scenario Outline: property is evaluated in an uncle schema to unevaluatedPropert
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/026/tests/000/data | true  | no extra properties                                                              |
-        | #/026/tests/001/data | false | uncle keyword evaluation is not significant                                      |
+        | #/027/tests/000/data | true  | no extra properties                                                              |
+        | #/027/tests/001/data | false | uncle keyword evaluation is not significant                                      |
 
 Scenario Outline: in-place applicator siblings, allOf has unevaluated
 /* Schema: 
@@ -856,7 +884,7 @@ Scenario Outline: in-place applicator siblings, allOf has unevaluated
         }
 */
     Given the input JSON file "unevaluatedProperties.json"
-    And the schema at "#/27/schema"
+    And the schema at "#/28/schema"
     And the input data at "<inputDataReference>"
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
@@ -865,9 +893,9 @@ Scenario Outline: in-place applicator siblings, allOf has unevaluated
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/027/tests/000/data | false | base case: both properties present                                               |
-        | #/027/tests/001/data | true  | in place applicator siblings, bar is missing                                     |
-        | #/027/tests/002/data | false | in place applicator siblings, foo is missing                                     |
+        | #/028/tests/000/data | false | base case: both properties present                                               |
+        | #/028/tests/001/data | true  | in place applicator siblings, bar is missing                                     |
+        | #/028/tests/002/data | false | in place applicator siblings, foo is missing                                     |
 
 Scenario Outline: in-place applicator siblings, anyOf has unevaluated
 /* Schema: 
@@ -892,7 +920,7 @@ Scenario Outline: in-place applicator siblings, anyOf has unevaluated
         }
 */
     Given the input JSON file "unevaluatedProperties.json"
-    And the schema at "#/28/schema"
+    And the schema at "#/29/schema"
     And the input data at "<inputDataReference>"
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
@@ -901,9 +929,9 @@ Scenario Outline: in-place applicator siblings, anyOf has unevaluated
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/028/tests/000/data | false | base case: both properties present                                               |
-        | #/028/tests/001/data | false | in place applicator siblings, bar is missing                                     |
-        | #/028/tests/002/data | true  | in place applicator siblings, foo is missing                                     |
+        | #/029/tests/000/data | false | base case: both properties present                                               |
+        | #/029/tests/001/data | false | in place applicator siblings, bar is missing                                     |
+        | #/029/tests/002/data | true  | in place applicator siblings, foo is missing                                     |
 
 Scenario Outline: unevaluatedProperties + single cyclic ref
 /* Schema: 
@@ -917,7 +945,7 @@ Scenario Outline: unevaluatedProperties + single cyclic ref
         }
 */
     Given the input JSON file "unevaluatedProperties.json"
-    And the schema at "#/29/schema"
+    And the schema at "#/30/schema"
     And the input data at "<inputDataReference>"
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
@@ -926,13 +954,13 @@ Scenario Outline: unevaluatedProperties + single cyclic ref
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/029/tests/000/data | true  | Empty is valid                                                                   |
-        | #/029/tests/001/data | true  | Single is valid                                                                  |
-        | #/029/tests/002/data | false | Unevaluated on 1st level is invalid                                              |
-        | #/029/tests/003/data | true  | Nested is valid                                                                  |
-        | #/029/tests/004/data | false | Unevaluated on 2nd level is invalid                                              |
-        | #/029/tests/005/data | true  | Deep nested is valid                                                             |
-        | #/029/tests/006/data | false | Unevaluated on 3rd level is invalid                                              |
+        | #/030/tests/000/data | true  | Empty is valid                                                                   |
+        | #/030/tests/001/data | true  | Single is valid                                                                  |
+        | #/030/tests/002/data | false | Unevaluated on 1st level is invalid                                              |
+        | #/030/tests/003/data | true  | Nested is valid                                                                  |
+        | #/030/tests/004/data | false | Unevaluated on 2nd level is invalid                                              |
+        | #/030/tests/005/data | true  | Deep nested is valid                                                             |
+        | #/030/tests/006/data | false | Unevaluated on 3rd level is invalid                                              |
 
 Scenario Outline: unevaluatedProperties + ref inside allOf / oneOf
 /* Schema: 
@@ -964,7 +992,7 @@ Scenario Outline: unevaluatedProperties + ref inside allOf / oneOf
         }
 */
     Given the input JSON file "unevaluatedProperties.json"
-    And the schema at "#/30/schema"
+    And the schema at "#/31/schema"
     And the input data at "<inputDataReference>"
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
@@ -973,14 +1001,14 @@ Scenario Outline: unevaluatedProperties + ref inside allOf / oneOf
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/030/tests/000/data | false | Empty is invalid (no x or y)                                                     |
-        | #/030/tests/001/data | false | a and b are invalid (no x or y)                                                  |
-        | #/030/tests/002/data | false | x and y are invalid                                                              |
-        | #/030/tests/003/data | true  | a and x are valid                                                                |
-        | #/030/tests/004/data | true  | a and y are valid                                                                |
-        | #/030/tests/005/data | true  | a and b and x are valid                                                          |
-        | #/030/tests/006/data | true  | a and b and y are valid                                                          |
-        | #/030/tests/007/data | false | a and b and x and y are invalid                                                  |
+        | #/031/tests/000/data | false | Empty is invalid (no x or y)                                                     |
+        | #/031/tests/001/data | false | a and b are invalid (no x or y)                                                  |
+        | #/031/tests/002/data | false | x and y are invalid                                                              |
+        | #/031/tests/003/data | true  | a and x are valid                                                                |
+        | #/031/tests/004/data | true  | a and y are valid                                                                |
+        | #/031/tests/005/data | true  | a and b and x are valid                                                          |
+        | #/031/tests/006/data | true  | a and b and y are valid                                                          |
+        | #/031/tests/007/data | false | a and b and x and y are invalid                                                  |
 
 Scenario Outline: dynamic evalation inside nested refs
 /* Schema: 
@@ -1010,45 +1038,6 @@ Scenario Outline: dynamic evalation inside nested refs
         }
 */
     Given the input JSON file "unevaluatedProperties.json"
-    And the schema at "#/31/schema"
-    And the input data at "<inputDataReference>"
-    And I generate a type for the schema
-    And I construct an instance of the schema type from the data
-    When I validate the instance
-    Then the result will be <valid>
-
-    Examples:
-        | inputDataReference   | valid | description                                                                      |
-        | #/031/tests/000/data | false | Empty is invalid                                                                 |
-        | #/031/tests/001/data | true  | a is valid                                                                       |
-        | #/031/tests/002/data | true  | b is valid                                                                       |
-        | #/031/tests/003/data | true  | c is valid                                                                       |
-        | #/031/tests/004/data | true  | d is valid                                                                       |
-        | #/031/tests/005/data | false | a + b is invalid                                                                 |
-        | #/031/tests/006/data | false | a + c is invalid                                                                 |
-        | #/031/tests/007/data | false | a + d is invalid                                                                 |
-        | #/031/tests/008/data | false | b + c is invalid                                                                 |
-        | #/031/tests/009/data | false | b + d is invalid                                                                 |
-        | #/031/tests/010/data | false | c + d is invalid                                                                 |
-        | #/031/tests/011/data | true  | xx is valid                                                                      |
-        | #/031/tests/012/data | true  | xx + foox is valid                                                               |
-        | #/031/tests/013/data | false | xx + foo is invalid                                                              |
-        | #/031/tests/014/data | false | xx + a is invalid                                                                |
-        | #/031/tests/015/data | false | xx + b is invalid                                                                |
-        | #/031/tests/016/data | false | xx + c is invalid                                                                |
-        | #/031/tests/017/data | false | xx + d is invalid                                                                |
-        | #/031/tests/018/data | true  | all is valid                                                                     |
-        | #/031/tests/019/data | true  | all + foo is valid                                                               |
-        | #/031/tests/020/data | false | all + a is invalid                                                               |
-
-Scenario Outline: non-object instances are valid
-/* Schema: 
-{
-            "$schema": "https://json-schema.org/draft/2019-09/schema",
-            "unevaluatedProperties": false
-        }
-*/
-    Given the input JSON file "unevaluatedProperties.json"
     And the schema at "#/32/schema"
     And the input data at "<inputDataReference>"
     And I generate a type for the schema
@@ -1058,20 +1047,33 @@ Scenario Outline: non-object instances are valid
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/032/tests/000/data | true  | ignores booleans                                                                 |
-        | #/032/tests/001/data | true  | ignores integers                                                                 |
-        | #/032/tests/002/data | true  | ignores floats                                                                   |
-        | #/032/tests/003/data | true  | ignores arrays                                                                   |
-        | #/032/tests/004/data | true  | ignores strings                                                                  |
-        | #/032/tests/005/data | true  | ignores null                                                                     |
+        | #/032/tests/000/data | false | Empty is invalid                                                                 |
+        | #/032/tests/001/data | true  | a is valid                                                                       |
+        | #/032/tests/002/data | true  | b is valid                                                                       |
+        | #/032/tests/003/data | true  | c is valid                                                                       |
+        | #/032/tests/004/data | true  | d is valid                                                                       |
+        | #/032/tests/005/data | false | a + b is invalid                                                                 |
+        | #/032/tests/006/data | false | a + c is invalid                                                                 |
+        | #/032/tests/007/data | false | a + d is invalid                                                                 |
+        | #/032/tests/008/data | false | b + c is invalid                                                                 |
+        | #/032/tests/009/data | false | b + d is invalid                                                                 |
+        | #/032/tests/010/data | false | c + d is invalid                                                                 |
+        | #/032/tests/011/data | true  | xx is valid                                                                      |
+        | #/032/tests/012/data | true  | xx + foox is valid                                                               |
+        | #/032/tests/013/data | false | xx + foo is invalid                                                              |
+        | #/032/tests/014/data | false | xx + a is invalid                                                                |
+        | #/032/tests/015/data | false | xx + b is invalid                                                                |
+        | #/032/tests/016/data | false | xx + c is invalid                                                                |
+        | #/032/tests/017/data | false | xx + d is invalid                                                                |
+        | #/032/tests/018/data | true  | all is valid                                                                     |
+        | #/032/tests/019/data | true  | all + foo is valid                                                               |
+        | #/032/tests/020/data | false | all + a is invalid                                                               |
 
-Scenario Outline: unevaluatedProperties with null valued instance properties
+Scenario Outline: non-object instances are valid
 /* Schema: 
 {
             "$schema": "https://json-schema.org/draft/2019-09/schema",
-            "unevaluatedProperties": {
-                "type": "null"
-            }
+            "unevaluatedProperties": false
         }
 */
     Given the input JSON file "unevaluatedProperties.json"
@@ -1084,4 +1086,30 @@ Scenario Outline: unevaluatedProperties with null valued instance properties
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/033/tests/000/data | true  | allows null valued properties                                                    |
+        | #/033/tests/000/data | true  | ignores booleans                                                                 |
+        | #/033/tests/001/data | true  | ignores integers                                                                 |
+        | #/033/tests/002/data | true  | ignores floats                                                                   |
+        | #/033/tests/003/data | true  | ignores arrays                                                                   |
+        | #/033/tests/004/data | true  | ignores strings                                                                  |
+        | #/033/tests/005/data | true  | ignores null                                                                     |
+
+Scenario Outline: unevaluatedProperties with null valued instance properties
+/* Schema: 
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "unevaluatedProperties": {
+                "type": "null"
+            }
+        }
+*/
+    Given the input JSON file "unevaluatedProperties.json"
+    And the schema at "#/34/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/034/tests/000/data | true  | allows null valued properties                                                    |
