@@ -15,7 +15,7 @@
 	<ItemGroup>
 		<PackageReference Include="CommunityToolkit.HighPerformance" Version="8.0.0" />
 		<PackageReference Include="Corvus.Extensions" Version="1.1.10" />
-		<PackageReference Include="Corvus.UriTemplates" Version="1.0.1" />
+		<PackageReference Include="Corvus.UriTemplates" Version="1.1.0" />
 		<PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.4">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
