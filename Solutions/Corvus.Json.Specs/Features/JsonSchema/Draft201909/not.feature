@@ -160,5 +160,5 @@ Scenario Outline: collect annotations inside a 'not', even if collection is disa
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/006/tests/000/data | true  | no properties to evaluate                                                        |
+        | #/006/tests/000/data | true  | unevaluated property                                                             |
         | #/006/tests/001/data | false | annotations are still collected inside a 'not'                                   |
