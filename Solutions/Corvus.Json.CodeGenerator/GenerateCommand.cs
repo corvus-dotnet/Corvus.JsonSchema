@@ -21,6 +21,7 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
     {
         [CommandOption("--rootNamespace")]
         [Description("The default root namespace for generated types.")]
+        [NotNull]
         public string? RootNamespace { get; init; }
 
         [CommandOption("--rootPath")]
@@ -52,6 +53,7 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
 
         [Description("The path to the schema file to process.")]
         [CommandArgument(0, "[schemaFile]")]
+        [NotNull]
         public string? SchemaFile { get; init; }
     }
 
@@ -61,12 +63,12 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         return GenerateTypes(settings.SchemaFile, settings.RootNamespace, settings.RootPath, settings.RebaseToRootPath, settings.OutputPath, settings.OutputMapFile, settings.OutputRootTypeName, settings.UseSchema);
     }
 
-    private static async Task<int> GenerateTypes(string schemaFile, string rootNamespace, string rootPath, bool rebaseToRootPath, string outputPath, string outputMapFile, string? rootTypeName, SchemaVariant schemaVariant)
+    private static async Task<int> GenerateTypes(string schemaFile, string rootNamespace, string? rootPath, bool rebaseToRootPath, string? outputPath, string? outputMapFile, string? rootTypeName, SchemaVariant schemaVariant)
     {
         try
         {
             var typeBuilder = new JsonSchemaTypeBuilder(new CompoundDocumentResolver(new FileSystemDocumentResolver(), new HttpClientDocumentResolver(new HttpClient())));
-            JsonReference reference = new JsonReference(schemaFile).Apply(new JsonReference(rootPath));
+            JsonReference reference = new(schemaFile, rootPath ?? string.Empty);
             schemaVariant = ValidationSemanticsToSchemaVariant(await typeBuilder.GetValidationSemantics(reference, rebaseToRootPath).ConfigureAwait(false));
             IJsonSchemaBuilder builder =
                 schemaVariant switch
@@ -89,7 +91,7 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
                 outputPath = Path.GetDirectoryName(schemaFile)!;
             }
 
-            string mapFile = string.IsNullOrEmpty(outputMapFile) ? outputMapFile : Path.Combine(outputPath, outputMapFile);
+            string? mapFile = string.IsNullOrEmpty(outputMapFile) ? outputMapFile : Path.Combine(outputPath, outputMapFile);
             if (!string.IsNullOrEmpty(mapFile))
             {
                 File.Delete(mapFile);
