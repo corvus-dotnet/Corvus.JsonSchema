@@ -21,7 +21,6 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
     {
         [CommandOption("--rootNamespace")]
         [Description("The default root namespace for generated types.")]
-        [NotNull]
         public string? RootNamespace { get; init; }
 
         [CommandOption("--rootPath")]
@@ -53,13 +52,15 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
 
         [Description("The path to the schema file to process.")]
         [CommandArgument(0, "[schemaFile]")]
-        [NotNull]
         public string? SchemaFile { get; init; }
     }
 
     /// <inheritdoc/>
-    public override Task<int> ExecuteAsync([NotNull] CommandContext context, [NotNull] Settings settings)
+    public override Task<int> ExecuteAsync(CommandContext context, Settings settings)
     {
+        ArgumentNullException.ThrowIfNullOrEmpty(settings.SchemaFile); // We will never see this exception if the framework is doing its job; it should have blown up inside the CLI command handling
+        ArgumentNullException.ThrowIfNullOrEmpty(settings.RootNamespace); // We will never see this exception if the framework is doing its job; it should have blown up inside the CLI command handling
+
         return GenerateTypes(settings.SchemaFile, settings.RootNamespace, settings.RootPath, settings.RebaseToRootPath, settings.OutputPath, settings.OutputMapFile, settings.OutputRootTypeName, settings.UseSchema);
     }
 
