@@ -2961,7 +2961,7 @@ public static partial class Validate
     [GeneratedRegex("^((/(([^/~])|(~[01]))*))*$", RegexOptions.Compiled)]
     private static partial Regex CreateJsonPointerPattern();
 
-    [GeneratedRegex("^(0|[1-9]+[0-9]*)(#|(/(/|[^/~]|(~[01]))*))?$", RegexOptions.Compiled)]
+    [GeneratedRegex("^(0|[1-9][0-9]*)(#|(/(/|[^/~]|(~[01]))*))?$", RegexOptions.Compiled)]
     private static partial Regex CreateRelativeJsonPointerPattern();
 
     private readonly record struct ValidationContextWrapper(in ValidationContext Context, ValidationLevel Level);
