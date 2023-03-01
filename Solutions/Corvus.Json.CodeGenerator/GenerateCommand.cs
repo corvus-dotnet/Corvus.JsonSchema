@@ -70,9 +70,15 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         {
             var typeBuilder = new JsonSchemaTypeBuilder(new CompoundDocumentResolver(new FileSystemDocumentResolver(), new HttpClientDocumentResolver(new HttpClient())));
             JsonReference reference = new(schemaFile, rootPath ?? string.Empty);
-            schemaVariant = ValidationSemanticsToSchemaVariant(await typeBuilder.GetValidationSemantics(reference, rebaseToRootPath).ConfigureAwait(false));
+            SchemaVariant sv = ValidationSemanticsToSchemaVariant(await typeBuilder.GetValidationSemantics(reference, rebaseToRootPath).ConfigureAwait(false));
+
+            if (sv == SchemaVariant.NotSpecified)
+            {
+                sv = schemaVariant;
+            }
+
             IJsonSchemaBuilder builder =
-                schemaVariant switch
+                sv switch
                 {
                     SchemaVariant.Draft6 => new CodeGeneration.Draft6.JsonSchemaBuilder(typeBuilder),
                     SchemaVariant.Draft7 => new CodeGeneration.Draft7.JsonSchemaBuilder(typeBuilder),
