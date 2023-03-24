@@ -285,7 +285,7 @@ public static partial class Validate
                     result = context.Context.WithResult(isValid: false);
                 }
 
-                return false;
+                return true;
             }
 
             if (context.Level == ValidationLevel.Verbose)
@@ -557,7 +557,7 @@ public static partial class Validate
                     result = context.Context.WithResult(isValid: false);
                 }
 
-                return false;
+                return true;
             }
 
             if (context.Level == ValidationLevel.Verbose)
@@ -635,7 +635,7 @@ public static partial class Validate
                     result = context.Context.WithResult(isValid: false);
                 }
 
-                return false;
+                return true;
             }
 
             if (context.Level == ValidationLevel.Verbose)
@@ -713,7 +713,7 @@ public static partial class Validate
                     result = context.Context.WithResult(isValid: false);
                 }
 
-                return false;
+                return true;
             }
 
             if (context.Level == ValidationLevel.Verbose)
@@ -791,7 +791,7 @@ public static partial class Validate
                     result = context.Context.WithResult(isValid: false);
                 }
 
-                return false;
+                return true;
             }
 
             if (context.Level == ValidationLevel.Verbose)
@@ -869,7 +869,7 @@ public static partial class Validate
                     result = context.Context.WithResult(isValid: false);
                 }
 
-                return false;
+                return true;
             }
 
             if (context.Level == ValidationLevel.Verbose)
@@ -947,7 +947,7 @@ public static partial class Validate
                     result = context.Context.WithResult(isValid: false);
                 }
 
-                return false;
+                return true;
             }
 
             if (context.Level == ValidationLevel.Verbose)
@@ -2792,7 +2792,7 @@ public static partial class Validate
                     result = context.Context.WithResult(isValid: false);
                 }
 
-                return false;
+                return true;
             }
         }
     }
@@ -2874,7 +2874,7 @@ public static partial class Validate
                     result = context.Context.WithResult(isValid: false);
                 }
 
-                return false;
+                return true;
             }
         }
     }
