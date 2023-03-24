@@ -24,7 +24,7 @@ public static partial class Validate
     private static readonly Regex UriTemplatePattern = CreateUriTemplatePattern();
     private static readonly Regex UuidTemplatePattern = CreateUuidTemplatePattern();
     private static readonly Regex JsonPointerPattern = CreateJsonPointerPattern();
-    private static readonly Regex RelativeJsonPointerPattern = CreateRelativeJsonPointerPattern();
+    private static readonly Regex JsonRelativePointerPattern = CreateJsonRelativePointerPattern();
 
     private static readonly IdnMapping IdnMapping = new() { AllowUnassigned = true, UseStd3AsciiRules = true };
 
@@ -854,7 +854,7 @@ public static partial class Validate
         {
             result = context.Context;
 
-            if (!RelativeJsonPointerPattern.IsMatch(input))
+            if (!JsonRelativePointerPattern.IsMatch(input))
             {
                 if (context.Level >= ValidationLevel.Detailed)
                 {

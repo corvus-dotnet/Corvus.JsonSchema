@@ -105,9 +105,9 @@ public static class BuiltInTypes
     public static readonly (string Ns, string Type) ClrJsonPointerTypeDeclaration = ("Corvus.Json", "JsonPointer");
 
     /// <summary>
-    /// A clr RelativeJsonPointer type.
+    /// A clr JsonRelativePointer type.
     /// </summary>
-    public static readonly (string Ns, string Type) ClrRelativeJsonPointerTypeDeclaration = ("Corvus.Json", "RelativeJsonPointer");
+    public static readonly (string Ns, string Type) ClrJsonRelativePointerTypeDeclaration = ("Corvus.Json", "JsonRelativePointer");
 
     /// <summary>
     /// A clr Regex type.
@@ -261,7 +261,7 @@ public static class BuiltInTypes
             "iri" => ClrIriTypeDeclaration,
             "iri-reference" => ClrIriReferenceTypeDeclaration,
             "json-pointer" => ClrJsonPointerTypeDeclaration,
-            "relative-json-pointer" => ClrRelativeJsonPointerTypeDeclaration,
+            "relative-json-pointer" => ClrJsonRelativePointerTypeDeclaration,
             "regex" => ClrRegexTypeDeclaration,
             _ => GetJsonStringFor(contentMediaType, contentEncoding, pre201909),
         };

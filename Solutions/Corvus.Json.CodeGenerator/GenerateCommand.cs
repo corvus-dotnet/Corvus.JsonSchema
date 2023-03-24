@@ -51,7 +51,8 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         public bool RebaseToRootPath { get; init; }
 
         [Description("The path to the schema file to process.")]
-        [CommandArgument(0, "[schemaFile]")]
+        [CommandArgument(0, "<schemaFile>")]
+        [NotNull] // <> => NotNull
         public string? SchemaFile { get; init; }
     }
 
@@ -87,7 +88,7 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
                     _ => new CodeGeneration.Draft202012.JsonSchemaBuilder(typeBuilder)
                 };
 
-            (string RootType, ImmutableDictionary<JsonReference, TypeAndCode> GeneratedTypes) = await builder.BuildTypesFor(reference, rootNamespace, rebaseToRootPath, rootTypeName: rootTypeName).ConfigureAwait(false);
+            (string RootType, ImmutableDictionary<JsonReference, TypeAndCode> GeneratedTypes) = await builder.BuildTypesFor(reference, rootNamespace ?? string.Empty, rebaseToRootPath, rootTypeName: rootTypeName).ConfigureAwait(false);
 
             if (!string.IsNullOrEmpty(outputPath))
             {
