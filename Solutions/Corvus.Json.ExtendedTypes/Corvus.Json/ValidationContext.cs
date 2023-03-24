@@ -79,7 +79,9 @@ public readonly struct ValidationContext
     /// <returns>The validation context enabled with the keyword stack.</returns>
     public ValidationContext UsingResults()
     {
-        return new ValidationContext(this.IsValid, this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack, this.Results, this.usingFeatures | UsingFeatures.Results);
+        bool usingResults = (this.usingFeatures & UsingFeatures.Results) != 0;
+
+        return new ValidationContext(this.IsValid, this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack, usingResults ? this.Results : ImmutableArray<ValidationResult>.Empty, this.usingFeatures | UsingFeatures.Results);
     }
 
     /// <summary>
