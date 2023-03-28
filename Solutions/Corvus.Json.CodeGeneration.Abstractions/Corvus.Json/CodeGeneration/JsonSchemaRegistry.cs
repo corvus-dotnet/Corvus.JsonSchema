@@ -65,13 +65,7 @@ internal class JsonSchemaRegistry
             basePath = new JsonReference(jsonSchemaPath.Uri[DefaultAbsoluteLocation.Uri.Length..], ReadOnlySpan<char>.Empty);
         }
 
-        JsonElement? optionalDocumentRoot = await this.documentResolver.TryResolve(basePath).ConfigureAwait(false);
-
-        if (optionalDocumentRoot is null)
-        {
-            throw new InvalidOperationException($"Unable to locate the root document at '{basePath}'");
-        }
-
+        JsonElement? optionalDocumentRoot = await this.documentResolver.TryResolve(basePath).ConfigureAwait(false) ?? throw new InvalidOperationException($"Unable to locate the root document at '{basePath}'");
         JsonElement documentRoot = optionalDocumentRoot.Value;
 
         if (jsonSchemaPath.HasFragment)
@@ -88,9 +82,10 @@ internal class JsonSchemaRegistry
             else
             {
                 // This is not a root path, so we need to construct a JSON document that references the root path instead.
-                // This will not actually be constructed, as it will be resolved to the reference type instaed.
+                // This will not actually be constructed, as it will be resolved to the reference type instead.
+                // It allows us to indirect through this reference as if it were a "root" type.
                 var referenceSchema = JsonAny.FromProperties(("$ref", (string)jsonSchemaPath));
-                jsonSchemaPath = DefaultAbsoluteLocation.Apply(new JsonReference($"Schema"));
+                jsonSchemaPath = DefaultAbsoluteLocation.Apply(new JsonReference($"{Guid.NewGuid()}/Schema"));
                 return await AddSchemaForUpdatedPathAndElement(jsonSchemaPath, referenceSchema.AsJsonElement).ConfigureAwait(false);
             }
         }
@@ -120,13 +115,7 @@ internal class JsonSchemaRegistry
         async Task<JsonReference> AddSchemaForUpdatedPathAndElement(JsonReference jsonSchemaPath, JsonElement newBase)
         {
             this.documentResolver.AddDocument(jsonSchemaPath, GetDocumentFrom(newBase));
-            JsonElement? resolvedBase = await this.documentResolver.TryResolve(jsonSchemaPath).ConfigureAwait(false);
-
-            if (resolvedBase is null)
-            {
-                throw new InvalidOperationException($"Expected to find a rebased schema at {jsonSchemaPath}");
-            }
-
+            JsonElement? resolvedBase = await this.documentResolver.TryResolve(jsonSchemaPath).ConfigureAwait(false) ?? throw new InvalidOperationException($"Expected to find a rebased schema at {jsonSchemaPath}");
             var rebasedSchema = JsonAny.FromJson(resolvedBase.Value);
             if (!this.JsonSchemaConfiguration.ValidateSchema(rebasedSchema))
             {
