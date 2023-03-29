@@ -1,5 +1,7 @@
 ﻿using Corvus.Json;
+using Corvus.Json.Benchmarking.Models;
 using Corvus.Json.UriTemplates;
+using NodaTime;
 
 string uriTemplate = "http://example.org/location{?value*}";
 JsonAny jsonValues = JsonAny.FromProperties(("foo", "bar"), ("bar", "baz"), ("baz", "bob")).AsJsonElementBackedValue();
@@ -15,3 +17,8 @@ static void HandleResult(ReadOnlySpan<char> resolvedTemplate, ref object? state)
 {
     // NOP
 }
+
+var p =
+    Person.Create(
+        name: PersonName.Create("Adams", "Matthew"),
+        dateOfBirth: new LocalDate(1973, 02, 14));

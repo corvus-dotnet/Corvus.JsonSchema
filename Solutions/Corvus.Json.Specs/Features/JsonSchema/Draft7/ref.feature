@@ -737,3 +737,84 @@ Scenario Outline: URN base URI with URN and anchor ref
         | inputDataReference   | valid | description                                                                      |
         | #/026/tests/000/data | true  | a string is valid                                                                |
         | #/026/tests/001/data | false | a non-string is invalid                                                          |
+
+Scenario Outline: ref to if
+/* Schema: 
+{
+            "allOf": [
+                {"$ref": "http://example.com/ref/if"},
+                {
+                    "if": {
+                        "$id": "http://example.com/ref/if",
+                        "type": "integer"
+                    }
+                }
+            ]
+        }
+*/
+    Given the input JSON file "ref.json"
+    And the schema at "#/27/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/027/tests/000/data | false | a non-integer is invalid due to the $ref                                         |
+        | #/027/tests/001/data | true  | an integer is valid                                                              |
+
+Scenario Outline: ref to then
+/* Schema: 
+{
+            "allOf": [
+                {"$ref": "http://example.com/ref/then"},
+                {
+                    "then": {
+                        "$id": "http://example.com/ref/then",
+                        "type": "integer"
+                    }
+                }
+            ]
+        }
+*/
+    Given the input JSON file "ref.json"
+    And the schema at "#/28/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/028/tests/000/data | false | a non-integer is invalid due to the $ref                                         |
+        | #/028/tests/001/data | true  | an integer is valid                                                              |
+
+Scenario Outline: ref to else
+/* Schema: 
+{
+            "allOf": [
+                {"$ref": "http://example.com/ref/else"},
+                {
+                    "else": {
+                        "$id": "http://example.com/ref/else",
+                        "type": "integer"
+                    }
+                }
+            ]
+        }
+*/
+    Given the input JSON file "ref.json"
+    And the schema at "#/29/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/029/tests/000/data | false | a non-integer is invalid due to the $ref                                         |
+        | #/029/tests/001/data | true  | an integer is valid                                                              |

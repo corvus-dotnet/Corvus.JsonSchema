@@ -135,3 +135,30 @@ Scenario Outline: not with boolean schema false
     Examples:
         | inputDataReference   | valid | description                                                                      |
         | #/005/tests/000/data | true  | any value is valid                                                               |
+
+Scenario Outline: collect annotations inside a 'not', even if collection is disabled
+/* Schema: 
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "not": {
+                "$comment": "this subschema must still produce annotations internally, even though the 'not' will ultimately discard them",
+                "anyOf": [
+                    true,
+                    { "properties": { "foo": true } }
+                ],
+                "unevaluatedProperties": false
+            }
+        }
+*/
+    Given the input JSON file "not.json"
+    And the schema at "#/6/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/006/tests/000/data | true  | unevaluated property                                                             |
+        | #/006/tests/001/data | false | annotations are still collected inside a 'not'                                   |

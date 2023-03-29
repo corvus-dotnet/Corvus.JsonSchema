@@ -24,7 +24,7 @@ public static partial class Validate
     private static readonly Regex UriTemplatePattern = CreateUriTemplatePattern();
     private static readonly Regex UuidTemplatePattern = CreateUuidTemplatePattern();
     private static readonly Regex JsonPointerPattern = CreateJsonPointerPattern();
-    private static readonly Regex RelativeJsonPointerPattern = CreateRelativeJsonPointerPattern();
+    private static readonly Regex JsonRelativePointerPattern = CreateJsonRelativePointerPattern();
 
     private static readonly IdnMapping IdnMapping = new() { AllowUnassigned = true, UseStd3AsciiRules = true };
 
@@ -285,7 +285,7 @@ public static partial class Validate
                     result = context.Context.WithResult(isValid: false);
                 }
 
-                return false;
+                return true;
             }
 
             if (context.Level == ValidationLevel.Verbose)
@@ -557,7 +557,7 @@ public static partial class Validate
                     result = context.Context.WithResult(isValid: false);
                 }
 
-                return false;
+                return true;
             }
 
             if (context.Level == ValidationLevel.Verbose)
@@ -635,7 +635,7 @@ public static partial class Validate
                     result = context.Context.WithResult(isValid: false);
                 }
 
-                return false;
+                return true;
             }
 
             if (context.Level == ValidationLevel.Verbose)
@@ -713,7 +713,7 @@ public static partial class Validate
                     result = context.Context.WithResult(isValid: false);
                 }
 
-                return false;
+                return true;
             }
 
             if (context.Level == ValidationLevel.Verbose)
@@ -791,7 +791,7 @@ public static partial class Validate
                     result = context.Context.WithResult(isValid: false);
                 }
 
-                return false;
+                return true;
             }
 
             if (context.Level == ValidationLevel.Verbose)
@@ -854,7 +854,7 @@ public static partial class Validate
         {
             result = context.Context;
 
-            if (!RelativeJsonPointerPattern.IsMatch(input))
+            if (!JsonRelativePointerPattern.IsMatch(input))
             {
                 if (context.Level >= ValidationLevel.Detailed)
                 {
@@ -869,7 +869,7 @@ public static partial class Validate
                     result = context.Context.WithResult(isValid: false);
                 }
 
-                return false;
+                return true;
             }
 
             if (context.Level == ValidationLevel.Verbose)
@@ -947,7 +947,7 @@ public static partial class Validate
                     result = context.Context.WithResult(isValid: false);
                 }
 
-                return false;
+                return true;
             }
 
             if (context.Level == ValidationLevel.Verbose)
@@ -2792,7 +2792,7 @@ public static partial class Validate
                     result = context.Context.WithResult(isValid: false);
                 }
 
-                return false;
+                return true;
             }
         }
     }
@@ -2874,7 +2874,7 @@ public static partial class Validate
                     result = context.Context.WithResult(isValid: false);
                 }
 
-                return false;
+                return true;
             }
         }
     }
@@ -2961,8 +2961,8 @@ public static partial class Validate
     [GeneratedRegex("^((/(([^/~])|(~[01]))*))*$", RegexOptions.Compiled)]
     private static partial Regex CreateJsonPointerPattern();
 
-    [GeneratedRegex("^(0|[1-9]+)(#|(/(/|[^/~]|(~[01]))*))?$", RegexOptions.Compiled)]
-    private static partial Regex CreateRelativeJsonPointerPattern();
+    [GeneratedRegex("^(0|[1-9][0-9]*)(#|(/(/|[^/~]|(~[01]))*))?$", RegexOptions.Compiled)]
+    private static partial Regex CreateJsonRelativePointerPattern();
 
     private readonly record struct ValidationContextWrapper(in ValidationContext Context, ValidationLevel Level);
 
