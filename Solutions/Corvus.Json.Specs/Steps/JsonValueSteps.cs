@@ -291,12 +291,15 @@ public class JsonValueSteps
         else
         {
             JsonAny result = JsonAny.Parse(value).AsDotnetBackedValue();
-            foreach (JsonObjectProperty property in result.EnumerateObject())
+            if (result.ValueKind == JsonValueKind.Object)
             {
-                if (property.Value.ValueKind == JsonValueKind.String &&
-                    property.Value.Equals("\u003cundefined\u003e"))
+                foreach (JsonObjectProperty property in result.EnumerateObject())
                 {
-                    result = result.SetProperty(property.Name, JsonString.Undefined);
+                    if (property.Value.ValueKind == JsonValueKind.String &&
+                        property.Value.Equals("\u003cundefined\u003e"))
+                    {
+                        result = result.SetProperty(property.Name, JsonString.Undefined);
+                    }
                 }
             }
 
