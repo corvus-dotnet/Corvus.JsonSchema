@@ -40,8 +40,11 @@ public static partial class JsonValueHelpers
 
         foreach (KeyValuePair<JsonPropertyName, JsonAny> property in properties)
         {
-            writer.WritePropertyName(property.Key.Name);
-            property.Value.WriteTo(writer);
+            if (property.Value.IsNotUndefined())
+            {
+                writer.WritePropertyName(property.Key.Name);
+                property.Value.WriteTo(writer);
+            }
         }
 
         writer.WriteEndObject();
