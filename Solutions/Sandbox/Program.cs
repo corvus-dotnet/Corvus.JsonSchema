@@ -22,3 +22,7 @@ var p =
     Person.Create(
         name: PersonName.Create("Adams", "Matthew"),
         dateOfBirth: new LocalDate(1973, 02, 14));
+
+JsonNumber first = new(3);
+JsonInteger second = new(long.MaxValue);
+Console.WriteLine((JsonInteger)first < second);

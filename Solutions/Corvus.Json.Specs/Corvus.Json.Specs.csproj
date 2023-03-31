@@ -73,4 +73,11 @@
 	  <Folder Include="Features\JsonSchema\Draft6\" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <SpecFlowFeatureFiles Update="Features\JsonModel\NumericComparison\JsonIntegerComparison.feature">
+	    <Visible>$(UsingMicrosoftNETSdk)</Visible>
+	    <CodeBehindFile>%(RelativeDir)%(Filename).feature$(DefaultLanguageSourceExtension)</CodeBehindFile>
+	  </SpecFlowFeatureFiles>
+	</ItemGroup>
+
 </Project>
