@@ -29,7 +29,7 @@ public class JsonStringTryGetValueSteps
         this.scenarioContext = scenarioContext;
     }
 
-    [When(@"you try get an integer from the json value using a char parser with the multiplier (.*)")]
+    [When("you try get an integer from the json value using a char parser with the multiplier (.*)")]
     public void WhenYouTryGetAnIntegerFromTheJsonValueUsingACharParser(int multiplier)
     {
         JsonString subjectUnderTest = this.scenarioContext.Get<JsonString>(JsonValueSteps.SubjectUnderTest);
@@ -51,7 +51,7 @@ public class JsonStringTryGetValueSteps
         }
     }
 
-    [When(@"you try get an integer from the json value using a utf8 parser with the multiplier (.*)")]
+    [When("you try get an integer from the json value using a utf8 parser with the multiplier (.*)")]
     public void WhenYouTryGetAnIntegerFromTheJsonValueUsingAUtf8Parser(int multiplier)
     {
         JsonString subjectUnderTest = this.scenarioContext.Get<JsonString>(JsonValueSteps.SubjectUnderTest);
@@ -73,28 +73,28 @@ public class JsonStringTryGetValueSteps
         }
     }
 
-    [Then(@"the parse result should be true")]
+    [Then("the parse result should be true")]
     public void ThenTheParseResultShouldBeTrue()
     {
         ParseResult result = this.scenarioContext.Get<ParseResult>(TryParseResult);
         Assert.IsTrue(result.Success);
     }
 
-    [Then(@"the parse result should be false")]
+    [Then("the parse result should be false")]
     public void ThenTheParseResultShouldBeFalse()
     {
         ParseResult result = this.scenarioContext.Get<ParseResult>(TryParseResult);
         Assert.IsFalse(result.Success);
     }
 
-    [Then(@"the parsed value should be equal to the number (.*)")]
+    [Then("the parsed value should be equal to the number (.*)")]
     public void ThenTheParsedValueShouldBeEqualToTheNumber(int expected)
     {
         ParseResult result = this.scenarioContext.Get<ParseResult>(TryParseResult);
         Assert.AreEqual(expected, result.Value);
     }
 
-    [Then(@"the parsed value should be null")]
+    [Then("the parsed value should be null")]
     public void ThenTheParsedValueShouldBeNull()
     {
         ParseResult result = this.scenarioContext.Get<ParseResult>(TryParseResult);
