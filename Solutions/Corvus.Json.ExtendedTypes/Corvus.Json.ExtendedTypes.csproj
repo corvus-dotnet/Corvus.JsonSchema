@@ -18,7 +18,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="CommunityToolkit.HighPerformance" Version="8.0.0" />
+		<PackageReference Include="CommunityToolkit.HighPerformance" Version="8.2.0" />
 		<PackageReference Include="Corvus.Extensions" Version="1.1.11" />
 		<PackageReference Include="Corvus.UriTemplates" Version="1.2.0" />
 		<PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.5">
