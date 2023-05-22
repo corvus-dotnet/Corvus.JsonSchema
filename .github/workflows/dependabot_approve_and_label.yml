@@ -90,9 +90,37 @@ jobs:
               body: "Bumps '${{needs.evaluate_dependabot_pr.outputs.dependency_name}}' from ${{needs.evaluate_dependabot_pr.outputs.version_from}} to ${{needs.evaluate_dependabot_pr.outputs.version_to}}"
             })
 
+  check_for_norelease_label:
+    runs-on: ubuntu-latest
+    outputs:
+      no_release: ${{ steps.check_for_norelease_label.outputs.result }}
+    steps:
+    - name: Check for 'no_release' label on PR
+      id: check_for_norelease_label
+      uses: actions/github-script@v6
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+            const labels = await github.rest.issues.listLabelsOnIssue({
+              owner: context.payload.repository.owner.login,
+              repo: context.payload.repository.name,
+              issue_number: context.payload.number
+            });
+            core.info("labels: " + JSON.stringify(labels.data))
+            if ( labels.data.map(l => l.name).includes("no_release") ) {
+              core.info("Label found")
+              return true
+            }
+            return false
+    - name: Display 'no_release' status
+      run: |
+        echo "no_release: ${{ steps.check_for_norelease_label.outputs.result }}"
+
   label_auto_merge:
     runs-on: ubuntu-latest
-    needs: evaluate_dependabot_pr
+    needs: 
+    - evaluate_dependabot_pr
+    - check_for_norelease_label
     name: 'Automerge & Label'
     steps:
       # Get a token for a different identity so any auto-merge that happens in the next step is
@@ -117,8 +145,11 @@ jobs:
           GITHUB_TOKEN: '${{ steps.generate_token.outputs.token }}'
       - name: 'Label non-dependabot PRs and auto-releasable dependabot PRs with "pending_release"'
         if: |
-          (github.actor != 'dependabot[bot]' && github.actor != 'dependjinbot[bot]') ||
-          needs.evaluate_dependabot_pr.outputs.is_auto_release_candidate == 'True'
+          needs.check_for_norelease_label.outputs.no_release == 'false' &&
+          (
+            (github.actor != 'dependabot[bot]' && github.actor != 'dependjinbot[bot]') ||
+            needs.evaluate_dependabot_pr.outputs.is_auto_release_candidate == 'True'
+          )
         uses: actions/github-script@v6
         with:
           github-token: '${{ secrets.GITHUB_TOKEN }}'
