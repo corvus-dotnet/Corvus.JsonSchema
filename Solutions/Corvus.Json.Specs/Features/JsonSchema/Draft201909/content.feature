@@ -76,7 +76,7 @@ Scenario Outline: validation of binary-encoded media type documents with schema
             "$schema": "https://json-schema.org/draft/2019-09/schema",
             "contentMediaType": "application/json",
             "contentEncoding": "base64",
-            "contentSchema": { "required": ["foo"], "properties": { "foo": { "type": "string" } } }
+            "contentSchema": { "type": "object", "required": ["foo"], "properties": { "foo": { "type": "string" } } }
         }
 */
     Given the input JSON file "content.json"

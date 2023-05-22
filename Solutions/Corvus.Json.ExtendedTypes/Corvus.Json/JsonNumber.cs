@@ -220,6 +220,28 @@ public readonly partial struct JsonNumber : IJsonNumber<JsonNumber>
     }
 
     /// <summary>
+    /// Less than operator.
+    /// </summary>
+    /// <param name="left">The LHS of the comparison.</param>
+    /// <param name="right">The RHS of the comparison.</param>
+    /// <returns><see langword="true"/> if the left is less than the right, otherwise <see langword="false"/>.</returns>
+    public static bool operator <(in JsonNumber left, in JsonNumber right)
+    {
+        return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && (double)left < (double)right;
+    }
+
+    /// <summary>
+    /// Greater than operator.
+    /// </summary>
+    /// <param name="left">The LHS of the comparison.</param>
+    /// <param name="right">The RHS of the comparison.</param>
+    /// <returns><see langword="true"/> if the left is greater than the right, otherwise <see langword="false"/>.</returns>
+    public static bool operator >(in JsonNumber left, in JsonNumber right)
+    {
+        return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && (double)left > (double)right;
+    }
+
+    /// <summary>
     /// Gets an instance of the JSON value from a JsonAny value.
     /// </summary>
     /// <param name="value">The <see cref="JsonAny"/> value from which to instantiate the instance.</param>

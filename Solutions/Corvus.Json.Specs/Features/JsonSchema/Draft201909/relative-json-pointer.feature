@@ -34,6 +34,9 @@ Scenario Outline: validation of Relative JSON Pointers (RJP)
         | #/000/tests/009/data | true  | a valid RJP taking the member or index name                                      |
         | #/000/tests/010/data | false | an invalid RJP that is a valid JSON Pointer                                      |
         | #/000/tests/011/data | false | negative prefix                                                                  |
-        | #/000/tests/012/data | false | ## is not a valid json-pointer                                                   |
-        | #/000/tests/013/data | false | zero cannot be followed by other digits, plus json-pointer                       |
-        | #/000/tests/014/data | false | zero cannot be followed by other digits, plus octothorpe                         |
+        | #/000/tests/012/data | false | explicit positive prefix                                                         |
+        | #/000/tests/013/data | false | ## is not a valid json-pointer                                                   |
+        | #/000/tests/014/data | false | zero cannot be followed by other digits, plus json-pointer                       |
+        | #/000/tests/015/data | false | zero cannot be followed by other digits, plus octothorpe                         |
+        | #/000/tests/016/data | false | empty string                                                                     |
+        | #/000/tests/017/data | true  | multi-digit integer prefix                                                       |

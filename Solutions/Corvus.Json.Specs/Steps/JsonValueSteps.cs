@@ -290,7 +290,20 @@ public class JsonValueSteps
         }
         else
         {
-            this.scenarioContext.Set(JsonAny.Parse(value).AsDotnetBackedValue(), SubjectUnderTest);
+            JsonAny result = JsonAny.Parse(value).AsDotnetBackedValue();
+            if (result.ValueKind == JsonValueKind.Object)
+            {
+                foreach (JsonObjectProperty property in result.EnumerateObject())
+                {
+                    if (property.Value.ValueKind == JsonValueKind.String &&
+                        property.Value.Equals("\u003cundefined\u003e"))
+                    {
+                        result = result.SetProperty(property.Name, JsonString.Undefined);
+                    }
+                }
+            }
+
+            this.scenarioContext.Set(result, SubjectUnderTest);
         }
     }
 

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 	<Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
 
 	<PropertyGroup>
@@ -13,17 +13,17 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Corvus.Extensions" Version="1.1.10" />
-		<PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.4">
+		<PackageReference Include="Corvus.Extensions" Version="1.1.11" />
+		<PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.5">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 		<PackageReference Include="Microsoft.Extensions.Http" Version="7.0.0" />
-		<PackageReference Include="Microsoft.Extensions.ObjectPool" Version="7.0.1" />
+		<PackageReference Include="Microsoft.Extensions.ObjectPool" Version="7.0.4" />
 		<PackageReference Include="NodaTime" Version="3.1.6" />
 		<PackageReference Include="System.Buffers" Version="4.5.1" />
 		<PackageReference Include="System.Collections.Immutable" Version="7.0.0" />
-		<PackageReference Include="System.Text.Json" Version="7.0.1" />
+		<PackageReference Include="System.Text.Json" Version="7.0.2" />
 	</ItemGroup>
 
 	<ItemGroup>

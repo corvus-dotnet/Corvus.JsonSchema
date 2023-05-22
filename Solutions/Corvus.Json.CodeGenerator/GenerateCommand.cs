@@ -51,25 +51,35 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         public bool RebaseToRootPath { get; init; }
 
         [Description("The path to the schema file to process.")]
-        [CommandArgument(0, "[schemaFile]")]
+        [CommandArgument(0, "<schemaFile>")]
+        [NotNull] // <> => NotNull
         public string? SchemaFile { get; init; }
     }
 
     /// <inheritdoc/>
-    public override Task<int> ExecuteAsync([NotNull] CommandContext context, [NotNull] Settings settings)
+    public override Task<int> ExecuteAsync(CommandContext context, Settings settings)
     {
+        ArgumentNullException.ThrowIfNullOrEmpty(settings.SchemaFile); // We will never see this exception if the framework is doing its job; it should have blown up inside the CLI command handling
+        ArgumentNullException.ThrowIfNullOrEmpty(settings.RootNamespace); // We will never see this exception if the framework is doing its job; it should have blown up inside the CLI command handling
+
         return GenerateTypes(settings.SchemaFile, settings.RootNamespace, settings.RootPath, settings.RebaseToRootPath, settings.OutputPath, settings.OutputMapFile, settings.OutputRootTypeName, settings.UseSchema);
     }
 
-    private static async Task<int> GenerateTypes(string schemaFile, string rootNamespace, string rootPath, bool rebaseToRootPath, string outputPath, string outputMapFile, string? rootTypeName, SchemaVariant schemaVariant)
+    private static async Task<int> GenerateTypes(string schemaFile, string rootNamespace, string? rootPath, bool rebaseToRootPath, string? outputPath, string? outputMapFile, string? rootTypeName, SchemaVariant schemaVariant)
     {
         try
         {
             var typeBuilder = new JsonSchemaTypeBuilder(new CompoundDocumentResolver(new FileSystemDocumentResolver(), new HttpClientDocumentResolver(new HttpClient())));
-            JsonReference reference = new JsonReference(schemaFile).Apply(new JsonReference(rootPath));
-            schemaVariant = ValidationSemanticsToSchemaVariant(await typeBuilder.GetValidationSemantics(reference, rebaseToRootPath).ConfigureAwait(false));
+            JsonReference reference = new(schemaFile, rootPath ?? string.Empty);
+            SchemaVariant sv = ValidationSemanticsToSchemaVariant(await typeBuilder.GetValidationSemantics(reference, rebaseToRootPath).ConfigureAwait(false));
+
+            if (sv == SchemaVariant.NotSpecified)
+            {
+                sv = schemaVariant;
+            }
+
             IJsonSchemaBuilder builder =
-                schemaVariant switch
+                sv switch
                 {
                     SchemaVariant.Draft6 => new CodeGeneration.Draft6.JsonSchemaBuilder(typeBuilder),
                     SchemaVariant.Draft7 => new CodeGeneration.Draft7.JsonSchemaBuilder(typeBuilder),
@@ -78,7 +88,7 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
                     _ => new CodeGeneration.Draft202012.JsonSchemaBuilder(typeBuilder)
                 };
 
-            (string RootType, ImmutableDictionary<JsonReference, TypeAndCode> GeneratedTypes) = await builder.BuildTypesFor(reference, rootNamespace, rebaseToRootPath, rootTypeName: rootTypeName).ConfigureAwait(false);
+            (string RootType, ImmutableDictionary<JsonReference, TypeAndCode> GeneratedTypes) = await builder.BuildTypesFor(reference, rootNamespace ?? string.Empty, rebaseToRootPath, rootTypeName: rootTypeName).ConfigureAwait(false);
 
             if (!string.IsNullOrEmpty(outputPath))
             {
@@ -89,7 +99,7 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
                 outputPath = Path.GetDirectoryName(schemaFile)!;
             }
 
-            string mapFile = string.IsNullOrEmpty(outputMapFile) ? outputMapFile : Path.Combine(outputPath, outputMapFile);
+            string? mapFile = string.IsNullOrEmpty(outputMapFile) ? outputMapFile : Path.Combine(outputPath, outputMapFile);
             if (!string.IsNullOrEmpty(mapFile))
             {
                 File.Delete(mapFile);

@@ -985,9 +985,9 @@ public partial class CodeGeneratorValidateIfThenElse
     {
         get
         {
-            return this.TypeDeclaration.Schema().AdditionalItems.ValueKind == JsonValueKind.Object ||
+            return this.HasMultipleItemsType && (this.TypeDeclaration.Schema().AdditionalItems.ValueKind == JsonValueKind.Object ||
                  this.TypeDeclaration.Schema().AdditionalItems.ValueKind == JsonValueKind.True ||
-                 this.TypeDeclaration.Schema().AdditionalItems.ValueKind == JsonValueKind.False;
+                 this.TypeDeclaration.Schema().AdditionalItems.ValueKind == JsonValueKind.False);
         }
     }
 

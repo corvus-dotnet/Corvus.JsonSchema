@@ -763,6 +763,54 @@ public class JsonValueEqualitySteps
     /// Compares the value in JsonInteger in the context variable <c>Value</c> with the expected base64String, and set it into the context variable <c>Result</c>.
     /// </summary>
     /// <param name="expected">The expected value.</param>
+    [When("I compare it as less than the integer (.*)")]
+    public void WhenICompareItAsLessThanTheInteger(string expected)
+    {
+        long expectedValue = expected switch
+        {
+            "long.MinValue" => long.MinValue,
+            "long.MaxValue" => long.MaxValue,
+            "null" => 0,
+            _ => long.Parse(expected),
+        };
+
+        if (expected != "null")
+        {
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonInteger>(JsonValueSteps.SubjectUnderTest) < new JsonInteger(expectedValue), EqualsObjectBackedResultKey);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonInteger>(JsonValueSteps.SubjectUnderTest) < new JsonInteger(expectedValue).AsJsonElementBackedValue(), EqualsResultKey);
+        }
+        else
+        {
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonInteger>(JsonValueSteps.SubjectUnderTest) < JsonInteger.Null, EqualsResultKey);
+        }
+    }
+
+    [When("I compare it as greater than the integer (.*)")]
+    public void WhenICompareItAsGreaterThanTheInteger(string expected)
+    {
+        long expectedValue = expected switch
+        {
+            "long.MinValue" => long.MinValue,
+            "long.MaxValue" => long.MaxValue,
+            "null" => 0,
+            _ => long.Parse(expected),
+        };
+
+        if (expected != "null")
+        {
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonInteger>(JsonValueSteps.SubjectUnderTest) > new JsonInteger(expectedValue), EqualsObjectBackedResultKey);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonInteger>(JsonValueSteps.SubjectUnderTest) > new JsonInteger(expectedValue).AsJsonElementBackedValue(), EqualsResultKey);
+        }
+        else
+        {
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonInteger>(JsonValueSteps.SubjectUnderTest) > JsonInteger.Null, EqualsResultKey);
+        }
+    }
+
+    /// <summary>
+    /// Compares the value in JsonInteger in the context variable <c>Value</c> with the expected base64String, and set it into the context variable <c>Result</c>.
+    /// </summary>
+    /// <param name="expected">The expected value.</param>
     [When("I compare it to the integer (.*)")]
     public void WhenICompareItToTheInteger(string expected)
     {
@@ -803,6 +851,32 @@ public class JsonValueEqualitySteps
     }
 
     /* number */
+
+    /// <summary>
+    /// Compares the value in JsonNumber in the context variable <c>Value</c> with the expected base64String, and set it into the context variable <c>Result</c>.
+    /// </summary>
+    /// <param name="expected">The expected value.</param>
+    [When("I compare it as less than the number (.*)")]
+    public void WhenICompareItAsLessThanTheNumber(string expected)
+    {
+        if (expected != "null")
+        {
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonNumber>(JsonValueSteps.SubjectUnderTest) < new JsonNumber((double)JsonAny.Parse(expected)), EqualsObjectBackedResultKey);
+        }
+
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonNumber>(JsonValueSteps.SubjectUnderTest) < (JsonNumber)JsonAny.Parse(expected), EqualsResultKey);
+    }
+
+    [When("I compare it as greater than the number (.*)")]
+    public void WhenICompareItAsGreaterThanTheNumber(string expected)
+    {
+        if (expected != "null")
+        {
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonNumber>(JsonValueSteps.SubjectUnderTest) > new JsonNumber((double)JsonAny.Parse(expected)), EqualsObjectBackedResultKey);
+        }
+
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonNumber>(JsonValueSteps.SubjectUnderTest) > (JsonNumber)JsonAny.Parse(expected), EqualsResultKey);
+    }
 
     /// <summary>
     /// Compares the value in JsonNumber in the context variable <c>Value</c> with the expected base64String, and set it into the context variable <c>Result</c>.
