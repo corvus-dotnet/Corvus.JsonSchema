@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
@@ -16,7 +16,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <PackageReference Include="Spectre.Console.Cli" Version="0.45.0" />
+	  <PackageReference Include="Spectre.Console.Cli" Version="0.47.0" />
 	</ItemGroup>
 
 	<ItemGroup>
