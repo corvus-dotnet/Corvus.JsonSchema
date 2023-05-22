@@ -111,20 +111,21 @@ jobs:
           const pulls = await github.rest.search.issuesAndPullRequests({
             q: `is:pr repo:${repoWithOwner} is:merged`,
           });
-          allPrs = pulls.data.items.map(p=>`#${p.number} '${p.title}' in ${p.repository_url}`);
+          const allPrs = pulls.data.items.map(p=>`#${p.number} '${p.title}' in ${p.repository_url}`);
           core.info(`allPrs: ${JSON.stringify(allPrs)}`);
 
-          releasePendingPrDetails = pulls.data.items.
-                            filter(function (x) { return x.labels.map(l=>l.name).includes('pending_release') }).
-                            map(p=>`#${p.number} '${p.title}' in ${p.repository_url}`);
+          const releasePendingPrs = pulls.data.items.
+            filter(function (x) { return x.labels.map(l=>l.name).includes('pending_release') }).
+            filter(function (x) { return !x.labels.map(l=>l.name).includes('no_release') });
+
+          const releasePendingPrDetails = releasePendingPrs.map(p=>`#${p.number} '${p.title}' in ${p.repository_url}`);
           core.info(`releasePendingPrDetails: ${JSON.stringify(releasePendingPrDetails)}`);
 
-          const release_pending_prs = pulls.data.items.
-                                        filter(function (x) { return x.labels.map(l=>l.name).includes('pending_release') }).
-                                        map(p=>p.number);
-          core.info(`release_pending_prs: ${JSON.stringify(release_pending_prs)}`);
-          core.setOutput('is_release_pending', (release_pending_prs.length > 0));
-          return JSON.stringify(release_pending_prs);
+          const releasePendingPrNumbers = releasePendingPrs.map(p=>p.number);
+          core.info(`release_pending_prs: ${JSON.stringify(releasePendingPrNumbers)}`);
+
+          core.setOutput('is_release_pending', (releasePendingPrNumbers.length > 0));
+          return JSON.stringify(releasePendingPrNumbers);
         result-encoding: string
 
     - name: Display release_pending_pr_list
