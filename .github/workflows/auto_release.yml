@@ -99,7 +99,9 @@ jobs:
         result-encoding: string
     - name: Display open_pr_list
       run: |
-        echo "open_pr_list : ${{ steps.get_open_pr_list.outputs.result }}"
+        cat <<EOF
+        open_pr_list : ${{ steps.get_open_pr_list.outputs.result }}
+        EOF
 
     - name: Get 'pending_release' PRs
       id: get_release_pending_pr_list
@@ -111,26 +113,27 @@ jobs:
           const pulls = await github.rest.search.issuesAndPullRequests({
             q: `is:pr repo:${repoWithOwner} is:merged`,
           });
-          const allPrs = pulls.data.items.map(p=>`#${p.number} '${p.title}' in ${p.repository_url}`);
+          allPrs = pulls.data.items.map(p=>`#${p.number} '${p.title}' in ${p.repository_url}`);
           core.info(`allPrs: ${JSON.stringify(allPrs)}`);
 
-          const releasePendingPrs = pulls.data.items.
-            filter(function (x) { return x.labels.map(l=>l.name).includes('pending_release') }).
-            filter(function (x) { return !x.labels.map(l=>l.name).includes('no_release') });
-
-          const releasePendingPrDetails = releasePendingPrs.map(p=>`#${p.number} '${p.title}' in ${p.repository_url}`);
+          releasePendingPrDetails = pulls.data.items.
+                            filter(function (x) { return x.labels.map(l=>l.name).includes('pending_release') }).
+                            map(p=>`#${p.number} '${p.title}' in ${p.repository_url}`);
           core.info(`releasePendingPrDetails: ${JSON.stringify(releasePendingPrDetails)}`);
 
-          const releasePendingPrNumbers = releasePendingPrs.map(p=>p.number);
-          core.info(`release_pending_prs: ${JSON.stringify(releasePendingPrNumbers)}`);
-
-          core.setOutput('is_release_pending', (releasePendingPrNumbers.length > 0));
-          return JSON.stringify(releasePendingPrNumbers);
+          const release_pending_prs = pulls.data.items.
+                                        filter(function (x) { return x.labels.map(l=>l.name).includes('pending_release') }).
+                                        map(p=>p.number);
+          core.info(`release_pending_prs: ${JSON.stringify(release_pending_prs)}`);
+          core.setOutput('is_release_pending', (release_pending_prs.length > 0));
+          return JSON.stringify(release_pending_prs);
         result-encoding: string
 
     - name: Display release_pending_pr_list
       run: |
-        echo "release_pending_pr_list : ${{ steps.get_release_pending_pr_list.outputs.result }}"
+        cat <<EOF
+        release_pending_pr_list : ${{ steps.get_release_pending_pr_list.outputs.result }}
+        EOF
         echo "is_release_pending : ${{ steps.get_release_pending_pr_list.outputs.is_release_pending }}"
 
     - uses: actions/checkout@v3
@@ -161,12 +164,14 @@ jobs:
       uses: actions/github-script@v6
       with:
         script: |
-          return ( '${{ steps.is_human_pr.outputs.result }}' == 'true' || '${{ steps.watch_dependabot_prs.outputs.is_complete }}' == 'True') && '${{ steps.get_release_pending_pr_list.outputs.is_release_pending }}' == 'true'
+          return ( '${{ steps.is_human_pr.outputs.result }}' == 'True' || '${{ steps.watch_dependabot_prs.outputs.is_complete }}' == 'True') && '${{ steps.get_release_pending_pr_list.outputs.is_release_pending }}' == 'True'
 
     - name: Display job outputs
       run: |
         echo "no_open_prs: ${{ steps.watch_dependabot_prs.outputs.is_complete }}"
-        echo "pending_release_pr_list: ${{ steps.get_release_pending_pr_list.outputs.result }}"
+        cat <<EOF
+        pending_release_pr_list: ${{ steps.get_release_pending_pr_list.outputs.result }}
+        EOF
         echo "is_human_pr: ${{ steps.is_human_pr.outputs.result }}"
         echo "ready_to_release : ${{ steps.set_ready_for_release.outputs.result }}"
 
@@ -194,7 +199,7 @@ jobs:
       id: run_gitversion
       run: |
         pwsh -noprofile -c 'dotnet-gitversion /diag'
-        pwsh -noprofile -c '(dotnet-gitversion | ConvertFrom-Json).psobject.properties | % { echo ("::set-output name={0}::{1}" -f $_.name, $_.value) }'
+        pwsh -noprofile -c '(dotnet-gitversion | ConvertFrom-Json).psobject.properties | % { echo ("{0}={1}" -f $_.name, $_.value) >> $GITHUB_OUTPUT }'
 
     - name: Generate token
       id: generate_token
