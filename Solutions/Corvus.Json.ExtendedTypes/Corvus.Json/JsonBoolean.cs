@@ -426,6 +426,26 @@ public readonly partial struct JsonBoolean : IJsonBoolean<JsonBoolean>
     }
 
     /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    public static JsonBoolean ParseValue(ReadOnlySpan<byte> buffer)
+    {
+        return IJsonValue<JsonBoolean>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="reader">The reader from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    public static JsonBoolean ParseValue(ref Utf8JsonReader reader)
+    {
+        return IJsonValue<JsonBoolean>.ParseValue(ref reader);
+    }
+
+    /// <summary>
     /// Gets the value as the target value.
     /// </summary>
     /// <typeparam name="TTarget">The type of the target.</typeparam>
