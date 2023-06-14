@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Buffers;
+using System.Reflection.Metadata;
 using System.Text.Json;
 
 namespace Corvus.Json;
@@ -130,4 +131,25 @@ public interface IJsonValue<T> : IEquatable<T>, IJsonValue
     /// <param name="options">The (optional) JsonDocumentOptions.</param>
     /// <returns>An instance built from the JSON string.</returns>
     static abstract T Parse(ReadOnlySequence<byte> utf8Json, JsonDocumentOptions options = default);
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static T ParseValue(ReadOnlySpan<byte> buffer)
+    {
+        Utf8JsonReader reader = new(buffer);
+        return ParseValue(ref reader);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="reader">The reader from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static T ParseValue(ref Utf8JsonReader reader)
+    {
+        return T.FromJson(JsonElement.ParseValue(ref reader));
+    }
 }
