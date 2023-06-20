@@ -26,7 +26,7 @@ public class ValidateLargeDocumentWithAnnotationCollection
     ""dateOfBirth"": ""1944-07-14""
 }";
 
-    private static readonly JsonEverything.ValidationOptions Options = new JsonEverything.ValidationOptions() { OutputFormat = JsonEverything.OutputFormat.Basic };
+    private static readonly JsonEverything.EvaluationOptions Options = new JsonEverything.EvaluationOptions() { OutputFormat = JsonEverything.OutputFormat.List };
 
     private JsonDocument? objectDocument;
     private Person person;
@@ -58,9 +58,9 @@ public class ValidateLargeDocumentWithAnnotationCollection
     }
 
     /// <summary>
-    /// Global cleanup.
+    /// Global clean-up.
     /// </summary>
-    /// <returns>A <see cref="Task"/> which completes once cleanup is complete.</returns>
+    /// <returns>A <see cref="Task"/> which completes once clean-up is complete.</returns>
     [GlobalCleanup]
     public Task GlobalCleanup()
     {
@@ -100,7 +100,7 @@ public class ValidateLargeDocumentWithAnnotationCollection
     [Benchmark(Baseline = true)]
     public void ValidateLargeArrayJsonEveything()
     {
-        JsonEverything.ValidationResults result = this.schema!.Validate(this.node, Options);
+        JsonEverything.EvaluationResults result = this.schema!.Evaluate(this.node, Options);
         if (!result.IsValid)
         {
             throw new InvalidOperationException();
