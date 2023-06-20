@@ -61,6 +61,7 @@ public readonly partial struct Applicator
         /// Gets an Undefined instance.
         /// </summary>
         public static ItemsEntity Undefined { get; } = default;
+
         /// <inheritdoc/>
         public JsonAny AsAny
         {
@@ -523,6 +524,26 @@ public readonly partial struct Applicator
         {
             using var jsonDocument = JsonDocument.Parse(utf8Json, options);
             return new ItemsEntity(jsonDocument.RootElement.Clone());
+        }
+
+        /// <summary>
+        /// Parses a JSON value from a buffer.
+        /// </summary>
+        /// <param name = "buffer">The buffer from which to parse the value.</param>
+        /// <returns>The parsed value.</returns>
+        static ItemsEntity ParseValue(ReadOnlySpan<byte> buffer)
+        {
+            return IJsonValue<ItemsEntity>.ParseValue(buffer);
+        }
+
+        /// <summary>
+        /// Parses a JSON value from a buffer.
+        /// </summary>
+        /// <param name = "reader">The reader from which to parse the value.</param>
+        /// <returns>The parsed value.</returns>
+        static ItemsEntity ParseValue(ref Utf8JsonReader reader)
+        {
+            return IJsonValue<ItemsEntity>.ParseValue(ref reader);
         }
 
         /// <summary>

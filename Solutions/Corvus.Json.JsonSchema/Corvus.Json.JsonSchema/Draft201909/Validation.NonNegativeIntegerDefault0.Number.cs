@@ -364,5 +364,27 @@ public readonly partial struct Validation
 
             throw new InvalidOperationException();
         }
+
+        /// <summary>
+        /// Less than operator.
+        /// </summary>
+        /// <param name = "left">The LHS of the comparison.</param>
+        /// <param name = "right">The RHS of the comparison.</param>
+        /// <returns><see langword="true"/> if the left is less than the right, otherwise <see langword="false"/>.</returns>
+        public static bool operator <(in NonNegativeIntegerDefault0 left, in NonNegativeIntegerDefault0 right)
+        {
+            return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && (double)left < (double)right;
+        }
+
+        /// <summary>
+        /// Greater than operator.
+        /// </summary>
+        /// <param name = "left">The LHS of the comparison.</param>
+        /// <param name = "right">The RHS of the comparison.</param>
+        /// <returns><see langword="true"/> if the left is greater than the right, otherwise <see langword="false"/>.</returns>
+        public static bool operator>(in NonNegativeIntegerDefault0 left, in NonNegativeIntegerDefault0 right)
+        {
+            return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && (double)left > (double)right;
+        }
     }
 }

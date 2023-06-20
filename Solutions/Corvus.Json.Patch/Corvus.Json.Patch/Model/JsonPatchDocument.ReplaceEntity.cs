@@ -55,6 +55,7 @@ public readonly partial struct JsonPatchDocument
         /// Gets an Undefined instance.
         /// </summary>
         public static ReplaceEntity Undefined { get; } = default;
+
         /// <inheritdoc/>
         public JsonAny AsAny
         {
@@ -463,6 +464,26 @@ public readonly partial struct JsonPatchDocument
         {
             using var jsonDocument = JsonDocument.Parse(utf8Json, options);
             return new ReplaceEntity(jsonDocument.RootElement.Clone());
+        }
+
+        /// <summary>
+        /// Parses a JSON value from a buffer.
+        /// </summary>
+        /// <param name = "buffer">The buffer from which to parse the value.</param>
+        /// <returns>The parsed value.</returns>
+        static ReplaceEntity ParseValue(ReadOnlySpan<byte> buffer)
+        {
+            return IJsonValue<ReplaceEntity>.ParseValue(buffer);
+        }
+
+        /// <summary>
+        /// Parses a JSON value from a buffer.
+        /// </summary>
+        /// <param name = "reader">The reader from which to parse the value.</param>
+        /// <returns>The parsed value.</returns>
+        static ReplaceEntity ParseValue(ref Utf8JsonReader reader)
+        {
+            return IJsonValue<ReplaceEntity>.ParseValue(ref reader);
         }
 
         /// <summary>

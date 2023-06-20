@@ -23,7 +23,15 @@ public readonly partial struct Format
     /// <summary>
     /// JSON property name for <see cref = "FormatValue"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> FormatValueUtf8JsonPropertyName = new byte[]{102, 111, 114, 109, 97, 116};
+    public static readonly ReadOnlyMemory<byte> FormatValueUtf8JsonPropertyName = new byte[]
+    {
+        102,
+        111,
+        114,
+        109,
+        97,
+        116
+    };
     /// <summary>
     /// JSON property name for <see cref = "FormatValue"/>.
     /// </summary>

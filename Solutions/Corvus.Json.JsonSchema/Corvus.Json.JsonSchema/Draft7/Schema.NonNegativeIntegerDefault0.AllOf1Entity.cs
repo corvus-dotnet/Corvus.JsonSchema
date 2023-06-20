@@ -69,6 +69,7 @@ public readonly partial struct Schema
             /// Gets an Undefined instance.
             /// </summary>
             public static AllOf1Entity Undefined { get; } = default;
+
             /// <inheritdoc/>
             public JsonAny AsAny
             {
@@ -589,6 +590,26 @@ public readonly partial struct Schema
             {
                 using var jsonDocument = JsonDocument.Parse(utf8Json, options);
                 return new AllOf1Entity(jsonDocument.RootElement.Clone());
+            }
+
+            /// <summary>
+            /// Parses a JSON value from a buffer.
+            /// </summary>
+            /// <param name = "buffer">The buffer from which to parse the value.</param>
+            /// <returns>The parsed value.</returns>
+            static AllOf1Entity ParseValue(ReadOnlySpan<byte> buffer)
+            {
+                return IJsonValue<AllOf1Entity>.ParseValue(buffer);
+            }
+
+            /// <summary>
+            /// Parses a JSON value from a buffer.
+            /// </summary>
+            /// <param name = "reader">The reader from which to parse the value.</param>
+            /// <returns>The parsed value.</returns>
+            static AllOf1Entity ParseValue(ref Utf8JsonReader reader)
+            {
+                return IJsonValue<AllOf1Entity>.ParseValue(ref reader);
             }
 
             /// <summary>

@@ -17,7 +17,7 @@ namespace Corvus.Json;
 /// These adapters give access to the underlying UTF8 bytes of JSON string
 /// values, unless/until https://github.com/dotnet/runtime/issues/74028 lands.
 /// </remarks>
-internal static class LowAllocJsonUtils
+public static class LowAllocJsonUtils
 {
     private static readonly ObjectPool<PooledWriter> WriterPool = new DefaultObjectPoolProvider().Create<PooledWriter>(new Utf8JsonWriterPooledObjectPolicy());
 

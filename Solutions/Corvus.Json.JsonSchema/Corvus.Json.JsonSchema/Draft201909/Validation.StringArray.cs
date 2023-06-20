@@ -55,6 +55,7 @@ public readonly partial struct Validation
         /// Gets an Undefined instance.
         /// </summary>
         public static StringArray Undefined { get; } = default;
+
         /// <inheritdoc/>
         public JsonAny AsAny
         {
@@ -463,6 +464,26 @@ public readonly partial struct Validation
         {
             using var jsonDocument = JsonDocument.Parse(utf8Json, options);
             return new StringArray(jsonDocument.RootElement.Clone());
+        }
+
+        /// <summary>
+        /// Parses a JSON value from a buffer.
+        /// </summary>
+        /// <param name = "buffer">The buffer from which to parse the value.</param>
+        /// <returns>The parsed value.</returns>
+        static StringArray ParseValue(ReadOnlySpan<byte> buffer)
+        {
+            return IJsonValue<StringArray>.ParseValue(buffer);
+        }
+
+        /// <summary>
+        /// Parses a JSON value from a buffer.
+        /// </summary>
+        /// <param name = "reader">The reader from which to parse the value.</param>
+        /// <returns>The parsed value.</returns>
+        static StringArray ParseValue(ref Utf8JsonReader reader)
+        {
+            return IJsonValue<StringArray>.ParseValue(ref reader);
         }
 
         /// <summary>
