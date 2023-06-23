@@ -56,6 +56,7 @@ public readonly partial struct Format
     /// Gets an Undefined instance.
     /// </summary>
     public static Format Undefined { get; } = default;
+
     /// <inheritdoc/>
     public JsonAny AsAny
     {
@@ -494,6 +495,36 @@ public readonly partial struct Format
     {
         using var jsonDocument = JsonDocument.Parse(utf8Json, options);
         return new Format(jsonDocument.RootElement.Clone());
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name = "buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static Format ParseValue(ReadOnlySpan<char> buffer)
+    {
+        return IJsonValue<Format>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name = "buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static Format ParseValue(ReadOnlySpan<byte> buffer)
+    {
+        return IJsonValue<Format>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name = "reader">The reader from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static Format ParseValue(ref Utf8JsonReader reader)
+    {
+        return IJsonValue<Format>.ParseValue(ref reader);
     }
 
     /// <summary>

@@ -39,7 +39,7 @@
 
 		<PackageReference Include="FluentAssertions" Version="6.11.0" />
 
-		<PackageReference Include="System.Text.Json" Version="7.0.2" />
+		<PackageReference Include="System.Text.Json" Version="7.0.3" />
 
 		<ProjectReference Include="..\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.201909.csproj" />
 
@@ -72,6 +72,7 @@
 	<ItemGroup>
 	  <Folder Include="Features\JsonModel\JsonStringTryGetValue\" />
 	  <Folder Include="Features\JsonModel\JsonStringConcatenate\" />
+	  <Folder Include="Features\JsonModel\ParseValue\" />
 	  <Folder Include="Features\JsonSchema\Draft6\" />
 	</ItemGroup>
 

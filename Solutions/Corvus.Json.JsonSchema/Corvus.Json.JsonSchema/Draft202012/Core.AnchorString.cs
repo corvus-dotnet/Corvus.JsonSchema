@@ -55,6 +55,7 @@ public readonly partial struct Core
         /// Gets an Undefined instance.
         /// </summary>
         public static AnchorString Undefined { get; } = default;
+
         /// <inheritdoc/>
         public JsonAny AsAny
         {
@@ -463,6 +464,36 @@ public readonly partial struct Core
         {
             using var jsonDocument = JsonDocument.Parse(utf8Json, options);
             return new AnchorString(jsonDocument.RootElement.Clone());
+        }
+
+        /// <summary>
+        /// Parses a JSON value from a buffer.
+        /// </summary>
+        /// <param name = "buffer">The buffer from which to parse the value.</param>
+        /// <returns>The parsed value.</returns>
+        static AnchorString ParseValue(ReadOnlySpan<char> buffer)
+        {
+            return IJsonValue<AnchorString>.ParseValue(buffer);
+        }
+
+        /// <summary>
+        /// Parses a JSON value from a buffer.
+        /// </summary>
+        /// <param name = "buffer">The buffer from which to parse the value.</param>
+        /// <returns>The parsed value.</returns>
+        static AnchorString ParseValue(ReadOnlySpan<byte> buffer)
+        {
+            return IJsonValue<AnchorString>.ParseValue(buffer);
+        }
+
+        /// <summary>
+        /// Parses a JSON value from a buffer.
+        /// </summary>
+        /// <param name = "reader">The reader from which to parse the value.</param>
+        /// <returns>The parsed value.</returns>
+        static AnchorString ParseValue(ref Utf8JsonReader reader)
+        {
+            return IJsonValue<AnchorString>.ParseValue(ref reader);
         }
 
         /// <summary>

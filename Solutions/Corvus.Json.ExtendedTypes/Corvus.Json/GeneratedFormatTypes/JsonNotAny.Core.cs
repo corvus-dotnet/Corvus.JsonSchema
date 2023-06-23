@@ -719,6 +719,16 @@ public readonly partial struct JsonNotAny
     /// </summary>
     /// <param name="buffer">The buffer from which to parse the value.</param>
     /// <returns>The parsed value.</returns>
+    public static JsonNotAny ParseValue(ReadOnlySpan<char> buffer)
+    {
+        return IJsonValue<JsonNotAny>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
     public static JsonNotAny ParseValue(ReadOnlySpan<byte> buffer)
     {
         return IJsonValue<JsonNotAny>.ParseValue(buffer);
