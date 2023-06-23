@@ -333,6 +333,36 @@ public readonly partial struct JsonUriReference
         return IJsonValue<JsonUriReference>.ParseValue(buffer[..written]);
     }
 
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    public static JsonUriReference ParseValue(ReadOnlySpan<char> buffer)
+    {
+        return IJsonValue<JsonUriReference>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    public static JsonUriReference ParseValue(ReadOnlySpan<byte> buffer)
+    {
+        return IJsonValue<JsonUriReference>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="reader">The reader from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    public static JsonUriReference ParseValue(ref Utf8JsonReader reader)
+    {
+        return IJsonValue<JsonUriReference>.ParseValue(ref reader);
+    }
+
     /// <inheritdoc/>
     public bool TryGetString([NotNullWhen(true)] out string? value)
     {

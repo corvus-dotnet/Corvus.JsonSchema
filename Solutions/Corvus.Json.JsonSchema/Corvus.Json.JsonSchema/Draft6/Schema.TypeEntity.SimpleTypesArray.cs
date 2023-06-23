@@ -473,6 +473,16 @@ public readonly partial struct Schema
             /// </summary>
             /// <param name = "buffer">The buffer from which to parse the value.</param>
             /// <returns>The parsed value.</returns>
+            static SimpleTypesArray ParseValue(ReadOnlySpan<char> buffer)
+            {
+                return IJsonValue<SimpleTypesArray>.ParseValue(buffer);
+            }
+
+            /// <summary>
+            /// Parses a JSON value from a buffer.
+            /// </summary>
+            /// <param name = "buffer">The buffer from which to parse the value.</param>
+            /// <returns>The parsed value.</returns>
             static SimpleTypesArray ParseValue(ReadOnlySpan<byte> buffer)
             {
                 return IJsonValue<SimpleTypesArray>.ParseValue(buffer);

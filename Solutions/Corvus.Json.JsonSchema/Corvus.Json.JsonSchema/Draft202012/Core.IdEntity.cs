@@ -471,6 +471,16 @@ public readonly partial struct Core
         /// </summary>
         /// <param name = "buffer">The buffer from which to parse the value.</param>
         /// <returns>The parsed value.</returns>
+        static IdEntity ParseValue(ReadOnlySpan<char> buffer)
+        {
+            return IJsonValue<IdEntity>.ParseValue(buffer);
+        }
+
+        /// <summary>
+        /// Parses a JSON value from a buffer.
+        /// </summary>
+        /// <param name = "buffer">The buffer from which to parse the value.</param>
+        /// <returns>The parsed value.</returns>
         static IdEntity ParseValue(ReadOnlySpan<byte> buffer)
         {
             return IJsonValue<IdEntity>.ParseValue(buffer);

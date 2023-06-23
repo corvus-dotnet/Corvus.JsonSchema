@@ -477,6 +477,16 @@ public readonly partial struct MetaData
         /// </summary>
         /// <param name = "buffer">The buffer from which to parse the value.</param>
         /// <returns>The parsed value.</returns>
+        static DeprecatedEntity ParseValue(ReadOnlySpan<char> buffer)
+        {
+            return IJsonValue<DeprecatedEntity>.ParseValue(buffer);
+        }
+
+        /// <summary>
+        /// Parses a JSON value from a buffer.
+        /// </summary>
+        /// <param name = "buffer">The buffer from which to parse the value.</param>
+        /// <returns>The parsed value.</returns>
         static DeprecatedEntity ParseValue(ReadOnlySpan<byte> buffer)
         {
             return IJsonValue<DeprecatedEntity>.ParseValue(buffer);

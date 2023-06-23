@@ -502,6 +502,16 @@ public readonly partial struct MetaData
     /// </summary>
     /// <param name = "buffer">The buffer from which to parse the value.</param>
     /// <returns>The parsed value.</returns>
+    static MetaData ParseValue(ReadOnlySpan<char> buffer)
+    {
+        return IJsonValue<MetaData>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name = "buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
     static MetaData ParseValue(ReadOnlySpan<byte> buffer)
     {
         return IJsonValue<MetaData>.ParseValue(buffer);

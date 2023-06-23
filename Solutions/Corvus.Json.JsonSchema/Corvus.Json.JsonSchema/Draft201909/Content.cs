@@ -502,6 +502,16 @@ public readonly partial struct Content
     /// </summary>
     /// <param name = "buffer">The buffer from which to parse the value.</param>
     /// <returns>The parsed value.</returns>
+    static Content ParseValue(ReadOnlySpan<char> buffer)
+    {
+        return IJsonValue<Content>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name = "buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
     static Content ParseValue(ReadOnlySpan<byte> buffer)
     {
         return IJsonValue<Content>.ParseValue(buffer);

@@ -425,6 +425,16 @@ public readonly partial struct JsonArray : IJsonArray<JsonArray>
     /// </summary>
     /// <param name="buffer">The buffer from which to parse the value.</param>
     /// <returns>The parsed value.</returns>
+    public static JsonArray ParseValue(ReadOnlySpan<char> buffer)
+    {
+        return IJsonValue<JsonArray>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
     public static JsonArray ParseValue(ReadOnlySpan<byte> buffer)
     {
         return IJsonValue<JsonArray>.ParseValue(buffer);

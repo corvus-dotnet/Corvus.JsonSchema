@@ -471,6 +471,16 @@ public readonly partial struct Schema
         /// </summary>
         /// <param name = "buffer">The buffer from which to parse the value.</param>
         /// <returns>The parsed value.</returns>
+        static PatternPropertiesEntity ParseValue(ReadOnlySpan<char> buffer)
+        {
+            return IJsonValue<PatternPropertiesEntity>.ParseValue(buffer);
+        }
+
+        /// <summary>
+        /// Parses a JSON value from a buffer.
+        /// </summary>
+        /// <param name = "buffer">The buffer from which to parse the value.</param>
+        /// <returns>The parsed value.</returns>
         static PatternPropertiesEntity ParseValue(ReadOnlySpan<byte> buffer)
         {
             return IJsonValue<PatternPropertiesEntity>.ParseValue(buffer);

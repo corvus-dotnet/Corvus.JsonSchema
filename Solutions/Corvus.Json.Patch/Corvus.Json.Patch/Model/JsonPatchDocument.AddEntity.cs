@@ -471,6 +471,16 @@ public readonly partial struct JsonPatchDocument
         /// </summary>
         /// <param name = "buffer">The buffer from which to parse the value.</param>
         /// <returns>The parsed value.</returns>
+        static AddEntity ParseValue(ReadOnlySpan<char> buffer)
+        {
+            return IJsonValue<AddEntity>.ParseValue(buffer);
+        }
+
+        /// <summary>
+        /// Parses a JSON value from a buffer.
+        /// </summary>
+        /// <param name = "buffer">The buffer from which to parse the value.</param>
+        /// <returns>The parsed value.</returns>
         static AddEntity ParseValue(ReadOnlySpan<byte> buffer)
         {
             return IJsonValue<AddEntity>.ParseValue(buffer);
