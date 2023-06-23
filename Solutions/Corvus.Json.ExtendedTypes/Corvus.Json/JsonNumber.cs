@@ -442,6 +442,36 @@ public readonly partial struct JsonNumber : IJsonNumber<JsonNumber>
     }
 
     /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    public static JsonNumber ParseValue(ReadOnlySpan<char> buffer)
+    {
+        return IJsonValue<JsonNumber>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    public static JsonNumber ParseValue(ReadOnlySpan<byte> buffer)
+    {
+        return IJsonValue<JsonNumber>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="reader">The reader from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    public static JsonNumber ParseValue(ref Utf8JsonReader reader)
+    {
+        return IJsonValue<JsonNumber>.ParseValue(ref reader);
+    }
+
+    /// <summary>
     /// Gets the value as the target value.
     /// </summary>
     /// <typeparam name="TTarget">The type of the target.</typeparam>

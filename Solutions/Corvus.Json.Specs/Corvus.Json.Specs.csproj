@@ -72,6 +72,7 @@
 	<ItemGroup>
 	  <Folder Include="Features\JsonModel\JsonStringTryGetValue\" />
 	  <Folder Include="Features\JsonModel\JsonStringConcatenate\" />
+	  <Folder Include="Features\JsonModel\ParseValue\" />
 	  <Folder Include="Features\JsonSchema\Draft6\" />
 	</ItemGroup>
 
