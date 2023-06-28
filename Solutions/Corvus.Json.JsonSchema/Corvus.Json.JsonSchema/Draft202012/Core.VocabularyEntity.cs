@@ -55,6 +55,7 @@ public readonly partial struct Core
         /// Gets an Undefined instance.
         /// </summary>
         public static VocabularyEntity Undefined { get; } = default;
+
         /// <inheritdoc/>
         public JsonAny AsAny
         {
@@ -463,6 +464,36 @@ public readonly partial struct Core
         {
             using var jsonDocument = JsonDocument.Parse(utf8Json, options);
             return new VocabularyEntity(jsonDocument.RootElement.Clone());
+        }
+
+        /// <summary>
+        /// Parses a JSON value from a buffer.
+        /// </summary>
+        /// <param name = "buffer">The buffer from which to parse the value.</param>
+        /// <returns>The parsed value.</returns>
+        static VocabularyEntity ParseValue(ReadOnlySpan<char> buffer)
+        {
+            return IJsonValue<VocabularyEntity>.ParseValue(buffer);
+        }
+
+        /// <summary>
+        /// Parses a JSON value from a buffer.
+        /// </summary>
+        /// <param name = "buffer">The buffer from which to parse the value.</param>
+        /// <returns>The parsed value.</returns>
+        static VocabularyEntity ParseValue(ReadOnlySpan<byte> buffer)
+        {
+            return IJsonValue<VocabularyEntity>.ParseValue(buffer);
+        }
+
+        /// <summary>
+        /// Parses a JSON value from a buffer.
+        /// </summary>
+        /// <param name = "reader">The reader from which to parse the value.</param>
+        /// <returns>The parsed value.</returns>
+        static VocabularyEntity ParseValue(ref Utf8JsonReader reader)
+        {
+            return IJsonValue<VocabularyEntity>.ParseValue(ref reader);
         }
 
         /// <summary>

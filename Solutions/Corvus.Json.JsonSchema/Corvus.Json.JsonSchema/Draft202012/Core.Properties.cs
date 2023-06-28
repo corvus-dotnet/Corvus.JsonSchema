@@ -23,7 +23,12 @@ public readonly partial struct Core
     /// <summary>
     /// JSON property name for <see cref = "Id"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> IdUtf8JsonPropertyName = new byte[]{36, 105, 100};
+    public static readonly ReadOnlyMemory<byte> IdUtf8JsonPropertyName = new byte[]
+    {
+        36,
+        105,
+        100
+    };
     /// <summary>
     /// JSON property name for <see cref = "Id"/>.
     /// </summary>
@@ -31,7 +36,16 @@ public readonly partial struct Core
     /// <summary>
     /// JSON property name for <see cref = "Schema"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> SchemaUtf8JsonPropertyName = new byte[]{36, 115, 99, 104, 101, 109, 97};
+    public static readonly ReadOnlyMemory<byte> SchemaUtf8JsonPropertyName = new byte[]
+    {
+        36,
+        115,
+        99,
+        104,
+        101,
+        109,
+        97
+    };
     /// <summary>
     /// JSON property name for <see cref = "Schema"/>.
     /// </summary>
@@ -39,7 +53,13 @@ public readonly partial struct Core
     /// <summary>
     /// JSON property name for <see cref = "Ref"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> RefUtf8JsonPropertyName = new byte[]{36, 114, 101, 102};
+    public static readonly ReadOnlyMemory<byte> RefUtf8JsonPropertyName = new byte[]
+    {
+        36,
+        114,
+        101,
+        102
+    };
     /// <summary>
     /// JSON property name for <see cref = "Ref"/>.
     /// </summary>
@@ -47,7 +67,16 @@ public readonly partial struct Core
     /// <summary>
     /// JSON property name for <see cref = "Anchor"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> AnchorUtf8JsonPropertyName = new byte[]{36, 97, 110, 99, 104, 111, 114};
+    public static readonly ReadOnlyMemory<byte> AnchorUtf8JsonPropertyName = new byte[]
+    {
+        36,
+        97,
+        110,
+        99,
+        104,
+        111,
+        114
+    };
     /// <summary>
     /// JSON property name for <see cref = "Anchor"/>.
     /// </summary>
@@ -55,7 +84,20 @@ public readonly partial struct Core
     /// <summary>
     /// JSON property name for <see cref = "DynamicRef"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> DynamicRefUtf8JsonPropertyName = new byte[]{36, 100, 121, 110, 97, 109, 105, 99, 82, 101, 102};
+    public static readonly ReadOnlyMemory<byte> DynamicRefUtf8JsonPropertyName = new byte[]
+    {
+        36,
+        100,
+        121,
+        110,
+        97,
+        109,
+        105,
+        99,
+        82,
+        101,
+        102
+    };
     /// <summary>
     /// JSON property name for <see cref = "DynamicRef"/>.
     /// </summary>
@@ -63,7 +105,23 @@ public readonly partial struct Core
     /// <summary>
     /// JSON property name for <see cref = "DynamicAnchor"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> DynamicAnchorUtf8JsonPropertyName = new byte[]{36, 100, 121, 110, 97, 109, 105, 99, 65, 110, 99, 104, 111, 114};
+    public static readonly ReadOnlyMemory<byte> DynamicAnchorUtf8JsonPropertyName = new byte[]
+    {
+        36,
+        100,
+        121,
+        110,
+        97,
+        109,
+        105,
+        99,
+        65,
+        110,
+        99,
+        104,
+        111,
+        114
+    };
     /// <summary>
     /// JSON property name for <see cref = "DynamicAnchor"/>.
     /// </summary>
@@ -71,7 +129,20 @@ public readonly partial struct Core
     /// <summary>
     /// JSON property name for <see cref = "Vocabulary"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> VocabularyUtf8JsonPropertyName = new byte[]{36, 118, 111, 99, 97, 98, 117, 108, 97, 114, 121};
+    public static readonly ReadOnlyMemory<byte> VocabularyUtf8JsonPropertyName = new byte[]
+    {
+        36,
+        118,
+        111,
+        99,
+        97,
+        98,
+        117,
+        108,
+        97,
+        114,
+        121
+    };
     /// <summary>
     /// JSON property name for <see cref = "Vocabulary"/>.
     /// </summary>
@@ -79,7 +150,17 @@ public readonly partial struct Core
     /// <summary>
     /// JSON property name for <see cref = "Comment"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> CommentUtf8JsonPropertyName = new byte[]{36, 99, 111, 109, 109, 101, 110, 116};
+    public static readonly ReadOnlyMemory<byte> CommentUtf8JsonPropertyName = new byte[]
+    {
+        36,
+        99,
+        111,
+        109,
+        109,
+        101,
+        110,
+        116
+    };
     /// <summary>
     /// JSON property name for <see cref = "Comment"/>.
     /// </summary>
@@ -87,7 +168,14 @@ public readonly partial struct Core
     /// <summary>
     /// JSON property name for <see cref = "Defs"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> DefsUtf8JsonPropertyName = new byte[]{36, 100, 101, 102, 115};
+    public static readonly ReadOnlyMemory<byte> DefsUtf8JsonPropertyName = new byte[]
+    {
+        36,
+        100,
+        101,
+        102,
+        115
+    };
     /// <summary>
     /// JSON property name for <see cref = "Defs"/>.
     /// </summary>

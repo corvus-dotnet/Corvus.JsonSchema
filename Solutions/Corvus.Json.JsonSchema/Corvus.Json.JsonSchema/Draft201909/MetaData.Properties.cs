@@ -23,7 +23,14 @@ public readonly partial struct MetaData
     /// <summary>
     /// JSON property name for <see cref = "Title"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> TitleUtf8JsonPropertyName = new byte[]{116, 105, 116, 108, 101};
+    public static readonly ReadOnlyMemory<byte> TitleUtf8JsonPropertyName = new byte[]
+    {
+        116,
+        105,
+        116,
+        108,
+        101
+    };
     /// <summary>
     /// JSON property name for <see cref = "Title"/>.
     /// </summary>
@@ -31,7 +38,20 @@ public readonly partial struct MetaData
     /// <summary>
     /// JSON property name for <see cref = "Description"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> DescriptionUtf8JsonPropertyName = new byte[]{100, 101, 115, 99, 114, 105, 112, 116, 105, 111, 110};
+    public static readonly ReadOnlyMemory<byte> DescriptionUtf8JsonPropertyName = new byte[]
+    {
+        100,
+        101,
+        115,
+        99,
+        114,
+        105,
+        112,
+        116,
+        105,
+        111,
+        110
+    };
     /// <summary>
     /// JSON property name for <see cref = "Description"/>.
     /// </summary>
@@ -39,7 +59,16 @@ public readonly partial struct MetaData
     /// <summary>
     /// JSON property name for <see cref = "Default"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> DefaultUtf8JsonPropertyName = new byte[]{100, 101, 102, 97, 117, 108, 116};
+    public static readonly ReadOnlyMemory<byte> DefaultUtf8JsonPropertyName = new byte[]
+    {
+        100,
+        101,
+        102,
+        97,
+        117,
+        108,
+        116
+    };
     /// <summary>
     /// JSON property name for <see cref = "Default"/>.
     /// </summary>
@@ -47,7 +76,19 @@ public readonly partial struct MetaData
     /// <summary>
     /// JSON property name for <see cref = "Deprecated"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> DeprecatedUtf8JsonPropertyName = new byte[]{100, 101, 112, 114, 101, 99, 97, 116, 101, 100};
+    public static readonly ReadOnlyMemory<byte> DeprecatedUtf8JsonPropertyName = new byte[]
+    {
+        100,
+        101,
+        112,
+        114,
+        101,
+        99,
+        97,
+        116,
+        101,
+        100
+    };
     /// <summary>
     /// JSON property name for <see cref = "Deprecated"/>.
     /// </summary>
@@ -55,7 +96,17 @@ public readonly partial struct MetaData
     /// <summary>
     /// JSON property name for <see cref = "ReadOnly"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> ReadOnlyUtf8JsonPropertyName = new byte[]{114, 101, 97, 100, 79, 110, 108, 121};
+    public static readonly ReadOnlyMemory<byte> ReadOnlyUtf8JsonPropertyName = new byte[]
+    {
+        114,
+        101,
+        97,
+        100,
+        79,
+        110,
+        108,
+        121
+    };
     /// <summary>
     /// JSON property name for <see cref = "ReadOnly"/>.
     /// </summary>
@@ -63,7 +114,18 @@ public readonly partial struct MetaData
     /// <summary>
     /// JSON property name for <see cref = "WriteOnly"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> WriteOnlyUtf8JsonPropertyName = new byte[]{119, 114, 105, 116, 101, 79, 110, 108, 121};
+    public static readonly ReadOnlyMemory<byte> WriteOnlyUtf8JsonPropertyName = new byte[]
+    {
+        119,
+        114,
+        105,
+        116,
+        101,
+        79,
+        110,
+        108,
+        121
+    };
     /// <summary>
     /// JSON property name for <see cref = "WriteOnly"/>.
     /// </summary>
@@ -71,7 +133,17 @@ public readonly partial struct MetaData
     /// <summary>
     /// JSON property name for <see cref = "Examples"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> ExamplesUtf8JsonPropertyName = new byte[]{101, 120, 97, 109, 112, 108, 101, 115};
+    public static readonly ReadOnlyMemory<byte> ExamplesUtf8JsonPropertyName = new byte[]
+    {
+        101,
+        120,
+        97,
+        109,
+        112,
+        108,
+        101,
+        115
+    };
     /// <summary>
     /// JSON property name for <see cref = "Examples"/>.
     /// </summary>

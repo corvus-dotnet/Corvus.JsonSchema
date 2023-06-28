@@ -25,7 +25,13 @@ public readonly partial struct JsonPatchDocument
         /// <summary>
         /// JSON property name for <see cref = "FromValue"/>.
         /// </summary>
-        public static readonly ReadOnlyMemory<byte> FromValueUtf8JsonPropertyName = new byte[]{102, 114, 111, 109};
+        public static readonly ReadOnlyMemory<byte> FromValueUtf8JsonPropertyName = new byte[]
+        {
+            102,
+            114,
+            111,
+            109
+        };
         /// <summary>
         /// JSON property name for <see cref = "FromValue"/>.
         /// </summary>
@@ -33,7 +39,13 @@ public readonly partial struct JsonPatchDocument
         /// <summary>
         /// JSON property name for <see cref = "Path"/>.
         /// </summary>
-        public static readonly ReadOnlyMemory<byte> PathUtf8JsonPropertyName = new byte[]{112, 97, 116, 104};
+        public static readonly ReadOnlyMemory<byte> PathUtf8JsonPropertyName = new byte[]
+        {
+            112,
+            97,
+            116,
+            104
+        };
         /// <summary>
         /// JSON property name for <see cref = "Path"/>.
         /// </summary>
@@ -41,7 +53,11 @@ public readonly partial struct JsonPatchDocument
         /// <summary>
         /// JSON property name for <see cref = "Op"/>.
         /// </summary>
-        public static readonly ReadOnlyMemory<byte> OpUtf8JsonPropertyName = new byte[]{111, 112};
+        public static readonly ReadOnlyMemory<byte> OpUtf8JsonPropertyName = new byte[]
+        {
+            111,
+            112
+        };
         /// <summary>
         /// JSON property name for <see cref = "Op"/>.
         /// </summary>

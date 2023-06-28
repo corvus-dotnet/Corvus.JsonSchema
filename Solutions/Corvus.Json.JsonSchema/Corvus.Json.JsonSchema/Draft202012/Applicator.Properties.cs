@@ -23,7 +23,20 @@ public readonly partial struct Applicator
     /// <summary>
     /// JSON property name for <see cref = "PrefixItems"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> PrefixItemsUtf8JsonPropertyName = new byte[]{112, 114, 101, 102, 105, 120, 73, 116, 101, 109, 115};
+    public static readonly ReadOnlyMemory<byte> PrefixItemsUtf8JsonPropertyName = new byte[]
+    {
+        112,
+        114,
+        101,
+        102,
+        105,
+        120,
+        73,
+        116,
+        101,
+        109,
+        115
+    };
     /// <summary>
     /// JSON property name for <see cref = "PrefixItems"/>.
     /// </summary>
@@ -31,7 +44,14 @@ public readonly partial struct Applicator
     /// <summary>
     /// JSON property name for <see cref = "Items"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> ItemsUtf8JsonPropertyName = new byte[]{105, 116, 101, 109, 115};
+    public static readonly ReadOnlyMemory<byte> ItemsUtf8JsonPropertyName = new byte[]
+    {
+        105,
+        116,
+        101,
+        109,
+        115
+    };
     /// <summary>
     /// JSON property name for <see cref = "Items"/>.
     /// </summary>
@@ -39,7 +59,17 @@ public readonly partial struct Applicator
     /// <summary>
     /// JSON property name for <see cref = "Contains"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> ContainsUtf8JsonPropertyName = new byte[]{99, 111, 110, 116, 97, 105, 110, 115};
+    public static readonly ReadOnlyMemory<byte> ContainsUtf8JsonPropertyName = new byte[]
+    {
+        99,
+        111,
+        110,
+        116,
+        97,
+        105,
+        110,
+        115
+    };
     /// <summary>
     /// JSON property name for <see cref = "Contains"/>.
     /// </summary>
@@ -47,7 +77,29 @@ public readonly partial struct Applicator
     /// <summary>
     /// JSON property name for <see cref = "AdditionalProperties"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> AdditionalPropertiesUtf8JsonPropertyName = new byte[]{97, 100, 100, 105, 116, 105, 111, 110, 97, 108, 80, 114, 111, 112, 101, 114, 116, 105, 101, 115};
+    public static readonly ReadOnlyMemory<byte> AdditionalPropertiesUtf8JsonPropertyName = new byte[]
+    {
+        97,
+        100,
+        100,
+        105,
+        116,
+        105,
+        111,
+        110,
+        97,
+        108,
+        80,
+        114,
+        111,
+        112,
+        101,
+        114,
+        116,
+        105,
+        101,
+        115
+    };
     /// <summary>
     /// JSON property name for <see cref = "AdditionalProperties"/>.
     /// </summary>
@@ -55,7 +107,19 @@ public readonly partial struct Applicator
     /// <summary>
     /// JSON property name for <see cref = "Properties"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> PropertiesUtf8JsonPropertyName = new byte[]{112, 114, 111, 112, 101, 114, 116, 105, 101, 115};
+    public static readonly ReadOnlyMemory<byte> PropertiesUtf8JsonPropertyName = new byte[]
+    {
+        112,
+        114,
+        111,
+        112,
+        101,
+        114,
+        116,
+        105,
+        101,
+        115
+    };
     /// <summary>
     /// JSON property name for <see cref = "Properties"/>.
     /// </summary>
@@ -63,7 +127,26 @@ public readonly partial struct Applicator
     /// <summary>
     /// JSON property name for <see cref = "PatternProperties"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> PatternPropertiesUtf8JsonPropertyName = new byte[]{112, 97, 116, 116, 101, 114, 110, 80, 114, 111, 112, 101, 114, 116, 105, 101, 115};
+    public static readonly ReadOnlyMemory<byte> PatternPropertiesUtf8JsonPropertyName = new byte[]
+    {
+        112,
+        97,
+        116,
+        116,
+        101,
+        114,
+        110,
+        80,
+        114,
+        111,
+        112,
+        101,
+        114,
+        116,
+        105,
+        101,
+        115
+    };
     /// <summary>
     /// JSON property name for <see cref = "PatternProperties"/>.
     /// </summary>
@@ -71,7 +154,25 @@ public readonly partial struct Applicator
     /// <summary>
     /// JSON property name for <see cref = "DependentSchemas"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> DependentSchemasUtf8JsonPropertyName = new byte[]{100, 101, 112, 101, 110, 100, 101, 110, 116, 83, 99, 104, 101, 109, 97, 115};
+    public static readonly ReadOnlyMemory<byte> DependentSchemasUtf8JsonPropertyName = new byte[]
+    {
+        100,
+        101,
+        112,
+        101,
+        110,
+        100,
+        101,
+        110,
+        116,
+        83,
+        99,
+        104,
+        101,
+        109,
+        97,
+        115
+    };
     /// <summary>
     /// JSON property name for <see cref = "DependentSchemas"/>.
     /// </summary>
@@ -79,7 +180,22 @@ public readonly partial struct Applicator
     /// <summary>
     /// JSON property name for <see cref = "PropertyNames"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> PropertyNamesUtf8JsonPropertyName = new byte[]{112, 114, 111, 112, 101, 114, 116, 121, 78, 97, 109, 101, 115};
+    public static readonly ReadOnlyMemory<byte> PropertyNamesUtf8JsonPropertyName = new byte[]
+    {
+        112,
+        114,
+        111,
+        112,
+        101,
+        114,
+        116,
+        121,
+        78,
+        97,
+        109,
+        101,
+        115
+    };
     /// <summary>
     /// JSON property name for <see cref = "PropertyNames"/>.
     /// </summary>
@@ -87,7 +203,11 @@ public readonly partial struct Applicator
     /// <summary>
     /// JSON property name for <see cref = "If"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> IfUtf8JsonPropertyName = new byte[]{105, 102};
+    public static readonly ReadOnlyMemory<byte> IfUtf8JsonPropertyName = new byte[]
+    {
+        105,
+        102
+    };
     /// <summary>
     /// JSON property name for <see cref = "If"/>.
     /// </summary>
@@ -95,7 +215,13 @@ public readonly partial struct Applicator
     /// <summary>
     /// JSON property name for <see cref = "Then"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> ThenUtf8JsonPropertyName = new byte[]{116, 104, 101, 110};
+    public static readonly ReadOnlyMemory<byte> ThenUtf8JsonPropertyName = new byte[]
+    {
+        116,
+        104,
+        101,
+        110
+    };
     /// <summary>
     /// JSON property name for <see cref = "Then"/>.
     /// </summary>
@@ -103,7 +229,13 @@ public readonly partial struct Applicator
     /// <summary>
     /// JSON property name for <see cref = "Else"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> ElseUtf8JsonPropertyName = new byte[]{101, 108, 115, 101};
+    public static readonly ReadOnlyMemory<byte> ElseUtf8JsonPropertyName = new byte[]
+    {
+        101,
+        108,
+        115,
+        101
+    };
     /// <summary>
     /// JSON property name for <see cref = "Else"/>.
     /// </summary>
@@ -111,7 +243,14 @@ public readonly partial struct Applicator
     /// <summary>
     /// JSON property name for <see cref = "AllOf"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> AllOfUtf8JsonPropertyName = new byte[]{97, 108, 108, 79, 102};
+    public static readonly ReadOnlyMemory<byte> AllOfUtf8JsonPropertyName = new byte[]
+    {
+        97,
+        108,
+        108,
+        79,
+        102
+    };
     /// <summary>
     /// JSON property name for <see cref = "AllOf"/>.
     /// </summary>
@@ -119,7 +258,14 @@ public readonly partial struct Applicator
     /// <summary>
     /// JSON property name for <see cref = "AnyOf"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> AnyOfUtf8JsonPropertyName = new byte[]{97, 110, 121, 79, 102};
+    public static readonly ReadOnlyMemory<byte> AnyOfUtf8JsonPropertyName = new byte[]
+    {
+        97,
+        110,
+        121,
+        79,
+        102
+    };
     /// <summary>
     /// JSON property name for <see cref = "AnyOf"/>.
     /// </summary>
@@ -127,7 +273,14 @@ public readonly partial struct Applicator
     /// <summary>
     /// JSON property name for <see cref = "OneOf"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> OneOfUtf8JsonPropertyName = new byte[]{111, 110, 101, 79, 102};
+    public static readonly ReadOnlyMemory<byte> OneOfUtf8JsonPropertyName = new byte[]
+    {
+        111,
+        110,
+        101,
+        79,
+        102
+    };
     /// <summary>
     /// JSON property name for <see cref = "OneOf"/>.
     /// </summary>
@@ -135,7 +288,12 @@ public readonly partial struct Applicator
     /// <summary>
     /// JSON property name for <see cref = "Not"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> NotUtf8JsonPropertyName = new byte[]{110, 111, 116};
+    public static readonly ReadOnlyMemory<byte> NotUtf8JsonPropertyName = new byte[]
+    {
+        110,
+        111,
+        116
+    };
     /// <summary>
     /// JSON property name for <see cref = "Not"/>.
     /// </summary>

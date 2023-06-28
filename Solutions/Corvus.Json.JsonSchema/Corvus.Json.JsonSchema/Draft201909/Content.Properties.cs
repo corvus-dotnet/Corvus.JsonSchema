@@ -23,7 +23,25 @@ public readonly partial struct Content
     /// <summary>
     /// JSON property name for <see cref = "ContentMediaType"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> ContentMediaTypeUtf8JsonPropertyName = new byte[]{99, 111, 110, 116, 101, 110, 116, 77, 101, 100, 105, 97, 84, 121, 112, 101};
+    public static readonly ReadOnlyMemory<byte> ContentMediaTypeUtf8JsonPropertyName = new byte[]
+    {
+        99,
+        111,
+        110,
+        116,
+        101,
+        110,
+        116,
+        77,
+        101,
+        100,
+        105,
+        97,
+        84,
+        121,
+        112,
+        101
+    };
     /// <summary>
     /// JSON property name for <see cref = "ContentMediaType"/>.
     /// </summary>
@@ -31,7 +49,24 @@ public readonly partial struct Content
     /// <summary>
     /// JSON property name for <see cref = "ContentEncoding"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> ContentEncodingUtf8JsonPropertyName = new byte[]{99, 111, 110, 116, 101, 110, 116, 69, 110, 99, 111, 100, 105, 110, 103};
+    public static readonly ReadOnlyMemory<byte> ContentEncodingUtf8JsonPropertyName = new byte[]
+    {
+        99,
+        111,
+        110,
+        116,
+        101,
+        110,
+        116,
+        69,
+        110,
+        99,
+        111,
+        100,
+        105,
+        110,
+        103
+    };
     /// <summary>
     /// JSON property name for <see cref = "ContentEncoding"/>.
     /// </summary>
@@ -39,7 +74,22 @@ public readonly partial struct Content
     /// <summary>
     /// JSON property name for <see cref = "ContentSchema"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> ContentSchemaUtf8JsonPropertyName = new byte[]{99, 111, 110, 116, 101, 110, 116, 83, 99, 104, 101, 109, 97};
+    public static readonly ReadOnlyMemory<byte> ContentSchemaUtf8JsonPropertyName = new byte[]
+    {
+        99,
+        111,
+        110,
+        116,
+        101,
+        110,
+        116,
+        83,
+        99,
+        104,
+        101,
+        109,
+        97
+    };
     /// <summary>
     /// JSON property name for <see cref = "ContentSchema"/>.
     /// </summary>

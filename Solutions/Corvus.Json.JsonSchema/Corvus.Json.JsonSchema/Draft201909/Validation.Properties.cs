@@ -23,7 +23,19 @@ public readonly partial struct Validation
     /// <summary>
     /// JSON property name for <see cref = "MultipleOf"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> MultipleOfUtf8JsonPropertyName = new byte[]{109, 117, 108, 116, 105, 112, 108, 101, 79, 102};
+    public static readonly ReadOnlyMemory<byte> MultipleOfUtf8JsonPropertyName = new byte[]
+    {
+        109,
+        117,
+        108,
+        116,
+        105,
+        112,
+        108,
+        101,
+        79,
+        102
+    };
     /// <summary>
     /// JSON property name for <see cref = "MultipleOf"/>.
     /// </summary>
@@ -31,7 +43,16 @@ public readonly partial struct Validation
     /// <summary>
     /// JSON property name for <see cref = "Maximum"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> MaximumUtf8JsonPropertyName = new byte[]{109, 97, 120, 105, 109, 117, 109};
+    public static readonly ReadOnlyMemory<byte> MaximumUtf8JsonPropertyName = new byte[]
+    {
+        109,
+        97,
+        120,
+        105,
+        109,
+        117,
+        109
+    };
     /// <summary>
     /// JSON property name for <see cref = "Maximum"/>.
     /// </summary>
@@ -39,7 +60,25 @@ public readonly partial struct Validation
     /// <summary>
     /// JSON property name for <see cref = "ExclusiveMaximum"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> ExclusiveMaximumUtf8JsonPropertyName = new byte[]{101, 120, 99, 108, 117, 115, 105, 118, 101, 77, 97, 120, 105, 109, 117, 109};
+    public static readonly ReadOnlyMemory<byte> ExclusiveMaximumUtf8JsonPropertyName = new byte[]
+    {
+        101,
+        120,
+        99,
+        108,
+        117,
+        115,
+        105,
+        118,
+        101,
+        77,
+        97,
+        120,
+        105,
+        109,
+        117,
+        109
+    };
     /// <summary>
     /// JSON property name for <see cref = "ExclusiveMaximum"/>.
     /// </summary>
@@ -47,7 +86,16 @@ public readonly partial struct Validation
     /// <summary>
     /// JSON property name for <see cref = "Minimum"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> MinimumUtf8JsonPropertyName = new byte[]{109, 105, 110, 105, 109, 117, 109};
+    public static readonly ReadOnlyMemory<byte> MinimumUtf8JsonPropertyName = new byte[]
+    {
+        109,
+        105,
+        110,
+        105,
+        109,
+        117,
+        109
+    };
     /// <summary>
     /// JSON property name for <see cref = "Minimum"/>.
     /// </summary>
@@ -55,7 +103,25 @@ public readonly partial struct Validation
     /// <summary>
     /// JSON property name for <see cref = "ExclusiveMinimum"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> ExclusiveMinimumUtf8JsonPropertyName = new byte[]{101, 120, 99, 108, 117, 115, 105, 118, 101, 77, 105, 110, 105, 109, 117, 109};
+    public static readonly ReadOnlyMemory<byte> ExclusiveMinimumUtf8JsonPropertyName = new byte[]
+    {
+        101,
+        120,
+        99,
+        108,
+        117,
+        115,
+        105,
+        118,
+        101,
+        77,
+        105,
+        110,
+        105,
+        109,
+        117,
+        109
+    };
     /// <summary>
     /// JSON property name for <see cref = "ExclusiveMinimum"/>.
     /// </summary>
@@ -63,7 +129,18 @@ public readonly partial struct Validation
     /// <summary>
     /// JSON property name for <see cref = "MaxLength"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> MaxLengthUtf8JsonPropertyName = new byte[]{109, 97, 120, 76, 101, 110, 103, 116, 104};
+    public static readonly ReadOnlyMemory<byte> MaxLengthUtf8JsonPropertyName = new byte[]
+    {
+        109,
+        97,
+        120,
+        76,
+        101,
+        110,
+        103,
+        116,
+        104
+    };
     /// <summary>
     /// JSON property name for <see cref = "MaxLength"/>.
     /// </summary>
@@ -71,7 +148,18 @@ public readonly partial struct Validation
     /// <summary>
     /// JSON property name for <see cref = "MinLength"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> MinLengthUtf8JsonPropertyName = new byte[]{109, 105, 110, 76, 101, 110, 103, 116, 104};
+    public static readonly ReadOnlyMemory<byte> MinLengthUtf8JsonPropertyName = new byte[]
+    {
+        109,
+        105,
+        110,
+        76,
+        101,
+        110,
+        103,
+        116,
+        104
+    };
     /// <summary>
     /// JSON property name for <see cref = "MinLength"/>.
     /// </summary>
@@ -79,7 +167,16 @@ public readonly partial struct Validation
     /// <summary>
     /// JSON property name for <see cref = "Pattern"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> PatternUtf8JsonPropertyName = new byte[]{112, 97, 116, 116, 101, 114, 110};
+    public static readonly ReadOnlyMemory<byte> PatternUtf8JsonPropertyName = new byte[]
+    {
+        112,
+        97,
+        116,
+        116,
+        101,
+        114,
+        110
+    };
     /// <summary>
     /// JSON property name for <see cref = "Pattern"/>.
     /// </summary>
@@ -87,7 +184,17 @@ public readonly partial struct Validation
     /// <summary>
     /// JSON property name for <see cref = "MaxItems"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> MaxItemsUtf8JsonPropertyName = new byte[]{109, 97, 120, 73, 116, 101, 109, 115};
+    public static readonly ReadOnlyMemory<byte> MaxItemsUtf8JsonPropertyName = new byte[]
+    {
+        109,
+        97,
+        120,
+        73,
+        116,
+        101,
+        109,
+        115
+    };
     /// <summary>
     /// JSON property name for <see cref = "MaxItems"/>.
     /// </summary>
@@ -95,7 +202,17 @@ public readonly partial struct Validation
     /// <summary>
     /// JSON property name for <see cref = "MinItems"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> MinItemsUtf8JsonPropertyName = new byte[]{109, 105, 110, 73, 116, 101, 109, 115};
+    public static readonly ReadOnlyMemory<byte> MinItemsUtf8JsonPropertyName = new byte[]
+    {
+        109,
+        105,
+        110,
+        73,
+        116,
+        101,
+        109,
+        115
+    };
     /// <summary>
     /// JSON property name for <see cref = "MinItems"/>.
     /// </summary>
@@ -103,7 +220,20 @@ public readonly partial struct Validation
     /// <summary>
     /// JSON property name for <see cref = "UniqueItems"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> UniqueItemsUtf8JsonPropertyName = new byte[]{117, 110, 105, 113, 117, 101, 73, 116, 101, 109, 115};
+    public static readonly ReadOnlyMemory<byte> UniqueItemsUtf8JsonPropertyName = new byte[]
+    {
+        117,
+        110,
+        105,
+        113,
+        117,
+        101,
+        73,
+        116,
+        101,
+        109,
+        115
+    };
     /// <summary>
     /// JSON property name for <see cref = "UniqueItems"/>.
     /// </summary>
@@ -111,7 +241,20 @@ public readonly partial struct Validation
     /// <summary>
     /// JSON property name for <see cref = "MaxContains"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> MaxContainsUtf8JsonPropertyName = new byte[]{109, 97, 120, 67, 111, 110, 116, 97, 105, 110, 115};
+    public static readonly ReadOnlyMemory<byte> MaxContainsUtf8JsonPropertyName = new byte[]
+    {
+        109,
+        97,
+        120,
+        67,
+        111,
+        110,
+        116,
+        97,
+        105,
+        110,
+        115
+    };
     /// <summary>
     /// JSON property name for <see cref = "MaxContains"/>.
     /// </summary>
@@ -119,7 +262,20 @@ public readonly partial struct Validation
     /// <summary>
     /// JSON property name for <see cref = "MinContains"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> MinContainsUtf8JsonPropertyName = new byte[]{109, 105, 110, 67, 111, 110, 116, 97, 105, 110, 115};
+    public static readonly ReadOnlyMemory<byte> MinContainsUtf8JsonPropertyName = new byte[]
+    {
+        109,
+        105,
+        110,
+        67,
+        111,
+        110,
+        116,
+        97,
+        105,
+        110,
+        115
+    };
     /// <summary>
     /// JSON property name for <see cref = "MinContains"/>.
     /// </summary>
@@ -127,7 +283,22 @@ public readonly partial struct Validation
     /// <summary>
     /// JSON property name for <see cref = "MaxProperties"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> MaxPropertiesUtf8JsonPropertyName = new byte[]{109, 97, 120, 80, 114, 111, 112, 101, 114, 116, 105, 101, 115};
+    public static readonly ReadOnlyMemory<byte> MaxPropertiesUtf8JsonPropertyName = new byte[]
+    {
+        109,
+        97,
+        120,
+        80,
+        114,
+        111,
+        112,
+        101,
+        114,
+        116,
+        105,
+        101,
+        115
+    };
     /// <summary>
     /// JSON property name for <see cref = "MaxProperties"/>.
     /// </summary>
@@ -135,7 +306,22 @@ public readonly partial struct Validation
     /// <summary>
     /// JSON property name for <see cref = "MinProperties"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> MinPropertiesUtf8JsonPropertyName = new byte[]{109, 105, 110, 80, 114, 111, 112, 101, 114, 116, 105, 101, 115};
+    public static readonly ReadOnlyMemory<byte> MinPropertiesUtf8JsonPropertyName = new byte[]
+    {
+        109,
+        105,
+        110,
+        80,
+        114,
+        111,
+        112,
+        101,
+        114,
+        116,
+        105,
+        101,
+        115
+    };
     /// <summary>
     /// JSON property name for <see cref = "MinProperties"/>.
     /// </summary>
@@ -143,7 +329,17 @@ public readonly partial struct Validation
     /// <summary>
     /// JSON property name for <see cref = "Required"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> RequiredUtf8JsonPropertyName = new byte[]{114, 101, 113, 117, 105, 114, 101, 100};
+    public static readonly ReadOnlyMemory<byte> RequiredUtf8JsonPropertyName = new byte[]
+    {
+        114,
+        101,
+        113,
+        117,
+        105,
+        114,
+        101,
+        100
+    };
     /// <summary>
     /// JSON property name for <see cref = "Required"/>.
     /// </summary>
@@ -151,7 +347,26 @@ public readonly partial struct Validation
     /// <summary>
     /// JSON property name for <see cref = "DependentRequired"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> DependentRequiredUtf8JsonPropertyName = new byte[]{100, 101, 112, 101, 110, 100, 101, 110, 116, 82, 101, 113, 117, 105, 114, 101, 100};
+    public static readonly ReadOnlyMemory<byte> DependentRequiredUtf8JsonPropertyName = new byte[]
+    {
+        100,
+        101,
+        112,
+        101,
+        110,
+        100,
+        101,
+        110,
+        116,
+        82,
+        101,
+        113,
+        117,
+        105,
+        114,
+        101,
+        100
+    };
     /// <summary>
     /// JSON property name for <see cref = "DependentRequired"/>.
     /// </summary>
@@ -159,7 +374,14 @@ public readonly partial struct Validation
     /// <summary>
     /// JSON property name for <see cref = "Const"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> ConstUtf8JsonPropertyName = new byte[]{99, 111, 110, 115, 116};
+    public static readonly ReadOnlyMemory<byte> ConstUtf8JsonPropertyName = new byte[]
+    {
+        99,
+        111,
+        110,
+        115,
+        116
+    };
     /// <summary>
     /// JSON property name for <see cref = "Const"/>.
     /// </summary>
@@ -167,7 +389,13 @@ public readonly partial struct Validation
     /// <summary>
     /// JSON property name for <see cref = "Enum"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> EnumUtf8JsonPropertyName = new byte[]{101, 110, 117, 109};
+    public static readonly ReadOnlyMemory<byte> EnumUtf8JsonPropertyName = new byte[]
+    {
+        101,
+        110,
+        117,
+        109
+    };
     /// <summary>
     /// JSON property name for <see cref = "Enum"/>.
     /// </summary>
@@ -175,7 +403,13 @@ public readonly partial struct Validation
     /// <summary>
     /// JSON property name for <see cref = "Type"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> TypeUtf8JsonPropertyName = new byte[]{116, 121, 112, 101};
+    public static readonly ReadOnlyMemory<byte> TypeUtf8JsonPropertyName = new byte[]
+    {
+        116,
+        121,
+        112,
+        101
+    };
     /// <summary>
     /// JSON property name for <see cref = "Type"/>.
     /// </summary>
