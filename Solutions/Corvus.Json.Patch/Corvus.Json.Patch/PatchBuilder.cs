@@ -14,12 +14,12 @@ public readonly record struct PatchBuilder(JsonAny Value, JsonPatchDocument Patc
     private static readonly JsonObject EmptyObject = JsonObject.FromProperties(ImmutableDictionary<JsonPropertyName, JsonAny>.Empty);
 
     /// <summary>
-    /// Adds or replaces the value found at the given location, building any missing intermediate structure.
+    /// Adds or replaces the value found at the given location, building any missing intermediate structure as object properties.
     /// </summary>
     /// <param name="value">The value to add or replace at the <paramref name="path"/>.</param>
     /// <param name="path">The location at which to add or replace the <paramref name="value"/>.</param>
     /// <returns>An instance of a <see cref="PatchBuilder"/> with the updated value, and the operation added to the operation array.</returns>
-    public PatchBuilder DeepAddOrReplace(JsonAny value, ReadOnlySpan<char> path)
+    public PatchBuilder DeepAddOrReplaceObjectProperties(JsonAny value, ReadOnlySpan<char> path)
     {
         bool goingDeep = false;
         int nextSlash;
@@ -54,7 +54,10 @@ public readonly record struct PatchBuilder(JsonAny Value, JsonPatchDocument Patc
             }
         }
 
-        // If we are not going deep, it means we are replacing the element at the path
+        // We do not have a trailing slash (we dealt with that above) so there will always be
+        // something to do at the end to add or replace the final value.
+
+        // If we are not going deep, we may be replacing the element at the path
         if (!goingDeep && this.Value.TryResolvePointer(path, out _))
         {
             return currentBuilder.Replace(value, path);
