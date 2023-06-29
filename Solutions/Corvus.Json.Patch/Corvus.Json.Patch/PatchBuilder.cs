@@ -21,6 +21,11 @@ public readonly record struct PatchBuilder(JsonAny Value, JsonPatchDocument Patc
     /// <returns>An instance of a <see cref="PatchBuilder"/> with the updated value, and the operation added to the operation array.</returns>
     public PatchBuilder DeepAddOrReplaceObjectProperties(JsonAny value, ReadOnlySpan<char> path)
     {
+        if (path.Length == 0)
+        {
+            return this.Replace(value, path);
+        }
+
         bool goingDeep = false;
         int nextSlash;
         int currentIndex = 0;
