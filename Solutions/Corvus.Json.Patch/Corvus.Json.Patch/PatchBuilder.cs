@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Collections.Immutable;
 using Corvus.Json.Patch.Model;
 
 namespace Corvus.Json.Patch;
@@ -10,6 +11,60 @@ namespace Corvus.Json.Patch;
 /// </summary>
 public readonly record struct PatchBuilder(JsonAny Value, JsonPatchDocument PatchOperations)
 {
+    private static readonly JsonObject EmptyObject = JsonObject.FromProperties(ImmutableDictionary<JsonPropertyName, JsonAny>.Empty);
+
+    /// <summary>
+    /// Adds or replaces the value found at the given location, building any missing intermediate structure.
+    /// </summary>
+    /// <param name="value">The value to add or replace at the <paramref name="path"/>.</param>
+    /// <param name="path">The location at which to add or replace the <paramref name="value"/>.</param>
+    /// <returns>An instance of a <see cref="PatchBuilder"/> with the updated value, and the operation added to the operation array.</returns>
+    public PatchBuilder DeepAddOrReplace(JsonAny value, ReadOnlySpan<char> path)
+    {
+        bool goingDeep = false;
+        int nextSlash;
+        int currentIndex = 0;
+
+        // To avoid constantly re-walking the tree, we stash the "last found" node,
+        // and trim the path as we go.
+        JsonAny currentNode = this.Value;
+
+        // Ignore a trailing slash
+        ReadOnlySpan<char> currentPath = (path[^1] == '/') ? path[..^1] : path;
+        PatchBuilder currentBuilder = this;
+
+        while ((nextSlash = currentPath.IndexOf("/", StringComparison.Ordinal)) >= 0)
+        {
+            currentIndex += nextSlash;
+
+            if (!goingDeep && currentNode.TryResolvePointer(currentPath[..nextSlash], out currentNode))
+            {
+                currentPath = currentPath[(nextSlash + 1)..];
+                currentIndex++;
+            }
+            else
+            {
+                goingDeep = true;
+                currentBuilder =
+                    currentBuilder.Add(
+                        EmptyObject,
+                        path[..currentIndex]);
+                currentPath = currentPath[(nextSlash + 1)..];
+                currentIndex++;
+            }
+        }
+
+        // If we are not going deep, it means we are replacing the element at the path
+        if (!goingDeep && this.Value.TryResolvePointer(path, out _))
+        {
+            return currentBuilder.Replace(value, path);
+        }
+        else
+        {
+            return currentBuilder.Add(value, path);
+        }
+    }
+
     /// <summary>
     /// Add the given <paramref name="value"/> to the entity at the given <paramref name="path"/>.
     /// </summary>
