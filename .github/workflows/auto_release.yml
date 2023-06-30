@@ -62,6 +62,16 @@ jobs:
             core.info("labels: " + JSON.stringify(labels.data))
             if ( labels.data.map(l => l.name).includes("no_release") ) {
               core.info("Label found")
+              if ( labels.data.map(l => l.name).includes("pending_release") ) {
+                // Remove the 'pending_release' label
+                await github.rest.issues.removeLabel({
+                  owner: context.payload.repository.owner.login,
+                  repo: context.payload.repository.name,
+                  issue_number: context.payload.pull_request.number,
+                  name: 'pending_release'
+                })
+              }
+              
               return true
             }
             return false
@@ -118,11 +128,13 @@ jobs:
 
           releasePendingPrDetails = pulls.data.items.
                             filter(function (x) { return x.labels.map(l=>l.name).includes('pending_release') }).
+                            filter(function (x) { return !x.labels.map(l=>l.name).includes('no_release') }).
                             map(p=>`#${p.number} '${p.title}' in ${p.repository_url}`);
           core.info(`releasePendingPrDetails: ${JSON.stringify(releasePendingPrDetails)}`);
 
           const release_pending_prs = pulls.data.items.
                                         filter(function (x) { return x.labels.map(l=>l.name).includes('pending_release') }).
+                                        filter(function (x) { return !x.labels.map(l=>l.name).includes('no_release') }).
                                         map(p=>p.number);
           core.info(`release_pending_prs: ${JSON.stringify(release_pending_prs)}`);
           core.setOutput('is_release_pending', (release_pending_prs.length > 0));
