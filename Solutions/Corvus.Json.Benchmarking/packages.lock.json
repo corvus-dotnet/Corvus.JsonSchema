@@ -51,9 +51,9 @@
       },
       "JsonSchema.Net": {
         "type": "Direct",
-        "requested": "[4.1.5, )",
-        "resolved": "4.1.5",
-        "contentHash": "nDQqFfL4chnds2fEzWm5HFH0ypb1qC6gof4kzU2lT/aZKzhT2cnvVRvpPr0F+5m4wJ/3joNMa7sSYLBe/WefiQ==",
+        "requested": "[4.1.6, )",
+        "resolved": "4.1.6",
+        "contentHash": "l7EhrRfZ9jMiQGNFzaDb6uKb1G6txs2i3QecPSrs6gDi0Td8sWFCkqbL9E7i9fEgnMFJnUtWYcP13H62g/NsKw==",
         "dependencies": {
           "JetBrains.Annotations": "2021.2.0",
           "Json.More.Net": "1.8.0",
@@ -324,8 +324,8 @@
       },
       "Microsoft.Extensions.ObjectPool": {
         "type": "Transitive",
-        "resolved": "7.0.7",
-        "contentHash": "pKyzYIhXug0Eom/F17SWIGf2aDB2N+A//aW+LJXP8/ZWrI3mXpxgf6SLNSu3gwakU3rZx+Xrsb6PT5MiB6QDvQ=="
+        "resolved": "7.0.8",
+        "contentHash": "aaNEWSL4d9Qhl5UXlBySXfgHvzIrR4sc6dScCDFfIcCw2uH4d5WuWy+KOnIRPumqj5YuP6J0ejkUTsipvm+xCQ=="
       },
       "Microsoft.Extensions.Options": {
         "type": "Transitive",
@@ -458,7 +458,7 @@
           "Corvus.Extensions": "[1.1.11, )",
           "Corvus.UriTemplates": "[1.2.1, )",
           "Microsoft.Extensions.Http": "[7.0.0, )",
-          "Microsoft.Extensions.ObjectPool": "[7.0.7, )",
+          "Microsoft.Extensions.ObjectPool": "[7.0.8, )",
           "NodaTime": "[3.1.9, )",
           "System.Buffers": "[4.5.1, )",
           "System.Collections.Immutable": "[7.0.0, )",
