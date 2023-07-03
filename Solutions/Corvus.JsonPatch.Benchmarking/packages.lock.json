@@ -102,8 +102,8 @@
       },
       "Corvus.UriTemplates": {
         "type": "Transitive",
-        "resolved": "1.2.0",
-        "contentHash": "Mt8dz6chvHNaVrOSrMQJPqk4EMBMA74R/LsYgq+fy5H1om88INKXHrcRaRSBMesJlmbugAowaQ7vTlNLbbn9vw==",
+        "resolved": "1.2.1",
+        "contentHash": "lDWJkAmoBDvYJER+xeDj3wY0m4jnql+KfCrre5k8212vMrDVKyeMjPPAfQJs7D5Bq1l7jqM4QFK6FB0Cr9Qv7Q==",
         "dependencies": {
           "CommunityToolkit.HighPerformance": "8.2.0",
           "Microsoft.Extensions.ObjectPool": "7.0.5",
@@ -440,7 +440,7 @@
         "dependencies": {
           "CommunityToolkit.HighPerformance": "[8.2.0, )",
           "Corvus.Extensions": "[1.1.11, )",
-          "Corvus.UriTemplates": "[1.2.0, )",
+          "Corvus.UriTemplates": "[1.2.1, )",
           "Microsoft.Extensions.Http": "[7.0.0, )",
           "Microsoft.Extensions.ObjectPool": "[7.0.7, )",
           "NodaTime": "[3.1.9, )",
