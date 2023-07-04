@@ -25,13 +25,13 @@ public static class JsonValueExtensions
     /// <returns><see langword="true"/> if the property could be set, otherwise <see langword="false"/>.</returns>
     public static bool TrySetDeepProperty<T, TValue>(this T jsonValue, ReadOnlySpan<char> path, in TValue value, out T result)
         where T : struct, IJsonValue<T>
-        where TValue : struct, IJsonValue<T>
+        where TValue : struct, IJsonValue<TValue>
     {
         if (path.Length == 0)
         {
-            if (jsonValue.AsAny.TryReplace(path.ToString(), value.AsAny, out JsonAny patched))
+            if (jsonValue.TryReplace(path.ToString(), value.AsAny, out T patched))
             {
-                result = patched.As<T>();
+                result = patched;
                 return true;
             }
             else
@@ -48,7 +48,7 @@ public static class JsonValueExtensions
         // To avoid constantly re-walking the tree, we stash the "last found" node,
         // and trim the path as we go.
         JsonAny currentNode = jsonValue.AsAny;
-        JsonAny currentResult = currentNode;
+        T currentResult = jsonValue;
 
         // Ignore a trailing slash
         ReadOnlySpan<char> currentPath = (path[^1] == '/') ? path[..^1] : path;
@@ -85,9 +85,9 @@ public static class JsonValueExtensions
         // If we are not going deep, we may be replacing the element at the path
         if (!goingDeep && jsonValue.TryResolvePointer(path, out _))
         {
-            if (jsonValue.AsAny.TryReplace(path.ToString(), value.AsAny, out JsonAny patched))
+            if (jsonValue.TryReplace(path.ToString(), value.AsAny, out T patched))
             {
-                result = patched.As<T>();
+                result = patched;
                 return true;
             }
             else
@@ -98,9 +98,9 @@ public static class JsonValueExtensions
         }
         else
         {
-            if (currentResult.TryAdd(path.ToString(), value.AsAny, out JsonAny patched))
+            if (currentResult.TryAdd(path.ToString(), value.AsAny, out T patched))
             {
-                result = patched.As<T>();
+                result = patched;
                 return true;
             }
             else
