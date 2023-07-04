@@ -67,12 +67,12 @@
       },
       "Microsoft.NET.Test.Sdk": {
         "type": "Direct",
-        "requested": "[17.6.2, )",
-        "resolved": "17.6.2",
-        "contentHash": "+WFxuoFVBG0aewD9Psw+1I90kaRToQgMIzK20xNVRO4QRWR9Bou3qGefrZvMZ/xTC+6bAmZppFbpPbiHDzrPyg==",
+        "requested": "[17.6.3, )",
+        "resolved": "17.6.3",
+        "contentHash": "MglaNTl646dC2xpHKotSk1xscmHO5uV3x3NK057IUA9BM3Wgl16WMEb9ptGczk518JfLd1+Th5OAYwnoWgHQQQ==",
         "dependencies": {
-          "Microsoft.CodeCoverage": "17.6.2",
-          "Microsoft.TestPlatform.TestHost": "17.6.2"
+          "Microsoft.CodeCoverage": "17.6.3",
+          "Microsoft.TestPlatform.TestHost": "17.6.3"
         }
       },
       "NUnit": {
@@ -182,8 +182,8 @@
       },
       "Corvus.UriTemplates": {
         "type": "Transitive",
-        "resolved": "1.2.0",
-        "contentHash": "Mt8dz6chvHNaVrOSrMQJPqk4EMBMA74R/LsYgq+fy5H1om88INKXHrcRaRSBMesJlmbugAowaQ7vTlNLbbn9vw==",
+        "resolved": "1.2.1",
+        "contentHash": "lDWJkAmoBDvYJER+xeDj3wY0m4jnql+KfCrre5k8212vMrDVKyeMjPPAfQJs7D5Bq1l7jqM4QFK6FB0Cr9Qv7Q==",
         "dependencies": {
           "CommunityToolkit.HighPerformance": "8.2.0",
           "Microsoft.Extensions.ObjectPool": "7.0.5",
@@ -233,8 +233,8 @@
       },
       "Microsoft.CodeCoverage": {
         "type": "Transitive",
-        "resolved": "17.6.2",
-        "contentHash": "t+DjPlq7GIxIkOK/jiTmNeiEMVkfVCynBEZyV+IMg2ro43NugKExng+7a04R1fBLi+d6voxjeDxL2ozdl+XyVg=="
+        "resolved": "17.6.3",
+        "contentHash": "Gorg6F1dOxlI28yHYKhbQ3pOOfHeW6sUfsmwFQFaIV+xttUAZ+l8KarHIfsR+rBAnjY9VH71BXvPXBuObCkXsw=="
       },
       "Microsoft.DotNet.PlatformAbstractions": {
         "type": "Transitive",
@@ -357,8 +357,8 @@
       },
       "Microsoft.Extensions.ObjectPool": {
         "type": "Transitive",
-        "resolved": "7.0.7",
-        "contentHash": "pKyzYIhXug0Eom/F17SWIGf2aDB2N+A//aW+LJXP8/ZWrI3mXpxgf6SLNSu3gwakU3rZx+Xrsb6PT5MiB6QDvQ=="
+        "resolved": "7.0.8",
+        "contentHash": "aaNEWSL4d9Qhl5UXlBySXfgHvzIrR4sc6dScCDFfIcCw2uH4d5WuWy+KOnIRPumqj5YuP6J0ejkUTsipvm+xCQ=="
       },
       "Microsoft.Extensions.Options": {
         "type": "Transitive",
@@ -400,8 +400,8 @@
       },
       "Microsoft.TestPlatform.ObjectModel": {
         "type": "Transitive",
-        "resolved": "17.6.2",
-        "contentHash": "I3S/oELDAe/ckFltBnPb0PV+gADbpc8n0yGTtYfTd7q1hd0cAZKn/FrYoegA/rGws8fEFyJD/2PB6uq+nIjWsg==",
+        "resolved": "17.6.3",
+        "contentHash": "gSqtX3RvcFisaLPs6sKXdZkSwUix83NQ9nOU/w6pYrHTl+d8GsVHSL9rvDNxMgoV5BNOdyU7zK7JOfbSaVMDWQ==",
         "dependencies": {
           "NuGet.Frameworks": "6.5.0",
           "System.Reflection.Metadata": "1.6.0"
@@ -409,10 +409,10 @@
       },
       "Microsoft.TestPlatform.TestHost": {
         "type": "Transitive",
-        "resolved": "17.6.2",
-        "contentHash": "WszrF1CoG+Y2bA4WJFxlaPADQCWUuNP6TCxVRuScmP6DQsNvDDuOO9XiUxCA+wPmNOSyWVh9EGrPu7JoUpf2gA==",
+        "resolved": "17.6.3",
+        "contentHash": "lrgRXKFfIZSPlhuoQGLtciO/osL+4oADYEYb0d5or7n7YyJATIWespq3lRgz2IQpRh6N7cm0DnCOWeZiCRGzxA==",
         "dependencies": {
-          "Microsoft.TestPlatform.ObjectModel": "17.6.2",
+          "Microsoft.TestPlatform.ObjectModel": "17.6.3",
           "Newtonsoft.Json": "13.0.1"
         }
       },
@@ -1376,9 +1376,9 @@
         "dependencies": {
           "CommunityToolkit.HighPerformance": "[8.2.0, )",
           "Corvus.Extensions": "[1.1.11, )",
-          "Corvus.UriTemplates": "[1.2.0, )",
+          "Corvus.UriTemplates": "[1.2.1, )",
           "Microsoft.Extensions.Http": "[7.0.0, )",
-          "Microsoft.Extensions.ObjectPool": "[7.0.7, )",
+          "Microsoft.Extensions.ObjectPool": "[7.0.8, )",
           "NodaTime": "[3.1.9, )",
           "System.Buffers": "[4.5.1, )",
           "System.Collections.Immutable": "[7.0.0, )",
@@ -1391,7 +1391,7 @@
           "Corvus.Extensions": "[1.1.11, )",
           "Corvus.Json.ExtendedTypes": "[1.0.0, )",
           "Microsoft.Extensions.Http": "[7.0.0, )",
-          "Microsoft.Extensions.ObjectPool": "[7.0.7, )",
+          "Microsoft.Extensions.ObjectPool": "[7.0.8, )",
           "NodaTime": "[3.1.9, )",
           "System.Buffers": "[4.5.1, )",
           "System.Collections.Immutable": "[7.0.0, )",
@@ -1404,7 +1404,7 @@
           "Corvus.Extensions": "[1.1.11, )",
           "Corvus.Json.ExtendedTypes": "[1.0.0, )",
           "Microsoft.Extensions.Http": "[7.0.0, )",
-          "Microsoft.Extensions.ObjectPool": "[7.0.7, )",
+          "Microsoft.Extensions.ObjectPool": "[7.0.8, )",
           "NodaTime": "[3.1.9, )",
           "System.Buffers": "[4.5.1, )",
           "System.Collections.Immutable": "[7.0.0, )",

@@ -53,6 +53,42 @@ public class JsonPatchSteps
         this.scenarioContext.Set(JsonAny.Parse(jsonString).As<JsonPatchDocument>(), PatchKey);
     }
 
+    [When("I deep patch the JSON value (.*) at the path (.*)")]
+    public void WhenIDeepPatchTheJSONValueAtThePath(string serializedValue, string path)
+    {
+        try
+        {
+            var value = JsonAny.ParseValue(serializedValue);
+            JsonAny document = this.scenarioContext.Get<JsonAny>(DocumentKey);
+            PatchBuilder builder = document.BeginPatch().DeepAddOrReplaceObjectProperties(value, path);
+            this.scenarioContext.Set(builder, BuilderKey);
+            this.scenarioContext.Set(builder.PatchOperations, PatchKey);
+            this.scenarioContext.Set(builder.Value, OutputKey);
+        }
+        catch (Exception ex)
+        {
+            this.scenarioContext.Set(ex, ExceptionKey);
+        }
+    }
+
+    [When("I try to set a deep property on the JSON value (.*) at the path (.*)")]
+    public void WhenITryToSetADeepPropertyOnTheJSONValueAtThePath(string serializedValue, string path)
+    {
+        try
+        {
+            var value = JsonAny.ParseValue(serializedValue);
+            JsonAny document = this.scenarioContext.Get<JsonAny>(DocumentKey);
+            if (document.TrySetDeepProperty(path, value, out JsonAny result))
+            {
+                this.scenarioContext.Set(result, OutputKey);
+            }
+        }
+        catch (Exception ex)
+        {
+            this.scenarioContext.Set(ex, ExceptionKey);
+        }
+    }
+
     /// <summary>
     /// Parses the <paramref name="jsonString"/> and uses it to create a <see cref="PatchBuilder"/> for those operations. The result
     /// is stored in the context key <see cref="BuilderKey"/>. If the build fails, the exception is stored in the <see cref="ExceptionKey"/>.
