@@ -18,30 +18,24 @@ public static partial class JsonPatchExtensions
     {
         public RemoveVisitor(in JsonPatchDocument.RemoveEntity patchOperation)
         {
-            this.Path = ((string)patchOperation.Path).AsMemory();
-            this.BeginTerminator = this.Path.Span.LastIndexOf('/') + 1;
+            this.Path = (string)patchOperation.Path;
+            this.BeginTerminator = this.Path.LastIndexOf('/') + 1;
         }
 
         public RemoveVisitor(string path)
         {
-            this.Path = path.AsMemory();
-            this.BeginTerminator = this.Path.Span.LastIndexOf('/') + 1;
-        }
-
-        public RemoveVisitor(ReadOnlyMemory<char> path)
-        {
             this.Path = path;
-            this.BeginTerminator = this.Path.Span.LastIndexOf('/') + 1;
+            this.BeginTerminator = this.Path.LastIndexOf('/') + 1;
         }
 
-        public ReadOnlyMemory<char> Path { get; }
+        public string Path { get; }
 
         public int BeginTerminator { get; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Visit(ReadOnlySpan<char> path, in JsonAny nodeToVisit, ref VisitResult result)
         {
-            ReadOnlySpan<char> span = this.Path.Span;
+            ReadOnlySpan<char> span = this.Path.AsSpan();
             VisitForRemove(path, nodeToVisit, span, span[this.BeginTerminator..], ref result);
         }
 

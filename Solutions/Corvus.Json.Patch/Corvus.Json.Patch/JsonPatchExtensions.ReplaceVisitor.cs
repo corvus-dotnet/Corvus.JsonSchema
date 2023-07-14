@@ -18,16 +18,10 @@ public static partial class JsonPatchExtensions
         public ReplaceVisitor(in JsonPatchDocument.ReplaceEntity patchOperation)
         {
             this.Value = patchOperation.Value;
-            this.Path = ((string)patchOperation.Path).AsMemory();
+            this.Path = (string)patchOperation.Path;
         }
 
         public ReplaceVisitor(in JsonAny value, string path)
-        {
-            this.Value = value;
-            this.Path = path.AsMemory();
-        }
-
-        public ReplaceVisitor(in JsonAny value, ReadOnlyMemory<char> path)
         {
             this.Value = value;
             this.Path = path;
@@ -35,12 +29,12 @@ public static partial class JsonPatchExtensions
 
         public JsonAny Value { get; }
 
-        public ReadOnlyMemory<char> Path { get; }
+        public string Path { get; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Visit(ReadOnlySpan<char> path, in JsonAny nodeToVisit, ref VisitResult result)
         {
-            VisitForReplace(path, nodeToVisit, this.Value, this.Path.Span, ref result);
+            VisitForReplace(path, nodeToVisit, this.Value, this.Path.AsSpan(), ref result);
         }
 
         internal static void VisitForReplace(ReadOnlySpan<char> path, in JsonAny nodeToVisit, in JsonAny value, ReadOnlySpan<char> operationPath, ref VisitResult result)
