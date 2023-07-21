@@ -23,14 +23,8 @@ public readonly partial struct MetaData
     /// <summary>
     /// JSON property name for <see cref = "Title"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> TitleUtf8JsonPropertyName = new byte[]
-    {
-        116,
-        105,
-        116,
-        108,
-        101
-    };
+    public static ReadOnlySpan<byte> TitleUtf8JsonPropertyName => "title"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "Title"/>.
     /// </summary>
@@ -38,20 +32,8 @@ public readonly partial struct MetaData
     /// <summary>
     /// JSON property name for <see cref = "Description"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> DescriptionUtf8JsonPropertyName = new byte[]
-    {
-        100,
-        101,
-        115,
-        99,
-        114,
-        105,
-        112,
-        116,
-        105,
-        111,
-        110
-    };
+    public static ReadOnlySpan<byte> DescriptionUtf8JsonPropertyName => "description"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "Description"/>.
     /// </summary>
@@ -59,16 +41,8 @@ public readonly partial struct MetaData
     /// <summary>
     /// JSON property name for <see cref = "Default"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> DefaultUtf8JsonPropertyName = new byte[]
-    {
-        100,
-        101,
-        102,
-        97,
-        117,
-        108,
-        116
-    };
+    public static ReadOnlySpan<byte> DefaultUtf8JsonPropertyName => "default"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "Default"/>.
     /// </summary>
@@ -76,19 +50,8 @@ public readonly partial struct MetaData
     /// <summary>
     /// JSON property name for <see cref = "Deprecated"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> DeprecatedUtf8JsonPropertyName = new byte[]
-    {
-        100,
-        101,
-        112,
-        114,
-        101,
-        99,
-        97,
-        116,
-        101,
-        100
-    };
+    public static ReadOnlySpan<byte> DeprecatedUtf8JsonPropertyName => "deprecated"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "Deprecated"/>.
     /// </summary>
@@ -96,17 +59,8 @@ public readonly partial struct MetaData
     /// <summary>
     /// JSON property name for <see cref = "ReadOnly"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> ReadOnlyUtf8JsonPropertyName = new byte[]
-    {
-        114,
-        101,
-        97,
-        100,
-        79,
-        110,
-        108,
-        121
-    };
+    public static ReadOnlySpan<byte> ReadOnlyUtf8JsonPropertyName => "readOnly"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "ReadOnly"/>.
     /// </summary>
@@ -114,18 +68,8 @@ public readonly partial struct MetaData
     /// <summary>
     /// JSON property name for <see cref = "WriteOnly"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> WriteOnlyUtf8JsonPropertyName = new byte[]
-    {
-        119,
-        114,
-        105,
-        116,
-        101,
-        79,
-        110,
-        108,
-        121
-    };
+    public static ReadOnlySpan<byte> WriteOnlyUtf8JsonPropertyName => "writeOnly"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "WriteOnly"/>.
     /// </summary>
@@ -133,17 +77,8 @@ public readonly partial struct MetaData
     /// <summary>
     /// JSON property name for <see cref = "Examples"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> ExamplesUtf8JsonPropertyName = new byte[]
-    {
-        101,
-        120,
-        97,
-        109,
-        112,
-        108,
-        101,
-        115
-    };
+    public static ReadOnlySpan<byte> ExamplesUtf8JsonPropertyName => "examples"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "Examples"/>.
     /// </summary>
@@ -162,7 +97,7 @@ public readonly partial struct MetaData
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(TitleUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(TitleUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonString(result);
                 }
@@ -194,7 +129,7 @@ public readonly partial struct MetaData
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(DescriptionUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(DescriptionUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonString(result);
                 }
@@ -226,7 +161,7 @@ public readonly partial struct MetaData
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(DefaultUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(DefaultUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonAny(result);
                 }
@@ -258,7 +193,7 @@ public readonly partial struct MetaData
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(DeprecatedUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(DeprecatedUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonSchema.Draft201909.MetaData.DeprecatedEntity(result);
                 }
@@ -290,7 +225,7 @@ public readonly partial struct MetaData
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(ReadOnlyUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(ReadOnlyUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonSchema.Draft201909.MetaData.ReadOnlyEntity(result);
                 }
@@ -322,7 +257,7 @@ public readonly partial struct MetaData
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(WriteOnlyUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(WriteOnlyUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonSchema.Draft201909.MetaData.WriteOnlyEntity(result);
                 }
@@ -354,7 +289,7 @@ public readonly partial struct MetaData
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(ExamplesUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(ExamplesUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonSchema.Draft201909.MetaData.JsonAnyArray(result);
                 }
@@ -532,37 +467,37 @@ public readonly partial struct MetaData
     {
         if (hasJsonElementBacking)
         {
-            if (property.NameEquals(TitleUtf8JsonPropertyName.Span))
+            if (property.NameEquals(TitleUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateTitle;
                 return true;
             }
-            else if (property.NameEquals(DescriptionUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(DescriptionUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateDescription;
                 return true;
             }
-            else if (property.NameEquals(DefaultUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(DefaultUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateDefault;
                 return true;
             }
-            else if (property.NameEquals(DeprecatedUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(DeprecatedUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateDeprecated;
                 return true;
             }
-            else if (property.NameEquals(ReadOnlyUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(ReadOnlyUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateReadOnly;
                 return true;
             }
-            else if (property.NameEquals(WriteOnlyUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(WriteOnlyUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateWriteOnly;
                 return true;
             }
-            else if (property.NameEquals(ExamplesUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(ExamplesUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateExamples;
                 return true;

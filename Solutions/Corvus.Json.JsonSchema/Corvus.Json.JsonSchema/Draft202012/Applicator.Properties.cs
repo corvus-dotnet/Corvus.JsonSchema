@@ -23,20 +23,8 @@ public readonly partial struct Applicator
     /// <summary>
     /// JSON property name for <see cref = "PrefixItems"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> PrefixItemsUtf8JsonPropertyName = new byte[]
-    {
-        112,
-        114,
-        101,
-        102,
-        105,
-        120,
-        73,
-        116,
-        101,
-        109,
-        115
-    };
+    public static ReadOnlySpan<byte> PrefixItemsUtf8JsonPropertyName => "prefixItems"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "PrefixItems"/>.
     /// </summary>
@@ -44,14 +32,8 @@ public readonly partial struct Applicator
     /// <summary>
     /// JSON property name for <see cref = "Items"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> ItemsUtf8JsonPropertyName = new byte[]
-    {
-        105,
-        116,
-        101,
-        109,
-        115
-    };
+    public static ReadOnlySpan<byte> ItemsUtf8JsonPropertyName => "items"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "Items"/>.
     /// </summary>
@@ -59,17 +41,8 @@ public readonly partial struct Applicator
     /// <summary>
     /// JSON property name for <see cref = "Contains"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> ContainsUtf8JsonPropertyName = new byte[]
-    {
-        99,
-        111,
-        110,
-        116,
-        97,
-        105,
-        110,
-        115
-    };
+    public static ReadOnlySpan<byte> ContainsUtf8JsonPropertyName => "contains"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "Contains"/>.
     /// </summary>
@@ -77,29 +50,8 @@ public readonly partial struct Applicator
     /// <summary>
     /// JSON property name for <see cref = "AdditionalProperties"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> AdditionalPropertiesUtf8JsonPropertyName = new byte[]
-    {
-        97,
-        100,
-        100,
-        105,
-        116,
-        105,
-        111,
-        110,
-        97,
-        108,
-        80,
-        114,
-        111,
-        112,
-        101,
-        114,
-        116,
-        105,
-        101,
-        115
-    };
+    public static ReadOnlySpan<byte> AdditionalPropertiesUtf8JsonPropertyName => "additionalProperties"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "AdditionalProperties"/>.
     /// </summary>
@@ -107,19 +59,8 @@ public readonly partial struct Applicator
     /// <summary>
     /// JSON property name for <see cref = "Properties"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> PropertiesUtf8JsonPropertyName = new byte[]
-    {
-        112,
-        114,
-        111,
-        112,
-        101,
-        114,
-        116,
-        105,
-        101,
-        115
-    };
+    public static ReadOnlySpan<byte> PropertiesUtf8JsonPropertyName => "properties"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "Properties"/>.
     /// </summary>
@@ -127,26 +68,8 @@ public readonly partial struct Applicator
     /// <summary>
     /// JSON property name for <see cref = "PatternProperties"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> PatternPropertiesUtf8JsonPropertyName = new byte[]
-    {
-        112,
-        97,
-        116,
-        116,
-        101,
-        114,
-        110,
-        80,
-        114,
-        111,
-        112,
-        101,
-        114,
-        116,
-        105,
-        101,
-        115
-    };
+    public static ReadOnlySpan<byte> PatternPropertiesUtf8JsonPropertyName => "patternProperties"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "PatternProperties"/>.
     /// </summary>
@@ -154,25 +77,8 @@ public readonly partial struct Applicator
     /// <summary>
     /// JSON property name for <see cref = "DependentSchemas"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> DependentSchemasUtf8JsonPropertyName = new byte[]
-    {
-        100,
-        101,
-        112,
-        101,
-        110,
-        100,
-        101,
-        110,
-        116,
-        83,
-        99,
-        104,
-        101,
-        109,
-        97,
-        115
-    };
+    public static ReadOnlySpan<byte> DependentSchemasUtf8JsonPropertyName => "dependentSchemas"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "DependentSchemas"/>.
     /// </summary>
@@ -180,22 +86,8 @@ public readonly partial struct Applicator
     /// <summary>
     /// JSON property name for <see cref = "PropertyNames"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> PropertyNamesUtf8JsonPropertyName = new byte[]
-    {
-        112,
-        114,
-        111,
-        112,
-        101,
-        114,
-        116,
-        121,
-        78,
-        97,
-        109,
-        101,
-        115
-    };
+    public static ReadOnlySpan<byte> PropertyNamesUtf8JsonPropertyName => "propertyNames"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "PropertyNames"/>.
     /// </summary>
@@ -203,11 +95,8 @@ public readonly partial struct Applicator
     /// <summary>
     /// JSON property name for <see cref = "If"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> IfUtf8JsonPropertyName = new byte[]
-    {
-        105,
-        102
-    };
+    public static ReadOnlySpan<byte> IfUtf8JsonPropertyName => "if"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "If"/>.
     /// </summary>
@@ -215,13 +104,8 @@ public readonly partial struct Applicator
     /// <summary>
     /// JSON property name for <see cref = "Then"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> ThenUtf8JsonPropertyName = new byte[]
-    {
-        116,
-        104,
-        101,
-        110
-    };
+    public static ReadOnlySpan<byte> ThenUtf8JsonPropertyName => "then"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "Then"/>.
     /// </summary>
@@ -229,13 +113,8 @@ public readonly partial struct Applicator
     /// <summary>
     /// JSON property name for <see cref = "Else"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> ElseUtf8JsonPropertyName = new byte[]
-    {
-        101,
-        108,
-        115,
-        101
-    };
+    public static ReadOnlySpan<byte> ElseUtf8JsonPropertyName => "else"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "Else"/>.
     /// </summary>
@@ -243,14 +122,8 @@ public readonly partial struct Applicator
     /// <summary>
     /// JSON property name for <see cref = "AllOf"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> AllOfUtf8JsonPropertyName = new byte[]
-    {
-        97,
-        108,
-        108,
-        79,
-        102
-    };
+    public static ReadOnlySpan<byte> AllOfUtf8JsonPropertyName => "allOf"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "AllOf"/>.
     /// </summary>
@@ -258,14 +131,8 @@ public readonly partial struct Applicator
     /// <summary>
     /// JSON property name for <see cref = "AnyOf"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> AnyOfUtf8JsonPropertyName = new byte[]
-    {
-        97,
-        110,
-        121,
-        79,
-        102
-    };
+    public static ReadOnlySpan<byte> AnyOfUtf8JsonPropertyName => "anyOf"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "AnyOf"/>.
     /// </summary>
@@ -273,14 +140,8 @@ public readonly partial struct Applicator
     /// <summary>
     /// JSON property name for <see cref = "OneOf"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> OneOfUtf8JsonPropertyName = new byte[]
-    {
-        111,
-        110,
-        101,
-        79,
-        102
-    };
+    public static ReadOnlySpan<byte> OneOfUtf8JsonPropertyName => "oneOf"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "OneOf"/>.
     /// </summary>
@@ -288,12 +149,8 @@ public readonly partial struct Applicator
     /// <summary>
     /// JSON property name for <see cref = "Not"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> NotUtf8JsonPropertyName = new byte[]
-    {
-        110,
-        111,
-        116
-    };
+    public static ReadOnlySpan<byte> NotUtf8JsonPropertyName => "not"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "Not"/>.
     /// </summary>
@@ -312,7 +169,7 @@ public readonly partial struct Applicator
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(PrefixItemsUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(PrefixItemsUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonSchema.Draft202012.Applicator.SchemaArray(result);
                 }
@@ -344,7 +201,7 @@ public readonly partial struct Applicator
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(ItemsUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(ItemsUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonSchema.Draft202012.Schema(result);
                 }
@@ -376,7 +233,7 @@ public readonly partial struct Applicator
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(ContainsUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(ContainsUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonSchema.Draft202012.Schema(result);
                 }
@@ -408,7 +265,7 @@ public readonly partial struct Applicator
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(AdditionalPropertiesUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(AdditionalPropertiesUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonSchema.Draft202012.Schema(result);
                 }
@@ -440,7 +297,7 @@ public readonly partial struct Applicator
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(PropertiesUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(PropertiesUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonSchema.Draft202012.Applicator.PropertiesEntity(result);
                 }
@@ -472,7 +329,7 @@ public readonly partial struct Applicator
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(PatternPropertiesUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(PatternPropertiesUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonSchema.Draft202012.Applicator.PatternPropertiesEntity(result);
                 }
@@ -504,7 +361,7 @@ public readonly partial struct Applicator
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(DependentSchemasUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(DependentSchemasUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonSchema.Draft202012.Applicator.DependentSchemasEntity(result);
                 }
@@ -536,7 +393,7 @@ public readonly partial struct Applicator
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(PropertyNamesUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(PropertyNamesUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonSchema.Draft202012.Schema(result);
                 }
@@ -568,7 +425,7 @@ public readonly partial struct Applicator
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(IfUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(IfUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonSchema.Draft202012.Schema(result);
                 }
@@ -600,7 +457,7 @@ public readonly partial struct Applicator
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(ThenUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(ThenUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonSchema.Draft202012.Schema(result);
                 }
@@ -632,7 +489,7 @@ public readonly partial struct Applicator
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(ElseUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(ElseUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonSchema.Draft202012.Schema(result);
                 }
@@ -664,7 +521,7 @@ public readonly partial struct Applicator
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(AllOfUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(AllOfUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonSchema.Draft202012.Schema.SchemaArray(result);
                 }
@@ -696,7 +553,7 @@ public readonly partial struct Applicator
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(AnyOfUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(AnyOfUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonSchema.Draft202012.Schema.SchemaArray(result);
                 }
@@ -728,7 +585,7 @@ public readonly partial struct Applicator
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(OneOfUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(OneOfUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonSchema.Draft202012.Schema.SchemaArray(result);
                 }
@@ -760,7 +617,7 @@ public readonly partial struct Applicator
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(NotUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(NotUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonSchema.Draft202012.Schema(result);
                 }
@@ -1098,77 +955,77 @@ public readonly partial struct Applicator
     {
         if (hasJsonElementBacking)
         {
-            if (property.NameEquals(PrefixItemsUtf8JsonPropertyName.Span))
+            if (property.NameEquals(PrefixItemsUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidatePrefixItems;
                 return true;
             }
-            else if (property.NameEquals(ItemsUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(ItemsUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateItems;
                 return true;
             }
-            else if (property.NameEquals(ContainsUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(ContainsUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateContains;
                 return true;
             }
-            else if (property.NameEquals(AdditionalPropertiesUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(AdditionalPropertiesUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateAdditionalProperties;
                 return true;
             }
-            else if (property.NameEquals(PropertiesUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(PropertiesUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateProperties;
                 return true;
             }
-            else if (property.NameEquals(PatternPropertiesUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(PatternPropertiesUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidatePatternProperties;
                 return true;
             }
-            else if (property.NameEquals(DependentSchemasUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(DependentSchemasUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateDependentSchemas;
                 return true;
             }
-            else if (property.NameEquals(PropertyNamesUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(PropertyNamesUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidatePropertyNames;
                 return true;
             }
-            else if (property.NameEquals(IfUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(IfUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateIf;
                 return true;
             }
-            else if (property.NameEquals(ThenUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(ThenUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateThen;
                 return true;
             }
-            else if (property.NameEquals(ElseUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(ElseUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateElse;
                 return true;
             }
-            else if (property.NameEquals(AllOfUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(AllOfUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateAllOf;
                 return true;
             }
-            else if (property.NameEquals(AnyOfUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(AnyOfUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateAnyOf;
                 return true;
             }
-            else if (property.NameEquals(OneOfUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(OneOfUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateOneOf;
                 return true;
             }
-            else if (property.NameEquals(NotUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(NotUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateNot;
                 return true;

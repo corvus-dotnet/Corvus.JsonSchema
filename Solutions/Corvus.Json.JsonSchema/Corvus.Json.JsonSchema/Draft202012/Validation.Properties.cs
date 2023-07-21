@@ -23,13 +23,8 @@ public readonly partial struct Validation
     /// <summary>
     /// JSON property name for <see cref = "Type"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> TypeUtf8JsonPropertyName = new byte[]
-    {
-        116,
-        121,
-        112,
-        101
-    };
+    public static ReadOnlySpan<byte> TypeUtf8JsonPropertyName => "type"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "Type"/>.
     /// </summary>
@@ -37,14 +32,8 @@ public readonly partial struct Validation
     /// <summary>
     /// JSON property name for <see cref = "Const"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> ConstUtf8JsonPropertyName = new byte[]
-    {
-        99,
-        111,
-        110,
-        115,
-        116
-    };
+    public static ReadOnlySpan<byte> ConstUtf8JsonPropertyName => "const"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "Const"/>.
     /// </summary>
@@ -52,13 +41,8 @@ public readonly partial struct Validation
     /// <summary>
     /// JSON property name for <see cref = "Enum"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> EnumUtf8JsonPropertyName = new byte[]
-    {
-        101,
-        110,
-        117,
-        109
-    };
+    public static ReadOnlySpan<byte> EnumUtf8JsonPropertyName => "enum"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "Enum"/>.
     /// </summary>
@@ -66,19 +50,8 @@ public readonly partial struct Validation
     /// <summary>
     /// JSON property name for <see cref = "MultipleOf"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> MultipleOfUtf8JsonPropertyName = new byte[]
-    {
-        109,
-        117,
-        108,
-        116,
-        105,
-        112,
-        108,
-        101,
-        79,
-        102
-    };
+    public static ReadOnlySpan<byte> MultipleOfUtf8JsonPropertyName => "multipleOf"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "MultipleOf"/>.
     /// </summary>
@@ -86,16 +59,8 @@ public readonly partial struct Validation
     /// <summary>
     /// JSON property name for <see cref = "Maximum"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> MaximumUtf8JsonPropertyName = new byte[]
-    {
-        109,
-        97,
-        120,
-        105,
-        109,
-        117,
-        109
-    };
+    public static ReadOnlySpan<byte> MaximumUtf8JsonPropertyName => "maximum"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "Maximum"/>.
     /// </summary>
@@ -103,25 +68,8 @@ public readonly partial struct Validation
     /// <summary>
     /// JSON property name for <see cref = "ExclusiveMaximum"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> ExclusiveMaximumUtf8JsonPropertyName = new byte[]
-    {
-        101,
-        120,
-        99,
-        108,
-        117,
-        115,
-        105,
-        118,
-        101,
-        77,
-        97,
-        120,
-        105,
-        109,
-        117,
-        109
-    };
+    public static ReadOnlySpan<byte> ExclusiveMaximumUtf8JsonPropertyName => "exclusiveMaximum"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "ExclusiveMaximum"/>.
     /// </summary>
@@ -129,16 +77,8 @@ public readonly partial struct Validation
     /// <summary>
     /// JSON property name for <see cref = "Minimum"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> MinimumUtf8JsonPropertyName = new byte[]
-    {
-        109,
-        105,
-        110,
-        105,
-        109,
-        117,
-        109
-    };
+    public static ReadOnlySpan<byte> MinimumUtf8JsonPropertyName => "minimum"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "Minimum"/>.
     /// </summary>
@@ -146,25 +86,8 @@ public readonly partial struct Validation
     /// <summary>
     /// JSON property name for <see cref = "ExclusiveMinimum"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> ExclusiveMinimumUtf8JsonPropertyName = new byte[]
-    {
-        101,
-        120,
-        99,
-        108,
-        117,
-        115,
-        105,
-        118,
-        101,
-        77,
-        105,
-        110,
-        105,
-        109,
-        117,
-        109
-    };
+    public static ReadOnlySpan<byte> ExclusiveMinimumUtf8JsonPropertyName => "exclusiveMinimum"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "ExclusiveMinimum"/>.
     /// </summary>
@@ -172,18 +95,8 @@ public readonly partial struct Validation
     /// <summary>
     /// JSON property name for <see cref = "MaxLength"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> MaxLengthUtf8JsonPropertyName = new byte[]
-    {
-        109,
-        97,
-        120,
-        76,
-        101,
-        110,
-        103,
-        116,
-        104
-    };
+    public static ReadOnlySpan<byte> MaxLengthUtf8JsonPropertyName => "maxLength"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "MaxLength"/>.
     /// </summary>
@@ -191,18 +104,8 @@ public readonly partial struct Validation
     /// <summary>
     /// JSON property name for <see cref = "MinLength"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> MinLengthUtf8JsonPropertyName = new byte[]
-    {
-        109,
-        105,
-        110,
-        76,
-        101,
-        110,
-        103,
-        116,
-        104
-    };
+    public static ReadOnlySpan<byte> MinLengthUtf8JsonPropertyName => "minLength"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "MinLength"/>.
     /// </summary>
@@ -210,16 +113,8 @@ public readonly partial struct Validation
     /// <summary>
     /// JSON property name for <see cref = "Pattern"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> PatternUtf8JsonPropertyName = new byte[]
-    {
-        112,
-        97,
-        116,
-        116,
-        101,
-        114,
-        110
-    };
+    public static ReadOnlySpan<byte> PatternUtf8JsonPropertyName => "pattern"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "Pattern"/>.
     /// </summary>
@@ -227,17 +122,8 @@ public readonly partial struct Validation
     /// <summary>
     /// JSON property name for <see cref = "MaxItems"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> MaxItemsUtf8JsonPropertyName = new byte[]
-    {
-        109,
-        97,
-        120,
-        73,
-        116,
-        101,
-        109,
-        115
-    };
+    public static ReadOnlySpan<byte> MaxItemsUtf8JsonPropertyName => "maxItems"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "MaxItems"/>.
     /// </summary>
@@ -245,17 +131,8 @@ public readonly partial struct Validation
     /// <summary>
     /// JSON property name for <see cref = "MinItems"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> MinItemsUtf8JsonPropertyName = new byte[]
-    {
-        109,
-        105,
-        110,
-        73,
-        116,
-        101,
-        109,
-        115
-    };
+    public static ReadOnlySpan<byte> MinItemsUtf8JsonPropertyName => "minItems"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "MinItems"/>.
     /// </summary>
@@ -263,20 +140,8 @@ public readonly partial struct Validation
     /// <summary>
     /// JSON property name for <see cref = "UniqueItems"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> UniqueItemsUtf8JsonPropertyName = new byte[]
-    {
-        117,
-        110,
-        105,
-        113,
-        117,
-        101,
-        73,
-        116,
-        101,
-        109,
-        115
-    };
+    public static ReadOnlySpan<byte> UniqueItemsUtf8JsonPropertyName => "uniqueItems"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "UniqueItems"/>.
     /// </summary>
@@ -284,20 +149,8 @@ public readonly partial struct Validation
     /// <summary>
     /// JSON property name for <see cref = "MaxContains"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> MaxContainsUtf8JsonPropertyName = new byte[]
-    {
-        109,
-        97,
-        120,
-        67,
-        111,
-        110,
-        116,
-        97,
-        105,
-        110,
-        115
-    };
+    public static ReadOnlySpan<byte> MaxContainsUtf8JsonPropertyName => "maxContains"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "MaxContains"/>.
     /// </summary>
@@ -305,20 +158,8 @@ public readonly partial struct Validation
     /// <summary>
     /// JSON property name for <see cref = "MinContains"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> MinContainsUtf8JsonPropertyName = new byte[]
-    {
-        109,
-        105,
-        110,
-        67,
-        111,
-        110,
-        116,
-        97,
-        105,
-        110,
-        115
-    };
+    public static ReadOnlySpan<byte> MinContainsUtf8JsonPropertyName => "minContains"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "MinContains"/>.
     /// </summary>
@@ -326,22 +167,8 @@ public readonly partial struct Validation
     /// <summary>
     /// JSON property name for <see cref = "MaxProperties"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> MaxPropertiesUtf8JsonPropertyName = new byte[]
-    {
-        109,
-        97,
-        120,
-        80,
-        114,
-        111,
-        112,
-        101,
-        114,
-        116,
-        105,
-        101,
-        115
-    };
+    public static ReadOnlySpan<byte> MaxPropertiesUtf8JsonPropertyName => "maxProperties"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "MaxProperties"/>.
     /// </summary>
@@ -349,22 +176,8 @@ public readonly partial struct Validation
     /// <summary>
     /// JSON property name for <see cref = "MinProperties"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> MinPropertiesUtf8JsonPropertyName = new byte[]
-    {
-        109,
-        105,
-        110,
-        80,
-        114,
-        111,
-        112,
-        101,
-        114,
-        116,
-        105,
-        101,
-        115
-    };
+    public static ReadOnlySpan<byte> MinPropertiesUtf8JsonPropertyName => "minProperties"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "MinProperties"/>.
     /// </summary>
@@ -372,17 +185,8 @@ public readonly partial struct Validation
     /// <summary>
     /// JSON property name for <see cref = "Required"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> RequiredUtf8JsonPropertyName = new byte[]
-    {
-        114,
-        101,
-        113,
-        117,
-        105,
-        114,
-        101,
-        100
-    };
+    public static ReadOnlySpan<byte> RequiredUtf8JsonPropertyName => "required"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "Required"/>.
     /// </summary>
@@ -390,26 +194,8 @@ public readonly partial struct Validation
     /// <summary>
     /// JSON property name for <see cref = "DependentRequired"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> DependentRequiredUtf8JsonPropertyName = new byte[]
-    {
-        100,
-        101,
-        112,
-        101,
-        110,
-        100,
-        101,
-        110,
-        116,
-        82,
-        101,
-        113,
-        117,
-        105,
-        114,
-        101,
-        100
-    };
+    public static ReadOnlySpan<byte> DependentRequiredUtf8JsonPropertyName => "dependentRequired"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "DependentRequired"/>.
     /// </summary>
@@ -428,7 +214,7 @@ public readonly partial struct Validation
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(TypeUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(TypeUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonSchema.Draft202012.Validation.TypeEntity(result);
                 }
@@ -460,7 +246,7 @@ public readonly partial struct Validation
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(ConstUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(ConstUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonAny(result);
                 }
@@ -492,7 +278,7 @@ public readonly partial struct Validation
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(EnumUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(EnumUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonSchema.Draft202012.Validation.JsonAnyArray(result);
                 }
@@ -524,7 +310,7 @@ public readonly partial struct Validation
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(MultipleOfUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(MultipleOfUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonSchema.Draft202012.Validation.MultipleOfEntity(result);
                 }
@@ -556,7 +342,7 @@ public readonly partial struct Validation
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(MaximumUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(MaximumUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonNumber(result);
                 }
@@ -588,7 +374,7 @@ public readonly partial struct Validation
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(ExclusiveMaximumUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(ExclusiveMaximumUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonNumber(result);
                 }
@@ -620,7 +406,7 @@ public readonly partial struct Validation
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(MinimumUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(MinimumUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonNumber(result);
                 }
@@ -652,7 +438,7 @@ public readonly partial struct Validation
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(ExclusiveMinimumUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(ExclusiveMinimumUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonNumber(result);
                 }
@@ -684,7 +470,7 @@ public readonly partial struct Validation
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(MaxLengthUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(MaxLengthUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeInteger(result);
                 }
@@ -716,7 +502,7 @@ public readonly partial struct Validation
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(MinLengthUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(MinLengthUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeIntegerDefault0(result);
                 }
@@ -748,7 +534,7 @@ public readonly partial struct Validation
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(PatternUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(PatternUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonRegex(result);
                 }
@@ -780,7 +566,7 @@ public readonly partial struct Validation
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(MaxItemsUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(MaxItemsUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeInteger(result);
                 }
@@ -812,7 +598,7 @@ public readonly partial struct Validation
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(MinItemsUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(MinItemsUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeIntegerDefault0(result);
                 }
@@ -844,7 +630,7 @@ public readonly partial struct Validation
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(UniqueItemsUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(UniqueItemsUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonSchema.Draft202012.Validation.UniqueItemsEntity(result);
                 }
@@ -876,7 +662,7 @@ public readonly partial struct Validation
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(MaxContainsUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(MaxContainsUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeInteger(result);
                 }
@@ -908,7 +694,7 @@ public readonly partial struct Validation
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(MinContainsUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(MinContainsUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonSchema.Draft202012.Validation.MinContainsEntity(result);
                 }
@@ -940,7 +726,7 @@ public readonly partial struct Validation
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(MaxPropertiesUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(MaxPropertiesUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeInteger(result);
                 }
@@ -972,7 +758,7 @@ public readonly partial struct Validation
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(MinPropertiesUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(MinPropertiesUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeIntegerDefault0(result);
                 }
@@ -1004,7 +790,7 @@ public readonly partial struct Validation
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(RequiredUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(RequiredUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonSchema.Draft202012.Validation.StringArray(result);
                 }
@@ -1036,7 +822,7 @@ public readonly partial struct Validation
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(DependentRequiredUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(DependentRequiredUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonSchema.Draft202012.Validation.DependentRequiredEntity(result);
                 }
@@ -1474,102 +1260,102 @@ public readonly partial struct Validation
     {
         if (hasJsonElementBacking)
         {
-            if (property.NameEquals(TypeUtf8JsonPropertyName.Span))
+            if (property.NameEquals(TypeUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateType;
                 return true;
             }
-            else if (property.NameEquals(ConstUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(ConstUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateConst;
                 return true;
             }
-            else if (property.NameEquals(EnumUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(EnumUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateEnum;
                 return true;
             }
-            else if (property.NameEquals(MultipleOfUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(MultipleOfUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateMultipleOf;
                 return true;
             }
-            else if (property.NameEquals(MaximumUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(MaximumUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateMaximum;
                 return true;
             }
-            else if (property.NameEquals(ExclusiveMaximumUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(ExclusiveMaximumUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateExclusiveMaximum;
                 return true;
             }
-            else if (property.NameEquals(MinimumUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(MinimumUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateMinimum;
                 return true;
             }
-            else if (property.NameEquals(ExclusiveMinimumUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(ExclusiveMinimumUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateExclusiveMinimum;
                 return true;
             }
-            else if (property.NameEquals(MaxLengthUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(MaxLengthUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateMaxLength;
                 return true;
             }
-            else if (property.NameEquals(MinLengthUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(MinLengthUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateMinLength;
                 return true;
             }
-            else if (property.NameEquals(PatternUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(PatternUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidatePattern;
                 return true;
             }
-            else if (property.NameEquals(MaxItemsUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(MaxItemsUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateMaxItems;
                 return true;
             }
-            else if (property.NameEquals(MinItemsUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(MinItemsUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateMinItems;
                 return true;
             }
-            else if (property.NameEquals(UniqueItemsUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(UniqueItemsUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateUniqueItems;
                 return true;
             }
-            else if (property.NameEquals(MaxContainsUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(MaxContainsUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateMaxContains;
                 return true;
             }
-            else if (property.NameEquals(MinContainsUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(MinContainsUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateMinContains;
                 return true;
             }
-            else if (property.NameEquals(MaxPropertiesUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(MaxPropertiesUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateMaxProperties;
                 return true;
             }
-            else if (property.NameEquals(MinPropertiesUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(MinPropertiesUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateMinProperties;
                 return true;
             }
-            else if (property.NameEquals(RequiredUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(RequiredUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateRequired;
                 return true;
             }
-            else if (property.NameEquals(DependentRequiredUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(DependentRequiredUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateDependentRequired;
                 return true;

@@ -2,11 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
-using System.Text;
 using System.Text.Json;
-using Corvus.Json.Internal;
 
 namespace Corvus.Json;
 
@@ -180,26 +177,7 @@ public readonly struct JsonObjectProperty : IEquatable<JsonObjectProperty>
     /// </exception>
     public bool TryGetName<TState, TResult>(in Utf8Parser<TState, TResult> parser, in TState state, [NotNullWhen(true)] out TResult? value)
     {
-        int required = Encoding.UTF8.GetMaxByteCount(this.name.Name.Length);
-        byte[]? rentedFromPool = null;
-        Span<byte> buffer =
-            required > JsonValueHelpers.MaxStackAlloc
-            ? (rentedFromPool = ArrayPool<byte>.Shared.Rent(required))
-            : stackalloc byte[JsonValueHelpers.MaxStackAlloc];
-
-        try
-        {
-            int written = Encoding.UTF8.GetBytes(this.name.Name, buffer);
-            return parser(buffer[..written], state, out value);
-        }
-        finally
-        {
-            if (rentedFromPool is not null)
-            {
-                // Clear the buffer on return as property names may be security sensitive
-                ArrayPool<byte>.Shared.Return(rentedFromPool, true);
-            }
-        }
+        return this.name.Name.TryGetValue(parser, state, out value);
     }
 
     /// <summary>
@@ -222,7 +200,18 @@ public readonly struct JsonObjectProperty : IEquatable<JsonObjectProperty>
     /// </exception>
     public bool TryGetName<TState, TResult>(in Parser<TState, TResult> parser, in TState state, [NotNullWhen(true)] out TResult? value)
     {
-        return parser(this.Name.Name.AsSpan(), state, out value);
+        if ((this.backing & Backing.JsonProperty) != 0)
+        {
+            return parser(this.jsonProperty.Name, state, out value);
+        }
+
+        if ((this.backing & Backing.NameValue) != 0)
+        {
+            return this.name.Name.TryGetValue(parser, state, out value);
+        }
+
+        value = default;
+        return false;
     }
 
     /// <summary>
@@ -251,6 +240,26 @@ public readonly struct JsonObjectProperty : IEquatable<JsonObjectProperty>
     /// <param name="name">The name to match.</param>
     /// <returns><c>True</c> if the name matches.</returns>
     public bool NameEquals(ReadOnlySpan<char> name)
+    {
+        if ((this.backing & Backing.JsonProperty) != 0)
+        {
+            return this.jsonProperty.NameEquals(name);
+        }
+
+        if ((this.backing & Backing.NameValue) != 0)
+        {
+            return this.name.Equals(name);
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Compares the specified text to the name of this property.
+    /// </summary>
+    /// <param name="name">The name to match.</param>
+    /// <returns><c>True</c> if the name matches.</returns>
+    public bool NameEquals(JsonString name)
     {
         if ((this.backing & Backing.JsonProperty) != 0)
         {

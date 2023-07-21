@@ -25,13 +25,8 @@ public readonly partial struct JsonPatchDocument
         /// <summary>
         /// JSON property name for <see cref = "FromValue"/>.
         /// </summary>
-        public static readonly ReadOnlyMemory<byte> FromValueUtf8JsonPropertyName = new byte[]
-        {
-            102,
-            114,
-            111,
-            109
-        };
+        public static ReadOnlySpan<byte> FromValueUtf8JsonPropertyName => "from"u8;
+
         /// <summary>
         /// JSON property name for <see cref = "FromValue"/>.
         /// </summary>
@@ -39,13 +34,8 @@ public readonly partial struct JsonPatchDocument
         /// <summary>
         /// JSON property name for <see cref = "Path"/>.
         /// </summary>
-        public static readonly ReadOnlyMemory<byte> PathUtf8JsonPropertyName = new byte[]
-        {
-            112,
-            97,
-            116,
-            104
-        };
+        public static ReadOnlySpan<byte> PathUtf8JsonPropertyName => "path"u8;
+
         /// <summary>
         /// JSON property name for <see cref = "Path"/>.
         /// </summary>
@@ -53,11 +43,8 @@ public readonly partial struct JsonPatchDocument
         /// <summary>
         /// JSON property name for <see cref = "Op"/>.
         /// </summary>
-        public static readonly ReadOnlyMemory<byte> OpUtf8JsonPropertyName = new byte[]
-        {
-            111,
-            112
-        };
+        public static ReadOnlySpan<byte> OpUtf8JsonPropertyName => "op"u8;
+
         /// <summary>
         /// JSON property name for <see cref = "Op"/>.
         /// </summary>
@@ -76,7 +63,7 @@ public readonly partial struct JsonPatchDocument
                         return default;
                     }
 
-                    if (this.jsonElementBacking.TryGetProperty(FromValueUtf8JsonPropertyName.Span, out JsonElement result))
+                    if (this.jsonElementBacking.TryGetProperty(FromValueUtf8JsonPropertyName, out JsonElement result))
                     {
                         return new Corvus.Json.JsonPointer(result);
                     }
@@ -108,7 +95,7 @@ public readonly partial struct JsonPatchDocument
                         return default;
                     }
 
-                    if (this.jsonElementBacking.TryGetProperty(PathUtf8JsonPropertyName.Span, out JsonElement result))
+                    if (this.jsonElementBacking.TryGetProperty(PathUtf8JsonPropertyName, out JsonElement result))
                     {
                         return new Corvus.Json.JsonPointer(result);
                     }
@@ -140,7 +127,7 @@ public readonly partial struct JsonPatchDocument
                         return default;
                     }
 
-                    if (this.jsonElementBacking.TryGetProperty(OpUtf8JsonPropertyName.Span, out JsonElement result))
+                    if (this.jsonElementBacking.TryGetProperty(OpUtf8JsonPropertyName, out JsonElement result))
                     {
                         return new Corvus.Json.Patch.Model.JsonPatchDocument.Move.OpEntity(result);
                     }
@@ -211,12 +198,12 @@ public readonly partial struct JsonPatchDocument
         {
             if (hasJsonElementBacking)
             {
-                if (property.NameEquals(FromValueUtf8JsonPropertyName.Span))
+                if (property.NameEquals(FromValueUtf8JsonPropertyName))
                 {
                     propertyValidator = __CorvusValidateFromValue;
                     return true;
                 }
-                else if (property.NameEquals(OpUtf8JsonPropertyName.Span))
+                else if (property.NameEquals(OpUtf8JsonPropertyName))
                 {
                     propertyValidator = __CorvusValidateOp;
                     return true;

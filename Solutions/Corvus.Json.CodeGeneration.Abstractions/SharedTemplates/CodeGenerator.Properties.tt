@@ -38,7 +38,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     /// <summary>
     /// JSON property name for <see cref="<#= property.DotnetPropertyName #>"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> <#= property.DotnetPropertyName #>Utf8JsonPropertyName = new byte[] { <#= GetEncodedBytes(property.JsonPropertyName) #> };
+    public static ReadOnlySpan<byte> <#= property.DotnetPropertyName #>Utf8JsonPropertyName => <#= Formatting.FormatLiteralOrNull(property.JsonPropertyName, true)#>u8;
 
     /// <summary>
     /// JSON property name for <see cref="<#= property.DotnetPropertyName #>"/>.
@@ -63,7 +63,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(<#= property.DotnetPropertyName #>Utf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(<#= property.DotnetPropertyName #>Utf8JsonPropertyName, out JsonElement result))
                 {
                     return new  <#= property.Type.FullyQualifiedDotnetTypeName #>(result);
                 }
@@ -183,7 +183,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 <#  bool isFirst = true;
     foreach (var property in LocalProperties)
     { #>
-            <#= isFirst ? string.Empty : "else " #>if (property.NameEquals(<#= property.DotnetPropertyName #>Utf8JsonPropertyName.Span))
+            <#= isFirst ? string.Empty : "else " #>if (property.NameEquals(<#= property.DotnetPropertyName #>Utf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidate<#= property.DotnetPropertyName #>;
                 return true;

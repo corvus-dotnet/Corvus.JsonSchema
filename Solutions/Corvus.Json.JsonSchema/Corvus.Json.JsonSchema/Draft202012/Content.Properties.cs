@@ -23,24 +23,8 @@ public readonly partial struct Content
     /// <summary>
     /// JSON property name for <see cref = "ContentEncoding"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> ContentEncodingUtf8JsonPropertyName = new byte[]
-    {
-        99,
-        111,
-        110,
-        116,
-        101,
-        110,
-        116,
-        69,
-        110,
-        99,
-        111,
-        100,
-        105,
-        110,
-        103
-    };
+    public static ReadOnlySpan<byte> ContentEncodingUtf8JsonPropertyName => "contentEncoding"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "ContentEncoding"/>.
     /// </summary>
@@ -48,25 +32,8 @@ public readonly partial struct Content
     /// <summary>
     /// JSON property name for <see cref = "ContentMediaType"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> ContentMediaTypeUtf8JsonPropertyName = new byte[]
-    {
-        99,
-        111,
-        110,
-        116,
-        101,
-        110,
-        116,
-        77,
-        101,
-        100,
-        105,
-        97,
-        84,
-        121,
-        112,
-        101
-    };
+    public static ReadOnlySpan<byte> ContentMediaTypeUtf8JsonPropertyName => "contentMediaType"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "ContentMediaType"/>.
     /// </summary>
@@ -74,22 +41,8 @@ public readonly partial struct Content
     /// <summary>
     /// JSON property name for <see cref = "ContentSchema"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> ContentSchemaUtf8JsonPropertyName = new byte[]
-    {
-        99,
-        111,
-        110,
-        116,
-        101,
-        110,
-        116,
-        83,
-        99,
-        104,
-        101,
-        109,
-        97
-    };
+    public static ReadOnlySpan<byte> ContentSchemaUtf8JsonPropertyName => "contentSchema"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "ContentSchema"/>.
     /// </summary>
@@ -108,7 +61,7 @@ public readonly partial struct Content
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(ContentEncodingUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(ContentEncodingUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonString(result);
                 }
@@ -140,7 +93,7 @@ public readonly partial struct Content
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(ContentMediaTypeUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(ContentMediaTypeUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonString(result);
                 }
@@ -172,7 +125,7 @@ public readonly partial struct Content
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(ContentSchemaUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(ContentSchemaUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonSchema.Draft202012.Schema(result);
                 }
@@ -270,17 +223,17 @@ public readonly partial struct Content
     {
         if (hasJsonElementBacking)
         {
-            if (property.NameEquals(ContentEncodingUtf8JsonPropertyName.Span))
+            if (property.NameEquals(ContentEncodingUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateContentEncoding;
                 return true;
             }
-            else if (property.NameEquals(ContentMediaTypeUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(ContentMediaTypeUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateContentMediaType;
                 return true;
             }
-            else if (property.NameEquals(ContentSchemaUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(ContentSchemaUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateContentSchema;
                 return true;

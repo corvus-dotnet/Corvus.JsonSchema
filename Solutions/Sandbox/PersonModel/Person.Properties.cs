@@ -23,7 +23,8 @@ public readonly partial struct Person
     /// <summary>
     /// JSON property name for <see cref = "Name"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> NameUtf8JsonPropertyName = new byte[]{110, 97, 109, 101};
+    public static ReadOnlySpan<byte> NameUtf8JsonPropertyName => "name"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "Name"/>.
     /// </summary>
@@ -31,7 +32,8 @@ public readonly partial struct Person
     /// <summary>
     /// JSON property name for <see cref = "DateOfBirth"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> DateOfBirthUtf8JsonPropertyName = new byte[]{100, 97, 116, 101, 79, 102, 66, 105, 114, 116, 104};
+    public static ReadOnlySpan<byte> DateOfBirthUtf8JsonPropertyName => "dateOfBirth"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "DateOfBirth"/>.
     /// </summary>
@@ -50,7 +52,7 @@ public readonly partial struct Person
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(NameUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(NameUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.Benchmarking.Models.PersonName(result);
                 }
@@ -82,7 +84,7 @@ public readonly partial struct Person
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(DateOfBirthUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(DateOfBirthUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonDate(result);
                 }
@@ -156,12 +158,12 @@ public readonly partial struct Person
     {
         if (hasJsonElementBacking)
         {
-            if (property.NameEquals(NameUtf8JsonPropertyName.Span))
+            if (property.NameEquals(NameUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateName;
                 return true;
             }
-            else if (property.NameEquals(DateOfBirthUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(DateOfBirthUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateDateOfBirth;
                 return true;
