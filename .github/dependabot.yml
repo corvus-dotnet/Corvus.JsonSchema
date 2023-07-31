@@ -12,13 +12,4 @@ updates:
     microsoft-extensions:
       patterns:
       - Microsoft.Extensions.*
-    corvus:
-      patterns:
-      - Corvus.*
-    marain:
-      patterns:
-      - Marain.*
-    menes:
-      patterns:
-      - Menes.*
 
