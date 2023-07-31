@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using Corvus.Json.Patch.Model;
 using Corvus.Json.Visitor;
 
@@ -14,12 +15,17 @@ namespace Corvus.Json.Patch;
 [System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.SpacingRules", "SA1000:Keywords should be spaced correctly", Justification = "new() syntax not supported by current version of StyleCop")]
 public static partial class JsonPatchExtensions
 {
-    private static readonly ReadOnlyMemory<byte> AddAsUtf8 = "add"u8.ToArray();
-    private static readonly ReadOnlyMemory<byte> CopyAsUtf8 = "copy"u8.ToArray();
-    private static readonly ReadOnlyMemory<byte> MoveAsUtf8 = "move"u8.ToArray();
-    private static readonly ReadOnlyMemory<byte> RemoveAsUtf8 = "remove"u8.ToArray();
-    private static readonly ReadOnlyMemory<byte> ReplaceAsUtf8 = "replace"u8.ToArray();
-    private static readonly ReadOnlyMemory<byte> TestAsUtf8 = "test"u8.ToArray();
+    private static ReadOnlySpan<byte> AddAsUtf8 => "add"u8;
+
+    private static ReadOnlySpan<byte> CopyAsUtf8 => "copy"u8;
+
+    private static ReadOnlySpan<byte> MoveAsUtf8 => "move"u8;
+
+    private static ReadOnlySpan<byte> RemoveAsUtf8 => "remove"u8;
+
+    private static ReadOnlySpan<byte> ReplaceAsUtf8 => "replace"u8;
+
+    private static ReadOnlySpan<byte> TestAsUtf8 => "test"u8;
 
     /// <summary>
     /// Begin gathering a <see cref="JsonPatchDocument"/> by applying successive patch operations to an initial <see cref="IJsonValue"/>.
@@ -66,38 +72,194 @@ public static partial class JsonPatchExtensions
         return true;
     }
 
+    /// <summary>
+    /// Apply a single patch operation to a <see cref="IJsonValue"/>.
+    /// </summary>
+    /// <typeparam name="T">The type of <see cref="IJsonValue"/>.</typeparam>
+    /// <param name="value">The value to which to apply the patch.</param>
+    /// <param name="patchOperation">The patch operation to apply.</param>
+    /// <param name="result">The result of applying the patch.</param>
+    /// <returns><see langword="true"/> if the patch was applied, otherwise <see langword="false"/>.</returns>
+    public static bool TryApplyPatchOperation<T>(this T value, in JsonPatchDocument.PatchOperation patchOperation, out JsonAny result)
+        where T : struct, IJsonValue
+    {
+        return TryApplyPatchOperation(value.AsAny, patchOperation, out result);
+    }
+
+    /// <summary>
+    /// Applies an Add operation to the node.
+    /// </summary>
+    /// <typeparam name="T">The type of the node to modify.</typeparam>
+    /// <param name="node">The node to which to add the value.</param>
+    /// <param name="path">The path at which to add the value.</param>
+    /// <param name="value">The value to add.</param>
+    /// <param name="result">The resulting entity.</param>
+    /// <returns><see langword="true"/> if the value was added, otherwise <see langword="false"/>.</returns>
+    public static bool TryAdd<T>(this T node, string path, JsonAny value, out T result)
+        where T : struct, IJsonValue<T>
+    {
+        if (path.Length == 0)
+        {
+            result = value.As<T>();
+            return true;
+        }
+
+        AddVisitor visitor = new(path, value);
+
+        bool transformed = node.Visit(visitor.Visit, out JsonAny transformedResult);
+        result = transformedResult.As<T>();
+        return transformed;
+    }
+
+    /// <summary>
+    /// Applies a Replace operation to the node.
+    /// </summary>
+    /// <typeparam name="T">The type of the node to modify.</typeparam>
+    /// <param name="node">The node in which to replace the value.</param>
+    /// <param name="path">The path at which to replace the value.</param>
+    /// <param name="value">The value to replace.</param>
+    /// <param name="result">The resulting entity.</param>
+    /// <returns><see langword="true"/> if the value was replaced, otherwise <see langword="false"/>.</returns>
+    public static bool TryReplace<T>(this T node, string path, JsonAny value, out T result)
+        where T : struct, IJsonValue<T>
+    {
+        if (path.Length == 0)
+        {
+            result = value.As<T>();
+            return true;
+        }
+
+        ReplaceVisitor visitor = new(value, path);
+
+        bool transformed = node.Visit(visitor.Visit, out JsonAny transformedResult);
+        result = transformedResult.As<T>();
+        return transformed;
+    }
+
+    /// <summary>
+    /// Applies a Copy operation to the node.
+    /// </summary>
+    /// <typeparam name="T">The type of the node to modify.</typeparam>
+    /// <param name="node">The node in which to copy the value.</param>
+    /// <param name="destinationPath">The path to which to copy the value.</param>
+    /// <param name="sourcePath">The path from which to copy the value.</param>
+    /// <param name="result">The resulting entity.</param>
+    /// <returns><see langword="true"/> if the value was copied, otherwise <see langword="false"/>.</returns>
+    public static bool TryCopy<T>(this T node, string destinationPath, string sourcePath, out T result)
+        where T : struct, IJsonValue<T>
+    {
+        if (sourcePath.Equals(destinationPath))
+        {
+            result = node;
+            return true;
+        }
+
+        if (!node.TryResolvePointer(sourcePath, out JsonAny source))
+        {
+            result = node;
+            return false;
+        }
+
+        if (destinationPath.Length == 0)
+        {
+            result = source.As<T>();
+            return true;
+        }
+
+        CopyVisitor visitor = new(destinationPath, source);
+
+        bool transformed = node.Visit(visitor.Visit, out JsonAny transformedResult);
+        result = transformedResult.As<T>();
+        return transformed;
+    }
+
+    /// <summary>
+    /// Applies a Move operation to the node.
+    /// </summary>
+    /// <typeparam name="T">The type of the node to modify.</typeparam>
+    /// <param name="node">The node in which to move the value.</param>
+    /// <param name="destinationPath">The path to which to move the value.</param>
+    /// <param name="sourcePath">The path from which to move the value.</param>
+    /// <param name="result">The resulting entity.</param>
+    /// <returns><see langword="true"/> if the value was moved, otherwise <see langword="false"/>.</returns>
+    public static bool TryMove<T>(this T node, string destinationPath, string sourcePath, out T result)
+        where T : struct, IJsonValue<T>
+    {
+        if (sourcePath.Equals(destinationPath))
+        {
+            result = node;
+            return true;
+        }
+
+        if (!node.TryResolvePointer(sourcePath, out JsonAny source))
+        {
+            result = node;
+            return false;
+        }
+
+        if (destinationPath.Length == 0)
+        {
+            result = source.As<T>();
+            return true;
+        }
+
+        MoveVisitor visitor = new(destinationPath, sourcePath, source);
+
+        bool transformed = node.Visit(visitor.Visit, out JsonAny transformedResult);
+        result = transformedResult.As<T>();
+        return transformed;
+    }
+
+    /// <summary>
+    /// Applies a Remove operation to the node.
+    /// </summary>
+    /// <typeparam name="T">The type of the node to modify.</typeparam>
+    /// <param name="node">The node from which to remove the value.</param>
+    /// <param name="path">The path at which to remove the value.</param>
+    /// <param name="result">The resulting entity.</param>
+    /// <returns><see langword="true"/> if the value was removed, otherwise <see langword="false"/>.</returns>
+    public static bool TryRemove<T>(this T node, string path, out T result)
+        where T : struct, IJsonValue<T>
+    {
+        RemoveVisitor visitor = new(path);
+
+        bool transformed = node.Visit(visitor.Visit, out JsonAny transformedResult);
+        result = transformedResult.As<T>();
+        return transformed;
+    }
+
     private static bool TryApplyPatchOperation(in JsonAny node, in JsonPatchDocument.PatchOperation patchOperation, out JsonAny result)
     {
         JsonString op = patchOperation.Op;
 
         if (patchOperation.HasJsonElementBacking)
         {
-            if (op.EqualsUtf8Bytes(AddAsUtf8.Span))
+            if (op.EqualsUtf8Bytes(AddAsUtf8))
             {
                 return TryApplyAdd(node, patchOperation, out result);
             }
 
-            if (op.EqualsUtf8Bytes(CopyAsUtf8.Span))
+            if (op.EqualsUtf8Bytes(CopyAsUtf8))
             {
                 return TryApplyCopy(node, patchOperation, out result);
             }
 
-            if (op.EqualsUtf8Bytes(MoveAsUtf8.Span))
+            if (op.EqualsUtf8Bytes(MoveAsUtf8))
             {
                 return TryApplyMove(node, patchOperation, out result);
             }
 
-            if (op.EqualsUtf8Bytes(RemoveAsUtf8.Span))
+            if (op.EqualsUtf8Bytes(RemoveAsUtf8))
             {
                 return TryApplyRemove(node, patchOperation, out result);
             }
 
-            if (op.EqualsUtf8Bytes(ReplaceAsUtf8.Span))
+            if (op.EqualsUtf8Bytes(ReplaceAsUtf8))
             {
                 return TryApplyReplace(node, patchOperation, out result);
             }
 
-            if (op.EqualsUtf8Bytes(TestAsUtf8.Span))
+            if (op.EqualsUtf8Bytes(TestAsUtf8))
             {
                 return TryApplyTest(node, patchOperation, out result);
             }
@@ -156,17 +318,7 @@ public static partial class JsonPatchExtensions
         patchOperation.TryGetProperty(JsonPatchDocument.AddEntity.PathUtf8JsonPropertyName.Span, out JsonAny pathAny);
         patchOperation.TryGetProperty(JsonPatchDocument.AddEntity.ValueUtf8JsonPropertyName.Span, out JsonAny value);
         string path = pathAny;
-        if (path.Length == 0)
-        {
-            result = value;
-            return true;
-        }
-
-        AddVisitor visitor = new(path, value);
-
-        bool transformed = node.Visit(visitor.Visit, out JsonAny transformedResult);
-        result = transformedResult;
-        return transformed;
+        return TryAdd(node, path, value, out result);
     }
 
     private static bool TryApplyCopy(in JsonAny node, in JsonPatchDocument.PatchOperation patchOperation, out JsonAny result)
