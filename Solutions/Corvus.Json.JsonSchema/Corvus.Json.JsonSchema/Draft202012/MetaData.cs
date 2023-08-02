@@ -56,6 +56,7 @@ public readonly partial struct MetaData
     /// Gets an Undefined instance.
     /// </summary>
     public static MetaData Undefined { get; } = default;
+
     /// <inheritdoc/>
     public JsonAny AsAny
     {
@@ -494,6 +495,36 @@ public readonly partial struct MetaData
     {
         using var jsonDocument = JsonDocument.Parse(utf8Json, options);
         return new MetaData(jsonDocument.RootElement.Clone());
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name = "buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static MetaData ParseValue(ReadOnlySpan<char> buffer)
+    {
+        return IJsonValue<MetaData>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name = "buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static MetaData ParseValue(ReadOnlySpan<byte> buffer)
+    {
+        return IJsonValue<MetaData>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name = "reader">The reader from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static MetaData ParseValue(ref Utf8JsonReader reader)
+    {
+        return IJsonValue<MetaData>.ParseValue(ref reader);
     }
 
     /// <summary>

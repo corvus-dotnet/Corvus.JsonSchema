@@ -761,6 +761,36 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     }
 
     /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static <#= TypeDeclaration.DotnetTypeName #> ParseValue(ReadOnlySpan<char> buffer)
+    {
+        return IJsonValue<<#= TypeDeclaration.DotnetTypeName #>>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static <#= TypeDeclaration.DotnetTypeName #> ParseValue(ReadOnlySpan<byte> buffer)
+    {
+        return IJsonValue<<#= TypeDeclaration.DotnetTypeName #>>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="reader">The reader from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static <#= TypeDeclaration.DotnetTypeName #> ParseValue(ref Utf8JsonReader reader)
+    {
+        return IJsonValue<<#= TypeDeclaration.DotnetTypeName #>>.ParseValue(ref reader);
+    }
+
+    /// <summary>
     /// Gets the value as the target value.
     /// </summary>
     /// <typeparam name="TTarget">The type of the target.</typeparam>

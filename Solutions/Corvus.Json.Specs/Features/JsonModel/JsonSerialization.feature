@@ -1,6 +1,12 @@
 ﻿Feature: JsonSerialization
 	Writing entities
 
+Scenario: Serialize an object with an undefined property value
+	Given the dotnet backed JsonAny { "foo": 3, "bar": "<undefined>" }
+	When the json value is round-trip serialized via a string
+	Then the round-tripped result should be an Object
+	And the round-tripped result should be equal to the JsonAny { "foo": 3 }
+
 Scenario Outline: Serialize a jsonelement-backed JsonAny to a string
 	Given the JsonElement backed JsonAny <jsonValue>
 	When the json value is round-trip serialized via a string

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 	<Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
 
 	<PropertyGroup>
@@ -18,28 +18,28 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Corvus.Testing.SpecFlow.NUnit" Version="2.0.0" />
+		<PackageReference Include="Corvus.Testing.SpecFlow.NUnit" Version="2.0.1" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="7.0.0" />
-		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.5.0-preview-20221003-04" />
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.6.3" />
 		<PackageReference Include="SolidToken.SpecFlow.DependencyInjection" Version="3.9.3" />
 		<PackageReference Include="System.Text.Encodings.Web" Version="7.0.0" />
 
-		<PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.4">
+		<PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.5">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.4.0" />
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.6.0" />
 
 
 		<PackageReference Include="SpecFlow.NUnit" Version="3.9.74" />
 		<PackageReference Include="nunit" Version="3.13.3" />
-		<PackageReference Include="NUnit3TestAdapter" Version="4.3.1" />
+		<PackageReference Include="NUnit3TestAdapter" Version="4.5.0" />
 		<!-- Required for publishing test results directly to Azure Pipelines -->
 		<PackageReference Include="azurepipelines.testlogger" Version="1.2.2" />
 
-		<PackageReference Include="FluentAssertions" Version="6.8.0" />
+		<PackageReference Include="FluentAssertions" Version="6.11.0" />
 
-		<PackageReference Include="System.Text.Json" Version="7.0.1" />
+		<PackageReference Include="System.Text.Json" Version="7.0.3" />
 
 		<ProjectReference Include="..\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.201909.csproj" />
 
@@ -70,7 +70,17 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Folder Include="Features\JsonModel\JsonStringTryGetValue\" />
+	  <Folder Include="Features\JsonModel\JsonStringConcatenate\" />
+	  <Folder Include="Features\JsonModel\ParseValue\" />
 	  <Folder Include="Features\JsonSchema\Draft6\" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <SpecFlowFeatureFiles Update="Features\JsonModel\NumericComparison\JsonIntegerComparison.feature">
+	    <Visible>$(UsingMicrosoftNETSdk)</Visible>
+	    <CodeBehindFile>%(RelativeDir)%(Filename).feature$(DefaultLanguageSourceExtension)</CodeBehindFile>
+	  </SpecFlowFeatureFiles>
 	</ItemGroup>
 
 </Project>

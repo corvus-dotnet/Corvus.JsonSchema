@@ -403,6 +403,36 @@ public readonly partial struct JsonNull : IJsonValue<JsonNull>
     }
 
     /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    public static JsonNull ParseValue(ReadOnlySpan<char> buffer)
+    {
+        return IJsonValue<JsonNull>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    public static JsonNull ParseValue(ReadOnlySpan<byte> buffer)
+    {
+        return IJsonValue<JsonNull>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="reader">The reader from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    public static JsonNull ParseValue(ref Utf8JsonReader reader)
+    {
+        return IJsonValue<JsonNull>.ParseValue(ref reader);
+    }
+
+    /// <summary>
     /// Gets the value as the target value.
     /// </summary>
     /// <typeparam name="TTarget">The type of the target.</typeparam>

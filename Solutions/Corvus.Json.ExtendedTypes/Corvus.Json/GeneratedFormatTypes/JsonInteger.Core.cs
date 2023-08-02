@@ -230,6 +230,28 @@ public readonly partial struct JsonInteger : IJsonNumber<JsonInteger>
     }
 
     /// <summary>
+    /// Less than operator.
+    /// </summary>
+    /// <param name="left">The LHS of the comparison.</param>
+    /// <param name="right">The RHS of the comparison.</param>
+    /// <returns><see langword="true"/> if the left is less than the right, otherwise <see langword="false"/>.</returns>
+    public static bool operator <(in JsonInteger left, in JsonInteger right)
+    {
+        return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && (double)left < (double)right;
+    }
+
+    /// <summary>
+    /// Greater than operator.
+    /// </summary>
+    /// <param name="left">The LHS of the comparison.</param>
+    /// <param name="right">The RHS of the comparison.</param>
+    /// <returns><see langword="true"/> if the left is greater than the right, otherwise <see langword="false"/>.</returns>
+    public static bool operator >(in JsonInteger left, in JsonInteger right)
+    {
+        return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && (double)left > (double)right;
+    }
+
+    /// <summary>
     /// Gets an instance of the JSON value from a JsonAny value.
     /// </summary>
     /// <param name="value">The <see cref="JsonAny"/> value from which to instantiate the instance.</param>
@@ -427,6 +449,36 @@ public readonly partial struct JsonInteger : IJsonNumber<JsonInteger>
     {
         using var jsonDocument = JsonDocument.Parse(utf8Json, options);
         return new JsonInteger(jsonDocument.RootElement.Clone());
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    public static JsonInteger ParseValue(ReadOnlySpan<char> buffer)
+    {
+        return IJsonValue<JsonInteger>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    public static JsonInteger ParseValue(ReadOnlySpan<byte> buffer)
+    {
+        return IJsonValue<JsonInteger>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="reader">The reader from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    public static JsonInteger ParseValue(ref Utf8JsonReader reader)
+    {
+        return IJsonValue<JsonInteger>.ParseValue(ref reader);
     }
 
     /// <summary>

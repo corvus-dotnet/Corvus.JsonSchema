@@ -23,7 +23,25 @@ public readonly partial struct Unevaluated
     /// <summary>
     /// JSON property name for <see cref = "UnevaluatedItems"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> UnevaluatedItemsUtf8JsonPropertyName = new byte[]{117, 110, 101, 118, 97, 108, 117, 97, 116, 101, 100, 73, 116, 101, 109, 115};
+    public static readonly ReadOnlyMemory<byte> UnevaluatedItemsUtf8JsonPropertyName = new byte[]
+    {
+        117,
+        110,
+        101,
+        118,
+        97,
+        108,
+        117,
+        97,
+        116,
+        101,
+        100,
+        73,
+        116,
+        101,
+        109,
+        115
+    };
     /// <summary>
     /// JSON property name for <see cref = "UnevaluatedItems"/>.
     /// </summary>
@@ -31,7 +49,30 @@ public readonly partial struct Unevaluated
     /// <summary>
     /// JSON property name for <see cref = "UnevaluatedProperties"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> UnevaluatedPropertiesUtf8JsonPropertyName = new byte[]{117, 110, 101, 118, 97, 108, 117, 97, 116, 101, 100, 80, 114, 111, 112, 101, 114, 116, 105, 101, 115};
+    public static readonly ReadOnlyMemory<byte> UnevaluatedPropertiesUtf8JsonPropertyName = new byte[]
+    {
+        117,
+        110,
+        101,
+        118,
+        97,
+        108,
+        117,
+        97,
+        116,
+        101,
+        100,
+        80,
+        114,
+        111,
+        112,
+        101,
+        114,
+        116,
+        105,
+        101,
+        115
+    };
     /// <summary>
     /// JSON property name for <see cref = "UnevaluatedProperties"/>.
     /// </summary>

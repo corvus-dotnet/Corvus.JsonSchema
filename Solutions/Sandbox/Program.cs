@@ -1,24 +1,6 @@
 ﻿using Corvus.Json;
-using Corvus.Json.Benchmarking.Models;
-using Corvus.Json.UriTemplates;
-using NodaTime;
+using Corvus.Json.Patch;
 
-string uriTemplate = "http://example.org/location{?value*}";
-JsonAny jsonValues = JsonAny.FromProperties(("foo", "bar"), ("bar", "baz"), ("baz", "bob")).AsJsonElementBackedValue();
-ReadOnlySpan<char> span = uriTemplate.AsSpan();
-
-for (int i = 0; i < 10000; i++)
-{
-    object? nullState = default;
-    JsonUriTemplateResolver.TryResolveResult(span, false, jsonValues, HandleResult, ref nullState);
-}
-
-static void HandleResult(ReadOnlySpan<char> resolvedTemplate, ref object? state)
-{
-    // NOP
-}
-
-var p =
-    Person.Create(
-        name: PersonName.Create("Adams", "Matthew"),
-        dateOfBirth: new LocalDate(1973, 02, 14));
+var value = JsonObject.FromProperties(("foo", "hello"), ("bar", "world"));
+PatchBuilder builder = value.BeginPatch().DeepAddOrReplaceObjectProperties(3, "/baz/bat/bash");
+Console.WriteLine(builder.Value.ToString());
