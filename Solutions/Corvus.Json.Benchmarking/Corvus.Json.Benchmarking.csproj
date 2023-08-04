@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 	<Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
 
 	<PropertyGroup>
@@ -14,13 +14,13 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="BenchmarkDotNet" Version="0.13.5" />
-		<PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.13.5" />
+		<PackageReference Include="BenchmarkDotNet" Version="0.13.7" />
+		<PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.13.7" />
 		<PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.5">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="JsonSchema.Net" Version="4.1.6" />
+		<PackageReference Include="JsonSchema.Net" Version="5.1.0" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="7.0.0" />
 		<PackageReference Include="JsonPatch.Net" Version="2.1.0" />
 	</ItemGroup>
@@ -40,7 +40,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <PackageReference Update="Roslynator.Analyzers" Version="4.2.0" />
+	  <PackageReference Update="Roslynator.Analyzers" Version="4.4.0" />
 	</ItemGroup>
 
 </Project>
