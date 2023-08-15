@@ -17,6 +17,24 @@ namespace Corvus.Json;
 public static class JsonValueExtensions
 {
     /// <summary>
+    /// Clones an <see cref="IJsonValue"/> to enable it to be
+    /// used safely outside of its construction context.
+    /// </summary>
+    /// <typeparam name="TValue">The type of the value to be cloned.</typeparam>
+    /// <param name="value">The value to be cloned.</param>
+    /// <returns>An instance of the value that is safe to be used detached from its previous context.</returns>
+    public static TValue Clone<TValue>(this TValue value)
+        where TValue : struct, IJsonValue<TValue>
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return TValue.FromJson(value.AsJsonElement.Clone());
+        }
+
+        return value;
+    }
+
+    /// <summary>
     /// Serialize the entity to a string.
     /// </summary>
     /// <typeparam name="TValue">The type of <see cref="IJsonValue"/>.</typeparam>
