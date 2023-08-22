@@ -447,7 +447,7 @@ public partial class JsonSchemaTypeBuilder
 
         if (failed)
         {
-            string pointer = currentBuilder.ToString();
+            string pointer = fragment.ToString();
             if (JsonPointerUtilities.TryResolvePointer(rootElement, pointer, out JsonElement? resolvedElement))
             {
                 var pointerRef = new JsonReference(pointer);
