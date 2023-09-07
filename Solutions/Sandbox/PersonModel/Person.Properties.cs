@@ -21,15 +21,6 @@ namespace Corvus.Json.Benchmarking.Models;
 public readonly partial struct Person
 {
     /// <summary>
-    /// JSON property name for <see cref = "Name"/>.
-    /// </summary>
-    public static ReadOnlySpan<byte> NameUtf8JsonPropertyName => "name"u8;
-
-    /// <summary>
-    /// JSON property name for <see cref = "Name"/>.
-    /// </summary>
-    public const string NameJsonPropertyName = "name";
-    /// <summary>
     /// JSON property name for <see cref = "DateOfBirth"/>.
     /// </summary>
     public static ReadOnlySpan<byte> DateOfBirthUtf8JsonPropertyName => "dateOfBirth"u8;
@@ -39,37 +30,14 @@ public readonly partial struct Person
     /// </summary>
     public const string DateOfBirthJsonPropertyName = "dateOfBirth";
     /// <summary>
-    /// Gets Name.
+    /// JSON property name for <see cref = "Name"/>.
     /// </summary>
-    public Corvus.Json.Benchmarking.Models.PersonName Name
-    {
-        get
-        {
-            if ((this.backing & Backing.JsonElement) != 0)
-            {
-                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
-                {
-                    return default;
-                }
+    public static ReadOnlySpan<byte> NameUtf8JsonPropertyName => "name"u8;
 
-                if (this.jsonElementBacking.TryGetProperty(NameUtf8JsonPropertyName, out JsonElement result))
-                {
-                    return new Corvus.Json.Benchmarking.Models.PersonName(result);
-                }
-            }
-
-            if ((this.backing & Backing.Object) != 0)
-            {
-                if (this.objectBacking.TryGetValue(NameJsonPropertyName, out JsonAny result))
-                {
-                    return result.As<Corvus.Json.Benchmarking.Models.PersonName>();
-                }
-            }
-
-            return default;
-        }
-    }
-
+    /// <summary>
+    /// JSON property name for <see cref = "Name"/>.
+    /// </summary>
+    public const string NameJsonPropertyName = "name";
     /// <summary>
     /// Gets DateOfBirth.
     /// </summary>
@@ -103,6 +71,38 @@ public readonly partial struct Person
     }
 
     /// <summary>
+    /// Gets Name.
+    /// </summary>
+    public Corvus.Json.Benchmarking.Models.PersonName Name
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                {
+                    return default;
+                }
+
+                if (this.jsonElementBacking.TryGetProperty(NameUtf8JsonPropertyName, out JsonElement result))
+                {
+                    return new Corvus.Json.Benchmarking.Models.PersonName(result);
+                }
+            }
+
+            if ((this.backing & Backing.Object) != 0)
+            {
+                if (this.objectBacking.TryGetValue(NameJsonPropertyName, out JsonAny result))
+                {
+                    return result.As<Corvus.Json.Benchmarking.Models.PersonName>();
+                }
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
     /// Creates an instance of a <see cref = "Person"/>.
     /// </summary>
     public static Person Create(Corvus.Json.Benchmarking.Models.PersonName name, Corvus.Json.JsonDate? dateOfBirth = null)
@@ -118,16 +118,6 @@ public readonly partial struct Person
     }
 
     /// <summary>
-    /// Sets name.
-    /// </summary>
-    /// <param name = "value">The value to set.</param>
-    /// <returns>The entity with the updated property.</returns>
-    public Person WithName(in Corvus.Json.Benchmarking.Models.PersonName value)
-    {
-        return this.SetProperty(NameJsonPropertyName, value);
-    }
-
-    /// <summary>
     /// Sets dateOfBirth.
     /// </summary>
     /// <param name = "value">The value to set.</param>
@@ -135,6 +125,16 @@ public readonly partial struct Person
     public Person WithDateOfBirth(in Corvus.Json.JsonDate value)
     {
         return this.SetProperty(DateOfBirthJsonPropertyName, value);
+    }
+
+    /// <summary>
+    /// Sets name.
+    /// </summary>
+    /// <param name = "value">The value to set.</param>
+    /// <returns>The entity with the updated property.</returns>
+    public Person WithName(in Corvus.Json.Benchmarking.Models.PersonName value)
+    {
+        return this.SetProperty(NameJsonPropertyName, value);
     }
 
     private static ValidationContext __CorvusValidateName(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)

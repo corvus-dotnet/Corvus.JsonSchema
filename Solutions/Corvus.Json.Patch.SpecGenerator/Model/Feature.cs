@@ -53,6 +53,7 @@ public readonly partial struct Feature
     /// Gets an Undefined instance.
     /// </summary>
     public static Feature Undefined { get; } = default;
+
     /// <inheritdoc/>
     public JsonAny AsAny
     {
@@ -461,6 +462,36 @@ public readonly partial struct Feature
     {
         using var jsonDocument = JsonDocument.Parse(utf8Json, options);
         return new Feature(jsonDocument.RootElement.Clone());
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name = "buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static Feature ParseValue(ReadOnlySpan<char> buffer)
+    {
+        return IJsonValue<Feature>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name = "buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static Feature ParseValue(ReadOnlySpan<byte> buffer)
+    {
+        return IJsonValue<Feature>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name = "reader">The reader from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static Feature ParseValue(ref Utf8JsonReader reader)
+    {
+        return IJsonValue<Feature>.ParseValue(ref reader);
     }
 
     /// <summary>

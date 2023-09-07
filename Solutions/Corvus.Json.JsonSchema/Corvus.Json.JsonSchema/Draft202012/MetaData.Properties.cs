@@ -21,24 +21,6 @@ namespace Corvus.Json.JsonSchema.Draft202012;
 public readonly partial struct MetaData
 {
     /// <summary>
-    /// JSON property name for <see cref = "Title"/>.
-    /// </summary>
-    public static ReadOnlySpan<byte> TitleUtf8JsonPropertyName => "title"u8;
-
-    /// <summary>
-    /// JSON property name for <see cref = "Title"/>.
-    /// </summary>
-    public const string TitleJsonPropertyName = "title";
-    /// <summary>
-    /// JSON property name for <see cref = "Description"/>.
-    /// </summary>
-    public static ReadOnlySpan<byte> DescriptionUtf8JsonPropertyName => "description"u8;
-
-    /// <summary>
-    /// JSON property name for <see cref = "Description"/>.
-    /// </summary>
-    public const string DescriptionJsonPropertyName = "description";
-    /// <summary>
     /// JSON property name for <see cref = "Default"/>.
     /// </summary>
     public static ReadOnlySpan<byte> DefaultUtf8JsonPropertyName => "default"u8;
@@ -57,23 +39,14 @@ public readonly partial struct MetaData
     /// </summary>
     public const string DeprecatedJsonPropertyName = "deprecated";
     /// <summary>
-    /// JSON property name for <see cref = "ReadOnly"/>.
+    /// JSON property name for <see cref = "Description"/>.
     /// </summary>
-    public static ReadOnlySpan<byte> ReadOnlyUtf8JsonPropertyName => "readOnly"u8;
+    public static ReadOnlySpan<byte> DescriptionUtf8JsonPropertyName => "description"u8;
 
     /// <summary>
-    /// JSON property name for <see cref = "ReadOnly"/>.
+    /// JSON property name for <see cref = "Description"/>.
     /// </summary>
-    public const string ReadOnlyJsonPropertyName = "readOnly";
-    /// <summary>
-    /// JSON property name for <see cref = "WriteOnly"/>.
-    /// </summary>
-    public static ReadOnlySpan<byte> WriteOnlyUtf8JsonPropertyName => "writeOnly"u8;
-
-    /// <summary>
-    /// JSON property name for <see cref = "WriteOnly"/>.
-    /// </summary>
-    public const string WriteOnlyJsonPropertyName = "writeOnly";
+    public const string DescriptionJsonPropertyName = "description";
     /// <summary>
     /// JSON property name for <see cref = "Examples"/>.
     /// </summary>
@@ -84,69 +57,32 @@ public readonly partial struct MetaData
     /// </summary>
     public const string ExamplesJsonPropertyName = "examples";
     /// <summary>
-    /// Gets Title.
+    /// JSON property name for <see cref = "ReadOnly"/>.
     /// </summary>
-    public Corvus.Json.JsonString Title
-    {
-        get
-        {
-            if ((this.backing & Backing.JsonElement) != 0)
-            {
-                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
-                {
-                    return default;
-                }
-
-                if (this.jsonElementBacking.TryGetProperty(TitleUtf8JsonPropertyName, out JsonElement result))
-                {
-                    return new Corvus.Json.JsonString(result);
-                }
-            }
-
-            if ((this.backing & Backing.Object) != 0)
-            {
-                if (this.objectBacking.TryGetValue(TitleJsonPropertyName, out JsonAny result))
-                {
-                    return result.As<Corvus.Json.JsonString>();
-                }
-            }
-
-            return default;
-        }
-    }
+    public static ReadOnlySpan<byte> ReadOnlyUtf8JsonPropertyName => "readOnly"u8;
 
     /// <summary>
-    /// Gets Description.
+    /// JSON property name for <see cref = "ReadOnly"/>.
     /// </summary>
-    public Corvus.Json.JsonString Description
-    {
-        get
-        {
-            if ((this.backing & Backing.JsonElement) != 0)
-            {
-                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
-                {
-                    return default;
-                }
+    public const string ReadOnlyJsonPropertyName = "readOnly";
+    /// <summary>
+    /// JSON property name for <see cref = "Title"/>.
+    /// </summary>
+    public static ReadOnlySpan<byte> TitleUtf8JsonPropertyName => "title"u8;
 
-                if (this.jsonElementBacking.TryGetProperty(DescriptionUtf8JsonPropertyName, out JsonElement result))
-                {
-                    return new Corvus.Json.JsonString(result);
-                }
-            }
+    /// <summary>
+    /// JSON property name for <see cref = "Title"/>.
+    /// </summary>
+    public const string TitleJsonPropertyName = "title";
+    /// <summary>
+    /// JSON property name for <see cref = "WriteOnly"/>.
+    /// </summary>
+    public static ReadOnlySpan<byte> WriteOnlyUtf8JsonPropertyName => "writeOnly"u8;
 
-            if ((this.backing & Backing.Object) != 0)
-            {
-                if (this.objectBacking.TryGetValue(DescriptionJsonPropertyName, out JsonAny result))
-                {
-                    return result.As<Corvus.Json.JsonString>();
-                }
-            }
-
-            return default;
-        }
-    }
-
+    /// <summary>
+    /// JSON property name for <see cref = "WriteOnly"/>.
+    /// </summary>
+    public const string WriteOnlyJsonPropertyName = "writeOnly";
     /// <summary>
     /// Gets Default.
     /// </summary>
@@ -212,9 +148,9 @@ public readonly partial struct MetaData
     }
 
     /// <summary>
-    /// Gets ReadOnly.
+    /// Gets Description.
     /// </summary>
-    public Corvus.Json.JsonSchema.Draft202012.MetaData.ReadOnlyEntity ReadOnly
+    public Corvus.Json.JsonString Description
     {
         get
         {
@@ -225,49 +161,17 @@ public readonly partial struct MetaData
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(ReadOnlyUtf8JsonPropertyName, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(DescriptionUtf8JsonPropertyName, out JsonElement result))
                 {
-                    return new Corvus.Json.JsonSchema.Draft202012.MetaData.ReadOnlyEntity(result);
+                    return new Corvus.Json.JsonString(result);
                 }
             }
 
             if ((this.backing & Backing.Object) != 0)
             {
-                if (this.objectBacking.TryGetValue(ReadOnlyJsonPropertyName, out JsonAny result))
+                if (this.objectBacking.TryGetValue(DescriptionJsonPropertyName, out JsonAny result))
                 {
-                    return result.As<Corvus.Json.JsonSchema.Draft202012.MetaData.ReadOnlyEntity>();
-                }
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets WriteOnly.
-    /// </summary>
-    public Corvus.Json.JsonSchema.Draft202012.MetaData.WriteOnlyEntity WriteOnly
-    {
-        get
-        {
-            if ((this.backing & Backing.JsonElement) != 0)
-            {
-                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
-                {
-                    return default;
-                }
-
-                if (this.jsonElementBacking.TryGetProperty(WriteOnlyUtf8JsonPropertyName, out JsonElement result))
-                {
-                    return new Corvus.Json.JsonSchema.Draft202012.MetaData.WriteOnlyEntity(result);
-                }
-            }
-
-            if ((this.backing & Backing.Object) != 0)
-            {
-                if (this.objectBacking.TryGetValue(WriteOnlyJsonPropertyName, out JsonAny result))
-                {
-                    return result.As<Corvus.Json.JsonSchema.Draft202012.MetaData.WriteOnlyEntity>();
+                    return result.As<Corvus.Json.JsonString>();
                 }
             }
 
@@ -308,21 +212,107 @@ public readonly partial struct MetaData
     }
 
     /// <summary>
+    /// Gets ReadOnly.
+    /// </summary>
+    public Corvus.Json.JsonSchema.Draft202012.MetaData.ReadOnlyEntity ReadOnly
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                {
+                    return default;
+                }
+
+                if (this.jsonElementBacking.TryGetProperty(ReadOnlyUtf8JsonPropertyName, out JsonElement result))
+                {
+                    return new Corvus.Json.JsonSchema.Draft202012.MetaData.ReadOnlyEntity(result);
+                }
+            }
+
+            if ((this.backing & Backing.Object) != 0)
+            {
+                if (this.objectBacking.TryGetValue(ReadOnlyJsonPropertyName, out JsonAny result))
+                {
+                    return result.As<Corvus.Json.JsonSchema.Draft202012.MetaData.ReadOnlyEntity>();
+                }
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets Title.
+    /// </summary>
+    public Corvus.Json.JsonString Title
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                {
+                    return default;
+                }
+
+                if (this.jsonElementBacking.TryGetProperty(TitleUtf8JsonPropertyName, out JsonElement result))
+                {
+                    return new Corvus.Json.JsonString(result);
+                }
+            }
+
+            if ((this.backing & Backing.Object) != 0)
+            {
+                if (this.objectBacking.TryGetValue(TitleJsonPropertyName, out JsonAny result))
+                {
+                    return result.As<Corvus.Json.JsonString>();
+                }
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets WriteOnly.
+    /// </summary>
+    public Corvus.Json.JsonSchema.Draft202012.MetaData.WriteOnlyEntity WriteOnly
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                {
+                    return default;
+                }
+
+                if (this.jsonElementBacking.TryGetProperty(WriteOnlyUtf8JsonPropertyName, out JsonElement result))
+                {
+                    return new Corvus.Json.JsonSchema.Draft202012.MetaData.WriteOnlyEntity(result);
+                }
+            }
+
+            if ((this.backing & Backing.Object) != 0)
+            {
+                if (this.objectBacking.TryGetValue(WriteOnlyJsonPropertyName, out JsonAny result))
+                {
+                    return result.As<Corvus.Json.JsonSchema.Draft202012.MetaData.WriteOnlyEntity>();
+                }
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
     /// Creates an instance of a <see cref = "MetaData"/>.
     /// </summary>
-    public static MetaData Create(Corvus.Json.JsonString? title = null, Corvus.Json.JsonString? description = null, Corvus.Json.JsonAny? @default = null, Corvus.Json.JsonSchema.Draft202012.MetaData.DeprecatedEntity? deprecated = null, Corvus.Json.JsonSchema.Draft202012.MetaData.ReadOnlyEntity? readOnly = null, Corvus.Json.JsonSchema.Draft202012.MetaData.WriteOnlyEntity? writeOnly = null, Corvus.Json.JsonSchema.Draft202012.MetaData.JsonAnyArray? examples = null)
+    public static MetaData Create(Corvus.Json.JsonAny? @default = null, Corvus.Json.JsonSchema.Draft202012.MetaData.DeprecatedEntity? deprecated = null, Corvus.Json.JsonString? description = null, Corvus.Json.JsonSchema.Draft202012.MetaData.JsonAnyArray? examples = null, Corvus.Json.JsonSchema.Draft202012.MetaData.ReadOnlyEntity? readOnly = null, Corvus.Json.JsonString? title = null, Corvus.Json.JsonSchema.Draft202012.MetaData.WriteOnlyEntity? writeOnly = null)
     {
         var builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
-        if (title is Corvus.Json.JsonString title__)
-        {
-            builder.Add(TitleJsonPropertyName, title__.AsAny);
-        }
-
-        if (description is Corvus.Json.JsonString description__)
-        {
-            builder.Add(DescriptionJsonPropertyName, description__.AsAny);
-        }
-
         if (@default is Corvus.Json.JsonAny @default__)
         {
             builder.Add(DefaultJsonPropertyName, @default__.AsAny);
@@ -333,14 +323,9 @@ public readonly partial struct MetaData
             builder.Add(DeprecatedJsonPropertyName, deprecated__.AsAny);
         }
 
-        if (readOnly is Corvus.Json.JsonSchema.Draft202012.MetaData.ReadOnlyEntity readOnly__)
+        if (description is Corvus.Json.JsonString description__)
         {
-            builder.Add(ReadOnlyJsonPropertyName, readOnly__.AsAny);
-        }
-
-        if (writeOnly is Corvus.Json.JsonSchema.Draft202012.MetaData.WriteOnlyEntity writeOnly__)
-        {
-            builder.Add(WriteOnlyJsonPropertyName, writeOnly__.AsAny);
+            builder.Add(DescriptionJsonPropertyName, description__.AsAny);
         }
 
         if (examples is Corvus.Json.JsonSchema.Draft202012.MetaData.JsonAnyArray examples__)
@@ -348,27 +333,22 @@ public readonly partial struct MetaData
             builder.Add(ExamplesJsonPropertyName, examples__.AsAny);
         }
 
+        if (readOnly is Corvus.Json.JsonSchema.Draft202012.MetaData.ReadOnlyEntity readOnly__)
+        {
+            builder.Add(ReadOnlyJsonPropertyName, readOnly__.AsAny);
+        }
+
+        if (title is Corvus.Json.JsonString title__)
+        {
+            builder.Add(TitleJsonPropertyName, title__.AsAny);
+        }
+
+        if (writeOnly is Corvus.Json.JsonSchema.Draft202012.MetaData.WriteOnlyEntity writeOnly__)
+        {
+            builder.Add(WriteOnlyJsonPropertyName, writeOnly__.AsAny);
+        }
+
         return builder.ToImmutable();
-    }
-
-    /// <summary>
-    /// Sets title.
-    /// </summary>
-    /// <param name = "value">The value to set.</param>
-    /// <returns>The entity with the updated property.</returns>
-    public MetaData WithTitle(in Corvus.Json.JsonString value)
-    {
-        return this.SetProperty(TitleJsonPropertyName, value);
-    }
-
-    /// <summary>
-    /// Sets description.
-    /// </summary>
-    /// <param name = "value">The value to set.</param>
-    /// <returns>The entity with the updated property.</returns>
-    public MetaData WithDescription(in Corvus.Json.JsonString value)
-    {
-        return this.SetProperty(DescriptionJsonPropertyName, value);
     }
 
     /// <summary>
@@ -392,23 +372,13 @@ public readonly partial struct MetaData
     }
 
     /// <summary>
-    /// Sets readOnly.
+    /// Sets description.
     /// </summary>
     /// <param name = "value">The value to set.</param>
     /// <returns>The entity with the updated property.</returns>
-    public MetaData WithReadOnly(in Corvus.Json.JsonSchema.Draft202012.MetaData.ReadOnlyEntity value)
+    public MetaData WithDescription(in Corvus.Json.JsonString value)
     {
-        return this.SetProperty(ReadOnlyJsonPropertyName, value);
-    }
-
-    /// <summary>
-    /// Sets writeOnly.
-    /// </summary>
-    /// <param name = "value">The value to set.</param>
-    /// <returns>The entity with the updated property.</returns>
-    public MetaData WithWriteOnly(in Corvus.Json.JsonSchema.Draft202012.MetaData.WriteOnlyEntity value)
-    {
-        return this.SetProperty(WriteOnlyJsonPropertyName, value);
+        return this.SetProperty(DescriptionJsonPropertyName, value);
     }
 
     /// <summary>
@@ -419,6 +389,36 @@ public readonly partial struct MetaData
     public MetaData WithExamples(in Corvus.Json.JsonSchema.Draft202012.MetaData.JsonAnyArray value)
     {
         return this.SetProperty(ExamplesJsonPropertyName, value);
+    }
+
+    /// <summary>
+    /// Sets readOnly.
+    /// </summary>
+    /// <param name = "value">The value to set.</param>
+    /// <returns>The entity with the updated property.</returns>
+    public MetaData WithReadOnly(in Corvus.Json.JsonSchema.Draft202012.MetaData.ReadOnlyEntity value)
+    {
+        return this.SetProperty(ReadOnlyJsonPropertyName, value);
+    }
+
+    /// <summary>
+    /// Sets title.
+    /// </summary>
+    /// <param name = "value">The value to set.</param>
+    /// <returns>The entity with the updated property.</returns>
+    public MetaData WithTitle(in Corvus.Json.JsonString value)
+    {
+        return this.SetProperty(TitleJsonPropertyName, value);
+    }
+
+    /// <summary>
+    /// Sets writeOnly.
+    /// </summary>
+    /// <param name = "value">The value to set.</param>
+    /// <returns>The entity with the updated property.</returns>
+    public MetaData WithWriteOnly(in Corvus.Json.JsonSchema.Draft202012.MetaData.WriteOnlyEntity value)
+    {
+        return this.SetProperty(WriteOnlyJsonPropertyName, value);
     }
 
     private static ValidationContext __CorvusValidateTitle(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)

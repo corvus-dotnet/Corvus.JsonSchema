@@ -535,6 +535,21 @@ public readonly partial struct PersonName : IJsonObject<PersonName>
     /// </summary>
     /// <returns>An immutable dictionary builder of <see cref = "JsonPropertyName"/> to <see cref = "JsonAny"/>, built from the existing object, without the given property.</returns>
     /// <exception cref = "InvalidOperationException">The value is not an object.</exception>
+    private ImmutableDictionary<JsonPropertyName, JsonAny> GetImmutableDictionaryWithout(ReadOnlySpan<char> name)
+    {
+        if ((this.backing & Backing.Object) != 0)
+        {
+            return this.objectBacking.Remove(name);
+        }
+
+        return this.GetImmutableDictionaryBuilderWithout(name).ToImmutable();
+    }
+
+    /// <summary>
+    /// Builds an <see cref = "ImmutableDictionary{JsonPropertyName, JsonAny}"/> from the object, without a specific property.
+    /// </summary>
+    /// <returns>An immutable dictionary builder of <see cref = "JsonPropertyName"/> to <see cref = "JsonAny"/>, built from the existing object, without the given property.</returns>
+    /// <exception cref = "InvalidOperationException">The value is not an object.</exception>
     private ImmutableDictionary<JsonPropertyName, JsonAny> GetImmutableDictionaryWith(in JsonPropertyName name, in JsonAny value)
     {
         if ((this.backing & Backing.Object) != 0)
@@ -607,6 +622,36 @@ public readonly partial struct PersonName : IJsonObject<PersonName>
                 builder.Add(enumerator.Current.Name, new(enumerator.Current.Value));
             }
 
+            return builder;
+        }
+
+        if ((this.backing & Backing.Object) != 0)
+        {
+            return this.objectBacking.ToBuilder();
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Builds an <see cref = "ImmutableDictionary{JsonPropertyName, JsonAny}.Builder"/> from the object, without a specific property.
+    /// </summary>
+    /// <returns>An immutable dictionary builder of <see cref = "JsonPropertyName"/> to <see cref = "JsonAny"/>, built from the existing object.</returns>
+    /// <exception cref = "InvalidOperationException">The value is not an object.</exception>
+    private ImmutableDictionary<JsonPropertyName, JsonAny>.Builder GetImmutableDictionaryBuilderWithout(ReadOnlySpan<char> name)
+    {
+        if ((this.backing & Backing.JsonElement) != 0 && this.jsonElementBacking.ValueKind == JsonValueKind.Object)
+        {
+            ImmutableDictionary<JsonPropertyName, JsonAny>.Builder builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
+            JsonElement.ObjectEnumerator enumerator = this.jsonElementBacking.EnumerateObject();
+            while (enumerator.MoveNext())
+            {
+                builder.Add(enumerator.Current.Name, new(enumerator.Current.Value));
+            }
+
+            // It is (currently) benchmarked to be faster to add them all, then remove the
+            // one from the hashtable, than it is to check them all on the way through.
+            builder.Remove(name);
             return builder;
         }
 

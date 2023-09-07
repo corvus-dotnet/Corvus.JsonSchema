@@ -52,7 +52,7 @@ public readonly partial struct Person
                     return result;
                 }
 
-                if ((this.HasJsonElementBacking && property.NameEquals(NameUtf8JsonPropertyName.Span)) || (!this.HasJsonElementBacking && property.NameEquals(NameJsonPropertyName)))
+                if ((this.HasJsonElementBacking && property.NameEquals(NameUtf8JsonPropertyName)) || (!this.HasJsonElementBacking && property.NameEquals(NameJsonPropertyName)))
                 {
                     foundName = true;
                 }

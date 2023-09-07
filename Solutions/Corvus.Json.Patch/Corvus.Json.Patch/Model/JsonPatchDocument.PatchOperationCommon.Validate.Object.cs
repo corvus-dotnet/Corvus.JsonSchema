@@ -31,8 +31,8 @@ public readonly partial struct JsonPatchDocument
             }
 
             int propertyCount = 0;
-            bool foundPath = false;
             bool foundOp = false;
+            bool foundPath = false;
             foreach (JsonObjectProperty property in this.EnumerateObject())
             {
                 if (__TryGetCorvusLocalPropertiesValidator(property, this.HasJsonElementBacking, out ObjectPropertyValidator? propertyValidator))
@@ -55,24 +55,24 @@ public readonly partial struct JsonPatchDocument
                         return result;
                     }
 
-                    if ((this.HasJsonElementBacking && property.NameEquals(PathUtf8JsonPropertyName)) || (!this.HasJsonElementBacking && property.NameEquals(PathJsonPropertyName)))
-                    {
-                        foundPath = true;
-                    }
-                    else if ((this.HasJsonElementBacking && property.NameEquals(OpUtf8JsonPropertyName)) || (!this.HasJsonElementBacking && property.NameEquals(OpJsonPropertyName)))
+                    if ((this.HasJsonElementBacking && property.NameEquals(OpUtf8JsonPropertyName)) || (!this.HasJsonElementBacking && property.NameEquals(OpJsonPropertyName)))
                     {
                         foundOp = true;
+                    }
+                    else if ((this.HasJsonElementBacking && property.NameEquals(PathUtf8JsonPropertyName)) || (!this.HasJsonElementBacking && property.NameEquals(PathJsonPropertyName)))
+                    {
+                        foundPath = true;
                     }
                 }
 
                 propertyCount++;
             }
 
-            if (!foundPath)
+            if (!foundOp)
             {
                 if (level >= ValidationLevel.Detailed)
                 {
-                    result = result.WithResult(isValid: false, $"6.5.3. required - required property \"path\" not present.");
+                    result = result.WithResult(isValid: false, $"6.5.3. required - required property \"op\" not present.");
                 }
                 else if (level >= ValidationLevel.Basic)
                 {
@@ -84,11 +84,11 @@ public readonly partial struct JsonPatchDocument
                 }
             }
 
-            if (!foundOp)
+            if (!foundPath)
             {
                 if (level >= ValidationLevel.Detailed)
                 {
-                    result = result.WithResult(isValid: false, $"6.5.3. required - required property \"op\" not present.");
+                    result = result.WithResult(isValid: false, $"6.5.3. required - required property \"path\" not present.");
                 }
                 else if (level >= ValidationLevel.Basic)
                 {
