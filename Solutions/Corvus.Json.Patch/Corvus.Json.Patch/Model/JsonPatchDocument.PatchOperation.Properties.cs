@@ -23,63 +23,23 @@ public readonly partial struct JsonPatchDocument
     public readonly partial struct PatchOperation
     {
         /// <summary>
-        /// JSON property name for <see cref = "Path"/>.
-        /// </summary>
-        public static readonly ReadOnlyMemory<byte> PathUtf8JsonPropertyName = new byte[]
-        {
-            112,
-            97,
-            116,
-            104
-        };
-        /// <summary>
-        /// JSON property name for <see cref = "Path"/>.
-        /// </summary>
-        public const string PathJsonPropertyName = "path";
-        /// <summary>
         /// JSON property name for <see cref = "Op"/>.
         /// </summary>
-        public static readonly ReadOnlyMemory<byte> OpUtf8JsonPropertyName = new byte[]
-        {
-            111,
-            112
-        };
+        public static ReadOnlySpan<byte> OpUtf8JsonPropertyName => "op"u8;
+
         /// <summary>
         /// JSON property name for <see cref = "Op"/>.
         /// </summary>
         public const string OpJsonPropertyName = "op";
         /// <summary>
-        /// Gets Path.
+        /// JSON property name for <see cref = "Path"/>.
         /// </summary>
-        public Corvus.Json.JsonPointer Path
-        {
-            get
-            {
-                if ((this.backing & Backing.JsonElement) != 0)
-                {
-                    if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
-                    {
-                        return default;
-                    }
+        public static ReadOnlySpan<byte> PathUtf8JsonPropertyName => "path"u8;
 
-                    if (this.jsonElementBacking.TryGetProperty(PathUtf8JsonPropertyName.Span, out JsonElement result))
-                    {
-                        return new Corvus.Json.JsonPointer(result);
-                    }
-                }
-
-                if ((this.backing & Backing.Object) != 0)
-                {
-                    if (this.objectBacking.TryGetValue(PathJsonPropertyName, out JsonAny result))
-                    {
-                        return result.As<Corvus.Json.JsonPointer>();
-                    }
-                }
-
-                return default;
-            }
-        }
-
+        /// <summary>
+        /// JSON property name for <see cref = "Path"/>.
+        /// </summary>
+        public const string PathJsonPropertyName = "path";
         /// <summary>
         /// Gets Op.
         /// </summary>
@@ -94,7 +54,7 @@ public readonly partial struct JsonPatchDocument
                         return default;
                     }
 
-                    if (this.jsonElementBacking.TryGetProperty(OpUtf8JsonPropertyName.Span, out JsonElement result))
+                    if (this.jsonElementBacking.TryGetProperty(OpUtf8JsonPropertyName, out JsonElement result))
                     {
                         return new Corvus.Json.JsonString(result);
                     }
@@ -113,24 +73,46 @@ public readonly partial struct JsonPatchDocument
         }
 
         /// <summary>
-        /// Creates an instance of a <see cref = "PatchOperation"/>.
+        /// Gets Path.
         /// </summary>
-        public static PatchOperation Create(Corvus.Json.JsonPointer path, Corvus.Json.JsonString op)
+        public Corvus.Json.JsonPointer Path
         {
-            var builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
-            builder.Add(PathJsonPropertyName, path.AsAny);
-            builder.Add(OpJsonPropertyName, op.AsAny);
-            return builder.ToImmutable();
+            get
+            {
+                if ((this.backing & Backing.JsonElement) != 0)
+                {
+                    if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                    {
+                        return default;
+                    }
+
+                    if (this.jsonElementBacking.TryGetProperty(PathUtf8JsonPropertyName, out JsonElement result))
+                    {
+                        return new Corvus.Json.JsonPointer(result);
+                    }
+                }
+
+                if ((this.backing & Backing.Object) != 0)
+                {
+                    if (this.objectBacking.TryGetValue(PathJsonPropertyName, out JsonAny result))
+                    {
+                        return result.As<Corvus.Json.JsonPointer>();
+                    }
+                }
+
+                return default;
+            }
         }
 
         /// <summary>
-        /// Sets path.
+        /// Creates an instance of a <see cref = "PatchOperation"/>.
         /// </summary>
-        /// <param name = "value">The value to set.</param>
-        /// <returns>The entity with the updated property.</returns>
-        public PatchOperation WithPath(in Corvus.Json.JsonPointer value)
+        public static PatchOperation Create(Corvus.Json.JsonString op, Corvus.Json.JsonPointer path)
         {
-            return this.SetProperty(PathJsonPropertyName, value);
+            var builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
+            builder.Add(OpJsonPropertyName, op.AsAny);
+            builder.Add(PathJsonPropertyName, path.AsAny);
+            return builder.ToImmutable();
         }
 
         /// <summary>
@@ -141,6 +123,16 @@ public readonly partial struct JsonPatchDocument
         public PatchOperation WithOp(in Corvus.Json.JsonString value)
         {
             return this.SetProperty(OpJsonPropertyName, value);
+        }
+
+        /// <summary>
+        /// Sets path.
+        /// </summary>
+        /// <param name = "value">The value to set.</param>
+        /// <returns>The entity with the updated property.</returns>
+        public PatchOperation WithPath(in Corvus.Json.JsonPointer value)
+        {
+            return this.SetProperty(PathJsonPropertyName, value);
         }
 
         /// <summary>

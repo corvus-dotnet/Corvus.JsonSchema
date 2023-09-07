@@ -158,7 +158,7 @@ public partial class CodeGeneratorArray
     {
         get
         {
-            return this.TypeDeclaration.Properties;
+            return this.TypeDeclaration.Properties.OrderBy(p => p.DotnetPropertyName).ToImmutableArray();
         }
     }
 
@@ -169,7 +169,7 @@ public partial class CodeGeneratorArray
     {
         get
         {
-            return this.TypeDeclaration.Properties.Where(p => p.IsDefinedInLocalScope && p.IsRequired).ToImmutableArray();
+            return this.TypeDeclaration.Properties.Where(p => p.IsDefinedInLocalScope && p.IsRequired).OrderBy(p => p.DotnetPropertyName).ToImmutableArray();
         }
     }
 
@@ -180,7 +180,7 @@ public partial class CodeGeneratorArray
     {
         get
         {
-            return this.TypeDeclaration.Properties.Where(p => p.IsDefinedInLocalScope && !p.IsRequired).ToImmutableArray();
+            return this.TypeDeclaration.Properties.Where(p => p.IsDefinedInLocalScope && !p.IsRequired).OrderBy(p => p.DotnetPropertyName).ToImmutableArray();
         }
     }
 
@@ -191,7 +191,7 @@ public partial class CodeGeneratorArray
     {
         get
         {
-            return this.TypeDeclaration.Properties.Where(p => p.IsRequired).ToImmutableArray();
+            return this.TypeDeclaration.Properties.Where(p => p.IsRequired).OrderBy(p => p.DotnetPropertyName).ToImmutableArray();
         }
     }
 
@@ -202,7 +202,7 @@ public partial class CodeGeneratorArray
     {
         get
         {
-            return this.TypeDeclaration.Properties.Where(p => !p.IsRequired).ToImmutableArray();
+            return this.TypeDeclaration.Properties.Where(p => !p.IsRequired).OrderBy(p => p.DotnetPropertyName).ToImmutableArray();
         }
     }
 

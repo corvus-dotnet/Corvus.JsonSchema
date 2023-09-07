@@ -82,7 +82,7 @@ public readonly record struct PatchBuilder(JsonAny Value, JsonPatchDocument Patc
     /// <exception cref="JsonPatchException">Thrown if the value cannot be added at the given path.</exception>
     public PatchBuilder Add(JsonAny value, JsonPointer path)
     {
-        var operation = JsonPatchDocument.AddEntity.Create(value, path);
+        var operation = JsonPatchDocument.AddEntity.Create(path, value);
         if (this.Value.TryApplyPatch(JsonPatchDocument.FromItems(operation), out JsonAny result))
         {
             return new(result, this.PatchOperations.Add(operation));
@@ -153,7 +153,7 @@ public readonly record struct PatchBuilder(JsonAny Value, JsonPatchDocument Patc
     /// <exception cref="JsonPatchException">Thrown if the value cannot be replaced at the given path.</exception>
     public PatchBuilder Replace(JsonAny value, JsonPointer path)
     {
-        var operation = JsonPatchDocument.ReplaceEntity.Create(value, path);
+        var operation = JsonPatchDocument.ReplaceEntity.Create(path, value);
         if (this.Value.TryApplyPatch(JsonPatchDocument.FromItems(operation), out JsonAny result))
         {
             return new(result, this.PatchOperations.Add(operation));
@@ -171,7 +171,7 @@ public readonly record struct PatchBuilder(JsonAny Value, JsonPatchDocument Patc
     /// <exception cref="JsonPatchException">Thrown if the value cannot be replaced at the given path.</exception>
     public PatchBuilder Test(JsonAny value, JsonPointer path)
     {
-        var operation = JsonPatchDocument.Test.Create(value, path);
+        var operation = JsonPatchDocument.Test.Create(path, value);
         if (this.Value.TryApplyPatch(JsonPatchDocument.FromItems(operation), out JsonAny result))
         {
             return new(result, this.PatchOperations.Add(operation));

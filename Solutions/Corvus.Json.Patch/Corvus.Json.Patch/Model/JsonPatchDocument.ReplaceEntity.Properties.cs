@@ -23,50 +23,36 @@ public readonly partial struct JsonPatchDocument
     public readonly partial struct ReplaceEntity
     {
         /// <summary>
-        /// JSON property name for <see cref = "Value"/>.
-        /// </summary>
-        public static readonly ReadOnlyMemory<byte> ValueUtf8JsonPropertyName = new byte[]
-        {
-            118,
-            97,
-            108,
-            117,
-            101
-        };
-        /// <summary>
-        /// JSON property name for <see cref = "Value"/>.
-        /// </summary>
-        public const string ValueJsonPropertyName = "value";
-        /// <summary>
-        /// JSON property name for <see cref = "Path"/>.
-        /// </summary>
-        public static readonly ReadOnlyMemory<byte> PathUtf8JsonPropertyName = new byte[]
-        {
-            112,
-            97,
-            116,
-            104
-        };
-        /// <summary>
-        /// JSON property name for <see cref = "Path"/>.
-        /// </summary>
-        public const string PathJsonPropertyName = "path";
-        /// <summary>
         /// JSON property name for <see cref = "Op"/>.
         /// </summary>
-        public static readonly ReadOnlyMemory<byte> OpUtf8JsonPropertyName = new byte[]
-        {
-            111,
-            112
-        };
+        public static ReadOnlySpan<byte> OpUtf8JsonPropertyName => "op"u8;
+
         /// <summary>
         /// JSON property name for <see cref = "Op"/>.
         /// </summary>
         public const string OpJsonPropertyName = "op";
         /// <summary>
-        /// Gets Value.
+        /// JSON property name for <see cref = "Path"/>.
         /// </summary>
-        public Corvus.Json.JsonAny Value
+        public static ReadOnlySpan<byte> PathUtf8JsonPropertyName => "path"u8;
+
+        /// <summary>
+        /// JSON property name for <see cref = "Path"/>.
+        /// </summary>
+        public const string PathJsonPropertyName = "path";
+        /// <summary>
+        /// JSON property name for <see cref = "Value"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ValueUtf8JsonPropertyName => "value"u8;
+
+        /// <summary>
+        /// JSON property name for <see cref = "Value"/>.
+        /// </summary>
+        public const string ValueJsonPropertyName = "value";
+        /// <summary>
+        /// Gets Op.
+        /// </summary>
+        public Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceEntity.OpEntity Op
         {
             get
             {
@@ -77,17 +63,17 @@ public readonly partial struct JsonPatchDocument
                         return default;
                     }
 
-                    if (this.jsonElementBacking.TryGetProperty(ValueUtf8JsonPropertyName.Span, out JsonElement result))
+                    if (this.jsonElementBacking.TryGetProperty(OpUtf8JsonPropertyName, out JsonElement result))
                     {
-                        return new Corvus.Json.JsonAny(result);
+                        return new Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceEntity.OpEntity(result);
                     }
                 }
 
                 if ((this.backing & Backing.Object) != 0)
                 {
-                    if (this.objectBacking.TryGetValue(ValueJsonPropertyName, out JsonAny result))
+                    if (this.objectBacking.TryGetValue(OpJsonPropertyName, out JsonAny result))
                     {
-                        return result.As<Corvus.Json.JsonAny>();
+                        return result.As<Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceEntity.OpEntity>();
                     }
                 }
 
@@ -109,7 +95,7 @@ public readonly partial struct JsonPatchDocument
                         return default;
                     }
 
-                    if (this.jsonElementBacking.TryGetProperty(PathUtf8JsonPropertyName.Span, out JsonElement result))
+                    if (this.jsonElementBacking.TryGetProperty(PathUtf8JsonPropertyName, out JsonElement result))
                     {
                         return new Corvus.Json.JsonPointer(result);
                     }
@@ -128,9 +114,9 @@ public readonly partial struct JsonPatchDocument
         }
 
         /// <summary>
-        /// Gets Op.
+        /// Gets Value.
         /// </summary>
-        public Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceEntity.OpEntity Op
+        public Corvus.Json.JsonAny Value
         {
             get
             {
@@ -141,17 +127,17 @@ public readonly partial struct JsonPatchDocument
                         return default;
                     }
 
-                    if (this.jsonElementBacking.TryGetProperty(OpUtf8JsonPropertyName.Span, out JsonElement result))
+                    if (this.jsonElementBacking.TryGetProperty(ValueUtf8JsonPropertyName, out JsonElement result))
                     {
-                        return new Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceEntity.OpEntity(result);
+                        return new Corvus.Json.JsonAny(result);
                     }
                 }
 
                 if ((this.backing & Backing.Object) != 0)
                 {
-                    if (this.objectBacking.TryGetValue(OpJsonPropertyName, out JsonAny result))
+                    if (this.objectBacking.TryGetValue(ValueJsonPropertyName, out JsonAny result))
                     {
-                        return result.As<Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceEntity.OpEntity>();
+                        return result.As<Corvus.Json.JsonAny>();
                     }
                 }
 
@@ -162,23 +148,13 @@ public readonly partial struct JsonPatchDocument
         /// <summary>
         /// Creates an instance of a <see cref = "ReplaceEntity"/>.
         /// </summary>
-        public static ReplaceEntity Create(Corvus.Json.JsonAny value, Corvus.Json.JsonPointer path)
+        public static ReplaceEntity Create(Corvus.Json.JsonPointer path, Corvus.Json.JsonAny value)
         {
             var builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
-            builder.Add(ValueJsonPropertyName, value.AsAny);
-            builder.Add(PathJsonPropertyName, path.AsAny);
             builder.Add(OpJsonPropertyName, new Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceEntity.OpEntity().AsAny);
+            builder.Add(PathJsonPropertyName, path.AsAny);
+            builder.Add(ValueJsonPropertyName, value.AsAny);
             return builder.ToImmutable();
-        }
-
-        /// <summary>
-        /// Sets value.
-        /// </summary>
-        /// <param name = "value">The value to set.</param>
-        /// <returns>The entity with the updated property.</returns>
-        public ReplaceEntity WithValue(in Corvus.Json.JsonAny value)
-        {
-            return this.SetProperty(ValueJsonPropertyName, value);
         }
 
         /// <summary>
@@ -189,6 +165,16 @@ public readonly partial struct JsonPatchDocument
         public ReplaceEntity WithPath(in Corvus.Json.JsonPointer value)
         {
             return this.SetProperty(PathJsonPropertyName, value);
+        }
+
+        /// <summary>
+        /// Sets value.
+        /// </summary>
+        /// <param name = "value">The value to set.</param>
+        /// <returns>The entity with the updated property.</returns>
+        public ReplaceEntity WithValue(in Corvus.Json.JsonAny value)
+        {
+            return this.SetProperty(ValueJsonPropertyName, value);
         }
 
         private static ValidationContext __CorvusValidateValue(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
@@ -212,12 +198,12 @@ public readonly partial struct JsonPatchDocument
         {
             if (hasJsonElementBacking)
             {
-                if (property.NameEquals(ValueUtf8JsonPropertyName.Span))
+                if (property.NameEquals(ValueUtf8JsonPropertyName))
                 {
                     propertyValidator = __CorvusValidateValue;
                     return true;
                 }
-                else if (property.NameEquals(OpUtf8JsonPropertyName.Span))
+                else if (property.NameEquals(OpUtf8JsonPropertyName))
                 {
                     propertyValidator = __CorvusValidateOp;
                     return true;

@@ -53,6 +53,7 @@ public readonly partial struct DisabledScenario
     /// Gets an Undefined instance.
     /// </summary>
     public static DisabledScenario Undefined { get; } = default;
+
     /// <inheritdoc/>
     public JsonAny AsAny
     {
@@ -461,6 +462,36 @@ public readonly partial struct DisabledScenario
     {
         using var jsonDocument = JsonDocument.Parse(utf8Json, options);
         return new DisabledScenario(jsonDocument.RootElement.Clone());
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name = "buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static DisabledScenario ParseValue(ReadOnlySpan<char> buffer)
+    {
+        return IJsonValue<DisabledScenario>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name = "buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static DisabledScenario ParseValue(ReadOnlySpan<byte> buffer)
+    {
+        return IJsonValue<DisabledScenario>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name = "reader">The reader from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static DisabledScenario ParseValue(ref Utf8JsonReader reader)
+    {
+        return IJsonValue<DisabledScenario>.ParseValue(ref reader);
     }
 
     /// <summary>

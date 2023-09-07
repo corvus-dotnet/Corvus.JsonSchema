@@ -56,6 +56,7 @@ public readonly partial struct OtherNames
     /// Gets an Undefined instance.
     /// </summary>
     public static OtherNames Undefined { get; } = default;
+
     /// <inheritdoc/>
     public JsonAny AsAny
     {
@@ -488,6 +489,36 @@ public readonly partial struct OtherNames
     {
         using var jsonDocument = JsonDocument.Parse(utf8Json, options);
         return new OtherNames(jsonDocument.RootElement.Clone());
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name = "buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static OtherNames ParseValue(ReadOnlySpan<char> buffer)
+    {
+        return IJsonValue<OtherNames>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name = "buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static OtherNames ParseValue(ReadOnlySpan<byte> buffer)
+    {
+        return IJsonValue<OtherNames>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name = "reader">The reader from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static OtherNames ParseValue(ref Utf8JsonReader reader)
+    {
+        return IJsonValue<OtherNames>.ParseValue(ref reader);
     }
 
     /// <summary>

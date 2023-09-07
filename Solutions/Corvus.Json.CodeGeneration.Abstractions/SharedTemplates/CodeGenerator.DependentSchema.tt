@@ -38,7 +38,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     foreach( var dependentSchema in DependentSchemas)
     {
         ++dsIndexV; #>
-    private static readonly ReadOnlyMemory<byte> __DependentSchema<#= dsIndexV #>Utf8JsonPropertyName = new byte[] { <#= GetEncodedBytes(dependentSchema.Name) #> };
+    private static ReadOnlySpan<byte> __DependentSchema<#= dsIndexV #>Utf8JsonPropertyName => <#= Formatting.FormatLiteralOrNull(dependentSchema.Name, true)#>u8;
     private const string __DependentSchema<#= dsIndexV #>JsonPropertyName = <#= Formatting.FormatLiteralOrNull(dependentSchema.Name, true)#>;
 <#  }
     dsIndexV = 0;
@@ -53,7 +53,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     /// <returns><c>True</c> if the property was present.</returns>
     public bool TryAsDependentSchemaFor<#= Formatting.ToPascalCaseWithReservedWords(dependentSchema.Name).ToString() #>(out <#= dependentSchema.DotnetTypeName #> result)
     {
-        if ((this.HasJsonElementBacking && this.HasProperty(__DependentSchema<#= dsIndexV #>Utf8JsonPropertyName.Span) || (!this.HasJsonElementBacking && this.HasProperty(__DependentSchema<#= dsIndexV #>JsonPropertyName))))
+        if ((this.HasJsonElementBacking && this.HasProperty(__DependentSchema<#= dsIndexV #>Utf8JsonPropertyName) || (!this.HasJsonElementBacking && this.HasProperty(__DependentSchema<#= dsIndexV #>JsonPropertyName))))
         {
             result = this.As<<#= dependentSchema.DotnetTypeName #>>();
             return true;
@@ -79,7 +79,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     foreach (var dependentSchema in DependentSchemas)
     {
         dsIndexV++; #>
-            <#= dsIndexV == 1 ? string.Empty : "else " #>if (property.NameEquals(__DependentSchema<#= dsIndexV #>Utf8JsonPropertyName.Span))
+            <#= dsIndexV == 1 ? string.Empty : "else " #>if (property.NameEquals(__DependentSchema<#= dsIndexV #>Utf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateDependentSchema<#= dsIndexV #>;
                 return true;

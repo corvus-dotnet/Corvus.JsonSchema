@@ -53,6 +53,7 @@ public readonly partial struct Person
     /// Gets an Undefined instance.
     /// </summary>
     public static Person Undefined { get; } = default;
+
     /// <inheritdoc/>
     public JsonAny AsAny
     {
@@ -461,6 +462,36 @@ public readonly partial struct Person
     {
         using var jsonDocument = JsonDocument.Parse(utf8Json, options);
         return new Person(jsonDocument.RootElement.Clone());
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name = "buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static Person ParseValue(ReadOnlySpan<char> buffer)
+    {
+        return IJsonValue<Person>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name = "buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static Person ParseValue(ReadOnlySpan<byte> buffer)
+    {
+        return IJsonValue<Person>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name = "reader">The reader from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static Person ParseValue(ref Utf8JsonReader reader)
+    {
+        return IJsonValue<Person>.ParseValue(ref reader);
     }
 
     /// <summary>
