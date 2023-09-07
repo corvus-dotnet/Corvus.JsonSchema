@@ -19,6 +19,7 @@ namespace Corvus.Json.JsonSchema.Draft201909;
 /// <summary>
 /// A type generated from a JsonSchema specification.
 /// </summary>
+[System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<Applicator>))]
 public readonly partial struct Applicator
 {
     private readonly Backing backing;

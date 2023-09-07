@@ -13,6 +13,7 @@ namespace Corvus.Json;
 /// <summary>
 /// Represents a JSON base64content.
 /// </summary>
+[System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<JsonBase64ContentPre201909>))]
 public readonly partial struct JsonBase64ContentPre201909
 {
     /// <summary>

@@ -13,6 +13,7 @@ namespace Corvus.Json;
 /// <summary>
 /// Represents a JSON dateTime.
 /// </summary>
+[System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<JsonDateTime>))]
 public readonly partial struct JsonDateTime
 {
     /// <summary>

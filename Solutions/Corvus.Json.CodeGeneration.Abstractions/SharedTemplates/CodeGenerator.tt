@@ -25,6 +25,7 @@ namespace <#= Namespace #>;
 /// <summary>
 /// A type generated from a JsonSchema specification.
 /// </summary>
+[System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<<#= TypeDeclaration.DotnetTypeName #>>))]
 public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 {
     private readonly Backing backing;

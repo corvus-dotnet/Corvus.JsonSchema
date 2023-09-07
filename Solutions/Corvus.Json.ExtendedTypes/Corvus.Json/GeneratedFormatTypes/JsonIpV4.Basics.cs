@@ -13,6 +13,7 @@ namespace Corvus.Json;
 /// <summary>
 /// Represents a JSON ipv4.
 /// </summary>
+[System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<JsonIpV4>))]
 public readonly partial struct JsonIpV4
 {
     /// <summary>

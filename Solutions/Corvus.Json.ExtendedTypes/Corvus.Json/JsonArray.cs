@@ -14,6 +14,7 @@ namespace Corvus.Json;
 /// <summary>
 /// Represents a JSON array.
 /// </summary>
+[System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<JsonArray>))]
 public readonly partial struct JsonArray : IJsonArray<JsonArray>
 {
     private readonly Backing backing;

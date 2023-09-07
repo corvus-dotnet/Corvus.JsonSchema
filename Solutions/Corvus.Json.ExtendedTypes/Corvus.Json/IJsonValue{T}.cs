@@ -3,7 +3,6 @@
 // </copyright>
 
 using System.Buffers;
-using System.Reflection.Metadata;
 using System.Text;
 using System.Text.Json;
 

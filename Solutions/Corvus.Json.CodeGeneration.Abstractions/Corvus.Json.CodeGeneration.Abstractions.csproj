@@ -22,7 +22,7 @@
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.6.0" />
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.7.0" />
 		<PackageReference Include="System.CodeDom" Version="7.0.0" />
 	</ItemGroup>
 
@@ -35,7 +35,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Update="Roslynator.Analyzers" Version="4.4.0" />
+		<PackageReference Update="Roslynator.Analyzers" Version="4.5.0" />
 	</ItemGroup>
 
 </Project>
