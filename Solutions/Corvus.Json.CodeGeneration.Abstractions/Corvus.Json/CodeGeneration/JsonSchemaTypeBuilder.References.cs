@@ -447,10 +447,9 @@ public partial class JsonSchemaTypeBuilder
 
         if (failed)
         {
-            string pointer = currentBuilder.ToString();
-            if (JsonPointerUtilities.TryResolvePointer(rootElement, pointer, out JsonElement? resolvedElement))
+            if (JsonPointerUtilities.TryResolvePointer(rootElement, fragment, out JsonElement? resolvedElement))
             {
-                var pointerRef = new JsonReference(pointer);
+                var pointerRef = new JsonReference(ReadOnlySpan<char>.Empty, fragment);
                 JsonReference location = baseSchemaForReferenceLocation.Apply(pointerRef);
                 this.schemaRegistry.AddSchemaAndSubschema(location, JsonAny.FromJson(resolvedElement.Value));
                 result = (baseSchemaForReferenceLocation, pointerRef);

@@ -4,6 +4,7 @@
 
 using System.Collections.Immutable;
 using System.Text;
+using System.Text.Json;
 using Corvus.Json.CodeGeneration.Generators.Draft201909;
 
 namespace Corvus.Json.CodeGeneration.Draft201909;
@@ -22,6 +23,12 @@ public class JsonSchemaBuilder : IJsonSchemaBuilder
     public JsonSchemaBuilder(JsonSchemaTypeBuilder typeBuilder)
     {
         this.typeBuilder = typeBuilder.UseDraft201909();
+    }
+
+    /// <inheritdoc/>
+    public void AddDocument(string path, JsonDocument jsonDocument)
+    {
+        this.typeBuilder.AddDocument(path, jsonDocument);
     }
 
     /// <inheritdoc/>

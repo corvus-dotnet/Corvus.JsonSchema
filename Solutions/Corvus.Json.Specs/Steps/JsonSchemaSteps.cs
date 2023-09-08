@@ -68,6 +68,16 @@ public class JsonSchemaSteps
     }
 
     /// <summary>
+    /// Uses the reference fragment to provide the schema JsonElement as a scenario property <see cref="SchemaPath"/>.
+    /// </summary>
+    /// <param name="schema">The actual schema to generate.</param>
+    [Given(@"the schema content (.*)")]
+    public void GivenTheSchema(string schema)
+    {
+        this.scenarioContext.Set(schema, SchemaInstance);
+    }
+
+    /// <summary>
     /// Uses the reference fragment to provide the data <see cref="JsonElement"/> as a scenario property called <see cref="InputData"/>.
     /// </summary>
     /// <param name="referenceFragment">The reference fragment pointing to the relevant data element in the <see cref="InputJsonFileName"/>.</param>
@@ -83,6 +93,42 @@ public class JsonSchemaSteps
         this.scenarioContext.Set(element.Value, InputData);
     }
 
+    [Given("a schema file")]
+    public void GivenASchemaFileWithContent(string schema)
+    {
+        this.scenarioContext.Set(schema, SchemaInstance);
+        string featureName = Formatting.ToPascalCaseWithReservedWords(this.featureContext.FeatureInfo.Title).ToString();
+
+        string scenarioName = BuildScenarioOutlineNameFromScenarioName(this.scenarioContext);
+
+        this.scenarioContext.Set($"{featureName}.{scenarioName}.json", InputJsonFileName);
+        this.scenarioContext.Set("#/", SchemaPath);
+
+        static string BuildScenarioOutlineNameFromScenarioName(ScenarioContext scenarioContext)
+        {
+            string scenarioName = scenarioContext.ScenarioInfo.Title;
+            int index = scenarioContext.ScenarioInfo.Title.IndexOf('(');
+            if (index >= 0)
+            {
+                // Slice back to the scenario outline name
+                scenarioName = scenarioName[..index];
+            }
+
+            return Formatting.ToPascalCaseWithReservedWords(scenarioName).ToString();
+        }
+    }
+
+    /// <summary>
+    ///  <see cref="JsonElement"/> as a scenario property called <see cref="InputData"/>.
+    /// </summary>
+    /// <param name="inputData">The input data in serialized JSON form.</param>
+    [Given("the input data value (.*)")]
+    public void GivenTheInputData(string inputData)
+    {
+        using var doc = JsonDocument.Parse(inputData);
+        this.scenarioContext.Set(doc.RootElement.Clone(), InputData);
+    }
+
     /// <summary>
     /// Generates the code for the schema in the scenario property <see cref="SchemaPath"/>, compiles it, and loads the assembly. The fully qualified type name is stored in a scenario property called <see cref="SchemaType"/>.
     /// </summary>
@@ -90,18 +136,43 @@ public class JsonSchemaSteps
     [Given("I generate a type for the schema")]
     public async Task GivenIGenerateATypeForTheSchema()
     {
-        string inputDataPath = this.scenarioContext.Get<string>(InputDataPath);
+        string featureName = Formatting.ToPascalCaseWithReservedWords(this.featureContext.FeatureInfo.Title).ToString();
+        string scenarioName = Formatting.ToPascalCaseWithReservedWords(this.scenarioContext.ScenarioInfo.Title).ToString();
         string filename = this.scenarioContext.Get<string>(InputJsonFileName);
         string schemaPath = this.scenarioContext.Get<string>(SchemaPath);
-        Type type;
         string key = filename + schemaPath;
+
+        Type type;
+
         if (this.featureContext.ContainsKey(key))
         {
             type = this.featureContext.Get<Type>(key);
         }
         else
         {
-            type = await this.driver.GenerateTypeFor(false, int.Parse(inputDataPath.AsSpan().Slice(12, 3)), filename, schemaPath, inputDataPath, Formatting.ToPascalCaseWithReservedWords(this.featureContext.FeatureInfo.Title).ToString(), Formatting.ToPascalCaseWithReservedWords(this.scenarioContext.ScenarioInfo.Title).ToString(), bool.Parse((string)this.scenarioContext.ScenarioInfo.Arguments[1]!)).ConfigureAwait(false);
+            if (this.scenarioContext.ContainsKey(InputDataPath))
+            {
+                string inputDataPath = this.scenarioContext.Get<string>(InputDataPath);
+                type = await this.driver.GenerateTypeFor(
+                    false,
+                    int.Parse(inputDataPath.AsSpan().Slice(12, 3)),
+                    filename,
+                    schemaPath,
+                    inputDataPath,
+                    featureName,
+                    scenarioName,
+                    bool.Parse((string)this.scenarioContext.ScenarioInfo.Arguments[1]!)).ConfigureAwait(false);
+            }
+            else
+            {
+                string schema = this.scenarioContext.Get<string>(SchemaInstance);
+                type = await this.driver.GenerateTypeFor(
+                    schema,
+                    filename,
+                    featureName,
+                    scenarioName).ConfigureAwait(false);
+            }
+
             this.featureContext.Set(type, key);
         }
 
