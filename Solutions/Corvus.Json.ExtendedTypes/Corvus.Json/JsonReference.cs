@@ -160,7 +160,7 @@ public readonly struct JsonReference : IEquatable<JsonReference>
     /// </summary>
     /// <param name="referenceOrNull">The string from which to construct <see cref="JsonReference"/>.</param>
     /// <returns>The new <see cref="JsonReference"/>.</returns>
-    [return: NotNullIfNotNull("referenceOrNull")]
+    [return: NotNullIfNotNull(nameof(referenceOrNull))]
     public static JsonReference? FromEncodedJsonString(string? referenceOrNull)
     {
         if (referenceOrNull is string reference)

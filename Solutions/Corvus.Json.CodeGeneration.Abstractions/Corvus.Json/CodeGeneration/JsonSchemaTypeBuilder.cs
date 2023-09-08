@@ -67,7 +67,7 @@ public partial class JsonSchemaTypeBuilder
         this.SetBuiltInTypeNamesAndNamespaces(rootTypeDeclaration);
 
         // Then, set the parent type names.
-        this.SetParents(rootTypeDeclaration);
+        SetParents(rootTypeDeclaration);
 
         // Finally, we figure out which are built in types, and which need new types and namespaces for the custom types.
         this.SetTypeNamesAndNamespaces(rootTypeDeclaration, rootNamespace, baseUriToNamespaceMap, rootTypeName);
@@ -150,13 +150,7 @@ public partial class JsonSchemaTypeBuilder
         this.locatedTypeDeclarations.Add(location, type);
     }
 
-    private void SetParents(TypeDeclaration rootTypeDeclaration)
-    {
-        HashSet<TypeDeclaration> visitedTypes = new();
-        this.SetParentsCore(rootTypeDeclaration, visitedTypes);
-    }
-
-    private void SetParentsCore(TypeDeclaration type, HashSet<TypeDeclaration> visitedTypes)
+    private static void SetParentsCore(TypeDeclaration type, HashSet<TypeDeclaration> visitedTypes)
     {
         if (visitedTypes.Contains(type))
         {
@@ -168,8 +162,14 @@ public partial class JsonSchemaTypeBuilder
         type.SetParent();
         foreach (TypeDeclaration child in type.RefResolvablePropertyDeclarations.Values)
         {
-            this.SetParentsCore(child, visitedTypes);
+            SetParentsCore(child, visitedTypes);
         }
+    }
+
+    private static void SetParents(TypeDeclaration rootTypeDeclaration)
+    {
+        HashSet<TypeDeclaration> visitedTypes = new();
+        SetParentsCore(rootTypeDeclaration, visitedTypes);
     }
 
     private void FindAndBuildPropertiesCore(TypeDeclaration rootTypeDeclaration)

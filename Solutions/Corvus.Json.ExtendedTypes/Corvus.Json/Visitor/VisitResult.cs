@@ -25,7 +25,7 @@ public ref struct VisitResult
     /// <summary>
     /// Gets a value indicating whether the node was transformed.
     /// </summary>
-    public bool IsTransformed => this.Transformed == Transformed.Yes;
+    public readonly bool IsTransformed => this.Transformed == Transformed.Yes;
 
     /// <summary>
     /// Gets or sets the result of performing the operation.
