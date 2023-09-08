@@ -127,6 +127,16 @@ public partial class JsonSchemaTypeBuilder
     }
 
     /// <summary>
+    /// Adds a virtual document to the document resolver.
+    /// </summary>
+    /// <param name="path">The virtual path.</param>
+    /// <param name="jsonDocument">The document to add.</param>
+    public void AddDocument(string path, JsonDocument jsonDocument)
+    {
+        this.documentResolver.AddDocument(path, jsonDocument);
+    }
+
+    /// <summary>
     /// Replaces a located type declaration.
     /// </summary>
     /// <param name="location">The location for the replacement.</param>
