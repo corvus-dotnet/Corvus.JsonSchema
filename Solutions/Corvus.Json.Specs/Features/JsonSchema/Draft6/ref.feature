@@ -394,6 +394,34 @@ Scenario Outline: Location-independent identifier
         | #/014/tests/000/data | true  | match                                                                            |
         | #/014/tests/001/data | false | mismatch                                                                         |
 
+Scenario Outline: Reference an anchor with a non-relative URI
+/* Schema: 
+{
+            "$id": "https://example.com/schema-with-anchor",
+            "allOf": [{
+                "$ref": "https://example.com/schema-with-anchor#foo"
+            }],
+            "definitions": {
+                "A": {
+                    "$id": "#foo",
+                    "type": "integer"
+                }
+            }
+        }
+*/
+    Given the input JSON file "ref.json"
+    And the schema at "#/15/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/015/tests/000/data | true  | match                                                                            |
+        | #/015/tests/001/data | false | mismatch                                                                         |
+
 Scenario Outline: Location-independent identifier with base URI change in subschema
 /* Schema: 
 {
@@ -415,7 +443,7 @@ Scenario Outline: Location-independent identifier with base URI change in subsch
         }
 */
     Given the input JSON file "ref.json"
-    And the schema at "#/15/schema"
+    And the schema at "#/16/schema"
     And the input data at "<inputDataReference>"
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
@@ -424,8 +452,8 @@ Scenario Outline: Location-independent identifier with base URI change in subsch
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/015/tests/000/data | true  | match                                                                            |
-        | #/015/tests/001/data | false | mismatch                                                                         |
+        | #/016/tests/000/data | true  | match                                                                            |
+        | #/016/tests/001/data | false | mismatch                                                                         |
 
 Scenario Outline: naive replacement of $ref with its destination is not correct
 /* Schema: 
@@ -439,7 +467,7 @@ Scenario Outline: naive replacement of $ref with its destination is not correct
         }
 */
     Given the input JSON file "ref.json"
-    And the schema at "#/16/schema"
+    And the schema at "#/17/schema"
     And the input data at "<inputDataReference>"
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
@@ -448,9 +476,9 @@ Scenario Outline: naive replacement of $ref with its destination is not correct
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/016/tests/000/data | false | do not evaluate the $ref inside the enum, matching any string                    |
-        | #/016/tests/001/data | false | do not evaluate the $ref inside the enum, definition exact match                 |
-        | #/016/tests/002/data | true  | match the enum exactly                                                           |
+        | #/017/tests/000/data | false | do not evaluate the $ref inside the enum, matching any string                    |
+        | #/017/tests/001/data | false | do not evaluate the $ref inside the enum, definition exact match                 |
+        | #/017/tests/002/data | true  | match the enum exactly                                                           |
 
 Scenario Outline: refs with relative uris and defs
 /* Schema: 
@@ -473,7 +501,7 @@ Scenario Outline: refs with relative uris and defs
         }
 */
     Given the input JSON file "ref.json"
-    And the schema at "#/17/schema"
+    And the schema at "#/18/schema"
     And the input data at "<inputDataReference>"
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
@@ -482,9 +510,9 @@ Scenario Outline: refs with relative uris and defs
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/017/tests/000/data | false | invalid on inner field                                                           |
-        | #/017/tests/001/data | false | invalid on outer field                                                           |
-        | #/017/tests/002/data | true  | valid on both fields                                                             |
+        | #/018/tests/000/data | false | invalid on inner field                                                           |
+        | #/018/tests/001/data | false | invalid on outer field                                                           |
+        | #/018/tests/002/data | true  | valid on both fields                                                             |
 
 Scenario Outline: relative refs with absolute uris and defs
 /* Schema: 
@@ -507,7 +535,7 @@ Scenario Outline: relative refs with absolute uris and defs
         }
 */
     Given the input JSON file "ref.json"
-    And the schema at "#/18/schema"
+    And the schema at "#/19/schema"
     And the input data at "<inputDataReference>"
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
@@ -516,9 +544,9 @@ Scenario Outline: relative refs with absolute uris and defs
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/018/tests/000/data | false | invalid on inner field                                                           |
-        | #/018/tests/001/data | false | invalid on outer field                                                           |
-        | #/018/tests/002/data | true  | valid on both fields                                                             |
+        | #/019/tests/000/data | false | invalid on inner field                                                           |
+        | #/019/tests/001/data | false | invalid on outer field                                                           |
+        | #/019/tests/002/data | true  | valid on both fields                                                             |
 
 Scenario Outline: simple URN base URI with $ref via the URN
 /* Schema: 
@@ -532,32 +560,6 @@ Scenario Outline: simple URN base URI with $ref via the URN
         }
 */
     Given the input JSON file "ref.json"
-    And the schema at "#/19/schema"
-    And the input data at "<inputDataReference>"
-    And I generate a type for the schema
-    And I construct an instance of the schema type from the data
-    When I validate the instance
-    Then the result will be <valid>
-
-    Examples:
-        | inputDataReference   | valid | description                                                                      |
-        | #/019/tests/000/data | true  | valid under the URN IDed schema                                                  |
-        | #/019/tests/001/data | false | invalid under the URN IDed schema                                                |
-
-Scenario Outline: simple URN base URI with JSON pointer
-/* Schema: 
-{
-            "$comment": "URIs do not have to have HTTP(s) schemes",
-            "$id": "urn:uuid:deadbeef-1234-00ff-ff00-4321feebdaed",
-            "properties": {
-                "foo": {"$ref": "#/definitions/bar"}
-            },
-            "definitions": {
-                "bar": {"type": "string"}
-            }
-        }
-*/
-    Given the input JSON file "ref.json"
     And the schema at "#/20/schema"
     And the input data at "<inputDataReference>"
     And I generate a type for the schema
@@ -567,14 +569,14 @@ Scenario Outline: simple URN base URI with JSON pointer
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/020/tests/000/data | true  | a string is valid                                                                |
-        | #/020/tests/001/data | false | a non-string is invalid                                                          |
+        | #/020/tests/000/data | true  | valid under the URN IDed schema                                                  |
+        | #/020/tests/001/data | false | invalid under the URN IDed schema                                                |
 
-Scenario Outline: URN base URI with NSS
+Scenario Outline: simple URN base URI with JSON pointer
 /* Schema: 
 {
-            "$comment": "RFC 8141 §2.2",
-            "$id": "urn:example:1/406/47452/2",
+            "$comment": "URIs do not have to have HTTP(s) schemes",
+            "$id": "urn:uuid:deadbeef-1234-00ff-ff00-4321feebdaed",
             "properties": {
                 "foo": {"$ref": "#/definitions/bar"}
             },
@@ -596,11 +598,11 @@ Scenario Outline: URN base URI with NSS
         | #/021/tests/000/data | true  | a string is valid                                                                |
         | #/021/tests/001/data | false | a non-string is invalid                                                          |
 
-Scenario Outline: URN base URI with r-component
+Scenario Outline: URN base URI with NSS
 /* Schema: 
 {
-            "$comment": "RFC 8141 §2.3.1",
-            "$id": "urn:example:foo-bar-baz-qux?+CCResolve:cc=uk",
+            "$comment": "RFC 8141 §2.2",
+            "$id": "urn:example:1/406/47452/2",
             "properties": {
                 "foo": {"$ref": "#/definitions/bar"}
             },
@@ -622,11 +624,11 @@ Scenario Outline: URN base URI with r-component
         | #/022/tests/000/data | true  | a string is valid                                                                |
         | #/022/tests/001/data | false | a non-string is invalid                                                          |
 
-Scenario Outline: URN base URI with q-component
+Scenario Outline: URN base URI with r-component
 /* Schema: 
 {
-            "$comment": "RFC 8141 §2.3.2",
-            "$id": "urn:example:weather?=op=map&lat=39.56&lon=-104.85&datetime=1969-07-21T02:56:15Z",
+            "$comment": "RFC 8141 §2.3.1",
+            "$id": "urn:example:foo-bar-baz-qux?+CCResolve:cc=uk",
             "properties": {
                 "foo": {"$ref": "#/definitions/bar"}
             },
@@ -648,12 +650,13 @@ Scenario Outline: URN base URI with q-component
         | #/023/tests/000/data | true  | a string is valid                                                                |
         | #/023/tests/001/data | false | a non-string is invalid                                                          |
 
-Scenario Outline: URN base URI with URN and JSON pointer ref
+Scenario Outline: URN base URI with q-component
 /* Schema: 
 {
-            "$id": "urn:uuid:deadbeef-1234-0000-0000-4321feebdaed",
+            "$comment": "RFC 8141 §2.3.2",
+            "$id": "urn:example:weather?=op=map&lat=39.56&lon=-104.85&datetime=1969-07-21T02:56:15Z",
             "properties": {
-                "foo": {"$ref": "urn:uuid:deadbeef-1234-0000-0000-4321feebdaed#/definitions/bar"}
+                "foo": {"$ref": "#/definitions/bar"}
             },
             "definitions": {
                 "bar": {"type": "string"}
@@ -673,6 +676,31 @@ Scenario Outline: URN base URI with URN and JSON pointer ref
         | #/024/tests/000/data | true  | a string is valid                                                                |
         | #/024/tests/001/data | false | a non-string is invalid                                                          |
 
+Scenario Outline: URN base URI with URN and JSON pointer ref
+/* Schema: 
+{
+            "$id": "urn:uuid:deadbeef-1234-0000-0000-4321feebdaed",
+            "properties": {
+                "foo": {"$ref": "urn:uuid:deadbeef-1234-0000-0000-4321feebdaed#/definitions/bar"}
+            },
+            "definitions": {
+                "bar": {"type": "string"}
+            }
+        }
+*/
+    Given the input JSON file "ref.json"
+    And the schema at "#/25/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/025/tests/000/data | true  | a string is valid                                                                |
+        | #/025/tests/001/data | false | a non-string is invalid                                                          |
+
 Scenario Outline: URN base URI with URN and anchor ref
 /* Schema: 
 {
@@ -689,7 +717,7 @@ Scenario Outline: URN base URI with URN and anchor ref
         }
 */
     Given the input JSON file "ref.json"
-    And the schema at "#/25/schema"
+    And the schema at "#/26/schema"
     And the input data at "<inputDataReference>"
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
@@ -698,5 +726,125 @@ Scenario Outline: URN base URI with URN and anchor ref
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/025/tests/000/data | true  | a string is valid                                                                |
-        | #/025/tests/001/data | false | a non-string is invalid                                                          |
+        | #/026/tests/000/data | true  | a string is valid                                                                |
+        | #/026/tests/001/data | false | a non-string is invalid                                                          |
+
+Scenario Outline: ref with absolute-path-reference
+/* Schema: 
+{
+             "$id": "http://example.com/ref/absref.json",
+             "definitions": {
+                 "a": {
+                     "$id": "http://example.com/ref/absref/foobar.json",
+                     "type": "number"
+                  },
+                  "b": {
+                      "$id": "http://example.com/absref/foobar.json",
+                      "type": "string"
+                  }
+             },
+             "allOf": [
+                 { "$ref": "/absref/foobar.json" }
+             ]
+         }
+*/
+    Given the input JSON file "ref.json"
+    And the schema at "#/27/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/027/tests/000/data | true  | a string is valid                                                                |
+        | #/027/tests/001/data | false | an integer is invalid                                                            |
+
+Scenario Outline: $id with file URI still resolves pointers - *nix
+/* Schema: 
+{
+             "$id": "file:///folder/file.json",
+             "definitions": {
+                 "foo": {
+                     "type": "number"
+                 }
+             },
+             "allOf": [
+                 {
+                     "$ref": "#/definitions/foo"
+                 }
+             ]
+         }
+*/
+    Given the input JSON file "ref.json"
+    And the schema at "#/28/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/028/tests/000/data | true  | number is valid                                                                  |
+        | #/028/tests/001/data | false | non-number is invalid                                                            |
+
+Scenario Outline: $id with file URI still resolves pointers - windows
+/* Schema: 
+{
+             "$id": "file:///c:/folder/file.json",
+             "definitions": {
+                 "foo": {
+                     "type": "number"
+                 }
+             },
+             "allOf": [
+                 {
+                     "$ref": "#/definitions/foo"
+                 }
+             ]
+         }
+*/
+    Given the input JSON file "ref.json"
+    And the schema at "#/29/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/029/tests/000/data | true  | number is valid                                                                  |
+        | #/029/tests/001/data | false | non-number is invalid                                                            |
+
+Scenario Outline: empty tokens in $ref json-pointer
+/* Schema: 
+{
+             "definitions": {
+                 "": {
+                     "definitions": {
+                         "": { "type": "number" }
+                     }
+                 } 
+             },
+             "allOf": [
+                 {
+                     "$ref": "#/definitions//definitions/"
+                 }
+             ]
+         }
+*/
+    Given the input JSON file "ref.json"
+    And the schema at "#/30/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/030/tests/000/data | true  | number is valid                                                                  |
+        | #/030/tests/001/data | false | non-number is invalid                                                            |

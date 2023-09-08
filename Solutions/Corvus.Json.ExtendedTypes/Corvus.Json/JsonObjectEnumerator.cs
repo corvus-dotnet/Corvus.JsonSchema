@@ -87,7 +87,7 @@ public struct JsonObjectEnumerator : IEnumerable, IEnumerator, IEnumerable<JsonO
     /// Gets a new enumerator instance.
     /// </summary>
     /// <returns>A new enumerator instance.</returns>
-    public JsonObjectEnumerator GetEnumerator()
+    public readonly JsonObjectEnumerator GetEnumerator()
     {
         JsonObjectEnumerator result = this;
         result.Reset();

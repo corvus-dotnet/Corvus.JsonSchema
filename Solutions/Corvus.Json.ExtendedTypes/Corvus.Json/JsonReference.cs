@@ -160,7 +160,7 @@ public readonly struct JsonReference : IEquatable<JsonReference>
     /// </summary>
     /// <param name="referenceOrNull">The string from which to construct <see cref="JsonReference"/>.</param>
     /// <returns>The new <see cref="JsonReference"/>.</returns>
-    [return: NotNullIfNotNull("referenceOrNull")]
+    [return: NotNullIfNotNull(nameof(referenceOrNull))]
     public static JsonReference? FromEncodedJsonString(string? referenceOrNull)
     {
         if (referenceOrNull is string reference)
@@ -262,9 +262,16 @@ public readonly struct JsonReference : IEquatable<JsonReference>
         }
 
         // Trim the leading '//'
-        if (authority.Length > 2 && authority[0] == '/' && authority[1] == '/')
+        if (authority.Length >= 2 && authority[0] == '/' && authority[1] == '/')
         {
-            authority = authority[2..];
+            if (authority.Length > 2)
+            {
+                authority = authority[2..];
+            }
+            else
+            {
+                authority = ReadOnlySpan<char>.Empty;
+            }
         }
 
         // Trim the leading '?'

@@ -597,3 +597,26 @@ Scenario Outline: unevaluatedItems with null instance elements
     Examples:
         | inputDataReference   | valid | description                                                                      |
         | #/021/tests/000/data | true  | allows null elements                                                             |
+
+Scenario Outline: unevaluatedItems can see annotations from if without then and else
+/* Schema: 
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "if": {
+                "items": [{"const": "a"}]
+            },
+            "unevaluatedItems": false
+        }
+*/
+    Given the input JSON file "unevaluatedItems.json"
+    And the schema at "#/22/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/022/tests/000/data | true  | valid in case if is evaluated                                                    |
+        | #/022/tests/001/data | false | invalid in case if is evaluated                                                  |

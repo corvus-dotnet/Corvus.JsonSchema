@@ -89,7 +89,7 @@ public struct JsonArrayEnumerator<T> : IEnumerable, IEnumerator, IEnumerable<T>,
     /// Gets a new enumerator instance.
     /// </summary>
     /// <returns>A new enumerator instance.</returns>
-    public JsonArrayEnumerator<T> GetEnumerator()
+    public readonly JsonArrayEnumerator<T> GetEnumerator()
     {
         JsonArrayEnumerator<T> result = this;
         result.Reset();

@@ -7,7 +7,7 @@ namespace Corvus.Json;
 /// <summary>
 /// A decomposed JsonReference to help you build / deconstruct references.
 /// </summary>
-public ref struct JsonReferenceBuilder
+public readonly ref struct JsonReferenceBuilder
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonReferenceBuilder"/> struct.
@@ -45,7 +45,7 @@ public ref struct JsonReferenceBuilder
     /// <summary>
     /// Gets a value indicating whether the reference has a scheme component.
     /// </summary>
-    public bool HasScheme => this.Scheme.Length > 0;
+    public readonly bool HasScheme => this.Scheme.Length > 0;
 
     /// <summary>
     /// Gets the authority.
@@ -55,7 +55,7 @@ public ref struct JsonReferenceBuilder
     /// <summary>
     /// Gets a value indicating whether the reference has an authority component.
     /// </summary>
-    public bool HasAuthority => this.Authority.Length > 0;
+    public readonly bool HasAuthority => this.Authority.Length > 0;
 
     /// <summary>
     /// Gets the path.
@@ -65,7 +65,7 @@ public ref struct JsonReferenceBuilder
     /// <summary>
     /// Gets a value indicating whether the reference has a path component.
     /// </summary>
-    public bool HasPath => this.Path.Length > 0;
+    public readonly bool HasPath => this.Path.Length > 0;
 
     /// <summary>
     /// Gets the query.
@@ -75,7 +75,7 @@ public ref struct JsonReferenceBuilder
     /// <summary>
     /// Gets a value indicating whether the reference has a query component.
     /// </summary>
-    public bool HasQuery => this.Query.Length > 0;
+    public readonly bool HasQuery => this.Query.Length > 0;
 
     /// <summary>
     /// Gets the fragment.
@@ -85,17 +85,17 @@ public ref struct JsonReferenceBuilder
     /// <summary>
     /// Gets a value indicating whether the reference has a query component.
     /// </summary>
-    public bool HasFragment => this.Fragment.Length > 0;
+    public readonly bool HasFragment => this.Fragment.Length > 0;
 
     /// <summary>
     /// Gets the host.
     /// </summary>
-    public ReadOnlySpan<char> Host => this.FindHost();
+    public readonly ReadOnlySpan<char> Host => this.FindHost();
 
     /// <summary>
     /// Gets the port.
     /// </summary>
-    public ReadOnlySpan<char> Port => this.FindPort();
+    public readonly ReadOnlySpan<char> Port => this.FindPort();
 
     /// <summary>
     /// Gets a reference builder from a reference.
@@ -111,7 +111,7 @@ public ref struct JsonReferenceBuilder
     /// Gets the JsonReference corresponding to this builder.
     /// </summary>
     /// <returns>The <see cref="JsonReference"/> built from this builder.</returns>
-    public JsonReference AsReference()
+    public readonly JsonReference AsReference()
     {
         int totalLength = 0;
         if (this.Scheme.Length > 0)
@@ -159,7 +159,7 @@ public ref struct JsonReferenceBuilder
             this.Scheme.CopyTo(reference.Span.Slice(index, this.Scheme.Length));
             index += this.Scheme.Length;
             reference.Span[index] = ':';
-            index += 1;
+            index++;
         }
 
         if (this.Authority.Length > 0)
@@ -186,7 +186,7 @@ public ref struct JsonReferenceBuilder
         if (this.Query.Length > 0)
         {
             reference.Span[index] = '?';
-            index += 1;
+            index++;
             this.Query.CopyTo(reference.Span.Slice(index, this.Query.Length));
             index += this.Query.Length;
         }
@@ -194,14 +194,14 @@ public ref struct JsonReferenceBuilder
         if (this.Fragment.Length > 0)
         {
             reference.Span[index] = '#';
-            index += 1;
+            index++;
             this.Fragment.CopyTo(reference.Span.Slice(index, this.Fragment.Length));
         }
 
         return new JsonReference(reference);
     }
 
-    private ReadOnlySpan<char> FindHost()
+    private readonly ReadOnlySpan<char> FindHost()
     {
         if (!this.HasAuthority)
         {
@@ -217,8 +217,7 @@ public ref struct JsonReferenceBuilder
         return this.Authority[0..index];
     }
 
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.SpacingRules", "SA1009:Closing parenthesis should be spaced correctly", Justification = "Stylecop does not yet support ..")]
-    private ReadOnlySpan<char> FindPort()
+    private readonly ReadOnlySpan<char> FindPort()
     {
         if (!this.HasAuthority)
         {

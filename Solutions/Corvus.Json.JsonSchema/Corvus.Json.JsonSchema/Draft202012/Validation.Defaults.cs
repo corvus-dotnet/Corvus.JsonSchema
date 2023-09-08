@@ -70,12 +70,12 @@ public readonly partial struct Validation
     private static ImmutableDictionary<JsonPropertyName, JsonAny> BuildDefaults()
     {
         ImmutableDictionary<JsonPropertyName, JsonAny>.Builder builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
-        builder.Add(MinLengthJsonPropertyName, JsonAny.Parse("0"));
-        builder.Add(MinItemsJsonPropertyName, JsonAny.Parse("0"));
-        builder.Add(UniqueItemsJsonPropertyName, JsonAny.Parse("false"));
         builder.Add(MinContainsJsonPropertyName, JsonAny.Parse("1"));
+        builder.Add(MinItemsJsonPropertyName, JsonAny.Parse("0"));
+        builder.Add(MinLengthJsonPropertyName, JsonAny.Parse("0"));
         builder.Add(MinPropertiesJsonPropertyName, JsonAny.Parse("0"));
         builder.Add(RequiredJsonPropertyName, JsonAny.Parse("[]"));
+        builder.Add(UniqueItemsJsonPropertyName, JsonAny.Parse("false"));
         return builder.ToImmutable();
     }
 }

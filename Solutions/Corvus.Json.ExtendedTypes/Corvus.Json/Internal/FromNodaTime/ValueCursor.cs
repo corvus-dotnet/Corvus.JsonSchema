@@ -61,7 +61,7 @@ internal ref struct ValueCursor
     /// <value>
     /// <c>true</c> if this instance has more characters; otherwise, <c>false</c>.
     /// </value>
-    internal bool HasMoreCharacters => unchecked(this.Index + 1) < this.Length;
+    internal readonly bool HasMoreCharacters => unchecked(this.Index + 1) < this.Length;
 
     /// <summary>
     /// Gets the current index into the string being parsed.
@@ -71,7 +71,7 @@ internal ref struct ValueCursor
     /// <summary>
     /// Gets the remainder the string that has not been parsed yet.
     /// </summary>
-    internal ReadOnlySpan<char> Remainder => this.Value[this.Index..];
+    internal readonly ReadOnlySpan<char> Remainder => this.Value[this.Index..];
 
     /// <summary>
     ///   Returns a <see cref="string" /> that represents this instance.
@@ -79,7 +79,7 @@ internal ref struct ValueCursor
     /// <returns>
     ///   A <see cref="string" /> that represents this instance.
     /// </returns>
-    public override string ToString() =>
+    public override readonly string ToString() =>
         this.Index <= 0 ? $"^{this.Value}"
             : this.Index >= this.Length ? $"{this.Value}^"
             : this.Value.ToString().Insert(this.Index, "^");
@@ -259,7 +259,7 @@ internal ref struct ValueCursor
     /// <returns>A negative number if the value (from the current cursor position) is lexicographically
     /// earlier than the given match string; 0 if they are equal (as far as the end of the match) and
     /// a positive number if the value is lexicographically later than the given match string.</returns>
-    internal int CompareOrdinal(ReadOnlySpan<char> match)
+    internal readonly int CompareOrdinal(ReadOnlySpan<char> match)
     {
         int remaining = this.Value.Length - this.Index;
         if (match.Length > remaining)
@@ -500,7 +500,7 @@ internal ref struct ValueCursor
     /// <remarks>
     /// This currently only handles ASCII digits, which is all we have to parse to stay in line with the BCL.
     /// </remarks>
-    private int GetDigit()
+    private readonly int GetDigit()
     {
         unchecked
         {

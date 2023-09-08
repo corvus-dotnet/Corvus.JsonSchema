@@ -65,12 +65,12 @@ internal static class SpecWriter
         writtenScenarios.Add(scenarioTitle);
 
         builder.AppendLine();
-        builder.AppendLine($"Scenario Outline: {scenarioTitle}");
+        builder.Append("Scenario Outline: ").AppendLine(scenarioTitle);
         builder.AppendLine("/* Schema: ");
         builder.AppendLine(scenarioDefinition.GetProperty("schema").ToString());
         builder.AppendLine("*/");
-        builder.AppendLine($"    Given the input JSON file \"{testSet.InputFileSpecFolderRelativePath}\"");
-        builder.AppendLine($"    And the schema at \"{inputSchemaReference}\"");
+        builder.Append("    Given the input JSON file \"").Append(testSet.InputFileSpecFolderRelativePath).AppendLine("\"");
+        builder.Append("    And the schema at \"").Append(inputSchemaReference).AppendLine("\"");
         builder.AppendLine("    And the input data at \"<inputDataReference>\"");
         builder.AppendLine("    And I generate a type for the schema");
         builder.AppendLine("    And I construct an instance of the schema type from the data");
@@ -95,7 +95,7 @@ internal static class SpecWriter
 
     private static string NormalizeTitleForDeduplication(string scenarioTitle)
     {
-        scenarioTitle = scenarioTitle
+        return scenarioTitle
             .Replace("[", "array[")
             .Replace("<=", " less than or equal ")
             .Replace("<", " less than ")
@@ -103,17 +103,16 @@ internal static class SpecWriter
             .Replace(">", " greater than ")
             .Replace("==", " equals ")
             .Replace("=", " equals ");
-        return scenarioTitle;
     }
 
     private static void WriteFeatureHeading(string testSet, string featureName, StringBuilder builder)
     {
-        builder.AppendLine($"@{testSet}");
+        builder.Append('@').AppendLine(testSet);
         builder.AppendLine();
-        builder.AppendLine($"Feature: {featureName} {testSet}");
+        builder.Append("Feature: ").Append(featureName).Append(' ').AppendLine(testSet);
         builder.AppendLine("    In order to use json-schema");
         builder.AppendLine("    As a developer");
-        builder.AppendLine($"    I want to support {featureName} in {testSet}");
+        builder.Append("    I want to support ").Append(featureName).Append(" in ").AppendLine(testSet);
     }
 
     private static void WriteExample(int scenarioIndex, int testIndex, JsonElement test, StringBuilder builder, bool omit)
@@ -130,13 +129,7 @@ internal static class SpecWriter
             valid = "true ";
         }
 
-        string? description = test.GetProperty("description").GetString();
-
-        if (description is null)
-        {
-            throw new Exception("Expected a 'description' property with a string value.");
-        }
-
+        string description = test.GetProperty("description").GetString() ?? throw new Exception("Expected a 'description' property with a string value.");
         description = description.PadRight(80);
 
         builder.Append("        ").Append(omit ? '#' : '|').Append(' ').Append(inputDataReference).Append(" | ").Append(valid).Append(" | ").Append(description).AppendLine(" |");

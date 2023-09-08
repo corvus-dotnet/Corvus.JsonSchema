@@ -1784,7 +1784,7 @@ public static partial class Validate
 
         if (multipleOf is double mo)
         {
-            if (Math.Abs(Math.IEEERemainder(currentValue, mo)) <= 1.0E-18)
+            if (Math.Abs(Math.IEEERemainder(currentValue, mo)) <= 1.0E-9)
             {
                 if (level == ValidationLevel.Verbose)
                 {

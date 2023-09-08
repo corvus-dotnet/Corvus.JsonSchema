@@ -310,3 +310,22 @@ Scenario Outline: remote HTTP ref with nested absolute ref
         | inputDataReference   | valid | description                                                                      |
         | #/013/tests/000/data | false | number is invalid                                                                |
         | #/013/tests/001/data | true  | string is valid                                                                  |
+
+Scenario Outline: $ref to $ref finds detached $anchor
+/* Schema: 
+{
+            "$ref": "http://localhost:1234/draft2019-09/detached-ref.json#/$defs/foo"
+        }
+*/
+    Given the input JSON file "refRemote.json"
+    And the schema at "#/14/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/014/tests/000/data | true  | number is valid                                                                  |
+        | #/014/tests/001/data | false | non-number is invalid                                                            |

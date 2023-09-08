@@ -213,7 +213,7 @@ public partial class CodeGeneratorValidate
     {
         get
         {
-            return this.TypeDeclaration.Properties.Where(p => p.HasDefaultValue).ToImmutableArray();
+            return this.TypeDeclaration.Properties.Where(p => p.HasDefaultValue).OrderBy(p => p.DotnetPropertyName).ToImmutableArray();
         }
     }
 

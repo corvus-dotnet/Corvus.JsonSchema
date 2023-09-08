@@ -101,7 +101,7 @@ public struct PeriodBuilder
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="unit"/> is not a single unit, or a value is provided for a date unit which is outside the range of <see cref="int"/>.</exception>
     public long this[PeriodUnits unit]
     {
-        get => unit switch
+        readonly get => unit switch
         {
             PeriodUnits.Years => this.Years,
             PeriodUnits.Months => this.Months,
@@ -138,5 +138,5 @@ public struct PeriodBuilder
     /// Builds a period from the properties in this builder.
     /// </summary>
     /// <returns>The total number of nanoseconds in the period.</returns>
-    public Period BuildPeriod() => new Period(this.Years, this.Months, this.Weeks, this.Days, this.Hours, this.Minutes, this.Seconds, this.Milliseconds, this.Ticks, this.Nanoseconds);
+    public readonly Period BuildPeriod() => new Period(this.Years, this.Months, this.Weeks, this.Days, this.Hours, this.Minutes, this.Seconds, this.Milliseconds, this.Ticks, this.Nanoseconds);
 }
