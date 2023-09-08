@@ -4,11 +4,11 @@
     "net7.0": {
       "BenchmarkDotNet": {
         "type": "Direct",
-        "requested": "[0.13.7, )",
-        "resolved": "0.13.7",
-        "contentHash": "5MordgS1tEKFB/1KywxIaIl5gKI1vbTH9hta36LHFLNQQoPyqdIOdGbbunqLIRl7XvbOIYOvkscZkCnVzkFmoQ==",
+        "requested": "[0.13.8, )",
+        "resolved": "0.13.8",
+        "contentHash": "saXPKaCLYfeRIWnJ+BQFsdiFNMh3DDzsVp9bIZBs+frCODtZiVUX++z32nNPNaMjzNNH3SgIHRPoZb74LX30Uw==",
         "dependencies": {
-          "BenchmarkDotNet.Annotations": "0.13.7",
+          "BenchmarkDotNet.Annotations": "0.13.8",
           "CommandLineParser": "2.9.1",
           "Gee.External.Capstone": "2.3.0",
           "Iced": "1.17.0",
@@ -22,11 +22,11 @@
       },
       "BenchmarkDotNet.Diagnostics.Windows": {
         "type": "Direct",
-        "requested": "[0.13.7, )",
-        "resolved": "0.13.7",
-        "contentHash": "ZdyzoFgxraffOOXJWNIkzqaWyopbiWd3+Ce0/JeGsq2gnkZ1ThUpK3wlw4/l2dPlIv+WPT9B0AaGYCEc7puMdQ==",
+        "requested": "[0.13.8, )",
+        "resolved": "0.13.8",
+        "contentHash": "lUFDzxlEx+CNnNJ8aF4wD1agSobwdraVJIsQTgEz2N3j7QRnQvjC6aTEGT/3Apt1+fNyJ9DDiO0h6eXBaJP41A==",
         "dependencies": {
-          "BenchmarkDotNet": "0.13.7",
+          "BenchmarkDotNet": "0.13.8",
           "Microsoft.Diagnostics.Tracing.TraceEvent": "3.0.2"
         }
       },
@@ -51,9 +51,9 @@
       },
       "JsonSchema.Net": {
         "type": "Direct",
-        "requested": "[5.2.2, )",
-        "resolved": "5.2.2",
-        "contentHash": "IntxgMEod1N9msnCB6nmIbf8CX/Z1py4L8E+jO1GHjt7/A2ISEKN0Fs7Agj2HC0nLL2skDtfn5erKyRGwNsSZA==",
+        "requested": "[5.2.3, )",
+        "resolved": "5.2.3",
+        "contentHash": "ip2hsISB0LMFukxIwWxxrz9jVdVGNWgSXkZu39nRKHtbemzSyPL2zirqfseXPW99JdltIMaWsqcnBzQ5BajZTw==",
         "dependencies": {
           "JetBrains.Annotations": "2021.2.0",
           "Json.More.Net": "1.8.0",
@@ -90,8 +90,8 @@
       },
       "BenchmarkDotNet.Annotations": {
         "type": "Transitive",
-        "resolved": "0.13.7",
-        "contentHash": "CG9XZHsGpm8BIXXTCdtgISLMucsbEgpcwcewa4BiAj33j/X5nMe5v0QrlQeAvPMcMOgfenUBhGS6as9Qcnq7Ew=="
+        "resolved": "0.13.8",
+        "contentHash": "ymeZAe2WIjjo6WZXdh7iWXX6ggn4EVJgfp0AVNGvQBTHhHr5HIY9zdTjuuk1qeGLZTPuxxpgk3vBAZO3huXBaQ=="
       },
       "CommandLineParser": {
         "type": "Transitive",
