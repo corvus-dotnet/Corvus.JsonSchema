@@ -262,9 +262,16 @@ public readonly struct JsonReference : IEquatable<JsonReference>
         }
 
         // Trim the leading '//'
-        if (authority.Length > 2 && authority[0] == '/' && authority[1] == '/')
+        if (authority.Length >= 2 && authority[0] == '/' && authority[1] == '/')
         {
-            authority = authority[2..];
+            if (authority.Length > 2)
+            {
+                authority = authority[2..];
+            }
+            else
+            {
+                authority = ReadOnlySpan<char>.Empty;
+            }
         }
 
         // Trim the leading '?'
