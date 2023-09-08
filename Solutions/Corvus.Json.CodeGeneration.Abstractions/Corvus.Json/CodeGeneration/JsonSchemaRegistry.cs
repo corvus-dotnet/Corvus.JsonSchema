@@ -43,19 +43,9 @@ internal class JsonSchemaRegistry
     /// <remarks><paramref name="jsonSchemaPath"/> must point to a root scope. If it has a pointer into the document, then <paramref name="rebaseAsRoot"/> must be true.</remarks>
     public async Task<JsonReference> RegisterDocumentSchema(JsonReference jsonSchemaPath, bool rebaseAsRoot = false)
     {
-        var uri = new JsonUri(jsonSchemaPath);
-        if (!uri.IsValid() || uri.GetUri().IsFile)
+        if (SchemaReferenceNormalization.TryNormalizeSchemaReference(jsonSchemaPath, out string? result))
         {
-            string schemaFile = jsonSchemaPath;
-
-            // If this is, in fact, a local file path, not a uri, then convert to a fullpath and URI-style separators.
-            if (!Path.IsPathFullyQualified(schemaFile))
-            {
-                schemaFile = Path.GetFullPath(schemaFile);
-            }
-
-            schemaFile = schemaFile.Replace('\\', '/');
-            jsonSchemaPath = new JsonReference(schemaFile);
+            jsonSchemaPath = new(result);
         }
 
         JsonReference basePath = jsonSchemaPath.WithFragment(string.Empty);

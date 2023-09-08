@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 	<Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
 
 	<PropertyGroup>
@@ -67,20 +67,6 @@
 
 	<ItemGroup>
 	  <PackageReference Update="Roslynator.Analyzers" Version="4.4.0" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Folder Include="Features\JsonModel\JsonStringTryGetValue\" />
-	  <Folder Include="Features\JsonModel\JsonStringConcatenate\" />
-	  <Folder Include="Features\JsonModel\ParseValue\" />
-	  <Folder Include="Features\JsonSchema\Draft6\" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <SpecFlowFeatureFiles Update="Features\JsonModel\NumericComparison\JsonIntegerComparison.feature">
-	    <Visible>$(UsingMicrosoftNETSdk)</Visible>
-	    <CodeBehindFile>%(RelativeDir)%(Filename).feature$(DefaultLanguageSourceExtension)</CodeBehindFile>
-	  </SpecFlowFeatureFiles>
 	</ItemGroup>
 
 </Project>
