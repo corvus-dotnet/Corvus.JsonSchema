@@ -204,7 +204,6 @@ public static class JsonSchemaHelpers
             "exclusiveMinimum",
             "format",
             "if",
-            "$id",
             "items",
             "maxContains",
             "minContains",
