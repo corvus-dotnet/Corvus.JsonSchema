@@ -68,7 +68,6 @@ Scenario Outline: Write a dotnet-backed JsonAny to a string
 		| 3.2                                     | a Number  |
 		| null                                    | Null      |
 
-Scenario Outline: Write a jsonelement-backed JsonNotAny to a string
 Scenario: Write a jsonelement-backed JsonObject to a string
 	Given the JsonElement backed JsonObject {"foo": 3, "bar": "hello", "baz": null}
 	When the json value is round-tripped via a string

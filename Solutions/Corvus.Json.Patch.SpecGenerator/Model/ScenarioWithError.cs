@@ -19,6 +19,7 @@ namespace Corvus.Json.Patch.SpecGenerator;
 /// <summary>
 /// A type generated from a JsonSchema specification.
 /// </summary>
+[System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<ScenarioWithError>))]
 public readonly partial struct ScenarioWithError
 {
     private readonly Backing backing;

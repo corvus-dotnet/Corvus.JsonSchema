@@ -20,7 +20,7 @@
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="JsonSchema.Net" Version="5.1.0" />
+		<PackageReference Include="JsonSchema.Net" Version="5.2.2" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="7.0.0" />
 		<PackageReference Include="JsonPatch.Net" Version="2.1.0" />
 	</ItemGroup>
@@ -40,7 +40,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <PackageReference Update="Roslynator.Analyzers" Version="4.4.0" />
+	  <PackageReference Update="Roslynator.Analyzers" Version="4.5.0" />
 	</ItemGroup>
 
 </Project>

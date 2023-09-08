@@ -21,6 +21,7 @@ public readonly partial struct JsonPatchDocument
     /// <summary>
     /// A type generated from a JsonSchema specification.
     /// </summary>
+    [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<PatchOperation>))]
     public readonly partial struct PatchOperation
     {
         private readonly Backing backing;

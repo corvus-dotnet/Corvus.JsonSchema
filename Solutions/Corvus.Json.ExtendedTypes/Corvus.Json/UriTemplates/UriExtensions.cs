@@ -15,7 +15,7 @@ namespace Corvus.Json.UriTemplates;
 /// </summary>
 public static class UriExtensions
 {
-    private static readonly Regex UnreservedCharacters = new(@"([-A-Za-z0-9._~]*)=([^&]*)&?", RegexOptions.Compiled, TimeSpan.FromSeconds(1));       //// Unreserved characters: http://tools.ietf.org/html/rfc3986#section-2.3
+    private static readonly Regex UnreservedCharacters = new("([-A-Za-z0-9._~]*)=([^&]*)&?", RegexOptions.Compiled, TimeSpan.FromSeconds(1));       //// Unreserved characters: http://tools.ietf.org/html/rfc3986#section-2.3
 
     /// <summary>
     /// Make a template from a URI and its query string parameters.
@@ -98,7 +98,7 @@ public static class UriExtensions
         Uri uri = target;
         ImmutableDictionary<string, JsonAny>.Builder? parameters = ImmutableDictionary.CreateBuilder<string, JsonAny>();
 
-        foreach (Match m in UnreservedCharacters.Matches(uri.Query))
+        foreach (Match m in UnreservedCharacters.Matches(uri.Query).Cast<Match>())
         {
             string key = m.Groups[1].Value.ToLowerInvariant();
             string value = m.Groups[2].Value;

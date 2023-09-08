@@ -21,6 +21,7 @@ public readonly partial struct Core
     /// <summary>
     /// A type generated from a JsonSchema specification.
     /// </summary>
+    [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<AnchorString>))]
     public readonly partial struct AnchorString
     {
         private readonly Backing backing;

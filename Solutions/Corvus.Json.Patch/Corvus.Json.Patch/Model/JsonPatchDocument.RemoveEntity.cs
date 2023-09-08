@@ -21,6 +21,7 @@ public readonly partial struct JsonPatchDocument
     /// <summary>
     /// A type generated from a JsonSchema specification.
     /// </summary>
+    [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<RemoveEntity>))]
     public readonly partial struct RemoveEntity
     {
         private readonly Backing backing;

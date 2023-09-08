@@ -13,6 +13,7 @@ namespace Corvus.Json;
 /// <summary>
 /// Represents a Json string value.
 /// </summary>
+[System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<JsonString>))]
 public readonly partial struct JsonString
 {
     /// <summary>

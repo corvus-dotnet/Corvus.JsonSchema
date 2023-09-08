@@ -13,6 +13,7 @@ namespace Corvus.Json;
 /// <summary>
 /// Represents a JSON iri.
 /// </summary>
+[System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<JsonNull>))]
 public readonly partial struct JsonNull : IJsonValue<JsonNull>
 {
     private readonly Backing backing;

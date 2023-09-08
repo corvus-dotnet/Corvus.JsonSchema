@@ -21,6 +21,7 @@ public readonly partial struct Schema
     /// <summary>
     /// A type generated from a JsonSchema specification.
     /// </summary>
+    [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<WriteOnlyEntity>))]
     public readonly partial struct WriteOnlyEntity
     {
         private readonly Backing backing;

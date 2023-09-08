@@ -19,6 +19,7 @@ namespace Corvus.Json.JsonSchema.Draft201909;
 /// <summary>
 /// A type generated from a JsonSchema specification.
 /// </summary>
+[System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<Validation>))]
 public readonly partial struct Validation
 {
     private readonly Backing backing;

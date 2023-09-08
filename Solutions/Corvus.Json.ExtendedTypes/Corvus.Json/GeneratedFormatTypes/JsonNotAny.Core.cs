@@ -13,6 +13,7 @@ namespace Corvus.Json;
 /// <summary>
 /// Represents any JSON value, validating false.
 /// </summary>
+[System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<JsonNotAny>))]
 public readonly partial struct JsonNotAny
 {
     private readonly Backing backing;

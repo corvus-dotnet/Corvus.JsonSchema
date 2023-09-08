@@ -9,6 +9,7 @@ namespace Corvus.Json;
 /// <summary>
 /// Represents a Json boolean.
 /// </summary>
+[System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<JsonBoolean>))]
 public readonly partial struct JsonBoolean
 {
     /// <summary>

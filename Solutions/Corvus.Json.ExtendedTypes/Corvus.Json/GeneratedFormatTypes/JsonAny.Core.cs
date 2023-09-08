@@ -13,6 +13,7 @@ namespace Corvus.Json;
 /// <summary>
 /// Represents any JSON value.
 /// </summary>
+[System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<JsonAny>))]
 public readonly partial struct JsonAny
 {
     private readonly Backing backing;
@@ -472,10 +473,9 @@ public readonly partial struct JsonAny
     /// Parses a naked value from a URI string.
     /// </summary>
     /// <param name="value">The value to parse.</param>
-    /// <param name="options">The (optional) JsonDocumentOptions.</param>
     /// <returns>A <see cref="JsonAny"/> instance representing the value.</returns>
     /// <remarks>Note that this only applies to <c>null</c>, <c>bool</c>, <c>number</c> and <c>string</c> types.</remarks>
-    public static JsonAny ParseUriValue(ReadOnlyMemory<char> value, JsonDocumentOptions options = default)
+    public static JsonAny ParseUriValue(ReadOnlyMemory<char> value)
     {
         ReadOnlySpan<char> valueSpan = value.Span;
         if (valueSpan.SequenceEqual("null"))
