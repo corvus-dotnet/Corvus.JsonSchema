@@ -155,3 +155,34 @@ Scenario Outline: dependencies with escaped characters
         | #/005/tests/004/data | false | invalid object 2                                                                 |
         | #/005/tests/005/data | false | invalid object 3                                                                 |
         | #/005/tests/006/data | false | invalid object 4                                                                 |
+
+Scenario Outline: dependent subschema incompatible with root
+/* Schema: 
+{
+            "properties": {
+                "foo": {}
+            },
+            "dependencies": {
+                "foo": {
+                    "properties": {
+                        "bar": {}
+                    },
+                    "additionalProperties": false
+                }
+            }
+        }
+*/
+    Given the input JSON file "dependencies.json"
+    And the schema at "#/6/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/006/tests/000/data | false | matches root                                                                     |
+        | #/006/tests/001/data | true  | matches dependency                                                               |
+        | #/006/tests/002/data | false | matches both                                                                     |
+        | #/006/tests/003/data | true  | no dependency                                                                    |

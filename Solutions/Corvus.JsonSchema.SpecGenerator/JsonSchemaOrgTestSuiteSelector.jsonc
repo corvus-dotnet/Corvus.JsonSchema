@@ -24,7 +24,10 @@
                 "optional/format/date-time.json": {
                   "validation of date-time strings": {
                     // Leap seconds
-                    "testsToIgnoreIndices": [ 10, 11 ]
+                    "testsToIgnoreIndices": [
+                      10,
+                      11
+                    ]
                   }
                 }
               }
@@ -55,13 +58,16 @@
               "testExclusions": {
                 "optional/format/date-time.json": {
                   "validation of date-time strings": {
-                    "testsToIgnoreIndices": [ 10, 11 ]
+                    "testsToIgnoreIndices": [
+                      10,
+                      11
+                    ]
                   }
                 },
                 "optional/format/time.json": {
                   "validation of time strings": {
                     "testsToIgnoreIndices": [
-                      // Leap seconds
+                      //// Leap seconds
                       10,
                       11,
                       12,
@@ -110,7 +116,10 @@
               "testExclusions": {
                 "optional/format/date-time.json": {
                   "validation of date-time strings": {
-                    "testsToIgnoreIndices": [ 10, 11 ]
+                    "testsToIgnoreIndices": [
+                      10,
+                      11
+                    ]
                   }
                 },
                 "optional/format/time.json": {
@@ -167,7 +176,10 @@
                 "optional/format/date-time.json": {
                   "validation of date-time strings": {
                     // Leap seconds
-                    "testsToIgnoreIndices": [ 10, 11 ]
+                    "testsToIgnoreIndices": [
+                      10,
+                      11
+                    ]
                   }
                 },
                 "optional/format/time.json": {
@@ -197,5 +209,65 @@
         }
       }
     }
+
+    //"draft-next": {
+    //  "testSet": "draft-next",
+    //  "outputFolder": "DraftNext",
+    //  "excludeFromThisDirectory": [
+    //    // We don't support custom metaschema (yet!)
+    //    "vocabulary\\.json"
+    //  ],
+    //  "testExclusions": {
+    //  },
+    //  "subdirectories": {
+    //    "optional": {
+    //      "excludeFromThisDirectory": [
+    //        "cross-draft\\.json",
+    //        "bignum\\.json",
+    //        "ecmascript-regex\\.json",
+    //        "non-bmp-regex\\.json"
+    //      ],
+    //      "subdirectories": {
+    //        "format": {
+    //          "excludeFromThisDirectory": [
+    //          ],
+    //          "testExclusions": {
+    //            "optional/format/date-time.json": {
+    //              "validation of date-time strings": {
+    //                // Leap seconds
+    //                "testsToIgnoreIndices": [
+    //                  //10,
+    //                  //11
+    //                ]
+    //              }
+    //            },
+    //            "optional/format/time.json": {
+    //              "validation of time strings": {
+    //                "testsToIgnoreIndices": [
+    //                  // Leap seconds
+    //                  //10,
+    //                  //11,
+    //                  //12,
+    //                  //13,
+    //                  //14,
+    //                  //15,
+    //                  //16,
+    //                  //17,
+    //                  //18,
+    //                  //19,
+    //                  //20,
+    //                  //21,
+    //                  //22,
+    //                  //23
+    //                ]
+    //              }
+    //            }
+    //          }
+    //        }
+    //      }
+    //    }
+    //  }
+    //}
+
   }
 }

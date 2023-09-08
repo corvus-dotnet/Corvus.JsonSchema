@@ -231,3 +231,22 @@ Scenario Outline: retrieved nested refs resolve relative to their URI not $id
         | inputDataReference   | valid | description                                                                      |
         | #/009/tests/000/data | false | number is invalid                                                                |
         | #/009/tests/001/data | true  | string is valid                                                                  |
+
+Scenario Outline: $ref to $ref finds location-independent $id
+/* Schema: 
+{
+            "$ref": "http://localhost:1234/draft6/detached-ref.json#/definitions/foo"
+        }
+*/
+    Given the input JSON file "refRemote.json"
+    And the schema at "#/10/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/010/tests/000/data | true  | number is valid                                                                  |
+        | #/010/tests/001/data | false | non-number is invalid                                                            |
