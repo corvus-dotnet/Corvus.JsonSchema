@@ -30,19 +30,19 @@ Scenario Outline: validation of time strings
         | #/000/tests/008/data | false | invalid time string with no leading zero for single digit                        |
         | #/000/tests/009/data | false | hour, minute, second must be two digits                                          |
         # #/000/tests/010/data | true  | a valid time string with leap second, Zulu                                       |
-        # #/000/tests/011/data | false | invalid leap second, Zulu (wrong hour)                                           |
-        # #/000/tests/012/data | false | invalid leap second, Zulu (wrong minute)                                         |
+        | #/000/tests/011/data | false | invalid leap second, Zulu (wrong hour)                                           |
+        | #/000/tests/012/data | false | invalid leap second, Zulu (wrong minute)                                         |
         # #/000/tests/013/data | true  | valid leap second, zero time-offset                                              |
-        # #/000/tests/014/data | false | invalid leap second, zero time-offset (wrong hour)                               |
-        # #/000/tests/015/data | false | invalid leap second, zero time-offset (wrong minute)                             |
+        | #/000/tests/014/data | false | invalid leap second, zero time-offset (wrong hour)                               |
+        | #/000/tests/015/data | false | invalid leap second, zero time-offset (wrong minute)                             |
         # #/000/tests/016/data | true  | valid leap second, positive time-offset                                          |
         # #/000/tests/017/data | true  | valid leap second, large positive time-offset                                    |
-        # #/000/tests/018/data | false | invalid leap second, positive time-offset (wrong hour)                           |
-        # #/000/tests/019/data | false | invalid leap second, positive time-offset (wrong minute)                         |
+        | #/000/tests/018/data | false | invalid leap second, positive time-offset (wrong hour)                           |
+        | #/000/tests/019/data | false | invalid leap second, positive time-offset (wrong minute)                         |
         # #/000/tests/020/data | true  | valid leap second, negative time-offset                                          |
         # #/000/tests/021/data | true  | valid leap second, large negative time-offset                                    |
-        # #/000/tests/022/data | false | invalid leap second, negative time-offset (wrong hour)                           |
-        # #/000/tests/023/data | false | invalid leap second, negative time-offset (wrong minute)                         |
+        | #/000/tests/022/data | false | invalid leap second, negative time-offset (wrong hour)                           |
+        | #/000/tests/023/data | false | invalid leap second, negative time-offset (wrong minute)                         |
         | #/000/tests/024/data | true  | a valid time string with second fraction                                         |
         | #/000/tests/025/data | true  | a valid time string with precise second fraction                                 |
         | #/000/tests/026/data | true  | a valid time string with plus offset                                             |

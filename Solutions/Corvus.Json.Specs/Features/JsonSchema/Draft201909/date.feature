@@ -65,7 +65,3 @@ Scenario Outline: validation of date strings
         | #/000/tests/040/data | false | 2021 is not a leap year                                                          |
         | #/000/tests/041/data | true  | 2020 is a leap year                                                              |
         | #/000/tests/042/data | false | invalid non-ASCII '৪' (a Bengali 4)                                              |
-        | #/000/tests/043/data | false | ISO8601 / non-RFC3339: YYYYMMDD without dashes (2023-03-28)                      |
-        | #/000/tests/044/data | false | ISO8601 / non-RFC3339: week number implicit day of week (2023-01-02)             |
-        | #/000/tests/045/data | false | ISO8601 / non-RFC3339: week number with day of week (2023-03-28)                 |
-        | #/000/tests/046/data | false | ISO8601 / non-RFC3339: week number rollover to next year (2023-01-01)            |

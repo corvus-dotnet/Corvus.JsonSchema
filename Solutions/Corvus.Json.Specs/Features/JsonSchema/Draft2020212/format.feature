@@ -28,7 +28,6 @@ Scenario Outline: email format
         | #/000/tests/003/data | true  | all string formats ignore arrays                                                 |
         | #/000/tests/004/data | true  | all string formats ignore booleans                                               |
         | #/000/tests/005/data | true  | all string formats ignore nulls                                                  |
-        #| #/000/tests/006/data | true  | invalid email string is only an annotation by default                            |
 
 Scenario Outline: idn-email format
 /* Schema: 
@@ -53,7 +52,6 @@ Scenario Outline: idn-email format
         | #/001/tests/003/data | true  | all string formats ignore arrays                                                 |
         | #/001/tests/004/data | true  | all string formats ignore booleans                                               |
         | #/001/tests/005/data | true  | all string formats ignore nulls                                                  |
-        #| #/001/tests/006/data | true  | invalid idn-email string is only an annotation by default                        |
 
 Scenario Outline: regex format
 /* Schema: 
@@ -78,7 +76,6 @@ Scenario Outline: regex format
         | #/002/tests/003/data | true  | all string formats ignore arrays                                                 |
         | #/002/tests/004/data | true  | all string formats ignore booleans                                               |
         | #/002/tests/005/data | true  | all string formats ignore nulls                                                  |
-        #| #/002/tests/006/data | true  | invalid regex string is only an annotation by default                            |
 
 Scenario Outline: ipv4 format
 /* Schema: 
@@ -103,7 +100,6 @@ Scenario Outline: ipv4 format
         | #/003/tests/003/data | true  | all string formats ignore arrays                                                 |
         | #/003/tests/004/data | true  | all string formats ignore booleans                                               |
         | #/003/tests/005/data | true  | all string formats ignore nulls                                                  |
-        #| #/003/tests/006/data | true  | invalid ipv4 string is only an annotation by default                             |
 
 Scenario Outline: ipv6 format
 /* Schema: 
@@ -128,7 +124,6 @@ Scenario Outline: ipv6 format
         | #/004/tests/003/data | true  | all string formats ignore arrays                                                 |
         | #/004/tests/004/data | true  | all string formats ignore booleans                                               |
         | #/004/tests/005/data | true  | all string formats ignore nulls                                                  |
-        #| #/004/tests/006/data | true  | invalid ipv6 string is only an annotation by default                             |
 
 Scenario Outline: idn-hostname format
 /* Schema: 
@@ -153,7 +148,6 @@ Scenario Outline: idn-hostname format
         | #/005/tests/003/data | true  | all string formats ignore arrays                                                 |
         | #/005/tests/004/data | true  | all string formats ignore booleans                                               |
         | #/005/tests/005/data | true  | all string formats ignore nulls                                                  |
-        #| #/005/tests/006/data | true  | invalid idn-hostname string is only an annotation by default                     |
 
 Scenario Outline: hostname format
 /* Schema: 
@@ -178,7 +172,6 @@ Scenario Outline: hostname format
         | #/006/tests/003/data | true  | all string formats ignore arrays                                                 |
         | #/006/tests/004/data | true  | all string formats ignore booleans                                               |
         | #/006/tests/005/data | true  | all string formats ignore nulls                                                  |
-        #| #/006/tests/006/data | true  | invalid hostname string is only an annotation by default                         |
 
 Scenario Outline: date format
 /* Schema: 
@@ -203,7 +196,6 @@ Scenario Outline: date format
         | #/007/tests/003/data | true  | all string formats ignore arrays                                                 |
         | #/007/tests/004/data | true  | all string formats ignore booleans                                               |
         | #/007/tests/005/data | true  | all string formats ignore nulls                                                  |
-        #| #/007/tests/006/data | true  | invalid date string is only an annotation by default                             |
 
 Scenario Outline: date-time format
 /* Schema: 
@@ -228,7 +220,6 @@ Scenario Outline: date-time format
         | #/008/tests/003/data | true  | all string formats ignore arrays                                                 |
         | #/008/tests/004/data | true  | all string formats ignore booleans                                               |
         | #/008/tests/005/data | true  | all string formats ignore nulls                                                  |
-        #| #/008/tests/006/data | true  | invalid date-time string is only an annotation by default                        |
 
 Scenario Outline: time format
 /* Schema: 
@@ -253,7 +244,6 @@ Scenario Outline: time format
         | #/009/tests/003/data | true  | all string formats ignore arrays                                                 |
         | #/009/tests/004/data | true  | all string formats ignore booleans                                               |
         | #/009/tests/005/data | true  | all string formats ignore nulls                                                  |
-        #| #/009/tests/006/data | true  | invalid time string is only an annotation by default                             |
 
 Scenario Outline: json-pointer format
 /* Schema: 
@@ -278,7 +268,6 @@ Scenario Outline: json-pointer format
         | #/010/tests/003/data | true  | all string formats ignore arrays                                                 |
         | #/010/tests/004/data | true  | all string formats ignore booleans                                               |
         | #/010/tests/005/data | true  | all string formats ignore nulls                                                  |
-        #| #/010/tests/006/data | true  | invalid json-pointer string is only an annotation by default                     |
 
 Scenario Outline: relative-json-pointer format
 /* Schema: 
@@ -303,7 +292,6 @@ Scenario Outline: relative-json-pointer format
         | #/011/tests/003/data | true  | all string formats ignore arrays                                                 |
         | #/011/tests/004/data | true  | all string formats ignore booleans                                               |
         | #/011/tests/005/data | true  | all string formats ignore nulls                                                  |
-        #| #/011/tests/006/data | true  | invalid relative-json-pointer string is only an annotation by default            |
 
 Scenario Outline: iri format
 /* Schema: 
@@ -328,7 +316,6 @@ Scenario Outline: iri format
         | #/012/tests/003/data | true  | all string formats ignore arrays                                                 |
         | #/012/tests/004/data | true  | all string formats ignore booleans                                               |
         | #/012/tests/005/data | true  | all string formats ignore nulls                                                  |
-        #| #/012/tests/006/data | true  | invalid iri string is only an annotation by default                              |
 
 Scenario Outline: iri-reference format
 /* Schema: 
@@ -353,7 +340,6 @@ Scenario Outline: iri-reference format
         | #/013/tests/003/data | true  | all string formats ignore arrays                                                 |
         | #/013/tests/004/data | true  | all string formats ignore booleans                                               |
         | #/013/tests/005/data | true  | all string formats ignore nulls                                                  |
-        #| #/013/tests/006/data | true  | invalid iri-reference string is only an annotation by default                    |
 
 Scenario Outline: uri format
 /* Schema: 
@@ -378,7 +364,6 @@ Scenario Outline: uri format
         | #/014/tests/003/data | true  | all string formats ignore arrays                                                 |
         | #/014/tests/004/data | true  | all string formats ignore booleans                                               |
         | #/014/tests/005/data | true  | all string formats ignore nulls                                                  |
-        #| #/014/tests/006/data | true  | invalid uri string is only an annotation by default                              |
 
 Scenario Outline: uri-reference format
 /* Schema: 
@@ -403,7 +388,6 @@ Scenario Outline: uri-reference format
         | #/015/tests/003/data | true  | all string formats ignore arrays                                                 |
         | #/015/tests/004/data | true  | all string formats ignore booleans                                               |
         | #/015/tests/005/data | true  | all string formats ignore nulls                                                  |
-        #| #/015/tests/006/data | true  | invalid uri-reference string is only an annotation by default                    |
 
 Scenario Outline: uri-template format
 /* Schema: 
@@ -428,7 +412,6 @@ Scenario Outline: uri-template format
         | #/016/tests/003/data | true  | all string formats ignore arrays                                                 |
         | #/016/tests/004/data | true  | all string formats ignore booleans                                               |
         | #/016/tests/005/data | true  | all string formats ignore nulls                                                  |
-        #| #/016/tests/006/data | true  | invalid uri-template string is only an annotation by default                     |
 
 Scenario Outline: uuid format
 /* Schema: 
@@ -453,7 +436,6 @@ Scenario Outline: uuid format
         | #/017/tests/003/data | true  | all string formats ignore arrays                                                 |
         | #/017/tests/004/data | true  | all string formats ignore booleans                                               |
         | #/017/tests/005/data | true  | all string formats ignore nulls                                                  |
-        #| #/017/tests/006/data | true  | invalid uuid string is only an annotation by default                             |
 
 Scenario Outline: duration format
 /* Schema: 
@@ -478,4 +460,3 @@ Scenario Outline: duration format
         | #/018/tests/003/data | true  | all string formats ignore arrays                                                 |
         | #/018/tests/004/data | true  | all string formats ignore booleans                                               |
         | #/018/tests/005/data | true  | all string formats ignore nulls                                                  |
-        #| #/018/tests/006/data | true  | invalid duration string is only an annotation by default                         |

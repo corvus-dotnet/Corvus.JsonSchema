@@ -513,16 +513,16 @@ Scenario Outline: order of evaluation: $id and $ref
 {
             "$schema": "https://json-schema.org/draft/2019-09/schema",
             "$comment": "$id must be evaluated before $ref to get the proper $ref destination",
-            "$id": "https://example.com/draft2019-09/ref-and-id1/base.json",
+            "$id": "/draft2019-09/ref-and-id1/base.json",
             "$ref": "int.json",
             "$defs": {
                 "bigint": {
-                    "$comment": "canonical uri: https://example.com/draft2019-09/ref-and-id1/int.json",
+                    "$comment": "canonical uri: /draft2019-09/ref-and-id1/int.json",
                     "$id": "int.json",
                     "maximum": 10
                 },
                 "smallint": {
-                    "$comment": "canonical uri: https://example.com/draft2019-09/ref-and-id1-int.json",
+                    "$comment": "canonical uri: /draft2019-09/ref-and-id1-int.json",
                     "$id": "/draft2019-09/ref-and-id1-int.json",
                     "maximum": 2
                 }
@@ -547,16 +547,16 @@ Scenario Outline: order of evaluation: $id and $anchor and $ref
 {
             "$schema": "https://json-schema.org/draft/2019-09/schema",
             "$comment": "$id must be evaluated before $ref to get the proper $ref destination",
-            "$id": "https://example.com/draft2019-09/ref-and-id2/base.json",
+            "$id": "/draft2019-09/ref-and-id2/base.json",
             "$ref": "#bigint",
             "$defs": {
                 "bigint": {
-                    "$comment": "canonical uri: https://example.com/draft2019-09/ref-and-id2/base.json#/$defs/bigint; another valid uri for this location: https://example.com/ref-and-id2/base.json#bigint",
+                    "$comment": "canonical uri: /draft2019-09/ref-and-id2/base.json#/$defs/bigint; another valid uri for this location: /ref-and-id2/base.json#bigint",
                     "$anchor": "bigint",
                     "maximum": 10
                 },
                 "smallint": {
-                    "$comment": "canonical uri: https://example.com/draft2019-09/ref-and-id2#/$defs/smallint; another valid uri for this location: https://example.com/ref-and-id2/#bigint",
+                    "$comment": "canonical uri: /draft2019-09/ref-and-id2#/$defs/smallint; another valid uri for this location: /ref-and-id2/#bigint",
                     "$id": "/draft2019-09/ref-and-id2/",
                     "$anchor": "bigint",
                     "maximum": 2
@@ -879,113 +879,3 @@ Scenario Outline: ref to else
         | inputDataReference   | valid | description                                                                      |
         | #/031/tests/000/data | false | a non-integer is invalid due to the $ref                                         |
         | #/031/tests/001/data | true  | an integer is valid                                                              |
-
-Scenario Outline: ref with absolute-path-reference
-/* Schema: 
-{
-             "$id": "http://example.com/ref/absref.json",
-             "$defs": {
-                 "a": {
-                     "$id": "http://example.com/ref/absref/foobar.json",
-                     "type": "number"
-                 },
-                 "b": {
-                     "$id": "http://example.com/absref/foobar.json",
-                     "type": "string"
-                 }
-             },
-             "$ref": "/absref/foobar.json"
-         }
-*/
-    Given the input JSON file "ref.json"
-    And the schema at "#/32/schema"
-    And the input data at "<inputDataReference>"
-    And I generate a type for the schema
-    And I construct an instance of the schema type from the data
-    When I validate the instance
-    Then the result will be <valid>
-
-    Examples:
-        | inputDataReference   | valid | description                                                                      |
-        | #/032/tests/000/data | true  | a string is valid                                                                |
-        | #/032/tests/001/data | false | an integer is invalid                                                            |
-
-Scenario Outline: $id with file URI still resolves pointers - *nix
-/* Schema: 
-{
-             "$id": "file:///folder/file.json",
-             "$defs": {
-                 "foo": {
-                     "type": "number"
-                 }
-             },
-             "$ref": "#/$defs/foo"
-         }
-*/
-    Given the input JSON file "ref.json"
-    And the schema at "#/33/schema"
-    And the input data at "<inputDataReference>"
-    And I generate a type for the schema
-    And I construct an instance of the schema type from the data
-    When I validate the instance
-    Then the result will be <valid>
-
-    Examples:
-        | inputDataReference   | valid | description                                                                      |
-        | #/033/tests/000/data | true  | number is valid                                                                  |
-        | #/033/tests/001/data | false | non-number is invalid                                                            |
-
-Scenario Outline: $id with file URI still resolves pointers - windows
-/* Schema: 
-{
-             "$id": "file:///c:/folder/file.json",
-             "$defs": {
-                 "foo": {
-                     "type": "number"
-                 }
-             },
-             "$ref": "#/$defs/foo"
-         }
-*/
-    Given the input JSON file "ref.json"
-    And the schema at "#/34/schema"
-    And the input data at "<inputDataReference>"
-    And I generate a type for the schema
-    And I construct an instance of the schema type from the data
-    When I validate the instance
-    Then the result will be <valid>
-
-    Examples:
-        | inputDataReference   | valid | description                                                                      |
-        | #/034/tests/000/data | true  | number is valid                                                                  |
-        | #/034/tests/001/data | false | non-number is invalid                                                            |
-
-Scenario Outline: empty tokens in $ref json-pointer
-/* Schema: 
-{
-             "$defs": {
-                 "": {
-                     "$defs": {
-                         "": { "type": "number" }
-                     }
-                 } 
-             },
-             "allOf": [
-                 {
-                     "$ref": "#/$defs//$defs/"
-                 }
-             ]
-         }
-*/
-    Given the input JSON file "ref.json"
-    And the schema at "#/35/schema"
-    And the input data at "<inputDataReference>"
-    And I generate a type for the schema
-    And I construct an instance of the schema type from the data
-    When I validate the instance
-    Then the result will be <valid>
-
-    Examples:
-        | inputDataReference   | valid | description                                                                      |
-        | #/035/tests/000/data | true  | number is valid                                                                  |
-        | #/035/tests/001/data | false | non-number is invalid                                                            |

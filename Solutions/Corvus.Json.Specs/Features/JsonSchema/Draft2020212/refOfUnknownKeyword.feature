@@ -28,13 +28,13 @@ Scenario Outline: reference of a root arbitrary keyword
         | #/000/tests/000/data | true  | match                                                                            |
         | #/000/tests/001/data | false | mismatch                                                                         |
 
-Scenario Outline: reference of an arbitrary keyword of a sub-schema
+Scenario Outline: reference of a root arbitrary keyword with encoded ref
 /* Schema: 
 {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "unknown/keyword": {"type": "integer"},
             "properties": {
-                "foo": {"unknown-keyword": {"type": "integer"}},
-                "bar": {"$ref": "#/properties/foo/unknown-keyword"}
+                "bar": {"$ref": "#/unknown~1keyword"}
             }
         }
 */
@@ -50,3 +50,49 @@ Scenario Outline: reference of an arbitrary keyword of a sub-schema
         | inputDataReference   | valid | description                                                                      |
         | #/001/tests/000/data | true  | match                                                                            |
         | #/001/tests/001/data | false | mismatch                                                                         |
+
+Scenario Outline: reference of an arbitrary keyword of a sub-schema
+/* Schema: 
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "properties": {
+                "foo": {"unknown-keyword": {"type": "integer"}},
+                "bar": {"$ref": "#/properties/foo/unknown-keyword"}
+            }
+        }
+*/
+    Given the input JSON file "optional/refOfUnknownKeyword.json"
+    And the schema at "#/2/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/002/tests/000/data | true  | match                                                                            |
+        | #/002/tests/001/data | false | mismatch                                                                         |
+
+Scenario Outline: reference of an arbitrary keyword of a sub-schema with encoded ref
+/* Schema: 
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "properties": {
+                "foo": {"unknown/keyword": {"type": "integer"}},
+                "bar": {"$ref": "#/properties/foo/unknown~1keyword"}
+            }
+        }
+*/
+    Given the input JSON file "optional/refOfUnknownKeyword.json"
+    And the schema at "#/3/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/003/tests/000/data | true  | match                                                                            |
+        | #/003/tests/001/data | false | mismatch                                                                         |

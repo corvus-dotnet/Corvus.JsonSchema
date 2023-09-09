@@ -32,24 +32,23 @@ Scenario Outline: uniqueItems validation
         | #/000/tests/007/data | false | non-unique array of strings is invalid                                           |
         | #/000/tests/008/data | true  | unique array of objects is valid                                                 |
         | #/000/tests/009/data | false | non-unique array of objects is invalid                                           |
-        | #/000/tests/010/data | false | property order of array of objects is ignored                                    |
-        | #/000/tests/011/data | true  | unique array of nested objects is valid                                          |
-        | #/000/tests/012/data | false | non-unique array of nested objects is invalid                                    |
-        | #/000/tests/013/data | true  | unique array of arrays is valid                                                  |
-        | #/000/tests/014/data | false | non-unique array of arrays is invalid                                            |
-        | #/000/tests/015/data | false | non-unique array of more than two arrays is invalid                              |
-        | #/000/tests/016/data | true  | 1 and true are unique                                                            |
-        | #/000/tests/017/data | true  | 0 and false are unique                                                           |
-        | #/000/tests/018/data | true  | [1] and [true] are unique                                                        |
-        | #/000/tests/019/data | true  | [0] and [false] are unique                                                       |
-        | #/000/tests/020/data | true  | nested [1] and [true] are unique                                                 |
-        | #/000/tests/021/data | true  | nested [0] and [false] are unique                                                |
-        | #/000/tests/022/data | true  | unique heterogeneous types are valid                                             |
-        | #/000/tests/023/data | false | non-unique heterogeneous types are invalid                                       |
-        | #/000/tests/024/data | true  | different objects are unique                                                     |
-        | #/000/tests/025/data | false | objects are non-unique despite key order                                         |
-        | #/000/tests/026/data | true  | {"a": false} and {"a": 0} are unique                                             |
-        | #/000/tests/027/data | true  | {"a": true} and {"a": 1} are unique                                              |
+        | #/000/tests/010/data | true  | unique array of nested objects is valid                                          |
+        | #/000/tests/011/data | false | non-unique array of nested objects is invalid                                    |
+        | #/000/tests/012/data | true  | unique array of arrays is valid                                                  |
+        | #/000/tests/013/data | false | non-unique array of arrays is invalid                                            |
+        | #/000/tests/014/data | false | non-unique array of more than two arrays is invalid                              |
+        | #/000/tests/015/data | true  | 1 and true are unique                                                            |
+        | #/000/tests/016/data | true  | 0 and false are unique                                                           |
+        | #/000/tests/017/data | true  | [1] and [true] are unique                                                        |
+        | #/000/tests/018/data | true  | [0] and [false] are unique                                                       |
+        | #/000/tests/019/data | true  | nested [1] and [true] are unique                                                 |
+        | #/000/tests/020/data | true  | nested [0] and [false] are unique                                                |
+        | #/000/tests/021/data | true  | unique heterogeneous types are valid                                             |
+        | #/000/tests/022/data | false | non-unique heterogeneous types are invalid                                       |
+        | #/000/tests/023/data | true  | different objects are unique                                                     |
+        | #/000/tests/024/data | false | objects are non-unique despite key order                                         |
+        | #/000/tests/025/data | true  | {"a": false} and {"a": 0} are unique                                             |
+        | #/000/tests/026/data | true  | {"a": true} and {"a": 1} are unique                                              |
 
 Scenario Outline: uniqueItems with an array of items
 /* Schema: 

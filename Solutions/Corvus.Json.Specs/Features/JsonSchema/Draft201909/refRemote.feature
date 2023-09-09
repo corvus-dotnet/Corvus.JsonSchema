@@ -45,12 +45,12 @@ Scenario Outline: fragment within remote ref
         | #/001/tests/000/data | true  | remote fragment valid                                                            |
         | #/001/tests/001/data | false | remote fragment invalid                                                          |
 
-Scenario Outline: anchor within remote ref
+Scenario Outline: ref within remote ref
 /* Schema: 
 {
-             "$schema": "https://json-schema.org/draft/2019-09/schema",
-             "$ref": "http://localhost:1234/draft2019-09/locationIndependentIdentifier.json#foo"
-         }
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "$ref": "http://localhost:1234/draft2019-09/subSchemas-defs.json#/$defs/refToInteger"
+        }
 */
     Given the input JSON file "refRemote.json"
     And the schema at "#/2/schema"
@@ -62,28 +62,8 @@ Scenario Outline: anchor within remote ref
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/002/tests/000/data | true  | remote anchor valid                                                              |
-        | #/002/tests/001/data | false | remote anchor invalid                                                            |
-
-Scenario Outline: ref within remote ref
-/* Schema: 
-{
-            "$schema": "https://json-schema.org/draft/2019-09/schema",
-            "$ref": "http://localhost:1234/draft2019-09/subSchemas-defs.json#/$defs/refToInteger"
-        }
-*/
-    Given the input JSON file "refRemote.json"
-    And the schema at "#/3/schema"
-    And the input data at "<inputDataReference>"
-    And I generate a type for the schema
-    And I construct an instance of the schema type from the data
-    When I validate the instance
-    Then the result will be <valid>
-
-    Examples:
-        | inputDataReference   | valid | description                                                                      |
-        | #/003/tests/000/data | true  | ref within ref valid                                                             |
-        | #/003/tests/001/data | false | ref within ref invalid                                                           |
+        | #/002/tests/000/data | true  | ref within ref valid                                                             |
+        | #/002/tests/001/data | false | ref within ref invalid                                                           |
 
 Scenario Outline: base URI change
 /* Schema: 
@@ -97,7 +77,7 @@ Scenario Outline: base URI change
         }
 */
     Given the input JSON file "refRemote.json"
-    And the schema at "#/4/schema"
+    And the schema at "#/3/schema"
     And the input data at "<inputDataReference>"
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
@@ -106,8 +86,8 @@ Scenario Outline: base URI change
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/004/tests/000/data | true  | base URI change ref valid                                                        |
-        | #/004/tests/001/data | false | base URI change ref invalid                                                      |
+        | #/003/tests/000/data | true  | base URI change ref valid                                                        |
+        | #/003/tests/001/data | false | base URI change ref invalid                                                      |
 
 Scenario Outline: base URI change - change folder
 /* Schema: 
@@ -126,7 +106,7 @@ Scenario Outline: base URI change - change folder
         }
 */
     Given the input JSON file "refRemote.json"
-    And the schema at "#/5/schema"
+    And the schema at "#/4/schema"
     And the input data at "<inputDataReference>"
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
@@ -135,8 +115,8 @@ Scenario Outline: base URI change - change folder
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/005/tests/000/data | true  | number is valid                                                                  |
-        | #/005/tests/001/data | false | string is invalid                                                                |
+        | #/004/tests/000/data | true  | number is valid                                                                  |
+        | #/004/tests/001/data | false | string is invalid                                                                |
 
 Scenario Outline: base URI change - change folder in subschema
 /* Schema: 
@@ -159,7 +139,7 @@ Scenario Outline: base URI change - change folder in subschema
         }
 */
     Given the input JSON file "refRemote.json"
-    And the schema at "#/6/schema"
+    And the schema at "#/5/schema"
     And the input data at "<inputDataReference>"
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
@@ -168,8 +148,8 @@ Scenario Outline: base URI change - change folder in subschema
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/006/tests/000/data | true  | number is valid                                                                  |
-        | #/006/tests/001/data | false | string is invalid                                                                |
+        | #/005/tests/000/data | true  | number is valid                                                                  |
+        | #/005/tests/001/data | false | string is invalid                                                                |
 
 Scenario Outline: root ref in remote ref
 /* Schema: 
@@ -183,6 +163,28 @@ Scenario Outline: root ref in remote ref
         }
 */
     Given the input JSON file "refRemote.json"
+    And the schema at "#/6/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/006/tests/000/data | true  | string is valid                                                                  |
+        | #/006/tests/001/data | true  | null is valid                                                                    |
+        | #/006/tests/002/data | false | object is invalid                                                                |
+
+Scenario Outline: remote ref with ref to defs
+/* Schema: 
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "$id": "http://localhost:1234/draft2019-09/schema-remote-ref-ref-defs1.json",
+            "$ref": "ref-and-defs.json"
+        }
+*/
+    Given the input JSON file "refRemote.json"
     And the schema at "#/7/schema"
     And the input data at "<inputDataReference>"
     And I generate a type for the schema
@@ -192,16 +194,14 @@ Scenario Outline: root ref in remote ref
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/007/tests/000/data | true  | string is valid                                                                  |
-        | #/007/tests/001/data | true  | null is valid                                                                    |
-        | #/007/tests/002/data | false | object is invalid                                                                |
+        | #/007/tests/000/data | false | invalid                                                                          |
+        | #/007/tests/001/data | true  | valid                                                                            |
 
-Scenario Outline: remote ref with ref to defs
+Scenario Outline: Location-independent identifier in remote ref
 /* Schema: 
 {
             "$schema": "https://json-schema.org/draft/2019-09/schema",
-            "$id": "http://localhost:1234/draft2019-09/schema-remote-ref-ref-defs1.json",
-            "$ref": "ref-and-defs.json"
+            "$ref": "http://localhost:1234/draft2019-09/locationIndependentIdentifier.json#/$defs/refToInteger"
         }
 */
     Given the input JSON file "refRemote.json"
@@ -214,14 +214,17 @@ Scenario Outline: remote ref with ref to defs
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/008/tests/000/data | false | invalid                                                                          |
-        | #/008/tests/001/data | true  | valid                                                                            |
+        | #/008/tests/000/data | true  | integer is valid                                                                 |
+        | #/008/tests/001/data | false | string is invalid                                                                |
 
-Scenario Outline: Location-independent identifier in remote ref
+Scenario Outline: retrieved nested refs resolve relative to their URI not $id
 /* Schema: 
 {
             "$schema": "https://json-schema.org/draft/2019-09/schema",
-            "$ref": "http://localhost:1234/draft2019-09/locationIndependentIdentifier.json#/$defs/refToInteger"
+            "$id": "http://localhost:1234/draft2019-09/some-id",
+            "properties": {
+                "name": {"$ref": "nested/foo-ref-string.json"}
+            }
         }
 */
     Given the input JSON file "refRemote.json"
@@ -234,18 +237,12 @@ Scenario Outline: Location-independent identifier in remote ref
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/009/tests/000/data | true  | integer is valid                                                                 |
-        | #/009/tests/001/data | false | string is invalid                                                                |
+        | #/009/tests/000/data | false | number is invalid                                                                |
+        | #/009/tests/001/data | true  | string is valid                                                                  |
 
-Scenario Outline: retrieved nested refs resolve relative to their URI not $id
+Scenario Outline: remote HTTP ref with different $id
 /* Schema: 
-{
-            "$schema": "https://json-schema.org/draft/2019-09/schema",
-            "$id": "http://localhost:1234/draft2019-09/some-id",
-            "properties": {
-                "name": {"$ref": "nested/foo-ref-string.json"}
-            }
-        }
+{"$ref": "http://localhost:1234/different-id-ref-string.json"}
 */
     Given the input JSON file "refRemote.json"
     And the schema at "#/10/schema"
@@ -260,9 +257,9 @@ Scenario Outline: retrieved nested refs resolve relative to their URI not $id
         | #/010/tests/000/data | false | number is invalid                                                                |
         | #/010/tests/001/data | true  | string is valid                                                                  |
 
-Scenario Outline: remote HTTP ref with different $id
+Scenario Outline: remote HTTP ref with different URN $id
 /* Schema: 
-{"$ref": "http://localhost:1234/different-id-ref-string.json"}
+{"$ref": "http://localhost:1234/urn-ref-string.json"}
 */
     Given the input JSON file "refRemote.json"
     And the schema at "#/11/schema"
@@ -277,9 +274,9 @@ Scenario Outline: remote HTTP ref with different $id
         | #/011/tests/000/data | false | number is invalid                                                                |
         | #/011/tests/001/data | true  | string is valid                                                                  |
 
-Scenario Outline: remote HTTP ref with different URN $id
+Scenario Outline: remote HTTP ref with nested absolute ref
 /* Schema: 
-{"$ref": "http://localhost:1234/urn-ref-string.json"}
+{"$ref": "http://localhost:1234/nested-absolute-ref-to-string.json"}
 */
     Given the input JSON file "refRemote.json"
     And the schema at "#/12/schema"
@@ -293,39 +290,3 @@ Scenario Outline: remote HTTP ref with different URN $id
         | inputDataReference   | valid | description                                                                      |
         | #/012/tests/000/data | false | number is invalid                                                                |
         | #/012/tests/001/data | true  | string is valid                                                                  |
-
-Scenario Outline: remote HTTP ref with nested absolute ref
-/* Schema: 
-{"$ref": "http://localhost:1234/nested-absolute-ref-to-string.json"}
-*/
-    Given the input JSON file "refRemote.json"
-    And the schema at "#/13/schema"
-    And the input data at "<inputDataReference>"
-    And I generate a type for the schema
-    And I construct an instance of the schema type from the data
-    When I validate the instance
-    Then the result will be <valid>
-
-    Examples:
-        | inputDataReference   | valid | description                                                                      |
-        | #/013/tests/000/data | false | number is invalid                                                                |
-        | #/013/tests/001/data | true  | string is valid                                                                  |
-
-Scenario Outline: $ref to $ref finds detached $anchor
-/* Schema: 
-{
-            "$ref": "http://localhost:1234/draft2019-09/detached-ref.json#/$defs/foo"
-        }
-*/
-    Given the input JSON file "refRemote.json"
-    And the schema at "#/14/schema"
-    And the input data at "<inputDataReference>"
-    And I generate a type for the schema
-    And I construct an instance of the schema type from the data
-    When I validate the instance
-    Then the result will be <valid>
-
-    Examples:
-        | inputDataReference   | valid | description                                                                      |
-        | #/014/tests/000/data | true  | number is valid                                                                  |
-        | #/014/tests/001/data | false | non-number is invalid                                                            |
