@@ -51,13 +51,13 @@
       },
       "JsonSchema.Net": {
         "type": "Direct",
-        "requested": "[5.2.3, )",
-        "resolved": "5.2.3",
-        "contentHash": "ip2hsISB0LMFukxIwWxxrz9jVdVGNWgSXkZu39nRKHtbemzSyPL2zirqfseXPW99JdltIMaWsqcnBzQ5BajZTw==",
+        "requested": "[5.2.5, )",
+        "resolved": "5.2.5",
+        "contentHash": "JfkqnfiyNikpPQyHc7OAgEbPe5c23jvpbZYMs6ayd6joELVAOWNTZ+jmBjAcOyKRodDK25dru3JkvFnnDopezA==",
         "dependencies": {
           "JetBrains.Annotations": "2021.2.0",
-          "Json.More.Net": "1.8.0",
-          "JsonPointer.Net": "3.0.1"
+          "Json.More.Net": "1.9.0",
+          "JsonPointer.Net": "3.0.3"
         }
       },
       "Microsoft.Extensions.Configuration.Json": {
@@ -147,16 +147,16 @@
       },
       "Json.More.Net": {
         "type": "Transitive",
-        "resolved": "1.8.0",
-        "contentHash": "JWxlYwCSYXZIWezmrvRgaxhI/vEEpQlZVm6/lskuS7p/uPrNJzQxbe2CPjzkF3UUz4RI8WkmObs6ycpxoE9T7w==",
+        "resolved": "1.9.0",
+        "contentHash": "MMjd2dOh32hLbcZg9YyA+7aEH9gu2cMTEAWrQY17in4+aEsPg2NtYTcwgWHJS9Tt2WUx+4iN1mNegR2uiEwsVQ==",
         "dependencies": {
           "System.Text.Json": "6.0.2"
         }
       },
       "JsonPointer.Net": {
         "type": "Transitive",
-        "resolved": "3.0.1",
-        "contentHash": "TtUFnAp/0wK4v16quNKAbtAngXV7NrTBe3t70beTxiBU9VRhHFnLqjjU+MKWFMbM3AK++oiI2b4abgK2/7WNJA==",
+        "resolved": "3.0.3",
+        "contentHash": "mCGQc15lHLp1R2CVhWiipnZurHXm93+LbPPAT/vXQm5PdHt6WQuYLhaEF8VZ+aXL9P2I6bGND6pDTEfqFs6gig==",
         "dependencies": {
           "Json.More.Net": "1.8.0"
         }
