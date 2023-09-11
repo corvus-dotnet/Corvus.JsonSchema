@@ -267,7 +267,7 @@ Scenario Outline: multiple dynamic paths to the $recursiveRef keyword
 /* Schema: 
 {
             "$schema": "https://json-schema.org/draft/2019-09/schema",
-            "$id": "recursiveRef8_main.json",
+            "$id": "https://example.com/recursiveRef8_main.json",
             "$defs": {
                 "inner": {
                     "$id": "recursiveRef8_inner.json",
@@ -315,7 +315,7 @@ Scenario Outline: dynamic $recursiveRef destination (not predictable at schema c
 /* Schema: 
 {
             "$schema": "https://json-schema.org/draft/2019-09/schema",
-            "$id": "main.json",
+            "$id": "https://example.com/main.json",
             "$defs": {
                 "inner": {
                     "$id": "inner.json",

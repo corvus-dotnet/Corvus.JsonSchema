@@ -118,12 +118,12 @@
                   "validation of time strings": {
                     "testsToIgnoreIndices": [
                       // Leap seconds
-                      7,
                       10,
                       13,
-                      14,
+                      16,
                       17,
-                      18
+                      20,
+                      21
                     ]
                   }
                 }
@@ -143,6 +143,103 @@
         "vocabulary\\.json"
       ],
       "testExclusions": {
+        "format.json": {
+          "email format": {
+            "testsToIgnoreIndices": [
+              6
+            ]
+          },
+          "idn-email format": {
+            "testsToIgnoreIndices": [
+              6
+            ]
+          },
+          "regex format": {
+            "testsToIgnoreIndices": [
+              6
+            ]
+          },
+          "ipv4 format": {
+            "testsToIgnoreIndices": [
+              6
+            ]
+          },
+          "ipv6 format": {
+            "testsToIgnoreIndices": [
+              6
+            ]
+          },
+          "idn-hostname format": {
+            "testsToIgnoreIndices": [
+              6
+            ]
+          },
+          "hostname format": {
+            "testsToIgnoreIndices": [
+              6
+            ]
+          },
+          "date format": {
+            "testsToIgnoreIndices": [
+              6
+            ]
+          },
+          "date-time format": {
+            "testsToIgnoreIndices": [
+              6
+            ]
+          },
+          "time format": {
+            "testsToIgnoreIndices": [
+              6
+            ]
+          },
+          "json-pointer format": {
+            "testsToIgnoreIndices": [
+              6
+            ]
+          },
+          "relative-json-pointer format": {
+            "testsToIgnoreIndices": [
+              6
+            ]
+          },
+          "iri format": {
+            "testsToIgnoreIndices": [
+              6
+            ]
+          },
+          "iri-reference format": {
+            "testsToIgnoreIndices": [
+              6
+            ]
+          },
+          "uri format": {
+            "testsToIgnoreIndices": [
+              6
+            ]
+          },
+          "uri-reference format": {
+            "testsToIgnoreIndices": [
+              6
+            ]
+          },
+          "uri-template format": {
+            "testsToIgnoreIndices": [
+              6
+            ]
+          },
+          "uuid format": {
+            "testsToIgnoreIndices": [
+              6
+            ]
+          },
+          "duration format": {
+            "testsToIgnoreIndices": [
+              6
+            ]
+          }
+        }
       },
       "subdirectories": {
         "optional": {
@@ -170,12 +267,12 @@
                   "validation of time strings": {
                     "testsToIgnoreIndices": [
                       // Leap seconds
-                      7,
                       10,
                       13,
-                      14,
+                      16,
                       17,
-                      18
+                      20,
+                      21
                     ]
                   }
                 }

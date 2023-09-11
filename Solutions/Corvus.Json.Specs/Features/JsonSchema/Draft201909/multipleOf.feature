@@ -85,3 +85,22 @@ Scenario Outline: float division  equals  inf
     Examples:
         | inputDataReference   | valid | description                                                                      |
         | #/003/tests/000/data | false | always invalid, but naive implementations may raise an overflow error            |
+
+Scenario Outline: small multiple of large integer
+/* Schema: 
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "type": "integer", "multipleOf": 1e-8
+        }
+*/
+    Given the input JSON file "multipleOf.json"
+    And the schema at "#/4/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/004/tests/000/data | true  | any integer is a multiple of 1e-8                                                |
