@@ -55,11 +55,11 @@ public readonly partial struct JsonPatchDocument
         /// <summary>
         /// Gets an Undefined instance.
         /// </summary>
-        public static Test Undefined { get; } = default;
+        public static Test Undefined { get; }
         /// <summary>
         /// Gets the default instance of the type.
         /// </summary>
-        public static Test DefaultInstance { get; } = default;
+        public static Test DefaultInstance { get; }
 
         /// <inheritdoc/>
         public JsonAny AsAny

@@ -53,11 +53,11 @@ public readonly partial struct Person
     /// <summary>
     /// Gets an Undefined instance.
     /// </summary>
-    public static Person Undefined { get; } = default;
+    public static Person Undefined { get; }
     /// <summary>
     /// Gets the default instance of the type.
     /// </summary>
-    public static Person DefaultInstance { get; } = default;
+    public static Person DefaultInstance { get; }
 
     /// <inheritdoc/>
     public JsonAny AsAny

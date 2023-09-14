@@ -437,8 +437,8 @@ namespace ");
             #line hidden
             
             #line 124 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
-            this.Write(" Undefined { get; } = default;\r\n\r\n    /// <summary>\r\n    /// Gets the default ins" +
-                    "tance of the type.\r\n    /// </summary>\r\n");
+            this.Write(" Undefined { get; }\r\n\r\n    /// <summary>\r\n    /// Gets the default instance of th" +
+                    "e type.\r\n    /// </summary>\r\n");
             
             #line default
             #line hidden
@@ -463,7 +463,7 @@ namespace ");
             #line hidden
             
             #line 131 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
-            this.Write(" DefaultInstance { get; } = default;\r\n");
+            this.Write(" DefaultInstance { get; }\r\n");
             
             #line default
             #line hidden

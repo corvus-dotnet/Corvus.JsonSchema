@@ -50,6 +50,11 @@ public readonly partial struct JsonIpV4 : IJsonString<JsonIpV4>
     /// </summary>
     public static JsonIpV4 Undefined { get; }
 
+    /// <summary>
+    /// Gets a default instance.
+    /// </summary>
+    public static JsonIpV4 DefaultInstance { get; }
+
     /// <inheritdoc/>
     public JsonAny AsAny
     {

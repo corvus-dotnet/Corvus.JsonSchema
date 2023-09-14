@@ -55,7 +55,7 @@ public readonly partial struct Applicator
         /// <summary>
         /// Gets an Undefined instance.
         /// </summary>
-        public static DependentSchemasEntity Undefined { get; } = default;
+        public static DependentSchemasEntity Undefined { get; }
         /// <summary>
         /// Gets the default instance of the type.
         /// </summary>

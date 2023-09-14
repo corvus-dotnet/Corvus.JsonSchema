@@ -53,11 +53,11 @@ public readonly partial struct Feature
     /// <summary>
     /// Gets an Undefined instance.
     /// </summary>
-    public static Feature Undefined { get; } = default;
+    public static Feature Undefined { get; }
     /// <summary>
     /// Gets the default instance of the type.
     /// </summary>
-    public static Feature DefaultInstance { get; } = default;
+    public static Feature DefaultInstance { get; }
 
     /// <inheritdoc/>
     public JsonAny AsAny

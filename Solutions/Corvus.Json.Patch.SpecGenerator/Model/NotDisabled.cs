@@ -53,11 +53,11 @@ public readonly partial struct NotDisabled
     /// <summary>
     /// Gets an Undefined instance.
     /// </summary>
-    public static NotDisabled Undefined { get; } = default;
+    public static NotDisabled Undefined { get; }
     /// <summary>
     /// Gets the default instance of the type.
     /// </summary>
-    public static NotDisabled DefaultInstance { get; } = default;
+    public static NotDisabled DefaultInstance { get; }
 
     /// <inheritdoc/>
     public JsonAny AsAny

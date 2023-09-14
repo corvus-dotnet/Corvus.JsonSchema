@@ -53,11 +53,11 @@ public readonly partial struct PersonArray
     /// <summary>
     /// Gets an Undefined instance.
     /// </summary>
-    public static PersonArray Undefined { get; } = default;
+    public static PersonArray Undefined { get; }
     /// <summary>
     /// Gets the default instance of the type.
     /// </summary>
-    public static PersonArray DefaultInstance { get; } = default;
+    public static PersonArray DefaultInstance { get; }
 
     /// <inheritdoc/>
     public JsonAny AsAny

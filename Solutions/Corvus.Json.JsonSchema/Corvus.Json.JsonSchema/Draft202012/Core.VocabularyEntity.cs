@@ -55,11 +55,11 @@ public readonly partial struct Core
         /// <summary>
         /// Gets an Undefined instance.
         /// </summary>
-        public static VocabularyEntity Undefined { get; } = default;
+        public static VocabularyEntity Undefined { get; }
         /// <summary>
         /// Gets the default instance of the type.
         /// </summary>
-        public static VocabularyEntity DefaultInstance { get; } = default;
+        public static VocabularyEntity DefaultInstance { get; }
 
         /// <inheritdoc/>
         public JsonAny AsAny

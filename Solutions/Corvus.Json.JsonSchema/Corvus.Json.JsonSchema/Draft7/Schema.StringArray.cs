@@ -55,7 +55,7 @@ public readonly partial struct Schema
         /// <summary>
         /// Gets an Undefined instance.
         /// </summary>
-        public static StringArray Undefined { get; } = default;
+        public static StringArray Undefined { get; }
         /// <summary>
         /// Gets the default instance of the type.
         /// </summary>

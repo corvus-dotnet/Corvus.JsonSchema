@@ -61,7 +61,12 @@ public readonly partial struct JsonAny
     /// <summary>
     /// Gets an Undefined instance.
     /// </summary>
-    public static JsonAny Undefined { get; } = default;
+    public static JsonAny Undefined { get; }
+
+    /// <summary>
+    /// Gets a default instance.
+    /// </summary>
+    public static JsonAny DefaultInstance { get; }
 
     /// <inheritdoc/>
     public JsonAny AsAny => this;

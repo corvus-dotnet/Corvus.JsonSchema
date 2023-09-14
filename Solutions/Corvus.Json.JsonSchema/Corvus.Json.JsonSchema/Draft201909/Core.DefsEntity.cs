@@ -55,7 +55,7 @@ public readonly partial struct Core
         /// <summary>
         /// Gets an Undefined instance.
         /// </summary>
-        public static DefsEntity Undefined { get; } = default;
+        public static DefsEntity Undefined { get; }
         /// <summary>
         /// Gets the default instance of the type.
         /// </summary>

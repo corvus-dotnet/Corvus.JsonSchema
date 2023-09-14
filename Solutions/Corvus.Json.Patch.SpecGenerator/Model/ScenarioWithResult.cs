@@ -53,11 +53,11 @@ public readonly partial struct ScenarioWithResult
     /// <summary>
     /// Gets an Undefined instance.
     /// </summary>
-    public static ScenarioWithResult Undefined { get; } = default;
+    public static ScenarioWithResult Undefined { get; }
     /// <summary>
     /// Gets the default instance of the type.
     /// </summary>
-    public static ScenarioWithResult DefaultInstance { get; } = default;
+    public static ScenarioWithResult DefaultInstance { get; }
 
     /// <inheritdoc/>
     public JsonAny AsAny

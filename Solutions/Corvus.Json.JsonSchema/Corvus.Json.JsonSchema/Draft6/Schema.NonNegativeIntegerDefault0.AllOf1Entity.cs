@@ -69,7 +69,7 @@ public readonly partial struct Schema
             /// <summary>
             /// Gets an Undefined instance.
             /// </summary>
-            public static AllOf1Entity Undefined { get; } = default;
+            public static AllOf1Entity Undefined { get; }
             /// <summary>
             /// Gets the default instance of the type.
             /// </summary>

@@ -56,11 +56,11 @@ public readonly partial struct FormatAnnotation
     /// <summary>
     /// Gets an Undefined instance.
     /// </summary>
-    public static FormatAnnotation Undefined { get; } = default;
+    public static FormatAnnotation Undefined { get; }
     /// <summary>
     /// Gets the default instance of the type.
     /// </summary>
-    public static FormatAnnotation DefaultInstance { get; } = default;
+    public static FormatAnnotation DefaultInstance { get; }
 
     /// <inheritdoc/>
     public JsonAny AsAny

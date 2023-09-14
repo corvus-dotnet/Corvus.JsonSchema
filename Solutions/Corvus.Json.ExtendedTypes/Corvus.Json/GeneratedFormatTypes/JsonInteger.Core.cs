@@ -51,6 +51,11 @@ public readonly partial struct JsonInteger : IJsonNumber<JsonInteger>
     /// </summary>
     public static JsonInteger Undefined { get; }
 
+    /// <summary>
+    /// Gets a default instance.
+    /// </summary>
+    public static JsonInteger DefaultInstance { get; }
+
     /// <inheritdoc/>
     public JsonAny AsAny
     {

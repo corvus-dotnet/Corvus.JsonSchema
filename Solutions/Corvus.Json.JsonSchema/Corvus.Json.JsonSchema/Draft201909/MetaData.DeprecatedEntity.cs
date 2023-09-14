@@ -55,7 +55,7 @@ public readonly partial struct MetaData
         /// <summary>
         /// Gets an Undefined instance.
         /// </summary>
-        public static DeprecatedEntity Undefined { get; } = default;
+        public static DeprecatedEntity Undefined { get; }
         /// <summary>
         /// Gets the default instance of the type.
         /// </summary>

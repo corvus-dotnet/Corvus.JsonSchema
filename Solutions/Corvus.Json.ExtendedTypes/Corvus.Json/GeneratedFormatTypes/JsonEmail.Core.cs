@@ -50,6 +50,11 @@ public readonly partial struct JsonEmail : IJsonString<JsonEmail>
     /// </summary>
     public static JsonEmail Undefined { get; }
 
+    /// <summary>
+    /// Gets a default instance.
+    /// </summary>
+    public static JsonEmail DefaultInstance { get; }
+
     /// <inheritdoc/>
     public JsonAny AsAny
     {

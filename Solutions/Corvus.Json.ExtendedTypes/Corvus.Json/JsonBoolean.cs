@@ -50,6 +50,11 @@ public readonly partial struct JsonBoolean : IJsonBoolean<JsonBoolean>
     /// </summary>
     public static JsonBoolean Undefined { get; }
 
+    /// <summary>
+    /// Gets a default instance.
+    /// </summary>
+    public static JsonBoolean DefaultInstance { get; }
+
     /// <inheritdoc/>
     public JsonAny AsAny
     {

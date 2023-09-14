@@ -50,6 +50,11 @@ public readonly partial struct JsonNumber : IJsonNumber<JsonNumber>
     /// </summary>
     public static JsonNumber Undefined { get; }
 
+    /// <summary>
+    /// Gets a default instance.
+    /// </summary>
+    public static JsonNumber DefaultInstance { get; }
+
     /// <inheritdoc/>
     public JsonAny AsAny
     {

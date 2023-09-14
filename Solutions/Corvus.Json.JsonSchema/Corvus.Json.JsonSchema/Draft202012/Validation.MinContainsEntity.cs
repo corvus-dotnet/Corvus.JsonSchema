@@ -55,7 +55,7 @@ public readonly partial struct Validation
         /// <summary>
         /// Gets an Undefined instance.
         /// </summary>
-        public static MinContainsEntity Undefined { get; } = default;
+        public static MinContainsEntity Undefined { get; }
         /// <summary>
         /// Gets the default instance of the type.
         /// </summary>

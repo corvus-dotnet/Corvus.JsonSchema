@@ -121,14 +121,14 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     /// <summary>
     /// Gets an Undefined instance.
     /// </summary>
-    public static <#= TypeDeclaration.DotnetTypeName #> Undefined { get; } = default;
+    public static <#= TypeDeclaration.DotnetTypeName #> Undefined { get; }
 
     /// <summary>
     /// Gets the default instance of the type.
     /// </summary>
 <#  if (!HasDefault)
     { #>
-    public static <#= TypeDeclaration.DotnetTypeName #> DefaultInstance { get; } = default;
+    public static <#= TypeDeclaration.DotnetTypeName #> DefaultInstance { get; }
 <#  }
     else
     {#>

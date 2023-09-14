@@ -55,11 +55,11 @@ public readonly partial struct Schema
         /// <summary>
         /// Gets an Undefined instance.
         /// </summary>
-        public static MultipleOfEntity Undefined { get; } = default;
+        public static MultipleOfEntity Undefined { get; }
         /// <summary>
         /// Gets the default instance of the type.
         /// </summary>
-        public static MultipleOfEntity DefaultInstance { get; } = default;
+        public static MultipleOfEntity DefaultInstance { get; }
 
         /// <inheritdoc/>
         public JsonAny AsAny

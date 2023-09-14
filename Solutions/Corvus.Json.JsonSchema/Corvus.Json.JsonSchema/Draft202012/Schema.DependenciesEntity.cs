@@ -55,7 +55,7 @@ public readonly partial struct Schema
         /// <summary>
         /// Gets an Undefined instance.
         /// </summary>
-        public static DependenciesEntity Undefined { get; } = default;
+        public static DependenciesEntity Undefined { get; }
         /// <summary>
         /// Gets the default instance of the type.
         /// </summary>

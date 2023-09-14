@@ -52,6 +52,11 @@ public readonly partial struct JsonArray : IJsonArray<JsonArray>
     /// </summary>
     public static JsonArray Undefined { get; }
 
+    /// <summary>
+    /// Gets a default instance.
+    /// </summary>
+    public static JsonArray DefaultInstance { get; }
+
     /// <inheritdoc/>
     public JsonAny AsAny
     {
