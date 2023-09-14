@@ -54,6 +54,10 @@ public readonly partial struct PersonNameElement
     /// Gets an Undefined instance.
     /// </summary>
     public static PersonNameElement Undefined { get; } = default;
+    /// <summary>
+    /// Gets the default instance of the type.
+    /// </summary>
+    public static PersonNameElement DefaultInstance { get; } = default;
 
     /// <inheritdoc/>
     public JsonAny AsAny

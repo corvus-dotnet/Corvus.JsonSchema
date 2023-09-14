@@ -56,6 +56,10 @@ public readonly partial struct Core
         /// Gets an Undefined instance.
         /// </summary>
         public static RecursiveAnchorEntity Undefined { get; } = default;
+        /// <summary>
+        /// Gets the default instance of the type.
+        /// </summary>
+        public static RecursiveAnchorEntity DefaultInstance { get; } = RecursiveAnchorEntity.ParseValue("false"u8);
 
         /// <inheritdoc/>
         public JsonAny AsAny

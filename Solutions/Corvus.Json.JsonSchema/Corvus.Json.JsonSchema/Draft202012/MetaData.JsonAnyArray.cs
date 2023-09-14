@@ -56,6 +56,10 @@ public readonly partial struct MetaData
         /// Gets an Undefined instance.
         /// </summary>
         public static JsonAnyArray Undefined { get; } = default;
+        /// <summary>
+        /// Gets the default instance of the type.
+        /// </summary>
+        public static JsonAnyArray DefaultInstance { get; } = default;
 
         /// <inheritdoc/>
         public JsonAny AsAny

@@ -70,20 +70,20 @@ public readonly partial struct Schema
     private static ImmutableDictionary<JsonPropertyName, JsonAny> BuildDefaults()
     {
         ImmutableDictionary<JsonPropertyName, JsonAny>.Builder builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
-        builder.Add(DefinitionsJsonPropertyName, JsonAny.Parse("{}"));
-        builder.Add(DefsJsonPropertyName, JsonAny.Parse("{}"));
-        builder.Add(DeprecatedJsonPropertyName, JsonAny.Parse("false"));
-        builder.Add(MinContainsJsonPropertyName, JsonAny.Parse("1"));
-        builder.Add(MinItemsJsonPropertyName, JsonAny.Parse("0"));
-        builder.Add(MinLengthJsonPropertyName, JsonAny.Parse("0"));
-        builder.Add(MinPropertiesJsonPropertyName, JsonAny.Parse("0"));
-        builder.Add(PatternPropertiesJsonPropertyName, JsonAny.Parse("{}"));
-        builder.Add(PropertiesJsonPropertyName, JsonAny.Parse("{}"));
-        builder.Add(ReadOnlyJsonPropertyName, JsonAny.Parse("false"));
-        builder.Add(RecursiveAnchorJsonPropertyName, JsonAny.Parse("false"));
-        builder.Add(RequiredJsonPropertyName, JsonAny.Parse("[]"));
-        builder.Add(UniqueItemsJsonPropertyName, JsonAny.Parse("false"));
-        builder.Add(WriteOnlyJsonPropertyName, JsonAny.Parse("false"));
+        builder.Add(DefinitionsJsonPropertyName, Corvus.Json.JsonSchema.Draft201909.Schema.DefinitionsEntity.DefaultInstance);
+        builder.Add(DefsJsonPropertyName, Corvus.Json.JsonSchema.Draft201909.Core.DefsEntity.DefaultInstance);
+        builder.Add(DeprecatedJsonPropertyName, Corvus.Json.JsonSchema.Draft201909.MetaData.DeprecatedEntity.DefaultInstance);
+        builder.Add(MinContainsJsonPropertyName, Corvus.Json.JsonSchema.Draft201909.Validation.MinContainsEntity.DefaultInstance);
+        builder.Add(MinItemsJsonPropertyName, Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeIntegerDefault0.DefaultInstance);
+        builder.Add(MinLengthJsonPropertyName, Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeIntegerDefault0.DefaultInstance);
+        builder.Add(MinPropertiesJsonPropertyName, Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeIntegerDefault0.DefaultInstance);
+        builder.Add(PatternPropertiesJsonPropertyName, Corvus.Json.JsonSchema.Draft201909.Applicator.PatternPropertiesEntity.DefaultInstance);
+        builder.Add(PropertiesJsonPropertyName, Corvus.Json.JsonSchema.Draft201909.Applicator.PropertiesEntity.DefaultInstance);
+        builder.Add(ReadOnlyJsonPropertyName, Corvus.Json.JsonSchema.Draft201909.MetaData.ReadOnlyEntity.DefaultInstance);
+        builder.Add(RecursiveAnchorJsonPropertyName, Corvus.Json.JsonSchema.Draft201909.Core.RecursiveAnchorEntity.DefaultInstance);
+        builder.Add(RequiredJsonPropertyName, Corvus.Json.JsonSchema.Draft201909.Validation.StringArray.DefaultInstance);
+        builder.Add(UniqueItemsJsonPropertyName, Corvus.Json.JsonSchema.Draft201909.Validation.UniqueItemsEntity.DefaultInstance);
+        builder.Add(WriteOnlyJsonPropertyName, Corvus.Json.JsonSchema.Draft201909.MetaData.WriteOnlyEntity.DefaultInstance);
         return builder.ToImmutable();
     }
 }

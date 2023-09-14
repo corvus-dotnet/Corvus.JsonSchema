@@ -56,6 +56,10 @@ public readonly partial struct MetaData
         /// Gets an Undefined instance.
         /// </summary>
         public static DeprecatedEntity Undefined { get; } = default;
+        /// <summary>
+        /// Gets the default instance of the type.
+        /// </summary>
+        public static DeprecatedEntity DefaultInstance { get; } = DeprecatedEntity.ParseValue("false"u8);
 
         /// <inheritdoc/>
         public JsonAny AsAny

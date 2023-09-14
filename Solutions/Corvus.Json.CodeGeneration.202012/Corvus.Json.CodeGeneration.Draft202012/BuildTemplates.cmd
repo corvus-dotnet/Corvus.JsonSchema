@@ -6,6 +6,7 @@ t4 -o Generators/CodeGenerator.Array.Remove.cs -c Corvus.Json.CodeGeneration.Gen
 t4 -o Generators/CodeGenerator.Array.cs -c Corvus.Json.CodeGeneration.Generators.Draft202012.CodeGeneratorArray ../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.tt
 t4 -o Generators/CodeGenerator.Boolean.cs -c Corvus.Json.CodeGeneration.Generators.Draft202012.CodeGeneratorBoolean ../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt
 t4 -o Generators/CodeGenerator.Const.cs -c Corvus.Json.CodeGeneration.Generators.Draft202012.CodeGeneratorConst ../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Const.tt
+t4 -o Generators/CodeGenerator.Default.cs -c Corvus.Json.CodeGeneration.Generators.Draft202012.CodeGeneratorDefault ../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Default.tt
 t4 -o Generators/CodeGenerator.Conversions.Accessors.cs -c Corvus.Json.CodeGeneration.Generators.Draft202012.CodeGeneratorConversionsAccessors ../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Conversions.Accessors.tt
 t4 -o Generators/CodeGenerator.Conversions.Operators.cs -c Corvus.Json.CodeGeneration.Generators.Draft202012.CodeGeneratorConversionsOperators ../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Conversions.Operators.tt
 t4 -o Generators/CodeGenerator.Defaults.cs -c Corvus.Json.CodeGeneration.Generators.Draft202012.CodeGeneratorDefaults ../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Defaults.tt

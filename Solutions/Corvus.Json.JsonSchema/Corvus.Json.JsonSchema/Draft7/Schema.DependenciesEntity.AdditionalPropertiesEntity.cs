@@ -64,6 +64,10 @@ public readonly partial struct Schema
             /// Gets an Undefined instance.
             /// </summary>
             public static AdditionalPropertiesEntity Undefined { get; } = default;
+            /// <summary>
+            /// Gets the default instance of the type.
+            /// </summary>
+            public static AdditionalPropertiesEntity DefaultInstance { get; } = default;
 
             /// <inheritdoc/>
             public JsonAny AsAny

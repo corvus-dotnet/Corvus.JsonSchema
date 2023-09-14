@@ -56,6 +56,10 @@ public readonly partial struct Validation
         /// Gets an Undefined instance.
         /// </summary>
         public static UniqueItemsEntity Undefined { get; } = default;
+        /// <summary>
+        /// Gets the default instance of the type.
+        /// </summary>
+        public static UniqueItemsEntity DefaultInstance { get; } = UniqueItemsEntity.ParseValue("false"u8);
 
         /// <inheritdoc/>
         public JsonAny AsAny

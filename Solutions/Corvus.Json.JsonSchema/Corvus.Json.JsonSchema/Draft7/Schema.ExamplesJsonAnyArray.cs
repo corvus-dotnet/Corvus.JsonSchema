@@ -21,6 +21,7 @@ public readonly partial struct Schema
     /// <summary>
     /// A type generated from a JsonSchema specification.
     /// </summary>
+    [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<ExamplesJsonAnyArray>))]
     public readonly partial struct ExamplesJsonAnyArray
     {
         private readonly Backing backing;
@@ -55,6 +56,10 @@ public readonly partial struct Schema
         /// Gets an Undefined instance.
         /// </summary>
         public static ExamplesJsonAnyArray Undefined { get; } = default;
+        /// <summary>
+        /// Gets the default instance of the type.
+        /// </summary>
+        public static ExamplesJsonAnyArray DefaultInstance { get; } = default;
 
         /// <inheritdoc/>
         public JsonAny AsAny

@@ -56,6 +56,10 @@ public readonly partial struct Core
         /// Gets an Undefined instance.
         /// </summary>
         public static DefsEntity Undefined { get; } = default;
+        /// <summary>
+        /// Gets the default instance of the type.
+        /// </summary>
+        public static DefsEntity DefaultInstance { get; } = DefsEntity.ParseValue("{}"u8);
 
         /// <inheritdoc/>
         public JsonAny AsAny

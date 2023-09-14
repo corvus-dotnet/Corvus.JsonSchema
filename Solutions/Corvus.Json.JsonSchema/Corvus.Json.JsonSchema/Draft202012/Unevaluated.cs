@@ -57,6 +57,10 @@ public readonly partial struct Unevaluated
     /// Gets an Undefined instance.
     /// </summary>
     public static Unevaluated Undefined { get; } = default;
+    /// <summary>
+    /// Gets the default instance of the type.
+    /// </summary>
+    public static Unevaluated DefaultInstance { get; } = default;
 
     /// <inheritdoc/>
     public JsonAny AsAny

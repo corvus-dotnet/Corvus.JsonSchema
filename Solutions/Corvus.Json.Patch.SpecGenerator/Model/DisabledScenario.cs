@@ -54,6 +54,10 @@ public readonly partial struct DisabledScenario
     /// Gets an Undefined instance.
     /// </summary>
     public static DisabledScenario Undefined { get; } = default;
+    /// <summary>
+    /// Gets the default instance of the type.
+    /// </summary>
+    public static DisabledScenario DefaultInstance { get; } = default;
 
     /// <inheritdoc/>
     public JsonAny AsAny

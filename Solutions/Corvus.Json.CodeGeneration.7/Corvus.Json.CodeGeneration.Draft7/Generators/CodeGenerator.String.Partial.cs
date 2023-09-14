@@ -141,6 +141,17 @@ public partial class CodeGeneratorString
     }
 
     /// <summary>
+    /// Gets a value indicating whether this has a default value itself.
+    /// </summary>
+    public bool HasDefault
+    {
+        get
+        {
+            return this.TypeDeclaration.Schema().Default.IsNotUndefined();
+        }
+    }
+
+    /// <summary>
     /// Gets a value indicating whether this has conversions.
     /// </summary>
     public bool HasConversions
@@ -357,6 +368,152 @@ public partial class CodeGeneratorString
             if (this.HasConstArray)
             {
                 return GetRawTextAsQuotedString(this.TypeDeclaration.Schema().Const);
+            }
+
+            return string.Empty;
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether this has a default string value.
+    /// </summary>
+    public bool HasDefaultString
+    {
+        get
+        {
+            return this.TypeDeclaration.Schema().Default.ValueKind == JsonValueKind.String;
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether this has a default boolean value.
+    /// </summary>
+    public bool HasDefaultBoolean
+    {
+        get
+        {
+            return this.TypeDeclaration.Schema().Default.ValueKind == JsonValueKind.True || this.TypeDeclaration.Schema().Default.ValueKind == JsonValueKind.False;
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether this has a default number value.
+    /// </summary>
+    public bool HasDefaultNumber
+    {
+        get
+        {
+            return this.TypeDeclaration.Schema().Default.ValueKind == JsonValueKind.Number;
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether this has a default object value.
+    /// </summary>
+    public bool HasDefaultObject
+    {
+        get
+        {
+            return this.TypeDeclaration.Schema().Default.ValueKind == JsonValueKind.Object;
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether this has a default array value.
+    /// </summary>
+    public bool HasDefaultArray
+    {
+        get
+        {
+            return this.TypeDeclaration.Schema().Default.ValueKind == JsonValueKind.Array;
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether this has a default null value.
+    /// </summary>
+    public bool HasDefaultNull
+    {
+        get
+        {
+            return this.TypeDeclaration.Schema().Default.ValueKind == JsonValueKind.Null;
+        }
+    }
+
+    /// <summary>
+    /// Gets a serialized string value.
+    /// </summary>
+    public string DefaultString
+    {
+        get
+        {
+            if (this.HasDefaultString)
+            {
+                return GetRawTextAsQuotedString(this.TypeDeclaration.Schema().Default);
+            }
+
+            return string.Empty;
+        }
+    }
+
+    /// <summary>
+    /// Gets a serialized boolean value.
+    /// </summary>
+    public string DefaultBoolean
+    {
+        get
+        {
+            if (this.HasDefaultBoolean)
+            {
+                return GetRawTextAsQuotedString(this.TypeDeclaration.Schema().Default);
+            }
+
+            return string.Empty;
+        }
+    }
+
+    /// <summary>
+    /// Gets a serialized number value.
+    /// </summary>
+    public string DefaultNumber
+    {
+        get
+        {
+            if (this.HasDefaultNumber)
+            {
+                return GetRawTextAsQuotedString(this.TypeDeclaration.Schema().Default);
+            }
+
+            return string.Empty;
+        }
+    }
+
+    /// <summary>
+    /// Gets a serialized object value.
+    /// </summary>
+    public string DefaultObject
+    {
+        get
+        {
+            if (this.HasDefaultObject)
+            {
+                return GetRawTextAsQuotedString(this.TypeDeclaration.Schema().Default);
+            }
+
+            return string.Empty;
+        }
+    }
+
+    /// <summary>
+    /// Gets a serialized array value.
+    /// </summary>
+    public string DefaultArray
+    {
+        get
+        {
+            if (this.HasDefaultArray)
+            {
+                return GetRawTextAsQuotedString(this.TypeDeclaration.Schema().Default);
             }
 
             return string.Empty;

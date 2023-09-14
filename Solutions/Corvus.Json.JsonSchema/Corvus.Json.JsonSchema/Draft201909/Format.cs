@@ -57,6 +57,10 @@ public readonly partial struct Format
     /// Gets an Undefined instance.
     /// </summary>
     public static Format Undefined { get; } = default;
+    /// <summary>
+    /// Gets the default instance of the type.
+    /// </summary>
+    public static Format DefaultInstance { get; } = default;
 
     /// <inheritdoc/>
     public JsonAny AsAny

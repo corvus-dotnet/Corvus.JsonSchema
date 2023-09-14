@@ -57,6 +57,10 @@ public readonly partial struct Schema
     /// Gets an Undefined instance.
     /// </summary>
     public static Schema Undefined { get; } = default;
+    /// <summary>
+    /// Gets the default instance of the type.
+    /// </summary>
+    public static Schema DefaultInstance { get; } = Schema.ParseValue("{}"u8);
 
     /// <inheritdoc/>
     public JsonAny AsAny

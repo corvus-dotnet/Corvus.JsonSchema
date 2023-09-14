@@ -56,6 +56,10 @@ public readonly partial struct Applicator
         /// Gets an Undefined instance.
         /// </summary>
         public static DependentSchemasEntity Undefined { get; } = default;
+        /// <summary>
+        /// Gets the default instance of the type.
+        /// </summary>
+        public static DependentSchemasEntity DefaultInstance { get; } = DependentSchemasEntity.ParseValue("{}"u8);
 
         /// <inheritdoc/>
         public JsonAny AsAny

@@ -62,6 +62,10 @@ public readonly partial struct Applicator
         /// Gets an Undefined instance.
         /// </summary>
         public static ItemsEntity Undefined { get; } = default;
+        /// <summary>
+        /// Gets the default instance of the type.
+        /// </summary>
+        public static ItemsEntity DefaultInstance { get; } = default;
 
         /// <inheritdoc/>
         public JsonAny AsAny

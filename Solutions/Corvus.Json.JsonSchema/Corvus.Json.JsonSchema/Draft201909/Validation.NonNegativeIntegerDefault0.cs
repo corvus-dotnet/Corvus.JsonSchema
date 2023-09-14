@@ -56,6 +56,10 @@ public readonly partial struct Validation
         /// Gets an Undefined instance.
         /// </summary>
         public static NonNegativeIntegerDefault0 Undefined { get; } = default;
+        /// <summary>
+        /// Gets the default instance of the type.
+        /// </summary>
+        public static NonNegativeIntegerDefault0 DefaultInstance { get; } = NonNegativeIntegerDefault0.ParseValue("0"u8);
 
         /// <inheritdoc/>
         public JsonAny AsAny
