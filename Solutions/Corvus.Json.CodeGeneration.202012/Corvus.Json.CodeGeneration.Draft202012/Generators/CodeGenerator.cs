@@ -1528,7 +1528,7 @@ namespace ");
             #line hidden
             
             #line 542 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
-            this.Write("            JsonValueKind.String => new((string)value),\r\n");
+            this.Write("            JsonValueKind.String => new((string)value.AsString),\r\n");
             
             #line default
             #line hidden
@@ -1557,7 +1557,7 @@ namespace ");
             #line hidden
             
             #line 551 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
-            this.Write("            JsonValueKind.Number => new((double)value),\r\n");
+            this.Write("            JsonValueKind.Number => new((double)value.AsNumber),\r\n");
             
             #line default
             #line hidden
@@ -1571,7 +1571,7 @@ namespace ");
             #line hidden
             
             #line 555 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
-            this.Write("            JsonValueKind.Array => new((ImmutableList<JsonAny>)value),\r\n");
+            this.Write("            JsonValueKind.Array => new((value.AsImmutableList()),\r\n");
             
             #line default
             #line hidden
@@ -1585,8 +1585,8 @@ namespace ");
             #line hidden
             
             #line 559 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
-            this.Write("            JsonValueKind.Object => new((ImmutableDictionary<JsonPropertyName, Js" +
-                    "onAny>)value),\r\n\r\n");
+            this.Write("            JsonValueKind.Object => new(value.AsObject.AsImmutableDictionary()),\r" +
+                    "\n\r\n");
             
             #line default
             #line hidden

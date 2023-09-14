@@ -265,7 +265,7 @@ public readonly partial struct <#= TypeName #> : IJsonString<<#= TypeName #>>
         JsonValueKind valueKind = value.ValueKind;
         return valueKind switch
         {
-            JsonValueKind.String => new((string)value),
+            JsonValueKind.String => new((string)value.AsString),
             JsonValueKind.Null => Null,
             _ => Undefined,
         };

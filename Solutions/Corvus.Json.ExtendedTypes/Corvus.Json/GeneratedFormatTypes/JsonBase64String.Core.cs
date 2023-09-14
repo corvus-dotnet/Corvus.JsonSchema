@@ -253,7 +253,7 @@ public readonly partial struct JsonBase64String : IJsonString<JsonBase64String>
         JsonValueKind valueKind = value.ValueKind;
         return valueKind switch
         {
-            JsonValueKind.String => new((string)value),
+            JsonValueKind.String => new((string)value.AsString),
             JsonValueKind.Null => Null,
             _ => Undefined,
         };

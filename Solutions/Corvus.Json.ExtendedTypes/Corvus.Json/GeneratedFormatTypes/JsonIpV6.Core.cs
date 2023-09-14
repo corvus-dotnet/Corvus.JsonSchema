@@ -253,7 +253,7 @@ public readonly partial struct JsonIpV6 : IJsonString<JsonIpV6>
         JsonValueKind valueKind = value.ValueKind;
         return valueKind switch
         {
-            JsonValueKind.String => new((string)value),
+            JsonValueKind.String => new((string)value.AsString),
             JsonValueKind.Null => Null,
             _ => Undefined,
         };

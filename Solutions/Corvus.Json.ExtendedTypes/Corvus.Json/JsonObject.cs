@@ -239,7 +239,7 @@ public readonly partial struct JsonObject : IJsonObject<JsonObject>
         JsonValueKind valueKind = value.ValueKind;
         return valueKind switch
         {
-            JsonValueKind.Object => new((ImmutableDictionary<JsonPropertyName, JsonAny>)value),
+            JsonValueKind.Object => new(value.AsObject.AsImmutableDictionary()),
             JsonValueKind.Null => Null,
             _ => Undefined,
         };

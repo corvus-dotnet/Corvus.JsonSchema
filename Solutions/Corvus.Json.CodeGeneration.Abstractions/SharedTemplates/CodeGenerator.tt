@@ -539,7 +539,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
         {
 <#  if(IsImplicitString || IsNotImplicitType)
     { #>
-            JsonValueKind.String => new((string)value),
+            JsonValueKind.String => new((string)value.AsString),
 <#  }
     if(IsImplicitBoolean || IsNotImplicitType)
     { #>
@@ -548,15 +548,15 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 <#  }
     if(IsImplicitNumber || IsNotImplicitType)
     { #>
-            JsonValueKind.Number => new((double)value),
+            JsonValueKind.Number => new((double)value.AsNumber),
 <#  }
     if(IsImplicitArray || IsNotImplicitType)
     { #>
-            JsonValueKind.Array => new((ImmutableList<JsonAny>)value),
+            JsonValueKind.Array => new((value.AsImmutableList()),
 <#  }
     if(IsImplicitObject || IsNotImplicitType)
     { #>
-            JsonValueKind.Object => new((ImmutableDictionary<JsonPropertyName, JsonAny>)value),
+            JsonValueKind.Object => new(value.AsObject.AsImmutableDictionary()),
 
 <#  } #>
             JsonValueKind.Null => Null,
