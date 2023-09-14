@@ -14,10 +14,6 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <None Remove="Corvus.Json\Templates\FormattedStringType.Core.tt" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<PackageReference Include="CommunityToolkit.HighPerformance" Version="8.2.1" />
 		<PackageReference Include="Corvus.Extensions" Version="1.1.11" />
 		<PackageReference Include="Corvus.UriTemplates" Version="1.2.1" />

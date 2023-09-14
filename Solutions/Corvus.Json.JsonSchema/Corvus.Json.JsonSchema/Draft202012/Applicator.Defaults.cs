@@ -70,9 +70,9 @@ public readonly partial struct Applicator
     private static ImmutableDictionary<JsonPropertyName, JsonAny> BuildDefaults()
     {
         ImmutableDictionary<JsonPropertyName, JsonAny>.Builder builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
-        builder.Add(DependentSchemasJsonPropertyName, JsonAny.Parse("{}"));
-        builder.Add(PatternPropertiesJsonPropertyName, JsonAny.Parse("{}"));
-        builder.Add(PropertiesJsonPropertyName, JsonAny.Parse("{}"));
+        builder.Add(DependentSchemasJsonPropertyName, Corvus.Json.JsonSchema.Draft202012.Applicator.DependentSchemasEntity.DefaultInstance);
+        builder.Add(PatternPropertiesJsonPropertyName, Corvus.Json.JsonSchema.Draft202012.Applicator.PatternPropertiesEntity.DefaultInstance);
+        builder.Add(PropertiesJsonPropertyName, Corvus.Json.JsonSchema.Draft202012.Applicator.PropertiesEntity.DefaultInstance);
         return builder.ToImmutable();
     }
 }

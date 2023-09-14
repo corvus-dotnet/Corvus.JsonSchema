@@ -55,7 +55,11 @@ public readonly partial struct Validation
         /// <summary>
         /// Gets an Undefined instance.
         /// </summary>
-        public static MinContainsEntity Undefined { get; } = default;
+        public static MinContainsEntity Undefined { get; }
+        /// <summary>
+        /// Gets the default instance of the type.
+        /// </summary>
+        public static MinContainsEntity DefaultInstance { get; } = MinContainsEntity.ParseValue("1"u8);
 
         /// <inheritdoc/>
         public JsonAny AsAny

@@ -7,16 +7,14 @@ using Corvus.Json.Patch.SpecGenerator;
 /// <summary>
 /// The code behind for spec generation.
 /// </summary>
-#pragma warning disable CA1050 // Declare types in namespaces
 public partial class BuilderSpec
-#pragma warning restore CA1050 // Declare types in namespaces
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="BuilderSpec"/> class.
     /// </summary>
     /// <param name="feature">The JSON object containing the feature definition.</param>
     /// <param name="name">The name of the feature.</param>
-    public BuilderSpec(ScenarioArray feature, string name)
+    public BuilderSpec(Feature feature, string name)
     {
         this.Feature = feature;
         this.FeatureName = name;
@@ -25,7 +23,7 @@ public partial class BuilderSpec
     /// <summary>
     /// Gets the array of scenarios in the feature.
     /// </summary>
-    public ScenarioArray Feature { get; }
+    public Feature Feature { get; }
 
     /// <summary>
     /// Gets the name of the feature.

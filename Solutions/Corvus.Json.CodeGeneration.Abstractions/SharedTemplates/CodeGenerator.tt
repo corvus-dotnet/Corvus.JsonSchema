@@ -121,7 +121,42 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     /// <summary>
     /// Gets an Undefined instance.
     /// </summary>
-    public static <#= TypeDeclaration.DotnetTypeName #> Undefined { get; } = default;
+    public static <#= TypeDeclaration.DotnetTypeName #> Undefined { get; }
+
+    /// <summary>
+    /// Gets the default instance of the type.
+    /// </summary>
+<#  if (!HasDefault)
+    { #>
+    public static <#= TypeDeclaration.DotnetTypeName #> DefaultInstance { get; }
+<#  }
+    else
+    {#>
+<#      if(HasDefaultString)
+        { #>
+    public static <#= TypeDeclaration.DotnetTypeName #> DefaultInstance { get; } = <#= TypeDeclaration.DotnetTypeName #>.ParseValue(<#= DefaultString #>u8);
+<#      }
+        else if(HasDefaultBoolean)
+        { #>
+    public static <#= TypeDeclaration.DotnetTypeName #> DefaultInstance { get; } = <#= TypeDeclaration.DotnetTypeName #>.ParseValue(<#= DefaultBoolean #>u8);
+<#      }
+        else if(HasDefaultNumber)
+        { #>
+    public static <#= TypeDeclaration.DotnetTypeName #> DefaultInstance { get; } = <#= TypeDeclaration.DotnetTypeName #>.ParseValue(<#= DefaultNumber #>u8);
+<#      }
+        else if(HasDefaultObject)
+        { #>
+    public static <#= TypeDeclaration.DotnetTypeName #> DefaultInstance { get; } = <#= TypeDeclaration.DotnetTypeName #>.ParseValue(<#= DefaultObject #>u8);
+<#      }
+        else if(HasDefaultArray)
+        { #>
+    public static <#= TypeDeclaration.DotnetTypeName #> DefaultInstance { get; } = <#= TypeDeclaration.DotnetTypeName #>.ParseValue(<#= DefaultArray #>u8);
+<#      }
+        else if(HasDefaultNull)
+        { #>
+    public static <#= TypeDeclaration.DotnetTypeName #> DefaultInstance { get; } = <#= TypeDeclaration.DotnetTypeName #>.ParseValue("null"u8);
+<#      }
+    } #>
 
     /// <inheritdoc/>
     public JsonAny AsAny

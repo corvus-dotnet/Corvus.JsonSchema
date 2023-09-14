@@ -48,6 +48,11 @@ public readonly partial struct JsonNull : IJsonValue<JsonNull>
     /// </summary>
     public static JsonNull Undefined { get; }
 
+    /// <summary>
+    /// Gets a default instance.
+    /// </summary>
+    public static JsonNull DefaultInstance { get; }
+
     /// <inheritdoc/>
     public JsonAny AsAny
     {

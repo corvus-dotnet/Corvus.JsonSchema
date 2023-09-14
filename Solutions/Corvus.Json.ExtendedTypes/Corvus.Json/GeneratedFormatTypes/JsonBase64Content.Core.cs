@@ -50,6 +50,11 @@ public readonly partial struct JsonBase64Content : IJsonString<JsonBase64Content
     /// </summary>
     public static JsonBase64Content Undefined { get; }
 
+    /// <summary>
+    /// Gets a default instance.
+    /// </summary>
+    public static JsonBase64Content DefaultInstance { get; }
+
     /// <inheritdoc/>
     public JsonAny AsAny
     {

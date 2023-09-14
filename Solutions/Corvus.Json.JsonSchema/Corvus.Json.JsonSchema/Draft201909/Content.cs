@@ -56,7 +56,11 @@ public readonly partial struct Content
     /// <summary>
     /// Gets an Undefined instance.
     /// </summary>
-    public static Content Undefined { get; } = default;
+    public static Content Undefined { get; }
+    /// <summary>
+    /// Gets the default instance of the type.
+    /// </summary>
+    public static Content DefaultInstance { get; }
 
     /// <inheritdoc/>
     public JsonAny AsAny

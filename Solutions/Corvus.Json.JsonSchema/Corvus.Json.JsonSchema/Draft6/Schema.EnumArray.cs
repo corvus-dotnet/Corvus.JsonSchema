@@ -55,7 +55,11 @@ public readonly partial struct Schema
         /// <summary>
         /// Gets an Undefined instance.
         /// </summary>
-        public static EnumArray Undefined { get; } = default;
+        public static EnumArray Undefined { get; }
+        /// <summary>
+        /// Gets the default instance of the type.
+        /// </summary>
+        public static EnumArray DefaultInstance { get; }
 
         /// <inheritdoc/>
         public JsonAny AsAny

@@ -50,6 +50,11 @@ public readonly partial struct JsonRegex : IJsonString<JsonRegex>
     /// </summary>
     public static JsonRegex Undefined { get; }
 
+    /// <summary>
+    /// Gets a default instance.
+    /// </summary>
+    public static JsonRegex DefaultInstance { get; }
+
     /// <inheritdoc/>
     public JsonAny AsAny
     {

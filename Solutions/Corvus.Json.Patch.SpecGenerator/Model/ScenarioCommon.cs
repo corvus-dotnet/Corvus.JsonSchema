@@ -53,7 +53,11 @@ public readonly partial struct ScenarioCommon
     /// <summary>
     /// Gets an Undefined instance.
     /// </summary>
-    public static ScenarioCommon Undefined { get; } = default;
+    public static ScenarioCommon Undefined { get; }
+    /// <summary>
+    /// Gets the default instance of the type.
+    /// </summary>
+    public static ScenarioCommon DefaultInstance { get; }
 
     /// <inheritdoc/>
     public JsonAny AsAny

@@ -57,7 +57,11 @@ public readonly partial struct Validation
             /// <summary>
             /// Gets an Undefined instance.
             /// </summary>
-            public static SimpleTypesArray Undefined { get; } = default;
+            public static SimpleTypesArray Undefined { get; }
+            /// <summary>
+            /// Gets the default instance of the type.
+            /// </summary>
+            public static SimpleTypesArray DefaultInstance { get; }
 
             /// <inheritdoc/>
             public JsonAny AsAny

@@ -55,7 +55,11 @@ public readonly partial struct Schema
         /// <summary>
         /// Gets an Undefined instance.
         /// </summary>
-        public static SimpleTypes Undefined { get; } = default;
+        public static SimpleTypes Undefined { get; }
+        /// <summary>
+        /// Gets the default instance of the type.
+        /// </summary>
+        public static SimpleTypes DefaultInstance { get; }
 
         /// <inheritdoc/>
         public JsonAny AsAny

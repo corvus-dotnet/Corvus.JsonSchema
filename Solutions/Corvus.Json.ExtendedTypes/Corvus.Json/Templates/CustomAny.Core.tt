@@ -79,7 +79,12 @@ public readonly partial struct <#= TypeName #>
     /// <summary>
     /// Gets an Undefined instance.
     /// </summary>
-    public static <#= TypeName #> Undefined { get; } = default;
+    public static <#= TypeName #> Undefined { get; }
+
+    /// <summary>
+    /// Gets a default instance.
+    /// </summary>
+    public static <#= TypeName #> DefaultInstance { get; }
 
     /// <inheritdoc/>
     public JsonAny AsAny => this;

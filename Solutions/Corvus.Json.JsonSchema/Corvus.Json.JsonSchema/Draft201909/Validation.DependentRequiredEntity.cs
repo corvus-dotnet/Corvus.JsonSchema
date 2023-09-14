@@ -55,7 +55,11 @@ public readonly partial struct Validation
         /// <summary>
         /// Gets an Undefined instance.
         /// </summary>
-        public static DependentRequiredEntity Undefined { get; } = default;
+        public static DependentRequiredEntity Undefined { get; }
+        /// <summary>
+        /// Gets the default instance of the type.
+        /// </summary>
+        public static DependentRequiredEntity DefaultInstance { get; }
 
         /// <inheritdoc/>
         public JsonAny AsAny

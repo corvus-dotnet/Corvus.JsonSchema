@@ -56,7 +56,11 @@ public readonly partial struct OtherNames
     /// <summary>
     /// Gets an Undefined instance.
     /// </summary>
-    public static OtherNames Undefined { get; } = default;
+    public static OtherNames Undefined { get; }
+    /// <summary>
+    /// Gets the default instance of the type.
+    /// </summary>
+    public static OtherNames DefaultInstance { get; }
 
     /// <inheritdoc/>
     public JsonAny AsAny

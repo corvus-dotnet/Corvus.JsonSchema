@@ -26,6 +26,11 @@ public interface IJsonValue<T> : IEquatable<T>, IJsonValue
     static abstract T Undefined { get; }
 
     /// <summary>
+    /// Gets the default instance.
+    /// </summary>
+    static abstract T DefaultInstance { get; }
+
+    /// <summary>
     /// Gets an instance of the JSON value from a JsonAny value.
     /// </summary>
     /// <param name="value">The <see cref="JsonAny"/> value from which to instantiate the instance.</param>

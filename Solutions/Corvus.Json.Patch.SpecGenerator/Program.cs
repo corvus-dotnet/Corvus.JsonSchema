@@ -30,7 +30,7 @@ public static class Program
 
         foreach (string testFile in Directory.EnumerateFiles(path, "*.json"))
         {
-            ScenarioArray feature = JsonAny.Parse(File.ReadAllText(testFile));
+            Feature feature = JsonAny.Parse(File.ReadAllText(testFile));
             if (!feature.IsValid())
             {
                 // Skip anything that isn't a test feature file.

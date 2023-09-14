@@ -55,7 +55,11 @@ public readonly partial struct Schema
         /// <summary>
         /// Gets an Undefined instance.
         /// </summary>
-        public static DefinitionsEntity Undefined { get; } = default;
+        public static DefinitionsEntity Undefined { get; }
+        /// <summary>
+        /// Gets the default instance of the type.
+        /// </summary>
+        public static DefinitionsEntity DefaultInstance { get; } = DefinitionsEntity.ParseValue("{}"u8);
 
         /// <inheritdoc/>
         public JsonAny AsAny

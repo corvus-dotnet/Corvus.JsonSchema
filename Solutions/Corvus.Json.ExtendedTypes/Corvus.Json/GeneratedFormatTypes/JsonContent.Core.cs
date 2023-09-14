@@ -50,6 +50,11 @@ public readonly partial struct JsonContent : IJsonString<JsonContent>
     /// </summary>
     public static JsonContent Undefined { get; }
 
+    /// <summary>
+    /// Gets a default instance.
+    /// </summary>
+    public static JsonContent DefaultInstance { get; }
+
     /// <inheritdoc/>
     public JsonAny AsAny
     {

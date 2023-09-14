@@ -50,6 +50,11 @@ public readonly partial struct JsonObject : IJsonObject<JsonObject>
     /// </summary>
     public static JsonObject Undefined { get; }
 
+    /// <summary>
+    /// Gets a default instance.
+    /// </summary>
+    public static JsonObject DefaultInstance { get; }
+
     /// <inheritdoc/>
     public JsonAny AsAny
     {

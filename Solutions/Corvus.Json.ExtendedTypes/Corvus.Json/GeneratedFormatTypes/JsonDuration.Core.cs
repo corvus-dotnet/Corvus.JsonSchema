@@ -50,6 +50,11 @@ public readonly partial struct JsonDuration : IJsonString<JsonDuration>
     /// </summary>
     public static JsonDuration Undefined { get; }
 
+    /// <summary>
+    /// Gets a default instance.
+    /// </summary>
+    public static JsonDuration DefaultInstance { get; }
+
     /// <inheritdoc/>
     public JsonAny AsAny
     {

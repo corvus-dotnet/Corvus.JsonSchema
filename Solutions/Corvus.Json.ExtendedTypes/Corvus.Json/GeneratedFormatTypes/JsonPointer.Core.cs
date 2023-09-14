@@ -50,6 +50,11 @@ public readonly partial struct JsonPointer : IJsonString<JsonPointer>
     /// </summary>
     public static JsonPointer Undefined { get; }
 
+    /// <summary>
+    /// Gets a default instance.
+    /// </summary>
+    public static JsonPointer DefaultInstance { get; }
+
     /// <inheritdoc/>
     public JsonAny AsAny
     {

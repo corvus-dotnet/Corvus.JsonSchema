@@ -50,6 +50,11 @@ public readonly partial struct JsonIdnHostname : IJsonString<JsonIdnHostname>
     /// </summary>
     public static JsonIdnHostname Undefined { get; }
 
+    /// <summary>
+    /// Gets a default instance.
+    /// </summary>
+    public static JsonIdnHostname DefaultInstance { get; }
+
     /// <inheritdoc/>
     public JsonAny AsAny
     {

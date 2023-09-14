@@ -55,7 +55,11 @@ public readonly partial struct Core
         /// <summary>
         /// Gets an Undefined instance.
         /// </summary>
-        public static IdEntity Undefined { get; } = default;
+        public static IdEntity Undefined { get; }
+        /// <summary>
+        /// Gets the default instance of the type.
+        /// </summary>
+        public static IdEntity DefaultInstance { get; }
 
         /// <inheritdoc/>
         public JsonAny AsAny

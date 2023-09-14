@@ -55,7 +55,11 @@ public readonly partial struct Core
         /// <summary>
         /// Gets an Undefined instance.
         /// </summary>
-        public static AnchorEntity Undefined { get; } = default;
+        public static AnchorEntity Undefined { get; }
+        /// <summary>
+        /// Gets the default instance of the type.
+        /// </summary>
+        public static AnchorEntity DefaultInstance { get; }
 
         /// <inheritdoc/>
         public JsonAny AsAny

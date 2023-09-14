@@ -55,7 +55,11 @@ public readonly partial struct Schema
         /// <summary>
         /// Gets an Undefined instance.
         /// </summary>
-        public static NonNegativeIntegerDefault0 Undefined { get; } = default;
+        public static NonNegativeIntegerDefault0 Undefined { get; }
+        /// <summary>
+        /// Gets the default instance of the type.
+        /// </summary>
+        public static NonNegativeIntegerDefault0 DefaultInstance { get; }
 
         /// <inheritdoc/>
         public JsonAny AsAny

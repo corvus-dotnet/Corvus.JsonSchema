@@ -55,7 +55,11 @@ public readonly partial struct Schema
         /// <summary>
         /// Gets an Undefined instance.
         /// </summary>
-        public static WriteOnlyEntity Undefined { get; } = default;
+        public static WriteOnlyEntity Undefined { get; }
+        /// <summary>
+        /// Gets the default instance of the type.
+        /// </summary>
+        public static WriteOnlyEntity DefaultInstance { get; } = WriteOnlyEntity.ParseValue("false"u8);
 
         /// <inheritdoc/>
         public JsonAny AsAny
