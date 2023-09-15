@@ -61,7 +61,7 @@ public class JsonPropertiesSteps
     {
         try
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest).AsObject.SetProperty(propertyName, JsonAny.Parse(value)), ObjectResult);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest).AsObject.SetProperty(propertyName, JsonAny.Parse(value)).AsAny, ObjectResult);
         }
         catch (Exception ex)
         {
@@ -80,7 +80,7 @@ public class JsonPropertiesSteps
     {
         try
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest).AsObject.SetProperty(propertyName, JsonNotAny.Parse(value)), ObjectResult);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest).AsObject.SetProperty(propertyName, JsonNotAny.Parse(value)).As<JsonNotAny>(), ObjectResult);
         }
         catch (Exception ex)
         {
@@ -118,7 +118,7 @@ public class JsonPropertiesSteps
     {
         try
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest).AsObject.SetProperty(propertyName.AsSpan(), JsonAny.Parse(value)), ObjectResult);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest).AsObject.SetProperty(propertyName.AsSpan(), JsonAny.Parse(value)).AsAny, ObjectResult);
         }
         catch (Exception ex)
         {
@@ -137,7 +137,7 @@ public class JsonPropertiesSteps
     {
         try
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest).AsObject.SetProperty(propertyName.AsSpan(), JsonNotAny.Parse(value)), ObjectResult);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest).AsObject.SetProperty(propertyName.AsSpan(), JsonNotAny.Parse(value)).As<JsonNotAny>(), ObjectResult);
         }
         catch (Exception ex)
         {
@@ -175,7 +175,7 @@ public class JsonPropertiesSteps
     {
         try
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest).AsObject.SetProperty(Encoding.UTF8.GetBytes(propertyName), JsonAny.Parse(value)), ObjectResult);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest).AsObject.SetProperty(Encoding.UTF8.GetBytes(propertyName), JsonAny.Parse(value)).AsAny, ObjectResult);
         }
         catch (Exception ex)
         {
@@ -194,7 +194,7 @@ public class JsonPropertiesSteps
     {
         try
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest).AsObject.SetProperty(Encoding.UTF8.GetBytes(propertyName), JsonNotAny.Parse(value)), ObjectResult);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest).AsObject.SetProperty(Encoding.UTF8.GetBytes(propertyName), JsonNotAny.Parse(value)).As<JsonNotAny>(), ObjectResult);
         }
         catch (Exception ex)
         {
@@ -437,7 +437,7 @@ public class JsonPropertiesSteps
     {
         try
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest).AsObject.RemoveProperty(propertyName), ObjectResult);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest).AsObject.RemoveProperty(propertyName).AsAny, ObjectResult);
         }
         catch (Exception ex)
         {
@@ -455,7 +455,7 @@ public class JsonPropertiesSteps
     {
         try
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest).AsObject.RemoveProperty(propertyName), ObjectResult);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest).AsObject.RemoveProperty(propertyName).As<JsonNotAny>(), ObjectResult);
         }
         catch (Exception ex)
         {
@@ -491,7 +491,7 @@ public class JsonPropertiesSteps
     {
         try
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest).AsObject.RemoveProperty(propertyName.AsSpan()), ObjectResult);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest).AsObject.RemoveProperty(propertyName.AsSpan()).AsAny, ObjectResult);
         }
         catch (Exception ex)
         {
@@ -509,7 +509,7 @@ public class JsonPropertiesSteps
     {
         try
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest).AsObject.RemoveProperty(propertyName.AsSpan()), ObjectResult);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest).AsObject.RemoveProperty(propertyName.AsSpan()).As<JsonNotAny>(), ObjectResult);
         }
         catch (Exception ex)
         {
@@ -545,7 +545,7 @@ public class JsonPropertiesSteps
     {
         try
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest).AsObject.RemoveProperty(Encoding.UTF8.GetBytes(propertyName)), ObjectResult);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest).AsObject.RemoveProperty(Encoding.UTF8.GetBytes(propertyName)).AsAny, ObjectResult);
         }
         catch (Exception ex)
         {
@@ -661,7 +661,7 @@ public class JsonPropertiesSteps
     {
         try
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest).AsObject.RemoveProperty(Encoding.UTF8.GetBytes(propertyName)), ObjectResult);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest).AsObject.RemoveProperty(Encoding.UTF8.GetBytes(propertyName)).As<JsonNotAny>(), ObjectResult);
         }
         catch (Exception ex)
         {

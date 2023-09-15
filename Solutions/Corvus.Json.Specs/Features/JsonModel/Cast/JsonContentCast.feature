@@ -11,11 +11,6 @@ Scenario: Cast to JsonAny for dotnet backed value as an content
 	When I cast the JsonContent to JsonAny
 	Then the result should equal the JsonAny "{\"foo\": \"bar\"}"
 
-Scenario: Cast from JsonAny for json element backed value as an content
-	Given the JsonAny for "{\"foo\": \"bar\"}"
-	When I cast the JsonAny to JsonContent
-	Then the result should equal the JsonContent "{\"foo\": \"bar\"}"
-
 Scenario: Cast to JsonString for json element backed value as an content
 	Given the JsonElement backed JsonContent "{\"foo\": \"bar\"}"
 	When I cast the JsonContent to JsonString

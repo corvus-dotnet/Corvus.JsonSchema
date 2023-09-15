@@ -100,7 +100,7 @@ public class JsonPatchSteps
     {
         try
         {
-            JsonPatchDocument patchOperationArray = JsonAny.Parse(jsonString);
+            var patchOperationArray = JsonPatchDocument.Parse(jsonString);
             this.scenarioContext.Set(patchOperationArray, PatchKey);
 
             JsonAny document = this.scenarioContext.Get<JsonAny>(DocumentKey);

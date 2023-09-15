@@ -125,7 +125,7 @@ public static class JsonElementExtensions
             Span<byte> sourceUnescaped = length <= JsonConstants.StackallocThreshold ?
             stackalloc byte[JsonConstants.StackallocThreshold] :
             (sourceArray = ArrayPool<byte>.Shared.Rent(length));
-            JsonReaderHelper.Unescape(rawInput, sourceUnescaped, 0, out int written);
+            JsonReaderHelper.Unescape(rawInput, sourceUnescaped, idx, out int written);
             sourceUnescaped = sourceUnescaped[..written];
 
             try

@@ -132,7 +132,7 @@ public class UriTemplateSteps
     [When("I set the template parameters from the JsonObject (.*)")]
     public void WhenISetTheTemplateParametersFromTheJsonObject(string json)
     {
-        JsonObject jsonObject = JsonAny.Parse(json);
+        var jsonObject = JsonObject.Parse(json);
         this.scenarioContext.Set(this.scenarioContext.Get<UriTemplate>(TemplateKey).SetParameters(jsonObject), TemplateKey);
     }
 
@@ -409,7 +409,7 @@ public class UriTemplateSteps
     [Then("the result should be one of (.*)")]
     public void ThenTheResultShouldBeOneOf(string result)
     {
-        JsonArray array = JsonAny.Parse(result);
+        var array = JsonArray.Parse(result);
 
         // This is the weird way it expects an exception in the test schema
         if (array.GetArrayLength() == 1)
@@ -425,9 +425,9 @@ public class UriTemplateSteps
 
         Assert.False(this.scenarioContext.ContainsKey(ExceptionKey), this.scenarioContext.ContainsKey(ExceptionKey) ? $"The scenario contains an exception:\r\n{this.scenarioContext.Get<Exception>(ExceptionKey)}" : "No error.");
         string actual = this.scenarioContext.Get<string>(ResultKey);
-        foreach (string expected in array.EnumerateArray())
+        foreach (JsonAny expected in array.EnumerateArray())
         {
-            if (expected == actual)
+            if (expected.AsString == actual)
             {
                 return;
             }
