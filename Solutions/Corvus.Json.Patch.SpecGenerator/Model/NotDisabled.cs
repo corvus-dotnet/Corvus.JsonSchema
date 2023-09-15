@@ -108,8 +108,7 @@ public readonly partial struct NotDisabled
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonString AsString
+    JsonString IJsonValue.AsString
     {
         get
         {
@@ -123,8 +122,7 @@ public readonly partial struct NotDisabled
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonBoolean AsBoolean
+    JsonBoolean IJsonValue.AsBoolean
     {
         get
         {
@@ -138,8 +136,7 @@ public readonly partial struct NotDisabled
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonNumber AsNumber
+    JsonNumber IJsonValue.AsNumber
     {
         get
         {
@@ -172,8 +169,7 @@ public readonly partial struct NotDisabled
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonArray AsArray
+    JsonArray IJsonValue.AsArray
     {
         get
         {
@@ -226,15 +222,6 @@ public readonly partial struct NotDisabled
 
             return JsonValueKind.Undefined;
         }
-    }
-
-    /// <summary>
-    /// Conversion from JsonAny.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator NotDisabled(JsonAny value)
-    {
-        return NotDisabled.FromAny(value);
     }
 
     /// <summary>
@@ -313,9 +300,7 @@ public readonly partial struct NotDisabled
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be NotDisabled.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static NotDisabled FromBoolean<TValue>(in TValue value)
-        where TValue : struct, IJsonBoolean<TValue>
+    static NotDisabled IJsonValue<NotDisabled>.FromBoolean<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -333,9 +318,7 @@ public readonly partial struct NotDisabled
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be NotDisabled.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static NotDisabled FromString<TValue>(in TValue value)
-        where TValue : struct, IJsonString<TValue>
+    static NotDisabled IJsonValue<NotDisabled>.FromString<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -353,9 +336,7 @@ public readonly partial struct NotDisabled
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be NotDisabled.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static NotDisabled FromNumber<TValue>(in TValue value)
-        where TValue : struct, IJsonNumber<TValue>
+    static NotDisabled IJsonValue<NotDisabled>.FromNumber<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -373,9 +354,7 @@ public readonly partial struct NotDisabled
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be NotDisabled.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static NotDisabled FromArray<TValue>(in TValue value)
-        where TValue : struct, IJsonArray<TValue>
+    static NotDisabled IJsonValue<NotDisabled>.FromArray<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -403,7 +382,7 @@ public readonly partial struct NotDisabled
 
         if (value.ValueKind == JsonValueKind.Object)
         {
-            return new((ImmutableDictionary<JsonPropertyName, JsonAny>)value);
+            return new(value.AsImmutableDictionary());
         }
 
         return Undefined;

@@ -50,15 +50,6 @@ public readonly partial struct JsonString
     }
 
     /// <summary>
-    /// Conversion from JsonAny.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonString(JsonAny value)
-    {
-        return value.AsString;
-    }
-
-    /// <summary>
     /// Conversion to JsonAny.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>

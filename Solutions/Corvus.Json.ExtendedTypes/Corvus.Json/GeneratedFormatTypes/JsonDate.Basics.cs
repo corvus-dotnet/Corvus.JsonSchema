@@ -49,15 +49,6 @@ public readonly partial struct JsonDate
         this.stringBacking = Encoding.UTF8.GetString(utf8Value);
     }
 
-        /// <summary>
-    /// Conversion from JsonAny.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonDate(JsonAny value)
-    {
-        return JsonDate.FromAny(value);
-    }
-
     /// <summary>
     /// Conversion to JsonAny.
     /// </summary>
@@ -68,7 +59,7 @@ public readonly partial struct JsonDate
     }
 
     /// <summary>
-    /// Conversion from JsonString.
+    /// Conversion to JsonString.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
     public static implicit operator JsonString(JsonDate value)
@@ -77,7 +68,7 @@ public readonly partial struct JsonDate
     }
 
     /// <summary>
-    /// Conversion to JsonString.
+    /// Conversion from JsonString.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
     public static implicit operator JsonDate(JsonString value)

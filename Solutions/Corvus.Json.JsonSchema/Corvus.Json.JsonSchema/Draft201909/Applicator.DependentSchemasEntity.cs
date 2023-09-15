@@ -110,8 +110,7 @@ public readonly partial struct Applicator
         }
 
         /// <inheritdoc/>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public JsonString AsString
+        JsonString IJsonValue.AsString
         {
             get
             {
@@ -125,8 +124,7 @@ public readonly partial struct Applicator
         }
 
         /// <inheritdoc/>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public JsonBoolean AsBoolean
+        JsonBoolean IJsonValue.AsBoolean
         {
             get
             {
@@ -140,8 +138,7 @@ public readonly partial struct Applicator
         }
 
         /// <inheritdoc/>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public JsonNumber AsNumber
+        JsonNumber IJsonValue.AsNumber
         {
             get
             {
@@ -174,8 +171,7 @@ public readonly partial struct Applicator
         }
 
         /// <inheritdoc/>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public JsonArray AsArray
+        JsonArray IJsonValue.AsArray
         {
             get
             {
@@ -228,15 +224,6 @@ public readonly partial struct Applicator
 
                 return JsonValueKind.Undefined;
             }
-        }
-
-        /// <summary>
-        /// Conversion from JsonAny.
-        /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator DependentSchemasEntity(JsonAny value)
-        {
-            return DependentSchemasEntity.FromAny(value);
         }
 
         /// <summary>
@@ -315,9 +302,7 @@ public readonly partial struct Applicator
         /// <returns>An instance of this type, initialized from the value.</returns>
         /// <remarks>This will be DependentSchemasEntity.Undefined if the type is not compatible.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static DependentSchemasEntity FromBoolean<TValue>(in TValue value)
-            where TValue : struct, IJsonBoolean<TValue>
+        static DependentSchemasEntity IJsonValue<DependentSchemasEntity>.FromBoolean<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -335,9 +320,7 @@ public readonly partial struct Applicator
         /// <returns>An instance of this type, initialized from the value.</returns>
         /// <remarks>This will be DependentSchemasEntity.Undefined if the type is not compatible.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static DependentSchemasEntity FromString<TValue>(in TValue value)
-            where TValue : struct, IJsonString<TValue>
+        static DependentSchemasEntity IJsonValue<DependentSchemasEntity>.FromString<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -355,9 +338,7 @@ public readonly partial struct Applicator
         /// <returns>An instance of this type, initialized from the value.</returns>
         /// <remarks>This will be DependentSchemasEntity.Undefined if the type is not compatible.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static DependentSchemasEntity FromNumber<TValue>(in TValue value)
-            where TValue : struct, IJsonNumber<TValue>
+        static DependentSchemasEntity IJsonValue<DependentSchemasEntity>.FromNumber<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -375,9 +356,7 @@ public readonly partial struct Applicator
         /// <returns>An instance of this type, initialized from the value.</returns>
         /// <remarks>This will be DependentSchemasEntity.Undefined if the type is not compatible.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static DependentSchemasEntity FromArray<TValue>(in TValue value)
-            where TValue : struct, IJsonArray<TValue>
+        static DependentSchemasEntity IJsonValue<DependentSchemasEntity>.FromArray<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -405,7 +384,7 @@ public readonly partial struct Applicator
 
             if (value.ValueKind == JsonValueKind.Object)
             {
-                return new((ImmutableDictionary<JsonPropertyName, JsonAny>)value);
+                return new(value.AsImmutableDictionary());
             }
 
             return Undefined;

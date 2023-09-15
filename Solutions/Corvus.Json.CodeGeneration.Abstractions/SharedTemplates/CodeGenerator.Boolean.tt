@@ -65,7 +65,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonBool
     /// <param name="value">The value from which to convert.</param>
     public static implicit operator JsonBoolean(<#= TypeDeclaration.DotnetTypeName #> value)
     {
-        return value.AsBoolean;
+        return JsonBoolean.FromBoolean(value);
     }
 
     /// <summary>

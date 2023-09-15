@@ -14,7 +14,7 @@ namespace Corvus.Json;
 /// Represents any JSON value, validating false.
 /// </summary>
 [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<JsonNotAny>))]
-public readonly partial struct JsonNotAny
+public readonly partial struct JsonNotAny : IJsonValue<JsonNotAny>
 {
     private readonly Backing backing;
     private readonly JsonElement jsonElementBacking;
@@ -51,6 +51,96 @@ public readonly partial struct JsonNotAny
         this.numberBacking = default;
         this.arrayBacking = ImmutableList<JsonAny>.Empty;
         this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonNotAny"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to construct the instance.</param>
+    public JsonNotAny(string value)
+    {
+        this.jsonElementBacking = default;
+        this.backing = Backing.String;
+        this.stringBacking = value;
+        this.boolBacking = default;
+        this.numberBacking = default;
+        this.arrayBacking = ImmutableList<JsonAny>.Empty;
+        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonNotAny"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to construct the instance.</param>
+    public JsonNotAny(bool value)
+    {
+        this.jsonElementBacking = default;
+        this.backing = Backing.Bool;
+        this.stringBacking = string.Empty;
+        this.boolBacking = value;
+        this.numberBacking = default;
+        this.arrayBacking = ImmutableList<JsonAny>.Empty;
+        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonNotAny"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to construct the instance.</param>
+    public JsonNotAny(long value)
+    {
+        this.jsonElementBacking = default;
+        this.backing = Backing.Number;
+        this.stringBacking = string.Empty;
+        this.boolBacking = default;
+        this.numberBacking = (double)value;
+        this.arrayBacking = ImmutableList<JsonAny>.Empty;
+        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonNotAny"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to construct the instance.</param>
+    public JsonNotAny(double value)
+    {
+        this.jsonElementBacking = default;
+        this.backing = Backing.Number;
+        this.stringBacking = string.Empty;
+        this.boolBacking = default;
+        this.numberBacking = value;
+        this.arrayBacking = ImmutableList<JsonAny>.Empty;
+        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonNotAny"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to construct the instance.</param>
+    public JsonNotAny(ImmutableList<JsonAny> value)
+    {
+        this.jsonElementBacking = default;
+        this.backing = Backing.Array;
+        this.stringBacking = string.Empty;
+        this.boolBacking = default;
+        this.numberBacking = default;
+        this.arrayBacking = value;
+        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonNotAny"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to construct the instance.</param>
+    public JsonNotAny(ImmutableDictionary<JsonPropertyName, JsonAny> value)
+    {
+        this.jsonElementBacking = default;
+        this.backing = Backing.Object;
+        this.stringBacking = string.Empty;
+        this.boolBacking = default;
+        this.numberBacking = default;
+        this.arrayBacking = ImmutableList<JsonAny>.Empty;
+        this.objectBacking = value;
     }
 
     /// <summary>
@@ -304,105 +394,6 @@ public readonly partial struct JsonNotAny
         return JsonAny.Undefined;
     }
 
-    /// <summary>s
-    /// Conversion from JsonAny.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonNotAny(JsonAny value)
-    {
-        return FromAny(value);
-    }
-
-    /// <summary>
-    /// Conversion to JsonArray.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonArray(JsonNotAny value)
-    {
-        return value.AsArray;
-    }
-
-    /// <summary>
-    /// Conversion from JsonAny.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonNotAny(JsonArray value)
-    {
-        return value.AsAny;
-    }
-
-    /// <summary>
-    /// Conversion to JsonBoolean.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonBoolean(JsonNotAny value)
-    {
-        return value.AsBoolean;
-    }
-
-    /// <summary>
-    /// Conversion from JsonBoolean.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonNotAny(JsonBoolean value)
-    {
-        return value.AsAny;
-    }
-
-    /// <summary>
-    /// Conversion to JsonObject.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonObject(JsonNotAny value)
-    {
-        return value.AsObject;
-    }
-
-    /// <summary>
-    /// Conversion from JsonObject.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonNotAny(JsonObject value)
-    {
-        return value.AsAny;
-    }
-
-    /// <summary>
-    /// Conversion to JsonString.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonString(JsonNotAny value)
-    {
-        return value.AsString;
-    }
-
-    /// <summary>
-    /// Conversion from JsonString.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonNotAny(JsonString value)
-    {
-        return value.AsAny;
-    }
-
-    /// <summary>
-    /// Conversion to JsonNumber.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonNumber(JsonNotAny value)
-    {
-        return value.AsNumber;
-    }
-
-    /// <summary>
-    /// Conversion from JsonNumber.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonNotAny(JsonNumber value)
-    {
-        return value.AsAny;
-    }
-
     /// <summary>
     /// Equality operator.
     /// </summary>
@@ -483,7 +474,7 @@ public readonly partial struct JsonNotAny
 
         if (value.ValueKind == JsonValueKind.String)
         {
-            return new((string)value);
+            return new((string)value.AsString);
         }
 
         return Undefined;
@@ -536,7 +527,7 @@ public readonly partial struct JsonNotAny
 
         if (value.ValueKind == JsonValueKind.Number)
         {
-            return new((double)value);
+            return new((double)value.AsNumber);
         }
 
         return Undefined;
@@ -560,7 +551,7 @@ public readonly partial struct JsonNotAny
 
         if (value.ValueKind == JsonValueKind.Array)
         {
-            return new((ImmutableList<JsonAny>)value);
+            return new(value.AsArray.AsImmutableList());
         }
 
         return Undefined;
@@ -584,7 +575,7 @@ public readonly partial struct JsonNotAny
 
         if (value.ValueKind == JsonValueKind.Object)
         {
-            return new((ImmutableDictionary<JsonPropertyName, JsonAny>)value);
+            return new(value.AsObject.AsImmutableDictionary());
         }
 
         return Undefined;
@@ -597,7 +588,7 @@ public readonly partial struct JsonNotAny
     /// <param name="instance">The object from which to create the instance.</param>
     /// <param name="options">The (optional) <see cref="JsonWriterOptions"/>.</param>
     /// <returns>A <see cref="JsonNotAny"/> derived from serializing the object.</returns>
-    public static JsonNotAny From<T>(T instance, JsonWriterOptions options = default)
+    public static JsonNotAny CreateFromSerializedInstance<T>(T instance, JsonWriterOptions options = default)
     {
         var abw = new ArrayBufferWriter<byte>();
         using var writer = new Utf8JsonWriter(abw, options);
@@ -657,7 +648,7 @@ public readonly partial struct JsonNotAny
             return new(numberResult);
         }
 
-        return new(valueSpan);
+        return new(valueSpan.ToString());
     }
 
     /// <summary>

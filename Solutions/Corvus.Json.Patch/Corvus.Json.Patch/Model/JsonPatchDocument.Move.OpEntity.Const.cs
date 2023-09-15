@@ -23,7 +23,7 @@ public readonly partial struct JsonPatchDocument
         /// </summary>
         public readonly partial struct OpEntity
         {
-            private static readonly OpEntity __CorvusConstValue = JsonAny.ParseValue("\"move\""u8);
+            private static readonly OpEntity __CorvusConstValue = OpEntity.ParseValue("\"move\""u8);
             /// <summary>
             /// Initializes a new instance of the <see cref = "OpEntity"/> struct.
             /// </summary>

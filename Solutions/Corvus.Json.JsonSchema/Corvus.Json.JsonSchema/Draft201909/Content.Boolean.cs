@@ -37,7 +37,7 @@ public readonly partial struct Content : IJsonBoolean<Content>
     /// <param name = "value">The value from which to convert.</param>
     public static implicit operator JsonBoolean(Content value)
     {
-        return value.AsBoolean;
+        return JsonBoolean.FromBoolean(value);
     }
 
     /// <summary>

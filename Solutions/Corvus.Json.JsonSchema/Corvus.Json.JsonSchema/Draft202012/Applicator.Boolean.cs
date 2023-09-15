@@ -37,7 +37,7 @@ public readonly partial struct Applicator : IJsonBoolean<Applicator>
     /// <param name = "value">The value from which to convert.</param>
     public static implicit operator JsonBoolean(Applicator value)
     {
-        return value.AsBoolean;
+        return JsonBoolean.FromBoolean(value);
     }
 
     /// <summary>

@@ -65,7 +65,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonNumb
     /// <param name="value">The value from which to convert.</param>
     public static implicit operator JsonNumber(<#= TypeDeclaration.DotnetTypeName #> value)
     {
-        return value.AsNumber;
+        return JsonNumber.FromNumber(value);
     }
 
     /// <summary>

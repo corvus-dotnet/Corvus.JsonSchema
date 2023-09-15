@@ -220,9 +220,10 @@ namespace ");
             #line hidden
             
             #line 66 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
-            this.Write(" value)\r\n    {\r\n        return value.AsBoolean;\r\n    }\r\n\r\n    /// <summary>\r\n    " +
-                    "/// Conversion to JsonBoolean.\r\n    /// </summary>\r\n    /// <param name=\"value\">" +
-                    "The value from which to convert.</param>\r\n    public static implicit operator ");
+            this.Write(" value)\r\n    {\r\n        return JsonBoolean.FromBoolean(value);\r\n    }\r\n\r\n    /// " +
+                    "<summary>\r\n    /// Conversion to JsonBoolean.\r\n    /// </summary>\r\n    /// <para" +
+                    "m name=\"value\">The value from which to convert.</param>\r\n    public static impli" +
+                    "cit operator ");
             
             #line default
             #line hidden

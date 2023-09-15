@@ -167,8 +167,7 @@ namespace ");
             #line hidden
             
             #line 54 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Conversions.Operators.tt"
-            this.Write("            JsonValueKind.Object => new((ImmutableDictionary<JsonPropertyName, Js" +
-                    "onAny>)value),\r\n");
+            this.Write("            JsonValueKind.Object => new(value.AsImmutableDictionary()),\r\n");
             
             #line default
             #line hidden
@@ -182,7 +181,7 @@ namespace ");
             #line hidden
             
             #line 58 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Conversions.Operators.tt"
-            this.Write("            JsonValueKind.Array => new((ImmutableList<JsonAny>)value),\r\n");
+            this.Write("            JsonValueKind.Array => new(value.AsImmutableList()),\r\n");
             
             #line default
             #line hidden

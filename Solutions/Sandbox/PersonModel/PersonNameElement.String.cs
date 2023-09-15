@@ -60,7 +60,7 @@ public readonly partial struct PersonNameElement : IJsonString<PersonNameElement
     /// <param name = "value">The value from which to convert.</param>
     public static implicit operator JsonString(PersonNameElement value)
     {
-        return value.AsString;
+        return JsonString.FromString(value);
     }
 
     /// <summary>

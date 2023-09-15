@@ -69,15 +69,6 @@ public readonly partial struct JsonArray
     }
 
     /// <summary>
-    /// Conversion from JsonAny.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonArray(JsonAny value)
-    {
-        return value.AsArray;
-    }
-
-    /// <summary>
     /// Conversion to JsonAny.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>

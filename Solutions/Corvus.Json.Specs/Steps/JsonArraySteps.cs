@@ -56,7 +56,7 @@ public class JsonArraySteps
     {
         try
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest).RemoveAt(index), ArrayValueResultkey);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest).AsArray.RemoveAt(index), ArrayValueResultkey);
         }
         catch (Exception ex)
         {
@@ -74,7 +74,7 @@ public class JsonArraySteps
     {
         try
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest).RemoveAt(index), ArrayValueResultkey);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest).AsArray.RemoveAt(index), ArrayValueResultkey);
         }
         catch (Exception ex)
         {
@@ -177,7 +177,7 @@ public class JsonArraySteps
     public void ThenTheItemInTheJsonAnyAtShouldBeTheObject(int index, string expected)
     {
         JsonAny value = this.scenarioContext.Get<JsonAny>(ArrayValueResultkey);
-        Assert.AreEqual(JsonAny.Parse(expected), value[index].AsObject);
+        Assert.AreEqual(JsonAny.Parse(expected), value.AsArray[index].AsObject);
     }
 
     /// <summary>
@@ -203,7 +203,7 @@ public class JsonArraySteps
     public void ThenTheItemInTheJsonAnyAtShouldBeTheNumber(int index, string expected)
     {
         JsonAny value = this.scenarioContext.Get<JsonAny>(ArrayValueResultkey);
-        Assert.AreEqual(JsonAny.Parse(expected), value[index].AsNumber);
+        Assert.AreEqual(JsonAny.Parse(expected), value.AsArray[index].AsNumber);
     }
 
     /// <summary>
@@ -216,7 +216,7 @@ public class JsonArraySteps
     public void ThenTheItemInTheJsonAnyAtShouldBeTheBoolean(int index, string expected)
     {
         JsonAny value = this.scenarioContext.Get<JsonAny>(ArrayValueResultkey);
-        Assert.AreEqual(JsonAny.Parse(expected), value[index].AsBoolean);
+        Assert.AreEqual(JsonAny.Parse(expected), value.AsArray[index].AsBoolean);
     }
 
     /// <summary>
@@ -229,7 +229,7 @@ public class JsonArraySteps
     public void ThenTheItemInTheJsonAnyAtShouldBeTheString(int index, string expected)
     {
         JsonAny value = this.scenarioContext.Get<JsonAny>(ArrayValueResultkey);
-        Assert.AreEqual(JsonAny.Parse(expected), value[index].AsString);
+        Assert.AreEqual(JsonAny.Parse(expected), value.AsArray[index].AsString);
     }
 
     /// <summary>
@@ -244,7 +244,7 @@ public class JsonArraySteps
         JsonAny sut = this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest);
         try
         {
-            this.scenarioContext.Set(sut.SetItem(index, JsonAny.Parse(value)), ArrayValueResultkey);
+            this.scenarioContext.Set(sut.AsArray.SetItem(index, JsonAny.Parse(value)), ArrayValueResultkey);
         }
         catch (Exception ex)
         {
@@ -262,7 +262,7 @@ public class JsonArraySteps
     public void ThenTheItemInTheJsonNotAnyAtShouldBeTheObject(int index, string expected)
     {
         JsonNotAny value = this.scenarioContext.Get<JsonNotAny>(ArrayValueResultkey);
-        Assert.AreEqual(JsonNotAny.Parse(expected), value[index].AsObject);
+        Assert.AreEqual(JsonNotAny.Parse(expected), value.AsArray[index].AsObject);
     }
 
     /// <summary>
@@ -288,7 +288,7 @@ public class JsonArraySteps
     public void ThenTheItemInTheJsonNotAnyAtShouldBeTheNumber(int index, string expected)
     {
         JsonNotAny value = this.scenarioContext.Get<JsonNotAny>(ArrayValueResultkey);
-        Assert.AreEqual(JsonNotAny.Parse(expected), value[index].AsNumber);
+        Assert.AreEqual(JsonNotAny.Parse(expected), value.AsArray[index].AsNumber);
     }
 
     /// <summary>
@@ -301,7 +301,7 @@ public class JsonArraySteps
     public void ThenTheItemInTheJsonNotAnyAtShouldBeTheBoolean(int index, string expected)
     {
         JsonNotAny value = this.scenarioContext.Get<JsonNotAny>(ArrayValueResultkey);
-        Assert.AreEqual(JsonNotAny.Parse(expected), value[index].AsBoolean);
+        Assert.AreEqual(JsonNotAny.Parse(expected), value.AsArray[index].AsBoolean);
     }
 
     /// <summary>
@@ -314,7 +314,7 @@ public class JsonArraySteps
     public void ThenTheItemInTheJsonNotAnyAtShouldBeTheString(int index, string expected)
     {
         JsonNotAny value = this.scenarioContext.Get<JsonNotAny>(ArrayValueResultkey);
-        Assert.AreEqual(JsonNotAny.Parse(expected), value[index].AsString);
+        Assert.AreEqual(JsonNotAny.Parse(expected), value.AsArray[index].AsString);
     }
 
     /// <summary>
@@ -329,7 +329,7 @@ public class JsonArraySteps
         JsonNotAny sut = this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest);
         try
         {
-            this.scenarioContext.Set(sut.SetItem(index, JsonNotAny.Parse(value)), ArrayValueResultkey);
+            this.scenarioContext.Set(sut.AsArray.SetItem(index, JsonNotAny.Parse(value)), ArrayValueResultkey);
         }
         catch (Exception ex)
         {
@@ -387,7 +387,7 @@ public class JsonArraySteps
         JsonAny sut = this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest);
         try
         {
-            this.scenarioContext.Set(sut[index].AsNumber, ArrayValueResultkey);
+            this.scenarioContext.Set(sut.AsArray[index].AsNumber, ArrayValueResultkey);
         }
         catch (Exception ex)
         {
@@ -406,7 +406,7 @@ public class JsonArraySteps
         JsonNotAny sut = this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest);
         try
         {
-            this.scenarioContext.Set(sut[index].AsNumber, ArrayValueResultkey);
+            this.scenarioContext.Set(sut.AsArray[index].AsNumber, ArrayValueResultkey);
         }
         catch (Exception ex)
         {
@@ -444,7 +444,7 @@ public class JsonArraySteps
         JsonAny sut = this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest);
         try
         {
-            this.scenarioContext.Set(sut[index].AsString, ArrayValueResultkey);
+            this.scenarioContext.Set(sut.AsArray[index].AsString, ArrayValueResultkey);
         }
         catch (Exception ex)
         {
@@ -463,7 +463,7 @@ public class JsonArraySteps
         JsonNotAny sut = this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest);
         try
         {
-            this.scenarioContext.Set(sut[index].AsString, ArrayValueResultkey);
+            this.scenarioContext.Set(sut.AsArray[index].AsString, ArrayValueResultkey);
         }
         catch (Exception ex)
         {
@@ -535,7 +535,7 @@ public class JsonArraySteps
         JsonAny sut = this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest);
         try
         {
-            this.scenarioContext.Set(sut.Insert(index, JsonAny.Parse(value)), ArrayValueResultkey);
+            this.scenarioContext.Set(sut.AsArray.Insert(index, JsonAny.Parse(value)), ArrayValueResultkey);
         }
         catch (Exception ex)
         {
@@ -555,7 +555,7 @@ public class JsonArraySteps
         JsonAny sut = this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest);
         try
         {
-            this.scenarioContext.Set(sut.Replace(JsonAny.Parse(oldValue), JsonAny.Parse(newValue)), ArrayValueResultkey);
+            this.scenarioContext.Set(sut.AsArray.Replace(JsonAny.Parse(oldValue), JsonAny.Parse(newValue)), ArrayValueResultkey);
         }
         catch (Exception ex)
         {
@@ -575,7 +575,7 @@ public class JsonArraySteps
         JsonNotAny sut = this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest);
         try
         {
-            this.scenarioContext.Set(sut.Insert(index, JsonNotAny.Parse(value)), ArrayValueResultkey);
+            this.scenarioContext.Set(sut.AsArray.Insert(index, JsonNotAny.Parse(value)), ArrayValueResultkey);
         }
         catch (Exception ex)
         {
@@ -595,7 +595,7 @@ public class JsonArraySteps
         JsonNotAny sut = this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest);
         try
         {
-            this.scenarioContext.Set(sut.Replace(JsonNotAny.Parse(oldValue), JsonNotAny.Parse(newValue)), ArrayValueResultkey);
+            this.scenarioContext.Set(sut.AsArray.Replace(JsonNotAny.Parse(oldValue), JsonNotAny.Parse(newValue)), ArrayValueResultkey);
         }
         catch (Exception ex)
         {
@@ -662,7 +662,7 @@ public class JsonArraySteps
         JsonAny sut = this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest);
         try
         {
-            this.scenarioContext.Set(sut.Add(JsonAny.Parse(value)), ArrayValueResultkey);
+            this.scenarioContext.Set(sut.AsArray.Add(JsonAny.Parse(value)), ArrayValueResultkey);
         }
         catch (Exception ex)
         {
@@ -682,7 +682,7 @@ public class JsonArraySteps
         JsonAny sut = this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest);
         try
         {
-            this.scenarioContext.Set(sut.Add(JsonAny.Parse(value1), JsonAny.Parse(value2)), ArrayValueResultkey);
+            this.scenarioContext.Set(sut.AsArray.Add(JsonAny.Parse(value1), JsonAny.Parse(value2)), ArrayValueResultkey);
         }
         catch (Exception ex)
         {
@@ -703,7 +703,7 @@ public class JsonArraySteps
         JsonAny sut = this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest);
         try
         {
-            this.scenarioContext.Set(sut.Add(JsonAny.Parse(value1), JsonAny.Parse(value2), JsonAny.Parse(value3)), ArrayValueResultkey);
+            this.scenarioContext.Set(sut.AsArray.Add(JsonAny.Parse(value1), JsonAny.Parse(value2), JsonAny.Parse(value3)), ArrayValueResultkey);
         }
         catch (Exception ex)
         {
@@ -725,7 +725,7 @@ public class JsonArraySteps
         JsonAny sut = this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest);
         try
         {
-            this.scenarioContext.Set(sut.Add(JsonAny.Parse(value1), JsonAny.Parse(value2), JsonAny.Parse(value3), JsonAny.Parse(value4)), ArrayValueResultkey);
+            this.scenarioContext.Set(sut.AsArray.Add(JsonAny.Parse(value1), JsonAny.Parse(value2), JsonAny.Parse(value3), JsonAny.Parse(value4)), ArrayValueResultkey);
         }
         catch (Exception ex)
         {
@@ -748,7 +748,7 @@ public class JsonArraySteps
         JsonAny sut = this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest);
         try
         {
-            this.scenarioContext.Set(sut.Add(JsonAny.Parse(value1), JsonAny.Parse(value2), JsonAny.Parse(value3), JsonAny.Parse(value4), JsonAny.Parse(value5)), ArrayValueResultkey);
+            this.scenarioContext.Set(sut.AsArray.Add(JsonAny.Parse(value1), JsonAny.Parse(value2), JsonAny.Parse(value3), JsonAny.Parse(value4), JsonAny.Parse(value5)), ArrayValueResultkey);
         }
         catch (Exception ex)
         {
@@ -767,7 +767,7 @@ public class JsonArraySteps
         JsonAny sut = this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest);
         try
         {
-            this.scenarioContext.Set(sut.AddRange(JsonAny.Parse(values).AsArray.AsImmutableList()), ArrayValueResultkey);
+            this.scenarioContext.Set(sut.AsArray.AddRange(JsonAny.Parse(values).AsArray.AsImmutableList()), ArrayValueResultkey);
         }
         catch (Exception ex)
         {
@@ -786,7 +786,7 @@ public class JsonArraySteps
         JsonNotAny sut = this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest);
         try
         {
-            this.scenarioContext.Set(sut.Add(JsonNotAny.Parse(value)), ArrayValueResultkey);
+            this.scenarioContext.Set(sut.AsArray.Add(JsonNotAny.Parse(value)), ArrayValueResultkey);
         }
         catch (Exception ex)
         {
@@ -806,7 +806,7 @@ public class JsonArraySteps
         JsonNotAny sut = this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest);
         try
         {
-            this.scenarioContext.Set(sut.Add(JsonNotAny.Parse(value1), JsonNotAny.Parse(value2)), ArrayValueResultkey);
+            this.scenarioContext.Set(sut.AsArray.Add(JsonNotAny.Parse(value1), JsonNotAny.Parse(value2)), ArrayValueResultkey);
         }
         catch (Exception ex)
         {
@@ -827,7 +827,7 @@ public class JsonArraySteps
         JsonNotAny sut = this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest);
         try
         {
-            this.scenarioContext.Set(sut.Add(JsonNotAny.Parse(value1), JsonNotAny.Parse(value2), JsonNotAny.Parse(value3)), ArrayValueResultkey);
+            this.scenarioContext.Set(sut.AsArray.Add(JsonNotAny.Parse(value1), JsonNotAny.Parse(value2), JsonNotAny.Parse(value3)), ArrayValueResultkey);
         }
         catch (Exception ex)
         {
@@ -849,7 +849,7 @@ public class JsonArraySteps
         JsonNotAny sut = this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest);
         try
         {
-            this.scenarioContext.Set(sut.Add(JsonNotAny.Parse(value1), JsonNotAny.Parse(value2), JsonNotAny.Parse(value3), JsonNotAny.Parse(value4)), ArrayValueResultkey);
+            this.scenarioContext.Set(sut.AsArray.Add(JsonNotAny.Parse(value1), JsonNotAny.Parse(value2), JsonNotAny.Parse(value3), JsonNotAny.Parse(value4)), ArrayValueResultkey);
         }
         catch (Exception ex)
         {
@@ -872,7 +872,7 @@ public class JsonArraySteps
         JsonNotAny sut = this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest);
         try
         {
-            this.scenarioContext.Set(sut.Add(JsonNotAny.Parse(value1), JsonNotAny.Parse(value2), JsonNotAny.Parse(value3), JsonNotAny.Parse(value4), JsonNotAny.Parse(value5)), ArrayValueResultkey);
+            this.scenarioContext.Set(sut.AsArray.Add(JsonNotAny.Parse(value1), JsonNotAny.Parse(value2), JsonNotAny.Parse(value3), JsonNotAny.Parse(value4), JsonNotAny.Parse(value5)), ArrayValueResultkey);
         }
         catch (Exception ex)
         {
@@ -891,7 +891,7 @@ public class JsonArraySteps
         JsonNotAny sut = this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest);
         try
         {
-            this.scenarioContext.Set(sut.AddRange(JsonNotAny.Parse(values).AsArray.AsImmutableList()), ArrayValueResultkey);
+            this.scenarioContext.Set(sut.AsArray.AddRange(JsonNotAny.Parse(values).AsArray.AsImmutableList()), ArrayValueResultkey);
         }
         catch (Exception ex)
         {

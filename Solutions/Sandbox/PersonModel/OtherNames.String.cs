@@ -63,7 +63,7 @@ public readonly partial struct OtherNames : IJsonString<OtherNames>
     /// <param name = "value">The value from which to convert.</param>
     public static implicit operator JsonString(OtherNames value)
     {
-        return value.AsString;
+        return JsonString.FromString(value);
     }
 
     /// <summary>

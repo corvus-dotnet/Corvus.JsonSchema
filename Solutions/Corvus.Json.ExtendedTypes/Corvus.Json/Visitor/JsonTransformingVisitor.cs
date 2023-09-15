@@ -98,15 +98,15 @@ public static partial class JsonTransformingVisitor
         switch (result.Output.ValueKind)
         {
             case JsonValueKind.Object:
-                VisitObject(path, result.Output, visitor, pathBuffer, ref result);
+                VisitObject(path, result.Output.AsObject, visitor, pathBuffer, ref result);
                 break;
             case JsonValueKind.Array:
-                VisitArray(path, result.Output, visitor, pathBuffer, ref result);
+                VisitArray(path, result.Output.AsArray, visitor, pathBuffer, ref result);
                 break;
         }
     }
 
-    private static void VisitArray(ReadOnlySpan<char> path, in JsonAny asArray, Visitor visitor, char[] pathBuffer, ref VisitResult result)
+    private static void VisitArray(ReadOnlySpan<char> path, in JsonArray asArray, Visitor visitor, char[] pathBuffer, ref VisitResult result)
     {
         bool terminateEntireWalkApplyingChanges = false;
         bool hasTransformedItems = false;
@@ -234,7 +234,7 @@ public static partial class JsonTransformingVisitor
         result.Walk = Walk.Continue;
     }
 
-    private static void VisitObject(ReadOnlySpan<char> path, in JsonAny asObject, Visitor visitor, char[] pathBuffer, ref VisitResult result)
+    private static void VisitObject(ReadOnlySpan<char> path, in JsonObject asObject, Visitor visitor, char[] pathBuffer, ref VisitResult result)
     {
         bool hasTransformedProperties = false;
         bool terminateEntireWalkApplyingChanges = false;

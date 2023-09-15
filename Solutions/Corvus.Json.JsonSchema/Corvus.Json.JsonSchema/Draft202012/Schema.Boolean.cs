@@ -37,7 +37,7 @@ public readonly partial struct Schema : IJsonBoolean<Schema>
     /// <param name = "value">The value from which to convert.</param>
     public static implicit operator JsonBoolean(Schema value)
     {
-        return value.AsBoolean;
+        return JsonBoolean.FromBoolean(value);
     }
 
     /// <summary>

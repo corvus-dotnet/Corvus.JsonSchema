@@ -38,7 +38,7 @@ public readonly partial struct Schema
         /// <param name = "value">The value from which to convert.</param>
         public static implicit operator JsonBoolean(ReadOnlyEntity value)
         {
-            return value.AsBoolean;
+            return JsonBoolean.FromBoolean(value);
         }
 
         /// <summary>

@@ -45,15 +45,6 @@ public readonly partial struct JsonInteger
     }
 
     /// <summary>
-    /// Conversion from JsonAny.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonInteger(JsonAny value)
-    {
-        return value.AsNumber;
-    }
-
-    /// <summary>
     /// Conversion to JsonAny.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>

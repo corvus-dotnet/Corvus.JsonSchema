@@ -110,8 +110,7 @@ public readonly partial struct MetaData
         }
 
         /// <inheritdoc/>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public JsonString AsString
+        JsonString IJsonValue.AsString
         {
             get
             {
@@ -144,8 +143,7 @@ public readonly partial struct MetaData
         }
 
         /// <inheritdoc/>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public JsonNumber AsNumber
+        JsonNumber IJsonValue.AsNumber
         {
             get
             {
@@ -159,8 +157,7 @@ public readonly partial struct MetaData
         }
 
         /// <inheritdoc/>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public JsonObject AsObject
+        JsonObject IJsonValue.AsObject
         {
             get
             {
@@ -174,8 +171,7 @@ public readonly partial struct MetaData
         }
 
         /// <inheritdoc/>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public JsonArray AsArray
+        JsonArray IJsonValue.AsArray
         {
             get
             {
@@ -228,15 +224,6 @@ public readonly partial struct MetaData
 
                 return JsonValueKind.Undefined;
             }
-        }
-
-        /// <summary>
-        /// Conversion from JsonAny.
-        /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator DeprecatedEntity(JsonAny value)
-        {
-            return DeprecatedEntity.FromAny(value);
         }
 
         /// <summary>
@@ -345,9 +332,7 @@ public readonly partial struct MetaData
         /// <returns>An instance of this type, initialized from the value.</returns>
         /// <remarks>This will be DeprecatedEntity.Undefined if the type is not compatible.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static DeprecatedEntity FromString<TValue>(in TValue value)
-            where TValue : struct, IJsonString<TValue>
+        static DeprecatedEntity IJsonValue<DeprecatedEntity>.FromString<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -365,9 +350,7 @@ public readonly partial struct MetaData
         /// <returns>An instance of this type, initialized from the value.</returns>
         /// <remarks>This will be DeprecatedEntity.Undefined if the type is not compatible.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static DeprecatedEntity FromNumber<TValue>(in TValue value)
-            where TValue : struct, IJsonNumber<TValue>
+        static DeprecatedEntity IJsonValue<DeprecatedEntity>.FromNumber<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -385,9 +368,7 @@ public readonly partial struct MetaData
         /// <returns>An instance of this type, initialized from the value.</returns>
         /// <remarks>This will be DeprecatedEntity.Undefined if the type is not compatible.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static DeprecatedEntity FromArray<TValue>(in TValue value)
-            where TValue : struct, IJsonArray<TValue>
+        static DeprecatedEntity IJsonValue<DeprecatedEntity>.FromArray<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -405,9 +386,7 @@ public readonly partial struct MetaData
         /// <returns>An instance of this type, initialized from the value.</returns>
         /// <remarks>This will be DeprecatedEntity.Undefined if the type is not compatible.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static DeprecatedEntity FromObject<TValue>(in TValue value)
-            where TValue : struct, IJsonObject<TValue>
+        static DeprecatedEntity IJsonValue<DeprecatedEntity>.FromObject<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {

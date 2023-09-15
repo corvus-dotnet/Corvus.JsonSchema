@@ -71,7 +71,7 @@ public static partial class JsonPatchExtensions
             result.Transformed = Transformed.No;
             result.Walk = Walk.SkipChildren;
 
-            static void RemoveNode(int index, in JsonAny arrayNode, ref VisitResult result)
+            static void RemoveNode(int index, in JsonArray arrayNode, ref VisitResult result)
             {
                 result.Output = arrayNode.RemoveAt(index);
                 result.Transformed = Transformed.Yes;
@@ -99,8 +99,10 @@ public static partial class JsonPatchExtensions
 
                 if (nodeToVisit.ValueKind == JsonValueKind.Object)
                 {
+                    JsonObject objectNode = nodeToVisit.AsObject;
+
                     // Add does not permit us to replace a property that already exists (that's what Replace is for)
-                    if (!nodeToVisit.HasProperty(terminatingPathElement))
+                    if (!objectNode.HasProperty(terminatingPathElement))
                     {
                         // So we don't transform, and we abandon the walk at this point.
                         result.Output = nodeToVisit;
@@ -110,7 +112,7 @@ public static partial class JsonPatchExtensions
                     }
 
                     // Return the transformed result, and stop walking the tree here.
-                    result.Output = nodeToVisit.RemoveProperty(terminatingPathElement);
+                    result.Output = objectNode.RemoveProperty(terminatingPathElement);
                     result.Transformed = Transformed.Yes;
                     result.Walk = Walk.TerminateAtThisNodeAndKeepChanges;
                     return;
@@ -118,11 +120,12 @@ public static partial class JsonPatchExtensions
 
                 if (nodeToVisit.ValueKind == JsonValueKind.Array)
                 {
-                    int arrayLength = nodeToVisit.GetArrayLength();
+                    JsonArray arrayNode = nodeToVisit.AsArray;
+                    int arrayLength = arrayNode.GetArrayLength();
 
                     if (TryGetArrayIndex(terminatingPathElement, out int index) && index < arrayLength)
                     {
-                        RemoveNode(index, in nodeToVisit, ref result);
+                        RemoveNode(index, in arrayNode, ref result);
                         return;
                     }
 

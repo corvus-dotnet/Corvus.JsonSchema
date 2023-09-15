@@ -80,7 +80,7 @@ public readonly partial struct MetaData
         /// <param name = "value">The value from which to convert.</param>
         public static implicit operator JsonArray(JsonAnyArray value)
         {
-            return value.AsArray;
+            return JsonArray.FromArray(value);
         }
 
         /// <summary>s

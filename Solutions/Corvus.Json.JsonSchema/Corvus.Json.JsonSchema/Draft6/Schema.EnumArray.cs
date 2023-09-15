@@ -110,8 +110,7 @@ public readonly partial struct Schema
         }
 
         /// <inheritdoc/>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public JsonString AsString
+        JsonString IJsonValue.AsString
         {
             get
             {
@@ -125,8 +124,7 @@ public readonly partial struct Schema
         }
 
         /// <inheritdoc/>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public JsonBoolean AsBoolean
+        JsonBoolean IJsonValue.AsBoolean
         {
             get
             {
@@ -140,8 +138,7 @@ public readonly partial struct Schema
         }
 
         /// <inheritdoc/>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public JsonNumber AsNumber
+        JsonNumber IJsonValue.AsNumber
         {
             get
             {
@@ -155,8 +152,7 @@ public readonly partial struct Schema
         }
 
         /// <inheritdoc/>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public JsonObject AsObject
+        JsonObject IJsonValue.AsObject
         {
             get
             {
@@ -228,15 +224,6 @@ public readonly partial struct Schema
 
                 return JsonValueKind.Undefined;
             }
-        }
-
-        /// <summary>
-        /// Conversion from JsonAny.
-        /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator EnumArray(JsonAny value)
-        {
-            return EnumArray.FromAny(value);
         }
 
         /// <summary>
@@ -315,9 +302,7 @@ public readonly partial struct Schema
         /// <returns>An instance of this type, initialized from the value.</returns>
         /// <remarks>This will be EnumArray.Undefined if the type is not compatible.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static EnumArray FromBoolean<TValue>(in TValue value)
-            where TValue : struct, IJsonBoolean<TValue>
+        static EnumArray IJsonValue<EnumArray>.FromBoolean<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -335,9 +320,7 @@ public readonly partial struct Schema
         /// <returns>An instance of this type, initialized from the value.</returns>
         /// <remarks>This will be EnumArray.Undefined if the type is not compatible.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static EnumArray FromString<TValue>(in TValue value)
-            where TValue : struct, IJsonString<TValue>
+        static EnumArray IJsonValue<EnumArray>.FromString<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -355,9 +338,7 @@ public readonly partial struct Schema
         /// <returns>An instance of this type, initialized from the value.</returns>
         /// <remarks>This will be EnumArray.Undefined if the type is not compatible.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static EnumArray FromNumber<TValue>(in TValue value)
-            where TValue : struct, IJsonNumber<TValue>
+        static EnumArray IJsonValue<EnumArray>.FromNumber<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -385,7 +366,7 @@ public readonly partial struct Schema
 
             if (value.ValueKind == JsonValueKind.Array)
             {
-                return new((ImmutableList<JsonAny>)value);
+                return new(value.AsImmutableList());
             }
 
             return Undefined;
@@ -399,9 +380,7 @@ public readonly partial struct Schema
         /// <returns>An instance of this type, initialized from the value.</returns>
         /// <remarks>This will be EnumArray.Undefined if the type is not compatible.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static EnumArray FromObject<TValue>(in TValue value)
-            where TValue : struct, IJsonObject<TValue>
+        static EnumArray IJsonValue<EnumArray>.FromObject<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {

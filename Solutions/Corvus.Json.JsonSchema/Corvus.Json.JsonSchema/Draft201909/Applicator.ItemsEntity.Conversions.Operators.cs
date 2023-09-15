@@ -33,7 +33,7 @@ public readonly partial struct Applicator
 
             return value.ValueKind switch
             {
-                JsonValueKind.Object => new((ImmutableDictionary<JsonPropertyName, JsonAny>)value),
+                JsonValueKind.Object => new(value.AsImmutableDictionary()),
                 JsonValueKind.True => new(true),
                 JsonValueKind.False => new(false),
                 _ => Undefined
@@ -77,7 +77,7 @@ public readonly partial struct Applicator
 
             return value.ValueKind switch
             {
-                JsonValueKind.Object => new((ImmutableDictionary<JsonPropertyName, JsonAny>)value),
+                JsonValueKind.Object => new(value.AsImmutableDictionary()),
                 JsonValueKind.True => new(true),
                 JsonValueKind.False => new(false),
                 _ => Undefined
@@ -121,7 +121,7 @@ public readonly partial struct Applicator
 
             return value.ValueKind switch
             {
-                JsonValueKind.Object => new((ImmutableDictionary<JsonPropertyName, JsonAny>)value),
+                JsonValueKind.Object => new(value.AsImmutableDictionary()),
                 JsonValueKind.True => new(true),
                 JsonValueKind.False => new(false),
                 _ => Undefined
@@ -165,7 +165,7 @@ public readonly partial struct Applicator
 
             return value.ValueKind switch
             {
-                JsonValueKind.Object => new((ImmutableDictionary<JsonPropertyName, JsonAny>)value),
+                JsonValueKind.Object => new(value.AsImmutableDictionary()),
                 JsonValueKind.True => new(true),
                 JsonValueKind.False => new(false),
                 _ => Undefined
@@ -209,7 +209,7 @@ public readonly partial struct Applicator
 
             return value.ValueKind switch
             {
-                JsonValueKind.Object => new((ImmutableDictionary<JsonPropertyName, JsonAny>)value),
+                JsonValueKind.Object => new(value.AsImmutableDictionary()),
                 JsonValueKind.True => new(true),
                 JsonValueKind.False => new(false),
                 _ => Undefined
@@ -253,7 +253,7 @@ public readonly partial struct Applicator
 
             return value.ValueKind switch
             {
-                JsonValueKind.Object => new((ImmutableDictionary<JsonPropertyName, JsonAny>)value),
+                JsonValueKind.Object => new(value.AsImmutableDictionary()),
                 JsonValueKind.True => new(true),
                 JsonValueKind.False => new(false),
                 _ => Undefined
@@ -297,7 +297,7 @@ public readonly partial struct Applicator
 
             return value.ValueKind switch
             {
-                JsonValueKind.Object => new((ImmutableDictionary<JsonPropertyName, JsonAny>)value),
+                JsonValueKind.Object => new(value.AsImmutableDictionary()),
                 JsonValueKind.True => new(true),
                 JsonValueKind.False => new(false),
                 _ => Undefined
@@ -341,7 +341,7 @@ public readonly partial struct Applicator
 
             return value.ValueKind switch
             {
-                JsonValueKind.Array => new((ImmutableList<JsonAny>)value),
+                JsonValueKind.Array => new(value.AsImmutableList()),
                 _ => Undefined
             };
         }

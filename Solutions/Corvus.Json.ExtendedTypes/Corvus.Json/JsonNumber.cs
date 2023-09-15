@@ -104,8 +104,7 @@ public readonly partial struct JsonNumber : IJsonNumber<JsonNumber>
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonString AsString
+    JsonString IJsonValue.AsString
     {
         get
         {
@@ -119,8 +118,7 @@ public readonly partial struct JsonNumber : IJsonNumber<JsonNumber>
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonBoolean AsBoolean
+    JsonBoolean IJsonValue.AsBoolean
     {
         get
         {
@@ -143,8 +141,7 @@ public readonly partial struct JsonNumber : IJsonNumber<JsonNumber>
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonObject AsObject
+    JsonObject IJsonValue.AsObject
     {
         get
         {
@@ -158,8 +155,7 @@ public readonly partial struct JsonNumber : IJsonNumber<JsonNumber>
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonArray AsArray
+    JsonArray IJsonValue.AsArray
     {
         get
         {
@@ -290,9 +286,7 @@ public readonly partial struct JsonNumber : IJsonNumber<JsonNumber>
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>The value will be undefined if it cannot be initialized with the specified instance.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static JsonNumber FromString<TValue>(in TValue value)
-        where TValue : struct, IJsonString<TValue>
+    static JsonNumber IJsonValue<JsonNumber>.FromString<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -310,9 +304,7 @@ public readonly partial struct JsonNumber : IJsonNumber<JsonNumber>
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>The value will be undefined if it cannot be initialized with the specified instance.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static JsonNumber FromBoolean<TValue>(in TValue value)
-        where TValue : struct, IJsonBoolean<TValue>
+    static JsonNumber IJsonValue<JsonNumber>.FromBoolean<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -329,7 +321,6 @@ public readonly partial struct JsonNumber : IJsonNumber<JsonNumber>
     /// <param name="value">The value from which to instantiate the instance.</param>
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>The value will be undefined if it cannot be initialized with the specified instance.</remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static JsonNumber FromNumber<TValue>(in TValue value)
         where TValue : struct, IJsonNumber<TValue>
     {
@@ -354,9 +345,7 @@ public readonly partial struct JsonNumber : IJsonNumber<JsonNumber>
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>The value will be undefined if it cannot be initialized with the specified instance.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static JsonNumber FromArray<TValue>(in TValue value)
-        where TValue : struct, IJsonArray<TValue>
+    static JsonNumber IJsonValue<JsonNumber>.FromArray<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -374,9 +363,7 @@ public readonly partial struct JsonNumber : IJsonNumber<JsonNumber>
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>The value will be undefined if it cannot be initialized with the specified instance.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static JsonNumber FromObject<TValue>(in TValue value)
-        where TValue : struct, IJsonObject<TValue>
+    static JsonNumber IJsonValue<JsonNumber>.FromObject<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {

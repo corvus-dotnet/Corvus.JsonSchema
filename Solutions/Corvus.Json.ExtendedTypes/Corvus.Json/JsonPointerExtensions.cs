@@ -210,7 +210,7 @@ public static class JsonPointerExtensions
                 ReadOnlySpan<char> component = decodedComponent[..decodedWritten];
                 if (current.ValueKind == JsonValueKind.Object)
                 {
-                    if (current.TryGetProperty(component, out JsonAny next))
+                    if (current.AsObject.TryGetProperty(component, out JsonAny next))
                     {
                         current = next;
                     }
@@ -247,7 +247,7 @@ public static class JsonPointerExtensions
                     if (int.TryParse(component, out int targetArrayIndex))
                     {
                         int arrayIndex = 0;
-                        JsonArrayEnumerator enumerator = current.EnumerateArray();
+                        JsonArrayEnumerator enumerator = current.AsArray.EnumerateArray();
                         while (enumerator.MoveNext() && arrayIndex < targetArrayIndex)
                         {
                             arrayIndex++;

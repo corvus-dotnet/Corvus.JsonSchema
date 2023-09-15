@@ -121,8 +121,7 @@ public readonly partial struct Applicator
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonString AsString
+    JsonString IJsonValue.AsString
     {
         get
         {
@@ -155,8 +154,7 @@ public readonly partial struct Applicator
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonNumber AsNumber
+    JsonNumber IJsonValue.AsNumber
     {
         get
         {
@@ -189,8 +187,7 @@ public readonly partial struct Applicator
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonArray AsArray
+    JsonArray IJsonValue.AsArray
     {
         get
         {
@@ -248,15 +245,6 @@ public readonly partial struct Applicator
 
             return JsonValueKind.Undefined;
         }
-    }
-
-    /// <summary>
-    /// Conversion from JsonAny.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator Applicator(JsonAny value)
-    {
-        return Applicator.FromAny(value);
     }
 
     /// <summary>
@@ -366,9 +354,7 @@ public readonly partial struct Applicator
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be Applicator.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static Applicator FromString<TValue>(in TValue value)
-        where TValue : struct, IJsonString<TValue>
+    static Applicator IJsonValue<Applicator>.FromString<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -386,9 +372,7 @@ public readonly partial struct Applicator
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be Applicator.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static Applicator FromNumber<TValue>(in TValue value)
-        where TValue : struct, IJsonNumber<TValue>
+    static Applicator IJsonValue<Applicator>.FromNumber<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -406,9 +390,7 @@ public readonly partial struct Applicator
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be Applicator.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static Applicator FromArray<TValue>(in TValue value)
-        where TValue : struct, IJsonArray<TValue>
+    static Applicator IJsonValue<Applicator>.FromArray<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -436,7 +418,7 @@ public readonly partial struct Applicator
 
         if (value.ValueKind == JsonValueKind.Object)
         {
-            return new((ImmutableDictionary<JsonPropertyName, JsonAny>)value);
+            return new(value.AsImmutableDictionary());
         }
 
         return Undefined;

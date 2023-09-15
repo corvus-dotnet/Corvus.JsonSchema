@@ -104,8 +104,7 @@ public readonly partial struct JsonBoolean : IJsonBoolean<JsonBoolean>
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonString AsString
+    JsonString IJsonValue.AsString
     {
         get
         {
@@ -128,8 +127,7 @@ public readonly partial struct JsonBoolean : IJsonBoolean<JsonBoolean>
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonNumber AsNumber
+    JsonNumber IJsonValue.AsNumber
     {
         get
         {
@@ -143,8 +141,7 @@ public readonly partial struct JsonBoolean : IJsonBoolean<JsonBoolean>
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonObject AsObject
+    JsonObject IJsonValue.AsObject
     {
         get
         {
@@ -158,8 +155,7 @@ public readonly partial struct JsonBoolean : IJsonBoolean<JsonBoolean>
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonArray AsArray
+    JsonArray IJsonValue.AsArray
     {
         get
         {
@@ -269,9 +265,7 @@ public readonly partial struct JsonBoolean : IJsonBoolean<JsonBoolean>
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>The value will be undefined if it cannot be initialized with the specified instance.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static JsonBoolean FromString<TValue>(in TValue value)
-        where TValue : struct, IJsonString<TValue>
+    static JsonBoolean IJsonValue<JsonBoolean>.FromString<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -318,9 +312,7 @@ public readonly partial struct JsonBoolean : IJsonBoolean<JsonBoolean>
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>The value will be undefined if it cannot be initialized with the specified instance.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static JsonBoolean FromNumber<TValue>(in TValue value)
-        where TValue : struct, IJsonNumber<TValue>
+    static JsonBoolean IJsonValue<JsonBoolean>.FromNumber<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -338,9 +330,7 @@ public readonly partial struct JsonBoolean : IJsonBoolean<JsonBoolean>
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>The value will be undefined if it cannot be initialized with the specified instance.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static JsonBoolean FromArray<TValue>(in TValue value)
-        where TValue : struct, IJsonArray<TValue>
+    static JsonBoolean IJsonValue<JsonBoolean>.FromArray<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -358,9 +348,7 @@ public readonly partial struct JsonBoolean : IJsonBoolean<JsonBoolean>
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>The value will be undefined if it cannot be initialized with the specified instance.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static JsonBoolean FromObject<TValue>(in TValue value)
-        where TValue : struct, IJsonObject<TValue>
+    static JsonBoolean IJsonValue<JsonBoolean>.FromObject<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {

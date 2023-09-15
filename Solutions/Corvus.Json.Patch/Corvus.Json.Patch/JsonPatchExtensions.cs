@@ -315,7 +315,7 @@ public static partial class JsonPatchExtensions
 
     private static bool TryApplyAdd(in JsonAny node, in JsonPatchDocument.PatchOperation patchOperation, out JsonAny result)
     {
-        patchOperation.TryGetProperty(JsonPatchDocument.AddEntity.PathUtf8JsonPropertyName, out JsonAny pathAny);
+        patchOperation.TryGetProperty(JsonPatchDocument.AddEntity.PathUtf8JsonPropertyName, out JsonString pathAny);
         patchOperation.TryGetProperty(JsonPatchDocument.AddEntity.ValueUtf8JsonPropertyName, out JsonAny value);
         string path = pathAny;
         return TryAdd(node, path, value, out result);
@@ -323,8 +323,8 @@ public static partial class JsonPatchExtensions
 
     private static bool TryApplyCopy(in JsonAny node, in JsonPatchDocument.PatchOperation patchOperation, out JsonAny result)
     {
-        patchOperation.TryGetProperty(JsonPatchDocument.Copy.FromValueUtf8JsonPropertyName, out JsonAny fromAny);
-        patchOperation.TryGetProperty(JsonPatchDocument.Copy.PathUtf8JsonPropertyName, out JsonAny pathAny);
+        patchOperation.TryGetProperty(JsonPatchDocument.Copy.FromValueUtf8JsonPropertyName, out JsonString fromAny);
+        patchOperation.TryGetProperty(JsonPatchDocument.Copy.PathUtf8JsonPropertyName, out JsonString pathAny);
         string from = fromAny;
         string path = pathAny;
 
@@ -352,8 +352,8 @@ public static partial class JsonPatchExtensions
 
     private static bool TryApplyMove(in JsonAny node, in JsonPatchDocument.PatchOperation patchOperation, out JsonAny result)
     {
-        patchOperation.TryGetProperty(JsonPatchDocument.Move.FromValueUtf8JsonPropertyName, out JsonAny fromAny);
-        patchOperation.TryGetProperty(JsonPatchDocument.Move.PathUtf8JsonPropertyName, out JsonAny pathAny);
+        patchOperation.TryGetProperty(JsonPatchDocument.Move.FromValueUtf8JsonPropertyName, out JsonString fromAny);
+        patchOperation.TryGetProperty(JsonPatchDocument.Move.PathUtf8JsonPropertyName, out JsonString pathAny);
         string from = fromAny;
         string path = pathAny;
 

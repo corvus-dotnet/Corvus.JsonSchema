@@ -108,8 +108,7 @@ public readonly partial struct ScenarioWithError
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonString AsString
+    JsonString IJsonValue.AsString
     {
         get
         {
@@ -123,8 +122,7 @@ public readonly partial struct ScenarioWithError
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonBoolean AsBoolean
+    JsonBoolean IJsonValue.AsBoolean
     {
         get
         {
@@ -138,8 +136,7 @@ public readonly partial struct ScenarioWithError
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonNumber AsNumber
+    JsonNumber IJsonValue.AsNumber
     {
         get
         {
@@ -172,8 +169,7 @@ public readonly partial struct ScenarioWithError
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonArray AsArray
+    JsonArray IJsonValue.AsArray
     {
         get
         {
@@ -226,15 +222,6 @@ public readonly partial struct ScenarioWithError
 
             return JsonValueKind.Undefined;
         }
-    }
-
-    /// <summary>
-    /// Conversion from JsonAny.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator ScenarioWithError(JsonAny value)
-    {
-        return ScenarioWithError.FromAny(value);
     }
 
     /// <summary>
@@ -313,9 +300,7 @@ public readonly partial struct ScenarioWithError
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be ScenarioWithError.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static ScenarioWithError FromBoolean<TValue>(in TValue value)
-        where TValue : struct, IJsonBoolean<TValue>
+    static ScenarioWithError IJsonValue<ScenarioWithError>.FromBoolean<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -333,9 +318,7 @@ public readonly partial struct ScenarioWithError
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be ScenarioWithError.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static ScenarioWithError FromString<TValue>(in TValue value)
-        where TValue : struct, IJsonString<TValue>
+    static ScenarioWithError IJsonValue<ScenarioWithError>.FromString<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -353,9 +336,7 @@ public readonly partial struct ScenarioWithError
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be ScenarioWithError.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static ScenarioWithError FromNumber<TValue>(in TValue value)
-        where TValue : struct, IJsonNumber<TValue>
+    static ScenarioWithError IJsonValue<ScenarioWithError>.FromNumber<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -373,9 +354,7 @@ public readonly partial struct ScenarioWithError
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be ScenarioWithError.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static ScenarioWithError FromArray<TValue>(in TValue value)
-        where TValue : struct, IJsonArray<TValue>
+    static ScenarioWithError IJsonValue<ScenarioWithError>.FromArray<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -403,7 +382,7 @@ public readonly partial struct ScenarioWithError
 
         if (value.ValueKind == JsonValueKind.Object)
         {
-            return new((ImmutableDictionary<JsonPropertyName, JsonAny>)value);
+            return new(value.AsImmutableDictionary());
         }
 
         return Undefined;

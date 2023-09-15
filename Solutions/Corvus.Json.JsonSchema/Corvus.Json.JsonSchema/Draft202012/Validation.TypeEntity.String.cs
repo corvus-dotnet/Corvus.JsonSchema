@@ -65,7 +65,7 @@ public readonly partial struct Validation
         /// <param name = "value">The value from which to convert.</param>
         public static implicit operator JsonString(TypeEntity value)
         {
-            return value.AsString;
+            return JsonString.FromString(value);
         }
 
         /// <summary>

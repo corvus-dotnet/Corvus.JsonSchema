@@ -70,7 +70,7 @@ public readonly partial struct Schema
 
             return value.ValueKind switch
             {
-                JsonValueKind.Array => new((ImmutableList<JsonAny>)value),
+                JsonValueKind.Array => new(value.AsImmutableList()),
                 _ => Undefined
             };
         }

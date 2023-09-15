@@ -62,7 +62,7 @@ public readonly partial struct Schema
         /// <param name = "value">The value from which to convert.</param>
         public static implicit operator JsonString(SimpleTypes value)
         {
-            return value.AsString;
+            return JsonString.FromString(value);
         }
 
         /// <summary>

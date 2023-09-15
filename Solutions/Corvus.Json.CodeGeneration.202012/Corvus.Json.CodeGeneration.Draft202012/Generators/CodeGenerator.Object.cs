@@ -250,9 +250,10 @@ namespace ");
             #line hidden
             
             #line 92 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Object.tt"
-            this.Write(" value)\r\n    {\r\n        return value.AsObject;\r\n    }\r\n\r\n    /// <summary>\r\n    /" +
-                    "// Conversion to JsonObject.\r\n    /// </summary>\r\n    /// <param name=\"value\">Th" +
-                    "e value from which to convert.</param>\r\n    public static implicit operator ");
+            this.Write(" value)\r\n    {\r\n        return JsonObject.FromObject(value);\r\n    }\r\n\r\n    /// <s" +
+                    "ummary>\r\n    /// Conversion to JsonObject.\r\n    /// </summary>\r\n    /// <param n" +
+                    "ame=\"value\">The value from which to convert.</param>\r\n    public static implicit" +
+                    " operator ");
             
             #line default
             #line hidden

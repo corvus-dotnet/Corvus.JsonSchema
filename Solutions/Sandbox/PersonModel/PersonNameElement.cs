@@ -127,8 +127,7 @@ public readonly partial struct PersonNameElement
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonBoolean AsBoolean
+    JsonBoolean IJsonValue.AsBoolean
     {
         get
         {
@@ -142,8 +141,7 @@ public readonly partial struct PersonNameElement
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonNumber AsNumber
+    JsonNumber IJsonValue.AsNumber
     {
         get
         {
@@ -157,8 +155,7 @@ public readonly partial struct PersonNameElement
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonObject AsObject
+    JsonObject IJsonValue.AsObject
     {
         get
         {
@@ -172,8 +169,7 @@ public readonly partial struct PersonNameElement
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonArray AsArray
+    JsonArray IJsonValue.AsArray
     {
         get
         {
@@ -226,15 +222,6 @@ public readonly partial struct PersonNameElement
 
             return JsonValueKind.Undefined;
         }
-    }
-
-    /// <summary>
-    /// Conversion from JsonAny.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator PersonNameElement(JsonAny value)
-    {
-        return PersonNameElement.FromAny(value);
     }
 
     /// <summary>
@@ -313,9 +300,7 @@ public readonly partial struct PersonNameElement
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be PersonNameElement.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static PersonNameElement FromBoolean<TValue>(in TValue value)
-        where TValue : struct, IJsonBoolean<TValue>
+    static PersonNameElement IJsonValue<PersonNameElement>.FromBoolean<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -357,9 +342,7 @@ public readonly partial struct PersonNameElement
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be PersonNameElement.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static PersonNameElement FromNumber<TValue>(in TValue value)
-        where TValue : struct, IJsonNumber<TValue>
+    static PersonNameElement IJsonValue<PersonNameElement>.FromNumber<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -377,9 +360,7 @@ public readonly partial struct PersonNameElement
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be PersonNameElement.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static PersonNameElement FromArray<TValue>(in TValue value)
-        where TValue : struct, IJsonArray<TValue>
+    static PersonNameElement IJsonValue<PersonNameElement>.FromArray<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -397,9 +378,7 @@ public readonly partial struct PersonNameElement
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be PersonNameElement.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static PersonNameElement FromObject<TValue>(in TValue value)
-        where TValue : struct, IJsonObject<TValue>
+    static PersonNameElement IJsonValue<PersonNameElement>.FromObject<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {

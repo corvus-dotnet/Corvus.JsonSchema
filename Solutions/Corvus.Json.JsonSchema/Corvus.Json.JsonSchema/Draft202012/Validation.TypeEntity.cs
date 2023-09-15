@@ -142,8 +142,7 @@ public readonly partial struct Validation
         }
 
         /// <inheritdoc/>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public JsonBoolean AsBoolean
+        JsonBoolean IJsonValue.AsBoolean
         {
             get
             {
@@ -157,8 +156,7 @@ public readonly partial struct Validation
         }
 
         /// <inheritdoc/>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public JsonNumber AsNumber
+        JsonNumber IJsonValue.AsNumber
         {
             get
             {
@@ -172,8 +170,7 @@ public readonly partial struct Validation
         }
 
         /// <inheritdoc/>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public JsonObject AsObject
+        JsonObject IJsonValue.AsObject
         {
             get
             {
@@ -253,15 +250,6 @@ public readonly partial struct Validation
         }
 
         /// <summary>
-        /// Conversion from JsonAny.
-        /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator TypeEntity(JsonAny value)
-        {
-            return TypeEntity.FromAny(value);
-        }
-
-        /// <summary>
         /// Conversion to JsonAny.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
@@ -338,9 +326,7 @@ public readonly partial struct Validation
         /// <returns>An instance of this type, initialized from the value.</returns>
         /// <remarks>This will be TypeEntity.Undefined if the type is not compatible.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static TypeEntity FromBoolean<TValue>(in TValue value)
-            where TValue : struct, IJsonBoolean<TValue>
+        static TypeEntity IJsonValue<TypeEntity>.FromBoolean<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -382,9 +368,7 @@ public readonly partial struct Validation
         /// <returns>An instance of this type, initialized from the value.</returns>
         /// <remarks>This will be TypeEntity.Undefined if the type is not compatible.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static TypeEntity FromNumber<TValue>(in TValue value)
-            where TValue : struct, IJsonNumber<TValue>
+        static TypeEntity IJsonValue<TypeEntity>.FromNumber<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -412,7 +396,7 @@ public readonly partial struct Validation
 
             if (value.ValueKind == JsonValueKind.Array)
             {
-                return new((ImmutableList<JsonAny>)value);
+                return new(value.AsImmutableList());
             }
 
             return Undefined;
@@ -426,9 +410,7 @@ public readonly partial struct Validation
         /// <returns>An instance of this type, initialized from the value.</returns>
         /// <remarks>This will be TypeEntity.Undefined if the type is not compatible.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static TypeEntity FromObject<TValue>(in TValue value)
-            where TValue : struct, IJsonObject<TValue>
+        static TypeEntity IJsonValue<TypeEntity>.FromObject<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {

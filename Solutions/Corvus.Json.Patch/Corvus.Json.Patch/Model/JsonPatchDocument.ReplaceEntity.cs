@@ -110,8 +110,7 @@ public readonly partial struct JsonPatchDocument
         }
 
         /// <inheritdoc/>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public JsonString AsString
+        JsonString IJsonValue.AsString
         {
             get
             {
@@ -125,8 +124,7 @@ public readonly partial struct JsonPatchDocument
         }
 
         /// <inheritdoc/>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public JsonBoolean AsBoolean
+        JsonBoolean IJsonValue.AsBoolean
         {
             get
             {
@@ -140,8 +138,7 @@ public readonly partial struct JsonPatchDocument
         }
 
         /// <inheritdoc/>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public JsonNumber AsNumber
+        JsonNumber IJsonValue.AsNumber
         {
             get
             {
@@ -174,8 +171,7 @@ public readonly partial struct JsonPatchDocument
         }
 
         /// <inheritdoc/>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public JsonArray AsArray
+        JsonArray IJsonValue.AsArray
         {
             get
             {
@@ -228,15 +224,6 @@ public readonly partial struct JsonPatchDocument
 
                 return JsonValueKind.Undefined;
             }
-        }
-
-        /// <summary>
-        /// Conversion from JsonAny.
-        /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator ReplaceEntity(JsonAny value)
-        {
-            return ReplaceEntity.FromAny(value);
         }
 
         /// <summary>
@@ -315,9 +302,7 @@ public readonly partial struct JsonPatchDocument
         /// <returns>An instance of this type, initialized from the value.</returns>
         /// <remarks>This will be ReplaceEntity.Undefined if the type is not compatible.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static ReplaceEntity FromBoolean<TValue>(in TValue value)
-            where TValue : struct, IJsonBoolean<TValue>
+        static ReplaceEntity IJsonValue<ReplaceEntity>.FromBoolean<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -335,9 +320,7 @@ public readonly partial struct JsonPatchDocument
         /// <returns>An instance of this type, initialized from the value.</returns>
         /// <remarks>This will be ReplaceEntity.Undefined if the type is not compatible.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static ReplaceEntity FromString<TValue>(in TValue value)
-            where TValue : struct, IJsonString<TValue>
+        static ReplaceEntity IJsonValue<ReplaceEntity>.FromString<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -355,9 +338,7 @@ public readonly partial struct JsonPatchDocument
         /// <returns>An instance of this type, initialized from the value.</returns>
         /// <remarks>This will be ReplaceEntity.Undefined if the type is not compatible.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static ReplaceEntity FromNumber<TValue>(in TValue value)
-            where TValue : struct, IJsonNumber<TValue>
+        static ReplaceEntity IJsonValue<ReplaceEntity>.FromNumber<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -375,9 +356,7 @@ public readonly partial struct JsonPatchDocument
         /// <returns>An instance of this type, initialized from the value.</returns>
         /// <remarks>This will be ReplaceEntity.Undefined if the type is not compatible.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static ReplaceEntity FromArray<TValue>(in TValue value)
-            where TValue : struct, IJsonArray<TValue>
+        static ReplaceEntity IJsonValue<ReplaceEntity>.FromArray<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -405,7 +384,7 @@ public readonly partial struct JsonPatchDocument
 
             if (value.ValueKind == JsonValueKind.Object)
             {
-                return new((ImmutableDictionary<JsonPropertyName, JsonAny>)value);
+                return new(value.AsImmutableDictionary());
             }
 
             return Undefined;

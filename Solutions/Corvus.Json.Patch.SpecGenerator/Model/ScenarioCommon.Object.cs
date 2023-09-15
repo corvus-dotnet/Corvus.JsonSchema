@@ -62,7 +62,7 @@ public readonly partial struct ScenarioCommon : IJsonObject<ScenarioCommon>
     /// <param name = "value">The value from which to convert.</param>
     public static implicit operator JsonObject(ScenarioCommon value)
     {
-        return value.AsObject;
+        return JsonObject.FromObject(value);
     }
 
     /// <summary>

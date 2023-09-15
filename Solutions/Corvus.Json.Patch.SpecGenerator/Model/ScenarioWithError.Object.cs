@@ -62,7 +62,7 @@ public readonly partial struct ScenarioWithError : IJsonObject<ScenarioWithError
     /// <param name = "value">The value from which to convert.</param>
     public static implicit operator JsonObject(ScenarioWithError value)
     {
-        return value.AsObject;
+        return JsonObject.FromObject(value);
     }
 
     /// <summary>

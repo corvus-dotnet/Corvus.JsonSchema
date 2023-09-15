@@ -983,262 +983,332 @@ namespace ");
             #line hidden
             
             #line 276 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
-            this.Write("    [EditorBrowsable(EditorBrowsableState.Never)]\r\n");
+            this.Write("    JsonString IJsonValue.AsString\r\n");
             
             #line default
             #line hidden
             
             #line 277 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   } 
+    else
+    {
             
             #line default
             #line hidden
             
-            #line 278 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
-            this.Write("    public JsonString AsString\r\n    {\r\n        get\r\n        {\r\n            if ((t" +
-                    "his.backing & Backing.JsonElement) != 0)\r\n            {\r\n                return " +
-                    "new(this.jsonElementBacking);\r\n            }\r\n");
+            #line 280 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write("    public JsonString AsString\r\n");
             
             #line default
             #line hidden
             
-            #line 286 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 281 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+  }
+            
+            #line default
+            #line hidden
+            
+            #line 282 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write("    {\r\n        get\r\n        {\r\n            if ((this.backing & Backing.JsonElemen" +
+                    "t) != 0)\r\n            {\r\n                return new(this.jsonElementBacking);\r\n " +
+                    "           }\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 289 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   if(IsImplicitString || IsNotImplicitType)
     { 
             
             #line default
             #line hidden
             
-            #line 288 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 291 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write("\r\n            if ((this.backing & Backing.String) != 0)\r\n            {\r\n         " +
                     "       return new(this.stringBacking);\r\n            }\r\n");
             
             #line default
             #line hidden
             
-            #line 293 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 296 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 294 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 297 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write("\r\n            throw new InvalidOperationException();\r\n        }\r\n    }\r\n\r\n    ///" +
                     " <inheritdoc/>\r\n");
             
             #line default
             #line hidden
             
-            #line 300 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 303 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   if(!IsImplicitBoolean)
     { 
             
             #line default
             #line hidden
             
-            #line 302 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
-            this.Write("    [EditorBrowsable(EditorBrowsableState.Never)]\r\n");
+            #line 305 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write("    JsonBoolean IJsonValue.AsBoolean\r\n");
             
             #line default
             #line hidden
             
-            #line 303 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 306 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   } 
+    else
+    {
             
             #line default
             #line hidden
             
-            #line 304 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
-            this.Write("    public JsonBoolean AsBoolean\r\n    {\r\n        get\r\n        {\r\n            if (" +
-                    "(this.backing & Backing.JsonElement) != 0)\r\n            {\r\n                retur" +
-                    "n new(this.jsonElementBacking);\r\n            }\r\n");
+            #line 309 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write("    public JsonBoolean AsBoolean\r\n");
             
             #line default
             #line hidden
             
-            #line 312 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 310 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+  }
+            
+            #line default
+            #line hidden
+            
+            #line 311 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write("    {\r\n        get\r\n        {\r\n            if ((this.backing & Backing.JsonElemen" +
+                    "t) != 0)\r\n            {\r\n                return new(this.jsonElementBacking);\r\n " +
+                    "           }\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 318 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   if(IsImplicitBoolean || IsNotImplicitType)
     { 
             
             #line default
             #line hidden
             
-            #line 314 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 320 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write("\r\n            if ((this.backing & Backing.Bool) != 0)\r\n            {\r\n           " +
                     "     return new(this.boolBacking);\r\n            }\r\n");
             
             #line default
             #line hidden
             
-            #line 319 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 325 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 320 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 326 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write("\r\n            throw new InvalidOperationException();\r\n        }\r\n    }\r\n\r\n    ///" +
                     " <inheritdoc/>\r\n");
             
             #line default
             #line hidden
             
-            #line 326 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 332 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   if(!IsImplicitNumber)
     { 
             
             #line default
             #line hidden
             
-            #line 328 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
-            this.Write("    [EditorBrowsable(EditorBrowsableState.Never)]\r\n");
+            #line 334 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write("    JsonNumber IJsonValue.AsNumber\r\n");
             
             #line default
             #line hidden
             
-            #line 329 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 335 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   } 
-            
-            #line default
-            #line hidden
-            
-            #line 330 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
-            this.Write("    public JsonNumber AsNumber\r\n    {\r\n        get\r\n        {\r\n            if ((t" +
-                    "his.backing & Backing.JsonElement) != 0)\r\n            {\r\n                return " +
-                    "new(this.jsonElementBacking);\r\n            }\r\n");
+    else
+    {
             
             #line default
             #line hidden
             
             #line 338 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write("    public JsonNumber AsNumber\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 339 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+  }
+            
+            #line default
+            #line hidden
+            
+            #line 340 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write("    {\r\n        get\r\n        {\r\n            if ((this.backing & Backing.JsonElemen" +
+                    "t) != 0)\r\n            {\r\n                return new(this.jsonElementBacking);\r\n " +
+                    "           }\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 347 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   if(IsImplicitNumber || IsNotImplicitType)
     { 
             
             #line default
             #line hidden
             
-            #line 340 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 349 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write("\r\n            if ((this.backing & Backing.Number) != 0)\r\n            {\r\n         " +
                     "       return new(this.numberBacking);\r\n            }\r\n");
             
             #line default
             #line hidden
             
-            #line 345 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 354 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 346 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 355 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write("\r\n            throw new InvalidOperationException();\r\n        }\r\n    }\r\n\r\n    ///" +
                     " <inheritdoc/>\r\n");
             
             #line default
             #line hidden
             
-            #line 352 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 361 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   if(!IsImplicitObject)
     { 
             
             #line default
             #line hidden
             
-            #line 354 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
-            this.Write("    [EditorBrowsable(EditorBrowsableState.Never)]\r\n");
-            
-            #line default
-            #line hidden
-            
-            #line 355 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
-  } 
-            
-            #line default
-            #line hidden
-            
-            #line 356 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
-            this.Write("    public JsonObject AsObject\r\n    {\r\n        get\r\n        {\r\n            if ((t" +
-                    "his.backing & Backing.JsonElement) != 0)\r\n            {\r\n                return " +
-                    "new(this.jsonElementBacking);\r\n            }\r\n");
+            #line 363 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write("    JsonObject IJsonValue.AsObject\r\n");
             
             #line default
             #line hidden
             
             #line 364 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+  } 
+    else
+    {
+            
+            #line default
+            #line hidden
+            
+            #line 367 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write("    public JsonObject AsObject\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 368 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+  }
+            
+            #line default
+            #line hidden
+            
+            #line 369 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write("    {\r\n        get\r\n        {\r\n            if ((this.backing & Backing.JsonElemen" +
+                    "t) != 0)\r\n            {\r\n                return new(this.jsonElementBacking);\r\n " +
+                    "           }\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 376 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   if(IsImplicitObject || IsNotImplicitType)
     { 
             
             #line default
             #line hidden
             
-            #line 366 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 378 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write("\r\n            if ((this.backing & Backing.Object) != 0)\r\n            {\r\n         " +
                     "       return new(this.objectBacking);\r\n            }\r\n");
             
             #line default
             #line hidden
             
-            #line 371 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 383 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 372 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 384 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write("\r\n            throw new InvalidOperationException();\r\n        }\r\n    }\r\n\r\n    ///" +
                     " <inheritdoc/>\r\n");
             
             #line default
             #line hidden
             
-            #line 378 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 390 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   if(!IsImplicitArray)
     { 
             
             #line default
             #line hidden
             
-            #line 380 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
-            this.Write("    [EditorBrowsable(EditorBrowsableState.Never)]\r\n");
+            #line 392 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write("    JsonArray IJsonValue.AsArray\r\n");
             
             #line default
             #line hidden
             
-            #line 381 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 393 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   } 
+    else
+    {
             
             #line default
             #line hidden
             
-            #line 382 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
-            this.Write("    public JsonArray AsArray\r\n    {\r\n        get\r\n        {\r\n            if ((thi" +
-                    "s.backing & Backing.JsonElement) != 0)\r\n            {\r\n                return ne" +
-                    "w(this.jsonElementBacking);\r\n            }\r\n");
+            #line 396 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write("    public JsonArray AsArray\r\n");
             
             #line default
             #line hidden
             
-            #line 390 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 397 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+  }
+            
+            #line default
+            #line hidden
+            
+            #line 398 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write("    {\r\n        get\r\n        {\r\n            if ((this.backing & Backing.JsonElemen" +
+                    "t) != 0)\r\n            {\r\n                return new(this.jsonElementBacking);\r\n " +
+                    "           }\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 405 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   if(IsImplicitArray || IsNotImplicitType)
     { 
             
             #line default
             #line hidden
             
-            #line 392 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 407 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write("\r\n            if ((this.backing & Backing.Array) != 0)\r\n            {\r\n          " +
                     "      return new(this.arrayBacking);\r\n            }\r\n");
             
             #line default
             #line hidden
             
-            #line 397 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 412 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 398 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 413 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(@"
             throw new InvalidOperationException();
         }
@@ -1276,21 +1346,21 @@ namespace ");
             #line default
             #line hidden
             
-            #line 430 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 445 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   if(IsImplicitString || IsNotImplicitType)
     { 
             
             #line default
             #line hidden
             
-            #line 432 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 447 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write("\r\n            if ((this.backing & Backing.String) != 0)\r\n            {\r\n         " +
                     "       return JsonValueKind.String;\r\n            }\r\n");
             
             #line default
             #line hidden
             
-            #line 437 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 452 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   }
     if(IsImplicitBoolean || IsNotImplicitType)
     { 
@@ -1298,7 +1368,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 440 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 455 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write("\r\n            if ((this.backing & Backing.Bool) != 0)\r\n            {\r\n           " +
                     "     return this.boolBacking ? JsonValueKind.True : JsonValueKind.False;\r\n      " +
                     "      }\r\n");
@@ -1306,7 +1376,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 445 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 460 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   }
     if(IsImplicitNumber || IsNotImplicitType)
     { 
@@ -1314,14 +1384,14 @@ namespace ");
             #line default
             #line hidden
             
-            #line 448 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 463 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write("\r\n            if ((this.backing & Backing.Number) != 0)\r\n            {\r\n         " +
                     "       return JsonValueKind.Number;\r\n            }\r\n");
             
             #line default
             #line hidden
             
-            #line 453 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 468 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   }
     if(IsImplicitArray || IsNotImplicitType)
     { 
@@ -1329,14 +1399,14 @@ namespace ");
             #line default
             #line hidden
             
-            #line 456 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 471 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write("\r\n            if ((this.backing & Backing.Array) != 0)\r\n            {\r\n          " +
                     "      return JsonValueKind.Array;\r\n            }\r\n");
             
             #line default
             #line hidden
             
-            #line 461 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 476 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   }
     if(IsImplicitObject || IsNotImplicitType)
     { 
@@ -1344,20 +1414,20 @@ namespace ");
             #line default
             #line hidden
             
-            #line 464 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 479 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write("\r\n            if ((this.backing & Backing.Object) != 0)\r\n            {\r\n         " +
                     "       return JsonValueKind.Object;\r\n            }\r\n");
             
             #line default
             #line hidden
             
-            #line 469 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 484 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 470 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 485 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(@"
             if ((this.backing & Backing.Null) != 0)
             {
@@ -1366,37 +1436,6 @@ namespace ");
 
             return JsonValueKind.Undefined;
         }
-    }
-
-    /// <summary>
-    /// Conversion from JsonAny.
-    /// </summary>
-    /// <param name=""value"">The value from which to convert.</param>
-    public static implicit operator ");
-            
-            #line default
-            #line hidden
-            
-            #line 484 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
-            
-            #line default
-            #line hidden
-            
-            #line 484 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
-            this.Write("(JsonAny value)\r\n    {\r\n        return ");
-            
-            #line default
-            #line hidden
-            
-            #line 486 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
-            
-            #line default
-            #line hidden
-            
-            #line 486 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
-            this.Write(@".FromAny(value);
     }
 
     /// <summary>
@@ -1409,13 +1448,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 494 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 500 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 494 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 500 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(@" value)
     {
         return value.AsAny;
@@ -1432,25 +1471,25 @@ namespace ");
             #line default
             #line hidden
             
-            #line 505 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 511 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 505 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 511 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(" left, in ");
             
             #line default
             #line hidden
             
-            #line 505 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 511 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 505 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 511 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(@" right)
     {
         return left.Equals(right);
@@ -1467,25 +1506,25 @@ namespace ");
             #line default
             #line hidden
             
-            #line 516 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 522 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 516 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 522 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(" left, in ");
             
             #line default
             #line hidden
             
-            #line 516 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 522 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 516 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 522 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(@" right)
     {
         return !left.Equals(right);
@@ -1505,13 +1544,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 530 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 536 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 530 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 536 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(" FromAny(in JsonAny value)\r\n    {\r\n        if (value.HasJsonElementBacking)\r\n    " +
                     "    {\r\n            return new(value.AsJsonElement);\r\n        }\r\n\r\n        JsonVa" +
                     "lueKind valueKind = value.ValueKind;\r\n        return valueKind switch\r\n        {" +
@@ -1520,20 +1559,20 @@ namespace ");
             #line default
             #line hidden
             
-            #line 540 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 546 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   if(IsImplicitString || IsNotImplicitType)
     { 
             
             #line default
             #line hidden
             
-            #line 542 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 548 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write("            JsonValueKind.String => new((string)value.AsString),\r\n");
             
             #line default
             #line hidden
             
-            #line 543 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 549 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   }
     if(IsImplicitBoolean || IsNotImplicitType)
     { 
@@ -1541,14 +1580,14 @@ namespace ");
             #line default
             #line hidden
             
-            #line 546 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 552 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write("            JsonValueKind.True => new(true),\r\n            JsonValueKind.False => " +
                     "new(false),\r\n");
             
             #line default
             #line hidden
             
-            #line 548 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 554 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   }
     if(IsImplicitNumber || IsNotImplicitType)
     { 
@@ -1556,13 +1595,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 551 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 557 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write("            JsonValueKind.Number => new((double)value.AsNumber),\r\n");
             
             #line default
             #line hidden
             
-            #line 552 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 558 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   }
     if(IsImplicitArray || IsNotImplicitType)
     { 
@@ -1570,13 +1609,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 555 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 561 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write("            JsonValueKind.Array => new(value.AsArray.AsImmutableList()),\r\n");
             
             #line default
             #line hidden
             
-            #line 556 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 562 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   }
     if(IsImplicitObject || IsNotImplicitType)
     { 
@@ -1584,20 +1623,20 @@ namespace ");
             #line default
             #line hidden
             
-            #line 559 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 565 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write("            JsonValueKind.Object => new(value.AsObject.AsImmutableDictionary()),\r" +
                     "\n\r\n");
             
             #line default
             #line hidden
             
-            #line 561 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 567 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 562 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 568 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(@"            JsonValueKind.Null => Null,
             _ => Undefined,
         };
@@ -1614,13 +1653,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 573 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 579 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 573 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 579 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(@" FromJson(in JsonElement value)
     {
         return new(value);
@@ -1637,59 +1676,97 @@ namespace ");
             #line default
             #line hidden
             
-            #line 584 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 590 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 584 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 590 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(".Undefined if the type is not compatible.</remarks>\r\n    [MethodImpl(MethodImplOp" +
                     "tions.AggressiveInlining)]\r\n");
             
             #line default
             #line hidden
             
-            #line 586 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 592 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   if(!IsImplicitBoolean)
     { 
             
             #line default
             #line hidden
             
-            #line 588 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
-            this.Write("    [EditorBrowsable(EditorBrowsableState.Never)]\r\n");
+            #line 594 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write("    static ");
             
             #line default
             #line hidden
             
-            #line 589 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
-  } 
-            
-            #line default
-            #line hidden
-            
-            #line 590 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
-            this.Write("    public static ");
-            
-            #line default
-            #line hidden
-            
-            #line 590 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 594 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 590 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
-            this.Write(" FromBoolean<TValue>(in TValue value)\r\n        where TValue : struct, IJsonBoolea" +
-                    "n<TValue>\r\n    {\r\n        if (value.HasJsonElementBacking)\r\n        {\r\n         " +
-                    "   return new(value.AsJsonElement);\r\n        }\r\n");
+            #line 594 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write(" IJsonValue<");
             
             #line default
             #line hidden
             
-            #line 597 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 594 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 594 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write(">.FromBoolean<TValue>(in TValue value)\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 595 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+  }
+    else
+    {
+            
+            #line default
+            #line hidden
+            
+            #line 598 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write("    public static ");
+            
+            #line default
+            #line hidden
+            
+            #line 598 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 598 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write(" FromBoolean<TValue>(in TValue value)\r\n        where TValue : struct, IJsonBoolea" +
+                    "n<TValue>\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 600 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+  } 
+            
+            #line default
+            #line hidden
+            
+            #line 601 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write("    {\r\n        if (value.HasJsonElementBacking)\r\n        {\r\n            return ne" +
+                    "w(value.AsJsonElement);\r\n        }\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 606 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
 
     if(IsImplicitBoolean || IsNotImplicitType)
     { 
@@ -1697,7 +1774,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 600 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 609 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write("\r\n        if (value.ValueKind == JsonValueKind.True)\r\n        {\r\n            retu" +
                     "rn new(true);\r\n        }\r\n\r\n        if (value.ValueKind == JsonValueKind.False)\r" +
                     "\n        {\r\n            return new(false);\r\n        }\r\n");
@@ -1705,13 +1782,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 610 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 619 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 611 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 620 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(@"
         return Undefined;
     }
@@ -1727,79 +1804,117 @@ namespace ");
             #line default
             #line hidden
             
-            #line 621 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 630 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 621 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 630 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(".Undefined if the type is not compatible.</remarks>\r\n    [MethodImpl(MethodImplOp" +
                     "tions.AggressiveInlining)]\r\n");
             
             #line default
             #line hidden
             
-            #line 623 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 632 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   if(!IsImplicitString)
     { 
             
             #line default
             #line hidden
             
-            #line 625 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
-            this.Write("    [EditorBrowsable(EditorBrowsableState.Never)]\r\n");
-            
-            #line default
-            #line hidden
-            
-            #line 626 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
-  } 
-            
-            #line default
-            #line hidden
-            
-            #line 627 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
-            this.Write("    public static ");
-            
-            #line default
-            #line hidden
-            
-            #line 627 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
-            
-            #line default
-            #line hidden
-            
-            #line 627 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
-            this.Write(" FromString<TValue>(in TValue value)\r\n        where TValue : struct, IJsonString<" +
-                    "TValue>\r\n    {\r\n        if (value.HasJsonElementBacking)\r\n        {\r\n           " +
-                    " return new(value.AsJsonElement);\r\n        }\r\n");
+            #line 634 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write("    static ");
             
             #line default
             #line hidden
             
             #line 634 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 634 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write(" IJsonValue<");
+            
+            #line default
+            #line hidden
+            
+            #line 634 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 634 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write(">.FromString<TValue>(in TValue value)\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 635 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+  }
+    else
+    {
+            
+            #line default
+            #line hidden
+            
+            #line 638 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write("    public static ");
+            
+            #line default
+            #line hidden
+            
+            #line 638 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 638 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write(" FromString<TValue>(in TValue value)\r\n        where TValue : struct, IJsonString<" +
+                    "TValue>\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 640 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+  } 
+            
+            #line default
+            #line hidden
+            
+            #line 641 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write("    {\r\n        if (value.HasJsonElementBacking)\r\n        {\r\n            return ne" +
+                    "w(value.AsJsonElement);\r\n        }\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 646 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   if(IsImplicitString || IsNotImplicitType)
     { 
             
             #line default
             #line hidden
             
-            #line 636 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 648 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write("\r\n        if (value.ValueKind == JsonValueKind.String)\r\n        {\r\n            re" +
                     "turn new((string)value);\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 641 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 653 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 642 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 654 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(@"
         return Undefined;
     }
@@ -1815,79 +1930,117 @@ namespace ");
             #line default
             #line hidden
             
-            #line 652 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 664 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 652 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 664 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(".Undefined if the type is not compatible.</remarks>\r\n    [MethodImpl(MethodImplOp" +
                     "tions.AggressiveInlining)]\r\n");
             
             #line default
             #line hidden
             
-            #line 654 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 666 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   if(!IsImplicitNumber)
     { 
             
             #line default
             #line hidden
             
-            #line 656 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
-            this.Write("    [EditorBrowsable(EditorBrowsableState.Never)]\r\n");
+            #line 668 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write("    static ");
             
             #line default
             #line hidden
             
-            #line 657 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
-  } 
-            
-            #line default
-            #line hidden
-            
-            #line 658 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
-            this.Write("    public static ");
-            
-            #line default
-            #line hidden
-            
-            #line 658 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 668 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 658 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
-            this.Write(" FromNumber<TValue>(in TValue value)\r\n        where TValue : struct, IJsonNumber<" +
-                    "TValue>\r\n    {\r\n        if (value.HasJsonElementBacking)\r\n        {\r\n           " +
-                    " return new(value.AsJsonElement);\r\n        }\r\n");
+            #line 668 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write(" IJsonValue<");
             
             #line default
             #line hidden
             
-            #line 665 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 668 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 668 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write(">.FromNumber<TValue>(in TValue value)\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 669 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+  }
+    else
+    {
+            
+            #line default
+            #line hidden
+            
+            #line 672 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write("    public static ");
+            
+            #line default
+            #line hidden
+            
+            #line 672 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 672 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write(" FromNumber<TValue>(in TValue value)\r\n        where TValue : struct, IJsonNumber<" +
+                    "TValue>\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 674 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+  } 
+            
+            #line default
+            #line hidden
+            
+            #line 675 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write("    {\r\n        if (value.HasJsonElementBacking)\r\n        {\r\n            return ne" +
+                    "w(value.AsJsonElement);\r\n        }\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 680 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   if(IsImplicitNumber || IsNotImplicitType)
     { 
             
             #line default
             #line hidden
             
-            #line 667 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 682 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write("\r\n        if (value.ValueKind == JsonValueKind.Number)\r\n        {\r\n            re" +
                     "turn new((double)value);\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 672 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 687 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 673 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 688 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(@"
         return Undefined;
     }
@@ -1903,79 +2056,117 @@ namespace ");
             #line default
             #line hidden
             
-            #line 683 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 698 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 683 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 698 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(".Undefined if the type is not compatible.</remarks>\r\n    [MethodImpl(MethodImplOp" +
                     "tions.AggressiveInlining)]\r\n");
             
             #line default
             #line hidden
             
-            #line 685 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 700 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   if(!IsImplicitArray)
     { 
             
             #line default
             #line hidden
             
-            #line 687 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
-            this.Write("    [EditorBrowsable(EditorBrowsableState.Never)]\r\n");
+            #line 702 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write("    static ");
             
             #line default
             #line hidden
             
-            #line 688 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
-  } 
-            
-            #line default
-            #line hidden
-            
-            #line 689 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
-            this.Write("    public static ");
-            
-            #line default
-            #line hidden
-            
-            #line 689 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 702 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 689 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
-            this.Write(" FromArray<TValue>(in TValue value)\r\n        where TValue : struct, IJsonArray<TV" +
-                    "alue>\r\n    {\r\n        if (value.HasJsonElementBacking)\r\n        {\r\n            r" +
-                    "eturn new(value.AsJsonElement);\r\n        }\r\n");
+            #line 702 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write(" IJsonValue<");
             
             #line default
             #line hidden
             
-            #line 696 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 702 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 702 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write(">.FromArray<TValue>(in TValue value)\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 703 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+  }
+    else
+    {
+            
+            #line default
+            #line hidden
+            
+            #line 706 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write("    public static ");
+            
+            #line default
+            #line hidden
+            
+            #line 706 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 706 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write(" FromArray<TValue>(in TValue value)\r\n        where TValue : struct, IJsonArray<TV" +
+                    "alue>\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 708 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+  } 
+            
+            #line default
+            #line hidden
+            
+            #line 709 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write("    {\r\n        if (value.HasJsonElementBacking)\r\n        {\r\n            return ne" +
+                    "w(value.AsJsonElement);\r\n        }\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 714 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   if(IsImplicitArray || IsNotImplicitType)
     { 
             
             #line default
             #line hidden
             
-            #line 698 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 716 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write("\r\n        if (value.ValueKind == JsonValueKind.Array)\r\n        {\r\n            ret" +
-                    "urn new((ImmutableList<JsonAny>)value);\r\n        }\r\n");
+                    "urn new(value.AsImmutableList());\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 703 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 721 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 704 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 722 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(@"
         return Undefined;
     }
@@ -1991,92 +2182,130 @@ namespace ");
             #line default
             #line hidden
             
-            #line 714 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 732 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 714 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 732 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(".Undefined if the type is not compatible.</remarks>\r\n    [MethodImpl(MethodImplOp" +
                     "tions.AggressiveInlining)]\r\n");
             
             #line default
             #line hidden
             
-            #line 716 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 734 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   if(!IsImplicitObject)
     { 
             
             #line default
             #line hidden
             
-            #line 718 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
-            this.Write("    [EditorBrowsable(EditorBrowsableState.Never)]\r\n");
+            #line 736 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write("    static ");
             
             #line default
             #line hidden
             
-            #line 719 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
-  } 
-            
-            #line default
-            #line hidden
-            
-            #line 720 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
-            this.Write("    public static ");
-            
-            #line default
-            #line hidden
-            
-            #line 720 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 736 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 720 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
-            this.Write(" FromObject<TValue>(in TValue value)\r\n        where TValue : struct, IJsonObject<" +
-                    "TValue>\r\n    {\r\n        if (value.HasJsonElementBacking)\r\n        {\r\n           " +
-                    " return new(value.AsJsonElement);\r\n        }\r\n");
+            #line 736 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write(" IJsonValue<");
             
             #line default
             #line hidden
             
-            #line 727 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 736 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 736 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write(">.FromObject<TValue>(in TValue value)\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 737 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+  }
+    else
+    {
+            
+            #line default
+            #line hidden
+            
+            #line 740 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write("    public static ");
+            
+            #line default
+            #line hidden
+            
+            #line 740 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 740 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write(" FromObject<TValue>(in TValue value)\r\n        where TValue : struct, IJsonObject<" +
+                    "TValue>\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 742 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+  } 
+            
+            #line default
+            #line hidden
+            
+            #line 743 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            this.Write("    {\r\n        if (value.HasJsonElementBacking)\r\n        {\r\n            return ne" +
+                    "w(value.AsJsonElement);\r\n        }\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 748 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   if(IsImplicitObject || IsNotImplicitType)
     { 
             
             #line default
             #line hidden
             
-            #line 729 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 750 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write("\r\n        if (value.ValueKind == JsonValueKind.Object)\r\n        {\r\n            re" +
-                    "turn new((ImmutableDictionary<JsonPropertyName, JsonAny>)value);\r\n        }\r\n");
+                    "turn new(value.AsImmutableDictionary());\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 734 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 755 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 735 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 756 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write("\r\n        return Undefined;\r\n    }\r\n\r\n    /// <summary>\r\n    /// Parses a JSON st" +
                     "ring into a ");
             
             #line default
             #line hidden
             
-            #line 740 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 761 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 740 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 761 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(".\r\n    /// </summary>\r\n    /// <param name=\"json\">The json string to parse.</para" +
                     "m>\r\n    /// <param name=\"options\">The (optional) JsonDocumentOptions.</param>\r\n " +
                     "   /// <returns>A <see cref=\"");
@@ -2084,51 +2313,51 @@ namespace ");
             #line default
             #line hidden
             
-            #line 744 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 765 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 744 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 765 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write("\"/> instance built from the JSON string.</returns>\r\n    public static ");
             
             #line default
             #line hidden
             
-            #line 745 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 766 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 745 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 766 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(" Parse(string json, JsonDocumentOptions options = default)\r\n    {\r\n        using " +
                     "var jsonDocument = JsonDocument.Parse(json, options);\r\n        return new ");
             
             #line default
             #line hidden
             
-            #line 748 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 769 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 748 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 769 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write("(jsonDocument.RootElement.Clone());\r\n    }\r\n\r\n    /// <summary>\r\n    /// Parses a" +
                     " JSON string into a ");
             
             #line default
             #line hidden
             
-            #line 752 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 773 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 752 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 773 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(".\r\n    /// </summary>\r\n    /// <param name=\"utf8Json\">The json string to parse.</" +
                     "param>\r\n    /// <param name=\"options\">The (optional) JsonDocumentOptions.</param" +
                     ">\r\n    /// <returns>A <see cref=\"");
@@ -2136,25 +2365,25 @@ namespace ");
             #line default
             #line hidden
             
-            #line 756 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 777 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 756 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 777 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write("\"/> instance built from the JSON string.</returns>\r\n    public static ");
             
             #line default
             #line hidden
             
-            #line 757 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 778 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 757 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 778 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(" Parse(Stream utf8Json, JsonDocumentOptions options = default)\r\n    {\r\n        us" +
                     "ing var jsonDocument = JsonDocument.Parse(utf8Json, options);\r\n        return ne" +
                     "w ");
@@ -2162,26 +2391,26 @@ namespace ");
             #line default
             #line hidden
             
-            #line 760 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 781 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 760 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 781 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write("(jsonDocument.RootElement.Clone());\r\n    }\r\n\r\n    /// <summary>\r\n    /// Parses a" +
                     " JSON string into a ");
             
             #line default
             #line hidden
             
-            #line 764 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 785 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 764 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 785 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(".\r\n    /// </summary>\r\n    /// <param name=\"utf8Json\">The json string to parse.</" +
                     "param>\r\n    /// <param name=\"options\">The (optional) JsonDocumentOptions.</param" +
                     ">\r\n    /// <returns>A <see cref=\"");
@@ -2189,25 +2418,25 @@ namespace ");
             #line default
             #line hidden
             
-            #line 768 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 789 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 768 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 789 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write("\"/> instance built from the JSON string.</returns>\r\n    public static ");
             
             #line default
             #line hidden
             
-            #line 769 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 790 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 769 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 790 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(" Parse(ReadOnlyMemory<byte> utf8Json, JsonDocumentOptions options = default)\r\n   " +
                     " {\r\n        using var jsonDocument = JsonDocument.Parse(utf8Json, options);\r\n   " +
                     "     return new ");
@@ -2215,26 +2444,26 @@ namespace ");
             #line default
             #line hidden
             
-            #line 772 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 793 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 772 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 793 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write("(jsonDocument.RootElement.Clone());\r\n    }\r\n\r\n    /// <summary>\r\n    /// Parses a" +
                     " JSON string into a ");
             
             #line default
             #line hidden
             
-            #line 776 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 797 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 776 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 797 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(".\r\n    /// </summary>\r\n    /// <param name=\"json\">The json string to parse.</para" +
                     "m>\r\n    /// <param name=\"options\">The (optional) JsonDocumentOptions.</param>\r\n " +
                     "   /// <returns>A <see cref=\"");
@@ -2242,25 +2471,25 @@ namespace ");
             #line default
             #line hidden
             
-            #line 780 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 801 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 780 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 801 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write("\"/> instance built from the JSON string.</returns>\r\n    public static ");
             
             #line default
             #line hidden
             
-            #line 781 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 802 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 781 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 802 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(" Parse(ReadOnlyMemory<char> json, JsonDocumentOptions options = default)\r\n    {\r\n" +
                     "        using var jsonDocument = JsonDocument.Parse(json, options);\r\n        ret" +
                     "urn new ");
@@ -2268,26 +2497,26 @@ namespace ");
             #line default
             #line hidden
             
-            #line 784 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 805 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 784 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 805 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write("(jsonDocument.RootElement.Clone());\r\n    }\r\n\r\n    /// <summary>\r\n    /// Parses a" +
                     " JSON string into a ");
             
             #line default
             #line hidden
             
-            #line 788 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 809 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 788 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 809 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(".\r\n    /// </summary>\r\n    /// <param name=\"utf8Json\">The json string to parse.</" +
                     "param>\r\n    /// <param name=\"options\">The (optional) JsonDocumentOptions.</param" +
                     ">\r\n    /// <returns>A <see cref=\"");
@@ -2295,25 +2524,25 @@ namespace ");
             #line default
             #line hidden
             
-            #line 792 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 813 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 792 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 813 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write("\"/> instance built from the JSON string.</returns>\r\n    public static ");
             
             #line default
             #line hidden
             
-            #line 793 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 814 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 793 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 814 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(" Parse(ReadOnlySequence<byte> utf8Json, JsonDocumentOptions options = default)\r\n " +
                     "   {\r\n        using var jsonDocument = JsonDocument.Parse(utf8Json, options);\r\n " +
                     "       return new ");
@@ -2321,13 +2550,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 796 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 817 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 796 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 817 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(@"(jsonDocument.RootElement.Clone());
     }
 
@@ -2341,25 +2570,25 @@ namespace ");
             #line default
             #line hidden
             
-            #line 804 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 825 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 804 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 825 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(" ParseValue(ReadOnlySpan<char> buffer)\r\n    {\r\n        return IJsonValue<");
             
             #line default
             #line hidden
             
-            #line 806 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 827 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 806 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 827 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(">.ParseValue(buffer);\r\n    }\r\n\r\n    /// <summary>\r\n    /// Parses a JSON value fr" +
                     "om a buffer.\r\n    /// </summary>\r\n    /// <param name=\"buffer\">The buffer from w" +
                     "hich to parse the value.</param>\r\n    /// <returns>The parsed value.</returns>\r\n" +
@@ -2368,25 +2597,25 @@ namespace ");
             #line default
             #line hidden
             
-            #line 814 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 835 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 814 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 835 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(" ParseValue(ReadOnlySpan<byte> buffer)\r\n    {\r\n        return IJsonValue<");
             
             #line default
             #line hidden
             
-            #line 816 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 837 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 816 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 837 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(">.ParseValue(buffer);\r\n    }\r\n\r\n    /// <summary>\r\n    /// Parses a JSON value fr" +
                     "om a buffer.\r\n    /// </summary>\r\n    /// <param name=\"reader\">The reader from w" +
                     "hich to parse the value.</param>\r\n    /// <returns>The parsed value.</returns>\r\n" +
@@ -2395,25 +2624,25 @@ namespace ");
             #line default
             #line hidden
             
-            #line 824 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 845 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 824 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 845 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(" ParseValue(ref Utf8JsonReader reader)\r\n    {\r\n        return IJsonValue<");
             
             #line default
             #line hidden
             
-            #line 826 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 847 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 826 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 847 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(@">.ParseValue(ref reader);
     }
 
@@ -2435,21 +2664,21 @@ namespace ");
             #line default
             #line hidden
             
-            #line 842 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 863 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   if(IsImplicitString || IsNotImplicitType)
     { 
             
             #line default
             #line hidden
             
-            #line 844 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 865 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write("\r\n        if ((this.backing & Backing.String) != 0)\r\n        {\r\n            retur" +
                     "n TTarget.FromString(this);\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 849 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 870 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   }
     if(IsImplicitBoolean || IsNotImplicitType)
     { 
@@ -2457,14 +2686,14 @@ namespace ");
             #line default
             #line hidden
             
-            #line 852 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 873 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write("\r\n        if ((this.backing & Backing.Bool) != 0)\r\n        {\r\n            return " +
                     "TTarget.FromBoolean(this);\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 857 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 878 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   }
     if(IsImplicitNumber || IsNotImplicitType)
     { 
@@ -2472,14 +2701,14 @@ namespace ");
             #line default
             #line hidden
             
-            #line 860 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 881 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write("\r\n        if ((this.backing & Backing.Number) != 0)\r\n        {\r\n            retur" +
                     "n TTarget.FromNumber(this);\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 865 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 886 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   }
     if(IsImplicitArray || IsNotImplicitType)
     { 
@@ -2487,14 +2716,14 @@ namespace ");
             #line default
             #line hidden
             
-            #line 868 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 889 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write("\r\n        if ((this.backing & Backing.Array) != 0)\r\n        {\r\n            return" +
                     " TTarget.FromArray(this);\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 873 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 894 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   }
     if(IsImplicitObject || IsNotImplicitType)
     { 
@@ -2502,20 +2731,20 @@ namespace ");
             #line default
             #line hidden
             
-            #line 876 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 897 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write("\r\n        if ((this.backing & Backing.Object) != 0)\r\n        {\r\n            retur" +
                     "n TTarget.FromObject(this);\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 881 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 902 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 882 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 903 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(@"
         if ((this.backing & Backing.Null) != 0)
         {
@@ -2546,13 +2775,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 907 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 928 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 907 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 928 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(@" other)
     {
         return JsonValueHelpers.CompareValues(this, other);
@@ -2575,14 +2804,14 @@ namespace ");
             #line default
             #line hidden
             
-            #line 924 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 945 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   if(IsImplicitArray || IsNotImplicitType)
     { 
             
             #line default
             #line hidden
             
-            #line 926 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 947 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write("\r\n        if ((this.backing & Backing.Array) != 0)\r\n        {\r\n            JsonVa" +
                     "lueHelpers.WriteItems(this.arrayBacking, writer);\r\n            return;\r\n        " +
                     "}\r\n");
@@ -2590,7 +2819,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 932 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 953 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   }
     if(IsImplicitBoolean || IsNotImplicitType)
     { 
@@ -2598,14 +2827,14 @@ namespace ");
             #line default
             #line hidden
             
-            #line 935 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 956 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write("\r\n        if ((this.backing & Backing.Bool) != 0)\r\n        {\r\n            writer." +
                     "WriteBooleanValue(this.boolBacking);\r\n            return;\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 941 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 962 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   }
     if(IsImplicitNumber || IsNotImplicitType)
     { 
@@ -2613,14 +2842,14 @@ namespace ");
             #line default
             #line hidden
             
-            #line 944 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 965 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write("\r\n        if ((this.backing & Backing.Number) != 0)\r\n        {\r\n            write" +
                     "r.WriteNumberValue(this.numberBacking);\r\n            return;\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 950 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 971 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   }
     if(IsImplicitObject || IsNotImplicitType)
     { 
@@ -2628,7 +2857,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 953 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 974 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write("\r\n        if ((this.backing & Backing.Object) != 0)\r\n        {\r\n            JsonV" +
                     "alueHelpers.WriteProperties(this.objectBacking, writer);\r\n            return;\r\n " +
                     "       }\r\n");
@@ -2636,7 +2865,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 959 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 980 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   }
     if(IsImplicitString || IsNotImplicitType)
     { 
@@ -2644,20 +2873,20 @@ namespace ");
             #line default
             #line hidden
             
-            #line 962 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 983 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write("\r\n        if ((this.backing & Backing.String) != 0)\r\n        {\r\n            write" +
                     "r.WriteStringValue(this.stringBacking);\r\n            return;\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 968 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 989 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 969 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 990 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write(@"
         if ((this.backing & Backing.Null) != 0)
         {
@@ -2683,7 +2912,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 989 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
+            #line 1010 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
  EndNesting(); 
             
             #line default

@@ -37,7 +37,7 @@ public readonly partial struct Validation : IJsonBoolean<Validation>
     /// <param name = "value">The value from which to convert.</param>
     public static implicit operator JsonBoolean(Validation value)
     {
-        return value.AsBoolean;
+        return JsonBoolean.FromBoolean(value);
     }
 
     /// <summary>

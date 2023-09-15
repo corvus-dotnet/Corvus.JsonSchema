@@ -70,7 +70,7 @@ public readonly partial struct Validation
 
             return value.ValueKind switch
             {
-                JsonValueKind.Array => new((ImmutableList<JsonAny>)value),
+                JsonValueKind.Array => new(value.AsImmutableList()),
                 _ => Undefined
             };
         }

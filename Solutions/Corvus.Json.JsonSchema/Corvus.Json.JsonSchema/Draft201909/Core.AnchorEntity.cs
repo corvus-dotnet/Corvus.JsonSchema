@@ -129,8 +129,7 @@ public readonly partial struct Core
         }
 
         /// <inheritdoc/>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public JsonBoolean AsBoolean
+        JsonBoolean IJsonValue.AsBoolean
         {
             get
             {
@@ -144,8 +143,7 @@ public readonly partial struct Core
         }
 
         /// <inheritdoc/>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public JsonNumber AsNumber
+        JsonNumber IJsonValue.AsNumber
         {
             get
             {
@@ -159,8 +157,7 @@ public readonly partial struct Core
         }
 
         /// <inheritdoc/>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public JsonObject AsObject
+        JsonObject IJsonValue.AsObject
         {
             get
             {
@@ -174,8 +171,7 @@ public readonly partial struct Core
         }
 
         /// <inheritdoc/>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public JsonArray AsArray
+        JsonArray IJsonValue.AsArray
         {
             get
             {
@@ -228,15 +224,6 @@ public readonly partial struct Core
 
                 return JsonValueKind.Undefined;
             }
-        }
-
-        /// <summary>
-        /// Conversion from JsonAny.
-        /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator AnchorEntity(JsonAny value)
-        {
-            return AnchorEntity.FromAny(value);
         }
 
         /// <summary>
@@ -315,9 +302,7 @@ public readonly partial struct Core
         /// <returns>An instance of this type, initialized from the value.</returns>
         /// <remarks>This will be AnchorEntity.Undefined if the type is not compatible.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static AnchorEntity FromBoolean<TValue>(in TValue value)
-            where TValue : struct, IJsonBoolean<TValue>
+        static AnchorEntity IJsonValue<AnchorEntity>.FromBoolean<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -359,9 +344,7 @@ public readonly partial struct Core
         /// <returns>An instance of this type, initialized from the value.</returns>
         /// <remarks>This will be AnchorEntity.Undefined if the type is not compatible.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static AnchorEntity FromNumber<TValue>(in TValue value)
-            where TValue : struct, IJsonNumber<TValue>
+        static AnchorEntity IJsonValue<AnchorEntity>.FromNumber<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -379,9 +362,7 @@ public readonly partial struct Core
         /// <returns>An instance of this type, initialized from the value.</returns>
         /// <remarks>This will be AnchorEntity.Undefined if the type is not compatible.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static AnchorEntity FromArray<TValue>(in TValue value)
-            where TValue : struct, IJsonArray<TValue>
+        static AnchorEntity IJsonValue<AnchorEntity>.FromArray<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -399,9 +380,7 @@ public readonly partial struct Core
         /// <returns>An instance of this type, initialized from the value.</returns>
         /// <remarks>This will be AnchorEntity.Undefined if the type is not compatible.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static AnchorEntity FromObject<TValue>(in TValue value)
-            where TValue : struct, IJsonObject<TValue>
+        static AnchorEntity IJsonValue<AnchorEntity>.FromObject<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {

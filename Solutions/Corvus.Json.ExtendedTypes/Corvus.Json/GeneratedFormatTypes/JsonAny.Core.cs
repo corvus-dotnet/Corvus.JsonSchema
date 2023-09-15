@@ -14,7 +14,7 @@ namespace Corvus.Json;
 /// Represents any JSON value.
 /// </summary>
 [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<JsonAny>))]
-public readonly partial struct JsonAny
+public readonly partial struct JsonAny : IJsonValue<JsonAny>
 {
     private readonly Backing backing;
     private readonly JsonElement jsonElementBacking;
@@ -51,6 +51,96 @@ public readonly partial struct JsonAny
         this.numberBacking = default;
         this.arrayBacking = ImmutableList<JsonAny>.Empty;
         this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonAny"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to construct the instance.</param>
+    public JsonAny(string value)
+    {
+        this.jsonElementBacking = default;
+        this.backing = Backing.String;
+        this.stringBacking = value;
+        this.boolBacking = default;
+        this.numberBacking = default;
+        this.arrayBacking = ImmutableList<JsonAny>.Empty;
+        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonAny"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to construct the instance.</param>
+    public JsonAny(bool value)
+    {
+        this.jsonElementBacking = default;
+        this.backing = Backing.Bool;
+        this.stringBacking = string.Empty;
+        this.boolBacking = value;
+        this.numberBacking = default;
+        this.arrayBacking = ImmutableList<JsonAny>.Empty;
+        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonAny"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to construct the instance.</param>
+    public JsonAny(long value)
+    {
+        this.jsonElementBacking = default;
+        this.backing = Backing.Number;
+        this.stringBacking = string.Empty;
+        this.boolBacking = default;
+        this.numberBacking = (double)value;
+        this.arrayBacking = ImmutableList<JsonAny>.Empty;
+        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonAny"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to construct the instance.</param>
+    public JsonAny(double value)
+    {
+        this.jsonElementBacking = default;
+        this.backing = Backing.Number;
+        this.stringBacking = string.Empty;
+        this.boolBacking = default;
+        this.numberBacking = value;
+        this.arrayBacking = ImmutableList<JsonAny>.Empty;
+        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonAny"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to construct the instance.</param>
+    public JsonAny(ImmutableList<JsonAny> value)
+    {
+        this.jsonElementBacking = default;
+        this.backing = Backing.Array;
+        this.stringBacking = string.Empty;
+        this.boolBacking = default;
+        this.numberBacking = default;
+        this.arrayBacking = value;
+        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonAny"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to construct the instance.</param>
+    public JsonAny(ImmutableDictionary<JsonPropertyName, JsonAny> value)
+    {
+        this.jsonElementBacking = default;
+        this.backing = Backing.Object;
+        this.stringBacking = string.Empty;
+        this.boolBacking = default;
+        this.numberBacking = default;
+        this.arrayBacking = ImmutableList<JsonAny>.Empty;
+        this.objectBacking = value;
     }
 
     /// <summary>
@@ -325,7 +415,7 @@ public readonly partial struct JsonAny
 
         if (value.ValueKind == JsonValueKind.String)
         {
-            return new((string)value);
+            return new((string)value.AsString);
         }
 
         return Undefined;
@@ -378,7 +468,7 @@ public readonly partial struct JsonAny
 
         if (value.ValueKind == JsonValueKind.Number)
         {
-            return new((double)value);
+            return new((double)value.AsNumber);
         }
 
         return Undefined;
@@ -402,7 +492,7 @@ public readonly partial struct JsonAny
 
         if (value.ValueKind == JsonValueKind.Array)
         {
-            return new((ImmutableList<JsonAny>)value);
+            return new(value.AsArray.AsImmutableList());
         }
 
         return Undefined;
@@ -426,7 +516,7 @@ public readonly partial struct JsonAny
 
         if (value.ValueKind == JsonValueKind.Object)
         {
-            return new((ImmutableDictionary<JsonPropertyName, JsonAny>)value);
+            return new(value.AsObject.AsImmutableDictionary());
         }
 
         return Undefined;
@@ -439,7 +529,7 @@ public readonly partial struct JsonAny
     /// <param name="instance">The object from which to create the instance.</param>
     /// <param name="options">The (optional) <see cref="JsonWriterOptions"/>.</param>
     /// <returns>A <see cref="JsonAny"/> derived from serializing the object.</returns>
-    public static JsonAny From<T>(T instance, JsonWriterOptions options = default)
+    public static JsonAny CreateFromSerializedInstance<T>(T instance, JsonWriterOptions options = default)
     {
         var abw = new ArrayBufferWriter<byte>();
         using var writer = new Utf8JsonWriter(abw, options);
@@ -499,7 +589,7 @@ public readonly partial struct JsonAny
             return new(numberResult);
         }
 
-        return new(valueSpan);
+        return new(valueSpan.ToString());
     }
 
     /// <summary>

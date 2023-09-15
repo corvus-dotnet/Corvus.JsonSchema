@@ -370,7 +370,7 @@ public partial class JsonSchemaTypeBuilder
 
     private bool TryEnterDynamicScope(WalkContext context, LocatedSchema schema)
     {
-        if (!schema.Schema.TryGetProperty(this.JsonSchemaConfiguration.IdKeyword, out JsonAny idValue))
+        if (!schema.Schema.AsObject.TryGetProperty(this.JsonSchemaConfiguration.IdKeyword, out JsonString idValue))
         {
             return false;
         }
@@ -394,7 +394,7 @@ public partial class JsonSchemaTypeBuilder
         {
             foreach (RefKeyword keyword in this.JsonSchemaConfiguration.RefKeywords)
             {
-                if (subschema.Schema.HasProperty(keyword.Name))
+                if (subschema.Schema.AsObject.HasProperty(keyword.Name))
                 {
                     return true;
                 }
@@ -412,14 +412,14 @@ public partial class JsonSchemaTypeBuilder
         {
             this.builder = builder;
             this.AnyTypeDeclarationInstance =
-                new(this.builder, new LocatedSchema(BuiltInsLocation, JsonAny.From(true)))
+                new(this.builder, new LocatedSchema(BuiltInsLocation, new(true)))
                 {
                     IsBuiltInType = true,
                 };
             this.AnyTypeDeclarationInstance.SetDotnetTypeName(BuiltInTypes.AnyTypeDeclaration.Type);
             this.AnyTypeDeclarationInstance.SetNamespace(BuiltInTypes.AnyTypeDeclaration.Ns);
             this.NotAnyTypeDeclarationInstance =
-                new(this.builder, new LocatedSchema(BuiltInsLocation, JsonAny.From(false)))
+                new(this.builder, new LocatedSchema(BuiltInsLocation, new(false)))
                 {
                     IsBuiltInType = true,
                 };

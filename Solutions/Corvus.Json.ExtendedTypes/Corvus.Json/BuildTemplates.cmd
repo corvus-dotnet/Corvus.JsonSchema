@@ -60,19 +60,4 @@ t4 -o ./GeneratedFormatTypes/JsonInteger.Basics.cs -p"=TypeName=JsonInteger" -p"
 
 REM See ./Templates/CustomAny.Core.tt for details
 t4 -o ./GeneratedFormatTypes/JsonAny.Core.cs -p"=TypeName=JsonAny" -p"=Summary=Represents any JSON value." -p"=HasConversionsToJsonAny=false" ./Templates/CustomAny.Core.tt
-t4 -o ./GeneratedFormatTypes/JsonAny.Array.Add.cs -p"=TypeName=JsonAny" -p"=Summary=Represents any JSON value." ./Templates/CustomAny.Array.Add.tt
-t4 -o ./GeneratedFormatTypes/JsonAny.Array.Remove.cs -p"=TypeName=JsonAny" -p"=Summary=Represents any JSON value." ./Templates/CustomAny.Array.Remove.tt
-t4 -o ./GeneratedFormatTypes/JsonAny.Array.cs -p"=TypeName=JsonAny" -p"=Summary=Represents any JSON value." ./Templates/CustomAny.Array.tt
-t4 -o ./GeneratedFormatTypes/JsonAny.Boolean.cs -p"=TypeName=JsonAny" -p"=Summary=Represents any JSON value." ./Templates/CustomAny.Boolean.tt
-t4 -o ./GeneratedFormatTypes/JsonAny.Number.cs -p"=TypeName=JsonAny" -p"=Summary=Represents any JSON value." ./Templates/CustomAny.Number.tt
-t4 -o ./GeneratedFormatTypes/JsonAny.Object.cs -p"=TypeName=JsonAny" -p"=Summary=Represents any JSON value." ./Templates/CustomAny.Object.tt
-t4 -o ./GeneratedFormatTypes/JsonAny.String.cs -p"=TypeName=JsonAny" -p"=Summary=Represents any JSON value." ./Templates/CustomAny.String.tt
-
 t4 -o ./GeneratedFormatTypes/JsonNotAny.Core.cs -p"=TypeName=JsonNotAny" -p"=Summary=Represents any JSON value, validating false." -p"=HasConversionsToJsonAny=true" ./Templates/CustomAny.Core.tt
-t4 -o ./GeneratedFormatTypes/JsonNotAny.Array.Add.cs -p"=TypeName=JsonNotAny" -p"=Summary=Represents any JSON value, validating false." ./Templates/CustomAny.Array.Add.tt
-t4 -o ./GeneratedFormatTypes/JsonNotAny.Array.Remove.cs -p"=TypeName=JsonNotAny" -p"=Summary=Represents any JSON value, validating false." ./Templates/CustomAny.Array.Remove.tt
-t4 -o ./GeneratedFormatTypes/JsonNotAny.Array.cs -p"=TypeName=JsonNotAny" -p"=Summary=Represents any JSON value, validating false." ./Templates/CustomAny.Array.tt
-t4 -o ./GeneratedFormatTypes/JsonNotAny.Boolean.cs -p"=TypeName=JsonNotAny" -p"=Summary=Represents any JSON value, validating false." ./Templates/CustomAny.Boolean.tt
-t4 -o ./GeneratedFormatTypes/JsonNotAny.Number.cs -p"=TypeName=JsonNotAny" -p"=Summary=Represents any JSON value, validating false." ./Templates/CustomAny.Number.tt
-t4 -o ./GeneratedFormatTypes/JsonNotAny.Object.cs -p"=TypeName=JsonNotAny" -p"=Summary=Represents any JSON value, validating false." ./Templates/CustomAny.Object.tt
-t4 -o ./GeneratedFormatTypes/JsonNotAny.String.cs -p"=TypeName=JsonNotAny" -p"=Summary=Represents any JSON value, validating false." ./Templates/CustomAny.String.tt

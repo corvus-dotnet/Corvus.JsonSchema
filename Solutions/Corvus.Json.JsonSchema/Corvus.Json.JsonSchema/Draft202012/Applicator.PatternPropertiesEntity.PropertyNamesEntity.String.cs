@@ -64,7 +64,7 @@ public readonly partial struct Applicator
             /// <param name = "value">The value from which to convert.</param>
             public static implicit operator JsonString(PropertyNamesEntity value)
             {
-                return value.AsString;
+                return JsonString.FromString(value);
             }
 
             /// <summary>

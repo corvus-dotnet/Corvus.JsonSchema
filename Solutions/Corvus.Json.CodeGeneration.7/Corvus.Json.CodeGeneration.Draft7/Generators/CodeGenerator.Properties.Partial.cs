@@ -1229,9 +1229,9 @@ public partial class CodeGeneratorProperties
                     if (property.Value.ValueKind == JsonValueKind.Array)
                     {
                         ImmutableArray<string>.Builder innerBuilder = ImmutableArray.CreateBuilder<string>();
-                        foreach (JsonAny item in property.Value.EnumerateArray())
+                        foreach (JsonAny item in property.Value.AsArray.EnumerateArray())
                         {
-                            innerBuilder.Add((string)item);
+                            innerBuilder.Add(item.AsString);
                         }
 
                         builder.Add(new DependentRequiredValue(property.Name, innerBuilder.ToImmutable()));

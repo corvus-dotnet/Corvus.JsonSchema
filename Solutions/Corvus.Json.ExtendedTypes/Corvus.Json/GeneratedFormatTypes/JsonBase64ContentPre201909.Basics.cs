@@ -49,15 +49,6 @@ public readonly partial struct JsonBase64ContentPre201909
         this.stringBacking = Encoding.UTF8.GetString(utf8Value);
     }
 
-        /// <summary>
-    /// Conversion from JsonAny.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonBase64ContentPre201909(JsonAny value)
-    {
-        return JsonBase64ContentPre201909.FromAny(value);
-    }
-
     /// <summary>
     /// Conversion to JsonAny.
     /// </summary>
@@ -68,7 +59,7 @@ public readonly partial struct JsonBase64ContentPre201909
     }
 
     /// <summary>
-    /// Conversion from JsonString.
+    /// Conversion to JsonString.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
     public static implicit operator JsonString(JsonBase64ContentPre201909 value)
@@ -77,7 +68,7 @@ public readonly partial struct JsonBase64ContentPre201909
     }
 
     /// <summary>
-    /// Conversion to JsonString.
+    /// Conversion from JsonString.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
     public static implicit operator JsonBase64ContentPre201909(JsonString value)

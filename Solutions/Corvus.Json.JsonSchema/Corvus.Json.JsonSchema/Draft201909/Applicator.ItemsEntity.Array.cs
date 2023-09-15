@@ -84,7 +84,7 @@ public readonly partial struct Applicator
         /// <param name = "value">The value from which to convert.</param>
         public static implicit operator JsonArray(ItemsEntity value)
         {
-            return value.AsArray;
+            return JsonArray.FromArray(value);
         }
 
         /// <summary>s

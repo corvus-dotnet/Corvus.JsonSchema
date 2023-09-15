@@ -124,7 +124,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
     /// <param name="value">The value from which to convert.</param>
     public static implicit operator JsonArray(<#= TypeDeclaration.DotnetTypeName #> value)
     {
-        return value.AsArray;
+        return JsonArray.FromArray(value);
     }
 
     /// <summary>s

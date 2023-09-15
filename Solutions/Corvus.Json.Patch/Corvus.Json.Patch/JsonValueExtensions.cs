@@ -11,7 +11,7 @@ namespace Corvus.Json.Patch;
 /// </summary>
 public static class JsonValueExtensions
 {
-    private static readonly JsonAny EmptyObject = JsonAny.FromProperties(ImmutableDictionary<JsonPropertyName, JsonAny>.Empty);
+    private static readonly JsonObject EmptyObject = JsonObject.FromProperties(ImmutableDictionary<JsonPropertyName, JsonAny>.Empty);
 
     /// <summary>
     /// Sets a property on a JSON value, building any missing object property structure on the way.

@@ -51,11 +51,11 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
         // so we do not need to check the IsImplicitObject etc.
         if(conversion.IsObject)
         { #>
-            JsonValueKind.Object => new((ImmutableDictionary<JsonPropertyName, JsonAny>)value),
+            JsonValueKind.Object => new(value.AsImmutableDictionary()),
 <#      }
         if(conversion.IsArray)
         { #>
-            JsonValueKind.Array => new((ImmutableList<JsonAny>)value),
+            JsonValueKind.Array => new(value.AsImmutableList()),
 <#      }
         if(conversion.IsString)
         { #>

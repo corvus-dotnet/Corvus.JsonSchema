@@ -30,8 +30,8 @@ public static partial class JsonValueHelpers
         {
             JsonValueKind.Array => GetArrayHashCode(value.AsArray),
             JsonValueKind.Object => GetObjectHashCode(value.AsObject),
-            JsonValueKind.Number => GetHashCodeForNumber(value),
-            JsonValueKind.String => GetHashCodeForString(value),
+            JsonValueKind.Number => GetHashCodeForNumber(value.AsNumber),
+            JsonValueKind.String => GetHashCodeForString(value.AsString),
             JsonValueKind.True => true.GetHashCode(),
             JsonValueKind.False => false.GetHashCode(),
             JsonValueKind.Null => NullHashCode,
@@ -49,10 +49,10 @@ public static partial class JsonValueHelpers
         JsonValueKind valueKind = value.ValueKind;
         return valueKind switch
         {
-            JsonValueKind.Array => GetArrayHashCode(value),
-            JsonValueKind.Object => GetObjectHashCode(value),
-            JsonValueKind.Number => GetHashCodeForNumber(value),
-            JsonValueKind.String => GetHashCodeForString(value),
+            JsonValueKind.Array => GetArrayHashCode(value.AsArray),
+            JsonValueKind.Object => GetObjectHashCode(value.AsObject),
+            JsonValueKind.Number => GetHashCodeForNumber(value.AsNumber),
+            JsonValueKind.String => GetHashCodeForString(value.AsString),
             JsonValueKind.True => true.GetHashCode(),
             JsonValueKind.False => false.GetHashCode(),
             JsonValueKind.Null => NullHashCode,
@@ -125,9 +125,9 @@ public static partial class JsonValueHelpers
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int GetHashCodeForString<T>(in T value)
-    where T : struct, IJsonValue<T>
+    where T : struct, IJsonString<T>
     {
-        if (value.AsString.TryGetValue(ProcessHashCode, (object?)null, out int hashCode))
+        if (value.TryGetValue(ProcessHashCode, (object?)null, out int hashCode))
         {
             return hashCode;
         }
@@ -144,7 +144,7 @@ public static partial class JsonValueHelpers
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int GetHashCodeForNumber<T>(in T value)
-        where T : struct, IJsonValue<T>
+        where T : struct, IJsonNumber<T>
     {
         if (value.HasJsonElementBacking)
         {
@@ -152,6 +152,6 @@ public static partial class JsonValueHelpers
             return result1.GetHashCode(); // It cannot be null if valueKind is string.
         }
 
-        return ((double)value.AsAny).GetHashCode();
+        return ((double)value).GetHashCode();
     }
 }

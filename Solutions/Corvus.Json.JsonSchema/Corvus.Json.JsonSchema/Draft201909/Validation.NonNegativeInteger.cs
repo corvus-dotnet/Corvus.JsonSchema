@@ -110,8 +110,7 @@ public readonly partial struct Validation
         }
 
         /// <inheritdoc/>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public JsonString AsString
+        JsonString IJsonValue.AsString
         {
             get
             {
@@ -125,8 +124,7 @@ public readonly partial struct Validation
         }
 
         /// <inheritdoc/>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public JsonBoolean AsBoolean
+        JsonBoolean IJsonValue.AsBoolean
         {
             get
             {
@@ -159,8 +157,7 @@ public readonly partial struct Validation
         }
 
         /// <inheritdoc/>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public JsonObject AsObject
+        JsonObject IJsonValue.AsObject
         {
             get
             {
@@ -174,8 +171,7 @@ public readonly partial struct Validation
         }
 
         /// <inheritdoc/>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public JsonArray AsArray
+        JsonArray IJsonValue.AsArray
         {
             get
             {
@@ -228,15 +224,6 @@ public readonly partial struct Validation
 
                 return JsonValueKind.Undefined;
             }
-        }
-
-        /// <summary>
-        /// Conversion from JsonAny.
-        /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator NonNegativeInteger(JsonAny value)
-        {
-            return NonNegativeInteger.FromAny(value);
         }
 
         /// <summary>
@@ -315,9 +302,7 @@ public readonly partial struct Validation
         /// <returns>An instance of this type, initialized from the value.</returns>
         /// <remarks>This will be NonNegativeInteger.Undefined if the type is not compatible.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static NonNegativeInteger FromBoolean<TValue>(in TValue value)
-            where TValue : struct, IJsonBoolean<TValue>
+        static NonNegativeInteger IJsonValue<NonNegativeInteger>.FromBoolean<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -335,9 +320,7 @@ public readonly partial struct Validation
         /// <returns>An instance of this type, initialized from the value.</returns>
         /// <remarks>This will be NonNegativeInteger.Undefined if the type is not compatible.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static NonNegativeInteger FromString<TValue>(in TValue value)
-            where TValue : struct, IJsonString<TValue>
+        static NonNegativeInteger IJsonValue<NonNegativeInteger>.FromString<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -379,9 +362,7 @@ public readonly partial struct Validation
         /// <returns>An instance of this type, initialized from the value.</returns>
         /// <remarks>This will be NonNegativeInteger.Undefined if the type is not compatible.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static NonNegativeInteger FromArray<TValue>(in TValue value)
-            where TValue : struct, IJsonArray<TValue>
+        static NonNegativeInteger IJsonValue<NonNegativeInteger>.FromArray<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -399,9 +380,7 @@ public readonly partial struct Validation
         /// <returns>An instance of this type, initialized from the value.</returns>
         /// <remarks>This will be NonNegativeInteger.Undefined if the type is not compatible.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static NonNegativeInteger FromObject<TValue>(in TValue value)
-            where TValue : struct, IJsonObject<TValue>
+        static NonNegativeInteger IJsonValue<NonNegativeInteger>.FromObject<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {

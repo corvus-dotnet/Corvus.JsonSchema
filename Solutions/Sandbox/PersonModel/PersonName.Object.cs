@@ -62,7 +62,7 @@ public readonly partial struct PersonName : IJsonObject<PersonName>
     /// <param name = "value">The value from which to convert.</param>
     public static implicit operator JsonObject(PersonName value)
     {
-        return value.AsObject;
+        return JsonObject.FromObject(value);
     }
 
     /// <summary>

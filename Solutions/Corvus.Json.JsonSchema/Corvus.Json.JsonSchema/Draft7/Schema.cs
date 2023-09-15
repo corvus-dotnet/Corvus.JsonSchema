@@ -121,8 +121,7 @@ public readonly partial struct Schema
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonString AsString
+    JsonString IJsonValue.AsString
     {
         get
         {
@@ -155,8 +154,7 @@ public readonly partial struct Schema
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonNumber AsNumber
+    JsonNumber IJsonValue.AsNumber
     {
         get
         {
@@ -189,8 +187,7 @@ public readonly partial struct Schema
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonArray AsArray
+    JsonArray IJsonValue.AsArray
     {
         get
         {
@@ -248,15 +245,6 @@ public readonly partial struct Schema
 
             return JsonValueKind.Undefined;
         }
-    }
-
-    /// <summary>
-    /// Conversion from JsonAny.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator Schema(JsonAny value)
-    {
-        return Schema.FromAny(value);
     }
 
     /// <summary>
@@ -366,9 +354,7 @@ public readonly partial struct Schema
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be Schema.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static Schema FromString<TValue>(in TValue value)
-        where TValue : struct, IJsonString<TValue>
+    static Schema IJsonValue<Schema>.FromString<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -386,9 +372,7 @@ public readonly partial struct Schema
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be Schema.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static Schema FromNumber<TValue>(in TValue value)
-        where TValue : struct, IJsonNumber<TValue>
+    static Schema IJsonValue<Schema>.FromNumber<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -406,9 +390,7 @@ public readonly partial struct Schema
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be Schema.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static Schema FromArray<TValue>(in TValue value)
-        where TValue : struct, IJsonArray<TValue>
+    static Schema IJsonValue<Schema>.FromArray<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -436,7 +418,7 @@ public readonly partial struct Schema
 
         if (value.ValueKind == JsonValueKind.Object)
         {
-            return new((ImmutableDictionary<JsonPropertyName, JsonAny>)value);
+            return new(value.AsImmutableDictionary());
         }
 
         return Undefined;

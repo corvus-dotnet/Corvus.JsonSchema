@@ -26,7 +26,7 @@ namespace Benchmarks
         {
             this.jePatch = BuildJEPatch("[{\"op\":\"test\",\"path\":\"/1e0\",\"value\":\"foo\"}]");
                 
-            this.corvusPatch = Corvus.Json.JsonAny.Parse("[{\"op\":\"test\",\"path\":\"/1e0\",\"value\":\"foo\"}]");
+            this.corvusPatch = Corvus.Json.Patch.Model.JsonPatchDocument.Parse("[{\"op\":\"test\",\"path\":\"/1e0\",\"value\":\"foo\"}]");
 
             await this.GlobalSetupJson("{\"1e0\":\"foo\"}").ConfigureAwait(false);
         }

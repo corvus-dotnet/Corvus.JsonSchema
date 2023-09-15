@@ -38,7 +38,7 @@ public readonly partial struct Validation
         /// <param name = "value">The value from which to convert.</param>
         public static implicit operator JsonNumber(MinContainsEntity value)
         {
-            return value.AsNumber;
+            return JsonNumber.FromNumber(value);
         }
 
         /// <summary>

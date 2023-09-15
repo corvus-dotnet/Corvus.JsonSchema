@@ -63,7 +63,7 @@ public readonly partial struct MetaData : IJsonObject<MetaData>
     /// <param name = "value">The value from which to convert.</param>
     public static implicit operator JsonObject(MetaData value)
     {
-        return value.AsObject;
+        return JsonObject.FromObject(value);
     }
 
     /// <summary>

@@ -44,7 +44,7 @@ public readonly partial struct Schema
             /// <param name = "value">The value from which to convert.</param>
             public static implicit operator JsonNumber(AllOf1Entity value)
             {
-                return value.AsNumber;
+                return JsonNumber.FromNumber(value);
             }
 
             /// <summary>

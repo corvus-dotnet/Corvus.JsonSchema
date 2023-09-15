@@ -382,9 +382,10 @@ namespace ");
             #line hidden
             
             #line 125 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.tt"
-            this.Write(" value)\r\n    {\r\n        return value.AsArray;\r\n    }\r\n\r\n    /// <summary>s\r\n    /" +
-                    "// Conversion to JsonArray.\r\n    /// </summary>\r\n    /// <param name=\"value\">The" +
-                    " value from which to convert.</param>\r\n    public static implicit operator ");
+            this.Write(" value)\r\n    {\r\n        return JsonArray.FromArray(value);\r\n    }\r\n\r\n    /// <sum" +
+                    "mary>s\r\n    /// Conversion to JsonArray.\r\n    /// </summary>\r\n    /// <param nam" +
+                    "e=\"value\">The value from which to convert.</param>\r\n    public static implicit o" +
+                    "perator ");
             
             #line default
             #line hidden

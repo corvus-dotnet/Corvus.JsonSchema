@@ -52,15 +52,6 @@ public readonly partial struct <#= TypeName #>
         this.stringBacking = Encoding.UTF8.GetString(utf8Value);
     }
 
-        /// <summary>
-    /// Conversion from JsonAny.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator <#= TypeName #>(JsonAny value)
-    {
-        return <#= TypeName #>.FromAny(value);
-    }
-
     /// <summary>
     /// Conversion to JsonAny.
     /// </summary>
@@ -71,7 +62,7 @@ public readonly partial struct <#= TypeName #>
     }
 
     /// <summary>
-    /// Conversion from JsonString.
+    /// Conversion to JsonString.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
     public static implicit operator JsonString(<#= TypeName #> value)
@@ -80,7 +71,7 @@ public readonly partial struct <#= TypeName #>
     }
 
     /// <summary>
-    /// Conversion to JsonString.
+    /// Conversion from JsonString.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
     public static implicit operator <#= TypeName #>(JsonString value)

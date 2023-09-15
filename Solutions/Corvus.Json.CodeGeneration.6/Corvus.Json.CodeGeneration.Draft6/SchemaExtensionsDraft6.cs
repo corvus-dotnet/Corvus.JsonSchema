@@ -52,7 +52,7 @@ public static class SchemaExtensionsDraft6
     {
         if (draft6Schema.TryGetProperty("media", out JsonAny media) && media.ValueKind == JsonValueKind.Object)
         {
-            if (media.TryGetProperty("type", out JsonAny type) && type.ValueKind == JsonValueKind.String)
+            if (media.AsObject.TryGetProperty("type", out JsonAny type) && type.ValueKind == JsonValueKind.String)
             {
                 return type.AsString;
             }
@@ -70,7 +70,7 @@ public static class SchemaExtensionsDraft6
     {
         if (draft6Schema.TryGetProperty("media", out JsonAny media) && media.ValueKind == JsonValueKind.Object)
         {
-            if (media.TryGetProperty("binaryEncoding", out JsonAny encoding) && encoding.ValueKind == JsonValueKind.String)
+            if (media.AsObject.TryGetProperty("binaryEncoding", out JsonAny encoding) && encoding.ValueKind == JsonValueKind.String)
             {
                 return encoding.AsString;
             }

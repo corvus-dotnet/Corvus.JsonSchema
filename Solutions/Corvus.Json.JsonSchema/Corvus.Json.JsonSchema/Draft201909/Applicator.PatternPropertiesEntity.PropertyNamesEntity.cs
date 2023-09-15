@@ -164,8 +164,7 @@ public readonly partial struct Applicator
             }
 
             /// <inheritdoc/>
-            [EditorBrowsable(EditorBrowsableState.Never)]
-            public JsonString AsString
+            JsonString IJsonValue.AsString
             {
                 get
                 {
@@ -184,8 +183,7 @@ public readonly partial struct Applicator
             }
 
             /// <inheritdoc/>
-            [EditorBrowsable(EditorBrowsableState.Never)]
-            public JsonBoolean AsBoolean
+            JsonBoolean IJsonValue.AsBoolean
             {
                 get
                 {
@@ -204,8 +202,7 @@ public readonly partial struct Applicator
             }
 
             /// <inheritdoc/>
-            [EditorBrowsable(EditorBrowsableState.Never)]
-            public JsonNumber AsNumber
+            JsonNumber IJsonValue.AsNumber
             {
                 get
                 {
@@ -224,8 +221,7 @@ public readonly partial struct Applicator
             }
 
             /// <inheritdoc/>
-            [EditorBrowsable(EditorBrowsableState.Never)]
-            public JsonObject AsObject
+            JsonObject IJsonValue.AsObject
             {
                 get
                 {
@@ -244,8 +240,7 @@ public readonly partial struct Applicator
             }
 
             /// <inheritdoc/>
-            [EditorBrowsable(EditorBrowsableState.Never)]
-            public JsonArray AsArray
+            JsonArray IJsonValue.AsArray
             {
                 get
                 {
@@ -323,15 +318,6 @@ public readonly partial struct Applicator
 
                     return JsonValueKind.Undefined;
                 }
-            }
-
-            /// <summary>
-            /// Conversion from JsonAny.
-            /// </summary>
-            /// <param name = "value">The value from which to convert.</param>
-            public static implicit operator PropertyNamesEntity(JsonAny value)
-            {
-                return PropertyNamesEntity.FromAny(value);
             }
 
             /// <summary>
@@ -415,9 +401,7 @@ public readonly partial struct Applicator
             /// <returns>An instance of this type, initialized from the value.</returns>
             /// <remarks>This will be PropertyNamesEntity.Undefined if the type is not compatible.</remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            [EditorBrowsable(EditorBrowsableState.Never)]
-            public static PropertyNamesEntity FromBoolean<TValue>(in TValue value)
-                where TValue : struct, IJsonBoolean<TValue>
+            static PropertyNamesEntity IJsonValue<PropertyNamesEntity>.FromBoolean<TValue>(in TValue value)
             {
                 if (value.HasJsonElementBacking)
                 {
@@ -445,9 +429,7 @@ public readonly partial struct Applicator
             /// <returns>An instance of this type, initialized from the value.</returns>
             /// <remarks>This will be PropertyNamesEntity.Undefined if the type is not compatible.</remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            [EditorBrowsable(EditorBrowsableState.Never)]
-            public static PropertyNamesEntity FromString<TValue>(in TValue value)
-                where TValue : struct, IJsonString<TValue>
+            static PropertyNamesEntity IJsonValue<PropertyNamesEntity>.FromString<TValue>(in TValue value)
             {
                 if (value.HasJsonElementBacking)
                 {
@@ -470,9 +452,7 @@ public readonly partial struct Applicator
             /// <returns>An instance of this type, initialized from the value.</returns>
             /// <remarks>This will be PropertyNamesEntity.Undefined if the type is not compatible.</remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            [EditorBrowsable(EditorBrowsableState.Never)]
-            public static PropertyNamesEntity FromNumber<TValue>(in TValue value)
-                where TValue : struct, IJsonNumber<TValue>
+            static PropertyNamesEntity IJsonValue<PropertyNamesEntity>.FromNumber<TValue>(in TValue value)
             {
                 if (value.HasJsonElementBacking)
                 {
@@ -495,9 +475,7 @@ public readonly partial struct Applicator
             /// <returns>An instance of this type, initialized from the value.</returns>
             /// <remarks>This will be PropertyNamesEntity.Undefined if the type is not compatible.</remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            [EditorBrowsable(EditorBrowsableState.Never)]
-            public static PropertyNamesEntity FromArray<TValue>(in TValue value)
-                where TValue : struct, IJsonArray<TValue>
+            static PropertyNamesEntity IJsonValue<PropertyNamesEntity>.FromArray<TValue>(in TValue value)
             {
                 if (value.HasJsonElementBacking)
                 {
@@ -506,7 +484,7 @@ public readonly partial struct Applicator
 
                 if (value.ValueKind == JsonValueKind.Array)
                 {
-                    return new((ImmutableList<JsonAny>)value);
+                    return new(value.AsImmutableList());
                 }
 
                 return Undefined;
@@ -520,9 +498,7 @@ public readonly partial struct Applicator
             /// <returns>An instance of this type, initialized from the value.</returns>
             /// <remarks>This will be PropertyNamesEntity.Undefined if the type is not compatible.</remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            [EditorBrowsable(EditorBrowsableState.Never)]
-            public static PropertyNamesEntity FromObject<TValue>(in TValue value)
-                where TValue : struct, IJsonObject<TValue>
+            static PropertyNamesEntity IJsonValue<PropertyNamesEntity>.FromObject<TValue>(in TValue value)
             {
                 if (value.HasJsonElementBacking)
                 {
@@ -531,7 +507,7 @@ public readonly partial struct Applicator
 
                 if (value.ValueKind == JsonValueKind.Object)
                 {
-                    return new((ImmutableDictionary<JsonPropertyName, JsonAny>)value);
+                    return new(value.AsImmutableDictionary());
                 }
 
                 return Undefined;

@@ -106,7 +106,7 @@ namespace Benchmarks
         #line hidden
         
         #line 35 "Benchmark.tt"
-        this.Write("\");\r\n                \r\n            this.corvusPatch = Corvus.Json.JsonAny.Parse(\"" +
+        this.Write("\");\r\n                \r\n            this.corvusPatch = Corvus.Json.Patch.Model.JsonPatchDocument.Parse(\"" +
                 "");
         
         #line default

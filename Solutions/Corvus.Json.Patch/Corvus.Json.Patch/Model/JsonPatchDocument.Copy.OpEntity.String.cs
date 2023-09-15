@@ -64,7 +64,7 @@ public readonly partial struct JsonPatchDocument
             /// <param name = "value">The value from which to convert.</param>
             public static implicit operator JsonString(OpEntity value)
             {
-                return value.AsString;
+                return JsonString.FromString(value);
             }
 
             /// <summary>

@@ -110,8 +110,7 @@ public readonly partial struct MetaData
         }
 
         /// <inheritdoc/>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public JsonString AsString
+        JsonString IJsonValue.AsString
         {
             get
             {
@@ -144,8 +143,7 @@ public readonly partial struct MetaData
         }
 
         /// <inheritdoc/>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public JsonNumber AsNumber
+        JsonNumber IJsonValue.AsNumber
         {
             get
             {
@@ -159,8 +157,7 @@ public readonly partial struct MetaData
         }
 
         /// <inheritdoc/>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public JsonObject AsObject
+        JsonObject IJsonValue.AsObject
         {
             get
             {
@@ -174,8 +171,7 @@ public readonly partial struct MetaData
         }
 
         /// <inheritdoc/>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public JsonArray AsArray
+        JsonArray IJsonValue.AsArray
         {
             get
             {
@@ -228,15 +224,6 @@ public readonly partial struct MetaData
 
                 return JsonValueKind.Undefined;
             }
-        }
-
-        /// <summary>
-        /// Conversion from JsonAny.
-        /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator ReadOnlyEntity(JsonAny value)
-        {
-            return ReadOnlyEntity.FromAny(value);
         }
 
         /// <summary>
@@ -345,9 +332,7 @@ public readonly partial struct MetaData
         /// <returns>An instance of this type, initialized from the value.</returns>
         /// <remarks>This will be ReadOnlyEntity.Undefined if the type is not compatible.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static ReadOnlyEntity FromString<TValue>(in TValue value)
-            where TValue : struct, IJsonString<TValue>
+        static ReadOnlyEntity IJsonValue<ReadOnlyEntity>.FromString<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -365,9 +350,7 @@ public readonly partial struct MetaData
         /// <returns>An instance of this type, initialized from the value.</returns>
         /// <remarks>This will be ReadOnlyEntity.Undefined if the type is not compatible.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static ReadOnlyEntity FromNumber<TValue>(in TValue value)
-            where TValue : struct, IJsonNumber<TValue>
+        static ReadOnlyEntity IJsonValue<ReadOnlyEntity>.FromNumber<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -385,9 +368,7 @@ public readonly partial struct MetaData
         /// <returns>An instance of this type, initialized from the value.</returns>
         /// <remarks>This will be ReadOnlyEntity.Undefined if the type is not compatible.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static ReadOnlyEntity FromArray<TValue>(in TValue value)
-            where TValue : struct, IJsonArray<TValue>
+        static ReadOnlyEntity IJsonValue<ReadOnlyEntity>.FromArray<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -405,9 +386,7 @@ public readonly partial struct MetaData
         /// <returns>An instance of this type, initialized from the value.</returns>
         /// <remarks>This will be ReadOnlyEntity.Undefined if the type is not compatible.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static ReadOnlyEntity FromObject<TValue>(in TValue value)
-            where TValue : struct, IJsonObject<TValue>
+        static ReadOnlyEntity IJsonValue<ReadOnlyEntity>.FromObject<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {

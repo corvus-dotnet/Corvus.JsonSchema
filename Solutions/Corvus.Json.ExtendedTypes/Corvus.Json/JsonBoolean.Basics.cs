@@ -24,15 +24,6 @@ public readonly partial struct JsonBoolean
     }
 
     /// <summary>
-    /// Conversion from JsonAny.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonBoolean(JsonAny value)
-    {
-        return value.AsBoolean;
-    }
-
-    /// <summary>
     /// Conversion to JsonAny.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>

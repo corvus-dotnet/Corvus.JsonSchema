@@ -37,7 +37,7 @@ public readonly partial struct FormatAnnotation : IJsonBoolean<FormatAnnotation>
     /// <param name = "value">The value from which to convert.</param>
     public static implicit operator JsonBoolean(FormatAnnotation value)
     {
-        return value.AsBoolean;
+        return JsonBoolean.FromBoolean(value);
     }
 
     /// <summary>

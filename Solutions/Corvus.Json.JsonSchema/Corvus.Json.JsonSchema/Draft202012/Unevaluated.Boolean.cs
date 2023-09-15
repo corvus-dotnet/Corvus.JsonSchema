@@ -37,7 +37,7 @@ public readonly partial struct Unevaluated : IJsonBoolean<Unevaluated>
     /// <param name = "value">The value from which to convert.</param>
     public static implicit operator JsonBoolean(Unevaluated value)
     {
-        return value.AsBoolean;
+        return JsonBoolean.FromBoolean(value);
     }
 
     /// <summary>

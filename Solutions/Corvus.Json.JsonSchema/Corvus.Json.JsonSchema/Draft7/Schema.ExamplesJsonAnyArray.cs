@@ -231,15 +231,6 @@ public readonly partial struct Schema
         }
 
         /// <summary>
-        /// Conversion from JsonAny.
-        /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator ExamplesJsonAnyArray(JsonAny value)
-        {
-            return ExamplesJsonAnyArray.FromAny(value);
-        }
-
-        /// <summary>
         /// Conversion to JsonAny.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
@@ -290,7 +281,7 @@ public readonly partial struct Schema
             JsonValueKind valueKind = value.ValueKind;
             return valueKind switch
             {
-                JsonValueKind.Array => new((ImmutableList<JsonAny>)value),
+                JsonValueKind.Array => new(value.AsArray.AsImmutableList()),
                 JsonValueKind.Null => Null,
                 _ => Undefined,
             };

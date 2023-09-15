@@ -91,7 +91,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonObje
     /// <param name="value">The value from which to convert.</param>
     public static implicit operator JsonObject(<#= TypeDeclaration.DotnetTypeName #> value)
     {
-        return value.AsObject;
+        return JsonObject.FromObject(value);
     }
 
     /// <summary>

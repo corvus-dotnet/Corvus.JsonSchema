@@ -114,7 +114,7 @@ public partial class JsonSchemaTypeBuilder
         {
             if (recursiveRefKeywords.TryGetValue(prop.Key, out RefKeyword? refKeyword))
             {
-                if (type.LocatedSchema.Schema.TryGetProperty(refKeyword.Name, out JsonAny value))
+                if (type.LocatedSchema.Schema.AsObject.HasProperty(refKeyword.Name))
                 {
                     return true;
                 }
@@ -144,7 +144,7 @@ public partial class JsonSchemaTypeBuilder
         {
             if (dynamicRefKeywords.TryGetValue(prop.Key, out RefKeyword? refKeyword))
             {
-                if (type.LocatedSchema.Schema.TryGetProperty(refKeyword.Name, out JsonAny value))
+                if (type.LocatedSchema.Schema.AsObject.TryGetProperty(refKeyword.Name, out JsonString value))
                 {
                     var reference = new JsonReference(value);
                     if (reference.HasFragment)
@@ -168,7 +168,7 @@ public partial class JsonSchemaTypeBuilder
 
         foreach (RefKeyword keyword in this.JsonSchemaConfiguration.RefKeywords)
         {
-            if (schema.Schema.TryGetProperty(keyword.Name, out JsonAny value))
+            if (schema.Schema.AsObject.TryGetProperty(keyword.Name, out JsonAny value))
             {
                 context.EnterSubschemaScopeForUnencodedPropertyName(keyword.Name);
                 JsonReference subschemaPath = new JsonReference("#").AppendUnencodedPropertyNameToFragment(keyword.Name);
@@ -176,13 +176,13 @@ public partial class JsonSchemaTypeBuilder
                 switch (keyword.RefKind)
                 {
                     case RefKind.Ref:
-                        await this.AddSubschemaForRef(subschemaPath, value, context, typeDeclaration).ConfigureAwait(false);
+                        await this.AddSubschemaForRef(subschemaPath, value.AsString, context, typeDeclaration).ConfigureAwait(false);
                         break;
                     case RefKind.DynamicRef:
-                        await this.AddSubschemaForDynamicRef(subschemaPath, value, context, typeDeclaration).ConfigureAwait(false);
+                        await this.AddSubschemaForDynamicRef(subschemaPath, value.AsString, context, typeDeclaration).ConfigureAwait(false);
                         break;
                     case RefKind.RecursiveRef:
-                        await this.AddSubschemaForRecursiveRef(subschemaPath, value, context, typeDeclaration).ConfigureAwait(false);
+                        await this.AddSubschemaForRecursiveRef(subschemaPath, value.AsString, context, typeDeclaration).ConfigureAwait(false);
                         break;
                     default:
                         throw new InvalidOperationException($"Unknown reference kind '{Enum.GetName(keyword.RefKind)}' at '{context.SubschemaLocation}'");
@@ -196,7 +196,7 @@ public partial class JsonSchemaTypeBuilder
         }
     }
 
-    private async Task AddSubschemaForRef(JsonReference subschemaPath, JsonAny referenceValue, WalkContext context, TypeDeclaration typeDeclaration)
+    private async Task AddSubschemaForRef(JsonReference subschemaPath, JsonString referenceValue, WalkContext context, TypeDeclaration typeDeclaration)
     {
         JsonReference reference = new(HttpUtility.UrlDecode(referenceValue));
 
@@ -246,7 +246,7 @@ public partial class JsonSchemaTypeBuilder
         context.LeaveScope();
     }
 
-    private async Task AddSubschemaForDynamicRef(JsonReference subschemaPath, JsonAny referenceValue, WalkContext context, TypeDeclaration typeDeclaration)
+    private async Task AddSubschemaForDynamicRef(JsonReference subschemaPath, JsonString referenceValue, WalkContext context, TypeDeclaration typeDeclaration)
     {
         JsonReference reference = new(HttpUtility.UrlDecode(referenceValue));
 
@@ -315,7 +315,7 @@ public partial class JsonSchemaTypeBuilder
         context.LeaveScope();
     }
 
-    private async Task AddSubschemaForRecursiveRef(JsonReference subschemaPath, JsonAny referenceValue, WalkContext context, TypeDeclaration typeDeclaration)
+    private async Task AddSubschemaForRecursiveRef(JsonReference subschemaPath, JsonString referenceValue, WalkContext context, TypeDeclaration typeDeclaration)
     {
         JsonReference reference = new(HttpUtility.UrlDecode(referenceValue));
 
@@ -430,7 +430,8 @@ public partial class JsonSchemaTypeBuilder
             if (this.schemaRegistry.TryGetValue(baseSchemaForReferenceLocation.WithFragment(currentBuilder.ToString()), out LocatedSchema? locatedSchema))
             {
                 failed = false;
-                if (!RefMatters(locatedSchema.Schema) && locatedSchema.Schema.TryGetProperty(this.JsonSchemaConfiguration.IdKeyword, out JsonAny value))
+                JsonObject schemaObject = locatedSchema.Schema.AsObject;
+                if (!RefMatters(schemaObject) && schemaObject.TryGetProperty(this.JsonSchemaConfiguration.IdKeyword, out JsonString value))
                 {
                     // Update the base location and element for the found schema;
                     baseSchemaForReferenceLocation = baseSchemaForReferenceLocation.Apply(new JsonReference(value));
@@ -465,7 +466,7 @@ public partial class JsonSchemaTypeBuilder
         result = null;
         return false;
 
-        bool RefMatters(JsonAny schema)
+        bool RefMatters(JsonObject schema)
         {
             return (this.JsonSchemaConfiguration.ValidatingAs & ValidationSemantics.Pre201909) != 0 && schema.HasProperty(this.JsonSchemaConfiguration.RefKeyword);
         }
@@ -497,7 +498,7 @@ public partial class JsonSchemaTypeBuilder
                 continue;
             }
 
-            if (schema.Schema.TryGetProperty(keyword.Name, out JsonAny value))
+            if (schema.Schema.AsObject.TryGetProperty(keyword.Name, out JsonAny value))
             {
                 context.EnterSubschemaScopeForUnencodedPropertyName(keyword.Name);
 
@@ -553,7 +554,7 @@ public partial class JsonSchemaTypeBuilder
         }
 
         int index = 0;
-        foreach (JsonAny item in array.EnumerateArray())
+        foreach (JsonAny item in array.AsArray.EnumerateArray())
         {
             context.EnterSubschemaScopeForArrayIndex(index);
 
@@ -575,7 +576,7 @@ public partial class JsonSchemaTypeBuilder
             throw new InvalidOperationException($"The value at {context.SubschemaLocation} was not an object.");
         }
 
-        foreach (JsonObjectProperty item in map.EnumerateObject())
+        foreach (JsonObjectProperty item in map.AsObject.EnumerateObject())
         {
             context.EnterSubschemaScopeForUnencodedPropertyName(item.Name);
             await this.AddSubschemaFromSchemaForRefResolvableKeyword(subschemaPath.AppendUnencodedPropertyNameToFragment(item.Name), item.Value, context, typeDeclaration).ConfigureAwait(false);
@@ -590,7 +591,7 @@ public partial class JsonSchemaTypeBuilder
             throw new InvalidOperationException($"The value at {context.SubschemaLocation} was not an object.");
         }
 
-        foreach (JsonObjectProperty item in map.EnumerateObject())
+        foreach (JsonObjectProperty item in map.AsObject.EnumerateObject())
         {
             if (item.ValueKind == JsonValueKind.Object || item.ValueKind == JsonValueKind.True || item.ValueKind == JsonValueKind.False)
             {

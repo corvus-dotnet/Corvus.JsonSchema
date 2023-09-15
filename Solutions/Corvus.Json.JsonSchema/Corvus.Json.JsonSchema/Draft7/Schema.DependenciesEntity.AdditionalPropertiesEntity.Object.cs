@@ -68,7 +68,7 @@ public readonly partial struct Schema
             /// <param name = "value">The value from which to convert.</param>
             public static implicit operator JsonObject(AdditionalPropertiesEntity value)
             {
-                return value.AsObject;
+                return JsonObject.FromObject(value);
             }
 
             /// <summary>

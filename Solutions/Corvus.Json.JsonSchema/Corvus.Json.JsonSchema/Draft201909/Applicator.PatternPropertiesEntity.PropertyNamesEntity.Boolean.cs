@@ -44,7 +44,7 @@ public readonly partial struct Applicator
             /// <param name = "value">The value from which to convert.</param>
             public static implicit operator JsonBoolean(PropertyNamesEntity value)
             {
-                return value.AsBoolean;
+                return JsonBoolean.FromBoolean(value);
             }
 
             /// <summary>

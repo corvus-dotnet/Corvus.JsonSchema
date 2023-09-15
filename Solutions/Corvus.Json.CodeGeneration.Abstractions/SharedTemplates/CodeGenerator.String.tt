@@ -122,7 +122,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonStri
     /// <param name="value">The value from which to convert.</param>
     public static implicit operator JsonString(<#= TypeDeclaration.DotnetTypeName #> value)
     {
-        return value.AsString;
+        return JsonString.FromString(value);
     }
 
     /// <summary>

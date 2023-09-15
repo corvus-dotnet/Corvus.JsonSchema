@@ -31,7 +31,7 @@ public readonly partial struct Scenario
 
         return value.ValueKind switch
         {
-            JsonValueKind.Object => new((ImmutableDictionary<JsonPropertyName, JsonAny>)value),
+            JsonValueKind.Object => new(value.AsImmutableDictionary()),
             _ => Undefined
         };
     }
@@ -68,7 +68,7 @@ public readonly partial struct Scenario
 
         return value.ValueKind switch
         {
-            JsonValueKind.Object => new((ImmutableDictionary<JsonPropertyName, JsonAny>)value),
+            JsonValueKind.Object => new(value.AsImmutableDictionary()),
             _ => Undefined
         };
     }
@@ -105,7 +105,7 @@ public readonly partial struct Scenario
 
         return value.ValueKind switch
         {
-            JsonValueKind.Object => new((ImmutableDictionary<JsonPropertyName, JsonAny>)value),
+            JsonValueKind.Object => new(value.AsImmutableDictionary()),
             _ => Undefined
         };
     }
@@ -142,7 +142,7 @@ public readonly partial struct Scenario
 
         return value.ValueKind switch
         {
-            JsonValueKind.Object => new((ImmutableDictionary<JsonPropertyName, JsonAny>)value),
+            JsonValueKind.Object => new(value.AsImmutableDictionary()),
             _ => Undefined
         };
     }
@@ -179,7 +179,7 @@ public readonly partial struct Scenario
 
         return value.ValueKind switch
         {
-            JsonValueKind.Object => new((ImmutableDictionary<JsonPropertyName, JsonAny>)value),
+            JsonValueKind.Object => new(value.AsImmutableDictionary()),
             _ => Undefined
         };
     }
