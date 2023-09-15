@@ -117,34 +117,6 @@ public readonly partial struct Schema
         }
 
         /// <summary>
-        /// Conversion from string.
-        /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator TypeEntity(ReadOnlySpan<char> value)
-        {
-            return new(value);
-        }
-
-        /// <summary>
-        /// Conversion to string.
-        /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        /// <exception cref = "InvalidOperationException">The value was not a string.</exception>
-        public static implicit operator ReadOnlySpan<char>(TypeEntity value)
-        {
-            return ((string)value).AsSpan();
-        }
-
-        /// <summary>
-        /// Conversion from string.
-        /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator TypeEntity(ReadOnlySpan<byte> value)
-        {
-            return new(value);
-        }
-
-        /// <summary>
         /// Concatenate two JSON values, producing an instance of the string type TypeEntity.
         /// </summary>
         /// <typeparam name = "T1">The type of the first value.</typeparam>
@@ -315,22 +287,6 @@ public readonly partial struct Schema
 
             value = null;
             return false;
-        }
-
-        /// <inheritdoc/>
-        public ReadOnlySpan<char> AsSpan()
-        {
-            if ((this.backing & Backing.String) != 0)
-            {
-                return this.stringBacking.AsSpan();
-            }
-
-            if ((this.backing & Backing.JsonElement) != 0 && this.jsonElementBacking.ValueKind == JsonValueKind.String)
-            {
-                return this.jsonElementBacking.GetString().AsSpan();
-            }
-
-            throw new InvalidOperationException();
         }
 
         /// <summary>

@@ -1510,7 +1510,7 @@ public class JsonValueEqualitySteps
     /// Asserts that the result from a previous comparison stored in the context variable <c>Result</c> is as expected.
     /// </summary>
     [Then("the result should be true")]
-    private void ThenTheResultShouldBeTrue()
+    public void ThenTheResultShouldBeTrue()
     {
         this.ThenTheResultShouldBe(true);
     }
@@ -1519,12 +1519,12 @@ public class JsonValueEqualitySteps
     /// Asserts that the result from a previous comparison stored in the context variable <c>Result</c> is as expected.
     /// </summary>
     [Then("the result should be false")]
-    private void ThenTheResultShouldBeFalse()
+    public void ThenTheResultShouldBeFalse()
     {
         this.ThenTheResultShouldBe(false);
     }
 
-    private void ThenTheResultShouldBe(bool expected)
+    public void ThenTheResultShouldBe(bool expected)
     {
         Assert.AreEqual(expected, this.scenarioContext.Get<bool>(EqualsResultKey));
         if (this.scenarioContext.ContainsKey(EqualityResultKey))

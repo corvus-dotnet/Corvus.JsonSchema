@@ -223,15 +223,7 @@ internal class JsonTemplateParameterProvider<TPayload> : ITemplateParameterProvi
         where T : struct, IJsonString<T>
     {
         output.Write(variable);
-
-        if (value.HasJsonElementBacking)
-        {
-            value.AsJsonElement.TryGetValue(ProcessString, new AppendNameAndValueState(output, ifEmpty, prefixLength, allowReserved), out bool _);
-        }
-        else
-        {
-            ProcessString(value.AsSpan(), new AppendNameAndValueState(output, ifEmpty, prefixLength, allowReserved), out bool _);
-        }
+        value.AsString.TryGetValue(ProcessString, new AppendNameAndValueState(output, ifEmpty, prefixLength, allowReserved), out bool _);
     }
 
     /// <summary>
@@ -245,14 +237,7 @@ internal class JsonTemplateParameterProvider<TPayload> : ITemplateParameterProvi
     {
         if (value.ValueKind == JsonValueKind.String)
         {
-            if (value.HasJsonElementBacking)
-            {
-                value.AsJsonElement.TryGetValue(ProcessString, new AppendValueState(output, prefixLength, allowReserved), out bool _);
-            }
-            else
-            {
-                ProcessString(value.AsString.AsSpan(), new AppendValueState(output, prefixLength, allowReserved), out bool _);
-            }
+            value.AsString.TryGetValue(ProcessString, new AppendValueState(output, prefixLength, allowReserved), out bool _);
         }
         else if (value.ValueKind == JsonValueKind.True)
         {

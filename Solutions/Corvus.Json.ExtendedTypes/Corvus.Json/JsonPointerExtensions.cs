@@ -25,12 +25,17 @@ public static class JsonPointerExtensions
     public static JsonAny ResolvePointer<T>(this T root, in JsonPointer pointer)
         where T : struct, IJsonValue
     {
-        if (ResolvePointerInternal(root, pointer.AsSpan(), true, out JsonAny element))
+        if (pointer.TryGetValue(ProcessPointer, root, out JsonAny element))
         {
             return element;
         }
 
         throw new InvalidOperationException("Internal error: ResolvePointerInternal() should have thrown if it failed to resolve a fragment");
+
+        static bool ProcessPointer(ReadOnlySpan<char> pointer, in T root, out JsonAny value)
+        {
+            return ResolvePointerInternal(root, pointer, true, out value);
+        }
     }
 
     /// <summary>
@@ -44,7 +49,12 @@ public static class JsonPointerExtensions
     public static bool TryResolvePointer<T>(this T root, in JsonPointer pointer, out JsonAny element)
         where T : struct, IJsonValue
     {
-        return ResolvePointerInternal(root, pointer.AsSpan(), false, out element);
+        return pointer.TryGetValue(ProcessPointer, root, out element);
+
+        static bool ProcessPointer(ReadOnlySpan<char> pointer, in T root, out JsonAny value)
+        {
+            return ResolvePointerInternal(root, pointer, false, out value);
+        }
     }
 
     /// <summary>
@@ -57,12 +67,17 @@ public static class JsonPointerExtensions
     public static JsonAny ResolvePointer<T>(this T root, in JsonRelativePointer pointer)
         where T : struct, IJsonValue
     {
-        if (ResolvePointerInternal(root, pointer.AsSpan(), true, out JsonAny element))
+        if (pointer.TryGetValue(ProcessPointer, root, out JsonAny element))
         {
             return element;
         }
 
         throw new InvalidOperationException("Internal error: ResolvePointerInternal() should have thrown if it failed to resolve a fragment");
+
+        static bool ProcessPointer(ReadOnlySpan<char> pointer, in T root, out JsonAny value)
+        {
+            return ResolvePointerInternal(root, pointer, true, out value);
+        }
     }
 
     /// <summary>
@@ -76,7 +91,12 @@ public static class JsonPointerExtensions
     public static bool TryResolvePointer<T>(this T root, in JsonRelativePointer pointer, out JsonAny element)
         where T : struct, IJsonValue
     {
-        return ResolvePointerInternal(root, pointer.AsSpan(), false, out element);
+        return pointer.TryGetValue(ProcessPointer, root, out element);
+
+        static bool ProcessPointer(ReadOnlySpan<char> pointer, in T root, out JsonAny value)
+        {
+            return ResolvePointerInternal(root, pointer, false, out value);
+        }
     }
 
     /// <summary>

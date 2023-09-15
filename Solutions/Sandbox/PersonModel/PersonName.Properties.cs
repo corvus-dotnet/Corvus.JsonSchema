@@ -167,7 +167,7 @@ public readonly partial struct PersonName
             builder.Add(JsonPropertyNames.OtherNames, otherNames__.AsAny);
         }
 
-        return builder.ToImmutable();
+        return new(builder.ToImmutable());
     }
 
     /// <summary>

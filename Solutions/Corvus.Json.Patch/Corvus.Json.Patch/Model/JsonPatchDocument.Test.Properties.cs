@@ -161,7 +161,7 @@ public readonly partial struct JsonPatchDocument
             builder.Add(JsonPropertyNames.Op, new Corvus.Json.Patch.Model.JsonPatchDocument.Test.OpEntity().AsAny);
             builder.Add(JsonPropertyNames.Path, path.AsAny);
             builder.Add(JsonPropertyNames.Value, value.AsAny);
-            return builder.ToImmutable();
+            return new(builder.ToImmutable());
         }
 
         /// <summary>

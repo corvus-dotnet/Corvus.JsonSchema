@@ -15,6 +15,56 @@ public static partial class JsonValueHelpers
     /// Compares two values.
     /// </summary>
     /// <typeparam name="TItem1">The type of the first value.</typeparam>
+    /// <param name="item1">The first value.</param>
+    /// <param name="item2">The second value.</param>
+    /// <returns><c>True</c> if they are equal.</returns>
+    public static bool CompareWithString<TItem1>(in TItem1 item1, ReadOnlySpan<char> item2)
+        where TItem1 : struct, IJsonValue<TItem1>
+    {
+        JsonValueKind thisKind = item1.ValueKind;
+
+        if (thisKind != JsonValueKind.String)
+        {
+            return false;
+        }
+
+        if (thisKind == JsonValueKind.String)
+        {
+            return item1.AsString.EqualsString(item2);
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Compares two values.
+    /// </summary>
+    /// <typeparam name="TItem1">The type of the first value.</typeparam>
+    /// <param name="item1">The first value.</param>
+    /// <param name="item2">The second value.</param>
+    /// <returns><c>True</c> if they are equal.</returns>
+    public static bool CompareWithUtf8Bytes<TItem1>(in TItem1 item1, ReadOnlySpan<byte> item2)
+        where TItem1 : struct, IJsonValue<TItem1>
+    {
+        JsonValueKind thisKind = item1.ValueKind;
+
+        if (thisKind != JsonValueKind.String)
+        {
+            return false;
+        }
+
+        if (thisKind == JsonValueKind.String)
+        {
+            return item1.AsString.EqualsUtf8Bytes(item2);
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Compares two values.
+    /// </summary>
+    /// <typeparam name="TItem1">The type of the first value.</typeparam>
     /// <typeparam name="TItem2">The type of the second value.</typeparam>
     /// <param name="item1">The first value.</param>
     /// <param name="item2">The second value.</param>

@@ -26,21 +26,6 @@ Scenario: Cast from JsonString for json element backed value as a pointer
 	When I cast the JsonString to JsonPointer
 	Then the result should equal the JsonPointer "/a~1b"
 
-Scenario: Cast to ReadOnlySpan<char> for json element backed value as a pointer
-	Given the JsonElement backed JsonPointer "/a~1b"
-	When I cast the JsonPointer to ReadOnlySpan<char>
-	Then the result should equal the ReadOnlySpan<char> "/a~1b"
-
-Scenario: Cast to ReadOnlySpan<char> for dotnet backed value as a pointer
-	Given the dotnet backed JsonPointer "/a~1b"
-	When I cast the JsonPointer to ReadOnlySpan<char>
-	Then the result should equal the ReadOnlySpan<char> "/a~1b"
-
-Scenario: Cast from ReadOnlySpan<char> for json element backed value as a pointer
-	Given the ReadOnlyMemory<char> for "/a~1b"
-	When I cast the ReadOnlySpan<char> to JsonPointer
-	Then the result should equal the JsonPointer "/a~1b"
-
 Scenario: Cast to string for json element backed value as a pointer
 	Given the JsonElement backed JsonPointer "/a~1b"
 	When I cast the JsonPointer to string

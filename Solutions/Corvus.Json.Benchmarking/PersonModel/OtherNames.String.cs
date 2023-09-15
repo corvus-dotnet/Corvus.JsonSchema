@@ -63,7 +63,7 @@ public readonly partial struct OtherNames : IJsonString<OtherNames>
     /// <param name = "value">The value from which to convert.</param>
     public static implicit operator JsonString(OtherNames value)
     {
-        return value.AsString;
+        return JsonString.FromString(value);
     }
 
     /// <summary>
@@ -112,34 +112,6 @@ public readonly partial struct OtherNames : IJsonString<OtherNames>
         }
 
         throw new InvalidOperationException();
-    }
-
-    /// <summary>
-    /// Conversion from string.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator OtherNames(ReadOnlySpan<char> value)
-    {
-        return new(value);
-    }
-
-    /// <summary>
-    /// Conversion to string.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    /// <exception cref = "InvalidOperationException">The value was not a string.</exception>
-    public static implicit operator ReadOnlySpan<char>(OtherNames value)
-    {
-        return ((string)value).AsSpan();
-    }
-
-    /// <summary>
-    /// Conversion from string.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator OtherNames(ReadOnlySpan<byte> value)
-    {
-        return new(value);
     }
 
     /// <summary>
@@ -313,22 +285,6 @@ public readonly partial struct OtherNames : IJsonString<OtherNames>
 
         value = null;
         return false;
-    }
-
-    /// <inheritdoc/>
-    public ReadOnlySpan<char> AsSpan()
-    {
-        if ((this.backing & Backing.String) != 0)
-        {
-            return this.stringBacking.AsSpan();
-        }
-
-        if ((this.backing & Backing.JsonElement) != 0 && this.jsonElementBacking.ValueKind == JsonValueKind.String)
-        {
-            return this.jsonElementBacking.GetString().AsSpan();
-        }
-
-        throw new InvalidOperationException();
     }
 
     /// <summary>

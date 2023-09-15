@@ -674,6 +674,26 @@ public readonly partial struct JsonString : IJsonString<JsonString>
         return JsonValueHelpers.CompareValues(this, other);
     }
 
+    /// <summary>
+    /// Compare with a string.
+    /// </summary>
+    /// <param name="other">The span with which to compare.</param>
+    /// <returns><see langword="true"/> if they are equal, otherwise <see langword="false"/>.</returns>
+    public bool Equals(ReadOnlySpan<char> other)
+    {
+        return JsonValueHelpers.CompareWithString(this, other);
+    }
+
+    /// <summary>
+    /// Compare with a UTF8 string.
+    /// </summary>
+    /// <param name="other">The span with which to compare.</param>
+    /// <returns><see langword="true"/> if they are equal, otherwise <see langword="false"/>.</returns>
+    public bool Equals(ReadOnlySpan<byte> other)
+    {
+        return JsonValueHelpers.CompareWithUtf8Bytes(this, other);
+    }
+
     /// <inheritdoc/>
     public void WriteTo(Utf8JsonWriter writer)
     {

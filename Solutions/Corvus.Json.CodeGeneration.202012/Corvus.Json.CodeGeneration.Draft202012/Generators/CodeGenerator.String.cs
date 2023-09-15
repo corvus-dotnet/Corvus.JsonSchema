@@ -17,7 +17,7 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft202012 {
     public partial class CodeGeneratorString : CodeGeneratorStringBase {
         
         
-        #line 527 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
+        #line 483 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
 
     public bool ShouldGenerate
     {
@@ -498,72 +498,18 @@ namespace ");
     }
 
     /// <summary>
-    /// Conversion from string.
-    /// </summary>
-    /// <param name=""value"">The value from which to convert.</param>
-    public static implicit operator ");
+    /// Concatenate two JSON values, producing an instance of the string type ");
             
             #line default
             #line hidden
             
-            #line 180 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
+            #line 177 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 180 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
-            this.Write(@"(ReadOnlySpan<char> value)
-    {
-        return new(value);
-    }
-
-    /// <summary>
-    /// Conversion to string.
-    /// </summary>
-    /// <param name=""value"">The value from which to convert.</param>
-    /// <exception cref=""InvalidOperationException"">The value was not a string.</exception>
-    public static implicit operator ReadOnlySpan<char>(");
-            
-            #line default
-            #line hidden
-            
-            #line 190 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
-            
-            #line default
-            #line hidden
-            
-            #line 190 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
-            this.Write(" value)\r\n    {\r\n        return ((string)value).AsSpan();\r\n    }\r\n\r\n    /// <summa" +
-                    "ry>\r\n    /// Conversion from string.\r\n    /// </summary>\r\n    /// <param name=\"v" +
-                    "alue\">The value from which to convert.</param>\r\n    public static implicit opera" +
-                    "tor ");
-            
-            #line default
-            #line hidden
-            
-            #line 199 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
-            
-            #line default
-            #line hidden
-            
-            #line 199 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
-            this.Write("(ReadOnlySpan<byte> value)\r\n    {\r\n        return new(value);\r\n    }\r\n\r\n    /// <" +
-                    "summary>\r\n    /// Concatenate two JSON values, producing an instance of the stri" +
-                    "ng type ");
-            
-            #line default
-            #line hidden
-            
-            #line 205 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
-            
-            #line default
-            #line hidden
-            
-            #line 205 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
+            #line 177 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
             this.Write(@".
     /// </summary>
     /// <typeparam name=""T1"">The type of the first value.</typeparam>
@@ -577,13 +523,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 213 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
+            #line 185 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 213 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
+            #line 185 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
             this.Write(@" Concatenate<T1, T2>(Span<byte> buffer, in T1 firstValue, in T2 secondValue)
         where T1 : struct, IJsonValue<T1>
         where T2 : struct, IJsonValue<T2>
@@ -598,13 +544,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 222 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
+            #line 194 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 222 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
+            #line 194 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
             this.Write(@".
     /// </summary>
     /// <typeparam name=""T1"">The type of the first value.</typeparam>
@@ -620,13 +566,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 232 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
+            #line 204 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 232 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
+            #line 204 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
             this.Write(@" Concatenate<T1, T2, T3>(Span<byte> buffer, in T1 firstValue, in T2 secondValue, in T3 thirdValue)
         where T1 : struct, IJsonValue<T1>
         where T2 : struct, IJsonValue<T2>
@@ -642,13 +588,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 242 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
+            #line 214 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 242 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
+            #line 214 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
             this.Write(@".
     /// </summary>
     /// <typeparam name=""T1"">The type of the first value.</typeparam>
@@ -666,13 +612,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 254 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
+            #line 226 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 254 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
+            #line 226 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
             this.Write(@" Concatenate<T1, T2, T3, T4>(Span<byte> buffer, in T1 firstValue, in T2 secondValue, in T3 thirdValue, in T4 fourthValue)
         where T1 : struct, IJsonValue<T1>
         where T2 : struct, IJsonValue<T2>
@@ -689,13 +635,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 265 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
+            #line 237 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 265 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
+            #line 237 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
             this.Write(@".
     /// </summary>
     /// <typeparam name=""T1"">The type of the first value.</typeparam>
@@ -715,13 +661,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 279 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
+            #line 251 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 279 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
+            #line 251 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
             this.Write(@" Concatenate<T1, T2, T3, T4, T5>(Span<byte> buffer, in T1 firstValue, in T2 secondValue, in T3 thirdValue, in T4 fourthValue, in T5 fifthValue)
         where T1 : struct, IJsonValue<T1>
         where T2 : struct, IJsonValue<T2>
@@ -739,13 +685,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 291 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
+            #line 263 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 291 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
+            #line 263 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
             this.Write(@".
     /// </summary>
     /// <typeparam name=""T1"">The type of the first value.</typeparam>
@@ -767,13 +713,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 307 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
+            #line 279 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 307 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
+            #line 279 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
             this.Write(@" Concatenate<T1, T2, T3, T4, T5, T6>(Span<byte> buffer, in T1 firstValue, in T2 secondValue, in T3 thirdValue, in T4 fourthValue, in T5 fifthValue, in T6 sixthValue)
         where T1 : struct, IJsonValue<T1>
         where T2 : struct, IJsonValue<T2>
@@ -792,13 +738,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 320 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
+            #line 292 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 320 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
+            #line 292 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
             this.Write(@".
     /// </summary>
     /// <typeparam name=""T1"">The type of the first value.</typeparam>
@@ -822,13 +768,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 338 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
+            #line 310 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 338 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
+            #line 310 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
             this.Write(@" Concatenate<T1, T2, T3, T4, T5, T6, T7>(Span<byte> buffer, in T1 firstValue, in T2 secondValue, in T3 thirdValue, in T4 fourthValue, in T5 fifthValue, in T6 sixthValue, in T7 seventhValue)
         where T1 : struct, IJsonValue<T1>
         where T2 : struct, IJsonValue<T2>
@@ -848,13 +794,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 352 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
+            #line 324 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 352 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
+            #line 324 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
             this.Write(@".
     /// </summary>
     /// <typeparam name=""T1"">The type of the first value.</typeparam>
@@ -880,13 +826,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 372 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
+            #line 344 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 372 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
+            #line 344 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
             this.Write(" Concatenate<T1, T2, T3, T4, T5, T6, T7, T8>(Span<byte> buffer, in T1 firstValue," +
                     " in T2 secondValue, in T3 thirdValue, in T4 fourthValue, in T5 fifthValue, in T6" +
                     " sixthValue, in T7 seventhValue, in T8 eighthValue)\r\n        where T1 : struct, " +
@@ -903,58 +849,53 @@ namespace ");
                     "        if ((this.backing & Backing.JsonElement) != 0 && this.jsonElementBacking" +
                     ".ValueKind == JsonValueKind.String)\r\n        {\r\n            value = this.jsonEle" +
                     "mentBacking.GetString();\r\n            return value is not null;\r\n        }\r\n\r\n  " +
-                    "      value = null;\r\n        return false;\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    " +
-                    "public ReadOnlySpan<char> AsSpan()\r\n    {\r\n        if ((this.backing & Backing.S" +
-                    "tring) != 0)\r\n        {\r\n            return this.stringBacking.AsSpan();\r\n      " +
-                    "  }\r\n\r\n        if ((this.backing & Backing.JsonElement) != 0 && this.jsonElement" +
-                    "Backing.ValueKind == JsonValueKind.String)\r\n        {\r\n            return this.j" +
-                    "sonElementBacking.GetString().AsSpan();\r\n        }\r\n\r\n        throw new InvalidO" +
-                    "perationException();\r\n    }\r\n\r\n    /// <summary>\r\n    /// Gets the string value." +
-                    "\r\n    /// </summary>\r\n    /// <returns><c>The string if this value represents a " +
-                    "string</c>, otherwise <c>null</c>.</returns>\r\n    public string? AsOptionalStrin" +
-                    "g()\r\n    {\r\n        if (this.TryGetString(out string? value))\r\n        {\r\n      " +
-                    "      return value;\r\n        }\r\n\r\n        return null;\r\n    }\r\n\r\n    /// <summar" +
-                    "y>\r\n    /// Compare to a sequence of characters.\r\n    /// </summary>\r\n    /// <p" +
-                    "aram name=\"utf8Bytes\">The UTF8-encoded character sequence to compare.</param>\r\n " +
-                    "   /// <returns><c>True</c> if teh sequences match.</returns>\r\n    public bool E" +
-                    "qualsUtf8Bytes(ReadOnlySpan<byte> utf8Bytes)\r\n    {\r\n        if ((this.backing &" +
-                    " Backing.JsonElement) != 0)\r\n        {\r\n            if (this.jsonElementBacking." +
-                    "ValueKind == JsonValueKind.String)\r\n            {\r\n                return this.j" +
-                    "sonElementBacking.ValueEquals(utf8Bytes);\r\n            }\r\n        }\r\n\r\n        i" +
-                    "f ((this.backing & Backing.String) != 0)\r\n        {\r\n            int maxCharCoun" +
-                    "t = Encoding.UTF8.GetMaxCharCount(utf8Bytes.Length);\r\n            char[]? pooled" +
-                    "Chars = null;\r\n\r\n            Span<char> chars = maxCharCount <= JsonValueHelpers" +
-                    ".MaxStackAlloc ?\r\n                stackalloc char[maxCharCount] :\r\n             " +
-                    "   (pooledChars = ArrayPool<char>.Shared.Rent(maxCharCount));\r\n\r\n            try" +
-                    "\r\n            {\r\n                int written = Encoding.UTF8.GetChars(utf8Bytes," +
-                    " chars);\r\n                return chars[..written].SequenceEqual(this.stringBacki" +
-                    "ng);\r\n            }\r\n            finally\r\n            {\r\n                if (poo" +
-                    "ledChars is not null)\r\n                {\r\n                    ArrayPool<char>.Sh" +
-                    "ared.Return(pooledChars, true);\r\n                }\r\n            }\r\n        }\r\n\r\n" +
-                    "        return false;\r\n    }\r\n\r\n    /// <summary>\r\n    /// Compare to a sequence" +
-                    " of characters.\r\n    /// </summary>\r\n    /// <param name=\"chars\">The character s" +
-                    "equence to compare.</param>\r\n    /// <returns><c>True</c> if teh sequences match" +
-                    ".</returns>\r\n    public bool EqualsString(string chars)\r\n    {\r\n        if ((thi" +
-                    "s.backing & Backing.JsonElement) != 0)\r\n        {\r\n            if (this.jsonElem" +
-                    "entBacking.ValueKind == JsonValueKind.String)\r\n            {\r\n                re" +
-                    "turn this.jsonElementBacking.ValueEquals(chars);\r\n            }\r\n\r\n            r" +
-                    "eturn false;\r\n        }\r\n\r\n        if ((this.backing & Backing.String) != 0)\r\n  " +
-                    "      {\r\n            return chars.Equals(this.stringBacking, StringComparison.Or" +
-                    "dinal);\r\n        }\r\n\r\n        return false;\r\n    }\r\n\r\n    /// <summary>\r\n    ///" +
+                    "      value = null;\r\n        return false;\r\n    }\r\n\r\n    /// <summary>\r\n    /// " +
+                    "Gets the string value.\r\n    /// </summary>\r\n    /// <returns><c>The string if th" +
+                    "is value represents a string</c>, otherwise <c>null</c>.</returns>\r\n    public s" +
+                    "tring? AsOptionalString()\r\n    {\r\n        if (this.TryGetString(out string? valu" +
+                    "e))\r\n        {\r\n            return value;\r\n        }\r\n\r\n        return null;\r\n  " +
+                    "  }\r\n\r\n    /// <summary>\r\n    /// Compare to a sequence of characters.\r\n    /// " +
+                    "</summary>\r\n    /// <param name=\"utf8Bytes\">The UTF8-encoded character sequence " +
+                    "to compare.</param>\r\n    /// <returns><c>True</c> if teh sequences match.</retur" +
+                    "ns>\r\n    public bool EqualsUtf8Bytes(ReadOnlySpan<byte> utf8Bytes)\r\n    {\r\n     " +
+                    "   if ((this.backing & Backing.JsonElement) != 0)\r\n        {\r\n            if (th" +
+                    "is.jsonElementBacking.ValueKind == JsonValueKind.String)\r\n            {\r\n       " +
+                    "         return this.jsonElementBacking.ValueEquals(utf8Bytes);\r\n            }\r\n" +
+                    "        }\r\n\r\n        if ((this.backing & Backing.String) != 0)\r\n        {\r\n     " +
+                    "       int maxCharCount = Encoding.UTF8.GetMaxCharCount(utf8Bytes.Length);\r\n    " +
+                    "        char[]? pooledChars = null;\r\n\r\n            Span<char> chars = maxCharCou" +
+                    "nt <= JsonValueHelpers.MaxStackAlloc ?\r\n                stackalloc char[maxCharC" +
+                    "ount] :\r\n                (pooledChars = ArrayPool<char>.Shared.Rent(maxCharCount" +
+                    "));\r\n\r\n            try\r\n            {\r\n                int written = Encoding.UT" +
+                    "F8.GetChars(utf8Bytes, chars);\r\n                return chars[..written].Sequence" +
+                    "Equal(this.stringBacking);\r\n            }\r\n            finally\r\n            {\r\n " +
+                    "               if (pooledChars is not null)\r\n                {\r\n                " +
+                    "    ArrayPool<char>.Shared.Return(pooledChars, true);\r\n                }\r\n      " +
+                    "      }\r\n        }\r\n\r\n        return false;\r\n    }\r\n\r\n    /// <summary>\r\n    ///" +
                     " Compare to a sequence of characters.\r\n    /// </summary>\r\n    /// <param name=\"" +
                     "chars\">The character sequence to compare.</param>\r\n    /// <returns><c>True</c> " +
-                    "if teh sequences match.</returns>\r\n    public bool EqualsString(ReadOnlySpan<cha" +
-                    "r> chars)\r\n    {\r\n        if ((this.backing & Backing.JsonElement) != 0)\r\n      " +
-                    "  {\r\n            if (this.jsonElementBacking.ValueKind == JsonValueKind.String)\r" +
-                    "\n            {\r\n                return this.jsonElementBacking.ValueEquals(chars" +
-                    ");\r\n            }\r\n\r\n            return false;\r\n        }\r\n\r\n        if ((this.b" +
-                    "acking & Backing.String) != 0)\r\n        {\r\n            return chars.SequenceEqua" +
-                    "l(this.stringBacking);\r\n        }\r\n\r\n        return false;\r\n    }\r\n}\r\n");
+                    "if teh sequences match.</returns>\r\n    public bool EqualsString(string chars)\r\n " +
+                    "   {\r\n        if ((this.backing & Backing.JsonElement) != 0)\r\n        {\r\n       " +
+                    "     if (this.jsonElementBacking.ValueKind == JsonValueKind.String)\r\n           " +
+                    " {\r\n                return this.jsonElementBacking.ValueEquals(chars);\r\n        " +
+                    "    }\r\n\r\n            return false;\r\n        }\r\n\r\n        if ((this.backing & Bac" +
+                    "king.String) != 0)\r\n        {\r\n            return chars.Equals(this.stringBackin" +
+                    "g, StringComparison.Ordinal);\r\n        }\r\n\r\n        return false;\r\n    }\r\n\r\n    " +
+                    "/// <summary>\r\n    /// Compare to a sequence of characters.\r\n    /// </summary>\r" +
+                    "\n    /// <param name=\"chars\">The character sequence to compare.</param>\r\n    ///" +
+                    " <returns><c>True</c> if teh sequences match.</returns>\r\n    public bool EqualsS" +
+                    "tring(ReadOnlySpan<char> chars)\r\n    {\r\n        if ((this.backing & Backing.Json" +
+                    "Element) != 0)\r\n        {\r\n            if (this.jsonElementBacking.ValueKind == " +
+                    "JsonValueKind.String)\r\n            {\r\n                return this.jsonElementBac" +
+                    "king.ValueEquals(chars);\r\n            }\r\n\r\n            return false;\r\n        }\r" +
+                    "\n\r\n        if ((this.backing & Backing.String) != 0)\r\n        {\r\n            ret" +
+                    "urn chars.SequenceEqual(this.stringBacking);\r\n        }\r\n\r\n        return false;" +
+                    "\r\n    }\r\n}\r\n");
             
             #line default
             #line hidden
             
-            #line 526 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
+            #line 482 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
  EndNesting(); 
             
             #line default

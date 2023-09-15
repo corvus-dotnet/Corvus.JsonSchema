@@ -62,7 +62,7 @@ public readonly partial struct PersonName : IJsonObject<PersonName>
     /// <param name = "value">The value from which to convert.</param>
     public static implicit operator JsonObject(PersonName value)
     {
-        return value.AsObject;
+        return JsonObject.FromObject(value);
     }
 
     /// <summary>
@@ -77,24 +77,6 @@ public readonly partial struct PersonName : IJsonObject<PersonName>
         }
 
         return new(value.AsImmutableDictionary());
-    }
-
-    /// <summary>
-    /// Conversion from immutable dictionary.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator PersonName(ImmutableDictionary<JsonPropertyName, JsonAny> value)
-    {
-        return new(value);
-    }
-
-    /// <summary>
-    /// Conversion to immutable dictionary.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator ImmutableDictionary<JsonPropertyName, JsonAny>(PersonName value)
-    {
-        return value.GetImmutableDictionary();
     }
 
     /// <summary>

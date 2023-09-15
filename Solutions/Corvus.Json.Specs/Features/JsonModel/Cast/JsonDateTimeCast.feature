@@ -36,21 +36,6 @@ Scenario: Cast to OffsetDateTime for json element backed value as an dateTime
 	When I cast the OffsetDateTime to JsonDateTime
 	Then the result should equal the JsonDateTime "2018-11-13T20:20:39+00:00"
 
-Scenario: Cast to ReadOnlySpan<char> for json element backed value as an dateTime
-	Given the JsonElement backed JsonDateTime "2018-11-13T20:20:39+00:00"
-	When I cast the JsonDateTime to ReadOnlySpan<char>
-	Then the result should equal the ReadOnlySpan<char> "2018-11-13T20:20:39+00:00"
-
-Scenario: Cast to ReadOnlySpan<char> for dotnet backed value as an dateTime
-	Given the dotnet backed JsonDateTime "2018-11-13T20:20:39+00:00"
-	When I cast the JsonDateTime to ReadOnlySpan<char>
-	Then the result should equal the ReadOnlySpan<char> "2018-11-13T20:20:39+00:00"
-
-Scenario: Cast from ReadOnlySpan<char> for json element backed value as an dateTime
-	Given the ReadOnlyMemory<char> for "2018-11-13T20:20:39+00:00"
-	When I cast the ReadOnlySpan<char> to JsonDateTime
-	Then the result should equal the JsonDateTime "2018-11-13T20:20:39+00:00"
-
 Scenario: Cast to string for json element backed value as an dateTime
 	Given the JsonElement backed JsonDateTime "2018-11-13T20:20:39+00:00"
 	When I cast the JsonDateTime to string

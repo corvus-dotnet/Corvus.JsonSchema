@@ -171,7 +171,7 @@ public readonly partial struct Content
             builder.Add(JsonPropertyNames.ContentSchema, contentSchema__.AsAny);
         }
 
-        return builder.ToImmutable();
+        return new(builder.ToImmutable());
     }
 
     /// <summary>

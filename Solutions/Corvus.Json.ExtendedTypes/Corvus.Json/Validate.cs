@@ -241,15 +241,7 @@ public static partial class Validate
 
         ValidationContext result = validationContext;
 
-        if (instance.HasJsonElementBacking)
-        {
-            // We know it is a string, so we should always return true, no need to check the result.
-            instance.AsJsonElement.TryGetValue(UriTemplateValidator, new ValidationContextWrapper(result, level), out result);
-        }
-        else
-        {
-            UriTemplateValidator(instance.AsString.AsSpan(), new ValidationContextWrapper(result, level), out result);
-        }
+        instance.AsString.TryGetValue(UriTemplateValidator, new ValidationContextWrapper(result, level), out result);
 
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
@@ -502,15 +494,7 @@ public static partial class Validate
 
         ValidationContext result = validationContext;
 
-        if (instance.HasJsonElementBacking)
-        {
-            // We know it is a string, so we should always return true, no need to check the result.
-            instance.AsJsonElement.TryGetValue(HostnameValidator, new ValidationContextWrapper(result, level), out result);
-        }
-        else
-        {
-            HostnameValidator(instance.AsString.AsSpan(), new ValidationContextWrapper(result, level), out result);
-        }
+        instance.AsString.TryGetValue(HostnameValidator, new ValidationContextWrapper(result, level), out result);
 
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
@@ -599,15 +583,7 @@ public static partial class Validate
 
         ValidationContext result = validationContext;
 
-        if (instance.HasJsonElementBacking)
-        {
-            // We know it is a string, so we should always return true, no need to check the result.
-            instance.AsJsonElement.TryGetValue(UuidValidator, new ValidationContextWrapper(result, level), out result);
-        }
-        else
-        {
-            UuidValidator(instance.AsString.AsSpan(), new ValidationContextWrapper(result, level), out result);
-        }
+        instance.AsString.TryGetValue(UuidValidator, new ValidationContextWrapper(result, level), out result);
 
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
@@ -677,15 +653,7 @@ public static partial class Validate
 
         ValidationContext result = validationContext;
 
-        if (instance.HasJsonElementBacking)
-        {
-            // We know it is a string, so we should always return true, no need to check the result.
-            instance.AsJsonElement.TryGetValue(DurationValidator, new ValidationContextWrapper(result, level), out result);
-        }
-        else
-        {
-            DurationValidator(instance.AsString.AsSpan(), new ValidationContextWrapper(result, level), out result);
-        }
+        instance.AsString.TryGetValue(DurationValidator, new ValidationContextWrapper(result, level), out result);
 
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
@@ -755,15 +723,7 @@ public static partial class Validate
 
         ValidationContext result = validationContext;
 
-        if (instance.HasJsonElementBacking)
-        {
-            // We know it is a string, so we should always return true, no need to check the result.
-            instance.AsJsonElement.TryGetValue(EmailValidator, new ValidationContextWrapper(result, level), out result);
-        }
-        else
-        {
-            EmailValidator(instance.AsString.AsSpan(), new ValidationContextWrapper(result, level), out result);
-        }
+        instance.AsString.TryGetValue(EmailValidator, new ValidationContextWrapper(result, level), out result);
 
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
@@ -833,15 +793,7 @@ public static partial class Validate
 
         ValidationContext result = validationContext;
 
-        if (instance.HasJsonElementBacking)
-        {
-            // We know it is a string, so we should always return true, no need to check the result.
-            instance.AsJsonElement.TryGetValue(RelativePointerValidator, new ValidationContextWrapper(result, level), out result);
-        }
-        else
-        {
-            RelativePointerValidator(instance.AsString.AsSpan(), new ValidationContextWrapper(result, level), out result);
-        }
+        instance.AsString.TryGetValue(RelativePointerValidator, new ValidationContextWrapper(result, level), out result);
 
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
@@ -911,15 +863,7 @@ public static partial class Validate
 
         ValidationContext result = validationContext;
 
-        if (instance.HasJsonElementBacking)
-        {
-            // We know it is a string, so we should always return true, no need to check the result.
-            instance.AsJsonElement.TryGetValue(PointerValidator, new ValidationContextWrapper(result, level), out result);
-        }
-        else
-        {
-            PointerValidator(instance.AsString.AsSpan(), new ValidationContextWrapper(result, level), out result);
-        }
+        instance.AsString.TryGetValue(PointerValidator, new ValidationContextWrapper(result, level), out result);
 
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
@@ -1959,15 +1903,7 @@ public static partial class Validate
 
         if (maxLength is not null || minLength is not null || pattern is not null)
         {
-            if (value.HasJsonElementBacking)
-            {
-                // We know it is a string, so we should always return true, no need to check the result.
-                value.AsJsonElement.TryGetValue(StringValidator, new StringValidationContextWrapper(result, level, minLength, maxLength, pattern), out result);
-            }
-            else
-            {
-                StringValidator(value.AsString.AsSpan(), new StringValidationContextWrapper(result, level, minLength, maxLength, pattern), out result);
-            }
+            value.AsString.TryGetValue(StringValidator, new StringValidationContextWrapper(result, level, minLength, maxLength, pattern), out result);
 
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
@@ -2745,15 +2681,7 @@ public static partial class Validate
 
         ValidationContext result = validationContext;
 
-        if (instance.HasJsonElementBacking)
-        {
-            // We know it is a string, so we should always return true, no need to check the result.
-            instance.AsJsonElement.TryGetValue(IPV6Validator, new ValidationContextWrapper(result, level), out result);
-        }
-        else
-        {
-            IPV6Validator(instance.AsString.AsSpan(), new ValidationContextWrapper(result, level), out result);
-        }
+        instance.AsString.TryGetValue(IPV6Validator, new ValidationContextWrapper(result, level), out result);
 
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
@@ -2826,16 +2754,7 @@ public static partial class Validate
         }
 
         ValidationContext result = validationContext;
-
-        if (instance.HasJsonElementBacking)
-        {
-            // We know it is a string, so we should always return true, no need to check the result.
-            instance.AsJsonElement.TryGetValue(IPV6Validator, new ValidationContextWrapper(result, level), out result);
-        }
-        else
-        {
-            IPV6Validator(instance.AsString.AsSpan(), new ValidationContextWrapper(result, level), out result);
-        }
+        instance.AsString.TryGetValue(IPV6Validator, new ValidationContextWrapper(result, level), out result);
 
         if (level == ValidationLevel.Flag && !result.IsValid)
         {

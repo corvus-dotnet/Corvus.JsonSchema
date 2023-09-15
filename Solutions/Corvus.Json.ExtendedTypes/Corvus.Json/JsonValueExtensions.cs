@@ -237,7 +237,7 @@ public static class JsonValueExtensions
             return jsonValue.AsJsonElement.TryGetValue(parser, state, out result);
         }
 
-        return parser(jsonValue.AsSpan(), state, out result);
+        return parser(((string)jsonValue).AsSpan(), state, out result);
     }
 
     /// <summary>

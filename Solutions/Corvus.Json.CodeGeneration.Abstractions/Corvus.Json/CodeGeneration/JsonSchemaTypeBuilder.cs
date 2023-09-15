@@ -381,13 +381,14 @@ public partial class JsonSchemaTypeBuilder
             return false;
         }
 
-        if (context.Scope.Location.Uri.EndsWith(idValue))
+        string idv = idValue;
+        if (context.Scope.Location.Uri.EndsWith(idv))
         {
             // Ignore ID if we were already directly in the dynamic scope.
             return false;
         }
 
-        context.EnterDynamicScope(context.Scope.Location.Apply(new JsonReference(idValue)), schema);
+        context.EnterDynamicScope(context.Scope.Location.Apply(new JsonReference(idv)), schema);
         return true;
 
         bool HasRefKeyword(LocatedSchema subschema)

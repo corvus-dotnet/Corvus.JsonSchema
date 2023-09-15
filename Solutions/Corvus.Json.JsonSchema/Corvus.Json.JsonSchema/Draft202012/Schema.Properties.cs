@@ -2839,7 +2839,7 @@ public readonly partial struct Schema
             builder.Add(JsonPropertyNames.WriteOnly, writeOnly__.AsAny);
         }
 
-        return builder.ToImmutable();
+        return new(builder.ToImmutable());
     }
 
     /// <summary>

@@ -145,7 +145,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
             builder.Add(JsonPropertyNames.<#= property.DotnetPropertyName#>, <#= property.DotnetParameterName #>__.AsAny);
         }
 <#  } #>
-        return builder.ToImmutable();
+        return new(builder.ToImmutable());
     }
 <#  foreach(var property in Properties)
     {

@@ -108,24 +108,6 @@ public class JsonValueCastSteps
         CollectionAssert.AreEqual(expected, actual);
     }
 
-    /// <summary>
-    /// Gets the item in the <see cref="JsonValueSteps.SubjectUnderTest"/>, casts it to <see cref="ImmutableList{JsonAny}"/> and stores it in the <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the JsonArray to ImmutableList<JsonAny>")]
-    public void WhenICastTheJsonArrayToImmutableList()
-    {
-        this.scenarioContext.Set((ImmutableList<JsonAny>)this.scenarioContext.Get<JsonArray>(JsonValueSteps.SubjectUnderTest), CastResultKey);
-    }
-
-    /// <summary>
-    /// Gets the item in the <see cref="JsonValueSteps.SubjectUnderTest"/>, casts it to <see cref="JsonArray"/> and stores it in the <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the ImmutableList<JsonAny> to JsonArray")]
-    public void WhenICastTheImmutableListToJsonArray()
-    {
-        this.scenarioContext.Set((JsonArray)this.scenarioContext.Get<ImmutableList<JsonAny>>(JsonValueSteps.SubjectUnderTest), CastResultKey);
-    }
-
     /* any */
 
     /// <summary>
@@ -190,24 +172,6 @@ public class JsonValueCastSteps
         ImmutableDictionary<JsonPropertyName, JsonAny> expected = JsonAny.ParseValue(immutableDictionary).AsObject.AsImmutableDictionary();
         ImmutableDictionary<JsonPropertyName, JsonAny> actual = this.scenarioContext.Get<ImmutableDictionary<JsonPropertyName, JsonAny>>(CastResultKey);
         CollectionAssert.AreEqual(expected, actual);
-    }
-
-    /// <summary>
-    /// Gets the item in the <see cref="JsonValueSteps.SubjectUnderTest"/>, casts it to <see cref="ImmutableList{JsonAny}"/> and stores it in the <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the JsonObject to ImmutableDictionary<JsonPropertyName,JsonAny>")]
-    public void WhenICastTheJsonObjectToImmutableDictionary()
-    {
-        this.scenarioContext.Set((ImmutableDictionary<JsonPropertyName, JsonAny>)this.scenarioContext.Get<JsonObject>(JsonValueSteps.SubjectUnderTest), CastResultKey);
-    }
-
-    /// <summary>
-    /// Gets the item in the <see cref="JsonValueSteps.SubjectUnderTest"/>, casts it to <see cref="JsonObject"/> and stores it in the <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the ImmutableDictionary<JsonPropertyName,JsonAny> to JsonObject")]
-    public void WhenICastTheImmutableDictionaryToJsonObject()
-    {
-        this.scenarioContext.Set((JsonObject)this.scenarioContext.Get<ImmutableDictionary<JsonPropertyName, JsonAny>>(JsonValueSteps.SubjectUnderTest), CastResultKey);
     }
 
     /* string */
@@ -300,24 +264,6 @@ public class JsonValueCastSteps
     }
 
     /// <summary>
-    /// Casts the <see cref="JsonBase64Content"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="ReadOnlySpan{Char}"/>, converts that to a <see cref="ReadOnlyMemory{Char}"/> and stores it in <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the JsonBase64Content to ReadOnlySpan<char>")]
-    public void WhenICastTheJsonBase64ContentToReadOnlySpanOfChar()
-    {
-        this.scenarioContext.Set<ReadOnlyMemory<char>>(((ReadOnlySpan<char>)this.scenarioContext.Get<JsonBase64Content>(JsonValueSteps.SubjectUnderTest)).ToArray().AsMemory(), CastResultKey);
-    }
-
-    /// <summary>
-    /// Casts the <see cref="JsonBase64Content"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="ReadOnlySpan{Char}"/>, converts that to a <see cref="ReadOnlyMemory{Char}"/> and stores it in <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the ReadOnlySpan<char> to JsonBase64Content")]
-    public void WhenICastTheReadOnlySpanOfCharToJsonBase64Content()
-    {
-        this.scenarioContext.Set((JsonBase64Content)this.scenarioContext.Get<ReadOnlyMemory<char>>(JsonValueSteps.SubjectUnderTest).Span, CastResultKey);
-    }
-
-    /// <summary>
     /// Casts the <see cref="JsonBase64Content"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="string"/> and stores it in <see cref="CastResultKey"/>.
     /// </summary>
     [When("I cast the JsonBase64Content to string")]
@@ -373,24 +319,6 @@ public class JsonValueCastSteps
     public void WhenICastTheJsonStringToJsonBase64String()
     {
         this.scenarioContext.Set((JsonBase64String)this.scenarioContext.Get<JsonString>(JsonValueSteps.SubjectUnderTest), CastResultKey);
-    }
-
-    /// <summary>
-    /// Casts the <see cref="JsonBase64String"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="ReadOnlySpan{Char}"/>, converts that to a <see cref="ReadOnlyMemory{Char}"/> and stores it in <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the JsonBase64String to ReadOnlySpan<char>")]
-    public void WhenICastTheJsonBase64StringToReadOnlySpanOfChar()
-    {
-        this.scenarioContext.Set<ReadOnlyMemory<char>>(((ReadOnlySpan<char>)this.scenarioContext.Get<JsonBase64String>(JsonValueSteps.SubjectUnderTest)).ToArray().AsMemory(), CastResultKey);
-    }
-
-    /// <summary>
-    /// Casts the <see cref="JsonBase64String"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="ReadOnlySpan{Char}"/>, converts that to a <see cref="ReadOnlyMemory{Char}"/> and stores it in <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the ReadOnlySpan<char> to JsonBase64String")]
-    public void WhenICastTheReadOnlySpanOfCharToJsonBase64String()
-    {
-        this.scenarioContext.Set((JsonBase64String)this.scenarioContext.Get<ReadOnlyMemory<char>>(JsonValueSteps.SubjectUnderTest).Span, CastResultKey);
     }
 
     /// <summary>
@@ -452,24 +380,6 @@ public class JsonValueCastSteps
     }
 
     /// <summary>
-    /// Casts the <see cref="JsonContent"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="ReadOnlySpan{Char}"/>, converts that to a <see cref="ReadOnlyMemory{Char}"/> and stores it in <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the JsonContent to ReadOnlySpan<char>")]
-    public void WhenICastTheJsonContentToReadOnlySpanOfChar()
-    {
-        this.scenarioContext.Set<ReadOnlyMemory<char>>(((ReadOnlySpan<char>)this.scenarioContext.Get<JsonContent>(JsonValueSteps.SubjectUnderTest)).ToArray().AsMemory(), CastResultKey);
-    }
-
-    /// <summary>
-    /// Casts the <see cref="JsonContent"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="ReadOnlySpan{Char}"/>, converts that to a <see cref="ReadOnlyMemory{Char}"/> and stores it in <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the ReadOnlySpan<char> to JsonContent")]
-    public void WhenICastTheReadOnlySpanOfCharToJsonContent()
-    {
-        this.scenarioContext.Set((JsonContent)this.scenarioContext.Get<ReadOnlyMemory<char>>(JsonValueSteps.SubjectUnderTest).Span, CastResultKey);
-    }
-
-    /// <summary>
     /// Casts the <see cref="JsonContent"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="string"/> and stores it in <see cref="CastResultKey"/>.
     /// </summary>
     [When("I cast the JsonContent to string")]
@@ -525,24 +435,6 @@ public class JsonValueCastSteps
     public void WhenICastTheJsonStringToJsonEmail()
     {
         this.scenarioContext.Set((JsonEmail)this.scenarioContext.Get<JsonString>(JsonValueSteps.SubjectUnderTest), CastResultKey);
-    }
-
-    /// <summary>
-    /// Casts the <see cref="JsonEmail"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="ReadOnlySpan{Char}"/>, converts that to a <see cref="ReadOnlyMemory{Char}"/> and stores it in <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the JsonEmail to ReadOnlySpan<char>")]
-    public void WhenICastTheJsonEmailToReadOnlySpanOfChar()
-    {
-        this.scenarioContext.Set<ReadOnlyMemory<char>>(((ReadOnlySpan<char>)this.scenarioContext.Get<JsonEmail>(JsonValueSteps.SubjectUnderTest)).ToArray().AsMemory(), CastResultKey);
-    }
-
-    /// <summary>
-    /// Casts the <see cref="JsonEmail"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="ReadOnlySpan{Char}"/>, converts that to a <see cref="ReadOnlyMemory{Char}"/> and stores it in <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the ReadOnlySpan<char> to JsonEmail")]
-    public void WhenICastTheReadOnlySpanOfCharToJsonEmail()
-    {
-        this.scenarioContext.Set((JsonEmail)this.scenarioContext.Get<ReadOnlyMemory<char>>(JsonValueSteps.SubjectUnderTest).Span, CastResultKey);
     }
 
     /// <summary>
@@ -604,24 +496,6 @@ public class JsonValueCastSteps
     }
 
     /// <summary>
-    /// Casts the <see cref="JsonUriTemplate"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="ReadOnlySpan{Char}"/>, converts that to a <see cref="ReadOnlyMemory{Char}"/> and stores it in <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the JsonUriTemplate to ReadOnlySpan<char>")]
-    public void WhenICastTheJsonUriTemplateToReadOnlySpanOfChar()
-    {
-        this.scenarioContext.Set<ReadOnlyMemory<char>>(((ReadOnlySpan<char>)this.scenarioContext.Get<JsonUriTemplate>(JsonValueSteps.SubjectUnderTest)).ToArray().AsMemory(), CastResultKey);
-    }
-
-    /// <summary>
-    /// Casts the <see cref="JsonUriTemplate"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="ReadOnlySpan{Char}"/>, converts that to a <see cref="ReadOnlyMemory{Char}"/> and stores it in <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the ReadOnlySpan<char> to JsonUriTemplate")]
-    public void WhenICastTheReadOnlySpanOfCharToJsonUriTemplate()
-    {
-        this.scenarioContext.Set((JsonUriTemplate)this.scenarioContext.Get<ReadOnlyMemory<char>>(JsonValueSteps.SubjectUnderTest).Span, CastResultKey);
-    }
-
-    /// <summary>
     /// Casts the <see cref="JsonUriTemplate"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="string"/> and stores it in <see cref="CastResultKey"/>.
     /// </summary>
     [When("I cast the JsonUriTemplate to string")]
@@ -680,24 +554,6 @@ public class JsonValueCastSteps
     }
 
     /// <summary>
-    /// Casts the <see cref="JsonPointer"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="ReadOnlySpan{Char}"/>, converts that to a <see cref="ReadOnlyMemory{Char}"/> and stores it in <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the JsonPointer to ReadOnlySpan<char>")]
-    public void WhenICastTheJsonPointerToReadOnlySpanOfChar()
-    {
-        this.scenarioContext.Set<ReadOnlyMemory<char>>(((ReadOnlySpan<char>)this.scenarioContext.Get<JsonPointer>(JsonValueSteps.SubjectUnderTest)).ToArray().AsMemory(), CastResultKey);
-    }
-
-    /// <summary>
-    /// Casts the <see cref="JsonPointer"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="ReadOnlySpan{Char}"/>, converts that to a <see cref="ReadOnlyMemory{Char}"/> and stores it in <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the ReadOnlySpan<char> to JsonPointer")]
-    public void WhenICastTheReadOnlySpanOfCharToJsonPointer()
-    {
-        this.scenarioContext.Set((JsonPointer)this.scenarioContext.Get<ReadOnlyMemory<char>>(JsonValueSteps.SubjectUnderTest).Span, CastResultKey);
-    }
-
-    /// <summary>
     /// Casts the <see cref="JsonPointer"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="string"/> and stores it in <see cref="CastResultKey"/>.
     /// </summary>
     [When("I cast the JsonPointer to string")]
@@ -753,24 +609,6 @@ public class JsonValueCastSteps
     public void WhenICastTheJsonStringToJsonRelativePointer()
     {
         this.scenarioContext.Set((JsonRelativePointer)this.scenarioContext.Get<JsonString>(JsonValueSteps.SubjectUnderTest), CastResultKey);
-    }
-
-    /// <summary>
-    /// Casts the <see cref="JsonRelativePointer"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="ReadOnlySpan{Char}"/>, converts that to a <see cref="ReadOnlyMemory{Char}"/> and stores it in <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the JsonRelativePointer to ReadOnlySpan<char>")]
-    public void WhenICastTheJsonRelativePointerToReadOnlySpanOfChar()
-    {
-        this.scenarioContext.Set<ReadOnlyMemory<char>>(((ReadOnlySpan<char>)this.scenarioContext.Get<JsonRelativePointer>(JsonValueSteps.SubjectUnderTest)).ToArray().AsMemory(), CastResultKey);
-    }
-
-    /// <summary>
-    /// Casts the <see cref="JsonRelativePointer"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="ReadOnlySpan{Char}"/>, converts that to a <see cref="ReadOnlyMemory{Char}"/> and stores it in <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the ReadOnlySpan<char> to JsonRelativePointer")]
-    public void WhenICastTheReadOnlySpanOfCharToJsonRelativePointer()
-    {
-        this.scenarioContext.Set((JsonRelativePointer)this.scenarioContext.Get<ReadOnlyMemory<char>>(JsonValueSteps.SubjectUnderTest).Span, CastResultKey);
     }
 
     /// <summary>
@@ -908,24 +746,6 @@ public class JsonValueCastSteps
     }
 
     /// <summary>
-    /// Casts the <see cref="JsonDate"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="ReadOnlySpan{Char}"/>, converts that to a <see cref="ReadOnlyMemory{Byte}"/> and stores it in <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the JsonDate to ReadOnlySpan<char>")]
-    public void WhenICastTheJsonDateToReadOnlySpanOfChar()
-    {
-        this.scenarioContext.Set<ReadOnlyMemory<char>>(((ReadOnlySpan<char>)this.scenarioContext.Get<JsonDate>(JsonValueSteps.SubjectUnderTest)).ToArray().AsMemory(), CastResultKey);
-    }
-
-    /// <summary>
-    /// Casts the <see cref="ReadOnlySpan{Char}"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="JsonDate"/> and stores it in <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the ReadOnlySpan<char> to JsonDate")]
-    public void WhenICastTheReadOnlySpanOfCharToJsonDate()
-    {
-        this.scenarioContext.Set((JsonDate)this.scenarioContext.Get<ReadOnlyMemory<char>>(JsonValueSteps.SubjectUnderTest).Span, CastResultKey);
-    }
-
-    /// <summary>
     /// Casts the <see cref="JsonDate"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see langword="string"/>, converts that to a <see cref="ReadOnlyMemory{Byte}"/> and stores it in <see cref="CastResultKey"/>.
     /// </summary>
     [When("I cast the JsonDate to string")]
@@ -1011,24 +831,6 @@ public class JsonValueCastSteps
     }
 
     /// <summary>
-    /// Casts the <see cref="JsonTime"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="ReadOnlySpan{Char}"/>, converts that to a <see cref="ReadOnlyMemory{Byte}"/> and stores it in <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the JsonTime to ReadOnlySpan<char>")]
-    public void WhenICastTheJsonTimeToReadOnlySpanOfChar()
-    {
-        this.scenarioContext.Set<ReadOnlyMemory<char>>(((ReadOnlySpan<char>)this.scenarioContext.Get<JsonTime>(JsonValueSteps.SubjectUnderTest)).ToArray().AsMemory(), CastResultKey);
-    }
-
-    /// <summary>
-    /// Casts the <see cref="ReadOnlySpan{Char}"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="JsonTime"/> and stores it in <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the ReadOnlySpan<char> to JsonTime")]
-    public void WhenICastTheReadOnlySpanOfCharToJsonTime()
-    {
-        this.scenarioContext.Set((JsonTime)this.scenarioContext.Get<ReadOnlyMemory<char>>(JsonValueSteps.SubjectUnderTest).Span, CastResultKey);
-    }
-
-    /// <summary>
     /// Casts the <see cref="JsonTime"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see langword="string"/>, converts that to a <see cref="ReadOnlyMemory{Byte}"/> and stores it in <see cref="CastResultKey"/>.
     /// </summary>
     [When("I cast the JsonTime to string")]
@@ -1111,24 +913,6 @@ public class JsonValueCastSteps
     public void WhenICastTheOffsetDateTimeToJsonDateTime()
     {
         this.scenarioContext.Set((JsonDateTime)this.scenarioContext.Get<OffsetDateTime>(JsonValueSteps.SubjectUnderTest), CastResultKey);
-    }
-
-    /// <summary>
-    /// Casts the <see cref="JsonDateTime"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="ReadOnlySpan{Char}"/>, converts that to a <see cref="ReadOnlyMemory{Byte}"/> and stores it in <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the JsonDateTime to ReadOnlySpan<char>")]
-    public void WhenICastTheJsonDateTimeToReadOnlySpanOfChar()
-    {
-        this.scenarioContext.Set<ReadOnlyMemory<char>>(((ReadOnlySpan<char>)this.scenarioContext.Get<JsonDateTime>(JsonValueSteps.SubjectUnderTest)).ToArray().AsMemory(), CastResultKey);
-    }
-
-    /// <summary>
-    /// Casts the <see cref="ReadOnlySpan{Char}"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="JsonDateTime"/> and stores it in <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the ReadOnlySpan<char> to JsonDateTime")]
-    public void WhenICastTheReadOnlySpanOfCharToJsonDateTime()
-    {
-        this.scenarioContext.Set((JsonDateTime)this.scenarioContext.Get<ReadOnlyMemory<char>>(JsonValueSteps.SubjectUnderTest).Span, CastResultKey);
     }
 
     /// <summary>
@@ -1243,24 +1027,6 @@ public class JsonValueCastSteps
     }
 
     /// <summary>
-    /// Casts the <see cref="JsonDuration"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="ReadOnlySpan{Char}"/>, converts that to a <see cref="ReadOnlyMemory{Byte}"/> and stores it in <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the JsonDuration to ReadOnlySpan<char>")]
-    public void WhenICastTheJsonDurationToReadOnlySpanOfChar()
-    {
-        this.scenarioContext.Set<ReadOnlyMemory<char>>(((ReadOnlySpan<char>)this.scenarioContext.Get<JsonDuration>(JsonValueSteps.SubjectUnderTest)).ToArray().AsMemory(), CastResultKey);
-    }
-
-    /// <summary>
-    /// Casts the <see cref="ReadOnlySpan{Char}"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="JsonDuration"/> and stores it in <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the ReadOnlySpan<char> to JsonDuration")]
-    public void WhenICastTheReadOnlySpanOfCharToJsonDuration()
-    {
-        this.scenarioContext.Set((JsonDuration)this.scenarioContext.Get<ReadOnlyMemory<char>>(JsonValueSteps.SubjectUnderTest).Span, CastResultKey);
-    }
-
-    /// <summary>
     /// Casts the <see cref="JsonDuration"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see langword="string"/>, converts that to a <see cref="ReadOnlyMemory{Byte}"/> and stores it in <see cref="CastResultKey"/>.
     /// </summary>
     [When("I cast the JsonDuration to string")]
@@ -1296,24 +1062,6 @@ public class JsonValueCastSteps
     public void WhenICastTheJsonStringToJsonString()
     {
         this.scenarioContext.Set((JsonString)this.scenarioContext.Get<JsonString>(JsonValueSteps.SubjectUnderTest), CastResultKey);
-    }
-
-    /// <summary>
-    /// Casts the <see cref="JsonString"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="ReadOnlySpan{Char}"/>, converts that to a <see cref="ReadOnlyMemory{Char}"/> and stores it in <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the JsonString to ReadOnlySpan<char>")]
-    public void WhenICastTheJsonStringToReadOnlySpanOfChar()
-    {
-        this.scenarioContext.Set<ReadOnlyMemory<char>>(((ReadOnlySpan<char>)this.scenarioContext.Get<JsonString>(JsonValueSteps.SubjectUnderTest)).ToArray().AsMemory(), CastResultKey);
-    }
-
-    /// <summary>
-    /// Casts the <see cref="JsonString"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="ReadOnlySpan{Char}"/>, converts that to a <see cref="ReadOnlyMemory{Char}"/> and stores it in <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the ReadOnlySpan<char> to JsonString")]
-    public void WhenICastTheReadOnlySpanOfCharToJsonString()
-    {
-        this.scenarioContext.Set((JsonString)this.scenarioContext.Get<ReadOnlyMemory<char>>(JsonValueSteps.SubjectUnderTest).Span, CastResultKey);
     }
 
     /// <summary>
@@ -1395,24 +1143,6 @@ public class JsonValueCastSteps
     }
 
     /// <summary>
-    /// Casts the <see cref="JsonHostname"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="ReadOnlySpan{Char}"/>, converts that to a <see cref="ReadOnlyMemory{Char}"/> and stores it in <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the JsonHostname to ReadOnlySpan<char>")]
-    public void WhenICastTheJsonHostnameToReadOnlySpanOfChar()
-    {
-        this.scenarioContext.Set<ReadOnlyMemory<char>>(((ReadOnlySpan<char>)this.scenarioContext.Get<JsonHostname>(JsonValueSteps.SubjectUnderTest)).ToArray().AsMemory(), CastResultKey);
-    }
-
-    /// <summary>
-    /// Casts the <see cref="JsonHostname"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="ReadOnlySpan{Char}"/>, converts that to a <see cref="ReadOnlyMemory{Char}"/> and stores it in <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the ReadOnlySpan<char> to JsonHostname")]
-    public void WhenICastTheReadOnlySpanOfCharToJsonHostname()
-    {
-        this.scenarioContext.Set((JsonHostname)this.scenarioContext.Get<ReadOnlyMemory<char>>(JsonValueSteps.SubjectUnderTest).Span, CastResultKey);
-    }
-
-    /// <summary>
     /// Casts the <see cref="JsonHostname"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="string"/> and stores it in <see cref="CastResultKey"/>.
     /// </summary>
     [When("I cast the JsonHostname to string")]
@@ -1471,24 +1201,6 @@ public class JsonValueCastSteps
     }
 
     /// <summary>
-    /// Casts the <see cref="JsonIdnEmail"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="ReadOnlySpan{Char}"/>, converts that to a <see cref="ReadOnlyMemory{Char}"/> and stores it in <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the JsonIdnEmail to ReadOnlySpan<char>")]
-    public void WhenICastTheJsonIdnEmailToReadOnlySpanOfChar()
-    {
-        this.scenarioContext.Set<ReadOnlyMemory<char>>(((ReadOnlySpan<char>)this.scenarioContext.Get<JsonIdnEmail>(JsonValueSteps.SubjectUnderTest)).ToArray().AsMemory(), CastResultKey);
-    }
-
-    /// <summary>
-    /// Casts the <see cref="JsonIdnEmail"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="ReadOnlySpan{Char}"/>, converts that to a <see cref="ReadOnlyMemory{Char}"/> and stores it in <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the ReadOnlySpan<char> to JsonIdnEmail")]
-    public void WhenICastTheReadOnlySpanOfCharToJsonIdnEmail()
-    {
-        this.scenarioContext.Set((JsonIdnEmail)this.scenarioContext.Get<ReadOnlyMemory<char>>(JsonValueSteps.SubjectUnderTest).Span, CastResultKey);
-    }
-
-    /// <summary>
     /// Casts the <see cref="JsonIdnEmail"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="string"/> and stores it in <see cref="CastResultKey"/>.
     /// </summary>
     [When("I cast the JsonIdnEmail to string")]
@@ -1544,24 +1256,6 @@ public class JsonValueCastSteps
     public void WhenICastTheJsonStringToJsonIdnHostname()
     {
         this.scenarioContext.Set((JsonIdnHostname)this.scenarioContext.Get<JsonString>(JsonValueSteps.SubjectUnderTest), CastResultKey);
-    }
-
-    /// <summary>
-    /// Casts the <see cref="JsonIdnHostname"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="ReadOnlySpan{Char}"/>, converts that to a <see cref="ReadOnlyMemory{Char}"/> and stores it in <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the JsonIdnHostname to ReadOnlySpan<char>")]
-    public void WhenICastTheJsonIdnHostnameToReadOnlySpanOfChar()
-    {
-        this.scenarioContext.Set<ReadOnlyMemory<char>>(((ReadOnlySpan<char>)this.scenarioContext.Get<JsonIdnHostname>(JsonValueSteps.SubjectUnderTest)).ToArray().AsMemory(), CastResultKey);
-    }
-
-    /// <summary>
-    /// Casts the <see cref="JsonIdnHostname"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="ReadOnlySpan{Char}"/>, converts that to a <see cref="ReadOnlyMemory{Char}"/> and stores it in <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the ReadOnlySpan<char> to JsonIdnHostname")]
-    public void WhenICastTheReadOnlySpanOfCharToJsonIdnHostname()
-    {
-        this.scenarioContext.Set((JsonIdnHostname)this.scenarioContext.Get<ReadOnlyMemory<char>>(JsonValueSteps.SubjectUnderTest).Span, CastResultKey);
     }
 
     /// <summary>
@@ -1878,24 +1572,6 @@ public class JsonValueCastSteps
     }
 
     /// <summary>
-    /// Casts the <see cref="JsonUuid"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="ReadOnlySpan{Char}"/>, converts that to a <see cref="ReadOnlyMemory{Char}"/> and stores it in <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the JsonUuid to ReadOnlySpan<char>")]
-    public void WhenICastTheJsonUuidToReadOnlySpanOfChar()
-    {
-        this.scenarioContext.Set<ReadOnlyMemory<char>>(((ReadOnlySpan<char>)this.scenarioContext.Get<JsonUuid>(JsonValueSteps.SubjectUnderTest)).ToArray().AsMemory(), CastResultKey);
-    }
-
-    /// <summary>
-    /// Casts the <see cref="JsonUuid"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="ReadOnlySpan{Char}"/>, converts that to a <see cref="ReadOnlyMemory{Char}"/> and stores it in <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the ReadOnlySpan<char> to JsonUuid")]
-    public void WhenICastTheReadOnlySpanOfCharToJsonUuid()
-    {
-        this.scenarioContext.Set((JsonUuid)this.scenarioContext.Get<ReadOnlyMemory<char>>(JsonValueSteps.SubjectUnderTest).Span, CastResultKey);
-    }
-
-    /// <summary>
     /// Casts the <see cref="JsonUuid"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="string"/> and stores it in <see cref="CastResultKey"/>.
     /// </summary>
     [When("I cast the JsonUuid to string")]
@@ -1982,24 +1658,6 @@ public class JsonValueCastSteps
     }
 
     /// <summary>
-    /// Casts the <see cref="JsonIpV4"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="ReadOnlySpan{Char}"/>, converts that to a <see cref="ReadOnlyMemory{Char}"/> and stores it in <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the JsonIpV4 to ReadOnlySpan<char>")]
-    public void WhenICastTheJsonIpV4ToReadOnlySpanOfChar()
-    {
-        this.scenarioContext.Set<ReadOnlyMemory<char>>(((ReadOnlySpan<char>)this.scenarioContext.Get<JsonIpV4>(JsonValueSteps.SubjectUnderTest)).ToArray().AsMemory(), CastResultKey);
-    }
-
-    /// <summary>
-    /// Casts the <see cref="JsonIpV4"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="ReadOnlySpan{Char}"/>, converts that to a <see cref="ReadOnlyMemory{Char}"/> and stores it in <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the ReadOnlySpan<char> to JsonIpV4")]
-    public void WhenICastTheReadOnlySpanOfCharToJsonIpV4()
-    {
-        this.scenarioContext.Set((JsonIpV4)this.scenarioContext.Get<ReadOnlyMemory<char>>(JsonValueSteps.SubjectUnderTest).Span, CastResultKey);
-    }
-
-    /// <summary>
     /// Casts the <see cref="JsonIpV4"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="string"/> and stores it in <see cref="CastResultKey"/>.
     /// </summary>
     [When("I cast the JsonIpV4 to string")]
@@ -2073,24 +1731,6 @@ public class JsonValueCastSteps
     public void WhenICastTheJsonStringToJsonIpV6()
     {
         this.scenarioContext.Set((JsonIpV6)this.scenarioContext.Get<JsonString>(JsonValueSteps.SubjectUnderTest), CastResultKey);
-    }
-
-    /// <summary>
-    /// Casts the <see cref="JsonIpV6"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="ReadOnlySpan{Char}"/>, converts that to a <see cref="ReadOnlyMemory{Char}"/> and stores it in <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the JsonIpV6 to ReadOnlySpan<char>")]
-    public void WhenICastTheJsonIpV6ToReadOnlySpanOfChar()
-    {
-        this.scenarioContext.Set<ReadOnlyMemory<char>>(((ReadOnlySpan<char>)this.scenarioContext.Get<JsonIpV6>(JsonValueSteps.SubjectUnderTest)).ToArray().AsMemory(), CastResultKey);
-    }
-
-    /// <summary>
-    /// Casts the <see cref="JsonIpV6"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="ReadOnlySpan{Char}"/>, converts that to a <see cref="ReadOnlyMemory{Char}"/> and stores it in <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the ReadOnlySpan<char> to JsonIpV6")]
-    public void WhenICastTheReadOnlySpanOfCharToJsonIpV6()
-    {
-        this.scenarioContext.Set((JsonIpV6)this.scenarioContext.Get<ReadOnlyMemory<char>>(JsonValueSteps.SubjectUnderTest).Span, CastResultKey);
     }
 
     /// <summary>
@@ -2180,24 +1820,6 @@ public class JsonValueCastSteps
     }
 
     /// <summary>
-    /// Casts the <see cref="JsonRegex"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="ReadOnlySpan{Char}"/>, converts that to a <see cref="ReadOnlyMemory{Char}"/> and stores it in <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the JsonRegex to ReadOnlySpan<char>")]
-    public void WhenICastTheJsonRegexToReadOnlySpanOfChar()
-    {
-        this.scenarioContext.Set<ReadOnlyMemory<char>>(((ReadOnlySpan<char>)this.scenarioContext.Get<JsonRegex>(JsonValueSteps.SubjectUnderTest)).ToArray().AsMemory(), CastResultKey);
-    }
-
-    /// <summary>
-    /// Casts the <see cref="JsonRegex"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="ReadOnlySpan{Char}"/>, converts that to a <see cref="ReadOnlyMemory{Char}"/> and stores it in <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the ReadOnlySpan<char> to JsonRegex")]
-    public void WhenICastTheReadOnlySpanOfCharToJsonRegex()
-    {
-        this.scenarioContext.Set((JsonRegex)this.scenarioContext.Get<ReadOnlyMemory<char>>(JsonValueSteps.SubjectUnderTest).Span, CastResultKey);
-    }
-
-    /// <summary>
     /// Casts the <see cref="JsonRegex"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="string"/> and stores it in <see cref="CastResultKey"/>.
     /// </summary>
     [When("I cast the JsonRegex to string")]
@@ -2271,24 +1893,6 @@ public class JsonValueCastSteps
     public void WhenICastTheJsonStringToJsonIri()
     {
         this.scenarioContext.Set((JsonIri)this.scenarioContext.Get<JsonString>(JsonValueSteps.SubjectUnderTest), CastResultKey);
-    }
-
-    /// <summary>
-    /// Casts the <see cref="JsonIri"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="ReadOnlySpan{Char}"/>, converts that to a <see cref="ReadOnlyMemory{Char}"/> and stores it in <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the JsonIri to ReadOnlySpan<char>")]
-    public void WhenICastTheJsonIriToReadOnlySpanOfChar()
-    {
-        this.scenarioContext.Set<ReadOnlyMemory<char>>(((ReadOnlySpan<char>)this.scenarioContext.Get<JsonIri>(JsonValueSteps.SubjectUnderTest)).ToArray().AsMemory(), CastResultKey);
-    }
-
-    /// <summary>
-    /// Casts the <see cref="JsonIri"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="ReadOnlySpan{Char}"/>, converts that to a <see cref="ReadOnlyMemory{Char}"/> and stores it in <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the ReadOnlySpan<char> to JsonIri")]
-    public void WhenICastTheReadOnlySpanOfCharToJsonIri()
-    {
-        this.scenarioContext.Set((JsonIri)this.scenarioContext.Get<ReadOnlyMemory<char>>(JsonValueSteps.SubjectUnderTest).Span, CastResultKey);
     }
 
     /// <summary>
@@ -2368,24 +1972,6 @@ public class JsonValueCastSteps
     }
 
     /// <summary>
-    /// Casts the <see cref="JsonIriReference"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="ReadOnlySpan{Char}"/>, converts that to a <see cref="ReadOnlyMemory{Char}"/> and stores it in <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the JsonIriReference to ReadOnlySpan<char>")]
-    public void WhenICastTheJsonIriReferenceToReadOnlySpanOfChar()
-    {
-        this.scenarioContext.Set<ReadOnlyMemory<char>>(((ReadOnlySpan<char>)this.scenarioContext.Get<JsonIriReference>(JsonValueSteps.SubjectUnderTest)).ToArray().AsMemory(), CastResultKey);
-    }
-
-    /// <summary>
-    /// Casts the <see cref="JsonIriReference"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="ReadOnlySpan{Char}"/>, converts that to a <see cref="ReadOnlyMemory{Char}"/> and stores it in <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the ReadOnlySpan<char> to JsonIriReference")]
-    public void WhenICastTheReadOnlySpanOfCharToJsonIriReference()
-    {
-        this.scenarioContext.Set((JsonIriReference)this.scenarioContext.Get<ReadOnlyMemory<char>>(JsonValueSteps.SubjectUnderTest).Span, CastResultKey);
-    }
-
-    /// <summary>
     /// Casts the <see cref="JsonIriReference"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="string"/> and stores it in <see cref="CastResultKey"/>.
     /// </summary>
     [When("I cast the JsonIriReference to string")]
@@ -2462,24 +2048,6 @@ public class JsonValueCastSteps
     }
 
     /// <summary>
-    /// Casts the <see cref="JsonUri"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="ReadOnlySpan{Char}"/>, converts that to a <see cref="ReadOnlyMemory{Char}"/> and stores it in <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the JsonUri to ReadOnlySpan<char>")]
-    public void WhenICastTheJsonUriToReadOnlySpanOfChar()
-    {
-        this.scenarioContext.Set<ReadOnlyMemory<char>>(((ReadOnlySpan<char>)this.scenarioContext.Get<JsonUri>(JsonValueSteps.SubjectUnderTest)).ToArray().AsMemory(), CastResultKey);
-    }
-
-    /// <summary>
-    /// Casts the <see cref="JsonUri"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="ReadOnlySpan{Char}"/>, converts that to a <see cref="ReadOnlyMemory{Char}"/> and stores it in <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the ReadOnlySpan<char> to JsonUri")]
-    public void WhenICastTheReadOnlySpanOfCharToJsonUri()
-    {
-        this.scenarioContext.Set((JsonUri)this.scenarioContext.Get<ReadOnlyMemory<char>>(JsonValueSteps.SubjectUnderTest).Span, CastResultKey);
-    }
-
-    /// <summary>
     /// Casts the <see cref="JsonUri"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="string"/> and stores it in <see cref="CastResultKey"/>.
     /// </summary>
     [When("I cast the JsonUri to string")]
@@ -2553,24 +2121,6 @@ public class JsonValueCastSteps
     public void WhenICastTheJsonStringToJsonUriReference()
     {
         this.scenarioContext.Set((JsonUriReference)this.scenarioContext.Get<JsonString>(JsonValueSteps.SubjectUnderTest), CastResultKey);
-    }
-
-    /// <summary>
-    /// Casts the <see cref="JsonUriReference"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="ReadOnlySpan{Char}"/>, converts that to a <see cref="ReadOnlyMemory{Char}"/> and stores it in <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the JsonUriReference to ReadOnlySpan<char>")]
-    public void WhenICastTheJsonUriReferenceToReadOnlySpanOfChar()
-    {
-        this.scenarioContext.Set<ReadOnlyMemory<char>>(((ReadOnlySpan<char>)this.scenarioContext.Get<JsonUriReference>(JsonValueSteps.SubjectUnderTest)).ToArray().AsMemory(), CastResultKey);
-    }
-
-    /// <summary>
-    /// Casts the <see cref="JsonUriReference"/> in the key <see cref="JsonValueSteps.SubjectUnderTest"/> to <see cref="ReadOnlySpan{Char}"/>, converts that to a <see cref="ReadOnlyMemory{Char}"/> and stores it in <see cref="CastResultKey"/>.
-    /// </summary>
-    [When("I cast the ReadOnlySpan<char> to JsonUriReference")]
-    public void WhenICastTheReadOnlySpanOfCharToJsonUriReference()
-    {
-        this.scenarioContext.Set((JsonUriReference)this.scenarioContext.Get<ReadOnlyMemory<char>>(JsonValueSteps.SubjectUnderTest).Span, CastResultKey);
     }
 
     /// <summary>

@@ -1781,7 +1781,7 @@ public readonly partial struct Schema
             builder.Add(JsonPropertyNames.UniqueItems, uniqueItems__.AsAny);
         }
 
-        return builder.ToImmutable();
+        return new(builder.ToImmutable());
     }
 
     /// <summary>

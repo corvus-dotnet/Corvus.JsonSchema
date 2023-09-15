@@ -815,7 +815,7 @@ public readonly partial struct Applicator
             builder.Add(JsonPropertyNames.UnevaluatedProperties, unevaluatedProperties__.AsAny);
         }
 
-        return builder.ToImmutable();
+        return new(builder.ToImmutable());
     }
 
     /// <summary>

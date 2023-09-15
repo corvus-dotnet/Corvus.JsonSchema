@@ -60,7 +60,7 @@ public readonly partial struct PersonNameElement : IJsonString<PersonNameElement
     /// <param name = "value">The value from which to convert.</param>
     public static implicit operator JsonString(PersonNameElement value)
     {
-        return value.AsString;
+        return JsonString.FromString(value);
     }
 
     /// <summary>
@@ -109,34 +109,6 @@ public readonly partial struct PersonNameElement : IJsonString<PersonNameElement
         }
 
         throw new InvalidOperationException();
-    }
-
-    /// <summary>
-    /// Conversion from string.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator PersonNameElement(ReadOnlySpan<char> value)
-    {
-        return new(value);
-    }
-
-    /// <summary>
-    /// Conversion to string.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    /// <exception cref = "InvalidOperationException">The value was not a string.</exception>
-    public static implicit operator ReadOnlySpan<char>(PersonNameElement value)
-    {
-        return ((string)value).AsSpan();
-    }
-
-    /// <summary>
-    /// Conversion from string.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator PersonNameElement(ReadOnlySpan<byte> value)
-    {
-        return new(value);
     }
 
     /// <summary>
@@ -310,22 +282,6 @@ public readonly partial struct PersonNameElement : IJsonString<PersonNameElement
 
         value = null;
         return false;
-    }
-
-    /// <inheritdoc/>
-    public ReadOnlySpan<char> AsSpan()
-    {
-        if ((this.backing & Backing.String) != 0)
-        {
-            return this.stringBacking.AsSpan();
-        }
-
-        if ((this.backing & Backing.JsonElement) != 0 && this.jsonElementBacking.ValueKind == JsonValueKind.String)
-        {
-            return this.jsonElementBacking.GetString().AsSpan();
-        }
-
-        throw new InvalidOperationException();
     }
 
     /// <summary>

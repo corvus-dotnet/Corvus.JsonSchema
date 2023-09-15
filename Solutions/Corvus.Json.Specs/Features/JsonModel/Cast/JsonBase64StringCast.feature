@@ -26,21 +26,6 @@ Scenario: Cast from JsonString for json element backed value as an base64String
 	When I cast the JsonString to JsonBase64String
 	Then the result should equal the JsonBase64String "eyAiaGVsbG8iOiAid29ybGQiIH0="
 
-Scenario: Cast to ReadOnlySpan<char> for json element backed value as an base64String
-	Given the JsonElement backed JsonBase64String "eyAiaGVsbG8iOiAid29ybGQiIH0="
-	When I cast the JsonBase64String to ReadOnlySpan<char>
-	Then the result should equal the ReadOnlySpan<char> "eyAiaGVsbG8iOiAid29ybGQiIH0="
-
-Scenario: Cast to ReadOnlySpan<char> for dotnet backed value as an base64String
-	Given the dotnet backed JsonBase64String "eyAiaGVsbG8iOiAid29ybGQiIH0="
-	When I cast the JsonBase64String to ReadOnlySpan<char>
-	Then the result should equal the ReadOnlySpan<char> "eyAiaGVsbG8iOiAid29ybGQiIH0="
-
-Scenario: Cast from ReadOnlySpan<char> for json element backed value as an base64String
-	Given the ReadOnlyMemory<char> for "eyAiaGVsbG8iOiAid29ybGQiIH0="
-	When I cast the ReadOnlySpan<char> to JsonBase64String
-	Then the result should equal the JsonBase64String "eyAiaGVsbG8iOiAid29ybGQiIH0="
-
 Scenario: Cast to string for json element backed value as an base64String
 	Given the JsonElement backed JsonBase64String "eyAiaGVsbG8iOiAid29ybGQiIH0="
 	When I cast the JsonBase64String to string

@@ -78,7 +78,7 @@ public readonly partial struct PersonNameElementArray : IJsonArray<PersonNameEle
     /// <param name = "value">The value from which to convert.</param>
     public static implicit operator JsonArray(PersonNameElementArray value)
     {
-        return value.AsArray;
+        return JsonArray.FromArray(value);
     }
 
     /// <summary>s

@@ -40,30 +40,12 @@ public readonly partial struct JsonObject
     }
 
     /// <summary>
-    /// Conversion from immutable dictionary.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonObject(ImmutableDictionary<JsonPropertyName, JsonAny> value)
-    {
-        return new(value);
-    }
-
-    /// <summary>
     /// Conversion to JsonAny.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
     public static implicit operator JsonAny(JsonObject value)
     {
         return value.AsAny;
-    }
-
-    /// <summary>
-    /// Conversion to immutable dictionary.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator ImmutableDictionary<JsonPropertyName, JsonAny>(JsonObject value)
-    {
-        return value.GetImmutableDictionary();
     }
 
     /// <summary>

@@ -79,7 +79,7 @@ public readonly partial struct NotDisabled
             builder.Add(JsonPropertyNames.Disabled, disabled__.AsAny);
         }
 
-        return builder.ToImmutable();
+        return new(builder.ToImmutable());
     }
 
     /// <summary>

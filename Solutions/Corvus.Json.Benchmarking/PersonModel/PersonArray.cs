@@ -108,8 +108,7 @@ public readonly partial struct PersonArray
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonString AsString
+    JsonString IJsonValue.AsString
     {
         get
         {
@@ -123,8 +122,7 @@ public readonly partial struct PersonArray
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonBoolean AsBoolean
+    JsonBoolean IJsonValue.AsBoolean
     {
         get
         {
@@ -138,8 +136,7 @@ public readonly partial struct PersonArray
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonNumber AsNumber
+    JsonNumber IJsonValue.AsNumber
     {
         get
         {
@@ -153,8 +150,7 @@ public readonly partial struct PersonArray
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonObject AsObject
+    JsonObject IJsonValue.AsObject
     {
         get
         {
@@ -226,15 +222,6 @@ public readonly partial struct PersonArray
 
             return JsonValueKind.Undefined;
         }
-    }
-
-    /// <summary>
-    /// Conversion from JsonAny.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator PersonArray(JsonAny value)
-    {
-        return PersonArray.FromAny(value);
     }
 
     /// <summary>
@@ -313,9 +300,7 @@ public readonly partial struct PersonArray
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be PersonArray.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static PersonArray FromBoolean<TValue>(in TValue value)
-        where TValue : struct, IJsonBoolean<TValue>
+    static PersonArray IJsonValue<PersonArray>.FromBoolean<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -333,9 +318,7 @@ public readonly partial struct PersonArray
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be PersonArray.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static PersonArray FromString<TValue>(in TValue value)
-        where TValue : struct, IJsonString<TValue>
+    static PersonArray IJsonValue<PersonArray>.FromString<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -353,9 +336,7 @@ public readonly partial struct PersonArray
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be PersonArray.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static PersonArray FromNumber<TValue>(in TValue value)
-        where TValue : struct, IJsonNumber<TValue>
+    static PersonArray IJsonValue<PersonArray>.FromNumber<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -383,7 +364,7 @@ public readonly partial struct PersonArray
 
         if (value.ValueKind == JsonValueKind.Array)
         {
-            return new((ImmutableList<JsonAny>)value);
+            return new(value.AsImmutableList());
         }
 
         return Undefined;
@@ -397,9 +378,7 @@ public readonly partial struct PersonArray
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be PersonArray.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static PersonArray FromObject<TValue>(in TValue value)
-        where TValue : struct, IJsonObject<TValue>
+    static PersonArray IJsonValue<PersonArray>.FromObject<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {

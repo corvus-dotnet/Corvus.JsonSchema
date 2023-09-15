@@ -78,24 +78,6 @@ public readonly partial struct JsonArray
     }
 
     /// <summary>
-    /// Conversion from immutable list.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator ImmutableList<JsonAny>(JsonArray value)
-    {
-        return value.GetImmutableList();
-    }
-
-    /// <summary>s
-    /// Conversion to immutable list.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonArray(ImmutableList<JsonAny> value)
-    {
-        return new(value);
-    }
-
-    /// <summary>
     /// Construct an instance of the array from a list of json values.
     /// </summary>
     /// <param name="items">The list of items from which to construct the array.</param>

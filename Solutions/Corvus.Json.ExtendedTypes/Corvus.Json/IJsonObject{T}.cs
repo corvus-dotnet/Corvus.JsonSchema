@@ -23,18 +23,6 @@ public interface IJsonObject<T> : IJsonValue<T>
     JsonAny this[in JsonPropertyName name] { get; }
 
     /// <summary>
-    /// Conversion from immutable list.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    static abstract implicit operator T(ImmutableDictionary<JsonPropertyName, JsonAny> value);
-
-    /// <summary>s
-    /// Conversion to immutable list.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    static abstract implicit operator ImmutableDictionary<JsonPropertyName, JsonAny>(T value);
-
-    /// <summary>
     /// Enumerate the array.
     /// </summary>
     /// <returns>An enumerator for the object.</returns>

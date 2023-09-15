@@ -23,7 +23,7 @@ public readonly record struct PatchBuilder(JsonAny Value, JsonPatchDocument Patc
     {
         if (path.Length == 0)
         {
-            return this.Replace(value, path);
+            return this.Replace(value, new JsonPointer(path.ToString()));
         }
 
         bool goingDeep = false;
@@ -53,7 +53,7 @@ public readonly record struct PatchBuilder(JsonAny Value, JsonPatchDocument Patc
                 currentBuilder =
                     currentBuilder.Add(
                         EmptyObject,
-                        path[..currentIndex]);
+                        new JsonPointer(path[..currentIndex].ToString()));
                 currentPath = currentPath[(nextSlash + 1)..];
                 currentIndex++;
             }
@@ -65,11 +65,11 @@ public readonly record struct PatchBuilder(JsonAny Value, JsonPatchDocument Patc
         // If we are not going deep, we may be replacing the element at the path
         if (!goingDeep && this.Value.TryResolvePointer(path, out _))
         {
-            return currentBuilder.Replace(value, path);
+            return currentBuilder.Replace(value, new JsonPointer(path.ToString()));
         }
         else
         {
-            return currentBuilder.Add(value, path);
+            return currentBuilder.Add(value, new JsonPointer(path.ToString()));
         }
     }
 

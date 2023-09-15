@@ -953,7 +953,7 @@ public readonly partial struct Validation
             builder.Add(JsonPropertyNames.UniqueItems, uniqueItems__.AsAny);
         }
 
-        return builder.ToImmutable();
+        return new(builder.ToImmutable());
     }
 
     /// <summary>

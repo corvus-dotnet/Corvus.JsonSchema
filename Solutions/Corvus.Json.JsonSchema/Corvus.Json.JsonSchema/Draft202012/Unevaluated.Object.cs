@@ -81,24 +81,6 @@ public readonly partial struct Unevaluated : IJsonObject<Unevaluated>
     }
 
     /// <summary>
-    /// Conversion from immutable dictionary.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator Unevaluated(ImmutableDictionary<JsonPropertyName, JsonAny> value)
-    {
-        return new(value);
-    }
-
-    /// <summary>
-    /// Conversion to immutable dictionary.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator ImmutableDictionary<JsonPropertyName, JsonAny>(Unevaluated value)
-    {
-        return value.GetImmutableDictionary();
-    }
-
-    /// <summary>
     /// Creates an instance of the type from the given dictionary of properties.
     /// </summary>
     /// <param name = "source">The dictionary of properties.</param>

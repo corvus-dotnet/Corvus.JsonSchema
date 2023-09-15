@@ -119,7 +119,7 @@ public readonly partial struct JsonPatchDocument
             var builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
             builder.Add(JsonPropertyNames.Op, op.AsAny);
             builder.Add(JsonPropertyNames.Path, path.AsAny);
-            return builder.ToImmutable();
+            return new(builder.ToImmutable());
         }
 
         /// <summary>

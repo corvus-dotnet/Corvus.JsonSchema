@@ -49,30 +49,12 @@ public readonly record struct JsonPropertyName(JsonString Name) : IEquatable<Jso
     }
 
     /// <summary>
-    /// Conversion to string.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    public static implicit operator ReadOnlySpan<char>(in JsonPropertyName value)
-    {
-        return value.Name.AsSpan();
-    }
-
-    /// <summary>
     /// Conversion from string.
     /// </summary>
     /// <param name="value">The value to convert.</param>
     public static implicit operator JsonPropertyName(ReadOnlySpan<char> value)
     {
         return new(value.ToString());
-    }
-
-    /// <summary>
-    /// Conversion to utf8 bytes.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    public static implicit operator ReadOnlySpan<byte>(in JsonPropertyName value)
-    {
-        return Encoding.UTF8.GetBytes(value.Name);
     }
 
     /// <summary>
@@ -91,7 +73,7 @@ public readonly record struct JsonPropertyName(JsonString Name) : IEquatable<Jso
     /// <returns><c>True</c> is the values are equal.</returns>
     public bool Equals(string value)
     {
-        return this.Name.Equals(value);
+        return this.Name.EqualsString(value);
     }
 
     /// <summary>
@@ -101,7 +83,7 @@ public readonly record struct JsonPropertyName(JsonString Name) : IEquatable<Jso
     /// <returns><c>True</c> is the values are equal.</returns>
     public bool Equals(ReadOnlySpan<char> value)
     {
-        return this.Name.Equals(value);
+        return this.Name.EqualsString(value);
     }
 
     /// <inheritdoc/>
@@ -127,6 +109,6 @@ public readonly record struct JsonPropertyName(JsonString Name) : IEquatable<Jso
     /// <returns><c>True</c> is the values are equal.</returns>
     public bool Equals(ReadOnlySpan<byte> value)
     {
-        return this.Name.Equals(value);
+        return this.Name.EqualsUtf8Bytes(value);
     }
 }

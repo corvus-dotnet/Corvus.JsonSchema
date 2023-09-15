@@ -251,7 +251,7 @@ public readonly partial struct ScenarioWithResult
             builder.Add(JsonPropertyNames.Disabled, disabled__.AsAny);
         }
 
-        return builder.ToImmutable();
+        return new(builder.ToImmutable());
     }
 
     /// <summary>

@@ -79,7 +79,7 @@ public readonly partial struct FormatAnnotation
             builder.Add(JsonPropertyNames.Format, format__.AsAny);
         }
 
-        return builder.ToImmutable();
+        return new(builder.ToImmutable());
     }
 
     /// <summary>

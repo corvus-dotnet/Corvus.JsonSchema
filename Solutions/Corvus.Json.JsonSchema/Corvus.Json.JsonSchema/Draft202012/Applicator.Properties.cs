@@ -723,7 +723,7 @@ public readonly partial struct Applicator
             builder.Add(JsonPropertyNames.Then, then__.AsAny);
         }
 
-        return builder.ToImmutable();
+        return new(builder.ToImmutable());
     }
 
     /// <summary>

@@ -447,7 +447,7 @@ public readonly partial struct Core
             builder.Add(JsonPropertyNames.Vocabulary, vocabulary__.AsAny);
         }
 
-        return builder.ToImmutable();
+        return new(builder.ToImmutable());
     }
 
     /// <summary>

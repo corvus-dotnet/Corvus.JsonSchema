@@ -41,21 +41,6 @@ Scenario: Cast from IPAddress for json element backed value as an ipV4
 	When I cast the IPAddress to JsonIpV4
 	Then the result should equal the JsonIpV4 "192.168.0.1"
 
-Scenario: Cast to ReadOnlySpan<char> for json element backed value as an ipV4
-	Given the JsonElement backed JsonIpV4 "192.168.0.1"
-	When I cast the JsonIpV4 to ReadOnlySpan<char>
-	Then the result should equal the ReadOnlySpan<char> "192.168.0.1"
-
-Scenario: Cast to ReadOnlySpan<char> for dotnet backed value as an ipV4
-	Given the dotnet backed JsonIpV4 "192.168.0.1"
-	When I cast the JsonIpV4 to ReadOnlySpan<char>
-	Then the result should equal the ReadOnlySpan<char> "192.168.0.1"
-
-Scenario: Cast from ReadOnlySpan<char> for json element backed value as an ipV4
-	Given the ReadOnlyMemory<char> for "192.168.0.1"
-	When I cast the ReadOnlySpan<char> to JsonIpV4
-	Then the result should equal the JsonIpV4 "192.168.0.1"
-
 Scenario: Cast to string for json element backed value as an ipV4
 	Given the JsonElement backed JsonIpV4 "192.168.0.1"
 	When I cast the JsonIpV4 to string

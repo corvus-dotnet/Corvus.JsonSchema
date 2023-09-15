@@ -649,7 +649,7 @@ namespace ");
             #line hidden
             
             #line 151 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Properties.tt"
-            this.Write("        return builder.ToImmutable();\r\n    }\r\n");
+            this.Write("        return new(builder.ToImmutable());\r\n    }\r\n");
             
             #line default
             #line hidden

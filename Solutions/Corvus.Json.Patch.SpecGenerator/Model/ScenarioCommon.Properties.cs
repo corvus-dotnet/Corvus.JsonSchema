@@ -163,7 +163,7 @@ public readonly partial struct ScenarioCommon
             builder.Add(JsonPropertyNames.Comment, comment__.AsAny);
         }
 
-        return builder.ToImmutable();
+        return new(builder.ToImmutable());
     }
 
     /// <summary>

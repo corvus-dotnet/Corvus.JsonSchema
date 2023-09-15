@@ -46,21 +46,6 @@ Scenario: Cast to Corvus Period for json element backed value as a duration
 	When I cast the Corvus Period to JsonDuration
 	Then the result should equal the JsonDuration "P3Y6M4DT12H30M5S"
 
-Scenario: Cast to ReadOnlySpan<char> for json element backed value as a duration
-	Given the JsonElement backed JsonDuration "P3Y6M4DT12H30M5S"
-	When I cast the JsonDuration to ReadOnlySpan<char>
-	Then the result should equal the ReadOnlySpan<char> "P3Y6M4DT12H30M5S"
-
-Scenario: Cast to ReadOnlySpan<char> for dotnet backed value as a duration
-	Given the dotnet backed JsonDuration "P3Y6M4DT12H30M5S"
-	When I cast the JsonDuration to ReadOnlySpan<char>
-	Then the result should equal the ReadOnlySpan<char> "P3Y6M4DT12H30M5S"
-
-Scenario: Cast from ReadOnlySpan<char> for json element backed value as a duration
-	Given the ReadOnlyMemory<char> for "P3Y6M4DT12H30M5S"
-	When I cast the ReadOnlySpan<char> to JsonDuration
-	Then the result should equal the JsonDuration "P3Y6M4DT12H30M5S"
-
 Scenario: Cast to string for json element backed value as a duration
 	Given the JsonElement backed JsonDuration "P3Y6M4DT12H30M5S"
 	When I cast the JsonDuration to string

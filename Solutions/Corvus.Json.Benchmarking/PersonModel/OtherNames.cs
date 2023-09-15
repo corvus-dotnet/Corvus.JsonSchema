@@ -140,8 +140,7 @@ public readonly partial struct OtherNames
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonBoolean AsBoolean
+    JsonBoolean IJsonValue.AsBoolean
     {
         get
         {
@@ -155,8 +154,7 @@ public readonly partial struct OtherNames
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonNumber AsNumber
+    JsonNumber IJsonValue.AsNumber
     {
         get
         {
@@ -170,8 +168,7 @@ public readonly partial struct OtherNames
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonObject AsObject
+    JsonObject IJsonValue.AsObject
     {
         get
         {
@@ -251,15 +248,6 @@ public readonly partial struct OtherNames
     }
 
     /// <summary>
-    /// Conversion from JsonAny.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator OtherNames(JsonAny value)
-    {
-        return OtherNames.FromAny(value);
-    }
-
-    /// <summary>
     /// Conversion to JsonAny.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
@@ -336,9 +324,7 @@ public readonly partial struct OtherNames
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be OtherNames.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OtherNames FromBoolean<TValue>(in TValue value)
-        where TValue : struct, IJsonBoolean<TValue>
+    static OtherNames IJsonValue<OtherNames>.FromBoolean<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -380,9 +366,7 @@ public readonly partial struct OtherNames
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be OtherNames.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OtherNames FromNumber<TValue>(in TValue value)
-        where TValue : struct, IJsonNumber<TValue>
+    static OtherNames IJsonValue<OtherNames>.FromNumber<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -410,7 +394,7 @@ public readonly partial struct OtherNames
 
         if (value.ValueKind == JsonValueKind.Array)
         {
-            return new((ImmutableList<JsonAny>)value);
+            return new(value.AsImmutableList());
         }
 
         return Undefined;
@@ -424,9 +408,7 @@ public readonly partial struct OtherNames
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be OtherNames.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OtherNames FromObject<TValue>(in TValue value)
-        where TValue : struct, IJsonObject<TValue>
+    static OtherNames IJsonValue<OtherNames>.FromObject<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {

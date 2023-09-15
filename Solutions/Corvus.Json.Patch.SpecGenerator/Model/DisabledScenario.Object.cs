@@ -80,24 +80,6 @@ public readonly partial struct DisabledScenario : IJsonObject<DisabledScenario>
     }
 
     /// <summary>
-    /// Conversion from immutable dictionary.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator DisabledScenario(ImmutableDictionary<JsonPropertyName, JsonAny> value)
-    {
-        return new(value);
-    }
-
-    /// <summary>
-    /// Conversion to immutable dictionary.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator ImmutableDictionary<JsonPropertyName, JsonAny>(DisabledScenario value)
-    {
-        return value.GetImmutableDictionary();
-    }
-
-    /// <summary>
     /// Creates an instance of the type from the given dictionary of properties.
     /// </summary>
     /// <param name = "source">The dictionary of properties.</param>

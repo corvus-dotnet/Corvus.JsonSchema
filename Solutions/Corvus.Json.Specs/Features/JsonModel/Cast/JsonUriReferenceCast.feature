@@ -41,21 +41,6 @@ Scenario: Cast from Uri for json element backed value as an uri
 	When I cast the Uri to JsonUriReference
 	Then the result should equal the JsonUriReference "http://foo.bar/?baz=qux#quux"
 
-Scenario: Cast to ReadOnlySpan<char> for json element backed value as an uri
-	Given the JsonElement backed JsonUriReference "http://foo.bar/?baz=qux#quux"
-	When I cast the JsonUriReference to ReadOnlySpan<char>
-	Then the result should equal the ReadOnlySpan<char> "http://foo.bar/?baz=qux#quux"
-
-Scenario: Cast to ReadOnlySpan<char> for dotnet backed value as an uri
-	Given the dotnet backed JsonUriReference "http://foo.bar/?baz=qux#quux"
-	When I cast the JsonUriReference to ReadOnlySpan<char>
-	Then the result should equal the ReadOnlySpan<char> "http://foo.bar/?baz=qux#quux"
-
-Scenario: Cast from ReadOnlySpan<char> for json element backed value as an uri
-	Given the ReadOnlyMemory<char> for "http://foo.bar/?baz=qux#quux"
-	When I cast the ReadOnlySpan<char> to JsonUriReference
-	Then the result should equal the JsonUriReference "http://foo.bar/?baz=qux#quux"
-
 Scenario: Cast to string for json element backed value as an uri
 	Given the JsonElement backed JsonUriReference "http://foo.bar/?baz=qux#quux"
 	When I cast the JsonUriReference to string
