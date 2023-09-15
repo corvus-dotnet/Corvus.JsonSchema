@@ -86,6 +86,27 @@ public readonly partial struct Schema
         }
 
         /// <summary>
+        /// Conversion to double.
+        /// </summary>
+        /// <param name = "value">The value to convert.</param>
+        /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
+        /// <exception cref = "FormatException">The value was not formatted as a double.</exception>
+        public static explicit operator float (NonNegativeIntegerDefault0 value)
+        {
+            if ((value.backing & Backing.JsonElement) != 0)
+            {
+                return value.jsonElementBacking.GetSingle();
+            }
+
+            if ((value.backing & Backing.Number) != 0)
+            {
+                return (float)value.numberBacking;
+            }
+
+            throw new InvalidOperationException();
+        }
+
+        /// <summary>
         /// Conversion from long.
         /// </summary>
         /// <param name = "value">The value to convert.</param>
@@ -104,7 +125,7 @@ public readonly partial struct Schema
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
-                return value.jsonElementBacking.GetInt64();
+                return value.jsonElementBacking.SafeGetInt64();
             }
 
             if ((value.backing & Backing.Number) != 0)
