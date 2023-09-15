@@ -21,16 +21,6 @@ Scenario: Cast to JsonNumber for dotnet backed value as a integer
 	When I cast the JsonInteger to JsonNumber
 	Then the result should equal the JsonNumber 12
 
-Scenario: Cast from JsonNumber for dotnet backed value as a integer
-	Given the dotnet backed JsonNumber 12
-	When I cast the JsonNumber to JsonInteger
-	Then the result should equal the JsonInteger 12
-
-Scenario: Cast from JsonNumber for json element backed value as a integer
-	Given the JsonElement backed JsonNumber 12
-	When I cast the JsonNumber to JsonInteger
-	Then the result should equal the JsonInteger 12
-
 Scenario: Cast to long for json element backed value as a integer
 	Given the JsonElement backed JsonInteger 12
 	When I cast the JsonInteger to long

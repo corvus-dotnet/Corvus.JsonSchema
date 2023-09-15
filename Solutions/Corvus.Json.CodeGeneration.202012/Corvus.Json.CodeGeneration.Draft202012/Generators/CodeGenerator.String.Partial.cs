@@ -735,7 +735,7 @@ public partial class CodeGeneratorString
     /// <summary>
     /// Gets a value indicating whether this has a maxItems constraint.
     /// </summary>
-    public int MaxItems
+    public long MaxItems
     {
         get
         {
@@ -746,7 +746,7 @@ public partial class CodeGeneratorString
     /// <summary>
     /// Gets a value indicating whether this has a minItems constraint.
     /// </summary>
-    public int MinItems
+    public long MinItems
     {
         get
         {
@@ -887,7 +887,7 @@ public partial class CodeGeneratorString
         {
             if (this.TypeDeclaration.Schema().MaxLength.IsNotUndefined())
             {
-                return ((int)this.TypeDeclaration.Schema().MaxLength).ToString();
+                return ((long)this.TypeDeclaration.Schema().MaxLength).ToString();
             }
 
             return string.Empty;
@@ -903,7 +903,7 @@ public partial class CodeGeneratorString
         {
             if (this.TypeDeclaration.Schema().MinLength.IsNotUndefined())
             {
-                return ((int)this.TypeDeclaration.Schema().MinLength).ToString();
+                return ((long)this.TypeDeclaration.Schema().MinLength).ToString();
             }
 
             return string.Empty;
@@ -1328,7 +1328,7 @@ public partial class CodeGeneratorString
     /// <summary>
     /// Gets the maxContains constraint.
     /// </summary>
-    public int MaxContains
+    public long MaxContains
     {
         get
         {
@@ -1469,7 +1469,7 @@ public partial class CodeGeneratorString
     /// <summary>
     /// Gets the minContains constraint.
     /// </summary>
-    public int MinContains
+    public long MinContains
     {
         get
         {
@@ -1513,7 +1513,7 @@ public partial class CodeGeneratorString
     /// <summary>
     /// Gets the maxProperties constraint.
     /// </summary>
-    public int MaxProperties
+    public long MaxProperties
     {
         get
         {
@@ -1524,7 +1524,7 @@ public partial class CodeGeneratorString
     /// <summary>
     /// Gets the minProperties constraint.
     /// </summary>
-    public int MinProperties
+    public long MinProperties
     {
         get
         {

@@ -110,8 +110,7 @@ public readonly partial struct Schema
         }
 
         /// <inheritdoc/>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public JsonString AsString
+        JsonString IJsonValue.AsString
         {
             get
             {
@@ -125,8 +124,7 @@ public readonly partial struct Schema
         }
 
         /// <inheritdoc/>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public JsonBoolean AsBoolean
+        JsonBoolean IJsonValue.AsBoolean
         {
             get
             {
@@ -140,8 +138,7 @@ public readonly partial struct Schema
         }
 
         /// <inheritdoc/>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public JsonNumber AsNumber
+        JsonNumber IJsonValue.AsNumber
         {
             get
             {
@@ -155,8 +152,7 @@ public readonly partial struct Schema
         }
 
         /// <inheritdoc/>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public JsonObject AsObject
+        JsonObject IJsonValue.AsObject
         {
             get
             {
@@ -306,9 +302,7 @@ public readonly partial struct Schema
         /// <returns>An instance of this type, initialized from the value.</returns>
         /// <remarks>This will be ExamplesJsonAnyArray.Undefined if the type is not compatible.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static ExamplesJsonAnyArray FromBoolean<TValue>(in TValue value)
-            where TValue : struct, IJsonBoolean<TValue>
+        static ExamplesJsonAnyArray IJsonValue<ExamplesJsonAnyArray>.FromBoolean<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -326,9 +320,7 @@ public readonly partial struct Schema
         /// <returns>An instance of this type, initialized from the value.</returns>
         /// <remarks>This will be ExamplesJsonAnyArray.Undefined if the type is not compatible.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static ExamplesJsonAnyArray FromString<TValue>(in TValue value)
-            where TValue : struct, IJsonString<TValue>
+        static ExamplesJsonAnyArray IJsonValue<ExamplesJsonAnyArray>.FromString<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -346,9 +338,7 @@ public readonly partial struct Schema
         /// <returns>An instance of this type, initialized from the value.</returns>
         /// <remarks>This will be ExamplesJsonAnyArray.Undefined if the type is not compatible.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static ExamplesJsonAnyArray FromNumber<TValue>(in TValue value)
-            where TValue : struct, IJsonNumber<TValue>
+        static ExamplesJsonAnyArray IJsonValue<ExamplesJsonAnyArray>.FromNumber<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -376,7 +366,7 @@ public readonly partial struct Schema
 
             if (value.ValueKind == JsonValueKind.Array)
             {
-                return new((ImmutableList<JsonAny>)value);
+                return new(value.AsImmutableList());
             }
 
             return Undefined;
@@ -390,9 +380,7 @@ public readonly partial struct Schema
         /// <returns>An instance of this type, initialized from the value.</returns>
         /// <remarks>This will be ExamplesJsonAnyArray.Undefined if the type is not compatible.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static ExamplesJsonAnyArray FromObject<TValue>(in TValue value)
-            where TValue : struct, IJsonObject<TValue>
+        static ExamplesJsonAnyArray IJsonValue<ExamplesJsonAnyArray>.FromObject<TValue>(in TValue value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -493,7 +481,7 @@ public readonly partial struct Schema
         }
 
         /// <summary>
-        /// Gets the value as the target value.
+        /// Gets the value as an instance of the target value.
         /// </summary>
         /// <typeparam name = "TTarget">The type of the target.</typeparam>
         /// <returns>An instance of the target type.</returns>

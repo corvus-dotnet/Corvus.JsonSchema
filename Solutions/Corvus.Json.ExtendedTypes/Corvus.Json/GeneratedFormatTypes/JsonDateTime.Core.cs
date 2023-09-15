@@ -423,7 +423,7 @@ public readonly partial struct JsonDateTime : IJsonString<JsonDateTime>
     }
 
     /// <summary>
-    /// Gets the value as the target value.
+    /// Gets the value as an instance of the target value.
     /// </summary>
     /// <typeparam name="TTarget">The type of the target.</typeparam>
     /// <returns>An instance of the target type.</returns>
