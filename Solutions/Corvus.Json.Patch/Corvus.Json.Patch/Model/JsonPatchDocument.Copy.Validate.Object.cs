@@ -55,11 +55,11 @@ public readonly partial struct JsonPatchDocument
                         return result;
                     }
 
-                    if ((this.HasJsonElementBacking && property.NameEquals(FromValueUtf8JsonPropertyName)) || (!this.HasJsonElementBacking && property.NameEquals(FromValueJsonPropertyName)))
+                    if ((this.HasJsonElementBacking && property.NameEquals(JsonPropertyNames.FromValueUtf8)) || (!this.HasJsonElementBacking && property.NameEquals(JsonPropertyNames.FromValue)))
                     {
                         foundFromValue = true;
                     }
-                    else if ((this.HasJsonElementBacking && property.NameEquals(OpUtf8JsonPropertyName)) || (!this.HasJsonElementBacking && property.NameEquals(OpJsonPropertyName)))
+                    else if ((this.HasJsonElementBacking && property.NameEquals(JsonPropertyNames.OpUtf8)) || (!this.HasJsonElementBacking && property.NameEquals(JsonPropertyNames.Op)))
                     {
                         foundOp = true;
                     }

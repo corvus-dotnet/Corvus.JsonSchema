@@ -53,11 +53,11 @@ public readonly partial struct ScenarioCommon
                     return result;
                 }
 
-                if ((this.HasJsonElementBacking && property.NameEquals(DocUtf8JsonPropertyName)) || (!this.HasJsonElementBacking && property.NameEquals(DocJsonPropertyName)))
+                if ((this.HasJsonElementBacking && property.NameEquals(JsonPropertyNames.DocUtf8)) || (!this.HasJsonElementBacking && property.NameEquals(JsonPropertyNames.Doc)))
                 {
                     foundDoc = true;
                 }
-                else if ((this.HasJsonElementBacking && property.NameEquals(PatchUtf8JsonPropertyName)) || (!this.HasJsonElementBacking && property.NameEquals(PatchJsonPropertyName)))
+                else if ((this.HasJsonElementBacking && property.NameEquals(JsonPropertyNames.PatchUtf8)) || (!this.HasJsonElementBacking && property.NameEquals(JsonPropertyNames.Patch)))
                 {
                     foundPatch = true;
                 }

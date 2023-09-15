@@ -21,23 +21,30 @@ namespace Corvus.Json.JsonSchema.Draft202012;
 public readonly partial struct Unevaluated
 {
     /// <summary>
-    /// JSON property name for <see cref = "UnevaluatedItems"/>.
+    /// The well-known property names in the JSON object.
     /// </summary>
-    public static ReadOnlySpan<byte> UnevaluatedItemsUtf8JsonPropertyName => "unevaluatedItems"u8;
+    public static class JsonPropertyNames
+    {
+        /// <summary>
+        /// JSON property name for <see cref = "UnevaluatedItems"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> UnevaluatedItemsUtf8 => "unevaluatedItems"u8;
 
-    /// <summary>
-    /// JSON property name for <see cref = "UnevaluatedItems"/>.
-    /// </summary>
-    public const string UnevaluatedItemsJsonPropertyName = "unevaluatedItems";
-    /// <summary>
-    /// JSON property name for <see cref = "UnevaluatedProperties"/>.
-    /// </summary>
-    public static ReadOnlySpan<byte> UnevaluatedPropertiesUtf8JsonPropertyName => "unevaluatedProperties"u8;
+        /// <summary>
+        /// JSON property name for <see cref = "UnevaluatedItems"/>.
+        /// </summary>
+        public const string UnevaluatedItems = "unevaluatedItems";
+        /// <summary>
+        /// JSON property name for <see cref = "UnevaluatedProperties"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> UnevaluatedPropertiesUtf8 => "unevaluatedProperties"u8;
 
-    /// <summary>
-    /// JSON property name for <see cref = "UnevaluatedProperties"/>.
-    /// </summary>
-    public const string UnevaluatedPropertiesJsonPropertyName = "unevaluatedProperties";
+        /// <summary>
+        /// JSON property name for <see cref = "UnevaluatedProperties"/>.
+        /// </summary>
+        public const string UnevaluatedProperties = "unevaluatedProperties";
+    }
+
     /// <summary>
     /// Gets UnevaluatedItems.
     /// </summary>
@@ -52,7 +59,7 @@ public readonly partial struct Unevaluated
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(UnevaluatedItemsUtf8JsonPropertyName, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.UnevaluatedItemsUtf8, out JsonElement result))
                 {
                     return new Corvus.Json.JsonSchema.Draft202012.Schema(result);
                 }
@@ -60,7 +67,7 @@ public readonly partial struct Unevaluated
 
             if ((this.backing & Backing.Object) != 0)
             {
-                if (this.objectBacking.TryGetValue(UnevaluatedItemsJsonPropertyName, out JsonAny result))
+                if (this.objectBacking.TryGetValue(JsonPropertyNames.UnevaluatedItems, out JsonAny result))
                 {
                     return result.As<Corvus.Json.JsonSchema.Draft202012.Schema>();
                 }
@@ -84,7 +91,7 @@ public readonly partial struct Unevaluated
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(UnevaluatedPropertiesUtf8JsonPropertyName, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.UnevaluatedPropertiesUtf8, out JsonElement result))
                 {
                     return new Corvus.Json.JsonSchema.Draft202012.Schema(result);
                 }
@@ -92,7 +99,7 @@ public readonly partial struct Unevaluated
 
             if ((this.backing & Backing.Object) != 0)
             {
-                if (this.objectBacking.TryGetValue(UnevaluatedPropertiesJsonPropertyName, out JsonAny result))
+                if (this.objectBacking.TryGetValue(JsonPropertyNames.UnevaluatedProperties, out JsonAny result))
                 {
                     return result.As<Corvus.Json.JsonSchema.Draft202012.Schema>();
                 }
@@ -110,12 +117,12 @@ public readonly partial struct Unevaluated
         var builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
         if (unevaluatedItems is Corvus.Json.JsonSchema.Draft202012.Schema unevaluatedItems__)
         {
-            builder.Add(UnevaluatedItemsJsonPropertyName, unevaluatedItems__.AsAny);
+            builder.Add(JsonPropertyNames.UnevaluatedItems, unevaluatedItems__.AsAny);
         }
 
         if (unevaluatedProperties is Corvus.Json.JsonSchema.Draft202012.Schema unevaluatedProperties__)
         {
-            builder.Add(UnevaluatedPropertiesJsonPropertyName, unevaluatedProperties__.AsAny);
+            builder.Add(JsonPropertyNames.UnevaluatedProperties, unevaluatedProperties__.AsAny);
         }
 
         return builder.ToImmutable();
@@ -128,7 +135,7 @@ public readonly partial struct Unevaluated
     /// <returns>The entity with the updated property.</returns>
     public Unevaluated WithUnevaluatedItems(in Corvus.Json.JsonSchema.Draft202012.Schema value)
     {
-        return this.SetProperty(UnevaluatedItemsJsonPropertyName, value);
+        return this.SetProperty(JsonPropertyNames.UnevaluatedItems, value);
     }
 
     /// <summary>
@@ -138,7 +145,7 @@ public readonly partial struct Unevaluated
     /// <returns>The entity with the updated property.</returns>
     public Unevaluated WithUnevaluatedProperties(in Corvus.Json.JsonSchema.Draft202012.Schema value)
     {
-        return this.SetProperty(UnevaluatedPropertiesJsonPropertyName, value);
+        return this.SetProperty(JsonPropertyNames.UnevaluatedProperties, value);
     }
 
     private static ValidationContext __CorvusValidateUnevaluatedItems(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
@@ -162,12 +169,12 @@ public readonly partial struct Unevaluated
     {
         if (hasJsonElementBacking)
         {
-            if (property.NameEquals(UnevaluatedItemsUtf8JsonPropertyName))
+            if (property.NameEquals(JsonPropertyNames.UnevaluatedItemsUtf8))
             {
                 propertyValidator = __CorvusValidateUnevaluatedItems;
                 return true;
             }
-            else if (property.NameEquals(UnevaluatedPropertiesUtf8JsonPropertyName))
+            else if (property.NameEquals(JsonPropertyNames.UnevaluatedPropertiesUtf8))
             {
                 propertyValidator = __CorvusValidateUnevaluatedProperties;
                 return true;
@@ -175,12 +182,12 @@ public readonly partial struct Unevaluated
         }
         else
         {
-            if (property.NameEquals(UnevaluatedItemsJsonPropertyName))
+            if (property.NameEquals(JsonPropertyNames.UnevaluatedItems))
             {
                 propertyValidator = __CorvusValidateUnevaluatedItems;
                 return true;
             }
-            else if (property.NameEquals(UnevaluatedPropertiesJsonPropertyName))
+            else if (property.NameEquals(JsonPropertyNames.UnevaluatedProperties))
             {
                 propertyValidator = __CorvusValidateUnevaluatedProperties;
                 return true;

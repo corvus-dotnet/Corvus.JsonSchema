@@ -70,8 +70,8 @@ public readonly partial struct Core
     private static ImmutableDictionary<JsonPropertyName, JsonAny> BuildDefaults()
     {
         ImmutableDictionary<JsonPropertyName, JsonAny>.Builder builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
-        builder.Add(DefsJsonPropertyName, Corvus.Json.JsonSchema.Draft201909.Core.DefsEntity.DefaultInstance);
-        builder.Add(RecursiveAnchorJsonPropertyName, Corvus.Json.JsonSchema.Draft201909.Core.RecursiveAnchorEntity.DefaultInstance);
+        builder.Add(JsonPropertyNames.Defs, Corvus.Json.JsonSchema.Draft201909.Core.DefsEntity.DefaultInstance);
+        builder.Add(JsonPropertyNames.RecursiveAnchor, Corvus.Json.JsonSchema.Draft201909.Core.RecursiveAnchorEntity.DefaultInstance);
         return builder.ToImmutable();
     }
 }

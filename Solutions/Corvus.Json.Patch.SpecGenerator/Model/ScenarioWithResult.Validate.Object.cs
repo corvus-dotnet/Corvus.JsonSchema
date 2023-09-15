@@ -52,7 +52,7 @@ public readonly partial struct ScenarioWithResult
                     return result;
                 }
 
-                if ((this.HasJsonElementBacking && property.NameEquals(ExpectedUtf8JsonPropertyName)) || (!this.HasJsonElementBacking && property.NameEquals(ExpectedJsonPropertyName)))
+                if ((this.HasJsonElementBacking && property.NameEquals(JsonPropertyNames.ExpectedUtf8)) || (!this.HasJsonElementBacking && property.NameEquals(JsonPropertyNames.Expected)))
                 {
                     foundExpected = true;
                 }

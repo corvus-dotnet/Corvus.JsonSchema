@@ -143,6 +143,7 @@ public static class JsonSchemaHelpers
             "EnumerateObject",
             "HasProperties",
             "HasProperty",
+            "JsonPropertyNames",
             "TryGetProperty",
             "SetProperty",
             "RemoveProperty",

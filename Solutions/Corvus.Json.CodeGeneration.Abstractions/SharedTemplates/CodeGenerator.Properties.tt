@@ -33,20 +33,25 @@ namespace <#= Namespace #>;
 /// </summary>
 public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 {
+    /// <summary>
+    /// The well-known property names in the JSON object.
+    /// </summary>
+    public static class JsonPropertyNames
+    {
 <#  foreach(var property in Properties)
     { #>
-    /// <summary>
-    /// JSON property name for <see cref="<#= property.DotnetPropertyName #>"/>.
-    /// </summary>
-    public static ReadOnlySpan<byte> <#= property.DotnetPropertyName #>Utf8JsonPropertyName => <#= Formatting.FormatLiteralOrNull(property.JsonPropertyName, true)#>u8;
+        /// <summary>
+        /// JSON property name for <see cref="<#= property.DotnetPropertyName #>"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> <#= property.DotnetPropertyName #>Utf8 => <#= Formatting.FormatLiteralOrNull(property.JsonPropertyName, true)#>u8;
 
-    /// <summary>
-    /// JSON property name for <see cref="<#= property.DotnetPropertyName #>"/>.
-    /// </summary>
-    public const string <#= property.DotnetPropertyName #>JsonPropertyName = <#= Formatting.FormatLiteralOrNull(property.JsonPropertyName, true)#>;
-
-<#  }
-    foreach(var property in Properties)
+        /// <summary>
+        /// JSON property name for <see cref="<#= property.DotnetPropertyName #>"/>.
+        /// </summary>
+        public const string <#= property.DotnetPropertyName #> = <#= Formatting.FormatLiteralOrNull(property.JsonPropertyName, true)#>;
+<#  } #>
+    }
+<#  foreach(var property in Properties)
     { #>
 
     /// <summary>
@@ -63,7 +68,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(<#= property.DotnetPropertyName #>Utf8JsonPropertyName, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.<#= property.DotnetPropertyName #>Utf8, out JsonElement result))
                 {
                     return new  <#= property.Type.FullyQualifiedDotnetTypeName #>(result);
                 }
@@ -71,7 +76,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 
             if ((this.backing & Backing.Object) != 0)
             {
-                if(this.objectBacking.TryGetValue(<#= property.DotnetPropertyName #>JsonPropertyName, out JsonAny result))
+                if(this.objectBacking.TryGetValue(JsonPropertyNames.<#= property.DotnetPropertyName #>, out JsonAny result))
                 {
                     return result.As<<#= property.Type.FullyQualifiedDotnetTypeName #>>();
                 }
@@ -124,11 +129,11 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     {
         if (IsConst(property.Type))
         { #>
-        builder.Add(<#= property.DotnetPropertyName#>JsonPropertyName, new <#= property.Type.FullyQualifiedDotnetTypeName #>().AsAny);
+        builder.Add(JsonPropertyNames.<#= property.DotnetPropertyName#>, new <#= property.Type.FullyQualifiedDotnetTypeName #>().AsAny);
 <#      }
         else
         { #>
-        builder.Add(<#= property.DotnetPropertyName#>JsonPropertyName, <#= property.DotnetParameterName #>.AsAny);
+        builder.Add(JsonPropertyNames.<#= property.DotnetPropertyName#>, <#= property.DotnetParameterName #>.AsAny);
 <#      }
     }
 
@@ -137,7 +142,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 
         if (<#= property.DotnetParameterName #> is <#= property.Type.FullyQualifiedDotnetTypeName #> <#= property.DotnetParameterName #>__)
         {
-            builder.Add(<#= property.DotnetPropertyName#>JsonPropertyName, <#= property.DotnetParameterName #>__.AsAny);
+            builder.Add(JsonPropertyNames.<#= property.DotnetPropertyName#>, <#= property.DotnetParameterName #>__.AsAny);
         }
 <#  } #>
         return builder.ToImmutable();
@@ -156,7 +161,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     /// <returns>The entity with the updated property.</returns>
     public <#= TypeDeclaration.DotnetTypeName #> With<#= property.DotnetPropertyName #>(in <#= property.Type.FullyQualifiedDotnetTypeName #> value)
     {
-        return this.SetProperty(<#= property.DotnetPropertyName #>JsonPropertyName, value);
+        return this.SetProperty(JsonPropertyNames.<#= property.DotnetPropertyName #>, value);
     }
 <#  } #>
 
@@ -183,7 +188,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 <#  bool isFirst = true;
     foreach (var property in LocalProperties)
     { #>
-            <#= isFirst ? string.Empty : "else " #>if (property.NameEquals(<#= property.DotnetPropertyName #>Utf8JsonPropertyName))
+            <#= isFirst ? string.Empty : "else " #>if (property.NameEquals(JsonPropertyNames.<#= property.DotnetPropertyName #>Utf8))
             {
                 propertyValidator = __CorvusValidate<#= property.DotnetPropertyName #>;
                 return true;
@@ -196,7 +201,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 <#  isFirst = true;
     foreach (var property in LocalProperties)
     { #>
-            <#= isFirst ? string.Empty : "else " #>if (property.NameEquals(<#= property.DotnetPropertyName #>JsonPropertyName))
+            <#= isFirst ? string.Empty : "else " #>if (property.NameEquals(JsonPropertyNames.<#= property.DotnetPropertyName #>))
             {
                 propertyValidator = __CorvusValidate<#= property.DotnetPropertyName #>;
                 return true;

@@ -52,7 +52,7 @@ public readonly partial struct DisabledScenario
                     return result;
                 }
 
-                if ((this.HasJsonElementBacking && property.NameEquals(DisabledUtf8JsonPropertyName)) || (!this.HasJsonElementBacking && property.NameEquals(DisabledJsonPropertyName)))
+                if ((this.HasJsonElementBacking && property.NameEquals(JsonPropertyNames.DisabledUtf8)) || (!this.HasJsonElementBacking && property.NameEquals(JsonPropertyNames.Disabled)))
                 {
                     foundDisabled = true;
                 }

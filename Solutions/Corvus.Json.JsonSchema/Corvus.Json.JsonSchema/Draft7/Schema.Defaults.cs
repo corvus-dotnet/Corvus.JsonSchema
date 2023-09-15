@@ -70,22 +70,22 @@ public readonly partial struct Schema
     private static ImmutableDictionary<JsonPropertyName, JsonAny> BuildDefaults()
     {
         ImmutableDictionary<JsonPropertyName, JsonAny>.Builder builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
-        builder.Add(AdditionalItemsJsonPropertyName, Corvus.Json.JsonSchema.Draft7.Schema.DefaultInstance);
-        builder.Add(AdditionalPropertiesJsonPropertyName, Corvus.Json.JsonSchema.Draft7.Schema.DefaultInstance);
-        builder.Add(ContainsJsonPropertyName, Corvus.Json.JsonSchema.Draft7.Schema.DefaultInstance);
-        builder.Add(DefinitionsJsonPropertyName, Corvus.Json.JsonSchema.Draft7.Schema.DefinitionsEntity.DefaultInstance);
-        builder.Add(ElseJsonPropertyName, Corvus.Json.JsonSchema.Draft7.Schema.DefaultInstance);
-        builder.Add(IfJsonPropertyName, Corvus.Json.JsonSchema.Draft7.Schema.DefaultInstance);
-        builder.Add(ItemsJsonPropertyName, Corvus.Json.JsonSchema.Draft7.Schema.ItemsEntity.DefaultInstance);
-        builder.Add(NotJsonPropertyName, Corvus.Json.JsonSchema.Draft7.Schema.DefaultInstance);
-        builder.Add(PatternPropertiesJsonPropertyName, Corvus.Json.JsonSchema.Draft7.Schema.PatternPropertiesEntity.DefaultInstance);
-        builder.Add(PropertiesJsonPropertyName, Corvus.Json.JsonSchema.Draft7.Schema.PropertiesEntity.DefaultInstance);
-        builder.Add(PropertyNamesJsonPropertyName, Corvus.Json.JsonSchema.Draft7.Schema.DefaultInstance);
-        builder.Add(ReadOnlyJsonPropertyName, Corvus.Json.JsonSchema.Draft7.Schema.ReadOnlyEntity.DefaultInstance);
-        builder.Add(RequiredJsonPropertyName, Corvus.Json.JsonSchema.Draft7.Schema.StringArray.DefaultInstance);
-        builder.Add(ThenJsonPropertyName, Corvus.Json.JsonSchema.Draft7.Schema.DefaultInstance);
-        builder.Add(UniqueItemsJsonPropertyName, Corvus.Json.JsonSchema.Draft7.Schema.UniqueItemsEntity.DefaultInstance);
-        builder.Add(WriteOnlyJsonPropertyName, Corvus.Json.JsonSchema.Draft7.Schema.WriteOnlyEntity.DefaultInstance);
+        builder.Add(JsonPropertyNames.AdditionalItems, Corvus.Json.JsonSchema.Draft7.Schema.DefaultInstance);
+        builder.Add(JsonPropertyNames.AdditionalProperties, Corvus.Json.JsonSchema.Draft7.Schema.DefaultInstance);
+        builder.Add(JsonPropertyNames.Contains, Corvus.Json.JsonSchema.Draft7.Schema.DefaultInstance);
+        builder.Add(JsonPropertyNames.Definitions, Corvus.Json.JsonSchema.Draft7.Schema.DefinitionsEntity.DefaultInstance);
+        builder.Add(JsonPropertyNames.Else, Corvus.Json.JsonSchema.Draft7.Schema.DefaultInstance);
+        builder.Add(JsonPropertyNames.If, Corvus.Json.JsonSchema.Draft7.Schema.DefaultInstance);
+        builder.Add(JsonPropertyNames.Items, Corvus.Json.JsonSchema.Draft7.Schema.ItemsEntity.DefaultInstance);
+        builder.Add(JsonPropertyNames.Not, Corvus.Json.JsonSchema.Draft7.Schema.DefaultInstance);
+        builder.Add(JsonPropertyNames.PatternProperties, Corvus.Json.JsonSchema.Draft7.Schema.PatternPropertiesEntity.DefaultInstance);
+        builder.Add(JsonPropertyNames.Properties, Corvus.Json.JsonSchema.Draft7.Schema.PropertiesEntity.DefaultInstance);
+        builder.Add(JsonPropertyNames.PropertyNames, Corvus.Json.JsonSchema.Draft7.Schema.DefaultInstance);
+        builder.Add(JsonPropertyNames.ReadOnly, Corvus.Json.JsonSchema.Draft7.Schema.ReadOnlyEntity.DefaultInstance);
+        builder.Add(JsonPropertyNames.Required, Corvus.Json.JsonSchema.Draft7.Schema.StringArray.DefaultInstance);
+        builder.Add(JsonPropertyNames.Then, Corvus.Json.JsonSchema.Draft7.Schema.DefaultInstance);
+        builder.Add(JsonPropertyNames.UniqueItems, Corvus.Json.JsonSchema.Draft7.Schema.UniqueItemsEntity.DefaultInstance);
+        builder.Add(JsonPropertyNames.WriteOnly, Corvus.Json.JsonSchema.Draft7.Schema.WriteOnlyEntity.DefaultInstance);
         return builder.ToImmutable();
     }
 }

@@ -21,23 +21,30 @@ namespace Corvus.Json.Benchmarking.Models;
 public readonly partial struct Person
 {
     /// <summary>
-    /// JSON property name for <see cref = "DateOfBirth"/>.
+    /// The well-known property names in the JSON object.
     /// </summary>
-    public static ReadOnlySpan<byte> DateOfBirthUtf8JsonPropertyName => "dateOfBirth"u8;
+    public static class JsonPropertyNames
+    {
+        /// <summary>
+        /// JSON property name for <see cref = "DateOfBirth"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> DateOfBirthUtf8 => "dateOfBirth"u8;
 
-    /// <summary>
-    /// JSON property name for <see cref = "DateOfBirth"/>.
-    /// </summary>
-    public const string DateOfBirthJsonPropertyName = "dateOfBirth";
-    /// <summary>
-    /// JSON property name for <see cref = "Name"/>.
-    /// </summary>
-    public static ReadOnlySpan<byte> NameUtf8JsonPropertyName => "name"u8;
+        /// <summary>
+        /// JSON property name for <see cref = "DateOfBirth"/>.
+        /// </summary>
+        public const string DateOfBirth = "dateOfBirth";
+        /// <summary>
+        /// JSON property name for <see cref = "Name"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> NameUtf8 => "name"u8;
 
-    /// <summary>
-    /// JSON property name for <see cref = "Name"/>.
-    /// </summary>
-    public const string NameJsonPropertyName = "name";
+        /// <summary>
+        /// JSON property name for <see cref = "Name"/>.
+        /// </summary>
+        public const string Name = "name";
+    }
+
     /// <summary>
     /// Gets DateOfBirth.
     /// </summary>
@@ -52,7 +59,7 @@ public readonly partial struct Person
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(DateOfBirthUtf8JsonPropertyName, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.DateOfBirthUtf8, out JsonElement result))
                 {
                     return new Corvus.Json.JsonDate(result);
                 }
@@ -60,7 +67,7 @@ public readonly partial struct Person
 
             if ((this.backing & Backing.Object) != 0)
             {
-                if (this.objectBacking.TryGetValue(DateOfBirthJsonPropertyName, out JsonAny result))
+                if (this.objectBacking.TryGetValue(JsonPropertyNames.DateOfBirth, out JsonAny result))
                 {
                     return result.As<Corvus.Json.JsonDate>();
                 }
@@ -84,7 +91,7 @@ public readonly partial struct Person
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(NameUtf8JsonPropertyName, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.NameUtf8, out JsonElement result))
                 {
                     return new Corvus.Json.Benchmarking.Models.PersonName(result);
                 }
@@ -92,7 +99,7 @@ public readonly partial struct Person
 
             if ((this.backing & Backing.Object) != 0)
             {
-                if (this.objectBacking.TryGetValue(NameJsonPropertyName, out JsonAny result))
+                if (this.objectBacking.TryGetValue(JsonPropertyNames.Name, out JsonAny result))
                 {
                     return result.As<Corvus.Json.Benchmarking.Models.PersonName>();
                 }
@@ -108,10 +115,10 @@ public readonly partial struct Person
     public static Person Create(Corvus.Json.Benchmarking.Models.PersonName name, Corvus.Json.JsonDate? dateOfBirth = null)
     {
         var builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
-        builder.Add(NameJsonPropertyName, name.AsAny);
+        builder.Add(JsonPropertyNames.Name, name.AsAny);
         if (dateOfBirth is Corvus.Json.JsonDate dateOfBirth__)
         {
-            builder.Add(DateOfBirthJsonPropertyName, dateOfBirth__.AsAny);
+            builder.Add(JsonPropertyNames.DateOfBirth, dateOfBirth__.AsAny);
         }
 
         return builder.ToImmutable();
@@ -124,7 +131,7 @@ public readonly partial struct Person
     /// <returns>The entity with the updated property.</returns>
     public Person WithDateOfBirth(in Corvus.Json.JsonDate value)
     {
-        return this.SetProperty(DateOfBirthJsonPropertyName, value);
+        return this.SetProperty(JsonPropertyNames.DateOfBirth, value);
     }
 
     /// <summary>
@@ -134,7 +141,7 @@ public readonly partial struct Person
     /// <returns>The entity with the updated property.</returns>
     public Person WithName(in Corvus.Json.Benchmarking.Models.PersonName value)
     {
-        return this.SetProperty(NameJsonPropertyName, value);
+        return this.SetProperty(JsonPropertyNames.Name, value);
     }
 
     private static ValidationContext __CorvusValidateName(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
@@ -158,12 +165,12 @@ public readonly partial struct Person
     {
         if (hasJsonElementBacking)
         {
-            if (property.NameEquals(NameUtf8JsonPropertyName))
+            if (property.NameEquals(JsonPropertyNames.NameUtf8))
             {
                 propertyValidator = __CorvusValidateName;
                 return true;
             }
-            else if (property.NameEquals(DateOfBirthUtf8JsonPropertyName))
+            else if (property.NameEquals(JsonPropertyNames.DateOfBirthUtf8))
             {
                 propertyValidator = __CorvusValidateDateOfBirth;
                 return true;
@@ -171,12 +178,12 @@ public readonly partial struct Person
         }
         else
         {
-            if (property.NameEquals(NameJsonPropertyName))
+            if (property.NameEquals(JsonPropertyNames.Name))
             {
                 propertyValidator = __CorvusValidateName;
                 return true;
             }
-            else if (property.NameEquals(DateOfBirthJsonPropertyName))
+            else if (property.NameEquals(JsonPropertyNames.DateOfBirth))
             {
                 propertyValidator = __CorvusValidateDateOfBirth;
                 return true;

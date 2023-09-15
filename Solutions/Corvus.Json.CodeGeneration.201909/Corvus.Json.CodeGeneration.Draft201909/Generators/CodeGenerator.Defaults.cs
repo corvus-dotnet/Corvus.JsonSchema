@@ -132,7 +132,7 @@ namespace ");
             #line hidden
             
             #line 91 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Defaults.tt"
-            this.Write("        builder.Add(");
+            this.Write("        builder.Add(JsonPropertyNames.");
             
             #line default
             #line hidden
@@ -144,7 +144,7 @@ namespace ");
             #line hidden
             
             #line 91 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Defaults.tt"
-            this.Write("JsonPropertyName, ");
+            this.Write(", ");
             
             #line default
             #line hidden

@@ -341,7 +341,7 @@ namespace ");
             #line hidden
             
             #line 145 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
-            this.Write("if ((this.HasJsonElementBacking && property.NameEquals(");
+            this.Write("if ((this.HasJsonElementBacking && property.NameEquals(JsonPropertyNames.");
             
             #line default
             #line hidden
@@ -353,7 +353,7 @@ namespace ");
             #line hidden
             
             #line 145 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
-            this.Write("Utf8JsonPropertyName)) || (!this.HasJsonElementBacking && property.NameEquals(");
+            this.Write("Utf8)) || (!this.HasJsonElementBacking && property.NameEquals(JsonPropertyNames.");
             
             #line default
             #line hidden
@@ -365,7 +365,7 @@ namespace ");
             #line hidden
             
             #line 145 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
-            this.Write("JsonPropertyName)))\r\n                {\r\n                    found");
+            this.Write(")))\r\n                {\r\n                    found");
             
             #line default
             #line hidden

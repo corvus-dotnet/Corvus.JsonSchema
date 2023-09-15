@@ -83,6 +83,7 @@ public static class JsonSchemaHelpers
             "HasProperty",
             "TryGetProperty",
             "SetProperty",
+            "JsonPropertyNames",
             "RemoveProperty",
             "GetImmutableDictionary",
             "GetImmutableDictionaryWithout",

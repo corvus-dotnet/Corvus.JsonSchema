@@ -70,12 +70,12 @@ public readonly partial struct Validation
     private static ImmutableDictionary<JsonPropertyName, JsonAny> BuildDefaults()
     {
         ImmutableDictionary<JsonPropertyName, JsonAny>.Builder builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
-        builder.Add(MinContainsJsonPropertyName, Corvus.Json.JsonSchema.Draft202012.Validation.MinContainsEntity.DefaultInstance);
-        builder.Add(MinItemsJsonPropertyName, Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeIntegerDefault0.DefaultInstance);
-        builder.Add(MinLengthJsonPropertyName, Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeIntegerDefault0.DefaultInstance);
-        builder.Add(MinPropertiesJsonPropertyName, Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeIntegerDefault0.DefaultInstance);
-        builder.Add(RequiredJsonPropertyName, Corvus.Json.JsonSchema.Draft202012.Validation.StringArray.DefaultInstance);
-        builder.Add(UniqueItemsJsonPropertyName, Corvus.Json.JsonSchema.Draft202012.Validation.UniqueItemsEntity.DefaultInstance);
+        builder.Add(JsonPropertyNames.MinContains, Corvus.Json.JsonSchema.Draft202012.Validation.MinContainsEntity.DefaultInstance);
+        builder.Add(JsonPropertyNames.MinItems, Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeIntegerDefault0.DefaultInstance);
+        builder.Add(JsonPropertyNames.MinLength, Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeIntegerDefault0.DefaultInstance);
+        builder.Add(JsonPropertyNames.MinProperties, Corvus.Json.JsonSchema.Draft202012.Validation.NonNegativeIntegerDefault0.DefaultInstance);
+        builder.Add(JsonPropertyNames.Required, Corvus.Json.JsonSchema.Draft202012.Validation.StringArray.DefaultInstance);
+        builder.Add(JsonPropertyNames.UniqueItems, Corvus.Json.JsonSchema.Draft202012.Validation.UniqueItemsEntity.DefaultInstance);
         return builder.ToImmutable();
     }
 }

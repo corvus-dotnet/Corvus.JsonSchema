@@ -142,7 +142,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 <#          int requiredIndex = 0 ;
             foreach (var property in RequiredProperties)
             { #>
-                <#= requiredIndex != 0 ? "else " : "" #>if ((this.HasJsonElementBacking && property.NameEquals(<#= property.DotnetPropertyName #>Utf8JsonPropertyName)) || (!this.HasJsonElementBacking && property.NameEquals(<#= property.DotnetPropertyName #>JsonPropertyName)))
+                <#= requiredIndex != 0 ? "else " : "" #>if ((this.HasJsonElementBacking && property.NameEquals(JsonPropertyNames.<#= property.DotnetPropertyName #>Utf8)) || (!this.HasJsonElementBacking && property.NameEquals(JsonPropertyNames.<#= property.DotnetPropertyName #>)))
                 {
                     found<#= property.DotnetPropertyName #> = true;
                 }

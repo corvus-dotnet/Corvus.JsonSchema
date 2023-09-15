@@ -70,9 +70,9 @@ public readonly partial struct MetaData
     private static ImmutableDictionary<JsonPropertyName, JsonAny> BuildDefaults()
     {
         ImmutableDictionary<JsonPropertyName, JsonAny>.Builder builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
-        builder.Add(DeprecatedJsonPropertyName, Corvus.Json.JsonSchema.Draft201909.MetaData.DeprecatedEntity.DefaultInstance);
-        builder.Add(ReadOnlyJsonPropertyName, Corvus.Json.JsonSchema.Draft201909.MetaData.ReadOnlyEntity.DefaultInstance);
-        builder.Add(WriteOnlyJsonPropertyName, Corvus.Json.JsonSchema.Draft201909.MetaData.WriteOnlyEntity.DefaultInstance);
+        builder.Add(JsonPropertyNames.Deprecated, Corvus.Json.JsonSchema.Draft201909.MetaData.DeprecatedEntity.DefaultInstance);
+        builder.Add(JsonPropertyNames.ReadOnly, Corvus.Json.JsonSchema.Draft201909.MetaData.ReadOnlyEntity.DefaultInstance);
+        builder.Add(JsonPropertyNames.WriteOnly, Corvus.Json.JsonSchema.Draft201909.MetaData.WriteOnlyEntity.DefaultInstance);
         return builder.ToImmutable();
     }
 }

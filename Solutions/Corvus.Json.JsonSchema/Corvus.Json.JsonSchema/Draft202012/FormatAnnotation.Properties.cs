@@ -21,14 +21,21 @@ namespace Corvus.Json.JsonSchema.Draft202012;
 public readonly partial struct FormatAnnotation
 {
     /// <summary>
-    /// JSON property name for <see cref = "Format"/>.
+    /// The well-known property names in the JSON object.
     /// </summary>
-    public static ReadOnlySpan<byte> FormatUtf8JsonPropertyName => "format"u8;
+    public static class JsonPropertyNames
+    {
+        /// <summary>
+        /// JSON property name for <see cref = "Format"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> FormatUtf8 => "format"u8;
 
-    /// <summary>
-    /// JSON property name for <see cref = "Format"/>.
-    /// </summary>
-    public const string FormatJsonPropertyName = "format";
+        /// <summary>
+        /// JSON property name for <see cref = "Format"/>.
+        /// </summary>
+        public const string Format = "format";
+    }
+
     /// <summary>
     /// Gets Format.
     /// </summary>
@@ -43,7 +50,7 @@ public readonly partial struct FormatAnnotation
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(FormatUtf8JsonPropertyName, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.FormatUtf8, out JsonElement result))
                 {
                     return new Corvus.Json.JsonString(result);
                 }
@@ -51,7 +58,7 @@ public readonly partial struct FormatAnnotation
 
             if ((this.backing & Backing.Object) != 0)
             {
-                if (this.objectBacking.TryGetValue(FormatJsonPropertyName, out JsonAny result))
+                if (this.objectBacking.TryGetValue(JsonPropertyNames.Format, out JsonAny result))
                 {
                     return result.As<Corvus.Json.JsonString>();
                 }
@@ -69,7 +76,7 @@ public readonly partial struct FormatAnnotation
         var builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
         if (format is Corvus.Json.JsonString format__)
         {
-            builder.Add(FormatJsonPropertyName, format__.AsAny);
+            builder.Add(JsonPropertyNames.Format, format__.AsAny);
         }
 
         return builder.ToImmutable();
@@ -82,7 +89,7 @@ public readonly partial struct FormatAnnotation
     /// <returns>The entity with the updated property.</returns>
     public FormatAnnotation WithFormat(in Corvus.Json.JsonString value)
     {
-        return this.SetProperty(FormatJsonPropertyName, value);
+        return this.SetProperty(JsonPropertyNames.Format, value);
     }
 
     private static ValidationContext __CorvusValidateFormat(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
@@ -101,7 +108,7 @@ public readonly partial struct FormatAnnotation
     {
         if (hasJsonElementBacking)
         {
-            if (property.NameEquals(FormatUtf8JsonPropertyName))
+            if (property.NameEquals(JsonPropertyNames.FormatUtf8))
             {
                 propertyValidator = __CorvusValidateFormat;
                 return true;
@@ -109,7 +116,7 @@ public readonly partial struct FormatAnnotation
         }
         else
         {
-            if (property.NameEquals(FormatJsonPropertyName))
+            if (property.NameEquals(JsonPropertyNames.Format))
             {
                 propertyValidator = __CorvusValidateFormat;
                 return true;
