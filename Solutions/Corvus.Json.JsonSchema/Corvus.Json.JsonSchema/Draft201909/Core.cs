@@ -312,7 +312,7 @@ public readonly partial struct Core
         {
             JsonValueKind.True => new(true),
             JsonValueKind.False => new(false),
-            JsonValueKind.Object => new((ImmutableDictionary<JsonPropertyName, JsonAny>)value),
+            JsonValueKind.Object => new(value.AsObject.AsImmutableDictionary()),
             JsonValueKind.Null => Null,
             _ => Undefined,
         };

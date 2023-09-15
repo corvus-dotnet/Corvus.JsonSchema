@@ -336,8 +336,8 @@ public readonly partial struct Applicator
             {
                 JsonValueKind.True => new(true),
                 JsonValueKind.False => new(false),
-                JsonValueKind.Array => new((ImmutableList<JsonAny>)value),
-                JsonValueKind.Object => new((ImmutableDictionary<JsonPropertyName, JsonAny>)value),
+                JsonValueKind.Array => new(value.AsArray.AsImmutableList()),
+                JsonValueKind.Object => new(value.AsObject.AsImmutableDictionary()),
                 JsonValueKind.Null => Null,
                 _ => Undefined,
             };

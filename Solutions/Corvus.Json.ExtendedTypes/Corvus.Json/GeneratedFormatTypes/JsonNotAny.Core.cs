@@ -443,10 +443,10 @@ public readonly partial struct JsonNotAny
 
         return value.ValueKind switch
         {
-            JsonValueKind.Object => new(value.AsImmutableDictionary()),
-            JsonValueKind.Array => new(value.AsImmutableList()),
-            JsonValueKind.String => new((string)value),
-            JsonValueKind.Number => new((double)value),
+            JsonValueKind.Object => new(value.AsObject.AsImmutableDictionary()),
+            JsonValueKind.Array => new(value.AsArray.AsImmutableList()),
+            JsonValueKind.String => new((string)value.AsString),
+            JsonValueKind.Number => new((double)value.AsNumber),
             JsonValueKind.True => new(true),
             JsonValueKind.False => new(false),
             JsonValueKind.Null => Null,

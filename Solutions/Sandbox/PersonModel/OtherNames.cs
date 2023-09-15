@@ -310,8 +310,8 @@ public readonly partial struct OtherNames
         JsonValueKind valueKind = value.ValueKind;
         return valueKind switch
         {
-            JsonValueKind.String => new((string)value),
-            JsonValueKind.Array => new((ImmutableList<JsonAny>)value),
+            JsonValueKind.String => new((string)value.AsString),
+            JsonValueKind.Array => new(value.AsArray.AsImmutableList()),
             JsonValueKind.Null => Null,
             _ => Undefined,
         };

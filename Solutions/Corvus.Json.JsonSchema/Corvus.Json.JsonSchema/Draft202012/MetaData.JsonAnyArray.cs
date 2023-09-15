@@ -290,7 +290,7 @@ public readonly partial struct MetaData
             JsonValueKind valueKind = value.ValueKind;
             return valueKind switch
             {
-                JsonValueKind.Array => new((ImmutableList<JsonAny>)value),
+                JsonValueKind.Array => new(value.AsArray.AsImmutableList()),
                 JsonValueKind.Null => Null,
                 _ => Undefined,
             };

@@ -385,12 +385,12 @@ public readonly partial struct Applicator
                 JsonValueKind valueKind = value.ValueKind;
                 return valueKind switch
                 {
-                    JsonValueKind.String => new((string)value),
+                    JsonValueKind.String => new((string)value.AsString),
                     JsonValueKind.True => new(true),
                     JsonValueKind.False => new(false),
-                    JsonValueKind.Number => new((double)value),
-                    JsonValueKind.Array => new((ImmutableList<JsonAny>)value),
-                    JsonValueKind.Object => new((ImmutableDictionary<JsonPropertyName, JsonAny>)value),
+                    JsonValueKind.Number => new((double)value.AsNumber),
+                    JsonValueKind.Array => new(value.AsArray.AsImmutableList()),
+                    JsonValueKind.Object => new(value.AsObject.AsImmutableDictionary()),
                     JsonValueKind.Null => Null,
                     _ => Undefined,
                 };

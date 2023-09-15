@@ -1571,7 +1571,7 @@ namespace ");
             #line hidden
             
             #line 555 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
-            this.Write("            JsonValueKind.Array => new((value.AsImmutableList()),\r\n");
+            this.Write("            JsonValueKind.Array => new(value.AsArray.AsImmutableList()),\r\n");
             
             #line default
             #line hidden

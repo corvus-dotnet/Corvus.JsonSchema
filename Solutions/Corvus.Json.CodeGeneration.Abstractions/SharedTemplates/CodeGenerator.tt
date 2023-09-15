@@ -552,7 +552,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 <#  }
     if(IsImplicitArray || IsNotImplicitType)
     { #>
-            JsonValueKind.Array => new((value.AsImmutableList()),
+            JsonValueKind.Array => new(value.AsArray.AsImmutableList()),
 <#  }
     if(IsImplicitObject || IsNotImplicitType)
     { #>
