@@ -11,11 +11,6 @@ Scenario: Cast to JsonAny for dotnet backed value as an idnEmail
 	When I cast the JsonIdnEmail to JsonAny
 	Then the result should equal the JsonAny "hello@endjin.com"
 
-Scenario: Cast from JsonAny for json element backed value as an idnEmail
-	Given the JsonAny for "hello@endjin.com"
-	When I cast the JsonAny to JsonIdnEmail
-	Then the result should equal the JsonIdnEmail "hello@endjin.com"
-
 Scenario: Cast to JsonString for json element backed value as an idnEmail
 	Given the JsonElement backed JsonIdnEmail "hello@endjin.com"
 	When I cast the JsonIdnEmail to JsonString

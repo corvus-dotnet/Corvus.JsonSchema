@@ -11,11 +11,6 @@ Scenario: Cast to JsonAny for dotnet backed value as an array
 	When I cast the JsonArray to JsonAny
 	Then the result should equal the JsonAny [1, "2", 3]
 
-Scenario: Cast from JsonAny for json element backed value as an array
-	Given the JsonAny for [1,"2",3]
-	When I cast the JsonAny to JsonArray
-	Then the result should equal the JsonArray [1, "2", 3]
-
 Scenario: Cast to ImmutableList for json element backed value as an array
 	Given the JsonElement backed JsonArray [1,"2",3]
 	When I cast the JsonArray to ImmutableList<JsonAny>

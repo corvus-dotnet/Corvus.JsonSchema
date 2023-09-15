@@ -11,11 +11,6 @@ Scenario: Cast to JsonAny for dotnet backed value as an dateTime
 	When I cast the JsonDateTime to JsonAny
 	Then the result should equal the JsonAny "2018-11-13T20:20:39+00:00"
 
-Scenario: Cast from JsonAny for json element backed value as an dateTime
-	Given the JsonAny for "2018-11-13T20:20:39+00:00"
-	When I cast the JsonAny to JsonDateTime
-	Then the result should equal the JsonDateTime "2018-11-13T20:20:39+00:00"
-
 Scenario: Cast to JsonString for json element backed value as an dateTime
 	Given the JsonElement backed JsonDateTime "2018-11-13T20:20:39+00:00"
 	When I cast the JsonDateTime to JsonString

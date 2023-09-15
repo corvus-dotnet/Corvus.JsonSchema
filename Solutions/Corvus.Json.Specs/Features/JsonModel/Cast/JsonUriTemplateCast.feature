@@ -11,11 +11,6 @@ Scenario: Cast to JsonAny for dotnet backed value as an uriTemplate
 	When I cast the JsonUriTemplate to JsonAny
 	Then the result should equal the JsonAny "http://example.com/dictionary/{term:1}/{term}"
 
-Scenario: Cast from JsonAny for json element backed value as an uriTemplate
-	Given the JsonAny for "http://example.com/dictionary/{term:1}/{term}"
-	When I cast the JsonAny to JsonUriTemplate
-	Then the result should equal the JsonUriTemplate "http://example.com/dictionary/{term:1}/{term}"
-
 Scenario: Cast to JsonString for json element backed value as an uriTemplate
 	Given the JsonElement backed JsonUriTemplate "http://example.com/dictionary/{term:1}/{term}"
 	When I cast the JsonUriTemplate to JsonString

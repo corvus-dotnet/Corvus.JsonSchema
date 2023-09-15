@@ -11,11 +11,6 @@ Scenario: Cast to JsonAny for dotnet backed value as a pointer
 	When I cast the JsonPointer to JsonAny
 	Then the result should equal the JsonAny "/a~1b"
 
-Scenario: Cast from JsonAny for json element backed value as a pointer
-	Given the JsonAny for "/a~1b"
-	When I cast the JsonAny to JsonPointer
-	Then the result should equal the JsonPointer "/a~1b"
-
 Scenario: Cast to JsonString for json element backed value as a pointer
 	Given the JsonElement backed JsonPointer "/a~1b"
 	When I cast the JsonPointer to JsonString

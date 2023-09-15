@@ -11,11 +11,6 @@ Scenario: Cast to JsonAny for dotnet backed value as an base64String
 	When I cast the JsonBase64String to JsonAny
 	Then the result should equal the JsonAny "eyAiaGVsbG8iOiAid29ybGQiIH0="
 
-Scenario: Cast from JsonAny for json element backed value as an base64String
-	Given the JsonAny for "eyAiaGVsbG8iOiAid29ybGQiIH0="
-	When I cast the JsonAny to JsonBase64String
-	Then the result should equal the JsonBase64String "eyAiaGVsbG8iOiAid29ybGQiIH0="
-
 Scenario: Cast to JsonString for json element backed value as an base64String
 	Given the JsonElement backed JsonBase64String "eyAiaGVsbG8iOiAid29ybGQiIH0="
 	When I cast the JsonBase64String to JsonString

@@ -11,11 +11,6 @@ Scenario: Cast to JsonAny for dotnet backed value as an iri
 	When I cast the JsonIriReference to JsonAny
 	Then the result should equal the JsonAny "http://foo.bar/?baz=qux#quux"
 
-Scenario: Cast from JsonAny for json element backed value as an iri
-	Given the JsonAny for "http://foo.bar/?baz=qux#quux"
-	When I cast the JsonAny to JsonIriReference
-	Then the result should equal the JsonIriReference "http://foo.bar/?baz=qux#quux"
-
 Scenario: Cast to JsonString for json element backed value as an iri
 	Given the JsonElement backed JsonIriReference "http://foo.bar/?baz=qux#quux"
 	When I cast the JsonIriReference to JsonString

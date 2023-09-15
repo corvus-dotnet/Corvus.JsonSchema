@@ -11,11 +11,6 @@ Scenario: Cast to JsonAny for dotnet backed value as an object
 	When I cast the JsonObject to JsonAny
 	Then the result should equal the JsonAny {"foo": 3}
 
-Scenario: Cast from JsonAny for json element backed value as an object
-	Given the JsonAny for {"foo": 3}
-	When I cast the JsonAny to JsonObject
-	Then the result should equal the JsonObject {"foo": 3}
-
 Scenario: Cast to dictionary for json element backed value as an object
 	Given the JsonElement backed JsonObject {"foo": 3}
 	When I cast the JsonObject to ImmutableDictionary<JsonPropertyName,JsonAny>

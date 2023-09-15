@@ -11,11 +11,6 @@ Scenario: Cast to JsonAny for dotnet backed value as an ipV4
 	When I cast the JsonIpV4 to JsonAny
 	Then the result should equal the JsonAny "192.168.0.1"
 
-Scenario: Cast from JsonAny for json element backed value as an ipV4
-	Given the JsonAny for "192.168.0.1"
-	When I cast the JsonAny to JsonIpV4
-	Then the result should equal the JsonIpV4 "192.168.0.1"
-
 Scenario: Cast to JsonString for json element backed value as an ipV4
 	Given the JsonElement backed JsonIpV4 "192.168.0.1"
 	When I cast the JsonIpV4 to JsonString

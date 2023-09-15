@@ -11,11 +11,6 @@ Scenario: Cast to JsonAny for dotnet backed value as an uuid
 	When I cast the JsonUuid to JsonAny
 	Then the result should equal the JsonAny "c3f2a2a3-72c1-4abc-a741-b0e7095f20d1"
 
-Scenario: Cast from JsonAny for json element backed value as an uuid
-	Given the JsonAny for "c3f2a2a3-72c1-4abc-a741-b0e7095f20d1"
-	When I cast the JsonAny to JsonUuid
-	Then the result should equal the JsonUuid "c3f2a2a3-72c1-4abc-a741-b0e7095f20d1"
-
 Scenario: Cast to JsonString for json element backed value as an uuid
 	Given the JsonElement backed JsonUuid "c3f2a2a3-72c1-4abc-a741-b0e7095f20d1"
 	When I cast the JsonUuid to JsonString

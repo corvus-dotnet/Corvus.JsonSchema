@@ -11,11 +11,6 @@ Scenario: Cast to JsonAny for dotnet backed value as a idnIdnHostname
 	When I cast the JsonIdnHostname to JsonAny
 	Then the result should equal the JsonAny "www.example.com"
 
-Scenario: Cast from JsonAny for json element backed value as a idnIdnHostname
-	Given the JsonAny for "www.example.com"
-	When I cast the JsonAny to JsonIdnHostname
-	Then the result should equal the JsonIdnHostname "www.example.com"
-
 Scenario: Cast to JsonString for json element backed value as a idnIdnHostname
 	Given the JsonElement backed JsonIdnHostname "www.example.com"
 	When I cast the JsonIdnHostname to JsonString

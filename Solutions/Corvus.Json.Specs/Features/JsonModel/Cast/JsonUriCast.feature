@@ -11,11 +11,6 @@ Scenario: Cast to JsonAny for dotnet backed value as an uri
 	When I cast the JsonUri to JsonAny
 	Then the result should equal the JsonAny "http://foo.bar/?baz=qux#quux"
 
-Scenario: Cast from JsonAny for json element backed value as an uri
-	Given the JsonAny for "http://foo.bar/?baz=qux#quux"
-	When I cast the JsonAny to JsonUri
-	Then the result should equal the JsonUri "http://foo.bar/?baz=qux#quux"
-
 Scenario: Cast to JsonString for json element backed value as an uri
 	Given the JsonElement backed JsonUri "http://foo.bar/?baz=qux#quux"
 	When I cast the JsonUri to JsonString

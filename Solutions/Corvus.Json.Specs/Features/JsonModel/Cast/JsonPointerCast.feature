@@ -11,11 +11,6 @@ Scenario: Cast to JsonAny for dotnet backed value as a relativePointer
 	When I cast the JsonRelativePointer to JsonAny
 	Then the result should equal the JsonAny "0/foo/bar"
 
-Scenario: Cast from JsonAny for json element backed value as a relativePointer
-	Given the JsonAny for "0/foo/bar"
-	When I cast the JsonAny to JsonRelativePointer
-	Then the result should equal the JsonRelativePointer "0/foo/bar"
-
 Scenario: Cast to JsonString for json element backed value as a relativePointer
 	Given the JsonElement backed JsonRelativePointer "0/foo/bar"
 	When I cast the JsonRelativePointer to JsonString

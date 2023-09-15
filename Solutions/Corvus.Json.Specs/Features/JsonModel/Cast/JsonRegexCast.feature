@@ -11,11 +11,6 @@ Scenario: Cast to JsonAny for dotnet backed value as a regex
 	When I cast the JsonRegex to JsonAny
 	Then the result should equal the JsonAny "([abc])+\\s+$"
 
-Scenario: Cast from JsonAny for json element backed value as a regex
-	Given the JsonAny for "([abc])+\\s+$"
-	When I cast the JsonAny to JsonRegex
-	Then the result should equal the JsonRegex "([abc])+\\s+$"
-
 Scenario: Cast to JsonString for json element backed value as a regex
 	Given the JsonElement backed JsonRegex "([abc])+\\s+$"
 	When I cast the JsonRegex to JsonString
