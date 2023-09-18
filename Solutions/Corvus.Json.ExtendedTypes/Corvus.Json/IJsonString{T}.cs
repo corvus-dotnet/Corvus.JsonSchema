@@ -37,7 +37,7 @@ public interface IJsonString<T> : IJsonValue<T>
     /// Get the string value as <see cref="Nullable{String}"/>.
     /// </summary>
     /// <returns>If the value is a string, the value as a string. Otherwise <c>null</c>.</returns>
-    string? AsOptionalString();
+    string? GetString();
 
     /// <summary>
     /// Concatenate two JSON values, producing an instance of the string type <typeparamref name="T"/>.
