@@ -1,8 +1,6 @@
 ﻿using Corvus.Json;
 using Corvus.Json.Benchmarking.Models;
 
-var value = JsonObject.FromProperties(("foo", "hello"), ("bar", "world"));
-
 JsonNumber num = 3.0;
 JsonNumber floatNum = 3.1;
 
@@ -12,7 +10,7 @@ JsonNumber floatNum = 3.1;
 // (notwithstanding precision issues)
 if (num.TryGetInt32(out int myInt3))
 {
-    Console.WriteLine($"Got {(num} as int32 {myInt3}.");
+    Console.WriteLine($"Got {num} as int32 {myInt3}.");
 }
 else
 {

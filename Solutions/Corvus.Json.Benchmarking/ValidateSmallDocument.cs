@@ -5,6 +5,7 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Jobs;
 using Corvus.Json.Benchmarking.Models;
 using JsonEverything = global::Json.Schema;
 
@@ -64,9 +65,24 @@ public class ValidateSmallDocument
     /// <summary>
     /// Validates using the Corvus types.
     /// </summary>
-    [Benchmark]
+    [Benchmark(Baseline = true)]
     public void ValidateSmallDocumentCorvus()
     {
+        LowAllocJsonUtils.UseReflection = false;
+        ValidationContext result = this.person.Validate(ValidationContext.ValidContext);
+        if (!result.IsValid)
+        {
+            throw new InvalidOperationException();
+        }
+    }
+
+    /// <summary>
+    /// Validates using the Corvus types.
+    /// </summary>
+    [Benchmark]
+    public void ValidateSmallDocumentCorvusWithFastText()
+    {
+        LowAllocJsonUtils.UseReflection = true;
         ValidationContext result = this.person.Validate(ValidationContext.ValidContext);
         if (!result.IsValid)
         {
@@ -77,7 +93,7 @@ public class ValidateSmallDocument
     /// <summary>
     /// Validates using the JsonEverything types.
     /// </summary>
-    [Benchmark(Baseline = true)]
+    [Benchmark]
     public void ValidateSmallDocumentJsonEverything()
     {
         JsonEverything.EvaluationResults result = this.schema!.Evaluate(this.node, Options);
