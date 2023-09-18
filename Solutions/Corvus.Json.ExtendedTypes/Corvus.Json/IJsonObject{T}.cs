@@ -242,10 +242,4 @@ public interface IJsonObject<T> : IJsonValue<T>
     /// </summary>
     /// <returns>An immutable dictionary of the properties of the object.</returns>
     ImmutableDictionary<JsonPropertyName, JsonAny> AsImmutableDictionary();
-
-    /// <summary>
-    /// Gets the object as an immutable dictionary builder of properties.
-    /// </summary>
-    /// <returns>An immutable dictionary builder, populated with the properties of the object.</returns>
-    public ImmutableDictionary<JsonPropertyName, JsonAny>.Builder AsImmutableDictionaryBuilder();
 }

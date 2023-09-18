@@ -252,7 +252,7 @@ public static partial class JsonTransformingVisitor
         }
         else
         {
-            builder = asObject.AsImmutableDictionaryBuilder();
+            builder = asObject.AsImmutableDictionary().ToBuilder();
         }
 
         foreach (JsonObjectProperty property in asObject.EnumerateObject())

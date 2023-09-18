@@ -85,12 +85,6 @@ public readonly partial struct JsonObject
     }
 
     /// <inheritdoc/>
-    public ImmutableDictionary<JsonPropertyName, JsonAny>.Builder AsImmutableDictionaryBuilder()
-    {
-        return this.GetImmutableDictionaryBuilder();
-    }
-
-    /// <inheritdoc/>
     public JsonObjectEnumerator EnumerateObject()
     {
         if ((this.backing & Backing.JsonElement) != 0)
