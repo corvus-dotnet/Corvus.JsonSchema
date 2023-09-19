@@ -174,6 +174,29 @@ public class JsonPropertiesSteps
     /// </summary>
     /// <param name="propertyName">The name of the property.</param>
     /// <param name="value">The serialized value of the property.</param>
+    [Then("the property (.*) on the JsonAny should be (.*) using JsonElement")]
+    public void ThenThePropertyNamedOnTheJsonAnyShouldBeUsingJsonElement(string propertyName, string value)
+    {
+        if (value == "<undefined>")
+        {
+            Assert.IsFalse(this.scenarioContext.Get<JsonAny>(ObjectResult).AsObject.TryGetProperty(JsonPropertyName.ParseValue($"\"{propertyName}\""), out _));
+        }
+        else
+        {
+            JsonAny sut = this.scenarioContext.Get<JsonAny>(ObjectResult);
+            if (sut.IsNotUndefined())
+            {
+                Assert.IsTrue(this.scenarioContext.Get<JsonAny>(ObjectResult).AsObject.TryGetProperty(JsonPropertyName.ParseValue($"\"{propertyName}\""), out JsonAny actualValue));
+                Assert.AreEqual(JsonAny.Parse(value), actualValue);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Validate the given property on a <see cref="JsonAny"/> found in the scenario context with key <see cref="ObjectResult"/>.
+    /// </summary>
+    /// <param name="propertyName">The name of the property.</param>
+    /// <param name="value">The serialized value of the property.</param>
     [Then("the property (.*) on the JsonAny should be (.*) using ReadOnlySpan<char>")]
     public void ThenThePropertyNamedOnTheJsonAnyShouldBeUsingReadOnlySpanOfChar(string propertyName, string value)
     {
@@ -233,6 +256,29 @@ public class JsonPropertiesSteps
             if (sut.IsNotUndefined())
             {
                 Assert.IsTrue(this.scenarioContext.Get<JsonNotAny>(ObjectResult).AsObject.TryGetProperty(propertyName, out JsonNotAny actualValue));
+                Assert.AreEqual(JsonNotAny.Parse(value), actualValue);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Validate the given property on a <see cref="JsonNotAny"/> found in the scenario context with key <see cref="ObjectResult"/>.
+    /// </summary>
+    /// <param name="propertyName">The name of the property.</param>
+    /// <param name="value">The serialized value of the property.</param>
+    [Then("the property (.*) on the JsonNotAny should be (.*) using JsonElement")]
+    public void ThenThePropertyNamedOnTheJsonNotAnyUsingJsonElementShouldBe(string propertyName, string value)
+    {
+        if (value == "<undefined>")
+        {
+            Assert.IsFalse(this.scenarioContext.Get<JsonNotAny>(ObjectResult).AsObject.TryGetProperty(JsonPropertyName.ParseValue($"\"{propertyName}\""), out _));
+        }
+        else
+        {
+            JsonNotAny sut = this.scenarioContext.Get<JsonNotAny>(ObjectResult);
+            if (sut.IsNotUndefined())
+            {
+                Assert.IsTrue(this.scenarioContext.Get<JsonNotAny>(ObjectResult).AsObject.TryGetProperty(JsonPropertyName.ParseValue($"\"{propertyName}\""), out JsonNotAny actualValue));
                 Assert.AreEqual(JsonNotAny.Parse(value), actualValue);
             }
         }
@@ -353,11 +399,6 @@ public class JsonPropertiesSteps
         }
     }
 
-    /// <summary>
-    /// Validate the given property on a <see cref="JsonObject"/> found in the scenario context with key <see cref="ObjectResult"/>.
-    /// </summary>
-    /// <param name="propertyName">The name of the property.</param>
-    /// <param name="value">The serialized value of the property.</param>
     [Then("the property (.*) on the JsonObject should be (.*) using ReadOnlySpan<byte>")]
     public void ThenThePropertyNamedOnTheJsonObjectShouldBeUsingReadOnlySpanOfByte(string propertyName, string value)
     {

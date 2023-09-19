@@ -17,7 +17,7 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft7 {
     public partial class CodeGeneratorObject : CodeGeneratorObjectBase {
         
         
-        #line 577 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Object.tt"
+        #line 571 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Object.tt"
 
     public bool ShouldGenerate
     {
@@ -209,15 +209,9 @@ namespace ");
     }
 
     /// <inheritdoc/>
-    public ImmutableList<JsonObjectProperty> AsImmutableList()
+    public ImmutableList<JsonObjectProperty> AsPropertyBacking()
     {
         return this.GetPropertyBacking();
-    }
-
-    /// <inheritdoc/>
-    public ImmutableList<JsonObjectProperty>.Builder AsImmutableListBuilder()
-    {
-        return this.GetPropertyBackingBuilder();
     }
 
     /// <inheritdoc/>
@@ -243,13 +237,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 92 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Object.tt"
+            #line 86 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 92 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Object.tt"
+            #line 86 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Object.tt"
             this.Write(" value)\r\n    {\r\n        return JsonObject.FromObject(value);\r\n    }\r\n\r\n    /// <s" +
                     "ummary>\r\n    /// Conversion to JsonObject.\r\n    /// </summary>\r\n    /// <param n" +
                     "ame=\"value\">The value from which to convert.</param>\r\n    public static implicit" +
@@ -258,13 +252,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 101 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Object.tt"
+            #line 95 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 101 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Object.tt"
+            #line 95 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Object.tt"
             this.Write(@"(JsonObject value)
     {
         if (value.HasJsonElementBacking)
@@ -272,7 +266,7 @@ namespace ");
             return new(value.AsJsonElement);
         }
 
-        return new(value.AsImmutableList());
+        return new(value.AsPropertyBacking());
     }
 
     /// <summary>
@@ -285,13 +279,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 116 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Object.tt"
+            #line 110 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 116 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Object.tt"
+            #line 110 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Object.tt"
             this.Write(@" FromProperties(IDictionary<JsonPropertyName, JsonAny> source)
     {
         return new(source.Select(kvp => new JsonObjectProperty(kvp.Key, kvp.Value)).ToImmutableList());
@@ -307,13 +301,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 126 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Object.tt"
+            #line 120 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 126 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Object.tt"
+            #line 120 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Object.tt"
             this.Write(@" FromProperties(ImmutableList<JsonObjectProperty> source)
     {
         return new(source);
@@ -329,13 +323,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 136 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Object.tt"
+            #line 130 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 136 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Object.tt"
+            #line 130 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Object.tt"
             this.Write(" FromProperties(params (JsonPropertyName Name, JsonAny Value)[] source)\r\n    {\r\n " +
                     "       return new(source.Select(s => new JsonObjectProperty(s.Name, s.Value)).To" +
                     "ImmutableList());\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public JsonObjectEnumerat" +
@@ -372,92 +366,92 @@ namespace ");
                     "         return this.objectBacking.ContainsKey(utf8Name);\r\n        }\r\n\r\n        " +
                     "throw new InvalidOperationException();\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    publ" +
                     "ic bool TryGetProperty(in JsonPropertyName name, out JsonAny value)\r\n    {\r\n    " +
+                    "    if ((this.backing & Backing.JsonElement) != 0)\r\n        {\r\n            if (n" +
+                    "ame.TryGetProperty(this.jsonElementBacking, out JsonElement result))\r\n          " +
+                    "  {\r\n                value = new(result);\r\n                return true;\r\n       " +
+                    "     }\r\n\r\n            value = default;\r\n            return false;\r\n        }\r\n\r\n" +
+                    "        if ((this.backing & Backing.Object) != 0)\r\n        {\r\n            return" +
+                    " this.objectBacking.TryGetValue(name, out value);\r\n        }\r\n\r\n        throw ne" +
+                    "w InvalidOperationException();\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public bool " +
+                    "TryGetProperty(string name, out JsonAny value)\r\n    {\r\n        if ((this.backing" +
+                    " & Backing.JsonElement) != 0)\r\n        {\r\n            if (this.jsonElementBackin" +
+                    "g.TryGetProperty(name, out JsonElement result))\r\n            {\r\n                " +
+                    "value = new(result);\r\n                return true;\r\n            }\r\n\r\n           " +
+                    " value = default;\r\n            return false;\r\n        }\r\n\r\n        if ((this.bac" +
+                    "king & Backing.Object) != 0)\r\n        {\r\n            return this.objectBacking.T" +
+                    "ryGetValue(name, out value);\r\n        }\r\n\r\n        throw new InvalidOperationExc" +
+                    "eption();\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public bool TryGetProperty(ReadOn" +
+                    "lySpan<char> name, out JsonAny value)\r\n    {\r\n        if ((this.backing & Backin" +
+                    "g.JsonElement) != 0)\r\n        {\r\n            if (this.jsonElementBacking.TryGetP" +
+                    "roperty(name, out JsonElement result))\r\n            {\r\n                value = n" +
+                    "ew(result);\r\n                return true;\r\n            }\r\n\r\n            value = " +
+                    "default;\r\n            return false;\r\n        }\r\n\r\n        if ((this.backing & Ba" +
+                    "cking.Object) != 0)\r\n        {\r\n            return this.objectBacking.TryGetValu" +
+                    "e(name, out value);\r\n        }\r\n\r\n        throw new InvalidOperationException();" +
+                    "\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public bool TryGetProperty(ReadOnlySpan<by" +
+                    "te> utf8Name, out JsonAny value)\r\n    {\r\n        if ((this.backing & Backing.Jso" +
+                    "nElement) != 0)\r\n        {\r\n            if (this.jsonElementBacking.TryGetProper" +
+                    "ty(utf8Name, out JsonElement result))\r\n            {\r\n                value = ne" +
+                    "w(result);\r\n                return true;\r\n            }\r\n\r\n            value = d" +
+                    "efault;\r\n            return false;\r\n        }\r\n\r\n        if ((this.backing & Bac" +
+                    "king.Object) != 0)\r\n        {\r\n            return this.objectBacking.TryGetValue" +
+                    "(utf8Name, out value);\r\n        }\r\n\r\n        throw new InvalidOperationException" +
+                    "();\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public bool TryGetProperty<TValue>(in J" +
+                    "sonPropertyName name, out TValue value)\r\n        where TValue : struct, IJsonVal" +
+                    "ue<TValue>\r\n    {\r\n        if ((this.backing & Backing.JsonElement) != 0)\r\n     " +
+                    "   {\r\n            if (name.TryGetProperty(this.jsonElementBacking, out JsonEleme" +
+                    "nt result))\r\n            {\r\n                value = TValue.FromJson(result);\r\n  " +
+                    "              return true;\r\n            }\r\n\r\n            value = default;\r\n     " +
+                    "       return false;\r\n        }\r\n\r\n        if ((this.backing & Backing.Object) !" +
+                    "= 0)\r\n        {\r\n            if (this.objectBacking.TryGetValue(name, out JsonAn" +
+                    "y result))\r\n            {\r\n                value = TValue.FromAny(result);\r\n    " +
+                    "            return true;\r\n            }\r\n\r\n            value = default;\r\n       " +
+                    "     return false;\r\n        }\r\n\r\n        throw new InvalidOperationException();\r" +
+                    "\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public bool TryGetProperty<TValue>(string n" +
+                    "ame, out TValue value)\r\n        where TValue : struct, IJsonValue<TValue>\r\n    {" +
+                    "\r\n        if ((this.backing & Backing.JsonElement) != 0)\r\n        {\r\n           " +
+                    " if (this.jsonElementBacking.TryGetProperty(name, out JsonElement result))\r\n    " +
+                    "        {\r\n                value = TValue.FromJson(result);\r\n                ret" +
+                    "urn true;\r\n            }\r\n\r\n            value = default;\r\n            return fal" +
+                    "se;\r\n        }\r\n\r\n        if ((this.backing & Backing.Object) != 0)\r\n        {\r\n" +
+                    "            if (this.objectBacking.TryGetValue(name, out JsonAny result))\r\n     " +
+                    "       {\r\n                value = TValue.FromAny(result);\r\n                retur" +
+                    "n true;\r\n            }\r\n\r\n            value = default;\r\n            return false" +
+                    ";\r\n        }\r\n\r\n        throw new InvalidOperationException();\r\n    }\r\n\r\n    ///" +
+                    " <inheritdoc/>\r\n    public bool TryGetProperty<TValue>(ReadOnlySpan<char> name, " +
+                    "out TValue value)\r\n        where TValue : struct, IJsonValue<TValue>\r\n    {\r\n   " +
+                    "     if ((this.backing & Backing.JsonElement) != 0)\r\n        {\r\n            if (" +
+                    "this.jsonElementBacking.TryGetProperty(name, out JsonElement result))\r\n         " +
+                    "   {\r\n                value = TValue.FromJson(result);\r\n                return t" +
+                    "rue;\r\n            }\r\n\r\n            value = default;\r\n            return false;\r\n" +
+                    "        }\r\n\r\n        if ((this.backing & Backing.Object) != 0)\r\n        {\r\n     " +
+                    "       if (this.objectBacking.TryGetValue(name, out JsonAny result))\r\n          " +
+                    "  {\r\n                value = TValue.FromAny(result);\r\n                return tru" +
+                    "e;\r\n            }\r\n\r\n            value = default;\r\n            return false;\r\n  " +
+                    "      }\r\n\r\n        throw new InvalidOperationException();\r\n    }\r\n\r\n    /// <inh" +
+                    "eritdoc/>\r\n    public bool TryGetProperty<TValue>(ReadOnlySpan<byte> utf8Name, o" +
+                    "ut TValue value)\r\n        where TValue : struct, IJsonValue<TValue>\r\n    {\r\n    " +
                     "    if ((this.backing & Backing.JsonElement) != 0)\r\n        {\r\n            if (t" +
-                    "his.jsonElementBacking.TryGetProperty((string)name, out JsonElement result))\r\n  " +
-                    "          {\r\n                value = new(result);\r\n                return true;\r" +
-                    "\n            }\r\n\r\n            value = default;\r\n            return false;\r\n     " +
-                    "   }\r\n\r\n        if ((this.backing & Backing.Object) != 0)\r\n        {\r\n          " +
-                    "  return this.objectBacking.TryGetValue(name, out value);\r\n        }\r\n\r\n        " +
-                    "throw new InvalidOperationException();\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    publ" +
-                    "ic bool TryGetProperty(string name, out JsonAny value)\r\n    {\r\n        if ((this" +
-                    ".backing & Backing.JsonElement) != 0)\r\n        {\r\n            if (this.jsonEleme" +
-                    "ntBacking.TryGetProperty(name, out JsonElement result))\r\n            {\r\n        " +
-                    "        value = new(result);\r\n                return true;\r\n            }\r\n\r\n   " +
-                    "         value = default;\r\n            return false;\r\n        }\r\n\r\n        if ((" +
-                    "this.backing & Backing.Object) != 0)\r\n        {\r\n            return this.objectB" +
-                    "acking.TryGetValue(name, out value);\r\n        }\r\n\r\n        throw new InvalidOper" +
-                    "ationException();\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public bool TryGetPropert" +
-                    "y(ReadOnlySpan<char> name, out JsonAny value)\r\n    {\r\n        if ((this.backing " +
-                    "& Backing.JsonElement) != 0)\r\n        {\r\n            if (this.jsonElementBacking" +
-                    ".TryGetProperty(name, out JsonElement result))\r\n            {\r\n                v" +
-                    "alue = new(result);\r\n                return true;\r\n            }\r\n\r\n            " +
-                    "value = default;\r\n            return false;\r\n        }\r\n\r\n        if ((this.back" +
-                    "ing & Backing.Object) != 0)\r\n        {\r\n            return this.objectBacking.Tr" +
-                    "yGetValue(name, out value);\r\n        }\r\n\r\n        throw new InvalidOperationExce" +
-                    "ption();\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public bool TryGetProperty(ReadOnl" +
-                    "ySpan<byte> utf8Name, out JsonAny value)\r\n    {\r\n        if ((this.backing & Bac" +
-                    "king.JsonElement) != 0)\r\n        {\r\n            if (this.jsonElementBacking.TryG" +
-                    "etProperty(utf8Name, out JsonElement result))\r\n            {\r\n                va" +
-                    "lue = new(result);\r\n                return true;\r\n            }\r\n\r\n            v" +
-                    "alue = default;\r\n            return false;\r\n        }\r\n\r\n        if ((this.backi" +
-                    "ng & Backing.Object) != 0)\r\n        {\r\n            return this.objectBacking.Try" +
-                    "GetValue(utf8Name, out value);\r\n        }\r\n\r\n        throw new InvalidOperationE" +
-                    "xception();\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public bool TryGetProperty<TVal" +
-                    "ue>(in JsonPropertyName name, out TValue value)\r\n        where TValue : struct, " +
-                    "IJsonValue<TValue>\r\n    {\r\n        if ((this.backing & Backing.JsonElement) != 0" +
-                    ")\r\n        {\r\n            if (this.jsonElementBacking.TryGetProperty((string)nam" +
-                    "e, out JsonElement result))\r\n            {\r\n                value = TValue.FromJ" +
-                    "son(result);\r\n                return true;\r\n            }\r\n\r\n            value =" +
-                    " default;\r\n            return false;\r\n        }\r\n\r\n        if ((this.backing & B" +
-                    "acking.Object) != 0)\r\n        {\r\n            if (this.objectBacking.TryGetValue(" +
-                    "name, out JsonAny result))\r\n            {\r\n                value = TValue.FromAn" +
-                    "y(result);\r\n                return true;\r\n            }\r\n\r\n            value = d" +
-                    "efault;\r\n            return false;\r\n        }\r\n\r\n        throw new InvalidOperat" +
-                    "ionException();\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public bool TryGetProperty<" +
-                    "TValue>(string name, out TValue value)\r\n        where TValue : struct, IJsonValu" +
-                    "e<TValue>\r\n    {\r\n        if ((this.backing & Backing.JsonElement) != 0)\r\n      " +
-                    "  {\r\n            if (this.jsonElementBacking.TryGetProperty(name, out JsonElemen" +
-                    "t result))\r\n            {\r\n                value = TValue.FromJson(result);\r\n   " +
-                    "             return true;\r\n            }\r\n\r\n            value = default;\r\n      " +
-                    "      return false;\r\n        }\r\n\r\n        if ((this.backing & Backing.Object) !=" +
-                    " 0)\r\n        {\r\n            if (this.objectBacking.TryGetValue(name, out JsonAny" +
-                    " result))\r\n            {\r\n                value = TValue.FromAny(result);\r\n     " +
-                    "           return true;\r\n            }\r\n\r\n            value = default;\r\n        " +
-                    "    return false;\r\n        }\r\n\r\n        throw new InvalidOperationException();\r\n" +
-                    "    }\r\n\r\n    /// <inheritdoc/>\r\n    public bool TryGetProperty<TValue>(ReadOnlyS" +
-                    "pan<char> name, out TValue value)\r\n        where TValue : struct, IJsonValue<TVa" +
-                    "lue>\r\n    {\r\n        if ((this.backing & Backing.JsonElement) != 0)\r\n        {\r\n" +
-                    "            if (this.jsonElementBacking.TryGetProperty(name, out JsonElement res" +
-                    "ult))\r\n            {\r\n                value = TValue.FromJson(result);\r\n        " +
-                    "        return true;\r\n            }\r\n\r\n            value = default;\r\n           " +
-                    " return false;\r\n        }\r\n\r\n        if ((this.backing & Backing.Object) != 0)\r\n" +
-                    "        {\r\n            if (this.objectBacking.TryGetValue(name, out JsonAny resu" +
-                    "lt))\r\n            {\r\n                value = TValue.FromAny(result);\r\n          " +
-                    "      return true;\r\n            }\r\n\r\n            value = default;\r\n            r" +
-                    "eturn false;\r\n        }\r\n\r\n        throw new InvalidOperationException();\r\n    }" +
-                    "\r\n\r\n    /// <inheritdoc/>\r\n    public bool TryGetProperty<TValue>(ReadOnlySpan<b" +
-                    "yte> utf8Name, out TValue value)\r\n        where TValue : struct, IJsonValue<TVal" +
-                    "ue>\r\n    {\r\n        if ((this.backing & Backing.JsonElement) != 0)\r\n        {\r\n " +
-                    "           if (this.jsonElementBacking.TryGetProperty(utf8Name, out JsonElement " +
-                    "result))\r\n            {\r\n                value = TValue.FromJson(result);\r\n     " +
-                    "           return true;\r\n            }\r\n\r\n            value = default;\r\n        " +
-                    "    return false;\r\n        }\r\n\r\n        if ((this.backing & Backing.Object) != 0" +
-                    ")\r\n        {\r\n            if (this.objectBacking.TryGetValue(utf8Name, out JsonA" +
-                    "ny result))\r\n            {\r\n                value = TValue.FromAny(result);\r\n   " +
-                    "             return true;\r\n            }\r\n\r\n            value = default;\r\n      " +
-                    "      return false;\r\n        }\r\n\r\n        throw new InvalidOperationException();" +
-                    "\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public ");
+                    "his.jsonElementBacking.TryGetProperty(utf8Name, out JsonElement result))\r\n      " +
+                    "      {\r\n                value = TValue.FromJson(result);\r\n                retur" +
+                    "n true;\r\n            }\r\n\r\n            value = default;\r\n            return false" +
+                    ";\r\n        }\r\n\r\n        if ((this.backing & Backing.Object) != 0)\r\n        {\r\n  " +
+                    "          if (this.objectBacking.TryGetValue(utf8Name, out JsonAny result))\r\n   " +
+                    "         {\r\n                value = TValue.FromAny(result);\r\n                ret" +
+                    "urn true;\r\n            }\r\n\r\n            value = default;\r\n            return fal" +
+                    "se;\r\n        }\r\n\r\n        throw new InvalidOperationException();\r\n    }\r\n\r\n    /" +
+                    "// <inheritdoc/>\r\n    public ");
             
             #line default
             #line hidden
             
-            #line 455 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Object.tt"
+            #line 449 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 455 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Object.tt"
+            #line 449 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Object.tt"
             this.Write(" SetProperty<TValue>(in JsonPropertyName name, TValue value)\r\n        where TValu" +
                     "e : struct, IJsonValue\r\n    {\r\n        return new(this.GetPropertyBackingWith(na" +
                     "me, value.AsAny));\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public ");
@@ -465,118 +459,117 @@ namespace ");
             #line default
             #line hidden
             
-            #line 462 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Object.tt"
+            #line 456 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 462 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Object.tt"
+            #line 456 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Object.tt"
             this.Write(" RemoveProperty(in JsonPropertyName name)\r\n    {\r\n        return new(this.GetProp" +
                     "ertyBackingWithout(name));\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public ");
             
             #line default
             #line hidden
             
-            #line 468 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Object.tt"
+            #line 462 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 468 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Object.tt"
+            #line 462 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Object.tt"
             this.Write(" RemoveProperty(string name)\r\n    {\r\n        return new(this.GetPropertyBackingWi" +
                     "thout(name));\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public ");
             
             #line default
             #line hidden
             
-            #line 474 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Object.tt"
+            #line 468 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 474 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Object.tt"
+            #line 468 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Object.tt"
             this.Write(" RemoveProperty(ReadOnlySpan<char> name)\r\n    {\r\n        return new(this.GetPrope" +
                     "rtyBackingWithout(name));\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public ");
             
             #line default
             #line hidden
             
-            #line 480 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Object.tt"
+            #line 474 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 480 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Object.tt"
+            #line 474 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Object.tt"
             this.Write(" RemoveProperty(ReadOnlySpan<byte> utf8Name)\r\n    {\r\n        return new(this.GetP" +
                     "ropertyBackingWithout(utf8Name));\r\n    }\r\n\r\n    /// <summary>\r\n    /// Builds an" +
-                    " <see cref=\"ImmutableList{JsonObjectProperty}\"/> from the object.\r\n" +
-                    "    /// </summary>\r\n    /// <returns>An immutable list of <see cref=\"JsonAny\"/> " +
-                    "built from the array.</returns>\r\n    /// <exception cref=\"InvalidOperationExcept" +
-                    "ion\">The value is not an array.</exception>\r\n    private ImmutableList<JsonObjec" +
-                    "tProperty> GetPropertyBacking()\r\n    {\r\n        if ((this.backing & Backing.Obje" +
-                    "ct) != 0)\r\n        {\r\n            return this.objectBacking;\r\n        }\r\n\r\n     " +
-                    "   return PropertyBackingBuilders.GetPropertyBackingBuilder(this.jsonElementBack" +
-                    "ing).ToImmutable();\r\n    }\r\n\r\n    /// <summary>\r\n    /// Builds an <see cref=\"Im" +
-                    "mutableDictionary{JsonPropertyName, JsonAny}\"/> from the object, without a speci" +
-                    "fic property.\r\n    /// </summary>\r\n    /// <returns>An immutable dictionary buil" +
-                    "der of <see cref=\"JsonPropertyName\"/> to <see cref=\"JsonAny\"/>, built from the e" +
-                    "xisting object, without the given property.</returns>\r\n    /// <exception cref=\"" +
-                    "InvalidOperationException\">The value is not an object.</exception>\r\n    private " +
-                    "ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in JsonPropertyName " +
+                    " <see cref=\"ImmutableList{JsonObjectProperty}\"/> from the object.\r\n    /// </sum" +
+                    "mary>\r\n    /// <returns>An immutable list of <see cref=\"JsonAny\"/> built from th" +
+                    "e array.</returns>\r\n    /// <exception cref=\"InvalidOperationException\">The valu" +
+                    "e is not an array.</exception>\r\n    private ImmutableList<JsonObjectProperty> Ge" +
+                    "tPropertyBacking()\r\n    {\r\n        if ((this.backing & Backing.Object) != 0)\r\n  " +
+                    "      {\r\n            return this.objectBacking;\r\n        }\r\n\r\n        return Pro" +
+                    "pertyBackingBuilders.GetPropertyBackingBuilder(this.jsonElementBacking).ToImmuta" +
+                    "ble();\r\n    }\r\n\r\n    /// <summary>\r\n    /// Builds an <see cref=\"ImmutableList{J" +
+                    "sonObjectProperty}\"/> from the object, without a specific property.\r\n    /// </s" +
+                    "ummary>\r\n    /// <returns>An immutable dictionary builder of <see cref=\"JsonProp" +
+                    "ertyName\"/> to <see cref=\"JsonAny\"/>, built from the existing object, without th" +
+                    "e given property.</returns>\r\n    /// <exception cref=\"InvalidOperationException\"" +
+                    ">The value is not an object.</exception>\r\n    private ImmutableList<JsonObjectPr" +
+                    "operty> GetPropertyBackingWithout(in JsonPropertyName name)\r\n    {\r\n        if (" +
+                    "(this.backing & Backing.Object) != 0)\r\n        {\r\n            return this.object" +
+                    "Backing.Remove(name);\r\n        }\r\n\r\n        return PropertyBackingBuilders.GetPr" +
+                    "opertyBackingBuilderWithout(this.jsonElementBacking, name).ToImmutable();\r\n    }" +
+                    "\r\n\r\n    /// <summary>\r\n    /// Builds an <see cref=\"ImmutableList{JsonObjectProp" +
+                    "erty}\"/> from the object, without a specific property.\r\n    /// </summary>\r\n    " +
+                    "/// <returns>An immutable dictionary builder of <see cref=\"JsonPropertyName\"/> t" +
+                    "o <see cref=\"JsonAny\"/>, built from the existing object, without the given prope" +
+                    "rty.</returns>\r\n    /// <exception cref=\"InvalidOperationException\">The value is" +
+                    " not an object.</exception>\r\n    private ImmutableList<JsonObjectProperty> GetPr" +
+                    "opertyBackingWithout(ReadOnlySpan<char> name)\r\n    {\r\n        if ((this.backing " +
+                    "& Backing.Object) != 0)\r\n        {\r\n            return this.objectBacking.Remove" +
+                    "(name);\r\n        }\r\n\r\n        return PropertyBackingBuilders.GetPropertyBackingB" +
+                    "uilderWithout(this.jsonElementBacking, name).ToImmutable();\r\n    }\r\n\r\n    /// <s" +
+                    "ummary>\r\n    /// Builds an <see cref=\"ImmutableList{JsonObjectProperty}\"/> from " +
+                    "the object, without a specific property.\r\n    /// </summary>\r\n    /// <returns>A" +
+                    "n immutable dictionary builder of <see cref=\"JsonPropertyName\"/> to <see cref=\"J" +
+                    "sonAny\"/>, built from the existing object, without the given property.</returns>" +
+                    "\r\n    /// <exception cref=\"InvalidOperationException\">The value is not an object" +
+                    ".</exception>\r\n    private ImmutableList<JsonObjectProperty> GetPropertyBackingW" +
+                    "ithout(ReadOnlySpan<byte> name)\r\n    {\r\n        if ((this.backing & Backing.Obje" +
+                    "ct) != 0)\r\n        {\r\n            return this.objectBacking.Remove(name);\r\n     " +
+                    "   }\r\n\r\n        return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(" +
+                    "this.jsonElementBacking, name).ToImmutable();\r\n    }\r\n\r\n    /// <summary>\r\n    /" +
+                    "// Builds an <see cref=\"ImmutableList{JsonObjectProperty}\"/> from the object, wi" +
+                    "thout a specific property.\r\n    /// </summary>\r\n    /// <returns>An immutable di" +
+                    "ctionary builder of <see cref=\"JsonPropertyName\"/> to <see cref=\"JsonAny\"/>, bui" +
+                    "lt from the existing object, without the given property.</returns>\r\n    /// <exc" +
+                    "eption cref=\"InvalidOperationException\">The value is not an object.</exception>\r" +
+                    "\n    private ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(string " +
                     "name)\r\n    {\r\n        if ((this.backing & Backing.Object) != 0)\r\n        {\r\n    " +
                     "        return this.objectBacking.Remove(name);\r\n        }\r\n\r\n        return Pro" +
                     "pertyBackingBuilders.GetPropertyBackingBuilderWithout(this.jsonElementBacking, n" +
                     "ame).ToImmutable();\r\n    }\r\n\r\n    /// <summary>\r\n    /// Builds an <see cref=\"Im" +
-                    "mutableDictionary{JsonPropertyName, JsonAny}\"/> from the object, without a speci" +
-                    "fic property.\r\n    /// </summary>\r\n    /// <returns>An immutable dictionary buil" +
-                    "der of <see cref=\"JsonPropertyName\"/> to <see cref=\"JsonAny\"/>, built from the e" +
-                    "xisting object, without the given property.</returns>\r\n    /// <exception cref=\"" +
-                    "InvalidOperationException\">The value is not an object.</exception>\r\n    private " +
-                    "ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(ReadOnlySpan<char> n" +
-                    "ame)\r\n    {\r\n        if ((this.backing & Backing.Object) != 0)\r\n        {\r\n     " +
-                    "       return this.objectBacking.Remove(name);\r\n        }\r\n\r\n        return Prop" +
-                    "ertyBackingBuilders.GetPropertyBackingBuilderWithout(this.jsonElementBacking, na" +
-                    "me).ToImmutable();\r\n    }\r\n\r\n    /// <summary>\r\n    /// Builds an <see cref=\"Imm" +
-                    "utableDictionary{JsonPropertyName, JsonAny}\"/> from the object, without a specif" +
-                    "ic property.\r\n    /// </summary>\r\n    /// <returns>An immutable dictionary build" +
-                    "er of <see cref=\"JsonPropertyName\"/> to <see cref=\"JsonAny\"/>, built from the ex" +
-                    "isting object, without the given property.</returns>\r\n    /// <exception cref=\"I" +
-                    "nvalidOperationException\">The value is not an object.</exception>\r\n    private I" +
-                    "mmutableList<JsonObjectProperty> GetPropertyBackingWithout(ReadOnlySpan<byte> na" +
-                    "me)\r\n    {\r\n        if ((this.backing & Backing.Object) != 0)\r\n        {\r\n      " +
-                    "      return this.objectBacking.Remove(name);\r\n        }\r\n\r\n        return Prope" +
-                    "rtyBackingBuilders.GetPropertyBackingBuilderWithout(this.jsonElementBacking, nam" +
-                    "e).ToImmutable();\r\n    }\r\n\r\n    /// <summary>\r\n    /// Builds an <see cref=\"Immu" +
-                    "tableDictionary{JsonPropertyName, JsonAny}\"/> from the object, without a specifi" +
-                    "c property.\r\n    /// </summary>\r\n    /// <returns>An immutable dictionary builde" +
-                    "r of <see cref=\"JsonPropertyName\"/> to <see cref=\"JsonAny\"/>, built from the exi" +
-                    "sting object, without the given property.</returns>\r\n    /// <exception cref=\"In" +
-                    "validOperationException\">The value is not an object.</exception>\r\n    private Im" +
-                    "mutableList<JsonObjectProperty> GetPropertyBackingWithout(string name)\r\n    {\r\n " +
-                    "       if ((this.backing & Backing.Object) != 0)\r\n        {\r\n            return " +
-                    "this.objectBacking.Remove(name);\r\n        }\r\n\r\n        return PropertyBackingBui" +
-                    "lders.GetPropertyBackingBuilderWithout(this.jsonElementBacking, name).ToImmutabl" +
-                    "e();\r\n    }\r\n\r\n    /// <summary>\r\n    /// Builds an <see cref=\"ImmutableDictiona" +
-                    "ry{JsonPropertyName, JsonAny}\"/> from the object, without a specific property.\r\n" +
-                    "    /// </summary>\r\n    /// <returns>An immutable dictionary builder of <see cre" +
-                    "f=\"JsonPropertyName\"/> to <see cref=\"JsonAny\"/>, built from the existing object," +
-                    " without the given property.</returns>\r\n    /// <exception cref=\"InvalidOperatio" +
-                    "nException\">The value is not an object.</exception>\r\n    private ImmutableList<J" +
-                    "sonObjectProperty> GetPropertyBackingWith(in JsonPropertyName name, in JsonAny v" +
-                    "alue)\r\n    {\r\n        if ((this.backing & Backing.Object) != 0)\r\n        {\r\n    " +
-                    "        return this.objectBacking.SetItem(name, value);\r\n        }\r\n\r\n        Im" +
-                    "mutableList<JsonObjectProperty>.Builder result = PropertyBackingBuilders.GetProp" +
-                    "ertyBackingBuilderReplacing(this.jsonElementBacking, name, value);\r\n        retu" +
-                    "rn result.ToImmutable();\r\n    }\r\n}\r\n");
+                    "mutableList{JsonObjectProperty}\"/> from the object, without a specific property." +
+                    "\r\n    /// </summary>\r\n    /// <returns>An immutable dictionary builder of <see c" +
+                    "ref=\"JsonPropertyName\"/> to <see cref=\"JsonAny\"/>, built from the existing objec" +
+                    "t, without the given property.</returns>\r\n    /// <exception cref=\"InvalidOperat" +
+                    "ionException\">The value is not an object.</exception>\r\n    private ImmutableList" +
+                    "<JsonObjectProperty> GetPropertyBackingWith(in JsonPropertyName name, in JsonAny" +
+                    " value)\r\n    {\r\n        if ((this.backing & Backing.Object) != 0)\r\n        {\r\n  " +
+                    "          return this.objectBacking.SetItem(name, value);\r\n        }\r\n\r\n        " +
+                    "ImmutableList<JsonObjectProperty>.Builder result = PropertyBackingBuilders.GetPr" +
+                    "opertyBackingBuilderReplacing(this.jsonElementBacking, name, value);\r\n        re" +
+                    "turn result.ToImmutable();\r\n    }\r\n}\r\n");
             
             #line default
             #line hidden
             
-            #line 576 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Object.tt"
+            #line 570 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Object.tt"
  EndNesting(); 
             
             #line default

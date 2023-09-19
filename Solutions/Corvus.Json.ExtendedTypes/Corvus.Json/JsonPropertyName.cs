@@ -6,6 +6,7 @@ using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace Corvus.Json;
 
@@ -50,7 +51,7 @@ public readonly struct JsonPropertyName : IEquatable<JsonPropertyName>, ICompara
 
     private bool HasStringBacking => (this.backing & Backing.String) != 0;
 
-    private bool HasJsonElementBacking => (this.backing & Backing.String) != 0;
+    private bool HasJsonElementBacking => (this.backing & Backing.JsonElement) != 0;
 
     /// <summary>
     /// Conversion from string.
@@ -302,10 +303,45 @@ public readonly struct JsonPropertyName : IEquatable<JsonPropertyName>, ICompara
 
         if (other.HasJsonElementBacking)
         {
-            return this.Equals(other.jsonElementBacking);
+            return this.EqualsJsonElement(other.jsonElementBacking);
         }
 
         throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Compares with a JsonElement.
+    /// </summary>
+    /// <param name="jsonElement">The json element to compare.</param>
+    /// <returns><see langword="true"/> if the property name was equal to this name.</returns>
+    /// <exception cref="InvalidOperationException">The property name did not have a valid backing.</exception>
+    public bool EqualsJsonElement(JsonElement jsonElement)
+    {
+        if (jsonElement.ValueKind != JsonValueKind.String)
+        {
+            return false;
+        }
+
+        if (this.HasStringBacking)
+        {
+            return jsonElement.ValueEquals(this.stringBacking);
+        }
+
+        if (this.HasJsonElementBacking)
+        {
+            if (jsonElement.TryGetValue(CompareElement, this.jsonElementBacking, out bool result))
+            {
+                return result;
+            }
+        }
+
+        throw new InvalidOperationException();
+
+        static bool CompareElement(ReadOnlySpan<byte> span, in JsonElement state, out bool result)
+        {
+            result = state.ValueEquals(span);
+            return true;
+        }
     }
 
     /// <summary>
@@ -371,10 +407,10 @@ public readonly struct JsonPropertyName : IEquatable<JsonPropertyName>, ICompara
     {
         if (name.HasJsonElementBacking)
         {
-            return this.Equals(name.AsJsonElement);
+            return this.EqualsJsonElement(name.AsJsonElement);
         }
 
-        return this.Equals((string)name);
+        return this.EqualsString((string)name);
     }
 
     /// <summary>
@@ -583,11 +619,13 @@ public readonly struct JsonPropertyName : IEquatable<JsonPropertyName>, ICompara
         if (this.HasJsonElementBacking)
         {
             this.jsonElementBacking.TryGetValue(WritePropertyName, writer, out int _);
+            return;
         }
 
         if (this.HasStringBacking)
         {
             writer.WritePropertyName(this.stringBacking);
+            return;
         }
 
         throw new InvalidOperationException("Unsupported JSON property name");
@@ -614,6 +652,39 @@ public readonly struct JsonPropertyName : IEquatable<JsonPropertyName>, ICompara
         }
 
         return T.FromString(new JsonString(this.stringBacking));
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether this property name matches
+    /// the given <see cref="Regex"/>.
+    /// </summary>
+    /// <param name="regex">The regular expressin to match.</param>
+    /// <returns><see langword="true"/> if the expression is a match.</returns>
+    /// <exception cref="InvalidOperationException">The name was not in a valid state.</exception>
+    public bool IsMatch(Regex regex)
+    {
+        if (this.HasJsonElementBacking)
+        {
+            if (this.jsonElementBacking.TryGetValue(MatchRegex, regex, out bool isMatch))
+            {
+                return isMatch;
+            }
+
+            return false;
+        }
+
+        if (this.HasStringBacking)
+        {
+            return regex.IsMatch(this.stringBacking);
+        }
+
+        throw new InvalidOperationException();
+
+        static bool MatchRegex(ReadOnlySpan<char> span, in Regex regex, out bool value)
+        {
+            value = regex.IsMatch(span);
+            return true;
+        }
     }
 
     /// <summary>

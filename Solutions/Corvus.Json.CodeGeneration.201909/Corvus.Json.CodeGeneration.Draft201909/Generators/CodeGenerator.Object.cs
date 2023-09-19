@@ -266,7 +266,7 @@ namespace ");
             return new(value.AsJsonElement);
         }
 
-        return new(value.AsImmutableList());
+        return new(value.AsPropertyBacking());
     }
 
     /// <summary>
@@ -366,81 +366,81 @@ namespace ");
                     "         return this.objectBacking.ContainsKey(utf8Name);\r\n        }\r\n\r\n        " +
                     "throw new InvalidOperationException();\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    publ" +
                     "ic bool TryGetProperty(in JsonPropertyName name, out JsonAny value)\r\n    {\r\n    " +
+                    "    if ((this.backing & Backing.JsonElement) != 0)\r\n        {\r\n            if (n" +
+                    "ame.TryGetProperty(this.jsonElementBacking, out JsonElement result))\r\n          " +
+                    "  {\r\n                value = new(result);\r\n                return true;\r\n       " +
+                    "     }\r\n\r\n            value = default;\r\n            return false;\r\n        }\r\n\r\n" +
+                    "        if ((this.backing & Backing.Object) != 0)\r\n        {\r\n            return" +
+                    " this.objectBacking.TryGetValue(name, out value);\r\n        }\r\n\r\n        throw ne" +
+                    "w InvalidOperationException();\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public bool " +
+                    "TryGetProperty(string name, out JsonAny value)\r\n    {\r\n        if ((this.backing" +
+                    " & Backing.JsonElement) != 0)\r\n        {\r\n            if (this.jsonElementBackin" +
+                    "g.TryGetProperty(name, out JsonElement result))\r\n            {\r\n                " +
+                    "value = new(result);\r\n                return true;\r\n            }\r\n\r\n           " +
+                    " value = default;\r\n            return false;\r\n        }\r\n\r\n        if ((this.bac" +
+                    "king & Backing.Object) != 0)\r\n        {\r\n            return this.objectBacking.T" +
+                    "ryGetValue(name, out value);\r\n        }\r\n\r\n        throw new InvalidOperationExc" +
+                    "eption();\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public bool TryGetProperty(ReadOn" +
+                    "lySpan<char> name, out JsonAny value)\r\n    {\r\n        if ((this.backing & Backin" +
+                    "g.JsonElement) != 0)\r\n        {\r\n            if (this.jsonElementBacking.TryGetP" +
+                    "roperty(name, out JsonElement result))\r\n            {\r\n                value = n" +
+                    "ew(result);\r\n                return true;\r\n            }\r\n\r\n            value = " +
+                    "default;\r\n            return false;\r\n        }\r\n\r\n        if ((this.backing & Ba" +
+                    "cking.Object) != 0)\r\n        {\r\n            return this.objectBacking.TryGetValu" +
+                    "e(name, out value);\r\n        }\r\n\r\n        throw new InvalidOperationException();" +
+                    "\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public bool TryGetProperty(ReadOnlySpan<by" +
+                    "te> utf8Name, out JsonAny value)\r\n    {\r\n        if ((this.backing & Backing.Jso" +
+                    "nElement) != 0)\r\n        {\r\n            if (this.jsonElementBacking.TryGetProper" +
+                    "ty(utf8Name, out JsonElement result))\r\n            {\r\n                value = ne" +
+                    "w(result);\r\n                return true;\r\n            }\r\n\r\n            value = d" +
+                    "efault;\r\n            return false;\r\n        }\r\n\r\n        if ((this.backing & Bac" +
+                    "king.Object) != 0)\r\n        {\r\n            return this.objectBacking.TryGetValue" +
+                    "(utf8Name, out value);\r\n        }\r\n\r\n        throw new InvalidOperationException" +
+                    "();\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public bool TryGetProperty<TValue>(in J" +
+                    "sonPropertyName name, out TValue value)\r\n        where TValue : struct, IJsonVal" +
+                    "ue<TValue>\r\n    {\r\n        if ((this.backing & Backing.JsonElement) != 0)\r\n     " +
+                    "   {\r\n            if (name.TryGetProperty(this.jsonElementBacking, out JsonEleme" +
+                    "nt result))\r\n            {\r\n                value = TValue.FromJson(result);\r\n  " +
+                    "              return true;\r\n            }\r\n\r\n            value = default;\r\n     " +
+                    "       return false;\r\n        }\r\n\r\n        if ((this.backing & Backing.Object) !" +
+                    "= 0)\r\n        {\r\n            if (this.objectBacking.TryGetValue(name, out JsonAn" +
+                    "y result))\r\n            {\r\n                value = TValue.FromAny(result);\r\n    " +
+                    "            return true;\r\n            }\r\n\r\n            value = default;\r\n       " +
+                    "     return false;\r\n        }\r\n\r\n        throw new InvalidOperationException();\r" +
+                    "\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public bool TryGetProperty<TValue>(string n" +
+                    "ame, out TValue value)\r\n        where TValue : struct, IJsonValue<TValue>\r\n    {" +
+                    "\r\n        if ((this.backing & Backing.JsonElement) != 0)\r\n        {\r\n           " +
+                    " if (this.jsonElementBacking.TryGetProperty(name, out JsonElement result))\r\n    " +
+                    "        {\r\n                value = TValue.FromJson(result);\r\n                ret" +
+                    "urn true;\r\n            }\r\n\r\n            value = default;\r\n            return fal" +
+                    "se;\r\n        }\r\n\r\n        if ((this.backing & Backing.Object) != 0)\r\n        {\r\n" +
+                    "            if (this.objectBacking.TryGetValue(name, out JsonAny result))\r\n     " +
+                    "       {\r\n                value = TValue.FromAny(result);\r\n                retur" +
+                    "n true;\r\n            }\r\n\r\n            value = default;\r\n            return false" +
+                    ";\r\n        }\r\n\r\n        throw new InvalidOperationException();\r\n    }\r\n\r\n    ///" +
+                    " <inheritdoc/>\r\n    public bool TryGetProperty<TValue>(ReadOnlySpan<char> name, " +
+                    "out TValue value)\r\n        where TValue : struct, IJsonValue<TValue>\r\n    {\r\n   " +
+                    "     if ((this.backing & Backing.JsonElement) != 0)\r\n        {\r\n            if (" +
+                    "this.jsonElementBacking.TryGetProperty(name, out JsonElement result))\r\n         " +
+                    "   {\r\n                value = TValue.FromJson(result);\r\n                return t" +
+                    "rue;\r\n            }\r\n\r\n            value = default;\r\n            return false;\r\n" +
+                    "        }\r\n\r\n        if ((this.backing & Backing.Object) != 0)\r\n        {\r\n     " +
+                    "       if (this.objectBacking.TryGetValue(name, out JsonAny result))\r\n          " +
+                    "  {\r\n                value = TValue.FromAny(result);\r\n                return tru" +
+                    "e;\r\n            }\r\n\r\n            value = default;\r\n            return false;\r\n  " +
+                    "      }\r\n\r\n        throw new InvalidOperationException();\r\n    }\r\n\r\n    /// <inh" +
+                    "eritdoc/>\r\n    public bool TryGetProperty<TValue>(ReadOnlySpan<byte> utf8Name, o" +
+                    "ut TValue value)\r\n        where TValue : struct, IJsonValue<TValue>\r\n    {\r\n    " +
                     "    if ((this.backing & Backing.JsonElement) != 0)\r\n        {\r\n            if (t" +
-                    "his.jsonElementBacking.TryGetProperty((string)name, out JsonElement result))\r\n  " +
-                    "          {\r\n                value = new(result);\r\n                return true;\r" +
-                    "\n            }\r\n\r\n            value = default;\r\n            return false;\r\n     " +
-                    "   }\r\n\r\n        if ((this.backing & Backing.Object) != 0)\r\n        {\r\n          " +
-                    "  return this.objectBacking.TryGetValue(name, out value);\r\n        }\r\n\r\n        " +
-                    "throw new InvalidOperationException();\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    publ" +
-                    "ic bool TryGetProperty(string name, out JsonAny value)\r\n    {\r\n        if ((this" +
-                    ".backing & Backing.JsonElement) != 0)\r\n        {\r\n            if (this.jsonEleme" +
-                    "ntBacking.TryGetProperty(name, out JsonElement result))\r\n            {\r\n        " +
-                    "        value = new(result);\r\n                return true;\r\n            }\r\n\r\n   " +
-                    "         value = default;\r\n            return false;\r\n        }\r\n\r\n        if ((" +
-                    "this.backing & Backing.Object) != 0)\r\n        {\r\n            return this.objectB" +
-                    "acking.TryGetValue(name, out value);\r\n        }\r\n\r\n        throw new InvalidOper" +
-                    "ationException();\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public bool TryGetPropert" +
-                    "y(ReadOnlySpan<char> name, out JsonAny value)\r\n    {\r\n        if ((this.backing " +
-                    "& Backing.JsonElement) != 0)\r\n        {\r\n            if (this.jsonElementBacking" +
-                    ".TryGetProperty(name, out JsonElement result))\r\n            {\r\n                v" +
-                    "alue = new(result);\r\n                return true;\r\n            }\r\n\r\n            " +
-                    "value = default;\r\n            return false;\r\n        }\r\n\r\n        if ((this.back" +
-                    "ing & Backing.Object) != 0)\r\n        {\r\n            return this.objectBacking.Tr" +
-                    "yGetValue(name, out value);\r\n        }\r\n\r\n        throw new InvalidOperationExce" +
-                    "ption();\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public bool TryGetProperty(ReadOnl" +
-                    "ySpan<byte> utf8Name, out JsonAny value)\r\n    {\r\n        if ((this.backing & Bac" +
-                    "king.JsonElement) != 0)\r\n        {\r\n            if (this.jsonElementBacking.TryG" +
-                    "etProperty(utf8Name, out JsonElement result))\r\n            {\r\n                va" +
-                    "lue = new(result);\r\n                return true;\r\n            }\r\n\r\n            v" +
-                    "alue = default;\r\n            return false;\r\n        }\r\n\r\n        if ((this.backi" +
-                    "ng & Backing.Object) != 0)\r\n        {\r\n            return this.objectBacking.Try" +
-                    "GetValue(utf8Name, out value);\r\n        }\r\n\r\n        throw new InvalidOperationE" +
-                    "xception();\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public bool TryGetProperty<TVal" +
-                    "ue>(in JsonPropertyName name, out TValue value)\r\n        where TValue : struct, " +
-                    "IJsonValue<TValue>\r\n    {\r\n        if ((this.backing & Backing.JsonElement) != 0" +
-                    ")\r\n        {\r\n            if (this.jsonElementBacking.TryGetProperty((string)nam" +
-                    "e, out JsonElement result))\r\n            {\r\n                value = TValue.FromJ" +
-                    "son(result);\r\n                return true;\r\n            }\r\n\r\n            value =" +
-                    " default;\r\n            return false;\r\n        }\r\n\r\n        if ((this.backing & B" +
-                    "acking.Object) != 0)\r\n        {\r\n            if (this.objectBacking.TryGetValue(" +
-                    "name, out JsonAny result))\r\n            {\r\n                value = TValue.FromAn" +
-                    "y(result);\r\n                return true;\r\n            }\r\n\r\n            value = d" +
-                    "efault;\r\n            return false;\r\n        }\r\n\r\n        throw new InvalidOperat" +
-                    "ionException();\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public bool TryGetProperty<" +
-                    "TValue>(string name, out TValue value)\r\n        where TValue : struct, IJsonValu" +
-                    "e<TValue>\r\n    {\r\n        if ((this.backing & Backing.JsonElement) != 0)\r\n      " +
-                    "  {\r\n            if (this.jsonElementBacking.TryGetProperty(name, out JsonElemen" +
-                    "t result))\r\n            {\r\n                value = TValue.FromJson(result);\r\n   " +
-                    "             return true;\r\n            }\r\n\r\n            value = default;\r\n      " +
-                    "      return false;\r\n        }\r\n\r\n        if ((this.backing & Backing.Object) !=" +
-                    " 0)\r\n        {\r\n            if (this.objectBacking.TryGetValue(name, out JsonAny" +
-                    " result))\r\n            {\r\n                value = TValue.FromAny(result);\r\n     " +
-                    "           return true;\r\n            }\r\n\r\n            value = default;\r\n        " +
-                    "    return false;\r\n        }\r\n\r\n        throw new InvalidOperationException();\r\n" +
-                    "    }\r\n\r\n    /// <inheritdoc/>\r\n    public bool TryGetProperty<TValue>(ReadOnlyS" +
-                    "pan<char> name, out TValue value)\r\n        where TValue : struct, IJsonValue<TVa" +
-                    "lue>\r\n    {\r\n        if ((this.backing & Backing.JsonElement) != 0)\r\n        {\r\n" +
-                    "            if (this.jsonElementBacking.TryGetProperty(name, out JsonElement res" +
-                    "ult))\r\n            {\r\n                value = TValue.FromJson(result);\r\n        " +
-                    "        return true;\r\n            }\r\n\r\n            value = default;\r\n           " +
-                    " return false;\r\n        }\r\n\r\n        if ((this.backing & Backing.Object) != 0)\r\n" +
-                    "        {\r\n            if (this.objectBacking.TryGetValue(name, out JsonAny resu" +
-                    "lt))\r\n            {\r\n                value = TValue.FromAny(result);\r\n          " +
-                    "      return true;\r\n            }\r\n\r\n            value = default;\r\n            r" +
-                    "eturn false;\r\n        }\r\n\r\n        throw new InvalidOperationException();\r\n    }" +
-                    "\r\n\r\n    /// <inheritdoc/>\r\n    public bool TryGetProperty<TValue>(ReadOnlySpan<b" +
-                    "yte> utf8Name, out TValue value)\r\n        where TValue : struct, IJsonValue<TVal" +
-                    "ue>\r\n    {\r\n        if ((this.backing & Backing.JsonElement) != 0)\r\n        {\r\n " +
-                    "           if (this.jsonElementBacking.TryGetProperty(utf8Name, out JsonElement " +
-                    "result))\r\n            {\r\n                value = TValue.FromJson(result);\r\n     " +
-                    "           return true;\r\n            }\r\n\r\n            value = default;\r\n        " +
-                    "    return false;\r\n        }\r\n\r\n        if ((this.backing & Backing.Object) != 0" +
-                    ")\r\n        {\r\n            if (this.objectBacking.TryGetValue(utf8Name, out JsonA" +
-                    "ny result))\r\n            {\r\n                value = TValue.FromAny(result);\r\n   " +
-                    "             return true;\r\n            }\r\n\r\n            value = default;\r\n      " +
-                    "      return false;\r\n        }\r\n\r\n        throw new InvalidOperationException();" +
-                    "\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public ");
+                    "his.jsonElementBacking.TryGetProperty(utf8Name, out JsonElement result))\r\n      " +
+                    "      {\r\n                value = TValue.FromJson(result);\r\n                retur" +
+                    "n true;\r\n            }\r\n\r\n            value = default;\r\n            return false" +
+                    ";\r\n        }\r\n\r\n        if ((this.backing & Backing.Object) != 0)\r\n        {\r\n  " +
+                    "          if (this.objectBacking.TryGetValue(utf8Name, out JsonAny result))\r\n   " +
+                    "         {\r\n                value = TValue.FromAny(result);\r\n                ret" +
+                    "urn true;\r\n            }\r\n\r\n            value = default;\r\n            return fal" +
+                    "se;\r\n        }\r\n\r\n        throw new InvalidOperationException();\r\n    }\r\n\r\n    /" +
+                    "// <inheritdoc/>\r\n    public ");
             
             #line default
             #line hidden

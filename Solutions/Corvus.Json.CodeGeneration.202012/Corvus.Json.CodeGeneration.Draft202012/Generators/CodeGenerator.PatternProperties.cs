@@ -224,7 +224,8 @@ namespace ");
             #line hidden
             
             #line 51 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
-            this.Write("(in JsonObjectProperty property)\r\n    {\r\n        return PatternProperty");
+            this.Write("(in JsonObjectProperty property)\r\n    {\r\n        return property.Name.IsMatch(Pat" +
+                    "ternProperty");
             
             #line default
             #line hidden
@@ -236,8 +237,8 @@ namespace ");
             #line hidden
             
             #line 53 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
-            this.Write(".IsMatch(property.Name);\r\n    }\r\n\r\n    /// <summary>\r\n    /// Get a property valu" +
-                    "e as the type matching the given pattern property ");
+            this.Write(");\r\n    }\r\n\r\n    /// <summary>\r\n    /// Get a property value as the type matching" +
+                    " the given pattern property ");
             
             #line default
             #line hidden
@@ -285,7 +286,7 @@ namespace ");
             #line hidden
             
             #line 59 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
-            this.Write(" result)\r\n    {\r\n        if (PatternProperty");
+            this.Write(" result)\r\n    {\r\n        if (property.Name.IsMatch(PatternProperty");
             
             #line default
             #line hidden
@@ -297,7 +298,7 @@ namespace ");
             #line hidden
             
             #line 61 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt"
-            this.Write(".IsMatch(property.Name))\r\n        {\r\n            result = property.ValueAs<");
+            this.Write("))\r\n        {\r\n            result = property.ValueAs<");
             
             #line default
             #line hidden

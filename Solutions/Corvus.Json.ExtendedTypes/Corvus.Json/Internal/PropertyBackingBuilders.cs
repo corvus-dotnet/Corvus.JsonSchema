@@ -206,11 +206,13 @@ public static class PropertyBackingBuilders
 
             JsonElement.ObjectEnumerator enumerator = jsonElementBacking.EnumerateObject();
 
+            bool added = false;
             while (enumerator.MoveNext())
             {
                 if (name.EqualsPropertyNameOf(enumerator.Current))
                 {
                     // Replace the property with the new value
+                    added = true;
                     builder.Add(new JsonObjectProperty(name, value));
                     break;
                 }
@@ -222,6 +224,11 @@ public static class PropertyBackingBuilders
             while (enumerator.MoveNext())
             {
                 builder.Add(new JsonObjectProperty(enumerator.Current));
+            }
+
+            if (!added)
+            {
+                builder.Add(new JsonObjectProperty(name, value));
             }
 
             return builder;

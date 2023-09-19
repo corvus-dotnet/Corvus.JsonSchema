@@ -562,7 +562,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 <#  }
     if(IsImplicitObject || IsNotImplicitType)
     { #>
-            JsonValueKind.Object => new(value.AsObject.AsImmutableList()),
+            JsonValueKind.Object => new(value.AsObject.AsPropertyBacking()),
 
 <#  } #>
             JsonValueKind.Null => Null,
@@ -750,7 +750,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 
         if (value.ValueKind == JsonValueKind.Object)
         {
-            return new(value.AsImmutableList());
+            return new(value.AsPropertyBacking());
         }
 <#  } #>
 

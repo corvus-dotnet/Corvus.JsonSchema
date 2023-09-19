@@ -1621,7 +1621,7 @@ namespace ");
             #line hidden
             
             #line 565 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
-            this.Write("            JsonValueKind.Object => new(value.AsObject.AsImmutableList()),\r\n\r\n");
+            this.Write("            JsonValueKind.Object => new(value.AsObject.AsPropertyBacking()),\r\n\r\n");
             
             #line default
             #line hidden
@@ -2277,7 +2277,7 @@ namespace ");
             
             #line 750 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write("\r\n        if (value.ValueKind == JsonValueKind.Object)\r\n        {\r\n            re" +
-                    "turn new(value.AsImmutableList());\r\n        }\r\n");
+                    "turn new(value.AsPropertyBacking());\r\n        }\r\n");
             
             #line default
             #line hidden

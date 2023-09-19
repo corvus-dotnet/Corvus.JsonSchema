@@ -449,7 +449,7 @@ public readonly partial struct <#= TypeName #> : IJsonValue<<#= TypeName #>>
 
         return value.ValueKind switch
         {
-            JsonValueKind.Object => new(value.AsObject.AsImmutableList()),
+            JsonValueKind.Object => new(value.AsObject.AsPropertyBacking()),
             JsonValueKind.Array => new(value.AsArray.AsImmutableList()),
             JsonValueKind.String => new((string)value.AsString),
             JsonValueKind.Number => new((double)value.AsNumber),
@@ -608,7 +608,7 @@ public readonly partial struct <#= TypeName #> : IJsonValue<<#= TypeName #>>
 
         if (value.ValueKind == JsonValueKind.Object)
         {
-            return new(value.AsObject.AsImmutableList());
+            return new(value.AsObject.AsPropertyBacking());
         }
 
         return Undefined;

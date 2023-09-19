@@ -28,8 +28,7 @@ public static class PropertyBackingExtensions
             }
         }
 
-        properties.Add(new JsonObjectProperty(name, value));
-        return properties;
+        return properties.Add(new JsonObjectProperty(name, value));
     }
 
     /// <summary>
@@ -219,7 +218,7 @@ public static class PropertyBackingExtensions
     {
         foreach (JsonObjectProperty property in properties)
         {
-            if (property.Equals(name))
+            if (property.NameEquals(name))
             {
                 value = property.Value;
                 return true;

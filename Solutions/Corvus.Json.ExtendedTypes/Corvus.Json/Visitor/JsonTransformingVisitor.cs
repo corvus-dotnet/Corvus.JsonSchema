@@ -302,7 +302,7 @@ public static partial class JsonTransformingVisitor
             // We need to build up the set of properties, whether we have transformed them or not
             if (result.Walk != Walk.RemoveAndContinue)
             {
-                builder.Add(new JsonObjectProperty(propertyName, result.Output));
+                builder.SetItem(propertyName, result.Output);
             }
             else
             {

@@ -118,8 +118,8 @@ namespace ");
                     "ublic bool HasDefault(ReadOnlySpan<byte> utf8Name)\r\n    {\r\n        return __Corv" +
                     "usDefaults.TryGetValue(utf8Name, out _);\r\n    }\r\n\r\n    private static ImmutableL" +
                     "ist<JsonObjectProperty> BuildDefaults()\r\n    {\r\n        ImmutableList<JsonObject" +
-                    "Property>.Builder builder =\r\n            ImmutableDictionary.CreateBuilder<JsonP" +
-                    "ropertyName, JsonAny>();\r\n\r\n");
+                    "Property>.Builder builder =\r\n            ImmutableList.CreateBuilder<JsonObjectP" +
+                    "roperty>();\r\n\r\n");
             
             #line default
             #line hidden

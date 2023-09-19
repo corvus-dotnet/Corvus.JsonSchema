@@ -167,7 +167,7 @@ namespace ");
             #line hidden
             
             #line 54 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Conversions.Operators.tt"
-            this.Write("            JsonValueKind.Object => new(value.AsImmutableList()),\r\n");
+            this.Write("            JsonValueKind.Object => new(value.AsPropertyBacking()),\r\n");
             
             #line default
             #line hidden

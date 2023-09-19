@@ -99,7 +99,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonObje
             return new(value.AsJsonElement);
         }
 
-        return new(value.AsImmutableList());
+        return new(value.AsPropertyBacking());
     }
 
     /// <summary>
@@ -234,7 +234,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonObje
     {
         if ((this.backing & Backing.JsonElement) != 0)
         {
-            if (this.jsonElementBacking.TryGetProperty((string)name, out JsonElement result))
+            if (name.TryGetProperty(this.jsonElementBacking, out JsonElement result))
             {
                 value = new(result);
                 return true;
@@ -327,7 +327,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonObje
     {
         if ((this.backing & Backing.JsonElement) != 0)
         {
-            if (this.jsonElementBacking.TryGetProperty((string)name, out JsonElement result))
+            if (name.TryGetProperty(this.jsonElementBacking, out JsonElement result))
             {
                 value = TValue.FromJson(result);
                 return true;
