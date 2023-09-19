@@ -70,7 +70,7 @@ public readonly partial struct Schema
         /// <param name = "value">The value to convert.</param>
         /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
         /// <exception cref = "FormatException">The value was not formatted as a double.</exception>
-        public static implicit operator double (MultipleOfEntity value)
+        public static explicit operator double (MultipleOfEntity value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -121,7 +121,7 @@ public readonly partial struct Schema
         /// <param name = "value">The value to convert.</param>
         /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
         /// <exception cref = "FormatException">The value was not formatted as a double.</exception>
-        public static implicit operator long (MultipleOfEntity value)
+        public static explicit operator long (MultipleOfEntity value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {

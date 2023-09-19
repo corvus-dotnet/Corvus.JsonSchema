@@ -70,7 +70,7 @@ public readonly partial struct Schema
         /// <param name = "value">The value to convert.</param>
         /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
         /// <exception cref = "FormatException">The value was not formatted as a double.</exception>
-        public static implicit operator double (NonNegativeInteger value)
+        public static explicit operator double (NonNegativeInteger value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -121,7 +121,7 @@ public readonly partial struct Schema
         /// <param name = "value">The value to convert.</param>
         /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
         /// <exception cref = "FormatException">The value was not formatted as a double.</exception>
-        public static implicit operator long (NonNegativeInteger value)
+        public static explicit operator long (NonNegativeInteger value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {

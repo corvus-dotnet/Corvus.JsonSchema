@@ -739,7 +739,7 @@ public partial class CodeGeneratorConst
     {
         get
         {
-            return this.HasMaxItems ? this.TypeDeclaration.Schema().MaxItems : default;
+            return this.HasMaxItems ? (long)this.TypeDeclaration.Schema().MaxItems : default;
         }
     }
 
@@ -750,7 +750,7 @@ public partial class CodeGeneratorConst
     {
         get
         {
-            return this.HasMinItems ? this.TypeDeclaration.Schema().MinItems : default;
+            return this.HasMinItems ? (long)this.TypeDeclaration.Schema().MinItems : default;
         }
     }
 
@@ -1391,7 +1391,7 @@ public partial class CodeGeneratorConst
         {
             if (this.HasMaxContains)
             {
-                return this.TypeDeclaration.Schema().MaxContains;
+                return (long)this.TypeDeclaration.Schema().MaxContains;
             }
 
             return default;
@@ -1530,7 +1530,7 @@ public partial class CodeGeneratorConst
     {
         get
         {
-            return this.HasMinContains ? this.TypeDeclaration.Schema().MinContains : default;
+            return this.HasMinContains ? (long)this.TypeDeclaration.Schema().MinContains : default;
         }
     }
 
@@ -1574,7 +1574,7 @@ public partial class CodeGeneratorConst
     {
         get
         {
-            return this.TypeDeclaration.Schema().MaxProperties.IsNotUndefined() ? this.TypeDeclaration.Schema().MaxProperties : default;
+            return this.TypeDeclaration.Schema().MaxProperties.IsNotUndefined() ? (long)this.TypeDeclaration.Schema().MaxProperties : default;
         }
     }
 
@@ -1585,7 +1585,7 @@ public partial class CodeGeneratorConst
     {
         get
         {
-            return this.TypeDeclaration.Schema().MinProperties.IsNotUndefined() ? this.TypeDeclaration.Schema().MinProperties : default;
+            return this.TypeDeclaration.Schema().MinProperties.IsNotUndefined() ? (long)this.TypeDeclaration.Schema().MinProperties : default;
         }
     }
 

@@ -1456,7 +1456,7 @@ public class JsonValueCastSteps
     [Then("the result should equal the JsonNumber (.*)")]
     public void ThenTheResultShouldEqualTheJsonNumber(string expectedValue)
     {
-        Assert.AreEqual(JsonNumber.ParseValue(expectedValue), this.scenarioContext.Get<IJsonValue>(CastResultKey).AsNumber, 0.00001);
+        Assert.AreEqual((double)JsonNumber.ParseValue(expectedValue), (double)this.scenarioContext.Get<IJsonValue>(CastResultKey).AsNumber, 0.00001);
     }
 
     /// <summary>

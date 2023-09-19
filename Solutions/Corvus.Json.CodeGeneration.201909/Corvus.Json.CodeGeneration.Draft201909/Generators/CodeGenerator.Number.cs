@@ -271,7 +271,7 @@ namespace ");
     /// <param name=""value"">The value to convert.</param>
     /// <exception cref=""InvalidOperationException"">The value was not a number.</exception>
     /// <exception cref=""FormatException"">The value was not formatted as a double.</exception>
-    public static implicit operator double(");
+    public static explicit operator double(");
             
             #line default
             #line hidden
@@ -358,7 +358,7 @@ namespace ");
     /// <param name=""value"">The value to convert.</param>
     /// <exception cref=""InvalidOperationException"">The value was not a number.</exception>
     /// <exception cref=""FormatException"">The value was not formatted as a double.</exception>
-    public static implicit operator long(");
+    public static explicit operator long(");
             
             #line default
             #line hidden

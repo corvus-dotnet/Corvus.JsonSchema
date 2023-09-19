@@ -97,7 +97,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonNumb
     /// <param name="value">The value to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a number.</exception>
     /// <exception cref="FormatException">The value was not formatted as a double.</exception>
-    public static implicit operator double(<#= TypeDeclaration.DotnetTypeName #> value)
+    public static explicit operator double(<#= TypeDeclaration.DotnetTypeName #> value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -148,7 +148,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonNumb
     /// <param name="value">The value to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a number.</exception>
     /// <exception cref="FormatException">The value was not formatted as a double.</exception>
-    public static implicit operator long(<#= TypeDeclaration.DotnetTypeName #> value)
+    public static explicit operator long(<#= TypeDeclaration.DotnetTypeName #> value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {

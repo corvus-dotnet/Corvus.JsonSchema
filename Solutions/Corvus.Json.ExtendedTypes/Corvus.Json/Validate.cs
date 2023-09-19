@@ -185,7 +185,7 @@ public static partial class Validate
         }
         else
         {
-            double value = instance.AsNumber;
+            double value = (double)instance.AsNumber;
             if (value != Math.Floor(value))
             {
                 if (level >= ValidationLevel.Detailed)
@@ -1724,7 +1724,7 @@ public static partial class Validate
 
         ValidationContext result = validationContext;
 
-        double currentValue = value.AsNumber;
+        double currentValue = (double)value.AsNumber;
 
         if (multipleOf is double mo)
         {

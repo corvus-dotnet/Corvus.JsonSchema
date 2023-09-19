@@ -47,7 +47,7 @@ public readonly partial struct JsonNumber
     /// <param name="value">The value to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a number.</exception>
     /// <exception cref="FormatException">The value was not formatted as a double.</exception>
-    public static implicit operator double(JsonNumber value)
+    public static explicit operator double(JsonNumber value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -57,27 +57,6 @@ public readonly partial struct JsonNumber
         if ((value.backing & Backing.Number) != 0)
         {
             return value.numberBacking;
-        }
-
-        throw new InvalidOperationException();
-    }
-
-    /// <summary>
-    /// Conversion to double.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
-    /// <exception cref="FormatException">The value was not formatted as a double.</exception>
-    public static explicit operator float(JsonNumber value)
-    {
-        if ((value.backing & Backing.JsonElement) != 0)
-        {
-            return value.jsonElementBacking.GetSingle();
-        }
-
-        if ((value.backing & Backing.Number) != 0)
-        {
-            return (float)value.numberBacking;
         }
 
         throw new InvalidOperationException();
@@ -98,7 +77,7 @@ public readonly partial struct JsonNumber
     /// <param name="value">The value to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a number.</exception>
     /// <exception cref="FormatException">The value was not formatted as a long.</exception>
-    public static implicit operator long(JsonNumber value)
+    public static explicit operator long(JsonNumber value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
