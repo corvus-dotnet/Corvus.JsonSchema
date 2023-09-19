@@ -2,6 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Diagnostics.CodeAnalysis;
+using System.Text.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json;
@@ -46,18 +48,43 @@ public readonly partial struct JsonBoolean
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a string.</exception>
-    public static implicit operator bool(JsonBoolean value)
+    public static explicit operator bool(JsonBoolean value)
     {
-        if ((value.backing & Backing.JsonElement) != 0)
+        return value.GetBoolean() ?? throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Try to retrieve the value as a boolean.
+    /// </summary>
+    /// <param name="result"><see langword="true"/> if the value was true, otherwise <see langword="false"/>.</param>
+    /// <returns><see langword="true"/> if the value was representable as a boolean, otherwise <see langword="false"/>.</returns>
+    public bool TryGetBoolean([NotNullWhen(true)] out bool result)
+    {
+        switch (this.ValueKind)
         {
-            return value.jsonElementBacking.GetBoolean();
+            case JsonValueKind.True:
+                result = true;
+                return true;
+            case JsonValueKind.False:
+                result = false;
+                return true;
+            default:
+                result = default;
+                return false;
+        }
+    }
+
+    /// <summary>
+    /// Get the value as a boolean.
+    /// </summary>
+    /// <returns>The value of the boolean, or <see langword="null"/> if the value was not representable as a boolean.</returns>
+    public bool? GetBoolean()
+    {
+        if (this.TryGetBoolean(out bool result))
+        {
+            return result;
         }
 
-        if ((value.backing & Backing.Bool) != 0)
-        {
-            return value.boolBacking;
-        }
-
-        throw new InvalidOperationException();
+        return null;
     }
 }
