@@ -141,8 +141,6 @@ public readonly partial struct DisabledScenario : IJsonObject<DisabledScenario>
     {
         if ((this.backing & Backing.JsonElement) != 0)
         {
-            // String is the fastest approach right now. If JsonPropertyName changes
-            // its internal implementation, we should switch this out.
             return name.TryGetProperty(this.jsonElementBacking, out JsonElement _);
         }
 
@@ -207,8 +205,6 @@ public readonly partial struct DisabledScenario : IJsonObject<DisabledScenario>
     {
         if ((this.backing & Backing.JsonElement) != 0)
         {
-            // String is the fastest approach right now. If JsonPropertyName changes
-            // its internal implementation, we should switch this out.
             if (name.TryGetProperty(this.jsonElementBacking, out JsonElement result))
             {
                 value = new(result);
@@ -302,8 +298,6 @@ public readonly partial struct DisabledScenario : IJsonObject<DisabledScenario>
     {
         if ((this.backing & Backing.JsonElement) != 0)
         {
-            // String is the fastest approach right now. If JsonPropertyName changes
-            // its internal implementation, we should switch this out.
             if (name.TryGetProperty(this.jsonElementBacking, out JsonElement result))
             {
                 value = TValue.FromJson(result);
@@ -335,8 +329,6 @@ public readonly partial struct DisabledScenario : IJsonObject<DisabledScenario>
     {
         if ((this.backing & Backing.JsonElement) != 0)
         {
-            // String is the fastest approach right now. If JsonPropertyName changes
-            // its internal implementation, we should switch this out.
             if (this.jsonElementBacking.TryGetProperty(name, out JsonElement result))
             {
                 value = TValue.FromJson(result);
@@ -456,10 +448,10 @@ public readonly partial struct DisabledScenario : IJsonObject<DisabledScenario>
     }
 
     /// <summary>
-    /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object.
+    /// Builds an <see cref = "ImmutableList{JsonObjectProperty}"/> from the object.
     /// </summary>
-    /// <returns>An immutable list of <see cref="JsonAny"/> built from the array.</returns>
-    /// <exception cref="InvalidOperationException">The value is not an array.</exception>
+    /// <returns>An immutable list of <see cref = "JsonAny"/> built from the array.</returns>
+    /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
     private ImmutableList<JsonObjectProperty> GetPropertyBacking()
     {
         if ((this.backing & Backing.Object) != 0)
@@ -471,10 +463,10 @@ public readonly partial struct DisabledScenario : IJsonObject<DisabledScenario>
     }
 
     /// <summary>
-    /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
+    /// Builds an <see cref = "ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
     /// </summary>
-    /// <returns>An immutable dictionary builder of <see cref="JsonPropertyName"/> to <see cref="JsonAny"/>, built from the existing object, without the given property.</returns>
-    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+    /// <returns>An immutable dictionary builder of <see cref = "JsonPropertyName"/> to <see cref = "JsonAny"/>, built from the existing object, without the given property.</returns>
+    /// <exception cref = "InvalidOperationException">The value is not an object.</exception>
     private ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in JsonPropertyName name)
     {
         if ((this.backing & Backing.Object) != 0)
@@ -486,10 +478,10 @@ public readonly partial struct DisabledScenario : IJsonObject<DisabledScenario>
     }
 
     /// <summary>
-    /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
+    /// Builds an <see cref = "ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
     /// </summary>
-    /// <returns>An immutable dictionary builder of <see cref="JsonPropertyName"/> to <see cref="JsonAny"/>, built from the existing object, without the given property.</returns>
-    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+    /// <returns>An immutable dictionary builder of <see cref = "JsonPropertyName"/> to <see cref = "JsonAny"/>, built from the existing object, without the given property.</returns>
+    /// <exception cref = "InvalidOperationException">The value is not an object.</exception>
     private ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(ReadOnlySpan<char> name)
     {
         if ((this.backing & Backing.Object) != 0)
@@ -501,10 +493,10 @@ public readonly partial struct DisabledScenario : IJsonObject<DisabledScenario>
     }
 
     /// <summary>
-    /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
+    /// Builds an <see cref = "ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
     /// </summary>
-    /// <returns>An immutable dictionary builder of <see cref="JsonPropertyName"/> to <see cref="JsonAny"/>, built from the existing object, without the given property.</returns>
-    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+    /// <returns>An immutable dictionary builder of <see cref = "JsonPropertyName"/> to <see cref = "JsonAny"/>, built from the existing object, without the given property.</returns>
+    /// <exception cref = "InvalidOperationException">The value is not an object.</exception>
     private ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(ReadOnlySpan<byte> name)
     {
         if ((this.backing & Backing.Object) != 0)
@@ -516,10 +508,10 @@ public readonly partial struct DisabledScenario : IJsonObject<DisabledScenario>
     }
 
     /// <summary>
-    /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
+    /// Builds an <see cref = "ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
     /// </summary>
-    /// <returns>An immutable dictionary builder of <see cref="JsonPropertyName"/> to <see cref="JsonAny"/>, built from the existing object, without the given property.</returns>
-    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+    /// <returns>An immutable dictionary builder of <see cref = "JsonPropertyName"/> to <see cref = "JsonAny"/>, built from the existing object, without the given property.</returns>
+    /// <exception cref = "InvalidOperationException">The value is not an object.</exception>
     private ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(string name)
     {
         if ((this.backing & Backing.Object) != 0)
@@ -531,10 +523,10 @@ public readonly partial struct DisabledScenario : IJsonObject<DisabledScenario>
     }
 
     /// <summary>
-    /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
+    /// Builds an <see cref = "ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
     /// </summary>
-    /// <returns>An immutable dictionary builder of <see cref="JsonPropertyName"/> to <see cref="JsonAny"/>, built from the existing object, without the given property.</returns>
-    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+    /// <returns>An immutable dictionary builder of <see cref = "JsonPropertyName"/> to <see cref = "JsonAny"/>, built from the existing object, without the given property.</returns>
+    /// <exception cref = "InvalidOperationException">The value is not an object.</exception>
     private ImmutableList<JsonObjectProperty> GetPropertyBackingWith(in JsonPropertyName name, in JsonAny value)
     {
         if ((this.backing & Backing.Object) != 0)
