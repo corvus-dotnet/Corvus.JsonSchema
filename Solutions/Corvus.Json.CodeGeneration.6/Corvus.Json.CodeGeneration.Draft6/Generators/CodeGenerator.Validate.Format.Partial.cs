@@ -540,7 +540,7 @@ public partial class CodeGeneratorValidateFormat
         {
             if (this.HasPattern)
             {
-                return this.TypeDeclaration.Schema().Pattern;
+                return (string)this.TypeDeclaration.Schema().Pattern;
             }
 
             return string.Empty;

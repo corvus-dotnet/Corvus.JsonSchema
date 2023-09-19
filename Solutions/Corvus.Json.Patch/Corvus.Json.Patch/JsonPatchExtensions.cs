@@ -317,7 +317,7 @@ public static partial class JsonPatchExtensions
     {
         patchOperation.TryGetProperty(JsonPatchDocument.AddEntity.JsonPropertyNames.PathUtf8, out JsonString pathAny);
         patchOperation.TryGetProperty(JsonPatchDocument.AddEntity.JsonPropertyNames.ValueUtf8, out JsonAny value);
-        string path = pathAny;
+        string path = (string)pathAny;
         return TryAdd(node, path, value, out result);
     }
 
@@ -325,14 +325,15 @@ public static partial class JsonPatchExtensions
     {
         patchOperation.TryGetProperty(JsonPatchDocument.Copy.JsonPropertyNames.FromValueUtf8, out JsonString fromAny);
         patchOperation.TryGetProperty(JsonPatchDocument.Copy.JsonPropertyNames.PathUtf8, out JsonString pathAny);
-        string from = fromAny;
-        string path = pathAny;
 
-        if (from.Equals(path))
+        if (fromAny.Equals(pathAny))
         {
             result = node;
             return true;
         }
+
+        string from = (string)fromAny;
+        string path = (string)pathAny;
 
         if (!node.TryResolvePointer(from, out JsonAny source))
         {
@@ -354,14 +355,15 @@ public static partial class JsonPatchExtensions
     {
         patchOperation.TryGetProperty(JsonPatchDocument.Move.JsonPropertyNames.FromValueUtf8, out JsonString fromAny);
         patchOperation.TryGetProperty(JsonPatchDocument.Move.JsonPropertyNames.PathUtf8, out JsonString pathAny);
-        string from = fromAny;
-        string path = pathAny;
 
-        if (from.Equals(path))
+        if (fromAny.Equals(pathAny))
         {
             result = node;
             return true;
         }
+
+        string from = (string)fromAny;
+        string path = (string)pathAny;
 
         if (!node.TryResolvePointer(from, out JsonAny source))
         {

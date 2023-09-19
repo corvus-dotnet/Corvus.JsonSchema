@@ -95,7 +95,7 @@ public readonly partial struct JsonIdnEmail
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a string.</exception>
-    public static implicit operator string(JsonIdnEmail value)
+    public static explicit operator string(JsonIdnEmail value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {

@@ -95,7 +95,7 @@ public readonly partial struct JsonHostname
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a string.</exception>
-    public static implicit operator string(JsonHostname value)
+    public static explicit operator string(JsonHostname value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {

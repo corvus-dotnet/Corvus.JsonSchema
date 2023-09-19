@@ -149,7 +149,7 @@ internal class JsonSchemaRegistry
         if (!RefMatters(schemaObject) && schemaObject.TryGetProperty(this.JsonSchemaConfiguration.IdKeyword, out JsonAny id))
         {
             JsonReference previousLocation = currentLocation;
-            currentLocation = currentLocation.Apply(new JsonReference(id.AsString));
+            currentLocation = currentLocation.Apply(new JsonReference((string)id.AsString));
 
             // We skip adding if we are leaving early
             if (!leavingEarly)
@@ -204,7 +204,7 @@ internal class JsonSchemaRegistry
                 {
                     if (value.ValueKind == JsonValueKind.String)
                     {
-                        JsonString valueString = value.AsString;
+                        string valueString = (string)value.AsString;
                         this.AddNamedAnchor(currentLocation, valueString);
                         if (anchorKeyword.IsDynamic)
                         {

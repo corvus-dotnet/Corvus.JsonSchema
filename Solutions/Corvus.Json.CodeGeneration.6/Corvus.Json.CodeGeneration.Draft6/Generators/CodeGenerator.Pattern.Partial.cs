@@ -540,7 +540,7 @@ public partial class CodeGeneratorPattern
         {
             if (this.HasPattern)
             {
-                return this.TypeDeclaration.Schema().Pattern;
+                return (string)this.TypeDeclaration.Schema().Pattern;
             }
 
             return string.Empty;

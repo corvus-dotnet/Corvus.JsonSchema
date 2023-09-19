@@ -95,7 +95,7 @@ public readonly partial struct JsonRegex
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a string.</exception>
-    public static implicit operator string(JsonRegex value)
+    public static explicit operator string(JsonRegex value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {

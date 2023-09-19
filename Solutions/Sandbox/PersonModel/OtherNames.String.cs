@@ -94,7 +94,7 @@ public readonly partial struct OtherNames : IJsonString<OtherNames>
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
     /// <exception cref = "InvalidOperationException">The value was not a string.</exception>
-    public static implicit operator string (OtherNames value)
+    public static explicit operator string (OtherNames value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {

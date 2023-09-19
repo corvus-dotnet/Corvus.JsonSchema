@@ -95,7 +95,7 @@ public readonly partial struct JsonBase64ContentPre201909
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a string.</exception>
-    public static implicit operator string(JsonBase64ContentPre201909 value)
+    public static explicit operator string(JsonBase64ContentPre201909 value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {

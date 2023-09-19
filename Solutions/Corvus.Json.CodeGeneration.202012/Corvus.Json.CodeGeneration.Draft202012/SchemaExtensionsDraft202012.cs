@@ -234,7 +234,7 @@ public static class SchemaExtensionsDraft202012
     /// <returns>True if the schema has a const value of the correct type.</returns>
     public static bool HasStringFormat(this Schema draft202012Schema)
     {
-        return (draft202012Schema.Format.ValueKind == JsonValueKind.String) && BuiltInTypes.IsStringFormat(draft202012Schema.Format);
+        return (draft202012Schema.Format.ValueKind == JsonValueKind.String) && BuiltInTypes.IsStringFormat((string)draft202012Schema.Format);
     }
 
     /// <summary>

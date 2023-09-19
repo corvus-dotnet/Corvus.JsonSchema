@@ -153,7 +153,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonStri
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a string.</exception>
-    public static implicit operator string(<#= TypeDeclaration.DotnetTypeName #> value)
+    public static explicit operator string(<#= TypeDeclaration.DotnetTypeName #> value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {

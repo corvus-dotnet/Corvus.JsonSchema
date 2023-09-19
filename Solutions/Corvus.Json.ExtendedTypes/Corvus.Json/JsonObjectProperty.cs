@@ -283,7 +283,12 @@ public readonly struct JsonObjectProperty : IEquatable<JsonObjectProperty>
     {
         if ((this.backing & Backing.JsonProperty) != 0)
         {
-            return this.jsonProperty.NameEquals(name);
+            if (name.TryGetValue(NameEquals, this.jsonProperty, out bool result))
+            {
+                return result;
+            }
+
+            return false;
         }
 
         if ((this.backing & Backing.NameValue) != 0)
@@ -292,6 +297,12 @@ public readonly struct JsonObjectProperty : IEquatable<JsonObjectProperty>
         }
 
         return false;
+
+        static bool NameEquals(ReadOnlySpan<char> span, in JsonProperty state, out bool result)
+        {
+            result = state.NameEquals(span);
+            return true;
+        }
     }
 
     /// <summary>

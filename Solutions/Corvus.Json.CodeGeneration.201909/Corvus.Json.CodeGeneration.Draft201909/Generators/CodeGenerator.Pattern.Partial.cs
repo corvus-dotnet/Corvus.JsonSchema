@@ -540,7 +540,7 @@ public partial class CodeGeneratorPattern
         {
             if (this.HasPattern)
             {
-                return this.TypeDeclaration.Schema().Pattern;
+                return (string)this.TypeDeclaration.Schema().Pattern;
             }
 
             return string.Empty;
@@ -1296,7 +1296,7 @@ public partial class CodeGeneratorPattern
                     ImmutableArray<string>.Builder innerBuilder = ImmutableArray.CreateBuilder<string>();
                     foreach (JsonAny item in property.Value.AsArray.EnumerateArray())
                     {
-                        innerBuilder.Add(item.AsString);
+                        innerBuilder.Add((string)item.AsString);
                     }
 
                     builder.Add(new DependentRequiredValue(property.Name.GetString(), innerBuilder.ToImmutable()));
@@ -1348,7 +1348,7 @@ public partial class CodeGeneratorPattern
                         ImmutableArray<string>.Builder innerBuilder = ImmutableArray.CreateBuilder<string>();
                         foreach (JsonAny item in property.Value.AsArray.EnumerateArray())
                         {
-                            innerBuilder.Add(item.AsString);
+                            innerBuilder.Add((string)item.AsString);
                         }
 
                         builder.Add(new DependentRequiredValue(property.Name.GetString(), innerBuilder.ToImmutable()));

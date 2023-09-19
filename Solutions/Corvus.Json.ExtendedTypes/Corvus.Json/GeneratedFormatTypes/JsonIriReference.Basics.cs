@@ -95,7 +95,7 @@ public readonly partial struct JsonIriReference
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a string.</exception>
-    public static implicit operator string(JsonIriReference value)
+    public static explicit operator string(JsonIriReference value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {

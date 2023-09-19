@@ -146,7 +146,7 @@ public partial class JsonSchemaTypeBuilder
             {
                 if (type.LocatedSchema.Schema.AsObject.TryGetProperty(refKeyword.Name, out JsonString value))
                 {
-                    var reference = new JsonReference(value);
+                    var reference = new JsonReference((string)value);
                     if (reference.HasFragment)
                     {
                         ReadOnlySpan<char> fragmentWithoutLeadingHash = reference.Fragment[1..];
@@ -198,7 +198,7 @@ public partial class JsonSchemaTypeBuilder
 
     private async Task AddSubschemaForRef(JsonReference subschemaPath, JsonString referenceValue, WalkContext context, TypeDeclaration typeDeclaration)
     {
-        JsonReference reference = new(HttpUtility.UrlDecode(referenceValue));
+        JsonReference reference = new(HttpUtility.UrlDecode((string)referenceValue));
 
         LocatedSchema baseSchemaForReference;
         JsonReference baseSchemaForReferenceLocation;
@@ -248,7 +248,7 @@ public partial class JsonSchemaTypeBuilder
 
     private async Task AddSubschemaForDynamicRef(JsonReference subschemaPath, JsonString referenceValue, WalkContext context, TypeDeclaration typeDeclaration)
     {
-        JsonReference reference = new(HttpUtility.UrlDecode(referenceValue));
+        JsonReference reference = new(HttpUtility.UrlDecode((string)referenceValue));
 
         LocatedSchema baseSchemaForReference;
         JsonReference baseSchemaForReferenceLocation;
@@ -317,7 +317,7 @@ public partial class JsonSchemaTypeBuilder
 
     private async Task AddSubschemaForRecursiveRef(JsonReference subschemaPath, JsonString referenceValue, WalkContext context, TypeDeclaration typeDeclaration)
     {
-        JsonReference reference = new(HttpUtility.UrlDecode(referenceValue));
+        JsonReference reference = new(HttpUtility.UrlDecode((string)referenceValue));
 
         LocatedSchema baseSchemaForReference;
         JsonReference baseSchemaForReferenceLocation;
@@ -434,7 +434,7 @@ public partial class JsonSchemaTypeBuilder
                 if (!RefMatters(schemaObject) && schemaObject.TryGetProperty(this.JsonSchemaConfiguration.IdKeyword, out JsonString value))
                 {
                     // Update the base location and element for the found schema;
-                    baseSchemaForReferenceLocation = baseSchemaForReferenceLocation.Apply(new JsonReference(value));
+                    baseSchemaForReferenceLocation = baseSchemaForReferenceLocation.Apply(new JsonReference((string)value));
                     rootElement = locatedSchema.Schema.AsJsonElement;
                     currentBuilder.Clear();
                     currentBuilder.Append('#');

@@ -95,7 +95,7 @@ public readonly partial struct JsonUuid
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a string.</exception>
-    public static implicit operator string(JsonUuid value)
+    public static explicit operator string(JsonUuid value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {

@@ -317,7 +317,7 @@ public static partial class Validate
             }
         }
 
-        JsonString email = instance.AsString;
+        string email = (string)instance.AsString;
 
         bool isMatch = false;
 
@@ -409,7 +409,7 @@ public static partial class Validate
             }
         }
 
-        string value = instance.AsString;
+        string value = (string)instance.AsString;
 
         bool isMatch;
         if (value.StartsWith("xn--"))

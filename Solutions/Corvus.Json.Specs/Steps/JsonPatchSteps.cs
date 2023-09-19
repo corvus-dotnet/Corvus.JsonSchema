@@ -108,7 +108,7 @@ public class JsonPatchSteps
 
             foreach (JsonPatchDocument.PatchOperation operation in patchOperationArray.EnumerateArray())
             {
-                string op = operation.Op;
+                string op = (string)operation.Op;
                 switch (op)
                 {
                     case "add":

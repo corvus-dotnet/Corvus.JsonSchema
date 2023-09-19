@@ -107,7 +107,7 @@ public readonly partial struct Schema
             /// </summary>
             /// <param name = "value">The value from which to convert.</param>
             /// <exception cref = "InvalidOperationException">The value was not a string.</exception>
-            public static implicit operator string (AllOf1Entity value)
+            public static explicit operator string (AllOf1Entity value)
             {
                 if ((value.backing & Backing.JsonElement) != 0)
                 {

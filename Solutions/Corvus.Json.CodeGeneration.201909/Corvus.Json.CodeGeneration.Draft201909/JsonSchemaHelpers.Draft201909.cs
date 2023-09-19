@@ -344,7 +344,7 @@ public static class JsonSchemaHelpers
             }
 
             return BuiltInTypes.GetTypeNameFor(
-                schema.Type.AsSimpleTypes,
+                schema.Type.AsSimpleTypes.GetString(),
                 schema.Format.GetString(),
                 schema.ContentEncoding.GetString(),
                 schema.ContentMediaType.GetString(),
@@ -375,7 +375,7 @@ public static class JsonSchemaHelpers
             {
                 foreach (JsonString requiredName in schema.Required.EnumerateArray())
                 {
-                    target.AddOrReplaceProperty(new PropertyDeclaration(builder.AnyTypeDeclarationInstance, requiredName, !treatRequiredAsOptional, source == target, false, null));
+                    target.AddOrReplaceProperty(new PropertyDeclaration(builder.AnyTypeDeclarationInstance, (string)requiredName, !treatRequiredAsOptional, source == target, false, null));
                 }
             }
 
@@ -435,7 +435,7 @@ public static class JsonSchemaHelpers
 
                     if (schema.Required.IsNotUndefined())
                     {
-                        if (schema.Required.EnumerateArray().Any(r => propertyName == Uri.UnescapeDataString(r)))
+                        if (schema.Required.EnumerateArray().Any(r => propertyName == Uri.UnescapeDataString((string)r)))
                         {
                             isRequired = !treatRequiredAsOptional;
                         }
