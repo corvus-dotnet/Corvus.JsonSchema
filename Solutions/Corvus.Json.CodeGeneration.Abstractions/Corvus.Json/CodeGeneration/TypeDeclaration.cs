@@ -435,7 +435,7 @@ public class TypeDeclaration
 
         foreach (JsonObjectProperty property in schemaObject.EnumerateObject())
         {
-            if (this.typeBuilder.JsonSchemaConfiguration.IrreducibleKeywords.Contains(property.Name))
+            if (this.typeBuilder.JsonSchemaConfiguration.IrreducibleKeywords.Contains(property.Name.GetString()))
             {
                 return false;
             }

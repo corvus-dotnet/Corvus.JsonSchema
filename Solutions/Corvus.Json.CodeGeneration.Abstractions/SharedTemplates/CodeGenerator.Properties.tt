@@ -124,7 +124,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     }
     #>)
     {
-        var builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
+        var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
 <#  foreach(var property in RequiredAllOfAndRefProperties)
     {
         if (IsConst(property.Type))

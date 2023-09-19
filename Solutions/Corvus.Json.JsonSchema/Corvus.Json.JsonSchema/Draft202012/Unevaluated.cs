@@ -25,7 +25,7 @@ public readonly partial struct Unevaluated
     private readonly Backing backing;
     private readonly JsonElement jsonElementBacking;
     private readonly bool boolBacking;
-    private readonly ImmutableDictionary<JsonPropertyName, JsonAny> objectBacking;
+    private readonly ImmutableList<JsonObjectProperty> objectBacking;
     /// <summary>
     /// Initializes a new instance of the <see cref = "Unevaluated"/> struct.
     /// </summary>
@@ -34,7 +34,7 @@ public readonly partial struct Unevaluated
         this.jsonElementBacking = default;
         this.backing = Backing.JsonElement;
         this.boolBacking = default;
-        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
     }
 
     /// <summary>
@@ -46,7 +46,7 @@ public readonly partial struct Unevaluated
         this.jsonElementBacking = value;
         this.backing = Backing.JsonElement;
         this.boolBacking = default;
-        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
     }
 
     /// <summary>
@@ -300,7 +300,7 @@ public readonly partial struct Unevaluated
         {
             JsonValueKind.True => new(true),
             JsonValueKind.False => new(false),
-            JsonValueKind.Object => new(value.AsObject.AsImmutableDictionary()),
+            JsonValueKind.Object => new(value.AsObject.AsPropertyBacking()),
             JsonValueKind.Null => Null,
             _ => Undefined,
         };
@@ -418,7 +418,7 @@ public readonly partial struct Unevaluated
 
         if (value.ValueKind == JsonValueKind.Object)
         {
-            return new(value.AsImmutableDictionary());
+            return new(value.AsPropertyBacking());
         }
 
         return Undefined;

@@ -157,7 +157,7 @@ public readonly partial struct JsonPatchDocument
         /// </summary>
         public static Move Create(Corvus.Json.JsonPointer fromValue, Corvus.Json.JsonPointer path)
         {
-            var builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
+            var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
             builder.Add(JsonPropertyNames.FromValue, fromValue.AsAny);
             builder.Add(JsonPropertyNames.Op, new Corvus.Json.Patch.Model.JsonPatchDocument.Move.OpEntity().AsAny);
             builder.Add(JsonPropertyNames.Path, path.AsAny);

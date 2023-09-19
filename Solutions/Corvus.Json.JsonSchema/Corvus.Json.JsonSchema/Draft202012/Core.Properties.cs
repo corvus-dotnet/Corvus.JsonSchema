@@ -401,7 +401,7 @@ public readonly partial struct Core
     /// </summary>
     public static Core Create(Corvus.Json.JsonSchema.Draft202012.Core.AnchorString? anchor = null, Corvus.Json.JsonString? comment = null, Corvus.Json.JsonSchema.Draft202012.Core.DefsEntity? defs = null, Corvus.Json.JsonSchema.Draft202012.Core.AnchorString? dynamicAnchor = null, Corvus.Json.JsonUriReference? dynamicRef = null, Corvus.Json.JsonSchema.Draft202012.Core.IdEntity? id = null, Corvus.Json.JsonUriReference? @ref = null, Corvus.Json.JsonUri? schema = null, Corvus.Json.JsonSchema.Draft202012.Core.VocabularyEntity? vocabulary = null)
     {
-        var builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
+        var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
         if (anchor is Corvus.Json.JsonSchema.Draft202012.Core.AnchorString anchor__)
         {
             builder.Add(JsonPropertyNames.Anchor, anchor__.AsAny);

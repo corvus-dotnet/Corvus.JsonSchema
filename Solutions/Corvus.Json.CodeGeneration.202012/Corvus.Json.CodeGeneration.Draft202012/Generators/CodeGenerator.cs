@@ -158,8 +158,7 @@ namespace ");
             #line hidden
             
             #line 51 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
-            this.Write("    private readonly ImmutableDictionary<JsonPropertyName, JsonAny> objectBacking" +
-                    ";\r\n");
+            this.Write("    private readonly ImmutableList<JsonObjectProperty> objectBacking;\r\n");
             
             #line default
             #line hidden
@@ -278,8 +277,7 @@ namespace ");
             #line hidden
             
             #line 81 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
-            this.Write("        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty" +
-                    ";\r\n");
+            this.Write("        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;\r\n");
             
             #line default
             #line hidden
@@ -398,8 +396,7 @@ namespace ");
             #line hidden
             
             #line 112 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
-            this.Write("        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty" +
-                    ";\r\n");
+            this.Write("        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;\r\n");
             
             #line default
             #line hidden
@@ -1624,8 +1621,7 @@ namespace ");
             #line hidden
             
             #line 565 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
-            this.Write("            JsonValueKind.Object => new(value.AsObject.AsImmutableDictionary()),\r" +
-                    "\n\r\n");
+            this.Write("            JsonValueKind.Object => new(value.AsObject.AsImmutableList()),\r\n\r\n");
             
             #line default
             #line hidden
@@ -2281,7 +2277,7 @@ namespace ");
             
             #line 750 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt"
             this.Write("\r\n        if (value.ValueKind == JsonValueKind.Object)\r\n        {\r\n            re" +
-                    "turn new(value.AsImmutableDictionary());\r\n        }\r\n");
+                    "turn new(value.AsImmutableList());\r\n        }\r\n");
             
             #line default
             #line hidden

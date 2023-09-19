@@ -187,7 +187,7 @@ public static class JsonValueExtensions
 
             return valueKind switch
             {
-                JsonValueKind.Object => T.FromObject(new JsonObject(value.AsObject.AsImmutableDictionary())),
+                JsonValueKind.Object => T.FromObject(new JsonObject(value.AsObject.AsPropertyBacking())),
                 JsonValueKind.Array => T.FromArray(new JsonArray(value.AsArray.AsImmutableList())),
                 JsonValueKind.Number => T.FromNumber(new JsonNumber((double)value.AsNumber)),
                 JsonValueKind.String => T.FromString(new JsonString((string)value.AsString)),

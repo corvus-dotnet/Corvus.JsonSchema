@@ -33,7 +33,7 @@ public readonly partial struct Core
             int propertyCount = 0;
             foreach (JsonObjectProperty property in this.EnumerateObject())
             {
-                string propertyName = property.Name;
+                string propertyName = property.Name.GetString();
                 result = new Corvus.Json.JsonUri(propertyName).Validate(result, level);
                 if (level == ValidationLevel.Flag && !result.IsValid)
                 {

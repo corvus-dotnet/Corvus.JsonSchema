@@ -40,7 +40,7 @@ public readonly partial struct Schema
                 this.boolBacking = default;
                 this.numberBacking = default;
                 this.arrayBacking = value;
-                this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+                this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
             }
 
             /// <summary>
@@ -55,7 +55,7 @@ public readonly partial struct Schema
                 this.boolBacking = default;
                 this.numberBacking = default;
                 this.arrayBacking = value.ToImmutableList();
-                this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+                this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
             }
 
             /// <inheritdoc/>

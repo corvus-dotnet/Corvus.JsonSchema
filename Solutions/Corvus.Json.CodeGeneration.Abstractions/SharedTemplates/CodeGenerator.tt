@@ -48,7 +48,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 <#  }
     if(IsImplicitObject || IsNotImplicitType)
     { #>
-    private readonly ImmutableDictionary<JsonPropertyName, JsonAny> objectBacking;
+    private readonly ImmutableList<JsonObjectProperty> objectBacking;
 <#  } #>
 
 <#  if(!HasConst)
@@ -78,7 +78,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 <#      }
         if(IsImplicitObject || IsNotImplicitType)
         { #>
-        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
 <#      } #>
     }
 <#  } #>
@@ -109,7 +109,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 <#  }
     if(IsImplicitObject || IsNotImplicitType)
     { #>
-        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
 <#  } #>
     }
 
@@ -562,7 +562,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 <#  }
     if(IsImplicitObject || IsNotImplicitType)
     { #>
-            JsonValueKind.Object => new(value.AsObject.AsImmutableDictionary()),
+            JsonValueKind.Object => new(value.AsObject.AsImmutableList()),
 
 <#  } #>
             JsonValueKind.Null => Null,
@@ -750,7 +750,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 
         if (value.ValueKind == JsonValueKind.Object)
         {
-            return new(value.AsImmutableDictionary());
+            return new(value.AsImmutableList());
         }
 <#  } #>
 

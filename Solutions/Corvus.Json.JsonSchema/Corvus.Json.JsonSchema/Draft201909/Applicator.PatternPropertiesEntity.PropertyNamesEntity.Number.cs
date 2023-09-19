@@ -35,7 +35,7 @@ public readonly partial struct Applicator
                 this.boolBacking = default;
                 this.stringBacking = string.Empty;
                 this.arrayBacking = ImmutableList<JsonAny>.Empty;
-                this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+                this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
             }
 
             /// <summary>

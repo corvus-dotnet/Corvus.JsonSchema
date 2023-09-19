@@ -44,7 +44,7 @@ public static partial class JsonValueHelpers
     /// </summary>
     /// <param name="properties">The property dictionary to write.</param>
     /// <returns>The <see cref="JsonElement"/> serialized from the value.</returns>
-    public static JsonElement ObjectToJsonElement(ImmutableDictionary<JsonPropertyName, JsonAny> properties)
+    public static JsonElement ObjectToJsonElement(ImmutableList<JsonObjectProperty> properties)
     {
         var abw = new ArrayBufferWriter<byte>();
         using var writer = new Utf8JsonWriter(abw);

@@ -11,7 +11,7 @@ namespace Corvus.Json.Patch;
 /// </summary>
 public readonly record struct PatchBuilder(JsonAny Value, JsonPatchDocument PatchOperations)
 {
-    private static readonly JsonObject EmptyObject = JsonObject.FromProperties(ImmutableDictionary<JsonPropertyName, JsonAny>.Empty);
+    private static readonly JsonObject EmptyObject = JsonObject.FromProperties(ImmutableList<JsonObjectProperty>.Empty);
 
     /// <summary>
     /// Adds or replaces the value found at the given location, building any missing intermediate structure as object properties.

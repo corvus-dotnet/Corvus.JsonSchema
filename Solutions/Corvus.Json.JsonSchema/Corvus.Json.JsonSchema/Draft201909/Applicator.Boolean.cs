@@ -28,7 +28,7 @@ public readonly partial struct Applicator : IJsonBoolean<Applicator>
         this.jsonElementBacking = default;
         this.backing = Backing.Bool;
         this.boolBacking = value;
-        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
     }
 
     /// <summary>

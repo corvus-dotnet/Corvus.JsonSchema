@@ -287,7 +287,7 @@ namespace ");
 
                 if (level > ValidationLevel.Basic)
                 {
-                    result = result.PushDocumentProperty(""properties"", property.Name);
+                    result = result.PushDocumentProperty(""properties"", property.Name.GetString());
                 }
 
                 var propertyResult = propertyValidator(property, result.CreateChildContext(), level);
@@ -441,7 +441,7 @@ namespace ");
             #line hidden
             
             #line 168 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.Object.tt"
-            this.Write("            string propertyName = property.Name;\r\n");
+            this.Write("            string propertyName = property.Name.GetString();\r\n");
             
             #line default
             #line hidden

@@ -155,7 +155,7 @@ public readonly partial struct Content
     /// </summary>
     public static Content Create(Corvus.Json.JsonString? contentEncoding = null, Corvus.Json.JsonString? contentMediaType = null, Corvus.Json.JsonSchema.Draft202012.Schema? contentSchema = null)
     {
-        var builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
+        var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
         if (contentEncoding is Corvus.Json.JsonString contentEncoding__)
         {
             builder.Add(JsonPropertyNames.ContentEncoding, contentEncoding__.AsAny);

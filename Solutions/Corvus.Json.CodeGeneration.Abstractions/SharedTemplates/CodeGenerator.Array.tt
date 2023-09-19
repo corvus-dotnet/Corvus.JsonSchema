@@ -61,7 +61,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
         this.arrayBacking = value;
 <#  if(IsImplicitObject || IsNotImplicitType)
     { #>
-        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
 <#  } #>
     }
 
@@ -88,7 +88,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
         this.arrayBacking = value.ToImmutableList();
 <#  if(IsImplicitObject || IsNotImplicitType)
     { #>
-        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
 <#  } #>
     }
 

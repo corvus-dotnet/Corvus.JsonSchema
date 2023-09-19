@@ -33,7 +33,7 @@ public readonly partial struct Schema
             int propertyCount = 0;
             foreach (JsonObjectProperty property in this.EnumerateObject())
             {
-                string propertyName = property.Name;
+                string propertyName = property.Name.GetString();
                 result = new Corvus.Json.JsonSchema.Draft7.Schema.PatternPropertiesEntity.PropertyNamesEntity(propertyName).Validate(result, level);
                 if (level == ValidationLevel.Flag && !result.IsValid)
                 {

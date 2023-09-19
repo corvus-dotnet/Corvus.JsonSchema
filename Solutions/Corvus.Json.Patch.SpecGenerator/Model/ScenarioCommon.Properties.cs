@@ -155,7 +155,7 @@ public readonly partial struct ScenarioCommon
     /// </summary>
     public static ScenarioCommon Create(Corvus.Json.JsonAny doc, Corvus.Json.JsonAny patch, Corvus.Json.JsonString? comment = null)
     {
-        var builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
+        var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
         builder.Add(JsonPropertyNames.Doc, doc.AsAny);
         builder.Add(JsonPropertyNames.Patch, patch.AsAny);
         if (comment is Corvus.Json.JsonString comment__)

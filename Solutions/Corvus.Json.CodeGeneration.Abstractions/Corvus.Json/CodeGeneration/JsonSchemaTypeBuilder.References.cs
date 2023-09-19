@@ -578,8 +578,9 @@ public partial class JsonSchemaTypeBuilder
 
         foreach (JsonObjectProperty item in map.AsObject.EnumerateObject())
         {
-            context.EnterSubschemaScopeForUnencodedPropertyName(item.Name);
-            await this.AddSubschemaFromSchemaForRefResolvableKeyword(subschemaPath.AppendUnencodedPropertyNameToFragment(item.Name), item.Value, context, typeDeclaration).ConfigureAwait(false);
+            string name = item.Name.GetString();
+            context.EnterSubschemaScopeForUnencodedPropertyName(name);
+            await this.AddSubschemaFromSchemaForRefResolvableKeyword(subschemaPath.AppendUnencodedPropertyNameToFragment(name), item.Value, context, typeDeclaration).ConfigureAwait(false);
             context.LeaveScope();
         }
     }
@@ -595,8 +596,9 @@ public partial class JsonSchemaTypeBuilder
         {
             if (item.ValueKind == JsonValueKind.Object || item.ValueKind == JsonValueKind.True || item.ValueKind == JsonValueKind.False)
             {
-                context.EnterSubschemaScopeForUnencodedPropertyName(item.Name);
-                await this.AddSubschemaFromSchemaForRefResolvableKeyword(subschemaPath.AppendUnencodedPropertyNameToFragment(item.Name), item.Value, context, typeDeclaration).ConfigureAwait(false);
+                string name = item.Name.GetString();
+                context.EnterSubschemaScopeForUnencodedPropertyName(name);
+                await this.AddSubschemaFromSchemaForRefResolvableKeyword(subschemaPath.AppendUnencodedPropertyNameToFragment(name), item.Value, context, typeDeclaration).ConfigureAwait(false);
                 context.LeaveScope();
             }
         }

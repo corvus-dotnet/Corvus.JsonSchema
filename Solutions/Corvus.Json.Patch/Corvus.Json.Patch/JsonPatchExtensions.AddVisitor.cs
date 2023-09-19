@@ -80,7 +80,9 @@ public static partial class JsonPatchExtensions
             if (nodeToVisit.ValueKind == JsonValueKind.Object)
             {
                 // Return the transformed result, and stop walking the tree here.
-                result.Output = nodeToVisit.AsObject.SetProperty(terminatingPathElement, value);
+                // We avoid allocating a string by parsing a JsonElement - this still allocates but is better aligned with our
+                // target output!
+                result.Output = nodeToVisit.AsObject.SetProperty(JsonPropertyName.ParseValue(terminatingPathElement), value);
                 result.Transformed = Transformed.Yes;
                 result.Walk = Walk.TerminateAtThisNodeAndKeepChanges;
                 return;

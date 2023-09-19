@@ -483,8 +483,8 @@ namespace ");
             #line hidden
             
             #line 128 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Properties.tt"
-            this.Write(")\r\n    {\r\n        var builder = ImmutableDictionary.CreateBuilder<JsonPropertyNam" +
-                    "e, JsonAny>();\r\n");
+            this.Write(")\r\n    {\r\n        var builder = ImmutableList.CreateBuilder<JsonObjectProperty>()" +
+                    ";\r\n");
             
             #line default
             #line hidden

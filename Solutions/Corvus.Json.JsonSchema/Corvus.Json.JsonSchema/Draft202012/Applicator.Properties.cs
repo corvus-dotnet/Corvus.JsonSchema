@@ -647,7 +647,7 @@ public readonly partial struct Applicator
     /// </summary>
     public static Applicator Create(Corvus.Json.JsonSchema.Draft202012.Schema? additionalProperties = null, Corvus.Json.JsonSchema.Draft202012.Schema.SchemaArray? allOf = null, Corvus.Json.JsonSchema.Draft202012.Schema.SchemaArray? anyOf = null, Corvus.Json.JsonSchema.Draft202012.Schema? contains = null, Corvus.Json.JsonSchema.Draft202012.Applicator.DependentSchemasEntity? dependentSchemas = null, Corvus.Json.JsonSchema.Draft202012.Schema? @else = null, Corvus.Json.JsonSchema.Draft202012.Schema? @if = null, Corvus.Json.JsonSchema.Draft202012.Schema? items = null, Corvus.Json.JsonSchema.Draft202012.Schema? not = null, Corvus.Json.JsonSchema.Draft202012.Schema.SchemaArray? oneOf = null, Corvus.Json.JsonSchema.Draft202012.Applicator.PatternPropertiesEntity? patternProperties = null, Corvus.Json.JsonSchema.Draft202012.Applicator.SchemaArray? prefixItems = null, Corvus.Json.JsonSchema.Draft202012.Applicator.PropertiesEntity? properties = null, Corvus.Json.JsonSchema.Draft202012.Schema? propertyNames = null, Corvus.Json.JsonSchema.Draft202012.Schema? then = null)
     {
-        var builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
+        var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
         if (additionalProperties is Corvus.Json.JsonSchema.Draft202012.Schema additionalProperties__)
         {
             builder.Add(JsonPropertyNames.AdditionalProperties, additionalProperties__.AsAny);

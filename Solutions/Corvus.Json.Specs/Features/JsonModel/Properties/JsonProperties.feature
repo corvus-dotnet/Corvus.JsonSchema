@@ -44,31 +44,31 @@ Scenario Outline: Set properties to JsonElement backed JsonProperty
 	And the operation should produce <expectedException>
 
 Examples:
-	| jsonValueType | propertyName | propertyValue | value          | propertyNameType   | expectedValue | expectedException            |
-	| JsonObject    | foo          | "bar"         | {"foo": "baz"} | string             | "bar"         | no exception                 |
-	| JsonAny       | foo          | "bar"         | {"foo": "baz"} | string             | "bar"         | no exception                 |
-	| JsonObject    | foo          | "bar"         | {}             | string             | "bar"         | no exception                 |
-	| JsonAny       | foo          | "bar"         | {}             | string             | "bar"         | no exception                 |
-	| JsonObject    | foo          | "bar"         | <undefined>    | string             | "bar"         | an InvalidOperationException |
-	| JsonAny       | foo          | "bar"         | <undefined>    | string             | "bar"         | an InvalidOperationException |
-	| JsonObject    | foo          | "bar"         | 1.2            | string             | <undefined>   | an InvalidOperationException |
-	| JsonAny       | foo          | "bar"         | 1.2            | string             | <undefined>   | an InvalidOperationException |
-	| JsonObject    | foo          | "bar"         | {"foo": "baz"} | ReadOnlySpan<char> | "bar"         | no exception                 |
-	| JsonAny       | foo          | "bar"         | {"foo": "baz"} | ReadOnlySpan<char> | "bar"         | no exception                 |
-	| JsonObject    | foo          | "bar"         | {}             | ReadOnlySpan<char> | "bar"         | no exception                 |
-	| JsonAny       | foo          | "bar"         | {}             | ReadOnlySpan<char> | "bar"         | no exception                 |
-	| JsonObject    | foo          | "bar"         | <undefined>    | ReadOnlySpan<char> | "bar"         | an InvalidOperationException |
-	| JsonAny       | foo          | "bar"         | <undefined>    | ReadOnlySpan<char> | "bar"         | an InvalidOperationException |
-	| JsonObject    | foo          | "bar"         | 1.2            | ReadOnlySpan<char> | <undefined>   | an InvalidOperationException |
-	| JsonAny       | foo          | "bar"         | 1.2            | ReadOnlySpan<char> | <undefined>   | an InvalidOperationException |
-	| JsonObject    | foo          | "bar"         | {"foo": "baz"} | ReadOnlySpan<byte> | "bar"         | no exception                 |
-	| JsonAny       | foo          | "bar"         | {"foo": "baz"} | ReadOnlySpan<byte> | "bar"         | no exception                 |
-	| JsonObject    | foo          | "bar"         | {}             | ReadOnlySpan<byte> | "bar"         | no exception                 |
-	| JsonAny       | foo          | "bar"         | {}             | ReadOnlySpan<byte> | "bar"         | no exception                 |
-	| JsonObject    | foo          | "bar"         | <undefined>    | ReadOnlySpan<byte> | "bar"         | an InvalidOperationException |
-	| JsonAny       | foo          | "bar"         | <undefined>    | ReadOnlySpan<byte> | "bar"         | an InvalidOperationException |
-	| JsonObject    | foo          | "bar"         | 1.2            | ReadOnlySpan<byte> | <undefined>   | an InvalidOperationException |
-	| JsonAny       | foo          | "bar"         | 1.2            | ReadOnlySpan<byte> | <undefined>   | an InvalidOperationException |
+	| jsonValueType | propertyName | propertyValue | value          | propertyNameType | expectedValue | expectedException            |
+	| JsonObject    | foo          | "bar"         | {"foo": "baz"} | string           | "bar"         | no exception                 |
+	| JsonAny       | foo          | "bar"         | {"foo": "baz"} | string           | "bar"         | no exception                 |
+	| JsonObject    | foo          | "bar"         | {}             | string           | "bar"         | no exception                 |
+	| JsonAny       | foo          | "bar"         | {}             | string           | "bar"         | no exception                 |
+	| JsonObject    | foo          | "bar"         | <undefined>    | string           | "bar"         | an InvalidOperationException |
+	| JsonAny       | foo          | "bar"         | <undefined>    | string           | "bar"         | an InvalidOperationException |
+	| JsonObject    | foo          | "bar"         | 1.2            | string           | <undefined>   | an InvalidOperationException |
+	| JsonAny       | foo          | "bar"         | 1.2            | string           | <undefined>   | an InvalidOperationException |
+	| JsonObject    | foo          | "bar"         | {"foo": "baz"} | JsonElement      | "bar"         | no exception                 |
+	| JsonAny       | foo          | "bar"         | {"foo": "baz"} | JsonElement      | "bar"         | no exception                 |
+	| JsonObject    | foo          | "bar"         | {}             | JsonElement      | "bar"         | no exception                 |
+	| JsonAny       | foo          | "bar"         | {}             | JsonElement      | "bar"         | no exception                 |
+	| JsonObject    | foo          | "bar"         | <undefined>    | JsonElement      | "bar"         | an InvalidOperationException |
+	| JsonAny       | foo          | "bar"         | <undefined>    | JsonElement      | "bar"         | an InvalidOperationException |
+	| JsonObject    | foo          | "bar"         | 1.2            | JsonElement      | <undefined>   | an InvalidOperationException |
+	| JsonAny       | foo          | "bar"         | 1.2            | JsonElement      | <undefined>   | an InvalidOperationException |
+	| JsonObject    | foo          | "bar"         | {"foo": "baz"} | JsonElement      | "bar"         | no exception                 |
+	| JsonAny       | foo          | "bar"         | {"foo": "baz"} | JsonElement      | "bar"         | no exception                 |
+	| JsonObject    | foo          | "bar"         | {}             | JsonElement      | "bar"         | no exception                 |
+	| JsonAny       | foo          | "bar"         | {}             | JsonElement      | "bar"         | no exception                 |
+	| JsonObject    | foo          | "bar"         | <undefined>    | JsonElement      | "bar"         | an InvalidOperationException |
+	| JsonAny       | foo          | "bar"         | <undefined>    | JsonElement      | "bar"         | an InvalidOperationException |
+	| JsonObject    | foo          | "bar"         | 1.2            | JsonElement      | <undefined>   | an InvalidOperationException |
+	| JsonAny       | foo          | "bar"         | 1.2            | JsonElement      | <undefined>   | an InvalidOperationException |
 
 Scenario Outline: Remove properties from a dotnet backed JsonProperty
 	Given the dotnet backed <jsonValueType> <value>
@@ -112,34 +112,34 @@ Scenario Outline: Set properties to dotnet backed JsonProperty
 	And the operation should produce <expectedException>
 
 Examples:
-	| jsonValueType | propertyName | propertyValue | value          | propertyNameType   | expectedValue | expectedException            |
-	| JsonObject    | foo          | "bar"         | {"foo": "baz"} | string             | "bar"         | no exception                 |
-	| JsonAny       | foo          | "bar"         | {"foo": "baz"} | string             | "bar"         | no exception                 |
-	| JsonNotAny    | foo          | "bar"         | {"foo": "baz"} | string             | "bar"         | no exception                 |
-	| JsonObject    | foo          | "bar"         | {}             | string             | "bar"         | no exception                 |
-	| JsonAny       | foo          | "bar"         | {}             | string             | "bar"         | no exception                 |
-	| JsonNotAny    | foo          | "bar"         | {}             | string             | "bar"         | no exception                 |
-	| JsonObject    | foo          | "bar"         | <undefined>    | string             | "bar"         | an InvalidOperationException |
-	| JsonAny       | foo          | "bar"         | <undefined>    | string             | "bar"         | an InvalidOperationException |
-	| JsonNotAny    | foo          | "bar"         | <undefined>    | string             | "bar"         | an InvalidOperationException |
-	| JsonObject    | foo          | "bar"         | {"foo": "baz"} | ReadOnlySpan<char> | "bar"         | no exception                 |
-	| JsonAny       | foo          | "bar"         | {"foo": "baz"} | ReadOnlySpan<char> | "bar"         | no exception                 |
-	| JsonNotAny    | foo          | "bar"         | {"foo": "baz"} | ReadOnlySpan<char> | "bar"         | no exception                 |
-	| JsonObject    | foo          | "bar"         | {}             | ReadOnlySpan<char> | "bar"         | no exception                 |
-	| JsonAny       | foo          | "bar"         | {}             | ReadOnlySpan<char> | "bar"         | no exception                 |
-	| JsonNotAny    | foo          | "bar"         | {}             | ReadOnlySpan<char> | "bar"         | no exception                 |
-	| JsonObject    | foo          | "bar"         | <undefined>    | ReadOnlySpan<char> | "bar"         | an InvalidOperationException |
-	| JsonAny       | foo          | "bar"         | <undefined>    | ReadOnlySpan<char> | "bar"         | an InvalidOperationException |
-	| JsonNotAny    | foo          | "bar"         | <undefined>    | ReadOnlySpan<char> | "bar"         | an InvalidOperationException |
-	| JsonObject    | foo          | "bar"         | {"foo": "baz"} | ReadOnlySpan<byte> | "bar"         | no exception                 |
-	| JsonAny       | foo          | "bar"         | {"foo": "baz"} | ReadOnlySpan<byte> | "bar"         | no exception                 |
-	| JsonNotAny    | foo          | "bar"         | {"foo": "baz"} | ReadOnlySpan<byte> | "bar"         | no exception                 |
-	| JsonObject    | foo          | "bar"         | {}             | ReadOnlySpan<byte> | "bar"         | no exception                 |
-	| JsonAny       | foo          | "bar"         | {}             | ReadOnlySpan<byte> | "bar"         | no exception                 |
-	| JsonNotAny    | foo          | "bar"         | {}             | ReadOnlySpan<byte> | "bar"         | no exception                 |
-	| JsonObject    | foo          | "bar"         | <undefined>    | ReadOnlySpan<byte> | "bar"         | an InvalidOperationException |
-	| JsonAny       | foo          | "bar"         | <undefined>    | ReadOnlySpan<byte> | "bar"         | an InvalidOperationException |
-	| JsonNotAny    | foo          | "bar"         | <undefined>    | ReadOnlySpan<byte> | "bar"         | an InvalidOperationException |
+	| jsonValueType | propertyName | propertyValue | value          | propertyNameType | expectedValue | expectedException            |
+	| JsonObject    | foo          | "bar"         | {"foo": "baz"} | string           | "bar"         | no exception                 |
+	| JsonAny       | foo          | "bar"         | {"foo": "baz"} | string           | "bar"         | no exception                 |
+	| JsonNotAny    | foo          | "bar"         | {"foo": "baz"} | string           | "bar"         | no exception                 |
+	| JsonObject    | foo          | "bar"         | {}             | string           | "bar"         | no exception                 |
+	| JsonAny       | foo          | "bar"         | {}             | string           | "bar"         | no exception                 |
+	| JsonNotAny    | foo          | "bar"         | {}             | string           | "bar"         | no exception                 |
+	| JsonObject    | foo          | "bar"         | <undefined>    | string           | "bar"         | an InvalidOperationException |
+	| JsonAny       | foo          | "bar"         | <undefined>    | string           | "bar"         | an InvalidOperationException |
+	| JsonNotAny    | foo          | "bar"         | <undefined>    | string           | "bar"         | an InvalidOperationException |
+	| JsonObject    | foo          | "bar"         | {"foo": "baz"} | JsonElement      | "bar"         | no exception                 |
+	| JsonAny       | foo          | "bar"         | {"foo": "baz"} | JsonElement      | "bar"         | no exception                 |
+	| JsonNotAny    | foo          | "bar"         | {"foo": "baz"} | JsonElement      | "bar"         | no exception                 |
+	| JsonObject    | foo          | "bar"         | {}             | JsonElement      | "bar"         | no exception                 |
+	| JsonAny       | foo          | "bar"         | {}             | JsonElement      | "bar"         | no exception                 |
+	| JsonNotAny    | foo          | "bar"         | {}             | JsonElement      | "bar"         | no exception                 |
+	| JsonObject    | foo          | "bar"         | <undefined>    | JsonElement      | "bar"         | an InvalidOperationException |
+	| JsonAny       | foo          | "bar"         | <undefined>    | JsonElement      | "bar"         | an InvalidOperationException |
+	| JsonNotAny    | foo          | "bar"         | <undefined>    | JsonElement      | "bar"         | an InvalidOperationException |
+	| JsonObject    | foo          | "bar"         | {"foo": "baz"} | JsonElement      | "bar"         | no exception                 |
+	| JsonAny       | foo          | "bar"         | {"foo": "baz"} | JsonElement      | "bar"         | no exception                 |
+	| JsonNotAny    | foo          | "bar"         | {"foo": "baz"} | JsonElement      | "bar"         | no exception                 |
+	| JsonObject    | foo          | "bar"         | {}             | JsonElement      | "bar"         | no exception                 |
+	| JsonAny       | foo          | "bar"         | {}             | JsonElement      | "bar"         | no exception                 |
+	| JsonNotAny    | foo          | "bar"         | {}             | JsonElement      | "bar"         | no exception                 |
+	| JsonObject    | foo          | "bar"         | <undefined>    | JsonElement      | "bar"         | an InvalidOperationException |
+	| JsonAny       | foo          | "bar"         | <undefined>    | JsonElement      | "bar"         | an InvalidOperationException |
+	| JsonNotAny    | foo          | "bar"         | <undefined>    | JsonElement      | "bar"         | an InvalidOperationException |
 
 Scenario Outline: Get existing properties for a JsonElement backed JsonProperty
 	Given the JsonElement backed <jsonValueType> <value>

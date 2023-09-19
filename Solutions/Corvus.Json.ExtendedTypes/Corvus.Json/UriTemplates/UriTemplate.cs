@@ -194,7 +194,7 @@ public readonly struct UriTemplate
         builder.AddRange(this.parameters);
         foreach (JsonObjectProperty property in parameters.EnumerateObject())
         {
-            string name = property.Name;
+            string name = property.Name.GetString();
             if (builder.ContainsKey(name))
             {
                 builder.Remove(name);
@@ -351,7 +351,7 @@ public readonly struct UriTemplate
     public string Resolve()
     {
         ArrayBufferWriter<char> output = new();
-        var properties = this.parameters.ToImmutableDictionary(k => (JsonPropertyName)k.Key, v => v.Value);
+        var properties = this.parameters.ToImmutableDictionary(k => new JsonPropertyName(k.Key), v => v.Value);
         if (!JsonUriTemplateResolver.TryResolveResult(this.template.AsSpan(), output, this.resolvePartially, JsonObject.FromProperties(properties)))
         {
             throw new ArgumentException("Malformed template.");

@@ -31,7 +31,7 @@ public readonly partial struct ScenarioWithResult
 
         return value.ValueKind switch
         {
-            JsonValueKind.Object => new(value.AsImmutableDictionary()),
+            JsonValueKind.Object => new(value.AsPropertyBacking()),
             _ => Undefined
         };
     }
@@ -68,7 +68,7 @@ public readonly partial struct ScenarioWithResult
 
         return value.ValueKind switch
         {
-            JsonValueKind.Object => new(value.AsImmutableDictionary()),
+            JsonValueKind.Object => new(value.AsPropertyBacking()),
             _ => Undefined
         };
     }

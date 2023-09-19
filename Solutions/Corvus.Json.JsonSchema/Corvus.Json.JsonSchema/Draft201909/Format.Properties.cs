@@ -73,7 +73,7 @@ public readonly partial struct Format
     /// </summary>
     public static Format Create(Corvus.Json.JsonString? formatValue = null)
     {
-        var builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
+        var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
         if (formatValue is Corvus.Json.JsonString formatValue__)
         {
             builder.Add(JsonPropertyNames.FormatValue, formatValue__.AsAny);

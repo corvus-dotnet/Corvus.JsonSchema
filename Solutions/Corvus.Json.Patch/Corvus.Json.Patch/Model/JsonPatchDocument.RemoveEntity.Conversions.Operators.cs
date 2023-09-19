@@ -33,7 +33,7 @@ public readonly partial struct JsonPatchDocument
 
             return value.ValueKind switch
             {
-                JsonValueKind.Object => new(value.AsImmutableDictionary()),
+                JsonValueKind.Object => new(value.AsPropertyBacking()),
                 _ => Undefined
             };
         }

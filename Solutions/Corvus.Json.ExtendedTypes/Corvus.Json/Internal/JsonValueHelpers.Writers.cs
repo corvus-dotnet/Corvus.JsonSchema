@@ -34,16 +34,15 @@ public static partial class JsonValueHelpers
     /// </summary>
     /// <param name="properties">The property dictionary to write.</param>
     /// <param name="writer">The writer to which to write the object.</param>
-    public static void WriteProperties(ImmutableDictionary<JsonPropertyName, JsonAny> properties, Utf8JsonWriter writer)
+    public static void WriteProperties(ImmutableList<JsonObjectProperty> properties, Utf8JsonWriter writer)
     {
         writer.WriteStartObject();
 
-        foreach (KeyValuePair<JsonPropertyName, JsonAny> property in properties)
+        foreach (JsonObjectProperty property in properties)
         {
             if (property.Value.IsNotUndefined())
             {
-                writer.WritePropertyName(property.Key.Name);
-                property.Value.WriteTo(writer);
+                property.WriteTo(writer);
             }
         }
 

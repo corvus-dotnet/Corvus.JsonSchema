@@ -97,7 +97,7 @@ public static partial class JsonValueHelpers
         ImmutableArray<JsonObjectProperty> sortedProperties =
                 value.EnumerateObject()
                     .ToImmutableArray()
-                    .Sort((x, y) => StringComparer.Ordinal.Compare((string)x.Name, (string)y.Name));
+                    .Sort((x, y) => x.Name.CompareTo(y.Name));
 
         foreach (JsonObjectProperty item in sortedProperties)
         {

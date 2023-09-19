@@ -114,7 +114,7 @@ public readonly partial struct Unevaluated
     /// </summary>
     public static Unevaluated Create(Corvus.Json.JsonSchema.Draft202012.Schema? unevaluatedItems = null, Corvus.Json.JsonSchema.Draft202012.Schema? unevaluatedProperties = null)
     {
-        var builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
+        var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
         if (unevaluatedItems is Corvus.Json.JsonSchema.Draft202012.Schema unevaluatedItems__)
         {
             builder.Add(JsonPropertyNames.UnevaluatedItems, unevaluatedItems__.AsAny);

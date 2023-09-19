@@ -24,7 +24,7 @@ public readonly partial struct DisabledScenario
 {
     private readonly Backing backing;
     private readonly JsonElement jsonElementBacking;
-    private readonly ImmutableDictionary<JsonPropertyName, JsonAny> objectBacking;
+    private readonly ImmutableList<JsonObjectProperty> objectBacking;
     /// <summary>
     /// Initializes a new instance of the <see cref = "DisabledScenario"/> struct.
     /// </summary>
@@ -32,7 +32,7 @@ public readonly partial struct DisabledScenario
     {
         this.jsonElementBacking = default;
         this.backing = Backing.JsonElement;
-        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
     }
 
     /// <summary>
@@ -43,7 +43,7 @@ public readonly partial struct DisabledScenario
     {
         this.jsonElementBacking = value;
         this.backing = Backing.JsonElement;
-        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
     }
 
     /// <summary>
@@ -275,7 +275,7 @@ public readonly partial struct DisabledScenario
         JsonValueKind valueKind = value.ValueKind;
         return valueKind switch
         {
-            JsonValueKind.Object => new(value.AsObject.AsImmutableDictionary()),
+            JsonValueKind.Object => new(value.AsObject.AsPropertyBacking()),
             JsonValueKind.Null => Null,
             _ => Undefined,
         };
@@ -382,7 +382,7 @@ public readonly partial struct DisabledScenario
 
         if (value.ValueKind == JsonValueKind.Object)
         {
-            return new(value.AsImmutableDictionary());
+            return new(value.AsPropertyBacking());
         }
 
         return Undefined;

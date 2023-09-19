@@ -18,7 +18,7 @@ namespace Corvus.Json.JsonSchema.Draft202012;
 /// </summary>
 public readonly partial struct Applicator
 {
-    private static readonly ImmutableDictionary<JsonPropertyName, JsonAny> __CorvusDefaults = BuildDefaults();
+    private static readonly ImmutableList<JsonObjectProperty> __CorvusDefaults = BuildDefaults();
     /// <inheritdoc/>
     public bool TryGetDefault(in JsonPropertyName name, out JsonAny value)
     {
@@ -67,9 +67,9 @@ public readonly partial struct Applicator
         return __CorvusDefaults.TryGetValue(utf8Name, out _);
     }
 
-    private static ImmutableDictionary<JsonPropertyName, JsonAny> BuildDefaults()
+    private static ImmutableList<JsonObjectProperty> BuildDefaults()
     {
-        ImmutableDictionary<JsonPropertyName, JsonAny>.Builder builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
+        ImmutableList<JsonObjectProperty>.Builder builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
         builder.Add(JsonPropertyNames.DependentSchemas, Corvus.Json.JsonSchema.Draft202012.Applicator.DependentSchemasEntity.DefaultInstance);
         builder.Add(JsonPropertyNames.PatternProperties, Corvus.Json.JsonSchema.Draft202012.Applicator.PatternPropertiesEntity.DefaultInstance);
         builder.Add(JsonPropertyNames.Properties, Corvus.Json.JsonSchema.Draft202012.Applicator.PropertiesEntity.DefaultInstance);

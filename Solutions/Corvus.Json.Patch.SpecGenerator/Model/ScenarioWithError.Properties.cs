@@ -237,7 +237,7 @@ public readonly partial struct ScenarioWithError
     /// </summary>
     public static ScenarioWithError Create(Corvus.Json.JsonAny doc, Corvus.Json.JsonAny error, Corvus.Json.JsonAny patch, Corvus.Json.JsonString? comment = null, Corvus.Json.JsonNotAny? disabled = null)
     {
-        var builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
+        var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
         builder.Add(JsonPropertyNames.Doc, doc.AsAny);
         builder.Add(JsonPropertyNames.Error, error.AsAny);
         builder.Add(JsonPropertyNames.Patch, patch.AsAny);

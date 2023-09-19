@@ -23,7 +23,7 @@ public readonly partial struct Format : IJsonObject<Format>
     /// Initializes a new instance of the <see cref = "Format"/> struct.
     /// </summary>
     /// <param name = "value">The value from which to construct the instance.</param>
-    public Format(ImmutableDictionary<JsonPropertyName, JsonAny> value)
+    public Format(ImmutableList<JsonObjectProperty> value)
     {
         this.jsonElementBacking = default;
         this.backing = Backing.Object;
@@ -32,15 +32,9 @@ public readonly partial struct Format : IJsonObject<Format>
     }
 
     /// <inheritdoc/>
-    public ImmutableDictionary<JsonPropertyName, JsonAny> AsImmutableDictionary()
+    public ImmutableList<JsonObjectProperty> AsPropertyBacking()
     {
-        return this.GetImmutableDictionary();
-    }
-
-    /// <inheritdoc/>
-    public ImmutableDictionary<JsonPropertyName, JsonAny>.Builder AsImmutableDictionaryBuilder()
-    {
-        return this.GetImmutableDictionaryBuilder();
+        return this.GetPropertyBacking();
     }
 
     /// <inheritdoc/>
@@ -77,7 +71,7 @@ public readonly partial struct Format : IJsonObject<Format>
             return new(value.AsJsonElement);
         }
 
-        return new(value.AsImmutableDictionary());
+        return new(value.AsPropertyBacking());
     }
 
     /// <summary>
@@ -87,7 +81,7 @@ public readonly partial struct Format : IJsonObject<Format>
     /// <returns>An instance of the type initialized from the dictionary of properties.</returns>
     public static Format FromProperties(IDictionary<JsonPropertyName, JsonAny> source)
     {
-        return new(source.ToImmutableDictionary());
+        return new(source.Select(kvp => new JsonObjectProperty(kvp.Key, kvp.Value)).ToImmutableList());
     }
 
     /// <summary>
@@ -95,7 +89,7 @@ public readonly partial struct Format : IJsonObject<Format>
     /// </summary>
     /// <param name = "source">The dictionary of properties.</param>
     /// <returns>An instance of the type initialized from the dictionary of properties.</returns>
-    public static Format FromProperties(ImmutableDictionary<JsonPropertyName, JsonAny> source)
+    public static Format FromProperties(ImmutableList<JsonObjectProperty> source)
     {
         return new(source);
     }
@@ -107,7 +101,7 @@ public readonly partial struct Format : IJsonObject<Format>
     /// <returns>An instance of the type initialized from the dictionary of properties.</returns>
     public static Format FromProperties(params (JsonPropertyName Name, JsonAny Value)[] source)
     {
-        return new(source.ToImmutableDictionary(k => k.Name, v => v.Value));
+        return new(source.Select(s => new JsonObjectProperty(s.Name, s.Value)).ToImmutableList());
     }
 
     /// <inheritdoc/>
@@ -150,7 +144,7 @@ public readonly partial struct Format : IJsonObject<Format>
         {
             // String is the fastest approach right now. If JsonPropertyName changes
             // its internal implementation, we should switch this out.
-            return this.jsonElementBacking.TryGetProperty((string)name, out _);
+            return name.TryGetProperty(this.jsonElementBacking, out JsonElement _);
         }
 
         if ((this.backing & Backing.Object) != 0)
@@ -216,7 +210,7 @@ public readonly partial struct Format : IJsonObject<Format>
         {
             // String is the fastest approach right now. If JsonPropertyName changes
             // its internal implementation, we should switch this out.
-            if (this.jsonElementBacking.TryGetProperty((string)name, out JsonElement result))
+            if (name.TryGetProperty(this.jsonElementBacking, out JsonElement result))
             {
                 value = new(result);
                 return true;
@@ -311,7 +305,7 @@ public readonly partial struct Format : IJsonObject<Format>
         {
             // String is the fastest approach right now. If JsonPropertyName changes
             // its internal implementation, we should switch this out.
-            if (this.jsonElementBacking.TryGetProperty((string)name, out JsonElement result))
+            if (name.TryGetProperty(this.jsonElementBacking, out JsonElement result))
             {
                 value = TValue.FromJson(result);
                 return true;
@@ -435,214 +429,121 @@ public readonly partial struct Format : IJsonObject<Format>
     public Format SetProperty<TValue>(in JsonPropertyName name, TValue value)
         where TValue : struct, IJsonValue
     {
-        return new(this.GetImmutableDictionaryWith(name, value.AsAny));
-    }
-
-    /// <inheritdoc/>
-    public Format SetProperty<TValue>(string name, TValue value)
-        where TValue : struct, IJsonValue
-    {
-        return new(this.GetImmutableDictionaryWith(name, value.AsAny));
-    }
-
-    /// <inheritdoc/>
-    public Format SetProperty<TValue>(ReadOnlySpan<char> name, TValue value)
-        where TValue : struct, IJsonValue
-    {
-        return new(this.GetImmutableDictionaryWith(name, value.AsAny));
-    }
-
-    /// <inheritdoc/>
-    public Format SetProperty<TValue>(ReadOnlySpan<byte> utf8Name, TValue value)
-        where TValue : struct, IJsonValue
-    {
-        return new(this.GetImmutableDictionaryWith(utf8Name, value.AsAny));
+        return new(this.GetPropertyBackingWith(name, value.AsAny));
     }
 
     /// <inheritdoc/>
     public Format RemoveProperty(in JsonPropertyName name)
     {
-        return new(this.GetImmutableDictionaryWithout(name));
+        return new(this.GetPropertyBackingWithout(name));
     }
 
     /// <inheritdoc/>
     public Format RemoveProperty(string name)
     {
-        return new(this.GetImmutableDictionaryWithout(name));
+        return new(this.GetPropertyBackingWithout(name));
     }
 
     /// <inheritdoc/>
     public Format RemoveProperty(ReadOnlySpan<char> name)
     {
-        return new(this.GetImmutableDictionaryWithout(name));
+        return new(this.GetPropertyBackingWithout(name));
     }
 
     /// <inheritdoc/>
     public Format RemoveProperty(ReadOnlySpan<byte> utf8Name)
     {
-        return new(this.GetImmutableDictionaryWithout(utf8Name));
+        return new(this.GetPropertyBackingWithout(utf8Name));
     }
 
     /// <summary>
-    /// Builds an <see cref = "ImmutableDictionary{JsonPropertyName, JsonAny}"/> from the object.
+    /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object.
     /// </summary>
-    /// <returns>An immutable list of <see cref = "JsonAny"/> built from the array.</returns>
-    /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
-    private ImmutableDictionary<JsonPropertyName, JsonAny> GetImmutableDictionary()
+    /// <returns>An immutable list of <see cref="JsonAny"/> built from the array.</returns>
+    /// <exception cref="InvalidOperationException">The value is not an array.</exception>
+    private ImmutableList<JsonObjectProperty> GetPropertyBacking()
     {
         if ((this.backing & Backing.Object) != 0)
         {
             return this.objectBacking;
         }
 
-        return this.GetImmutableDictionaryBuilder().ToImmutable();
+        return PropertyBackingBuilders.GetPropertyBackingBuilder(this.jsonElementBacking).ToImmutable();
     }
 
     /// <summary>
-    /// Builds an <see cref = "ImmutableDictionary{JsonPropertyName, JsonAny}"/> from the object, without a specific property.
+    /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
     /// </summary>
-    /// <returns>An immutable dictionary builder of <see cref = "JsonPropertyName"/> to <see cref = "JsonAny"/>, built from the existing object, without the given property.</returns>
-    /// <exception cref = "InvalidOperationException">The value is not an object.</exception>
-    private ImmutableDictionary<JsonPropertyName, JsonAny> GetImmutableDictionaryWithout(in JsonPropertyName name)
+    /// <returns>An immutable dictionary builder of <see cref="JsonPropertyName"/> to <see cref="JsonAny"/>, built from the existing object, without the given property.</returns>
+    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+    private ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in JsonPropertyName name)
     {
         if ((this.backing & Backing.Object) != 0)
         {
             return this.objectBacking.Remove(name);
         }
 
-        return this.GetImmutableDictionaryBuilderWithout(name).ToImmutable();
+        return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(this.jsonElementBacking, name).ToImmutable();
     }
 
     /// <summary>
-    /// Builds an <see cref = "ImmutableDictionary{JsonPropertyName, JsonAny}"/> from the object, without a specific property.
+    /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
     /// </summary>
-    /// <returns>An immutable dictionary builder of <see cref = "JsonPropertyName"/> to <see cref = "JsonAny"/>, built from the existing object, without the given property.</returns>
-    /// <exception cref = "InvalidOperationException">The value is not an object.</exception>
-    private ImmutableDictionary<JsonPropertyName, JsonAny> GetImmutableDictionaryWithout(ReadOnlySpan<char> name)
+    /// <returns>An immutable dictionary builder of <see cref="JsonPropertyName"/> to <see cref="JsonAny"/>, built from the existing object, without the given property.</returns>
+    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+    private ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(ReadOnlySpan<char> name)
     {
         if ((this.backing & Backing.Object) != 0)
         {
             return this.objectBacking.Remove(name);
         }
 
-        return this.GetImmutableDictionaryBuilderWithout(name).ToImmutable();
+        return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(this.jsonElementBacking, name).ToImmutable();
     }
 
     /// <summary>
-    /// Builds an <see cref = "ImmutableDictionary{JsonPropertyName, JsonAny}"/> from the object, without a specific property.
+    /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
     /// </summary>
-    /// <returns>An immutable dictionary builder of <see cref = "JsonPropertyName"/> to <see cref = "JsonAny"/>, built from the existing object, without the given property.</returns>
-    /// <exception cref = "InvalidOperationException">The value is not an object.</exception>
-    private ImmutableDictionary<JsonPropertyName, JsonAny> GetImmutableDictionaryWith(in JsonPropertyName name, in JsonAny value)
+    /// <returns>An immutable dictionary builder of <see cref="JsonPropertyName"/> to <see cref="JsonAny"/>, built from the existing object, without the given property.</returns>
+    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+    private ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(ReadOnlySpan<byte> name)
+    {
+        if ((this.backing & Backing.Object) != 0)
+        {
+            return this.objectBacking.Remove(name);
+        }
+
+        return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(this.jsonElementBacking, name).ToImmutable();
+    }
+
+    /// <summary>
+    /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
+    /// </summary>
+    /// <returns>An immutable dictionary builder of <see cref="JsonPropertyName"/> to <see cref="JsonAny"/>, built from the existing object, without the given property.</returns>
+    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+    private ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(string name)
+    {
+        if ((this.backing & Backing.Object) != 0)
+        {
+            return this.objectBacking.Remove(name);
+        }
+
+        return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(this.jsonElementBacking, name).ToImmutable();
+    }
+
+    /// <summary>
+    /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
+    /// </summary>
+    /// <returns>An immutable dictionary builder of <see cref="JsonPropertyName"/> to <see cref="JsonAny"/>, built from the existing object, without the given property.</returns>
+    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+    private ImmutableList<JsonObjectProperty> GetPropertyBackingWith(in JsonPropertyName name, in JsonAny value)
     {
         if ((this.backing & Backing.Object) != 0)
         {
             return this.objectBacking.SetItem(name, value);
         }
 
-        ImmutableDictionary<JsonPropertyName, JsonAny>.Builder result = this.GetImmutableDictionaryBuilder();
-        if (result.ContainsKey(name))
-        {
-            result.Remove(name);
-        }
-
-        result.Add(name, value);
+        ImmutableList<JsonObjectProperty>.Builder result = PropertyBackingBuilders.GetPropertyBackingBuilderReplacing(this.jsonElementBacking, name, value);
         return result.ToImmutable();
-    }
-
-    /// <summary>
-    /// Builds an <see cref = "ImmutableDictionary{JsonPropertyName, JsonAny}.Builder"/> from the object.
-    /// </summary>
-    /// <returns>An immutable dictionary builder of <see cref = "JsonPropertyName"/> to <see cref = "JsonAny"/>, built from the existing object.</returns>
-    /// <exception cref = "InvalidOperationException">The value is not an object.</exception>
-    private ImmutableDictionary<JsonPropertyName, JsonAny>.Builder GetImmutableDictionaryBuilder()
-    {
-        if ((this.backing & Backing.JsonElement) != 0 && this.jsonElementBacking.ValueKind == JsonValueKind.Object)
-        {
-            ImmutableDictionary<JsonPropertyName, JsonAny>.Builder builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
-            foreach (JsonProperty property in this.jsonElementBacking.EnumerateObject())
-            {
-                builder.Add(property.Name, new(property.Value));
-            }
-
-            return builder;
-        }
-
-        if ((this.backing & Backing.Object) != 0)
-        {
-            return this.objectBacking.ToBuilder();
-        }
-
-        throw new InvalidOperationException();
-    }
-
-    /// <summary>
-    /// Builds an <see cref = "ImmutableDictionary{JsonPropertyName, JsonAny}.Builder"/> from the object, without a specific property.
-    /// </summary>
-    /// <returns>An immutable dictionary builder of <see cref = "JsonPropertyName"/> to <see cref = "JsonAny"/>, built from the existing object.</returns>
-    /// <exception cref = "InvalidOperationException">The value is not an object.</exception>
-    private ImmutableDictionary<JsonPropertyName, JsonAny>.Builder GetImmutableDictionaryBuilderWithout(in JsonPropertyName name)
-    {
-        if ((this.backing & Backing.JsonElement) != 0 && this.jsonElementBacking.ValueKind == JsonValueKind.Object)
-        {
-            ImmutableDictionary<JsonPropertyName, JsonAny>.Builder builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
-            JsonElement.ObjectEnumerator enumerator = this.jsonElementBacking.EnumerateObject();
-            while (enumerator.MoveNext())
-            {
-                // Use string for the current implementation of JsonPropertyName
-                if (enumerator.Current.NameEquals((string)name))
-                {
-                    // Skip this one.
-                    break;
-                }
-
-                builder.Add(enumerator.Current.Name, new(enumerator.Current.Value));
-            }
-
-            // We've found the property to eliminate, so we can work through the rest without checking names.
-            while (enumerator.MoveNext())
-            {
-                builder.Add(enumerator.Current.Name, new(enumerator.Current.Value));
-            }
-
-            return builder;
-        }
-
-        if ((this.backing & Backing.Object) != 0)
-        {
-            return this.objectBacking.ToBuilder();
-        }
-
-        throw new InvalidOperationException();
-    }
-
-    /// <summary>
-    /// Builds an <see cref = "ImmutableDictionary{JsonPropertyName, JsonAny}.Builder"/> from the object, without a specific property.
-    /// </summary>
-    /// <returns>An immutable dictionary builder of <see cref = "JsonPropertyName"/> to <see cref = "JsonAny"/>, built from the existing object.</returns>
-    /// <exception cref = "InvalidOperationException">The value is not an object.</exception>
-    private ImmutableDictionary<JsonPropertyName, JsonAny>.Builder GetImmutableDictionaryBuilderWithout(ReadOnlySpan<char> name)
-    {
-        if ((this.backing & Backing.JsonElement) != 0 && this.jsonElementBacking.ValueKind == JsonValueKind.Object)
-        {
-            ImmutableDictionary<JsonPropertyName, JsonAny>.Builder builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
-            JsonElement.ObjectEnumerator enumerator = this.jsonElementBacking.EnumerateObject();
-            while (enumerator.MoveNext())
-            {
-                builder.Add(enumerator.Current.Name, new(enumerator.Current.Value));
-            }
-
-            // It is (currently) benchmarked to be faster to add them all, then remove the
-            // one from the hashtable, than it is to check them all on the way through.
-            builder.Remove(name);
-            return builder;
-        }
-
-        if ((this.backing & Backing.Object) != 0)
-        {
-            return this.objectBacking.ToBuilder();
-        }
-
-        throw new InvalidOperationException();
     }
 }

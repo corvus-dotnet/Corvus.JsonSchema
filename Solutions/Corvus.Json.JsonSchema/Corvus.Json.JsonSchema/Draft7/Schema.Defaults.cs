@@ -18,7 +18,7 @@ namespace Corvus.Json.JsonSchema.Draft7;
 /// </summary>
 public readonly partial struct Schema
 {
-    private static readonly ImmutableDictionary<JsonPropertyName, JsonAny> __CorvusDefaults = BuildDefaults();
+    private static readonly ImmutableList<JsonObjectProperty> __CorvusDefaults = BuildDefaults();
     /// <inheritdoc/>
     public bool TryGetDefault(in JsonPropertyName name, out JsonAny value)
     {
@@ -67,9 +67,9 @@ public readonly partial struct Schema
         return __CorvusDefaults.TryGetValue(utf8Name, out _);
     }
 
-    private static ImmutableDictionary<JsonPropertyName, JsonAny> BuildDefaults()
+    private static ImmutableList<JsonObjectProperty> BuildDefaults()
     {
-        ImmutableDictionary<JsonPropertyName, JsonAny>.Builder builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
+        ImmutableList<JsonObjectProperty>.Builder builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
         builder.Add(JsonPropertyNames.AdditionalItems, Corvus.Json.JsonSchema.Draft7.Schema.DefaultInstance);
         builder.Add(JsonPropertyNames.AdditionalProperties, Corvus.Json.JsonSchema.Draft7.Schema.DefaultInstance);
         builder.Add(JsonPropertyNames.Contains, Corvus.Json.JsonSchema.Draft7.Schema.DefaultInstance);

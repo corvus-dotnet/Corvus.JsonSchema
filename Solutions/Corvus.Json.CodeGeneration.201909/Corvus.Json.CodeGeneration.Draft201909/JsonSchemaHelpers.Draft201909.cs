@@ -193,11 +193,11 @@ public static class JsonSchemaHelpers
             "SetProperty",
             "RemoveProperty",
             "JsonPropertyNames",
-            "GetImmutableDictionary",
-            "GetImmutableDictionaryWithout",
-            "GetImmutableDictionaryWith",
-            "GetImmutableDictionaryBuilder",
-            "GetImmutableDictionaryBuilderWithout",
+            "GetPropertyBacking",
+            "GetPropertyBackingWithout",
+            "GetPropertyBackingWith",
+            "GetPropertyBackingBuilder",
+            "GetPropertyBackingBuilderWithout",
             "__CorvusPatternExpression",
             "__CorvusPatternProperties",
             "CreatePatternPropertiesValidators",
@@ -430,7 +430,7 @@ public static class JsonSchemaHelpers
 
                 foreach (JsonObjectProperty property in schema.Properties.EnumerateObject())
                 {
-                    JsonPropertyName propertyName = property.Name;
+                    string propertyName = property.Name.GetString();
                     bool isRequired = false;
 
                     if (schema.Required.IsNotUndefined())
@@ -441,7 +441,7 @@ public static class JsonSchemaHelpers
                         }
                     }
 
-                    if (source.RefResolvablePropertyDeclarations.TryGetValue(propertyRef.AppendUnencodedPropertyNameToFragment(property.Name), out TypeDeclaration? propertyTypeDeclaration))
+                    if (source.RefResolvablePropertyDeclarations.TryGetValue(propertyRef.AppendUnencodedPropertyNameToFragment(propertyName), out TypeDeclaration? propertyTypeDeclaration))
                     {
                         target.AddOrReplaceProperty(new PropertyDeclaration(propertyTypeDeclaration, propertyName, isRequired, source == target, propertyTypeDeclaration.Schema().Default.IsNotUndefined(), propertyTypeDeclaration.Schema().Default is JsonAny def ? def.ToString() : default));
                     }

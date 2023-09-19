@@ -139,7 +139,7 @@ public readonly partial struct JsonDateTime
             return true;
         }
 
-        JsonValueKind  valueKind = this.ValueKind;
+        JsonValueKind valueKind = this.ValueKind;
         if (valueKind != JsonValueKind.String || other.ValueKind != valueKind)
         {
             return false;

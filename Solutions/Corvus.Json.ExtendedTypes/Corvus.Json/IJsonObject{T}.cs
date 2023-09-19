@@ -159,36 +159,6 @@ public interface IJsonObject<T> : IJsonValue<T>
         where TValue : struct, IJsonValue;
 
     /// <summary>
-    /// Sets the given property value.
-    /// </summary>
-    /// <typeparam name="TValue">The type of the value.</typeparam>
-    /// <param name="name">The name of the property.</param>
-    /// <param name="value">The value of the property.</param>
-    /// <returns>The instance with the property set.</returns>
-    T SetProperty<TValue>(string name, TValue value)
-        where TValue : struct, IJsonValue;
-
-    /// <summary>
-    /// Sets the given property value.
-    /// </summary>
-    /// <typeparam name="TValue">The type of the value.</typeparam>
-    /// <param name="name">The name of the property.</param>
-    /// <param name="value">The value of the property.</param>
-    /// <returns>The instance with the property set.</returns>
-    T SetProperty<TValue>(ReadOnlySpan<char> name, TValue value)
-        where TValue : struct, IJsonValue;
-
-    /// <summary>
-    /// Sets the given property value.
-    /// </summary>
-    /// <typeparam name="TValue">The type of the value.</typeparam>
-    /// <param name="utf8Name">The utf8-encoded name of the property.</param>
-    /// <param name="value">The value of the property.</param>
-    /// <returns>The instance with the property set.</returns>
-    T SetProperty<TValue>(ReadOnlySpan<byte> utf8Name, TValue value)
-        where TValue : struct, IJsonValue;
-
-    /// <summary>
     /// Removes the given property value.
     /// </summary>
     /// <param name="name">The name of the property.</param>
@@ -228,7 +198,7 @@ public interface IJsonObject<T> : IJsonValue<T>
     /// </summary>
     /// <param name="source">The dictionary of properties.</param>
     /// <returns>An instance of the type initialized from the dictionary of properties.</returns>
-    static abstract T FromProperties(ImmutableDictionary<JsonPropertyName, JsonAny> source);
+    static abstract T FromProperties(ImmutableList<JsonObjectProperty> source);
 
     /// <summary>
     /// Creates an instance of the type from the given dictionary of properties.
@@ -241,5 +211,5 @@ public interface IJsonObject<T> : IJsonValue<T>
     /// Gets the object as an immutable dictionary of properties.
     /// </summary>
     /// <returns>An immutable dictionary of the properties of the object.</returns>
-    ImmutableDictionary<JsonPropertyName, JsonAny> AsImmutableDictionary();
+    ImmutableList<JsonObjectProperty> AsPropertyBacking();
 }

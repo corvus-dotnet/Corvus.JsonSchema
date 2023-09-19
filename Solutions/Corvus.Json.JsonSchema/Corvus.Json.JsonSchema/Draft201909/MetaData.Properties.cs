@@ -319,7 +319,7 @@ public readonly partial struct MetaData
     /// </summary>
     public static MetaData Create(Corvus.Json.JsonAny? @default = null, Corvus.Json.JsonSchema.Draft201909.MetaData.DeprecatedEntity? deprecated = null, Corvus.Json.JsonString? description = null, Corvus.Json.JsonSchema.Draft201909.MetaData.JsonAnyArray? examples = null, Corvus.Json.JsonSchema.Draft201909.MetaData.ReadOnlyEntity? readOnly = null, Corvus.Json.JsonString? title = null, Corvus.Json.JsonSchema.Draft201909.MetaData.WriteOnlyEntity? writeOnly = null)
     {
-        var builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
+        var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
         if (@default is Corvus.Json.JsonAny @default__)
         {
             builder.Add(JsonPropertyNames.Default, @default__.AsAny);

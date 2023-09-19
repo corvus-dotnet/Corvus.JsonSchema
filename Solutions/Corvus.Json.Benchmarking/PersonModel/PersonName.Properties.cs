@@ -155,7 +155,7 @@ public readonly partial struct PersonName
     /// </summary>
     public static PersonName Create(Corvus.Json.Benchmarking.Models.PersonNameElement familyName, Corvus.Json.Benchmarking.Models.PersonNameElement? givenName = null, Corvus.Json.Benchmarking.Models.OtherNames? otherNames = null)
     {
-        var builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
+        var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
         builder.Add(JsonPropertyNames.FamilyName, familyName.AsAny);
         if (givenName is Corvus.Json.Benchmarking.Models.PersonNameElement givenName__)
         {

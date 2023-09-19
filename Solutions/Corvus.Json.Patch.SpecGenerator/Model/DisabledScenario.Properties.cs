@@ -196,7 +196,7 @@ public readonly partial struct DisabledScenario
     /// </summary>
     public static DisabledScenario Create(Corvus.Json.JsonAny disabled, Corvus.Json.JsonAny doc, Corvus.Json.JsonAny patch, Corvus.Json.JsonString? comment = null)
     {
-        var builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
+        var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
         builder.Add(JsonPropertyNames.Disabled, disabled.AsAny);
         builder.Add(JsonPropertyNames.Doc, doc.AsAny);
         builder.Add(JsonPropertyNames.Patch, patch.AsAny);

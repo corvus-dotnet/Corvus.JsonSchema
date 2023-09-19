@@ -58,7 +58,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonStri
 <#  }
     if(IsImplicitObject || IsNotImplicitType)
     { #>
-        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
 <#  } #>
     }
 
@@ -85,7 +85,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonStri
 <#  }
     if(IsImplicitObject || IsNotImplicitType)
     { #>
-        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
 <#  } #>
     }
 
@@ -112,7 +112,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonStri
 <#  }
     if(IsImplicitObject || IsNotImplicitType)
     { #>
-        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
 <#  } #>
     }
 

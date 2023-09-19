@@ -317,7 +317,7 @@ internal class JsonSchemaRegistry
             {
                 if (property.ValueKind == JsonValueKind.Object || property.ValueKind == JsonValueKind.True || property.ValueKind == JsonValueKind.False)
                 {
-                    JsonReference subschemaLocation = propertyLocation.AppendUnencodedPropertyNameToFragment(property.Name);
+                    JsonReference subschemaLocation = propertyLocation.AppendUnencodedPropertyNameToFragment(property.Name.GetString());
                     this.AddSchemaAndSubschema(subschemaLocation, property.Value);
                     ++index;
                 }
@@ -335,7 +335,7 @@ internal class JsonSchemaRegistry
             int index = 0;
             foreach (JsonObjectProperty property in value.AsObject.EnumerateObject())
             {
-                JsonReference subschemaLocation = propertyLocation.AppendUnencodedPropertyNameToFragment(property.Name);
+                JsonReference subschemaLocation = propertyLocation.AppendUnencodedPropertyNameToFragment(property.Name.GetString());
                 this.AddSchemaAndSubschema(subschemaLocation, property.Value);
                 ++index;
             }

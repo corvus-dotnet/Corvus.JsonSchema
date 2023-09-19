@@ -440,7 +440,7 @@ namespace ");
             #line hidden
             
             #line 167 "./Templates/CodeGenerator.Validate.Object.tt"
-            this.Write("            string propertyName = property.Name;\r\n");
+            this.Write("            string propertyName = property.Name.GetString();\r\n");
             
             #line default
             #line hidden

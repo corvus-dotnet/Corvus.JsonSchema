@@ -22,7 +22,7 @@ public readonly partial struct JsonNotAny : IJsonValue<JsonNotAny>
     private readonly bool boolBacking;
     private readonly double numberBacking;
     private readonly ImmutableList<JsonAny> arrayBacking;
-    private readonly ImmutableDictionary<JsonPropertyName, JsonAny> objectBacking;
+    private readonly ImmutableList<JsonObjectProperty> objectBacking;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonNotAny"/> struct.
@@ -35,7 +35,7 @@ public readonly partial struct JsonNotAny : IJsonValue<JsonNotAny>
         this.boolBacking = default;
         this.numberBacking = default;
         this.arrayBacking = ImmutableList<JsonAny>.Empty;
-        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
     }
 
     /// <summary>
@@ -50,7 +50,7 @@ public readonly partial struct JsonNotAny : IJsonValue<JsonNotAny>
         this.boolBacking = default;
         this.numberBacking = default;
         this.arrayBacking = ImmutableList<JsonAny>.Empty;
-        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
     }
 
     /// <summary>
@@ -65,7 +65,7 @@ public readonly partial struct JsonNotAny : IJsonValue<JsonNotAny>
         this.boolBacking = default;
         this.numberBacking = default;
         this.arrayBacking = ImmutableList<JsonAny>.Empty;
-        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
     }
 
     /// <summary>
@@ -80,7 +80,7 @@ public readonly partial struct JsonNotAny : IJsonValue<JsonNotAny>
         this.boolBacking = value;
         this.numberBacking = default;
         this.arrayBacking = ImmutableList<JsonAny>.Empty;
-        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
     }
 
     /// <summary>
@@ -95,7 +95,7 @@ public readonly partial struct JsonNotAny : IJsonValue<JsonNotAny>
         this.boolBacking = default;
         this.numberBacking = (double)value;
         this.arrayBacking = ImmutableList<JsonAny>.Empty;
-        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
     }
 
     /// <summary>
@@ -110,7 +110,7 @@ public readonly partial struct JsonNotAny : IJsonValue<JsonNotAny>
         this.boolBacking = default;
         this.numberBacking = value;
         this.arrayBacking = ImmutableList<JsonAny>.Empty;
-        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
     }
 
     /// <summary>
@@ -125,14 +125,14 @@ public readonly partial struct JsonNotAny : IJsonValue<JsonNotAny>
         this.boolBacking = default;
         this.numberBacking = default;
         this.arrayBacking = value;
-        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
     }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonNotAny"/> struct.
     /// </summary>
     /// <param name="value">The value from which to construct the instance.</param>
-    public JsonNotAny(ImmutableDictionary<JsonPropertyName, JsonAny> value)
+    public JsonNotAny(ImmutableList<JsonObjectProperty> value)
     {
         this.jsonElementBacking = default;
         this.backing = Backing.Object;
@@ -434,7 +434,7 @@ public readonly partial struct JsonNotAny : IJsonValue<JsonNotAny>
 
         return value.ValueKind switch
         {
-            JsonValueKind.Object => new(value.AsObject.AsImmutableDictionary()),
+            JsonValueKind.Object => new(value.AsObject.AsPropertyBacking()),
             JsonValueKind.Array => new(value.AsArray.AsImmutableList()),
             JsonValueKind.String => new((string)value.AsString),
             JsonValueKind.Number => new((double)value.AsNumber),
@@ -575,7 +575,7 @@ public readonly partial struct JsonNotAny : IJsonValue<JsonNotAny>
 
         if (value.ValueKind == JsonValueKind.Object)
         {
-            return new(value.AsObject.AsImmutableDictionary());
+            return new(value.AsObject.AsPropertyBacking());
         }
 
         return Undefined;

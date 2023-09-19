@@ -114,7 +114,7 @@ public readonly partial struct Person
     /// </summary>
     public static Person Create(Corvus.Json.Benchmarking.Models.PersonName name, Corvus.Json.JsonDate? dateOfBirth = null)
     {
-        var builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
+        var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
         builder.Add(JsonPropertyNames.Name, name.AsAny);
         if (dateOfBirth is Corvus.Json.JsonDate dateOfBirth__)
         {

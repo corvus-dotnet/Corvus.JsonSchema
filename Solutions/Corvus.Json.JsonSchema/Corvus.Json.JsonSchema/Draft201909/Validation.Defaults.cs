@@ -18,7 +18,7 @@ namespace Corvus.Json.JsonSchema.Draft201909;
 /// </summary>
 public readonly partial struct Validation
 {
-    private static readonly ImmutableDictionary<JsonPropertyName, JsonAny> __CorvusDefaults = BuildDefaults();
+    private static readonly ImmutableList<JsonObjectProperty> __CorvusDefaults = BuildDefaults();
     /// <inheritdoc/>
     public bool TryGetDefault(in JsonPropertyName name, out JsonAny value)
     {
@@ -67,9 +67,9 @@ public readonly partial struct Validation
         return __CorvusDefaults.TryGetValue(utf8Name, out _);
     }
 
-    private static ImmutableDictionary<JsonPropertyName, JsonAny> BuildDefaults()
+    private static ImmutableList<JsonObjectProperty> BuildDefaults()
     {
-        ImmutableDictionary<JsonPropertyName, JsonAny>.Builder builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
+        ImmutableList<JsonObjectProperty>.Builder builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
         builder.Add(JsonPropertyNames.MinContains, Corvus.Json.JsonSchema.Draft201909.Validation.MinContainsEntity.DefaultInstance);
         builder.Add(JsonPropertyNames.MinItems, Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeIntegerDefault0.DefaultInstance);
         builder.Add(JsonPropertyNames.MinLength, Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeIntegerDefault0.DefaultInstance);

@@ -1186,8 +1186,9 @@ public partial class CodeGeneratorValidateType
             {
                 foreach (JsonObjectProperty property in this.TypeDeclaration.Schema().PatternProperties.EnumerateObject())
                 {
-                    TypeDeclaration typeDeclaration = this.Builder.GetTypeDeclarationForPatternProperty(this.TypeDeclaration, property.Name);
-                    builder.Add(new PatternProperty(property.Name, typeDeclaration.FullyQualifiedDotnetTypeName!));
+                    string name = property.Name.GetString();
+                    TypeDeclaration typeDeclaration = this.Builder.GetTypeDeclarationForPatternProperty(this.TypeDeclaration, name);
+                    builder.Add(new PatternProperty(name, typeDeclaration.FullyQualifiedDotnetTypeName!));
                 }
             }
 
@@ -1212,7 +1213,8 @@ public partial class CodeGeneratorValidateType
             {
                 foreach (JsonObjectProperty property in this.TypeDeclaration.Schema().DependentSchemas.EnumerateObject())
                 {
-                    builder.Add(new DependentSchema(property.Name, this.Builder.GetTypeDeclarationForDependentSchema(this.TypeDeclaration, property.Name).FullyQualifiedDotnetTypeName!));
+                    string name = property.Name.GetString();
+                    builder.Add(new DependentSchema(name, this.Builder.GetTypeDeclarationForDependentSchema(this.TypeDeclaration, name).FullyQualifiedDotnetTypeName!));
                 }
             }
 
@@ -1243,7 +1245,7 @@ public partial class CodeGeneratorValidateType
                         innerBuilder.Add(item.AsString);
                     }
 
-                    builder.Add(new DependentRequiredValue(property.Name, innerBuilder.ToImmutable()));
+                    builder.Add(new DependentRequiredValue(property.Name.GetString(), innerBuilder.ToImmutable()));
                 }
             }
 
@@ -1265,7 +1267,8 @@ public partial class CodeGeneratorValidateType
                 {
                     if (property.Value.As<Schema>().IsValid())
                     {
-                        builder.Add(new DependentSchema(property.Name, this.Builder.GetTypeDeclarationForDependentSchema(this.TypeDeclaration, property.Name).FullyQualifiedDotnetTypeName!));
+                        string name = property.Name.GetString();
+                        builder.Add(new DependentSchema(name, this.Builder.GetTypeDeclarationForDependentSchema(this.TypeDeclaration, name).FullyQualifiedDotnetTypeName!));
                     }
                 }
             }
@@ -1294,7 +1297,7 @@ public partial class CodeGeneratorValidateType
                             innerBuilder.Add(item.AsString);
                         }
 
-                        builder.Add(new DependentRequiredValue(property.Name, innerBuilder.ToImmutable()));
+                        builder.Add(new DependentRequiredValue(property.Name.GetString(), innerBuilder.ToImmutable()));
                     }
                 }
             }

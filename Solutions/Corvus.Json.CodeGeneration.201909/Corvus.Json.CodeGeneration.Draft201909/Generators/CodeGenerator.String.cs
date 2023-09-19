@@ -195,8 +195,7 @@ namespace ");
             #line hidden
             
             #line 61 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
-            this.Write("        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty" +
-                    ";\r\n");
+            this.Write("        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;\r\n");
             
             #line default
             #line hidden
@@ -291,8 +290,7 @@ namespace ");
             #line hidden
             
             #line 88 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
-            this.Write("        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty" +
-                    ";\r\n");
+            this.Write("        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;\r\n");
             
             #line default
             #line hidden
@@ -387,8 +385,7 @@ namespace ");
             #line hidden
             
             #line 115 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt"
-            this.Write("        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty" +
-                    ";\r\n");
+            this.Write("        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;\r\n");
             
             #line default
             #line hidden
@@ -852,45 +849,45 @@ namespace ");
                     "      value = null;\r\n        return false;\r\n    }\r\n\r\n    /// <summary>\r\n    /// " +
                     "Gets the string value.\r\n    /// </summary>\r\n    /// <returns><c>The string if th" +
                     "is value represents a string</c>, otherwise <c>null</c>.</returns>\r\n    public s" +
-                    "tring? AsOptionalString()\r\n    {\r\n        if (this.TryGetString(out string? valu" +
-                    "e))\r\n        {\r\n            return value;\r\n        }\r\n\r\n        return null;\r\n  " +
-                    "  }\r\n\r\n    /// <summary>\r\n    /// Compare to a sequence of characters.\r\n    /// " +
-                    "</summary>\r\n    /// <param name=\"utf8Bytes\">The UTF8-encoded character sequence " +
-                    "to compare.</param>\r\n    /// <returns><c>True</c> if teh sequences match.</retur" +
-                    "ns>\r\n    public bool EqualsUtf8Bytes(ReadOnlySpan<byte> utf8Bytes)\r\n    {\r\n     " +
-                    "   if ((this.backing & Backing.JsonElement) != 0)\r\n        {\r\n            if (th" +
-                    "is.jsonElementBacking.ValueKind == JsonValueKind.String)\r\n            {\r\n       " +
-                    "         return this.jsonElementBacking.ValueEquals(utf8Bytes);\r\n            }\r\n" +
-                    "        }\r\n\r\n        if ((this.backing & Backing.String) != 0)\r\n        {\r\n     " +
-                    "       int maxCharCount = Encoding.UTF8.GetMaxCharCount(utf8Bytes.Length);\r\n    " +
-                    "        char[]? pooledChars = null;\r\n\r\n            Span<char> chars = maxCharCou" +
-                    "nt <= JsonValueHelpers.MaxStackAlloc ?\r\n                stackalloc char[maxCharC" +
-                    "ount] :\r\n                (pooledChars = ArrayPool<char>.Shared.Rent(maxCharCount" +
-                    "));\r\n\r\n            try\r\n            {\r\n                int written = Encoding.UT" +
-                    "F8.GetChars(utf8Bytes, chars);\r\n                return chars[..written].Sequence" +
-                    "Equal(this.stringBacking);\r\n            }\r\n            finally\r\n            {\r\n " +
-                    "               if (pooledChars is not null)\r\n                {\r\n                " +
-                    "    ArrayPool<char>.Shared.Return(pooledChars, true);\r\n                }\r\n      " +
-                    "      }\r\n        }\r\n\r\n        return false;\r\n    }\r\n\r\n    /// <summary>\r\n    ///" +
-                    " Compare to a sequence of characters.\r\n    /// </summary>\r\n    /// <param name=\"" +
-                    "chars\">The character sequence to compare.</param>\r\n    /// <returns><c>True</c> " +
-                    "if teh sequences match.</returns>\r\n    public bool EqualsString(string chars)\r\n " +
-                    "   {\r\n        if ((this.backing & Backing.JsonElement) != 0)\r\n        {\r\n       " +
-                    "     if (this.jsonElementBacking.ValueKind == JsonValueKind.String)\r\n           " +
-                    " {\r\n                return this.jsonElementBacking.ValueEquals(chars);\r\n        " +
-                    "    }\r\n\r\n            return false;\r\n        }\r\n\r\n        if ((this.backing & Bac" +
-                    "king.String) != 0)\r\n        {\r\n            return chars.Equals(this.stringBackin" +
-                    "g, StringComparison.Ordinal);\r\n        }\r\n\r\n        return false;\r\n    }\r\n\r\n    " +
-                    "/// <summary>\r\n    /// Compare to a sequence of characters.\r\n    /// </summary>\r" +
-                    "\n    /// <param name=\"chars\">The character sequence to compare.</param>\r\n    ///" +
-                    " <returns><c>True</c> if teh sequences match.</returns>\r\n    public bool EqualsS" +
-                    "tring(ReadOnlySpan<char> chars)\r\n    {\r\n        if ((this.backing & Backing.Json" +
-                    "Element) != 0)\r\n        {\r\n            if (this.jsonElementBacking.ValueKind == " +
-                    "JsonValueKind.String)\r\n            {\r\n                return this.jsonElementBac" +
-                    "king.ValueEquals(chars);\r\n            }\r\n\r\n            return false;\r\n        }\r" +
-                    "\n\r\n        if ((this.backing & Backing.String) != 0)\r\n        {\r\n            ret" +
-                    "urn chars.SequenceEqual(this.stringBacking);\r\n        }\r\n\r\n        return false;" +
-                    "\r\n    }\r\n}\r\n");
+                    "tring? GetString()\r\n    {\r\n        if (this.TryGetString(out string? value))\r\n  " +
+                    "      {\r\n            return value;\r\n        }\r\n\r\n        return null;\r\n    }\r\n\r\n" +
+                    "    /// <summary>\r\n    /// Compare to a sequence of characters.\r\n    /// </summa" +
+                    "ry>\r\n    /// <param name=\"utf8Bytes\">The UTF8-encoded character sequence to comp" +
+                    "are.</param>\r\n    /// <returns><c>True</c> if teh sequences match.</returns>\r\n  " +
+                    "  public bool EqualsUtf8Bytes(ReadOnlySpan<byte> utf8Bytes)\r\n    {\r\n        if (" +
+                    "(this.backing & Backing.JsonElement) != 0)\r\n        {\r\n            if (this.json" +
+                    "ElementBacking.ValueKind == JsonValueKind.String)\r\n            {\r\n              " +
+                    "  return this.jsonElementBacking.ValueEquals(utf8Bytes);\r\n            }\r\n       " +
+                    " }\r\n\r\n        if ((this.backing & Backing.String) != 0)\r\n        {\r\n            " +
+                    "int maxCharCount = Encoding.UTF8.GetMaxCharCount(utf8Bytes.Length);\r\n           " +
+                    " char[]? pooledChars = null;\r\n\r\n            Span<char> chars = maxCharCount <= J" +
+                    "sonValueHelpers.MaxStackAlloc ?\r\n                stackalloc char[maxCharCount] :" +
+                    "\r\n                (pooledChars = ArrayPool<char>.Shared.Rent(maxCharCount));\r\n\r\n" +
+                    "            try\r\n            {\r\n                int written = Encoding.UTF8.GetC" +
+                    "hars(utf8Bytes, chars);\r\n                return chars[..written].SequenceEqual(t" +
+                    "his.stringBacking);\r\n            }\r\n            finally\r\n            {\r\n        " +
+                    "        if (pooledChars is not null)\r\n                {\r\n                    Arr" +
+                    "ayPool<char>.Shared.Return(pooledChars, true);\r\n                }\r\n            }" +
+                    "\r\n        }\r\n\r\n        return false;\r\n    }\r\n\r\n    /// <summary>\r\n    /// Compar" +
+                    "e to a sequence of characters.\r\n    /// </summary>\r\n    /// <param name=\"chars\">" +
+                    "The character sequence to compare.</param>\r\n    /// <returns><c>True</c> if teh " +
+                    "sequences match.</returns>\r\n    public bool EqualsString(string chars)\r\n    {\r\n " +
+                    "       if ((this.backing & Backing.JsonElement) != 0)\r\n        {\r\n            if" +
+                    " (this.jsonElementBacking.ValueKind == JsonValueKind.String)\r\n            {\r\n   " +
+                    "             return this.jsonElementBacking.ValueEquals(chars);\r\n            }\r\n" +
+                    "\r\n            return false;\r\n        }\r\n\r\n        if ((this.backing & Backing.St" +
+                    "ring) != 0)\r\n        {\r\n            return chars.Equals(this.stringBacking, Stri" +
+                    "ngComparison.Ordinal);\r\n        }\r\n\r\n        return false;\r\n    }\r\n\r\n    /// <su" +
+                    "mmary>\r\n    /// Compare to a sequence of characters.\r\n    /// </summary>\r\n    //" +
+                    "/ <param name=\"chars\">The character sequence to compare.</param>\r\n    /// <retur" +
+                    "ns><c>True</c> if teh sequences match.</returns>\r\n    public bool EqualsString(R" +
+                    "eadOnlySpan<char> chars)\r\n    {\r\n        if ((this.backing & Backing.JsonElement" +
+                    ") != 0)\r\n        {\r\n            if (this.jsonElementBacking.ValueKind == JsonVal" +
+                    "ueKind.String)\r\n            {\r\n                return this.jsonElementBacking.Va" +
+                    "lueEquals(chars);\r\n            }\r\n\r\n            return false;\r\n        }\r\n\r\n    " +
+                    "    if ((this.backing & Backing.String) != 0)\r\n        {\r\n            return cha" +
+                    "rs.SequenceEqual(this.stringBacking);\r\n        }\r\n\r\n        return false;\r\n    }" +
+                    "\r\n}\r\n");
             
             #line default
             #line hidden

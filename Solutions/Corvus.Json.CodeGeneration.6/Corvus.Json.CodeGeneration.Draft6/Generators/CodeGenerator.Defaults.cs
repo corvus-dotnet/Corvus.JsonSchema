@@ -99,27 +99,27 @@ namespace ");
             #line hidden
             
             #line 32 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Defaults.tt"
-            this.Write("\r\n{\r\n    private static readonly ImmutableDictionary<JsonPropertyName, JsonAny> _" +
-                    "_CorvusDefaults = BuildDefaults();\r\n\r\n    /// <inheritdoc/>\r\n    public bool Try" +
-                    "GetDefault(in JsonPropertyName name, out JsonAny value)\r\n    {\r\n        return _" +
-                    "_CorvusDefaults.TryGetValue(name, out value);\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n " +
-                    "   public bool TryGetDefault(string name, out JsonAny value)\r\n    {\r\n        ret" +
-                    "urn __CorvusDefaults.TryGetValue(name, out value);\r\n    }\r\n\r\n    /// <inheritdoc" +
-                    "/>\r\n    public bool TryGetDefault(ReadOnlySpan<char> name, out JsonAny value)\r\n " +
-                    "   {\r\n        return __CorvusDefaults.TryGetValue(name, out value);\r\n    }\r\n\r\n  " +
-                    "  /// <inheritdoc/>\r\n    public bool TryGetDefault(ReadOnlySpan<byte> utf8Name, " +
-                    "out JsonAny value)\r\n    {\r\n        return __CorvusDefaults.TryGetValue(utf8Name," +
-                    " out value);\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public bool HasDefault(in Json" +
-                    "PropertyName name)\r\n    {\r\n        return __CorvusDefaults.TryGetValue(name, out" +
-                    " _);\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public bool HasDefault(string name)\r\n " +
-                    "   {\r\n        return __CorvusDefaults.TryGetValue(name, out _);\r\n    }\r\n\r\n    //" +
-                    "/ <inheritdoc/>\r\n    public bool HasDefault(ReadOnlySpan<char> name)\r\n    {\r\n   " +
-                    "     return __CorvusDefaults.TryGetValue(name, out _);\r\n    }\r\n\r\n    /// <inheri" +
-                    "tdoc/>\r\n    public bool HasDefault(ReadOnlySpan<byte> utf8Name)\r\n    {\r\n        " +
-                    "return __CorvusDefaults.TryGetValue(utf8Name, out _);\r\n    }\r\n\r\n    private stat" +
-                    "ic ImmutableDictionary<JsonPropertyName, JsonAny> BuildDefaults()\r\n    {\r\n      " +
-                    "  ImmutableDictionary<JsonPropertyName, JsonAny>.Builder builder =\r\n            " +
-                    "ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();\r\n\r\n");
+            this.Write("\r\n{\r\n    private static readonly ImmutableList<JsonObjectProperty> __CorvusDefaul" +
+                    "ts = BuildDefaults();\r\n\r\n    /// <inheritdoc/>\r\n    public bool TryGetDefault(in" +
+                    " JsonPropertyName name, out JsonAny value)\r\n    {\r\n        return __CorvusDefaul" +
+                    "ts.TryGetValue(name, out value);\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public boo" +
+                    "l TryGetDefault(string name, out JsonAny value)\r\n    {\r\n        return __CorvusD" +
+                    "efaults.TryGetValue(name, out value);\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    publi" +
+                    "c bool TryGetDefault(ReadOnlySpan<char> name, out JsonAny value)\r\n    {\r\n       " +
+                    " return __CorvusDefaults.TryGetValue(name, out value);\r\n    }\r\n\r\n    /// <inheri" +
+                    "tdoc/>\r\n    public bool TryGetDefault(ReadOnlySpan<byte> utf8Name, out JsonAny v" +
+                    "alue)\r\n    {\r\n        return __CorvusDefaults.TryGetValue(utf8Name, out value);\r" +
+                    "\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public bool HasDefault(in JsonPropertyName " +
+                    "name)\r\n    {\r\n        return __CorvusDefaults.TryGetValue(name, out _);\r\n    }\r\n" +
+                    "\r\n    /// <inheritdoc/>\r\n    public bool HasDefault(string name)\r\n    {\r\n       " +
+                    " return __CorvusDefaults.TryGetValue(name, out _);\r\n    }\r\n\r\n    /// <inheritdoc" +
+                    "/>\r\n    public bool HasDefault(ReadOnlySpan<char> name)\r\n    {\r\n        return _" +
+                    "_CorvusDefaults.TryGetValue(name, out _);\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    p" +
+                    "ublic bool HasDefault(ReadOnlySpan<byte> utf8Name)\r\n    {\r\n        return __Corv" +
+                    "usDefaults.TryGetValue(utf8Name, out _);\r\n    }\r\n\r\n    private static ImmutableL" +
+                    "ist<JsonObjectProperty> BuildDefaults()\r\n    {\r\n        ImmutableList<JsonObject" +
+                    "Property>.Builder builder =\r\n            ImmutableDictionary.CreateBuilder<JsonP" +
+                    "ropertyName, JsonAny>();\r\n\r\n");
             
             #line default
             #line hidden

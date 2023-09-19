@@ -1280,7 +1280,7 @@ public class JsonValueSteps
     [Given("the ImmutableDictionary<JsonPropertyName,JsonAny> for (.*)")]
     public void GivenTheImmutableDictionaryOfStringToJsonAnyFor(string value)
     {
-        this.scenarioContext.Set(JsonAny.Parse(value).AsObject.AsImmutableDictionary(), SubjectUnderTest);
+        this.scenarioContext.Set(JsonAny.Parse(value).AsObject.AsPropertyBacking(), SubjectUnderTest);
     }
 
     /// <summary>

@@ -55,7 +55,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonBool
 <#  }
     if(IsImplicitObject || IsNotImplicitType)
     { #>
-        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
 <#  } #>
     }
 

@@ -116,7 +116,7 @@ public readonly partial struct JsonPatchDocument
         /// </summary>
         public static PatchOperation Create(Corvus.Json.JsonString op, Corvus.Json.JsonPointer path)
         {
-            var builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
+            var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
             builder.Add(JsonPropertyNames.Op, op.AsAny);
             builder.Add(JsonPropertyNames.Path, path.AsAny);
             return new(builder.ToImmutable());

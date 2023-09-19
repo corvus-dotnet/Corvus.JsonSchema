@@ -729,7 +729,7 @@ public readonly partial struct Applicator
     /// </summary>
     public static Applicator Create(Corvus.Json.JsonSchema.Draft201909.Schema? additionalItems = null, Corvus.Json.JsonSchema.Draft201909.Schema? additionalProperties = null, Corvus.Json.JsonSchema.Draft201909.Applicator.SchemaArray? allOf = null, Corvus.Json.JsonSchema.Draft201909.Applicator.SchemaArray? anyOf = null, Corvus.Json.JsonSchema.Draft201909.Schema? contains = null, Corvus.Json.JsonSchema.Draft201909.Applicator.DependentSchemasEntity? dependentSchemas = null, Corvus.Json.JsonSchema.Draft201909.Schema? @else = null, Corvus.Json.JsonSchema.Draft201909.Schema? @if = null, Corvus.Json.JsonSchema.Draft201909.Applicator.ItemsEntity? items = null, Corvus.Json.JsonSchema.Draft201909.Schema? not = null, Corvus.Json.JsonSchema.Draft201909.Applicator.SchemaArray? oneOf = null, Corvus.Json.JsonSchema.Draft201909.Applicator.PatternPropertiesEntity? patternProperties = null, Corvus.Json.JsonSchema.Draft201909.Applicator.PropertiesEntity? properties = null, Corvus.Json.JsonSchema.Draft201909.Schema? propertyNames = null, Corvus.Json.JsonSchema.Draft201909.Schema? then = null, Corvus.Json.JsonSchema.Draft201909.Schema? unevaluatedItems = null, Corvus.Json.JsonSchema.Draft201909.Schema? unevaluatedProperties = null)
     {
-        var builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
+        var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
         if (additionalItems is Corvus.Json.JsonSchema.Draft201909.Schema additionalItems__)
         {
             builder.Add(JsonPropertyNames.AdditionalItems, additionalItems__.AsAny);

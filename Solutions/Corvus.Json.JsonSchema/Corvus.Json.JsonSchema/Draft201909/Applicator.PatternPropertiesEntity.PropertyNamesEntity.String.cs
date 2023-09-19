@@ -37,7 +37,7 @@ public readonly partial struct Applicator
                 this.boolBacking = default;
                 this.numberBacking = default;
                 this.arrayBacking = ImmutableList<JsonAny>.Empty;
-                this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+                this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
             }
 
             /// <summary>
@@ -52,7 +52,7 @@ public readonly partial struct Applicator
                 this.boolBacking = default;
                 this.numberBacking = default;
                 this.arrayBacking = ImmutableList<JsonAny>.Empty;
-                this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+                this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
             }
 
             /// <summary>
@@ -67,7 +67,7 @@ public readonly partial struct Applicator
                 this.boolBacking = default;
                 this.numberBacking = default;
                 this.arrayBacking = ImmutableList<JsonAny>.Empty;
-                this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+                this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
             }
 
             /// <summary>

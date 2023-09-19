@@ -61,7 +61,7 @@ public readonly partial struct JsonBase64Content
     {
         if ((this.backing & Backing.String) != 0)
         {
-                return Encoding.UTF8.GetBytes(this.stringBacking);
+            return Encoding.UTF8.GetBytes(this.stringBacking);
         }
 
         if (this.jsonElementBacking.ValueKind == JsonValueKind.String)

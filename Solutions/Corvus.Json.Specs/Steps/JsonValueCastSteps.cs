@@ -169,8 +169,8 @@ public class JsonValueCastSteps
     [Then("the result should equal the ImmutableDictionary<JsonPropertyName,JsonAny> (.*)")]
     public void ThenTheResultShouldEqualTheImmutablDictionary(string immutableDictionary)
     {
-        ImmutableDictionary<JsonPropertyName, JsonAny> expected = JsonAny.ParseValue(immutableDictionary).AsObject.AsImmutableDictionary();
-        ImmutableDictionary<JsonPropertyName, JsonAny> actual = this.scenarioContext.Get<ImmutableDictionary<JsonPropertyName, JsonAny>>(CastResultKey);
+        ImmutableList<JsonObjectProperty> expected = JsonAny.ParseValue(immutableDictionary).AsObject.AsPropertyBacking();
+        ImmutableList<JsonObjectProperty> actual = this.scenarioContext.Get<ImmutableList<JsonObjectProperty>>(CastResultKey);
         CollectionAssert.AreEqual(expected, actual);
     }
 

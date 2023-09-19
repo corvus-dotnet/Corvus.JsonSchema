@@ -33,7 +33,7 @@ public readonly partial struct Schema
 
             return value.ValueKind switch
             {
-                JsonValueKind.Object => new(value.AsImmutableDictionary()),
+                JsonValueKind.Object => new(value.AsPropertyBacking()),
                 JsonValueKind.True => new(true),
                 JsonValueKind.False => new(false),
                 _ => Undefined
