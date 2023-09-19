@@ -82,11 +82,7 @@ public static partial class JsonPatchExtensions
                 // Return the transformed result, and stop walking the tree here.
                 // We avoid allocating a string by parsing a JsonElement - this still allocates but is better aligned with our
                 // target output!
-                Span<char> parsablePathElement = stackalloc char[terminatingPathElement.Length + 2];
-                parsablePathElement[0] = '\"';
-                parsablePathElement[^1] = '\"';
-                terminatingPathElement.CopyTo(parsablePathElement[1..]);
-                result.Output = nodeToVisit.AsObject.SetProperty(JsonPropertyName.ParseValue(parsablePathElement), value);
+                result.Output = nodeToVisit.AsObject.SetProperty(terminatingPathElement.ToString(), value);
                 result.Transformed = Transformed.Yes;
                 result.Walk = Walk.TerminateAtThisNodeAndKeepChanges;
                 return;

@@ -24,6 +24,11 @@ internal class Program
                     .WithOutlierMode(OutlierMode.RemoveAll)
                     .WithStrategy(RunStrategy.Throughput)
                     .WithIterationCount(1))
+                .AddJob(Job.Dry
+                    .WithRuntime(CoreRuntime.Core80)
+                    .WithOutlierMode(OutlierMode.RemoveAll)
+                    .WithStrategy(RunStrategy.Throughput)
+                    .WithIterationCount(1))
                 .AddValidator(ExecutionValidator.DontFailOnError));
     }
 }
