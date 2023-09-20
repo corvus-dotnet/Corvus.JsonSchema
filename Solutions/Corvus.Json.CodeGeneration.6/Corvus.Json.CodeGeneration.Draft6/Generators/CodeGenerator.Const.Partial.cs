@@ -1662,12 +1662,7 @@ public partial class CodeGeneratorConst
     {
         get
         {
-            if (this.TypeDeclaration.Schema().Format.IsNotUndefined())
-            {
-                return this.TypeDeclaration.Schema().Format == "integer";
-            }
-
-            return false;
+            return this.TypeDeclaration.Schema().IsJsonInteger();
         }
     }
 

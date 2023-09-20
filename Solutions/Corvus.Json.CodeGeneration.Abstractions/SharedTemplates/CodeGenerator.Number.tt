@@ -82,6 +82,28 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonNumb
         return new((double)value);
     }
 
+<#  if (IsJsonInteger)
+	{ #>
+    /// <summary>
+    /// Conversion from double.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static explicit operator <#= TypeDeclaration.DotnetTypeName #>(double value)
+    {
+        return new(value);
+    }
+
+    /// <summary>
+    /// Conversion from long.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static implicit operator <#= TypeDeclaration.DotnetTypeName #>(long value)
+    {
+        return new(value);
+    }
+<#  }
+    else
+    {#>
     /// <summary>
     /// Conversion from double.
     /// </summary>
@@ -90,6 +112,16 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonNumb
     {
         return new(value);
     }
+
+    /// <summary>
+    /// Conversion from long.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static explicit operator <#= TypeDeclaration.DotnetTypeName #>(long value)
+    {
+        return new(value);
+    }
+<#  }#>
 
     /// <summary>
     /// Conversion to double.
@@ -113,20 +145,37 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonNumb
     }
 
     /// <summary>
-    /// Conversion from long.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    public static implicit operator <#= TypeDeclaration.DotnetTypeName #>(long value)
-    {
-        return new(value);
-    }
-
-    /// <summary>
-    /// Conversion to double.
+    /// Conversion to float.
     /// </summary>
     /// <param name="value">The value to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a number.</exception>
-    /// <exception cref="FormatException">The value was not formatted as a double.</exception>
+    /// <exception cref="FormatException">The value was not formatted as a float.</exception>
+    public static explicit operator float(<#= TypeDeclaration.DotnetTypeName #> value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
+        {
+            return value.jsonElementBacking.SafeGetSingle();
+        }
+
+        if ((value.backing & Backing.Number) != 0)
+        {
+            if (value.numberBacking < float.MinValue || value.numberBacking > float.MaxValue)
+            {
+                throw new FormatException();
+            }
+
+            return (float)value.numberBacking;
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Conversion to long.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+    /// <exception cref="FormatException">The value was not formatted as a long.</exception>
     public static explicit operator long(<#= TypeDeclaration.DotnetTypeName #> value)
     {
         if ((value.backing & Backing.JsonElement) != 0)

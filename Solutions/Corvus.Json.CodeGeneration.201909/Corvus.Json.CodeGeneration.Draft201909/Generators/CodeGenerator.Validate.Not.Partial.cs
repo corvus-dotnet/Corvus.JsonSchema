@@ -1966,12 +1966,7 @@ public partial class CodeGeneratorValidateNot
     {
         get
         {
-            if (this.TypeDeclaration.Schema().Format.IsNotUndefined())
-            {
-                return this.TypeDeclaration.Schema().Format == "integer";
-            }
-
-            return false;
+            return this.TypeDeclaration.Schema().IsJsonInteger();
         }
     }
 

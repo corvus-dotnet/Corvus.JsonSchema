@@ -71,6 +71,15 @@ public readonly partial struct Schema
             }
 
             /// <summary>
+            /// Conversion from long.
+            /// </summary>
+            /// <param name = "value">The value to convert.</param>
+            public static explicit operator PropertyNamesEntity(long value)
+            {
+                return new(value);
+            }
+
+            /// <summary>
             /// Conversion to double.
             /// </summary>
             /// <param name = "value">The value to convert.</param>
@@ -92,20 +101,37 @@ public readonly partial struct Schema
             }
 
             /// <summary>
-            /// Conversion from long.
-            /// </summary>
-            /// <param name = "value">The value to convert.</param>
-            public static implicit operator PropertyNamesEntity(long value)
-            {
-                return new(value);
-            }
-
-            /// <summary>
-            /// Conversion to double.
+            /// Conversion to float.
             /// </summary>
             /// <param name = "value">The value to convert.</param>
             /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-            /// <exception cref = "FormatException">The value was not formatted as a double.</exception>
+            /// <exception cref = "FormatException">The value was not formatted as a float.</exception>
+            public static explicit operator float (PropertyNamesEntity value)
+            {
+                if ((value.backing & Backing.JsonElement) != 0)
+                {
+                    return value.jsonElementBacking.SafeGetSingle();
+                }
+
+                if ((value.backing & Backing.Number) != 0)
+                {
+                    if (value.numberBacking < float.MinValue || value.numberBacking > float.MaxValue)
+                    {
+                        throw new FormatException();
+                    }
+
+                    return (float)value.numberBacking;
+                }
+
+                throw new InvalidOperationException();
+            }
+
+            /// <summary>
+            /// Conversion to long.
+            /// </summary>
+            /// <param name = "value">The value to convert.</param>
+            /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
+            /// <exception cref = "FormatException">The value was not formatted as a long.</exception>
             public static explicit operator long (PropertyNamesEntity value)
             {
                 if ((value.backing & Backing.JsonElement) != 0)

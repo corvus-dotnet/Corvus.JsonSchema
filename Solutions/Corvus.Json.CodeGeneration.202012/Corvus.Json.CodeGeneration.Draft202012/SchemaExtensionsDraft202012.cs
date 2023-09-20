@@ -143,6 +143,19 @@ public static class SchemaExtensionsDraft202012
     }
 
     /// <summary>
+    /// Determines if this is an integer type.
+    /// </summary>
+    /// <param name="draft202012Schema">The schema to test.</param>
+    /// <returns><c>True</c> if the schema has a single type value, or no type value but a format value.</returns>
+    public static bool IsJsonInteger(this Schema draft202012Schema)
+    {
+        return
+            draft202012Schema.Type.IsSimpleTypes && (
+                draft202012Schema.Type.Equals(Validation.SimpleTypes.EnumValues.Integer) ||
+                (draft202012Schema.Format.IsNullOrUndefined() && draft202012Schema.Format == "integer"));
+    }
+
+    /// <summary>
     /// Gets a value indicating whether is has an object enum type.
     /// </summary>
     /// <param name="draft202012Schema">The schema to validate.</param>

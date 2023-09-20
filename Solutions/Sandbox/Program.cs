@@ -1,10 +1,7 @@
 ﻿using Corvus.Json;
-using Corvus.Json.Benchmarking.Models;
 
 JsonNumber num = 3.0;
 JsonNumber floatNum = 3.1;
-
-
 
 // But these are safe - they return false if they would truncate
 // (notwithstanding precision issues)

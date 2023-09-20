@@ -63,6 +63,32 @@ public readonly partial struct JsonNumber
     }
 
     /// <summary>
+    /// Conversion to float.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+    /// <exception cref="FormatException">The value was not formatted as a float.</exception>
+    public static explicit operator float(JsonNumber value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
+        {
+            return value.jsonElementBacking.SafeGetSingle();
+        }
+
+        if ((value.backing & Backing.Number) != 0)
+        {
+            if (value.numberBacking < float.MinValue || value.numberBacking > float.MaxValue)
+            {
+                throw new FormatException();
+            }
+
+            return (float)value.numberBacking;
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    /// <summary>
     /// Conversion from long.
     /// </summary>
     /// <param name="value">The value to convert.</param>
