@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using BenchmarkDotNet.Attributes;
@@ -17,14 +18,18 @@ namespace Corvus.Json.Benchmarking;
 [MemoryDiagnoser]
 public class ValidateLargeDocumentWithAnnotationCollection
 {
-    private const string JsonText = @"{
-    ""name"": {
-      ""familyName"": ""Oldroyd"",
-      ""givenName"": ""Michael"",
-      ""otherNames"": []
-    },
-    ""dateOfBirth"": ""1944-07-14""
-}";
+    private const string JsonText =
+        """
+        {
+            "name": {
+              "familyName": "Oldroyd",
+              "givenName": "Michael",
+              "otherNames": [],
+              "email": "michael.oldryoyd@contoso.com"
+            },
+            "dateOfBirth": "1944-07-14"
+        }
+        """;
 
     private static readonly JsonEverything.EvaluationOptions Options = new() { OutputFormat = JsonEverything.OutputFormat.List };
 

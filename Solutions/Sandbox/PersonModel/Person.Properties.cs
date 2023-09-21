@@ -35,6 +35,15 @@ public readonly partial struct Person
         /// </summary>
         public const string DateOfBirth = "dateOfBirth";
         /// <summary>
+        /// JSON property name for <see cref = "Email"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> EmailUtf8 => "email"u8;
+
+        /// <summary>
+        /// JSON property name for <see cref = "Email"/>.
+        /// </summary>
+        public const string Email = "email";
+        /// <summary>
         /// JSON property name for <see cref = "Name"/>.
         /// </summary>
         public static ReadOnlySpan<byte> NameUtf8 => "name"u8;
@@ -78,6 +87,38 @@ public readonly partial struct Person
     }
 
     /// <summary>
+    /// Gets Email.
+    /// </summary>
+    public Corvus.Json.JsonEmail Email
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                {
+                    return default;
+                }
+
+                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.EmailUtf8, out JsonElement result))
+                {
+                    return new Corvus.Json.JsonEmail(result);
+                }
+            }
+
+            if ((this.backing & Backing.Object) != 0)
+            {
+                if (this.objectBacking.TryGetValue(JsonPropertyNames.Email, out JsonAny result))
+                {
+                    return result.As<Corvus.Json.JsonEmail>();
+                }
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
     /// Gets Name.
     /// </summary>
     public Corvus.Json.Benchmarking.Models.PersonName Name
@@ -112,13 +153,18 @@ public readonly partial struct Person
     /// <summary>
     /// Creates an instance of a <see cref = "Person"/>.
     /// </summary>
-    public static Person Create(Corvus.Json.Benchmarking.Models.PersonName name, Corvus.Json.JsonDate? dateOfBirth = null)
+    public static Person Create(Corvus.Json.Benchmarking.Models.PersonName name, Corvus.Json.JsonDate? dateOfBirth = null, Corvus.Json.JsonEmail? email = null)
     {
         var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
         builder.Add(JsonPropertyNames.Name, name.AsAny);
         if (dateOfBirth is Corvus.Json.JsonDate dateOfBirth__)
         {
             builder.Add(JsonPropertyNames.DateOfBirth, dateOfBirth__.AsAny);
+        }
+
+        if (email is Corvus.Json.JsonEmail email__)
+        {
+            builder.Add(JsonPropertyNames.Email, email__.AsAny);
         }
 
         return new(builder.ToImmutable());
@@ -132,6 +178,16 @@ public readonly partial struct Person
     public Person WithDateOfBirth(in Corvus.Json.JsonDate value)
     {
         return this.SetProperty(JsonPropertyNames.DateOfBirth, value);
+    }
+
+    /// <summary>
+    /// Sets email.
+    /// </summary>
+    /// <param name = "value">The value to set.</param>
+    /// <returns>The entity with the updated property.</returns>
+    public Person WithEmail(in Corvus.Json.JsonEmail value)
+    {
+        return this.SetProperty(JsonPropertyNames.Email, value);
     }
 
     /// <summary>
@@ -152,6 +208,11 @@ public readonly partial struct Person
     private static ValidationContext __CorvusValidateDateOfBirth(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
         return property.ValueAs<Corvus.Json.JsonDate>().Validate(validationContext, level);
+    }
+
+    private static ValidationContext __CorvusValidateEmail(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
+    {
+        return property.ValueAs<Corvus.Json.JsonEmail>().Validate(validationContext, level);
     }
 
     /// <summary>
@@ -175,6 +236,11 @@ public readonly partial struct Person
                 propertyValidator = __CorvusValidateDateOfBirth;
                 return true;
             }
+            else if (property.NameEquals(JsonPropertyNames.EmailUtf8))
+            {
+                propertyValidator = __CorvusValidateEmail;
+                return true;
+            }
         }
         else
         {
@@ -186,6 +252,11 @@ public readonly partial struct Person
             else if (property.NameEquals(JsonPropertyNames.DateOfBirth))
             {
                 propertyValidator = __CorvusValidateDateOfBirth;
+                return true;
+            }
+            else if (property.NameEquals(JsonPropertyNames.Email))
+            {
+                propertyValidator = __CorvusValidateEmail;
                 return true;
             }
         }

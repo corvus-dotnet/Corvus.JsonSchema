@@ -18,6 +18,10 @@
         "dateOfBirth": {
           "type": "string",
           "format": "date"
+        },
+        "email": {
+          "type": "string",
+          "format": "email"
         }
       }
     },

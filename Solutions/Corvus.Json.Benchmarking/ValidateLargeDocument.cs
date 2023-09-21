@@ -17,14 +17,18 @@ namespace Corvus.Json.Benchmarking;
 [MemoryDiagnoser]
 public class ValidateLargeDocument
 {
-    private const string JsonText = @"{
-    ""name"": {
-      ""familyName"": ""Oldroyd"",
-      ""givenName"": ""Michael"",
-      ""otherNames"": []
-    },
-    ""dateOfBirth"": ""1944-07-14""
-}";
+    private const string JsonText =
+        """
+        {
+            "name": {
+              "familyName": "Oldroyd",
+              "givenName": "Michael",
+              "otherNames": [],
+              "email": "michael.oldryoyd@contoso.com"
+            },
+            "dateOfBirth": "1944-07-14"
+        }
+        """;
 
     private static readonly JsonEverything.EvaluationOptions Options = new() { OutputFormat = JsonEverything.OutputFormat.Flag };
 
