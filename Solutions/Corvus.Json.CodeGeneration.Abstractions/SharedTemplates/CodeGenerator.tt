@@ -40,7 +40,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 <#  }
     if(IsImplicitNumber || IsNotImplicitType)
     { #>
-    private readonly double numberBacking;
+    private readonly BinaryJsonNumber numberBacking;
 <#  }
     if(IsImplicitArray || IsNotImplicitType)
     { #>
@@ -554,7 +554,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 <#  }
     if(IsImplicitNumber || IsNotImplicitType)
     { #>
-            JsonValueKind.Number => new((double)value.AsNumber),
+            JsonValueKind.Number => new(value.AsNumber.AsBinaryJsonNumber),
 <#  }
     if(IsImplicitArray || IsNotImplicitType)
     { #>
@@ -682,7 +682,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 
         if (value.ValueKind == JsonValueKind.Number)
         {
-            return new((double)value);
+            return new(value.AsBinaryJsonNumber);
         }
 <#  } #>
 
@@ -956,7 +956,14 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 
         if ((this.backing & Backing.Bool) != 0)
         {
+<#      if (IsImplicitNumber || !IsNotImplicitType)
+        { #>
             writer.WriteBooleanValue(this.boolBacking);
+<#      }
+        else
+        {#>
+            writer.WriteBooleanValue(this.numberBacking.GetByteAsBool());
+<#      }#>
             return;
         }
 <#  }
@@ -965,7 +972,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 
         if ((this.backing & Backing.Number) != 0)
         {
-            writer.WriteNumberValue(this.numberBacking);
+            this.numberBacking.WriteTo(writer);
             return;
         }
 <#  }

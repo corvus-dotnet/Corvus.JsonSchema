@@ -763,7 +763,13 @@ public partial class CodeGeneratorArrayAdd
         {
             if (this.TypeDeclaration.Schema().MultipleOf.IsNotUndefined())
             {
-                return this.TypeDeclaration.Schema().MultipleOf.AsJsonElement.GetRawText();
+                if (this.TypeDeclaration.Schema().MultipleOf.AsJsonElement.TryGetDouble(out double _))
+                {
+                    return this.TypeDeclaration.Schema().MultipleOf.AsJsonElement.GetRawText();
+                }
+
+                // Fall back to a decimal
+                return $"{this.TypeDeclaration.Schema().MultipleOf.AsJsonElement.GetRawText()}M";
             }
 
             return string.Empty;
@@ -779,7 +785,13 @@ public partial class CodeGeneratorArrayAdd
         {
             if (this.TypeDeclaration.Schema().ExclusiveMaximum.IsNotUndefined())
             {
-                return this.TypeDeclaration.Schema().ExclusiveMaximum.AsJsonElement.GetRawText();
+                if (this.TypeDeclaration.Schema().ExclusiveMaximum.AsJsonElement.TryGetDouble(out double _))
+                {
+                    return this.TypeDeclaration.Schema().ExclusiveMaximum.AsJsonElement.GetRawText();
+                }
+
+                // Fall back to a decimal
+                return $"{this.TypeDeclaration.Schema().MultipleOf.AsJsonElement.GetRawText()}M";
             }
 
             return string.Empty;
@@ -795,7 +807,13 @@ public partial class CodeGeneratorArrayAdd
         {
             if (this.TypeDeclaration.Schema().Maximum.IsNotUndefined())
             {
-                return this.TypeDeclaration.Schema().Maximum.AsJsonElement.GetRawText();
+                if (this.TypeDeclaration.Schema().Maximum.AsJsonElement.TryGetDouble(out double _))
+                {
+                    return this.TypeDeclaration.Schema().Maximum.AsJsonElement.GetRawText();
+                }
+
+                // Fall back to a decimal
+                return $"{this.TypeDeclaration.Schema().Maximum.AsJsonElement.GetRawText()}M";
             }
 
             return string.Empty;
@@ -811,7 +829,13 @@ public partial class CodeGeneratorArrayAdd
         {
             if (this.TypeDeclaration.Schema().ExclusiveMinimum.IsNotUndefined())
             {
-                return this.TypeDeclaration.Schema().ExclusiveMinimum.AsJsonElement.GetRawText();
+                if (this.TypeDeclaration.Schema().ExclusiveMinimum.AsJsonElement.TryGetDouble(out double _))
+                {
+                    return this.TypeDeclaration.Schema().ExclusiveMinimum.AsJsonElement.GetRawText();
+                }
+
+                // Fall back to a decimal
+                return $"{this.TypeDeclaration.Schema().ExclusiveMinimum.AsJsonElement.GetRawText()}M";
             }
 
             return string.Empty;
@@ -827,7 +851,13 @@ public partial class CodeGeneratorArrayAdd
         {
             if (this.TypeDeclaration.Schema().Minimum.IsNotUndefined())
             {
-                return this.TypeDeclaration.Schema().Minimum.AsJsonElement.GetRawText();
+                if (this.TypeDeclaration.Schema().Minimum.AsJsonElement.TryGetDouble(out double _))
+                {
+                    return this.TypeDeclaration.Schema().Minimum.AsJsonElement.GetRawText();
+                }
+
+                // Fall back to a decimal
+                return $"{this.TypeDeclaration.Schema().Minimum.AsJsonElement.GetRawText()}M";
             }
 
             return string.Empty;
@@ -1761,7 +1791,7 @@ public partial class CodeGeneratorArrayAdd
     {
         get
         {
-            return this.TypeDeclaration.Schema().IsJsonInteger();
+            return this.TypeDeclaration.Schema().IsJsonInteger() || BuiltInTypes.IsIntegerFormat(this.TypeDeclaration.Schema().Format.GetString());
         }
     }
 

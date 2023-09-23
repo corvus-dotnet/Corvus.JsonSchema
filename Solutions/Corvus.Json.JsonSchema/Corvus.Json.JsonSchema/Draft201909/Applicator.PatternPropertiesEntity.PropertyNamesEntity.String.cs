@@ -34,7 +34,6 @@ public readonly partial struct Applicator
                 this.jsonElementBacking = default;
                 this.backing = Backing.String;
                 this.stringBacking = value;
-                this.boolBacking = default;
                 this.numberBacking = default;
                 this.arrayBacking = ImmutableList<JsonAny>.Empty;
                 this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
@@ -49,7 +48,6 @@ public readonly partial struct Applicator
                 this.jsonElementBacking = default;
                 this.backing = Backing.String;
                 this.stringBacking = value.ToString();
-                this.boolBacking = default;
                 this.numberBacking = default;
                 this.arrayBacking = ImmutableList<JsonAny>.Empty;
                 this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
@@ -64,7 +62,6 @@ public readonly partial struct Applicator
                 this.jsonElementBacking = default;
                 this.backing = Backing.String;
                 this.stringBacking = Encoding.UTF8.GetString(utf8Value);
-                this.boolBacking = default;
                 this.numberBacking = default;
                 this.arrayBacking = ImmutableList<JsonAny>.Empty;
                 this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;

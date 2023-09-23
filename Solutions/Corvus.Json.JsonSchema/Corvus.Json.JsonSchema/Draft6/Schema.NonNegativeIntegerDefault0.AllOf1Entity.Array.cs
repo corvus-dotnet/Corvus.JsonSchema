@@ -291,7 +291,7 @@ public readonly partial struct Schema
                 ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
                 foreach (string item in items)
                 {
-                    builder.Add(new JsonAny(item));
+                    builder.Add((JsonAny)item);
                 }
 
                 return new AllOf1Entity(builder.ToImmutable());
@@ -307,7 +307,7 @@ public readonly partial struct Schema
                 ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
                 foreach (double item in items)
                 {
-                    builder.Add(new JsonAny(item));
+                    builder.Add((JsonAny)item);
                 }
 
                 return new AllOf1Entity(builder.ToImmutable());
@@ -323,7 +323,7 @@ public readonly partial struct Schema
                 ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
                 foreach (float item in items)
                 {
-                    builder.Add(new JsonAny(item));
+                    builder.Add((JsonAny)item);
                 }
 
                 return new AllOf1Entity(builder.ToImmutable());
@@ -339,7 +339,7 @@ public readonly partial struct Schema
                 ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
                 foreach (int item in items)
                 {
-                    builder.Add(new JsonAny(item));
+                    builder.Add((JsonAny)item);
                 }
 
                 return new AllOf1Entity(builder.ToImmutable());
@@ -355,7 +355,7 @@ public readonly partial struct Schema
                 ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
                 foreach (long item in items)
                 {
-                    builder.Add(new JsonAny(item));
+                    builder.Add((JsonAny)item);
                 }
 
                 return new AllOf1Entity(builder.ToImmutable());
@@ -371,7 +371,7 @@ public readonly partial struct Schema
                 ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
                 foreach (bool item in items)
                 {
-                    builder.Add(new JsonAny(item));
+                    builder.Add((JsonAny)item);
                 }
 
                 return new AllOf1Entity(builder.ToImmutable());

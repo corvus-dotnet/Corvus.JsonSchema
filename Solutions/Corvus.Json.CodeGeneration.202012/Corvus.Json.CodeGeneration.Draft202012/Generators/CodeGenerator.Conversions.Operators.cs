@@ -17,7 +17,7 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft202012 {
     public partial class CodeGeneratorConversionsOperators : CodeGeneratorConversionsOperatorsBase {
         
         
-        #line 135 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Conversions.Operators.tt"
+        #line 142 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Conversions.Operators.tt"
 
     public bool ShouldGenerate
     {
@@ -224,7 +224,7 @@ namespace ");
             #line hidden
             
             #line 71 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Conversions.Operators.tt"
-            this.Write("            JsonValueKind.Number => new((double)value),\r\n");
+            this.Write("            JsonValueKind.Number => new(value.AsBinaryJsonNumber),\r\n");
             
             #line default
             #line hidden
@@ -336,13 +336,51 @@ namespace ");
             #line hidden
             
             #line 117 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Conversions.Operators.tt"
-            this.Write("        if ((value.backing & Backing.Bool) != 0)\r\n        {\r\n            return n" +
-                    "ew(value.boolBacking);\r\n        }\r\n");
+            this.Write("        if ((value.backing & Backing.Bool) != 0)\r\n        {\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 119 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Conversions.Operators.tt"
+  if (IsImplicitBoolean && !(IsImplicitNumber || IsNotImplicitType))
+    { 
             
             #line default
             #line hidden
             
             #line 121 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Conversions.Operators.tt"
+            this.Write("            return new(value.boolBacking);\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 122 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Conversions.Operators.tt"
+  }
+    else
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 125 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Conversions.Operators.tt"
+            this.Write("            return new(value.numberBacking.GetByteAsBool());\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 126 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Conversions.Operators.tt"
+  } 
+            
+            #line default
+            #line hidden
+            
+            #line 127 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Conversions.Operators.tt"
+            this.Write("        }\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 128 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Conversions.Operators.tt"
       }
         if(conversion.IsNumber)
         { 
@@ -350,50 +388,50 @@ namespace ");
             #line default
             #line hidden
             
-            #line 124 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Conversions.Operators.tt"
+            #line 131 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Conversions.Operators.tt"
             this.Write("        if ((value.backing & Backing.Number) != 0)\r\n        {\r\n            return" +
                     " new(value.numberBacking);\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 128 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Conversions.Operators.tt"
+            #line 135 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Conversions.Operators.tt"
       } 
             
             #line default
             #line hidden
             
-            #line 129 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Conversions.Operators.tt"
+            #line 136 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Conversions.Operators.tt"
             this.Write("\r\n        return ");
             
             #line default
             #line hidden
             
-            #line 130 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Conversions.Operators.tt"
+            #line 137 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Conversions.Operators.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( conversion.FullyQualifiedDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 130 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Conversions.Operators.tt"
+            #line 137 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Conversions.Operators.tt"
             this.Write(".Undefined;\r\n    }\r\n");
             
             #line default
             #line hidden
             
-            #line 132 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Conversions.Operators.tt"
+            #line 139 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Conversions.Operators.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 133 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Conversions.Operators.tt"
+            #line 140 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Conversions.Operators.tt"
             this.Write("}\r\n");
             
             #line default
             #line hidden
             
-            #line 134 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Conversions.Operators.tt"
+            #line 141 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Conversions.Operators.tt"
  EndNesting(); 
             
             #line default

@@ -32,7 +32,6 @@ public readonly partial struct Applicator
                 this.jsonElementBacking = default;
                 this.backing = Backing.Object;
                 this.stringBacking = string.Empty;
-                this.boolBacking = default;
                 this.numberBacking = default;
                 this.arrayBacking = ImmutableList<JsonAny>.Empty;
                 this.objectBacking = value;

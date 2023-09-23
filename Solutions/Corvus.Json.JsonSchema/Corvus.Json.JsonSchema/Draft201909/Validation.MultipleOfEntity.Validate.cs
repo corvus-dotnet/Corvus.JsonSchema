@@ -40,7 +40,7 @@ public readonly partial struct Validation
                 return result;
             }
 
-            result = Corvus.Json.Validate.ValidateNumber(this, result, level, null, null, null, null, 0);
+            result = Corvus.Json.Validate.ValidateNumber(this, result, level, default, default, default, default, new(0));
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;

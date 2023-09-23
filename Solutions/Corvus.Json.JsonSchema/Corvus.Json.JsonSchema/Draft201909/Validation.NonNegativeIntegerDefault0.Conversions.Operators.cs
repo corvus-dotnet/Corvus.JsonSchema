@@ -33,7 +33,7 @@ public readonly partial struct Validation
 
             return value.ValueKind switch
             {
-                JsonValueKind.Number => new((double)value),
+                JsonValueKind.Number => new(value.AsBinaryJsonNumber),
                 _ => Undefined
             };
         }

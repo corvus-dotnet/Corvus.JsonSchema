@@ -41,14 +41,18 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonBool
     {
         this.jsonElementBacking = default;
         this.backing = Backing.Bool;
+<#  if (!(IsImplicitNumber || IsNotImplicitType))
+    { #>
         this.boolBacking = value;
+<#  }
+    else
+    {#>
+        this.numberBacking = new(value);
+<#  }#>
+
 <#  if(IsImplicitString || IsNotImplicitType)
     { #>
         this.stringBacking = string.Empty;
-<#  }
-    if(IsImplicitNumber || IsNotImplicitType)
-    { #>
-        this.numberBacking = default;
 <#  }
     if(IsImplicitArray || IsNotImplicitType)
     { #>

@@ -17,34 +17,6 @@ public readonly partial struct <#= TypeName #>
     /// <summary>
     /// Initializes a new instance of the <see cref="<#= TypeName #>"/> struct.
     /// </summary>
-    private <#= TypeName #>(BinaryJsonNumber value)
-    {
-        this.jsonElementBacking = default;
-        this.backing = Backing.Number;
-        this.numberBacking = value;
-    }
-
-    /// <summary>
-    /// Conversion to JsonNumber.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonNumber(<#= TypeName #> value)
-    {
-        return value.AsNumber;
-    }
-
-    /// <summary>
-    /// Conversion to JsonAny.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonAny(<#= TypeName #> value)
-    {
-        return value.AsAny;
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="<#= TypeName #>"/> struct.
-    /// </summary>
     /// <param name="value">The value from which to initialize the number.</param>
     public <#= TypeName #>(byte value)
     {
@@ -53,6 +25,8 @@ public readonly partial struct <#= TypeName #>
         this.numberBacking = new(value);
     }
 
+<# if (JsonTypeName != "integer")
+    {#>
     /// <summary>
     /// Initializes a new instance of the <see cref="<#= TypeName #>"/> struct.
     /// </summary>
@@ -86,6 +60,18 @@ public readonly partial struct <#= TypeName #>
         this.numberBacking = new(value);
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="<#= TypeName #>"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to initialize the number.</param>
+    public <#= TypeName #>(float value)
+    {
+        this.jsonElementBacking = default;
+        this.backing = Backing.Number;
+        this.numberBacking = new(value);
+    }
+
+<#  }#>
     /// <summary>
     /// Initializes a new instance of the <see cref="<#= TypeName #>"/> struct.
     /// </summary>
@@ -134,17 +120,6 @@ public readonly partial struct <#= TypeName #>
     /// Initializes a new instance of the <see cref="<#= TypeName #>"/> struct.
     /// </summary>
     /// <param name="value">The value from which to initialize the number.</param>
-    public <#= TypeName #>(float value)
-    {
-        this.jsonElementBacking = default;
-        this.backing = Backing.Number;
-        this.numberBacking = new(value);
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="<#= TypeName #>"/> struct.
-    /// </summary>
-    /// <param name="value">The value from which to initialize the number.</param>
     public <#= TypeName #>(ushort value)
     {
         this.jsonElementBacking = default;
@@ -172,6 +147,24 @@ public readonly partial struct <#= TypeName #>
         this.jsonElementBacking = default;
         this.backing = Backing.Number;
         this.numberBacking = new(value);
+    }
+
+    /// <summary>
+    /// Conversion to JsonNumber.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator JsonNumber(<#= TypeName #> value)
+    {
+        return value.AsNumber;
+    }
+
+    /// <summary>
+    /// Conversion to JsonAny.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator JsonAny(<#= TypeName #> value)
+    {
+        return value.AsAny;
     }
 
     /// <summary>
@@ -426,24 +419,55 @@ public readonly partial struct <#= TypeName #>
         throw new InvalidOperationException();
     }
 
+<#  if (JsonTypeName == "integer")
+    {#>
     /// <summary>
-    /// Conversion to JsonAny.
+    /// Conversion from decimal.
     /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonAny(<#= TypeName #> value)
+    /// <param name="value">The value to convert.</param>
+    public static explicit operator <#= TypeName #>(decimal value)
     {
-        return value.AsAny;
+        return new((long)value);
     }
 
     /// <summary>
-    /// Conversion from byte.
+    /// Conversion from double.
     /// </summary>
     /// <param name="value">The value to convert.</param>
-    public static implicit operator <#= TypeName #>(byte value)
+    public static explicit operator <#= TypeName #>(double value)
+    {
+        return new((long)value);
+    }
+
+    /// <summary>
+    /// Conversion from Half.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static explicit operator <#= TypeName #>(Half value)
+    {
+        return new((long)value);
+    }
+
+    /// <summary>
+    /// Conversion from short.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static implicit operator <#= TypeName #>(short value)
     {
         return new(value);
     }
 
+    /// <summary>
+    /// Conversion from float.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static explicit operator <#= TypeName #>(float value)
+    {
+        return new((long)value);
+    }
+<#  }
+    else
+    {#>
     /// <summary>
     /// Conversion from decimal.
     /// </summary>
@@ -472,10 +496,20 @@ public readonly partial struct <#= TypeName #>
     }
 
     /// <summary>
-    /// Conversion from short.
+    /// Conversion from float.
     /// </summary>
     /// <param name="value">The value to convert.</param>
-    public static implicit operator <#= TypeName #>(short value)
+    public static implicit operator <#= TypeName #>(float value)
+    {
+        return new(value);
+    }
+<#  }#>
+
+    /// <summary>
+    /// Conversion from byte.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static implicit operator <#= TypeName #>(byte value)
     {
         return new(value);
     }
@@ -503,15 +537,6 @@ public readonly partial struct <#= TypeName #>
     /// </summary>
     /// <param name="value">The value to convert.</param>
     public static implicit operator <#= TypeName #>(sbyte value)
-    {
-        return new(value);
-    }
-
-    /// <summary>
-    /// Conversion from float.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    public static implicit operator <#= TypeName #>(float value)
     {
         return new(value);
     }

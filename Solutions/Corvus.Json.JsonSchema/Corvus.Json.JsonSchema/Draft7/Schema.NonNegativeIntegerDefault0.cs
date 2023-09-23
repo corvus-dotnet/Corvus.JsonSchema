@@ -26,7 +26,7 @@ public readonly partial struct Schema
     {
         private readonly Backing backing;
         private readonly JsonElement jsonElementBacking;
-        private readonly double numberBacking;
+        private readonly BinaryJsonNumber numberBacking;
         /// <summary>
         /// Initializes a new instance of the <see cref = "NonNegativeIntegerDefault0"/> struct.
         /// </summary>
@@ -277,7 +277,7 @@ public readonly partial struct Schema
             JsonValueKind valueKind = value.ValueKind;
             return valueKind switch
             {
-                JsonValueKind.Number => new((double)value.AsNumber),
+                JsonValueKind.Number => new(value.AsNumber.AsBinaryJsonNumber),
                 JsonValueKind.Null => Null,
                 _ => Undefined,
             };
@@ -348,7 +348,7 @@ public readonly partial struct Schema
 
             if (value.ValueKind == JsonValueKind.Number)
             {
-                return new((double)value);
+                return new(value.AsBinaryJsonNumber);
             }
 
             return Undefined;
@@ -541,7 +541,7 @@ public readonly partial struct Schema
 
             if ((this.backing & Backing.Number) != 0)
             {
-                writer.WriteNumberValue(this.numberBacking);
+                this.numberBacking.WriteTo(writer);
                 return;
             }
 

@@ -158,7 +158,7 @@ namespace ");
             
             #line 46 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Object.tt"
   }
-    if(IsImplicitBoolean || IsNotImplicitType)
+    if (IsImplicitBoolean && !(IsImplicitNumber || IsNotImplicitType))
     { 
             
             #line default

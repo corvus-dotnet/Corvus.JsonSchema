@@ -30,7 +30,7 @@ public readonly partial struct Schema
             private readonly JsonElement jsonElementBacking;
             private readonly string stringBacking;
             private readonly bool boolBacking;
-            private readonly double numberBacking;
+            private readonly BinaryJsonNumber numberBacking;
             private readonly ImmutableList<JsonAny> arrayBacking;
             private readonly ImmutableList<JsonObjectProperty> objectBacking;
             /// <summary>
@@ -374,7 +374,7 @@ public readonly partial struct Schema
                     JsonValueKind.String => new((string)value.AsString),
                     JsonValueKind.True => new(true),
                     JsonValueKind.False => new(false),
-                    JsonValueKind.Number => new((double)value.AsNumber),
+                    JsonValueKind.Number => new(value.AsNumber.AsBinaryJsonNumber),
                     JsonValueKind.Array => new(value.AsArray.AsImmutableList()),
                     JsonValueKind.Object => new(value.AsObject.AsPropertyBacking()),
                     JsonValueKind.Null => Null,
@@ -461,7 +461,7 @@ public readonly partial struct Schema
 
                 if (value.ValueKind == JsonValueKind.Number)
                 {
-                    return new((double)value);
+                    return new(value.AsBinaryJsonNumber);
                 }
 
                 return Undefined;
@@ -696,7 +696,7 @@ public readonly partial struct Schema
 
                 if ((this.backing & Backing.Number) != 0)
                 {
-                    writer.WriteNumberValue(this.numberBacking);
+                    this.numberBacking.WriteTo(writer);
                     return;
                 }
 

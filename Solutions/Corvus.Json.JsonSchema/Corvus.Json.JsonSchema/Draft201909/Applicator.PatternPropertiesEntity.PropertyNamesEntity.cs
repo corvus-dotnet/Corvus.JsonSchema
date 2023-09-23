@@ -29,8 +29,7 @@ public readonly partial struct Applicator
             private readonly Backing backing;
             private readonly JsonElement jsonElementBacking;
             private readonly string stringBacking;
-            private readonly bool boolBacking;
-            private readonly double numberBacking;
+            private readonly BinaryJsonNumber numberBacking;
             private readonly ImmutableList<JsonAny> arrayBacking;
             private readonly ImmutableList<JsonObjectProperty> objectBacking;
             /// <summary>
@@ -41,7 +40,6 @@ public readonly partial struct Applicator
                 this.jsonElementBacking = default;
                 this.backing = Backing.JsonElement;
                 this.stringBacking = string.Empty;
-                this.boolBacking = default;
                 this.numberBacking = default;
                 this.arrayBacking = ImmutableList<JsonAny>.Empty;
                 this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
@@ -56,7 +54,6 @@ public readonly partial struct Applicator
                 this.jsonElementBacking = value;
                 this.backing = Backing.JsonElement;
                 this.stringBacking = string.Empty;
-                this.boolBacking = default;
                 this.numberBacking = default;
                 this.arrayBacking = ImmutableList<JsonAny>.Empty;
                 this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
@@ -92,7 +89,7 @@ public readonly partial struct Applicator
 
                     if ((this.backing & Backing.Bool) != 0)
                     {
-                        return new(this.boolBacking);
+                        return new(this.numberBacking.GetByteAsBool());
                     }
 
                     if ((this.backing & Backing.Number) != 0)
@@ -136,7 +133,7 @@ public readonly partial struct Applicator
 
                     if ((this.backing & Backing.Bool) != 0)
                     {
-                        return JsonValueHelpers.BoolToJsonElement(this.boolBacking);
+                        return JsonValueHelpers.BoolToJsonElement(this.numberBacking.GetByteAsBool());
                     }
 
                     if ((this.backing & Backing.Number) != 0)
@@ -194,7 +191,7 @@ public readonly partial struct Applicator
 
                     if ((this.backing & Backing.Bool) != 0)
                     {
-                        return new(this.boolBacking);
+                        return new(this.numberBacking.GetByteAsBool());
                     }
 
                     throw new InvalidOperationException();
@@ -293,7 +290,7 @@ public readonly partial struct Applicator
 
                     if ((this.backing & Backing.Bool) != 0)
                     {
-                        return this.boolBacking ? JsonValueKind.True : JsonValueKind.False;
+                        return this.numberBacking.GetByteAsBool() ? JsonValueKind.True : JsonValueKind.False;
                     }
 
                     if ((this.backing & Backing.Number) != 0)
@@ -374,7 +371,7 @@ public readonly partial struct Applicator
                     JsonValueKind.String => new((string)value.AsString),
                     JsonValueKind.True => new(true),
                     JsonValueKind.False => new(false),
-                    JsonValueKind.Number => new((double)value.AsNumber),
+                    JsonValueKind.Number => new(value.AsNumber.AsBinaryJsonNumber),
                     JsonValueKind.Array => new(value.AsArray.AsImmutableList()),
                     JsonValueKind.Object => new(value.AsObject.AsPropertyBacking()),
                     JsonValueKind.Null => Null,
@@ -461,7 +458,7 @@ public readonly partial struct Applicator
 
                 if (value.ValueKind == JsonValueKind.Number)
                 {
-                    return new((double)value);
+                    return new(value.AsBinaryJsonNumber);
                 }
 
                 return Undefined;
@@ -690,13 +687,13 @@ public readonly partial struct Applicator
 
                 if ((this.backing & Backing.Bool) != 0)
                 {
-                    writer.WriteBooleanValue(this.boolBacking);
+                    writer.WriteBooleanValue(this.numberBacking.GetByteAsBool());
                     return;
                 }
 
                 if ((this.backing & Backing.Number) != 0)
                 {
-                    writer.WriteNumberValue(this.numberBacking);
+                    this.numberBacking.WriteTo(writer);
                     return;
                 }
 

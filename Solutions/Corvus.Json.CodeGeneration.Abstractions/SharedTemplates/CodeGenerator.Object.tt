@@ -44,7 +44,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonObje
     { #>
         this.stringBacking = string.Empty;
 <#  }
-    if(IsImplicitBoolean || IsNotImplicitType)
+    if (IsImplicitBoolean && !(IsImplicitNumber || IsNotImplicitType))
     { #>
         this.boolBacking = default;
 <#  }

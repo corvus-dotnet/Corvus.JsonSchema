@@ -27,19 +27,186 @@ public readonly partial struct Applicator
             /// Initializes a new instance of the <see cref = "PropertyNamesEntity"/> struct.
             /// </summary>
             /// <param name = "value">The value from which to construct the instance.</param>
-            public PropertyNamesEntity(double value)
+            public PropertyNamesEntity(BinaryJsonNumber value)
             {
                 this.jsonElementBacking = default;
                 this.backing = Backing.Number;
                 this.numberBacking = value;
-                this.boolBacking = default;
                 this.stringBacking = string.Empty;
                 this.arrayBacking = ImmutableList<JsonAny>.Empty;
                 this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
             }
 
             /// <summary>
-            /// Conversion from JsonNumber.
+            /// Initializes a new instance of the <see cref="PropertyNamesEntity"/> struct.
+            /// </summary>
+            /// <param name="value">The value from which to initialize the number.</param>
+            public PropertyNamesEntity(byte value)
+            {
+                this.jsonElementBacking = default;
+                this.backing = Backing.Number;
+                this.numberBacking = new(value);
+                this.stringBacking = string.Empty;
+                this.arrayBacking = ImmutableList<JsonAny>.Empty;
+                this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
+            }
+
+            /// <summary>
+            /// Initializes a new instance of the <see cref="PropertyNamesEntity"/> struct.
+            /// </summary>
+            /// <param name="value">The value from which to initialize the number.</param>
+            public PropertyNamesEntity(decimal value)
+            {
+                this.jsonElementBacking = default;
+                this.backing = Backing.Number;
+                this.numberBacking = new(value);
+                this.stringBacking = string.Empty;
+                this.arrayBacking = ImmutableList<JsonAny>.Empty;
+                this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
+            }
+
+            /// <summary>
+            /// Initializes a new instance of the <see cref="PropertyNamesEntity"/> struct.
+            /// </summary>
+            /// <param name="value">The value from which to initialize the number.</param>
+            public PropertyNamesEntity(double value)
+            {
+                this.jsonElementBacking = default;
+                this.backing = Backing.Number;
+                this.numberBacking = new(value);
+                this.stringBacking = string.Empty;
+                this.arrayBacking = ImmutableList<JsonAny>.Empty;
+                this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
+            }
+
+            /// <summary>
+            /// Initializes a new instance of the <see cref="PropertyNamesEntity"/> struct.
+            /// </summary>
+            /// <param name="value">The value from which to initialize the number.</param>
+            public PropertyNamesEntity(Half value)
+            {
+                this.jsonElementBacking = default;
+                this.backing = Backing.Number;
+                this.numberBacking = new(value);
+                this.stringBacking = string.Empty;
+                this.arrayBacking = ImmutableList<JsonAny>.Empty;
+                this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
+            }
+
+            /// <summary>
+            /// Initializes a new instance of the <see cref="PropertyNamesEntity"/> struct.
+            /// </summary>
+            /// <param name="value">The value from which to initialize the number.</param>
+            public PropertyNamesEntity(short value)
+            {
+                this.jsonElementBacking = default;
+                this.backing = Backing.Number;
+                this.numberBacking = new(value);
+                this.stringBacking = string.Empty;
+                this.arrayBacking = ImmutableList<JsonAny>.Empty;
+                this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
+            }
+
+            /// <summary>
+            /// Initializes a new instance of the <see cref="PropertyNamesEntity"/> struct.
+            /// </summary>
+            /// <param name="value">The value from which to initialize the number.</param>
+            public PropertyNamesEntity(int value)
+            {
+                this.jsonElementBacking = default;
+                this.backing = Backing.Number;
+                this.numberBacking = new(value);
+                this.stringBacking = string.Empty;
+                this.arrayBacking = ImmutableList<JsonAny>.Empty;
+                this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
+            }
+
+            /// <summary>
+            /// Initializes a new instance of the <see cref="PropertyNamesEntity"/> struct.
+            /// </summary>
+            /// <param name="value">The value from which to initialize the number.</param>
+            public PropertyNamesEntity(long value)
+            {
+                this.jsonElementBacking = default;
+                this.backing = Backing.Number;
+                this.numberBacking = new(value);
+                this.stringBacking = string.Empty;
+                this.arrayBacking = ImmutableList<JsonAny>.Empty;
+                this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
+            }
+
+            /// <summary>
+            /// Initializes a new instance of the <see cref="PropertyNamesEntity"/> struct.
+            /// </summary>
+            /// <param name="value">The value from which to initialize the number.</param>
+            public PropertyNamesEntity(sbyte value)
+            {
+                this.jsonElementBacking = default;
+                this.backing = Backing.Number;
+                this.numberBacking = new(value);
+                this.stringBacking = string.Empty;
+                this.arrayBacking = ImmutableList<JsonAny>.Empty;
+                this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
+            }
+
+            /// <summary>
+            /// Initializes a new instance of the <see cref="PropertyNamesEntity"/> struct.
+            /// </summary>
+            /// <param name="value">The value from which to initialize the number.</param>
+            public PropertyNamesEntity(float value)
+            {
+                this.jsonElementBacking = default;
+                this.backing = Backing.Number;
+                this.numberBacking = new(value);
+                this.stringBacking = string.Empty;
+                this.arrayBacking = ImmutableList<JsonAny>.Empty;
+                this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
+            }
+
+            /// <summary>
+            /// Initializes a new instance of the <see cref="PropertyNamesEntity"/> struct.
+            /// </summary>
+            /// <param name="value">The value from which to initialize the number.</param>
+            public PropertyNamesEntity(ushort value)
+            {
+                this.jsonElementBacking = default;
+                this.backing = Backing.Number;
+                this.numberBacking = new(value);
+                this.stringBacking = string.Empty;
+                this.arrayBacking = ImmutableList<JsonAny>.Empty;
+                this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
+            }
+
+            /// <summary>
+            /// Initializes a new instance of the <see cref="PropertyNamesEntity"/> struct.
+            /// </summary>
+            /// <param name="value">The value from which to initialize the number.</param>
+            public PropertyNamesEntity(uint value)
+            {
+                this.jsonElementBacking = default;
+                this.backing = Backing.Number;
+                this.numberBacking = new(value);
+                this.stringBacking = string.Empty;
+                this.arrayBacking = ImmutableList<JsonAny>.Empty;
+                this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
+            }
+
+            /// <summary>
+            /// Initializes a new instance of the <see cref="PropertyNamesEntity"/> struct.
+            /// </summary>
+            /// <param name="value">The value from which to initialize the number.</param>
+            public PropertyNamesEntity(ulong value)
+            {
+                this.jsonElementBacking = default;
+                this.backing = Backing.Number;
+                this.numberBacking = new(value);
+                this.stringBacking = string.Empty;
+                this.arrayBacking = ImmutableList<JsonAny>.Empty;
+                this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
+            }
+
+            /// <summary>
+            /// Conversion to JsonNumber.
             /// </summary>
             /// <param name = "value">The value from which to convert.</param>
             public static implicit operator JsonNumber(PropertyNamesEntity value)
@@ -48,7 +215,7 @@ public readonly partial struct Applicator
             }
 
             /// <summary>
-            /// Conversion to JsonNumber.
+            /// Conversion from JsonNumber.
             /// </summary>
             /// <param name = "value">The value from which to convert.</param>
             public static implicit operator PropertyNamesEntity(JsonNumber value)
@@ -58,81 +225,121 @@ public readonly partial struct Applicator
                     return new(value.AsJsonElement);
                 }
 
-                return new((double)value);
+                return new(value.AsBinaryJsonNumber);
             }
 
             /// <summary>
-            /// Conversion from double.
+            /// Conversion to byte.
             /// </summary>
-            /// <param name = "value">The value to convert.</param>
-            public static implicit operator PropertyNamesEntity(double value)
+            /// <param name="value">The value to convert.</param>
+            /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+            /// <exception cref="FormatException">The value was not formatted as a byte.</exception>
+            public static explicit operator byte(PropertyNamesEntity value)
             {
-                return new(value);
+                if ((value.backing & Backing.JsonElement) != 0)
+                {
+                    return value.jsonElementBacking.SafeGetByte();
+                }
+
+                if ((value.backing & Backing.Number) != 0)
+                {
+                    return value.numberBacking.CreateChecked<byte>();
+                }
+
+                throw new InvalidOperationException();
             }
 
             /// <summary>
-            /// Conversion from long.
+            /// Conversion to decimal.
             /// </summary>
-            /// <param name = "value">The value to convert.</param>
-            public static explicit operator PropertyNamesEntity(long value)
+            /// <param name="value">The value to convert.</param>
+            /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+            /// <exception cref="FormatException">The value was not formatted as a decimal.</exception>
+            public static explicit operator decimal(PropertyNamesEntity value)
             {
-                return new(value);
+                if ((value.backing & Backing.JsonElement) != 0)
+                {
+                    return value.jsonElementBacking.SafeGetDecimal();
+                }
+
+                if ((value.backing & Backing.Number) != 0)
+                {
+                    return value.numberBacking.CreateChecked<decimal>();
+                }
+
+                throw new InvalidOperationException();
             }
 
             /// <summary>
             /// Conversion to double.
             /// </summary>
-            /// <param name = "value">The value to convert.</param>
-            /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-            /// <exception cref = "FormatException">The value was not formatted as a double.</exception>
-            public static explicit operator double (PropertyNamesEntity value)
+            /// <param name="value">The value to convert.</param>
+            /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+            /// <exception cref="FormatException">The value was not formatted as a double.</exception>
+            public static explicit operator double(PropertyNamesEntity value)
             {
                 if ((value.backing & Backing.JsonElement) != 0)
                 {
-                    return value.jsonElementBacking.GetDouble();
+                    return value.jsonElementBacking.SafeGetDouble();
                 }
 
                 if ((value.backing & Backing.Number) != 0)
                 {
-                    return value.numberBacking;
+                    return value.numberBacking.CreateChecked<double>();
                 }
 
                 throw new InvalidOperationException();
             }
 
             /// <summary>
-            /// Conversion to float.
+            /// Conversion to Int16.
             /// </summary>
-            /// <param name = "value">The value to convert.</param>
-            /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-            /// <exception cref = "FormatException">The value was not formatted as a float.</exception>
-            public static explicit operator float (PropertyNamesEntity value)
+            /// <param name="value">The value to convert.</param>
+            /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+            /// <exception cref="FormatException">The value was not formatted as an Int16.</exception>
+            public static explicit operator short(PropertyNamesEntity value)
             {
                 if ((value.backing & Backing.JsonElement) != 0)
                 {
-                    return value.jsonElementBacking.SafeGetSingle();
+                    return value.jsonElementBacking.SafeGetInt16();
                 }
 
                 if ((value.backing & Backing.Number) != 0)
                 {
-                    if (value.numberBacking < float.MinValue || value.numberBacking > float.MaxValue)
-                    {
-                        throw new FormatException();
-                    }
-
-                    return (float)value.numberBacking;
+                    return value.numberBacking.CreateChecked<short>();
                 }
 
                 throw new InvalidOperationException();
             }
 
             /// <summary>
-            /// Conversion to long.
+            /// Conversion to Int32.
             /// </summary>
-            /// <param name = "value">The value to convert.</param>
-            /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-            /// <exception cref = "FormatException">The value was not formatted as a long.</exception>
-            public static explicit operator long (PropertyNamesEntity value)
+            /// <param name="value">The value to convert.</param>
+            /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+            /// <exception cref="FormatException">The value was not formatted as an Int32.</exception>
+            public static explicit operator int(PropertyNamesEntity value)
+            {
+                if ((value.backing & Backing.JsonElement) != 0)
+                {
+                    return value.jsonElementBacking.SafeGetInt32();
+                }
+
+                if ((value.backing & Backing.Number) != 0)
+                {
+                    return value.numberBacking.CreateChecked<int>();
+                }
+
+                throw new InvalidOperationException();
+            }
+
+            /// <summary>
+            /// Conversion to Int64.
+            /// </summary>
+            /// <param name="value">The value to convert.</param>
+            /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+            /// <exception cref="FormatException">The value was not formatted as an Int64.</exception>
+            public static explicit operator long(PropertyNamesEntity value)
             {
                 if ((value.backing & Backing.JsonElement) != 0)
                 {
@@ -141,33 +348,248 @@ public readonly partial struct Applicator
 
                 if ((value.backing & Backing.Number) != 0)
                 {
-                    return (long)value.numberBacking;
+                    return value.numberBacking.CreateChecked<long>();
                 }
 
                 throw new InvalidOperationException();
             }
 
             /// <summary>
-            /// Less than operator.
+            /// Conversion to SByte.
             /// </summary>
-            /// <param name = "left">The LHS of the comparison.</param>
-            /// <param name = "right">The RHS of the comparison.</param>
-            /// <returns><see langword="true"/> if the left is less than the right, otherwise <see langword="false"/>.</returns>
-            public static bool operator <(in PropertyNamesEntity left, in PropertyNamesEntity right)
+            /// <param name="value">The value to convert.</param>
+            /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+            /// <exception cref="FormatException">The value was not formatted as an SByte.</exception>
+            public static explicit operator sbyte(PropertyNamesEntity value)
             {
-                return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && (double)left < (double)right;
+                if ((value.backing & Backing.JsonElement) != 0)
+                {
+                    return value.jsonElementBacking.SafeGetSByte();
+                }
+
+                if ((value.backing & Backing.Number) != 0)
+                {
+                    return value.numberBacking.CreateChecked<sbyte>();
+                }
+
+                throw new InvalidOperationException();
             }
 
             /// <summary>
-            /// Greater than operator.
+            /// Conversion to Half.
             /// </summary>
-            /// <param name = "left">The LHS of the comparison.</param>
-            /// <param name = "right">The RHS of the comparison.</param>
-            /// <returns><see langword="true"/> if the left is greater than the right, otherwise <see langword="false"/>.</returns>
-            public static bool operator>(in PropertyNamesEntity left, in PropertyNamesEntity right)
+            /// <param name="value">The value to convert.</param>
+            /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+            /// <exception cref="FormatException">The value was not formatted as a Single.</exception>
+            public static explicit operator Half(PropertyNamesEntity value)
             {
-                return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && (double)left > (double)right;
+                if ((value.backing & Backing.JsonElement) != 0)
+                {
+                    return value.jsonElementBacking.SafeGetHalf();
+                }
+
+                if ((value.backing & Backing.Number) != 0)
+                {
+                    return value.numberBacking.CreateChecked<Half>();
+                }
+
+                throw new InvalidOperationException();
             }
+
+            /// <summary>
+            /// Conversion to Single.
+            /// </summary>
+            /// <param name="value">The value to convert.</param>
+            /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+            /// <exception cref="FormatException">The value was not formatted as a Single.</exception>
+            public static explicit operator float(PropertyNamesEntity value)
+            {
+                if ((value.backing & Backing.JsonElement) != 0)
+                {
+                    return value.jsonElementBacking.SafeGetSingle();
+                }
+
+                if ((value.backing & Backing.Number) != 0)
+                {
+                    return value.numberBacking.CreateChecked<float>();
+                }
+
+                throw new InvalidOperationException();
+            }
+
+            /// <summary>
+            /// Conversion to UInt16.
+            /// </summary>
+            /// <param name="value">The value to convert.</param>
+            /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+            /// <exception cref="FormatException">The value was not formatted as an UInt16.</exception>
+            public static explicit operator ushort(PropertyNamesEntity value)
+            {
+                if ((value.backing & Backing.JsonElement) != 0)
+                {
+                    return value.jsonElementBacking.SafeGetUInt16();
+                }
+
+                if ((value.backing & Backing.Number) != 0)
+                {
+                    return value.numberBacking.CreateChecked<ushort>();
+                }
+
+                throw new InvalidOperationException();
+            }
+
+            /// <summary>
+            /// Conversion to UInt32.
+            /// </summary>
+            /// <param name="value">The value to convert.</param>
+            /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+            /// <exception cref="FormatException">The value was not formatted as an UInt32.</exception>
+            public static explicit operator uint(PropertyNamesEntity value)
+            {
+                if ((value.backing & Backing.JsonElement) != 0)
+                {
+                    return value.jsonElementBacking.SafeGetUInt32();
+                }
+
+                if ((value.backing & Backing.Number) != 0)
+                {
+                    return value.numberBacking.CreateChecked<uint>();
+                }
+
+                throw new InvalidOperationException();
+            }
+
+            /// <summary>
+            /// Conversion to UInt64.
+            /// </summary>
+            /// <param name="value">The value to convert.</param>
+            /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+            /// <exception cref="FormatException">The value was not formatted as an UInt64.</exception>
+            public static explicit operator ulong(PropertyNamesEntity value)
+            {
+                if ((value.backing & Backing.JsonElement) != 0)
+                {
+                    return value.jsonElementBacking.SafeGetUInt64();
+                }
+
+                if ((value.backing & Backing.Number) != 0)
+                {
+                    return value.numberBacking.CreateChecked<ulong>();
+                }
+
+                throw new InvalidOperationException();
+            }
+
+            /// <summary>
+            /// Conversion from byte.
+            /// </summary>
+            /// <param name="value">The value to convert.</param>
+            public static implicit operator PropertyNamesEntity(byte value)
+            {
+                return new(value);
+            }
+
+            /// <summary>
+            /// Conversion from decimal.
+            /// </summary>
+            /// <param name="value">The value to convert.</param>
+            public static implicit operator PropertyNamesEntity(decimal value)
+            {
+                return new(value);
+            }
+
+            /// <summary>
+            /// Conversion from double.
+            /// </summary>
+            /// <param name="value">The value to convert.</param>
+            public static implicit operator PropertyNamesEntity(double value)
+            {
+                return new(value);
+            }
+
+            /// <summary>
+            /// Conversion from Half.
+            /// </summary>
+            /// <param name="value">The value to convert.</param>
+            public static implicit operator PropertyNamesEntity(Half value)
+            {
+                return new(value);
+            }
+
+            /// <summary>
+            /// Conversion from short.
+            /// </summary>
+            /// <param name="value">The value to convert.</param>
+            public static implicit operator PropertyNamesEntity(short value)
+            {
+                return new(value);
+            }
+
+            /// <summary>
+            /// Conversion from int.
+            /// </summary>
+            /// <param name="value">The value to convert.</param>
+            public static implicit operator PropertyNamesEntity(int value)
+            {
+                return new(value);
+            }
+
+            /// <summary>
+            /// Conversion from long.
+            /// </summary>
+            /// <param name="value">The value to convert.</param>
+            public static implicit operator PropertyNamesEntity(long value)
+            {
+                return new(value);
+            }
+
+            /// <summary>
+            /// Conversion from sbyte.
+            /// </summary>
+            /// <param name="value">The value to convert.</param>
+            public static implicit operator PropertyNamesEntity(sbyte value)
+            {
+                return new(value);
+            }
+
+            /// <summary>
+            /// Conversion from float.
+            /// </summary>
+            /// <param name="value">The value to convert.</param>
+            public static implicit operator PropertyNamesEntity(float value)
+            {
+                return new(value);
+            }
+
+            /// <summary>
+            /// Conversion from ushort.
+            /// </summary>
+            /// <param name="value">The value to convert.</param>
+            public static implicit operator PropertyNamesEntity(ushort value)
+            {
+                return new(value);
+            }
+
+            /// <summary>
+            /// Conversion from uint.
+            /// </summary>
+            /// <param name="value">The value to convert.</param>
+            public static implicit operator PropertyNamesEntity(uint value)
+            {
+                return new(value);
+            }
+
+            /// <summary>
+            /// Conversion from ulong.
+            /// </summary>
+            /// <param name="value">The value to convert.</param>
+            public static implicit operator PropertyNamesEntity(ulong value)
+            {
+                return new(value);
+            }
+
+            /// <inheritdoc/>
+            public BinaryJsonNumber AsBinaryJsonNumber => this.HasDotnetBacking ? this.numberBacking : BinaryJsonNumber.FromJson(this.jsonElementBacking);
         }
     }
 }

@@ -37,7 +37,6 @@ public readonly partial struct Applicator
                 this.jsonElementBacking = default;
                 this.backing = Backing.Array;
                 this.stringBacking = string.Empty;
-                this.boolBacking = default;
                 this.numberBacking = default;
                 this.arrayBacking = value;
                 this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
@@ -52,7 +51,6 @@ public readonly partial struct Applicator
                 this.jsonElementBacking = default;
                 this.backing = Backing.Array;
                 this.stringBacking = string.Empty;
-                this.boolBacking = default;
                 this.numberBacking = default;
                 this.arrayBacking = value.ToImmutableList();
                 this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
@@ -291,7 +289,7 @@ public readonly partial struct Applicator
                 ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
                 foreach (string item in items)
                 {
-                    builder.Add(new JsonAny(item));
+                    builder.Add((JsonAny)item);
                 }
 
                 return new PropertyNamesEntity(builder.ToImmutable());
@@ -307,7 +305,7 @@ public readonly partial struct Applicator
                 ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
                 foreach (double item in items)
                 {
-                    builder.Add(new JsonAny(item));
+                    builder.Add((JsonAny)item);
                 }
 
                 return new PropertyNamesEntity(builder.ToImmutable());
@@ -323,7 +321,7 @@ public readonly partial struct Applicator
                 ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
                 foreach (float item in items)
                 {
-                    builder.Add(new JsonAny(item));
+                    builder.Add((JsonAny)item);
                 }
 
                 return new PropertyNamesEntity(builder.ToImmutable());
@@ -339,7 +337,7 @@ public readonly partial struct Applicator
                 ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
                 foreach (int item in items)
                 {
-                    builder.Add(new JsonAny(item));
+                    builder.Add((JsonAny)item);
                 }
 
                 return new PropertyNamesEntity(builder.ToImmutable());
@@ -355,7 +353,7 @@ public readonly partial struct Applicator
                 ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
                 foreach (long item in items)
                 {
-                    builder.Add(new JsonAny(item));
+                    builder.Add((JsonAny)item);
                 }
 
                 return new PropertyNamesEntity(builder.ToImmutable());
@@ -371,7 +369,7 @@ public readonly partial struct Applicator
                 ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
                 foreach (bool item in items)
                 {
-                    builder.Add(new JsonAny(item));
+                    builder.Add((JsonAny)item);
                 }
 
                 return new PropertyNamesEntity(builder.ToImmutable());

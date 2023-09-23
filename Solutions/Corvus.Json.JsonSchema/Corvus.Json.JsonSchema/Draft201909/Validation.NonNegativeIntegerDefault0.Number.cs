@@ -25,7 +25,7 @@ public readonly partial struct Validation
         /// Initializes a new instance of the <see cref = "NonNegativeIntegerDefault0"/> struct.
         /// </summary>
         /// <param name = "value">The value from which to construct the instance.</param>
-        public NonNegativeIntegerDefault0(double value)
+        public NonNegativeIntegerDefault0(BinaryJsonNumber value)
         {
             this.jsonElementBacking = default;
             this.backing = Backing.Number;
@@ -52,81 +52,184 @@ public readonly partial struct Validation
                 return new(value.AsJsonElement);
             }
 
-            return new((double)value);
+            return new(value.AsBinaryJsonNumber);
         }
 
         /// <summary>
-        /// Conversion from double.
+        /// Initializes a new instance of the <see cref="NonNegativeIntegerDefault0"/> struct.
         /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        public static implicit operator NonNegativeIntegerDefault0(double value)
+        /// <param name="value">The value from which to initialize the number.</param>
+        public NonNegativeIntegerDefault0(short value)
+        : this(new BinaryJsonNumber(value))
         {
-            return new(value);
         }
 
         /// <summary>
-        /// Conversion from long.
+        /// Initializes a new instance of the <see cref="NonNegativeIntegerDefault0"/> struct.
         /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        public static explicit operator NonNegativeIntegerDefault0(long value)
+        /// <param name="value">The value from which to initialize the number.</param>
+        public NonNegativeIntegerDefault0(int value)
+            : this(new BinaryJsonNumber(value))
         {
-            return new(value);
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="NonNegativeIntegerDefault0"/> struct.
+        /// </summary>
+        /// <param name="value">The value from which to initialize the number.</param>
+        public NonNegativeIntegerDefault0(long value)
+            : this(new BinaryJsonNumber(value))
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="NonNegativeIntegerDefault0"/> struct.
+        /// </summary>
+        /// <param name="value">The value from which to initialize the number.</param>
+        public NonNegativeIntegerDefault0(sbyte value)
+            : this(new BinaryJsonNumber(value))
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="NonNegativeIntegerDefault0"/> struct.
+        /// </summary>
+        /// <param name="value">The value from which to initialize the number.</param>
+        public NonNegativeIntegerDefault0(ushort value)
+            : this(new BinaryJsonNumber(value))
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="NonNegativeIntegerDefault0"/> struct.
+        /// </summary>
+        /// <param name="value">The value from which to initialize the number.</param>
+        public NonNegativeIntegerDefault0(uint value)
+            : this(new BinaryJsonNumber(value))
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="NonNegativeIntegerDefault0"/> struct.
+        /// </summary>
+        /// <param name="value">The value from which to initialize the number.</param>
+        public NonNegativeIntegerDefault0(ulong value)
+            : this(new BinaryJsonNumber(value))
+        {
+        }
+
+        /// <summary>
+        /// Conversion to byte.
+        /// </summary>
+        /// <param name="value">The value to convert.</param>
+        /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+        /// <exception cref="FormatException">The value was not formatted as a byte.</exception>
+        public static explicit operator byte(NonNegativeIntegerDefault0 value)
+        {
+            if ((value.backing & Backing.JsonElement) != 0)
+            {
+                return value.jsonElementBacking.SafeGetByte();
+            }
+
+            if ((value.backing & Backing.Number) != 0)
+            {
+                return value.numberBacking.CreateChecked<byte>();
+            }
+
+            throw new InvalidOperationException();
+        }
+
+        /// <summary>
+        /// Conversion to decimal.
+        /// </summary>
+        /// <param name="value">The value to convert.</param>
+        /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+        /// <exception cref="FormatException">The value was not formatted as a decimal.</exception>
+        public static explicit operator decimal(NonNegativeIntegerDefault0 value)
+        {
+            if ((value.backing & Backing.JsonElement) != 0)
+            {
+                return value.jsonElementBacking.SafeGetDecimal();
+            }
+
+            if ((value.backing & Backing.Number) != 0)
+            {
+                return value.numberBacking.CreateChecked<decimal>();
+            }
+
+            throw new InvalidOperationException();
         }
 
         /// <summary>
         /// Conversion to double.
         /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-        /// <exception cref = "FormatException">The value was not formatted as a double.</exception>
-        public static explicit operator double (NonNegativeIntegerDefault0 value)
+        /// <param name="value">The value to convert.</param>
+        /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+        /// <exception cref="FormatException">The value was not formatted as a double.</exception>
+        public static explicit operator double(NonNegativeIntegerDefault0 value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
-                return value.jsonElementBacking.GetDouble();
+                return value.jsonElementBacking.SafeGetDouble();
             }
 
             if ((value.backing & Backing.Number) != 0)
             {
-                return value.numberBacking;
+                return value.numberBacking.CreateChecked<double>();
             }
 
             throw new InvalidOperationException();
         }
 
         /// <summary>
-        /// Conversion to float.
+        /// Conversion to Int16.
         /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-        /// <exception cref = "FormatException">The value was not formatted as a float.</exception>
-        public static explicit operator float (NonNegativeIntegerDefault0 value)
+        /// <param name="value">The value to convert.</param>
+        /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+        /// <exception cref="FormatException">The value was not formatted as an Int16.</exception>
+        public static explicit operator short(NonNegativeIntegerDefault0 value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
-                return value.jsonElementBacking.SafeGetSingle();
+                return value.jsonElementBacking.SafeGetInt16();
             }
 
             if ((value.backing & Backing.Number) != 0)
             {
-                if (value.numberBacking < float.MinValue || value.numberBacking > float.MaxValue)
-                {
-                    throw new FormatException();
-                }
-
-                return (float)value.numberBacking;
+                return value.numberBacking.CreateChecked<short>();
             }
 
             throw new InvalidOperationException();
         }
 
         /// <summary>
-        /// Conversion to long.
+        /// Conversion to Int32.
         /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-        /// <exception cref = "FormatException">The value was not formatted as a long.</exception>
-        public static explicit operator long (NonNegativeIntegerDefault0 value)
+        /// <param name="value">The value to convert.</param>
+        /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+        /// <exception cref="FormatException">The value was not formatted as an Int32.</exception>
+        public static explicit operator int(NonNegativeIntegerDefault0 value)
+        {
+            if ((value.backing & Backing.JsonElement) != 0)
+            {
+                return value.jsonElementBacking.SafeGetInt32();
+            }
+
+            if ((value.backing & Backing.Number) != 0)
+            {
+                return value.numberBacking.CreateChecked<int>();
+            }
+
+            throw new InvalidOperationException();
+        }
+
+        /// <summary>
+        /// Conversion to Int64.
+        /// </summary>
+        /// <param name="value">The value to convert.</param>
+        /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+        /// <exception cref="FormatException">The value was not formatted as an Int64.</exception>
+        public static explicit operator long(NonNegativeIntegerDefault0 value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -135,7 +238,133 @@ public readonly partial struct Validation
 
             if ((value.backing & Backing.Number) != 0)
             {
-                return (long)value.numberBacking;
+                return value.numberBacking.CreateChecked<long>();
+            }
+
+            throw new InvalidOperationException();
+        }
+
+        /// <summary>
+        /// Conversion to SByte.
+        /// </summary>
+        /// <param name="value">The value to convert.</param>
+        /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+        /// <exception cref="FormatException">The value was not formatted as an SByte.</exception>
+        public static explicit operator sbyte(NonNegativeIntegerDefault0 value)
+        {
+            if ((value.backing & Backing.JsonElement) != 0)
+            {
+                return value.jsonElementBacking.SafeGetSByte();
+            }
+
+            if ((value.backing & Backing.Number) != 0)
+            {
+                return value.numberBacking.CreateChecked<sbyte>();
+            }
+
+            throw new InvalidOperationException();
+        }
+
+        /// <summary>
+        /// Conversion to Half.
+        /// </summary>
+        /// <param name="value">The value to convert.</param>
+        /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+        /// <exception cref="FormatException">The value was not formatted as a Single.</exception>
+        public static explicit operator Half(NonNegativeIntegerDefault0 value)
+        {
+            if ((value.backing & Backing.JsonElement) != 0)
+            {
+                return value.jsonElementBacking.SafeGetHalf();
+            }
+
+            if ((value.backing & Backing.Number) != 0)
+            {
+                return value.numberBacking.CreateChecked<Half>();
+            }
+
+            throw new InvalidOperationException();
+        }
+
+        /// <summary>
+        /// Conversion to Single.
+        /// </summary>
+        /// <param name="value">The value to convert.</param>
+        /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+        /// <exception cref="FormatException">The value was not formatted as a Single.</exception>
+        public static explicit operator float(NonNegativeIntegerDefault0 value)
+        {
+            if ((value.backing & Backing.JsonElement) != 0)
+            {
+                return value.jsonElementBacking.SafeGetSingle();
+            }
+
+            if ((value.backing & Backing.Number) != 0)
+            {
+                return value.numberBacking.CreateChecked<float>();
+            }
+
+            throw new InvalidOperationException();
+        }
+
+        /// <summary>
+        /// Conversion to UInt16.
+        /// </summary>
+        /// <param name="value">The value to convert.</param>
+        /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+        /// <exception cref="FormatException">The value was not formatted as an UInt16.</exception>
+        public static explicit operator ushort(NonNegativeIntegerDefault0 value)
+        {
+            if ((value.backing & Backing.JsonElement) != 0)
+            {
+                return value.jsonElementBacking.SafeGetUInt16();
+            }
+
+            if ((value.backing & Backing.Number) != 0)
+            {
+                return value.numberBacking.CreateChecked<ushort>();
+            }
+
+            throw new InvalidOperationException();
+        }
+
+        /// <summary>
+        /// Conversion to UInt32.
+        /// </summary>
+        /// <param name="value">The value to convert.</param>
+        /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+        /// <exception cref="FormatException">The value was not formatted as an UInt32.</exception>
+        public static explicit operator uint(NonNegativeIntegerDefault0 value)
+        {
+            if ((value.backing & Backing.JsonElement) != 0)
+            {
+                return value.jsonElementBacking.SafeGetUInt32();
+            }
+
+            if ((value.backing & Backing.Number) != 0)
+            {
+                return value.numberBacking.CreateChecked<uint>();
+            }
+
+            throw new InvalidOperationException();
+        }
+
+        /// <summary>
+        /// Conversion to UInt64.
+        /// </summary>
+        /// <param name="value">The value to convert.</param>
+        /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+        /// <exception cref="FormatException">The value was not formatted as an UInt64.</exception>
+        public static explicit operator ulong(NonNegativeIntegerDefault0 value)
+        {
+            if ((value.backing & Backing.JsonElement) != 0)
+            {
+                return value.jsonElementBacking.SafeGetUInt64();
+            }
+
+            if ((value.backing & Backing.Number) != 0)
+            {
+                return value.numberBacking.CreateChecked<ulong>();
             }
 
             throw new InvalidOperationException();
@@ -144,23 +373,103 @@ public readonly partial struct Validation
         /// <summary>
         /// Less than operator.
         /// </summary>
-        /// <param name = "left">The LHS of the comparison.</param>
-        /// <param name = "right">The RHS of the comparison.</param>
+        /// <param name="left">The LHS of the comparison.</param>
+        /// <param name="right">The RHS of the comparison.</param>
         /// <returns><see langword="true"/> if the left is less than the right, otherwise <see langword="false"/>.</returns>
         public static bool operator <(in NonNegativeIntegerDefault0 left, in NonNegativeIntegerDefault0 right)
         {
-            return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && (double)left < (double)right;
+            return Compare(left, right) < 0;
         }
 
         /// <summary>
         /// Greater than operator.
         /// </summary>
-        /// <param name = "left">The LHS of the comparison.</param>
-        /// <param name = "right">The RHS of the comparison.</param>
+        /// <param name="left">The LHS of the comparison.</param>
+        /// <param name="right">The RHS of the comparison.</param>
         /// <returns><see langword="true"/> if the left is greater than the right, otherwise <see langword="false"/>.</returns>
-        public static bool operator>(in NonNegativeIntegerDefault0 left, in NonNegativeIntegerDefault0 right)
+        public static bool operator >(in NonNegativeIntegerDefault0 left, in NonNegativeIntegerDefault0 right)
         {
-            return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && (double)left > (double)right;
+            return Compare(left, right) > 0;
         }
+
+        /// <summary>
+        /// Less than operator.
+        /// </summary>
+        /// <param name="left">The LHS of the comparison.</param>
+        /// <param name="right">The RHS of the comparison.</param>
+        /// <returns><see langword="true"/> if the left is less than the right, otherwise <see langword="false"/>.</returns>
+        public static bool operator <=(in NonNegativeIntegerDefault0 left, in NonNegativeIntegerDefault0 right)
+        {
+            return Compare(left, right) <= 0;
+        }
+
+        /// <summary>
+        /// Greater than operator.
+        /// </summary>
+        /// <param name="left">The LHS of the comparison.</param>
+        /// <param name="right">The RHS of the comparison.</param>
+        /// <returns><see langword="true"/> if the left is greater than the right, otherwise <see langword="false"/>.</returns>
+        public static bool operator >=(in NonNegativeIntegerDefault0 left, in NonNegativeIntegerDefault0 right)
+        {
+            return Compare(left, right) >= 0;
+        }
+
+        /// <summary>
+        /// Compare with another number.
+        /// </summary>
+        /// <param name="lhs">The lhs of the comparison.</param>
+        /// <param name="rhs">The rhs of the comparison.</param>
+        /// <returns>0 if the numbers are equal, -1 if the lhs is less than the rhs, and 1 if the lhs is greater than the rhs.</returns>
+        public static int Compare(in NonNegativeIntegerDefault0 lhs, in NonNegativeIntegerDefault0 rhs)
+        {
+            if (lhs.ValueKind != rhs.ValueKind)
+            {
+                // We can't be equal if we are not the same underlying type
+                return -1;
+            }
+
+            if (lhs.IsNull())
+            {
+                // Nulls are always equal
+                return 0;
+            }
+
+            if (lhs.backing == Backing.Number &&
+                rhs.backing == Backing.Number)
+            {
+                return BinaryJsonNumber.Compare(lhs.numberBacking, rhs.numberBacking);
+            }
+
+            // After this point there is no need to check both value kinds because our first quick test verified that they were the same.
+            // If either one is a Backing.Number or a JsonValueKind.Number then we know the rhs is conmpatible.
+            if (lhs.backing == Backing.Number &&
+                rhs.backing == Backing.Number)
+            {
+                return BinaryJsonNumber.Compare(lhs.numberBacking, rhs.numberBacking);
+            }
+
+            if (lhs.backing == Backing.Number &&
+                rhs.backing == Backing.JsonElement)
+            {
+                return BinaryJsonNumber.Compare(lhs.numberBacking, rhs.jsonElementBacking);
+            }
+
+            if (lhs.backing == Backing.JsonElement && rhs.backing == Backing.Number)
+            {
+                return BinaryJsonNumber.Compare(lhs.jsonElementBacking, rhs.numberBacking);
+            }
+
+            if (lhs.backing == Backing.JsonElement && rhs.backing == Backing.JsonElement && rhs.jsonElementBacking.ValueKind == JsonValueKind.Number)
+            {
+                return JsonValueHelpers.NumericCompare(lhs.jsonElementBacking, rhs.jsonElementBacking);
+            }
+
+            throw new InvalidOperationException();
+        }
+
+
+        /// <inheritdoc/>
+        public BinaryJsonNumber AsBinaryJsonNumber => this.HasDotnetBacking ? this.numberBacking : BinaryJsonNumber.FromJson(this.jsonElementBacking);
+
     }
 }
