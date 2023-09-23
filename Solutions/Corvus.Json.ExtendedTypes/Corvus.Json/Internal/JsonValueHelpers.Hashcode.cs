@@ -148,10 +148,19 @@ public static partial class JsonValueHelpers
     {
         if (value.HasJsonElementBacking)
         {
-            double result1 = value.AsJsonElement.GetDouble();
-            return result1.GetHashCode(); // It cannot be null if valueKind is string.
+            // We get a double if we can, otherwise we fall back to a decimal.
+            if (value.AsJsonElement.TryGetDouble(out double result1))
+            {
+                return result1.GetHashCode();
+            }
+
+            if (value.AsJsonElement.TryGetDecimal(out decimal result2))
+            {
+                return result2.GetHashCode();
+            }
         }
 
-        return ((double)value).GetHashCode();
+        // This has the same double if possible, then decimal semantics.
+        return value.AsBinaryJsonNumber.GetHashCode();
     }
 }

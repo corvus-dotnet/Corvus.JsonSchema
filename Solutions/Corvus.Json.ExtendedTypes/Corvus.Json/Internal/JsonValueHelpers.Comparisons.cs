@@ -103,7 +103,7 @@ public static partial class JsonValueHelpers
 
         if (thisKind == JsonValueKind.Number)
         {
-            return CompareNumbers(item1.AsNumber, item2.AsNumber);
+            return item1.AsNumber.Equals(item2.AsNumber);
         }
 
         if (thisKind == JsonValueKind.Object)
@@ -160,7 +160,7 @@ public static partial class JsonValueHelpers
 
         if (thisKind == JsonValueKind.Number)
         {
-            return CompareNumbers(item1.AsNumber, item2.AsNumber);
+            return item1.AsNumber.Equals(item2.AsNumber);
         }
 
         if (thisKind == JsonValueKind.Object)
@@ -217,7 +217,7 @@ public static partial class JsonValueHelpers
 
         if (thisKind == JsonValueKind.Number)
         {
-            return CompareNumbers(item1.AsNumber, item2.AsNumber);
+            return item1.AsNumber.Equals(item2.AsNumber);
         }
 
         if (thisKind == JsonValueKind.Object)
@@ -272,7 +272,7 @@ public static partial class JsonValueHelpers
 
         if (thisKind == JsonValueKind.Number)
         {
-            return CompareNumbers(item1.AsNumber, item2.AsNumber);
+            return item1.AsNumber.Equals(item2.AsNumber);
         }
 
         if (thisKind == JsonValueKind.Object)
@@ -354,22 +354,6 @@ public static partial class JsonValueHelpers
         }
 
         return !rhs.MoveNext();
-    }
-
-    /// <summary>
-    /// Compares two numeric values.
-    /// </summary>
-    /// <typeparam name="TItem1">The type of the first numeric value.</typeparam>
-    /// <typeparam name="TItem2">The type of the second numeric value.</typeparam>
-    /// <param name="item1">The first value.</param>
-    /// <param name="item2">The second value.</param>
-    /// <returns><c>True</c> if they are equal.</returns>
-    /// <exception cref="InvalidOperationException">The values were not numbers.</exception>
-    public static bool CompareNumbers<TItem1, TItem2>(in TItem1 item1, in TItem2 item2)
-        where TItem1 : struct, IJsonNumber<TItem1>
-        where TItem2 : struct, IJsonNumber<TItem2>
-    {
-        return ((double)item1).Equals((double)item2);
     }
 
     /// <summary>

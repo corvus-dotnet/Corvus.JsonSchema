@@ -19,8 +19,7 @@ public readonly partial struct JsonAny : IJsonValue<JsonAny>
     private readonly Backing backing;
     private readonly JsonElement jsonElementBacking;
     private readonly string stringBacking;
-    private readonly bool boolBacking;
-    private readonly double numberBacking;
+    private readonly BinaryJsonNumber numericBacking;
     private readonly ImmutableList<JsonAny> arrayBacking;
     private readonly ImmutableList<JsonObjectProperty> objectBacking;
 
@@ -32,8 +31,6 @@ public readonly partial struct JsonAny : IJsonValue<JsonAny>
         this.jsonElementBacking = default;
         this.backing = Backing.JsonElement;
         this.stringBacking = string.Empty;
-        this.boolBacking = default;
-        this.numberBacking = default;
         this.arrayBacking = ImmutableList<JsonAny>.Empty;
         this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
     }
@@ -47,8 +44,6 @@ public readonly partial struct JsonAny : IJsonValue<JsonAny>
         this.jsonElementBacking = value;
         this.backing = Backing.JsonElement;
         this.stringBacking = string.Empty;
-        this.boolBacking = default;
-        this.numberBacking = default;
         this.arrayBacking = ImmutableList<JsonAny>.Empty;
         this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
     }
@@ -62,8 +57,20 @@ public readonly partial struct JsonAny : IJsonValue<JsonAny>
         this.jsonElementBacking = default;
         this.backing = Backing.String;
         this.stringBacking = value;
-        this.boolBacking = default;
-        this.numberBacking = default;
+        this.arrayBacking = ImmutableList<JsonAny>.Empty;
+        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonAny"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to construct the instance.</param>
+    public JsonAny(BinaryJsonNumber value)
+    {
+        this.jsonElementBacking = default;
+        this.backing = Backing.Number;
+        this.numericBacking = value;
+        this.stringBacking = string.Empty;
         this.arrayBacking = ImmutableList<JsonAny>.Empty;
         this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
     }
@@ -77,38 +84,7 @@ public readonly partial struct JsonAny : IJsonValue<JsonAny>
         this.jsonElementBacking = default;
         this.backing = Backing.Bool;
         this.stringBacking = string.Empty;
-        this.boolBacking = value;
-        this.numberBacking = default;
-        this.arrayBacking = ImmutableList<JsonAny>.Empty;
-        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="JsonAny"/> struct.
-    /// </summary>
-    /// <param name="value">The value from which to construct the instance.</param>
-    public JsonAny(long value)
-    {
-        this.jsonElementBacking = default;
-        this.backing = Backing.Number;
-        this.stringBacking = string.Empty;
-        this.boolBacking = default;
-        this.numberBacking = (double)value;
-        this.arrayBacking = ImmutableList<JsonAny>.Empty;
-        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="JsonAny"/> struct.
-    /// </summary>
-    /// <param name="value">The value from which to construct the instance.</param>
-    public JsonAny(double value)
-    {
-        this.jsonElementBacking = default;
-        this.backing = Backing.Number;
-        this.stringBacking = string.Empty;
-        this.boolBacking = default;
-        this.numberBacking = value;
+        this.numericBacking = new(value); // We reuse the binary number to avoid allocating an extra int.
         this.arrayBacking = ImmutableList<JsonAny>.Empty;
         this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
     }
@@ -122,8 +98,6 @@ public readonly partial struct JsonAny : IJsonValue<JsonAny>
         this.jsonElementBacking = default;
         this.backing = Backing.Array;
         this.stringBacking = string.Empty;
-        this.boolBacking = default;
-        this.numberBacking = default;
         this.arrayBacking = value;
         this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
     }
@@ -137,8 +111,6 @@ public readonly partial struct JsonAny : IJsonValue<JsonAny>
         this.jsonElementBacking = default;
         this.backing = Backing.Object;
         this.stringBacking = string.Empty;
-        this.boolBacking = default;
-        this.numberBacking = default;
         this.arrayBacking = ImmutableList<JsonAny>.Empty;
         this.objectBacking = value;
     }
@@ -178,12 +150,12 @@ public readonly partial struct JsonAny : IJsonValue<JsonAny>
 
             if ((this.backing & Backing.Bool) != 0)
             {
-                return JsonValueHelpers.BoolToJsonElement(this.boolBacking);
+                return JsonValueHelpers.BoolToJsonElement(this.numericBacking.GetByteAsBool());
             }
 
             if ((this.backing & Backing.Number) != 0)
             {
-                return JsonValueHelpers.NumberToJsonElement(this.numberBacking);
+                return JsonValueHelpers.NumberToJsonElement(this.numericBacking);
             }
 
             if ((this.backing & Backing.Null) != 0)
@@ -236,7 +208,7 @@ public readonly partial struct JsonAny : IJsonValue<JsonAny>
 
             if ((this.backing & Backing.Bool) != 0)
             {
-                return new(this.boolBacking);
+                return new(this.numericBacking.GetByteAsBool());
             }
 
             throw new InvalidOperationException();
@@ -255,7 +227,7 @@ public readonly partial struct JsonAny : IJsonValue<JsonAny>
 
             if ((this.backing & Backing.Number) != 0)
             {
-                return new(this.numberBacking);
+                return new(this.numericBacking);
             }
 
             throw new InvalidOperationException();
@@ -323,7 +295,7 @@ public readonly partial struct JsonAny : IJsonValue<JsonAny>
 
             if ((this.backing & Backing.Bool) != 0)
             {
-                return this.boolBacking ? JsonValueKind.True : JsonValueKind.False;
+                return this.numericBacking.GetByteAsBool() ? JsonValueKind.True : JsonValueKind.False;
             }
 
             if ((this.backing & Backing.Number) != 0)
@@ -468,7 +440,7 @@ public readonly partial struct JsonAny : IJsonValue<JsonAny>
 
         if (value.ValueKind == JsonValueKind.Number)
         {
-            return new((double)value.AsNumber);
+            return new(value.AsBinaryJsonNumber);
         }
 
         return Undefined;
@@ -556,9 +528,14 @@ public readonly partial struct JsonAny : IJsonValue<JsonAny>
             return new(boolResult);
         }
 
-        if (double.TryParse(value, out double numberResult))
+        if (double.TryParse(value, out double doubleResult))
         {
-            return new(numberResult);
+            return new(new BinaryJsonNumber(doubleResult));
+        }
+
+        if (decimal.TryParse(value, out decimal decimalResult))
+        {
+            return new(new BinaryJsonNumber(decimalResult));
         }
 
         return new(value);
@@ -583,9 +560,14 @@ public readonly partial struct JsonAny : IJsonValue<JsonAny>
             return new(boolResult);
         }
 
-        if (double.TryParse(valueSpan, out double numberResult))
+        if (double.TryParse(valueSpan, out double doubleResult))
         {
-            return new(numberResult);
+            return new(new BinaryJsonNumber(doubleResult));
+        }
+
+        if (decimal.TryParse(valueSpan, out decimal decimalResult))
+        {
+            return new(new BinaryJsonNumber(decimalResult));
         }
 
         return new(valueSpan.ToString());
@@ -745,13 +727,13 @@ public readonly partial struct JsonAny : IJsonValue<JsonAny>
 
         if ((this.backing & Backing.Bool) != 0)
         {
-            writer.WriteBooleanValue(this.boolBacking);
+            writer.WriteBooleanValue(this.numericBacking.GetByteAsBool());
             return;
         }
 
         if ((this.backing & Backing.Number) != 0)
         {
-            writer.WriteNumberValue(this.numberBacking);
+            this.numericBacking.WriteTo(writer);
             return;
         }
 

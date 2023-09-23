@@ -156,7 +156,7 @@ public static class JsonArrayBuilder<T>
     /// <returns>The new array created from the items.</returns>
     public static T FromRange(IEnumerable<double> value)
     {
-        return T.From(value.Select(static v => new JsonAny(v)).ToImmutableList());
+        return T.From(value.Select(static v => new JsonAny(new BinaryJsonNumber(v))).ToImmutableList());
     }
 
     /// <summary>
@@ -166,7 +166,7 @@ public static class JsonArrayBuilder<T>
     /// <returns>The new array created from the items.</returns>
     public static T FromRange(IEnumerable<long> value)
     {
-        return T.From(value.Select(static v => new JsonAny(v)).ToImmutableList());
+        return T.From(value.Select(static v => new JsonAny(new BinaryJsonNumber(v))).ToImmutableList());
     }
 
     /// <summary>

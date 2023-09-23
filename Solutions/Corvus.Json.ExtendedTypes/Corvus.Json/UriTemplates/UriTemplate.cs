@@ -270,7 +270,7 @@ public readonly struct UriTemplate
     /// <returns>An instance of the template with the updated parameters.</returns>
     public UriTemplate SetParameter(string name, double value)
     {
-        return new UriTemplate(this.template, this.resolvePartially, this.parameters.SetItem(name, new(value)), this.parser);
+        return new UriTemplate(this.template, this.resolvePartially, this.parameters.SetItem(name, new(new BinaryJsonNumber(value))), this.parser);
     }
 
     /// <summary>
@@ -281,7 +281,7 @@ public readonly struct UriTemplate
     /// <returns>An instance of the template with the updated parameters.</returns>
     public UriTemplate SetParameter(string name, int value)
     {
-        return new UriTemplate(this.template, this.resolvePartially, this.parameters.SetItem(name, new(value)), this.parser);
+        return new UriTemplate(this.template, this.resolvePartially, this.parameters.SetItem(name, new(new BinaryJsonNumber(value))), this.parser);
     }
 
     /// <summary>
@@ -292,7 +292,7 @@ public readonly struct UriTemplate
     /// <returns>An instance of the template with the updated parameters.</returns>
     public UriTemplate SetParameter(string name, long value)
     {
-        return new UriTemplate(this.template, this.resolvePartially, this.parameters.SetItem(name, new(value)), this.parser);
+        return new UriTemplate(this.template, this.resolvePartially, this.parameters.SetItem(name, new(new BinaryJsonNumber(value))), this.parser);
     }
 
     /// <summary>
@@ -303,7 +303,7 @@ public readonly struct UriTemplate
     /// <returns>An instance of the template with the updated parameters.</returns>
     public UriTemplate SetParameter(string name, bool value)
     {
-        return new UriTemplate(this.template, this.resolvePartially, this.parameters.SetItem(name, new(value)), this.parser);
+        return new UriTemplate(this.template, this.resolvePartially, this.parameters.SetItem(name, new(new BinaryJsonNumber(value))), this.parser);
     }
 
     /// <summary>

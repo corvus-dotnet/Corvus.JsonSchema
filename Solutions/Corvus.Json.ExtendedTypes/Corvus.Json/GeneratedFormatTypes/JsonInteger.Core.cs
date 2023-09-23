@@ -3,7 +3,6 @@
 // </copyright>
 
 using System.Buffers;
-using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json.Internal;
@@ -18,7 +17,7 @@ public readonly partial struct JsonInteger : IJsonNumber<JsonInteger>
 {
     private readonly Backing backing;
     private readonly JsonElement jsonElementBacking;
-    private readonly double numberBacking;
+    private readonly BinaryJsonNumber numberBacking;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonInteger"/> struct.
@@ -39,6 +38,17 @@ public readonly partial struct JsonInteger : IJsonNumber<JsonInteger>
         this.jsonElementBacking = value;
         this.backing = Backing.JsonElement;
         this.numberBacking = default;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonInteger"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to construct the instance.</param>
+    public JsonInteger(in BinaryJsonNumber value)
+    {
+        this.jsonElementBacking = default;
+        this.backing = Backing.Number;
+        this.numberBacking = value;
     }
 
     /// <summary>
@@ -209,6 +219,9 @@ public readonly partial struct JsonInteger : IJsonNumber<JsonInteger>
         }
     }
 
+    /// <inheritdoc/>
+    public BinaryJsonNumber AsBinaryJsonNumber => this.HasDotnetBacking ? this.numberBacking : BinaryJsonNumber.FromJson(this.jsonElementBacking);
+
     /// <summary>
     /// Equality operator.
     /// </summary>
@@ -232,28 +245,6 @@ public readonly partial struct JsonInteger : IJsonNumber<JsonInteger>
     }
 
     /// <summary>
-    /// Less than operator.
-    /// </summary>
-    /// <param name="left">The LHS of the comparison.</param>
-    /// <param name="right">The RHS of the comparison.</param>
-    /// <returns><see langword="true"/> if the left is less than the right, otherwise <see langword="false"/>.</returns>
-    public static bool operator <(in JsonInteger left, in JsonInteger right)
-    {
-        return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && (double)left < (double)right;
-    }
-
-    /// <summary>
-    /// Greater than operator.
-    /// </summary>
-    /// <param name="left">The LHS of the comparison.</param>
-    /// <param name="right">The RHS of the comparison.</param>
-    /// <returns><see langword="true"/> if the left is greater than the right, otherwise <see langword="false"/>.</returns>
-    public static bool operator >(in JsonInteger left, in JsonInteger right)
-    {
-        return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && (double)left > (double)right;
-    }
-
-    /// <summary>
     /// Gets an instance of the JSON value from a JsonAny value.
     /// </summary>
     /// <param name="value">The <see cref="JsonAny"/> value from which to instantiate the instance.</param>
@@ -272,7 +263,7 @@ public readonly partial struct JsonInteger : IJsonNumber<JsonInteger>
         JsonValueKind valueKind = value.ValueKind;
         return valueKind switch
         {
-            JsonValueKind.Number => new((double)value.AsNumber),
+            JsonValueKind.Number => new(value.AsNumber.AsBinaryJsonNumber),
             JsonValueKind.Null => Null,
             _ => Undefined,
         };
@@ -326,7 +317,7 @@ public readonly partial struct JsonInteger : IJsonNumber<JsonInteger>
     }
 
     /// <summary>
-    /// Gets an instance of the JSON value from a double value.
+    /// Gets an instance of the JSON value from an <see cref="IJsonNumber{T}"/> value.
     /// </summary>
     /// <typeparam name="TValue">The type of the value.</typeparam>
     /// <param name="value">The value from which to instantiate the instance.</param>
@@ -343,7 +334,7 @@ public readonly partial struct JsonInteger : IJsonNumber<JsonInteger>
 
         if (value.ValueKind == JsonValueKind.Number)
         {
-            return new((double)value);
+            return new(value.AsBinaryJsonNumber);
         }
 
         return Undefined;
@@ -544,7 +535,7 @@ public readonly partial struct JsonInteger : IJsonNumber<JsonInteger>
 
         if ((this.backing & Backing.Number) != 0)
         {
-            writer.WriteNumberValue(this.numberBacking);
+            this.numberBacking.WriteTo(writer);
             return;
         }
     }

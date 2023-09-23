@@ -29,7 +29,7 @@ public readonly partial struct <#= TypeName #> : IJsonNumber<<#= TypeName #>>
 {
     private readonly Backing backing;
     private readonly JsonElement jsonElementBacking;
-    private readonly double numberBacking;
+    private readonly BinaryJsonNumber numberBacking;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="<#= TypeName #>"/> struct.
@@ -283,7 +283,7 @@ public readonly partial struct <#= TypeName #> : IJsonNumber<<#= TypeName #>>
         JsonValueKind valueKind = value.ValueKind;
         return valueKind switch
         {
-            JsonValueKind.Number => new((double)value.AsNumber),
+            JsonValueKind.Number => new(value.AsNumber.AsBinaryJsonNumber),
             JsonValueKind.Null => Null,
             _ => Undefined,
         };
@@ -354,7 +354,7 @@ public readonly partial struct <#= TypeName #> : IJsonNumber<<#= TypeName #>>
 
         if (value.ValueKind == JsonValueKind.Number)
         {
-            return new((double)value);
+            return new(value.AsBinaryJsonNumber);
         }
 
         return Undefined;
@@ -514,6 +514,9 @@ public readonly partial struct <#= TypeName #> : IJsonNumber<<#= TypeName #>>
     }
 
     /// <inheritdoc/>
+    public BinaryJsonNumber AsBinaryJsonNumber => this.HasDotnetBacking ? this.numberBacking : BinaryJsonNumber.FromJson(this.jsonElementBacking);
+
+    /// <inheritdoc/>
     public override bool Equals(object? obj)
     {
         return
@@ -555,7 +558,7 @@ public readonly partial struct <#= TypeName #> : IJsonNumber<<#= TypeName #>>
 
         if ((this.backing & Backing.Number) != 0)
         {
-            writer.WriteNumberValue(this.numberBacking);
+            this.numberBacking.WriteTo(writer);
             return;
         }
     }

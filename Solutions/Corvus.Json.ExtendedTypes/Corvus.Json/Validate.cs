@@ -1683,7 +1683,7 @@ public static partial class Validate
     /// <param name="minimum">The optional minimum validation.</param>
     /// <param name="exclusiveMinimum">The optional exclusive minimum validation.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext ValidateNumber<TValue>(in TValue value, in ValidationContext validationContext, ValidationLevel level, double? multipleOf, double? maximum, double? exclusiveMaximum, double? minimum, double? exclusiveMinimum)
+    public static ValidationContext ValidateNumber<TValue>(in TValue value, in ValidationContext validationContext, ValidationLevel level, BinaryJsonNumber multipleOf, BinaryJsonNumber maximum, BinaryJsonNumber exclusiveMaximum, BinaryJsonNumber minimum, BinaryJsonNumber exclusiveMinimum)
         where TValue : struct, IJsonValue
     {
         if (value.ValueKind != JsonValueKind.Number)
@@ -1691,27 +1691,27 @@ public static partial class Validate
             if (level == ValidationLevel.Verbose)
             {
                 ValidationContext ignoredResult = validationContext;
-                if (multipleOf is not null)
+                if (multipleOf.HasValue)
                 {
                     ignoredResult = ignoredResult.WithResult(isValid: true, "Validation 6.2.1 multipleOf - ignored because the value is not a number");
                 }
 
-                if (maximum is not null)
+                if (maximum.HasValue)
                 {
                     ignoredResult = ignoredResult.WithResult(isValid: true, "Validation 6.2.2 maximum- ignored because the value is not a number");
                 }
 
-                if (exclusiveMaximum is not null)
+                if (exclusiveMaximum.HasValue)
                 {
                     ignoredResult = ignoredResult.WithResult(isValid: true, "Validation 6.2.3 exclusiveMaximum - ignored because the value is not a number");
                 }
 
-                if (minimum is not null)
+                if (minimum.HasValue)
                 {
                     ignoredResult = ignoredResult.WithResult(isValid: true, "Validation 6.2.4 minimum - ignored because the value is not a number");
                 }
 
-                if (exclusiveMinimum is not null)
+                if (exclusiveMinimum.HasValue)
                 {
                     ignoredResult = ignoredResult.WithResult(isValid: true, "Validation 6.2.5 exclusiveMinimum - ignored because the value is not a number");
                 }
@@ -1724,22 +1724,22 @@ public static partial class Validate
 
         ValidationContext result = validationContext;
 
-        double currentValue = (double)value.AsNumber;
+        BinaryJsonNumber currentValue = value.AsNumber.AsBinaryJsonNumber;
 
-        if (multipleOf is double mo)
+        if (multipleOf.HasValue)
         {
-            if (Math.Abs(Math.IEEERemainder(currentValue, mo)) <= 1.0E-9)
+            if (currentValue.IsMultipleOf(multipleOf))
             {
                 if (level == ValidationLevel.Verbose)
                 {
-                    result = result.WithResult(isValid: true, $"Validation 6.2.1 multipleOf -  {currentValue} was a multiple of {mo}.");
+                    result = result.WithResult(isValid: true, $"Validation 6.2.1 multipleOf -  {currentValue} was a multiple of {multipleOf}.");
                 }
             }
             else
             {
                 if (level >= ValidationLevel.Detailed)
                 {
-                    result = result.WithResult(isValid: false, $"Validation 6.2.1 multipleOf -  {currentValue} was not a multiple of {mo}.");
+                    result = result.WithResult(isValid: false, $"Validation 6.2.1 multipleOf -  {currentValue} was not a multiple of {multipleOf}.");
                 }
                 else if (level >= ValidationLevel.Basic)
                 {
@@ -1752,20 +1752,20 @@ public static partial class Validate
             }
         }
 
-        if (maximum is double max)
+        if (maximum.HasValue)
         {
-            if (currentValue <= max)
+            if (currentValue <= maximum)
             {
                 if (level == ValidationLevel.Verbose)
                 {
-                    result = result.WithResult(isValid: true, $"Validation 6.2.2 maximum -  {currentValue} was less than or equal to {max}.");
+                    result = result.WithResult(isValid: true, $"Validation 6.2.2 maximum -  {currentValue} was less than or equal to {maximum}.");
                 }
             }
             else
             {
                 if (level >= ValidationLevel.Detailed)
                 {
-                    result = result.WithResult(isValid: false, $"Validation 6.2.2 maximum -  {currentValue} was greater than {max}.");
+                    result = result.WithResult(isValid: false, $"Validation 6.2.2 maximum -  {currentValue} was greater than {maximum}.");
                 }
                 else if (level >= ValidationLevel.Basic)
                 {
@@ -1778,20 +1778,20 @@ public static partial class Validate
             }
         }
 
-        if (exclusiveMaximum is double emax)
+        if (exclusiveMaximum.HasValue)
         {
-            if (currentValue < emax)
+            if (currentValue < exclusiveMaximum)
             {
                 if (level == ValidationLevel.Verbose)
                 {
-                    result = result.WithResult(isValid: true, $"Validation 6.2.3 exclusiveMaximum -  {currentValue} was less than {emax}.");
+                    result = result.WithResult(isValid: true, $"Validation 6.2.3 exclusiveMaximum -  {currentValue} was less than {exclusiveMaximum}.");
                 }
             }
             else
             {
                 if (level >= ValidationLevel.Detailed)
                 {
-                    result = result.WithResult(isValid: false, $"Validation 6.2.3 exclusiveMaximum -  {currentValue} was greater than or equal to {emax}.");
+                    result = result.WithResult(isValid: false, $"Validation 6.2.3 exclusiveMaximum -  {currentValue} was greater than or equal to {exclusiveMaximum}.");
                 }
                 else if (level >= ValidationLevel.Basic)
                 {
@@ -1804,20 +1804,20 @@ public static partial class Validate
             }
         }
 
-        if (minimum is double min)
+        if (minimum.HasValue)
         {
-            if (currentValue >= min)
+            if (currentValue >= minimum)
             {
                 if (level == ValidationLevel.Verbose)
                 {
-                    result = result.WithResult(isValid: true, $"Validation 6.2.4 minimum -  {currentValue} was greater than or equal to {min}.");
+                    result = result.WithResult(isValid: true, $"Validation 6.2.4 minimum -  {currentValue} was greater than or equal to {minimum}.");
                 }
             }
             else
             {
                 if (level >= ValidationLevel.Detailed)
                 {
-                    result = result.WithResult(isValid: false, $"Validation 6.2.4 minimum - {currentValue} was less than {min}.");
+                    result = result.WithResult(isValid: false, $"Validation 6.2.4 minimum - {currentValue} was less than {minimum}.");
                 }
                 else if (level >= ValidationLevel.Basic)
                 {
@@ -1830,20 +1830,20 @@ public static partial class Validate
             }
         }
 
-        if (exclusiveMinimum is double emin)
+        if (exclusiveMinimum.HasValue)
         {
-            if (currentValue > emin)
+            if (currentValue > exclusiveMinimum)
             {
                 if (level == ValidationLevel.Verbose)
                 {
-                    result = result.WithResult(isValid: true, $"Validation 6.2.5 exclusiveMinimum -  {currentValue} was greater than {emin}.");
+                    result = result.WithResult(isValid: true, $"Validation 6.2.5 exclusiveMinimum -  {currentValue} was greater than {exclusiveMinimum}.");
                 }
             }
             else
             {
                 if (level >= ValidationLevel.Detailed)
                 {
-                    result = result.WithResult(isValid: false, $"Validation 6.2.5 exclusiveMinimum -  {currentValue} was less than or equal to {emin}.");
+                    result = result.WithResult(isValid: false, $"Validation 6.2.5 exclusiveMinimum -  {currentValue} was less than or equal to {exclusiveMinimum}.");
                 }
                 else if (level >= ValidationLevel.Basic)
                 {

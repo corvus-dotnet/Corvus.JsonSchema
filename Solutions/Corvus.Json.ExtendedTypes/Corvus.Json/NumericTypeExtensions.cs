@@ -17,39 +17,11 @@ public static class NumericTypeExtensions
     /// <summary>
     /// Safely get an int32 value.
     /// </summary>
-    /// <typeparam name="T">The type of number for which to get the value.</typeparam>
-    /// <param name="value">The value to get.</param>
-    /// <param name="result">The value as an integer.</param>
-    /// <returns><see langword="true"/> if the value coudld be represented as an int32.</returns>
-    public static bool TryGetInt32<T>(this T value, [NotNullWhen(true)] out int result)
-        where T : struct, IJsonNumber<T>
-    {
-        result = default;
-
-        if (value.HasJsonElementBacking)
-        {
-            return TryGetInt32(value.AsJsonElement, out result);
-        }
-
-        double doubleResult = (double)value;
-        if (doubleResult < int.MinValue || doubleResult > int.MaxValue)
-        {
-            return false;
-        }
-
-        result = (int)doubleResult;
-        return Math.Abs(result - doubleResult) < Error;
-    }
-
-    /// <summary>
-    /// Safely get an int32 value.
-    /// </summary>
     /// <param name="value">The value to get.</param>
     /// <param name="result">The value as an integer.</param>
     /// <returns><see langword="true"/> if the value coudld be represented as an int32.</returns>
     public static bool TryGetInt32(this JsonElement value, [NotNullWhen(true)] out int result)
     {
-        result = default;
         if (value.TryGetInt32(out result))
         {
             return true;
@@ -66,6 +38,7 @@ public static class NumericTypeExtensions
             return Math.Abs(result - doubleResult) < Error;
         }
 
+        result = default;
         return false;
     }
 
@@ -86,30 +59,86 @@ public static class NumericTypeExtensions
     }
 
     /// <summary>
-    /// Safely get an single value.
+    /// Safely get an short value.
     /// </summary>
-    /// <typeparam name="T">The type of number for which to get the value.</typeparam>
+    /// <param name="value">The value to get.</param>
+    /// <param name="result">The value as an integer.</param>
+    /// <returns><see langword="true"/> if the value coudld be represented as an int16.</returns>
+    public static bool TryGetInt16(this JsonElement value, [NotNullWhen(true)] out short result)
+    {
+        if (value.TryGetInt16(out result))
+        {
+            return true;
+        }
+
+        if (value.TryGetDouble(out double doubleResult))
+        {
+            if (doubleResult < short.MinValue || doubleResult > short.MaxValue)
+            {
+                return false;
+            }
+
+            result = (short)doubleResult;
+            return Math.Abs(result - doubleResult) < Error;
+        }
+
+        result = default;
+        return false;
+    }
+
+    /// <summary>
+    /// Safely get an short value.
+    /// </summary>
+    /// <param name="value">The value to get.</param>
+    /// <returns>The value as an integer.</returns>
+    /// <exception cref="FormatException">The value could not be formatted as an integer.</exception>
+    public static short SafeGetInt16(this JsonElement value)
+    {
+        if (TryGetInt16(value, out short result))
+        {
+            return result;
+        }
+
+        throw new FormatException();
+    }
+
+    /// <summary>
+    /// Safely get an half value.
+    /// </summary>
     /// <param name="value">The value to get.</param>
     /// <param name="result">The value as an floateger.</param>
     /// <returns><see langword="true"/> if the value coudld be represented as an single.</returns>
-    public static bool TryGetSingle<T>(this T value, [NotNullWhen(true)] out float result)
-        where T : struct, IJsonNumber<T>
+    public static bool TryGetHalf(this JsonElement value, [NotNullWhen(true)] out Half result)
     {
         result = default;
-
-        if (value.HasJsonElementBacking)
+        if (value.TryGetDouble(out double doubleResult))
         {
-            return TryGetSingle(value.AsJsonElement, out result);
+            if (doubleResult < (double)Half.MinValue || doubleResult > (double)Half.MaxValue)
+            {
+                return false;
+            }
+
+            result = (Half)doubleResult;
+            return true;
         }
 
-        double doubleResult = (double)value;
-        if (doubleResult < float.MinValue || doubleResult > float.MaxValue)
+        return false;
+    }
+
+    /// <summary>
+    /// Safely get an Half value.
+    /// </summary>
+    /// <param name="value">The value to get.</param>
+    /// <returns>The value as an floateger.</returns>
+    /// <exception cref="FormatException">The value could not be formatted as an floateger.</exception>
+    public static Half SafeGetHalf(this JsonElement value)
+    {
+        if (TryGetHalf(value, out Half result))
         {
-            return false;
+            return result;
         }
 
-        result = (float)doubleResult;
-        return true;
+        throw new FormatException();
     }
 
     /// <summary>
@@ -120,7 +149,6 @@ public static class NumericTypeExtensions
     /// <returns><see langword="true"/> if the value coudld be represented as an single.</returns>
     public static bool TryGetSingle(this JsonElement value, [NotNullWhen(true)] out float result)
     {
-        result = default;
         if (value.TryGetSingle(out result))
         {
             return true;
@@ -137,6 +165,7 @@ public static class NumericTypeExtensions
             return true;
         }
 
+        result = default;
         return false;
     }
 
@@ -159,25 +188,6 @@ public static class NumericTypeExtensions
     /// <summary>
     /// Safely get an double value.
     /// </summary>
-    /// <typeparam name="T">The type of number for which to get the value.</typeparam>
-    /// <param name="value">The value to get.</param>
-    /// <param name="result">The value as an doubleeger.</param>
-    /// <returns><see langword="true"/> if the value coudld be represented as an double.</returns>
-    public static bool TryGetDouble<T>(this T value, [NotNullWhen(true)] out double result)
-        where T : struct, IJsonNumber<T>
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return value.AsJsonElement.TryGetDouble(out result);
-        }
-
-        result = (double)value;
-        return true;
-    }
-
-    /// <summary>
-    /// Safely get an double value.
-    /// </summary>
     /// <param name="value">The value to get.</param>
     /// <returns>The value as an doubleeger.</returns>
     /// <exception cref="FormatException">The value could not be formatted as an doubleeger.</exception>
@@ -194,28 +204,17 @@ public static class NumericTypeExtensions
     /// <summary>
     /// Safely get an int64 value.
     /// </summary>
-    /// <typeparam name="T">The type of number for which to get the value.</typeparam>
     /// <param name="value">The value to get.</param>
-    /// <param name="result">The value as an integer.</param>
-    /// <returns><see langword="true"/> if the value coudld be represented as an int64.</returns>
-    public static bool TryGetInt64<T>(this T value, [NotNullWhen(true)] out long result)
-        where T : struct, IJsonNumber<T>
+    /// <returns>The value as an integer.</returns>
+    /// <exception cref="FormatException">The value could not be formatted as an integer.</exception>
+    public static decimal SafeGetDecimal(this JsonElement value)
     {
-        result = default;
-
-        if (value.HasJsonElementBacking)
+        if (value.TryGetDecimal(out decimal result))
         {
-            return TryGetInt64(value.AsJsonElement, out result);
+            return result;
         }
 
-        double doubleResult = (double)value;
-        if (doubleResult < long.MinValue || doubleResult > long.MaxValue)
-        {
-            return false;
-        }
-
-        result = (long)doubleResult;
-        return Math.Abs(result - doubleResult) < Error;
+        throw new FormatException();
     }
 
     /// <summary>
@@ -226,7 +225,6 @@ public static class NumericTypeExtensions
     /// <returns><see langword="true"/> if the value coudld be represented as an int64.</returns>
     public static bool TryGetInt64(this JsonElement value, [NotNullWhen(true)] out long result)
     {
-        result = default;
         if (value.TryGetInt64(out result))
         {
             return true;
@@ -239,10 +237,13 @@ public static class NumericTypeExtensions
                 return false;
             }
 
+            double.IsInteger(doubleResult);
+
             result = (long)doubleResult;
             return Math.Abs(result - doubleResult) < Error;
         }
 
+        result = default;
         return false;
     }
 
@@ -262,32 +263,7 @@ public static class NumericTypeExtensions
         throw new FormatException();
     }
 
-    /// <summary>
-    /// Safely get an uint32 value.
-    /// </summary>
-    /// <typeparam name="T">The type of number for which to get the value.</typeparam>
-    /// <param name="value">The value to get.</param>
-    /// <param name="result">The value as an integer.</param>
-    /// <returns><see langword="true"/> if the value coudld be represented as an int64.</returns>
-    public static bool TryGetUInt32<T>(this T value, [NotNullWhen(true)] out uint result)
-        where T : struct, IJsonNumber<T>
-    {
-        result = default;
-
-        if (value.HasJsonElementBacking)
-        {
-            return TryGetUInt32(value.AsJsonElement, out result);
-        }
-
-        double doubleResult = (double)value;
-        if (doubleResult < uint.MinValue || doubleResult > uint.MaxValue)
-        {
-            return false;
-        }
-
-        result = (uint)doubleResult;
-        return Math.Abs(result - doubleResult) < Error;
-    }
+    // NEXT TIME: WORKING ON THESE TRUNCATION/PRECISION DETECTION
 
     /// <summary>
     /// Safely get an uint32 value.
@@ -297,7 +273,6 @@ public static class NumericTypeExtensions
     /// <returns><see langword="true"/> if the value coudld be represented as an int64.</returns>
     public static bool TryGetUInt32(this JsonElement value, [NotNullWhen(true)] out uint result)
     {
-        result = default;
         if (value.TryGetUInt32(out result))
         {
             return true;
@@ -314,6 +289,7 @@ public static class NumericTypeExtensions
             return Math.Abs(result - doubleResult) < Error;
         }
 
+        result = default;
         return false;
     }
 
@@ -336,39 +312,11 @@ public static class NumericTypeExtensions
     /// <summary>
     /// Safely get an ushort value.
     /// </summary>
-    /// <typeparam name="T">The type of number for which to get the value.</typeparam>
-    /// <param name="value">The value to get.</param>
-    /// <param name="result">The value as an integer.</param>
-    /// <returns><see langword="true"/> if the value coudld be represented as an int64.</returns>
-    public static bool TryGetUInt16<T>(this T value, [NotNullWhen(true)] out ushort result)
-        where T : struct, IJsonNumber<T>
-    {
-        result = default;
-
-        if (value.HasJsonElementBacking)
-        {
-            return TryGetUInt16(value.AsJsonElement, out result);
-        }
-
-        double doubleResult = (double)value;
-        if (doubleResult < ushort.MinValue || doubleResult > ushort.MaxValue)
-        {
-            return false;
-        }
-
-        result = (ushort)doubleResult;
-        return Math.Abs(result - doubleResult) < Error;
-    }
-
-    /// <summary>
-    /// Safely get an ushort value.
-    /// </summary>
     /// <param name="value">The value to get.</param>
     /// <param name="result">The value as an integer.</param>
     /// <returns><see langword="true"/> if the value coudld be represented as an int64.</returns>
     public static bool TryGetUInt16(this JsonElement value, [NotNullWhen(true)] out ushort result)
     {
-        result = default;
         if (value.TryGetUInt16(out result))
         {
             return true;
@@ -376,7 +324,7 @@ public static class NumericTypeExtensions
 
         if (value.TryGetDouble(out double doubleResult))
         {
-            if (doubleResult < uint.MinValue || doubleResult > uint.MaxValue)
+            if (doubleResult < ushort.MinValue || doubleResult > ushort.MaxValue)
             {
                 return false;
             }
@@ -385,6 +333,7 @@ public static class NumericTypeExtensions
             return Math.Abs(result - doubleResult) < Error;
         }
 
+        result = default;
         return false;
     }
 
@@ -394,7 +343,7 @@ public static class NumericTypeExtensions
     /// <param name="value">The value to get.</param>
     /// <returns>The value as an integer.</returns>
     /// <exception cref="FormatException">The value could not be formatted as an integer.</exception>
-    public static uint SafeGetUInt16(this JsonElement value)
+    public static ushort SafeGetUInt16(this JsonElement value)
     {
         if (TryGetUInt16(value, out ushort result))
         {
@@ -407,39 +356,11 @@ public static class NumericTypeExtensions
     /// <summary>
     /// Safely get a ulong value.
     /// </summary>
-    /// <typeparam name="T">The type of number for which to get the value.</typeparam>
-    /// <param name="value">The value to get.</param>
-    /// <param name="result">The value as an integer.</param>
-    /// <returns><see langword="true"/> if the value coudld be represented as an int64.</returns>
-    public static bool TryGetUInt64<T>(this T value, [NotNullWhen(true)] out ulong result)
-        where T : struct, IJsonNumber<T>
-    {
-        result = default;
-
-        if (value.HasJsonElementBacking)
-        {
-            return TryGetUInt64(value.AsJsonElement, out result);
-        }
-
-        double doubleResult = (double)value;
-        if (doubleResult < ulong.MinValue || doubleResult > ulong.MaxValue)
-        {
-            return false;
-        }
-
-        result = (ulong)doubleResult;
-        return Math.Abs(result - doubleResult) < Error;
-    }
-
-    /// <summary>
-    /// Safely get a ulong value.
-    /// </summary>
     /// <param name="value">The value to get.</param>
     /// <param name="result">The value as an integer.</param>
     /// <returns><see langword="true"/> if the value coudld be represented as an int64.</returns>
     public static bool TryGetUInt64(this JsonElement value, [NotNullWhen(true)] out ulong result)
     {
-        result = default;
         if (value.TryGetUInt64(out result))
         {
             return true;
@@ -447,7 +368,7 @@ public static class NumericTypeExtensions
 
         if (value.TryGetDouble(out double doubleResult))
         {
-            if (doubleResult < uint.MinValue || doubleResult > uint.MaxValue)
+            if (doubleResult < ulong.MinValue || doubleResult > ulong.MaxValue)
             {
                 return false;
             }
@@ -456,6 +377,7 @@ public static class NumericTypeExtensions
             return Math.Abs(result - doubleResult) < Error;
         }
 
+        result = default;
         return false;
     }
 
@@ -478,39 +400,11 @@ public static class NumericTypeExtensions
     /// <summary>
     /// Safely get a byte value.
     /// </summary>
-    /// <typeparam name="T">The type of number for which to get the value.</typeparam>
-    /// <param name="value">The value to get.</param>
-    /// <param name="result">The value as an integer.</param>
-    /// <returns><see langword="true"/> if the value coudld be represented as an int64.</returns>
-    public static bool TryGetByte<T>(this T value, [NotNullWhen(true)] out byte result)
-        where T : struct, IJsonNumber<T>
-    {
-        result = default;
-
-        if (value.HasJsonElementBacking)
-        {
-            return TryGetByte(value.AsJsonElement, out result);
-        }
-
-        double doubleResult = (double)value;
-        if (doubleResult < byte.MinValue || doubleResult > byte.MaxValue)
-        {
-            return false;
-        }
-
-        result = (byte)doubleResult;
-        return Math.Abs(result - doubleResult) < Error;
-    }
-
-    /// <summary>
-    /// Safely get a byte value.
-    /// </summary>
     /// <param name="value">The value to get.</param>
     /// <param name="result">The value as an integer.</param>
     /// <returns><see langword="true"/> if the value coudld be represented as an int64.</returns>
     public static bool TryGetByte(this JsonElement value, [NotNullWhen(true)] out byte result)
     {
-        result = default;
         if (value.TryGetByte(out result))
         {
             return true;
@@ -518,7 +412,7 @@ public static class NumericTypeExtensions
 
         if (value.TryGetDouble(out double doubleResult))
         {
-            if (doubleResult < uint.MinValue || doubleResult > uint.MaxValue)
+            if (doubleResult < byte.MinValue || doubleResult > byte.MaxValue)
             {
                 return false;
             }
@@ -527,6 +421,7 @@ public static class NumericTypeExtensions
             return Math.Abs(result - doubleResult) < Error;
         }
 
+        result = default;
         return false;
     }
 
@@ -534,8 +429,8 @@ public static class NumericTypeExtensions
     /// Safely get a byte value.
     /// </summary>
     /// <param name="value">The value to get.</param>
-    /// <returns>The value as an integer.</returns>
-    /// <exception cref="FormatException">The value could not be formatted as an integer.</exception>
+    /// <returns>The value as an byte.</returns>
+    /// <exception cref="FormatException">The value could not be formatted as a byte.</exception>
     public static byte SafeGetByte(this JsonElement value)
     {
         if (TryGetByte(value, out byte result))
@@ -547,41 +442,13 @@ public static class NumericTypeExtensions
     }
 
     /// <summary>
-    /// Safely get an sbyte value.
-    /// </summary>
-    /// <typeparam name="T">The type of number for which to get the value.</typeparam>
-    /// <param name="value">The value to get.</param>
-    /// <param name="result">The value as an integer.</param>
-    /// <returns><see langword="true"/> if the value coudld be represented as an int64.</returns>
-    public static bool TryGetSByte<T>(this T value, [NotNullWhen(true)] out sbyte result)
-        where T : struct, IJsonNumber<T>
-    {
-        result = default;
-
-        if (value.HasJsonElementBacking)
-        {
-            return TryGetSByte(value.AsJsonElement, out result);
-        }
-
-        double doubleResult = (double)value;
-        if (doubleResult < sbyte.MinValue || doubleResult > sbyte.MaxValue)
-        {
-            return false;
-        }
-
-        result = (sbyte)doubleResult;
-        return Math.Abs(result - doubleResult) < Error;
-    }
-
-    /// <summary>
-    /// Safely get an sbyte value.
+    /// Safely get and sbyte value.
     /// </summary>
     /// <param name="value">The value to get.</param>
-    /// <param name="result">The value as an integer.</param>
-    /// <returns><see langword="true"/> if the value coudld be represented as an int64.</returns>
+    /// <param name="result">The value as an sbyte.</param>
+    /// <returns><see langword="true"/> if the value could be retrieved as an sbyte.</returns>
     public static bool TryGetSByte(this JsonElement value, [NotNullWhen(true)] out sbyte result)
     {
-        result = default;
         if (value.TryGetSByte(out result))
         {
             return true;
@@ -589,7 +456,7 @@ public static class NumericTypeExtensions
 
         if (value.TryGetDouble(out double doubleResult))
         {
-            if (doubleResult < uint.MinValue || doubleResult > uint.MaxValue)
+            if (doubleResult < sbyte.MinValue || doubleResult > sbyte.MaxValue)
             {
                 return false;
             }
@@ -598,6 +465,7 @@ public static class NumericTypeExtensions
             return Math.Abs(result - doubleResult) < Error;
         }
 
+        result = default;
         return false;
     }
 
