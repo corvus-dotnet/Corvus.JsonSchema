@@ -518,7 +518,11 @@ public readonly partial struct NotDisabled
         return JsonValueHelpers.CompareValues(this, other);
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Equality comparison.
+    /// </summary>
+    /// <param name = "other">The other item with which to compare.</param>
+    /// <returns><see langword="true"/> if the values were equal.</returns>
     public bool Equals(in NotDisabled other)
     {
         return JsonValueHelpers.CompareValues(this, other);

@@ -41,7 +41,7 @@ public readonly partial struct Schema
                 return result;
             }
 
-            result = Corvus.Json.Validate.ValidateNumber(this, result, level, default, default, default, default, __Corvus_ExclusiveMinimum);
+            result = Corvus.Json.Validate.ValidateNumber(this, result, level, BinaryJsonNumber.None, BinaryJsonNumber.None, BinaryJsonNumber.None, BinaryJsonNumber.None, __Corvus_ExclusiveMinimum);
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;

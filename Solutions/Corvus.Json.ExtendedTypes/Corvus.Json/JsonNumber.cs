@@ -14,12 +14,8 @@ namespace Corvus.Json;
 /// </summary>
 public readonly partial struct JsonNumber :
     IJsonNumber<JsonNumber>,
-#if NET8_0
     ISpanFormattable,
     IUtf8SpanFormattable
-#else
-    ISpanFormattable
-#endif
 {
     private readonly Backing backing;
     private readonly JsonElement jsonElementBacking;
@@ -737,7 +733,6 @@ public readonly partial struct JsonNumber :
         throw new InvalidOperationException();
     }
 
-#if NET8_0
     /// <inheritdoc/>
     public bool TryFormat(Span<byte> utf8Destination, out int bytesWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
     {
@@ -762,7 +757,6 @@ public readonly partial struct JsonNumber :
 
         throw new InvalidOperationException();
     }
-#endif
 
     /// <inheritdoc/>
     public string ToString(string? format, IFormatProvider? formatProvider)

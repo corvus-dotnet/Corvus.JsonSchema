@@ -93,6 +93,17 @@ public readonly partial struct JsonNumber
     /// Initializes a new instance of the <see cref="JsonNumber"/> struct.
     /// </summary>
     /// <param name="value">The value from which to initialize the number.</param>
+    public JsonNumber(Int128 value)
+    {
+        this.jsonElementBacking = default;
+        this.backing = Backing.Number;
+        this.numberBacking = new(value);
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonNumber"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to initialize the number.</param>
     public JsonNumber(sbyte value)
     {
         this.jsonElementBacking = default;
@@ -138,6 +149,17 @@ public readonly partial struct JsonNumber
     /// </summary>
     /// <param name="value">The value from which to initialize the number.</param>
     public JsonNumber(ulong value)
+    {
+        this.jsonElementBacking = default;
+        this.backing = Backing.Number;
+        this.numberBacking = new(value);
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonNumber"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to initialize the number.</param>
+    public JsonNumber(UInt128 value)
     {
         this.jsonElementBacking = default;
         this.backing = Backing.Number;

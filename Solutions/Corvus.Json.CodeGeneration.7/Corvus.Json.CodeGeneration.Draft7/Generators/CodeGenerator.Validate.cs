@@ -456,7 +456,7 @@ namespace ");
             #line hidden
             
             #line 154 "./Templates/CodeGenerator.Validate.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( HasMultipleOf ? "__Corvus_MultipleOf" : "default" ));
+            this.Write(this.ToStringHelper.ToStringWithCulture( HasMultipleOf ? "__Corvus_MultipleOf" : "BinaryJsonNumber.None" ));
             
             #line default
             #line hidden
@@ -468,7 +468,7 @@ namespace ");
             #line hidden
             
             #line 155 "./Templates/CodeGenerator.Validate.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( HasMaximum ? "__Corvus_Maximum" : "default" ));
+            this.Write(this.ToStringHelper.ToStringWithCulture( HasMaximum ? "__Corvus_Maximum" : "BinaryJsonNumber.None" ));
             
             #line default
             #line hidden
@@ -480,7 +480,7 @@ namespace ");
             #line hidden
             
             #line 156 "./Templates/CodeGenerator.Validate.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( HasExclusiveMaximum ? "__Corvus_ExclusiveMaximum" : "default" ));
+            this.Write(this.ToStringHelper.ToStringWithCulture( HasExclusiveMaximum ? "__Corvus_ExclusiveMaximum" : "BinaryJsonNumber.None" ));
             
             #line default
             #line hidden
@@ -492,7 +492,7 @@ namespace ");
             #line hidden
             
             #line 157 "./Templates/CodeGenerator.Validate.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( HasMinimum ? "__Corvus_Minimum" : "default" ));
+            this.Write(this.ToStringHelper.ToStringWithCulture( HasMinimum ? "__Corvus_Minimum" : "BinaryJsonNumber.None" ));
             
             #line default
             #line hidden
@@ -504,7 +504,7 @@ namespace ");
             #line hidden
             
             #line 158 "./Templates/CodeGenerator.Validate.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( HasExclusiveMinimum ? "__Corvus_ExclusiveMinimum" : "default" ));
+            this.Write(this.ToStringHelper.ToStringWithCulture( HasExclusiveMinimum ? "__Corvus_ExclusiveMinimum" : "BinaryJsonNumber.None" ));
             
             #line default
             #line hidden

@@ -237,8 +237,6 @@ public static class NumericTypeExtensions
                 return false;
             }
 
-            double.IsInteger(doubleResult);
-
             result = (long)doubleResult;
             return Math.Abs(result - doubleResult) < Error;
         }
@@ -263,7 +261,49 @@ public static class NumericTypeExtensions
         throw new FormatException();
     }
 
-    // NEXT TIME: WORKING ON THESE TRUNCATION/PRECISION DETECTION
+    /// <summary>
+    /// Safely get an int64 value.
+    /// </summary>
+    /// <param name="value">The value to get.</param>
+    /// <param name="result">The value as an integer.</param>
+    /// <returns><see langword="true"/> if the value coudld be represented as an int64.</returns>
+    public static bool TryGetInt128(this JsonElement value, [NotNullWhen(true)] out Int128 result)
+    {
+        if (value.TryGetInt128(out result))
+        {
+            return true;
+        }
+
+        if (value.TryGetDouble(out double doubleResult))
+        {
+            if (doubleResult < (double)Int128.MinValue || doubleResult > (double)Int128.MaxValue)
+            {
+                return false;
+            }
+
+            result = (Int128)doubleResult;
+            return Math.Abs((double)result - doubleResult) < Error;
+        }
+
+        result = default;
+        return false;
+    }
+
+    /// <summary>
+    /// Safely get an int64 value.
+    /// </summary>
+    /// <param name="value">The value to get.</param>
+    /// <returns>The value as an integer.</returns>
+    /// <exception cref="FormatException">The value could not be formatted as an integer.</exception>
+    public static Int128 SafeGetInt128(this JsonElement value)
+    {
+        if (TryGetInt128(value, out Int128 result))
+        {
+            return result;
+        }
+
+        throw new FormatException();
+    }
 
     /// <summary>
     /// Safely get an uint32 value.
@@ -390,6 +430,50 @@ public static class NumericTypeExtensions
     public static ulong SafeGetUInt64(this JsonElement value)
     {
         if (TryGetUInt64(value, out ulong result))
+        {
+            return result;
+        }
+
+        throw new FormatException();
+    }
+
+    /// <summary>
+    /// Safely get a UInt128 value.
+    /// </summary>
+    /// <param name="value">The value to get.</param>
+    /// <param name="result">The value as an integer.</param>
+    /// <returns><see langword="true"/> if the value coudld be represented as an int64.</returns>
+    public static bool TryGetUInt128(this JsonElement value, [NotNullWhen(true)] out UInt128 result)
+    {
+        if (value.TryGetUInt128(out result))
+        {
+            return true;
+        }
+
+        if (value.TryGetDouble(out double doubleResult))
+        {
+            if (doubleResult < (double)UInt128.MinValue || doubleResult > (double)UInt128.MaxValue)
+            {
+                return false;
+            }
+
+            result = (UInt128)doubleResult;
+            return Math.Abs((double)result - doubleResult) < Error;
+        }
+
+        result = default;
+        return false;
+    }
+
+    /// <summary>
+    /// Safely get a ulong value.
+    /// </summary>
+    /// <param name="value">The value to get.</param>
+    /// <returns>The value as an integer.</returns>
+    /// <exception cref="FormatException">The value could not be formatted as an integer.</exception>
+    public static UInt128 SafeGetUInt128(this JsonElement value)
+    {
+        if (TryGetUInt128(value, out UInt128 result))
         {
             return result;
         }

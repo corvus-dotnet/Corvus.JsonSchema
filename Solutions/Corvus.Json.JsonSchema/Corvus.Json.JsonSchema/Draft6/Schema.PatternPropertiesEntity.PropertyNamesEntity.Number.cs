@@ -97,6 +97,14 @@ public readonly partial struct Schema
             /// Initializes a new instance of the <see cref = "PropertyNamesEntity"/> struct.
             /// </summary>
             /// <param name = "value">The value from which to initialize the number.</param>
+            public PropertyNamesEntity(Int128 value) : this(new BinaryJsonNumber(value))
+            {
+            }
+
+            /// <summary>
+            /// Initializes a new instance of the <see cref = "PropertyNamesEntity"/> struct.
+            /// </summary>
+            /// <param name = "value">The value from which to initialize the number.</param>
             public PropertyNamesEntity(sbyte value) : this(new BinaryJsonNumber(value))
             {
             }
@@ -122,6 +130,14 @@ public readonly partial struct Schema
             /// </summary>
             /// <param name = "value">The value from which to initialize the number.</param>
             public PropertyNamesEntity(ulong value) : this(new BinaryJsonNumber(value))
+            {
+            }
+
+            /// <summary>
+            /// Initializes a new instance of the <see cref = "PropertyNamesEntity"/> struct.
+            /// </summary>
+            /// <param name = "value">The value from which to initialize the number.</param>
+            public PropertyNamesEntity(UInt128 value) : this(new BinaryJsonNumber(value))
             {
             }
 
@@ -275,6 +291,27 @@ public readonly partial struct Schema
             }
 
             /// <summary>
+            /// Conversion to Int128.
+            /// </summary>
+            /// <param name = "value">The value to convert.</param>
+            /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
+            /// <exception cref = "FormatException">The value was not formatted as an Int64.</exception>
+            public static explicit operator Int128(PropertyNamesEntity value)
+            {
+                if ((value.backing & Backing.JsonElement) != 0)
+                {
+                    return value.jsonElementBacking.SafeGetInt128();
+                }
+
+                if ((value.backing & Backing.Number) != 0)
+                {
+                    return value.numberBacking.CreateChecked<Int128>();
+                }
+
+                throw new InvalidOperationException();
+            }
+
+            /// <summary>
             /// Conversion to SByte.
             /// </summary>
             /// <param name = "value">The value to convert.</param>
@@ -395,6 +432,27 @@ public readonly partial struct Schema
                 if ((value.backing & Backing.Number) != 0)
                 {
                     return value.numberBacking.CreateChecked<ulong>();
+                }
+
+                throw new InvalidOperationException();
+            }
+
+            /// <summary>
+            /// Conversion to UInt128.
+            /// </summary>
+            /// <param name = "value">The value to convert.</param>
+            /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
+            /// <exception cref = "FormatException">The value was not formatted as an UInt64.</exception>
+            public static explicit operator UInt128(PropertyNamesEntity value)
+            {
+                if ((value.backing & Backing.JsonElement) != 0)
+                {
+                    return value.jsonElementBacking.SafeGetUInt128();
+                }
+
+                if ((value.backing & Backing.Number) != 0)
+                {
+                    return value.numberBacking.CreateChecked<UInt128>();
                 }
 
                 throw new InvalidOperationException();

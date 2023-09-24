@@ -65,6 +65,11 @@ public static class BuiltInTypes
     public static readonly (string Ns, string Type) ClrInt64TypeDeclaration = ("Corvus.Json", "JsonInteger");
 
     /// <summary>
+    /// A clr <see cref="Int128"/> type.
+    /// </summary>
+    public static readonly (string Ns, string Type) ClrInt128TypeDeclaration = ("Corvus.Json", "JsonInteger");
+
+    /// <summary>
     /// A clr <see cref="byte"/> type.
     /// </summary>
     public static readonly (string Ns, string Type) ClrByteTypeDeclaration = ("Corvus.Json", "JsonInteger");
@@ -83,6 +88,11 @@ public static class BuiltInTypes
     /// A clr <see cref="ulong"/> type.
     /// </summary>
     public static readonly (string Ns, string Type) ClrUInt64TypeDeclaration = ("Corvus.Json", "JsonInteger");
+
+    /// <summary>
+    /// A clr <see cref="UInt128"/> type.
+    /// </summary>
+    public static readonly (string Ns, string Type) ClrUInt128TypeDeclaration = ("Corvus.Json", "JsonInteger");
 
     /// <summary>
     /// A clr <see cref="Half"/> type.
@@ -349,10 +359,12 @@ public static class BuiltInTypes
             "int16" => ClrInt16TypeDeclaration,
             "int32" => ClrInt32TypeDeclaration,
             "int64" => ClrInt64TypeDeclaration,
+            "int128" => ClrInt128TypeDeclaration,
             "sbyte" => ClrSByteTypeDeclaration,
             "uint16" => ClrUInt16TypeDeclaration,
             "uint32" => ClrUInt32TypeDeclaration,
             "uint64" => ClrUInt64TypeDeclaration,
+            "uint128" => ClrUInt128TypeDeclaration,
 
             _ => null,
         };

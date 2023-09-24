@@ -59,6 +59,17 @@ public readonly partial struct JsonInteger
     /// Initializes a new instance of the <see cref="JsonInteger"/> struct.
     /// </summary>
     /// <param name="value">The value from which to initialize the number.</param>
+    public JsonInteger(Int128 value)
+    {
+        this.jsonElementBacking = default;
+        this.backing = Backing.Number;
+        this.numberBacking = new(value);
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonInteger"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to initialize the number.</param>
     public JsonInteger(sbyte value)
     {
         this.jsonElementBacking = default;
@@ -93,6 +104,17 @@ public readonly partial struct JsonInteger
     /// </summary>
     /// <param name="value">The value from which to initialize the number.</param>
     public JsonInteger(ulong value)
+    {
+        this.jsonElementBacking = default;
+        this.backing = Backing.Number;
+        this.numberBacking = new(value);
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonInteger"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to initialize the number.</param>
+    public JsonInteger(UInt128 value)
     {
         this.jsonElementBacking = default;
         this.backing = Backing.Number;
@@ -244,6 +266,27 @@ public readonly partial struct JsonInteger
     }
 
     /// <summary>
+    /// Conversion to Int128.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+    /// <exception cref="FormatException">The value was not formatted as an Int64.</exception>
+    public static explicit operator Int128(JsonInteger value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
+        {
+            return value.jsonElementBacking.SafeGetInt128();
+        }
+
+        if ((value.backing & Backing.Number) != 0)
+        {
+            return value.numberBacking.CreateChecked<Int128>();
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    /// <summary>
     /// Conversion to SByte.
     /// </summary>
     /// <param name="value">The value to convert.</param>
@@ -364,6 +407,27 @@ public readonly partial struct JsonInteger
         if ((value.backing & Backing.Number) != 0)
         {
             return value.numberBacking.CreateChecked<ulong>();
+        }
+
+        throw new InvalidOperationException();
+    }
+
+        /// <summary>
+    /// Conversion to UInt64.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+    /// <exception cref="FormatException">The value was not formatted as an UInt64.</exception>
+    public static explicit operator UInt128(JsonInteger value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
+        {
+            return value.jsonElementBacking.SafeGetUInt128();
+        }
+
+        if ((value.backing & Backing.Number) != 0)
+        {
+            return value.numberBacking.CreateChecked<UInt128>();
         }
 
         throw new InvalidOperationException();

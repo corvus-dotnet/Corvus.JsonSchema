@@ -92,6 +92,14 @@ public readonly partial struct Validation
         /// Initializes a new instance of the <see cref = "MinContainsEntity"/> struct.
         /// </summary>
         /// <param name = "value">The value from which to initialize the number.</param>
+        public MinContainsEntity(Int128 value) : this(new BinaryJsonNumber(value))
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref = "MinContainsEntity"/> struct.
+        /// </summary>
+        /// <param name = "value">The value from which to initialize the number.</param>
         public MinContainsEntity(sbyte value) : this(new BinaryJsonNumber(value))
         {
         }
@@ -117,6 +125,14 @@ public readonly partial struct Validation
         /// </summary>
         /// <param name = "value">The value from which to initialize the number.</param>
         public MinContainsEntity(ulong value) : this(new BinaryJsonNumber(value))
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref = "MinContainsEntity"/> struct.
+        /// </summary>
+        /// <param name = "value">The value from which to initialize the number.</param>
+        public MinContainsEntity(UInt128 value) : this(new BinaryJsonNumber(value))
         {
         }
 
@@ -270,6 +286,27 @@ public readonly partial struct Validation
         }
 
         /// <summary>
+        /// Conversion to Int128.
+        /// </summary>
+        /// <param name = "value">The value to convert.</param>
+        /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
+        /// <exception cref = "FormatException">The value was not formatted as an Int64.</exception>
+        public static explicit operator Int128(MinContainsEntity value)
+        {
+            if ((value.backing & Backing.JsonElement) != 0)
+            {
+                return value.jsonElementBacking.SafeGetInt128();
+            }
+
+            if ((value.backing & Backing.Number) != 0)
+            {
+                return value.numberBacking.CreateChecked<Int128>();
+            }
+
+            throw new InvalidOperationException();
+        }
+
+        /// <summary>
         /// Conversion to SByte.
         /// </summary>
         /// <param name = "value">The value to convert.</param>
@@ -390,6 +427,27 @@ public readonly partial struct Validation
             if ((value.backing & Backing.Number) != 0)
             {
                 return value.numberBacking.CreateChecked<ulong>();
+            }
+
+            throw new InvalidOperationException();
+        }
+
+        /// <summary>
+        /// Conversion to UInt128.
+        /// </summary>
+        /// <param name = "value">The value to convert.</param>
+        /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
+        /// <exception cref = "FormatException">The value was not formatted as an UInt64.</exception>
+        public static explicit operator UInt128(MinContainsEntity value)
+        {
+            if ((value.backing & Backing.JsonElement) != 0)
+            {
+                return value.jsonElementBacking.SafeGetUInt128();
+            }
+
+            if ((value.backing & Backing.Number) != 0)
+            {
+                return value.numberBacking.CreateChecked<UInt128>();
             }
 
             throw new InvalidOperationException();

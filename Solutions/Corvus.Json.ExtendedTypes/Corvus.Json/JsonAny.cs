@@ -91,6 +91,15 @@ public readonly partial struct JsonAny
     }
 
     /// <summary>
+    /// Conversion from Int128.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static implicit operator JsonAny(Int128 value)
+    {
+        return new(new BinaryJsonNumber(value));
+    }
+
+    /// <summary>
     /// Conversion from sbyte.
     /// </summary>
     /// <param name="value">The value to convert.</param>
@@ -131,6 +140,15 @@ public readonly partial struct JsonAny
     /// </summary>
     /// <param name="value">The value to convert.</param>
     public static implicit operator JsonAny(ulong value)
+    {
+        return new(new BinaryJsonNumber(value));
+    }
+
+    /// <summary>
+    /// Conversion from UInt128.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static implicit operator JsonAny(UInt128 value)
     {
         return new(new BinaryJsonNumber(value));
     }

@@ -1683,7 +1683,7 @@ public static partial class Validate
     /// <param name="minimum">The optional minimum validation.</param>
     /// <param name="exclusiveMinimum">The optional exclusive minimum validation.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext ValidateNumber<TValue>(in TValue value, in ValidationContext validationContext, ValidationLevel level, BinaryJsonNumber multipleOf, BinaryJsonNumber maximum, BinaryJsonNumber exclusiveMaximum, BinaryJsonNumber minimum, BinaryJsonNumber exclusiveMinimum)
+    public static ValidationContext ValidateNumber<TValue>(in TValue value, in ValidationContext validationContext, ValidationLevel level, in BinaryJsonNumber multipleOf, in BinaryJsonNumber maximum, in BinaryJsonNumber exclusiveMaximum, in BinaryJsonNumber minimum, in BinaryJsonNumber exclusiveMinimum)
         where TValue : struct, IJsonValue
     {
         if (value.ValueKind != JsonValueKind.Number)
@@ -1724,134 +1724,269 @@ public static partial class Validate
 
         ValidationContext result = validationContext;
 
-        BinaryJsonNumber currentValue = value.AsNumber.AsBinaryJsonNumber;
-
-        if (multipleOf.HasValue)
+        if (value.HasJsonElementBacking)
         {
-            if (currentValue.IsMultipleOf(multipleOf))
+            JsonElement number = value.AsNumber.AsJsonElement;
+            if (multipleOf.HasValue)
             {
-                if (level == ValidationLevel.Verbose)
+                if (BinaryJsonNumber.IsMultipleOf(number, multipleOf))
                 {
-                    result = result.WithResult(isValid: true, $"Validation 6.2.1 multipleOf -  {currentValue} was a multiple of {multipleOf}.");
-                }
-            }
-            else
-            {
-                if (level >= ValidationLevel.Detailed)
-                {
-                    result = result.WithResult(isValid: false, $"Validation 6.2.1 multipleOf -  {currentValue} was not a multiple of {multipleOf}.");
-                }
-                else if (level >= ValidationLevel.Basic)
-                {
-                    result = result.WithResult(isValid: false, "Validation 6.2.1 multipleOf - was not a multiple of the required value.");
+                    if (level == ValidationLevel.Verbose)
+                    {
+                        result = result.WithResult(isValid: true, $"Validation 6.2.1 multipleOf -  {value} was a multiple of {multipleOf}.");
+                    }
                 }
                 else
                 {
-                    return validationContext.WithResult(isValid: false);
+                    if (level >= ValidationLevel.Detailed)
+                    {
+                        result = result.WithResult(isValid: false, $"Validation 6.2.1 multipleOf -  {value} was not a multiple of {multipleOf}.");
+                    }
+                    else if (level >= ValidationLevel.Basic)
+                    {
+                        result = result.WithResult(isValid: false, "Validation 6.2.1 multipleOf - was not a multiple of the required value.");
+                    }
+                    else
+                    {
+                        return validationContext.WithResult(isValid: false);
+                    }
+                }
+            }
+
+            if (maximum.HasValue)
+            {
+                if (maximum >= number)
+                {
+                    if (level == ValidationLevel.Verbose)
+                    {
+                        result = result.WithResult(isValid: true, $"Validation 6.2.2 maximum -  {value} was less than or equal to {maximum}.");
+                    }
+                }
+                else
+                {
+                    if (level >= ValidationLevel.Detailed)
+                    {
+                        result = result.WithResult(isValid: false, $"Validation 6.2.2 maximum -  {value} was greater than {maximum}.");
+                    }
+                    else if (level >= ValidationLevel.Basic)
+                    {
+                        result = result.WithResult(isValid: false, "Validation 6.2.2 maximum - was greater than the required value.");
+                    }
+                    else
+                    {
+                        return validationContext.WithResult(isValid: false);
+                    }
+                }
+            }
+
+            if (exclusiveMaximum.HasValue)
+            {
+                if (exclusiveMaximum > number)
+                {
+                    if (level == ValidationLevel.Verbose)
+                    {
+                        result = result.WithResult(isValid: true, $"Validation 6.2.3 exclusiveMaximum -  {value} was less than {exclusiveMaximum}.");
+                    }
+                }
+                else
+                {
+                    if (level >= ValidationLevel.Detailed)
+                    {
+                        result = result.WithResult(isValid: false, $"Validation 6.2.3 exclusiveMaximum -  {value} was greater than or equal to {exclusiveMaximum}.");
+                    }
+                    else if (level >= ValidationLevel.Basic)
+                    {
+                        result = result.WithResult(isValid: false, "Validation 6.2.3 exclusiveMaximum - was greater than or equal to the required value.");
+                    }
+                    else
+                    {
+                        return validationContext.WithResult(isValid: false);
+                    }
+                }
+            }
+
+            if (minimum.HasValue)
+            {
+                if (minimum <= number)
+                {
+                    if (level == ValidationLevel.Verbose)
+                    {
+                        result = result.WithResult(isValid: true, $"Validation 6.2.4 minimum -  {value} was greater than or equal to {minimum}.");
+                    }
+                }
+                else
+                {
+                    if (level >= ValidationLevel.Detailed)
+                    {
+                        result = result.WithResult(isValid: false, $"Validation 6.2.4 minimum - {value} was less than {minimum}.");
+                    }
+                    else if (level >= ValidationLevel.Basic)
+                    {
+                        result = result.WithResult(isValid: false, "Validation 6.2.4 minimum - was less than the required value.");
+                    }
+                    else
+                    {
+                        return validationContext.WithResult(isValid: false);
+                    }
+                }
+            }
+
+            if (exclusiveMinimum.HasValue)
+            {
+                if (exclusiveMinimum < number)
+                {
+                    if (level == ValidationLevel.Verbose)
+                    {
+                        result = result.WithResult(isValid: true, $"Validation 6.2.5 exclusiveMinimum -  {value} was greater than {exclusiveMinimum}.");
+                    }
+                }
+                else
+                {
+                    if (level >= ValidationLevel.Detailed)
+                    {
+                        result = result.WithResult(isValid: false, $"Validation 6.2.5 exclusiveMinimum -  {value} was less than or equal to {exclusiveMinimum}.");
+                    }
+                    else if (level >= ValidationLevel.Basic)
+                    {
+                        result = result.WithResult(isValid: false, "Validation 6.2.5 exclusiveMinimum - was less than or equal to the required value.");
+                    }
+                    else
+                    {
+                        return validationContext.WithResult(isValid: false);
+                    }
                 }
             }
         }
-
-        if (maximum.HasValue)
+        else
         {
-            if (currentValue <= maximum)
+            BinaryJsonNumber currentValue = value.AsNumber.AsBinaryJsonNumber;
+            if (multipleOf.HasValue)
             {
-                if (level == ValidationLevel.Verbose)
+                if (currentValue.IsMultipleOf(multipleOf))
                 {
-                    result = result.WithResult(isValid: true, $"Validation 6.2.2 maximum -  {currentValue} was less than or equal to {maximum}.");
-                }
-            }
-            else
-            {
-                if (level >= ValidationLevel.Detailed)
-                {
-                    result = result.WithResult(isValid: false, $"Validation 6.2.2 maximum -  {currentValue} was greater than {maximum}.");
-                }
-                else if (level >= ValidationLevel.Basic)
-                {
-                    result = result.WithResult(isValid: false, "Validation 6.2.2 maximum - was greater than the required value.");
+                    if (level == ValidationLevel.Verbose)
+                    {
+                        result = result.WithResult(isValid: true, $"Validation 6.2.1 multipleOf -  {currentValue} was a multiple of {multipleOf}.");
+                    }
                 }
                 else
                 {
-                    return validationContext.WithResult(isValid: false);
+                    if (level >= ValidationLevel.Detailed)
+                    {
+                        result = result.WithResult(isValid: false, $"Validation 6.2.1 multipleOf -  {currentValue} was not a multiple of {multipleOf}.");
+                    }
+                    else if (level >= ValidationLevel.Basic)
+                    {
+                        result = result.WithResult(isValid: false, "Validation 6.2.1 multipleOf - was not a multiple of the required value.");
+                    }
+                    else
+                    {
+                        return validationContext.WithResult(isValid: false);
+                    }
                 }
             }
-        }
 
-        if (exclusiveMaximum.HasValue)
-        {
-            if (currentValue < exclusiveMaximum)
+            if (maximum.HasValue)
             {
-                if (level == ValidationLevel.Verbose)
+                if (currentValue <= maximum)
                 {
-                    result = result.WithResult(isValid: true, $"Validation 6.2.3 exclusiveMaximum -  {currentValue} was less than {exclusiveMaximum}.");
-                }
-            }
-            else
-            {
-                if (level >= ValidationLevel.Detailed)
-                {
-                    result = result.WithResult(isValid: false, $"Validation 6.2.3 exclusiveMaximum -  {currentValue} was greater than or equal to {exclusiveMaximum}.");
-                }
-                else if (level >= ValidationLevel.Basic)
-                {
-                    result = result.WithResult(isValid: false, "Validation 6.2.3 exclusiveMaximum - was greater than or equal to the required value.");
+                    if (level == ValidationLevel.Verbose)
+                    {
+                        result = result.WithResult(isValid: true, $"Validation 6.2.2 maximum -  {currentValue} was less than or equal to {maximum}.");
+                    }
                 }
                 else
                 {
-                    return validationContext.WithResult(isValid: false);
+                    if (level >= ValidationLevel.Detailed)
+                    {
+                        result = result.WithResult(isValid: false, $"Validation 6.2.2 maximum -  {currentValue} was greater than {maximum}.");
+                    }
+                    else if (level >= ValidationLevel.Basic)
+                    {
+                        result = result.WithResult(isValid: false, "Validation 6.2.2 maximum - was greater than the required value.");
+                    }
+                    else
+                    {
+                        return validationContext.WithResult(isValid: false);
+                    }
                 }
             }
-        }
 
-        if (minimum.HasValue)
-        {
-            if (currentValue >= minimum)
+            if (exclusiveMaximum.HasValue)
             {
-                if (level == ValidationLevel.Verbose)
+                if (currentValue < exclusiveMaximum)
                 {
-                    result = result.WithResult(isValid: true, $"Validation 6.2.4 minimum -  {currentValue} was greater than or equal to {minimum}.");
-                }
-            }
-            else
-            {
-                if (level >= ValidationLevel.Detailed)
-                {
-                    result = result.WithResult(isValid: false, $"Validation 6.2.4 minimum - {currentValue} was less than {minimum}.");
-                }
-                else if (level >= ValidationLevel.Basic)
-                {
-                    result = result.WithResult(isValid: false, "Validation 6.2.4 minimum - was less than the required value.");
+                    if (level == ValidationLevel.Verbose)
+                    {
+                        result = result.WithResult(isValid: true, $"Validation 6.2.3 exclusiveMaximum -  {currentValue} was less than {exclusiveMaximum}.");
+                    }
                 }
                 else
                 {
-                    return validationContext.WithResult(isValid: false);
+                    if (level >= ValidationLevel.Detailed)
+                    {
+                        result = result.WithResult(isValid: false, $"Validation 6.2.3 exclusiveMaximum -  {currentValue} was greater than or equal to {exclusiveMaximum}.");
+                    }
+                    else if (level >= ValidationLevel.Basic)
+                    {
+                        result = result.WithResult(isValid: false, "Validation 6.2.3 exclusiveMaximum - was greater than or equal to the required value.");
+                    }
+                    else
+                    {
+                        return validationContext.WithResult(isValid: false);
+                    }
                 }
             }
-        }
 
-        if (exclusiveMinimum.HasValue)
-        {
-            if (currentValue > exclusiveMinimum)
+            if (minimum.HasValue)
             {
-                if (level == ValidationLevel.Verbose)
+                if (currentValue >= minimum)
                 {
-                    result = result.WithResult(isValid: true, $"Validation 6.2.5 exclusiveMinimum -  {currentValue} was greater than {exclusiveMinimum}.");
-                }
-            }
-            else
-            {
-                if (level >= ValidationLevel.Detailed)
-                {
-                    result = result.WithResult(isValid: false, $"Validation 6.2.5 exclusiveMinimum -  {currentValue} was less than or equal to {exclusiveMinimum}.");
-                }
-                else if (level >= ValidationLevel.Basic)
-                {
-                    result = result.WithResult(isValid: false, "Validation 6.2.5 exclusiveMinimum - was less than or equal to the required value.");
+                    if (level == ValidationLevel.Verbose)
+                    {
+                        result = result.WithResult(isValid: true, $"Validation 6.2.4 minimum -  {currentValue} was greater than or equal to {minimum}.");
+                    }
                 }
                 else
                 {
-                    return validationContext.WithResult(isValid: false);
+                    if (level >= ValidationLevel.Detailed)
+                    {
+                        result = result.WithResult(isValid: false, $"Validation 6.2.4 minimum - {currentValue} was less than {minimum}.");
+                    }
+                    else if (level >= ValidationLevel.Basic)
+                    {
+                        result = result.WithResult(isValid: false, "Validation 6.2.4 minimum - was less than the required value.");
+                    }
+                    else
+                    {
+                        return validationContext.WithResult(isValid: false);
+                    }
+                }
+            }
+
+            if (exclusiveMinimum.HasValue)
+            {
+                if (currentValue > exclusiveMinimum)
+                {
+                    if (level == ValidationLevel.Verbose)
+                    {
+                        result = result.WithResult(isValid: true, $"Validation 6.2.5 exclusiveMinimum -  {currentValue} was greater than {exclusiveMinimum}.");
+                    }
+                }
+                else
+                {
+                    if (level >= ValidationLevel.Detailed)
+                    {
+                        result = result.WithResult(isValid: false, $"Validation 6.2.5 exclusiveMinimum -  {currentValue} was less than or equal to {exclusiveMinimum}.");
+                    }
+                    else if (level >= ValidationLevel.Basic)
+                    {
+                        result = result.WithResult(isValid: false, "Validation 6.2.5 exclusiveMinimum - was less than or equal to the required value.");
+                    }
+                    else
+                    {
+                        return validationContext.WithResult(isValid: false);
+                    }
                 }
             }
         }

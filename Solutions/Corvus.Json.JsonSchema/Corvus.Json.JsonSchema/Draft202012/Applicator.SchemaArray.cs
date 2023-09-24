@@ -520,7 +520,11 @@ public readonly partial struct Applicator
             return JsonValueHelpers.CompareValues(this, other);
         }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// Equality comparison.
+        /// </summary>
+        /// <param name = "other">The other item with which to compare.</param>
+        /// <returns><see langword="true"/> if the values were equal.</returns>
         public bool Equals(in SchemaArray other)
         {
             return JsonValueHelpers.CompareValues(this, other);

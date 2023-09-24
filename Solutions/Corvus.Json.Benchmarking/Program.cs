@@ -11,7 +11,7 @@ using Perfolizer.Mathematics.OutlierDetection;
 
 var config = ManualConfig.Create(DefaultConfig.Instance);
 config.AddJob(
-    Job.Dry
+    Job.Default
         .WithRuntime(CoreRuntime.Core80)
         .WithOutlierMode(OutlierMode.RemoveAll)
         .WithStrategy(RunStrategy.Throughput));

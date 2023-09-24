@@ -40,7 +40,7 @@ public readonly partial struct HeightRangeDouble
             return result;
         }
 
-        result = Corvus.Json.Validate.ValidateNumber(this, result, level, default, __Corvus_Maximum, default, __Corvus_Minimum, default);
+        result = Corvus.Json.Validate.ValidateNumber(this, result, level, BinaryJsonNumber.None, __Corvus_Maximum, BinaryJsonNumber.None, __Corvus_Minimum, BinaryJsonNumber.None);
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
             return result;
