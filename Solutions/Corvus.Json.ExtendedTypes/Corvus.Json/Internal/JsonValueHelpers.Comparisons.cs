@@ -90,7 +90,7 @@ public static partial class JsonValueHelpers
             JsonValueKind.Number => item1.AsNumber.Equals(item2.AsNumber),
             JsonValueKind.Object => CompareObjects(item1.AsObject, item2.AsObject),
             JsonValueKind.String => CompareStrings(item1.AsString, item2.AsString),
-            _ => false
+            _ => false,
         };
     }
 
@@ -122,7 +122,7 @@ public static partial class JsonValueHelpers
             JsonValueKind.Number => item1.AsNumber.Equals(item2.AsNumber),
             JsonValueKind.Object => CompareObjects(item1.AsObject, item2.AsObject),
             JsonValueKind.String => CompareStrings(item1.AsString, item2.AsString),
-            _ => false
+            _ => false,
         };
     }
 
@@ -154,7 +154,7 @@ public static partial class JsonValueHelpers
             JsonValueKind.Number => item1.AsNumber.Equals(item2.AsNumber),
             JsonValueKind.Object => CompareObjects(item1.AsObject, item2.AsObject),
             JsonValueKind.String => CompareStrings(item1.AsString, item2.AsString),
-            _ => false
+            _ => false,
         };
     }
 
@@ -184,7 +184,7 @@ public static partial class JsonValueHelpers
             JsonValueKind.Number => item1.AsNumber.Equals(item2.AsNumber),
             JsonValueKind.Object => CompareObjects(item1.AsObject, item2.AsObject),
             JsonValueKind.String => CompareStrings(item1.AsString, item2.AsString),
-            _ => false
+            _ => false,
         };
     }
 
