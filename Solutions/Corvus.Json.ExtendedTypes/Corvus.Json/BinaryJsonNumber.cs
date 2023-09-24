@@ -16,10 +16,6 @@ namespace Corvus.Json;
 /// A Binary representation of a JSON number.
 /// </summary>
 public readonly struct BinaryJsonNumber :
-    IEquatable<BinaryJsonNumber>,
-    IComparable<BinaryJsonNumber>,
-    IEquatable<JsonElement>,
-    IComparable<JsonElement>,
 #if NET8_0
     ISpanFormattable,
     IUtf8SpanFormattable
@@ -364,7 +360,7 @@ public readonly struct BinaryJsonNumber :
     /// <param name="right">The right hand side of the comparison.</param>
     /// <returns><see langword="true"/> if the left is less than the right.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool operator <(BinaryJsonNumber left, JsonElement right)
+    public static bool operator <(in BinaryJsonNumber left, in JsonElement right)
     {
         return Compare(left, right) < 0;
     }
@@ -899,7 +895,7 @@ public readonly struct BinaryJsonNumber :
     /// <param name="multipleOf">The factor to test.</param>
     /// <returns><see langword="true"/> if the value is a multuple of the given factor.</returns>
     /// <exception cref="NotSupportedException">The number format is not suported.</exception>
-    public bool IsMultipleOf(BinaryJsonNumber multipleOf)
+    public bool IsMultipleOf(in BinaryJsonNumber multipleOf)
     {
         if (this.numericKind == multipleOf.numericKind)
         {
@@ -946,14 +942,22 @@ public readonly struct BinaryJsonNumber :
                (obj is JsonElement jsonElement && this.Equals(jsonElement));
     }
 
-    /// <inheritdoc/>
-    public bool Equals(BinaryJsonNumber other)
+    /// <summary>
+    /// Equality comparison.
+    /// </summary>
+    /// <param name="other">The value with which to compare.</param>
+    /// <returns><see langword="true"/> if the values are equal.</returns>
+    public bool Equals(in BinaryJsonNumber other)
     {
         return Equals(this, other);
     }
 
-    /// <inheritdoc/>
-    public bool Equals(JsonElement other)
+    /// <summary>
+    /// Equality comparison.
+    /// </summary>
+    /// <param name="other">The value with which to compare.</param>
+    /// <returns><see langword="true"/> if the values are equal.</returns>
+    public bool Equals(in JsonElement other)
     {
         return Equals(this, other);
     }
@@ -992,14 +996,22 @@ public readonly struct BinaryJsonNumber :
         };
     }
 
-    /// <inheritdoc/>
-    public int CompareTo(BinaryJsonNumber other)
+    /// <summary>
+    /// Comparison with another value.
+    /// </summary>
+    /// <param name="other">The value with which to compare.</param>
+    /// <returns>0 if the values are equal, -1 if this value is less than the other, and 1 if this value is greater than the other.</returns>
+    public int CompareTo(in BinaryJsonNumber other)
     {
         return Compare(this, other);
     }
 
-    /// <inheritdoc/>
-    public int CompareTo(JsonElement other)
+    /// <summary>
+    /// Comparison with another value.
+    /// </summary>
+    /// <param name="other">The value with which to compare.</param>
+    /// <returns>0 if the values are equal, -1 if this value is less than the other, and 1 if this value is greater than the other.</returns>
+    public int CompareTo(in JsonElement other)
     {
         return Compare(this, other);
     }

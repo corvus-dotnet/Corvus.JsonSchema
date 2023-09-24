@@ -75,7 +75,7 @@ public readonly partial struct <#= TypeName #> : IJsonValue<<#= TypeName #>>
     /// Initializes a new instance of the <see cref="JsonAny"/> struct.
     /// </summary>
     /// <param name="value">The value from which to construct the instance.</param>
-    public <#= TypeName #>(BinaryJsonNumber value)
+    public <#= TypeName #>(in BinaryJsonNumber value)
     {
         this.jsonElementBacking = default;
         this.backing = Backing.Number;

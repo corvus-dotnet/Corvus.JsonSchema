@@ -65,7 +65,7 @@ public readonly partial struct JsonAny : IJsonValue<JsonAny>
     /// Initializes a new instance of the <see cref="JsonAny"/> struct.
     /// </summary>
     /// <param name="value">The value from which to construct the instance.</param>
-    public JsonAny(BinaryJsonNumber value)
+    public JsonAny(in BinaryJsonNumber value)
     {
         this.jsonElementBacking = default;
         this.backing = Backing.Number;
