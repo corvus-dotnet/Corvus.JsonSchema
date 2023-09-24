@@ -253,21 +253,10 @@ internal class JsonTemplateParameterProvider<TPayload> : ITemplateParameterProvi
         }
         else if (value.ValueKind == JsonValueKind.Number)
         {
-            value.AsNumber.Format
-            double valueNumber = (double)value.AsNumber;
-
-            // The maximum number of digits in a double precision number is 1074; we allocate a little above this
-            char[] bufferArray;
-            Span<char> buffer = bufferArray = ArrayPool<char>.Shared.Rent(1100);
-            try
-            {
-                valueNumber.TryFormat(buffer, out int written);
-                output.Write(buffer[..written]);
-            }
-            finally
-            {
-                ArrayPool<char>.Shared.Return(bufferArray);
-            }
+            JsonNumber number = value.AsNumber;
+            Span<char> buffer = stackalloc char[number.GetMaxCharLength()];
+            number.TryFormat(buffer, out int written, "G", null);
+            output.Write(buffer[..written]);
         }
     }
 

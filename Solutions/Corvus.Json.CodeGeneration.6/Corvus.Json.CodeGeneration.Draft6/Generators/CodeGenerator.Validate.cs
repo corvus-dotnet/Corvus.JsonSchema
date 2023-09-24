@@ -156,12 +156,66 @@ namespace ");
             #line hidden
             
             #line 42 "./Templates/CodeGenerator.Validate.tt"
+  }
+
+    if (HasExclusiveMaximum)
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 46 "./Templates/CodeGenerator.Validate.tt"
+            this.Write("    private static readonly BinaryJsonNumber __Corvus_ExclusiveMaximum = new(");
+            
+            #line default
+            #line hidden
+            
+            #line 46 "./Templates/CodeGenerator.Validate.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( ExclusiveMaximum ));
+            
+            #line default
+            #line hidden
+            
+            #line 46 "./Templates/CodeGenerator.Validate.tt"
+            this.Write(");\r\n\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 48 "./Templates/CodeGenerator.Validate.tt"
+  }
+
+    if (HasExclusiveMinimum)
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 52 "./Templates/CodeGenerator.Validate.tt"
+            this.Write("    private static readonly BinaryJsonNumber __Corvus_ExclusiveMinimum = new(");
+            
+            #line default
+            #line hidden
+            
+            #line 52 "./Templates/CodeGenerator.Validate.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( ExclusiveMinimum ));
+            
+            #line default
+            #line hidden
+            
+            #line 52 "./Templates/CodeGenerator.Validate.tt"
+            this.Write(");\r\n\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 54 "./Templates/CodeGenerator.Validate.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 43 "./Templates/CodeGenerator.Validate.tt"
+            #line 55 "./Templates/CodeGenerator.Validate.tt"
             this.Write(@"    /// <inheritdoc/>
     public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
     {
@@ -179,32 +233,32 @@ namespace ");
             #line default
             #line hidden
             
-            #line 55 "./Templates/CodeGenerator.Validate.tt"
+            #line 67 "./Templates/CodeGenerator.Validate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.LocatedSchema.Location ));
             
             #line default
             #line hidden
             
-            #line 55 "./Templates/CodeGenerator.Validate.tt"
+            #line 67 "./Templates/CodeGenerator.Validate.tt"
             this.Write("\");\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 57 "./Templates/CodeGenerator.Validate.tt"
+            #line 69 "./Templates/CodeGenerator.Validate.tt"
   if (HasAdditionalProperties)
     { 
             
             #line default
             #line hidden
             
-            #line 59 "./Templates/CodeGenerator.Validate.tt"
+            #line 71 "./Templates/CodeGenerator.Validate.tt"
             this.Write("\r\n        result = result.UsingEvaluatedProperties();\r\n");
             
             #line default
             #line hidden
             
-            #line 61 "./Templates/CodeGenerator.Validate.tt"
+            #line 73 "./Templates/CodeGenerator.Validate.tt"
   }
     if (HasAdditionalItems)
     { 
@@ -212,13 +266,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 64 "./Templates/CodeGenerator.Validate.tt"
+            #line 76 "./Templates/CodeGenerator.Validate.tt"
             this.Write("\r\n        result = result.UsingEvaluatedItems();\r\n");
             
             #line default
             #line hidden
             
-            #line 66 "./Templates/CodeGenerator.Validate.tt"
+            #line 78 "./Templates/CodeGenerator.Validate.tt"
   }
     if (HasRef)
     { 
@@ -226,7 +280,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 69 "./Templates/CodeGenerator.Validate.tt"
+            #line 81 "./Templates/CodeGenerator.Validate.tt"
             this.Write("\r\n        result = this.ValidateRef(result, level);\r\n        if (level == Validat" +
                     "ionLevel.Flag && !result.IsValid)\r\n        {\r\n            return result;\r\n      " +
                     "  }\r\n");
@@ -234,7 +288,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 75 "./Templates/CodeGenerator.Validate.tt"
+            #line 87 "./Templates/CodeGenerator.Validate.tt"
   }
     if ((HasExplicitType || HasFormat || HasMediaTypeOrEncoding) || (HasItems || HasContains || HasUniqueItems || HasMaxItems || HasMinItems|| HasAdditionalItems) || (HasDependentRequired || HasLocalProperties || HasRequired || HasMaxProperties || HasMinProperties || HasDependentSchemas || HasPropertyNames || HasPatternProperties || ((AllowsAdditionalProperties && (HasAdditionalProperties)))))
     { 
@@ -242,13 +296,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 78 "./Templates/CodeGenerator.Validate.tt"
+            #line 90 "./Templates/CodeGenerator.Validate.tt"
             this.Write("\r\n        JsonValueKind valueKind = this.ValueKind;\r\n");
             
             #line default
             #line hidden
             
-            #line 80 "./Templates/CodeGenerator.Validate.tt"
+            #line 92 "./Templates/CodeGenerator.Validate.tt"
   }
     if (HasExplicitType || HasFormat || HasMediaTypeOrEncoding)
     {
@@ -258,7 +312,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 85 "./Templates/CodeGenerator.Validate.tt"
+            #line 97 "./Templates/CodeGenerator.Validate.tt"
             this.Write("\r\n        result = this.ValidateType(valueKind, result, level);\r\n        if (leve" +
                     "l == ValidationLevel.Flag && !result.IsValid)\r\n        {\r\n            return res" +
                     "ult;\r\n        }\r\n");
@@ -266,7 +320,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 91 "./Templates/CodeGenerator.Validate.tt"
+            #line 103 "./Templates/CodeGenerator.Validate.tt"
       }
         if (HasFormat)
         { 
@@ -274,7 +328,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 94 "./Templates/CodeGenerator.Validate.tt"
+            #line 106 "./Templates/CodeGenerator.Validate.tt"
             this.Write("\r\n        result = this.ValidateFormat(valueKind, result, level);\r\n        if (le" +
                     "vel == ValidationLevel.Flag && !result.IsValid)\r\n        {\r\n            return r" +
                     "esult;\r\n        }\r\n");
@@ -282,7 +336,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 100 "./Templates/CodeGenerator.Validate.tt"
+            #line 112 "./Templates/CodeGenerator.Validate.tt"
       }
         if (HasMediaTypeOrEncoding)
         { 
@@ -290,7 +344,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 103 "./Templates/CodeGenerator.Validate.tt"
+            #line 115 "./Templates/CodeGenerator.Validate.tt"
             this.Write("\r\n        result = this.ValidateMediaTypeAndEncoding(valueKind, result, level);\r\n" +
                     "        if (level == ValidationLevel.Flag && !result.IsValid)\r\n        {\r\n      " +
                     "      return result;\r\n        }\r\n");
@@ -298,7 +352,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 109 "./Templates/CodeGenerator.Validate.tt"
+            #line 121 "./Templates/CodeGenerator.Validate.tt"
       }
     }
     if (HasConst)
@@ -307,7 +361,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 113 "./Templates/CodeGenerator.Validate.tt"
+            #line 125 "./Templates/CodeGenerator.Validate.tt"
             this.Write("\r\n        result = Corvus.Json.Validate.ValidateConst(this, result, level, __Corv" +
                     "usConstValue);\r\n        if (level == ValidationLevel.Flag && !result.IsValid)\r\n " +
                     "       {\r\n            return result;\r\n        }\r\n");
@@ -315,7 +369,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 119 "./Templates/CodeGenerator.Validate.tt"
+            #line 131 "./Templates/CodeGenerator.Validate.tt"
   }
     if (HasEnum)
     { 
@@ -323,122 +377,146 @@ namespace ");
             #line default
             #line hidden
             
-            #line 122 "./Templates/CodeGenerator.Validate.tt"
+            #line 134 "./Templates/CodeGenerator.Validate.tt"
             this.Write("        result = Corvus.Json.Validate.ValidateEnum(\r\n            this,\r\n         " +
                     "   result,\r\n            level");
             
             #line default
             #line hidden
             
-            #line 125 "./Templates/CodeGenerator.Validate.tt"
+            #line 137 "./Templates/CodeGenerator.Validate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( EnumValues.Length > 0 ? "," : ");" ));
             
             #line default
             #line hidden
             
-            #line 125 "./Templates/CodeGenerator.Validate.tt"
+            #line 137 "./Templates/CodeGenerator.Validate.tt"
             this.Write("\r\n");
             
             #line default
             #line hidden
             
-            #line 126 "./Templates/CodeGenerator.Validate.tt"
+            #line 138 "./Templates/CodeGenerator.Validate.tt"
       for(int enumIndex = 0; enumIndex < EnumValues.Length; ++enumIndex)
         { 
             
             #line default
             #line hidden
             
-            #line 128 "./Templates/CodeGenerator.Validate.tt"
+            #line 140 "./Templates/CodeGenerator.Validate.tt"
             this.Write("            EnumValues.Item");
             
             #line default
             #line hidden
             
-            #line 128 "./Templates/CodeGenerator.Validate.tt"
+            #line 140 "./Templates/CodeGenerator.Validate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( enumIndex ));
             
             #line default
             #line hidden
             
-            #line 128 "./Templates/CodeGenerator.Validate.tt"
+            #line 140 "./Templates/CodeGenerator.Validate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( enumIndex < (EnumValues.Length - 1) ? "," : ");" ));
             
             #line default
             #line hidden
             
-            #line 128 "./Templates/CodeGenerator.Validate.tt"
+            #line 140 "./Templates/CodeGenerator.Validate.tt"
             this.Write("\r\n");
             
             #line default
             #line hidden
             
-            #line 129 "./Templates/CodeGenerator.Validate.tt"
+            #line 141 "./Templates/CodeGenerator.Validate.tt"
       } 
             
             #line default
             #line hidden
             
-            #line 130 "./Templates/CodeGenerator.Validate.tt"
+            #line 142 "./Templates/CodeGenerator.Validate.tt"
             this.Write("        if (level == ValidationLevel.Flag && !result.IsValid)\r\n        {\r\n       " +
                     "     return result;\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 134 "./Templates/CodeGenerator.Validate.tt"
+            #line 146 "./Templates/CodeGenerator.Validate.tt"
   }
-    if (HasMultipleOf || HasMaximum || HasMinimum)
+    if (HasMultipleOf || HasMaximum || HasMinimum || HasExclusiveMaximum || HasExclusiveMinimum)
     { 
             
             #line default
             #line hidden
             
-            #line 137 "./Templates/CodeGenerator.Validate.tt"
+            #line 149 "./Templates/CodeGenerator.Validate.tt"
             this.Write("\r\n        result = Corvus.Json.Validate.ValidateNumber(\r\n            this,\r\n     " +
                     "       result,\r\n            level,\r\n            ");
             
             #line default
             #line hidden
             
-            #line 142 "./Templates/CodeGenerator.Validate.tt"
+            #line 154 "./Templates/CodeGenerator.Validate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( HasMultipleOf ? "__Corvus_MultipleOf" : "default" ));
             
             #line default
             #line hidden
             
-            #line 142 "./Templates/CodeGenerator.Validate.tt"
+            #line 154 "./Templates/CodeGenerator.Validate.tt"
             this.Write(",\r\n            ");
             
             #line default
             #line hidden
             
-            #line 143 "./Templates/CodeGenerator.Validate.tt"
+            #line 155 "./Templates/CodeGenerator.Validate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( HasMaximum ? "__Corvus_Maximum" : "default" ));
             
             #line default
             #line hidden
             
-            #line 143 "./Templates/CodeGenerator.Validate.tt"
-            this.Write(",\r\n            default\r\n            ");
+            #line 155 "./Templates/CodeGenerator.Validate.tt"
+            this.Write(",\r\n            ");
             
             #line default
             #line hidden
             
-            #line 145 "./Templates/CodeGenerator.Validate.tt"
+            #line 156 "./Templates/CodeGenerator.Validate.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( HasExclusiveMaximum ? "__Corvus_ExclusiveMaximum" : "default" ));
+            
+            #line default
+            #line hidden
+            
+            #line 156 "./Templates/CodeGenerator.Validate.tt"
+            this.Write(",\r\n            ");
+            
+            #line default
+            #line hidden
+            
+            #line 157 "./Templates/CodeGenerator.Validate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( HasMinimum ? "__Corvus_Minimum" : "default" ));
             
             #line default
             #line hidden
             
-            #line 145 "./Templates/CodeGenerator.Validate.tt"
-            this.Write(",\r\n            default);\r\n\r\n        if (level == ValidationLevel.Flag && !result." +
-                    "IsValid)\r\n        {\r\n            return result;\r\n        }\r\n");
+            #line 157 "./Templates/CodeGenerator.Validate.tt"
+            this.Write(",\r\n            ");
             
             #line default
             #line hidden
             
-            #line 152 "./Templates/CodeGenerator.Validate.tt"
+            #line 158 "./Templates/CodeGenerator.Validate.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( HasExclusiveMinimum ? "__Corvus_ExclusiveMinimum" : "default" ));
+            
+            #line default
+            #line hidden
+            
+            #line 158 "./Templates/CodeGenerator.Validate.tt"
+            this.Write(");\r\n\r\n        if (level == ValidationLevel.Flag && !result.IsValid)\r\n        {\r\n " +
+                    "           return result;\r\n        }\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 164 "./Templates/CodeGenerator.Validate.tt"
   }
     if (HasMaxLength || HasMinLength || HasPattern)
     { 
@@ -446,51 +524,51 @@ namespace ");
             #line default
             #line hidden
             
-            #line 155 "./Templates/CodeGenerator.Validate.tt"
+            #line 167 "./Templates/CodeGenerator.Validate.tt"
             this.Write("\r\n        result = Corvus.Json.Validate.ValidateString(\r\n            this,\r\n     " +
                     "       result,\r\n            level,\r\n            ");
             
             #line default
             #line hidden
             
-            #line 160 "./Templates/CodeGenerator.Validate.tt"
+            #line 172 "./Templates/CodeGenerator.Validate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( HasMaxLength ? MaxLength : "null" ));
             
             #line default
             #line hidden
             
-            #line 160 "./Templates/CodeGenerator.Validate.tt"
+            #line 172 "./Templates/CodeGenerator.Validate.tt"
             this.Write(",\r\n            ");
             
             #line default
             #line hidden
             
-            #line 161 "./Templates/CodeGenerator.Validate.tt"
+            #line 173 "./Templates/CodeGenerator.Validate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( HasMinLength ? MinLength : "null" ));
             
             #line default
             #line hidden
             
-            #line 161 "./Templates/CodeGenerator.Validate.tt"
+            #line 173 "./Templates/CodeGenerator.Validate.tt"
             this.Write(",\r\n            ");
             
             #line default
             #line hidden
             
-            #line 162 "./Templates/CodeGenerator.Validate.tt"
+            #line 174 "./Templates/CodeGenerator.Validate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( HasPattern ? "__CorvusPatternExpression" : "null" ));
             
             #line default
             #line hidden
             
-            #line 162 "./Templates/CodeGenerator.Validate.tt"
+            #line 174 "./Templates/CodeGenerator.Validate.tt"
             this.Write(");\r\n\r\n        if (level == ValidationLevel.Flag && !result.IsValid)\r\n        {\r\n " +
                     "           return result;\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 168 "./Templates/CodeGenerator.Validate.tt"
+            #line 180 "./Templates/CodeGenerator.Validate.tt"
   }
     if (HasNot)
     { 
@@ -498,7 +576,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 171 "./Templates/CodeGenerator.Validate.tt"
+            #line 183 "./Templates/CodeGenerator.Validate.tt"
             this.Write("\r\n        result = this.ValidateNot(result, level);\r\n        if (level == Validat" +
                     "ionLevel.Flag && !result.IsValid)\r\n        {\r\n            return result;\r\n      " +
                     "  }\r\n");
@@ -506,7 +584,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 177 "./Templates/CodeGenerator.Validate.tt"
+            #line 189 "./Templates/CodeGenerator.Validate.tt"
   }
     if (HasAllOf)
     { 
@@ -514,7 +592,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 180 "./Templates/CodeGenerator.Validate.tt"
+            #line 192 "./Templates/CodeGenerator.Validate.tt"
             this.Write("\r\n        result = this.ValidateAllOf(result, level);\r\n        if (level == Valid" +
                     "ationLevel.Flag && !result.IsValid)\r\n        {\r\n            return result;\r\n    " +
                     "    }\r\n");
@@ -522,7 +600,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 186 "./Templates/CodeGenerator.Validate.tt"
+            #line 198 "./Templates/CodeGenerator.Validate.tt"
   }
     if (HasAnyOf)
     { 
@@ -530,7 +608,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 189 "./Templates/CodeGenerator.Validate.tt"
+            #line 201 "./Templates/CodeGenerator.Validate.tt"
             this.Write("\r\n        result = this.ValidateAnyOf(result, level);\r\n        if (level == Valid" +
                     "ationLevel.Flag && !result.IsValid)\r\n        {\r\n            return result;\r\n    " +
                     "    }\r\n");
@@ -538,7 +616,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 195 "./Templates/CodeGenerator.Validate.tt"
+            #line 207 "./Templates/CodeGenerator.Validate.tt"
   }
     if (HasOneOf)
     { 
@@ -546,7 +624,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 198 "./Templates/CodeGenerator.Validate.tt"
+            #line 210 "./Templates/CodeGenerator.Validate.tt"
             this.Write("\r\n        result = this.ValidateOneOf(result, level);\r\n        if (level == Valid" +
                     "ationLevel.Flag && !result.IsValid)\r\n        {\r\n            return result;\r\n    " +
                     "    }\r\n");
@@ -554,7 +632,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 204 "./Templates/CodeGenerator.Validate.tt"
+            #line 216 "./Templates/CodeGenerator.Validate.tt"
   }
     if (HasDependentRequired || HasLocalProperties || HasRequired || HasMaxProperties || HasMinProperties || HasDependentSchemas || HasPropertyNames || HasPatternProperties || ((AllowsAdditionalProperties && (HasAdditionalProperties)) || !AllowsAdditionalProperties))
     { 
@@ -562,7 +640,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 207 "./Templates/CodeGenerator.Validate.tt"
+            #line 219 "./Templates/CodeGenerator.Validate.tt"
             this.Write("\r\n        result = this.ValidateObject(valueKind, result, level);\r\n        if (le" +
                     "vel == ValidationLevel.Flag && !result.IsValid)\r\n        {\r\n            return r" +
                     "esult;\r\n        }\r\n");
@@ -570,7 +648,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 213 "./Templates/CodeGenerator.Validate.tt"
+            #line 225 "./Templates/CodeGenerator.Validate.tt"
   }
     if (HasItems || HasContains || HasUniqueItems || HasMaxItems || HasMinItems || HasAdditionalItems)
     { 
@@ -578,7 +656,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 216 "./Templates/CodeGenerator.Validate.tt"
+            #line 228 "./Templates/CodeGenerator.Validate.tt"
             this.Write("\r\n        result = this.ValidateArray(valueKind, result, level);\r\n        if (lev" +
                     "el == ValidationLevel.Flag && !result.IsValid)\r\n        {\r\n            return re" +
                     "sult;\r\n        }\r\n");
@@ -586,20 +664,20 @@ namespace ");
             #line default
             #line hidden
             
-            #line 222 "./Templates/CodeGenerator.Validate.tt"
+            #line 234 "./Templates/CodeGenerator.Validate.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 223 "./Templates/CodeGenerator.Validate.tt"
+            #line 235 "./Templates/CodeGenerator.Validate.tt"
             this.Write("        if (level != ValidationLevel.Flag)\r\n        {\r\n            result = resul" +
                     "t.PopLocation();\r\n        }\r\n\r\n        return result;\r\n    }\r\n}\r\n");
             
             #line default
             #line hidden
             
-            #line 231 "./Templates/CodeGenerator.Validate.tt"
+            #line 243 "./Templates/CodeGenerator.Validate.tt"
  EndNesting(); 
             
             #line default

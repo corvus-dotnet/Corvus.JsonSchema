@@ -39,6 +39,18 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     {#>
     private static readonly BinaryJsonNumber __Corvus_Minimum = new(<#= Minimum #>);
 
+<#  }
+
+    if (HasExclusiveMaximum)
+    { #>
+    private static readonly BinaryJsonNumber __Corvus_ExclusiveMaximum = new(<#= ExclusiveMaximum #>);
+
+<#  }
+
+    if (HasExclusiveMinimum)
+    { #>
+    private static readonly BinaryJsonNumber __Corvus_ExclusiveMinimum = new(<#= ExclusiveMinimum #>);
+
 <#  } #>
     /// <inheritdoc/>
     public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
@@ -132,7 +144,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
             return result;
         }
 <#  }
-    if (HasMultipleOf || HasMaximum || HasMinimum)
+    if (HasMultipleOf || HasMaximum || HasMinimum || HasExclusiveMaximum || HasExclusiveMinimum)
     { #>
 
         result = Corvus.Json.Validate.ValidateNumber(
@@ -141,9 +153,9 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
             level,
             <#= HasMultipleOf ? "__Corvus_MultipleOf" : "default" #>,
             <#= HasMaximum ? "__Corvus_Maximum" : "default" #>,
-            default
+            <#= HasExclusiveMaximum ? "__Corvus_ExclusiveMaximum" : "default" #>,
             <#= HasMinimum ? "__Corvus_Minimum" : "default" #>,
-            default);
+            <#= HasExclusiveMinimum ? "__Corvus_ExclusiveMinimum" : "default" #>);
 
         if (level == ValidationLevel.Flag && !result.IsValid)
         {

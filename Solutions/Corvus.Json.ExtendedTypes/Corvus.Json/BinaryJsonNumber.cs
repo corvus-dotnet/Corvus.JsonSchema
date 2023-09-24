@@ -24,7 +24,7 @@ public readonly struct BinaryJsonNumber :
     ISpanFormattable,
     IUtf8SpanFormattable
 #else
-    ISpanFormattable,
+    ISpanFormattable
 #endif
 {
 #if NET8_0
