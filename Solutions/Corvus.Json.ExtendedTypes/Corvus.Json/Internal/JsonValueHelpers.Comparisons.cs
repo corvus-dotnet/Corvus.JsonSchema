@@ -81,42 +81,17 @@ public static partial class JsonValueHelpers
             return false;
         }
 
-        if (thisKind == JsonValueKind.Array)
+        return thisKind switch
         {
-            return CompareArrays(item1.AsArray, item2.AsArray);
-        }
-
-        if (thisKind == JsonValueKind.False || thisKind == JsonValueKind.True)
-        {
-            return true;
-        }
-
-        if (thisKind == JsonValueKind.Null)
-        {
-            return true;
-        }
-
-        if (thisKind == JsonValueKind.Undefined)
-        {
-            return false;
-        }
-
-        if (thisKind == JsonValueKind.Number)
-        {
-            return item1.AsNumber.Equals(item2.AsNumber);
-        }
-
-        if (thisKind == JsonValueKind.Object)
-        {
-            return CompareObjects(item1.AsObject, item2.AsObject);
-        }
-
-        if (thisKind == JsonValueKind.String)
-        {
-            return CompareStrings(item1.AsString, item2.AsString);
-        }
-
-        return false;
+            JsonValueKind.Array => CompareArrays(item1.AsArray, item2.AsArray),
+            JsonValueKind.False or JsonValueKind.True => true,
+            JsonValueKind.Null => true,
+            JsonValueKind.Undefined => false,
+            JsonValueKind.Number => item1.AsNumber.Equals(item2.AsNumber),
+            JsonValueKind.Object => CompareObjects(item1.AsObject, item2.AsObject),
+            JsonValueKind.String => CompareStrings(item1.AsString, item2.AsString),
+            _ => false
+        };
     }
 
     /// <summary>
@@ -138,42 +113,17 @@ public static partial class JsonValueHelpers
             return false;
         }
 
-        if (thisKind == JsonValueKind.Array)
+        return thisKind switch
         {
-            return CompareArrays(item1.AsArray, item2.AsArray);
-        }
-
-        if (thisKind == JsonValueKind.False || thisKind == JsonValueKind.True)
-        {
-            return true;
-        }
-
-        if (thisKind == JsonValueKind.Null)
-        {
-            return true;
-        }
-
-        if (thisKind == JsonValueKind.Undefined)
-        {
-            return false;
-        }
-
-        if (thisKind == JsonValueKind.Number)
-        {
-            return item1.AsNumber.Equals(item2.AsNumber);
-        }
-
-        if (thisKind == JsonValueKind.Object)
-        {
-            return CompareObjects(item1.AsObject, item2.AsObject);
-        }
-
-        if (thisKind == JsonValueKind.String)
-        {
-            return CompareStrings(item1.AsString, item2.AsString);
-        }
-
-        return false;
+            JsonValueKind.Array => CompareArrays(item1.AsArray, item2.AsArray),
+            JsonValueKind.False or JsonValueKind.True => true,
+            JsonValueKind.Null => true,
+            JsonValueKind.Undefined => false,
+            JsonValueKind.Number => item1.AsNumber.Equals(item2.AsNumber),
+            JsonValueKind.Object => CompareObjects(item1.AsObject, item2.AsObject),
+            JsonValueKind.String => CompareStrings(item1.AsString, item2.AsString),
+            _ => false
+        };
     }
 
     /// <summary>
@@ -195,42 +145,17 @@ public static partial class JsonValueHelpers
             return false;
         }
 
-        if (thisKind == JsonValueKind.Array)
+        return thisKind switch
         {
-            return CompareArrays(item1.AsArray, item2.AsArray);
-        }
-
-        if (thisKind == JsonValueKind.False || thisKind == JsonValueKind.True)
-        {
-            return true;
-        }
-
-        if (thisKind == JsonValueKind.Null)
-        {
-            return true;
-        }
-
-        if (thisKind == JsonValueKind.Undefined)
-        {
-            return false;
-        }
-
-        if (thisKind == JsonValueKind.Number)
-        {
-            return item1.AsNumber.Equals(item2.AsNumber);
-        }
-
-        if (thisKind == JsonValueKind.Object)
-        {
-            return CompareObjects(item1.AsObject, item2.AsObject);
-        }
-
-        if (thisKind == JsonValueKind.String)
-        {
-            return CompareStrings(item1.AsString, item2.AsString);
-        }
-
-        return false;
+            JsonValueKind.Array => CompareArrays(item1.AsArray, item2.AsArray),
+            JsonValueKind.False or JsonValueKind.True => true,
+            JsonValueKind.Null => true,
+            JsonValueKind.Undefined => false,
+            JsonValueKind.Number => item1.AsNumber.Equals(item2.AsNumber),
+            JsonValueKind.Object => CompareObjects(item1.AsObject, item2.AsObject),
+            JsonValueKind.String => CompareStrings(item1.AsString, item2.AsString),
+            _ => false
+        };
     }
 
     /// <summary>
@@ -250,42 +175,17 @@ public static partial class JsonValueHelpers
             return false;
         }
 
-        if (thisKind == JsonValueKind.Array)
+        return thisKind switch
         {
-            return CompareArrays(item1.AsArray, item2.AsArray);
-        }
-
-        if (thisKind == JsonValueKind.False || thisKind == JsonValueKind.True)
-        {
-            return true;
-        }
-
-        if (thisKind == JsonValueKind.Null)
-        {
-            return true;
-        }
-
-        if (thisKind == JsonValueKind.Undefined)
-        {
-            return true;
-        }
-
-        if (thisKind == JsonValueKind.Number)
-        {
-            return item1.AsNumber.Equals(item2.AsNumber);
-        }
-
-        if (thisKind == JsonValueKind.Object)
-        {
-            return CompareObjects(item1.AsObject, item2.AsObject);
-        }
-
-        if (thisKind == JsonValueKind.String)
-        {
-            return CompareStrings(item1.AsString, item2.AsString);
-        }
-
-        return false;
+            JsonValueKind.Array => CompareArrays(item1.AsArray, item2.AsArray),
+            JsonValueKind.False or JsonValueKind.True => true,
+            JsonValueKind.Null => true,
+            JsonValueKind.Undefined => true,
+            JsonValueKind.Number => item1.AsNumber.Equals(item2.AsNumber),
+            JsonValueKind.Object => CompareObjects(item1.AsObject, item2.AsObject),
+            JsonValueKind.String => CompareStrings(item1.AsString, item2.AsString),
+            _ => false
+        };
     }
 
     /// <summary>
