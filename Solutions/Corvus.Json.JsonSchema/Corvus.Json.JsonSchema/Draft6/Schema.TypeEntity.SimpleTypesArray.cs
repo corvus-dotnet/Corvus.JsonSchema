@@ -516,14 +516,14 @@ public readonly partial struct Schema
             }
 
             /// <inheritdoc/>
-            public bool Equals<T>(T other)
+            public bool Equals<T>(in T other)
                 where T : struct, IJsonValue<T>
             {
                 return JsonValueHelpers.CompareValues(this, other);
             }
 
             /// <inheritdoc/>
-            public bool Equals(SimpleTypesArray other)
+            public bool Equals(in SimpleTypesArray other)
             {
                 return JsonValueHelpers.CompareValues(this, other);
             }

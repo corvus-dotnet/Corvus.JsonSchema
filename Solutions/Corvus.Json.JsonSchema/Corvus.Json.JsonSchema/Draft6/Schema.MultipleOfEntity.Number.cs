@@ -25,7 +25,7 @@ public readonly partial struct Schema
         /// Initializes a new instance of the <see cref = "MultipleOfEntity"/> struct.
         /// </summary>
         /// <param name = "value">The value from which to construct the instance.</param>
-        public MultipleOfEntity(BinaryJsonNumber value)
+        public MultipleOfEntity(in BinaryJsonNumber value)
         {
             this.jsonElementBacking = default;
             this.backing = Backing.Number;

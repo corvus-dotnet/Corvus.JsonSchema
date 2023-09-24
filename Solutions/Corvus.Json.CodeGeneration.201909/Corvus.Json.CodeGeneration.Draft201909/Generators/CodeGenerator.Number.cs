@@ -137,8 +137,8 @@ namespace ");
             #line hidden
             
             #line 39 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
-            this.Write("(BinaryJsonNumber value)\r\n    {\r\n        this.jsonElementBacking = default;\r\n    " +
-                    "    this.backing = Backing.Number;\r\n        this.numberBacking = value;\r\n");
+            this.Write("(in BinaryJsonNumber value)\r\n    {\r\n        this.jsonElementBacking = default;\r\n " +
+                    "       this.backing = Backing.Number;\r\n        this.numberBacking = value;\r\n");
             
             #line default
             #line hidden

@@ -25,7 +25,7 @@ public readonly partial struct Validation
         /// Initializes a new instance of the <see cref = "MinContainsEntity"/> struct.
         /// </summary>
         /// <param name = "value">The value from which to construct the instance.</param>
-        public MinContainsEntity(BinaryJsonNumber value)
+        public MinContainsEntity(in BinaryJsonNumber value)
         {
             this.jsonElementBacking = default;
             this.backing = Backing.Number;

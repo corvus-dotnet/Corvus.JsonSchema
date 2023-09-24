@@ -27,7 +27,7 @@ public readonly partial struct Applicator
             /// Initializes a new instance of the <see cref = "PropertyNamesEntity"/> struct.
             /// </summary>
             /// <param name = "value">The value from which to construct the instance.</param>
-            public PropertyNamesEntity(BinaryJsonNumber value)
+            public PropertyNamesEntity(in BinaryJsonNumber value)
             {
                 this.jsonElementBacking = default;
                 this.backing = Backing.Number;

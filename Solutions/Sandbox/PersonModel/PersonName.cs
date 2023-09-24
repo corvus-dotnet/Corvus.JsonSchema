@@ -512,14 +512,14 @@ public readonly partial struct PersonName
     }
 
     /// <inheritdoc/>
-    public bool Equals<T>(T other)
+    public bool Equals<T>(in T other)
         where T : struct, IJsonValue<T>
     {
         return JsonValueHelpers.CompareValues(this, other);
     }
 
     /// <inheritdoc/>
-    public bool Equals(PersonName other)
+    public bool Equals(in PersonName other)
     {
         return JsonValueHelpers.CompareValues(this, other);
     }

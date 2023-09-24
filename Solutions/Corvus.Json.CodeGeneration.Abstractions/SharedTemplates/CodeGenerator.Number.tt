@@ -36,7 +36,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonNumb
     /// Initializes a new instance of the <see cref="<#= TypeDeclaration.DotnetTypeName #>"/> struct.
     /// </summary>
     /// <param name="value">The value from which to construct the instance.</param>
-    public <#= TypeDeclaration.DotnetTypeName #>(BinaryJsonNumber value)
+    public <#= TypeDeclaration.DotnetTypeName #>(in BinaryJsonNumber value)
     {
         this.jsonElementBacking = default;
         this.backing = Backing.Number;

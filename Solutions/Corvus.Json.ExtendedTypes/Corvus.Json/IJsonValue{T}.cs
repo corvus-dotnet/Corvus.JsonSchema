@@ -12,7 +12,7 @@ namespace Corvus.Json;
 /// Interface implemented by all JSON values.
 /// </summary>
 /// <typeparam name="T">The type implementing the interface.</typeparam>
-public interface IJsonValue<T> : IEquatable<T>, IJsonValue
+public interface IJsonValue<T> : IJsonValue
     where T : struct, IJsonValue<T>
 {
     /// <summary>

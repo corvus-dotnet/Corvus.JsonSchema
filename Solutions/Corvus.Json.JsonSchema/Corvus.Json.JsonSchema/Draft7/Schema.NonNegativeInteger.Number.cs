@@ -25,7 +25,7 @@ public readonly partial struct Schema
         /// Initializes a new instance of the <see cref = "NonNegativeInteger"/> struct.
         /// </summary>
         /// <param name = "value">The value from which to construct the instance.</param>
-        public NonNegativeInteger(BinaryJsonNumber value)
+        public NonNegativeInteger(in BinaryJsonNumber value)
         {
             this.jsonElementBacking = default;
             this.backing = Backing.Number;

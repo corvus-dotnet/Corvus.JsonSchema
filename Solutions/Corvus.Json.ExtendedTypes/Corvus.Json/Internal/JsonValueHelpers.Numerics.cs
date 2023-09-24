@@ -21,7 +21,7 @@ public static partial class JsonValueHelpers
     /// <exception cref="FormatException">The numeric format is not supported.</exception>
     /// <exception cref="OverflowException">The numeric formats were not convertible without overflow or loss of precision.</exception>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool NumericEquals(JsonElement jsonElementL, JsonElement jsonElementR)
+    public static bool NumericEquals(in JsonElement jsonElementL, in JsonElement jsonElementR)
     {
         if (jsonElementL.ValueKind != JsonValueKind.Number || jsonElementR.ValueKind != JsonValueKind.Number)
         {
@@ -57,7 +57,7 @@ public static partial class JsonValueHelpers
     /// <returns>0 if the numbers are equal, -1 if the lhs is less than the rhs, and 1 if the lhs is greater than the rhs.</returns>
     /// <exception cref="OverflowException">The numeric formats were not convertible without overflow or loss of precision.</exception>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int NumericCompare(JsonElement jsonElementL, JsonElement jsonElementR)
+    public static int NumericCompare(in JsonElement jsonElementL, in JsonElement jsonElementR)
     {
         if (jsonElementL.ValueKind != JsonValueKind.Number || jsonElementR.ValueKind != JsonValueKind.Number)
         {

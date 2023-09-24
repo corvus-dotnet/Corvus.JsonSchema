@@ -253,7 +253,7 @@ public readonly struct BinaryJsonNumber :
     /// <param name="right">The right hand side of the comparison.</param>
     /// <returns><see langword="true"/> if the values are equal.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool operator ==(BinaryJsonNumber left, BinaryJsonNumber right) => Equals(left, right);
+    public static bool operator ==(in BinaryJsonNumber left, in BinaryJsonNumber right) => Equals(left, right);
 
     /// <summary>
     /// Equality operator.
@@ -262,7 +262,7 @@ public readonly struct BinaryJsonNumber :
     /// <param name="right">The right hand side of the comparison.</param>
     /// <returns><see langword="true"/> if the values are equal.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool operator ==(BinaryJsonNumber left, JsonElement right) => Equals(left, right);
+    public static bool operator ==(in BinaryJsonNumber left, in JsonElement right) => Equals(left, right);
 
     /// <summary>
     /// Equality operator.
@@ -271,7 +271,7 @@ public readonly struct BinaryJsonNumber :
     /// <param name="right">The right hand side of the comparison.</param>
     /// <returns><see langword="true"/> if the values are equal.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool operator ==(JsonElement left, BinaryJsonNumber right) => Equals(left, right);
+    public static bool operator ==(in JsonElement left, in BinaryJsonNumber right) => Equals(left, right);
 
     /// <summary>
     /// Inequality operator.
@@ -280,7 +280,7 @@ public readonly struct BinaryJsonNumber :
     /// <param name="right">The right hand side of the comparison.</param>
     /// <returns><see langword="true"/> if the values are not equal.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool operator !=(BinaryJsonNumber left, BinaryJsonNumber right)
+    public static bool operator !=(in BinaryJsonNumber left, in BinaryJsonNumber right)
     {
         return !(left == right);
     }
@@ -292,7 +292,7 @@ public readonly struct BinaryJsonNumber :
     /// <param name="right">The right hand side of the comparison.</param>
     /// <returns><see langword="true"/> if the values are not equal.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool operator !=(BinaryJsonNumber left, JsonElement right)
+    public static bool operator !=(in BinaryJsonNumber left, in JsonElement right)
     {
         return !(left == right);
     }
@@ -304,7 +304,7 @@ public readonly struct BinaryJsonNumber :
     /// <param name="right">The right hand side of the comparison.</param>
     /// <returns><see langword="true"/> if the values are not equal.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool operator !=(JsonElement left, BinaryJsonNumber right)
+    public static bool operator !=(in JsonElement left, in BinaryJsonNumber right)
     {
         return !(left == right);
     }
@@ -316,7 +316,7 @@ public readonly struct BinaryJsonNumber :
     /// <param name="right">The right hand side of the comparison.</param>
     /// <returns><see langword="true"/> if the left is less than the right.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool operator <(BinaryJsonNumber left, BinaryJsonNumber right)
+    public static bool operator <(in BinaryJsonNumber left, in BinaryJsonNumber right)
     {
         return Compare(left, right) < 0;
     }
@@ -328,7 +328,7 @@ public readonly struct BinaryJsonNumber :
     /// <param name="right">The right hand side of the comparison.</param>
     /// <returns><see langword="true"/> if the left is less than or equal to the right.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool operator <=(BinaryJsonNumber left, BinaryJsonNumber right)
+    public static bool operator <=(in BinaryJsonNumber left, in BinaryJsonNumber right)
     {
         return Compare(left, right) <= 0;
     }
@@ -340,7 +340,7 @@ public readonly struct BinaryJsonNumber :
     /// <param name="right">The right hand side of the comparison.</param>
     /// <returns><see langword="true"/> if the left is greater than the right.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool operator >(BinaryJsonNumber left, BinaryJsonNumber right)
+    public static bool operator >(in BinaryJsonNumber left, in BinaryJsonNumber right)
     {
         return Compare(left, right) > 0;
     }
@@ -352,7 +352,7 @@ public readonly struct BinaryJsonNumber :
     /// <param name="right">The right hand side of the comparison.</param>
     /// <returns><see langword="true"/> if the left is greater than or equal to the right.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool operator >=(BinaryJsonNumber left, BinaryJsonNumber right)
+    public static bool operator >=(in BinaryJsonNumber left, in BinaryJsonNumber right)
     {
         return Compare(left, right) >= 0;
     }
@@ -376,7 +376,7 @@ public readonly struct BinaryJsonNumber :
     /// <param name="right">The right hand side of the comparison.</param>
     /// <returns><see langword="true"/> if the left is less than or equal to the right.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool operator <=(BinaryJsonNumber left, JsonElement right)
+    public static bool operator <=(in BinaryJsonNumber left, in JsonElement right)
     {
         return Compare(left, right) <= 0;
     }
@@ -388,7 +388,7 @@ public readonly struct BinaryJsonNumber :
     /// <param name="right">The right hand side of the comparison.</param>
     /// <returns><see langword="true"/> if the left is greater than the right.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool operator >(BinaryJsonNumber left, JsonElement right)
+    public static bool operator >(in BinaryJsonNumber left, in JsonElement right)
     {
         return Compare(left, right) > 0;
     }
@@ -400,7 +400,7 @@ public readonly struct BinaryJsonNumber :
     /// <param name="right">The right hand side of the comparison.</param>
     /// <returns><see langword="true"/> if the left is greater than or equal to the right.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool operator >=(BinaryJsonNumber left, JsonElement right)
+    public static bool operator >=(in BinaryJsonNumber left, in JsonElement right)
     {
         return Compare(left, right) >= 0;
     }
@@ -412,7 +412,7 @@ public readonly struct BinaryJsonNumber :
     /// <param name="right">The right hand side of the comparison.</param>
     /// <returns><see langword="true"/> if the left is less than the right.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool operator <(JsonElement left, BinaryJsonNumber right)
+    public static bool operator <(in JsonElement left, in BinaryJsonNumber right)
     {
         return Compare(left, right) < 0;
     }
@@ -424,7 +424,7 @@ public readonly struct BinaryJsonNumber :
     /// <param name="right">The right hand side of the comparison.</param>
     /// <returns><see langword="true"/> if the left is less than or equal to the right.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool operator <=(JsonElement left, BinaryJsonNumber right)
+    public static bool operator <=(in JsonElement left, in BinaryJsonNumber right)
     {
         return Compare(left, right) <= 0;
     }
@@ -436,7 +436,7 @@ public readonly struct BinaryJsonNumber :
     /// <param name="right">The right hand side of the comparison.</param>
     /// <returns><see langword="true"/> if the left is greater than the right.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool operator >(JsonElement left, BinaryJsonNumber right)
+    public static bool operator >(in JsonElement left, in BinaryJsonNumber right)
     {
         return Compare(left, right) > 0;
     }
@@ -1626,7 +1626,7 @@ public readonly struct BinaryJsonNumber :
             throw new OverflowException();
         }
 
-        public static TOut From(BinaryJsonNumber value)
+        public static TOut From(in BinaryJsonNumber value)
         {
             if (TryFrom(value, out TOut result))
             {

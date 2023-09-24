@@ -514,14 +514,14 @@ public readonly partial struct Applicator
         }
 
         /// <inheritdoc/>
-        public bool Equals<T>(T other)
+        public bool Equals<T>(in T other)
             where T : struct, IJsonValue<T>
         {
             return JsonValueHelpers.CompareValues(this, other);
         }
 
         /// <inheritdoc/>
-        public bool Equals(DependentSchemasEntity other)
+        public bool Equals(in DependentSchemasEntity other)
         {
             return JsonValueHelpers.CompareValues(this, other);
         }

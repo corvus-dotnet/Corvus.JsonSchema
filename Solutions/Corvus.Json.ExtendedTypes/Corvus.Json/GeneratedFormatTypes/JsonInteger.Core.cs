@@ -44,7 +44,7 @@ public readonly partial struct JsonInteger : IJsonNumber<JsonInteger>
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonInteger"/> struct.
     /// </summary>
-    private JsonInteger(BinaryJsonNumber value)
+    private JsonInteger(in BinaryJsonNumber value)
     {
         this.jsonElementBacking = default;
         this.backing = Backing.Number;
@@ -599,14 +599,18 @@ public readonly partial struct JsonInteger : IJsonNumber<JsonInteger>
     }
 
     /// <inheritdoc/>
-    public bool Equals<T>(T other)
+    public bool Equals<T>(in T other)
         where T : struct, IJsonValue<T>
     {
         return JsonValueHelpers.CompareValues(this, other);
     }
 
-    /// <inheritdoc/>
-    public bool Equals(JsonInteger other)
+    /// <summary>
+    /// Equality comparison.
+    /// </summary>
+    /// <param name="other">The other item with which to compare.</param>
+    /// <returns><see langword="true"/> if the values were equal.</returns>
+    public bool Equals(in JsonInteger other)
     {
         return JsonValueHelpers.CompareValues(this, other);
     }

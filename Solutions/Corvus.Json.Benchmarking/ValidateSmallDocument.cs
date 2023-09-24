@@ -25,8 +25,10 @@ public class ValidateSmallDocument
               "otherNames": [],
               "email": "michael.oldryoyd@contoso.com"
             },
-            "dateOfBirth": "1944-07-14"
-        }
+            "dateOfBirth": "1944-07-14",
+            "netWorth": 1234567890.1234567891,
+            "height": 1.8
+                }
         """;
 
     private static readonly JsonEverything.EvaluationOptions Options = new() { OutputFormat = JsonEverything.OutputFormat.Flag };

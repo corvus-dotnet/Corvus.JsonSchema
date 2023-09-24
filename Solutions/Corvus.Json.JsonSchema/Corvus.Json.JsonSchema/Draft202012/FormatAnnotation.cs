@@ -553,14 +553,14 @@ public readonly partial struct FormatAnnotation
     }
 
     /// <inheritdoc/>
-    public bool Equals<T>(T other)
+    public bool Equals<T>(in T other)
         where T : struct, IJsonValue<T>
     {
         return JsonValueHelpers.CompareValues(this, other);
     }
 
     /// <inheritdoc/>
-    public bool Equals(FormatAnnotation other)
+    public bool Equals(in FormatAnnotation other)
     {
         return JsonValueHelpers.CompareValues(this, other);
     }

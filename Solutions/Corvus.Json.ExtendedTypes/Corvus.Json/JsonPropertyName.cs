@@ -13,7 +13,7 @@ namespace Corvus.Json;
 /// <summary>
 /// A JSON property name.
 /// </summary>
-public readonly struct JsonPropertyName : IEquatable<JsonPropertyName>, IComparable<JsonPropertyName>
+public readonly struct JsonPropertyName
 {
     private readonly Backing backing;
     private readonly JsonElement jsonElementBacking;
@@ -23,7 +23,7 @@ public readonly struct JsonPropertyName : IEquatable<JsonPropertyName>, ICompara
     /// Initializes a new instance of the <see cref="JsonPropertyName"/> struct.
     /// </summary>
     /// <param name="value">The value from which to construct the property name.</param>
-    public JsonPropertyName(JsonElement value)
+    public JsonPropertyName(in JsonElement value)
     {
         this.backing = Backing.JsonElement;
         this.jsonElementBacking = value;
@@ -65,7 +65,7 @@ public readonly struct JsonPropertyName : IEquatable<JsonPropertyName>, ICompara
     /// <param name="left">The lhs.</param>
     /// <param name="right">The rhs.</param>
     /// <returns><see langword="true"/> if the values are equal.</returns>
-    public static bool operator ==(JsonPropertyName left, JsonPropertyName right)
+    public static bool operator ==(in JsonPropertyName left, in JsonPropertyName right)
     {
         return left.Equals(right);
     }
@@ -76,7 +76,7 @@ public readonly struct JsonPropertyName : IEquatable<JsonPropertyName>, ICompara
     /// <param name="left">The lhs.</param>
     /// <param name="right">The rhs.</param>
     /// <returns><see langword="true"/> if the values are not equal.</returns>
-    public static bool operator !=(JsonPropertyName left, JsonPropertyName right)
+    public static bool operator !=(in JsonPropertyName left, in JsonPropertyName right)
     {
         return !(left == right);
     }
@@ -87,7 +87,7 @@ public readonly struct JsonPropertyName : IEquatable<JsonPropertyName>, ICompara
     /// <param name="left">The lhs.</param>
     /// <param name="right">The rhs.</param>
     /// <returns><see langword="true"/> if lhs is less than rhs.</returns>
-    public static bool operator <(JsonPropertyName left, JsonPropertyName right)
+    public static bool operator <(in JsonPropertyName left, in JsonPropertyName right)
     {
         return left.CompareTo(right) < 0;
     }
@@ -98,7 +98,7 @@ public readonly struct JsonPropertyName : IEquatable<JsonPropertyName>, ICompara
     /// <param name="left">The lhs.</param>
     /// <param name="right">The rhs.</param>
     /// <returns><see langword="true"/> if lhs is less than or equal to rhs.</returns>
-    public static bool operator <=(JsonPropertyName left, JsonPropertyName right)
+    public static bool operator <=(in JsonPropertyName left, in JsonPropertyName right)
     {
         return left.CompareTo(right) <= 0;
     }
@@ -109,7 +109,7 @@ public readonly struct JsonPropertyName : IEquatable<JsonPropertyName>, ICompara
     /// <param name="left">The lhs.</param>
     /// <param name="right">The rhs.</param>
     /// <returns><see langword="true"/> if lhs is greater than rhs.</returns>
-    public static bool operator >(JsonPropertyName left, JsonPropertyName right)
+    public static bool operator >(in JsonPropertyName left, in JsonPropertyName right)
     {
         return left.CompareTo(right) > 0;
     }
@@ -120,7 +120,7 @@ public readonly struct JsonPropertyName : IEquatable<JsonPropertyName>, ICompara
     /// <param name="left">The lhs.</param>
     /// <param name="right">The rhs.</param>
     /// <returns><see langword="true"/> if lhs is greater than or equal to rhs.</returns>
-    public static bool operator >=(JsonPropertyName left, JsonPropertyName right)
+    public static bool operator >=(in JsonPropertyName left, in JsonPropertyName right)
     {
         return left.CompareTo(right) >= 0;
     }
@@ -228,8 +228,13 @@ public readonly struct JsonPropertyName : IEquatable<JsonPropertyName>, ICompara
         return false;
     }
 
-    /// <inheritdoc/>
-    public int CompareTo(JsonPropertyName other)
+    /// <summary>
+    /// Compares with another property name.
+    /// </summary>
+    /// <param name="other">The name with which to compare.</param>
+    /// <returns>0 if they are equal, -1 if this is less than the other, 1 if this is greater than the other.</returns>
+    /// <exception cref="InvalidOperationException">The values could not be compared.</exception>
+    public int CompareTo(in JsonPropertyName other)
     {
         if (this.HasStringBacking)
         {
@@ -293,8 +298,13 @@ public readonly struct JsonPropertyName : IEquatable<JsonPropertyName>, ICompara
         }
     }
 
-    /// <inheritdoc/>
-    public bool Equals(JsonPropertyName other)
+    /// <summary>
+    /// Equality comparison.
+    /// </summary>
+    /// <param name="other">The other item with which to compare.</param>
+    /// <returns><see langword="true"/> if the values were equal.</returns>
+    /// <exception cref="InvalidOperationException">The comparison was not possible.</exception>
+    public bool Equals(in JsonPropertyName other)
     {
         if (other.HasStringBacking)
         {

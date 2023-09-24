@@ -29,7 +29,7 @@ public readonly partial struct JsonNumber :
     /// Initializes a new instance of the <see cref="JsonNumber"/> struct.
     /// </summary>
     /// <param name="numberBacking">The binary number backing the number.</param>
-    public JsonNumber(BinaryJsonNumber numberBacking)
+    public JsonNumber(in BinaryJsonNumber numberBacking)
     {
         this.jsonElementBacking = default;
         this.backing = Backing.Number;
@@ -595,14 +595,18 @@ public readonly partial struct JsonNumber :
     }
 
     /// <inheritdoc/>
-    public bool Equals<T>(T other)
+    public bool Equals<T>(in T other)
         where T : struct, IJsonValue<T>
     {
         return JsonValueHelpers.CompareValues(this, other);
     }
 
-    /// <inheritdoc/>
-    public bool Equals(JsonNumber other)
+    /// <summary>
+    /// Equality comparison.
+    /// </summary>
+    /// <param name="other">The other item with which to compare.</param>
+    /// <returns><see langword="true"/> if the values were equal.</returns>
+    public bool Equals(in JsonNumber other)
     {
         if (this.ValueKind != other.ValueKind)
         {

@@ -514,14 +514,14 @@ public readonly partial struct Validation
         }
 
         /// <inheritdoc/>
-        public bool Equals<T>(T other)
+        public bool Equals<T>(in T other)
             where T : struct, IJsonValue<T>
         {
             return JsonValueHelpers.CompareValues(this, other);
         }
 
         /// <inheritdoc/>
-        public bool Equals(NonNegativeIntegerDefault0 other)
+        public bool Equals(in NonNegativeIntegerDefault0 other)
         {
             return JsonValueHelpers.CompareValues(this, other);
         }

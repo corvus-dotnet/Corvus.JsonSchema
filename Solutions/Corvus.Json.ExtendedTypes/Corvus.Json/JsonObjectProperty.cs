@@ -10,7 +10,7 @@ namespace Corvus.Json;
 /// <summary>
 /// A property on a <see cref="IJsonObject{T}"/>.
 /// </summary>
-public readonly struct JsonObjectProperty : IEquatable<JsonObjectProperty>
+public readonly struct JsonObjectProperty
 {
     private readonly Backing backing;
     private readonly JsonProperty jsonProperty;
@@ -21,7 +21,7 @@ public readonly struct JsonObjectProperty : IEquatable<JsonObjectProperty>
     /// Initializes a new instance of the <see cref="JsonObjectProperty"/> struct.
     /// </summary>
     /// <param name="jsonProperty">The JSON property over which to construct this instance.</param>
-    public JsonObjectProperty(JsonProperty jsonProperty)
+    public JsonObjectProperty(in JsonProperty jsonProperty)
     {
         this.backing = Backing.JsonProperty;
         this.jsonProperty = jsonProperty;
@@ -34,7 +34,7 @@ public readonly struct JsonObjectProperty : IEquatable<JsonObjectProperty>
     /// </summary>
     /// <param name="name">The property name.</param>
     /// <param name="value">The property value.</param>
-    public JsonObjectProperty(JsonPropertyName name, JsonAny value)
+    public JsonObjectProperty(in JsonPropertyName name, in JsonAny value)
     {
         this.backing = Backing.NameValue;
         this.jsonProperty = default;
@@ -120,7 +120,7 @@ public readonly struct JsonObjectProperty : IEquatable<JsonObjectProperty>
     /// <param name="left">The LHS of the comparison.</param>
     /// <param name="right">The RHS of the comparison.</param>
     /// <returns>True if they are equal.</returns>
-    public static bool operator ==(JsonObjectProperty left, JsonObjectProperty right)
+    public static bool operator ==(in JsonObjectProperty left, in JsonObjectProperty right)
     {
         return left.Equals(right);
     }
@@ -131,7 +131,7 @@ public readonly struct JsonObjectProperty : IEquatable<JsonObjectProperty>
     /// <param name="left">The LHS of the comparison.</param>
     /// <param name="right">The RHS of the comparison.</param>
     /// <returns>True if they are not equal.</returns>
-    public static bool operator !=(JsonObjectProperty left, JsonObjectProperty right)
+    public static bool operator !=(in JsonObjectProperty left, in JsonObjectProperty right)
     {
         return !left.Equals(right);
     }
@@ -259,7 +259,7 @@ public readonly struct JsonObjectProperty : IEquatable<JsonObjectProperty>
     /// </summary>
     /// <param name="name">The name to match.</param>
     /// <returns><c>True</c> if the name matches.</returns>
-    public bool NameEquals(JsonPropertyName name)
+    public bool NameEquals(in JsonPropertyName name)
     {
         if ((this.backing & Backing.JsonProperty) != 0)
         {
@@ -279,7 +279,7 @@ public readonly struct JsonObjectProperty : IEquatable<JsonObjectProperty>
     /// </summary>
     /// <param name="name">The name to match.</param>
     /// <returns><c>True</c> if the name matches.</returns>
-    public bool NameEquals(JsonString name)
+    public bool NameEquals(in JsonString name)
     {
         if ((this.backing & Backing.JsonProperty) != 0)
         {
@@ -331,8 +331,12 @@ public readonly struct JsonObjectProperty : IEquatable<JsonObjectProperty>
         return obj is JsonObjectProperty property && this.Equals(property);
     }
 
-    /// <inheritdoc/>
-    public bool Equals(JsonObjectProperty other)
+    /// <summary>
+    /// Equality comparison.
+    /// </summary>
+    /// <param name="other">The other item with which to compare.</param>
+    /// <returns><see langword="true"/> if the two objects are equal.</returns>
+    public bool Equals(in JsonObjectProperty other)
     {
         return this.Value.Equals(other.Value) &&
                this.Name.Equals(other.Name);

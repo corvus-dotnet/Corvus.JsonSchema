@@ -514,7 +514,7 @@ public readonly partial struct Schema
         }
 
         /// <inheritdoc/>
-        public bool Equals<T>(T other)
+        public bool Equals<T>(in T other)
             where T : struct, IJsonValue<T>
         {
             return JsonValueHelpers.CompareValues(this, other);

@@ -88,7 +88,7 @@ public interface IJsonValue
     /// <typeparam name="T">The type of the item with which to compare.</typeparam>
     /// <param name="other">The instance with which to compare.</param>
     /// <returns><c>True</c> if the other insance is equal to this one.</returns>
-    bool Equals<T>(T other)
+    bool Equals<T>(in T other)
         where T : struct, IJsonValue<T>;
 
     /// <summary>

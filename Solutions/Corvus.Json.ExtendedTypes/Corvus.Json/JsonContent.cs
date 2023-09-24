@@ -248,7 +248,7 @@ public readonly partial struct JsonContent
     /// <typeparam name="T">The type of the item with which to compare.</typeparam>
     /// <param name="other">The item with which to compare.</param>
     /// <returns><c>True</c> if the items are equal.</returns>
-    public bool Equals<T>(T other)
+    public bool Equals<T>(in T other)
         where T : struct, IJsonValue<T>
     {
         if (this.IsNull() && other.IsNull())
@@ -269,7 +269,7 @@ public readonly partial struct JsonContent
     /// </summary>
     /// <param name="other">The item with which to compare.</param>
     /// <returns><c>True</c> if the items are equal.</returns>
-    public bool Equals(JsonContent other)
+    public bool Equals(in JsonContent other)
     {
         if (this.IsNull() && other.IsNull())
         {

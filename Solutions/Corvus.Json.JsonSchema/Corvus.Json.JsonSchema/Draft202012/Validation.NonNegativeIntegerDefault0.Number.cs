@@ -25,7 +25,7 @@ public readonly partial struct Validation
         /// Initializes a new instance of the <see cref = "NonNegativeIntegerDefault0"/> struct.
         /// </summary>
         /// <param name = "value">The value from which to construct the instance.</param>
-        public NonNegativeIntegerDefault0(BinaryJsonNumber value)
+        public NonNegativeIntegerDefault0(in BinaryJsonNumber value)
         {
             this.jsonElementBacking = default;
             this.backing = Backing.Number;

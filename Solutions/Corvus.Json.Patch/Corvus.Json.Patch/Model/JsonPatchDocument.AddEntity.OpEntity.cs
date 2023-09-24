@@ -506,14 +506,14 @@ public readonly partial struct JsonPatchDocument
             }
 
             /// <inheritdoc/>
-            public bool Equals<T>(T other)
+            public bool Equals<T>(in T other)
                 where T : struct, IJsonValue<T>
             {
                 return JsonValueHelpers.CompareValues(this, other);
             }
 
             /// <inheritdoc/>
-            public bool Equals(OpEntity other)
+            public bool Equals(in OpEntity other)
             {
                 return JsonValueHelpers.CompareValues(this, other);
             }
