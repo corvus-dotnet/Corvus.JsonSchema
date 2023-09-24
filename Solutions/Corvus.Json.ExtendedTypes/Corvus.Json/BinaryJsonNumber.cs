@@ -960,7 +960,7 @@ public readonly struct BinaryJsonNumber : IEquatable<BinaryJsonNumber>, ICompara
     /// <exception cref="FormatException">The value was not a byte.</exception>
     public bool GetByteAsBool()
     {
-        if (this.numericKind == Kind.Byte)
+        if (this.numericKind == Kind.Bool)
         {
             return ReadByte(this.binaryData) != 0;
         }

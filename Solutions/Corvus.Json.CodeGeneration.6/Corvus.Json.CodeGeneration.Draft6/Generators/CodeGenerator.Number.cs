@@ -974,7 +974,7 @@ namespace ");
             #line 441 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
             this.Write(@" right)
     {
-        return Compare(left, right) < 0;
+        return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && Compare(left, right) < 0;
     }
 
     /// <summary>
@@ -1009,7 +1009,7 @@ namespace ");
             #line 452 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
             this.Write(@" right)
     {
-        return Compare(left, right) > 0;
+        return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && Compare(left, right) > 0;
     }
 
     /// <summary>
@@ -1044,7 +1044,7 @@ namespace ");
             #line 463 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
             this.Write(@" right)
     {
-        return Compare(left, right) <= 0;
+        return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && Compare(left, right) <= 0;
     }
 
     /// <summary>
@@ -1079,7 +1079,7 @@ namespace ");
             #line 474 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
             this.Write(@" right)
     {
-        return Compare(left, right) >= 0;
+        return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && Compare(left, right) >= 0;
     }
 
     /// <summary>
@@ -1114,28 +1114,28 @@ namespace ");
             #line 485 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
             this.Write(" rhs)\r\n    {\r\n        if (lhs.ValueKind != rhs.ValueKind)\r\n        {\r\n           " +
                     " // We can\'t be equal if we are not the same underlying type\r\n            return" +
-                    " -1;\r\n        }\r\n\r\n        if (lhs.IsNull())\r\n        {\r\n            // Nulls ar" +
-                    "e always equal\r\n            return 0;\r\n        }\r\n\r\n        if (lhs.backing == B" +
-                    "acking.Number &&\r\n            rhs.backing == Backing.Number)\r\n        {\r\n       " +
-                    "     return BinaryJsonNumber.Compare(lhs.numberBacking, rhs.numberBacking);\r\n   " +
-                    "     }\r\n\r\n        // After this point there is no need to check both value kinds" +
-                    " because our first quick test verified that they were the same.\r\n        // If e" +
-                    "ither one is a Backing.Number or a JsonValueKind.Number then we know the rhs is " +
-                    "conmpatible.\r\n        if (lhs.backing == Backing.Number &&\r\n            rhs.back" +
-                    "ing == Backing.Number)\r\n        {\r\n            return BinaryJsonNumber.Compare(l" +
-                    "hs.numberBacking, rhs.numberBacking);\r\n        }\r\n\r\n        if (lhs.backing == B" +
-                    "acking.Number &&\r\n            rhs.backing == Backing.JsonElement)\r\n        {\r\n  " +
-                    "          return BinaryJsonNumber.Compare(lhs.numberBacking, rhs.jsonElementBack" +
-                    "ing);\r\n        }\r\n\r\n        if (lhs.backing == Backing.JsonElement && rhs.backin" +
-                    "g == Backing.Number)\r\n        {\r\n            return BinaryJsonNumber.Compare(lhs" +
-                    ".jsonElementBacking, rhs.numberBacking);\r\n        }\r\n\r\n        if (lhs.backing =" +
-                    "= Backing.JsonElement && rhs.backing == Backing.JsonElement && rhs.jsonElementBa" +
-                    "cking.ValueKind == JsonValueKind.Number)\r\n        {\r\n            return JsonValu" +
-                    "eHelpers.NumericCompare(lhs.jsonElementBacking, rhs.jsonElementBacking);\r\n      " +
-                    "  }\r\n\r\n        throw new InvalidOperationException();\r\n    }\r\n\r\n\r\n    /// <inher" +
-                    "itdoc/>\r\n    public BinaryJsonNumber AsBinaryJsonNumber => this.HasDotnetBacking" +
-                    " ? this.numberBacking : BinaryJsonNumber.FromJson(this.jsonElementBacking);\r\n}\r\n" +
-                    "");
+                    " lhs.IsNullOrUndefined() ? 1 : -1;\r\n        }\r\n\r\n        if (lhs.IsNull())\r\n    " +
+                    "    {\r\n            // Nulls are always equal\r\n            return 0;\r\n        }\r\n" +
+                    "\r\n        if (lhs.backing == Backing.Number &&\r\n            rhs.backing == Backi" +
+                    "ng.Number)\r\n        {\r\n            return BinaryJsonNumber.Compare(lhs.numberBac" +
+                    "king, rhs.numberBacking);\r\n        }\r\n\r\n        // After this point there is no " +
+                    "need to check both value kinds because our first quick test verified that they w" +
+                    "ere the same.\r\n        // If either one is a Backing.Number or a JsonValueKind.N" +
+                    "umber then we know the rhs is conmpatible.\r\n        if (lhs.backing == Backing.N" +
+                    "umber &&\r\n            rhs.backing == Backing.Number)\r\n        {\r\n            ret" +
+                    "urn BinaryJsonNumber.Compare(lhs.numberBacking, rhs.numberBacking);\r\n        }\r\n" +
+                    "\r\n        if (lhs.backing == Backing.Number &&\r\n            rhs.backing == Backi" +
+                    "ng.JsonElement)\r\n        {\r\n            return BinaryJsonNumber.Compare(lhs.numb" +
+                    "erBacking, rhs.jsonElementBacking);\r\n        }\r\n\r\n        if (lhs.backing == Bac" +
+                    "king.JsonElement && rhs.backing == Backing.Number)\r\n        {\r\n            retur" +
+                    "n BinaryJsonNumber.Compare(lhs.jsonElementBacking, rhs.numberBacking);\r\n        " +
+                    "}\r\n\r\n        if (lhs.backing == Backing.JsonElement && rhs.backing == Backing.Js" +
+                    "onElement && rhs.jsonElementBacking.ValueKind == JsonValueKind.Number)\r\n        " +
+                    "{\r\n            return JsonValueHelpers.NumericCompare(lhs.jsonElementBacking, rh" +
+                    "s.jsonElementBacking);\r\n        }\r\n\r\n        throw new InvalidOperationException" +
+                    "();\r\n    }\r\n\r\n\r\n    /// <inheritdoc/>\r\n    public BinaryJsonNumber AsBinaryJsonN" +
+                    "umber => this.HasDotnetBacking ? this.numberBacking : BinaryJsonNumber.FromJson(" +
+                    "this.jsonElementBacking);\r\n}\r\n");
             
             #line default
             #line hidden

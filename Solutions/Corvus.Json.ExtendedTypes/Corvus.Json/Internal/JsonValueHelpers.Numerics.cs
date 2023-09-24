@@ -23,7 +23,7 @@ public static partial class JsonValueHelpers
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool NumericEquals(JsonElement jsonElementL, JsonElement jsonElementR)
     {
-        if (jsonElementL.ValueKind != JsonValueKind.Number || jsonElementR.ValueKind == JsonValueKind.Number)
+        if (jsonElementL.ValueKind != JsonValueKind.Number || jsonElementR.ValueKind != JsonValueKind.Number)
         {
             throw new FormatException();
         }
@@ -59,7 +59,7 @@ public static partial class JsonValueHelpers
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int NumericCompare(JsonElement jsonElementL, JsonElement jsonElementR)
     {
-        if (jsonElementL.ValueKind != JsonValueKind.Number || jsonElementR.ValueKind == JsonValueKind.Number)
+        if (jsonElementL.ValueKind != JsonValueKind.Number || jsonElementR.ValueKind != JsonValueKind.Number)
         {
             throw new FormatException();
         }

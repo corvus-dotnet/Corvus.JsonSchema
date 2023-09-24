@@ -252,7 +252,7 @@ public readonly partial struct JsonInteger : IJsonNumber<JsonInteger>
     /// <returns><see langword="true"/> if the left is less than the right, otherwise <see langword="false"/>.</returns>
     public static bool operator <(in JsonInteger left, in JsonInteger right)
     {
-        return Compare(left, right) < 0;
+        return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && Compare(left, right) < 0;
     }
 
     /// <summary>
@@ -263,7 +263,7 @@ public readonly partial struct JsonInteger : IJsonNumber<JsonInteger>
     /// <returns><see langword="true"/> if the left is greater than the right, otherwise <see langword="false"/>.</returns>
     public static bool operator >(in JsonInteger left, in JsonInteger right)
     {
-        return Compare(left, right) > 0;
+        return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && Compare(left, right) > 0;
     }
 
     /// <summary>
@@ -274,7 +274,7 @@ public readonly partial struct JsonInteger : IJsonNumber<JsonInteger>
     /// <returns><see langword="true"/> if the left is less than the right, otherwise <see langword="false"/>.</returns>
     public static bool operator <=(in JsonInteger left, in JsonInteger right)
     {
-        return Compare(left, right) <= 0;
+        return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && Compare(left, right) <= 0;
     }
 
     /// <summary>
@@ -285,7 +285,7 @@ public readonly partial struct JsonInteger : IJsonNumber<JsonInteger>
     /// <returns><see langword="true"/> if the left is greater than the right, otherwise <see langword="false"/>.</returns>
     public static bool operator >=(in JsonInteger left, in JsonInteger right)
     {
-        return Compare(left, right) >= 0;
+        return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && Compare(left, right) >= 0;
     }
 
     /// <summary>
@@ -299,7 +299,7 @@ public readonly partial struct JsonInteger : IJsonNumber<JsonInteger>
         if (lhs.ValueKind != rhs.ValueKind)
         {
             // We can't be equal if we are not the same underlying type
-            return -1;
+            return lhs.IsNullOrUndefined() ? 1 : -1;
         }
 
         if (lhs.IsNull())
