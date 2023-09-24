@@ -29,6 +29,7 @@ public readonly partial struct Applicator
             private readonly Backing backing;
             private readonly JsonElement jsonElementBacking;
             private readonly string stringBacking;
+            private readonly bool boolBacking;
             private readonly BinaryJsonNumber numberBacking;
             private readonly ImmutableList<JsonAny> arrayBacking;
             private readonly ImmutableList<JsonObjectProperty> objectBacking;
@@ -40,6 +41,7 @@ public readonly partial struct Applicator
                 this.jsonElementBacking = default;
                 this.backing = Backing.JsonElement;
                 this.stringBacking = string.Empty;
+                this.boolBacking = default;
                 this.numberBacking = default;
                 this.arrayBacking = ImmutableList<JsonAny>.Empty;
                 this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
@@ -54,6 +56,7 @@ public readonly partial struct Applicator
                 this.jsonElementBacking = value;
                 this.backing = Backing.JsonElement;
                 this.stringBacking = string.Empty;
+                this.boolBacking = default;
                 this.numberBacking = default;
                 this.arrayBacking = ImmutableList<JsonAny>.Empty;
                 this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
@@ -89,7 +92,7 @@ public readonly partial struct Applicator
 
                     if ((this.backing & Backing.Bool) != 0)
                     {
-                        return new(this.numberBacking.GetByteAsBool());
+                        return new(this.boolBacking);
                     }
 
                     if ((this.backing & Backing.Number) != 0)
@@ -133,7 +136,7 @@ public readonly partial struct Applicator
 
                     if ((this.backing & Backing.Bool) != 0)
                     {
-                        return JsonValueHelpers.BoolToJsonElement(this.numberBacking.GetByteAsBool());
+                        return JsonValueHelpers.BoolToJsonElement(this.boolBacking);
                     }
 
                     if ((this.backing & Backing.Number) != 0)
@@ -191,7 +194,7 @@ public readonly partial struct Applicator
 
                     if ((this.backing & Backing.Bool) != 0)
                     {
-                        return new(this.numberBacking.GetByteAsBool());
+                        return new(this.boolBacking);
                     }
 
                     throw new InvalidOperationException();
@@ -290,7 +293,7 @@ public readonly partial struct Applicator
 
                     if ((this.backing & Backing.Bool) != 0)
                     {
-                        return this.numberBacking.GetByteAsBool() ? JsonValueKind.True : JsonValueKind.False;
+                        return this.boolBacking ? JsonValueKind.True : JsonValueKind.False;
                     }
 
                     if ((this.backing & Backing.Number) != 0)

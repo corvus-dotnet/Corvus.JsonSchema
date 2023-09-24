@@ -36,30 +36,6 @@ public readonly partial struct Schema
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref = "TypeEntity"/> struct.
-        /// </summary>
-        /// <param name = "value">The value from which to construct the instance.</param>
-        public TypeEntity(in ReadOnlySpan<char> value)
-        {
-            this.jsonElementBacking = default;
-            this.backing = Backing.String;
-            this.stringBacking = value.ToString();
-            this.arrayBacking = ImmutableList<JsonAny>.Empty;
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref = "TypeEntity"/> struct.
-        /// </summary>
-        /// <param name = "utf8Value">The value from which to construct the instance.</param>
-        public TypeEntity(in ReadOnlySpan<byte> utf8Value)
-        {
-            this.jsonElementBacking = default;
-            this.backing = Backing.String;
-            this.stringBacking = Encoding.UTF8.GetString(utf8Value);
-            this.arrayBacking = ImmutableList<JsonAny>.Empty;
-        }
-
-        /// <summary>
         /// Conversion from JsonString.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>

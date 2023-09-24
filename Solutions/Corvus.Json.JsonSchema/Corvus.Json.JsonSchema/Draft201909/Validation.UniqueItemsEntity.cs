@@ -73,7 +73,7 @@ public readonly partial struct Validation
 
                 if ((this.backing & Backing.Bool) != 0)
                 {
-                    return new(boolBacking);
+                    return new(this.boolBacking);
                 }
 
                 if ((this.backing & Backing.Null) != 0)
@@ -97,7 +97,7 @@ public readonly partial struct Validation
 
                 if ((this.backing & Backing.Bool) != 0)
                 {
-                    return JsonValueHelpers.BoolToJsonElement(boolBacking);
+                    return JsonValueHelpers.BoolToJsonElement(this.boolBacking);
                 }
 
                 if ((this.backing & Backing.Null) != 0)
@@ -135,7 +135,7 @@ public readonly partial struct Validation
 
                 if ((this.backing & Backing.Bool) != 0)
                 {
-                    return new(boolBacking);
+                    return new(this.boolBacking);
                 }
 
                 throw new InvalidOperationException();
@@ -214,7 +214,7 @@ public readonly partial struct Validation
 
                 if ((this.backing & Backing.Bool) != 0)
                 {
-                    return boolBacking ? JsonValueKind.True : JsonValueKind.False;
+                    return this.boolBacking ? JsonValueKind.True : JsonValueKind.False;
                 }
 
                 if ((this.backing & Backing.Null) != 0)

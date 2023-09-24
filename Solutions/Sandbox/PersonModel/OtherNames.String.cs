@@ -34,30 +34,6 @@ public readonly partial struct OtherNames : IJsonString<OtherNames>
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref = "OtherNames"/> struct.
-    /// </summary>
-    /// <param name = "value">The value from which to construct the instance.</param>
-    public OtherNames(in ReadOnlySpan<char> value)
-    {
-        this.jsonElementBacking = default;
-        this.backing = Backing.String;
-        this.stringBacking = value.ToString();
-        this.arrayBacking = ImmutableList<JsonAny>.Empty;
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref = "OtherNames"/> struct.
-    /// </summary>
-    /// <param name = "utf8Value">The value from which to construct the instance.</param>
-    public OtherNames(in ReadOnlySpan<byte> utf8Value)
-    {
-        this.jsonElementBacking = default;
-        this.backing = Backing.String;
-        this.stringBacking = Encoding.UTF8.GetString(utf8Value);
-        this.arrayBacking = ImmutableList<JsonAny>.Empty;
-    }
-
-    /// <summary>
     /// Conversion from JsonString.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>

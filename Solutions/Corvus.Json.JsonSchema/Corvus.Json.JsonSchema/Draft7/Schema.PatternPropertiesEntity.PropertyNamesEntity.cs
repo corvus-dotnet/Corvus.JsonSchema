@@ -690,7 +690,7 @@ public readonly partial struct Schema
 
                 if ((this.backing & Backing.Bool) != 0)
                 {
-                    writer.WriteBooleanValue(this.boolBacking);
+                    writer.WriteBooleanValue(this.numberBacking.GetByteAsBool());
                     return;
                 }
 

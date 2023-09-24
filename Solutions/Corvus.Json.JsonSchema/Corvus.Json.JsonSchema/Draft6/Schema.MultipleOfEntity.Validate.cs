@@ -18,6 +18,7 @@ public readonly partial struct Schema
     /// </summary>
     public readonly partial struct MultipleOfEntity
     {
+        private static readonly BinaryJsonNumber __Corvus_ExclusiveMinimum = new(0);
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -40,7 +41,7 @@ public readonly partial struct Schema
                 return result;
             }
 
-            result = Corvus.Json.Validate.ValidateNumber(this, result, level, default, default, default, default, new(0));
+            result = Corvus.Json.Validate.ValidateNumber(this, result, level, default, default, default, default, __Corvus_ExclusiveMinimum);
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;

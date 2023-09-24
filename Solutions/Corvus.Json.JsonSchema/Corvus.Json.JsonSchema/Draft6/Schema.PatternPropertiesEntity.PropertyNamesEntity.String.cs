@@ -34,37 +34,6 @@ public readonly partial struct Schema
                 this.jsonElementBacking = default;
                 this.backing = Backing.String;
                 this.stringBacking = value;
-                this.boolBacking = default;
-                this.numberBacking = default;
-                this.arrayBacking = ImmutableList<JsonAny>.Empty;
-                this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
-            }
-
-            /// <summary>
-            /// Initializes a new instance of the <see cref = "PropertyNamesEntity"/> struct.
-            /// </summary>
-            /// <param name = "value">The value from which to construct the instance.</param>
-            public PropertyNamesEntity(in ReadOnlySpan<char> value)
-            {
-                this.jsonElementBacking = default;
-                this.backing = Backing.String;
-                this.stringBacking = value.ToString();
-                this.boolBacking = default;
-                this.numberBacking = default;
-                this.arrayBacking = ImmutableList<JsonAny>.Empty;
-                this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
-            }
-
-            /// <summary>
-            /// Initializes a new instance of the <see cref = "PropertyNamesEntity"/> struct.
-            /// </summary>
-            /// <param name = "utf8Value">The value from which to construct the instance.</param>
-            public PropertyNamesEntity(in ReadOnlySpan<byte> utf8Value)
-            {
-                this.jsonElementBacking = default;
-                this.backing = Backing.String;
-                this.stringBacking = Encoding.UTF8.GetString(utf8Value);
-                this.boolBacking = default;
                 this.numberBacking = default;
                 this.arrayBacking = ImmutableList<JsonAny>.Empty;
                 this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;

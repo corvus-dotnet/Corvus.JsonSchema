@@ -33,28 +33,6 @@ public readonly partial struct PersonNameElement : IJsonString<PersonNameElement
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref = "PersonNameElement"/> struct.
-    /// </summary>
-    /// <param name = "value">The value from which to construct the instance.</param>
-    public PersonNameElement(in ReadOnlySpan<char> value)
-    {
-        this.jsonElementBacking = default;
-        this.backing = Backing.String;
-        this.stringBacking = value.ToString();
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref = "PersonNameElement"/> struct.
-    /// </summary>
-    /// <param name = "utf8Value">The value from which to construct the instance.</param>
-    public PersonNameElement(in ReadOnlySpan<byte> utf8Value)
-    {
-        this.jsonElementBacking = default;
-        this.backing = Backing.String;
-        this.stringBacking = Encoding.UTF8.GetString(utf8Value);
-    }
-
-    /// <summary>
     /// Conversion from JsonString.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>

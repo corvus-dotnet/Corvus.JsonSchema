@@ -18,6 +18,7 @@ public readonly partial struct Validation
     /// </summary>
     public readonly partial struct NonNegativeInteger
     {
+        private static readonly BinaryJsonNumber __Corvus_Minimum = new(0);
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -40,7 +41,7 @@ public readonly partial struct Validation
                 return result;
             }
 
-            result = Corvus.Json.Validate.ValidateNumber(this, result, level, default, default, default, new BinaryJsonNumber(0), default);
+            result = Corvus.Json.Validate.ValidateNumber(this, result, level, default, default, default, __Corvus_Minimum, default);
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;

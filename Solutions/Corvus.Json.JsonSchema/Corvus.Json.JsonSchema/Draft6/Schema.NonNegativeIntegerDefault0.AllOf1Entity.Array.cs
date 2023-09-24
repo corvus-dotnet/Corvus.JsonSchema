@@ -37,7 +37,6 @@ public readonly partial struct Schema
                 this.jsonElementBacking = default;
                 this.backing = Backing.Array;
                 this.stringBacking = string.Empty;
-                this.boolBacking = default;
                 this.numberBacking = default;
                 this.arrayBacking = value;
                 this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
@@ -52,7 +51,6 @@ public readonly partial struct Schema
                 this.jsonElementBacking = default;
                 this.backing = Backing.Array;
                 this.stringBacking = string.Empty;
-                this.boolBacking = default;
                 this.numberBacking = default;
                 this.arrayBacking = value.ToImmutableList();
                 this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
