@@ -12,7 +12,14 @@ namespace Corvus.Json;
 /// <summary>
 /// Represents a JSON number.
 /// </summary>
-public readonly partial struct JsonNumber : IJsonNumber<JsonNumber>
+public readonly partial struct JsonNumber :
+    IJsonNumber<JsonNumber>,
+#if NET8_0
+    ISpanFormattable,
+    IUtf8SpanFormattable
+#else
+    ISpanFormattable
+#endif
 {
     private readonly Backing backing;
     private readonly JsonElement jsonElementBacking;
@@ -679,5 +686,102 @@ public readonly partial struct JsonNumber : IJsonNumber<JsonNumber>
     public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
     {
         return Json.Validate.TypeNumber(this.ValueKind, validationContext, level);
+    }
+
+    /// <summary>
+    /// Gets the maximum char length for a number of this size.
+    /// </summary>
+    /// <returns>The maximum possible length of the buffer required if the number is written to a <see cref="Span{T}"/> - either bytes or chars.</returns>
+    public int GetMaxCharLength()
+    {
+        if (this.HasJsonElementBacking)
+        {
+            // This is the largest possible output size.
+            return BinaryJsonNumber.GetMaxCharLength(BinaryJsonNumber.Kind.Double);
+        }
+
+        if (this.HasDotnetBacking)
+        {
+            return this.numberBacking.GetMaxCharLength();
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    /// <inheritdoc/>
+    public bool TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
+    {
+        if (this.HasJsonElementBacking)
+        {
+            // This is the largest possible output size.
+            if (this.jsonElementBacking.TryGetDouble(out double v1))
+            {
+                return v1.TryFormat(destination, out charsWritten, format, provider);
+            }
+
+            if (this.jsonElementBacking.TryGetDecimal(out decimal v2))
+            {
+                return v2.TryFormat(destination, out charsWritten, format, provider);
+            }
+        }
+
+        if (this.HasDotnetBacking)
+        {
+            return this.numberBacking.TryFormat(destination, out charsWritten, format, provider);
+        }
+
+        throw new InvalidOperationException();
+    }
+
+#if NET8_0
+    /// <inheritdoc/>
+    public bool TryFormat(Span<byte> utf8Destination, out int bytesWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
+    {
+        if (this.HasJsonElementBacking)
+        {
+            // This is the largest possible output size.
+            if (this.jsonElementBacking.TryGetDouble(out double v1))
+            {
+                return v1.TryFormat(utf8Destination, out bytesWritten, format, provider);
+            }
+
+            if (this.jsonElementBacking.TryGetDecimal(out decimal v2))
+            {
+                return v2.TryFormat(utf8Destination, out bytesWritten, format, provider);
+            }
+        }
+
+        if (this.HasDotnetBacking)
+        {
+            return this.numberBacking.TryFormat(utf8Destination, out bytesWritten, format, provider);
+        }
+
+        throw new InvalidOperationException();
+    }
+#endif
+
+    /// <inheritdoc/>
+    public string ToString(string? format, IFormatProvider? formatProvider)
+    {
+        if (this.HasJsonElementBacking)
+        {
+            // This is the largest possible output size.
+            if (this.jsonElementBacking.TryGetDouble(out double v1))
+            {
+                return v1.ToString(format, formatProvider);
+            }
+
+            if (this.jsonElementBacking.TryGetDecimal(out decimal v2))
+            {
+                return v2.ToString(format, formatProvider);
+            }
+        }
+
+        if (this.HasDotnetBacking)
+        {
+            return this.numberBacking.ToString(format, formatProvider);
+        }
+
+        throw new InvalidOperationException();
     }
 }

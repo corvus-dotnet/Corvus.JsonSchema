@@ -253,6 +253,7 @@ internal class JsonTemplateParameterProvider<TPayload> : ITemplateParameterProvi
         }
         else if (value.ValueKind == JsonValueKind.Number)
         {
+            value.AsNumber.Format
             double valueNumber = (double)value.AsNumber;
 
             // The maximum number of digits in a double precision number is 1074; we allocate a little above this

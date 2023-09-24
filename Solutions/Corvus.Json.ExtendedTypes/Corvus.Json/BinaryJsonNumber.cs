@@ -15,7 +15,17 @@ namespace Corvus.Json;
 /// <summary>
 /// A Binary representation of a JSON number.
 /// </summary>
-public readonly struct BinaryJsonNumber : IEquatable<BinaryJsonNumber>, IComparable<BinaryJsonNumber>, IEquatable<JsonElement>, IComparable<JsonElement>
+public readonly struct BinaryJsonNumber :
+    IEquatable<BinaryJsonNumber>,
+    IComparable<BinaryJsonNumber>,
+    IEquatable<JsonElement>,
+    IComparable<JsonElement>,
+#if NET8_0
+    ISpanFormattable,
+    IUtf8SpanFormattable
+#else
+    ISpanFormattable,
+#endif
 {
 #if NET8_0
     private readonly ByteBuffer16 binaryData;
@@ -476,18 +486,18 @@ public readonly struct BinaryJsonNumber : IEquatable<BinaryJsonNumber>, ICompara
 
         return right.numericKind switch
         {
-            Kind.Byte => Equals(right, ReadByte(left.binaryData)),
-            Kind.Decimal => Equals(right, ReadDecimal(left.binaryData)),
-            Kind.Double => Equals(right, ReadDouble(left.binaryData)),
-            Kind.Half => Equals(right, ReadHalf(left.binaryData)),
-            Kind.Int16 => Equals(right, ReadInt16(left.binaryData)),
-            Kind.Int32 => Equals(right, ReadInt32(left.binaryData)),
-            Kind.Int64 => Equals(right, ReadInt64(left.binaryData)),
-            Kind.SByte => Equals(right, ReadSByte(left.binaryData)),
-            Kind.Single => Equals(right, ReadSingle(left.binaryData)),
-            Kind.UInt16 => Equals(right, ReadUInt16(left.binaryData)),
-            Kind.UInt32 => Equals(right, ReadUInt32(left.binaryData)),
-            Kind.UInt64 => Equals(right, ReadUInt64(left.binaryData)),
+            Kind.Byte => Equals(left, ReadByte(right.binaryData)),
+            Kind.Decimal => Equals(left, ReadDecimal(right.binaryData)),
+            Kind.Double => Equals(left, ReadDouble(right.binaryData)),
+            Kind.Half => Equals(left, ReadHalf(right.binaryData)),
+            Kind.Int16 => Equals(left, ReadInt16(right.binaryData)),
+            Kind.Int32 => Equals(left, ReadInt32(right.binaryData)),
+            Kind.Int64 => Equals(left, ReadInt64(right.binaryData)),
+            Kind.SByte => Equals(left, ReadSByte(right.binaryData)),
+            Kind.Single => Equals(left, ReadSingle(right.binaryData)),
+            Kind.UInt16 => Equals(left, ReadUInt16(right.binaryData)),
+            Kind.UInt32 => Equals(left, ReadUInt32(right.binaryData)),
+            Kind.UInt64 => Equals(left, ReadUInt64(right.binaryData)),
             _ => throw new NotSupportedException(),
         };
     }
@@ -527,57 +537,15 @@ public readonly struct BinaryJsonNumber : IEquatable<BinaryJsonNumber>, ICompara
 
         if (jsonNumber.TryGetDouble(out double jsonNumberDouble))
         {
-            if (binaryNumber.numericKind == Kind.Decimal)
-            {
-                decimal binaryNumberDecimal = ReadDecimal(binaryNumber.binaryData);
-
-                if (PreciseConversionTo<double>.TryFrom(binaryNumberDecimal, out double binaryNumberDecimalAsDouble))
-                {
-                    jsonNumberDouble.CompareTo(binaryNumberDecimalAsDouble);
-                }
-                else
-                {
-                    // This will throw if we cannot conver to a decimal
-                    jsonNumber.GetDecimal().CompareTo(binaryNumberDecimal);
-                }
-            }
-
-            // We didn't throw, so we can try to compare with the double
-            return binaryNumber.numericKind switch
-            {
-                Kind.Byte => jsonNumberDouble.Equals(ReadByte(binaryNumber.binaryData)),
-                Kind.Double => jsonNumberDouble.Equals(ReadDouble(binaryNumber.binaryData)),
-                Kind.Half => jsonNumberDouble.Equals((double)ReadHalf(binaryNumber.binaryData)),
-                Kind.Int16 => jsonNumberDouble.Equals(ReadInt16(binaryNumber.binaryData)),
-                Kind.Int32 => jsonNumberDouble.Equals(ReadInt32(binaryNumber.binaryData)),
-                Kind.Int64 => jsonNumberDouble.Equals(ReadInt64(binaryNumber.binaryData)),
-                Kind.SByte => jsonNumberDouble.Equals(ReadSByte(binaryNumber.binaryData)),
-                Kind.Single => jsonNumberDouble.Equals((double)ReadSingle(binaryNumber.binaryData)),
-                Kind.UInt16 => jsonNumberDouble.Equals(ReadUInt16(binaryNumber.binaryData)),
-                Kind.UInt32 => jsonNumberDouble.Equals(ReadUInt32(binaryNumber.binaryData)),
-                Kind.UInt64 => jsonNumberDouble.Equals(ReadUInt64(binaryNumber.binaryData)),
-                _ => throw new NotSupportedException(),
-            };
+            return Equals(binaryNumber, jsonNumberDouble);
         }
 
-        // We fall through the decimal handling
-        decimal jsonNumberDecimal = jsonNumber.GetDecimal();
-        return binaryNumber.numericKind switch
+        if (jsonNumber.TryGetDecimal(out decimal jsonNumberDecimal))
         {
-            Kind.Byte => jsonNumberDecimal.Equals(ReadByte(binaryNumber.binaryData)),
-            Kind.Decimal => jsonNumberDecimal.Equals(ReadDecimal(binaryNumber.binaryData)),
-            Kind.Double => jsonNumberDecimal.Equals(checked((decimal)ReadDouble(binaryNumber.binaryData))),
-            Kind.Half => jsonNumberDecimal.Equals(checked((decimal)ReadHalf(binaryNumber.binaryData))),
-            Kind.Int16 => jsonNumberDecimal.Equals(ReadInt16(binaryNumber.binaryData)),
-            Kind.Int32 => jsonNumberDecimal.Equals(ReadInt32(binaryNumber.binaryData)),
-            Kind.Int64 => jsonNumberDecimal.Equals(ReadInt64(binaryNumber.binaryData)),
-            Kind.SByte => jsonNumberDecimal.Equals(ReadSByte(binaryNumber.binaryData)),
-            Kind.Single => jsonNumberDecimal.Equals(checked((decimal)ReadSingle(binaryNumber.binaryData))),
-            Kind.UInt16 => jsonNumberDecimal.Equals(ReadUInt16(binaryNumber.binaryData)),
-            Kind.UInt32 => jsonNumberDecimal.Equals(ReadUInt32(binaryNumber.binaryData)),
-            Kind.UInt64 => jsonNumberDecimal.Equals(ReadUInt64(binaryNumber.binaryData)),
-            _ => throw new NotSupportedException(),
-        };
+            return Equals(binaryNumber, jsonNumberDecimal);
+        }
+
+        throw new NotSupportedException();
     }
 
     /// <summary>
@@ -659,54 +627,15 @@ public readonly struct BinaryJsonNumber : IEquatable<BinaryJsonNumber>, ICompara
 
         if (left.TryGetDouble(out double leftDouble))
         {
-            if (right.numericKind == Kind.Decimal)
-            {
-                decimal rightDecimal = ReadDecimal(right.binaryData);
-
-                if (PreciseConversionTo<double>.TryFrom(rightDecimal, out double rightDecimalAsDouble))
-                {
-                    leftDouble.CompareTo(rightDecimalAsDouble);
-                }
-                else
-                {
-                    left.GetDecimal().CompareTo(rightDecimal);
-                }
-            }
-
-            return right.numericKind switch
-            {
-                Kind.Byte => leftDouble.CompareTo(ReadByte(right.binaryData)),
-                Kind.Double => leftDouble.CompareTo(ReadDouble(right.binaryData)),
-                Kind.Half => leftDouble.CompareTo((double)ReadHalf(right.binaryData)),
-                Kind.Int16 => leftDouble.CompareTo(ReadInt16(right.binaryData)),
-                Kind.Int32 => leftDouble.CompareTo(ReadInt32(right.binaryData)),
-                Kind.Int64 => leftDouble.CompareTo(ReadInt64(right.binaryData)),
-                Kind.SByte => leftDouble.CompareTo(ReadSByte(right.binaryData)),
-                Kind.Single => leftDouble.CompareTo((double)ReadSingle(right.binaryData)),
-                Kind.UInt16 => leftDouble.CompareTo(ReadUInt16(right.binaryData)),
-                Kind.UInt32 => leftDouble.CompareTo(ReadUInt32(right.binaryData)),
-                Kind.UInt64 => leftDouble.CompareTo(ReadUInt64(right.binaryData)),
-                _ => throw new NotSupportedException(),
-            };
+            return Compare(leftDouble, right);
         }
 
-        decimal leftDecimal = left.GetDecimal();
-        return right.numericKind switch
+        if (left.TryGetDecimal(out decimal leftDecimal))
         {
-            Kind.Byte => leftDecimal.CompareTo(ReadByte(right.binaryData)),
-            Kind.Decimal => leftDecimal.CompareTo(ReadDecimal(right.binaryData)),
-            Kind.Double => leftDecimal.CompareTo(checked((decimal)ReadDouble(right.binaryData))),
-            Kind.Half => leftDecimal.CompareTo(checked((decimal)ReadHalf(right.binaryData))),
-            Kind.Int16 => leftDecimal.CompareTo(ReadInt16(right.binaryData)),
-            Kind.Int32 => leftDecimal.CompareTo(ReadInt32(right.binaryData)),
-            Kind.Int64 => leftDecimal.CompareTo(ReadInt64(right.binaryData)),
-            Kind.SByte => leftDecimal.CompareTo(ReadSByte(right.binaryData)),
-            Kind.Single => leftDecimal.CompareTo(checked((decimal)ReadSingle(right.binaryData))),
-            Kind.UInt16 => leftDecimal.CompareTo(ReadUInt16(right.binaryData)),
-            Kind.UInt32 => leftDecimal.CompareTo(ReadUInt32(right.binaryData)),
-            Kind.UInt64 => leftDecimal.CompareTo(ReadUInt64(right.binaryData)),
-            _ => throw new NotSupportedException(),
-        };
+            return Compare(leftDecimal, right);
+        }
+
+        throw new NotSupportedException();
     }
 
     /// <summary>
@@ -731,6 +660,128 @@ public readonly struct BinaryJsonNumber : IEquatable<BinaryJsonNumber>, ICompara
         // But if we can#t, we'll go with a decimal
         return new BinaryJsonNumber(jsonElement.GetDecimal());
     }
+
+    /// <summary>
+    /// Get the maximum number of characters if a number of a paticular numeric kind is written to a string.
+    /// </summary>
+    /// <param name="numericKind">The numeric kind of the number.</param>
+    /// <returns>The maximum possible number of characters if the number is written to a string.</returns>
+    /// <remarks>Note that your format provider may add additional characters to the output. You should account for those when allocating a format.</remarks>
+    public static int GetMaxCharLength(Kind numericKind)
+    {
+        return numericKind switch
+        {
+            Kind.Byte => 8,
+            Kind.Decimal => 128,
+            Kind.Double => 512,
+            Kind.Half => 64,
+            Kind.Int16 => 8,
+            Kind.Int32 => 16,
+            Kind.Int64 => 32,
+            Kind.SByte => 8,
+            Kind.Single => 64,
+            Kind.UInt16 => 8,
+            Kind.UInt32 => 16,
+            Kind.UInt64 => 32,
+            _ => throw new NotSupportedException(),
+        };
+    }
+
+    /// <summary>
+    /// Get the maximum number of characters if the number is written to a string.
+    /// </summary>
+    /// <returns>The maximum possible number of characters if the number is written to a string.</returns>
+    /// <remarks>Note that your format provider may add additional characters to the output. You should account for those when allocating a format.</remarks>
+    public int GetMaxCharLength()
+    {
+        return GetMaxCharLength(this.numericKind);
+    }
+
+    /// <inheritdoc/>
+    public bool TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
+    {
+        return this.numericKind switch
+        {
+            Kind.Byte => ReadByte(this.binaryData).TryFormat(destination, out charsWritten, format, provider),
+            Kind.Decimal => ReadDecimal(this.binaryData).TryFormat(destination, out charsWritten, format, provider),
+            Kind.Double => ReadDouble(this.binaryData).TryFormat(destination, out charsWritten, format, provider),
+            Kind.Half => ReadHalf(this.binaryData).TryFormat(destination, out charsWritten, format, provider),
+            Kind.Int16 => ReadInt16(this.binaryData).TryFormat(destination, out charsWritten, format, provider),
+            Kind.Int32 => ReadInt32(this.binaryData).TryFormat(destination, out charsWritten, format, provider),
+            Kind.Int64 => ReadInt64(this.binaryData).TryFormat(destination, out charsWritten, format, provider),
+            Kind.SByte => ReadSByte(this.binaryData).TryFormat(destination, out charsWritten, format, provider),
+            Kind.Single => ReadSingle(this.binaryData).TryFormat(destination, out charsWritten, format, provider),
+            Kind.UInt16 => ReadUInt16(this.binaryData).TryFormat(destination, out charsWritten, format, provider),
+            Kind.UInt32 => ReadUInt32(this.binaryData).TryFormat(destination, out charsWritten, format, provider),
+            Kind.UInt64 => ReadUInt64(this.binaryData).TryFormat(destination, out charsWritten, format, provider),
+            _ => throw new NotSupportedException(),
+        };
+    }
+
+    /// <inheritdoc/>
+    public string ToString(string? format, IFormatProvider? formatProvider)
+    {
+        return this.numericKind switch
+        {
+            Kind.Byte => ReadByte(this.binaryData).ToString(format, formatProvider),
+            Kind.Decimal => ReadDecimal(this.binaryData).ToString(format, formatProvider),
+            Kind.Double => ReadDouble(this.binaryData).ToString(format, formatProvider),
+            Kind.Half => ReadHalf(this.binaryData).ToString(format, formatProvider),
+            Kind.Int16 => ReadInt16(this.binaryData).ToString(format, formatProvider),
+            Kind.Int32 => ReadInt32(this.binaryData).ToString(format, formatProvider),
+            Kind.Int64 => ReadInt64(this.binaryData).ToString(format, formatProvider),
+            Kind.SByte => ReadSByte(this.binaryData).ToString(format, formatProvider),
+            Kind.Single => ReadSingle(this.binaryData).ToString(format, formatProvider),
+            Kind.UInt16 => ReadUInt16(this.binaryData).ToString(format, formatProvider),
+            Kind.UInt32 => ReadUInt32(this.binaryData).ToString(format, formatProvider),
+            Kind.UInt64 => ReadUInt64(this.binaryData).ToString(format, formatProvider),
+            _ => throw new NotSupportedException(),
+        };
+    }
+
+    /// <inheritdoc/>
+    public override string ToString()
+    {
+        return this.numericKind switch
+        {
+            Kind.Byte => ReadByte(this.binaryData).ToString(),
+            Kind.Decimal => ReadDecimal(this.binaryData).ToString(),
+            Kind.Double => ReadDouble(this.binaryData).ToString(),
+            Kind.Half => ReadHalf(this.binaryData).ToString(),
+            Kind.Int16 => ReadInt16(this.binaryData).ToString(),
+            Kind.Int32 => ReadInt32(this.binaryData).ToString(),
+            Kind.Int64 => ReadInt64(this.binaryData).ToString(),
+            Kind.SByte => ReadSByte(this.binaryData).ToString(),
+            Kind.Single => ReadSingle(this.binaryData).ToString(),
+            Kind.UInt16 => ReadUInt16(this.binaryData).ToString(),
+            Kind.UInt32 => ReadUInt32(this.binaryData).ToString(),
+            Kind.UInt64 => ReadUInt64(this.binaryData).ToString(),
+            _ => throw new NotSupportedException(),
+        };
+    }
+
+#if NET8_0
+    /// <inheritdoc/>
+    public bool TryFormat(Span<byte> utf8Destination, out int bytesWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
+    {
+        return this.numericKind switch
+        {
+            Kind.Byte => ReadByte(this.binaryData).TryFormat(utf8Destination, out bytesWritten, format, provider),
+            Kind.Decimal => ReadDecimal(this.binaryData).TryFormat(utf8Destination, out bytesWritten, format, provider),
+            Kind.Double => ReadDouble(this.binaryData).TryFormat(utf8Destination, out bytesWritten, format, provider),
+            Kind.Half => ReadHalf(this.binaryData).TryFormat(utf8Destination, out bytesWritten, format, provider),
+            Kind.Int16 => ReadInt16(this.binaryData).TryFormat(utf8Destination, out bytesWritten, format, provider),
+            Kind.Int32 => ReadInt32(this.binaryData).TryFormat(utf8Destination, out bytesWritten, format, provider),
+            Kind.Int64 => ReadInt64(this.binaryData).TryFormat(utf8Destination, out bytesWritten, format, provider),
+            Kind.SByte => ReadSByte(this.binaryData).TryFormat(utf8Destination, out bytesWritten, format, provider),
+            Kind.Single => ReadSingle(this.binaryData).TryFormat(utf8Destination, out bytesWritten, format, provider),
+            Kind.UInt16 => ReadUInt16(this.binaryData).TryFormat(utf8Destination, out bytesWritten, format, provider),
+            Kind.UInt32 => ReadUInt32(this.binaryData).TryFormat(utf8Destination, out bytesWritten, format, provider),
+            Kind.UInt64 => ReadUInt64(this.binaryData).TryFormat(utf8Destination, out bytesWritten, format, provider),
+            _ => throw new NotSupportedException(),
+        };
+    }
+#endif
 
     /// <summary>
     /// Create an instance of an <see cref="INumberBase{TSelf}"/>.
@@ -1275,6 +1326,63 @@ public readonly struct BinaryJsonNumber : IEquatable<BinaryJsonNumber>, ICompara
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool Equals(in BinaryJsonNumber binaryNumber, decimal numberBase)
+    {
+        if (binaryNumber.numericKind == Kind.Double)
+        {
+            double binaryNumberAsDouble = ReadDouble(binaryNumber.binaryData);
+            if (PreciseConversionTo<decimal>.TryFrom(binaryNumberAsDouble, out decimal binaryNumberAsDecimal))
+            {
+                return binaryNumberAsDecimal.Equals(numberBase);
+            }
+            else
+            {
+                return PreciseConversionTo<double>.From(numberBase).Equals(binaryNumberAsDouble);
+            }
+        }
+
+        if (binaryNumber.numericKind == Kind.Single)
+        {
+            float binaryNumberAsFloat = ReadSingle(binaryNumber.binaryData);
+            if (PreciseConversionTo<decimal>.TryFrom(binaryNumberAsFloat, out decimal binaryNumberAsDecimal))
+            {
+                return binaryNumberAsDecimal.Equals(numberBase);
+            }
+            else
+            {
+                return PreciseConversionTo<double>.From(numberBase).Equals((double)binaryNumberAsFloat);
+            }
+        }
+
+        if (binaryNumber.numericKind == Kind.Half)
+        {
+            Half binaryNumberAsHalf = ReadHalf(binaryNumber.binaryData);
+            if (PreciseConversionTo<decimal>.TryFrom(binaryNumberAsHalf, out decimal binaryNumberAsDecimal))
+            {
+                return binaryNumberAsDecimal.Equals(numberBase);
+            }
+            else
+            {
+                return PreciseConversionTo<double>.From(numberBase).Equals((double)binaryNumberAsHalf);
+            }
+        }
+
+        return binaryNumber.numericKind switch
+        {
+            Kind.Byte => numberBase.Equals(ReadByte(binaryNumber.binaryData)),
+            Kind.Decimal => numberBase.Equals(ReadDecimal(binaryNumber.binaryData)),
+            Kind.Int16 => numberBase.Equals(ReadInt16(binaryNumber.binaryData)),
+            Kind.Int32 => numberBase.Equals(ReadInt32(binaryNumber.binaryData)),
+            Kind.Int64 => numberBase.Equals(ReadInt64(binaryNumber.binaryData)),
+            Kind.SByte => numberBase.Equals(ReadSByte(binaryNumber.binaryData)),
+            Kind.UInt16 => numberBase.Equals(ReadUInt16(binaryNumber.binaryData)),
+            Kind.UInt32 => numberBase.Equals(ReadUInt32(binaryNumber.binaryData)),
+            Kind.UInt64 => numberBase.Equals(ReadUInt64(binaryNumber.binaryData)),
+            _ => throw new NotSupportedException(),
+        };
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool Equals<T>(in BinaryJsonNumber binaryNumber, T numberBase)
     where T : INumberBase<T>
     {
@@ -1284,13 +1392,13 @@ public readonly struct BinaryJsonNumber : IEquatable<BinaryJsonNumber>, ICompara
             {
                 decimal binaryNumberDecimal = ReadDecimal(binaryNumber.binaryData);
 
-                if (PreciseConversionTo<double>.TryFrom(binaryNumberDecimal, out double binaryNumberDecimalAsDouble))
+                if (PreciseConversionTo<decimal>.TryFrom(numberBase, out decimal numberBaseAsDecimal))
                 {
-                    numberBaseDouble.CompareTo(binaryNumberDecimalAsDouble);
+                    return binaryNumberDecimal.Equals(numberBaseAsDecimal);
                 }
                 else
                 {
-                    PreciseConversionTo<decimal>.From(numberBase).CompareTo(binaryNumberDecimal);
+                    return PreciseConversionTo<double>.From(binaryNumberDecimal).Equals(numberBaseDouble);
                 }
             }
 
@@ -1333,6 +1441,62 @@ public readonly struct BinaryJsonNumber : IEquatable<BinaryJsonNumber>, ICompara
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int Compare(decimal left, in BinaryJsonNumber right)
+    {
+        if (right.numericKind == Kind.Double)
+        {
+            double rightAsDouble = ReadDouble(right.binaryData);
+            if (PreciseConversionTo<decimal>.TryFrom(rightAsDouble, out decimal rightAsDecimal))
+            {
+                return left.CompareTo(rightAsDecimal);
+            }
+            else
+            {
+                return PreciseConversionTo<double>.From(left).CompareTo(rightAsDouble);
+            }
+        }
+
+        if (right.numericKind == Kind.Single)
+        {
+            float rightAsFloat = ReadSingle(right.binaryData);
+            if (PreciseConversionTo<decimal>.TryFrom(rightAsFloat, out decimal rightAsDecimal))
+            {
+                return left.CompareTo(rightAsDecimal);
+            }
+            else
+            {
+                return PreciseConversionTo<double>.From(left).CompareTo((double)rightAsFloat);
+            }
+        }
+
+        if (right.numericKind == Kind.Half)
+        {
+            Half rightAsHalf = ReadHalf(right.binaryData);
+            if (PreciseConversionTo<decimal>.TryFrom(rightAsHalf, out decimal rightAsDecimal))
+            {
+                return left.CompareTo(rightAsDecimal);
+            }
+            else
+            {
+                return PreciseConversionTo<double>.From(left).CompareTo((double)rightAsHalf);
+            }
+        }
+
+        return right.numericKind switch
+        {
+            Kind.Byte => left.CompareTo(ReadByte(right.binaryData)),
+            Kind.Int16 => left.CompareTo(ReadInt16(right.binaryData)),
+            Kind.Int32 => left.CompareTo(ReadInt32(right.binaryData)),
+            Kind.Int64 => left.CompareTo(ReadInt64(right.binaryData)),
+            Kind.SByte => left.CompareTo(ReadSByte(right.binaryData)),
+            Kind.UInt16 => left.CompareTo(ReadUInt16(right.binaryData)),
+            Kind.UInt32 => left.CompareTo(ReadUInt32(right.binaryData)),
+            Kind.UInt64 => left.CompareTo(ReadUInt64(right.binaryData)),
+            _ => throw new NotSupportedException(),
+        };
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int Compare<T>(T left, in BinaryJsonNumber right)
         where T : INumberBase<T>
     {
@@ -1345,16 +1509,16 @@ public readonly struct BinaryJsonNumber : IEquatable<BinaryJsonNumber>, ICompara
                 // Get it as a decimal
                 decimal rightDecimal = ReadDecimal(right.binaryData);
 
-                // Then try to use it as a double
-                if (PreciseConversionTo<double>.TryFrom(rightDecimal, out double rightDecimalAsDouble))
-                {
-                    return leftDouble.CompareTo(rightDecimalAsDouble);
-                }
-
-                // Otherwise fall back on the decimal
+                // Then try to use it as a decimal
                 if (PreciseConversionTo<decimal>.TryFrom(left, out decimal leftDecimalForRightDecimal))
                 {
                     return leftDecimalForRightDecimal.CompareTo(rightDecimal);
+                }
+
+                // Otherwise fall back on the double
+                if (PreciseConversionTo<double>.TryFrom(rightDecimal, out double rightDecimalAsDouble))
+                {
+                    return leftDouble.CompareTo(rightDecimalAsDouble);
                 }
 
                 // We couldn't cope - they are mutually incompatible.
@@ -1399,6 +1563,24 @@ public readonly struct BinaryJsonNumber : IEquatable<BinaryJsonNumber>, ICompara
         };
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool IsMultipleOf(decimal x, BinaryJsonNumber y)
+    {
+        if (PreciseConversionTo<decimal>.TryFrom(y, out decimal yAsDecimal))
+        {
+            return decimal.Abs(decimal.Remainder(x, yAsDecimal)) <= 1.0E-5M;
+        }
+
+        if (PreciseConversionTo<double>.TryFrom(x, out double xAsDouble) &&
+            PreciseConversionTo<double>.TryFrom(y, out double yAsDouble))
+        {
+            return Math.Abs(Math.IEEERemainder(xAsDouble, yAsDouble)) <= 1.0E-9;
+        }
+
+        throw new OverflowException();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool IsMultipleOf<TOther>(TOther x, BinaryJsonNumber y)
     where TOther : INumberBase<TOther>
     {
