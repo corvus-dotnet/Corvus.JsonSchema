@@ -4,6 +4,7 @@
 
 using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -304,6 +305,7 @@ public readonly struct JsonPropertyName
     /// <param name="other">The other item with which to compare.</param>
     /// <returns><see langword="true"/> if the values were equal.</returns>
     /// <exception cref="InvalidOperationException">The comparison was not possible.</exception>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool Equals(in JsonPropertyName other)
     {
         if (other.HasStringBacking)
@@ -325,6 +327,7 @@ public readonly struct JsonPropertyName
     /// <param name="jsonElement">The json element to compare.</param>
     /// <returns><see langword="true"/> if the property name was equal to this name.</returns>
     /// <exception cref="InvalidOperationException">The property name did not have a valid backing.</exception>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool EqualsJsonElement(JsonElement jsonElement)
     {
         if (jsonElement.ValueKind != JsonValueKind.String)
@@ -360,6 +363,7 @@ public readonly struct JsonPropertyName
     /// <param name="jp">The JSON property whose name is to be compared.</param>
     /// <returns><see langword="true"/> if the property name was equal to this name.</returns>
     /// <exception cref="InvalidOperationException">The property name did not have a valid backing.</exception>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool EqualsPropertyNameOf(JsonProperty jp)
     {
         if (this.HasJsonElementBacking)
@@ -392,6 +396,7 @@ public readonly struct JsonPropertyName
     /// <param name="name">The name with which to compare.</param>
     /// <returns><see langword="true"/> if the property name was equal to this name.</returns>
     /// <exception cref="InvalidOperationException">The property name did not have a valid backing.</exception>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool EqualsString(ReadOnlySpan<char> name)
     {
         if (this.HasJsonElementBacking)
@@ -413,6 +418,7 @@ public readonly struct JsonPropertyName
     /// <param name="name">The name with which to compare.</param>
     /// <returns><see langword="true"/> if the property name was equal to this name.</returns>
     /// <exception cref="InvalidOperationException">The property name did not have a valid backing.</exception>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool EqualsJsonString(in JsonString name)
     {
         if (name.HasJsonElementBacking)
@@ -653,6 +659,7 @@ public readonly struct JsonPropertyName
     /// </summary>
     /// <typeparam name="T">The type of the <see cref="IJsonString{T}"/>.</typeparam>
     /// <returns>An instance of the property name converted to the given type.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T As<T>()
         where T : struct, IJsonString<T>
     {
@@ -671,6 +678,7 @@ public readonly struct JsonPropertyName
     /// <param name="regex">The regular expressin to match.</param>
     /// <returns><see langword="true"/> if the expression is a match.</returns>
     /// <exception cref="InvalidOperationException">The name was not in a valid state.</exception>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool IsMatch(Regex regex)
     {
         if (this.HasJsonElementBacking)
@@ -701,6 +709,7 @@ public readonly struct JsonPropertyName
     /// Gets an estimate of the length of the name.
     /// </summary>
     /// <returns>An estimate of the length of the name.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal int EstimateCharLength()
     {
         if (this.HasJsonElementBacking)
