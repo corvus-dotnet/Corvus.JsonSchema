@@ -71,7 +71,7 @@ param (
     [string] $BuildModulePath,
 
     [Parameter()]
-    [version] $BuildModuleVersion = "1.3.9",
+    [version] $BuildModuleVersion = "1.3.10",
 
     [Parameter()]
     [version] $InvokeBuildModuleVersion = "5.7.1"
