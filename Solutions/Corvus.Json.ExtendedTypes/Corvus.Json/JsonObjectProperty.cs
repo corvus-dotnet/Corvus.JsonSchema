@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 
 namespace Corvus.Json;
@@ -141,6 +142,7 @@ public readonly struct JsonObjectProperty
     /// </summary>
     /// <typeparam name="T">The type for which to get the value.</typeparam>
     /// <returns>An instance of the value as the given type.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T ValueAs<T>()
         where T : struct, IJsonValue<T>
     {
