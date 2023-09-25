@@ -599,7 +599,7 @@ internal class BinaryJsonNumberComparisonLessThanOrEqualsGreaterThanOrEquals
     ];
 
     /// <summary>
-    /// The expectation from the conparison.
+    /// The expectation from the comparison.
     /// </summary>
     public enum Expectation
     {
@@ -609,7 +609,7 @@ internal class BinaryJsonNumberComparisonLessThanOrEqualsGreaterThanOrEquals
         False,
 
         /// <summary>
-        /// True expecatation.
+        /// True expectation.
         /// </summary>
         True,
 
@@ -748,19 +748,19 @@ internal class BinaryJsonNumberComparisonLessThanOrEqualsGreaterThanOrEquals
             return new(half);
         }
 
-        if (value is float sngl)
+        if (value is float singleValue)
         {
-            return new(sngl);
+            return new(singleValue);
         }
 
-        if (value is double dbl)
+        if (value is double doubleValue)
         {
-            return new(dbl);
+            return new(doubleValue);
         }
 
-        if (value is decimal dcml)
+        if (value is decimal decimalValue)
         {
-            return new(dcml);
+            return new(decimalValue);
         }
 
         throw new InvalidOperationException("Unsupported value kind");

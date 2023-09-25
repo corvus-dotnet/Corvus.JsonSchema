@@ -700,19 +700,19 @@ public readonly struct BinaryJsonNumber :
     /// <param name="x">The value to test.</param>
     /// <param name="y">The factor to test.</param>
     /// <returns><see langword="true"/> if the value is a multiple of the given factor.</returns>
-    /// <exception cref="NotSupportedException">The number format is not suported.</exception>
+    /// <exception cref="NotSupportedException">The number format is not supported.</exception>
     /// <exception cref="OverflowException">The number could not be converted without overflow/loss of precision.</exception>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsMultipleOf(JsonElement x, BinaryJsonNumber y)
     {
-        if (x.TryGetDouble(out double dv))
+        if (x.TryGetDouble(out double doubleValue))
         {
-            return IsMultipleOf(dv, y);
+            return IsMultipleOf(doubleValue, y);
         }
 
-        if (x.TryGetDecimal(out decimal decv))
+        if (x.TryGetDecimal(out decimal decimalValue))
         {
-            return IsMultipleOf(decv, y);
+            return IsMultipleOf(decimalValue, y);
         }
 
         throw new OverflowException();
@@ -724,7 +724,7 @@ public readonly struct BinaryJsonNumber :
     /// <param name="x">The value to test.</param>
     /// <param name="y">The factor to test.</param>
     /// <returns><see langword="true"/> if the value is a multiple of the given factor.</returns>
-    /// <exception cref="NotSupportedException">The number format is not suported.</exception>
+    /// <exception cref="NotSupportedException">The number format is not supported.</exception>
     /// <exception cref="OverflowException">The number could not be converted without overflow/loss of precision.</exception>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsMultipleOf(decimal x, BinaryJsonNumber y)
@@ -750,7 +750,7 @@ public readonly struct BinaryJsonNumber :
     /// <param name="x">The value to test.</param>
     /// <param name="y">The factor to test.</param>
     /// <returns><see langword="true"/> if the value is a multiple of the given factor.</returns>
-    /// <exception cref="NotSupportedException">The number format is not suported.</exception>
+    /// <exception cref="NotSupportedException">The number format is not supported.</exception>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsMultipleOf<TOther>(TOther x, BinaryJsonNumber y)
         where TOther : INumberBase<TOther>
@@ -772,7 +772,7 @@ public readonly struct BinaryJsonNumber :
     }
 
     /// <summary>
-    /// Get the maximum number of characters if a number of a paticular numeric kind is written to a string.
+    /// Get the maximum number of characters if a number of a particular numeric kind is written to a string.
     /// </summary>
     /// <param name="numericKind">The numeric kind of the number.</param>
     /// <returns>The maximum possible number of characters if the number is written to a string.</returns>
@@ -1024,7 +1024,7 @@ public readonly struct BinaryJsonNumber :
     /// </summary>
     /// <param name="multipleOf">The factor to test.</param>
     /// <returns><see langword="true"/> if the value is a multiple of the given factor.</returns>
-    /// <exception cref="NotSupportedException">The number format is not suported.</exception>
+    /// <exception cref="NotSupportedException">The number format is not supported.</exception>
     public bool IsMultipleOf(in BinaryJsonNumber multipleOf)
     {
         if (this.numericKind == multipleOf.numericKind)

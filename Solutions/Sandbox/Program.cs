@@ -49,14 +49,6 @@ Console.WriteLine($"*0.3d == *0.3M is {rhs3["hello"].AsNumber == lhs3["hello"].A
 Console.WriteLine($"0.3M == 0.3f is {0.3M == (decimal)0.3d}");
 Console.WriteLine($"0.3d == 0.3M is {(decimal)0.3d == 0.3M}");
 
-var lhs3a = JsonObject.FromProperties(("hello", 0.3d));
-var rhs3a = JsonObject.FromProperties(("hello", 0.3f));
-
-Console.WriteLine($"*0.3d == *0.3f is {lhs3["hello"].AsNumber == rhs3["hello"].AsNumber}");
-Console.WriteLine($"*0.3f == *0.3d is {rhs3["hello"].AsNumber == lhs3["hello"].AsNumber}");
-Console.WriteLine($"0.3d == 0.3f is {0.3d == 0.3f}");
-Console.WriteLine($"0.3f == 0.3d is {0.3f == 0.3d}");
-
 var lhs4 = JsonObject.FromProperties(("hello", 0.4M));
 var rhs4 = JsonObject.FromProperties(("hello", 0.4));
 
