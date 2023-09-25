@@ -93,12 +93,12 @@ public class ValidateLargeDocument
     /// Validates using the Corvus types.
     /// </summary>
     [Benchmark]
-    public void ValidateLargeArrayJsonEveything()
+    public void ValidateLargeArrayJsonEverything()
     {
         JsonEverything.EvaluationResults result = this.schema!.Evaluate(this.node, Options);
         if (!result.IsValid)
         {
-            throw new InvalidOperationException();
+            result.Errors.ForEach(result => Console.WriteLine(result.Value));
         }
     }
 }
