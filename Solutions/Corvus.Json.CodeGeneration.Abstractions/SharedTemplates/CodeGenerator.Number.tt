@@ -98,6 +98,15 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonNumb
     /// Initializes a new instance of the <see cref="<#= TypeDeclaration.DotnetTypeName #>"/> struct.
     /// </summary>
     /// <param name="value">The value from which to initialize the number.</param>
+    public <#= TypeDeclaration.DotnetTypeName #>(byte value)
+        : this(new BinaryJsonNumber(value))
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="<#= TypeDeclaration.DotnetTypeName #>"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to initialize the number.</param>
     public <#= TypeDeclaration.DotnetTypeName #>(short value)
         : this(new BinaryJsonNumber(value))
     {
@@ -490,6 +499,155 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonNumb
         }
 
         throw new InvalidOperationException();
+    }
+
+<#  if (IsJsonInteger)
+    {#>
+    /// <summary>
+    /// Conversion from decimal.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static explicit operator <#= TypeDeclaration.DotnetTypeName #>(decimal value)
+    {
+        return new((long)value);
+    }
+
+    /// <summary>
+    /// Conversion from double.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static explicit operator <#= TypeDeclaration.DotnetTypeName #>(double value)
+    {
+        return new((long)value);
+    }
+
+    /// <summary>
+    /// Conversion from Half.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static explicit operator <#= TypeDeclaration.DotnetTypeName #>(Half value)
+    {
+        return new((long)value);
+    }
+
+    /// <summary>
+    /// Conversion from float.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static explicit operator <#= TypeDeclaration.DotnetTypeName #>(float value)
+    {
+        return new((long)value);
+    }
+<#  }
+    else
+    {#>
+    /// <summary>
+    /// Conversion from decimal.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static implicit operator <#= TypeDeclaration.DotnetTypeName #>(decimal value)
+    {
+        return new(value);
+    }
+
+    /// <summary>
+    /// Conversion from double.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static implicit operator <#= TypeDeclaration.DotnetTypeName #>(double value)
+    {
+        return new(value);
+    }
+
+    /// <summary>
+    /// Conversion from Half.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static implicit operator <#= TypeDeclaration.DotnetTypeName #>(Half value)
+    {
+        return new(value);
+    }
+
+    /// <summary>
+    /// Conversion from float.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static implicit operator <#= TypeDeclaration.DotnetTypeName #>(float value)
+    {
+        return new(value);
+    }
+<#  }#>
+
+    /// <summary>
+    /// Conversion from byte.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static implicit operator <#= TypeDeclaration.DotnetTypeName #>(byte value)
+    {
+        return new(value);
+    }
+
+    /// <summary>
+    /// Conversion from short.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static implicit operator <#= TypeDeclaration.DotnetTypeName #>(short value)
+    {
+        return new(value);
+    }
+
+    /// <summary>
+    /// Conversion from int.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static implicit operator <#= TypeDeclaration.DotnetTypeName #>(int value)
+    {
+        return new(value);
+    }
+
+    /// <summary>
+    /// Conversion from long.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static implicit operator <#= TypeDeclaration.DotnetTypeName #>(long value)
+    {
+        return new(value);
+    }
+
+    /// <summary>
+    /// Conversion from sbyte.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static implicit operator <#= TypeDeclaration.DotnetTypeName #>(sbyte value)
+    {
+        return new(value);
+    }
+
+    /// <summary>
+    /// Conversion from ushort.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static implicit operator <#= TypeDeclaration.DotnetTypeName #>(ushort value)
+    {
+        return new(value);
+    }
+
+    /// <summary>
+    /// Conversion from uint.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static implicit operator <#= TypeDeclaration.DotnetTypeName #>(uint value)
+    {
+        return new(value);
+    }
+
+    /// <summary>
+    /// Conversion from ulong.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static implicit operator <#= TypeDeclaration.DotnetTypeName #>(ulong value)
+    {
+        return new(value);
     }
 
     /// <summary>

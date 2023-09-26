@@ -68,6 +68,14 @@ public readonly partial struct Validation
         /// Initializes a new instance of the <see cref = "MultipleOfEntity"/> struct.
         /// </summary>
         /// <param name = "value">The value from which to initialize the number.</param>
+        public MultipleOfEntity(byte value) : this(new BinaryJsonNumber(value))
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref = "MultipleOfEntity"/> struct.
+        /// </summary>
+        /// <param name = "value">The value from which to initialize the number.</param>
         public MultipleOfEntity(short value) : this(new BinaryJsonNumber(value))
         {
         }
@@ -451,6 +459,114 @@ public readonly partial struct Validation
             }
 
             throw new InvalidOperationException();
+        }
+
+        /// <summary>
+        /// Conversion from decimal.
+        /// </summary>
+        /// <param name = "value">The value to convert.</param>
+        public static implicit operator MultipleOfEntity(decimal value)
+        {
+            return new(value);
+        }
+
+        /// <summary>
+        /// Conversion from double.
+        /// </summary>
+        /// <param name = "value">The value to convert.</param>
+        public static implicit operator MultipleOfEntity(double value)
+        {
+            return new(value);
+        }
+
+        /// <summary>
+        /// Conversion from Half.
+        /// </summary>
+        /// <param name = "value">The value to convert.</param>
+        public static implicit operator MultipleOfEntity(Half value)
+        {
+            return new(value);
+        }
+
+        /// <summary>
+        /// Conversion from float.
+        /// </summary>
+        /// <param name = "value">The value to convert.</param>
+        public static implicit operator MultipleOfEntity(float value)
+        {
+            return new(value);
+        }
+
+        /// <summary>
+        /// Conversion from byte.
+        /// </summary>
+        /// <param name = "value">The value to convert.</param>
+        public static implicit operator MultipleOfEntity(byte value)
+        {
+            return new(value);
+        }
+
+        /// <summary>
+        /// Conversion from short.
+        /// </summary>
+        /// <param name = "value">The value to convert.</param>
+        public static implicit operator MultipleOfEntity(short value)
+        {
+            return new(value);
+        }
+
+        /// <summary>
+        /// Conversion from int.
+        /// </summary>
+        /// <param name = "value">The value to convert.</param>
+        public static implicit operator MultipleOfEntity(int value)
+        {
+            return new(value);
+        }
+
+        /// <summary>
+        /// Conversion from long.
+        /// </summary>
+        /// <param name = "value">The value to convert.</param>
+        public static implicit operator MultipleOfEntity(long value)
+        {
+            return new(value);
+        }
+
+        /// <summary>
+        /// Conversion from sbyte.
+        /// </summary>
+        /// <param name = "value">The value to convert.</param>
+        public static implicit operator MultipleOfEntity(sbyte value)
+        {
+            return new(value);
+        }
+
+        /// <summary>
+        /// Conversion from ushort.
+        /// </summary>
+        /// <param name = "value">The value to convert.</param>
+        public static implicit operator MultipleOfEntity(ushort value)
+        {
+            return new(value);
+        }
+
+        /// <summary>
+        /// Conversion from uint.
+        /// </summary>
+        /// <param name = "value">The value to convert.</param>
+        public static implicit operator MultipleOfEntity(uint value)
+        {
+            return new(value);
+        }
+
+        /// <summary>
+        /// Conversion from ulong.
+        /// </summary>
+        /// <param name = "value">The value to convert.</param>
+        public static implicit operator MultipleOfEntity(ulong value)
+        {
+            return new(value);
         }
 
         /// <summary>

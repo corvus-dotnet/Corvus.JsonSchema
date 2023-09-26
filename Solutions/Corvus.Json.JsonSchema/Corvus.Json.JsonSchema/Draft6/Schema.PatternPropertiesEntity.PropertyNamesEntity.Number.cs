@@ -73,6 +73,14 @@ public readonly partial struct Schema
             /// Initializes a new instance of the <see cref = "PropertyNamesEntity"/> struct.
             /// </summary>
             /// <param name = "value">The value from which to initialize the number.</param>
+            public PropertyNamesEntity(byte value) : this(new BinaryJsonNumber(value))
+            {
+            }
+
+            /// <summary>
+            /// Initializes a new instance of the <see cref = "PropertyNamesEntity"/> struct.
+            /// </summary>
+            /// <param name = "value">The value from which to initialize the number.</param>
             public PropertyNamesEntity(short value) : this(new BinaryJsonNumber(value))
             {
             }
@@ -456,6 +464,114 @@ public readonly partial struct Schema
                 }
 
                 throw new InvalidOperationException();
+            }
+
+            /// <summary>
+            /// Conversion from decimal.
+            /// </summary>
+            /// <param name = "value">The value to convert.</param>
+            public static implicit operator PropertyNamesEntity(decimal value)
+            {
+                return new(value);
+            }
+
+            /// <summary>
+            /// Conversion from double.
+            /// </summary>
+            /// <param name = "value">The value to convert.</param>
+            public static implicit operator PropertyNamesEntity(double value)
+            {
+                return new(value);
+            }
+
+            /// <summary>
+            /// Conversion from Half.
+            /// </summary>
+            /// <param name = "value">The value to convert.</param>
+            public static implicit operator PropertyNamesEntity(Half value)
+            {
+                return new(value);
+            }
+
+            /// <summary>
+            /// Conversion from float.
+            /// </summary>
+            /// <param name = "value">The value to convert.</param>
+            public static implicit operator PropertyNamesEntity(float value)
+            {
+                return new(value);
+            }
+
+            /// <summary>
+            /// Conversion from byte.
+            /// </summary>
+            /// <param name = "value">The value to convert.</param>
+            public static implicit operator PropertyNamesEntity(byte value)
+            {
+                return new(value);
+            }
+
+            /// <summary>
+            /// Conversion from short.
+            /// </summary>
+            /// <param name = "value">The value to convert.</param>
+            public static implicit operator PropertyNamesEntity(short value)
+            {
+                return new(value);
+            }
+
+            /// <summary>
+            /// Conversion from int.
+            /// </summary>
+            /// <param name = "value">The value to convert.</param>
+            public static implicit operator PropertyNamesEntity(int value)
+            {
+                return new(value);
+            }
+
+            /// <summary>
+            /// Conversion from long.
+            /// </summary>
+            /// <param name = "value">The value to convert.</param>
+            public static implicit operator PropertyNamesEntity(long value)
+            {
+                return new(value);
+            }
+
+            /// <summary>
+            /// Conversion from sbyte.
+            /// </summary>
+            /// <param name = "value">The value to convert.</param>
+            public static implicit operator PropertyNamesEntity(sbyte value)
+            {
+                return new(value);
+            }
+
+            /// <summary>
+            /// Conversion from ushort.
+            /// </summary>
+            /// <param name = "value">The value to convert.</param>
+            public static implicit operator PropertyNamesEntity(ushort value)
+            {
+                return new(value);
+            }
+
+            /// <summary>
+            /// Conversion from uint.
+            /// </summary>
+            /// <param name = "value">The value to convert.</param>
+            public static implicit operator PropertyNamesEntity(uint value)
+            {
+                return new(value);
+            }
+
+            /// <summary>
+            /// Conversion from ulong.
+            /// </summary>
+            /// <param name = "value">The value to convert.</param>
+            public static implicit operator PropertyNamesEntity(ulong value)
+            {
+                return new(value);
             }
 
             /// <summary>

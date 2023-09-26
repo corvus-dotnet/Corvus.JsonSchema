@@ -73,6 +73,14 @@ public readonly partial struct Schema
             /// Initializes a new instance of the <see cref = "AllOf1Entity"/> struct.
             /// </summary>
             /// <param name = "value">The value from which to initialize the number.</param>
+            public AllOf1Entity(byte value) : this(new BinaryJsonNumber(value))
+            {
+            }
+
+            /// <summary>
+            /// Initializes a new instance of the <see cref = "AllOf1Entity"/> struct.
+            /// </summary>
+            /// <param name = "value">The value from which to initialize the number.</param>
             public AllOf1Entity(short value) : this(new BinaryJsonNumber(value))
             {
             }
@@ -456,6 +464,114 @@ public readonly partial struct Schema
                 }
 
                 throw new InvalidOperationException();
+            }
+
+            /// <summary>
+            /// Conversion from decimal.
+            /// </summary>
+            /// <param name = "value">The value to convert.</param>
+            public static implicit operator AllOf1Entity(decimal value)
+            {
+                return new(value);
+            }
+
+            /// <summary>
+            /// Conversion from double.
+            /// </summary>
+            /// <param name = "value">The value to convert.</param>
+            public static implicit operator AllOf1Entity(double value)
+            {
+                return new(value);
+            }
+
+            /// <summary>
+            /// Conversion from Half.
+            /// </summary>
+            /// <param name = "value">The value to convert.</param>
+            public static implicit operator AllOf1Entity(Half value)
+            {
+                return new(value);
+            }
+
+            /// <summary>
+            /// Conversion from float.
+            /// </summary>
+            /// <param name = "value">The value to convert.</param>
+            public static implicit operator AllOf1Entity(float value)
+            {
+                return new(value);
+            }
+
+            /// <summary>
+            /// Conversion from byte.
+            /// </summary>
+            /// <param name = "value">The value to convert.</param>
+            public static implicit operator AllOf1Entity(byte value)
+            {
+                return new(value);
+            }
+
+            /// <summary>
+            /// Conversion from short.
+            /// </summary>
+            /// <param name = "value">The value to convert.</param>
+            public static implicit operator AllOf1Entity(short value)
+            {
+                return new(value);
+            }
+
+            /// <summary>
+            /// Conversion from int.
+            /// </summary>
+            /// <param name = "value">The value to convert.</param>
+            public static implicit operator AllOf1Entity(int value)
+            {
+                return new(value);
+            }
+
+            /// <summary>
+            /// Conversion from long.
+            /// </summary>
+            /// <param name = "value">The value to convert.</param>
+            public static implicit operator AllOf1Entity(long value)
+            {
+                return new(value);
+            }
+
+            /// <summary>
+            /// Conversion from sbyte.
+            /// </summary>
+            /// <param name = "value">The value to convert.</param>
+            public static implicit operator AllOf1Entity(sbyte value)
+            {
+                return new(value);
+            }
+
+            /// <summary>
+            /// Conversion from ushort.
+            /// </summary>
+            /// <param name = "value">The value to convert.</param>
+            public static implicit operator AllOf1Entity(ushort value)
+            {
+                return new(value);
+            }
+
+            /// <summary>
+            /// Conversion from uint.
+            /// </summary>
+            /// <param name = "value">The value to convert.</param>
+            public static implicit operator AllOf1Entity(uint value)
+            {
+                return new(value);
+            }
+
+            /// <summary>
+            /// Conversion from ulong.
+            /// </summary>
+            /// <param name = "value">The value to convert.</param>
+            public static implicit operator AllOf1Entity(ulong value)
+            {
+                return new(value);
             }
 
             /// <summary>

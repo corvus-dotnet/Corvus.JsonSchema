@@ -68,6 +68,14 @@ public readonly partial struct Validation
         /// Initializes a new instance of the <see cref = "MinContainsEntity"/> struct.
         /// </summary>
         /// <param name = "value">The value from which to initialize the number.</param>
+        public MinContainsEntity(byte value) : this(new BinaryJsonNumber(value))
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref = "MinContainsEntity"/> struct.
+        /// </summary>
+        /// <param name = "value">The value from which to initialize the number.</param>
         public MinContainsEntity(short value) : this(new BinaryJsonNumber(value))
         {
         }
@@ -451,6 +459,114 @@ public readonly partial struct Validation
             }
 
             throw new InvalidOperationException();
+        }
+
+        /// <summary>
+        /// Conversion from decimal.
+        /// </summary>
+        /// <param name = "value">The value to convert.</param>
+        public static implicit operator MinContainsEntity(decimal value)
+        {
+            return new(value);
+        }
+
+        /// <summary>
+        /// Conversion from double.
+        /// </summary>
+        /// <param name = "value">The value to convert.</param>
+        public static implicit operator MinContainsEntity(double value)
+        {
+            return new(value);
+        }
+
+        /// <summary>
+        /// Conversion from Half.
+        /// </summary>
+        /// <param name = "value">The value to convert.</param>
+        public static implicit operator MinContainsEntity(Half value)
+        {
+            return new(value);
+        }
+
+        /// <summary>
+        /// Conversion from float.
+        /// </summary>
+        /// <param name = "value">The value to convert.</param>
+        public static implicit operator MinContainsEntity(float value)
+        {
+            return new(value);
+        }
+
+        /// <summary>
+        /// Conversion from byte.
+        /// </summary>
+        /// <param name = "value">The value to convert.</param>
+        public static implicit operator MinContainsEntity(byte value)
+        {
+            return new(value);
+        }
+
+        /// <summary>
+        /// Conversion from short.
+        /// </summary>
+        /// <param name = "value">The value to convert.</param>
+        public static implicit operator MinContainsEntity(short value)
+        {
+            return new(value);
+        }
+
+        /// <summary>
+        /// Conversion from int.
+        /// </summary>
+        /// <param name = "value">The value to convert.</param>
+        public static implicit operator MinContainsEntity(int value)
+        {
+            return new(value);
+        }
+
+        /// <summary>
+        /// Conversion from long.
+        /// </summary>
+        /// <param name = "value">The value to convert.</param>
+        public static implicit operator MinContainsEntity(long value)
+        {
+            return new(value);
+        }
+
+        /// <summary>
+        /// Conversion from sbyte.
+        /// </summary>
+        /// <param name = "value">The value to convert.</param>
+        public static implicit operator MinContainsEntity(sbyte value)
+        {
+            return new(value);
+        }
+
+        /// <summary>
+        /// Conversion from ushort.
+        /// </summary>
+        /// <param name = "value">The value to convert.</param>
+        public static implicit operator MinContainsEntity(ushort value)
+        {
+            return new(value);
+        }
+
+        /// <summary>
+        /// Conversion from uint.
+        /// </summary>
+        /// <param name = "value">The value to convert.</param>
+        public static implicit operator MinContainsEntity(uint value)
+        {
+            return new(value);
+        }
+
+        /// <summary>
+        /// Conversion from ulong.
+        /// </summary>
+        /// <param name = "value">The value to convert.</param>
+        public static implicit operator MinContainsEntity(ulong value)
+        {
+            return new(value);
         }
 
         /// <summary>

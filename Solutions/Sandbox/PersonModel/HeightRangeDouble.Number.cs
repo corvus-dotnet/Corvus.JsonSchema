@@ -66,6 +66,14 @@ public readonly partial struct HeightRangeDouble : IJsonNumber<HeightRangeDouble
     /// Initializes a new instance of the <see cref = "HeightRangeDouble"/> struct.
     /// </summary>
     /// <param name = "value">The value from which to initialize the number.</param>
+    public HeightRangeDouble(byte value) : this(new BinaryJsonNumber(value))
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref = "HeightRangeDouble"/> struct.
+    /// </summary>
+    /// <param name = "value">The value from which to initialize the number.</param>
     public HeightRangeDouble(short value) : this(new BinaryJsonNumber(value))
     {
     }
@@ -449,6 +457,114 @@ public readonly partial struct HeightRangeDouble : IJsonNumber<HeightRangeDouble
         }
 
         throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Conversion from decimal.
+    /// </summary>
+    /// <param name = "value">The value to convert.</param>
+    public static implicit operator HeightRangeDouble(decimal value)
+    {
+        return new(value);
+    }
+
+    /// <summary>
+    /// Conversion from double.
+    /// </summary>
+    /// <param name = "value">The value to convert.</param>
+    public static implicit operator HeightRangeDouble(double value)
+    {
+        return new(value);
+    }
+
+    /// <summary>
+    /// Conversion from Half.
+    /// </summary>
+    /// <param name = "value">The value to convert.</param>
+    public static implicit operator HeightRangeDouble(Half value)
+    {
+        return new(value);
+    }
+
+    /// <summary>
+    /// Conversion from float.
+    /// </summary>
+    /// <param name = "value">The value to convert.</param>
+    public static implicit operator HeightRangeDouble(float value)
+    {
+        return new(value);
+    }
+
+    /// <summary>
+    /// Conversion from byte.
+    /// </summary>
+    /// <param name = "value">The value to convert.</param>
+    public static implicit operator HeightRangeDouble(byte value)
+    {
+        return new(value);
+    }
+
+    /// <summary>
+    /// Conversion from short.
+    /// </summary>
+    /// <param name = "value">The value to convert.</param>
+    public static implicit operator HeightRangeDouble(short value)
+    {
+        return new(value);
+    }
+
+    /// <summary>
+    /// Conversion from int.
+    /// </summary>
+    /// <param name = "value">The value to convert.</param>
+    public static implicit operator HeightRangeDouble(int value)
+    {
+        return new(value);
+    }
+
+    /// <summary>
+    /// Conversion from long.
+    /// </summary>
+    /// <param name = "value">The value to convert.</param>
+    public static implicit operator HeightRangeDouble(long value)
+    {
+        return new(value);
+    }
+
+    /// <summary>
+    /// Conversion from sbyte.
+    /// </summary>
+    /// <param name = "value">The value to convert.</param>
+    public static implicit operator HeightRangeDouble(sbyte value)
+    {
+        return new(value);
+    }
+
+    /// <summary>
+    /// Conversion from ushort.
+    /// </summary>
+    /// <param name = "value">The value to convert.</param>
+    public static implicit operator HeightRangeDouble(ushort value)
+    {
+        return new(value);
+    }
+
+    /// <summary>
+    /// Conversion from uint.
+    /// </summary>
+    /// <param name = "value">The value to convert.</param>
+    public static implicit operator HeightRangeDouble(uint value)
+    {
+        return new(value);
+    }
+
+    /// <summary>
+    /// Conversion from ulong.
+    /// </summary>
+    /// <param name = "value">The value to convert.</param>
+    public static implicit operator HeightRangeDouble(ulong value)
+    {
+        return new(value);
     }
 
     /// <summary>

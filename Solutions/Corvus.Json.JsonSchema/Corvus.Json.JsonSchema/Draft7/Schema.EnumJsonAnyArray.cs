@@ -520,8 +520,12 @@ public readonly partial struct Schema
             return JsonValueHelpers.CompareValues(this, other);
         }
 
-        /// <inheritdoc/>
-        public bool Equals(EnumJsonAnyArray other)
+        /// <summary>
+        /// Equality comparison.
+        /// </summary>
+        /// <param name = "other">The other item with which to compare.</param>
+        /// <returns><see langword="true"/> if the values were equal.</returns>
+        public bool Equals(in EnumJsonAnyArray other)
         {
             return JsonValueHelpers.CompareValues(this, other);
         }
