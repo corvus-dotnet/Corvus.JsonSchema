@@ -1,7 +1,6 @@
 ﻿using Corvus.Json;
 using Corvus.Json.Benchmarking.Models;
 
-HeightRangeDouble d = 1.2;
 
 var lhs = JsonObject.FromProperties(("hello", 1.3M));
 var rhs = JsonObject.FromProperties(("hello", 1.3f));
@@ -106,4 +105,4 @@ catch (Exception ex4)
     Console.WriteLine($"1E29 == 1234567890.1234567891M is {ex4.Message}");
 }
 
-HeightRangeDouble d = new(3.4);
+HeightRangeDouble d = 3.4;
