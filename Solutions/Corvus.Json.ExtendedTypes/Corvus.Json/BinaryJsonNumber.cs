@@ -1759,11 +1759,14 @@ public readonly struct BinaryJsonNumber :
         throw new NotSupportedException();
     }
 
+// The analyzers have not caught up with this structure.
+#pragma warning disable
     [InlineArray(16)]
     private struct ByteBuffer16
     {
         private byte element0;
     }
+#pragma warning restore
 
     /// <summary>
     /// Provides a cast between numeric types with precision and overflow verification.

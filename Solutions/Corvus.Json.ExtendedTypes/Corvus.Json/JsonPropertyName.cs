@@ -675,7 +675,7 @@ public readonly struct JsonPropertyName
     /// Gets a value indicating whether this property name matches
     /// the given <see cref="Regex"/>.
     /// </summary>
-    /// <param name="regex">The regular expressin to match.</param>
+    /// <param name="regex">The regular expression to match.</param>
     /// <returns><see langword="true"/> if the expression is a match.</returns>
     /// <exception cref="InvalidOperationException">The name was not in a valid state.</exception>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
