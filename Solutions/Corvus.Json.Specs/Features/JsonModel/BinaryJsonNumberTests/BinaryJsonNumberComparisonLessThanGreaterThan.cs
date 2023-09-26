@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Text.Json;
 using Corvus.Json;
 using NUnit.Framework;
 
@@ -29,6 +30,7 @@ internal class BinaryJsonNumberComparisonLessThanGreaterThan
         new object[] { (sbyte)3, 4F, Expectation.False },
         new object[] { (sbyte)3, 4M, Expectation.False },
         new object[] { (sbyte)3, 4D, Expectation.False },
+        new object[] { (sbyte)3, GetJsonElement(4D), Expectation.False },
     ];
 
     /// <summary>
@@ -50,6 +52,7 @@ internal class BinaryJsonNumberComparisonLessThanGreaterThan
         new object[] { (short)3, 4F, Expectation.False },
         new object[] { (short)3, 4M, Expectation.False },
         new object[] { (short)3, 4D, Expectation.False },
+        new object[] { (short)3, GetJsonElement(4D), Expectation.False },
     ];
 
     /// <summary>
@@ -71,6 +74,7 @@ internal class BinaryJsonNumberComparisonLessThanGreaterThan
         new object[] { 3, 4F, Expectation.False },
         new object[] { 3, 4M, Expectation.False },
         new object[] { 3, 4D, Expectation.False },
+        new object[] { 3, GetJsonElement(4D), Expectation.False },
     ];
 
     /// <summary>
@@ -92,6 +96,7 @@ internal class BinaryJsonNumberComparisonLessThanGreaterThan
         new object[] { 3L, 4F, Expectation.False },
         new object[] { 3L, 4M, Expectation.False },
         new object[] { 3L, 4D, Expectation.False },
+        new object[] { 3L, GetJsonElement(4D), Expectation.False },
     ];
 
     /// <summary>
@@ -113,6 +118,7 @@ internal class BinaryJsonNumberComparisonLessThanGreaterThan
         new object[] { new Int128(0, 3), 4F, Expectation.False },
         new object[] { new Int128(0, 3), 4M, Expectation.False },
         new object[] { new Int128(0, 3), 4D, Expectation.False },
+        new object[] { new Int128(0, 3), GetJsonElement(4D), Expectation.False },
     ];
 
     /// <summary>
@@ -134,6 +140,7 @@ internal class BinaryJsonNumberComparisonLessThanGreaterThan
         new object[] { (byte)3, 4F, Expectation.False },
         new object[] { (byte)3, 4M, Expectation.False },
         new object[] { (byte)3, 4D, Expectation.False },
+        new object[] { (byte)3, GetJsonElement(4D), Expectation.False },
     ];
 
     /// <summary>
@@ -155,6 +162,7 @@ internal class BinaryJsonNumberComparisonLessThanGreaterThan
         new object[] { (ushort)3, 4F, Expectation.False },
         new object[] { (ushort)3, 4M, Expectation.False },
         new object[] { (ushort)3, 4D, Expectation.False },
+        new object[] { (ushort)3, GetJsonElement(4D), Expectation.False },
     ];
 
     /// <summary>
@@ -176,6 +184,7 @@ internal class BinaryJsonNumberComparisonLessThanGreaterThan
         new object[] { 3U, 4F, Expectation.False },
         new object[] { 3U, 4M, Expectation.False },
         new object[] { 3U, 4D, Expectation.False },
+        new object[] { 3U, GetJsonElement(4D), Expectation.False },
     ];
 
     /// <summary>
@@ -197,6 +206,7 @@ internal class BinaryJsonNumberComparisonLessThanGreaterThan
         new object[] { 3UL, 4F, Expectation.False },
         new object[] { 3UL, 4M, Expectation.False },
         new object[] { 3UL, 4D, Expectation.False },
+        new object[] { 3UL, GetJsonElement(4D), Expectation.False },
     ];
 
     /// <summary>
@@ -218,6 +228,7 @@ internal class BinaryJsonNumberComparisonLessThanGreaterThan
         new object[] { new UInt128(0, 3), 4F, Expectation.False },
         new object[] { new UInt128(0, 3), 4M, Expectation.False },
         new object[] { new UInt128(0, 3), 4D, Expectation.False },
+        new object[] { new UInt128(0, 3), GetJsonElement(4D), Expectation.False },
     ];
 
     /// <summary>
@@ -239,6 +250,7 @@ internal class BinaryJsonNumberComparisonLessThanGreaterThan
         new object[] { (Half)3, 4F, Expectation.False },
         new object[] { (Half)3, 4M, Expectation.False },
         new object[] { (Half)3, 4D, Expectation.False },
+        new object[] { (Half)3, GetJsonElement(4D), Expectation.False },
     ];
 
     /// <summary>
@@ -260,6 +272,7 @@ internal class BinaryJsonNumberComparisonLessThanGreaterThan
         new object[] { 3F, 4F, Expectation.False },
         new object[] { 3F, 4M, Expectation.False },
         new object[] { 3F, 4D, Expectation.False },
+        new object[] { 3F, GetJsonElement(4D), Expectation.False },
     ];
 
     /// <summary>
@@ -281,6 +294,7 @@ internal class BinaryJsonNumberComparisonLessThanGreaterThan
         new object[] { 3M, 4F, Expectation.False },
         new object[] { 3M, 4M, Expectation.False },
         new object[] { 3M, 4D, Expectation.False },
+        new object[] { 3M, GetJsonElement(4D), Expectation.False },
     ];
 
     /// <summary>
@@ -302,6 +316,7 @@ internal class BinaryJsonNumberComparisonLessThanGreaterThan
         new object[] { 3D, 4F, Expectation.False },
         new object[] { 3D, 4M, Expectation.False },
         new object[] { 3D, 4D, Expectation.False },
+        new object[] { 3D, GetJsonElement(4D), Expectation.False },
     ];
 
     /// <summary>
@@ -342,22 +357,49 @@ internal class BinaryJsonNumberComparisonLessThanGreaterThan
     public void ValuesCompare(object lhs, object rhs, Expectation expected)
     {
         BinaryJsonNumber number1 = GetBinaryJsonNumberFor(lhs);
-        BinaryJsonNumber number2 = GetBinaryJsonNumberFor(rhs);
-
-        switch (expected)
+        if (rhs is JsonElement jsonElement)
         {
-            case Expectation.False:
-                Assert.IsFalse(number1 > number2);
-                Assert.IsTrue(number1 < number2);
-                break;
-            case Expectation.True:
-                Assert.IsTrue(number1 > number2);
-                Assert.IsFalse(number1 < number2);
-                break;
-            case Expectation.Exception:
-                Assert.Catch(() => _ = number1 > number2);
-                Assert.Catch(() => _ = number1 < number2);
-                break;
+            switch (expected)
+            {
+                case Expectation.False:
+                    Assert.IsFalse(number1 > jsonElement);
+                    Assert.IsTrue(number1 < jsonElement);
+                    Assert.IsTrue(jsonElement > number1);
+                    Assert.IsFalse(jsonElement < number1);
+                    break;
+                case Expectation.True:
+                    Assert.IsTrue(number1 > jsonElement);
+                    Assert.IsFalse(number1 < jsonElement);
+                    Assert.IsFalse(jsonElement > number1);
+                    Assert.IsTrue(jsonElement < number1);
+                    break;
+                case Expectation.Exception:
+                    Assert.Catch(() => _ = number1 > jsonElement);
+                    Assert.Catch(() => _ = number1 < jsonElement);
+                    Assert.Catch(() => _ = jsonElement > number1);
+                    Assert.Catch(() => _ = jsonElement < number1);
+                    break;
+            }
+        }
+        else
+        {
+            BinaryJsonNumber number2 = GetBinaryJsonNumberFor(rhs);
+
+            switch (expected)
+            {
+                case Expectation.False:
+                    Assert.IsFalse(number1 > number2);
+                    Assert.IsTrue(number1 < number2);
+                    break;
+                case Expectation.True:
+                    Assert.IsTrue(number1 > number2);
+                    Assert.IsFalse(number1 < number2);
+                    break;
+                case Expectation.Exception:
+                    Assert.Catch(() => _ = number1 > number2);
+                    Assert.Catch(() => _ = number1 < number2);
+                    break;
+            }
         }
     }
 
@@ -434,5 +476,29 @@ internal class BinaryJsonNumberComparisonLessThanGreaterThan
         }
 
         throw new InvalidOperationException("Unsupported value kind");
+    }
+
+    private static JsonElement GetJsonElement(double v)
+    {
+        using var doc = JsonDocument.Parse(v.ToString());
+        return doc.RootElement.Clone();
+    }
+
+    private static JsonElement GetJsonElement(float v)
+    {
+        using var doc = JsonDocument.Parse(v.ToString());
+        return doc.RootElement.Clone();
+    }
+
+    private static JsonElement GetJsonElement(decimal v)
+    {
+        using var doc = JsonDocument.Parse(v.ToString());
+        return doc.RootElement.Clone();
+    }
+
+    private static JsonElement GetJsonElement(int v)
+    {
+        using var doc = JsonDocument.Parse(v.ToString());
+        return doc.RootElement.Clone();
     }
 }

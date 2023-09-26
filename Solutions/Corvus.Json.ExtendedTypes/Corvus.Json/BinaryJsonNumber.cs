@@ -564,14 +564,24 @@ public readonly struct BinaryJsonNumber :
             throw new FormatException();
         }
 
-        if (jsonNumber.TryGetDouble(out double jsonNumberDouble))
+        if (binaryNumber.numericKind == Kind.Decimal)
         {
-            return Equals(binaryNumber, jsonNumberDouble);
-        }
+            if (jsonNumber.TryGetDecimal(out decimal jsonNumberDecimal))
+            {
+                return Equals(binaryNumber, jsonNumberDecimal);
+            }
 
-        if (jsonNumber.TryGetDecimal(out decimal jsonNumberDecimal))
+            if (jsonNumber.TryGetDouble(out double jsonNumberDouble))
+            {
+                return Equals(binaryNumber, jsonNumberDouble);
+            }
+        }
+        else
         {
-            return Equals(binaryNumber, jsonNumberDecimal);
+            if (jsonNumber.TryGetDouble(out double jsonNumberDouble))
+            {
+                return Equals(binaryNumber, jsonNumberDouble);
+            }
         }
 
         throw new NotSupportedException();
@@ -658,14 +668,29 @@ public readonly struct BinaryJsonNumber :
             throw new FormatException();
         }
 
-        if (left.TryGetDouble(out double leftDouble))
+        if (right.numericKind == Kind.Decimal)
         {
-            return Compare(leftDouble, right);
-        }
+            if (left.TryGetDecimal(out decimal leftDecimal))
+            {
+                return Compare(leftDecimal, right);
+            }
 
-        if (left.TryGetDecimal(out decimal leftDecimal))
+            if (left.TryGetDouble(out double leftDouble))
+            {
+                return Compare(leftDouble, right);
+            }
+        }
+        else
         {
-            return Compare(leftDecimal, right);
+            if (left.TryGetDouble(out double leftDouble))
+            {
+                return Compare(leftDouble, right);
+            }
+
+            if (left.TryGetDecimal(out decimal leftDecimal))
+            {
+                return Compare(leftDecimal, right);
+            }
         }
 
         throw new NotSupportedException();
@@ -1667,6 +1692,7 @@ public readonly struct BinaryJsonNumber :
         return right.numericKind switch
         {
             Kind.Byte => left.CompareTo(ReadByte(right.binaryData)),
+            Kind.Decimal => left.CompareTo(ReadDecimal(right.binaryData)),
             Kind.Int16 => left.CompareTo(ReadInt16(right.binaryData)),
             Kind.Int32 => left.CompareTo(ReadInt32(right.binaryData)),
             Kind.Int64 => left.CompareTo(ReadInt64(right.binaryData)),

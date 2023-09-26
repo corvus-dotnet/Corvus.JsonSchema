@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Text.Json;
 using Corvus.Json;
 using NUnit.Framework;
 
@@ -29,6 +30,7 @@ internal class BinaryJsonNumberEquals
         new object[] { (sbyte)3, 4F, Expectation.False },
         new object[] { (sbyte)3, 4M, Expectation.False },
         new object[] { (sbyte)3, 4D, Expectation.False },
+        new object[] { (sbyte)3, GetJsonElement(4), Expectation.False },
     ];
 
     /// <summary>
@@ -50,6 +52,8 @@ internal class BinaryJsonNumberEquals
         new object[] { (short)3, 4F, Expectation.False },
         new object[] { (short)3, 4M, Expectation.False },
         new object[] { (short)3, 4D, Expectation.False },
+        new object[] { (short)3, GetJsonElement(4), Expectation.False },
+
     ];
 
     /// <summary>
@@ -71,6 +75,7 @@ internal class BinaryJsonNumberEquals
         new object[] { 3, 4F, Expectation.False },
         new object[] { 3, 4M, Expectation.False },
         new object[] { 3, 4D, Expectation.False },
+        new object[] { 3, GetJsonElement(4), Expectation.False },
     ];
 
     /// <summary>
@@ -92,6 +97,7 @@ internal class BinaryJsonNumberEquals
         new object[] { 3L, 4F, Expectation.False },
         new object[] { 3L, 4M, Expectation.False },
         new object[] { 3L, 4D, Expectation.False },
+        new object[] { 3L, GetJsonElement(4), Expectation.False },
     ];
 
     /// <summary>
@@ -113,6 +119,7 @@ internal class BinaryJsonNumberEquals
         new object[] { new Int128(0, 3), 4F, Expectation.False },
         new object[] { new Int128(0, 3), 4M, Expectation.False },
         new object[] { new Int128(0, 3), 4D, Expectation.False },
+        new object[] { new Int128(0, 3), GetJsonElement(4), Expectation.False },
     ];
 
     /// <summary>
@@ -134,6 +141,7 @@ internal class BinaryJsonNumberEquals
         new object[] { (byte)3, 4F, Expectation.False },
         new object[] { (byte)3, 4M, Expectation.False },
         new object[] { (byte)3, 4D, Expectation.False },
+        new object[] { (byte)3, GetJsonElement(4), Expectation.False },
     ];
 
     /// <summary>
@@ -155,6 +163,7 @@ internal class BinaryJsonNumberEquals
         new object[] { (ushort)3, 4F, Expectation.False },
         new object[] { (ushort)3, 4M, Expectation.False },
         new object[] { (ushort)3, 4D, Expectation.False },
+        new object[] { (ushort)3, GetJsonElement(4), Expectation.False },
     ];
 
     /// <summary>
@@ -176,6 +185,7 @@ internal class BinaryJsonNumberEquals
         new object[] { 3U, 4F, Expectation.False },
         new object[] { 3U, 4M, Expectation.False },
         new object[] { 3U, 4D, Expectation.False },
+        new object[] { 3U, GetJsonElement(4), Expectation.False },
     ];
 
     /// <summary>
@@ -197,6 +207,7 @@ internal class BinaryJsonNumberEquals
         new object[] { 3UL, 4F, Expectation.False },
         new object[] { 3UL, 4M, Expectation.False },
         new object[] { 3UL, 4D, Expectation.False },
+        new object[] { 3UL, GetJsonElement(4), Expectation.False },
     ];
 
     /// <summary>
@@ -218,6 +229,7 @@ internal class BinaryJsonNumberEquals
         new object[] { new UInt128(0, 3), 4F, Expectation.False },
         new object[] { new UInt128(0, 3), 4M, Expectation.False },
         new object[] { new UInt128(0, 3), 4D, Expectation.False },
+        new object[] { new UInt128(0, 3), GetJsonElement(4), Expectation.False },
     ];
 
     /// <summary>
@@ -239,6 +251,7 @@ internal class BinaryJsonNumberEquals
         new object[] { (Half)3, 4F, Expectation.False },
         new object[] { (Half)3, 4M, Expectation.False },
         new object[] { (Half)3, 4D, Expectation.False },
+        new object[] { (Half)3, GetJsonElement(4), Expectation.False },
     ];
 
     /// <summary>
@@ -260,6 +273,7 @@ internal class BinaryJsonNumberEquals
         new object[] { 3F, 4F, Expectation.False },
         new object[] { 3F, 4M, Expectation.False },
         new object[] { 3F, 4D, Expectation.False },
+        new object[] { 3F, GetJsonElement(4), Expectation.False },
     ];
 
     /// <summary>
@@ -281,6 +295,7 @@ internal class BinaryJsonNumberEquals
         new object[] { 3M, 4F, Expectation.False },
         new object[] { 3M, 4M, Expectation.False },
         new object[] { 3M, 4D, Expectation.False },
+        new object[] { 3M, GetJsonElement(4), Expectation.False },
     ];
 
     /// <summary>
@@ -302,6 +317,7 @@ internal class BinaryJsonNumberEquals
         new object[] { 3D, 4F, Expectation.False },
         new object[] { 3D, 4M, Expectation.False },
         new object[] { 3D, 4D, Expectation.False },
+        new object[] { 3D, GetJsonElement(4), Expectation.False },
     ];
 
     /// <summary>
@@ -323,6 +339,7 @@ internal class BinaryJsonNumberEquals
         new object[] { (sbyte)4, 4F, Expectation.True },
         new object[] { (sbyte)4, 4M, Expectation.True },
         new object[] { (sbyte)4, 4D, Expectation.True },
+        new object[] { (sbyte)4, GetJsonElement(4), Expectation.True },
     ];
 
     /// <summary>
@@ -344,6 +361,7 @@ internal class BinaryJsonNumberEquals
         new object[] { (short)4, 4F, Expectation.True },
         new object[] { (short)4, 4M, Expectation.True },
         new object[] { (short)4, 4D, Expectation.True },
+        new object[] { (short)4, GetJsonElement(4), Expectation.True },
     ];
 
     /// <summary>
@@ -365,6 +383,7 @@ internal class BinaryJsonNumberEquals
         new object[] { 4, 4F, Expectation.True },
         new object[] { 4, 4M, Expectation.True },
         new object[] { 4, 4D, Expectation.True },
+        new object[] { 4, GetJsonElement(4), Expectation.True },
     ];
 
     /// <summary>
@@ -407,6 +426,7 @@ internal class BinaryJsonNumberEquals
         new object[] { new Int128(0, 4), 4F, Expectation.True },
         new object[] { new Int128(0, 4), 4M, Expectation.True },
         new object[] { new Int128(0, 4), 4D, Expectation.True },
+        new object[] { new Int128(0, 4), GetJsonElement(4), Expectation.True },
     ];
 
     /// <summary>
@@ -428,6 +448,7 @@ internal class BinaryJsonNumberEquals
         new object[] { (byte)4, 4F, Expectation.True },
         new object[] { (byte)4, 4M, Expectation.True },
         new object[] { (byte)4, 4D, Expectation.True },
+        new object[] { (byte)4, GetJsonElement(4), Expectation.True },
     ];
 
     /// <summary>
@@ -449,6 +470,7 @@ internal class BinaryJsonNumberEquals
         new object[] { (ushort)4, 4F, Expectation.True },
         new object[] { (ushort)4, 4M, Expectation.True },
         new object[] { (ushort)4, 4D, Expectation.True },
+        new object[] { (ushort)4, GetJsonElement(4), Expectation.True },
     ];
 
     /// <summary>
@@ -470,6 +492,7 @@ internal class BinaryJsonNumberEquals
         new object[] { 4U, 4F, Expectation.True },
         new object[] { 4U, 4M, Expectation.True },
         new object[] { 4U, 4D, Expectation.True },
+        new object[] { 4U, GetJsonElement(4), Expectation.True },
     ];
 
     /// <summary>
@@ -491,6 +514,7 @@ internal class BinaryJsonNumberEquals
         new object[] { 4UL, 4F, Expectation.True },
         new object[] { 4UL, 4M, Expectation.True },
         new object[] { 4UL, 4D, Expectation.True },
+        new object[] { 4UL, GetJsonElement(4), Expectation.True },
     ];
 
     /// <summary>
@@ -512,6 +536,7 @@ internal class BinaryJsonNumberEquals
         new object[] { new UInt128(0, 4), 4F, Expectation.True },
         new object[] { new UInt128(0, 4), 4M, Expectation.True },
         new object[] { new UInt128(0, 4), 4D, Expectation.True },
+        new object[] { new UInt128(0, 4), GetJsonElement(4), Expectation.True },
     ];
 
     /// <summary>
@@ -533,6 +558,7 @@ internal class BinaryJsonNumberEquals
         new object[] { (Half)4, 4F, Expectation.True },
         new object[] { (Half)4, 4M, Expectation.True },
         new object[] { (Half)4, 4D, Expectation.True },
+        new object[] { (Half)4, GetJsonElement(4), Expectation.True },
     ];
 
     /// <summary>
@@ -554,6 +580,7 @@ internal class BinaryJsonNumberEquals
         new object[] { 4F, 4F, Expectation.True },
         new object[] { 4F, 4M, Expectation.True },
         new object[] { 4F, 4D, Expectation.True },
+        new object[] { 4F, GetJsonElement(4), Expectation.True },
     ];
 
     /// <summary>
@@ -575,6 +602,7 @@ internal class BinaryJsonNumberEquals
         new object[] { 4M, 4F, Expectation.True },
         new object[] { 4M, 4M, Expectation.True },
         new object[] { 4M, 4D, Expectation.True },
+        new object[] { 4M, GetJsonElement(4), Expectation.True },
     ];
 
     /// <summary>
@@ -596,6 +624,7 @@ internal class BinaryJsonNumberEquals
         new object[] { 4D, 4F, Expectation.True },
         new object[] { 4D, 4M, Expectation.True },
         new object[] { 4D, 4D, Expectation.True },
+        new object[] { 4D, GetJsonElement(4), Expectation.True },
     ];
 
     /// <summary>
@@ -607,6 +636,12 @@ internal class BinaryJsonNumberEquals
         new object[] { 1E29, 1234567890.1234567891M, Expectation.Exception },
         new object[] { 1234567890.1234567891M, 1E29D, Expectation.Exception },
         new object[] { 1E29D, 1234567890.1234567891M, Expectation.Exception },
+
+        new object[] { 1234567890.1234567891M, GetJsonElement(1E29), Expectation.Exception },
+
+        // Because of https://github.com/dotnet/runtime/issues/92631, the JSON element succeeds in converting to double
+        new object[] { 1E29, GetJsonElement(1234567890.1234567891M), Expectation.False },
+        new object[] { 1234567890.1234567891M, GetJsonElement(1234567890.1234567891M), Expectation.True },
     ];
 
     /// <summary>
@@ -618,6 +653,9 @@ internal class BinaryJsonNumberEquals
         new object[] { 0.3F, 0.3F, Expectation.True },
         new object[] { 0.3F, 0.3M, Expectation.True },
         new object[] { 0.3F, 0.3D, Expectation.False },
+        new object[] { 0.3F, GetJsonElement(0.3F), Expectation.False }, // These are false because JsonElement behaves as a double even if it was created via a float; it can't tell.
+        new object[] { 0.3F, GetJsonElement(0.3M), Expectation.False },
+        new object[] { 0.3F, GetJsonElement(0.3D), Expectation.False },
     ];
 
     /// <summary>
@@ -629,6 +667,9 @@ internal class BinaryJsonNumberEquals
         new object[] { 0.3D, 0.3F, Expectation.False },
         new object[] { 0.3D, 0.3M, Expectation.True },
         new object[] { 0.3D, 0.3D, Expectation.True },
+        new object[] { 0.3D, GetJsonElement(0.3F), Expectation.True }, // These are true because JsonElement behaves as a double even if it was created via a float; it can't tell.
+        new object[] { 0.3D, GetJsonElement(0.3M), Expectation.True },
+        new object[] { 0.3D, GetJsonElement(0.3D), Expectation.True },
     ];
 
     /// <summary>
@@ -650,6 +691,7 @@ internal class BinaryJsonNumberEquals
         new object[] { (sbyte)0, 0F, Expectation.True },
         new object[] { (sbyte)0, 0M, Expectation.True },
         new object[] { (sbyte)0, 0D, Expectation.True },
+        new object[] { (sbyte)0, GetJsonElement(0D), Expectation.True },
     ];
 
     /// <summary>
@@ -671,6 +713,7 @@ internal class BinaryJsonNumberEquals
         new object[] { (short)0, 0F, Expectation.True },
         new object[] { (short)0, 0M, Expectation.True },
         new object[] { (short)0, 0D, Expectation.True },
+        new object[] { (short)0, GetJsonElement(0D), Expectation.True },
     ];
 
     /// <summary>
@@ -692,6 +735,7 @@ internal class BinaryJsonNumberEquals
         new object[] { 0, 0F, Expectation.True },
         new object[] { 0, 0M, Expectation.True },
         new object[] { 0, 0D, Expectation.True },
+        new object[] { 0, GetJsonElement(0D), Expectation.True },
     ];
 
     /// <summary>
@@ -713,6 +757,7 @@ internal class BinaryJsonNumberEquals
         new object[] { 0L, 0F, Expectation.True },
         new object[] { 0L, 0M, Expectation.True },
         new object[] { 0L, 0D, Expectation.True },
+        new object[] { 0L, GetJsonElement(0D), Expectation.True },
     ];
 
     /// <summary>
@@ -734,6 +779,7 @@ internal class BinaryJsonNumberEquals
         new object[] { Int128.Zero, 0F, Expectation.True },
         new object[] { Int128.Zero, 0M, Expectation.True },
         new object[] { Int128.Zero, 0D, Expectation.True },
+        new object[] { Int128.Zero, GetJsonElement(0D), Expectation.True },
     ];
 
     /// <summary>
@@ -755,6 +801,7 @@ internal class BinaryJsonNumberEquals
         new object[] { (byte)0, 0F, Expectation.True },
         new object[] { (byte)0, 0M, Expectation.True },
         new object[] { (byte)0, 0D, Expectation.True },
+        new object[] { (byte)0, GetJsonElement(0D), Expectation.True },
     ];
 
     /// <summary>
@@ -776,6 +823,7 @@ internal class BinaryJsonNumberEquals
         new object[] { (ushort)0, 0F, Expectation.True },
         new object[] { (ushort)0, 0M, Expectation.True },
         new object[] { (ushort)0, 0D, Expectation.True },
+        new object[] { (ushort)0, GetJsonElement(0D), Expectation.True },
     ];
 
     /// <summary>
@@ -797,6 +845,7 @@ internal class BinaryJsonNumberEquals
         new object[] { 0U, 0F, Expectation.True },
         new object[] { 0U, 0M, Expectation.True },
         new object[] { 0U, 0D, Expectation.True },
+        new object[] { 0U, GetJsonElement(0D), Expectation.True },
     ];
 
     /// <summary>
@@ -818,6 +867,7 @@ internal class BinaryJsonNumberEquals
         new object[] { 0UL, 0F, Expectation.True },
         new object[] { 0UL, 0M, Expectation.True },
         new object[] { 0UL, 0D, Expectation.True },
+        new object[] { 0UL, GetJsonElement(0D), Expectation.True },
     ];
 
     /// <summary>
@@ -839,6 +889,7 @@ internal class BinaryJsonNumberEquals
         new object[] { UInt128.Zero, 0F, Expectation.True },
         new object[] { UInt128.Zero, 0M, Expectation.True },
         new object[] { UInt128.Zero, 0D, Expectation.True },
+        new object[] { UInt128.Zero, GetJsonElement(0D), Expectation.True },
     ];
 
     /// <summary>
@@ -860,6 +911,7 @@ internal class BinaryJsonNumberEquals
         new object[] { Half.Zero, 0F, Expectation.True },
         new object[] { Half.Zero, 0M, Expectation.True },
         new object[] { Half.Zero, 0D, Expectation.True },
+        new object[] { Half.Zero, GetJsonElement(0D), Expectation.True },
     ];
 
     /// <summary>
@@ -881,6 +933,7 @@ internal class BinaryJsonNumberEquals
         new object[] { 0F, 0F, Expectation.True },
         new object[] { 0F, 0M, Expectation.True },
         new object[] { 0F, 0D, Expectation.True },
+        new object[] { 0F, GetJsonElement(0D), Expectation.True },
     ];
 
     /// <summary>
@@ -902,6 +955,7 @@ internal class BinaryJsonNumberEquals
         new object[] { 0M, 0F, Expectation.True },
         new object[] { 0M, 0M, Expectation.True },
         new object[] { 0M, 0D, Expectation.True },
+        new object[] { 0M, GetJsonElement(0D), Expectation.True },
     ];
 
     /// <summary>
@@ -923,6 +977,7 @@ internal class BinaryJsonNumberEquals
         new object[] { 0D, 0F, Expectation.True },
         new object[] { 0D, 0M, Expectation.True },
         new object[] { 0D, 0D, Expectation.True },
+        new object[] { 0D, GetJsonElement(0D), Expectation.True },
     ];
 
     /// <summary>
@@ -997,25 +1052,56 @@ internal class BinaryJsonNumberEquals
     public void ValuesEqual(object lhs, object rhs, Expectation expected)
     {
         BinaryJsonNumber number1 = GetBinaryJsonNumberFor(lhs);
-        BinaryJsonNumber number2 = GetBinaryJsonNumberFor(rhs);
 
-        switch (expected)
+        if (rhs is JsonElement jsonElement)
         {
-            case Expectation.False:
-                Assert.IsFalse(number1.Equals(number2));
-                Assert.IsFalse(number1 == number2);
-                Assert.IsTrue(number1 != number2);
-                break;
-            case Expectation.True:
-                Assert.IsTrue(number1.Equals(number2));
-                Assert.IsTrue(number1 == number2);
-                Assert.IsFalse(number1 != number2);
-                break;
-            case Expectation.Exception:
-                Assert.Catch(() => number1.Equals(number2));
-                Assert.Catch(() => _ = number1 == number2);
-                Assert.Catch(() => _ = number1 != number2);
-                break;
+            switch (expected)
+            {
+                case Expectation.False:
+                    Assert.IsFalse(number1.Equals(jsonElement));
+                    Assert.IsFalse(number1 == jsonElement);
+                    Assert.IsTrue(number1 != jsonElement);
+                    Assert.IsFalse(jsonElement == number1);
+                    Assert.IsTrue(jsonElement != number1);
+                    break;
+                case Expectation.True:
+                    Assert.IsTrue(number1.Equals(jsonElement));
+                    Assert.IsTrue(number1 == jsonElement);
+                    Assert.IsFalse(number1 != jsonElement);
+                    Assert.IsTrue(jsonElement == number1);
+                    Assert.IsFalse(jsonElement != number1);
+                    break;
+                case Expectation.Exception:
+                    Assert.Catch(() => number1.Equals(jsonElement));
+                    Assert.Catch(() => _ = number1 == jsonElement);
+                    Assert.Catch(() => _ = number1 != jsonElement);
+                    Assert.Catch(() => _ = jsonElement == number1);
+                    Assert.Catch(() => _ = jsonElement != number1);
+                    break;
+            }
+        }
+        else
+        {
+            BinaryJsonNumber number2 = GetBinaryJsonNumberFor(rhs);
+
+            switch (expected)
+            {
+                case Expectation.False:
+                    Assert.IsFalse(number1.Equals(number2));
+                    Assert.IsFalse(number1 == number2);
+                    Assert.IsTrue(number1 != number2);
+                    break;
+                case Expectation.True:
+                    Assert.IsTrue(number1.Equals(number2));
+                    Assert.IsTrue(number1 == number2);
+                    Assert.IsFalse(number1 != number2);
+                    break;
+                case Expectation.Exception:
+                    Assert.Catch(() => number1.Equals(number2));
+                    Assert.Catch(() => _ = number1 == number2);
+                    Assert.Catch(() => _ = number1 != number2);
+                    break;
+            }
         }
     }
 
@@ -1092,5 +1178,29 @@ internal class BinaryJsonNumberEquals
         }
 
         throw new InvalidOperationException("Unsupported value kind");
+    }
+
+    private static JsonElement GetJsonElement(double v)
+    {
+        using var doc = JsonDocument.Parse(v.ToString());
+        return doc.RootElement.Clone();
+    }
+
+    private static JsonElement GetJsonElement(float v)
+    {
+        using var doc = JsonDocument.Parse(v.ToString());
+        return doc.RootElement.Clone();
+    }
+
+    private static JsonElement GetJsonElement(decimal v)
+    {
+        using var doc = JsonDocument.Parse(v.ToString());
+        return doc.RootElement.Clone();
+    }
+
+    private static JsonElement GetJsonElement(int v)
+    {
+        using var doc = JsonDocument.Parse(v.ToString());
+        return doc.RootElement.Clone();
     }
 }
