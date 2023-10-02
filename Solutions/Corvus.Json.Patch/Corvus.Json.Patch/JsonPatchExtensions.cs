@@ -326,14 +326,14 @@ public static partial class JsonPatchExtensions
         patchOperation.TryGetProperty(JsonPatchDocument.Copy.JsonPropertyNames.FromValueUtf8, out JsonString fromAny);
         patchOperation.TryGetProperty(JsonPatchDocument.Copy.JsonPropertyNames.PathUtf8, out JsonString pathAny);
 
-        if (fromAny.Equals(pathAny))
+        string from = (string)fromAny;
+        string path = (string)pathAny;
+
+        if (from == path)
         {
             result = node;
             return true;
         }
-
-        string from = (string)fromAny;
-        string path = (string)pathAny;
 
         if (!node.TryResolvePointer(from, out JsonAny source))
         {
@@ -356,14 +356,14 @@ public static partial class JsonPatchExtensions
         patchOperation.TryGetProperty(JsonPatchDocument.Move.JsonPropertyNames.FromValueUtf8, out JsonString fromAny);
         patchOperation.TryGetProperty(JsonPatchDocument.Move.JsonPropertyNames.PathUtf8, out JsonString pathAny);
 
-        if (fromAny.Equals(pathAny))
+        string from = (string)fromAny;
+        string path = (string)pathAny;
+
+        if (from == path)
         {
             result = node;
             return true;
         }
-
-        string from = (string)fromAny;
-        string path = (string)pathAny;
 
         if (!node.TryResolvePointer(from, out JsonAny source))
         {

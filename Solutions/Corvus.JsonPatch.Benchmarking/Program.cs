@@ -17,12 +17,18 @@ internal class Program
 {
     private static void Main(string[] args)
     {
-        BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).RunAll(
-                ManualConfig.Create(DefaultConfig.Instance)
-                .AddJob(Job.Default
-                    .WithRuntime(CoreRuntime.Core80)
-                    .WithOutlierMode(OutlierMode.RemoveAll)
-                    .WithStrategy(RunStrategy.Throughput))
-                .AddValidator(ExecutionValidator.DontFailOnError));
+        BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(
+            args,
+            GetGlobalConfig());
+    }
+
+    private static IConfig? GetGlobalConfig()
+    {
+        return DefaultConfig.Instance
+        .AddJob(Job.Default
+            .WithRuntime(CoreRuntime.Core80)
+            .WithOutlierMode(OutlierMode.RemoveAll)
+            .WithStrategy(RunStrategy.Throughput).AsDefault())
+        .AddValidator(ExecutionValidator.DontFailOnError);
     }
 }
