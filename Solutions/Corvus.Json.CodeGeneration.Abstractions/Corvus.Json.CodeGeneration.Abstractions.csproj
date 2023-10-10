@@ -23,7 +23,7 @@
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.8.0-2.final" />
-		<PackageReference Include="System.CodeDom" Version="8.0.0-rc.1.23419.4" />
+		<PackageReference Include="System.CodeDom" Version="8.0.0-rc.2.23479.6" />
 	</ItemGroup>
 
 	<ItemGroup>
