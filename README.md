@@ -275,3 +275,28 @@ Generates Feature Files in `Corvus.Json.Specs` for the JSON Patch tests.
 ### Corvus.JsonPatch.Benchmarking
 
 Benchmark suites for various components.
+
+## System.Text.Json support by other projects
+
+There is a thriving ecosystem of System.Text.Json-based projects out there. 
+
+In particular I would point you at
+
+[JsonEverything](https://github.com/gregsdennis/json-everything) by [@gregsdennis](https://github.com/gregsdennis)
+
+- JSON Schema, drafts 6 and higher ([Specification](https://json-schema.org))
+- JSON Path ([RFC in progress](https://github.com/ietf-wg-jsonpath/draft-ietf-jsonpath-jsonpath)) (.Net Standard 2.1)
+- JSON Patch ([RFC 6902](https://tools.ietf.org/html/rfc6902))
+- JsonLogic ([Website](https://jsonlogic.com)) (.Net Standard 2.1)
+- JSON Pointer ([RFC 6901](https://tools.ietf.org/html/rfc6901))
+- Relative JSON Pointer ([Specification](https://tools.ietf.org/id/draft-handrews-relative-json-pointer-00.html))
+- Json.More.Net (Useful System.Text.Json extensions)
+- Yaml2JsonNode
+
+[JsonCons.Net](https://github.com/danielaparker/JsonCons.Net) by [@danielParker](https://github.com/danielaparker)
+
+- JSON Pointer
+- JSON Patch
+- JSON Merge Patch
+- JSON Path
+- JMES Path
