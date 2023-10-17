@@ -4,7 +4,6 @@
 
 using System.Collections.Immutable;
 using System.Text;
-using System.Text.Json;
 using Corvus.Json.CodeGeneration.Generators.Draft202012;
 
 namespace Corvus.Json.CodeGeneration.Draft202012;
@@ -12,66 +11,22 @@ namespace Corvus.Json.CodeGeneration.Draft202012;
 /// <summary>
 /// A JSON Schema() type builder.
 /// </summary>
-public class JsonSchemaBuilder : IJsonSchemaBuilder
+public class JsonSchemaBuilder : JsonSchemaBuilderBase
 {
-    private readonly JsonSchemaTypeBuilder typeBuilder;
-
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonSchemaBuilder"/> class.
     /// </summary>
     /// <param name="typeBuilder">The the type builder to use.</param>
     public JsonSchemaBuilder(JsonSchemaTypeBuilder typeBuilder)
+        : base(typeBuilder.UseDraft202012())
     {
-        this.typeBuilder = typeBuilder.UseDraft202012();
     }
 
     /// <inheritdoc/>
-    public void AddDocument(string path, JsonDocument jsonDocument)
-    {
-        this.typeBuilder.AddDocument(path, jsonDocument);
-    }
-
-    /// <inheritdoc/>
-    public async Task<(string RootTypeName, ImmutableDictionary<JsonReference, TypeAndCode> GeneratedTypes)> BuildTypesFor(JsonReference reference, string rootNamespace, bool rebase = false, ImmutableDictionary<string, string>? baseUriToNamespaceMap = null, string? rootTypeName = null)
-    {
-        TypeDeclaration rootTypeDeclaration = await this.typeBuilder.AddTypeDeclarationsFor(reference, rootNamespace, rebase, baseUriToNamespaceMap, rootTypeName) ?? throw new InvalidOperationException($"Unable to find the root type declaration at {reference}");
-        rootTypeName = rootTypeDeclaration.FullyQualifiedDotnetTypeName!;
-        ImmutableArray<TypeDeclaration> typesToGenerate = rootTypeDeclaration.GetTypesToGenerate();
-
-        return (
-            rootTypeName,
-            typesToGenerate.Select(t => (t.LocatedSchema.Location, t)).Select(this.GenerateFilesForType).ToImmutableDictionary(i => i.Location, i => i.TypeAndCode));
-    }
-
-    /// <summary>
-    /// Gets the type declaration for a property of a type.
-    /// </summary>
-    /// <param name="typeDeclaration">The type declaration.</param>
-    /// <param name="property">The property that provides a Schema().</param>
-    /// <returns>The given type declaration.</returns>
-    internal TypeDeclaration GetTypeDeclarationForProperty(TypeDeclaration typeDeclaration, string property)
-    {
-        return typeDeclaration.GetTypeDeclarationForProperty(property);
-    }
-
-    /// <summary>
-    /// Gets the type declaration for a property of a type.
-    /// </summary>
-    /// <param name="typeDeclaration">The type declaration.</param>
-    /// <param name="patternProperty">The pattern property that provides a Schema().</param>
-    /// <returns>The given type declaration.</returns>
-    internal TypeDeclaration GetTypeDeclarationForPatternProperty(TypeDeclaration typeDeclaration, string patternProperty)
-    {
-        return typeDeclaration.GetTypeDeclarationForMappedProperty("patternProperties", patternProperty);
-    }
-
-    /// <summary>
-    /// Gets the type declaration for a dependent of a type.
-    /// </summary>
-    /// <param name="typeDeclaration">The type declaration.</param>
-    /// <param name="dependentSchema">The dependent schema that provides a Schema().</param>
-    /// <returns>The given type declaration.</returns>
-    internal TypeDeclaration GetTypeDeclarationForDependentSchema(TypeDeclaration typeDeclaration, string dependentSchema)
+    /// <remarks>
+    /// The dependent schemas is split in 2019-09 from the base implementation.
+    /// </remarks>
+    public override TypeDeclaration GetTypeDeclarationForDependentSchema(TypeDeclaration typeDeclaration, string dependentSchema)
     {
         if (typeDeclaration.TryGetTypeDeclarationForMappedProperty("dependentSchemas", dependentSchema, out TypeDeclaration? result))
         {
@@ -81,37 +36,8 @@ public class JsonSchemaBuilder : IJsonSchemaBuilder
         return typeDeclaration.GetTypeDeclarationForMappedProperty("dependencies", dependentSchema);
     }
 
-    /// <summary>
-    /// Gets the type declaration for a Schema() array property at a given index.
-    /// </summary>
-    /// <param name="typeDeclaration">The type declaration.</param>
-    /// <param name="property">The property that provides a Schema().</param>
-    /// <param name="index">The index of the Schema() in the array.</param>
-    /// <returns>The given type declaration.</returns>
-    internal TypeDeclaration GetTypeDeclarationForPropertyArrayIndex(TypeDeclaration typeDeclaration, string property, int index)
-    {
-        return typeDeclaration.GetTypeDeclarationForPropertyArrayIndex(property, index);
-    }
-
-    private static string GetDottedFileNameFor(TypeDeclaration typeDeclaration)
-    {
-        StringBuilder builder = new();
-        TypeDeclaration? current = typeDeclaration;
-        while (current is not null)
-        {
-            if (builder.Length > 0)
-            {
-                builder.Insert(0, ".");
-            }
-
-            builder.Insert(0, current.DotnetTypeName);
-            current = current.Parent;
-        }
-
-        return builder.ToString();
-    }
-
-    private (JsonReference Location, TypeAndCode TypeAndCode) GenerateFilesForType((JsonReference Location, TypeDeclaration TypeDeclaration) typeForGeneration)
+    /// <inheritdoc/>
+    protected override (JsonReference Location, TypeAndCode TypeAndCode) GenerateFilesForType((JsonReference Location, TypeDeclaration TypeDeclaration) typeForGeneration)
     {
         var codeGenerator = new CodeGenerator(this, typeForGeneration.TypeDeclaration);
         var codeGeneratorArrayAdd = new CodeGeneratorArrayAdd(this, typeForGeneration.TypeDeclaration);
