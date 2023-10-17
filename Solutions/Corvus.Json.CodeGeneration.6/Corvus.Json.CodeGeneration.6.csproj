@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 	<Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
 
 	<PropertyGroup>
@@ -27,7 +27,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\Corvus.Json.CodeGeneration.Abstractions\Corvus.Json.CodeGeneration.Abstractions.csproj" />
-		<ProjectReference Include="..\Corvus.Json.JsonSchema\Corvus.Json.JsonSchema.csproj" />
+		<ProjectReference Include="..\Corvus.Json.JsonSchema.Draft6\Corvus.Json.JsonSchema.Draft6.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

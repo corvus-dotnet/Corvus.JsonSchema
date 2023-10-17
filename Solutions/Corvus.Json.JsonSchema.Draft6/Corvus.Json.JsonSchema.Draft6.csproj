@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 	<Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
 
 	<PropertyGroup>
@@ -8,12 +8,8 @@
 	</PropertyGroup>
 
 	<PropertyGroup>
-		<NoWarn>CS1591</NoWarn>
-	</PropertyGroup>
-
-	<PropertyGroup>
 		<PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-		<Description>A library for generating code from .NET types representing data types found in JSON.</Description>
+		<Description>Object models representing JSON Schema documents (201909 and 202012 drafts)</Description>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -22,12 +18,16 @@
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="System.CodeDom" Version="8.0.0-rc.2.23479.6" />
+		<PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0-rc.2.23479.6" />
+		<PackageReference Include="Microsoft.Extensions.ObjectPool" Version="8.0.0-rc.2.23480.2" />
+		<PackageReference Include="NodaTime" Version="3.1.9" />
+		<PackageReference Include="System.Buffers" Version="4.5.1" />
+		<PackageReference Include="System.Collections.Immutable" Version="8.0.0-rc.2.23479.6" />
+		<PackageReference Include="System.Text.Json" Version="8.0.0-rc.2.23479.6" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\Corvus.Json.CodeGeneration.Abstractions\Corvus.Json.CodeGeneration.Abstractions.csproj" />
-		<ProjectReference Include="..\Corvus.Json.JsonSchema.Draft7\Corvus.Json.JsonSchema.Draft7.csproj" />
+		<ProjectReference Include="..\Corvus.Json.ExtendedTypes\Corvus.Json.ExtendedTypes.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -38,7 +38,4 @@
 		<PackageReference Update="Roslynator.Analyzers" Version="4.5.0" />
 	</ItemGroup>
 
-	<ItemGroup>
-		<Folder Include="Corvus.Json.CodeGeneration.Draft7\Generators\" />
-	</ItemGroup>
 </Project>

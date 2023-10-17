@@ -1356,7 +1356,7 @@
         "dependencies": {
           "Corvus.Extensions": "[1.1.11, )",
           "Corvus.Json.CodeGeneration.Abstractions": "[1.0.0, )",
-          "Corvus.Json.JsonSchema": "[1.0.0, )",
+          "Corvus.Json.JsonSchema.Draft201909": "[1.0.0, )",
           "System.CodeDom": "[8.0.0-rc.2.23479.6, )"
         }
       },
@@ -1365,7 +1365,7 @@
         "dependencies": {
           "Corvus.Extensions": "[1.1.11, )",
           "Corvus.Json.CodeGeneration.Abstractions": "[1.0.0, )",
-          "Corvus.Json.JsonSchema": "[1.0.0, )",
+          "Corvus.Json.JsonSchema.Draft202012": "[1.0.0, )",
           "System.CodeDom": "[8.0.0-rc.2.23479.6, )"
         }
       },
@@ -1374,7 +1374,7 @@
         "dependencies": {
           "Corvus.Extensions": "[1.1.11, )",
           "Corvus.Json.CodeGeneration.Abstractions": "[1.0.0, )",
-          "Corvus.Json.JsonSchema": "[1.0.0, )",
+          "Corvus.Json.JsonSchema.Draft6": "[1.0.0, )",
           "System.CodeDom": "[8.0.0-rc.2.23479.6, )"
         }
       },
@@ -1383,7 +1383,7 @@
         "dependencies": {
           "Corvus.Extensions": "[1.1.11, )",
           "Corvus.Json.CodeGeneration.Abstractions": "[1.0.0, )",
-          "Corvus.Json.JsonSchema": "[1.0.0, )",
+          "Corvus.Json.JsonSchema.Draft7": "[1.0.0, )",
           "System.CodeDom": "[8.0.0-rc.2.23479.6, )"
         }
       },
@@ -1410,7 +1410,46 @@
           "System.Text.Json": "[8.0.0-rc.2.23479.6, )"
         }
       },
-      "corvus.json.jsonschema": {
+      "corvus.json.jsonschema.draft201909": {
+        "type": "Project",
+        "dependencies": {
+          "Corvus.Extensions": "[1.1.11, )",
+          "Corvus.Json.ExtendedTypes": "[1.0.0, )",
+          "Microsoft.Extensions.Http": "[8.0.0-rc.2.23479.6, )",
+          "Microsoft.Extensions.ObjectPool": "[8.0.0-rc.2.23480.2, )",
+          "NodaTime": "[3.1.9, )",
+          "System.Buffers": "[4.5.1, )",
+          "System.Collections.Immutable": "[8.0.0-rc.2.23479.6, )",
+          "System.Text.Json": "[8.0.0-rc.2.23479.6, )"
+        }
+      },
+      "corvus.json.jsonschema.draft202012": {
+        "type": "Project",
+        "dependencies": {
+          "Corvus.Extensions": "[1.1.11, )",
+          "Corvus.Json.ExtendedTypes": "[1.0.0, )",
+          "Microsoft.Extensions.Http": "[8.0.0-rc.2.23479.6, )",
+          "Microsoft.Extensions.ObjectPool": "[8.0.0-rc.2.23480.2, )",
+          "NodaTime": "[3.1.9, )",
+          "System.Buffers": "[4.5.1, )",
+          "System.Collections.Immutable": "[8.0.0-rc.2.23479.6, )",
+          "System.Text.Json": "[8.0.0-rc.2.23479.6, )"
+        }
+      },
+      "corvus.json.jsonschema.draft6": {
+        "type": "Project",
+        "dependencies": {
+          "Corvus.Extensions": "[1.1.11, )",
+          "Corvus.Json.ExtendedTypes": "[1.0.0, )",
+          "Microsoft.Extensions.Http": "[8.0.0-rc.2.23479.6, )",
+          "Microsoft.Extensions.ObjectPool": "[8.0.0-rc.2.23480.2, )",
+          "NodaTime": "[3.1.9, )",
+          "System.Buffers": "[4.5.1, )",
+          "System.Collections.Immutable": "[8.0.0-rc.2.23479.6, )",
+          "System.Text.Json": "[8.0.0-rc.2.23479.6, )"
+        }
+      },
+      "corvus.json.jsonschema.draft7": {
         "type": "Project",
         "dependencies": {
           "Corvus.Extensions": "[1.1.11, )",

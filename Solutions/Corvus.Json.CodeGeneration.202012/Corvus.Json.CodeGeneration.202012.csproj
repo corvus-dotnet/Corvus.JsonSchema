@@ -31,7 +31,7 @@
 
 	<ItemGroup>
 	  <ProjectReference Include="..\Corvus.Json.CodeGeneration.Abstractions\Corvus.Json.CodeGeneration.Abstractions.csproj" />
-	  <ProjectReference Include="..\Corvus.Json.JsonSchema\Corvus.Json.JsonSchema.csproj" />
+	  <ProjectReference Include="..\Corvus.Json.JsonSchema.Draft202012\Corvus.Json.JsonSchema.Draft202012.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
