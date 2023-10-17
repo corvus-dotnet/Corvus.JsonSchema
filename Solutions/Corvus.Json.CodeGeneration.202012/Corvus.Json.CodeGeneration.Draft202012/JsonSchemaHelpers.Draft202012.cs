@@ -40,7 +40,8 @@ public static class JsonSchemaHelpers
 
     private static ImmutableHashSet<string> CreateDraft202012GeneratorReservedWords()
     {
-        return ImmutableHashSet.Create(
+        return
+        [
             "Item",
             "Add",
             "AddRange",
@@ -141,7 +142,8 @@ public static class JsonSchemaHelpers
             "ValidateOneOf",
             "ValidateRef",
             "Validate",
-            "ValidateType");
+            "ValidateType",
+        ];
     }
 
     /// <summary>
@@ -159,9 +161,11 @@ public static class JsonSchemaHelpers
     /// <returns>An array of keywords that represent anchors in draft 2020-12.</returns>
     private static ImmutableArray<AnchorKeyword> CreateDraft202012AnchorKeywords()
     {
-        return ImmutableArray.Create(
+        return
+        [
             new AnchorKeyword(Name: "$anchor", IsDynamic: false, IsRecursive: false),
-            new AnchorKeyword(Name: "$dynamicAnchor", IsDynamic: true, IsRecursive: false));
+            new AnchorKeyword(Name: "$dynamicAnchor", IsDynamic: true, IsRecursive: false),
+        ];
     }
 
     /// <summary>
@@ -179,7 +183,10 @@ public static class JsonSchemaHelpers
     /// <returns>Return <c>"$defs"</c>.</returns>
     private static ImmutableHashSet<string> CreateDraft202012DefsKeywords()
     {
-        return ImmutableHashSet.Create("$defs");
+        return
+        [
+            "$defs",
+        ];
     }
 
     /// <summary>
@@ -191,7 +198,8 @@ public static class JsonSchemaHelpers
     /// </returns>
     private static ImmutableHashSet<string> CreateDraft202012IrreducibleKeywords()
     {
-        return ImmutableHashSet.Create(
+        return
+        [
             "additionalProperties",
             "allOf",
             "anyOf",
@@ -234,7 +242,8 @@ public static class JsonSchemaHelpers
             "type",
             "unevaluatedItems",
             "unevaluatedProperties",
-            "uniqueItems");
+            "uniqueItems",
+        ];
     }
 
     /// <summary>
@@ -243,7 +252,8 @@ public static class JsonSchemaHelpers
     /// <returns>An array of <see cref="RefResolvableKeyword"/> instances.</returns>
     private static ImmutableArray<RefResolvableKeyword> CreateDraft202012RefResolvableKeywords()
     {
-        return ImmutableArray.Create<RefResolvableKeyword>(
+        return
+        [
             new("$defs", RefResolvablePropertyKind.MapOfSchema),
             new("items", RefResolvablePropertyKind.SchemaOrArrayOfSchema),
             new("contains", RefResolvablePropertyKind.Schema),
@@ -263,7 +273,8 @@ public static class JsonSchemaHelpers
             new("not", RefResolvablePropertyKind.Schema),
             new("contentSchema", RefResolvablePropertyKind.Schema),
             new("unevaluatedItems", RefResolvablePropertyKind.Schema),
-            new("unevaluatedProperties", RefResolvablePropertyKind.Schema));
+            new("unevaluatedProperties", RefResolvablePropertyKind.Schema),
+        ];
     }
 
     /// <summary>
@@ -272,10 +283,12 @@ public static class JsonSchemaHelpers
     /// <returns>An array of <see cref="RefKeyword"/> instances.</returns>
     private static ImmutableArray<RefKeyword> CreateDraft202012RefKeywords()
     {
-        return ImmutableArray.Create(
+        return
+        [
             new RefKeyword("$ref", RefKind.Ref),
             new RefKeyword("$recursiveRef", RefKind.RecursiveRef),
-            new RefKeyword("$dynamicRef", RefKind.DynamicRef));
+            new RefKeyword("$dynamicRef", RefKind.DynamicRef),
+        ];
     }
 
     /// <summary>

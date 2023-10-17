@@ -53,7 +53,9 @@ public static class JsonSchemaHelpers
     /// <returns>An array of keywords that represent anchors in draft 2020-12.</returns>
     private static ImmutableArray<AnchorKeyword> CreateDraft6AnchorKeywords()
     {
-        return ImmutableArray<AnchorKeyword>.Empty;
+        return
+        [
+        ];
     }
 
     /// <summary>
@@ -80,7 +82,10 @@ public static class JsonSchemaHelpers
     /// <returns>Return <c>"$defs"</c>.</returns>
     private static ImmutableHashSet<string> CreateDraft6DefsKeywords()
     {
-        return ImmutableHashSet.Create("definitions");
+        return
+        [
+            "definitions",
+        ];
     }
 
     /// <summary>
@@ -93,7 +98,9 @@ public static class JsonSchemaHelpers
     private static ImmutableHashSet<string> CreateDraft6IrreducibleKeywords()
     {
         // $ref always reduces in draft7.
-        return ImmutableHashSet<string>.Empty;
+        return
+        [
+        ];
     }
 
     /// <summary>
@@ -102,7 +109,8 @@ public static class JsonSchemaHelpers
     /// <returns>The immutable set of reserved words.</returns>
     private static ImmutableHashSet<string> CreateDraft6GeneratorReservedWords()
     {
-        return ImmutableHashSet.Create(
+        return
+        [
             "Item",
             "Add",
             "AddRange",
@@ -203,7 +211,8 @@ public static class JsonSchemaHelpers
             "ValidateOneOf",
             "ValidateRef",
             "Validate",
-            "ValidateType");
+            "ValidateType",
+        ];
     }
 
     /// <summary>
@@ -212,7 +221,8 @@ public static class JsonSchemaHelpers
     /// <returns>An array of <see cref="RefResolvableKeyword"/> instances.</returns>
     private static ImmutableArray<RefResolvableKeyword> CreateDraft6RefResolvableKeywords()
     {
-        return ImmutableArray.Create<RefResolvableKeyword>(
+        return
+        [
             new("definitions", RefResolvablePropertyKind.MapOfSchema),
             new("items", RefResolvablePropertyKind.SchemaOrArrayOfSchema),
             new("contains", RefResolvablePropertyKind.Schema),
@@ -229,7 +239,8 @@ public static class JsonSchemaHelpers
             new("not", RefResolvablePropertyKind.Schema),
             new("contentSchema", RefResolvablePropertyKind.Schema),
             new("unevaluatedItems", RefResolvablePropertyKind.Schema),
-            new("unevaluatedProperties", RefResolvablePropertyKind.Schema));
+            new("unevaluatedProperties", RefResolvablePropertyKind.Schema),
+        ];
     }
 
     /// <summary>
@@ -238,8 +249,10 @@ public static class JsonSchemaHelpers
     /// <returns>An array of <see cref="RefKeyword"/> instances.</returns>
     private static ImmutableArray<RefKeyword> CreateDraft6RefKeywords()
     {
-        return ImmutableArray.Create(
-            new RefKeyword("$ref", RefKind.Ref));
+        return
+        [
+            new RefKeyword("$ref", RefKind.Ref),
+        ];
     }
 
     /// <summary>

@@ -53,9 +53,11 @@ public static class JsonSchemaHelpers
     /// <returns>An array of keywords that represent anchors in draft 2020-12.</returns>
     private static ImmutableArray<AnchorKeyword> CreateDraft201909AnchorKeywords()
     {
-        return ImmutableArray.Create(
+        return
+        [
             new AnchorKeyword(Name: "$anchor", IsDynamic: false, IsRecursive: false),
-            new AnchorKeyword(Name: "$recursiveAnchor", IsDynamic: false, IsRecursive: true));
+            new AnchorKeyword(Name: "$recursiveAnchor", IsDynamic: false, IsRecursive: true),
+        ];
     }
 
     /// <summary>
@@ -82,7 +84,10 @@ public static class JsonSchemaHelpers
     /// <returns>Return <c>"$defs"</c>.</returns>
     private static ImmutableHashSet<string> CreateDraft201909DefsKeywords()
     {
-        return ImmutableHashSet.Create("$defs");
+        return
+        [
+            "$defs",
+        ];
     }
 
     /// <summary>
@@ -94,7 +99,8 @@ public static class JsonSchemaHelpers
     /// </returns>
     private static ImmutableHashSet<string> CreateDraft201909IrreducibleKeywords()
     {
-        return ImmutableHashSet.Create(
+        return
+        [
             "additionalProperties",
             "additionalItems",
             "allOf",
@@ -139,7 +145,8 @@ public static class JsonSchemaHelpers
             "type",
             "unevaluatedItems",
             "unevaluatedProperties",
-            "uniqueItems");
+            "uniqueItems",
+        ];
     }
 
     /// <summary>
@@ -148,7 +155,8 @@ public static class JsonSchemaHelpers
     /// <returns>The immutable set of reserved words.</returns>
     private static ImmutableHashSet<string> CreateDraft201909GeneratorReservedWords()
     {
-        return ImmutableHashSet.Create(
+        return
+        [
             "Item",
             "Add",
             "AddRange",
@@ -249,7 +257,8 @@ public static class JsonSchemaHelpers
             "ValidateOneOf",
             "ValidateRef",
             "Validate",
-            "ValidateType");
+            "ValidateType",
+        ];
     }
 
     /// <summary>
@@ -258,7 +267,8 @@ public static class JsonSchemaHelpers
     /// <returns>An array of <see cref="RefResolvableKeyword"/> instances.</returns>
     private static ImmutableArray<RefResolvableKeyword> CreateDraft201909RefResolvableKeywords()
     {
-        return ImmutableArray.Create<RefResolvableKeyword>(
+        return
+        [
             new("$defs", RefResolvablePropertyKind.MapOfSchema),
             new("items", RefResolvablePropertyKind.SchemaOrArrayOfSchema),
             new("contains", RefResolvablePropertyKind.Schema),
@@ -279,7 +289,8 @@ public static class JsonSchemaHelpers
             new("not", RefResolvablePropertyKind.Schema),
             new("contentSchema", RefResolvablePropertyKind.Schema),
             new("unevaluatedItems", RefResolvablePropertyKind.Schema),
-            new("unevaluatedProperties", RefResolvablePropertyKind.Schema));
+            new("unevaluatedProperties", RefResolvablePropertyKind.Schema),
+        ];
     }
 
     /// <summary>
@@ -288,9 +299,11 @@ public static class JsonSchemaHelpers
     /// <returns>An array of <see cref="RefKeyword"/> instances.</returns>
     private static ImmutableArray<RefKeyword> CreateDraft201909RefKeywords()
     {
-        return ImmutableArray.Create(
+        return
+        [
             new RefKeyword("$ref", RefKind.Ref),
-            new RefKeyword("$recursiveRef", RefKind.RecursiveRef));
+            new RefKeyword("$recursiveRef", RefKind.RecursiveRef),
+        ];
     }
 
     /// <summary>
