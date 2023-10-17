@@ -25,6 +25,8 @@ public static partial class Validate
     private static readonly Regex UuidTemplatePattern = CreateUuidTemplatePattern();
     private static readonly Regex JsonPointerPattern = CreateJsonPointerPattern();
     private static readonly Regex JsonRelativePointerPattern = CreateJsonRelativePointerPattern();
+    private static readonly Regex IdnEmailReplacePattern = CreateIdnEmailReplacePattern();
+    private static readonly Regex IdnEmailMatchPattern = CreateIdnEmailMatchPattern();
 
     private static readonly IdnMapping IdnMapping = new() { AllowUnassigned = true, UseStd3AsciiRules = true };
 
@@ -324,19 +326,8 @@ public static partial class Validate
         try
         {
             // Normalize the domain
-            email = Regex.Replace(email, "(@)(.+)$", DomainMapper, RegexOptions.None, TimeSpan.FromMilliseconds(200));
-            try
-            {
-                isMatch = Regex.IsMatch(
-                    email,
-                    @"^[^@\s]+@[^@\s]+\.[^@\s]+$",
-                    RegexOptions.IgnoreCase,
-                    TimeSpan.FromMilliseconds(250));
-            }
-            catch (RegexMatchTimeoutException)
-            {
-                isMatch = false;
-            }
+            email = IdnEmailReplacePattern.Replace(email, DomainMapper);
+            isMatch = IdnEmailMatchPattern.IsMatch(email);
 
             // Examines the domain part of the email and normalizes it.
             static string DomainMapper(Match match)
@@ -3017,6 +3008,12 @@ public static partial class Validate
 
     [GeneratedRegex("^(0|[1-9][0-9]*)(#|(/(/|[^/~]|(~[01]))*))?$", RegexOptions.Compiled)]
     private static partial Regex CreateJsonRelativePointerPattern();
+
+    [GeneratedRegex("(@)(.+)$", RegexOptions.Compiled)]
+    private static partial Regex CreateIdnEmailReplacePattern();
+
+    [GeneratedRegex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", RegexOptions.Compiled)]
+    private static partial Regex CreateIdnEmailMatchPattern();
 
     private readonly record struct ValidationContextWrapper(in ValidationContext Context, ValidationLevel Level);
 
