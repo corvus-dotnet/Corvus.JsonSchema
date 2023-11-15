@@ -10,7 +10,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.6">
+		<PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.7">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
@@ -28,7 +28,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <PackageReference Update="Roslynator.Analyzers" Version="4.5.0" />
+	  <PackageReference Update="Roslynator.Analyzers" Version="4.6.2" />
 	</ItemGroup>
 
 </Project>

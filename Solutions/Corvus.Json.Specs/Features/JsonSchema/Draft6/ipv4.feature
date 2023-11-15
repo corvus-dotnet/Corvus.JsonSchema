@@ -34,3 +34,4 @@ Scenario Outline: validation of IP addresses
         | #/000/tests/012/data | false | invalid leading zeroes, as they are treated as octals                            |
         | #/000/tests/013/data | true  | value without leading zero is valid                                              |
         | #/000/tests/014/data | false | invalid non-ASCII '২' (a Bengali 2)                                              |
+        | #/000/tests/015/data | false | netmask is not a part of ipv4 address                                            |

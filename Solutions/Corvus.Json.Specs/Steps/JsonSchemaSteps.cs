@@ -203,7 +203,7 @@ public class JsonSchemaSteps
     /// <summary>
     /// Uses the <see cref="ValidationResult"/> stored in the scenario property <see cref="SchemaValidationResult"/> and checks its <see cref="ValidationResult.Valid"/> property.
     /// </summary>
-    /// <param name="expectedValidity"><c>True</c> if the result is expected to be valid, otherwiee false.</param>
+    /// <param name="expectedValidity"><c>True</c> if the result is expected to be valid, otherwise false.</param>
     [Then("the result will be (.*)")]
     public void ThenTheResultWillBe(bool expectedValidity)
     {

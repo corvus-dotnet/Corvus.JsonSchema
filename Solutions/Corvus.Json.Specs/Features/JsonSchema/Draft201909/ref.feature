@@ -788,6 +788,7 @@ Scenario Outline: URN base URI with URN and anchor ref
 Scenario Outline: URN ref with nested pointer ref
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "$ref": "urn:uuid:deadbeef-4321-ffff-ffff-1234feebdaed",
             "$defs": {
                 "foo": {
@@ -814,6 +815,7 @@ Scenario Outline: URN ref with nested pointer ref
 Scenario Outline: ref to if
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "$ref": "http://example.com/ref/if",
             "if": {
                 "$id": "http://example.com/ref/if",
@@ -837,6 +839,7 @@ Scenario Outline: ref to if
 Scenario Outline: ref to then
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "$ref": "http://example.com/ref/then",
             "then": {
                 "$id": "http://example.com/ref/then",
@@ -860,6 +863,7 @@ Scenario Outline: ref to then
 Scenario Outline: ref to else
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "$ref": "http://example.com/ref/else",
             "else": {
                 "$id": "http://example.com/ref/else",
@@ -883,6 +887,7 @@ Scenario Outline: ref to else
 Scenario Outline: ref with absolute-path-reference
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
              "$id": "http://example.com/ref/absref.json",
              "$defs": {
                  "a": {
@@ -913,6 +918,7 @@ Scenario Outline: ref with absolute-path-reference
 Scenario Outline: $id with file URI still resolves pointers - *nix
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
              "$id": "file:///folder/file.json",
              "$defs": {
                  "foo": {
@@ -938,6 +944,7 @@ Scenario Outline: $id with file URI still resolves pointers - *nix
 Scenario Outline: $id with file URI still resolves pointers - windows
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
              "$id": "file:///c:/folder/file.json",
              "$defs": {
                  "foo": {
@@ -963,6 +970,7 @@ Scenario Outline: $id with file URI still resolves pointers - windows
 Scenario Outline: empty tokens in $ref json-pointer
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
              "$defs": {
                  "": {
                      "$defs": {

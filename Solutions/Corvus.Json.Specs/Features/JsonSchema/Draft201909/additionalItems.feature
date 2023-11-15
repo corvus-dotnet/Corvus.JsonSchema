@@ -200,13 +200,12 @@ Scenario Outline: items validation adjusts the starting index for additionalItem
         | #/008/tests/000/data | true  | valid items                                                                      |
         | #/008/tests/001/data | false | wrong type of second item                                                        |
 
-Scenario Outline: additionalItems with null instance elements
+Scenario Outline: additionalItems with heterogeneous array
 /* Schema: 
 {
             "$schema": "https://json-schema.org/draft/2019-09/schema",
-            "additionalItems": {
-                "type": "null"
-            }
+            "items": [{}],
+            "additionalItems": false
         }
 */
     Given the input JSON file "additionalItems.json"
@@ -219,4 +218,26 @@ Scenario Outline: additionalItems with null instance elements
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/009/tests/000/data | true  | allows null elements                                                             |
+        | #/009/tests/000/data | false | heterogeneous invalid instance                                                   |
+        | #/009/tests/001/data | true  | valid instance                                                                   |
+
+Scenario Outline: additionalItems with null instance elements
+/* Schema: 
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "additionalItems": {
+                "type": "null"
+            }
+        }
+*/
+    Given the input JSON file "additionalItems.json"
+    And the schema at "#/10/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/010/tests/000/data | true  | allows null elements                                                             |
