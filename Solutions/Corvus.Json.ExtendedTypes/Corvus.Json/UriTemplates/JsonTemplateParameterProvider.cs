@@ -17,6 +17,11 @@ internal class JsonTemplateParameterProvider<TPayload> : ITemplateParameterProvi
     where TPayload : struct, IJsonObject<TPayload>
 {
     /// <summary>
+    /// Gets the instance of the <see cref="JsonTemplateParameterProvider{TPayload}"/>.
+    /// </summary>
+    internal static JsonTemplateParameterProvider<TPayload> Instance { get; } = new();
+
+    /// <summary>
     /// Process the given variable.
     /// </summary>
     /// <param name="variableSpecification">The specification for the variable.</param>
@@ -25,8 +30,8 @@ internal class JsonTemplateParameterProvider<TPayload> : ITemplateParameterProvi
     /// <returns>
     ///     <see cref="VariableProcessingState.Success"/> if the variable was successfully processed,
     ///     <see cref="VariableProcessingState.NotProcessed"/> if the parameter was not present, or
-    ///     <see cref="VariableProcessingState.Failure"/> if the parmeter could not be processed because it was incompatible with the variable specification in the template.</returns>
-    public static VariableProcessingState ProcessVariable(ref VariableSpecification variableSpecification, in TPayload parameters, IBufferWriter<char> output)
+    ///     <see cref="VariableProcessingState.Failure"/> if the parameter could not be processed because it was incompatible with the variable specification in the template.</returns>
+    public VariableProcessingState ProcessVariable(ref VariableSpecification variableSpecification, in TPayload parameters, IBufferWriter<char> output)
     {
         if (!parameters.TryGetProperty(variableSpecification.VarName, out JsonAny value)
                 || value.IsNullOrUndefined()

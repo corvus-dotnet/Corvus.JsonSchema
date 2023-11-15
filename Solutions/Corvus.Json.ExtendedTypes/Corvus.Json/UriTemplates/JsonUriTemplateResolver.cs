@@ -30,7 +30,7 @@ public static class JsonUriTemplateResolver
     public static bool TryResolveResult<TState, T>(ReadOnlySpan<char> template, bool resolvePartially, in T parameters, ParameterNameCallback<TState>? parameterNameCallback, ResolvedUriTemplateCallback<TState> callback, ref TState state)
         where T : struct, IJsonObject<T>
     {
-        return UriTemplateResolver<JsonTemplateParameterProvider<T>, T>.TryResolveResult(template, resolvePartially, parameters, callback, parameterNameCallback, ref state);
+        return UriTemplateResolver<JsonTemplateParameterProvider<T>, T>.TryResolveResult(JsonTemplateParameterProvider<T>.Instance, template, resolvePartially, parameters, callback, parameterNameCallback, ref state);
     }
 
     /// <summary>
@@ -48,7 +48,7 @@ public static class JsonUriTemplateResolver
     public static bool TryResolveResult<TState, T>(ReadOnlySpan<char> template, bool resolvePartially, in T parameters, ResolvedUriTemplateCallback<TState> callback, ref TState state)
         where T : struct, IJsonObject<T>
     {
-        return UriTemplateResolver<JsonTemplateParameterProvider<T>, T>.TryResolveResult(template, resolvePartially, parameters, callback, null, ref state);
+        return UriTemplateResolver<JsonTemplateParameterProvider<T>, T>.TryResolveResult(JsonTemplateParameterProvider<T>.Instance, template, resolvePartially, parameters, callback, null, ref state);
     }
 
     /// <summary>
@@ -65,7 +65,7 @@ public static class JsonUriTemplateResolver
         where T : struct, IJsonObject<T>
     {
         object? nullState = default;
-        return UriTemplateResolver<JsonTemplateParameterProvider<T>, T>.TryResolveResult(template, output, resolvePartially, parameters, null, ref nullState);
+        return UriTemplateResolver<JsonTemplateParameterProvider<T>, T>.TryResolveResult(JsonTemplateParameterProvider<T>.Instance, template, output, resolvePartially, parameters, null, ref nullState);
     }
 
     /// <summary>
@@ -79,7 +79,7 @@ public static class JsonUriTemplateResolver
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool TryGetParameterNames<TState>(ReadOnlySpan<char> template, ParameterNameCallback<TState> callback, ref TState state)
     {
-        return UriTemplateResolver<JsonTemplateParameterProvider<JsonObject>, JsonObject>.TryResolveResult(template, true, JsonObject.Null, Nop, callback, ref state);
+        return UriTemplateResolver<JsonTemplateParameterProvider<JsonObject>, JsonObject>.TryResolveResult(JsonTemplateParameterProvider<JsonObject>.Instance, template, true, JsonObject.Null, Nop, callback, ref state);
 
         static void Nop(ReadOnlySpan<char> value, ref TState state)
         {
