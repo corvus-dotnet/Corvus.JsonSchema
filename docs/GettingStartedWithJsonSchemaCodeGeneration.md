@@ -1721,3 +1721,29 @@ if (michaelOldroyd.Name.OtherNames.TryGetAsPersonNameElementArray(out PersonName
     otherNamesArray.EnumerateArray();
 }
 ```
+
+## V2.0 Updates
+
+There have been considerable breaking changes with V2.0 of the generator. This section will help you understand what has changed, and how to update your code.
+
+### Json Schema Models
+
+The JSON Schema Models have been broken out into separate projects.
+
+  - Corvus.Json.JsonSchema.Draft6
+  - Corvus.Json.JsonSchema.Draft7
+  - Corvus.Json.JsonSchema.Draft201909
+  - Corvus.Json.JsonSchema.Draft202012
+
+### Code Generation
+
+### Property Names
+
+The static values for JSON Property Names have been moved from the root type, to a nested subtype called `PropertyNamesEntity`
+
+### Conversions and operators
+
+The implicit/explicit conversions and operators have been rationalised. More explicit conversions are required, at the expense of the implicit conversions.
+
+However, most implicit conversions from/to intrinsic types are still supported.
+
