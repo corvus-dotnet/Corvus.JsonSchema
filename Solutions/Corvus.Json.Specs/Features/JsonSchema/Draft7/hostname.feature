@@ -37,3 +37,7 @@ Scenario Outline: validation of host names
         | #/000/tests/015/data | false | contains underscore                                                              |
         | #/000/tests/016/data | true  | maximum label length                                                             |
         | #/000/tests/017/data | false | exceeds maximum label length                                                     |
+        | #/000/tests/018/data | true  | single label                                                                     |
+        | #/000/tests/019/data | true  | single label with hyphen                                                         |
+        | #/000/tests/020/data | true  | single label with digits                                                         |
+        | #/000/tests/021/data | true  | single label ending with digit                                                   |

@@ -540,7 +540,7 @@ public partial class CodeGeneratorValidateMediaTypeAndEncoding
         {
             if (this.HasPattern)
             {
-                return this.TypeDeclaration.Schema().Pattern;
+                return (string)this.TypeDeclaration.Schema().Pattern;
             }
 
             return string.Empty;
@@ -735,22 +735,22 @@ public partial class CodeGeneratorValidateMediaTypeAndEncoding
     /// <summary>
     /// Gets a value indicating whether this has a maxItems constraint.
     /// </summary>
-    public int MaxItems
+    public long MaxItems
     {
         get
         {
-            return this.HasMaxItems ? this.TypeDeclaration.Schema().MaxItems : default;
+            return this.HasMaxItems ? (long)this.TypeDeclaration.Schema().MaxItems : default;
         }
     }
 
     /// <summary>
     /// Gets a value indicating whether this has a minItems constraint.
     /// </summary>
-    public int MinItems
+    public long MinItems
     {
         get
         {
-            return this.HasMinItems ? this.TypeDeclaration.Schema().MinItems : default;
+            return this.HasMinItems ? (long)this.TypeDeclaration.Schema().MinItems : default;
         }
     }
 
@@ -785,7 +785,13 @@ public partial class CodeGeneratorValidateMediaTypeAndEncoding
         {
             if (this.TypeDeclaration.Schema().MultipleOf.IsNotUndefined())
             {
-                return this.TypeDeclaration.Schema().MultipleOf.AsJsonElement.GetRawText();
+                if (this.TypeDeclaration.Schema().MultipleOf.AsJsonElement.TryGetDouble(out double _))
+                {
+                    return this.TypeDeclaration.Schema().MultipleOf.AsJsonElement.GetRawText();
+                }
+
+                // Fall back to a decimal
+                return $"{this.TypeDeclaration.Schema().MultipleOf.AsJsonElement.GetRawText()}M";
             }
 
             return string.Empty;
@@ -801,7 +807,13 @@ public partial class CodeGeneratorValidateMediaTypeAndEncoding
         {
             if (this.TypeDeclaration.Schema().ExclusiveMaximum.IsNotUndefined())
             {
-                return this.TypeDeclaration.Schema().ExclusiveMaximum.AsJsonElement.GetRawText();
+                if (this.TypeDeclaration.Schema().ExclusiveMaximum.AsJsonElement.TryGetDouble(out double _))
+                {
+                    return this.TypeDeclaration.Schema().ExclusiveMaximum.AsJsonElement.GetRawText();
+                }
+
+                // Fall back to a decimal
+                return $"{this.TypeDeclaration.Schema().MultipleOf.AsJsonElement.GetRawText()}M";
             }
 
             return string.Empty;
@@ -817,7 +829,13 @@ public partial class CodeGeneratorValidateMediaTypeAndEncoding
         {
             if (this.TypeDeclaration.Schema().Maximum.IsNotUndefined())
             {
-                return this.TypeDeclaration.Schema().Maximum.AsJsonElement.GetRawText();
+                if (this.TypeDeclaration.Schema().Maximum.AsJsonElement.TryGetDouble(out double _))
+                {
+                    return this.TypeDeclaration.Schema().Maximum.AsJsonElement.GetRawText();
+                }
+
+                // Fall back to a decimal
+                return $"{this.TypeDeclaration.Schema().Maximum.AsJsonElement.GetRawText()}M";
             }
 
             return string.Empty;
@@ -833,7 +851,13 @@ public partial class CodeGeneratorValidateMediaTypeAndEncoding
         {
             if (this.TypeDeclaration.Schema().ExclusiveMinimum.IsNotUndefined())
             {
-                return this.TypeDeclaration.Schema().ExclusiveMinimum.AsJsonElement.GetRawText();
+                if (this.TypeDeclaration.Schema().ExclusiveMinimum.AsJsonElement.TryGetDouble(out double _))
+                {
+                    return this.TypeDeclaration.Schema().ExclusiveMinimum.AsJsonElement.GetRawText();
+                }
+
+                // Fall back to a decimal
+                return $"{this.TypeDeclaration.Schema().ExclusiveMinimum.AsJsonElement.GetRawText()}M";
             }
 
             return string.Empty;
@@ -849,7 +873,13 @@ public partial class CodeGeneratorValidateMediaTypeAndEncoding
         {
             if (this.TypeDeclaration.Schema().Minimum.IsNotUndefined())
             {
-                return this.TypeDeclaration.Schema().Minimum.AsJsonElement.GetRawText();
+                if (this.TypeDeclaration.Schema().Minimum.AsJsonElement.TryGetDouble(out double _))
+                {
+                    return this.TypeDeclaration.Schema().Minimum.AsJsonElement.GetRawText();
+                }
+
+                // Fall back to a decimal
+                return $"{this.TypeDeclaration.Schema().Minimum.AsJsonElement.GetRawText()}M";
             }
 
             return string.Empty;
@@ -887,7 +917,7 @@ public partial class CodeGeneratorValidateMediaTypeAndEncoding
         {
             if (this.TypeDeclaration.Schema().MaxLength.IsNotUndefined())
             {
-                return ((int)this.TypeDeclaration.Schema().MaxLength).ToString();
+                return ((long)this.TypeDeclaration.Schema().MaxLength).ToString();
             }
 
             return string.Empty;
@@ -903,7 +933,7 @@ public partial class CodeGeneratorValidateMediaTypeAndEncoding
         {
             if (this.TypeDeclaration.Schema().MinLength.IsNotUndefined())
             {
-                return ((int)this.TypeDeclaration.Schema().MinLength).ToString();
+                return ((long)this.TypeDeclaration.Schema().MinLength).ToString();
             }
 
             return string.Empty;
@@ -1186,8 +1216,9 @@ public partial class CodeGeneratorValidateMediaTypeAndEncoding
             {
                 foreach (JsonObjectProperty property in this.TypeDeclaration.Schema().PatternProperties.EnumerateObject())
                 {
-                    TypeDeclaration typeDeclaration = this.Builder.GetTypeDeclarationForPatternProperty(this.TypeDeclaration, property.Name);
-                    builder.Add(new PatternProperty(property.Name, typeDeclaration.FullyQualifiedDotnetTypeName!));
+                    string name = property.Name.GetString();
+                    TypeDeclaration typeDeclaration = this.Builder.GetTypeDeclarationForPatternProperty(this.TypeDeclaration, name);
+                    builder.Add(new PatternProperty(name, typeDeclaration.FullyQualifiedDotnetTypeName!));
                 }
             }
 
@@ -1212,7 +1243,8 @@ public partial class CodeGeneratorValidateMediaTypeAndEncoding
             {
                 foreach (JsonObjectProperty property in this.TypeDeclaration.Schema().DependentSchemas.EnumerateObject())
                 {
-                    builder.Add(new DependentSchema(property.Name, this.Builder.GetTypeDeclarationForDependentSchema(this.TypeDeclaration, property.Name).FullyQualifiedDotnetTypeName!));
+                    string name = property.Name.GetString();
+                    builder.Add(new DependentSchema(name, this.Builder.GetTypeDeclarationForDependentSchema(this.TypeDeclaration, name).FullyQualifiedDotnetTypeName!));
                 }
             }
 
@@ -1238,12 +1270,12 @@ public partial class CodeGeneratorValidateMediaTypeAndEncoding
                 foreach (JsonObjectProperty property in this.TypeDeclaration.Schema().DependentRequired.EnumerateObject())
                 {
                     ImmutableArray<string>.Builder innerBuilder = ImmutableArray.CreateBuilder<string>();
-                    foreach (JsonAny item in property.Value.EnumerateArray())
+                    foreach (JsonAny item in property.Value.AsArray.EnumerateArray())
                     {
-                        innerBuilder.Add((string)item);
+                        innerBuilder.Add((string)item.AsString);
                     }
 
-                    builder.Add(new DependentRequiredValue(property.Name, innerBuilder.ToImmutable()));
+                    builder.Add(new DependentRequiredValue(property.Name.GetString(), innerBuilder.ToImmutable()));
                 }
             }
 
@@ -1265,7 +1297,8 @@ public partial class CodeGeneratorValidateMediaTypeAndEncoding
                 {
                     if (property.Value.As<Schema>().IsValid())
                     {
-                        builder.Add(new DependentSchema(property.Name, this.Builder.GetTypeDeclarationForDependentSchema(this.TypeDeclaration, property.Name).FullyQualifiedDotnetTypeName!));
+                        string name = property.Name.GetString();
+                        builder.Add(new DependentSchema(name, this.Builder.GetTypeDeclarationForDependentSchema(this.TypeDeclaration, name).FullyQualifiedDotnetTypeName!));
                     }
                 }
             }
@@ -1289,12 +1322,12 @@ public partial class CodeGeneratorValidateMediaTypeAndEncoding
                     if (property.Value.ValueKind == JsonValueKind.Array)
                     {
                         ImmutableArray<string>.Builder innerBuilder = ImmutableArray.CreateBuilder<string>();
-                        foreach (JsonAny item in property.Value.EnumerateArray())
+                        foreach (JsonAny item in property.Value.AsArray.EnumerateArray())
                         {
-                            innerBuilder.Add((string)item);
+                            innerBuilder.Add((string)item.AsString);
                         }
 
-                        builder.Add(new DependentRequiredValue(property.Name, innerBuilder.ToImmutable()));
+                        builder.Add(new DependentRequiredValue(property.Name.GetString(), innerBuilder.ToImmutable()));
                     }
                 }
             }
@@ -1328,13 +1361,13 @@ public partial class CodeGeneratorValidateMediaTypeAndEncoding
     /// <summary>
     /// Gets the maxContains constraint.
     /// </summary>
-    public int MaxContains
+    public long MaxContains
     {
         get
         {
             if (this.HasMaxContains)
             {
-                return this.TypeDeclaration.Schema().MaxContains;
+                return (long)this.TypeDeclaration.Schema().MaxContains;
             }
 
             return default;
@@ -1469,11 +1502,11 @@ public partial class CodeGeneratorValidateMediaTypeAndEncoding
     /// <summary>
     /// Gets the minContains constraint.
     /// </summary>
-    public int MinContains
+    public long MinContains
     {
         get
         {
-            return this.HasMinContains ? this.TypeDeclaration.Schema().MinContains : default;
+            return this.HasMinContains ? (long)this.TypeDeclaration.Schema().MinContains : default;
         }
     }
 
@@ -1513,22 +1546,22 @@ public partial class CodeGeneratorValidateMediaTypeAndEncoding
     /// <summary>
     /// Gets the maxProperties constraint.
     /// </summary>
-    public int MaxProperties
+    public long MaxProperties
     {
         get
         {
-            return this.TypeDeclaration.Schema().MaxProperties.IsNotUndefined() ? this.TypeDeclaration.Schema().MaxProperties : default;
+            return this.TypeDeclaration.Schema().MaxProperties.IsNotUndefined() ? (long)this.TypeDeclaration.Schema().MaxProperties : default;
         }
     }
 
     /// <summary>
     /// Gets the minProperties constraint.
     /// </summary>
-    public int MinProperties
+    public long MinProperties
     {
         get
         {
-            return this.TypeDeclaration.Schema().MinProperties.IsNotUndefined() ? this.TypeDeclaration.Schema().MinProperties : default;
+            return this.TypeDeclaration.Schema().MinProperties.IsNotUndefined() ? (long)this.TypeDeclaration.Schema().MinProperties : default;
         }
     }
 
@@ -1909,12 +1942,7 @@ public partial class CodeGeneratorValidateMediaTypeAndEncoding
     {
         get
         {
-            if (this.TypeDeclaration.Schema().Format.IsNotUndefined())
-            {
-                return this.TypeDeclaration.Schema().Format == "integer";
-            }
-
-            return false;
+            return this.TypeDeclaration.Schema().IsJsonInteger();
         }
     }
 

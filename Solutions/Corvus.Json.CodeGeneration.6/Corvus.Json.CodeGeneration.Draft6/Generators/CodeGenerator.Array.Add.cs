@@ -259,9 +259,9 @@ namespace ");
             #line hidden
             
             #line 110 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Add.tt"
-            this.Write(" Replace(in JsonAny oldValue, in JsonAny newValue)\r\n    {\r\n        return this.Ge" +
-                    "tImmutableListReplacing(oldValue.AsAny, newValue.AsAny);\r\n    }\r\n\r\n    /// <inhe" +
-                    "ritdoc/>\r\n    public ");
+            this.Write(" Replace(in JsonAny oldValue, in JsonAny newValue)\r\n    {\r\n        return new(thi" +
+                    "s.GetImmutableListReplacing(oldValue.AsAny, newValue.AsAny));\r\n    }\r\n\r\n    /// " +
+                    "<inheritdoc/>\r\n    public ");
             
             #line default
             #line hidden
@@ -273,8 +273,8 @@ namespace ");
             #line hidden
             
             #line 116 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.Add.tt"
-            this.Write(" SetItem(int index, in JsonAny value)\r\n    {\r\n        return this.GetImmutableLis" +
-                    "tSetting(index, value.AsAny);\r\n    }\r\n}\r\n");
+            this.Write(" SetItem(int index, in JsonAny value)\r\n    {\r\n        return new(this.GetImmutabl" +
+                    "eListSetting(index, value.AsAny));\r\n    }\r\n}\r\n");
             
             #line default
             #line hidden

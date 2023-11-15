@@ -117,7 +117,7 @@ public partial class JsonSchemaTypeBuilder
         var reference = JsonReferenceBuilder.From(type.LocatedSchema.Location);
         if (!skipRoot && this.JsonSchemaConfiguration.IsExplicitArrayType(type.LocatedSchema.Schema) && !this.IsDirectlyInDefinitions(reference))
         {
-            if (type.LocatedSchema.Schema.TryGetProperty(this.JsonSchemaConfiguration.ItemsKeyword, out JsonAny value) && value.ValueKind != JsonValueKind.Array)
+            if (type.LocatedSchema.Schema.AsObject.TryGetProperty(this.JsonSchemaConfiguration.ItemsKeyword, out JsonAny value) && value.ValueKind != JsonValueKind.Array)
             {
                 TypeDeclaration itemsDeclaration = type.GetTypeDeclarationForProperty(this.JsonSchemaConfiguration.ItemsKeyword);
 

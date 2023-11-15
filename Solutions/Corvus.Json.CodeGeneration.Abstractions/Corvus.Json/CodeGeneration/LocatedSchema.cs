@@ -34,7 +34,7 @@ public class LocatedSchema
     /// <summary>
     /// Gets the scoped location of the located schema.
     /// </summary>
-    public JsonReference Location { get; internal set;  }
+    public JsonReference Location { get; internal set; }
 
     /// <summary>
     /// Gets the schema associated with the location.

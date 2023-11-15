@@ -11,11 +11,6 @@ Scenario: Cast to JsonAny for dotnet backed value as a boolean
 	When I cast the JsonBoolean to JsonAny
 	Then the result should equal the JsonAny true
 
-Scenario: Cast from JsonAny for json element backed value as a boolean
-	Given the JsonAny for true
-	When I cast the JsonAny to JsonBoolean
-	Then the result should equal the JsonBoolean true
-
 Scenario: Cast to bool for json element backed value as a boolean
 	Given the JsonElement backed JsonBoolean true
 	When I cast the JsonBoolean to bool

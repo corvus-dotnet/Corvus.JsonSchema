@@ -19,7 +19,7 @@ public readonly partial struct JsonDate
     /// Initializes a new instance of the <see cref="JsonDate"/> struct.
     /// </summary>
     /// <param name="value">The NodaTime LocalDate value.</param>
-    public JsonDate(LocalDate value)
+    public JsonDate(in LocalDate value)
     {
         this.jsonElementBacking = default;
         this.stringBacking = FormatDate(value);
@@ -30,7 +30,7 @@ public readonly partial struct JsonDate
     /// Initializes a new instance of the <see cref="JsonDate"/> struct.
     /// </summary>
     /// <param name="value">The date time from which to construct the date.</param>
-    public JsonDate(DateTime value)
+    public JsonDate(in DateTime value)
     {
         this.jsonElementBacking = default;
         this.stringBacking = FormatDate(LocalDate.FromDateTime(value));
@@ -42,7 +42,7 @@ public readonly partial struct JsonDate
     /// </summary>
     /// <param name="value">The date time from which to construct the date.</param>
     /// <param name="calendar">The calendar system with which to interpret the date.</param>
-    public JsonDate(DateTime value, CalendarSystem calendar)
+    public JsonDate(in DateTime value, CalendarSystem calendar)
     {
         this.jsonElementBacking = default;
         this.stringBacking = FormatDate(LocalDate.FromDateTime(value, calendar));
@@ -53,7 +53,7 @@ public readonly partial struct JsonDate
     /// Implicit conversion to LocalDate.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
-    public static implicit operator LocalDate(JsonDate value)
+    public static implicit operator LocalDate(in JsonDate value)
     {
         return value.GetDate();
     }
@@ -62,7 +62,7 @@ public readonly partial struct JsonDate
     /// Implicit conversion from JsonAny.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonDate(LocalDate value)
+    public static implicit operator JsonDate(in LocalDate value)
     {
         return new JsonDate(value);
     }
@@ -103,7 +103,7 @@ public readonly partial struct JsonDate
         return false;
     }
 
-    private static string FormatDate(LocalDate value)
+    private static string FormatDate(in LocalDate value)
     {
         return LocalDatePattern.Iso.Format(value);
     }

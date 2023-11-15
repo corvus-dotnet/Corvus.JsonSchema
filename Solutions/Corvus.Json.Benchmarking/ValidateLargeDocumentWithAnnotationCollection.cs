@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using BenchmarkDotNet.Attributes;
@@ -17,19 +18,24 @@ namespace Corvus.Json.Benchmarking;
 [MemoryDiagnoser]
 public class ValidateLargeDocumentWithAnnotationCollection
 {
-    private const string JsonText = @"{
-    ""name"": {
-      ""familyName"": ""Oldroyd"",
-      ""givenName"": ""Michael"",
-      ""otherNames"": []
-    },
-    ""dateOfBirth"": ""1944-07-14""
-}";
+    private const string JsonText =
+        """
+        {
+            "name": {
+              "familyName": "Oldroyd",
+              "givenName": "Michael",
+              "otherNames": [],
+              "email": "michael.oldryoyd@contoso.com"
+            },
+            "dateOfBirth": "1944-07-14",
+            "netWorth": 1234567890.1234567891,
+            "height": 1.8
+        }
+        """;
 
-    private static readonly JsonEverything.EvaluationOptions Options = new JsonEverything.EvaluationOptions() { OutputFormat = JsonEverything.OutputFormat.List };
+    private static readonly JsonEverything.EvaluationOptions Options = new() { OutputFormat = JsonEverything.OutputFormat.List };
 
     private JsonDocument? objectDocument;
-    private Person person;
     private PersonArray personArray;
     private JsonNode? node;
     private JsonEverything.JsonSchema? schema;
@@ -42,7 +48,6 @@ public class ValidateLargeDocumentWithAnnotationCollection
     public Task GlobalSetup()
     {
         this.objectDocument = JsonDocument.Parse(JsonText);
-        this.person = Person.FromJson(this.objectDocument.RootElement);
 
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         for (int i = 0; i < 10000; ++i)
@@ -72,19 +77,10 @@ public class ValidateLargeDocumentWithAnnotationCollection
         return Task.CompletedTask;
     }
 
-    /////// <summary>
-    /////// Validates using the Corvus types.
-    /////// </summary>
-    ////[Benchmark]
-    ////public void ValidateSmallDocument()
-    ////{
-    ////    ValidationContext result = this.person.Validate(ValidationContext.ValidContext);
-    ////}
-
     /// <summary>
     /// Validates using the Corvus types.
     /// </summary>
-    [Benchmark]
+    [Benchmark(Baseline = true)]
     public void ValidateLargeArrayCorvus()
     {
         ValidationContext result = this.personArray.Validate(ValidationContext.ValidContext, ValidationLevel.Basic);
@@ -97,13 +93,13 @@ public class ValidateLargeDocumentWithAnnotationCollection
     /// <summary>
     /// Validates using the Corvus types.
     /// </summary>
-    [Benchmark(Baseline = true)]
-    public void ValidateLargeArrayJsonEveything()
+    [Benchmark]
+    public void ValidateLargeArrayJsonEverything()
     {
         JsonEverything.EvaluationResults result = this.schema!.Evaluate(this.node, Options);
         if (!result.IsValid)
         {
-            throw new InvalidOperationException();
+            result.Errors.ForEach(result => Console.WriteLine(result.Value));
         }
     }
 }

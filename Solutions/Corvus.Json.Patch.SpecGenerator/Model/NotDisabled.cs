@@ -24,7 +24,7 @@ public readonly partial struct NotDisabled
 {
     private readonly Backing backing;
     private readonly JsonElement jsonElementBacking;
-    private readonly ImmutableDictionary<JsonPropertyName, JsonAny> objectBacking;
+    private readonly ImmutableList<JsonObjectProperty> objectBacking;
     /// <summary>
     /// Initializes a new instance of the <see cref = "NotDisabled"/> struct.
     /// </summary>
@@ -32,7 +32,7 @@ public readonly partial struct NotDisabled
     {
         this.jsonElementBacking = default;
         this.backing = Backing.JsonElement;
-        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
     }
 
     /// <summary>
@@ -43,7 +43,7 @@ public readonly partial struct NotDisabled
     {
         this.jsonElementBacking = value;
         this.backing = Backing.JsonElement;
-        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
     }
 
     /// <summary>
@@ -108,8 +108,7 @@ public readonly partial struct NotDisabled
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonString AsString
+    JsonString IJsonValue.AsString
     {
         get
         {
@@ -123,8 +122,7 @@ public readonly partial struct NotDisabled
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonBoolean AsBoolean
+    JsonBoolean IJsonValue.AsBoolean
     {
         get
         {
@@ -138,8 +136,7 @@ public readonly partial struct NotDisabled
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonNumber AsNumber
+    JsonNumber IJsonValue.AsNumber
     {
         get
         {
@@ -172,8 +169,7 @@ public readonly partial struct NotDisabled
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonArray AsArray
+    JsonArray IJsonValue.AsArray
     {
         get
         {
@@ -229,15 +225,6 @@ public readonly partial struct NotDisabled
     }
 
     /// <summary>
-    /// Conversion from JsonAny.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator NotDisabled(JsonAny value)
-    {
-        return NotDisabled.FromAny(value);
-    }
-
-    /// <summary>
     /// Conversion to JsonAny.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
@@ -288,7 +275,7 @@ public readonly partial struct NotDisabled
         JsonValueKind valueKind = value.ValueKind;
         return valueKind switch
         {
-            JsonValueKind.Object => new((ImmutableDictionary<JsonPropertyName, JsonAny>)value),
+            JsonValueKind.Object => new(value.AsObject.AsPropertyBacking()),
             JsonValueKind.Null => Null,
             _ => Undefined,
         };
@@ -313,9 +300,7 @@ public readonly partial struct NotDisabled
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be NotDisabled.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static NotDisabled FromBoolean<TValue>(in TValue value)
-        where TValue : struct, IJsonBoolean<TValue>
+    static NotDisabled IJsonValue<NotDisabled>.FromBoolean<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -333,9 +318,7 @@ public readonly partial struct NotDisabled
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be NotDisabled.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static NotDisabled FromString<TValue>(in TValue value)
-        where TValue : struct, IJsonString<TValue>
+    static NotDisabled IJsonValue<NotDisabled>.FromString<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -353,9 +336,7 @@ public readonly partial struct NotDisabled
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be NotDisabled.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static NotDisabled FromNumber<TValue>(in TValue value)
-        where TValue : struct, IJsonNumber<TValue>
+    static NotDisabled IJsonValue<NotDisabled>.FromNumber<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -373,9 +354,7 @@ public readonly partial struct NotDisabled
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be NotDisabled.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static NotDisabled FromArray<TValue>(in TValue value)
-        where TValue : struct, IJsonArray<TValue>
+    static NotDisabled IJsonValue<NotDisabled>.FromArray<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -403,7 +382,7 @@ public readonly partial struct NotDisabled
 
         if (value.ValueKind == JsonValueKind.Object)
         {
-            return new((ImmutableDictionary<JsonPropertyName, JsonAny>)value);
+            return new(value.AsPropertyBacking());
         }
 
         return Undefined;
@@ -500,7 +479,7 @@ public readonly partial struct NotDisabled
     }
 
     /// <summary>
-    /// Gets the value as the target value.
+    /// Gets the value as an instance of the target value.
     /// </summary>
     /// <typeparam name = "TTarget">The type of the target.</typeparam>
     /// <returns>An instance of the target type.</returns>
@@ -533,14 +512,18 @@ public readonly partial struct NotDisabled
     }
 
     /// <inheritdoc/>
-    public bool Equals<T>(T other)
+    public bool Equals<T>(in T other)
         where T : struct, IJsonValue<T>
     {
         return JsonValueHelpers.CompareValues(this, other);
     }
 
-    /// <inheritdoc/>
-    public bool Equals(NotDisabled other)
+    /// <summary>
+    /// Equality comparison.
+    /// </summary>
+    /// <param name = "other">The other item with which to compare.</param>
+    /// <returns><see langword="true"/> if the values were equal.</returns>
+    public bool Equals(in NotDisabled other)
     {
         return JsonValueHelpers.CompareValues(this, other);
     }

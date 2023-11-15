@@ -17,7 +17,7 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft6 {
     public partial class CodeGeneratorNumber : CodeGeneratorNumberBase {
         
         
-        #line 418 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+        #line 755 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
 
     public bool ShouldGenerate
     {
@@ -137,40 +137,26 @@ namespace ");
             #line hidden
             
             #line 39 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
-            this.Write("(double value)\r\n    {\r\n        this.jsonElementBacking = default;\r\n        this.b" +
-                    "acking = Backing.Number;\r\n        this.numberBacking = value;\r\n");
+            this.Write("(in BinaryJsonNumber value)\r\n    {\r\n        this.jsonElementBacking = default;\r\n " +
+                    "       this.backing = Backing.Number;\r\n        this.numberBacking = value;\r\n");
             
             #line default
             #line hidden
             
             #line 44 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
-  if(IsImplicitBoolean || IsNotImplicitType)
+  if(IsImplicitString || IsNotImplicitType)
     { 
             
             #line default
             #line hidden
             
             #line 46 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
-            this.Write("        this.boolBacking = default;\r\n");
-            
-            #line default
-            #line hidden
-            
-            #line 47 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
-  }
-    if(IsImplicitString || IsNotImplicitType)
-    { 
-            
-            #line default
-            #line hidden
-            
-            #line 50 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
             this.Write("        this.stringBacking = string.Empty;\r\n");
             
             #line default
             #line hidden
             
-            #line 51 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            #line 47 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
   }
     if(IsImplicitArray || IsNotImplicitType)
     { 
@@ -178,13 +164,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 54 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            #line 50 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
             this.Write("        this.arrayBacking = ImmutableList<JsonAny>.Empty;\r\n");
             
             #line default
             #line hidden
             
-            #line 55 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            #line 51 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
   }
     if(IsImplicitObject || IsNotImplicitType)
     { 
@@ -192,48 +178,442 @@ namespace ");
             #line default
             #line hidden
             
-            #line 58 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
-            this.Write("        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty" +
-                    ";\r\n");
+            #line 54 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write("        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;\r\n");
             
             #line default
             #line hidden
             
-            #line 59 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            #line 55 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
   } 
             
             #line default
             #line hidden
             
+            #line 56 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write("    }\r\n\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 58 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+  if (!IsJsonInteger)
+    {
+            
+            #line default
+            #line hidden
+            
             #line 60 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
-            this.Write("    }\r\n\r\n    /// <summary>\r\n    /// Conversion from JsonNumber.\r\n    /// </summar" +
-                    "y>\r\n    /// <param name=\"value\">The value from which to convert.</param>\r\n    pu" +
-                    "blic static implicit operator JsonNumber(");
+            this.Write("    /// <summary>\r\n    /// Initializes a new instance of the <see cref=\"");
             
             #line default
             #line hidden
             
-            #line 66 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            #line 61 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 66 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
-            this.Write(" value)\r\n    {\r\n        return value.AsNumber;\r\n    }\r\n\r\n    /// <summary>\r\n    /" +
-                    "// Conversion to JsonNumber.\r\n    /// </summary>\r\n    /// <param name=\"value\">Th" +
-                    "e value from which to convert.</param>\r\n    public static implicit operator ");
+            #line 61 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write("\"/> struct.\r\n    /// </summary>\r\n    /// <param name=\"value\">The value from which" +
+                    " to initialize the number.</param>\r\n    public ");
             
             #line default
             #line hidden
             
-            #line 75 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            #line 64 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 75 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            #line 64 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write("(decimal value)\r\n        : this(new BinaryJsonNumber(value))\r\n    {\r\n    }\r\n\r\n   " +
+                    " /// <summary>\r\n    /// Initializes a new instance of the <see cref=\"");
+            
+            #line default
+            #line hidden
+            
+            #line 70 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 70 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write("\"/> struct.\r\n    /// </summary>\r\n    /// <param name=\"value\">The value from which" +
+                    " to initialize the number.</param>\r\n    public ");
+            
+            #line default
+            #line hidden
+            
+            #line 73 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 73 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write("(double value)\r\n        : this(new BinaryJsonNumber(value))\r\n    {\r\n    }\r\n\r\n    " +
+                    "/// <summary>\r\n    /// Initializes a new instance of the <see cref=\"");
+            
+            #line default
+            #line hidden
+            
+            #line 79 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 79 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write("\"/> struct.\r\n    /// </summary>\r\n    /// <param name=\"value\">The value from which" +
+                    " to initialize the number.</param>\r\n    public ");
+            
+            #line default
+            #line hidden
+            
+            #line 82 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 82 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write("(Half value)\r\n        : this(new BinaryJsonNumber(value))\r\n    {\r\n    }\r\n\r\n    //" +
+                    "/ <summary>\r\n    /// Initializes a new instance of the <see cref=\"");
+            
+            #line default
+            #line hidden
+            
+            #line 88 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 88 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write("\"/> struct.\r\n    /// </summary>\r\n    /// <param name=\"value\">The value from which" +
+                    " to initialize the number.</param>\r\n    public ");
+            
+            #line default
+            #line hidden
+            
+            #line 91 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 91 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write("(float value)\r\n        : this(new BinaryJsonNumber(value))\r\n    {\r\n    }\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 95 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+  }
+            
+            #line default
+            #line hidden
+            
+            #line 96 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write("\r\n    /// <summary>\r\n    /// Initializes a new instance of the <see cref=\"");
+            
+            #line default
+            #line hidden
+            
+            #line 98 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 98 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write("\"/> struct.\r\n    /// </summary>\r\n    /// <param name=\"value\">The value from which" +
+                    " to initialize the number.</param>\r\n    public ");
+            
+            #line default
+            #line hidden
+            
+            #line 101 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 101 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write("(byte value)\r\n        : this(new BinaryJsonNumber(value))\r\n    {\r\n    }\r\n\r\n    //" +
+                    "/ <summary>\r\n    /// Initializes a new instance of the <see cref=\"");
+            
+            #line default
+            #line hidden
+            
+            #line 107 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 107 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write("\"/> struct.\r\n    /// </summary>\r\n    /// <param name=\"value\">The value from which" +
+                    " to initialize the number.</param>\r\n    public ");
+            
+            #line default
+            #line hidden
+            
+            #line 110 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 110 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write("(short value)\r\n        : this(new BinaryJsonNumber(value))\r\n    {\r\n    }\r\n\r\n    /" +
+                    "// <summary>\r\n    /// Initializes a new instance of the <see cref=\"");
+            
+            #line default
+            #line hidden
+            
+            #line 116 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 116 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write("\"/> struct.\r\n    /// </summary>\r\n    /// <param name=\"value\">The value from which" +
+                    " to initialize the number.</param>\r\n    public ");
+            
+            #line default
+            #line hidden
+            
+            #line 119 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 119 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write("(int value)\r\n        : this(new BinaryJsonNumber(value))\r\n    {\r\n    }\r\n\r\n    ///" +
+                    " <summary>\r\n    /// Initializes a new instance of the <see cref=\"");
+            
+            #line default
+            #line hidden
+            
+            #line 125 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 125 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write("\"/> struct.\r\n    /// </summary>\r\n    /// <param name=\"value\">The value from which" +
+                    " to initialize the number.</param>\r\n    public ");
+            
+            #line default
+            #line hidden
+            
+            #line 128 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 128 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write("(long value)\r\n        : this(new BinaryJsonNumber(value))\r\n    {\r\n    }\r\n\r\n    //" +
+                    "/ <summary>\r\n    /// Initializes a new instance of the <see cref=\"");
+            
+            #line default
+            #line hidden
+            
+            #line 134 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 134 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write("\"/> struct.\r\n    /// </summary>\r\n    /// <param name=\"value\">The value from which" +
+                    " to initialize the number.</param>\r\n    public ");
+            
+            #line default
+            #line hidden
+            
+            #line 137 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 137 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write("(Int128 value)\r\n        : this(new BinaryJsonNumber(value))\r\n    {\r\n    }\r\n\r\n    " +
+                    "/// <summary>\r\n    /// Initializes a new instance of the <see cref=\"");
+            
+            #line default
+            #line hidden
+            
+            #line 143 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 143 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write("\"/> struct.\r\n    /// </summary>\r\n    /// <param name=\"value\">The value from which" +
+                    " to initialize the number.</param>\r\n    public ");
+            
+            #line default
+            #line hidden
+            
+            #line 146 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 146 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write("(sbyte value)\r\n        : this(new BinaryJsonNumber(value))\r\n    {\r\n    }\r\n\r\n    /" +
+                    "// <summary>\r\n    /// Initializes a new instance of the <see cref=\"");
+            
+            #line default
+            #line hidden
+            
+            #line 152 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 152 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write("\"/> struct.\r\n    /// </summary>\r\n    /// <param name=\"value\">The value from which" +
+                    " to initialize the number.</param>\r\n    public ");
+            
+            #line default
+            #line hidden
+            
+            #line 155 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 155 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write("(ushort value)\r\n        : this(new BinaryJsonNumber(value))\r\n    {\r\n    }\r\n\r\n    " +
+                    "/// <summary>\r\n    /// Initializes a new instance of the <see cref=\"");
+            
+            #line default
+            #line hidden
+            
+            #line 161 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 161 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write("\"/> struct.\r\n    /// </summary>\r\n    /// <param name=\"value\">The value from which" +
+                    " to initialize the number.</param>\r\n    public ");
+            
+            #line default
+            #line hidden
+            
+            #line 164 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 164 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write("(uint value)\r\n        : this(new BinaryJsonNumber(value))\r\n    {\r\n    }\r\n\r\n    //" +
+                    "/ <summary>\r\n    /// Initializes a new instance of the <see cref=\"");
+            
+            #line default
+            #line hidden
+            
+            #line 170 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 170 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write("\"/> struct.\r\n    /// </summary>\r\n    /// <param name=\"value\">The value from which" +
+                    " to initialize the number.</param>\r\n    public ");
+            
+            #line default
+            #line hidden
+            
+            #line 173 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 173 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write("(ulong value)\r\n        : this(new BinaryJsonNumber(value))\r\n    {\r\n    }\r\n\r\n    /" +
+                    "// <summary>\r\n    /// Initializes a new instance of the <see cref=\"");
+            
+            #line default
+            #line hidden
+            
+            #line 179 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 179 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write("\"/> struct.\r\n    /// </summary>\r\n    /// <param name=\"value\">The value from which" +
+                    " to initialize the number.</param>\r\n    public ");
+            
+            #line default
+            #line hidden
+            
+            #line 182 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 182 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(@"(UInt128 value)
+        : this(new BinaryJsonNumber(value))
+    {
+    }
+
+    /// <summary>
+    /// Conversion from JsonNumber.
+    /// </summary>
+    /// <param name=""value"">The value from which to convert.</param>
+    public static implicit operator JsonNumber(");
+            
+            #line default
+            #line hidden
+            
+            #line 191 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 191 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(" value)\r\n    {\r\n        return JsonNumber.FromNumber(value);\r\n    }\r\n\r\n    /// <s" +
+                    "ummary>\r\n    /// Conversion to JsonNumber.\r\n    /// </summary>\r\n    /// <param n" +
+                    "ame=\"value\">The value from which to convert.</param>\r\n    public static implicit" +
+                    " operator ");
+            
+            #line default
+            #line hidden
+            
+            #line 200 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 200 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
             this.Write(@"(JsonNumber value)
     {
         if (value.HasJsonElementBacking)
@@ -241,436 +621,7 @@ namespace ");
             return new(value.AsJsonElement);
         }
 
-        return new((double)value);
-    }
-
-    /// <summary>
-    /// Conversion from double.
-    /// </summary>
-    /// <param name=""value"">The value to convert.</param>
-    public static implicit operator ");
-            
-            #line default
-            #line hidden
-            
-            #line 89 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
-            
-            #line default
-            #line hidden
-            
-            #line 89 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
-            this.Write(@"(double value)
-    {
-        return new(value);
-    }
-
-    /// <summary>
-    /// Conversion to double.
-    /// </summary>
-    /// <param name=""value"">The value to convert.</param>
-    /// <exception cref=""InvalidOperationException"">The value was not a number.</exception>
-    /// <exception cref=""FormatException"">The value was not formatted as a double.</exception>
-    public static implicit operator double(");
-            
-            #line default
-            #line hidden
-            
-            #line 100 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
-            
-            #line default
-            #line hidden
-            
-            #line 100 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
-            this.Write(@" value)
-    {
-        if ((value.backing & Backing.JsonElement) != 0)
-        {
-            return value.jsonElementBacking.GetDouble();
-        }
-
-        if ((value.backing & Backing.Number) != 0)
-        {
-            return value.numberBacking;
-        }
-
-        throw new InvalidOperationException();
-    }
-
-    /// <summary>
-    /// Conversion from float.
-    /// </summary>
-    /// <param name=""value"">The value to convert.</param>
-    public static implicit operator ");
-            
-            #line default
-            #line hidden
-            
-            #line 119 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
-            
-            #line default
-            #line hidden
-            
-            #line 119 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
-            this.Write(@"(float value)
-    {
-        return new(value);
-    }
-
-    /// <summary>
-    /// Conversion to double.
-    /// </summary>
-    /// <param name=""value"">The value to convert.</param>
-    /// <exception cref=""InvalidOperationException"">The value was not a number.</exception>
-    /// <exception cref=""FormatException"">The value was not formatted as a float.</exception>
-    public static implicit operator float(");
-            
-            #line default
-            #line hidden
-            
-            #line 130 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
-            
-            #line default
-            #line hidden
-            
-            #line 130 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
-            this.Write(@" value)
-    {
-        if ((value.backing & Backing.JsonElement) != 0)
-        {
-            return value.jsonElementBacking.GetSingle();
-        }
-
-        if ((value.backing & Backing.Number) != 0)
-        {
-            if (value.numberBacking < float.MinValue || value.numberBacking > float.MaxValue)
-            {
-                throw new FormatException();
-            }
-
-            return (float)value.numberBacking;
-        }
-
-        throw new InvalidOperationException();
-    }
-
-    /// <summary>
-    /// Conversion from int.
-    /// </summary>
-    /// <param name=""value"">The value to convert.</param>
-    public static implicit operator ");
-            
-            #line default
-            #line hidden
-            
-            #line 154 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
-            
-            #line default
-            #line hidden
-            
-            #line 154 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
-            this.Write(@"(int value)
-    {
-        return new(value);
-    }
-
-    /// <summary>
-    /// Conversion to int.
-    /// </summary>
-    /// <param name=""value"">The value to convert.</param>
-    /// <exception cref=""InvalidOperationException"">The value was not a number.</exception>
-    /// <exception cref=""FormatException"">The value was not formatted as a int.</exception>
-    public static implicit operator int(");
-            
-            #line default
-            #line hidden
-            
-            #line 165 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
-            
-            #line default
-            #line hidden
-            
-            #line 165 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
-            this.Write(@" value)
-    {
-        if ((value.backing & Backing.JsonElement) != 0)
-        {
-            return value.jsonElementBacking.SafeGetInt32();
-        }
-
-        if ((value.backing & Backing.Number) != 0)
-        {
-            if (value.numberBacking < int.MinValue || value.numberBacking > int.MaxValue)
-            {
-                throw new FormatException();
-            }
-
-            return (int)value.numberBacking;
-        }
-
-        throw new InvalidOperationException();
-    }
-
-    /// <summary>
-    /// Conversion from long.
-    /// </summary>
-    /// <param name=""value"">The value to convert.</param>
-    public static implicit operator ");
-            
-            #line default
-            #line hidden
-            
-            #line 189 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
-            
-            #line default
-            #line hidden
-            
-            #line 189 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
-            this.Write(@"(long value)
-    {
-        return new(value);
-    }
-
-    /// <summary>
-    /// Conversion to long.
-    /// </summary>
-    /// <param name=""value"">The value to convert.</param>
-    /// <exception cref=""InvalidOperationException"">The value was not a number.</exception>
-    /// <exception cref=""FormatException"">The value was not formatted as a long.</exception>
-    public static implicit operator long(");
-            
-            #line default
-            #line hidden
-            
-            #line 200 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
-            
-            #line default
-            #line hidden
-            
-            #line 200 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
-            this.Write(@" value)
-    {
-        if ((value.backing & Backing.JsonElement) != 0)
-        {
-            return value.jsonElementBacking.SafeGetInt64();
-        }
-
-        if ((value.backing & Backing.Number) != 0)
-        {
-            if (value.numberBacking < long.MinValue || value.numberBacking > long.MaxValue)
-            {
-                throw new FormatException();
-            }
-
-            return (long)value.numberBacking;
-        }
-
-        throw new InvalidOperationException();
-    }
-
-    /// <summary>
-    /// Conversion from uint.
-    /// </summary>
-    /// <param name=""value"">The value to convert.</param>
-    public static explicit operator ");
-            
-            #line default
-            #line hidden
-            
-            #line 224 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
-            
-            #line default
-            #line hidden
-            
-            #line 224 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
-            this.Write(@"(uint value)
-    {
-        return new(value);
-    }
-
-    /// <summary>
-    /// Conversion to uint.
-    /// </summary>
-    /// <param name=""value"">The value to convert.</param>
-    /// <exception cref=""InvalidOperationException"">The value was not a number.</exception>
-    /// <exception cref=""FormatException"">The value was not formatted as a uint.</exception>
-    public static implicit operator uint(");
-            
-            #line default
-            #line hidden
-            
-            #line 235 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
-            
-            #line default
-            #line hidden
-            
-            #line 235 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
-            this.Write(@" value)
-    {
-        if ((value.backing & Backing.JsonElement) != 0)
-        {
-            return value.jsonElementBacking.SafeGetUInt32();
-        }
-
-        if ((value.backing & Backing.Number) != 0)
-        {
-            if (value.numberBacking < uint.MinValue || value.numberBacking > uint.MaxValue)
-            {
-                throw new FormatException();
-            }
-
-            return (uint)value.numberBacking;
-        }
-
-        throw new InvalidOperationException();
-    }
-
-    /// <summary>
-    /// Conversion from ushort.
-    /// </summary>
-    /// <param name=""value"">The value to convert.</param>
-    public static implicit operator ");
-            
-            #line default
-            #line hidden
-            
-            #line 259 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
-            
-            #line default
-            #line hidden
-            
-            #line 259 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
-            this.Write(@"(ushort value)
-    {
-        return new(value);
-    }
-
-    /// <summary>
-    /// Conversion to ushort.
-    /// </summary>
-    /// <param name=""value"">The value to convert.</param>
-    /// <exception cref=""InvalidOperationException"">The value was not a number.</exception>
-    /// <exception cref=""FormatException"">The value was not formatted as a ushort.</exception>
-    public static implicit operator ushort(");
-            
-            #line default
-            #line hidden
-            
-            #line 270 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
-            
-            #line default
-            #line hidden
-            
-            #line 270 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
-            this.Write(@" value)
-    {
-        if ((value.backing & Backing.JsonElement) != 0)
-        {
-            return value.jsonElementBacking.SafeGetUInt16();
-        }
-
-        if ((value.backing & Backing.Number) != 0)
-        {
-            if (value.numberBacking < ushort.MinValue || value.numberBacking > ushort.MaxValue)
-            {
-                throw new FormatException();
-            }
-
-            return (ushort)value.numberBacking;
-        }
-
-        throw new InvalidOperationException();
-    }
-
-    /// <summary>
-    /// Conversion from ulong.
-    /// </summary>
-    /// <param name=""value"">The value to convert.</param>
-    public static implicit operator ");
-            
-            #line default
-            #line hidden
-            
-            #line 294 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
-            
-            #line default
-            #line hidden
-            
-            #line 294 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
-            this.Write(@"(ulong value)
-    {
-        return new(value);
-    }
-
-    /// <summary>
-    /// Conversion to ulong.
-    /// </summary>
-    /// <param name=""value"">The value to convert.</param>
-    /// <exception cref=""InvalidOperationException"">The value was not a number.</exception>
-    /// <exception cref=""FormatException"">The value was not formatted as a ulong.</exception>
-    public static implicit operator ulong(");
-            
-            #line default
-            #line hidden
-            
-            #line 305 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
-            
-            #line default
-            #line hidden
-            
-            #line 305 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
-            this.Write(@" value)
-    {
-        if ((value.backing & Backing.JsonElement) != 0)
-        {
-            return value.jsonElementBacking.SafeGetUInt64();
-        }
-
-        if ((value.backing & Backing.Number) != 0)
-        {
-            if (value.numberBacking < ulong.MinValue || value.numberBacking > ulong.MaxValue)
-            {
-                throw new FormatException();
-            }
-
-            return (ulong)value.numberBacking;
-        }
-
-        throw new InvalidOperationException();
-    }
-
-    /// <summary>
-    /// Conversion from byte.
-    /// </summary>
-    /// <param name=""value"">The value to convert.</param>
-    public static implicit operator ");
-            
-            #line default
-            #line hidden
-            
-            #line 329 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
-            
-            #line default
-            #line hidden
-            
-            #line 329 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
-            this.Write(@"(byte value)
-    {
-        return new(value);
+        return new(value.AsBinaryJsonNumber);
     }
 
     /// <summary>
@@ -679,18 +630,18 @@ namespace ");
     /// <param name=""value"">The value to convert.</param>
     /// <exception cref=""InvalidOperationException"">The value was not a number.</exception>
     /// <exception cref=""FormatException"">The value was not formatted as a byte.</exception>
-    public static implicit operator byte(");
+    public static explicit operator byte(");
             
             #line default
             #line hidden
             
-            #line 340 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            #line 216 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 340 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            #line 216 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
             this.Write(@" value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
@@ -700,56 +651,228 @@ namespace ");
 
         if ((value.backing & Backing.Number) != 0)
         {
-            if (value.numberBacking < byte.MinValue || value.numberBacking > byte.MaxValue)
-            {
-                throw new FormatException();
-            }
-
-            return (byte)value.numberBacking;
+            return value.numberBacking.CreateChecked<byte>();
         }
 
         throw new InvalidOperationException();
     }
 
     /// <summary>
-    /// Conversion from sbyte.
-    /// </summary>
-    /// <param name=""value"">The value to convert.</param>
-    public static implicit operator ");
-            
-            #line default
-            #line hidden
-            
-            #line 364 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
-            
-            #line default
-            #line hidden
-            
-            #line 364 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
-            this.Write(@"(sbyte value)
-    {
-        return new(value);
-    }
-
-    /// <summary>
-    /// Conversion to sbyte.
+    /// Conversion to decimal.
     /// </summary>
     /// <param name=""value"">The value to convert.</param>
     /// <exception cref=""InvalidOperationException"">The value was not a number.</exception>
-    /// <exception cref=""FormatException"">The value was not formatted as an sbyte.</exception>
-    public static implicit operator sbyte(");
+    /// <exception cref=""FormatException"">The value was not formatted as a decimal.</exception>
+    public static explicit operator decimal(");
             
             #line default
             #line hidden
             
-            #line 375 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            #line 237 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 375 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            #line 237 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(@" value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
+        {
+            return value.jsonElementBacking.SafeGetDecimal();
+        }
+
+        if ((value.backing & Backing.Number) != 0)
+        {
+            return value.numberBacking.CreateChecked<decimal>();
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Conversion to double.
+    /// </summary>
+    /// <param name=""value"">The value to convert.</param>
+    /// <exception cref=""InvalidOperationException"">The value was not a number.</exception>
+    /// <exception cref=""FormatException"">The value was not formatted as a double.</exception>
+    public static explicit operator double(");
+            
+            #line default
+            #line hidden
+            
+            #line 258 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 258 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(@" value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
+        {
+            return value.jsonElementBacking.SafeGetDouble();
+        }
+
+        if ((value.backing & Backing.Number) != 0)
+        {
+            return value.numberBacking.CreateChecked<double>();
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Conversion to Int16.
+    /// </summary>
+    /// <param name=""value"">The value to convert.</param>
+    /// <exception cref=""InvalidOperationException"">The value was not a number.</exception>
+    /// <exception cref=""FormatException"">The value was not formatted as an Int16.</exception>
+    public static explicit operator short(");
+            
+            #line default
+            #line hidden
+            
+            #line 279 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 279 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(@" value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
+        {
+            return value.jsonElementBacking.SafeGetInt16();
+        }
+
+        if ((value.backing & Backing.Number) != 0)
+        {
+            return value.numberBacking.CreateChecked<short>();
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Conversion to Int32.
+    /// </summary>
+    /// <param name=""value"">The value to convert.</param>
+    /// <exception cref=""InvalidOperationException"">The value was not a number.</exception>
+    /// <exception cref=""FormatException"">The value was not formatted as an Int32.</exception>
+    public static explicit operator int(");
+            
+            #line default
+            #line hidden
+            
+            #line 300 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 300 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(@" value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
+        {
+            return value.jsonElementBacking.SafeGetInt32();
+        }
+
+        if ((value.backing & Backing.Number) != 0)
+        {
+            return value.numberBacking.CreateChecked<int>();
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Conversion to Int64.
+    /// </summary>
+    /// <param name=""value"">The value to convert.</param>
+    /// <exception cref=""InvalidOperationException"">The value was not a number.</exception>
+    /// <exception cref=""FormatException"">The value was not formatted as an Int64.</exception>
+    public static explicit operator long(");
+            
+            #line default
+            #line hidden
+            
+            #line 321 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 321 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(@" value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
+        {
+            return value.jsonElementBacking.SafeGetInt64();
+        }
+
+        if ((value.backing & Backing.Number) != 0)
+        {
+            return value.numberBacking.CreateChecked<long>();
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Conversion to Int128.
+    /// </summary>
+    /// <param name=""value"">The value to convert.</param>
+    /// <exception cref=""InvalidOperationException"">The value was not a number.</exception>
+    /// <exception cref=""FormatException"">The value was not formatted as an Int64.</exception>
+    public static explicit operator Int128(");
+            
+            #line default
+            #line hidden
+            
+            #line 342 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 342 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(@" value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
+        {
+            return value.jsonElementBacking.SafeGetInt128();
+        }
+
+        if ((value.backing & Backing.Number) != 0)
+        {
+            return value.numberBacking.CreateChecked<Int128>();
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Conversion to SByte.
+    /// </summary>
+    /// <param name=""value"">The value to convert.</param>
+    /// <exception cref=""InvalidOperationException"">The value was not a number.</exception>
+    /// <exception cref=""FormatException"">The value was not formatted as an SByte.</exception>
+    public static explicit operator sbyte(");
+            
+            #line default
+            #line hidden
+            
+            #line 363 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 363 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
             this.Write(@" value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
@@ -759,15 +882,476 @@ namespace ");
 
         if ((value.backing & Backing.Number) != 0)
         {
-            if (value.numberBacking < sbyte.MinValue || value.numberBacking > sbyte.MaxValue)
-            {
-                throw new FormatException();
-            }
-
-            return (sbyte)value.numberBacking;
+            return value.numberBacking.CreateChecked<sbyte>();
         }
 
         throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Conversion to Half.
+    /// </summary>
+    /// <param name=""value"">The value to convert.</param>
+    /// <exception cref=""InvalidOperationException"">The value was not a number.</exception>
+    /// <exception cref=""FormatException"">The value was not formatted as a Single.</exception>
+    public static explicit operator Half(");
+            
+            #line default
+            #line hidden
+            
+            #line 384 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 384 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(@" value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
+        {
+            return value.jsonElementBacking.SafeGetHalf();
+        }
+
+        if ((value.backing & Backing.Number) != 0)
+        {
+            return value.numberBacking.CreateChecked<Half>();
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Conversion to Single.
+    /// </summary>
+    /// <param name=""value"">The value to convert.</param>
+    /// <exception cref=""InvalidOperationException"">The value was not a number.</exception>
+    /// <exception cref=""FormatException"">The value was not formatted as a Single.</exception>
+    public static explicit operator float(");
+            
+            #line default
+            #line hidden
+            
+            #line 405 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 405 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(@" value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
+        {
+            return value.jsonElementBacking.SafeGetSingle();
+        }
+
+        if ((value.backing & Backing.Number) != 0)
+        {
+            return value.numberBacking.CreateChecked<float>();
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Conversion to UInt16.
+    /// </summary>
+    /// <param name=""value"">The value to convert.</param>
+    /// <exception cref=""InvalidOperationException"">The value was not a number.</exception>
+    /// <exception cref=""FormatException"">The value was not formatted as an UInt16.</exception>
+    public static explicit operator ushort(");
+            
+            #line default
+            #line hidden
+            
+            #line 426 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 426 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(@" value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
+        {
+            return value.jsonElementBacking.SafeGetUInt16();
+        }
+
+        if ((value.backing & Backing.Number) != 0)
+        {
+            return value.numberBacking.CreateChecked<ushort>();
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Conversion to UInt32.
+    /// </summary>
+    /// <param name=""value"">The value to convert.</param>
+    /// <exception cref=""InvalidOperationException"">The value was not a number.</exception>
+    /// <exception cref=""FormatException"">The value was not formatted as an UInt32.</exception>
+    public static explicit operator uint(");
+            
+            #line default
+            #line hidden
+            
+            #line 447 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 447 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(@" value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
+        {
+            return value.jsonElementBacking.SafeGetUInt32();
+        }
+
+        if ((value.backing & Backing.Number) != 0)
+        {
+            return value.numberBacking.CreateChecked<uint>();
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Conversion to UInt64.
+    /// </summary>
+    /// <param name=""value"">The value to convert.</param>
+    /// <exception cref=""InvalidOperationException"">The value was not a number.</exception>
+    /// <exception cref=""FormatException"">The value was not formatted as an UInt64.</exception>
+    public static explicit operator ulong(");
+            
+            #line default
+            #line hidden
+            
+            #line 468 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 468 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(@" value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
+        {
+            return value.jsonElementBacking.SafeGetUInt64();
+        }
+
+        if ((value.backing & Backing.Number) != 0)
+        {
+            return value.numberBacking.CreateChecked<ulong>();
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Conversion to UInt128.
+    /// </summary>
+    /// <param name=""value"">The value to convert.</param>
+    /// <exception cref=""InvalidOperationException"">The value was not a number.</exception>
+    /// <exception cref=""FormatException"">The value was not formatted as an UInt64.</exception>
+    public static explicit operator UInt128(");
+            
+            #line default
+            #line hidden
+            
+            #line 489 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 489 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(@" value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
+        {
+            return value.jsonElementBacking.SafeGetUInt128();
+        }
+
+        if ((value.backing & Backing.Number) != 0)
+        {
+            return value.numberBacking.CreateChecked<UInt128>();
+        }
+
+        throw new InvalidOperationException();
+    }
+
+");
+            
+            #line default
+            #line hidden
+            
+            #line 504 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+  if (IsJsonInteger)
+    {
+            
+            #line default
+            #line hidden
+            
+            #line 506 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write("    /// <summary>\r\n    /// Conversion from decimal.\r\n    /// </summary>\r\n    /// " +
+                    "<param name=\"value\">The value to convert.</param>\r\n    public static explicit op" +
+                    "erator ");
+            
+            #line default
+            #line hidden
+            
+            #line 510 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 510 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write("(decimal value)\r\n    {\r\n        return new((long)value);\r\n    }\r\n\r\n    /// <summa" +
+                    "ry>\r\n    /// Conversion from double.\r\n    /// </summary>\r\n    /// <param name=\"v" +
+                    "alue\">The value to convert.</param>\r\n    public static explicit operator ");
+            
+            #line default
+            #line hidden
+            
+            #line 519 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 519 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write("(double value)\r\n    {\r\n        return new((long)value);\r\n    }\r\n\r\n    /// <summar" +
+                    "y>\r\n    /// Conversion from Half.\r\n    /// </summary>\r\n    /// <param name=\"valu" +
+                    "e\">The value to convert.</param>\r\n    public static explicit operator ");
+            
+            #line default
+            #line hidden
+            
+            #line 528 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 528 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write("(Half value)\r\n    {\r\n        return new((long)value);\r\n    }\r\n\r\n    /// <summary>" +
+                    "\r\n    /// Conversion from float.\r\n    /// </summary>\r\n    /// <param name=\"value" +
+                    "\">The value to convert.</param>\r\n    public static explicit operator ");
+            
+            #line default
+            #line hidden
+            
+            #line 537 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 537 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write("(float value)\r\n    {\r\n        return new((long)value);\r\n    }\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 541 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+  }
+    else
+    {
+            
+            #line default
+            #line hidden
+            
+            #line 544 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write("    /// <summary>\r\n    /// Conversion from decimal.\r\n    /// </summary>\r\n    /// " +
+                    "<param name=\"value\">The value to convert.</param>\r\n    public static implicit op" +
+                    "erator ");
+            
+            #line default
+            #line hidden
+            
+            #line 548 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 548 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write("(decimal value)\r\n    {\r\n        return new(value);\r\n    }\r\n\r\n    /// <summary>\r\n " +
+                    "   /// Conversion from double.\r\n    /// </summary>\r\n    /// <param name=\"value\">" +
+                    "The value to convert.</param>\r\n    public static implicit operator ");
+            
+            #line default
+            #line hidden
+            
+            #line 557 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 557 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write("(double value)\r\n    {\r\n        return new(value);\r\n    }\r\n\r\n    /// <summary>\r\n  " +
+                    "  /// Conversion from Half.\r\n    /// </summary>\r\n    /// <param name=\"value\">The" +
+                    " value to convert.</param>\r\n    public static implicit operator ");
+            
+            #line default
+            #line hidden
+            
+            #line 566 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 566 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write("(Half value)\r\n    {\r\n        return new(value);\r\n    }\r\n\r\n    /// <summary>\r\n    " +
+                    "/// Conversion from float.\r\n    /// </summary>\r\n    /// <param name=\"value\">The " +
+                    "value to convert.</param>\r\n    public static implicit operator ");
+            
+            #line default
+            #line hidden
+            
+            #line 575 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 575 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write("(float value)\r\n    {\r\n        return new(value);\r\n    }\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 579 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+  }
+            
+            #line default
+            #line hidden
+            
+            #line 580 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write("\r\n    /// <summary>\r\n    /// Conversion from byte.\r\n    /// </summary>\r\n    /// <" +
+                    "param name=\"value\">The value to convert.</param>\r\n    public static implicit ope" +
+                    "rator ");
+            
+            #line default
+            #line hidden
+            
+            #line 585 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 585 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write("(byte value)\r\n    {\r\n        return new(value);\r\n    }\r\n\r\n    /// <summary>\r\n    " +
+                    "/// Conversion from short.\r\n    /// </summary>\r\n    /// <param name=\"value\">The " +
+                    "value to convert.</param>\r\n    public static implicit operator ");
+            
+            #line default
+            #line hidden
+            
+            #line 594 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 594 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write("(short value)\r\n    {\r\n        return new(value);\r\n    }\r\n\r\n    /// <summary>\r\n   " +
+                    " /// Conversion from int.\r\n    /// </summary>\r\n    /// <param name=\"value\">The v" +
+                    "alue to convert.</param>\r\n    public static implicit operator ");
+            
+            #line default
+            #line hidden
+            
+            #line 603 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 603 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write("(int value)\r\n    {\r\n        return new(value);\r\n    }\r\n\r\n    /// <summary>\r\n    /" +
+                    "// Conversion from long.\r\n    /// </summary>\r\n    /// <param name=\"value\">The va" +
+                    "lue to convert.</param>\r\n    public static implicit operator ");
+            
+            #line default
+            #line hidden
+            
+            #line 612 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 612 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write("(long value)\r\n    {\r\n        return new(value);\r\n    }\r\n\r\n    /// <summary>\r\n    " +
+                    "/// Conversion from sbyte.\r\n    /// </summary>\r\n    /// <param name=\"value\">The " +
+                    "value to convert.</param>\r\n    public static implicit operator ");
+            
+            #line default
+            #line hidden
+            
+            #line 621 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 621 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write("(sbyte value)\r\n    {\r\n        return new(value);\r\n    }\r\n\r\n    /// <summary>\r\n   " +
+                    " /// Conversion from ushort.\r\n    /// </summary>\r\n    /// <param name=\"value\">Th" +
+                    "e value to convert.</param>\r\n    public static implicit operator ");
+            
+            #line default
+            #line hidden
+            
+            #line 630 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 630 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write("(ushort value)\r\n    {\r\n        return new(value);\r\n    }\r\n\r\n    /// <summary>\r\n  " +
+                    "  /// Conversion from uint.\r\n    /// </summary>\r\n    /// <param name=\"value\">The" +
+                    " value to convert.</param>\r\n    public static implicit operator ");
+            
+            #line default
+            #line hidden
+            
+            #line 639 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 639 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write("(uint value)\r\n    {\r\n        return new(value);\r\n    }\r\n\r\n    /// <summary>\r\n    " +
+                    "/// Conversion from ulong.\r\n    /// </summary>\r\n    /// <param name=\"value\">The " +
+                    "value to convert.</param>\r\n    public static implicit operator ");
+            
+            #line default
+            #line hidden
+            
+            #line 648 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 648 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(@"(ulong value)
+    {
+        return new(value);
     }
 
     /// <summary>
@@ -781,28 +1365,28 @@ namespace ");
             #line default
             #line hidden
             
-            #line 401 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            #line 659 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 401 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            #line 659 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
             this.Write(" left, in ");
             
             #line default
             #line hidden
             
-            #line 401 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            #line 659 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 401 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            #line 659 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
             this.Write(@" right)
     {
-        return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && (double)left < (double)right;
+        return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && Compare(left, right) < 0;
     }
 
     /// <summary>
@@ -816,32 +1400,159 @@ namespace ");
             #line default
             #line hidden
             
-            #line 412 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            #line 670 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 412 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            #line 670 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
             this.Write(" left, in ");
             
             #line default
             #line hidden
             
-            #line 412 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            #line 670 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 412 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
-            this.Write(" right)\r\n    {\r\n        return left.IsNotNullOrUndefined() && right.IsNotNullOrUn" +
-                    "defined() && (double)left > (double)right;\r\n    }\r\n}\r\n");
+            #line 670 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(@" right)
+    {
+        return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && Compare(left, right) > 0;
+    }
+
+    /// <summary>
+    /// Less than operator.
+    /// </summary>
+    /// <param name=""left"">The LHS of the comparison.</param>
+    /// <param name=""right"">The RHS of the comparison.</param>
+    /// <returns><see langword=""true""/> if the left is less than the right, otherwise <see langword=""false""/>.</returns>
+    public static bool operator <=(in ");
             
             #line default
             #line hidden
             
-            #line 417 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            #line 681 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 681 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(" left, in ");
+            
+            #line default
+            #line hidden
+            
+            #line 681 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 681 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(@" right)
+    {
+        return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && Compare(left, right) <= 0;
+    }
+
+    /// <summary>
+    /// Greater than operator.
+    /// </summary>
+    /// <param name=""left"">The LHS of the comparison.</param>
+    /// <param name=""right"">The RHS of the comparison.</param>
+    /// <returns><see langword=""true""/> if the left is greater than the right, otherwise <see langword=""false""/>.</returns>
+    public static bool operator >=(in ");
+            
+            #line default
+            #line hidden
+            
+            #line 692 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 692 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(" left, in ");
+            
+            #line default
+            #line hidden
+            
+            #line 692 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 692 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(@" right)
+    {
+        return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && Compare(left, right) >= 0;
+    }
+
+    /// <summary>
+    /// Compare with another number.
+    /// </summary>
+    /// <param name=""lhs"">The lhs of the comparison.</param>
+    /// <param name=""rhs"">The rhs of the comparison.</param>
+    /// <returns>0 if the numbers are equal, -1 if the lhs is less than the rhs, and 1 if the lhs is greater than the rhs.</returns>
+    public static int Compare(in ");
+            
+            #line default
+            #line hidden
+            
+            #line 703 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 703 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(" lhs, in ");
+            
+            #line default
+            #line hidden
+            
+            #line 703 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 703 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
+            this.Write(" rhs)\r\n    {\r\n        if (lhs.ValueKind != rhs.ValueKind)\r\n        {\r\n           " +
+                    " // We can\'t be equal if we are not the same underlying type\r\n            return" +
+                    " lhs.IsNullOrUndefined() ? 1 : -1;\r\n        }\r\n\r\n        if (lhs.IsNull())\r\n    " +
+                    "    {\r\n            // Nulls are always equal\r\n            return 0;\r\n        }\r\n" +
+                    "\r\n        if (lhs.backing == Backing.Number &&\r\n            rhs.backing == Backi" +
+                    "ng.Number)\r\n        {\r\n            return BinaryJsonNumber.Compare(lhs.numberBac" +
+                    "king, rhs.numberBacking);\r\n        }\r\n\r\n        // After this point there is no " +
+                    "need to check both value kinds because our first quick test verified that they w" +
+                    "ere the same.\r\n        // If either one is a Backing.Number or a JsonValueKind.N" +
+                    "umber then we know the rhs is conmpatible.\r\n        if (lhs.backing == Backing.N" +
+                    "umber &&\r\n            rhs.backing == Backing.Number)\r\n        {\r\n            ret" +
+                    "urn BinaryJsonNumber.Compare(lhs.numberBacking, rhs.numberBacking);\r\n        }\r\n" +
+                    "\r\n        if (lhs.backing == Backing.Number &&\r\n            rhs.backing == Backi" +
+                    "ng.JsonElement)\r\n        {\r\n            return BinaryJsonNumber.Compare(lhs.numb" +
+                    "erBacking, rhs.jsonElementBacking);\r\n        }\r\n\r\n        if (lhs.backing == Bac" +
+                    "king.JsonElement && rhs.backing == Backing.Number)\r\n        {\r\n            retur" +
+                    "n BinaryJsonNumber.Compare(lhs.jsonElementBacking, rhs.numberBacking);\r\n        " +
+                    "}\r\n\r\n        if (lhs.backing == Backing.JsonElement && rhs.backing == Backing.Js" +
+                    "onElement && rhs.jsonElementBacking.ValueKind == JsonValueKind.Number)\r\n        " +
+                    "{\r\n            return JsonValueHelpers.NumericCompare(lhs.jsonElementBacking, rh" +
+                    "s.jsonElementBacking);\r\n        }\r\n\r\n        throw new InvalidOperationException" +
+                    "();\r\n    }\r\n\r\n\r\n    /// <inheritdoc/>\r\n    public BinaryJsonNumber AsBinaryJsonN" +
+                    "umber => this.HasDotnetBacking ? this.numberBacking : BinaryJsonNumber.FromJson(" +
+                    "this.jsonElementBacking);\r\n}\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 754 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Number.tt"
  EndNesting(); 
             
             #line default

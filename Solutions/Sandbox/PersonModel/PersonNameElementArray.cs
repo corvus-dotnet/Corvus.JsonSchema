@@ -108,8 +108,7 @@ public readonly partial struct PersonNameElementArray
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonString AsString
+    JsonString IJsonValue.AsString
     {
         get
         {
@@ -123,8 +122,7 @@ public readonly partial struct PersonNameElementArray
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonBoolean AsBoolean
+    JsonBoolean IJsonValue.AsBoolean
     {
         get
         {
@@ -138,8 +136,7 @@ public readonly partial struct PersonNameElementArray
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonNumber AsNumber
+    JsonNumber IJsonValue.AsNumber
     {
         get
         {
@@ -153,8 +150,7 @@ public readonly partial struct PersonNameElementArray
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonObject AsObject
+    JsonObject IJsonValue.AsObject
     {
         get
         {
@@ -229,15 +225,6 @@ public readonly partial struct PersonNameElementArray
     }
 
     /// <summary>
-    /// Conversion from JsonAny.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator PersonNameElementArray(JsonAny value)
-    {
-        return PersonNameElementArray.FromAny(value);
-    }
-
-    /// <summary>
     /// Conversion to JsonAny.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
@@ -288,7 +275,7 @@ public readonly partial struct PersonNameElementArray
         JsonValueKind valueKind = value.ValueKind;
         return valueKind switch
         {
-            JsonValueKind.Array => new((ImmutableList<JsonAny>)value),
+            JsonValueKind.Array => new(value.AsArray.AsImmutableList()),
             JsonValueKind.Null => Null,
             _ => Undefined,
         };
@@ -313,9 +300,7 @@ public readonly partial struct PersonNameElementArray
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be PersonNameElementArray.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static PersonNameElementArray FromBoolean<TValue>(in TValue value)
-        where TValue : struct, IJsonBoolean<TValue>
+    static PersonNameElementArray IJsonValue<PersonNameElementArray>.FromBoolean<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -333,9 +318,7 @@ public readonly partial struct PersonNameElementArray
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be PersonNameElementArray.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static PersonNameElementArray FromString<TValue>(in TValue value)
-        where TValue : struct, IJsonString<TValue>
+    static PersonNameElementArray IJsonValue<PersonNameElementArray>.FromString<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -353,9 +336,7 @@ public readonly partial struct PersonNameElementArray
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be PersonNameElementArray.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static PersonNameElementArray FromNumber<TValue>(in TValue value)
-        where TValue : struct, IJsonNumber<TValue>
+    static PersonNameElementArray IJsonValue<PersonNameElementArray>.FromNumber<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -383,7 +364,7 @@ public readonly partial struct PersonNameElementArray
 
         if (value.ValueKind == JsonValueKind.Array)
         {
-            return new((ImmutableList<JsonAny>)value);
+            return new(value.AsImmutableList());
         }
 
         return Undefined;
@@ -397,9 +378,7 @@ public readonly partial struct PersonNameElementArray
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be PersonNameElementArray.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static PersonNameElementArray FromObject<TValue>(in TValue value)
-        where TValue : struct, IJsonObject<TValue>
+    static PersonNameElementArray IJsonValue<PersonNameElementArray>.FromObject<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -500,7 +479,7 @@ public readonly partial struct PersonNameElementArray
     }
 
     /// <summary>
-    /// Gets the value as the target value.
+    /// Gets the value as an instance of the target value.
     /// </summary>
     /// <typeparam name = "TTarget">The type of the target.</typeparam>
     /// <returns>An instance of the target type.</returns>
@@ -533,14 +512,18 @@ public readonly partial struct PersonNameElementArray
     }
 
     /// <inheritdoc/>
-    public bool Equals<T>(T other)
+    public bool Equals<T>(in T other)
         where T : struct, IJsonValue<T>
     {
         return JsonValueHelpers.CompareValues(this, other);
     }
 
-    /// <inheritdoc/>
-    public bool Equals(PersonNameElementArray other)
+    /// <summary>
+    /// Equality comparison.
+    /// </summary>
+    /// <param name = "other">The other item with which to compare.</param>
+    /// <returns><see langword="true"/> if the values were equal.</returns>
+    public bool Equals(in PersonNameElementArray other)
     {
         return JsonValueHelpers.CompareValues(this, other);
     }

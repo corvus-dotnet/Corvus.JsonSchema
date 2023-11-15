@@ -135,11 +135,11 @@ global using global::System.Threading.Tasks;";
     /// <returns>An instance of a <see cref="IJsonValue"/> initialized from the data.</returns>
     public IJsonValue CreateInstance(Type type, JsonElement data)
     {
-        ConstructorInfo? constructor = type.GetConstructors().SingleOrDefault(c => c.GetParameters().Length == 1 && c.GetParameters()[0].ParameterType.Name.StartsWith("JsonElement"));
-        if (constructor is null)
-        {
-            throw new InvalidOperationException($"Unable to find the public JsonElement constructor on type '{type.FullName}'");
-        }
+        ConstructorInfo? constructor =
+            type
+                .GetConstructors()
+                .SingleOrDefault(c => c.GetParameters().Length == 1 && c.GetParameters()[0].ParameterType.Name.StartsWith("JsonElement"))
+            ?? throw new InvalidOperationException($"Unable to find the public JsonElement constructor on type '{type.FullName}'");
 
         return (IJsonValue)constructor.Invoke(new object[] { data });
     }
@@ -209,13 +209,13 @@ global using global::System.Threading.Tasks;";
     private static IEnumerable<SyntaxTree> ParseSyntaxTrees(ImmutableDictionary<JsonReference, TypeAndCode> generatedTypes)
     {
         CSharpParseOptions parseOptions = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Preview);
-        yield return CSharpSyntaxTree.ParseText(GlobalUsings, path: "GlobalUsings.cs", options: parseOptions);
+        yield return CSharpSyntaxTree.ParseText(GlobalUsings, options: parseOptions, path: "GlobalUsings.cs");
 
         foreach (KeyValuePair<JsonReference, TypeAndCode> type in generatedTypes)
         {
             foreach (CodeAndFilename codeAndFilename in type.Value.Code)
             {
-                yield return CSharpSyntaxTree.ParseText(codeAndFilename.Code, path: codeAndFilename.Filename, options: parseOptions);
+                yield return CSharpSyntaxTree.ParseText(codeAndFilename.Code, options: parseOptions, path: codeAndFilename.Filename);
             }
         }
     }

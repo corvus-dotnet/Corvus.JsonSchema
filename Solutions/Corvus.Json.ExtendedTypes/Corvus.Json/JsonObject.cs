@@ -17,7 +17,7 @@ public readonly partial struct JsonObject : IJsonObject<JsonObject>
 {
     private readonly Backing backing;
     private readonly JsonElement jsonElementBacking;
-    private readonly ImmutableDictionary<JsonPropertyName, JsonAny> objectBacking;
+    private readonly ImmutableList<JsonObjectProperty> objectBacking;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonObject"/> struct.
@@ -26,7 +26,7 @@ public readonly partial struct JsonObject : IJsonObject<JsonObject>
     {
         this.jsonElementBacking = default;
         this.backing = Backing.JsonElement;
-        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
     }
 
     /// <summary>
@@ -37,7 +37,7 @@ public readonly partial struct JsonObject : IJsonObject<JsonObject>
     {
         this.jsonElementBacking = value;
         this.backing = Backing.JsonElement;
-        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
     }
 
     /// <summary>
@@ -104,7 +104,7 @@ public readonly partial struct JsonObject : IJsonObject<JsonObject>
     }
 
     /// <inheritdoc/>
-    public JsonString AsString
+    JsonString IJsonValue.AsString
     {
         get
         {
@@ -118,7 +118,7 @@ public readonly partial struct JsonObject : IJsonObject<JsonObject>
     }
 
     /// <inheritdoc/>
-    public JsonBoolean AsBoolean
+    JsonBoolean IJsonValue.AsBoolean
     {
         get
         {
@@ -132,7 +132,7 @@ public readonly partial struct JsonObject : IJsonObject<JsonObject>
     }
 
     /// <inheritdoc/>
-    public JsonNumber AsNumber
+    JsonNumber IJsonValue.AsNumber
     {
         get
         {
@@ -155,7 +155,7 @@ public readonly partial struct JsonObject : IJsonObject<JsonObject>
     }
 
     /// <inheritdoc/>
-    public JsonArray AsArray
+    JsonArray IJsonValue.AsArray
     {
         get
         {
@@ -239,7 +239,7 @@ public readonly partial struct JsonObject : IJsonObject<JsonObject>
         JsonValueKind valueKind = value.ValueKind;
         return valueKind switch
         {
-            JsonValueKind.Object => new((ImmutableDictionary<JsonPropertyName, JsonAny>)value),
+            JsonValueKind.Object => new(value.AsObject.AsPropertyBacking()),
             JsonValueKind.Null => Null,
             _ => Undefined,
         };
@@ -264,8 +264,7 @@ public readonly partial struct JsonObject : IJsonObject<JsonObject>
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>The value will be undefined if it cannot be initialized with the specified instance.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static JsonObject FromString<TValue>(in TValue value)
-        where TValue : struct, IJsonString<TValue>
+    static JsonObject IJsonValue<JsonObject>.FromString<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -283,8 +282,7 @@ public readonly partial struct JsonObject : IJsonObject<JsonObject>
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>The value will be undefined if it cannot be initialized with the specified instance.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static JsonObject FromBoolean<TValue>(in TValue value)
-        where TValue : struct, IJsonBoolean<TValue>
+    static JsonObject IJsonValue<JsonObject>.FromBoolean<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -302,8 +300,7 @@ public readonly partial struct JsonObject : IJsonObject<JsonObject>
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>The value will be undefined if it cannot be initialized with the specified instance.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static JsonObject FromNumber<TValue>(in TValue value)
-        where TValue : struct, IJsonNumber<TValue>
+    static JsonObject IJsonValue<JsonObject>.FromNumber<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -321,8 +318,7 @@ public readonly partial struct JsonObject : IJsonObject<JsonObject>
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>The value will be undefined if it cannot be initialized with the specified instance.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static JsonObject FromArray<TValue>(in TValue value)
-        where TValue : struct, IJsonArray<TValue>
+    static JsonObject IJsonValue<JsonObject>.FromArray<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -350,7 +346,7 @@ public readonly partial struct JsonObject : IJsonObject<JsonObject>
 
         if (value.ValueKind == JsonValueKind.Object)
         {
-            return new(value.AsImmutableDictionary());
+            return new(value.AsPropertyBacking());
         }
 
         return Undefined;
@@ -447,7 +443,7 @@ public readonly partial struct JsonObject : IJsonObject<JsonObject>
     }
 
     /// <summary>
-    /// Gets the value as the target value.
+    /// Gets the value as an instance of the target value.
     /// </summary>
     /// <typeparam name="TTarget">The type of the target.</typeparam>
     /// <returns>An instance of the target type.</returns>
@@ -482,14 +478,18 @@ public readonly partial struct JsonObject : IJsonObject<JsonObject>
     }
 
     /// <inheritdoc/>
-    public bool Equals<T>(T other)
+    public bool Equals<T>(in T other)
         where T : struct, IJsonValue<T>
     {
         return JsonValueHelpers.CompareValues(this, other);
     }
 
-    /// <inheritdoc/>
-    public bool Equals(JsonObject other)
+    /// <summary>
+    /// Equality comparison.
+    /// </summary>
+    /// <param name="other">The other item with which to compare.</param>
+    /// <returns><see langword="true"/> if the values were equal.</returns>
+    public bool Equals(in JsonObject other)
     {
         return JsonValueHelpers.CompareValues(this, other);
     }

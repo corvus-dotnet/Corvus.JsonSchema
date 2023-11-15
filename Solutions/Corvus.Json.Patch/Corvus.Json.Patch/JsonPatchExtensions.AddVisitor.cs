@@ -80,7 +80,9 @@ public static partial class JsonPatchExtensions
             if (nodeToVisit.ValueKind == JsonValueKind.Object)
             {
                 // Return the transformed result, and stop walking the tree here.
-                result.Output = nodeToVisit.SetProperty(terminatingPathElement, value);
+                // We avoid allocating a string by parsing a JsonElement - this still allocates but is better aligned with our
+                // target output!
+                result.Output = nodeToVisit.AsObject.SetProperty(terminatingPathElement.ToString(), value);
                 result.Transformed = Transformed.Yes;
                 result.Walk = Walk.TerminateAtThisNodeAndKeepChanges;
                 return;
@@ -88,14 +90,15 @@ public static partial class JsonPatchExtensions
 
             if (nodeToVisit.ValueKind == JsonValueKind.Array)
             {
-                int arrayLength = nodeToVisit.GetArrayLength();
+                JsonArray array = nodeToVisit.AsArray;
+                int arrayLength = array.GetArrayLength();
 
                 if (terminatingPathElement[0] == '-')
                 {
                     if (terminatingPathElement.Length == 1)
                     {
                         // We got the '-' which means add it at the end
-                        AddNodeAtEnd(nodeToVisit, value, ref result);
+                        AddNodeAtEnd(array, value, ref result);
                         return;
                     }
                     else
@@ -112,13 +115,13 @@ public static partial class JsonPatchExtensions
                     // You can specify the end explicitly
                     if (index == arrayLength)
                     {
-                        AddNodeAtEnd(nodeToVisit, value, ref result);
+                        AddNodeAtEnd(array, value, ref result);
                         return;
                     }
 
                     if (index < arrayLength)
                     {
-                        InsertNode(index, nodeToVisit, value, ref result);
+                        InsertNode(index, array, value, ref result);
                         return;
                     }
                 }
@@ -136,14 +139,14 @@ public static partial class JsonPatchExtensions
             result.Walk = Walk.TerminateAtThisNodeAndAbandonAllChanges;
         }
 
-        private static void AddNodeAtEnd(in JsonAny arrayNode, in JsonAny node, ref VisitResult result)
+        private static void AddNodeAtEnd(in JsonArray arrayNode, in JsonAny node, ref VisitResult result)
         {
             result.Output = arrayNode.Add(node);
             result.Transformed = Transformed.Yes;
             result.Walk = Walk.TerminateAtThisNodeAndKeepChanges;
         }
 
-        private static void InsertNode(int index, in JsonAny arrayNode, in JsonAny node, ref VisitResult result)
+        private static void InsertNode(int index, in JsonArray arrayNode, in JsonAny node, ref VisitResult result)
         {
             result.Output = arrayNode.Insert(index, node);
             result.Transformed = Transformed.Yes;

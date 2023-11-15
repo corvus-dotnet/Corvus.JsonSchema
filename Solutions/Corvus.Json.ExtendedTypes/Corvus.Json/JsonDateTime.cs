@@ -18,7 +18,7 @@ public readonly partial struct JsonDateTime
     /// Initializes a new instance of the <see cref="JsonDateTime"/> struct.
     /// </summary>
     /// <param name="value">The NodaTime OffsetDateTime value.</param>
-    public JsonDateTime(OffsetDateTime value)
+    public JsonDateTime(in OffsetDateTime value)
     {
         this.jsonElementBacking = default;
         this.stringBacking = FormatDateTime(value);
@@ -29,7 +29,7 @@ public readonly partial struct JsonDateTime
     /// Initializes a new instance of the <see cref="JsonDateTime"/> struct.
     /// </summary>
     /// <param name="value">The date time offset from which to construct the date.</param>
-    public JsonDateTime(DateTimeOffset value)
+    public JsonDateTime(in DateTimeOffset value)
     {
         this.jsonElementBacking = default;
         this.stringBacking = FormatDateTime(OffsetDateTime.FromDateTimeOffset(value));
@@ -40,7 +40,7 @@ public readonly partial struct JsonDateTime
     /// Conversion from OffsetDateTime.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonDateTime(OffsetDateTime value)
+    public static implicit operator JsonDateTime(in OffsetDateTime value)
     {
         return new JsonDateTime(value);
     }
@@ -50,7 +50,7 @@ public readonly partial struct JsonDateTime
     /// </summary>
     /// <param name="value">The number from which to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a datetime.</exception>
-    public static implicit operator OffsetDateTime(JsonDateTime value)
+    public static implicit operator OffsetDateTime(in JsonDateTime value)
     {
         return value.GetDateTime();
     }
@@ -101,7 +101,7 @@ public readonly partial struct JsonDateTime
     /// <typeparam name="T">The type of the item with which to compare.</typeparam>
     /// <param name="other">The item with which to compare.</param>
     /// <returns><c>True</c> if the items are equal.</returns>
-    public bool Equals<T>(T other)
+    public bool Equals<T>(in T other)
         where T : struct, IJsonValue<T>
     {
         if (this.IsNull() && other.IsNull())
@@ -132,14 +132,14 @@ public readonly partial struct JsonDateTime
     /// </summary>
     /// <param name="other">The item with which to compare.</param>
     /// <returns><c>True</c> if the items are equal.</returns>
-    public bool Equals(JsonDateTime other)
+    public bool Equals(in JsonDateTime other)
     {
         if (this.IsNull() && other.IsNull())
         {
             return true;
         }
 
-        JsonValueKind  valueKind = this.ValueKind;
+        JsonValueKind valueKind = this.ValueKind;
         if (valueKind != JsonValueKind.String || other.ValueKind != valueKind)
         {
             return false;
@@ -158,7 +158,7 @@ public readonly partial struct JsonDateTime
         return thisDate.Equals(otherDate);
     }
 
-    private static string FormatDateTime(OffsetDateTime value)
+    private static string FormatDateTime(in OffsetDateTime value)
     {
         return OffsetDateTimePattern.ExtendedIso.Format(value);
     }

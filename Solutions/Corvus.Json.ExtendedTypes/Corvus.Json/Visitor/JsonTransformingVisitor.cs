@@ -6,6 +6,7 @@ using System.Buffers;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+using Corvus.Json.Internal;
 
 namespace Corvus.Json.Visitor;
 
@@ -98,15 +99,15 @@ public static partial class JsonTransformingVisitor
         switch (result.Output.ValueKind)
         {
             case JsonValueKind.Object:
-                VisitObject(path, result.Output, visitor, pathBuffer, ref result);
+                VisitObject(path, result.Output.AsObject, visitor, pathBuffer, ref result);
                 break;
             case JsonValueKind.Array:
-                VisitArray(path, result.Output, visitor, pathBuffer, ref result);
+                VisitArray(path, result.Output.AsArray, visitor, pathBuffer, ref result);
                 break;
         }
     }
 
-    private static void VisitArray(ReadOnlySpan<char> path, in JsonAny asArray, Visitor visitor, char[] pathBuffer, ref VisitResult result)
+    private static void VisitArray(ReadOnlySpan<char> path, in JsonArray asArray, Visitor visitor, char[] pathBuffer, ref VisitResult result)
     {
         bool terminateEntireWalkApplyingChanges = false;
         bool hasTransformedItems = false;
@@ -234,11 +235,11 @@ public static partial class JsonTransformingVisitor
         result.Walk = Walk.Continue;
     }
 
-    private static void VisitObject(ReadOnlySpan<char> path, in JsonAny asObject, Visitor visitor, char[] pathBuffer, ref VisitResult result)
+    private static void VisitObject(ReadOnlySpan<char> path, in JsonObject asObject, Visitor visitor, char[] pathBuffer, ref VisitResult result)
     {
         bool hasTransformedProperties = false;
         bool terminateEntireWalkApplyingChanges = false;
-        ImmutableDictionary<JsonPropertyName, JsonAny>.Builder builder;
+        ImmutableList<JsonObjectProperty>.Builder builder;
 
         // We have two separate strategies in play.
         // If we have a JsonElement backing, and we are going to mutate the object,
@@ -248,11 +249,11 @@ public static partial class JsonTransformingVisitor
         // to mutate the existing copy using the .ToBuilder() method.
         if (asObject.HasJsonElementBacking)
         {
-            builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
+            builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
         }
         else
         {
-            builder = asObject.AsImmutableDictionaryBuilder();
+            builder = asObject.AsPropertyBacking().ToBuilder();
         }
 
         foreach (JsonObjectProperty property in asObject.EnumerateObject())
@@ -261,7 +262,7 @@ public static partial class JsonTransformingVisitor
             {
                 if (asObject.HasJsonElementBacking)
                 {
-                    builder[property.Name] = property.Value;
+                    builder.Add(property);
                     continue;
                 }
                 else
@@ -270,18 +271,16 @@ public static partial class JsonTransformingVisitor
                 }
             }
 
-            // Build the property path
-            string propertyName = property.Name;
-            int desiredLength = path.Length + propertyName.Length + 1;
-            TryExtendBuffer(ref pathBuffer, desiredLength);
-            Span<char> propertyPath = pathBuffer.AsSpan(0, desiredLength);
-            path.CopyTo(propertyPath);
-            propertyPath[path.Length] = '/';
+            // Stash the name and value as these may allocated with the current System.Text.JsonProperty
+            JsonPropertyName propertyName = property.Name;
+            JsonAny propertyValue = property.Value;
 
-            propertyName.CopyTo(propertyPath[(path.Length + 1)..]);
+            // Build the property path
+            int desiredLength = ExtendBufferAndCopy(ref pathBuffer, path, propertyName);
+            Span<char> propertyPath = pathBuffer.AsSpan(0, desiredLength);
 
             // Visit the property, and determine whether we've transformed it.
-            Visit(propertyPath, property.Value, visitor, pathBuffer, ref result);
+            Visit(propertyPath, propertyValue, visitor, pathBuffer, ref result);
             if (result.Walk == Walk.TerminateAtThisNodeAndAbandonAllChanges)
             {
                 // We didn't transform any properties, and we are bailing out right now
@@ -303,11 +302,11 @@ public static partial class JsonTransformingVisitor
             // We need to build up the set of properties, whether we have transformed them or not
             if (result.Walk != Walk.RemoveAndContinue)
             {
-                builder[property.Name] = result.Output;
+                builder.SetItem(propertyName, result.Output);
             }
             else
             {
-                builder.Remove(property.Name);
+                builder.Remove(propertyName);
             }
         }
 
@@ -347,6 +346,29 @@ public static partial class JsonTransformingVisitor
         result.Transformed = Transformed.No;
         result.Walk = Walk.Continue;
         return;
+    }
+
+    private static int ExtendBufferAndCopy(ref char[] pathBuffer, ReadOnlySpan<char> path, JsonPropertyName name)
+    {
+        int desiredLength = path.Length + name.EstimateCharLength() + 1;
+        TryExtendBuffer(ref pathBuffer, desiredLength);
+        path.CopyTo(pathBuffer);
+        pathBuffer[path.Length] = '/';
+        if (name.TryCopyTo(pathBuffer.AsMemory(path.Length + 1), out int nameLength))
+        {
+            desiredLength = path.Length + nameLength + 1;
+        }
+        else
+        {
+            desiredLength = path.Length + nameLength + 1;
+            TryExtendBuffer(ref pathBuffer, desiredLength);
+            if (!name.TryCopyTo(pathBuffer.AsMemory(path.Length + 1), out _))
+            {
+                throw new InvalidOperationException("Unable to extend the buffer successfully");
+            }
+        }
+
+        return desiredLength;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

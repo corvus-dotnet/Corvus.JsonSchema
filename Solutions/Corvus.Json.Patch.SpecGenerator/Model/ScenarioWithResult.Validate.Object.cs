@@ -37,7 +37,7 @@ public readonly partial struct ScenarioWithResult
                 result = result.WithLocalProperty(propertyCount);
                 if (level > ValidationLevel.Basic)
                 {
-                    result = result.PushDocumentProperty("properties", property.Name);
+                    result = result.PushDocumentProperty("properties", property.Name.GetString());
                 }
 
                 var propertyResult = propertyValidator(property, result.CreateChildContext(), level);
@@ -52,7 +52,7 @@ public readonly partial struct ScenarioWithResult
                     return result;
                 }
 
-                if ((this.HasJsonElementBacking && property.NameEquals(ExpectedUtf8JsonPropertyName)) || (!this.HasJsonElementBacking && property.NameEquals(ExpectedJsonPropertyName)))
+                if ((this.HasJsonElementBacking && property.NameEquals(JsonPropertyNames.ExpectedUtf8)) || (!this.HasJsonElementBacking && property.NameEquals(JsonPropertyNames.Expected)))
                 {
                     foundExpected = true;
                 }

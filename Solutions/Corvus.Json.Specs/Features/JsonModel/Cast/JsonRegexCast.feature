@@ -11,11 +11,6 @@ Scenario: Cast to JsonAny for dotnet backed value as a regex
 	When I cast the JsonRegex to JsonAny
 	Then the result should equal the JsonAny "([abc])+\\s+$"
 
-Scenario: Cast from JsonAny for json element backed value as a regex
-	Given the JsonAny for "([abc])+\\s+$"
-	When I cast the JsonAny to JsonRegex
-	Then the result should equal the JsonRegex "([abc])+\\s+$"
-
 Scenario: Cast to JsonString for json element backed value as a regex
 	Given the JsonElement backed JsonRegex "([abc])+\\s+$"
 	When I cast the JsonRegex to JsonString
@@ -44,21 +39,6 @@ Scenario: Cast to Regex for dotnet backed value as a regex
 Scenario: Cast from Regex for json element backed value as a regex
 	Given the Regex for "([abc])+\s+$"
 	When I cast the Regex to JsonRegex
-	Then the result should equal the JsonRegex "([abc])+\\s+$"
-
-Scenario: Cast to ReadOnlySpan<char> for json element backed value as a regex
-	Given the JsonElement backed JsonRegex "([abc])+\\s+$"
-	When I cast the JsonRegex to ReadOnlySpan<char>
-	Then the result should equal the ReadOnlySpan<char> "([abc])+\s+$"
-
-Scenario: Cast to ReadOnlySpan<char> for dotnet backed value as a regex
-	Given the dotnet backed JsonRegex "([abc])+\\s+$"
-	When I cast the JsonRegex to ReadOnlySpan<char>
-	Then the result should equal the ReadOnlySpan<char> "([abc])+\s+$"
-
-Scenario: Cast from ReadOnlySpan<char> for json element backed value as a regex
-	Given the ReadOnlyMemory<char> for "([abc])+\s+$"
-	When I cast the ReadOnlySpan<char> to JsonRegex
 	Then the result should equal the JsonRegex "([abc])+\\s+$"
 
 Scenario: Cast to string for json element backed value as a regex

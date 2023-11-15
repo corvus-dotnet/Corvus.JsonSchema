@@ -15,7 +15,7 @@ public struct JsonObjectEnumerator : IEnumerable, IEnumerator, IEnumerable<JsonO
 {
     private readonly Backing backing;
     private JsonElement.ObjectEnumerator jsonElementEnumerator;
-    private ImmutableDictionary<JsonPropertyName, JsonAny>.Enumerator dictionaryEnumerator;
+    private ImmutableList<JsonObjectProperty>.Enumerator propertyBackingEnumerator;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonObjectEnumerator"/> struct.
@@ -25,18 +25,18 @@ public struct JsonObjectEnumerator : IEnumerable, IEnumerator, IEnumerable<JsonO
     {
         this.backing = Backing.JsonElementEnumerator;
         this.jsonElementEnumerator = jsonElement.EnumerateObject();
-        this.dictionaryEnumerator = default;
+        this.propertyBackingEnumerator = default;
     }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonObjectEnumerator"/> struct.
     /// </summary>
     /// <param name="dictionary">The property dictionary to enumerate.</param>
-    public JsonObjectEnumerator(ImmutableDictionary<JsonPropertyName, JsonAny> dictionary)
+    public JsonObjectEnumerator(ImmutableList<JsonObjectProperty> dictionary)
     {
-        this.backing = Backing.DictionaryEnumerator;
+        this.backing = Backing.PropertyBackingEnumerator;
         this.jsonElementEnumerator = default;
-        this.dictionaryEnumerator = dictionary.GetEnumerator();
+        this.propertyBackingEnumerator = dictionary.GetEnumerator();
     }
 
     [Flags]
@@ -44,7 +44,7 @@ public struct JsonObjectEnumerator : IEnumerable, IEnumerator, IEnumerable<JsonO
     {
         Undefined = 0b00,
         JsonElementEnumerator = 0b01,
-        DictionaryEnumerator = 0b10,
+        PropertyBackingEnumerator = 0b10,
     }
 
     /// <inheritdoc/>
@@ -57,9 +57,9 @@ public struct JsonObjectEnumerator : IEnumerable, IEnumerator, IEnumerable<JsonO
                 return new JsonObjectProperty(this.jsonElementEnumerator.Current);
             }
 
-            if ((this.backing & Backing.DictionaryEnumerator) != 0)
+            if ((this.backing & Backing.PropertyBackingEnumerator) != 0)
             {
-                return new JsonObjectProperty(this.dictionaryEnumerator.Current.Key, this.dictionaryEnumerator.Current.Value);
+                return this.propertyBackingEnumerator.Current;
             }
 
             return default;
@@ -77,9 +77,9 @@ public struct JsonObjectEnumerator : IEnumerable, IEnumerator, IEnumerable<JsonO
             this.jsonElementEnumerator.Dispose();
         }
 
-        if ((this.backing & Backing.DictionaryEnumerator) != 0)
+        if ((this.backing & Backing.PropertyBackingEnumerator) != 0)
         {
-            this.dictionaryEnumerator.Dispose();
+            this.propertyBackingEnumerator.Dispose();
         }
     }
 
@@ -95,13 +95,13 @@ public struct JsonObjectEnumerator : IEnumerable, IEnumerator, IEnumerable<JsonO
     }
 
     /// <inheritdoc/>
-    IEnumerator IEnumerable.GetEnumerator()
+    readonly IEnumerator IEnumerable.GetEnumerator()
     {
         return this.GetEnumerator();
     }
 
     /// <inheritdoc/>
-    IEnumerator<JsonObjectProperty> IEnumerable<JsonObjectProperty>.GetEnumerator()
+    readonly IEnumerator<JsonObjectProperty> IEnumerable<JsonObjectProperty>.GetEnumerator()
     {
         return this.GetEnumerator();
     }
@@ -114,9 +114,9 @@ public struct JsonObjectEnumerator : IEnumerable, IEnumerator, IEnumerable<JsonO
             return this.jsonElementEnumerator.MoveNext();
         }
 
-        if ((this.backing & Backing.DictionaryEnumerator) != 0)
+        if ((this.backing & Backing.PropertyBackingEnumerator) != 0)
         {
-            return this.dictionaryEnumerator.MoveNext();
+            return this.propertyBackingEnumerator.MoveNext();
         }
 
         return false;
@@ -130,9 +130,9 @@ public struct JsonObjectEnumerator : IEnumerable, IEnumerator, IEnumerable<JsonO
             this.jsonElementEnumerator.Reset();
         }
 
-        if ((this.backing & Backing.DictionaryEnumerator) != 0)
+        if ((this.backing & Backing.PropertyBackingEnumerator) != 0)
         {
-            this.dictionaryEnumerator.Reset();
+            this.propertyBackingEnumerator.Reset();
         }
     }
 }

@@ -34,27 +34,27 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #><# if (HasCo
 {
 <#  if(HasConstString)
     { #>
-    private static readonly <#= TypeDeclaration.DotnetTypeName #> __CorvusConstValue = JsonAny.ParseValue(<#= ConstString #>u8);
+    private static readonly <#= TypeDeclaration.DotnetTypeName #> __CorvusConstValue = <#= TypeDeclaration.DotnetTypeName #>.ParseValue(<#= ConstString #>u8);
 <#  }
     else if(HasConstBoolean)
     { #>
-    private static readonly <#= TypeDeclaration.DotnetTypeName #> __CorvusConstValue = JsonAny.ParseValue(<#= ConstBoolean #>u8);
+    private static readonly <#= TypeDeclaration.DotnetTypeName #> __CorvusConstValue = <#= TypeDeclaration.DotnetTypeName #>.ParseValue(<#= ConstBoolean #>u8);
 <#  }
     else if(HasConstNumber)
     { #>
-    private static readonly <#= TypeDeclaration.DotnetTypeName #> __CorvusConstValue = JsonAny.ParseValue(<#= ConstNumber #>u8);
+    private static readonly <#= TypeDeclaration.DotnetTypeName #> __CorvusConstValue = <#= TypeDeclaration.DotnetTypeName #>.ParseValue(<#= ConstNumber #>u8);
 <#  }
     else if(HasConstObject)
     { #>
-    private static readonly <#= TypeDeclaration.DotnetTypeName #> __CorvusConstValue = JsonAny.ParseValue(<#= ConstObject #>u8);
+    private static readonly <#= TypeDeclaration.DotnetTypeName #> __CorvusConstValue = <#= TypeDeclaration.DotnetTypeName #>.ParseValue(<#= ConstObject #>u8);
 <#  }
     else if(HasConstArray)
     { #>
-    private static readonly <#= TypeDeclaration.DotnetTypeName #> __CorvusConstValue = JsonAny.ParseValue(<#= ConstArray #>u8);
+    private static readonly <#= TypeDeclaration.DotnetTypeName #> __CorvusConstValue = <#= TypeDeclaration.DotnetTypeName #>.ParseValue(<#= ConstArray #>u8);
 <#  }
     else if(HasConstNull)
     { #>
-    private static readonly <#= TypeDeclaration.DotnetTypeName #> __CorvusConstValue = JsonAny.ParseValue("null"u8);
+    private static readonly <#= TypeDeclaration.DotnetTypeName #> __CorvusConstValue = <#= TypeDeclaration.DotnetTypeName #>.ParseValue("null"u8);
 <#  }   #>
 
     <# // Note that if this is a const value, it cannot be of more than one type, so it is safe to initialize

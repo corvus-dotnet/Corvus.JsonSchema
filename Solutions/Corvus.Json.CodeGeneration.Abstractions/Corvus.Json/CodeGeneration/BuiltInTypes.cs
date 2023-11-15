@@ -45,6 +45,16 @@ public static class BuiltInTypes
     public static readonly (string Ns, string Type) ObjectTypeDeclaration = ("Corvus.Json", "JsonObject");
 
     /// <summary>
+    /// A clr <see cref="sbyte"/> type.
+    /// </summary>
+    public static readonly (string Ns, string Type) ClrSByteTypeDeclaration = ("Corvus.Json", "JsonInteger");
+
+    /// <summary>
+    /// A clr <see cref="short"/> type.
+    /// </summary>
+    public static readonly (string Ns, string Type) ClrInt16TypeDeclaration = ("Corvus.Json", "JsonInteger");
+
+    /// <summary>
     /// A clr <see cref="int"/> type.
     /// </summary>
     public static readonly (string Ns, string Type) ClrInt32TypeDeclaration = ("Corvus.Json", "JsonInteger");
@@ -55,14 +65,54 @@ public static class BuiltInTypes
     public static readonly (string Ns, string Type) ClrInt64TypeDeclaration = ("Corvus.Json", "JsonInteger");
 
     /// <summary>
+    /// A clr <see cref="Int128"/> type.
+    /// </summary>
+    public static readonly (string Ns, string Type) ClrInt128TypeDeclaration = ("Corvus.Json", "JsonInteger");
+
+    /// <summary>
+    /// A clr <see cref="byte"/> type.
+    /// </summary>
+    public static readonly (string Ns, string Type) ClrByteTypeDeclaration = ("Corvus.Json", "JsonInteger");
+
+    /// <summary>
+    /// A clr <see cref="ushort"/> type.
+    /// </summary>
+    public static readonly (string Ns, string Type) ClrUInt16TypeDeclaration = ("Corvus.Json", "JsonInteger");
+
+    /// <summary>
+    /// A clr <see cref="uint"/> type.
+    /// </summary>
+    public static readonly (string Ns, string Type) ClrUInt32TypeDeclaration = ("Corvus.Json", "JsonInteger");
+
+    /// <summary>
+    /// A clr <see cref="ulong"/> type.
+    /// </summary>
+    public static readonly (string Ns, string Type) ClrUInt64TypeDeclaration = ("Corvus.Json", "JsonInteger");
+
+    /// <summary>
+    /// A clr <see cref="UInt128"/> type.
+    /// </summary>
+    public static readonly (string Ns, string Type) ClrUInt128TypeDeclaration = ("Corvus.Json", "JsonInteger");
+
+    /// <summary>
+    /// A clr <see cref="Half"/> type.
+    /// </summary>
+    public static readonly (string Ns, string Type) ClrHalfTypeDeclaration = ("Corvus.Json", "JsonNumber");
+
+    /// <summary>
     /// A clr <see cref="float"/> type.
     /// </summary>
-    public static readonly (string Ns, string Type) ClrFloatTypeDeclaration = ("Corvus.Json", "JsonNumber");
+    public static readonly (string Ns, string Type) ClrSingleTypeDeclaration = ("Corvus.Json", "JsonNumber");
 
     /// <summary>
     /// A clr <see cref="double"/> type.
     /// </summary>
     public static readonly (string Ns, string Type) ClrDoubleTypeDeclaration = ("Corvus.Json", "JsonNumber");
+
+    /// <summary>
+    /// A clr <see cref="decimal"/> type.
+    /// </summary>
+    public static readonly (string Ns, string Type) ClrDecimalTypeDeclaration = ("Corvus.Json", "JsonNumber");
 
     /// <summary>
     /// A clr <see cref="string"/> type.
@@ -206,6 +256,16 @@ public static class BuiltInTypes
     public static readonly (string Ns, string Type) IpV6TypeDeclaration = ("Corvus.Json", "JsonIpV6");
 
     /// <summary>
+    /// Determines if the value is an integer based on the format.
+    /// </summary>
+    /// <param name="format">The format string, or null if there is no format.</param>
+    /// <returns><see langword="true"/> if the format represents an integer.</returns>
+    public static bool IsIntegerFormat(string? format)
+    {
+        return GetIntegerFor(format) is not null;
+    }
+
+    /// <summary>
     /// Gets the built in type and namespace for the given type and optional format.
     /// </summary>
     /// <param name="type">The type for which to get the type declaration.</param>
@@ -283,8 +343,10 @@ public static class BuiltInTypes
     {
         return format switch
         {
-            "single" => ClrFloatTypeDeclaration,
             "double" => ClrDoubleTypeDeclaration,
+            "decimal" => ClrDecimalTypeDeclaration,
+            "half" => ClrHalfTypeDeclaration,
+            "single" => ClrSingleTypeDeclaration,
             _ => null,
         };
     }
@@ -293,8 +355,17 @@ public static class BuiltInTypes
     {
         return format switch
         {
+            "byte" => ClrByteTypeDeclaration,
+            "int16" => ClrInt16TypeDeclaration,
             "int32" => ClrInt32TypeDeclaration,
             "int64" => ClrInt64TypeDeclaration,
+            "int128" => ClrInt128TypeDeclaration,
+            "sbyte" => ClrSByteTypeDeclaration,
+            "uint16" => ClrUInt16TypeDeclaration,
+            "uint32" => ClrUInt32TypeDeclaration,
+            "uint64" => ClrUInt64TypeDeclaration,
+            "uint128" => ClrUInt128TypeDeclaration,
+
             _ => null,
         };
     }

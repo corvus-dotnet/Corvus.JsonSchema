@@ -23,6 +23,35 @@ namespace <#= Namespace #>;
 /// </summary>
 public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 {
+<#  if (HasMultipleOf)
+    { #>
+    private static readonly BinaryJsonNumber __Corvus_MultipleOf = new(<#= MultipleOf #>);
+
+<#  }
+
+    if (HasMaximum)
+    {#>
+    private static readonly BinaryJsonNumber __Corvus_Maximum = new(<#= Maximum #>);
+
+<#  }
+
+    if (HasMinimum)
+    {#>
+    private static readonly BinaryJsonNumber __Corvus_Minimum = new(<#= Minimum #>);
+
+<#  }
+
+    if (HasExclusiveMaximum)
+    { #>
+    private static readonly BinaryJsonNumber __Corvus_ExclusiveMaximum = new(<#= ExclusiveMaximum #>);
+
+<#  }
+
+    if (HasExclusiveMinimum)
+    { #>
+    private static readonly BinaryJsonNumber __Corvus_ExclusiveMinimum = new(<#= ExclusiveMinimum #>);
+
+<#  } #>
     /// <inheritdoc/>
     public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
     {
@@ -115,18 +144,18 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
             return result;
         }
 <#  }
-    if (HasMultipleOf || HasMaximum || HasExclusiveMaximum|| HasMinimum || HasExclusiveMinimum)
+    if (HasMultipleOf || HasMaximum || HasMinimum || HasExclusiveMaximum || HasExclusiveMinimum)
     { #>
 
         result = Corvus.Json.Validate.ValidateNumber(
             this,
             result,
             level,
-            <#= HasMultipleOf ? MultipleOf : "null" #>,
-            <#= HasMaximum ? Maximum : "null" #>,
-            <#= HasExclusiveMaximum ? ExclusiveMaximum : "null" #>,
-            <#= HasMinimum ? Minimum : "null" #>,
-            <#= HasExclusiveMinimum ? ExclusiveMinimum : "null" #>);
+            <#= HasMultipleOf ? "__Corvus_MultipleOf" : "BinaryJsonNumber.None" #>,
+            <#= HasMaximum ? "__Corvus_Maximum" : "BinaryJsonNumber.None" #>,
+            <#= HasExclusiveMaximum ? "__Corvus_ExclusiveMaximum" : "BinaryJsonNumber.None" #>,
+            <#= HasMinimum ? "__Corvus_Minimum" : "BinaryJsonNumber.None" #>,
+            <#= HasExclusiveMinimum ? "__Corvus_ExclusiveMinimum" : "BinaryJsonNumber.None" #>);
 
         if (level == ValidationLevel.Flag && !result.IsValid)
         {

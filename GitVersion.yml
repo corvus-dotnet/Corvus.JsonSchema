@@ -20,5 +20,5 @@ branches:
     - feature
     - support
     - hotfix
-next-version: "1.0"
+next-version: "2.0"
 

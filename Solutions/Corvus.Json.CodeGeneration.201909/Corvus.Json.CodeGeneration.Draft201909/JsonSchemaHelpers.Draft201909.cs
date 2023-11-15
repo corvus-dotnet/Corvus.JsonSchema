@@ -53,9 +53,11 @@ public static class JsonSchemaHelpers
     /// <returns>An array of keywords that represent anchors in draft 2020-12.</returns>
     private static ImmutableArray<AnchorKeyword> CreateDraft201909AnchorKeywords()
     {
-        return ImmutableArray.Create(
+        return
+        [
             new AnchorKeyword(Name: "$anchor", IsDynamic: false, IsRecursive: false),
-            new AnchorKeyword(Name: "$recursiveAnchor", IsDynamic: false, IsRecursive: true));
+            new AnchorKeyword(Name: "$recursiveAnchor", IsDynamic: false, IsRecursive: true),
+        ];
     }
 
     /// <summary>
@@ -82,7 +84,10 @@ public static class JsonSchemaHelpers
     /// <returns>Return <c>"$defs"</c>.</returns>
     private static ImmutableHashSet<string> CreateDraft201909DefsKeywords()
     {
-        return ImmutableHashSet.Create("$defs");
+        return
+        [
+            "$defs",
+        ];
     }
 
     /// <summary>
@@ -94,7 +99,8 @@ public static class JsonSchemaHelpers
     /// </returns>
     private static ImmutableHashSet<string> CreateDraft201909IrreducibleKeywords()
     {
-        return ImmutableHashSet.Create(
+        return
+        [
             "additionalProperties",
             "additionalItems",
             "allOf",
@@ -139,7 +145,8 @@ public static class JsonSchemaHelpers
             "type",
             "unevaluatedItems",
             "unevaluatedProperties",
-            "uniqueItems");
+            "uniqueItems",
+        ];
     }
 
     /// <summary>
@@ -148,7 +155,8 @@ public static class JsonSchemaHelpers
     /// <returns>The immutable set of reserved words.</returns>
     private static ImmutableHashSet<string> CreateDraft201909GeneratorReservedWords()
     {
-        return ImmutableHashSet.Create(
+        return
+        [
             "Item",
             "Add",
             "AddRange",
@@ -175,6 +183,11 @@ public static class JsonSchemaHelpers
             "GetImmutableListWithoutRange",
             "GetImmutableListWith",
             "__CorvusConstValue",
+            "__Corvus_Minimum",
+            "__Corvus_Maximum",
+            "__Corvus_ExclusiveMaximum",
+            "__Corvus_ExclusiveMinimum",
+            "__Corvus_MultipleOf",
             "ConstInstance",
             "__CorvusDefaults",
             "TryGetDefault",
@@ -192,11 +205,12 @@ public static class JsonSchemaHelpers
             "TryGetProperty",
             "SetProperty",
             "RemoveProperty",
-            "GetImmutableDictionary",
-            "GetImmutableDictionaryWithout",
-            "GetImmutableDictionaryWith",
-            "GetImmutableDictionaryBuilder",
-            "GetImmutableDictionaryBuilderWithout",
+            "JsonPropertyNames",
+            "GetPropertyBacking",
+            "GetPropertyBackingWithout",
+            "GetPropertyBackingWith",
+            "GetPropertyBackingBuilder",
+            "GetPropertyBackingBuilderWithout",
             "__CorvusPatternExpression",
             "__CorvusPatternProperties",
             "CreatePatternPropertiesValidators",
@@ -243,7 +257,8 @@ public static class JsonSchemaHelpers
             "ValidateOneOf",
             "ValidateRef",
             "Validate",
-            "ValidateType");
+            "ValidateType",
+        ];
     }
 
     /// <summary>
@@ -252,7 +267,8 @@ public static class JsonSchemaHelpers
     /// <returns>An array of <see cref="RefResolvableKeyword"/> instances.</returns>
     private static ImmutableArray<RefResolvableKeyword> CreateDraft201909RefResolvableKeywords()
     {
-        return ImmutableArray.Create<RefResolvableKeyword>(
+        return
+        [
             new("$defs", RefResolvablePropertyKind.MapOfSchema),
             new("items", RefResolvablePropertyKind.SchemaOrArrayOfSchema),
             new("contains", RefResolvablePropertyKind.Schema),
@@ -273,7 +289,8 @@ public static class JsonSchemaHelpers
             new("not", RefResolvablePropertyKind.Schema),
             new("contentSchema", RefResolvablePropertyKind.Schema),
             new("unevaluatedItems", RefResolvablePropertyKind.Schema),
-            new("unevaluatedProperties", RefResolvablePropertyKind.Schema));
+            new("unevaluatedProperties", RefResolvablePropertyKind.Schema),
+        ];
     }
 
     /// <summary>
@@ -282,9 +299,11 @@ public static class JsonSchemaHelpers
     /// <returns>An array of <see cref="RefKeyword"/> instances.</returns>
     private static ImmutableArray<RefKeyword> CreateDraft201909RefKeywords()
     {
-        return ImmutableArray.Create(
+        return
+        [
             new RefKeyword("$ref", RefKind.Ref),
-            new RefKeyword("$recursiveRef", RefKind.RecursiveRef));
+            new RefKeyword("$recursiveRef", RefKind.RecursiveRef),
+        ];
     }
 
     /// <summary>
@@ -343,10 +362,10 @@ public static class JsonSchemaHelpers
             }
 
             return BuiltInTypes.GetTypeNameFor(
-                schema.Type.AsSimpleTypes,
-                schema.Format.AsOptionalString(),
-                schema.ContentEncoding.AsOptionalString(),
-                schema.ContentMediaType.AsOptionalString(),
+                schema.Type.AsSimpleTypes.GetString(),
+                schema.Format.GetString(),
+                schema.ContentEncoding.GetString(),
+                schema.ContentMediaType.GetString(),
                 (validateAs & ValidationSemantics.Draft201909) != 0);
         };
     }
@@ -374,7 +393,7 @@ public static class JsonSchemaHelpers
             {
                 foreach (JsonString requiredName in schema.Required.EnumerateArray())
                 {
-                    target.AddOrReplaceProperty(new PropertyDeclaration(builder.AnyTypeDeclarationInstance, requiredName, !treatRequiredAsOptional, source == target, false, null));
+                    target.AddOrReplaceProperty(new PropertyDeclaration(builder.AnyTypeDeclarationInstance, (string)requiredName, !treatRequiredAsOptional, source == target, false, null));
                 }
             }
 
@@ -429,18 +448,18 @@ public static class JsonSchemaHelpers
 
                 foreach (JsonObjectProperty property in schema.Properties.EnumerateObject())
                 {
-                    JsonPropertyName propertyName = property.Name;
+                    string propertyName = property.Name.GetString();
                     bool isRequired = false;
 
                     if (schema.Required.IsNotUndefined())
                     {
-                        if (schema.Required.EnumerateArray().Any(r => propertyName == Uri.UnescapeDataString(r)))
+                        if (schema.Required.EnumerateArray().Any(r => propertyName == Uri.UnescapeDataString((string)r)))
                         {
                             isRequired = !treatRequiredAsOptional;
                         }
                     }
 
-                    if (source.RefResolvablePropertyDeclarations.TryGetValue(propertyRef.AppendUnencodedPropertyNameToFragment(property.Name), out TypeDeclaration? propertyTypeDeclaration))
+                    if (source.RefResolvablePropertyDeclarations.TryGetValue(propertyRef.AppendUnencodedPropertyNameToFragment(propertyName), out TypeDeclaration? propertyTypeDeclaration))
                     {
                         target.AddOrReplaceProperty(new PropertyDeclaration(propertyTypeDeclaration, propertyName, isRequired, source == target, propertyTypeDeclaration.Schema().Default.IsNotUndefined(), propertyTypeDeclaration.Schema().Default is JsonAny def ? def.ToString() : default));
                     }

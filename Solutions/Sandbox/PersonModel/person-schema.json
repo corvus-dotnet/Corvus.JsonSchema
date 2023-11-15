@@ -18,8 +18,24 @@
         "dateOfBirth": {
           "type": "string",
           "format": "date"
+        },
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "netWorth": {
+          "type": "number",
+          "format": "decimal"
+        },
+        "height": {
+          "$ref": "#/%24defs/HeightRangeDouble"
         }
       }
+    },
+    "HeightRangeDouble": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 3.0
     },
     "PersonName": {
       "type": "object",

@@ -33,34 +33,12 @@ public readonly partial struct PersonNameElement : IJsonString<PersonNameElement
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref = "PersonNameElement"/> struct.
-    /// </summary>
-    /// <param name = "value">The value from which to construct the instance.</param>
-    public PersonNameElement(in ReadOnlySpan<char> value)
-    {
-        this.jsonElementBacking = default;
-        this.backing = Backing.String;
-        this.stringBacking = value.ToString();
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref = "PersonNameElement"/> struct.
-    /// </summary>
-    /// <param name = "utf8Value">The value from which to construct the instance.</param>
-    public PersonNameElement(in ReadOnlySpan<byte> utf8Value)
-    {
-        this.jsonElementBacking = default;
-        this.backing = Backing.String;
-        this.stringBacking = Encoding.UTF8.GetString(utf8Value);
-    }
-
-    /// <summary>
     /// Conversion from JsonString.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
     public static implicit operator JsonString(PersonNameElement value)
     {
-        return value.AsString;
+        return JsonString.FromString(value);
     }
 
     /// <summary>
@@ -91,7 +69,7 @@ public readonly partial struct PersonNameElement : IJsonString<PersonNameElement
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
     /// <exception cref = "InvalidOperationException">The value was not a string.</exception>
-    public static implicit operator string (PersonNameElement value)
+    public static explicit operator string (PersonNameElement value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -109,34 +87,6 @@ public readonly partial struct PersonNameElement : IJsonString<PersonNameElement
         }
 
         throw new InvalidOperationException();
-    }
-
-    /// <summary>
-    /// Conversion from string.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator PersonNameElement(ReadOnlySpan<char> value)
-    {
-        return new(value);
-    }
-
-    /// <summary>
-    /// Conversion to string.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    /// <exception cref = "InvalidOperationException">The value was not a string.</exception>
-    public static implicit operator ReadOnlySpan<char>(PersonNameElement value)
-    {
-        return ((string)value).AsSpan();
-    }
-
-    /// <summary>
-    /// Conversion from string.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator PersonNameElement(ReadOnlySpan<byte> value)
-    {
-        return new(value);
     }
 
     /// <summary>
@@ -312,27 +262,11 @@ public readonly partial struct PersonNameElement : IJsonString<PersonNameElement
         return false;
     }
 
-    /// <inheritdoc/>
-    public ReadOnlySpan<char> AsSpan()
-    {
-        if ((this.backing & Backing.String) != 0)
-        {
-            return this.stringBacking.AsSpan();
-        }
-
-        if ((this.backing & Backing.JsonElement) != 0 && this.jsonElementBacking.ValueKind == JsonValueKind.String)
-        {
-            return this.jsonElementBacking.GetString().AsSpan();
-        }
-
-        throw new InvalidOperationException();
-    }
-
     /// <summary>
     /// Gets the string value.
     /// </summary>
     /// <returns><c>The string if this value represents a string</c>, otherwise <c>null</c>.</returns>
-    public string? AsOptionalString()
+    public string? GetString()
     {
         if (this.TryGetString(out string? value))
         {

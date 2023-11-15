@@ -16,14 +16,20 @@ namespace Corvus.Json.Benchmarking;
 [MemoryDiagnoser]
 public class ValidateSmallDocument
 {
-    private const string JsonText = @"{
-    ""name"": {
-      ""familyName"": ""Oldroyd"",
-      ""givenName"": ""Michael"",
-      ""otherNames"": []
-    },
-    ""dateOfBirth"": ""1944-07-14""
-}";
+    private const string JsonText =
+        """
+        {
+            "name": {
+              "familyName": "Oldroyd",
+              "givenName": "Michael",
+              "otherNames": [],
+              "email": "michael.oldryoyd@contoso.com"
+            },
+            "dateOfBirth": "1944-07-14",
+            "netWorth": 1234567890.1234567891,
+            "height": 1.8
+                }
+        """;
 
     private static readonly JsonEverything.EvaluationOptions Options = new() { OutputFormat = JsonEverything.OutputFormat.Flag };
 
@@ -64,7 +70,7 @@ public class ValidateSmallDocument
     /// <summary>
     /// Validates using the Corvus types.
     /// </summary>
-    [Benchmark]
+    [Benchmark(Baseline = true)]
     public void ValidateSmallDocumentCorvus()
     {
         ValidationContext result = this.person.Validate(ValidationContext.ValidContext);
@@ -77,7 +83,7 @@ public class ValidateSmallDocument
     /// <summary>
     /// Validates using the JsonEverything types.
     /// </summary>
-    [Benchmark(Baseline = true)]
+    [Benchmark]
     public void ValidateSmallDocumentJsonEverything()
     {
         JsonEverything.EvaluationResults result = this.schema!.Evaluate(this.node, Options);

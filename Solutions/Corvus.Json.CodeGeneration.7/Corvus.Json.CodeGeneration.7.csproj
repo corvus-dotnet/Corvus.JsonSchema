@@ -2,7 +2,7 @@
 	<Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
 
 	<PropertyGroup>
-		<TargetFramework>net7.0</TargetFramework>
+		<TargetFramework>net8.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 	</PropertyGroup>
@@ -22,12 +22,12 @@
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="System.CodeDom" Version="7.0.0" />
+		<PackageReference Include="System.CodeDom" Version="8.0.0" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\Corvus.Json.CodeGeneration.Abstractions\Corvus.Json.CodeGeneration.Abstractions.csproj" />
-		<ProjectReference Include="..\Corvus.Json.JsonSchema\Corvus.Json.JsonSchema.csproj" />
+		<ProjectReference Include="..\Corvus.Json.JsonSchema.Draft7\Corvus.Json.JsonSchema.Draft7.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -35,7 +35,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Update="Roslynator.Analyzers" Version="4.5.0" />
+		<PackageReference Update="Roslynator.Analyzers" Version="4.6.2" />
 	</ItemGroup>
 
 	<ItemGroup>

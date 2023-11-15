@@ -15,6 +15,56 @@ public static partial class JsonValueHelpers
     /// Compares two values.
     /// </summary>
     /// <typeparam name="TItem1">The type of the first value.</typeparam>
+    /// <param name="item1">The first value.</param>
+    /// <param name="item2">The second value.</param>
+    /// <returns><c>True</c> if they are equal.</returns>
+    public static bool CompareWithString<TItem1>(in TItem1 item1, ReadOnlySpan<char> item2)
+        where TItem1 : struct, IJsonValue<TItem1>
+    {
+        JsonValueKind thisKind = item1.ValueKind;
+
+        if (thisKind != JsonValueKind.String)
+        {
+            return false;
+        }
+
+        if (thisKind == JsonValueKind.String)
+        {
+            return item1.AsString.EqualsString(item2);
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Compares two values.
+    /// </summary>
+    /// <typeparam name="TItem1">The type of the first value.</typeparam>
+    /// <param name="item1">The first value.</param>
+    /// <param name="item2">The second value.</param>
+    /// <returns><c>True</c> if they are equal.</returns>
+    public static bool CompareWithUtf8Bytes<TItem1>(in TItem1 item1, ReadOnlySpan<byte> item2)
+        where TItem1 : struct, IJsonValue<TItem1>
+    {
+        JsonValueKind thisKind = item1.ValueKind;
+
+        if (thisKind != JsonValueKind.String)
+        {
+            return false;
+        }
+
+        if (thisKind == JsonValueKind.String)
+        {
+            return item1.AsString.EqualsUtf8Bytes(item2);
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Compares two values.
+    /// </summary>
+    /// <typeparam name="TItem1">The type of the first value.</typeparam>
     /// <typeparam name="TItem2">The type of the second value.</typeparam>
     /// <param name="item1">The first value.</param>
     /// <param name="item2">The second value.</param>
@@ -31,42 +81,17 @@ public static partial class JsonValueHelpers
             return false;
         }
 
-        if (thisKind == JsonValueKind.Array)
+        return thisKind switch
         {
-            return CompareArrays(item1.AsArray, item2.AsArray);
-        }
-
-        if (thisKind == JsonValueKind.False || thisKind == JsonValueKind.True)
-        {
-            return true;
-        }
-
-        if (thisKind == JsonValueKind.Null)
-        {
-            return true;
-        }
-
-        if (thisKind == JsonValueKind.Undefined)
-        {
-            return false;
-        }
-
-        if (thisKind == JsonValueKind.Number)
-        {
-            return CompareNumbers(item1.AsNumber, item2.AsNumber);
-        }
-
-        if (thisKind == JsonValueKind.Object)
-        {
-            return CompareObjects(item1.AsObject, item2.AsObject);
-        }
-
-        if (thisKind == JsonValueKind.String)
-        {
-            return CompareStrings(item1.AsString, item2.AsString);
-        }
-
-        return false;
+            JsonValueKind.Array => CompareArrays(item1.AsArray, item2.AsArray),
+            JsonValueKind.False or JsonValueKind.True => true,
+            JsonValueKind.Null => true,
+            JsonValueKind.Undefined => false,
+            JsonValueKind.Number => item1.AsNumber.Equals(item2.AsNumber),
+            JsonValueKind.Object => CompareObjects(item1.AsObject, item2.AsObject),
+            JsonValueKind.String => CompareStrings(item1.AsString, item2.AsString),
+            _ => false,
+        };
     }
 
     /// <summary>
@@ -88,42 +113,17 @@ public static partial class JsonValueHelpers
             return false;
         }
 
-        if (thisKind == JsonValueKind.Array)
+        return thisKind switch
         {
-            return CompareArrays(item1.AsArray, item2);
-        }
-
-        if (thisKind == JsonValueKind.False || thisKind == JsonValueKind.True)
-        {
-            return true;
-        }
-
-        if (thisKind == JsonValueKind.Null)
-        {
-            return true;
-        }
-
-        if (thisKind == JsonValueKind.Undefined)
-        {
-            return false;
-        }
-
-        if (thisKind == JsonValueKind.Number)
-        {
-            return CompareNumbers(item1.AsNumber, item2);
-        }
-
-        if (thisKind == JsonValueKind.Object)
-        {
-            return CompareObjects(item1.AsObject, item2);
-        }
-
-        if (thisKind == JsonValueKind.String)
-        {
-            return CompareStrings(item1.AsString, item2);
-        }
-
-        return false;
+            JsonValueKind.Array => CompareArrays(item1.AsArray, item2.AsArray),
+            JsonValueKind.False or JsonValueKind.True => true,
+            JsonValueKind.Null => true,
+            JsonValueKind.Undefined => false,
+            JsonValueKind.Number => item1.AsNumber.Equals(item2.AsNumber),
+            JsonValueKind.Object => CompareObjects(item1.AsObject, item2.AsObject),
+            JsonValueKind.String => CompareStrings(item1.AsString, item2.AsString),
+            _ => false,
+        };
     }
 
     /// <summary>
@@ -145,42 +145,17 @@ public static partial class JsonValueHelpers
             return false;
         }
 
-        if (thisKind == JsonValueKind.Array)
+        return thisKind switch
         {
-            return CompareArrays(item1, item2.AsArray);
-        }
-
-        if (thisKind == JsonValueKind.False || thisKind == JsonValueKind.True)
-        {
-            return true;
-        }
-
-        if (thisKind == JsonValueKind.Null)
-        {
-            return true;
-        }
-
-        if (thisKind == JsonValueKind.Undefined)
-        {
-            return false;
-        }
-
-        if (thisKind == JsonValueKind.Number)
-        {
-            return CompareNumbers(item1, item2.AsNumber);
-        }
-
-        if (thisKind == JsonValueKind.Object)
-        {
-            return CompareObjects(item1, item2.AsObject);
-        }
-
-        if (thisKind == JsonValueKind.String)
-        {
-            return CompareStrings(item1, item2.AsString);
-        }
-
-        return false;
+            JsonValueKind.Array => CompareArrays(item1.AsArray, item2.AsArray),
+            JsonValueKind.False or JsonValueKind.True => true,
+            JsonValueKind.Null => true,
+            JsonValueKind.Undefined => false,
+            JsonValueKind.Number => item1.AsNumber.Equals(item2.AsNumber),
+            JsonValueKind.Object => CompareObjects(item1.AsObject, item2.AsObject),
+            JsonValueKind.String => CompareStrings(item1.AsString, item2.AsString),
+            _ => false,
+        };
     }
 
     /// <summary>
@@ -200,42 +175,17 @@ public static partial class JsonValueHelpers
             return false;
         }
 
-        if (thisKind == JsonValueKind.Array)
+        return thisKind switch
         {
-            return CompareArrays(item1, item2);
-        }
-
-        if (thisKind == JsonValueKind.False || thisKind == JsonValueKind.True)
-        {
-            return true;
-        }
-
-        if (thisKind == JsonValueKind.Null)
-        {
-            return true;
-        }
-
-        if (thisKind == JsonValueKind.Undefined)
-        {
-            return true;
-        }
-
-        if (thisKind == JsonValueKind.Number)
-        {
-            return CompareNumbers(item1, item2);
-        }
-
-        if (thisKind == JsonValueKind.Object)
-        {
-            return CompareObjects(item1, item2);
-        }
-
-        if (thisKind == JsonValueKind.String)
-        {
-            return CompareStrings(item1, item2);
-        }
-
-        return false;
+            JsonValueKind.Array => CompareArrays(item1.AsArray, item2.AsArray),
+            JsonValueKind.False or JsonValueKind.True => true,
+            JsonValueKind.Null => true,
+            JsonValueKind.Undefined => true,
+            JsonValueKind.Number => item1.AsNumber.Equals(item2.AsNumber),
+            JsonValueKind.Object => CompareObjects(item1.AsObject, item2.AsObject),
+            JsonValueKind.String => CompareStrings(item1.AsString, item2.AsString),
+            _ => false,
+        };
     }
 
     /// <summary>
@@ -307,22 +257,6 @@ public static partial class JsonValueHelpers
     }
 
     /// <summary>
-    /// Compares two numeric values.
-    /// </summary>
-    /// <typeparam name="TItem1">The type of the first numeric value.</typeparam>
-    /// <typeparam name="TItem2">The type of the second numeric value.</typeparam>
-    /// <param name="item1">The first value.</param>
-    /// <param name="item2">The second value.</param>
-    /// <returns><c>True</c> if they are equal.</returns>
-    /// <exception cref="InvalidOperationException">The values were not numbers.</exception>
-    public static bool CompareNumbers<TItem1, TItem2>(in TItem1 item1, in TItem2 item2)
-        where TItem1 : struct, IJsonNumber<TItem1>
-        where TItem2 : struct, IJsonNumber<TItem2>
-    {
-        return ((double)item1).Equals(item2);
-    }
-
-    /// <summary>
     /// Compares two string values.
     /// </summary>
     /// <typeparam name="TItem1">The type of the first string value.</typeparam>
@@ -337,14 +271,36 @@ public static partial class JsonValueHelpers
     {
         if (item1.HasJsonElementBacking)
         {
-            return item1.AsJsonElement.ValueEquals(item2);
+            if (item2.HasDotnetBacking)
+            {
+                return item1.AsJsonElement.ValueEquals((string)item2);
+            }
+            else
+            {
+                item2.AsJsonElement.TryGetValue(CompareValues, item1.AsJsonElement, out bool areEqual);
+                return areEqual;
+            }
         }
 
         if (item2.HasJsonElementBacking)
         {
-            return item2.AsJsonElement.ValueEquals(item1);
+            if (item1.HasDotnetBacking)
+            {
+                return item2.AsJsonElement.ValueEquals((string)item1);
+            }
+            else
+            {
+                item1.AsJsonElement.TryGetValue(CompareValues, item2.AsJsonElement, out bool areEqual);
+                return areEqual;
+            }
         }
 
-        return ((string)item1).Equals(item2, StringComparison.Ordinal);
+        return ((string)item1).Equals((string)item2, StringComparison.Ordinal);
+
+        static bool CompareValues(ReadOnlySpan<byte> span, in JsonElement firstItem, out bool value)
+        {
+            value = firstItem.ValueEquals(span);
+            return true;
+        }
     }
 }

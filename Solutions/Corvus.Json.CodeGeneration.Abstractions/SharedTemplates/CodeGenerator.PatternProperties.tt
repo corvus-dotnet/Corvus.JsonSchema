@@ -50,7 +50,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     /// </summary>
     public bool MatchesPattern<#= PatternPropertySuffix(patternProperty) #>(in JsonObjectProperty property)
     {
-        return PatternProperty<#= PatternPropertySuffix(patternProperty) #>.IsMatch(property.Name);
+        return property.Name.IsMatch(PatternProperty<#= PatternPropertySuffix(patternProperty) #>);
     }
 
     /// <summary>
@@ -58,7 +58,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     /// </summary>
     public bool TryAsPattern<#= PatternPropertySuffix(patternProperty) #>(in JsonObjectProperty property, out  <#= patternProperty.DotnetTypeName #> result)
     {
-        if (PatternProperty<#= PatternPropertySuffix(patternProperty) #>.IsMatch(property.Name))
+        if (property.Name.IsMatch(PatternProperty<#= PatternPropertySuffix(patternProperty) #>))
         {
             result = property.ValueAs<<#= patternProperty.DotnetTypeName #>>();
             return true;

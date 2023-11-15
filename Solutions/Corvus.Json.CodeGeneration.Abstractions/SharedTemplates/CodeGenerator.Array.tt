@@ -50,7 +50,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
     { #>
         this.stringBacking = string.Empty;
 <#  }
-    if(IsImplicitBoolean || IsNotImplicitType)
+    if (IsImplicitBoolean && !(IsImplicitNumber || IsNotImplicitType))
     { #>
         this.boolBacking = default;
 <#  }
@@ -61,7 +61,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
         this.arrayBacking = value;
 <#  if(IsImplicitObject || IsNotImplicitType)
     { #>
-        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
 <#  } #>
     }
 
@@ -77,7 +77,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
     { #>
         this.stringBacking = string.Empty;
 <#  }
-    if(IsImplicitBoolean || IsNotImplicitType)
+    if(IsImplicitBoolean && !(IsImplicitNumber || IsNotImplicitType))
     { #>
         this.boolBacking = default;
 <#  }
@@ -88,7 +88,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
         this.arrayBacking = value.ToImmutableList();
 <#  if(IsImplicitObject || IsNotImplicitType)
     { #>
-        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
 <#  } #>
     }
 
@@ -124,7 +124,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
     /// <param name="value">The value from which to convert.</param>
     public static implicit operator JsonArray(<#= TypeDeclaration.DotnetTypeName #> value)
     {
-        return value.AsArray;
+        return JsonArray.FromArray(value);
     }
 
     /// <summary>s
@@ -331,7 +331,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         foreach (string item in items)
         {
-            builder.Add(new JsonAny(item));
+            builder.Add((JsonAny)item);
         }
 
         return new <#= TypeDeclaration.DotnetTypeName #>(builder.ToImmutable());
@@ -347,7 +347,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         foreach (double item in items)
         {
-            builder.Add(new JsonAny(item));
+            builder.Add((JsonAny)item);
         }
 
         return new <#= TypeDeclaration.DotnetTypeName #>(builder.ToImmutable());
@@ -363,7 +363,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         foreach (float item in items)
         {
-            builder.Add(new JsonAny(item));
+            builder.Add((JsonAny)item);
         }
 
         return new <#= TypeDeclaration.DotnetTypeName #>(builder.ToImmutable());
@@ -379,7 +379,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         foreach (int item in items)
         {
-            builder.Add(new JsonAny(item));
+            builder.Add((JsonAny)item);
         }
 
         return new <#= TypeDeclaration.DotnetTypeName #>(builder.ToImmutable());
@@ -395,7 +395,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         foreach (long item in items)
         {
-            builder.Add(new JsonAny(item));
+            builder.Add((JsonAny)item);
         }
 
         return new <#= TypeDeclaration.DotnetTypeName #>(builder.ToImmutable());
@@ -411,7 +411,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         foreach (bool item in items)
         {
-            builder.Add(new JsonAny(item));
+            builder.Add((JsonAny)item);
         }
 
         return new <#= TypeDeclaration.DotnetTypeName #>(builder.ToImmutable());

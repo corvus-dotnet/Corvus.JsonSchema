@@ -40,7 +40,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 <#  }
     if(IsImplicitNumber || IsNotImplicitType)
     { #>
-    private readonly double numberBacking;
+    private readonly BinaryJsonNumber numberBacking;
 <#  }
     if(IsImplicitArray || IsNotImplicitType)
     { #>
@@ -48,7 +48,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 <#  }
     if(IsImplicitObject || IsNotImplicitType)
     { #>
-    private readonly ImmutableDictionary<JsonPropertyName, JsonAny> objectBacking;
+    private readonly ImmutableList<JsonObjectProperty> objectBacking;
 <#  } #>
 
 <#  if(!HasConst)
@@ -78,7 +78,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 <#      }
         if(IsImplicitObject || IsNotImplicitType)
         { #>
-        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
 <#      } #>
     }
 <#  } #>
@@ -109,7 +109,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 <#  }
     if(IsImplicitObject || IsNotImplicitType)
     { #>
-        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
 <#  } #>
     }
 
@@ -273,9 +273,12 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     /// <inheritdoc/>
 <#  if(!IsImplicitString)
     { #>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-<#  } #>
+    JsonString IJsonValue.AsString
+<#  } 
+    else
+    {#>
     public JsonString AsString
+<#  }#>
     {
         get
         {
@@ -299,9 +302,12 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     /// <inheritdoc/>
 <#  if(!IsImplicitBoolean)
     { #>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-<#  } #>
+    JsonBoolean IJsonValue.AsBoolean
+<#  } 
+    else
+    {#>
     public JsonBoolean AsBoolean
+<#  }#>
     {
         get
         {
@@ -325,9 +331,12 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     /// <inheritdoc/>
 <#  if(!IsImplicitNumber)
     { #>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-<#  } #>
+    JsonNumber IJsonValue.AsNumber
+<#  } 
+    else
+    {#>
     public JsonNumber AsNumber
+<#  }#>
     {
         get
         {
@@ -351,9 +360,12 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     /// <inheritdoc/>
 <#  if(!IsImplicitObject)
     { #>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-<#  } #>
+    JsonObject IJsonValue.AsObject
+<#  } 
+    else
+    {#>
     public JsonObject AsObject
+<#  }#>
     {
         get
         {
@@ -377,9 +389,12 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     /// <inheritdoc/>
 <#  if(!IsImplicitArray)
     { #>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-<#  } #>
+    JsonArray IJsonValue.AsArray
+<#  } 
+    else
+    {#>
     public JsonArray AsArray
+<#  }#>
     {
         get
         {
@@ -478,15 +493,6 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     }
 
     /// <summary>
-    /// Conversion from JsonAny.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator <#= TypeDeclaration.DotnetTypeName #>(JsonAny value)
-    {
-        return <#= TypeDeclaration.DotnetTypeName #>.FromAny(value);
-    }
-
-    /// <summary>
     /// Conversion to JsonAny.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
@@ -539,7 +545,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
         {
 <#  if(IsImplicitString || IsNotImplicitType)
     { #>
-            JsonValueKind.String => new((string)value),
+            JsonValueKind.String => new((string)value.AsString),
 <#  }
     if(IsImplicitBoolean || IsNotImplicitType)
     { #>
@@ -548,15 +554,15 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 <#  }
     if(IsImplicitNumber || IsNotImplicitType)
     { #>
-            JsonValueKind.Number => new((double)value),
+            JsonValueKind.Number => new(value.AsNumber.AsBinaryJsonNumber),
 <#  }
     if(IsImplicitArray || IsNotImplicitType)
     { #>
-            JsonValueKind.Array => new((ImmutableList<JsonAny>)value),
+            JsonValueKind.Array => new(value.AsArray.AsImmutableList()),
 <#  }
     if(IsImplicitObject || IsNotImplicitType)
     { #>
-            JsonValueKind.Object => new((ImmutableDictionary<JsonPropertyName, JsonAny>)value),
+            JsonValueKind.Object => new(value.AsObject.AsPropertyBacking()),
 
 <#  } #>
             JsonValueKind.Null => Null,
@@ -585,10 +591,13 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
 <#  if(!IsImplicitBoolean)
     { #>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-<#  } #>
+    static <#= TypeDeclaration.DotnetTypeName #> IJsonValue<<#= TypeDeclaration.DotnetTypeName #>>.FromBoolean<TValue>(in TValue value)
+<#  }
+    else
+    {#>
     public static <#= TypeDeclaration.DotnetTypeName #> FromBoolean<TValue>(in TValue value)
         where TValue : struct, IJsonBoolean<TValue>
+<#  } #>
     {
         if (value.HasJsonElementBacking)
         {
@@ -622,10 +631,13 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
 <#  if(!IsImplicitString)
     { #>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-<#  } #>
+    static <#= TypeDeclaration.DotnetTypeName #> IJsonValue<<#= TypeDeclaration.DotnetTypeName #>>.FromString<TValue>(in TValue value)
+<#  }
+    else
+    {#>
     public static <#= TypeDeclaration.DotnetTypeName #> FromString<TValue>(in TValue value)
         where TValue : struct, IJsonString<TValue>
+<#  } #>
     {
         if (value.HasJsonElementBacking)
         {
@@ -653,10 +665,13 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
 <#  if(!IsImplicitNumber)
     { #>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-<#  } #>
+    static <#= TypeDeclaration.DotnetTypeName #> IJsonValue<<#= TypeDeclaration.DotnetTypeName #>>.FromNumber<TValue>(in TValue value)
+<#  }
+    else
+    {#>
     public static <#= TypeDeclaration.DotnetTypeName #> FromNumber<TValue>(in TValue value)
         where TValue : struct, IJsonNumber<TValue>
+<#  } #>
     {
         if (value.HasJsonElementBacking)
         {
@@ -667,7 +682,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 
         if (value.ValueKind == JsonValueKind.Number)
         {
-            return new((double)value);
+            return new(value.AsBinaryJsonNumber);
         }
 <#  } #>
 
@@ -684,10 +699,13 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
 <#  if(!IsImplicitArray)
     { #>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-<#  } #>
+    static <#= TypeDeclaration.DotnetTypeName #> IJsonValue<<#= TypeDeclaration.DotnetTypeName #>>.FromArray<TValue>(in TValue value)
+<#  }
+    else
+    {#>
     public static <#= TypeDeclaration.DotnetTypeName #> FromArray<TValue>(in TValue value)
         where TValue : struct, IJsonArray<TValue>
+<#  } #>
     {
         if (value.HasJsonElementBacking)
         {
@@ -698,7 +716,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 
         if (value.ValueKind == JsonValueKind.Array)
         {
-            return new((ImmutableList<JsonAny>)value);
+            return new(value.AsImmutableList());
         }
 <#  } #>
 
@@ -715,10 +733,13 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
 <#  if(!IsImplicitObject)
     { #>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-<#  } #>
+    static <#= TypeDeclaration.DotnetTypeName #> IJsonValue<<#= TypeDeclaration.DotnetTypeName #>>.FromObject<TValue>(in TValue value)
+<#  }
+    else
+    {#>
     public static <#= TypeDeclaration.DotnetTypeName #> FromObject<TValue>(in TValue value)
         where TValue : struct, IJsonObject<TValue>
+<#  } #>
     {
         if (value.HasJsonElementBacking)
         {
@@ -729,7 +750,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 
         if (value.ValueKind == JsonValueKind.Object)
         {
-            return new((ImmutableDictionary<JsonPropertyName, JsonAny>)value);
+            return new(value.AsPropertyBacking());
         }
 <#  } #>
 
@@ -827,7 +848,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     }
 
     /// <summary>
-    /// Gets the value as the target value.
+    /// Gets the value as an instance of the target value.
     /// </summary>
     /// <typeparam name="TTarget">The type of the target.</typeparam>
     /// <returns>An instance of the target type.</returns>
@@ -897,14 +918,18 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     }
 
     /// <inheritdoc/>
-    public bool Equals<T>(T other)
+    public bool Equals<T>(in T other)
         where T : struct, IJsonValue<T>
     {
         return JsonValueHelpers.CompareValues(this, other);
     }
 
-    /// <inheritdoc/>
-    public bool Equals(<#= TypeDeclaration.DotnetTypeName #> other)
+    /// <summary>
+    /// Equality comparison.
+    /// </summary>
+    /// <param name="other">The other item with which to compare.</param>
+    /// <returns><see langword="true"/> if the values were equal.</returns>
+    public bool Equals(in <#= TypeDeclaration.DotnetTypeName #> other)
     {
         return JsonValueHelpers.CompareValues(this, other);
     }
@@ -935,7 +960,14 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 
         if ((this.backing & Backing.Bool) != 0)
         {
+<#      if (IsImplicitNumber || !IsNotImplicitType)
+        { #>
             writer.WriteBooleanValue(this.boolBacking);
+<#      }
+        else
+        {#>
+            writer.WriteBooleanValue(this.numberBacking.GetByteAsBool());
+<#      }#>
             return;
         }
 <#  }
@@ -944,7 +976,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 
         if ((this.backing & Backing.Number) != 0)
         {
-            writer.WriteNumberValue(this.numberBacking);
+            this.numberBacking.WriteTo(writer);
             return;
         }
 <#  }

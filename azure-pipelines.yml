@@ -23,5 +23,6 @@ jobs:
     solution_to_build: $(Endjin_Solution_To_Build)
     additionalNetSdkVersions:
     - '7.x'
+    - '8.x'
     includeNetSdkPreviewVersions: 'true'
     compileTasksServiceConnection: endjin-acr-reader

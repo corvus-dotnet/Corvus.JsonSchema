@@ -23,19 +23,6 @@ public interface IJsonArray<T> : IJsonValue<T>
     JsonAny this[int index] { get; }
 
     /// <summary>
-    /// Conversion from immutable list.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    static abstract implicit operator T(ImmutableList<JsonAny> value);
-
-    /// <summary>s
-    /// Conversion to immutable list.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    /// <exception cref="InvalidOperationException">The value was not a string.</exception>
-    static abstract implicit operator ImmutableList<JsonAny>(T value);
-
-    /// <summary>
     /// Gets the length of the IJsonArray.
     /// </summary>
     /// <returns>The length of the array.</returns>

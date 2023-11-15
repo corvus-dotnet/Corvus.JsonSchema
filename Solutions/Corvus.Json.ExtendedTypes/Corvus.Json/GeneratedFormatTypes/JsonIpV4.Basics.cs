@@ -49,15 +49,6 @@ public readonly partial struct JsonIpV4
         this.stringBacking = Encoding.UTF8.GetString(utf8Value);
     }
 
-        /// <summary>
-    /// Conversion from JsonAny.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonIpV4(JsonAny value)
-    {
-        return JsonIpV4.FromAny(value);
-    }
-
     /// <summary>
     /// Conversion to JsonAny.
     /// </summary>
@@ -68,7 +59,7 @@ public readonly partial struct JsonIpV4
     }
 
     /// <summary>
-    /// Conversion from JsonString.
+    /// Conversion to JsonString.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
     public static implicit operator JsonString(JsonIpV4 value)
@@ -77,7 +68,7 @@ public readonly partial struct JsonIpV4
     }
 
     /// <summary>
-    /// Conversion to JsonString.
+    /// Conversion from JsonString.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
     public static implicit operator JsonIpV4(JsonString value)
@@ -104,7 +95,7 @@ public readonly partial struct JsonIpV4
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a string.</exception>
-    public static implicit operator string(JsonIpV4 value)
+    public static explicit operator string(JsonIpV4 value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -122,34 +113,6 @@ public readonly partial struct JsonIpV4
         }
 
         throw new InvalidOperationException();
-    }
-
-    /// <summary>
-    /// Conversion from string.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonIpV4(ReadOnlySpan<char> value)
-    {
-        return new(value);
-    }
-
-    /// <summary>
-    /// Conversion to string.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    /// <exception cref="InvalidOperationException">The value was not a string.</exception>
-    public static implicit operator ReadOnlySpan<char>(JsonIpV4 value)
-    {
-        return ((string)value).AsSpan();
-    }
-
-    /// <summary>
-    /// Conversion from string.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonIpV4(ReadOnlySpan<byte> value)
-    {
-        return new(value);
     }
 
     /// <summary>
@@ -383,27 +346,11 @@ public readonly partial struct JsonIpV4
         return false;
     }
 
-    /// <inheritdoc/>
-    public ReadOnlySpan<char> AsSpan()
-    {
-        if ((this.backing & Backing.String) != 0)
-        {
-            return this.stringBacking.AsSpan();
-        }
-
-        if ((this.backing & Backing.JsonElement) != 0 && this.jsonElementBacking.ValueKind == JsonValueKind.String)
-        {
-            return this.jsonElementBacking.GetString().AsSpan();
-        }
-
-        throw new InvalidOperationException();
-    }
-
     /// <summary>
     /// Gets the string value.
     /// </summary>
     /// <returns><c>The string if this value represents a string</c>, otherwise <c>null</c>.</returns>
-    public string? AsOptionalString()
+    public string? GetString()
     {
         if (this.TryGetString(out string? value))
         {

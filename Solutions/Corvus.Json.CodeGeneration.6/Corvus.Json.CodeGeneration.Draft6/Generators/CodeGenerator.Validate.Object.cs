@@ -286,7 +286,7 @@ namespace ");
                 result = result.WithLocalProperty(propertyCount);
                 if (level > ValidationLevel.Basic)
                 {
-                    result = result.PushDocumentProperty(""properties"", property.Name);
+                    result = result.PushDocumentProperty(""properties"", property.Name.GetString());
                 }
 
                 var propertyResult = propertyValidator(property, result.CreateChildContext(), level);
@@ -340,7 +340,7 @@ namespace ");
             #line hidden
             
             #line 144 "./Templates/CodeGenerator.Validate.Object.tt"
-            this.Write("if ((this.HasJsonElementBacking && property.NameEquals(");
+            this.Write("if ((this.HasJsonElementBacking && property.NameEquals(JsonPropertyNames.");
             
             #line default
             #line hidden
@@ -352,7 +352,7 @@ namespace ");
             #line hidden
             
             #line 144 "./Templates/CodeGenerator.Validate.Object.tt"
-            this.Write("Utf8JsonPropertyName)) || (!this.HasJsonElementBacking && property.NameEquals(");
+            this.Write("Utf8)) || (!this.HasJsonElementBacking && property.NameEquals(JsonPropertyNames.");
             
             #line default
             #line hidden
@@ -364,7 +364,7 @@ namespace ");
             #line hidden
             
             #line 144 "./Templates/CodeGenerator.Validate.Object.tt"
-            this.Write("JsonPropertyName)))\r\n                {\r\n                    found");
+            this.Write(")))\r\n                {\r\n                    found");
             
             #line default
             #line hidden
@@ -440,7 +440,7 @@ namespace ");
             #line hidden
             
             #line 167 "./Templates/CodeGenerator.Validate.Object.tt"
-            this.Write("            string propertyName = property.Name;\r\n");
+            this.Write("            string propertyName = property.Name.GetString();\r\n");
             
             #line default
             #line hidden

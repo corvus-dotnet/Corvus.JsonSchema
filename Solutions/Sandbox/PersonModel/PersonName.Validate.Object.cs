@@ -37,7 +37,7 @@ public readonly partial struct PersonName
                 result = result.WithLocalProperty(propertyCount);
                 if (level > ValidationLevel.Basic)
                 {
-                    result = result.PushDocumentProperty("properties", property.Name);
+                    result = result.PushDocumentProperty("properties", property.Name.GetString());
                 }
 
                 var propertyResult = propertyValidator(property, result.CreateChildContext(), level);
@@ -52,7 +52,7 @@ public readonly partial struct PersonName
                     return result;
                 }
 
-                if ((this.HasJsonElementBacking && property.NameEquals(FamilyNameUtf8JsonPropertyName)) || (!this.HasJsonElementBacking && property.NameEquals(FamilyNameJsonPropertyName)))
+                if ((this.HasJsonElementBacking && property.NameEquals(JsonPropertyNames.FamilyNameUtf8)) || (!this.HasJsonElementBacking && property.NameEquals(JsonPropertyNames.FamilyName)))
                 {
                     foundFamilyName = true;
                 }

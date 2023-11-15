@@ -73,3 +73,8 @@ Scenario Outline: validation of internationalized host names
         | #/000/tests/048/data | true  | ZERO WIDTH JOINER preceded by Virama                                             |
         | #/000/tests/049/data | true  | ZERO WIDTH NON-JOINER preceded by Virama                                         |
         | #/000/tests/050/data | true  | ZERO WIDTH NON-JOINER not preceded by Virama but matches regexp                  |
+        | #/000/tests/051/data | true  | single label                                                                     |
+        | #/000/tests/052/data | true  | single label with hyphen                                                         |
+        | #/000/tests/053/data | true  | single label with digits                                                         |
+        | #/000/tests/054/data | true  | single label starting with digit                                                 |
+        | #/000/tests/055/data | true  | single label ending with digit                                                   |

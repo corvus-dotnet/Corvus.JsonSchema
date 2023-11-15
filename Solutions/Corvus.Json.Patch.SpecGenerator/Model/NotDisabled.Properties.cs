@@ -21,14 +21,21 @@ namespace Corvus.Json.Patch.SpecGenerator;
 public readonly partial struct NotDisabled
 {
     /// <summary>
-    /// JSON property name for <see cref = "Disabled"/>.
+    /// The well-known property names in the JSON object.
     /// </summary>
-    public static ReadOnlySpan<byte> DisabledUtf8JsonPropertyName => "disabled"u8;
+    public static class JsonPropertyNames
+    {
+        /// <summary>
+        /// JSON property name for <see cref = "Disabled"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> DisabledUtf8 => "disabled"u8;
 
-    /// <summary>
-    /// JSON property name for <see cref = "Disabled"/>.
-    /// </summary>
-    public const string DisabledJsonPropertyName = "disabled";
+        /// <summary>
+        /// JSON property name for <see cref = "Disabled"/>.
+        /// </summary>
+        public const string Disabled = "disabled";
+    }
+
     /// <summary>
     /// Gets Disabled.
     /// </summary>
@@ -43,7 +50,7 @@ public readonly partial struct NotDisabled
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(DisabledUtf8JsonPropertyName, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.DisabledUtf8, out JsonElement result))
                 {
                     return new Corvus.Json.JsonNotAny(result);
                 }
@@ -51,7 +58,7 @@ public readonly partial struct NotDisabled
 
             if ((this.backing & Backing.Object) != 0)
             {
-                if (this.objectBacking.TryGetValue(DisabledJsonPropertyName, out JsonAny result))
+                if (this.objectBacking.TryGetValue(JsonPropertyNames.Disabled, out JsonAny result))
                 {
                     return result.As<Corvus.Json.JsonNotAny>();
                 }
@@ -66,13 +73,13 @@ public readonly partial struct NotDisabled
     /// </summary>
     public static NotDisabled Create(Corvus.Json.JsonNotAny? disabled = null)
     {
-        var builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
+        var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
         if (disabled is Corvus.Json.JsonNotAny disabled__)
         {
-            builder.Add(DisabledJsonPropertyName, disabled__.AsAny);
+            builder.Add(JsonPropertyNames.Disabled, disabled__.AsAny);
         }
 
-        return builder.ToImmutable();
+        return new(builder.ToImmutable());
     }
 
     /// <summary>
@@ -82,7 +89,7 @@ public readonly partial struct NotDisabled
     /// <returns>The entity with the updated property.</returns>
     public NotDisabled WithDisabled(in Corvus.Json.JsonNotAny value)
     {
-        return this.SetProperty(DisabledJsonPropertyName, value);
+        return this.SetProperty(JsonPropertyNames.Disabled, value);
     }
 
     private static ValidationContext __CorvusValidateDisabled(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
@@ -101,7 +108,7 @@ public readonly partial struct NotDisabled
     {
         if (hasJsonElementBacking)
         {
-            if (property.NameEquals(DisabledUtf8JsonPropertyName))
+            if (property.NameEquals(JsonPropertyNames.DisabledUtf8))
             {
                 propertyValidator = __CorvusValidateDisabled;
                 return true;
@@ -109,7 +116,7 @@ public readonly partial struct NotDisabled
         }
         else
         {
-            if (property.NameEquals(DisabledJsonPropertyName))
+            if (property.NameEquals(JsonPropertyNames.Disabled))
             {
                 propertyValidator = __CorvusValidateDisabled;
                 return true;

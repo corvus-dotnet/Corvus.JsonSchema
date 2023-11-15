@@ -96,12 +96,12 @@ public readonly partial struct PersonNameElementArray
     /// <inheritdoc/>
     public PersonNameElementArray Replace(in JsonAny oldValue, in JsonAny newValue)
     {
-        return this.GetImmutableListReplacing(oldValue.AsAny, newValue.AsAny);
+        return new(this.GetImmutableListReplacing(oldValue.AsAny, newValue.AsAny));
     }
 
     /// <inheritdoc/>
     public PersonNameElementArray SetItem(int index, in JsonAny value)
     {
-        return this.GetImmutableListSetting(index, value.AsAny);
+        return new(this.GetImmutableListSetting(index, value.AsAny));
     }
 }

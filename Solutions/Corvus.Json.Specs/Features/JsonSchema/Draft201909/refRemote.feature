@@ -29,7 +29,7 @@ Scenario Outline: fragment within remote ref
 /* Schema: 
 {
             "$schema": "https://json-schema.org/draft/2019-09/schema",
-            "$ref": "http://localhost:1234/draft2019-09/subSchemas-defs.json#/$defs/integer"
+            "$ref": "http://localhost:1234/draft2019-09/subSchemas.json#/$defs/integer"
         }
 */
     Given the input JSON file "refRemote.json"
@@ -69,7 +69,7 @@ Scenario Outline: ref within remote ref
 /* Schema: 
 {
             "$schema": "https://json-schema.org/draft/2019-09/schema",
-            "$ref": "http://localhost:1234/draft2019-09/subSchemas-defs.json#/$defs/refToInteger"
+            "$ref": "http://localhost:1234/draft2019-09/subSchemas.json#/$defs/refToInteger"
         }
 */
     Given the input JSON file "refRemote.json"
@@ -262,7 +262,10 @@ Scenario Outline: retrieved nested refs resolve relative to their URI not $id
 
 Scenario Outline: remote HTTP ref with different $id
 /* Schema: 
-{"$ref": "http://localhost:1234/different-id-ref-string.json"}
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "$ref": "http://localhost:1234/different-id-ref-string.json"
+        }
 */
     Given the input JSON file "refRemote.json"
     And the schema at "#/11/schema"
@@ -279,7 +282,10 @@ Scenario Outline: remote HTTP ref with different $id
 
 Scenario Outline: remote HTTP ref with different URN $id
 /* Schema: 
-{"$ref": "http://localhost:1234/urn-ref-string.json"}
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "$ref": "http://localhost:1234/urn-ref-string.json"
+        }
 */
     Given the input JSON file "refRemote.json"
     And the schema at "#/12/schema"
@@ -296,7 +302,10 @@ Scenario Outline: remote HTTP ref with different URN $id
 
 Scenario Outline: remote HTTP ref with nested absolute ref
 /* Schema: 
-{"$ref": "http://localhost:1234/nested-absolute-ref-to-string.json"}
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "$ref": "http://localhost:1234/nested-absolute-ref-to-string.json"
+        }
 */
     Given the input JSON file "refRemote.json"
     And the schema at "#/13/schema"
@@ -314,6 +323,7 @@ Scenario Outline: remote HTTP ref with nested absolute ref
 Scenario Outline: $ref to $ref finds detached $anchor
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
             "$ref": "http://localhost:1234/draft2019-09/detached-ref.json#/$defs/foo"
         }
 */

@@ -155,7 +155,19 @@ namespace ");
             #line hidden
             
             #line 38 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Const.tt"
-            this.Write(" __CorvusConstValue = JsonAny.ParseValue(");
+            this.Write(" __CorvusConstValue = ");
+            
+            #line default
+            #line hidden
+            
+            #line 38 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Const.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 38 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Const.tt"
+            this.Write(".ParseValue(");
             
             #line default
             #line hidden
@@ -193,7 +205,19 @@ namespace ");
             #line hidden
             
             #line 42 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Const.tt"
-            this.Write(" __CorvusConstValue = JsonAny.ParseValue(");
+            this.Write(" __CorvusConstValue = ");
+            
+            #line default
+            #line hidden
+            
+            #line 42 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Const.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 42 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Const.tt"
+            this.Write(".ParseValue(");
             
             #line default
             #line hidden
@@ -231,7 +255,19 @@ namespace ");
             #line hidden
             
             #line 46 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Const.tt"
-            this.Write(" __CorvusConstValue = JsonAny.ParseValue(");
+            this.Write(" __CorvusConstValue = ");
+            
+            #line default
+            #line hidden
+            
+            #line 46 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Const.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 46 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Const.tt"
+            this.Write(".ParseValue(");
             
             #line default
             #line hidden
@@ -269,7 +305,19 @@ namespace ");
             #line hidden
             
             #line 50 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Const.tt"
-            this.Write(" __CorvusConstValue = JsonAny.ParseValue(");
+            this.Write(" __CorvusConstValue = ");
+            
+            #line default
+            #line hidden
+            
+            #line 50 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Const.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 50 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Const.tt"
+            this.Write(".ParseValue(");
             
             #line default
             #line hidden
@@ -307,7 +355,19 @@ namespace ");
             #line hidden
             
             #line 54 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Const.tt"
-            this.Write(" __CorvusConstValue = JsonAny.ParseValue(");
+            this.Write(" __CorvusConstValue = ");
+            
+            #line default
+            #line hidden
+            
+            #line 54 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Const.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 54 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Const.tt"
+            this.Write(".ParseValue(");
             
             #line default
             #line hidden
@@ -345,7 +405,19 @@ namespace ");
             #line hidden
             
             #line 58 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Const.tt"
-            this.Write(" __CorvusConstValue = JsonAny.ParseValue(\"null\"u8);\r\n");
+            this.Write(" __CorvusConstValue = ");
+            
+            #line default
+            #line hidden
+            
+            #line 58 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Const.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 58 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Const.tt"
+            this.Write(".ParseValue(\"null\"u8);\r\n");
             
             #line default
             #line hidden

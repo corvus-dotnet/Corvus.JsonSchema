@@ -49,15 +49,6 @@ public readonly partial struct JsonDate
         this.stringBacking = Encoding.UTF8.GetString(utf8Value);
     }
 
-        /// <summary>
-    /// Conversion from JsonAny.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonDate(JsonAny value)
-    {
-        return JsonDate.FromAny(value);
-    }
-
     /// <summary>
     /// Conversion to JsonAny.
     /// </summary>
@@ -68,7 +59,7 @@ public readonly partial struct JsonDate
     }
 
     /// <summary>
-    /// Conversion from JsonString.
+    /// Conversion to JsonString.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
     public static implicit operator JsonString(JsonDate value)
@@ -77,7 +68,7 @@ public readonly partial struct JsonDate
     }
 
     /// <summary>
-    /// Conversion to JsonString.
+    /// Conversion from JsonString.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
     public static implicit operator JsonDate(JsonString value)
@@ -104,7 +95,7 @@ public readonly partial struct JsonDate
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a string.</exception>
-    public static implicit operator string(JsonDate value)
+    public static explicit operator string(JsonDate value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -122,34 +113,6 @@ public readonly partial struct JsonDate
         }
 
         throw new InvalidOperationException();
-    }
-
-    /// <summary>
-    /// Conversion from string.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonDate(ReadOnlySpan<char> value)
-    {
-        return new(value);
-    }
-
-    /// <summary>
-    /// Conversion to string.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    /// <exception cref="InvalidOperationException">The value was not a string.</exception>
-    public static implicit operator ReadOnlySpan<char>(JsonDate value)
-    {
-        return ((string)value).AsSpan();
-    }
-
-    /// <summary>
-    /// Conversion from string.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonDate(ReadOnlySpan<byte> value)
-    {
-        return new(value);
     }
 
     /// <summary>
@@ -383,27 +346,11 @@ public readonly partial struct JsonDate
         return false;
     }
 
-    /// <inheritdoc/>
-    public ReadOnlySpan<char> AsSpan()
-    {
-        if ((this.backing & Backing.String) != 0)
-        {
-            return this.stringBacking.AsSpan();
-        }
-
-        if ((this.backing & Backing.JsonElement) != 0 && this.jsonElementBacking.ValueKind == JsonValueKind.String)
-        {
-            return this.jsonElementBacking.GetString().AsSpan();
-        }
-
-        throw new InvalidOperationException();
-    }
-
     /// <summary>
     /// Gets the string value.
     /// </summary>
     /// <returns><c>The string if this value represents a string</c>, otherwise <c>null</c>.</returns>
-    public string? AsOptionalString()
+    public string? GetString()
     {
         if (this.TryGetString(out string? value))
         {

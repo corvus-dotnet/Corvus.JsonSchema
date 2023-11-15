@@ -100,7 +100,7 @@ public class JsonPatchSteps
     {
         try
         {
-            JsonPatchDocument patchOperationArray = JsonAny.Parse(jsonString);
+            var patchOperationArray = JsonPatchDocument.Parse(jsonString);
             this.scenarioContext.Set(patchOperationArray, PatchKey);
 
             JsonAny document = this.scenarioContext.Get<JsonAny>(DocumentKey);
@@ -108,7 +108,7 @@ public class JsonPatchSteps
 
             foreach (JsonPatchDocument.PatchOperation operation in patchOperationArray.EnumerateArray())
             {
-                string op = operation.Op;
+                string op = (string)operation.Op;
                 switch (op)
                 {
                     case "add":

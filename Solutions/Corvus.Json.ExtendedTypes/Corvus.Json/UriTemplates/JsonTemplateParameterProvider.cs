@@ -12,8 +12,15 @@ namespace Corvus.Json.UriTemplates;
 /// <summary>
 /// Implements a parameter provider over a JsonAny.
 /// </summary>
-internal class JsonTemplateParameterProvider : ITemplateParameterProvider<JsonAny>
+/// <typeparam name="TPayload">The type of the payload.</typeparam>
+internal class JsonTemplateParameterProvider<TPayload> : ITemplateParameterProvider<TPayload>
+    where TPayload : struct, IJsonObject<TPayload>
 {
+    /// <summary>
+    /// Gets the instance of the <see cref="JsonTemplateParameterProvider{TPayload}"/>.
+    /// </summary>
+    internal static JsonTemplateParameterProvider<TPayload> Instance { get; } = new();
+
     /// <summary>
     /// Process the given variable.
     /// </summary>
@@ -23,13 +30,13 @@ internal class JsonTemplateParameterProvider : ITemplateParameterProvider<JsonAn
     /// <returns>
     ///     <see cref="VariableProcessingState.Success"/> if the variable was successfully processed,
     ///     <see cref="VariableProcessingState.NotProcessed"/> if the parameter was not present, or
-    ///     <see cref="VariableProcessingState.Failure"/> if the parmeter could not be processed because it was incompatible with the variable specification in the template.</returns>
-    public static VariableProcessingState ProcessVariable(ref VariableSpecification variableSpecification, in JsonAny parameters, IBufferWriter<char> output)
+    ///     <see cref="VariableProcessingState.Failure"/> if the parameter could not be processed because it was incompatible with the variable specification in the template.</returns>
+    public VariableProcessingState ProcessVariable(ref VariableSpecification variableSpecification, in TPayload parameters, IBufferWriter<char> output)
     {
         if (!parameters.TryGetProperty(variableSpecification.VarName, out JsonAny value)
                 || value.IsNullOrUndefined()
-                || (value.ValueKind == JsonValueKind.Array && value.GetArrayLength() == 0)
-                || (value.ValueKind == JsonValueKind.Object && !value.HasProperties()))
+                || (value.ValueKind == JsonValueKind.Array && value.AsArray.GetArrayLength() == 0)
+                || (value.ValueKind == JsonValueKind.Object && !value.AsObject.HasProperties()))
         {
             return VariableProcessingState.NotProcessed;
         }
@@ -48,12 +55,13 @@ internal class JsonTemplateParameterProvider : ITemplateParameterProvider<JsonAn
 
         if (value.ValueKind == JsonValueKind.Array)
         {
+            JsonArray valueArray = value.AsArray;
             if (variableSpecification.OperatorInfo.Named && !variableSpecification.Explode) //// exploding will prefix with list name
             {
-                AppendName(output, variableSpecification.VarName, variableSpecification.OperatorInfo.IfEmpty, value.GetArrayLength() == 0);
+                AppendName(output, variableSpecification.VarName, variableSpecification.OperatorInfo.IfEmpty, valueArray.GetArrayLength() == 0);
             }
 
-            AppendArray(output, variableSpecification.OperatorInfo, variableSpecification.Explode, variableSpecification.VarName, value);
+            AppendArray(output, variableSpecification.OperatorInfo, variableSpecification.Explode, variableSpecification.VarName, valueArray);
         }
         else if (value.ValueKind == JsonValueKind.Object)
         {
@@ -62,18 +70,20 @@ internal class JsonTemplateParameterProvider : ITemplateParameterProvider<JsonAn
                 return VariableProcessingState.Failure;
             }
 
+            JsonObject valueObject = value.AsObject;
+
             if (variableSpecification.OperatorInfo.Named && !variableSpecification.Explode) //// exploding will prefix with list name
             {
-                AppendName(output, variableSpecification.VarName, variableSpecification.OperatorInfo.IfEmpty, !value.HasProperties());
+                AppendName(output, variableSpecification.VarName, variableSpecification.OperatorInfo.IfEmpty, !valueObject.HasProperties());
             }
 
-            AppendObject(output, variableSpecification.OperatorInfo, variableSpecification.Explode, value);
+            AppendObject(output, variableSpecification.OperatorInfo, variableSpecification.Explode, valueObject);
         }
         else if (value.ValueKind == JsonValueKind.String)
         {
             if (variableSpecification.OperatorInfo.Named)
             {
-                AppendNameAndStringValue(output, variableSpecification.VarName, variableSpecification.OperatorInfo.IfEmpty, value, variableSpecification.PrefixLength, variableSpecification.OperatorInfo.AllowReserved);
+                AppendNameAndStringValue(output, variableSpecification.VarName, variableSpecification.OperatorInfo.IfEmpty, value.AsString, variableSpecification.PrefixLength, variableSpecification.OperatorInfo.AllowReserved);
             }
             else
             {
@@ -101,7 +111,8 @@ internal class JsonTemplateParameterProvider : ITemplateParameterProvider<JsonAn
     /// <param name="explode">Whether to explode the array.</param>
     /// <param name="variable">The variable name.</param>
     /// <param name="array">The array to add.</param>
-    private static void AppendArray(IBufferWriter<char> output, in OperatorInfo op, bool explode, ReadOnlySpan<char> variable, in JsonAny array)
+    private static void AppendArray<T>(IBufferWriter<char> output, in OperatorInfo op, bool explode, ReadOnlySpan<char> variable, in T array)
+        where T : struct, IJsonArray<T>
     {
         bool isFirst = true;
         foreach (JsonAny item in array.EnumerateArray())
@@ -132,7 +143,8 @@ internal class JsonTemplateParameterProvider : ITemplateParameterProvider<JsonAn
     /// <param name="op">The operator info.</param>
     /// <param name="explode">Whether to explode the object.</param>
     /// <param name="instance">The object instance to append.</param>
-    private static void AppendObject(IBufferWriter<char> output, in OperatorInfo op, bool explode, in JsonAny instance)
+    private static void AppendObject<T>(IBufferWriter<char> output, in OperatorInfo op, bool explode, in T instance)
+        where T : struct, IJsonObject<T>
     {
         bool isFirst = true;
         foreach (JsonObjectProperty value in instance.EnumerateObject())
@@ -212,18 +224,11 @@ internal class JsonTemplateParameterProvider : ITemplateParameterProvider<JsonAn
     /// <param name="value">The value to append.</param>
     /// <param name="prefixLength">The prefix length.</param>
     /// <param name="allowReserved">Whether to allow reserved characters.</param>
-    private static void AppendNameAndStringValue(IBufferWriter<char> output, ReadOnlySpan<char> variable, string ifEmpty, JsonAny value, int prefixLength, bool allowReserved)
+    private static void AppendNameAndStringValue<T>(IBufferWriter<char> output, ReadOnlySpan<char> variable, string ifEmpty, T value, int prefixLength, bool allowReserved)
+        where T : struct, IJsonString<T>
     {
         output.Write(variable);
-
-        if (value.HasJsonElementBacking)
-        {
-            value.AsJsonElement.TryGetValue(ProcessString, new AppendNameAndValueState(output, ifEmpty, prefixLength, allowReserved), out bool _);
-        }
-        else
-        {
-            ProcessString(value.AsSpan(), new AppendNameAndValueState(output, ifEmpty, prefixLength, allowReserved), out bool _);
-        }
+        value.AsString.TryGetValue(ProcessString, new AppendNameAndValueState(output, ifEmpty, prefixLength, allowReserved), out bool _);
     }
 
     /// <summary>
@@ -237,14 +242,7 @@ internal class JsonTemplateParameterProvider : ITemplateParameterProvider<JsonAn
     {
         if (value.ValueKind == JsonValueKind.String)
         {
-            if (value.HasJsonElementBacking)
-            {
-                value.AsJsonElement.TryGetValue(ProcessString, new AppendValueState(output, prefixLength, allowReserved), out bool _);
-            }
-            else
-            {
-                ProcessString(value.AsSpan(), new AppendValueState(output, prefixLength, allowReserved), out bool _);
-            }
+            value.AsString.TryGetValue(ProcessString, new AppendValueState(output, prefixLength, allowReserved), out bool _);
         }
         else if (value.ValueKind == JsonValueKind.True)
         {
@@ -260,11 +258,9 @@ internal class JsonTemplateParameterProvider : ITemplateParameterProvider<JsonAn
         }
         else if (value.ValueKind == JsonValueKind.Number)
         {
-            double valueNumber = (double)value;
-
-            // The maximum number of digits in a double precision number is 1074; we allocate a little above this
-            Span<char> buffer = stackalloc char[1100];
-            valueNumber.TryFormat(buffer, out int written);
+            JsonNumber number = value.AsNumber;
+            Span<char> buffer = stackalloc char[number.GetMaxCharLength()];
+            number.TryFormat(buffer, out int written, "G", null);
             output.Write(buffer[..written]);
         }
     }

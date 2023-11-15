@@ -173,7 +173,7 @@ namespace ");
             
             #line 52 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.tt"
   }
-    if(IsImplicitBoolean || IsNotImplicitType)
+    if (IsImplicitBoolean && !(IsImplicitNumber || IsNotImplicitType))
     { 
             
             #line default
@@ -219,8 +219,7 @@ namespace ");
             #line hidden
             
             #line 64 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.tt"
-            this.Write("        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty" +
-                    ";\r\n");
+            this.Write("        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;\r\n");
             
             #line default
             #line hidden
@@ -279,7 +278,7 @@ namespace ");
             
             #line 79 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.tt"
   }
-    if(IsImplicitBoolean || IsNotImplicitType)
+    if(IsImplicitBoolean && !(IsImplicitNumber || IsNotImplicitType))
     { 
             
             #line default
@@ -325,8 +324,7 @@ namespace ");
             #line hidden
             
             #line 91 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.tt"
-            this.Write("        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty" +
-                    ";\r\n");
+            this.Write("        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;\r\n");
             
             #line default
             #line hidden
@@ -382,9 +380,10 @@ namespace ");
             #line hidden
             
             #line 125 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.tt"
-            this.Write(" value)\r\n    {\r\n        return value.AsArray;\r\n    }\r\n\r\n    /// <summary>s\r\n    /" +
-                    "// Conversion to JsonArray.\r\n    /// </summary>\r\n    /// <param name=\"value\">The" +
-                    " value from which to convert.</param>\r\n    public static implicit operator ");
+            this.Write(" value)\r\n    {\r\n        return JsonArray.FromArray(value);\r\n    }\r\n\r\n    /// <sum" +
+                    "mary>s\r\n    /// Conversion to JsonArray.\r\n    /// </summary>\r\n    /// <param nam" +
+                    "e=\"value\">The value from which to convert.</param>\r\n    public static implicit o" +
+                    "perator ");
             
             #line default
             #line hidden
@@ -872,7 +871,7 @@ namespace ");
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         foreach (string item in items)
         {
-            builder.Add(new JsonAny(item));
+            builder.Add((JsonAny)item);
         }
 
         return new ");
@@ -912,7 +911,7 @@ namespace ");
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         foreach (double item in items)
         {
-            builder.Add(new JsonAny(item));
+            builder.Add((JsonAny)item);
         }
 
         return new ");
@@ -952,7 +951,7 @@ namespace ");
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         foreach (float item in items)
         {
-            builder.Add(new JsonAny(item));
+            builder.Add((JsonAny)item);
         }
 
         return new ");
@@ -987,15 +986,10 @@ namespace ");
             #line hidden
             
             #line 377 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Array.tt"
-            this.Write(@" FromRange(IEnumerable<int> items)
-    {
-        ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
-        foreach (int item in items)
-        {
-            builder.Add(new JsonAny(item));
-        }
-
-        return new ");
+            this.Write(" FromRange(IEnumerable<int> items)\r\n    {\r\n        ImmutableList<JsonAny>.Builder" +
+                    " builder = ImmutableList.CreateBuilder<JsonAny>();\r\n        foreach (int item in" +
+                    " items)\r\n        {\r\n            builder.Add((JsonAny)item);\r\n        }\r\n\r\n      " +
+                    "  return new ");
             
             #line default
             #line hidden
@@ -1032,7 +1026,7 @@ namespace ");
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         foreach (long item in items)
         {
-            builder.Add(new JsonAny(item));
+            builder.Add((JsonAny)item);
         }
 
         return new ");
@@ -1072,7 +1066,7 @@ namespace ");
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         foreach (bool item in items)
         {
-            builder.Add(new JsonAny(item));
+            builder.Add((JsonAny)item);
         }
 
         return new ");

@@ -74,7 +74,7 @@ public interface IJsonValue
     void WriteTo(Utf8JsonWriter writer);
 
     /// <summary>
-    /// Gets the value as the target value.
+    /// Gets the value as an instance of the target value.
     /// </summary>
     /// <typeparam name="TTarget">The type of the target.</typeparam>
     /// <returns>An instance of the target type.</returns>
@@ -88,7 +88,7 @@ public interface IJsonValue
     /// <typeparam name="T">The type of the item with which to compare.</typeparam>
     /// <param name="other">The instance with which to compare.</param>
     /// <returns><c>True</c> if the other insance is equal to this one.</returns>
-    bool Equals<T>(T other)
+    bool Equals<T>(in T other)
         where T : struct, IJsonValue<T>;
 
     /// <summary>

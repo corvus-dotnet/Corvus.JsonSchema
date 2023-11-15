@@ -11,11 +11,6 @@ Scenario: Cast to JsonAny for dotnet backed value as a time
 	When I cast the JsonTime to JsonAny
 	Then the result should equal the JsonAny "08:30:06+00:20"
 
-Scenario: Cast from JsonAny for json element backed value as a time
-	Given the JsonAny for "08:30:06+00:20"
-	When I cast the JsonAny to JsonTime
-	Then the result should equal the JsonTime "08:30:06+00:20"
-
 Scenario: Cast to JsonString for json element backed value as a time
 	Given the JsonElement backed JsonTime "08:30:06+00:20"
 	When I cast the JsonTime to JsonString
@@ -39,21 +34,6 @@ Scenario: Cast from OffsetTime for json element backed value as a time
 Scenario: Cast to OffsetTime for json element backed value as a time
 	Given the OffsetTime for "08:30:06+00:20"
 	When I cast the OffsetTime to JsonTime
-	Then the result should equal the JsonTime "08:30:06+00:20"
-
-Scenario: Cast to ReadOnlySpan<char> for json element backed value as a time
-	Given the JsonElement backed JsonTime "08:30:06+00:20"
-	When I cast the JsonTime to ReadOnlySpan<char>
-	Then the result should equal the ReadOnlySpan<char> "08:30:06+00:20"
-
-Scenario: Cast to ReadOnlySpan<char> for dotnet backed value as a time
-	Given the dotnet backed JsonTime "08:30:06+00:20"
-	When I cast the JsonTime to ReadOnlySpan<char>
-	Then the result should equal the ReadOnlySpan<char> "08:30:06+00:20"
-
-Scenario: Cast from ReadOnlySpan<char> for json element backed value as a time
-	Given the ReadOnlyMemory<char> for "08:30:06+00:20"
-	When I cast the ReadOnlySpan<char> to JsonTime
 	Then the result should equal the JsonTime "08:30:06+00:20"
 
 Scenario: Cast to string for json element backed value as a time

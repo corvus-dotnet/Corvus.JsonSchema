@@ -17,7 +17,7 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft202012 {
     public partial class CodeGeneratorBoolean : CodeGeneratorBooleanBase {
         
         
-        #line 115 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
+        #line 145 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
 
     public bool ShouldGenerate
     {
@@ -58,6 +58,7 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft202012 {
 #nullable enable
 
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
@@ -68,109 +69,134 @@ namespace ");
             #line default
             #line hidden
             
-            #line 27 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
+            #line 28 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( Namespace ));
             
             #line default
             #line hidden
             
-            #line 27 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
+            #line 28 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
             this.Write(";\r\n\r\n");
             
             #line default
             #line hidden
             
-            #line 29 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
+            #line 30 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
  BeginNesting(); 
             
             #line default
             #line hidden
             
-            #line 30 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
+            #line 31 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
             this.Write("/// <summary>\r\n/// A type generated from a JsonSchema specification.\r\n/// </summa" +
                     "ry>\r\npublic readonly partial struct ");
             
             #line default
             #line hidden
             
-            #line 33 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
+            #line 34 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 33 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
+            #line 34 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
             this.Write(" : IJsonBoolean<");
             
             #line default
             #line hidden
             
-            #line 33 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
+            #line 34 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 33 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
+            #line 34 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
             this.Write(">\r\n{\r\n    /// <summary>\r\n    /// Initializes a new instance of the <see cref=\"");
             
             #line default
             #line hidden
             
-            #line 36 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
+            #line 37 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 36 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
+            #line 37 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
             this.Write("\"/> struct.\r\n    /// </summary>\r\n    /// <param name=\"value\">The value from which" +
                     " to construct the instance.</param>\r\n    public ");
             
             #line default
             #line hidden
             
-            #line 39 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
+            #line 40 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 39 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
+            #line 40 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
             this.Write("(bool value)\r\n    {\r\n        this.jsonElementBacking = default;\r\n        this.bac" +
-                    "king = Backing.Bool;\r\n        this.boolBacking = value;\r\n");
+                    "king = Backing.Bool;\r\n");
             
             #line default
             #line hidden
             
             #line 44 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
-  if(IsImplicitString || IsNotImplicitType)
+  if (!(IsImplicitNumber || IsNotImplicitType))
     { 
             
             #line default
             #line hidden
             
             #line 46 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
-            this.Write("        this.stringBacking = string.Empty;\r\n");
+            this.Write("        this.boolBacking = value;\r\n");
             
             #line default
             #line hidden
             
             #line 47 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
   }
-    if(IsImplicitNumber || IsNotImplicitType)
-    { 
+    else
+    {
             
             #line default
             #line hidden
             
             #line 50 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
-            this.Write("        this.numberBacking = default;\r\n");
+            this.Write("        this.numberBacking = new(value);\r\n");
             
             #line default
             #line hidden
             
             #line 51 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
+  }
+            
+            #line default
+            #line hidden
+            
+            #line 52 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
+            this.Write("\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 53 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
+  if(IsImplicitString || IsNotImplicitType)
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 55 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
+            this.Write("        this.stringBacking = string.Empty;\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 56 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
   }
     if(IsImplicitArray || IsNotImplicitType)
     { 
@@ -178,13 +204,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 54 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
+            #line 59 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
             this.Write("        this.arrayBacking = ImmutableList<JsonAny>.Empty;\r\n");
             
             #line default
             #line hidden
             
-            #line 55 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
+            #line 60 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
   }
     if(IsImplicitObject || IsNotImplicitType)
     { 
@@ -192,20 +218,19 @@ namespace ");
             #line default
             #line hidden
             
-            #line 58 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
-            this.Write("        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty" +
-                    ";\r\n");
+            #line 63 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
+            this.Write("        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;\r\n");
             
             #line default
             #line hidden
             
-            #line 59 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
+            #line 64 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 60 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
+            #line 65 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
             this.Write("    }\r\n\r\n    /// <summary>\r\n    /// Conversion from JsonBoolean.\r\n    /// </summa" +
                     "ry>\r\n    /// <param name=\"value\">The value from which to convert.</param>\r\n    p" +
                     "ublic static implicit operator JsonBoolean(");
@@ -213,27 +238,28 @@ namespace ");
             #line default
             #line hidden
             
-            #line 66 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
+            #line 71 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 66 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
-            this.Write(" value)\r\n    {\r\n        return value.AsBoolean;\r\n    }\r\n\r\n    /// <summary>\r\n    " +
-                    "/// Conversion to JsonBoolean.\r\n    /// </summary>\r\n    /// <param name=\"value\">" +
-                    "The value from which to convert.</param>\r\n    public static implicit operator ");
+            #line 71 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
+            this.Write(" value)\r\n    {\r\n        return JsonBoolean.FromBoolean(value);\r\n    }\r\n\r\n    /// " +
+                    "<summary>\r\n    /// Conversion to JsonBoolean.\r\n    /// </summary>\r\n    /// <para" +
+                    "m name=\"value\">The value from which to convert.</param>\r\n    public static impli" +
+                    "cit operator ");
             
             #line default
             #line hidden
             
-            #line 75 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
+            #line 80 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 75 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
+            #line 80 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
             this.Write(@"(JsonBoolean value)
     {
         if (value.HasJsonElementBacking)
@@ -253,13 +279,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 89 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
+            #line 94 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 89 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
+            #line 94 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
             this.Write(@"(bool value)
     {
         return new(value);
@@ -270,31 +296,56 @@ namespace ");
     /// </summary>
     /// <param name=""value"">The value from which to convert.</param>
     /// <exception cref=""InvalidOperationException"">The value was not a string.</exception>
-    public static implicit operator bool(");
+    public static explicit operator bool(");
             
             #line default
             #line hidden
             
-            #line 99 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
+            #line 104 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 99 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
+            #line 104 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
             this.Write(@" value)
     {
-        if ((value.backing & Backing.JsonElement) != 0)
+        return value.GetBoolean() ?? throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Try to retrieve the value as a boolean.
+    /// </summary>
+    /// <param name=""result""><see langword=""true""/> if the value was true, otherwise <see langword=""false""/>.</param>
+    /// <returns><see langword=""true""/> if the value was representable as a boolean, otherwise <see langword=""false""/>.</returns>
+    public bool TryGetBoolean([NotNullWhen(true)] out bool result)
+    {
+        switch (this.ValueKind)
         {
-            return value.jsonElementBacking.GetBoolean();
+            case JsonValueKind.True:
+                result = true;
+                return true;
+            case JsonValueKind.False:
+                result = false;
+                return true;
+            default:
+                result = default;
+                return false;
+        }
+    }
+
+    /// <summary>
+    /// Get the value as a boolean.
+    /// </summary>
+    /// <returns>The value of the boolean, or <see langword=""null""/> if the value was not representable as a boolean.</returns>
+    public bool? GetBoolean()
+    {
+        if (this.TryGetBoolean(out bool result))
+        {
+            return result;
         }
 
-        if ((value.backing & Backing.Bool) != 0)
-        {
-            return value.boolBacking;
-        }
-
-        throw new InvalidOperationException();
+        return null;
     }
 }
 ");
@@ -302,7 +353,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 114 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
+            #line 144 "../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Boolean.tt"
  EndNesting(); 
             
             #line default

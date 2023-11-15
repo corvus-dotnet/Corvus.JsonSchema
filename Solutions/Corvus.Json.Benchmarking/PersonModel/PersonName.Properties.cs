@@ -21,32 +21,39 @@ namespace Corvus.Json.Benchmarking.Models;
 public readonly partial struct PersonName
 {
     /// <summary>
-    /// JSON property name for <see cref = "FamilyName"/>.
+    /// The well-known property names in the JSON object.
     /// </summary>
-    public static ReadOnlySpan<byte> FamilyNameUtf8JsonPropertyName => "familyName"u8;
+    public static class JsonPropertyNames
+    {
+        /// <summary>
+        /// JSON property name for <see cref = "FamilyName"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> FamilyNameUtf8 => "familyName"u8;
 
-    /// <summary>
-    /// JSON property name for <see cref = "FamilyName"/>.
-    /// </summary>
-    public const string FamilyNameJsonPropertyName = "familyName";
-    /// <summary>
-    /// JSON property name for <see cref = "GivenName"/>.
-    /// </summary>
-    public static ReadOnlySpan<byte> GivenNameUtf8JsonPropertyName => "givenName"u8;
+        /// <summary>
+        /// JSON property name for <see cref = "FamilyName"/>.
+        /// </summary>
+        public const string FamilyName = "familyName";
+        /// <summary>
+        /// JSON property name for <see cref = "GivenName"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> GivenNameUtf8 => "givenName"u8;
 
-    /// <summary>
-    /// JSON property name for <see cref = "GivenName"/>.
-    /// </summary>
-    public const string GivenNameJsonPropertyName = "givenName";
-    /// <summary>
-    /// JSON property name for <see cref = "OtherNames"/>.
-    /// </summary>
-    public static ReadOnlySpan<byte> OtherNamesUtf8JsonPropertyName => "otherNames"u8;
+        /// <summary>
+        /// JSON property name for <see cref = "GivenName"/>.
+        /// </summary>
+        public const string GivenName = "givenName";
+        /// <summary>
+        /// JSON property name for <see cref = "OtherNames"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> OtherNamesUtf8 => "otherNames"u8;
 
-    /// <summary>
-    /// JSON property name for <see cref = "OtherNames"/>.
-    /// </summary>
-    public const string OtherNamesJsonPropertyName = "otherNames";
+        /// <summary>
+        /// JSON property name for <see cref = "OtherNames"/>.
+        /// </summary>
+        public const string OtherNames = "otherNames";
+    }
+
     /// <summary>
     /// Gets FamilyName.
     /// </summary>
@@ -61,7 +68,7 @@ public readonly partial struct PersonName
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(FamilyNameUtf8JsonPropertyName, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.FamilyNameUtf8, out JsonElement result))
                 {
                     return new Corvus.Json.Benchmarking.Models.PersonNameElement(result);
                 }
@@ -69,7 +76,7 @@ public readonly partial struct PersonName
 
             if ((this.backing & Backing.Object) != 0)
             {
-                if (this.objectBacking.TryGetValue(FamilyNameJsonPropertyName, out JsonAny result))
+                if (this.objectBacking.TryGetValue(JsonPropertyNames.FamilyName, out JsonAny result))
                 {
                     return result.As<Corvus.Json.Benchmarking.Models.PersonNameElement>();
                 }
@@ -93,7 +100,7 @@ public readonly partial struct PersonName
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(GivenNameUtf8JsonPropertyName, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.GivenNameUtf8, out JsonElement result))
                 {
                     return new Corvus.Json.Benchmarking.Models.PersonNameElement(result);
                 }
@@ -101,7 +108,7 @@ public readonly partial struct PersonName
 
             if ((this.backing & Backing.Object) != 0)
             {
-                if (this.objectBacking.TryGetValue(GivenNameJsonPropertyName, out JsonAny result))
+                if (this.objectBacking.TryGetValue(JsonPropertyNames.GivenName, out JsonAny result))
                 {
                     return result.As<Corvus.Json.Benchmarking.Models.PersonNameElement>();
                 }
@@ -125,7 +132,7 @@ public readonly partial struct PersonName
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(OtherNamesUtf8JsonPropertyName, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.OtherNamesUtf8, out JsonElement result))
                 {
                     return new Corvus.Json.Benchmarking.Models.OtherNames(result);
                 }
@@ -133,7 +140,7 @@ public readonly partial struct PersonName
 
             if ((this.backing & Backing.Object) != 0)
             {
-                if (this.objectBacking.TryGetValue(OtherNamesJsonPropertyName, out JsonAny result))
+                if (this.objectBacking.TryGetValue(JsonPropertyNames.OtherNames, out JsonAny result))
                 {
                     return result.As<Corvus.Json.Benchmarking.Models.OtherNames>();
                 }
@@ -148,19 +155,19 @@ public readonly partial struct PersonName
     /// </summary>
     public static PersonName Create(Corvus.Json.Benchmarking.Models.PersonNameElement familyName, Corvus.Json.Benchmarking.Models.PersonNameElement? givenName = null, Corvus.Json.Benchmarking.Models.OtherNames? otherNames = null)
     {
-        var builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
-        builder.Add(FamilyNameJsonPropertyName, familyName.AsAny);
+        var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
+        builder.Add(JsonPropertyNames.FamilyName, familyName.AsAny);
         if (givenName is Corvus.Json.Benchmarking.Models.PersonNameElement givenName__)
         {
-            builder.Add(GivenNameJsonPropertyName, givenName__.AsAny);
+            builder.Add(JsonPropertyNames.GivenName, givenName__.AsAny);
         }
 
         if (otherNames is Corvus.Json.Benchmarking.Models.OtherNames otherNames__)
         {
-            builder.Add(OtherNamesJsonPropertyName, otherNames__.AsAny);
+            builder.Add(JsonPropertyNames.OtherNames, otherNames__.AsAny);
         }
 
-        return builder.ToImmutable();
+        return new(builder.ToImmutable());
     }
 
     /// <summary>
@@ -170,7 +177,7 @@ public readonly partial struct PersonName
     /// <returns>The entity with the updated property.</returns>
     public PersonName WithFamilyName(in Corvus.Json.Benchmarking.Models.PersonNameElement value)
     {
-        return this.SetProperty(FamilyNameJsonPropertyName, value);
+        return this.SetProperty(JsonPropertyNames.FamilyName, value);
     }
 
     /// <summary>
@@ -180,7 +187,7 @@ public readonly partial struct PersonName
     /// <returns>The entity with the updated property.</returns>
     public PersonName WithGivenName(in Corvus.Json.Benchmarking.Models.PersonNameElement value)
     {
-        return this.SetProperty(GivenNameJsonPropertyName, value);
+        return this.SetProperty(JsonPropertyNames.GivenName, value);
     }
 
     /// <summary>
@@ -190,7 +197,7 @@ public readonly partial struct PersonName
     /// <returns>The entity with the updated property.</returns>
     public PersonName WithOtherNames(in Corvus.Json.Benchmarking.Models.OtherNames value)
     {
-        return this.SetProperty(OtherNamesJsonPropertyName, value);
+        return this.SetProperty(JsonPropertyNames.OtherNames, value);
     }
 
     private static ValidationContext __CorvusValidateFamilyName(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
@@ -219,17 +226,17 @@ public readonly partial struct PersonName
     {
         if (hasJsonElementBacking)
         {
-            if (property.NameEquals(FamilyNameUtf8JsonPropertyName))
+            if (property.NameEquals(JsonPropertyNames.FamilyNameUtf8))
             {
                 propertyValidator = __CorvusValidateFamilyName;
                 return true;
             }
-            else if (property.NameEquals(GivenNameUtf8JsonPropertyName))
+            else if (property.NameEquals(JsonPropertyNames.GivenNameUtf8))
             {
                 propertyValidator = __CorvusValidateGivenName;
                 return true;
             }
-            else if (property.NameEquals(OtherNamesUtf8JsonPropertyName))
+            else if (property.NameEquals(JsonPropertyNames.OtherNamesUtf8))
             {
                 propertyValidator = __CorvusValidateOtherNames;
                 return true;
@@ -237,17 +244,17 @@ public readonly partial struct PersonName
         }
         else
         {
-            if (property.NameEquals(FamilyNameJsonPropertyName))
+            if (property.NameEquals(JsonPropertyNames.FamilyName))
             {
                 propertyValidator = __CorvusValidateFamilyName;
                 return true;
             }
-            else if (property.NameEquals(GivenNameJsonPropertyName))
+            else if (property.NameEquals(JsonPropertyNames.GivenName))
             {
                 propertyValidator = __CorvusValidateGivenName;
                 return true;
             }
-            else if (property.NameEquals(OtherNamesJsonPropertyName))
+            else if (property.NameEquals(JsonPropertyNames.OtherNames))
             {
                 propertyValidator = __CorvusValidateOtherNames;
                 return true;
