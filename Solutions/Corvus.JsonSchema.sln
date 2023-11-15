@@ -64,6 +64,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{2CE21CBD-4B31-4408-A0E1-01E673F6FADF}"
 	ProjectSection(SolutionItems) = preProject
 		..\docs\GettingStartedWithJsonSchemaCodeGeneration.md = ..\docs\GettingStartedWithJsonSchemaCodeGeneration.md
+		..\README.md = ..\README.md
 	EndProjectSection
 EndProject
 Global

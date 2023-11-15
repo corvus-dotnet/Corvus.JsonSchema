@@ -228,9 +228,9 @@ A dotnet command line tool that generates C# code from JSON schema.
 
 Builds on System.Text.Json to provide a rich object model over JSON data, with validation for well-known types.
 
-### Corvus.Json.JsonSchema
+### Corvus.Json.JsonSchema.*
 
-An object model for working with JSON Schema documents. *This does not provide validation of data - it is purely a model for reading,  writing, and validating JSON Schema documents of various flavours.*
+Object models for working with JSON Schema documents. *This does not provide validation of data - it is purely a model for reading,  writing, and validating JSON Schema documents of various flavours.*
 
 ### Corvus.Json.CodeGeneration.Abstractions
 
@@ -275,3 +275,29 @@ Generates Feature Files in `Corvus.Json.Specs` for the JSON Patch tests.
 ### Corvus.JsonPatch.Benchmarking
 
 Benchmark suites for various components.
+
+## V2.0 Updates
+
+There have been considerable breaking changes with V2.0 of the generator. This section will help you understand what has changed, and how to update your code.
+
+### Json Schema Models
+
+The JSON Schema Models have been broken out into separate projects.
+
+  - Corvus.Json.JsonSchema.Draft6
+  - Corvus.Json.JsonSchema.Draft7
+  - Corvus.Json.JsonSchema.Draft201909
+  - Corvus.Json.JsonSchema.Draft202012
+
+### Code Generation
+
+### Property Names
+
+The static values for JSON Property Names have been moved from the root type, to a nested subtype called `PropertyNamesEntity`
+
+### Conversions and operators
+
+The implicit/explicit conversions and operators have been rationalised. More explicit conversions are required, at the expense of the implicit conversions.
+
+However, most implicit conversions from/to intrinsic types are still supported.
+
