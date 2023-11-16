@@ -18,7 +18,7 @@ public readonly partial struct JsonArray
     /// <summary>
     /// Gets an empty array.
     /// </summary>
-    public static readonly JsonArray EmptyArray = From(ImmutableList<JsonAny>.Empty);
+    public static readonly JsonArray EmptyArray = From([]);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonArray"/> struct.
@@ -114,9 +114,7 @@ public readonly partial struct JsonArray
     /// <returns>A JsonAny instantiated from the given array.</returns>
     public static JsonArray FromItems(in JsonAny value1)
     {
-        ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
-        builder.Add(value1.AsAny);
-        return new(builder.ToImmutable());
+        return new([value1.AsAny]);
     }
 
     /// <summary>
@@ -127,10 +125,7 @@ public readonly partial struct JsonArray
     /// <returns>A JsonAny instantiated from the given array.</returns>
     public static JsonArray FromItems(in JsonAny value1, in JsonAny value2)
     {
-        ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
-        builder.Add(value1);
-        builder.Add(value2);
-        return new(builder.ToImmutable());
+        return new([value1, value2]);
     }
 
     /// <summary>
@@ -138,15 +133,11 @@ public readonly partial struct JsonArray
     /// </summary>
     /// <param name="value1">The first value from which to construct the instance.</param>
     /// <param name="value2">The second value from which to construct the instance.</param>
-    /// <param name="value3">The thirdvalue from which to construct the instance.</param>
+    /// <param name="value3">The third value from which to construct the instance.</param>
     /// <returns>A JsonAny instantiated from the given array.</returns>
     public static JsonArray FromItems(in JsonAny value1, in JsonAny value2, in JsonAny value3)
     {
-        ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
-        builder.Add(value1);
-        builder.Add(value2);
-        builder.Add(value3);
-        return new(builder.ToImmutable());
+        return new([value1, value2, value3]);
     }
 
     /// <summary>
@@ -199,13 +190,7 @@ public readonly partial struct JsonArray
     /// <returns>The new array created from the items.</returns>
     public static JsonArray FromRange(IEnumerable<JsonAny> items)
     {
-        ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
-        foreach (JsonAny item in items)
-        {
-            builder.Add(item);
-        }
-
-        return new JsonArray(builder.ToImmutable());
+        return new JsonArray([.. items]);
     }
 
     /// <summary>

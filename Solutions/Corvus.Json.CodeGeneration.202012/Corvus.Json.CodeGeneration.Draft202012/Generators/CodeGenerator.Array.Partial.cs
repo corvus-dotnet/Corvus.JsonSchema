@@ -1018,7 +1018,7 @@ public partial class CodeGeneratorArray
     }
 
     /// <summary>
-    /// Gets the dotnet typename for the non-naked reference.
+    /// Gets the dotnet type name for the non-naked reference.
     /// </summary>
     public string RefDotnetTypeName
     {
