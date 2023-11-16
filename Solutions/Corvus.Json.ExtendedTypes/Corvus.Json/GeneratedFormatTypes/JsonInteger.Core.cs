@@ -44,7 +44,8 @@ public readonly partial struct JsonInteger : IJsonNumber<JsonInteger>
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonInteger"/> struct.
     /// </summary>
-    private JsonInteger(in BinaryJsonNumber value)
+    /// <param name="value">The value from which to construct the instance.</param>
+    public JsonInteger(in BinaryJsonNumber value)
     {
         this.jsonElementBacking = default;
         this.backing = Backing.Number;

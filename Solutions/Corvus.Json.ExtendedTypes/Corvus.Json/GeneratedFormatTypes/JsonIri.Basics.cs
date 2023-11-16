@@ -59,6 +59,15 @@ public readonly partial struct JsonIri
     }
 
     /// <summary>
+    /// Conversion from JsonAny.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator JsonIri(JsonAny value)
+    {
+        return value.As<JsonIri>();
+    }
+
+    /// <summary>
     /// Conversion to JsonString.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>

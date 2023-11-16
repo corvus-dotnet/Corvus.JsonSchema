@@ -59,6 +59,15 @@ public readonly partial struct JsonBase64Content
     }
 
     /// <summary>
+    /// Conversion from JsonAny.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator JsonBase64Content(JsonAny value)
+    {
+        return value.As<JsonBase64Content>();
+    }
+
+    /// <summary>
     /// Conversion to JsonString.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>

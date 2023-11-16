@@ -59,6 +59,15 @@ public readonly partial struct JsonEmail
     }
 
     /// <summary>
+    /// Conversion from JsonAny.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator JsonEmail(JsonAny value)
+    {
+        return value.As<JsonEmail>();
+    }
+
+    /// <summary>
     /// Conversion to JsonString.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>

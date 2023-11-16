@@ -140,6 +140,15 @@ public readonly partial struct JsonInteger
     }
 
     /// <summary>
+    /// Conversion from JsonAny.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator JsonInteger(JsonAny value)
+    {
+        return value.As<JsonInteger>();
+    }
+
+    /// <summary>
     /// Conversion to byte.
     /// </summary>
     /// <param name="value">The value to convert.</param>

@@ -59,6 +59,15 @@ public readonly partial struct JsonContent
     }
 
     /// <summary>
+    /// Conversion from JsonAny.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator JsonContent(JsonAny value)
+    {
+        return value.As<JsonContent>();
+    }
+
+    /// <summary>
     /// Conversion to JsonString.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>

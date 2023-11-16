@@ -59,6 +59,15 @@ public readonly partial struct JsonRegex
     }
 
     /// <summary>
+    /// Conversion from JsonAny.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator JsonRegex(JsonAny value)
+    {
+        return value.As<JsonRegex>();
+    }
+
+    /// <summary>
     /// Conversion to JsonString.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>

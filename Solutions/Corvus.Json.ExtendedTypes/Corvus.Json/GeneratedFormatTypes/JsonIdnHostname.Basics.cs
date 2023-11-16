@@ -59,6 +59,15 @@ public readonly partial struct JsonIdnHostname
     }
 
     /// <summary>
+    /// Conversion from JsonAny.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator JsonIdnHostname(JsonAny value)
+    {
+        return value.As<JsonIdnHostname>();
+    }
+
+    /// <summary>
     /// Conversion to JsonString.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>

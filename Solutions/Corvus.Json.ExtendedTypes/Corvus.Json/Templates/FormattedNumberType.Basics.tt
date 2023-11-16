@@ -190,6 +190,15 @@ public readonly partial struct <#= TypeName #>
     }
 
     /// <summary>
+    /// Conversion from JsonAny.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator <#= TypeName #>(JsonAny value)
+    {
+        return value.As<<#= TypeName #>>();
+    }
+
+    /// <summary>
     /// Conversion to byte.
     /// </summary>
     /// <param name="value">The value to convert.</param>

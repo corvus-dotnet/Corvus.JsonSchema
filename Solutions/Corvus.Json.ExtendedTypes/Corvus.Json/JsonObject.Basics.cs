@@ -49,6 +49,15 @@ public readonly partial struct JsonObject
     }
 
     /// <summary>
+    /// Conversion from JsonAny.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator JsonObject(JsonAny value)
+    {
+        return value.As<JsonObject>();
+    }
+
+    /// <summary>
     /// Creates an instance of the type from the given dictionary of properties.
     /// </summary>
     /// <param name="source">The dictionary of properties.</param>

@@ -2378,7 +2378,7 @@ public partial class CodeGeneratorValidateAllOf
             {
                 TypeDeclaration td = this.Builder.GetTypeDeclarationForPropertyArrayIndex(typeDeclaration, "allOf", i);
 
-                if (!td.IsBuiltInType && !conversions.ContainsKey(td))
+                if (!conversions.ContainsKey(td))
                 {
                     conversions.Add(td, new Conversion(td, parent is null));
                     this.AddConversionsFor(td, conversions, typeDeclaration);
@@ -2392,7 +2392,7 @@ public partial class CodeGeneratorValidateAllOf
             {
                 TypeDeclaration td = this.Builder.GetTypeDeclarationForPropertyArrayIndex(typeDeclaration, "anyOf", i);
 
-                if (!td.IsBuiltInType && !conversions.ContainsKey(td))
+                if (!conversions.ContainsKey(td))
                 {
                     conversions.Add(td, new Conversion(td, parent is null));
                     this.AddConversionsFor(td, conversions, typeDeclaration);
@@ -2406,7 +2406,7 @@ public partial class CodeGeneratorValidateAllOf
             {
                 TypeDeclaration td = this.Builder.GetTypeDeclarationForPropertyArrayIndex(typeDeclaration, "oneOf", i);
 
-                if (!td.IsBuiltInType && !conversions.ContainsKey(td))
+                if (!conversions.ContainsKey(td))
                 {
                     conversions.Add(td, new Conversion(td, parent is null));
                     this.AddConversionsFor(td, conversions, typeDeclaration);
@@ -2418,7 +2418,7 @@ public partial class CodeGeneratorValidateAllOf
         {
             TypeDeclaration td = this.Builder.GetTypeDeclarationForProperty(typeDeclaration, "$ref");
 
-            if (!td.IsBuiltInType && !conversions.ContainsKey(td))
+            if (!conversions.ContainsKey(td))
             {
                 conversions.Add(td, new Conversion(td, parent is null));
                 this.AddConversionsFor(td, conversions, typeDeclaration);
@@ -2429,7 +2429,7 @@ public partial class CodeGeneratorValidateAllOf
         {
             TypeDeclaration td = this.Builder.GetTypeDeclarationForProperty(typeDeclaration, "then");
 
-            if (!td.IsBuiltInType && !conversions.ContainsKey(td))
+            if (!conversions.ContainsKey(td))
             {
                 conversions.Add(td, new Conversion(td, parent is null));
                 this.AddConversionsFor(td, conversions, typeDeclaration);
@@ -2440,7 +2440,7 @@ public partial class CodeGeneratorValidateAllOf
         {
             TypeDeclaration td = this.Builder.GetTypeDeclarationForProperty(typeDeclaration, "else");
 
-            if (!td.IsBuiltInType && !conversions.ContainsKey(td))
+            if (!conversions.ContainsKey(td))
             {
                 conversions.Add(td, new Conversion(td, parent is null));
                 this.AddConversionsFor(td, conversions, typeDeclaration);

@@ -59,6 +59,15 @@ public readonly partial struct JsonPointer
     }
 
     /// <summary>
+    /// Conversion from JsonAny.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator JsonPointer(JsonAny value)
+    {
+        return value.As<JsonPointer>();
+    }
+
+    /// <summary>
     /// Conversion to JsonString.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>

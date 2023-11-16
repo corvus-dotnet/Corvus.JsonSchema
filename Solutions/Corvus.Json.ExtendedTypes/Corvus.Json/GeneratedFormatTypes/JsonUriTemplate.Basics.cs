@@ -59,6 +59,15 @@ public readonly partial struct JsonUriTemplate
     }
 
     /// <summary>
+    /// Conversion from JsonAny.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator JsonUriTemplate(JsonAny value)
+    {
+        return value.As<JsonUriTemplate>();
+    }
+
+    /// <summary>
     /// Conversion to JsonString.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>

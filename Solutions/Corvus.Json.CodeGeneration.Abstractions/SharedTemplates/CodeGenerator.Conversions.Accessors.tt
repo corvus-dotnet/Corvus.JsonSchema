@@ -30,7 +30,14 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 {
 <#  // Accessors are only provided
     foreach (Conversion conversion in DirectConversions)
-    { #>
+    {
+        if (conversion.DotnetTypeName == BuiltInTypes.AnyTypeDeclaration.Type)
+        {
+            continue;
+        } #>
+
+<#      if (!conversion.IsBuiltInType)
+        { #>
     /// <summary>
     /// Gets the value as a <see cref="<#= conversion.FullyQualifiedDotnetTypeName #>" />.
     /// </summary>
@@ -41,6 +48,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
             return (<#= conversion.FullyQualifiedDotnetTypeName #>)this;
         }
     }
+<#      } #>
 
     /// <summary>
     /// Gets a value indicating whether this is a valid <see cref="<#= conversion.FullyQualifiedDotnetTypeName #>" />.

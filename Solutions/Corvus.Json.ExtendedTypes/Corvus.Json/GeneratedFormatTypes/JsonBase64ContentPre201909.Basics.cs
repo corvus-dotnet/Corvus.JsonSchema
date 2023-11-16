@@ -59,6 +59,15 @@ public readonly partial struct JsonBase64ContentPre201909
     }
 
     /// <summary>
+    /// Conversion from JsonAny.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator JsonBase64ContentPre201909(JsonAny value)
+    {
+        return value.As<JsonBase64ContentPre201909>();
+    }
+
+    /// <summary>
     /// Conversion to JsonString.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>

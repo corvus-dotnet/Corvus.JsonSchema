@@ -59,6 +59,15 @@ public readonly partial struct JsonIpV4
     }
 
     /// <summary>
+    /// Conversion from JsonAny.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator JsonIpV4(JsonAny value)
+    {
+        return value.As<JsonIpV4>();
+    }
+
+    /// <summary>
     /// Conversion to JsonString.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
