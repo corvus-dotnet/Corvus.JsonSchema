@@ -34,29 +34,6 @@ public readonly partial struct Core
         }
 
         /// <summary>
-        /// Conversion from JsonBoolean.
-        /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator JsonBoolean(RecursiveAnchorEntity value)
-        {
-            return JsonBoolean.FromBoolean(value);
-        }
-
-        /// <summary>
-        /// Conversion to JsonBoolean.
-        /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator RecursiveAnchorEntity(JsonBoolean value)
-        {
-            if (value.HasJsonElementBacking)
-            {
-                return new(value.AsJsonElement);
-            }
-
-            return new((bool)value);
-        }
-
-        /// <summary>
         /// Conversion from bool.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>

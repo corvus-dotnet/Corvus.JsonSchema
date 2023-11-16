@@ -42,7 +42,7 @@ public readonly partial struct JsonPatchDocument
         /// Conversion to <see cref = "Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon(Move value)
+        public static explicit operator Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon(Move value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {

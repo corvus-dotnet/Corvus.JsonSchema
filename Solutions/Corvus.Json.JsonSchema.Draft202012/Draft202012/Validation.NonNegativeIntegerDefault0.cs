@@ -227,6 +227,16 @@ public readonly partial struct Validation
         }
 
         /// <summary>
+        /// Conversion from JsonAny.
+        /// </summary>
+        /// <param name = "value">The value from which to convert.</param>
+        /// <exception cref = "InvalidOperationException">The value was not compatible with this type.</exception>
+        public static implicit operator NonNegativeIntegerDefault0(in JsonAny value)
+        {
+            return value.As<NonNegativeIntegerDefault0>();
+        }
+
+        /// <summary>
         /// Conversion to JsonAny.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>

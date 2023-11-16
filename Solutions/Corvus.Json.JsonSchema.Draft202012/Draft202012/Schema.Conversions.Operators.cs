@@ -42,7 +42,7 @@ public readonly partial struct Schema
     /// Conversion to <see cref = "Corvus.Json.JsonSchema.Draft202012.Core"/>.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator Corvus.Json.JsonSchema.Draft202012.Core(Schema value)
+    public static explicit operator Corvus.Json.JsonSchema.Draft202012.Core(Schema value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -86,7 +86,7 @@ public readonly partial struct Schema
     /// Conversion to <see cref = "Corvus.Json.JsonSchema.Draft202012.Applicator"/>.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator Corvus.Json.JsonSchema.Draft202012.Applicator(Schema value)
+    public static explicit operator Corvus.Json.JsonSchema.Draft202012.Applicator(Schema value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -130,7 +130,7 @@ public readonly partial struct Schema
     /// Conversion to <see cref = "Corvus.Json.JsonSchema.Draft202012.Unevaluated"/>.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator Corvus.Json.JsonSchema.Draft202012.Unevaluated(Schema value)
+    public static explicit operator Corvus.Json.JsonSchema.Draft202012.Unevaluated(Schema value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -174,7 +174,7 @@ public readonly partial struct Schema
     /// Conversion to <see cref = "Corvus.Json.JsonSchema.Draft202012.Validation"/>.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator Corvus.Json.JsonSchema.Draft202012.Validation(Schema value)
+    public static explicit operator Corvus.Json.JsonSchema.Draft202012.Validation(Schema value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -218,7 +218,7 @@ public readonly partial struct Schema
     /// Conversion to <see cref = "Corvus.Json.JsonSchema.Draft202012.MetaData"/>.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator Corvus.Json.JsonSchema.Draft202012.MetaData(Schema value)
+    public static explicit operator Corvus.Json.JsonSchema.Draft202012.MetaData(Schema value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -262,7 +262,7 @@ public readonly partial struct Schema
     /// Conversion to <see cref = "Corvus.Json.JsonSchema.Draft202012.FormatAnnotation"/>.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator Corvus.Json.JsonSchema.Draft202012.FormatAnnotation(Schema value)
+    public static explicit operator Corvus.Json.JsonSchema.Draft202012.FormatAnnotation(Schema value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -306,7 +306,7 @@ public readonly partial struct Schema
     /// Conversion to <see cref = "Corvus.Json.JsonSchema.Draft202012.Content"/>.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator Corvus.Json.JsonSchema.Draft202012.Content(Schema value)
+    public static explicit operator Corvus.Json.JsonSchema.Draft202012.Content(Schema value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {

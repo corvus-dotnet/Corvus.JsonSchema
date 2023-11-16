@@ -383,7 +383,7 @@ public static partial class JsonPatchExtensions
 
     private static bool TryApplyRemove(in JsonAny node, in JsonPatchDocument.PatchOperation patchOperation, out JsonAny result)
     {
-        RemoveVisitor visitor = new(patchOperation);
+        RemoveVisitor visitor = new(patchOperation.AsRemoveEntity);
         bool transformed = node.Visit(visitor.Visit, out JsonAny transformedResult);
         result = transformedResult;
         return transformed;
@@ -391,7 +391,7 @@ public static partial class JsonPatchExtensions
 
     private static bool TryApplyReplace(in JsonAny node, in JsonPatchDocument.PatchOperation patchOperation, out JsonAny result)
     {
-        ReplaceVisitor visitor = new(patchOperation);
+        ReplaceVisitor visitor = new(patchOperation.AsReplaceEntity);
 
         if (visitor.Path.Length == 0)
         {

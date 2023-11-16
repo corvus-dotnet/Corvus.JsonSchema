@@ -35,29 +35,6 @@ public readonly partial struct Core
         }
 
         /// <summary>
-        /// Conversion from JsonString.
-        /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator JsonString(IdEntity value)
-        {
-            return JsonString.FromString(value);
-        }
-
-        /// <summary>
-        /// Conversion to JsonString.
-        /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator IdEntity(JsonString value)
-        {
-            if (value.HasJsonElementBacking)
-            {
-                return new(value.AsJsonElement);
-            }
-
-            return new((string)value);
-        }
-
-        /// <summary>
         /// Conversion from string.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>

@@ -33,29 +33,6 @@ public readonly partial struct Content : IJsonBoolean<Content>
     }
 
     /// <summary>
-    /// Conversion from JsonBoolean.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator JsonBoolean(Content value)
-    {
-        return JsonBoolean.FromBoolean(value);
-    }
-
-    /// <summary>
-    /// Conversion to JsonBoolean.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator Content(JsonBoolean value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        return new((bool)value);
-    }
-
-    /// <summary>
     /// Conversion from bool.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>

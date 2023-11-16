@@ -33,29 +33,6 @@ public readonly partial struct MetaData : IJsonBoolean<MetaData>
     }
 
     /// <summary>
-    /// Conversion from JsonBoolean.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator JsonBoolean(MetaData value)
-    {
-        return JsonBoolean.FromBoolean(value);
-    }
-
-    /// <summary>
-    /// Conversion to JsonBoolean.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator MetaData(JsonBoolean value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        return new((bool)value);
-    }
-
-    /// <summary>
     /// Conversion from bool.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>

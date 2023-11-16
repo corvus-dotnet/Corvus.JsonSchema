@@ -40,7 +40,7 @@ public readonly partial struct OtherNames
     /// Conversion to <see cref = "Corvus.Json.Benchmarking.Models.PersonNameElement"/>.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator Corvus.Json.Benchmarking.Models.PersonNameElement(OtherNames value)
+    public static explicit operator Corvus.Json.Benchmarking.Models.PersonNameElement(OtherNames value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -77,7 +77,7 @@ public readonly partial struct OtherNames
     /// Conversion to <see cref = "Corvus.Json.Benchmarking.Models.PersonNameElementArray"/>.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator Corvus.Json.Benchmarking.Models.PersonNameElementArray(OtherNames value)
+    public static explicit operator Corvus.Json.Benchmarking.Models.PersonNameElementArray(OtherNames value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {

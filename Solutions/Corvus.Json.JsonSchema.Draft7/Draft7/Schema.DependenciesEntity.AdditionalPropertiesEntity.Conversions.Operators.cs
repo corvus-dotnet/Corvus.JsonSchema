@@ -46,7 +46,7 @@ public readonly partial struct Schema
             /// Conversion to <see cref = "Corvus.Json.JsonSchema.Draft7.Schema"/>.
             /// </summary>
             /// <param name = "value">The value from which to convert.</param>
-            public static implicit operator Corvus.Json.JsonSchema.Draft7.Schema(AdditionalPropertiesEntity value)
+            public static explicit operator Corvus.Json.JsonSchema.Draft7.Schema(AdditionalPropertiesEntity value)
             {
                 if ((value.backing & Backing.JsonElement) != 0)
                 {
@@ -88,7 +88,7 @@ public readonly partial struct Schema
             /// Conversion to <see cref = "Corvus.Json.JsonSchema.Draft7.Schema.StringArray"/>.
             /// </summary>
             /// <param name = "value">The value from which to convert.</param>
-            public static implicit operator Corvus.Json.JsonSchema.Draft7.Schema.StringArray(AdditionalPropertiesEntity value)
+            public static explicit operator Corvus.Json.JsonSchema.Draft7.Schema.StringArray(AdditionalPropertiesEntity value)
             {
                 if ((value.backing & Backing.JsonElement) != 0)
                 {

@@ -42,7 +42,7 @@ public readonly partial struct Validation
         /// Conversion to <see cref = "Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger(MinContainsEntity value)
+        public static explicit operator Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger(MinContainsEntity value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {

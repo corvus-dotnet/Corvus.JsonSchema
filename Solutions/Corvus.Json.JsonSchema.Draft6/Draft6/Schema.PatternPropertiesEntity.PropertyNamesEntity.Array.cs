@@ -83,29 +83,6 @@ public readonly partial struct Schema
             }
 
             /// <summary>
-            /// Conversion from JsonArray.
-            /// </summary>
-            /// <param name = "value">The value from which to convert.</param>
-            public static implicit operator JsonArray(PropertyNamesEntity value)
-            {
-                return JsonArray.FromArray(value);
-            }
-
-            /// <summary>s
-            /// Conversion to JsonArray.
-            /// </summary>
-            /// <param name = "value">The value from which to convert.</param>
-            public static implicit operator PropertyNamesEntity(JsonArray value)
-            {
-                if (value.HasJsonElementBacking)
-                {
-                    return new(value.AsJsonElement);
-                }
-
-                return new(value.AsImmutableList());
-            }
-
-            /// <summary>
             /// Conversion from immutable list.
             /// </summary>
             /// <param name = "value">The value from which to convert.</param>

@@ -225,6 +225,16 @@ public readonly partial struct Person
     }
 
     /// <summary>
+    /// Conversion from JsonAny.
+    /// </summary>
+    /// <param name = "value">The value from which to convert.</param>
+    /// <exception cref = "InvalidOperationException">The value was not compatible with this type.</exception>
+    public static implicit operator Person(in JsonAny value)
+    {
+        return value.As<Person>();
+    }
+
+    /// <summary>
     /// Conversion to JsonAny.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>

@@ -44,7 +44,7 @@ public readonly partial struct Applicator
         /// Conversion to <see cref = "Corvus.Json.JsonSchema.Draft201909.Schema"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator Corvus.Json.JsonSchema.Draft201909.Schema(ItemsEntity value)
+        public static explicit operator Corvus.Json.JsonSchema.Draft201909.Schema(ItemsEntity value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -88,7 +88,7 @@ public readonly partial struct Applicator
         /// Conversion to <see cref = "Corvus.Json.JsonSchema.Draft201909.Core"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator Corvus.Json.JsonSchema.Draft201909.Core(ItemsEntity value)
+        public static explicit operator Corvus.Json.JsonSchema.Draft201909.Core(ItemsEntity value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -132,7 +132,7 @@ public readonly partial struct Applicator
         /// Conversion to <see cref = "Corvus.Json.JsonSchema.Draft201909.Applicator"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator Corvus.Json.JsonSchema.Draft201909.Applicator(ItemsEntity value)
+        public static explicit operator Corvus.Json.JsonSchema.Draft201909.Applicator(ItemsEntity value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -176,7 +176,7 @@ public readonly partial struct Applicator
         /// Conversion to <see cref = "Corvus.Json.JsonSchema.Draft201909.Validation"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator Corvus.Json.JsonSchema.Draft201909.Validation(ItemsEntity value)
+        public static explicit operator Corvus.Json.JsonSchema.Draft201909.Validation(ItemsEntity value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -220,7 +220,7 @@ public readonly partial struct Applicator
         /// Conversion to <see cref = "Corvus.Json.JsonSchema.Draft201909.MetaData"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator Corvus.Json.JsonSchema.Draft201909.MetaData(ItemsEntity value)
+        public static explicit operator Corvus.Json.JsonSchema.Draft201909.MetaData(ItemsEntity value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -264,7 +264,7 @@ public readonly partial struct Applicator
         /// Conversion to <see cref = "Corvus.Json.JsonSchema.Draft201909.Format"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator Corvus.Json.JsonSchema.Draft201909.Format(ItemsEntity value)
+        public static explicit operator Corvus.Json.JsonSchema.Draft201909.Format(ItemsEntity value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -308,7 +308,7 @@ public readonly partial struct Applicator
         /// Conversion to <see cref = "Corvus.Json.JsonSchema.Draft201909.Content"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator Corvus.Json.JsonSchema.Draft201909.Content(ItemsEntity value)
+        public static explicit operator Corvus.Json.JsonSchema.Draft201909.Content(ItemsEntity value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -350,7 +350,7 @@ public readonly partial struct Applicator
         /// Conversion to <see cref = "Corvus.Json.JsonSchema.Draft201909.Applicator.SchemaArray"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator Corvus.Json.JsonSchema.Draft201909.Applicator.SchemaArray(ItemsEntity value)
+        public static explicit operator Corvus.Json.JsonSchema.Draft201909.Applicator.SchemaArray(ItemsEntity value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {

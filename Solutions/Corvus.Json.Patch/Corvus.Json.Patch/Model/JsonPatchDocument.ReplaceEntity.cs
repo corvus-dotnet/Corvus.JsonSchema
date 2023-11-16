@@ -227,6 +227,16 @@ public readonly partial struct JsonPatchDocument
         }
 
         /// <summary>
+        /// Conversion from JsonAny.
+        /// </summary>
+        /// <param name = "value">The value from which to convert.</param>
+        /// <exception cref = "InvalidOperationException">The value was not compatible with this type.</exception>
+        public static implicit operator ReplaceEntity(in JsonAny value)
+        {
+            return value.As<ReplaceEntity>();
+        }
+
+        /// <summary>
         /// Conversion to JsonAny.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>

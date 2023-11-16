@@ -145,29 +145,6 @@ public readonly partial struct Validation
         }
 
         /// <summary>
-        /// Conversion from JsonNumber.
-        /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator JsonNumber(MultipleOfEntity value)
-        {
-            return JsonNumber.FromNumber(value);
-        }
-
-        /// <summary>
-        /// Conversion to JsonNumber.
-        /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator MultipleOfEntity(JsonNumber value)
-        {
-            if (value.HasJsonElementBacking)
-            {
-                return new(value.AsJsonElement);
-            }
-
-            return new(value.AsBinaryJsonNumber);
-        }
-
-        /// <summary>
         /// Conversion to byte.
         /// </summary>
         /// <param name = "value">The value to convert.</param>

@@ -33,29 +33,6 @@ public readonly partial struct Schema : IJsonBoolean<Schema>
     }
 
     /// <summary>
-    /// Conversion from JsonBoolean.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator JsonBoolean(Schema value)
-    {
-        return JsonBoolean.FromBoolean(value);
-    }
-
-    /// <summary>
-    /// Conversion to JsonBoolean.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator Schema(JsonBoolean value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        return new((bool)value);
-    }
-
-    /// <summary>
     /// Conversion from bool.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>

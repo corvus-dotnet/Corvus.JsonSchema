@@ -51,29 +51,6 @@ public readonly partial struct DisabledScenario : IJsonObject<DisabledScenario>
     }
 
     /// <summary>
-    /// Conversion from JsonObject.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator JsonObject(DisabledScenario value)
-    {
-        return JsonObject.FromObject(value);
-    }
-
-    /// <summary>
-    /// Conversion to JsonObject.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator DisabledScenario(JsonObject value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        return new(value.AsPropertyBacking());
-    }
-
-    /// <summary>
     /// Creates an instance of the type from the given dictionary of properties.
     /// </summary>
     /// <param name = "source">The dictionary of properties.</param>

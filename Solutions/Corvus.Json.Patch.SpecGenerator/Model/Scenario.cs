@@ -225,6 +225,16 @@ public readonly partial struct Scenario
     }
 
     /// <summary>
+    /// Conversion from JsonAny.
+    /// </summary>
+    /// <param name = "value">The value from which to convert.</param>
+    /// <exception cref = "InvalidOperationException">The value was not compatible with this type.</exception>
+    public static implicit operator Scenario(in JsonAny value)
+    {
+        return value.As<Scenario>();
+    }
+
+    /// <summary>
     /// Conversion to JsonAny.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>

@@ -36,29 +36,6 @@ public readonly partial struct Schema
         }
 
         /// <summary>
-        /// Conversion from JsonString.
-        /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator JsonString(TypeEntity value)
-        {
-            return JsonString.FromString(value);
-        }
-
-        /// <summary>
-        /// Conversion to JsonString.
-        /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator TypeEntity(JsonString value)
-        {
-            if (value.HasJsonElementBacking)
-            {
-                return new(value.AsJsonElement);
-            }
-
-            return new((string)value);
-        }
-
-        /// <summary>
         /// Conversion from string.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>

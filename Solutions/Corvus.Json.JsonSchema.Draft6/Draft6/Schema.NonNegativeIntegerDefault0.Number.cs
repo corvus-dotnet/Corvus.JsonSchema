@@ -145,29 +145,6 @@ public readonly partial struct Schema
         }
 
         /// <summary>
-        /// Conversion from JsonNumber.
-        /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator JsonNumber(NonNegativeIntegerDefault0 value)
-        {
-            return JsonNumber.FromNumber(value);
-        }
-
-        /// <summary>
-        /// Conversion to JsonNumber.
-        /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator NonNegativeIntegerDefault0(JsonNumber value)
-        {
-            if (value.HasJsonElementBacking)
-            {
-                return new(value.AsJsonElement);
-            }
-
-            return new(value.AsBinaryJsonNumber);
-        }
-
-        /// <summary>
         /// Conversion to byte.
         /// </summary>
         /// <param name = "value">The value to convert.</param>

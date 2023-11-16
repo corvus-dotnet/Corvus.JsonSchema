@@ -42,7 +42,7 @@ public readonly partial struct Schema
         /// Conversion to <see cref = "Corvus.Json.JsonSchema.Draft7.Schema.NonNegativeInteger"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator Corvus.Json.JsonSchema.Draft7.Schema.NonNegativeInteger(NonNegativeIntegerDefault0 value)
+        public static explicit operator Corvus.Json.JsonSchema.Draft7.Schema.NonNegativeInteger(NonNegativeIntegerDefault0 value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -78,7 +78,7 @@ public readonly partial struct Schema
         /// Conversion to <see cref = "Corvus.Json.JsonSchema.Draft7.Schema.NonNegativeIntegerDefault0.AllOf1Entity"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator Corvus.Json.JsonSchema.Draft7.Schema.NonNegativeIntegerDefault0.AllOf1Entity(NonNegativeIntegerDefault0 value)
+        public static explicit operator Corvus.Json.JsonSchema.Draft7.Schema.NonNegativeIntegerDefault0.AllOf1Entity(NonNegativeIntegerDefault0 value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {

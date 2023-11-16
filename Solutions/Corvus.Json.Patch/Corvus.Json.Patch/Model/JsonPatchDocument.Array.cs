@@ -73,29 +73,6 @@ public readonly partial struct JsonPatchDocument : IJsonArray<JsonPatchDocument>
     }
 
     /// <summary>
-    /// Conversion from JsonArray.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator JsonArray(JsonPatchDocument value)
-    {
-        return JsonArray.FromArray(value);
-    }
-
-    /// <summary>s
-    /// Conversion to JsonArray.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator JsonPatchDocument(JsonArray value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        return new(value.AsImmutableList());
-    }
-
-    /// <summary>
     /// Conversion from immutable list.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>

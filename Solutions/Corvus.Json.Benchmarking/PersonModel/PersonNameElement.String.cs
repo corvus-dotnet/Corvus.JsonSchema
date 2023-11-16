@@ -33,29 +33,6 @@ public readonly partial struct PersonNameElement : IJsonString<PersonNameElement
     }
 
     /// <summary>
-    /// Conversion from JsonString.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator JsonString(PersonNameElement value)
-    {
-        return JsonString.FromString(value);
-    }
-
-    /// <summary>
-    /// Conversion to JsonString.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator PersonNameElement(JsonString value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        return new((string)value);
-    }
-
-    /// <summary>
     /// Conversion from string.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>

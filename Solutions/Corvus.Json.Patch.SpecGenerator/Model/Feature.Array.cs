@@ -73,29 +73,6 @@ public readonly partial struct Feature : IJsonArray<Feature>
     }
 
     /// <summary>
-    /// Conversion from JsonArray.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator JsonArray(Feature value)
-    {
-        return JsonArray.FromArray(value);
-    }
-
-    /// <summary>s
-    /// Conversion to JsonArray.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator Feature(JsonArray value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        return new(value.AsImmutableList());
-    }
-
-    /// <summary>
     /// Conversion from immutable list.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
