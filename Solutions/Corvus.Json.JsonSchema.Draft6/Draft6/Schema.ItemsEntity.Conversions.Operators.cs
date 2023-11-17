@@ -21,26 +21,6 @@ public readonly partial struct Schema
     public readonly partial struct ItemsEntity
     {
         /// <summary>
-        /// Conversion from <see cref = "Corvus.Json.JsonSchema.Draft6.Schema"/>.
-        /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator ItemsEntity(Corvus.Json.JsonSchema.Draft6.Schema value)
-        {
-            if (value.HasJsonElementBacking)
-            {
-                return new(value.AsJsonElement);
-            }
-
-            return value.ValueKind switch
-            {
-                JsonValueKind.Object => new(value.AsPropertyBacking()),
-                JsonValueKind.True => new(true),
-                JsonValueKind.False => new(false),
-                _ => Undefined
-            };
-        }
-
-        /// <summary>
         /// Conversion to <see cref = "Corvus.Json.JsonSchema.Draft6.Schema"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
@@ -65,10 +45,10 @@ public readonly partial struct Schema
         }
 
         /// <summary>
-        /// Conversion from <see cref = "Corvus.Json.JsonSchema.Draft6.Schema.SchemaArray"/>.
+        /// Conversion from <see cref = "Corvus.Json.JsonSchema.Draft6.Schema"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator ItemsEntity(Corvus.Json.JsonSchema.Draft6.Schema.SchemaArray value)
+        public static implicit operator ItemsEntity(Corvus.Json.JsonSchema.Draft6.Schema value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -77,7 +57,9 @@ public readonly partial struct Schema
 
             return value.ValueKind switch
             {
-                JsonValueKind.Array => new(value.AsImmutableList()),
+                JsonValueKind.Object => new(value.AsPropertyBacking()),
+                JsonValueKind.True => new(true),
+                JsonValueKind.False => new(false),
                 _ => Undefined
             };
         }
@@ -99,6 +81,24 @@ public readonly partial struct Schema
             }
 
             return Corvus.Json.JsonSchema.Draft6.Schema.SchemaArray.Undefined;
+        }
+
+        /// <summary>
+        /// Conversion from <see cref = "Corvus.Json.JsonSchema.Draft6.Schema.SchemaArray"/>.
+        /// </summary>
+        /// <param name = "value">The value from which to convert.</param>
+        public static implicit operator ItemsEntity(Corvus.Json.JsonSchema.Draft6.Schema.SchemaArray value)
+        {
+            if (value.HasJsonElementBacking)
+            {
+                return new(value.AsJsonElement);
+            }
+
+            return value.ValueKind switch
+            {
+                JsonValueKind.Array => new(value.AsImmutableList()),
+                _ => Undefined
+            };
         }
     }
 }

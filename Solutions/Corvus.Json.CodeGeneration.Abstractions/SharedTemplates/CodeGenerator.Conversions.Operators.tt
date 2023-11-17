@@ -35,49 +35,9 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     {
         if (conversion.DotnetTypeName == BuiltInTypes.AnyTypeDeclaration.Type)
         {
+            // Never emit JsonAny conversions.
             continue;
         } #>
-
-    /// <summary>
-    /// Conversion from <see cref="<#= conversion.FullyQualifiedDotnetTypeName #>" />.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator <#= TypeDeclaration.DotnetTypeName #>(<#= conversion.FullyQualifiedDotnetTypeName #> value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        return value.ValueKind switch
-        {
-<#      // If the conversion supports the given type, we know that
-        // we must also support the given type (as we derived the conversion from schema in this case)
-        // so we do not need to check the IsImplicitObject etc.
-        if(conversion.IsObject)
-        { #>
-            JsonValueKind.Object => new(value.AsPropertyBacking()),
-<#      }
-        if(conversion.IsArray)
-        { #>
-            JsonValueKind.Array => new(value.AsImmutableList()),
-<#      }
-        if(conversion.IsString)
-        { #>
-            JsonValueKind.String => new((string)value),
-<#      }
-        if(conversion.IsBoolean)
-        { #>
-            JsonValueKind.True => new(true),
-            JsonValueKind.False => new(false),
-<#      }
-        if(conversion.IsNumber)
-        { #>
-            JsonValueKind.Number => new(value.AsBinaryJsonNumber),
-<#      } #>
-            _ => Undefined
-        };
-    }
 
     /// <summary>
     /// Conversion to <see cref="<#= conversion.FullyQualifiedDotnetTypeName #>" />.
@@ -140,6 +100,61 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 <#      } #>
 
         return <#= conversion.FullyQualifiedDotnetTypeName #>.Undefined;
+    }
+
+<#  if (conversion.IsBuiltInPrimitiveType)
+    {
+        if ((conversion.IsString && IsImplicitString) ||
+            (conversion.IsBoolean && IsImplicitBoolean) ||
+            (conversion.IsNumber && IsImplicitNumber) ||
+            (conversion.IsObject && IsImplicitObject) ||
+            (conversion.IsArray && IsImplicitArray))
+        {
+            // We have already emitted the conversions for this type.
+			continue;
+        }
+
+    } #>
+
+    /// <summary>
+    /// Conversion from <see cref="<#= conversion.FullyQualifiedDotnetTypeName #>" />.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator <#= TypeDeclaration.DotnetTypeName #>(<#= conversion.FullyQualifiedDotnetTypeName #> value)
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        return value.ValueKind switch
+        {
+<#      // If the conversion supports the given type, we know that
+        // we must also support the given type (as we derived the conversion from schema in this case)
+        // so we do not need to check the IsImplicitObject etc.
+        if(conversion.IsObject)
+        { #>
+            JsonValueKind.Object => new(value.AsPropertyBacking()),
+<#      }
+        if(conversion.IsArray)
+        { #>
+            JsonValueKind.Array => new(value.AsImmutableList()),
+<#      }
+        if(conversion.IsString)
+        { #>
+            JsonValueKind.String => new((string)value),
+<#      }
+        if(conversion.IsBoolean)
+        { #>
+            JsonValueKind.True => new(true),
+            JsonValueKind.False => new(false),
+<#      }
+        if(conversion.IsNumber)
+        { #>
+            JsonValueKind.Number => new(value.AsBinaryJsonNumber),
+<#      } #>
+            _ => Undefined
+        };
     }
 <#  } #>
 }

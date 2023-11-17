@@ -82,12 +82,12 @@ public readonly partial struct JsonDate
     /// <param name="value">The value from which to convert.</param>
     public static implicit operator JsonDate(JsonString value)
     {
-        if (value.HasJsonElementBacking)
+        if (value.HasDotnetBacking && value.ValueKind == JsonValueKind.String)
         {
-            return new(value.AsJsonElement);
+            return new((string)value);
         }
 
-        return new((string)value);
+        return new(value.AsJsonElement);
     }
 
     /// <summary>

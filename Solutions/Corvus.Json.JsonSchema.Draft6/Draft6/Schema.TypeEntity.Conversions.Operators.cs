@@ -21,24 +21,6 @@ public readonly partial struct Schema
     public readonly partial struct TypeEntity
     {
         /// <summary>
-        /// Conversion from <see cref = "Corvus.Json.JsonSchema.Draft6.Schema.SimpleTypes"/>.
-        /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator TypeEntity(Corvus.Json.JsonSchema.Draft6.Schema.SimpleTypes value)
-        {
-            if (value.HasJsonElementBacking)
-            {
-                return new(value.AsJsonElement);
-            }
-
-            return value.ValueKind switch
-            {
-                JsonValueKind.String => new((string)value),
-                _ => Undefined
-            };
-        }
-
-        /// <summary>
         /// Conversion to <see cref = "Corvus.Json.JsonSchema.Draft6.Schema.SimpleTypes"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
@@ -58,10 +40,10 @@ public readonly partial struct Schema
         }
 
         /// <summary>
-        /// Conversion from <see cref = "Corvus.Json.JsonSchema.Draft6.Schema.TypeEntity.SimpleTypesArray"/>.
+        /// Conversion from <see cref = "Corvus.Json.JsonSchema.Draft6.Schema.SimpleTypes"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator TypeEntity(Corvus.Json.JsonSchema.Draft6.Schema.TypeEntity.SimpleTypesArray value)
+        public static implicit operator TypeEntity(Corvus.Json.JsonSchema.Draft6.Schema.SimpleTypes value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -70,7 +52,7 @@ public readonly partial struct Schema
 
             return value.ValueKind switch
             {
-                JsonValueKind.Array => new(value.AsImmutableList()),
+                JsonValueKind.String => new((string)value),
                 _ => Undefined
             };
         }
@@ -92,6 +74,24 @@ public readonly partial struct Schema
             }
 
             return Corvus.Json.JsonSchema.Draft6.Schema.TypeEntity.SimpleTypesArray.Undefined;
+        }
+
+        /// <summary>
+        /// Conversion from <see cref = "Corvus.Json.JsonSchema.Draft6.Schema.TypeEntity.SimpleTypesArray"/>.
+        /// </summary>
+        /// <param name = "value">The value from which to convert.</param>
+        public static implicit operator TypeEntity(Corvus.Json.JsonSchema.Draft6.Schema.TypeEntity.SimpleTypesArray value)
+        {
+            if (value.HasJsonElementBacking)
+            {
+                return new(value.AsJsonElement);
+            }
+
+            return value.ValueKind switch
+            {
+                JsonValueKind.Array => new(value.AsImmutableList()),
+                _ => Undefined
+            };
         }
     }
 }

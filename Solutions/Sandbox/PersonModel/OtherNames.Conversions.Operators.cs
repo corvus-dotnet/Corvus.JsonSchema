@@ -19,24 +19,6 @@ namespace Corvus.Json.Benchmarking.Models;
 public readonly partial struct OtherNames
 {
     /// <summary>
-    /// Conversion from <see cref = "Corvus.Json.Benchmarking.Models.PersonNameElement"/>.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator OtherNames(Corvus.Json.Benchmarking.Models.PersonNameElement value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        return value.ValueKind switch
-        {
-            JsonValueKind.String => new((string)value),
-            _ => Undefined
-        };
-    }
-
-    /// <summary>
     /// Conversion to <see cref = "Corvus.Json.Benchmarking.Models.PersonNameElement"/>.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
@@ -56,10 +38,10 @@ public readonly partial struct OtherNames
     }
 
     /// <summary>
-    /// Conversion from <see cref = "Corvus.Json.Benchmarking.Models.PersonNameElementArray"/>.
+    /// Conversion from <see cref = "Corvus.Json.Benchmarking.Models.PersonNameElement"/>.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator OtherNames(Corvus.Json.Benchmarking.Models.PersonNameElementArray value)
+    public static implicit operator OtherNames(Corvus.Json.Benchmarking.Models.PersonNameElement value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -68,7 +50,7 @@ public readonly partial struct OtherNames
 
         return value.ValueKind switch
         {
-            JsonValueKind.Array => new(value.AsImmutableList()),
+            JsonValueKind.String => new((string)value),
             _ => Undefined
         };
     }
@@ -90,5 +72,23 @@ public readonly partial struct OtherNames
         }
 
         return Corvus.Json.Benchmarking.Models.PersonNameElementArray.Undefined;
+    }
+
+    /// <summary>
+    /// Conversion from <see cref = "Corvus.Json.Benchmarking.Models.PersonNameElementArray"/>.
+    /// </summary>
+    /// <param name = "value">The value from which to convert.</param>
+    public static implicit operator OtherNames(Corvus.Json.Benchmarking.Models.PersonNameElementArray value)
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        return value.ValueKind switch
+        {
+            JsonValueKind.Array => new(value.AsImmutableList()),
+            _ => Undefined
+        };
     }
 }
