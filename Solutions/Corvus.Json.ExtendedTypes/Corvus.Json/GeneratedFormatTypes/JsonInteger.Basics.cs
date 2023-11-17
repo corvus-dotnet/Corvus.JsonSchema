@@ -2,6 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Numerics;
+
 using Corvus.Json.Internal;
 
 namespace Corvus.Json;
@@ -10,6 +12,12 @@ namespace Corvus.Json;
 /// Represents a JSON integer.
 /// </summary>
 public readonly partial struct JsonInteger
+ : IAdditionOperators<JsonInteger, JsonInteger, JsonInteger>,
+   ISubtractionOperators<JsonInteger, JsonInteger, JsonInteger>,
+   IMultiplyOperators<JsonInteger, JsonInteger, JsonInteger>,
+   IDivisionOperators<JsonInteger, JsonInteger, JsonInteger>,
+   IIncrementOperators<JsonInteger>,
+   IDecrementOperators<JsonInteger>
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonInteger"/> struct.
@@ -548,5 +556,71 @@ public readonly partial struct JsonInteger
     public static implicit operator JsonInteger(ulong value)
     {
         return new(value);
+    }
+
+    /// <summary>
+    /// Adds two values together to compute their sum.
+    /// </summary>
+    /// <param name="left">The left hand side.</param>
+    /// <param name="right">The right hand side.</param>
+    /// <returns>The resulting value.</returns>
+    public static JsonInteger operator +(JsonInteger left, JsonInteger right)
+    {
+        return new(left.AsBinaryJsonNumber + right.AsBinaryJsonNumber);
+    }
+
+    /// <summary>
+    /// Subtracts two values together to compute their difference.
+    /// </summary>
+    /// <param name="left">The left hand side.</param>
+    /// <param name="right">The right hand side.</param>
+    /// <returns>The resulting value.</returns>
+    public static JsonInteger operator -(JsonInteger left, JsonInteger right)
+    {
+        return new(left.AsBinaryJsonNumber - right.AsBinaryJsonNumber);
+    }
+
+    /// <summary>
+    /// Multiplies two values together.
+    /// </summary>
+    /// <param name="left">The left hand side.</param>
+    /// <param name="right">The right hand side.</param>
+    /// <returns>The resulting value.</returns>
+    public static JsonInteger operator *(JsonInteger left, JsonInteger right)
+    {
+        return new(left.AsBinaryJsonNumber * right.AsBinaryJsonNumber);
+    }
+
+    /// <summary>
+    /// Divides two values.
+    /// </summary>
+    /// <param name="left">The left hand side.</param>
+    /// <param name="right">The right hand side.</param>
+    /// <returns>The resulting value.</returns>
+    public static JsonInteger operator /(JsonInteger left, JsonInteger right)
+    {
+        return new(left.AsBinaryJsonNumber / right.AsBinaryJsonNumber);
+    }
+
+    /// <summary>
+    /// Increments the value.
+    /// </summary>
+    /// <param name="value">The value.</param>
+    /// <returns>The resulting value.</returns>
+    public static JsonInteger operator ++(JsonInteger value)
+    {
+        BinaryJsonNumber num = value.AsBinaryJsonNumber;
+        return new(num++);
+    }
+
+    /// <summary>
+    /// Decrements the value.
+    /// </summary>
+    /// <param name="value">The value.</param>
+    /// <returns>The resulting value.</returns>
+    public static JsonInteger operator --(JsonInteger value)
+    {
+        BinaryJsonNumber num = value.AsBinaryJsonNumber;
+        return new(num--);
     }
 }

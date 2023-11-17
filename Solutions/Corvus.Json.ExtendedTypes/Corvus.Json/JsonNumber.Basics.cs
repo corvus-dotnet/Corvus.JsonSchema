@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Numerics;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json;
@@ -11,6 +12,12 @@ namespace Corvus.Json;
 /// </summary>
 [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<JsonNumber>))]
 public readonly partial struct JsonNumber
+    : IAdditionOperators<JsonNumber, JsonNumber, JsonNumber>,
+      ISubtractionOperators<JsonNumber, JsonNumber, JsonNumber>,
+      IMultiplyOperators<JsonNumber, JsonNumber, JsonNumber>,
+      IDivisionOperators<JsonNumber, JsonNumber, JsonNumber>,
+      IIncrementOperators<JsonNumber>,
+      IDecrementOperators<JsonNumber>
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonNumber"/> struct.
@@ -533,5 +540,71 @@ public readonly partial struct JsonNumber
     public static implicit operator JsonNumber(ulong value)
     {
         return new(value);
+    }
+
+    /// <summary>
+    /// Adds two values together to compute their sum.
+    /// </summary>
+    /// <param name="left">The left hand side.</param>
+    /// <param name="right">The right hand side.</param>
+    /// <returns>The resulting value.</returns>
+    public static JsonNumber operator +(JsonNumber left, JsonNumber right)
+    {
+        return new JsonNumber(left.AsBinaryJsonNumber + right.AsBinaryJsonNumber);
+    }
+
+    /// <summary>
+    /// Subtracts two values together to compute their difference.
+    /// </summary>
+    /// <param name="left">The left hand side.</param>
+    /// <param name="right">The right hand side.</param>
+    /// <returns>The resulting value.</returns>
+    public static JsonNumber operator -(JsonNumber left, JsonNumber right)
+    {
+        return new(left.AsBinaryJsonNumber - right.AsBinaryJsonNumber);
+    }
+
+    /// <summary>
+    /// Multiplies two values together.
+    /// </summary>
+    /// <param name="left">The left hand side.</param>
+    /// <param name="right">The right hand side.</param>
+    /// <returns>The resulting value.</returns>
+    public static JsonNumber operator *(JsonNumber left, JsonNumber right)
+    {
+        return new(left.AsBinaryJsonNumber * right.AsBinaryJsonNumber);
+    }
+
+    /// <summary>
+    /// Divides two values.
+    /// </summary>
+    /// <param name="left">The left hand side.</param>
+    /// <param name="right">The right hand side.</param>
+    /// <returns>The resulting value.</returns>
+    public static JsonNumber operator /(JsonNumber left, JsonNumber right)
+    {
+        return new(left.AsBinaryJsonNumber / right.AsBinaryJsonNumber);
+    }
+
+    /// <summary>
+    /// Increments the value.
+    /// </summary>
+    /// <param name="value">The value.</param>
+    /// <returns>The resulting value.</returns>
+    public static JsonNumber operator ++(JsonNumber value)
+    {
+        BinaryJsonNumber num = value.AsBinaryJsonNumber;
+        return new(num++);
+    }
+
+    /// <summary>
+    /// Decrements the value.
+    /// </summary>
+    /// <param name="value">The value.</param>
+    /// <returns>The resulting value.</returns>
+    public static JsonNumber operator --(JsonNumber value)
+    {
+        BinaryJsonNumber num = value.AsBinaryJsonNumber;
+        return new(num--);
     }
 }

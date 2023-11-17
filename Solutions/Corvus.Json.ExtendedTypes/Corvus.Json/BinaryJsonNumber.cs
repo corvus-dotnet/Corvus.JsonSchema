@@ -5,6 +5,7 @@
 using System.Buffers.Binary;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -19,7 +20,8 @@ namespace Corvus.Json;
 [DebuggerDisplay("{ToString()} [{numericKind}]")]
 public readonly struct BinaryJsonNumber :
     ISpanFormattable,
-    IUtf8SpanFormattable
+    IUtf8SpanFormattable,
+    INumberBase<BinaryJsonNumber>
 {
     private readonly ByteBuffer16 binaryData;
     private readonly Kind numericKind;
@@ -267,6 +269,31 @@ public readonly struct BinaryJsonNumber :
     public static BinaryJsonNumber None { get; } = default;
 
     /// <summary>
+    /// Gets the BinaryJsonNumber for 1.
+    /// </summary>
+    public static BinaryJsonNumber One { get; } = new BinaryJsonNumber(1);
+
+    /// <summary>
+    /// Gets the Radix for the BinaryJsonNumber (2).
+    /// </summary>
+    public static int Radix { get; } = 2;
+
+    /// <summary>
+    /// Gets the BinaryJsonNumber for 0.
+    /// </summary>
+    public static BinaryJsonNumber Zero { get; } = new BinaryJsonNumber(0);
+
+    /// <summary>
+    /// Gets the BinaryJsonNumber for 0.
+    /// </summary>
+    public static BinaryJsonNumber AdditiveIdentity => Zero;
+
+    /// <summary>
+    /// Gets the BinaryJsonNumber for 1.
+    /// </summary>
+    public static BinaryJsonNumber MultiplicativeIdentity => One;
+
+    /// <summary>
     /// Gets a value indicating whether the binary number has a value.
     /// </summary>
     public bool HasValue => this.numericKind != Kind.None;
@@ -476,6 +503,1023 @@ public readonly struct BinaryJsonNumber :
     public static bool operator >=(JsonElement left, BinaryJsonNumber right)
     {
         return Compare(left, right) >= 0;
+    }
+
+    /// <summary>
+    /// Addition operator.
+    /// </summary>
+    /// <param name="left">The left hand side of the addition.</param>
+    /// <param name="right">The right hand side of the addition.</param>
+    /// <returns>The result of the addition.</returns>
+    /// <exception cref="NotSupportedException">The numeric format is not supported.</exception>
+    public static BinaryJsonNumber operator +(BinaryJsonNumber left, BinaryJsonNumber right)
+    {
+        if (left.numericKind == right.numericKind)
+        {
+            return left.numericKind switch
+            {
+                Kind.Byte => new(ReadByte(left.binaryData) + ReadByte(right.binaryData)),
+                Kind.Decimal => new(ReadDecimal(left.binaryData) + ReadDecimal(right.binaryData)),
+                Kind.Double => new(ReadDouble(left.binaryData) + ReadDouble(right.binaryData)),
+                Kind.Half => new(ReadHalf(left.binaryData) + ReadHalf(right.binaryData)),
+                Kind.Int16 => new(ReadInt16(left.binaryData) + ReadInt16(right.binaryData)),
+                Kind.Int32 => new(ReadInt32(left.binaryData) + ReadInt32(right.binaryData)),
+                Kind.Int64 => new(ReadInt64(left.binaryData) + ReadInt64(right.binaryData)),
+                Kind.Int128 => new(ReadInt128(left.binaryData) + ReadInt128(right.binaryData)),
+                Kind.SByte => new(ReadSByte(left.binaryData) + ReadSByte(right.binaryData)),
+                Kind.Single => new(ReadSingle(left.binaryData) + ReadSingle(right.binaryData)),
+                Kind.UInt16 => new(ReadUInt16(left.binaryData) + ReadUInt16(right.binaryData)),
+                Kind.UInt32 => new(ReadUInt32(left.binaryData) + ReadUInt32(right.binaryData)),
+                Kind.UInt64 => new(ReadUInt64(left.binaryData) + ReadUInt64(right.binaryData)),
+                Kind.UInt128 => new(ReadUInt128(left.binaryData) + ReadUInt128(right.binaryData)),
+                _ => throw new NotSupportedException(),
+            };
+        }
+
+        return right.numericKind switch
+        {
+            Kind.Byte => Add(left, ReadByte(right.binaryData)),
+            Kind.Decimal => Add(left, ReadDecimal(right.binaryData)),
+            Kind.Double => Add(left, ReadDouble(right.binaryData)),
+            Kind.Half => Add(left, ReadHalf(right.binaryData)),
+            Kind.Int16 => Add(left, ReadInt16(right.binaryData)),
+            Kind.Int32 => Add(left, ReadInt32(right.binaryData)),
+            Kind.Int64 => Add(left, ReadInt64(right.binaryData)),
+            Kind.Int128 => Add(left, ReadInt128(right.binaryData)),
+            Kind.SByte => Add(left, ReadSByte(right.binaryData)),
+            Kind.Single => Add(left, ReadSingle(right.binaryData)),
+            Kind.UInt16 => Add(left, ReadUInt16(right.binaryData)),
+            Kind.UInt32 => Add(left, ReadUInt32(right.binaryData)),
+            Kind.UInt64 => Add(left, ReadUInt64(right.binaryData)),
+            Kind.UInt128 => Add(left, ReadUInt128(right.binaryData)),
+            _ => throw new NotSupportedException(),
+        };
+    }
+
+    /// <summary>
+    /// Subtraction operator.
+    /// </summary>
+    /// <param name="left">The left hand side of the subtraction.</param>
+    /// <param name="right">The right hand side of the subtraction.</param>
+    /// <returns>The result of the subtraction.</returns>
+    /// <exception cref="NotSupportedException">The numeric format is not supported.</exception>
+    public static BinaryJsonNumber operator -(BinaryJsonNumber left, BinaryJsonNumber right)
+    {
+        if (left.numericKind == right.numericKind)
+        {
+            return left.numericKind switch
+            {
+                Kind.Byte => new(ReadByte(left.binaryData) - ReadByte(right.binaryData)),
+                Kind.Decimal => new(ReadDecimal(left.binaryData) - ReadDecimal(right.binaryData)),
+                Kind.Double => new(ReadDouble(left.binaryData) - ReadDouble(right.binaryData)),
+                Kind.Half => new(ReadHalf(left.binaryData) - ReadHalf(right.binaryData)),
+                Kind.Int16 => new(ReadInt16(left.binaryData) - ReadInt16(right.binaryData)),
+                Kind.Int32 => new(ReadInt32(left.binaryData) - ReadInt32(right.binaryData)),
+                Kind.Int64 => new(ReadInt64(left.binaryData) - ReadInt64(right.binaryData)),
+                Kind.Int128 => new(ReadInt128(left.binaryData) - ReadInt128(right.binaryData)),
+                Kind.SByte => new(ReadSByte(left.binaryData) - ReadSByte(right.binaryData)),
+                Kind.Single => new(ReadSingle(left.binaryData) - ReadSingle(right.binaryData)),
+                Kind.UInt16 => new(ReadUInt16(left.binaryData) - ReadUInt16(right.binaryData)),
+                Kind.UInt32 => new(ReadUInt32(left.binaryData) - ReadUInt32(right.binaryData)),
+                Kind.UInt64 => new(ReadUInt64(left.binaryData) - ReadUInt64(right.binaryData)),
+                Kind.UInt128 => new(ReadUInt128(left.binaryData) - ReadUInt128(right.binaryData)),
+                _ => throw new NotSupportedException(),
+            };
+        }
+
+        return right.numericKind switch
+        {
+            Kind.Byte => Subtract(left, ReadByte(right.binaryData)),
+            Kind.Decimal => Subtract(left, ReadDecimal(right.binaryData)),
+            Kind.Double => Subtract(left, ReadDouble(right.binaryData)),
+            Kind.Half => Subtract(left, ReadHalf(right.binaryData)),
+            Kind.Int16 => Subtract(left, ReadInt16(right.binaryData)),
+            Kind.Int32 => Subtract(left, ReadInt32(right.binaryData)),
+            Kind.Int64 => Subtract(left, ReadInt64(right.binaryData)),
+            Kind.Int128 => Subtract(left, ReadInt128(right.binaryData)),
+            Kind.SByte => Subtract(left, ReadSByte(right.binaryData)),
+            Kind.Single => Subtract(left, ReadSingle(right.binaryData)),
+            Kind.UInt16 => Subtract(left, ReadUInt16(right.binaryData)),
+            Kind.UInt32 => Subtract(left, ReadUInt32(right.binaryData)),
+            Kind.UInt64 => Subtract(left, ReadUInt64(right.binaryData)),
+            Kind.UInt128 => Subtract(left, ReadUInt128(right.binaryData)),
+            _ => throw new NotSupportedException(),
+        };
+    }
+
+    /// <summary>
+    /// Multiplication operator.
+    /// </summary>
+    /// <param name="left">The left hand side of the multiplication.</param>
+    /// <param name="right">The right hand side of the multiplication.</param>
+    /// <returns>The result of the multiplication.</returns>
+    /// <exception cref="NotSupportedException">The numeric format is not supported.</exception>
+    public static BinaryJsonNumber operator *(BinaryJsonNumber left, BinaryJsonNumber right)
+    {
+        if (left.numericKind == right.numericKind)
+        {
+            return left.numericKind switch
+            {
+                Kind.Byte => new(ReadByte(left.binaryData) * ReadByte(right.binaryData)),
+                Kind.Decimal => new(ReadDecimal(left.binaryData) * ReadDecimal(right.binaryData)),
+                Kind.Double => new(ReadDouble(left.binaryData) * ReadDouble(right.binaryData)),
+                Kind.Half => new(ReadHalf(left.binaryData) * ReadHalf(right.binaryData)),
+                Kind.Int16 => new(ReadInt16(left.binaryData) * ReadInt16(right.binaryData)),
+                Kind.Int32 => new(ReadInt32(left.binaryData) * ReadInt32(right.binaryData)),
+                Kind.Int64 => new(ReadInt64(left.binaryData) * ReadInt64(right.binaryData)),
+                Kind.Int128 => new(ReadInt128(left.binaryData) * ReadInt128(right.binaryData)),
+                Kind.SByte => new(ReadSByte(left.binaryData) * ReadSByte(right.binaryData)),
+                Kind.Single => new(ReadSingle(left.binaryData) * ReadSingle(right.binaryData)),
+                Kind.UInt16 => new(ReadUInt16(left.binaryData) * ReadUInt16(right.binaryData)),
+                Kind.UInt32 => new(ReadUInt32(left.binaryData) * ReadUInt32(right.binaryData)),
+                Kind.UInt64 => new(ReadUInt64(left.binaryData) * ReadUInt64(right.binaryData)),
+                Kind.UInt128 => new(ReadUInt128(left.binaryData) * ReadUInt128(right.binaryData)),
+                _ => throw new NotSupportedException(),
+            };
+        }
+
+        return right.numericKind switch
+        {
+            Kind.Byte => Multiply(left, ReadByte(right.binaryData)),
+            Kind.Decimal => Multiply(left, ReadDecimal(right.binaryData)),
+            Kind.Double => Multiply(left, ReadDouble(right.binaryData)),
+            Kind.Half => Multiply(left, ReadHalf(right.binaryData)),
+            Kind.Int16 => Multiply(left, ReadInt16(right.binaryData)),
+            Kind.Int32 => Multiply(left, ReadInt32(right.binaryData)),
+            Kind.Int64 => Multiply(left, ReadInt64(right.binaryData)),
+            Kind.Int128 => Multiply(left, ReadInt128(right.binaryData)),
+            Kind.SByte => Multiply(left, ReadSByte(right.binaryData)),
+            Kind.Single => Multiply(left, ReadSingle(right.binaryData)),
+            Kind.UInt16 => Multiply(left, ReadUInt16(right.binaryData)),
+            Kind.UInt32 => Multiply(left, ReadUInt32(right.binaryData)),
+            Kind.UInt64 => Multiply(left, ReadUInt64(right.binaryData)),
+            Kind.UInt128 => Multiply(left, ReadUInt128(right.binaryData)),
+            _ => throw new NotSupportedException(),
+        };
+    }
+
+    /// <summary>
+    /// Division operator.
+    /// </summary>
+    /// <param name="left">The left hand side of the division.</param>
+    /// <param name="right">The right hand side of the division.</param>
+    /// <returns>The result of the division.</returns>
+    /// <exception cref="NotSupportedException">The numeric format is not supported.</exception>
+    public static BinaryJsonNumber operator /(BinaryJsonNumber left, BinaryJsonNumber right)
+    {
+        if (left.numericKind == right.numericKind)
+        {
+            return left.numericKind switch
+            {
+                Kind.Byte => new(ReadByte(left.binaryData) / ReadByte(right.binaryData)),
+                Kind.Decimal => new(ReadDecimal(left.binaryData) / ReadDecimal(right.binaryData)),
+                Kind.Double => new(ReadDouble(left.binaryData) / ReadDouble(right.binaryData)),
+                Kind.Half => new(ReadHalf(left.binaryData) / ReadHalf(right.binaryData)),
+                Kind.Int16 => new(ReadInt16(left.binaryData) / ReadInt16(right.binaryData)),
+                Kind.Int32 => new(ReadInt32(left.binaryData) / ReadInt32(right.binaryData)),
+                Kind.Int64 => new(ReadInt64(left.binaryData) / ReadInt64(right.binaryData)),
+                Kind.Int128 => new(ReadInt128(left.binaryData) / ReadInt128(right.binaryData)),
+                Kind.SByte => new(ReadSByte(left.binaryData) / ReadSByte(right.binaryData)),
+                Kind.Single => new(ReadSingle(left.binaryData) / ReadSingle(right.binaryData)),
+                Kind.UInt16 => new(ReadUInt16(left.binaryData) / ReadUInt16(right.binaryData)),
+                Kind.UInt32 => new(ReadUInt32(left.binaryData) / ReadUInt32(right.binaryData)),
+                Kind.UInt64 => new(ReadUInt64(left.binaryData) / ReadUInt64(right.binaryData)),
+                Kind.UInt128 => new(ReadUInt128(left.binaryData) / ReadUInt128(right.binaryData)),
+                _ => throw new NotSupportedException(),
+            };
+        }
+
+        return right.numericKind switch
+        {
+            Kind.Byte => Divide(left, ReadByte(right.binaryData)),
+            Kind.Decimal => Divide(left, ReadDecimal(right.binaryData)),
+            Kind.Double => Divide(left, ReadDouble(right.binaryData)),
+            Kind.Half => Divide(left, ReadHalf(right.binaryData)),
+            Kind.Int16 => Divide(left, ReadInt16(right.binaryData)),
+            Kind.Int32 => Divide(left, ReadInt32(right.binaryData)),
+            Kind.Int64 => Divide(left, ReadInt64(right.binaryData)),
+            Kind.Int128 => Divide(left, ReadInt128(right.binaryData)),
+            Kind.SByte => Divide(left, ReadSByte(right.binaryData)),
+            Kind.Single => Divide(left, ReadSingle(right.binaryData)),
+            Kind.UInt16 => Divide(left, ReadUInt16(right.binaryData)),
+            Kind.UInt32 => Divide(left, ReadUInt32(right.binaryData)),
+            Kind.UInt64 => Divide(left, ReadUInt64(right.binaryData)),
+            Kind.UInt128 => Divide(left, ReadUInt128(right.binaryData)),
+            _ => throw new NotSupportedException(),
+        };
+    }
+
+    /// <summary>
+    /// Decrement operator.
+    /// </summary>
+    /// <param name="value">The number to decrement.</param>
+    /// <returns>The decremented number.</returns>
+    /// <exception cref="NotSupportedException">The numeric format was not supported.</exception>
+    public static BinaryJsonNumber operator --(BinaryJsonNumber value)
+    {
+        return value.numericKind switch
+        {
+            Kind.Byte => new(ReadByte(value.binaryData) - 1),
+            Kind.Decimal => new(ReadDecimal(value.binaryData) - 1m),
+            Kind.Double => new(ReadDouble(value.binaryData) - 1),
+            Kind.Half => new(ReadHalf(value.binaryData) - (Half)1),
+            Kind.Int16 => new(ReadInt16(value.binaryData) - 1),
+            Kind.Int32 => new(ReadInt32(value.binaryData) - 1),
+            Kind.Int64 => new(ReadInt64(value.binaryData) - 1),
+            Kind.Int128 => new(ReadInt128(value.binaryData) - 1),
+            Kind.SByte => new(ReadSByte(value.binaryData) - 1),
+            Kind.Single => new(ReadSingle(value.binaryData) - 1),
+            Kind.UInt16 => new(ReadUInt16(value.binaryData) - 1),
+            Kind.UInt32 => new(ReadUInt32(value.binaryData) - 1),
+            Kind.UInt64 => new(ReadUInt64(value.binaryData) - 1),
+            Kind.UInt128 => new(ReadUInt128(value.binaryData) - 1),
+            _ => throw new NotSupportedException(),
+        };
+    }
+
+    /// <summary>
+    /// The equality operator.
+    /// </summary>
+    /// <param name="left">The lhs.</param>
+    /// <param name="right">The rhs.</param>
+    /// <returns><see langword="true"/> if the values are equal.</returns>
+    public static bool operator ==(BinaryJsonNumber left, BinaryJsonNumber right)
+    {
+        return left.Equals(right);
+    }
+
+    /// <summary>
+    /// The inequality operator.
+    /// </summary>
+    /// <param name="left">The lhs.</param>
+    /// <param name="right">The rhs.</param>
+    /// <returns><see langword="true"/> if the the values are not equal.</returns>
+    public static bool operator !=(BinaryJsonNumber left, BinaryJsonNumber right)
+    {
+        return !left.Equals(right);
+    }
+
+    /// <summary>
+    /// Increment operator.
+    /// </summary>
+    /// <param name="value">The value to increment.</param>
+    /// <returns>The incremented value.</returns>
+    /// <exception cref="NotSupportedException">The numeric format was not supported.</exception>
+    public static BinaryJsonNumber operator ++(BinaryJsonNumber value)
+    {
+        return value.numericKind switch
+        {
+            Kind.Byte => new(ReadByte(value.binaryData) + 1),
+            Kind.Decimal => new(ReadDecimal(value.binaryData) + 1m),
+            Kind.Double => new(ReadDouble(value.binaryData) + 1),
+            Kind.Half => new(ReadHalf(value.binaryData) + (Half)1),
+            Kind.Int16 => new(ReadInt16(value.binaryData) + 1),
+            Kind.Int32 => new(ReadInt32(value.binaryData) + 1),
+            Kind.Int64 => new(ReadInt64(value.binaryData) + 1),
+            Kind.Int128 => new(ReadInt128(value.binaryData) + 1),
+            Kind.SByte => new(ReadSByte(value.binaryData) + 1),
+            Kind.Single => new(ReadSingle(value.binaryData) + 1),
+            Kind.UInt16 => new(ReadUInt16(value.binaryData) + 1),
+            Kind.UInt32 => new(ReadUInt32(value.binaryData) + 1),
+            Kind.UInt64 => new(ReadUInt64(value.binaryData) + 1),
+            Kind.UInt128 => new(ReadUInt128(value.binaryData) + 1),
+            _ => throw new NotSupportedException(),
+        };
+    }
+
+    /// <summary>
+    /// Negation operator.
+    /// </summary>
+    /// <param name="value">The value on which to operate.</param>
+    /// <returns>The negated value.</returns>
+    /// <exception cref="NotSupportedException">The numeric format was not supported.</exception>
+    public static BinaryJsonNumber operator -(BinaryJsonNumber value)
+    {
+        return value.numericKind switch
+        {
+            Kind.Byte => new(-ReadByte(value.binaryData)),
+            Kind.Decimal => new(-ReadDecimal(value.binaryData)),
+            Kind.Double => new(-ReadDouble(value.binaryData)),
+            Kind.Half => new(-ReadHalf(value.binaryData)),
+            Kind.Int16 => new(-ReadInt16(value.binaryData)),
+            Kind.Int32 => new(-ReadInt32(value.binaryData)),
+            Kind.Int64 => new(-ReadInt64(value.binaryData)),
+            Kind.Int128 => new(-ReadInt128(value.binaryData)),
+            Kind.SByte => new(-ReadSByte(value.binaryData)),
+            Kind.Single => new(-ReadSingle(value.binaryData)),
+            Kind.UInt16 => new(-ReadUInt16(value.binaryData)),
+            Kind.UInt32 => new(-ReadUInt32(value.binaryData)),
+            Kind.UInt64 => value,
+            Kind.UInt128 => new(-ReadUInt128(value.binaryData)),
+            _ => throw new NotSupportedException(),
+        };
+    }
+
+    /// <summary>
+    /// Unary plus operator.
+    /// </summary>
+    /// <param name="value">The value on which to operate.</param>
+    /// <returns>The unary plus value.</returns>
+    /// <exception cref="NotSupportedException">The numeric format was not supported.</exception>
+    public static BinaryJsonNumber operator +(BinaryJsonNumber value)
+    {
+        return value.numericKind switch
+        {
+            Kind.Byte => new(+ReadByte(value.binaryData)),
+            Kind.Decimal => new(+ReadDecimal(value.binaryData)),
+            Kind.Double => new(+ReadDouble(value.binaryData)),
+            Kind.Half => new(+ReadHalf(value.binaryData)),
+            Kind.Int16 => new(+ReadInt16(value.binaryData)),
+            Kind.Int32 => new(+ReadInt32(value.binaryData)),
+            Kind.Int64 => new(+ReadInt64(value.binaryData)),
+            Kind.Int128 => new(+ReadInt128(value.binaryData)),
+            Kind.SByte => new(+ReadSByte(value.binaryData)),
+            Kind.Single => new(+ReadSingle(value.binaryData)),
+            Kind.UInt16 => new(+ReadUInt16(value.binaryData)),
+            Kind.UInt32 => new(+ReadUInt32(value.binaryData)),
+            Kind.UInt64 => new(+ReadUInt64(value.binaryData)),
+            Kind.UInt128 => new(+ReadUInt128(value.binaryData)),
+            _ => throw new NotSupportedException(),
+        };
+    }
+
+    /// <summary>
+    /// Computes the absolute of a value.
+    /// </summary>
+    /// <param name="value">The value for which to calculate the absolute.</param>
+    /// <returns>The absolute value.</returns>
+    /// <exception cref="NotSupportedException">The numeric format was not supported.</exception>
+    public static BinaryJsonNumber Abs(BinaryJsonNumber value)
+    {
+        return value.numericKind switch
+        {
+            Kind.Byte => value,
+            Kind.Decimal => new(decimal.Abs(ReadDecimal(value.binaryData))),
+            Kind.Double => new(double.Abs(ReadDouble(value.binaryData))),
+            Kind.Half => new(Half.Abs(ReadHalf(value.binaryData))),
+            Kind.Int16 => new(short.Abs(ReadInt16(value.binaryData))),
+            Kind.Int32 => new(int.Abs(ReadInt32(value.binaryData))),
+            Kind.Int64 => new(long.Abs(ReadInt64(value.binaryData))),
+            Kind.Int128 => new(Int128.Abs(ReadInt128(value.binaryData))),
+            Kind.SByte => new(sbyte.Abs(ReadSByte(value.binaryData))),
+            Kind.Single => new(float.Abs(ReadSingle(value.binaryData))),
+            Kind.UInt16 => value,
+            Kind.UInt32 => value,
+            Kind.UInt64 => value,
+            Kind.UInt128 => value,
+            _ => throw new NotSupportedException(),
+        };
+    }
+
+    /// <summary>
+    /// Determine if a value is in its canonical representation.
+    /// </summary>
+    /// <param name="value">The value to check.</param>
+    /// <returns><see langword="true"/> if the value is in its canonical representation.</returns>
+    public static bool IsCanonical(BinaryJsonNumber value)
+    {
+        return true;
+    }
+
+    /// <summary>
+    /// Determine if a value is a complex number.
+    /// </summary>
+    /// <param name="value">The value to check.</param>
+    /// <returns>Always <see langword="false"/>.</returns>
+    public static bool IsComplexNumber(BinaryJsonNumber value)
+    {
+        return false;
+    }
+
+    /// <summary>
+    /// Determine if a value is an even integer.
+    /// </summary>
+    /// <param name="value">The value to check.</param>
+    /// <returns><see langword="true"/> if the value is an even integer.</returns>
+    /// <exception cref="NotSupportedException">The numeric format was not supported.</exception>
+    public static bool IsEvenInteger(BinaryJsonNumber value)
+    {
+        return value.numericKind switch
+        {
+            Kind.Byte => byte.IsEvenInteger(ReadByte(value.binaryData)),
+            Kind.Decimal => decimal.IsEvenInteger(ReadDecimal(value.binaryData)),
+            Kind.Double => double.IsEvenInteger(ReadDouble(value.binaryData)),
+            Kind.Half => Half.IsEvenInteger(ReadHalf(value.binaryData)),
+            Kind.Int16 => short.IsEvenInteger(ReadInt16(value.binaryData)),
+            Kind.Int32 => int.IsEvenInteger(ReadInt32(value.binaryData)),
+            Kind.Int64 => long.IsEvenInteger(ReadInt64(value.binaryData)),
+            Kind.Int128 => Int128.IsEvenInteger(ReadInt128(value.binaryData)),
+            Kind.SByte => sbyte.IsEvenInteger(ReadSByte(value.binaryData)),
+            Kind.Single => float.IsEvenInteger(ReadSingle(value.binaryData)),
+            Kind.UInt16 => ushort.IsEvenInteger(ReadUInt16(value.binaryData)),
+            Kind.UInt32 => uint.IsEvenInteger(ReadUInt32(value.binaryData)),
+            Kind.UInt64 => ulong.IsEvenInteger(ReadUInt64(value.binaryData)),
+            Kind.UInt128 => UInt128.IsEvenInteger(ReadUInt128(value.binaryData)),
+            _ => throw new NotSupportedException(),
+        };
+    }
+
+    /// <summary>
+    /// Determine if a value is finite.
+    /// </summary>
+    /// <param name="value">The value to check.</param>
+    /// <returns><see langword="true"/> if the value is finite.</returns>
+    public static bool IsFinite(BinaryJsonNumber value)
+    {
+        return value.numericKind switch
+        {
+            Kind.Double => double.IsFinite(ReadDouble(value.binaryData)),
+            Kind.Half => Half.IsFinite(ReadHalf(value.binaryData)),
+            Kind.Single => float.IsFinite(ReadSingle(value.binaryData)),
+            _ => true,
+        };
+    }
+
+    /// <summary>
+    /// Determine if a value is an imaginary number.
+    /// </summary>
+    /// <param name="value">The value to check.</param>
+    /// <returns><see langword="true"/> if the value is imaginary.</returns>
+    public static bool IsImaginaryNumber(BinaryJsonNumber value)
+    {
+        return false;
+    }
+
+    /// <summary>
+    /// Determine if a value is infinity.
+    /// </summary>
+    /// <param name="value">The value to check.</param>
+    /// <returns><see langword="true"/> if the value is infinity.</returns>
+    public static bool IsInfinity(BinaryJsonNumber value)
+    {
+        return value.numericKind switch
+        {
+            Kind.Double => double.IsInfinity(ReadDouble(value.binaryData)),
+            Kind.Half => Half.IsInfinity(ReadHalf(value.binaryData)),
+            Kind.Single => float.IsInfinity(ReadSingle(value.binaryData)),
+            _ => false,
+        };
+    }
+
+    /// <summary>
+    /// Determine if a value is an integer.
+    /// </summary>
+    /// <param name="value">The value to check.</param>
+    /// <returns><see langword="true"/> if the value is an integer.</returns>
+    public static bool IsInteger(BinaryJsonNumber value)
+    {
+        return value.numericKind switch
+        {
+            Kind.Decimal => decimal.IsInteger(ReadDecimal(value.binaryData)),
+            Kind.Double => double.IsInteger(ReadDouble(value.binaryData)),
+            Kind.Half => Half.IsInteger(ReadHalf(value.binaryData)),
+            Kind.Single => float.IsInteger(ReadSingle(value.binaryData)),
+            _ => true,
+        };
+    }
+
+    /// <summary>
+    /// Determine if a value is NaN.
+    /// </summary>
+    /// <param name="value">The value to check.</param>
+    /// <returns><see langword="true"/> if the value is NaN.</returns>
+    public static bool IsNaN(BinaryJsonNumber value)
+    {
+        return value.numericKind switch
+        {
+            Kind.Double => double.IsNaN(ReadDouble(value.binaryData)),
+            Kind.Half => Half.IsNaN(ReadHalf(value.binaryData)),
+            Kind.Single => float.IsNaN(ReadSingle(value.binaryData)),
+            _ => false,
+        };
+    }
+
+    /// <summary>
+    /// Determine if a value is negative.
+    /// </summary>
+    /// <param name="value">The value to check.</param>
+    /// <returns><see langword="true"/> if the value is negative.</returns>
+    public static bool IsNegative(BinaryJsonNumber value)
+    {
+        return value.numericKind switch
+        {
+            Kind.Decimal => decimal.IsNegative(ReadDecimal(value.binaryData)),
+            Kind.Double => double.IsNegative(ReadDouble(value.binaryData)),
+            Kind.Half => Half.IsNegative(ReadHalf(value.binaryData)),
+            Kind.Int16 => short.IsNegative(ReadInt16(value.binaryData)),
+            Kind.Int32 => int.IsNegative(ReadInt32(value.binaryData)),
+            Kind.Int64 => long.IsNegative(ReadInt64(value.binaryData)),
+            Kind.Int128 => Int128.IsNegative(ReadInt128(value.binaryData)),
+            Kind.SByte => sbyte.IsNegative(ReadSByte(value.binaryData)),
+            Kind.Single => float.IsNegative(ReadSingle(value.binaryData)),
+            _ => false,
+        };
+    }
+
+    /// <summary>
+    /// Determine if a value is negative infinity.
+    /// </summary>
+    /// <param name="value">The value to check.</param>
+    /// <returns><see langword="true"/> if the value is negative infinity.</returns>
+    public static bool IsNegativeInfinity(BinaryJsonNumber value)
+    {
+        return value.numericKind switch
+        {
+            Kind.Double => double.IsNegativeInfinity(ReadDouble(value.binaryData)),
+            Kind.Half => Half.IsNegativeInfinity(ReadHalf(value.binaryData)),
+            Kind.Single => float.IsNegativeInfinity(ReadSingle(value.binaryData)),
+            _ => false,
+        };
+    }
+
+    /// <summary>
+    /// Determine if a value is normal.
+    /// </summary>
+    /// <param name="value">The value to check.</param>
+    /// <returns><see langword="true"/> if the value is normal.</returns>
+    public static bool IsNormal(BinaryJsonNumber value)
+    {
+        return value.numericKind switch
+        {
+            Kind.Double => double.IsNormal(ReadDouble(value.binaryData)),
+            Kind.Half => Half.IsNormal(ReadHalf(value.binaryData)),
+            Kind.Single => float.IsNormal(ReadSingle(value.binaryData)),
+            _ => true,
+        };
+    }
+
+    /// <summary>
+    /// Determine if a value is an odd integer.
+    /// </summary>
+    /// <param name="value">The value to check.</param>
+    /// <returns><see langword="true"/> if the value is an odd integer.</returns>
+    /// <exception cref="NotSupportedException">The numeric format was not supported.</exception>
+    public static bool IsOddInteger(BinaryJsonNumber value)
+    {
+        return value.numericKind switch
+        {
+            Kind.Byte => byte.IsOddInteger(ReadByte(value.binaryData)),
+            Kind.Decimal => decimal.IsOddInteger(ReadDecimal(value.binaryData)),
+            Kind.Double => double.IsOddInteger(ReadDouble(value.binaryData)),
+            Kind.Half => Half.IsOddInteger(ReadHalf(value.binaryData)),
+            Kind.Int16 => short.IsOddInteger(ReadInt16(value.binaryData)),
+            Kind.Int32 => int.IsOddInteger(ReadInt32(value.binaryData)),
+            Kind.Int64 => long.IsOddInteger(ReadInt64(value.binaryData)),
+            Kind.Int128 => Int128.IsOddInteger(ReadInt128(value.binaryData)),
+            Kind.SByte => sbyte.IsOddInteger(ReadSByte(value.binaryData)),
+            Kind.Single => float.IsOddInteger(ReadSingle(value.binaryData)),
+            Kind.UInt16 => ushort.IsOddInteger(ReadUInt16(value.binaryData)),
+            Kind.UInt32 => uint.IsOddInteger(ReadUInt32(value.binaryData)),
+            Kind.UInt64 => ulong.IsOddInteger(ReadUInt64(value.binaryData)),
+            Kind.UInt128 => UInt128.IsOddInteger(ReadUInt128(value.binaryData)),
+            _ => throw new NotSupportedException(),
+        };
+    }
+
+    /// <summary>
+    /// Determine if a value is a positive number.
+    /// </summary>
+    /// <param name="value">The value to check.</param>
+    /// <returns><see langword="true"/> if the value is positive.</returns>
+    public static bool IsPositive(BinaryJsonNumber value)
+    {
+        return value.numericKind switch
+        {
+            Kind.Decimal => decimal.IsPositive(ReadDecimal(value.binaryData)),
+            Kind.Double => double.IsPositive(ReadDouble(value.binaryData)),
+            Kind.Half => Half.IsPositive(ReadHalf(value.binaryData)),
+            Kind.Int16 => short.IsPositive(ReadInt16(value.binaryData)),
+            Kind.Int32 => int.IsPositive(ReadInt32(value.binaryData)),
+            Kind.Int64 => long.IsPositive(ReadInt64(value.binaryData)),
+            Kind.Int128 => Int128.IsPositive(ReadInt128(value.binaryData)),
+            Kind.SByte => sbyte.IsPositive(ReadSByte(value.binaryData)),
+            Kind.Single => float.IsPositive(ReadSingle(value.binaryData)),
+            _ => true,
+        };
+    }
+
+    /// <summary>
+    /// Determine if a value is positive infinity.
+    /// </summary>
+    /// <param name="value">The value to check.</param>
+    /// <returns><see langword="true"/> if the value is positive infinity.</returns>
+    public static bool IsPositiveInfinity(BinaryJsonNumber value)
+    {
+        return value.numericKind switch
+        {
+            Kind.Double => double.IsNegativeInfinity(ReadDouble(value.binaryData)),
+            Kind.Half => Half.IsNegativeInfinity(ReadHalf(value.binaryData)),
+            Kind.Single => float.IsNegativeInfinity(ReadSingle(value.binaryData)),
+            _ => false,
+        };
+    }
+
+    /// <summary>
+    /// Determine if a value is real.
+    /// </summary>
+    /// <param name="value">The value to check.</param>
+    /// <returns><see langword="true"/> if the value is real.</returns>
+    public static bool IsRealNumber(BinaryJsonNumber value)
+    {
+        return true;
+    }
+
+    /// <summary>
+    /// Determine if a value is .
+    /// </summary>
+    /// <param name="value">The value to check.</param>
+    /// <returns><see langword="true"/> if the value is .</returns>
+    public static bool IsSubnormal(BinaryJsonNumber value)
+    {
+        return value.numericKind switch
+        {
+            Kind.Double => double.IsNormal(ReadDouble(value.binaryData)),
+            Kind.Half => Half.IsNormal(ReadHalf(value.binaryData)),
+            Kind.Single => float.IsNormal(ReadSingle(value.binaryData)),
+            _ => false,
+        };
+    }
+
+    /// <summary>
+    /// Determine if a value is Zero.
+    /// </summary>
+    /// <param name="value">The value to check.</param>
+    /// <returns><see langword="true"/> if the value is Zero.</returns>
+    public static bool IsZero(BinaryJsonNumber value)
+    {
+        return value.numericKind switch
+        {
+            Kind.Decimal => ReadDecimal(value.binaryData).Equals(decimal.Zero),
+            Kind.Double => ReadDouble(value.binaryData).Equals(0),
+            Kind.Half => ReadHalf(value.binaryData).Equals(Half.Zero),
+            Kind.Int16 => ReadInt16(value.binaryData).Equals(0),
+            Kind.Int32 => ReadInt32(value.binaryData).Equals(0),
+            Kind.Int64 => ReadInt64(value.binaryData).Equals(0),
+            Kind.Int128 => ReadInt128(value.binaryData).Equals(0),
+            Kind.SByte => ReadSByte(value.binaryData).Equals(0),
+            Kind.Single => ReadSingle(value.binaryData).Equals(0),
+            _ => true,
+        };
+    }
+
+    /// <summary>
+    /// Compares two values to compute which is greater.
+    /// </summary>
+    /// <param name="x">The first value.</param>
+    /// <param name="y">The second value.</param>
+    /// <returns>The greater of the two values.</returns>
+    /// <exception cref="NotSupportedException">The numeric format was not supported.</exception>
+    public static BinaryJsonNumber MaxMagnitude(BinaryJsonNumber x, BinaryJsonNumber y)
+    {
+        if (x.numericKind == y.numericKind)
+        {
+            return x.numericKind switch
+            {
+                Kind.Byte => new(byte.Max(ReadByte(x.binaryData), ReadByte(y.binaryData))),
+                Kind.Decimal => new(decimal.MaxMagnitude(ReadDecimal(x.binaryData), ReadDecimal(y.binaryData))),
+                Kind.Double => new(double.MaxMagnitude(ReadDouble(x.binaryData), ReadDouble(y.binaryData))),
+                Kind.Half => new(Half.MaxMagnitude(ReadHalf(x.binaryData), ReadHalf(y.binaryData))),
+                Kind.Int16 => new(short.MaxMagnitude(ReadInt16(x.binaryData), ReadInt16(y.binaryData))),
+                Kind.Int32 => new(int.MaxMagnitude(ReadInt32(x.binaryData), ReadInt32(y.binaryData))),
+                Kind.Int64 => new(long.MaxMagnitude(ReadInt64(x.binaryData), ReadInt64(y.binaryData))),
+                Kind.Int128 => new(Int128.MaxMagnitude(ReadInt128(x.binaryData), ReadInt128(y.binaryData))),
+                Kind.SByte => new(sbyte.MaxMagnitude(ReadSByte(x.binaryData), ReadSByte(y.binaryData))),
+                Kind.Single => new(float.MaxMagnitude(ReadSingle(x.binaryData), ReadSingle(y.binaryData))),
+                Kind.UInt16 => new(ushort.Max(ReadUInt16(x.binaryData), ReadUInt16(y.binaryData))),
+                Kind.UInt32 => new(uint.Max(ReadUInt32(x.binaryData), ReadUInt32(y.binaryData))),
+                Kind.UInt64 => new(ulong.Max(ReadUInt64(x.binaryData), ReadUInt64(y.binaryData))),
+                Kind.UInt128 => new(UInt128.Max(ReadUInt128(x.binaryData), ReadUInt128(y.binaryData))),
+                _ => throw new NotSupportedException(),
+            };
+        }
+
+        return y.numericKind switch
+        {
+            Kind.Byte => MaxMagnitude(x, ReadByte(y.binaryData)),
+            Kind.Decimal => MaxMagnitude(x, ReadDecimal(y.binaryData)),
+            Kind.Double => MaxMagnitude(x, ReadDouble(y.binaryData)),
+            Kind.Half => MaxMagnitude(x, ReadHalf(y.binaryData)),
+            Kind.Int16 => MaxMagnitude(x, ReadInt16(y.binaryData)),
+            Kind.Int32 => MaxMagnitude(x, ReadInt32(y.binaryData)),
+            Kind.Int64 => MaxMagnitude(x, ReadInt64(y.binaryData)),
+            Kind.Int128 => MaxMagnitude(x, ReadInt128(y.binaryData)),
+            Kind.SByte => MaxMagnitude(x, ReadSByte(y.binaryData)),
+            Kind.Single => MaxMagnitude(x, ReadSingle(y.binaryData)),
+            Kind.UInt16 => MaxMagnitude(x, ReadUInt16(y.binaryData)),
+            Kind.UInt32 => MaxMagnitude(x, ReadUInt32(y.binaryData)),
+            Kind.UInt64 => MaxMagnitude(x, ReadUInt64(y.binaryData)),
+            Kind.UInt128 => MaxMagnitude(x, ReadUInt128(y.binaryData)),
+            _ => throw new NotSupportedException(),
+        };
+    }
+
+    /// <summary>
+    /// Compares two values to compute which is greater. If one is NaN, it returns the other.
+    /// </summary>
+    /// <param name="x">The first value.</param>
+    /// <param name="y">The second value.</param>
+    /// <returns>The greater of the two values.</returns>
+    /// <exception cref="NotSupportedException">The numeric format was not supported.</exception>
+    public static BinaryJsonNumber MaxMagnitudeNumber(BinaryJsonNumber x, BinaryJsonNumber y)
+    {
+        if (x.numericKind == y.numericKind)
+        {
+            return x.numericKind switch
+            {
+                Kind.Byte => new(byte.Max(ReadByte(x.binaryData), ReadByte(y.binaryData))),
+                Kind.Decimal => new(decimal.MaxMagnitude(ReadDecimal(x.binaryData), ReadDecimal(y.binaryData))),
+                Kind.Double => new(double.MaxMagnitudeNumber(ReadDouble(x.binaryData), ReadDouble(y.binaryData))),
+                Kind.Half => new(Half.MaxMagnitudeNumber(ReadHalf(x.binaryData), ReadHalf(y.binaryData))),
+                Kind.Int16 => new(short.MaxMagnitude(ReadInt16(x.binaryData), ReadInt16(y.binaryData))),
+                Kind.Int32 => new(int.MaxMagnitude(ReadInt32(x.binaryData), ReadInt32(y.binaryData))),
+                Kind.Int64 => new(long.MaxMagnitude(ReadInt64(x.binaryData), ReadInt64(y.binaryData))),
+                Kind.Int128 => new(Int128.MaxMagnitude(ReadInt128(x.binaryData), ReadInt128(y.binaryData))),
+                Kind.SByte => new(sbyte.MaxMagnitude(ReadSByte(x.binaryData), ReadSByte(y.binaryData))),
+                Kind.Single => new(float.MaxMagnitudeNumber(ReadSingle(x.binaryData), ReadSingle(y.binaryData))),
+                Kind.UInt16 => new(ushort.Max(ReadUInt16(x.binaryData), ReadUInt16(y.binaryData))),
+                Kind.UInt32 => new(uint.Max(ReadUInt32(x.binaryData), ReadUInt32(y.binaryData))),
+                Kind.UInt64 => new(ulong.Max(ReadUInt64(x.binaryData), ReadUInt64(y.binaryData))),
+                Kind.UInt128 => new(UInt128.Max(ReadUInt128(x.binaryData), ReadUInt128(y.binaryData))),
+                _ => throw new NotSupportedException(),
+            };
+        }
+
+        return y.numericKind switch
+        {
+            Kind.Byte => MaxMagnitudeNumber(x, ReadByte(y.binaryData)),
+            Kind.Decimal => MaxMagnitudeNumber(x, ReadDecimal(y.binaryData)),
+            Kind.Double => MaxMagnitudeNumber(x, ReadDouble(y.binaryData)),
+            Kind.Half => MaxMagnitudeNumber(x, ReadHalf(y.binaryData)),
+            Kind.Int16 => MaxMagnitudeNumber(x, ReadInt16(y.binaryData)),
+            Kind.Int32 => MaxMagnitudeNumber(x, ReadInt32(y.binaryData)),
+            Kind.Int64 => MaxMagnitudeNumber(x, ReadInt64(y.binaryData)),
+            Kind.Int128 => MaxMagnitudeNumber(x, ReadInt128(y.binaryData)),
+            Kind.SByte => MaxMagnitudeNumber(x, ReadSByte(y.binaryData)),
+            Kind.Single => MaxMagnitudeNumber(x, ReadSingle(y.binaryData)),
+            Kind.UInt16 => MaxMagnitudeNumber(x, ReadUInt16(y.binaryData)),
+            Kind.UInt32 => MaxMagnitudeNumber(x, ReadUInt32(y.binaryData)),
+            Kind.UInt64 => MaxMagnitudeNumber(x, ReadUInt64(y.binaryData)),
+            Kind.UInt128 => MaxMagnitudeNumber(x, ReadUInt128(y.binaryData)),
+            _ => throw new NotSupportedException(),
+        };
+    }
+
+    /// <summary>
+    /// Compares two values to compute which is lesser.
+    /// </summary>
+    /// <param name="x">The first value.</param>
+    /// <param name="y">The second value.</param>
+    /// <returns>The lesser of the two values.</returns>
+    /// <exception cref="NotSupportedException">The numeric format was not supported.</exception>
+    public static BinaryJsonNumber MinMagnitude(BinaryJsonNumber x, BinaryJsonNumber y)
+    {
+        if (x.numericKind == y.numericKind)
+        {
+            return x.numericKind switch
+            {
+                Kind.Byte => new(byte.Min(ReadByte(x.binaryData), ReadByte(y.binaryData))),
+                Kind.Decimal => new(decimal.MinMagnitude(ReadDecimal(x.binaryData), ReadDecimal(y.binaryData))),
+                Kind.Double => new(double.MinMagnitude(ReadDouble(x.binaryData), ReadDouble(y.binaryData))),
+                Kind.Half => new(Half.MinMagnitude(ReadHalf(x.binaryData), ReadHalf(y.binaryData))),
+                Kind.Int16 => new(short.MinMagnitude(ReadInt16(x.binaryData), ReadInt16(y.binaryData))),
+                Kind.Int32 => new(int.MinMagnitude(ReadInt32(x.binaryData), ReadInt32(y.binaryData))),
+                Kind.Int64 => new(long.MinMagnitude(ReadInt64(x.binaryData), ReadInt64(y.binaryData))),
+                Kind.Int128 => new(Int128.MinMagnitude(ReadInt128(x.binaryData), ReadInt128(y.binaryData))),
+                Kind.SByte => new(sbyte.MinMagnitude(ReadSByte(x.binaryData), ReadSByte(y.binaryData))),
+                Kind.Single => new(float.MinMagnitude(ReadSingle(x.binaryData), ReadSingle(y.binaryData))),
+                Kind.UInt16 => new(ushort.Min(ReadUInt16(x.binaryData), ReadUInt16(y.binaryData))),
+                Kind.UInt32 => new(uint.Min(ReadUInt32(x.binaryData), ReadUInt32(y.binaryData))),
+                Kind.UInt64 => new(ulong.Min(ReadUInt64(x.binaryData), ReadUInt64(y.binaryData))),
+                Kind.UInt128 => new(UInt128.Min(ReadUInt128(x.binaryData), ReadUInt128(y.binaryData))),
+                _ => throw new NotSupportedException(),
+            };
+        }
+
+        return y.numericKind switch
+        {
+            Kind.Byte => MinMagnitude(x, ReadByte(y.binaryData)),
+            Kind.Decimal => MinMagnitude(x, ReadDecimal(y.binaryData)),
+            Kind.Double => MinMagnitude(x, ReadDouble(y.binaryData)),
+            Kind.Half => MinMagnitude(x, ReadHalf(y.binaryData)),
+            Kind.Int16 => MinMagnitude(x, ReadInt16(y.binaryData)),
+            Kind.Int32 => MinMagnitude(x, ReadInt32(y.binaryData)),
+            Kind.Int64 => MinMagnitude(x, ReadInt64(y.binaryData)),
+            Kind.Int128 => MinMagnitude(x, ReadInt128(y.binaryData)),
+            Kind.SByte => MinMagnitude(x, ReadSByte(y.binaryData)),
+            Kind.Single => MinMagnitude(x, ReadSingle(y.binaryData)),
+            Kind.UInt16 => MinMagnitude(x, ReadUInt16(y.binaryData)),
+            Kind.UInt32 => MinMagnitude(x, ReadUInt32(y.binaryData)),
+            Kind.UInt64 => MinMagnitude(x, ReadUInt64(y.binaryData)),
+            Kind.UInt128 => MinMagnitude(x, ReadUInt128(y.binaryData)),
+            _ => throw new NotSupportedException(),
+        };
+    }
+
+    /// <summary>
+    /// Compares two values to compute which is lesser. If one is NaN, it returns the other.
+    /// </summary>
+    /// <param name="x">The first value.</param>
+    /// <param name="y">The second value.</param>
+    /// <returns>The lesser of the two values.</returns>
+    /// <exception cref="NotSupportedException">The numeric format was not supported.</exception>
+    public static BinaryJsonNumber MinMagnitudeNumber(BinaryJsonNumber x, BinaryJsonNumber y)
+    {
+        if (x.numericKind == y.numericKind)
+        {
+            return x.numericKind switch
+            {
+                Kind.Byte => new(byte.Min(ReadByte(x.binaryData), ReadByte(y.binaryData))),
+                Kind.Decimal => new(decimal.MinMagnitude(ReadDecimal(x.binaryData), ReadDecimal(y.binaryData))),
+                Kind.Double => new(double.MinMagnitudeNumber(ReadDouble(x.binaryData), ReadDouble(y.binaryData))),
+                Kind.Half => new(Half.MinMagnitudeNumber(ReadHalf(x.binaryData), ReadHalf(y.binaryData))),
+                Kind.Int16 => new(short.MinMagnitude(ReadInt16(x.binaryData), ReadInt16(y.binaryData))),
+                Kind.Int32 => new(int.MinMagnitude(ReadInt32(x.binaryData), ReadInt32(y.binaryData))),
+                Kind.Int64 => new(long.MinMagnitude(ReadInt64(x.binaryData), ReadInt64(y.binaryData))),
+                Kind.Int128 => new(Int128.MinMagnitude(ReadInt128(x.binaryData), ReadInt128(y.binaryData))),
+                Kind.SByte => new(sbyte.MinMagnitude(ReadSByte(x.binaryData), ReadSByte(y.binaryData))),
+                Kind.Single => new(float.MinMagnitudeNumber(ReadSingle(x.binaryData), ReadSingle(y.binaryData))),
+                Kind.UInt16 => new(ushort.Min(ReadUInt16(x.binaryData), ReadUInt16(y.binaryData))),
+                Kind.UInt32 => new(uint.Min(ReadUInt32(x.binaryData), ReadUInt32(y.binaryData))),
+                Kind.UInt64 => new(ulong.Min(ReadUInt64(x.binaryData), ReadUInt64(y.binaryData))),
+                Kind.UInt128 => new(UInt128.Min(ReadUInt128(x.binaryData), ReadUInt128(y.binaryData))),
+                _ => throw new NotSupportedException(),
+            };
+        }
+
+        return y.numericKind switch
+        {
+            Kind.Byte => MinMagnitudeNumber(x, ReadByte(y.binaryData)),
+            Kind.Decimal => MinMagnitudeNumber(x, ReadDecimal(y.binaryData)),
+            Kind.Double => MinMagnitudeNumber(x, ReadDouble(y.binaryData)),
+            Kind.Half => MinMagnitudeNumber(x, ReadHalf(y.binaryData)),
+            Kind.Int16 => MinMagnitudeNumber(x, ReadInt16(y.binaryData)),
+            Kind.Int32 => MinMagnitudeNumber(x, ReadInt32(y.binaryData)),
+            Kind.Int64 => MinMagnitudeNumber(x, ReadInt64(y.binaryData)),
+            Kind.Int128 => MinMagnitudeNumber(x, ReadInt128(y.binaryData)),
+            Kind.SByte => MinMagnitudeNumber(x, ReadSByte(y.binaryData)),
+            Kind.Single => MinMagnitudeNumber(x, ReadSingle(y.binaryData)),
+            Kind.UInt16 => MinMagnitudeNumber(x, ReadUInt16(y.binaryData)),
+            Kind.UInt32 => MinMagnitudeNumber(x, ReadUInt32(y.binaryData)),
+            Kind.UInt64 => MinMagnitudeNumber(x, ReadUInt64(y.binaryData)),
+            Kind.UInt128 => MinMagnitudeNumber(x, ReadUInt128(y.binaryData)),
+            _ => throw new NotSupportedException(),
+        };
+    }
+
+    /// <summary>
+    /// Parse a string into a <see cref="BinaryJsonNumber"/>.
+    /// </summary>
+    /// <param name="s">The value to parse.</param>
+    /// <param name="style">The number styles to use.</param>
+    /// <param name="provider">The format provider.</param>
+    /// <returns>An instance of a binary JSON number.</returns>
+    /// <remarks>
+    /// If you wish to control the underlying numeric kind of the <see cref="BinaryJsonNumber"/> then
+    /// you should parse into that underlying type, and create a <see cref="BinaryJsonNumber"/> from the value.
+    /// </remarks>
+    public static BinaryJsonNumber Parse(ReadOnlySpan<char> s, NumberStyles style, IFormatProvider? provider)
+    {
+        return new(double.Parse(s, style, provider));
+    }
+
+    /// <summary>
+    /// Parse a string into a <see cref="BinaryJsonNumber"/>.
+    /// </summary>
+    /// <param name="s">The value to parse.</param>
+    /// <param name="style">The number styles to use.</param>
+    /// <param name="provider">The format provider.</param>
+    /// <returns>An instance of a binary JSON number.</returns>
+    /// <remarks>
+    /// If you wish to control the underlying numeric kind of the <see cref="BinaryJsonNumber"/> then
+    /// you should parse into that underlying type, and create a <see cref="BinaryJsonNumber"/> from the value.
+    /// </remarks>
+    public static BinaryJsonNumber Parse(string s, NumberStyles style, IFormatProvider? provider)
+    {
+        return new(double.Parse(s, style, provider));
+    }
+
+    /// <summary>
+    /// Try to parse a string into a <see cref="BinaryJsonNumber"/>.
+    /// </summary>
+    /// <param name="s">The value to parse.</param>
+    /// <param name="style">The number styles to use.</param>
+    /// <param name="provider">The format provider.</param>
+    /// <param name="result">The parsed number.</param>
+    /// <returns><see langword="true"/> if the value was parsed successfully.</returns>
+    /// <remarks>
+    /// If you wish to control the underlying numeric kind of the <see cref="BinaryJsonNumber"/> then
+    /// you should parse into that underlying type, and create a <see cref="BinaryJsonNumber"/> from the value.
+    /// </remarks>
+    public static bool TryParse(ReadOnlySpan<char> s, NumberStyles style, IFormatProvider? provider, [MaybeNullWhen(false)] out BinaryJsonNumber result)
+    {
+        if (double.TryParse(s, style, provider, out double d))
+        {
+            result = new(d);
+            return true;
+        }
+
+        result = default;
+        return false;
+    }
+
+    /// <summary>
+    /// Try to parse a string into a <see cref="BinaryJsonNumber"/>.
+    /// </summary>
+    /// <param name="s">The value to parse.</param>
+    /// <param name="style">The number styles to use.</param>
+    /// <param name="provider">The format provider.</param>
+    /// <param name="result">The parsed number.</param>
+    /// <returns><see langword="true"/> if the value was parsed successfully.</returns>
+    /// <remarks>
+    /// If you wish to control the underlying numeric kind of the <see cref="BinaryJsonNumber"/> then
+    /// you should parse into that underlying type, and create a <see cref="BinaryJsonNumber"/> from the value.
+    /// </remarks>
+    public static bool TryParse([NotNullWhen(true)] string? s, NumberStyles style, IFormatProvider? provider, [MaybeNullWhen(false)] out BinaryJsonNumber result)
+    {
+        if (double.TryParse(s, style, provider, out double d))
+        {
+            result = new(d);
+            return true;
+        }
+
+        result = default;
+        return false;
+    }
+
+    /// <summary>
+    /// Parse a string into a <see cref="BinaryJsonNumber"/>.
+    /// </summary>
+    /// <param name="s">The value to parse.</param>
+    /// <param name="provider">The format provider.</param>
+    /// <returns>An instance of a binary JSON number.</returns>
+    /// <remarks>
+    /// If you wish to control the underlying numeric kind of the <see cref="BinaryJsonNumber"/> then
+    /// you should parse into that underlying type, and create a <see cref="BinaryJsonNumber"/> from the value.
+    /// </remarks>
+    public static BinaryJsonNumber Parse(ReadOnlySpan<char> s, IFormatProvider? provider)
+    {
+        return new(double.Parse(s, provider));
+    }
+
+    /// <summary>
+    /// Try to parse a string into a <see cref="BinaryJsonNumber"/>.
+    /// </summary>
+    /// <param name="s">The value to parse.</param>
+    /// <param name="provider">The format provider.</param>
+    /// <param name="result">The parsed number.</param>
+    /// <returns><see langword="true"/> if the value was parsed successfully.</returns>
+    /// <remarks>
+    /// If you wish to control the underlying numeric kind of the <see cref="BinaryJsonNumber"/> then
+    /// you should parse into that underlying type, and create a <see cref="BinaryJsonNumber"/> from the value.
+    /// </remarks>
+    public static bool TryParse(ReadOnlySpan<char> s, IFormatProvider? provider, [MaybeNullWhen(false)] out BinaryJsonNumber result)
+    {
+        if (double.TryParse(s, provider, out double d))
+        {
+            result = new(d);
+            return true;
+        }
+
+        result = default;
+        return false;
+    }
+
+    /// <summary>
+    /// Parse a string into a <see cref="BinaryJsonNumber"/>.
+    /// </summary>
+    /// <param name="s">The value to parse.</param>
+    /// <param name="provider">The format provider.</param>
+    /// <returns>An instance of a binary JSON number.</returns>
+    /// <remarks>
+    /// If you wish to control the underlying numeric kind of the <see cref="BinaryJsonNumber"/> then
+    /// you should parse into that underlying type, and create a <see cref="BinaryJsonNumber"/> from the value.
+    /// </remarks>
+    public static BinaryJsonNumber Parse(string s, IFormatProvider? provider)
+    {
+        return new(double.Parse(s, provider));
+    }
+
+    /// <summary>
+    /// Try to parse a string into a <see cref="BinaryJsonNumber"/>.
+    /// </summary>
+    /// <param name="s">The value to parse.</param>
+    /// <param name="provider">The format provider.</param>
+    /// <param name="result">The parsed number.</param>
+    /// <returns><see langword="true"/> if the value was parsed successfully.</returns>
+    /// <remarks>
+    /// If you wish to control the underlying numeric kind of the <see cref="BinaryJsonNumber"/> then
+    /// you should parse into that underlying type, and create a <see cref="BinaryJsonNumber"/> from the value.
+    /// </remarks>
+    public static bool TryParse([NotNullWhen(true)] string? s, IFormatProvider? provider, [MaybeNullWhen(false)] out BinaryJsonNumber result)
+    {
+        if (double.TryParse(s, provider, out double d))
+        {
+            result = new(d);
+            return true;
+        }
+
+        result = default;
+        return false;
     }
 
     /// <summary>
@@ -715,7 +1759,7 @@ public readonly struct BinaryJsonNumber :
             return new BinaryJsonNumber(jsonNumberDouble);
         }
 
-        // But if we can#t, we'll go with a decimal
+        // But if we can't, we'll go with a decimal
         return new BinaryJsonNumber(jsonElement.GetDecimal());
     }
 
@@ -822,6 +1866,72 @@ public readonly struct BinaryJsonNumber :
             Kind.UInt128 => 64,
             _ => throw new NotSupportedException(),
         };
+    }
+
+    /// <summary>
+    /// Convert from the given value.
+    /// </summary>
+    /// <typeparam name="TOther">The type of the other value.</typeparam>
+    /// <param name="value">The value to convert.</param>
+    /// <param name="result">The converted value.</param>
+    /// <returns><see langword="true"/> if the value was converted successfully.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    static bool INumberBase<BinaryJsonNumber>.TryConvertFromChecked<TOther>(TOther value, out BinaryJsonNumber result) => TryConvertFromChecked(value, out result);
+
+    /// <summary>
+    /// Convert from the given value.
+    /// </summary>
+    /// <typeparam name="TOther">The type of the other value.</typeparam>
+    /// <param name="value">The value to convert.</param>
+    /// <param name="result">The converted value.</param>
+    /// <returns><see langword="true"/> if the value was converted successfully.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    static bool INumberBase<BinaryJsonNumber>.TryConvertFromSaturating<TOther>(TOther value, out BinaryJsonNumber result) => TryConvertFromSaturating(value, out result);
+
+    /// <summary>
+    /// Convert from the given value.
+    /// </summary>
+    /// <typeparam name="TOther">The type of the other value.</typeparam>
+    /// <param name="value">The value to convert.</param>
+    /// <param name="result">The converted value.</param>
+    /// <returns><see langword="true"/> if the value was converted successfully.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    static bool INumberBase<BinaryJsonNumber>.TryConvertFromTruncating<TOther>(TOther value, out BinaryJsonNumber result) => TryConvertFromTruncating(value, out result);
+
+    /// <summary>
+    /// Convert to the given value.
+    /// </summary>
+    /// <typeparam name="TOther">The type of the other value.</typeparam>
+    /// <param name="value">The value to convert.</param>
+    /// <param name="result">The converted value.</param>
+    /// <returns><see langword="true"/> if the value was converted successfully.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    static bool INumberBase<BinaryJsonNumber>.TryConvertToChecked<TOther>(BinaryJsonNumber value, [MaybeNullWhen(false)] out TOther result) => TryConvertToChecked(value, out result);
+
+    /// <summary>
+    /// Convert to the given value.
+    /// </summary>
+    /// <typeparam name="TOther">The type of the other value.</typeparam>
+    /// <param name="value">The value to convert.</param>
+    /// <param name="result">The converted value.</param>
+    /// <returns><see langword="true"/> if the value was converted successfully.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    static bool INumberBase<BinaryJsonNumber>.TryConvertToSaturating<TOther>(BinaryJsonNumber value, [MaybeNullWhen(false)] out TOther result) => TryConvertToSaturating(value, out result);
+
+    /// <summary>
+    /// Convert to the given value.
+    /// </summary>
+    /// <typeparam name="TOther">The type of the other value.</typeparam>
+    /// <param name="value">The value to convert.</param>
+    /// <param name="result">The converted value.</param>
+    /// <returns><see langword="true"/> if the value was converted successfully.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    static bool INumberBase<BinaryJsonNumber>.TryConvertToTruncating<TOther>(BinaryJsonNumber value, [MaybeNullWhen(false)] out TOther result) => TryConvertToTruncating(value, out result);
+
+    /// <inheritdoc/>
+    public bool Equals(BinaryJsonNumber other)
+    {
+        return Equals(this, other);
     }
 
     /// <summary>
@@ -1546,6 +2656,178 @@ public readonly struct BinaryJsonNumber :
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static BinaryJsonNumber Add<T>(in BinaryJsonNumber binaryNumber, T numberBase)
+    where T : INumberBase<T>
+    {
+        if (PreciseConversionTo<double>.TryFrom(numberBase, out double numberBaseDouble))
+        {
+            if (binaryNumber.numericKind == Kind.Decimal)
+            {
+                decimal binaryNumberDecimal = ReadDecimal(binaryNumber.binaryData);
+
+                if (PreciseConversionTo<decimal>.TryFrom(numberBase, out decimal numberBaseAsDecimal))
+                {
+                    return new(binaryNumberDecimal + numberBaseAsDecimal);
+                }
+                else
+                {
+                    return new(PreciseConversionTo<double>.From(binaryNumberDecimal) + numberBaseDouble);
+                }
+            }
+
+            return binaryNumber.numericKind switch
+            {
+                Kind.Byte => new(numberBaseDouble + ReadByte(binaryNumber.binaryData)),
+                Kind.Double => new(numberBaseDouble + ReadDouble(binaryNumber.binaryData)),
+                Kind.Half => new(numberBaseDouble + (double)ReadHalf(binaryNumber.binaryData)),
+                Kind.Int16 => new(numberBaseDouble + ReadInt16(binaryNumber.binaryData)),
+                Kind.Int32 => new(numberBaseDouble + ReadInt32(binaryNumber.binaryData)),
+                Kind.Int64 => new(numberBaseDouble + ReadInt64(binaryNumber.binaryData)),
+                Kind.Int128 => new(numberBaseDouble + (double)ReadInt128(binaryNumber.binaryData)),
+                Kind.SByte => new(numberBaseDouble + ReadSByte(binaryNumber.binaryData)),
+                Kind.Single => new(numberBaseDouble + (double)ReadSingle(binaryNumber.binaryData)),
+                Kind.UInt16 => new(numberBaseDouble + ReadUInt16(binaryNumber.binaryData)),
+                Kind.UInt32 => new(numberBaseDouble + ReadUInt32(binaryNumber.binaryData)),
+                Kind.UInt64 => new(numberBaseDouble + ReadUInt64(binaryNumber.binaryData)),
+                Kind.UInt128 => new(numberBaseDouble + (double)ReadUInt128(binaryNumber.binaryData)),
+                _ => throw new NotSupportedException(),
+            };
+        }
+
+        // The decimal handling is special-cased above.
+        throw new NotSupportedException();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static BinaryJsonNumber Subtract<T>(in BinaryJsonNumber binaryNumber, T numberBase)
+        where T : INumberBase<T>
+    {
+        if (PreciseConversionTo<double>.TryFrom(numberBase, out double numberBaseDouble))
+        {
+            if (binaryNumber.numericKind == Kind.Decimal)
+            {
+                decimal binaryNumberDecimal = ReadDecimal(binaryNumber.binaryData);
+
+                if (PreciseConversionTo<decimal>.TryFrom(numberBase, out decimal numberBaseAsDecimal))
+                {
+                    return new(binaryNumberDecimal - numberBaseAsDecimal);
+                }
+                else
+                {
+                    return new(PreciseConversionTo<double>.From(binaryNumberDecimal) - numberBaseDouble);
+                }
+            }
+
+            return binaryNumber.numericKind switch
+            {
+                Kind.Byte => new(ReadByte(binaryNumber.binaryData) - numberBaseDouble),
+                Kind.Double => new(ReadDouble(binaryNumber.binaryData) - numberBaseDouble),
+                Kind.Half => new((double)ReadHalf(binaryNumber.binaryData) - numberBaseDouble),
+                Kind.Int16 => new(ReadInt16(binaryNumber.binaryData) - numberBaseDouble),
+                Kind.Int32 => new(ReadInt32(binaryNumber.binaryData) - numberBaseDouble),
+                Kind.Int64 => new(ReadInt64(binaryNumber.binaryData) - numberBaseDouble),
+                Kind.Int128 => new((double)ReadInt128(binaryNumber.binaryData) - numberBaseDouble),
+                Kind.SByte => new(ReadSByte(binaryNumber.binaryData) - numberBaseDouble),
+                Kind.Single => new((double)ReadSingle(binaryNumber.binaryData) - numberBaseDouble),
+                Kind.UInt16 => new(ReadUInt16(binaryNumber.binaryData) - numberBaseDouble),
+                Kind.UInt32 => new(ReadUInt32(binaryNumber.binaryData) - numberBaseDouble),
+                Kind.UInt64 => new(ReadUInt64(binaryNumber.binaryData) - numberBaseDouble),
+                Kind.UInt128 => new((double)ReadUInt128(binaryNumber.binaryData) - numberBaseDouble),
+                _ => throw new NotSupportedException(),
+            };
+        }
+
+        // The decimal handling is special-cased above.
+        throw new NotSupportedException();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static BinaryJsonNumber Multiply<T>(in BinaryJsonNumber binaryNumber, T numberBase)
+        where T : INumberBase<T>
+    {
+        if (PreciseConversionTo<double>.TryFrom(numberBase, out double numberBaseDouble))
+        {
+            if (binaryNumber.numericKind == Kind.Decimal)
+            {
+                decimal binaryNumberDecimal = ReadDecimal(binaryNumber.binaryData);
+
+                if (PreciseConversionTo<decimal>.TryFrom(numberBase, out decimal numberBaseAsDecimal))
+                {
+                    return new(binaryNumberDecimal * numberBaseAsDecimal);
+                }
+                else
+                {
+                    return new(PreciseConversionTo<double>.From(binaryNumberDecimal) * numberBaseDouble);
+                }
+            }
+
+            return binaryNumber.numericKind switch
+            {
+                Kind.Byte => new(ReadByte(binaryNumber.binaryData) * numberBaseDouble),
+                Kind.Double => new(ReadDouble(binaryNumber.binaryData) * numberBaseDouble),
+                Kind.Half => new((double)ReadHalf(binaryNumber.binaryData) * numberBaseDouble),
+                Kind.Int16 => new(ReadInt16(binaryNumber.binaryData) * numberBaseDouble),
+                Kind.Int32 => new(ReadInt32(binaryNumber.binaryData) * numberBaseDouble),
+                Kind.Int64 => new(ReadInt64(binaryNumber.binaryData) * numberBaseDouble),
+                Kind.Int128 => new((double)ReadInt128(binaryNumber.binaryData) * numberBaseDouble),
+                Kind.SByte => new(ReadSByte(binaryNumber.binaryData) * numberBaseDouble),
+                Kind.Single => new((double)ReadSingle(binaryNumber.binaryData) * numberBaseDouble),
+                Kind.UInt16 => new(ReadUInt16(binaryNumber.binaryData) * numberBaseDouble),
+                Kind.UInt32 => new(ReadUInt32(binaryNumber.binaryData) * numberBaseDouble),
+                Kind.UInt64 => new(ReadUInt64(binaryNumber.binaryData) * numberBaseDouble),
+                Kind.UInt128 => new((double)ReadUInt128(binaryNumber.binaryData) * numberBaseDouble),
+                _ => throw new NotSupportedException(),
+            };
+        }
+
+        // The decimal handling is special-cased above.
+        throw new NotSupportedException();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static BinaryJsonNumber Divide<T>(in BinaryJsonNumber binaryNumber, T numberBase)
+        where T : INumberBase<T>
+    {
+        if (PreciseConversionTo<double>.TryFrom(numberBase, out double numberBaseDouble))
+        {
+            if (binaryNumber.numericKind == Kind.Decimal)
+            {
+                decimal binaryNumberDecimal = ReadDecimal(binaryNumber.binaryData);
+
+                if (PreciseConversionTo<decimal>.TryFrom(numberBase, out decimal numberBaseAsDecimal))
+                {
+                    return new(binaryNumberDecimal / numberBaseAsDecimal);
+                }
+                else
+                {
+                    return new(PreciseConversionTo<double>.From(binaryNumberDecimal) / numberBaseDouble);
+                }
+            }
+
+            return binaryNumber.numericKind switch
+            {
+                Kind.Byte => new(ReadByte(binaryNumber.binaryData) / numberBaseDouble),
+                Kind.Double => new(ReadDouble(binaryNumber.binaryData) / numberBaseDouble),
+                Kind.Half => new((double)ReadHalf(binaryNumber.binaryData) / numberBaseDouble),
+                Kind.Int16 => new(ReadInt16(binaryNumber.binaryData) / numberBaseDouble),
+                Kind.Int32 => new(ReadInt32(binaryNumber.binaryData) / numberBaseDouble),
+                Kind.Int64 => new(ReadInt64(binaryNumber.binaryData) / numberBaseDouble),
+                Kind.Int128 => new((double)ReadInt128(binaryNumber.binaryData) / numberBaseDouble),
+                Kind.SByte => new(ReadSByte(binaryNumber.binaryData) / numberBaseDouble),
+                Kind.Single => new((double)ReadSingle(binaryNumber.binaryData) / numberBaseDouble),
+                Kind.UInt16 => new(ReadUInt16(binaryNumber.binaryData) / numberBaseDouble),
+                Kind.UInt32 => new(ReadUInt32(binaryNumber.binaryData) / numberBaseDouble),
+                Kind.UInt64 => new(ReadUInt64(binaryNumber.binaryData) / numberBaseDouble),
+                Kind.UInt128 => new((double)ReadUInt128(binaryNumber.binaryData) / numberBaseDouble),
+                _ => throw new NotSupportedException(),
+            };
+        }
+
+        // The decimal handling is special-cased above.
+        throw new NotSupportedException();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool Equals(in BinaryJsonNumber binaryNumber, decimal numberBase)
     {
         if (binaryNumber.numericKind == Kind.Double)
@@ -1648,62 +2930,179 @@ public readonly struct BinaryJsonNumber :
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int Compare(decimal left, in BinaryJsonNumber right)
+    private static BinaryJsonNumber MaxMagnitude<T>(in BinaryJsonNumber binaryNumber, T numberBase)
+        where T : INumberBase<T>
     {
-        if (right.numericKind == Kind.Double)
+        if (PreciseConversionTo<double>.TryFrom(numberBase, out double numberBaseDouble))
         {
-            double rightAsDouble = ReadDouble(right.binaryData);
-            if (PreciseConversionTo<decimal>.TryFrom(rightAsDouble, out decimal rightAsDecimal))
+            if (binaryNumber.numericKind == Kind.Decimal)
             {
-                return left.CompareTo(rightAsDecimal);
+                decimal binaryNumberDecimal = ReadDecimal(binaryNumber.binaryData);
+
+                if (PreciseConversionTo<decimal>.TryFrom(numberBase, out decimal numberBaseAsDecimal))
+                {
+                    return  new(decimal.MaxMagnitude(binaryNumberDecimal, numberBaseAsDecimal));
+                }
+                else
+                {
+                    return new(double.MaxMagnitude(PreciseConversionTo<double>.From(binaryNumberDecimal), numberBaseDouble));
+                }
             }
-            else
-            {
-                return PreciseConversionTo<double>.From(left).CompareTo(rightAsDouble);
-            }
+
+            return new(
+                binaryNumber.numericKind switch
+                {
+                    Kind.Byte => double.MaxMagnitude(numberBaseDouble, ReadByte(binaryNumber.binaryData)),
+                    Kind.Double => double.MaxMagnitude(numberBaseDouble, ReadDouble(binaryNumber.binaryData)),
+                    Kind.Half => double.MaxMagnitude(numberBaseDouble, (double)ReadHalf(binaryNumber.binaryData)),
+                    Kind.Int16 => double.MaxMagnitude(numberBaseDouble, ReadInt16(binaryNumber.binaryData)),
+                    Kind.Int32 => double.MaxMagnitude(numberBaseDouble, ReadInt32(binaryNumber.binaryData)),
+                    Kind.Int64 => double.MaxMagnitude(numberBaseDouble, ReadInt64(binaryNumber.binaryData)),
+                    Kind.Int128 => double.MaxMagnitude(numberBaseDouble, (double)ReadInt128(binaryNumber.binaryData)),
+                    Kind.SByte => double.MaxMagnitude(numberBaseDouble, ReadSByte(binaryNumber.binaryData)),
+                    Kind.Single => double.MaxMagnitude(numberBaseDouble, (double)ReadSingle(binaryNumber.binaryData)),
+                    Kind.UInt16 => double.MaxMagnitude(numberBaseDouble, ReadUInt16(binaryNumber.binaryData)),
+                    Kind.UInt32 => double.MaxMagnitude(numberBaseDouble, ReadUInt32(binaryNumber.binaryData)),
+                    Kind.UInt64 => double.MaxMagnitude(numberBaseDouble, ReadUInt64(binaryNumber.binaryData)),
+                    Kind.UInt128 => double.MaxMagnitude(numberBaseDouble, (double)ReadUInt128(binaryNumber.binaryData)),
+                    _ => throw new NotSupportedException(),
+                });
         }
 
-        if (right.numericKind == Kind.Single)
+        // The decimal handling is special-cased above.
+        throw new NotSupportedException();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static BinaryJsonNumber MaxMagnitudeNumber<T>(in BinaryJsonNumber binaryNumber, T numberBase)
+    where T : INumberBase<T>
+    {
+        if (PreciseConversionTo<double>.TryFrom(numberBase, out double numberBaseDouble))
         {
-            float rightAsFloat = ReadSingle(right.binaryData);
-            if (PreciseConversionTo<decimal>.TryFrom(rightAsFloat, out decimal rightAsDecimal))
+            if (binaryNumber.numericKind == Kind.Decimal)
             {
-                return left.CompareTo(rightAsDecimal);
+                decimal binaryNumberDecimal = ReadDecimal(binaryNumber.binaryData);
+
+                if (PreciseConversionTo<decimal>.TryFrom(numberBase, out decimal numberBaseAsDecimal))
+                {
+                    return new(decimal.MaxMagnitude(binaryNumberDecimal, numberBaseAsDecimal));
+                }
+                else
+                {
+                    return new(double.MaxMagnitudeNumber(PreciseConversionTo<double>.From(binaryNumberDecimal), numberBaseDouble));
+                }
             }
-            else
-            {
-                return PreciseConversionTo<double>.From(left).CompareTo((double)rightAsFloat);
-            }
+
+            return new(
+                binaryNumber.numericKind switch
+                {
+                    Kind.Byte => double.MaxMagnitudeNumber(numberBaseDouble, ReadByte(binaryNumber.binaryData)),
+                    Kind.Double => double.MaxMagnitudeNumber(numberBaseDouble, ReadDouble(binaryNumber.binaryData)),
+                    Kind.Half => double.MaxMagnitudeNumber(numberBaseDouble, (double)ReadHalf(binaryNumber.binaryData)),
+                    Kind.Int16 => double.MaxMagnitudeNumber(numberBaseDouble, ReadInt16(binaryNumber.binaryData)),
+                    Kind.Int32 => double.MaxMagnitudeNumber(numberBaseDouble, ReadInt32(binaryNumber.binaryData)),
+                    Kind.Int64 => double.MaxMagnitudeNumber(numberBaseDouble, ReadInt64(binaryNumber.binaryData)),
+                    Kind.Int128 => double.MaxMagnitudeNumber(numberBaseDouble, (double)ReadInt128(binaryNumber.binaryData)),
+                    Kind.SByte => double.MaxMagnitudeNumber(numberBaseDouble, ReadSByte(binaryNumber.binaryData)),
+                    Kind.Single => double.MaxMagnitudeNumber(numberBaseDouble, (double)ReadSingle(binaryNumber.binaryData)),
+                    Kind.UInt16 => double.MaxMagnitudeNumber(numberBaseDouble, ReadUInt16(binaryNumber.binaryData)),
+                    Kind.UInt32 => double.MaxMagnitudeNumber(numberBaseDouble, ReadUInt32(binaryNumber.binaryData)),
+                    Kind.UInt64 => double.MaxMagnitudeNumber(numberBaseDouble, ReadUInt64(binaryNumber.binaryData)),
+                    Kind.UInt128 => double.MaxMagnitudeNumber(numberBaseDouble, (double)ReadUInt128(binaryNumber.binaryData)),
+                    _ => throw new NotSupportedException(),
+                });
         }
 
-        if (right.numericKind == Kind.Half)
+        // The decimal handling is special-cased above.
+        throw new NotSupportedException();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static BinaryJsonNumber MinMagnitude<T>(in BinaryJsonNumber binaryNumber, T numberBase)
+    where T : INumberBase<T>
+    {
+        if (PreciseConversionTo<double>.TryFrom(numberBase, out double numberBaseDouble))
         {
-            Half rightAsHalf = ReadHalf(right.binaryData);
-            if (PreciseConversionTo<decimal>.TryFrom(rightAsHalf, out decimal rightAsDecimal))
+            if (binaryNumber.numericKind == Kind.Decimal)
             {
-                return left.CompareTo(rightAsDecimal);
+                decimal binaryNumberDecimal = ReadDecimal(binaryNumber.binaryData);
+
+                if (PreciseConversionTo<decimal>.TryFrom(numberBase, out decimal numberBaseAsDecimal))
+                {
+                    return new(decimal.MinMagnitude(binaryNumberDecimal, numberBaseAsDecimal));
+                }
+                else
+                {
+                    return new(double.MinMagnitude(PreciseConversionTo<double>.From(binaryNumberDecimal), numberBaseDouble));
+                }
             }
-            else
-            {
-                return PreciseConversionTo<double>.From(left).CompareTo((double)rightAsHalf);
-            }
+
+            return new(
+                binaryNumber.numericKind switch
+                {
+                    Kind.Byte => double.MinMagnitude(numberBaseDouble, ReadByte(binaryNumber.binaryData)),
+                    Kind.Double => double.MinMagnitude(numberBaseDouble, ReadDouble(binaryNumber.binaryData)),
+                    Kind.Half => double.MinMagnitude(numberBaseDouble, (double)ReadHalf(binaryNumber.binaryData)),
+                    Kind.Int16 => double.MinMagnitude(numberBaseDouble, ReadInt16(binaryNumber.binaryData)),
+                    Kind.Int32 => double.MinMagnitude(numberBaseDouble, ReadInt32(binaryNumber.binaryData)),
+                    Kind.Int64 => double.MinMagnitude(numberBaseDouble, ReadInt64(binaryNumber.binaryData)),
+                    Kind.Int128 => double.MinMagnitude(numberBaseDouble, (double)ReadInt128(binaryNumber.binaryData)),
+                    Kind.SByte => double.MinMagnitude(numberBaseDouble, ReadSByte(binaryNumber.binaryData)),
+                    Kind.Single => double.MinMagnitude(numberBaseDouble, (double)ReadSingle(binaryNumber.binaryData)),
+                    Kind.UInt16 => double.MinMagnitude(numberBaseDouble, ReadUInt16(binaryNumber.binaryData)),
+                    Kind.UInt32 => double.MinMagnitude(numberBaseDouble, ReadUInt32(binaryNumber.binaryData)),
+                    Kind.UInt64 => double.MinMagnitude(numberBaseDouble, ReadUInt64(binaryNumber.binaryData)),
+                    Kind.UInt128 => double.MinMagnitude(numberBaseDouble, (double)ReadUInt128(binaryNumber.binaryData)),
+                    _ => throw new NotSupportedException(),
+                });
         }
 
-        return right.numericKind switch
+        // The decimal handling is special-cased above.
+        throw new NotSupportedException();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static BinaryJsonNumber MinMagnitudeNumber<T>(in BinaryJsonNumber binaryNumber, T numberBase)
+    where T : INumberBase<T>
+    {
+        if (PreciseConversionTo<double>.TryFrom(numberBase, out double numberBaseDouble))
         {
-            Kind.Byte => left.CompareTo(ReadByte(right.binaryData)),
-            Kind.Decimal => left.CompareTo(ReadDecimal(right.binaryData)),
-            Kind.Int16 => left.CompareTo(ReadInt16(right.binaryData)),
-            Kind.Int32 => left.CompareTo(ReadInt32(right.binaryData)),
-            Kind.Int64 => left.CompareTo(ReadInt64(right.binaryData)),
-            Kind.Int128 => left.CompareTo(PreciseConversionTo<decimal>.From(ReadInt128(right.binaryData))),
-            Kind.SByte => left.CompareTo(ReadSByte(right.binaryData)),
-            Kind.UInt16 => left.CompareTo(ReadUInt16(right.binaryData)),
-            Kind.UInt32 => left.CompareTo(ReadUInt32(right.binaryData)),
-            Kind.UInt64 => left.CompareTo(ReadUInt64(right.binaryData)),
-            Kind.UInt128 => left.CompareTo(PreciseConversionTo<decimal>.From(ReadUInt128(right.binaryData))),
-            _ => throw new NotSupportedException(),
-        };
+            if (binaryNumber.numericKind == Kind.Decimal)
+            {
+                decimal binaryNumberDecimal = ReadDecimal(binaryNumber.binaryData);
+
+                if (PreciseConversionTo<decimal>.TryFrom(numberBase, out decimal numberBaseAsDecimal))
+                {
+                    return new(decimal.MinMagnitude(binaryNumberDecimal, numberBaseAsDecimal));
+                }
+                else
+                {
+                    return new(double.MinMagnitudeNumber(PreciseConversionTo<double>.From(binaryNumberDecimal), numberBaseDouble));
+                }
+            }
+
+            return new(
+                binaryNumber.numericKind switch
+                {
+                    Kind.Byte => double.MinMagnitudeNumber(numberBaseDouble, ReadByte(binaryNumber.binaryData)),
+                    Kind.Double => double.MinMagnitudeNumber(numberBaseDouble, ReadDouble(binaryNumber.binaryData)),
+                    Kind.Half => double.MinMagnitudeNumber(numberBaseDouble, (double)ReadHalf(binaryNumber.binaryData)),
+                    Kind.Int16 => double.MinMagnitudeNumber(numberBaseDouble, ReadInt16(binaryNumber.binaryData)),
+                    Kind.Int32 => double.MinMagnitudeNumber(numberBaseDouble, ReadInt32(binaryNumber.binaryData)),
+                    Kind.Int64 => double.MinMagnitudeNumber(numberBaseDouble, ReadInt64(binaryNumber.binaryData)),
+                    Kind.Int128 => double.MinMagnitudeNumber(numberBaseDouble, (double)ReadInt128(binaryNumber.binaryData)),
+                    Kind.SByte => double.MinMagnitudeNumber(numberBaseDouble, ReadSByte(binaryNumber.binaryData)),
+                    Kind.Single => double.MinMagnitudeNumber(numberBaseDouble, (double)ReadSingle(binaryNumber.binaryData)),
+                    Kind.UInt16 => double.MinMagnitudeNumber(numberBaseDouble, ReadUInt16(binaryNumber.binaryData)),
+                    Kind.UInt32 => double.MinMagnitudeNumber(numberBaseDouble, ReadUInt32(binaryNumber.binaryData)),
+                    Kind.UInt64 => double.MinMagnitudeNumber(numberBaseDouble, ReadUInt64(binaryNumber.binaryData)),
+                    Kind.UInt128 => double.MinMagnitudeNumber(numberBaseDouble, (double)ReadUInt128(binaryNumber.binaryData)),
+                    _ => throw new NotSupportedException(),
+                });
+        }
+
+        // The decimal handling is special-cased above.
+        throw new NotSupportedException();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1759,7 +3158,328 @@ public readonly struct BinaryJsonNumber :
         throw new NotSupportedException();
     }
 
-// The analyzers have not caught up with this structure.
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool TryConvertFromChecked<TOther>(TOther value, out BinaryJsonNumber result)
+           where TOther : INumberBase<TOther>
+    {
+        if (typeof(TOther) == typeof(byte))
+        {
+            byte actualValue = (byte)(object)value;
+            result = new(actualValue);
+            return true;
+        }
+        else if (typeof(TOther) == typeof(sbyte))
+        {
+            sbyte actualValue = (sbyte)(object)value;
+            result = new(actualValue);
+            return true;
+        }
+        else if (typeof(TOther) == typeof(char))
+        {
+            char actualValue = (char)(object)value;
+            result = new(actualValue);
+            return true;
+        }
+        else if (typeof(TOther) == typeof(double))
+        {
+            double actualValue = (double)(object)value;
+            result = new(actualValue);
+            return true;
+        }
+        else if (typeof(TOther) == typeof(decimal))
+        {
+            decimal actualValue = (decimal)(object)value;
+            result = new(actualValue);
+            return true;
+        }
+        else if (typeof(TOther) == typeof(ushort))
+        {
+            ushort actualValue = (ushort)(object)value;
+            result = new(actualValue);
+            return true;
+        }
+        else if (typeof(TOther) == typeof(uint))
+        {
+            uint actualValue = (uint)(object)value;
+            result = new(actualValue);
+            return true;
+        }
+        else if (typeof(TOther) == typeof(ulong))
+        {
+            ulong actualValue = (ulong)(object)value;
+            result = new(actualValue);
+            return true;
+        }
+        else if (typeof(TOther) == typeof(nuint))
+        {
+            nuint actualValue = (nuint)(object)value;
+            result = new(actualValue);
+            return true;
+        }
+        else if (typeof(TOther) == typeof(Half))
+        {
+            var actualValue = (Half)(object)value;
+            result = new(actualValue);
+            return true;
+        }
+        else if (typeof(TOther) == typeof(Int128))
+        {
+            var actualValue = (Int128)(object)value;
+            result = new(actualValue);
+            return true;
+        }
+        else if (typeof(TOther) == typeof(UInt128))
+        {
+            var actualValue = (UInt128)(object)value;
+            result = new(actualValue);
+            return true;
+        }
+        else
+        {
+            result = default;
+            return false;
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool TryConvertFromSaturating<TOther>(TOther value, out BinaryJsonNumber result)
+       where TOther : INumberBase<TOther>
+    {
+        if (typeof(TOther) == typeof(byte))
+        {
+            byte actualValue = (byte)(object)value;
+            result = new(actualValue);
+            return true;
+        }
+        else if (typeof(TOther) == typeof(sbyte))
+        {
+            sbyte actualValue = (sbyte)(object)value;
+            result = new(actualValue);
+            return true;
+        }
+        else if (typeof(TOther) == typeof(char))
+        {
+            char actualValue = (char)(object)value;
+            result = new(actualValue);
+            return true;
+        }
+        else if (typeof(TOther) == typeof(double))
+        {
+            double actualValue = (double)(object)value;
+            result = new(actualValue);
+            return true;
+        }
+        else if (typeof(TOther) == typeof(decimal))
+        {
+            decimal actualValue = (decimal)(object)value;
+            result = new(actualValue);
+            return true;
+        }
+        else if (typeof(TOther) == typeof(ushort))
+        {
+            ushort actualValue = (ushort)(object)value;
+            result = new(actualValue);
+            return true;
+        }
+        else if (typeof(TOther) == typeof(uint))
+        {
+            uint actualValue = (uint)(object)value;
+            result = new(actualValue);
+            return true;
+        }
+        else if (typeof(TOther) == typeof(ulong))
+        {
+            ulong actualValue = (ulong)(object)value;
+            result = new(actualValue);
+            return true;
+        }
+        else if (typeof(TOther) == typeof(nuint))
+        {
+            nuint actualValue = (nuint)(object)value;
+            result = new(actualValue);
+            return true;
+        }
+        else if (typeof(TOther) == typeof(Half))
+        {
+            var actualValue = (Half)(object)value;
+            result = new(actualValue);
+            return true;
+        }
+        else if (typeof(TOther) == typeof(Int128))
+        {
+            var actualValue = (Int128)(object)value;
+            result = new(actualValue);
+            return true;
+        }
+        else if (typeof(TOther) == typeof(UInt128))
+        {
+            var actualValue = (UInt128)(object)value;
+            result = new(actualValue);
+            return true;
+        }
+        else
+        {
+            result = default;
+            return false;
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool TryConvertFromTruncating<TOther>(TOther value, out BinaryJsonNumber result)
+        where TOther : INumberBase<TOther>
+    {
+        if (typeof(TOther) == typeof(byte))
+        {
+            byte actualValue = (byte)(object)value;
+            result = new(actualValue);
+            return true;
+        }
+        else if (typeof(TOther) == typeof(sbyte))
+        {
+            sbyte actualValue = (sbyte)(object)value;
+            result = new(actualValue);
+            return true;
+        }
+        else if (typeof(TOther) == typeof(char))
+        {
+            char actualValue = (char)(object)value;
+            result = new(actualValue);
+            return true;
+        }
+        else if (typeof(TOther) == typeof(double))
+        {
+            double actualValue = (double)(object)value;
+            result = new(actualValue);
+            return true;
+        }
+        else if (typeof(TOther) == typeof(decimal))
+        {
+            decimal actualValue = (decimal)(object)value;
+            result = new(actualValue);
+            return true;
+        }
+        else if (typeof(TOther) == typeof(ushort))
+        {
+            ushort actualValue = (ushort)(object)value;
+            result = new(actualValue);
+            return true;
+        }
+        else if (typeof(TOther) == typeof(uint))
+        {
+            uint actualValue = (uint)(object)value;
+            result = new(actualValue);
+            return true;
+        }
+        else if (typeof(TOther) == typeof(ulong))
+        {
+            ulong actualValue = (ulong)(object)value;
+            result = new(actualValue);
+            return true;
+        }
+        else if (typeof(TOther) == typeof(nuint))
+        {
+            nuint actualValue = (nuint)(object)value;
+            result = new(actualValue);
+            return true;
+        }
+        else if (typeof(TOther) == typeof(Half))
+        {
+            var actualValue = (Half)(object)value;
+            result = new(actualValue);
+            return true;
+        }
+        else if (typeof(TOther) == typeof(Int128))
+        {
+            var actualValue = (Int128)(object)value;
+            result = new(actualValue);
+            return true;
+        }
+        else if (typeof(TOther) == typeof(UInt128))
+        {
+            var actualValue = (UInt128)(object)value;
+            result = new(actualValue);
+            return true;
+        }
+        else
+        {
+            result = default;
+            return false;
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool TryConvertToChecked<TOther>(BinaryJsonNumber value, [MaybeNullWhen(false)] out TOther result)
+    where TOther : INumberBase<TOther>
+    {
+        return value.numericKind switch
+        {
+            Kind.Byte => TOther.TryConvertFromChecked(ReadByte(value.binaryData), out result),
+            Kind.Decimal => TOther.TryConvertFromChecked(ReadDecimal(value.binaryData), out result),
+            Kind.Double => TOther.TryConvertFromChecked(ReadDouble(value.binaryData), out result),
+            Kind.Half => TOther.TryConvertFromChecked(ReadHalf(value.binaryData), out result),
+            Kind.Int16 => TOther.TryConvertFromChecked(ReadInt16(value.binaryData), out result),
+            Kind.Int32 => TOther.TryConvertFromChecked(ReadInt32(value.binaryData), out result),
+            Kind.Int64 => TOther.TryConvertFromChecked(ReadInt64(value.binaryData), out result),
+            Kind.Int128 => TOther.TryConvertFromChecked(ReadInt128(value.binaryData), out result),
+            Kind.SByte => TOther.TryConvertFromChecked(ReadSByte(value.binaryData), out result),
+            Kind.Single => TOther.TryConvertFromChecked(ReadSingle(value.binaryData), out result),
+            Kind.UInt16 => TOther.TryConvertFromChecked(ReadUInt16(value.binaryData), out result),
+            Kind.UInt32 => TOther.TryConvertFromChecked(ReadUInt32(value.binaryData), out result),
+            Kind.UInt64 => TOther.TryConvertFromChecked(ReadUInt64(value.binaryData), out result),
+            Kind.UInt128 => TOther.TryConvertFromChecked(ReadUInt128(value.binaryData), out result),
+            _ => throw new NotSupportedException(),
+        };
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool TryConvertToTruncating<TOther>(BinaryJsonNumber value, [MaybeNullWhen(false)] out TOther result)
+        where TOther : INumberBase<TOther>
+    {
+        return value.numericKind switch
+        {
+            Kind.Byte => TOther.TryConvertFromTruncating(ReadByte(value.binaryData), out result),
+            Kind.Decimal => TOther.TryConvertFromTruncating(ReadDecimal(value.binaryData), out result),
+            Kind.Double => TOther.TryConvertFromTruncating(ReadDouble(value.binaryData), out result),
+            Kind.Half => TOther.TryConvertFromTruncating(ReadHalf(value.binaryData), out result),
+            Kind.Int16 => TOther.TryConvertFromTruncating(ReadInt16(value.binaryData), out result),
+            Kind.Int32 => TOther.TryConvertFromTruncating(ReadInt32(value.binaryData), out result),
+            Kind.Int64 => TOther.TryConvertFromTruncating(ReadInt64(value.binaryData), out result),
+            Kind.Int128 => TOther.TryConvertFromTruncating(ReadInt128(value.binaryData), out result),
+            Kind.SByte => TOther.TryConvertFromTruncating(ReadSByte(value.binaryData), out result),
+            Kind.Single => TOther.TryConvertFromTruncating(ReadSingle(value.binaryData), out result),
+            Kind.UInt16 => TOther.TryConvertFromTruncating(ReadUInt16(value.binaryData), out result),
+            Kind.UInt32 => TOther.TryConvertFromTruncating(ReadUInt32(value.binaryData), out result),
+            Kind.UInt64 => TOther.TryConvertFromTruncating(ReadUInt64(value.binaryData), out result),
+            Kind.UInt128 => TOther.TryConvertFromTruncating(ReadUInt128(value.binaryData), out result),
+            _ => throw new NotSupportedException(),
+        };
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool TryConvertToSaturating<TOther>(BinaryJsonNumber value, [MaybeNullWhen(false)] out TOther result)
+        where TOther : INumberBase<TOther>
+    {
+        return value.numericKind switch
+        {
+            Kind.Byte => TOther.TryConvertFromSaturating(ReadByte(value.binaryData), out result),
+            Kind.Decimal => TOther.TryConvertFromSaturating(ReadDecimal(value.binaryData), out result),
+            Kind.Double => TOther.TryConvertFromSaturating(ReadDouble(value.binaryData), out result),
+            Kind.Half => TOther.TryConvertFromSaturating(ReadHalf(value.binaryData), out result),
+            Kind.Int16 => TOther.TryConvertFromSaturating(ReadInt16(value.binaryData), out result),
+            Kind.Int32 => TOther.TryConvertFromSaturating(ReadInt32(value.binaryData), out result),
+            Kind.Int64 => TOther.TryConvertFromSaturating(ReadInt64(value.binaryData), out result),
+            Kind.Int128 => TOther.TryConvertFromSaturating(ReadInt128(value.binaryData), out result),
+            Kind.SByte => TOther.TryConvertFromSaturating(ReadSByte(value.binaryData), out result),
+            Kind.Single => TOther.TryConvertFromSaturating(ReadSingle(value.binaryData), out result),
+            Kind.UInt16 => TOther.TryConvertFromSaturating(ReadUInt16(value.binaryData), out result),
+            Kind.UInt32 => TOther.TryConvertFromSaturating(ReadUInt32(value.binaryData), out result),
+            Kind.UInt64 => TOther.TryConvertFromSaturating(ReadUInt64(value.binaryData), out result),
+            Kind.UInt128 => TOther.TryConvertFromSaturating(ReadUInt128(value.binaryData), out result),
+            _ => throw new NotSupportedException(),
+        };
+    }
+
+    // The analyzers have not caught up with this structure.
 #pragma warning disable
     [InlineArray(16)]
     private struct ByteBuffer16
