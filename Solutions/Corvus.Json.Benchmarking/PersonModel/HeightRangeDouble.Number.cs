@@ -8,6 +8,7 @@
 //------------------------------------------------------------------------------
 #nullable enable
 using System.Collections.Immutable;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
@@ -17,7 +18,7 @@ namespace Corvus.Json.Benchmarking.Models;
 /// <summary>
 /// A type generated from a JsonSchema specification.
 /// </summary>
-public readonly partial struct HeightRangeDouble : IJsonNumber<HeightRangeDouble>
+public readonly partial struct HeightRangeDouble : IJsonNumber<HeightRangeDouble>, IAdditionOperators<HeightRangeDouble, HeightRangeDouble, HeightRangeDouble>, ISubtractionOperators<HeightRangeDouble, HeightRangeDouble, HeightRangeDouble>, IMultiplyOperators<HeightRangeDouble, HeightRangeDouble, HeightRangeDouble>, IDivisionOperators<HeightRangeDouble, HeightRangeDouble, HeightRangeDouble>, IIncrementOperators<HeightRangeDouble>, IDecrementOperators<HeightRangeDouble>
 {
     /// <summary>
     /// Initializes a new instance of the <see cref = "HeightRangeDouble"/> struct.
@@ -586,6 +587,72 @@ public readonly partial struct HeightRangeDouble : IJsonNumber<HeightRangeDouble
     public static bool operator >=(in HeightRangeDouble left, in HeightRangeDouble right)
     {
         return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && Compare(left, right) >= 0;
+    }
+
+    /// <summary>
+    /// Adds two values together to compute their sum.
+    /// </summary>
+    /// <param name = "left">The left hand side.</param>
+    /// <param name = "right">The right hand side.</param>
+    /// <returns>The resulting value.</returns>
+    public static HeightRangeDouble operator +(HeightRangeDouble left, HeightRangeDouble right)
+    {
+        return new(left.AsBinaryJsonNumber + right.AsBinaryJsonNumber);
+    }
+
+    /// <summary>
+    /// Subtracts two values together to compute their difference.
+    /// </summary>
+    /// <param name = "left">The left hand side.</param>
+    /// <param name = "right">The right hand side.</param>
+    /// <returns>The resulting value.</returns>
+    public static HeightRangeDouble operator -(HeightRangeDouble left, HeightRangeDouble right)
+    {
+        return new(left.AsBinaryJsonNumber - right.AsBinaryJsonNumber);
+    }
+
+    /// <summary>
+    /// Multiplies two values together.
+    /// </summary>
+    /// <param name = "left">The left hand side.</param>
+    /// <param name = "right">The right hand side.</param>
+    /// <returns>The resulting value.</returns>
+    public static HeightRangeDouble operator *(HeightRangeDouble left, HeightRangeDouble right)
+    {
+        return new(left.AsBinaryJsonNumber * right.AsBinaryJsonNumber);
+    }
+
+    /// <summary>
+    /// Divides two values.
+    /// </summary>
+    /// <param name = "left">The left hand side.</param>
+    /// <param name = "right">The right hand side.</param>
+    /// <returns>The resulting value.</returns>
+    public static HeightRangeDouble operator /(HeightRangeDouble left, HeightRangeDouble right)
+    {
+        return new(left.AsBinaryJsonNumber / right.AsBinaryJsonNumber);
+    }
+
+    /// <summary>
+    /// Increments the value.
+    /// </summary>
+    /// <param name = "value">The value.</param>
+    /// <returns>The resulting value.</returns>
+    public static HeightRangeDouble operator ++(HeightRangeDouble value)
+    {
+        BinaryJsonNumber num = value.AsBinaryJsonNumber;
+        return new(num++);
+    }
+
+    /// <summary>
+    /// Decrements the value.
+    /// </summary>
+    /// <param name = "value">The value.</param>
+    /// <returns>The resulting value.</returns>
+    public static HeightRangeDouble operator --(HeightRangeDouble value)
+    {
+        BinaryJsonNumber num = value.AsBinaryJsonNumber;
+        return new(num--);
     }
 
     /// <summary>

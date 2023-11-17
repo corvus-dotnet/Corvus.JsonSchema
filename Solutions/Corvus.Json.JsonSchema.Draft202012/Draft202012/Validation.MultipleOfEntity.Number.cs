@@ -8,6 +8,7 @@
 //------------------------------------------------------------------------------
 #nullable enable
 using System.Collections.Immutable;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
@@ -19,7 +20,7 @@ public readonly partial struct Validation
     /// <summary>
     /// A type generated from a JsonSchema specification.
     /// </summary>
-    public readonly partial struct MultipleOfEntity : IJsonNumber<MultipleOfEntity>
+    public readonly partial struct MultipleOfEntity : IJsonNumber<MultipleOfEntity>, IAdditionOperators<MultipleOfEntity, MultipleOfEntity, MultipleOfEntity>, ISubtractionOperators<MultipleOfEntity, MultipleOfEntity, MultipleOfEntity>, IMultiplyOperators<MultipleOfEntity, MultipleOfEntity, MultipleOfEntity>, IDivisionOperators<MultipleOfEntity, MultipleOfEntity, MultipleOfEntity>, IIncrementOperators<MultipleOfEntity>, IDecrementOperators<MultipleOfEntity>
     {
         /// <summary>
         /// Initializes a new instance of the <see cref = "MultipleOfEntity"/> struct.
@@ -588,6 +589,72 @@ public readonly partial struct Validation
         public static bool operator >=(in MultipleOfEntity left, in MultipleOfEntity right)
         {
             return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && Compare(left, right) >= 0;
+        }
+
+        /// <summary>
+        /// Adds two values together to compute their sum.
+        /// </summary>
+        /// <param name = "left">The left hand side.</param>
+        /// <param name = "right">The right hand side.</param>
+        /// <returns>The resulting value.</returns>
+        public static MultipleOfEntity operator +(MultipleOfEntity left, MultipleOfEntity right)
+        {
+            return new(left.AsBinaryJsonNumber + right.AsBinaryJsonNumber);
+        }
+
+        /// <summary>
+        /// Subtracts two values together to compute their difference.
+        /// </summary>
+        /// <param name = "left">The left hand side.</param>
+        /// <param name = "right">The right hand side.</param>
+        /// <returns>The resulting value.</returns>
+        public static MultipleOfEntity operator -(MultipleOfEntity left, MultipleOfEntity right)
+        {
+            return new(left.AsBinaryJsonNumber - right.AsBinaryJsonNumber);
+        }
+
+        /// <summary>
+        /// Multiplies two values together.
+        /// </summary>
+        /// <param name = "left">The left hand side.</param>
+        /// <param name = "right">The right hand side.</param>
+        /// <returns>The resulting value.</returns>
+        public static MultipleOfEntity operator *(MultipleOfEntity left, MultipleOfEntity right)
+        {
+            return new(left.AsBinaryJsonNumber * right.AsBinaryJsonNumber);
+        }
+
+        /// <summary>
+        /// Divides two values.
+        /// </summary>
+        /// <param name = "left">The left hand side.</param>
+        /// <param name = "right">The right hand side.</param>
+        /// <returns>The resulting value.</returns>
+        public static MultipleOfEntity operator /(MultipleOfEntity left, MultipleOfEntity right)
+        {
+            return new(left.AsBinaryJsonNumber / right.AsBinaryJsonNumber);
+        }
+
+        /// <summary>
+        /// Increments the value.
+        /// </summary>
+        /// <param name = "value">The value.</param>
+        /// <returns>The resulting value.</returns>
+        public static MultipleOfEntity operator ++(MultipleOfEntity value)
+        {
+            BinaryJsonNumber num = value.AsBinaryJsonNumber;
+            return new(num++);
+        }
+
+        /// <summary>
+        /// Decrements the value.
+        /// </summary>
+        /// <param name = "value">The value.</param>
+        /// <returns>The resulting value.</returns>
+        public static MultipleOfEntity operator --(MultipleOfEntity value)
+        {
+            BinaryJsonNumber num = value.AsBinaryJsonNumber;
+            return new(num--);
         }
 
         /// <summary>
