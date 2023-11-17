@@ -32,6 +32,20 @@ public readonly partial struct JsonPatchDocument
             this.objectBacking = value;
         }
 
+        /// <summary>
+        /// Conversion from JsonObject.
+        /// </summary>
+        /// <param name = "value">The value from which to convert.</param>
+        public static implicit operator ReplaceEntity(JsonObject value)
+        {
+            if (value.HasDotnetBacking && value.ValueKind == JsonValueKind.Object)
+            {
+                return new(value.AsPropertyBacking());
+            }
+
+            return new(value.AsJsonElement);
+        }
+
         /// <inheritdoc/>
         public ImmutableList<JsonObjectProperty> AsPropertyBacking()
         {

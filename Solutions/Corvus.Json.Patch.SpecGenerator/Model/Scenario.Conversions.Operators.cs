@@ -19,24 +19,6 @@ namespace Corvus.Json.Patch.SpecGenerator;
 public readonly partial struct Scenario
 {
     /// <summary>
-    /// Conversion from <see cref = "Corvus.Json.Patch.SpecGenerator.ScenarioCommon"/>.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator Scenario(Corvus.Json.Patch.SpecGenerator.ScenarioCommon value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        return value.ValueKind switch
-        {
-            JsonValueKind.Object => new(value.AsPropertyBacking()),
-            _ => Undefined
-        };
-    }
-
-    /// <summary>
     /// Conversion to <see cref = "Corvus.Json.Patch.SpecGenerator.ScenarioCommon"/>.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
@@ -56,10 +38,10 @@ public readonly partial struct Scenario
     }
 
     /// <summary>
-    /// Conversion from <see cref = "Corvus.Json.Patch.SpecGenerator.ScenarioWithResult"/>.
+    /// Conversion from <see cref = "Corvus.Json.Patch.SpecGenerator.ScenarioCommon"/>.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator Scenario(Corvus.Json.Patch.SpecGenerator.ScenarioWithResult value)
+    public static implicit operator Scenario(Corvus.Json.Patch.SpecGenerator.ScenarioCommon value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -93,10 +75,10 @@ public readonly partial struct Scenario
     }
 
     /// <summary>
-    /// Conversion from <see cref = "Corvus.Json.Patch.SpecGenerator.NotDisabled"/>.
+    /// Conversion from <see cref = "Corvus.Json.Patch.SpecGenerator.ScenarioWithResult"/>.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator Scenario(Corvus.Json.Patch.SpecGenerator.NotDisabled value)
+    public static implicit operator Scenario(Corvus.Json.Patch.SpecGenerator.ScenarioWithResult value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -130,10 +112,10 @@ public readonly partial struct Scenario
     }
 
     /// <summary>
-    /// Conversion from <see cref = "Corvus.Json.Patch.SpecGenerator.ScenarioWithError"/>.
+    /// Conversion from <see cref = "Corvus.Json.Patch.SpecGenerator.NotDisabled"/>.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator Scenario(Corvus.Json.Patch.SpecGenerator.ScenarioWithError value)
+    public static implicit operator Scenario(Corvus.Json.Patch.SpecGenerator.NotDisabled value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -167,10 +149,10 @@ public readonly partial struct Scenario
     }
 
     /// <summary>
-    /// Conversion from <see cref = "Corvus.Json.Patch.SpecGenerator.DisabledScenario"/>.
+    /// Conversion from <see cref = "Corvus.Json.Patch.SpecGenerator.ScenarioWithError"/>.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator Scenario(Corvus.Json.Patch.SpecGenerator.DisabledScenario value)
+    public static implicit operator Scenario(Corvus.Json.Patch.SpecGenerator.ScenarioWithError value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -201,5 +183,23 @@ public readonly partial struct Scenario
         }
 
         return Corvus.Json.Patch.SpecGenerator.DisabledScenario.Undefined;
+    }
+
+    /// <summary>
+    /// Conversion from <see cref = "Corvus.Json.Patch.SpecGenerator.DisabledScenario"/>.
+    /// </summary>
+    /// <param name = "value">The value from which to convert.</param>
+    public static implicit operator Scenario(Corvus.Json.Patch.SpecGenerator.DisabledScenario value)
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        return value.ValueKind switch
+        {
+            JsonValueKind.Object => new(value.AsPropertyBacking()),
+            _ => Undefined
+        };
     }
 }

@@ -21,24 +21,6 @@ public readonly partial struct Validation
     public readonly partial struct MinContainsEntity
     {
         /// <summary>
-        /// Conversion from <see cref = "Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger"/>.
-        /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator MinContainsEntity(Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger value)
-        {
-            if (value.HasJsonElementBacking)
-            {
-                return new(value.AsJsonElement);
-            }
-
-            return value.ValueKind switch
-            {
-                JsonValueKind.Number => new(value.AsBinaryJsonNumber),
-                _ => Undefined
-            };
-        }
-
-        /// <summary>
         /// Conversion to <see cref = "Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
@@ -55,6 +37,24 @@ public readonly partial struct Validation
             }
 
             return Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger.Undefined;
+        }
+
+        /// <summary>
+        /// Conversion from <see cref = "Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger"/>.
+        /// </summary>
+        /// <param name = "value">The value from which to convert.</param>
+        public static implicit operator MinContainsEntity(Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger value)
+        {
+            if (value.HasJsonElementBacking)
+            {
+                return new(value.AsJsonElement);
+            }
+
+            return value.ValueKind switch
+            {
+                JsonValueKind.Number => new(value.AsBinaryJsonNumber),
+                _ => Undefined
+            };
         }
     }
 }

@@ -21,24 +21,6 @@ public readonly partial struct JsonPatchDocument
     public readonly partial struct PatchOperation
     {
         /// <summary>
-        /// Conversion from <see cref = "Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon"/>.
-        /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator PatchOperation(Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon value)
-        {
-            if (value.HasJsonElementBacking)
-            {
-                return new(value.AsJsonElement);
-            }
-
-            return value.ValueKind switch
-            {
-                JsonValueKind.Object => new(value.AsPropertyBacking()),
-                _ => Undefined
-            };
-        }
-
-        /// <summary>
         /// Conversion to <see cref = "Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
@@ -58,10 +40,10 @@ public readonly partial struct JsonPatchDocument
         }
 
         /// <summary>
-        /// Conversion from <see cref = "Corvus.Json.Patch.Model.JsonPatchDocument.AddEntity"/>.
+        /// Conversion from <see cref = "Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator PatchOperation(Corvus.Json.Patch.Model.JsonPatchDocument.AddEntity value)
+        public static implicit operator PatchOperation(Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -95,10 +77,10 @@ public readonly partial struct JsonPatchDocument
         }
 
         /// <summary>
-        /// Conversion from <see cref = "Corvus.Json.Patch.Model.JsonPatchDocument.RemoveEntity"/>.
+        /// Conversion from <see cref = "Corvus.Json.Patch.Model.JsonPatchDocument.AddEntity"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator PatchOperation(Corvus.Json.Patch.Model.JsonPatchDocument.RemoveEntity value)
+        public static implicit operator PatchOperation(Corvus.Json.Patch.Model.JsonPatchDocument.AddEntity value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -132,10 +114,10 @@ public readonly partial struct JsonPatchDocument
         }
 
         /// <summary>
-        /// Conversion from <see cref = "Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceEntity"/>.
+        /// Conversion from <see cref = "Corvus.Json.Patch.Model.JsonPatchDocument.RemoveEntity"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator PatchOperation(Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceEntity value)
+        public static implicit operator PatchOperation(Corvus.Json.Patch.Model.JsonPatchDocument.RemoveEntity value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -169,10 +151,10 @@ public readonly partial struct JsonPatchDocument
         }
 
         /// <summary>
-        /// Conversion from <see cref = "Corvus.Json.Patch.Model.JsonPatchDocument.Move"/>.
+        /// Conversion from <see cref = "Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceEntity"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator PatchOperation(Corvus.Json.Patch.Model.JsonPatchDocument.Move value)
+        public static implicit operator PatchOperation(Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceEntity value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -206,10 +188,10 @@ public readonly partial struct JsonPatchDocument
         }
 
         /// <summary>
-        /// Conversion from <see cref = "Corvus.Json.Patch.Model.JsonPatchDocument.Copy"/>.
+        /// Conversion from <see cref = "Corvus.Json.Patch.Model.JsonPatchDocument.Move"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator PatchOperation(Corvus.Json.Patch.Model.JsonPatchDocument.Copy value)
+        public static implicit operator PatchOperation(Corvus.Json.Patch.Model.JsonPatchDocument.Move value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -243,10 +225,10 @@ public readonly partial struct JsonPatchDocument
         }
 
         /// <summary>
-        /// Conversion from <see cref = "Corvus.Json.Patch.Model.JsonPatchDocument.Test"/>.
+        /// Conversion from <see cref = "Corvus.Json.Patch.Model.JsonPatchDocument.Copy"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator PatchOperation(Corvus.Json.Patch.Model.JsonPatchDocument.Test value)
+        public static implicit operator PatchOperation(Corvus.Json.Patch.Model.JsonPatchDocument.Copy value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -277,6 +259,24 @@ public readonly partial struct JsonPatchDocument
             }
 
             return Corvus.Json.Patch.Model.JsonPatchDocument.Test.Undefined;
+        }
+
+        /// <summary>
+        /// Conversion from <see cref = "Corvus.Json.Patch.Model.JsonPatchDocument.Test"/>.
+        /// </summary>
+        /// <param name = "value">The value from which to convert.</param>
+        public static implicit operator PatchOperation(Corvus.Json.Patch.Model.JsonPatchDocument.Test value)
+        {
+            if (value.HasJsonElementBacking)
+            {
+                return new(value.AsJsonElement);
+            }
+
+            return value.ValueKind switch
+            {
+                JsonValueKind.Object => new(value.AsPropertyBacking()),
+                _ => Undefined
+            };
         }
     }
 }

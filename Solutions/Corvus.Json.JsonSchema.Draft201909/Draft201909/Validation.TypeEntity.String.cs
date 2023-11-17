@@ -45,6 +45,20 @@ public readonly partial struct Validation
         }
 
         /// <summary>
+        /// Conversion from JsonString.
+        /// </summary>
+        /// <param name = "value">The value from which to convert.</param>
+        public static implicit operator TypeEntity(JsonString value)
+        {
+            if (value.HasDotnetBacking && value.ValueKind == JsonValueKind.String)
+            {
+                return new((string)value);
+            }
+
+            return new(value.AsJsonElement);
+        }
+
+        /// <summary>
         /// Conversion to string.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>

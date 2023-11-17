@@ -44,6 +44,20 @@ public readonly partial struct Core
         }
 
         /// <summary>
+        /// Conversion from JsonString.
+        /// </summary>
+        /// <param name = "value">The value from which to convert.</param>
+        public static implicit operator AnchorString(JsonString value)
+        {
+            if (value.HasDotnetBacking && value.ValueKind == JsonValueKind.String)
+            {
+                return new((string)value);
+            }
+
+            return new(value.AsJsonElement);
+        }
+
+        /// <summary>
         /// Conversion to string.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>

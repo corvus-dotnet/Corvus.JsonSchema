@@ -93,6 +93,20 @@ public readonly partial struct Validation
         }
 
         /// <summary>
+        /// Conversion from JsonArray.
+        /// </summary>
+        /// <param name = "value">The value from which to convert.</param>
+        public static implicit operator StringArray(JsonArray value)
+        {
+            if (value.HasDotnetBacking && value.ValueKind == JsonValueKind.Array)
+            {
+                return new(value.AsImmutableList());
+            }
+
+            return new(value.AsJsonElement);
+        }
+
+        /// <summary>
         /// Initializes a new instance of the <see cref = "StringArray"/> struct.
         /// </summary>
         /// <param name = "items">The list of items from which to construct the array.</param>

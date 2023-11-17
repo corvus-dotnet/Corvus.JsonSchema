@@ -33,6 +33,20 @@ public readonly partial struct Unevaluated : IJsonBoolean<Unevaluated>
     }
 
     /// <summary>
+    /// Conversion from JsonBoolean.
+    /// </summary>
+    /// <param name = "value">The value from which to convert.</param>
+    public static implicit operator Unevaluated(JsonBoolean value)
+    {
+        if (value.HasDotnetBacking && (value.ValueKind == JsonValueKind.True || value.ValueKind == JsonValueKind.False))
+        {
+            return new((bool)value);
+        }
+
+        return new(value.AsJsonElement);
+    }
+
+    /// <summary>
     /// Conversion from bool.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>

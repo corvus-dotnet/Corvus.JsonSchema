@@ -19,24 +19,6 @@ namespace Corvus.Json.Patch.SpecGenerator;
 public readonly partial struct ScenarioWithError
 {
     /// <summary>
-    /// Conversion from <see cref = "Corvus.Json.Patch.SpecGenerator.ScenarioCommon"/>.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator ScenarioWithError(Corvus.Json.Patch.SpecGenerator.ScenarioCommon value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        return value.ValueKind switch
-        {
-            JsonValueKind.Object => new(value.AsPropertyBacking()),
-            _ => Undefined
-        };
-    }
-
-    /// <summary>
     /// Conversion to <see cref = "Corvus.Json.Patch.SpecGenerator.ScenarioCommon"/>.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
@@ -56,10 +38,10 @@ public readonly partial struct ScenarioWithError
     }
 
     /// <summary>
-    /// Conversion from <see cref = "Corvus.Json.Patch.SpecGenerator.NotDisabled"/>.
+    /// Conversion from <see cref = "Corvus.Json.Patch.SpecGenerator.ScenarioCommon"/>.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator ScenarioWithError(Corvus.Json.Patch.SpecGenerator.NotDisabled value)
+    public static implicit operator ScenarioWithError(Corvus.Json.Patch.SpecGenerator.ScenarioCommon value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -90,5 +72,23 @@ public readonly partial struct ScenarioWithError
         }
 
         return Corvus.Json.Patch.SpecGenerator.NotDisabled.Undefined;
+    }
+
+    /// <summary>
+    /// Conversion from <see cref = "Corvus.Json.Patch.SpecGenerator.NotDisabled"/>.
+    /// </summary>
+    /// <param name = "value">The value from which to convert.</param>
+    public static implicit operator ScenarioWithError(Corvus.Json.Patch.SpecGenerator.NotDisabled value)
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        return value.ValueKind switch
+        {
+            JsonValueKind.Object => new(value.AsPropertyBacking()),
+            _ => Undefined
+        };
     }
 }

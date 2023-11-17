@@ -21,24 +21,6 @@ public readonly partial struct Core
     public readonly partial struct IdEntity
     {
         /// <summary>
-        /// Conversion from <see cref = "Corvus.Json.JsonUriReference"/>.
-        /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator IdEntity(Corvus.Json.JsonUriReference value)
-        {
-            if (value.HasJsonElementBacking)
-            {
-                return new(value.AsJsonElement);
-            }
-
-            return value.ValueKind switch
-            {
-                JsonValueKind.String => new((string)value),
-                _ => Undefined
-            };
-        }
-
-        /// <summary>
         /// Conversion to <see cref = "Corvus.Json.JsonUriReference"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
@@ -55,6 +37,24 @@ public readonly partial struct Core
             }
 
             return Corvus.Json.JsonUriReference.Undefined;
+        }
+
+        /// <summary>
+        /// Conversion from <see cref = "Corvus.Json.JsonUriReference"/>.
+        /// </summary>
+        /// <param name = "value">The value from which to convert.</param>
+        public static implicit operator IdEntity(Corvus.Json.JsonUriReference value)
+        {
+            if (value.HasJsonElementBacking)
+            {
+                return new(value.AsJsonElement);
+            }
+
+            return value.ValueKind switch
+            {
+                JsonValueKind.String => new((string)value),
+                _ => Undefined
+            };
         }
     }
 }

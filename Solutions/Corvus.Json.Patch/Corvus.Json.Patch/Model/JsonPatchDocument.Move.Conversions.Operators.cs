@@ -21,24 +21,6 @@ public readonly partial struct JsonPatchDocument
     public readonly partial struct Move
     {
         /// <summary>
-        /// Conversion from <see cref = "Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon"/>.
-        /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator Move(Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon value)
-        {
-            if (value.HasJsonElementBacking)
-            {
-                return new(value.AsJsonElement);
-            }
-
-            return value.ValueKind switch
-            {
-                JsonValueKind.Object => new(value.AsPropertyBacking()),
-                _ => Undefined
-            };
-        }
-
-        /// <summary>
         /// Conversion to <see cref = "Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
@@ -55,6 +37,24 @@ public readonly partial struct JsonPatchDocument
             }
 
             return Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon.Undefined;
+        }
+
+        /// <summary>
+        /// Conversion from <see cref = "Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon"/>.
+        /// </summary>
+        /// <param name = "value">The value from which to convert.</param>
+        public static implicit operator Move(Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperationCommon value)
+        {
+            if (value.HasJsonElementBacking)
+            {
+                return new(value.AsJsonElement);
+            }
+
+            return value.ValueKind switch
+            {
+                JsonValueKind.Object => new(value.AsPropertyBacking()),
+                _ => Undefined
+            };
         }
     }
 }

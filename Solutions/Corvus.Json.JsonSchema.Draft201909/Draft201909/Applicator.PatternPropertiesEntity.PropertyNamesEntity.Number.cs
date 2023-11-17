@@ -151,6 +151,20 @@ public readonly partial struct Applicator
             }
 
             /// <summary>
+            /// Conversion from JsonNumber.
+            /// </summary>
+            /// <param name = "value">The value from which to convert.</param>
+            public static implicit operator PropertyNamesEntity(JsonNumber value)
+            {
+                if (value.HasDotnetBacking && value.ValueKind == JsonValueKind.Number)
+                {
+                    return new(value.AsBinaryJsonNumber);
+                }
+
+                return new(value.AsJsonElement);
+            }
+
+            /// <summary>
             /// Conversion to byte.
             /// </summary>
             /// <param name = "value">The value to convert.</param>
