@@ -314,6 +314,16 @@ public static class SchemaExtensionsDraft201909
     }
 
     /// <summary>
+    /// Determines if this schema is a primitive type.
+    /// </summary>
+    /// <param name="draft201909Schema">The schema to test.</param>
+    /// <returns><c>True</c> if the schema has a single type value, or no type value and no format value.</returns>
+    public static bool IsBuiltInPrimitiveType(this Schema draft201909Schema)
+    {
+        return draft201909Schema.IsBuiltInType() && draft201909Schema.Format.IsUndefined();
+    }
+
+    /// <summary>
     /// Determines if this schema is empty of non-extension items.
     /// </summary>
     /// <param name="draft201909Schema">The schema to test.</param>

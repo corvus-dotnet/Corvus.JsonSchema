@@ -2576,6 +2576,11 @@ public partial class CodeGeneratorValidateFormat
         public bool IsBuiltInType => this.typeDeclaration.Schema().IsBuiltInType();
 
         /// <summary>
+        /// Gets a value indicating whether this is a built-in primitive type.
+        /// </summary>
+        public bool IsBuiltInPrimitiveType => this.typeDeclaration.Schema().IsBuiltInPrimitiveType();
+
+        /// <summary>
         /// Gets the fully qualified dotnet type name.
         /// </summary>
         public string FullyQualifiedDotnetTypeName => this.typeDeclaration.FullyQualifiedDotnetTypeName ?? string.Empty;

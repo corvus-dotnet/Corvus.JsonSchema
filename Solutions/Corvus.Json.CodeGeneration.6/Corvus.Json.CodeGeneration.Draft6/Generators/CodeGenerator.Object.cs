@@ -16,7 +16,7 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft6 {
     public partial class CodeGeneratorObject : CodeGeneratorObjectBase {
         
         
-        #line 548 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
+        #line 563 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
 
     public bool ShouldGenerate
     {
@@ -204,8 +204,30 @@ namespace ");
             #line hidden
             
             #line 59 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
-            this.Write(@"        this.objectBacking = value;
+            this.Write("        this.objectBacking = value;\r\n    }\r\n\r\n    /// <summary>\r\n    /// Conversi" +
+                    "on from JsonObject.\r\n    /// </summary>\r\n    /// <param name=\"value\">The value f" +
+                    "rom which to convert.</param>\r\n    public static implicit operator ");
+            
+            #line default
+            #line hidden
+            
+            #line 66 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 66 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
+            this.Write(@"(JsonObject value)
+    {
+        if (value.HasDotnetBacking && value.ValueKind == JsonValueKind.Object)
+        {
+            return new(value.AsPropertyBacking());
+        }
+
+        return new(value.AsJsonElement);
     }
+
 
     /// <inheritdoc/>
     public ImmutableList<JsonObjectProperty> AsPropertyBacking()
@@ -237,13 +259,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 87 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
+            #line 102 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 87 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
+            #line 102 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
             this.Write(@" FromProperties(IDictionary<JsonPropertyName, JsonAny> source)
     {
         return new(source.Select(kvp => new JsonObjectProperty(kvp.Key, kvp.Value)).ToImmutableList());
@@ -259,13 +281,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 97 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
+            #line 112 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 97 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
+            #line 112 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
             this.Write(@" FromProperties(ImmutableList<JsonObjectProperty> source)
     {
         return new(source);
@@ -281,13 +303,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 107 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
+            #line 122 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 107 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
+            #line 122 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
             this.Write(" FromProperties(params (JsonPropertyName Name, JsonAny Value)[] source)\r\n    {\r\n " +
                     "       return new(source.Select(s => new JsonObjectProperty(s.Name, s.Value)).To" +
                     "ImmutableList());\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public JsonObjectEnumerat" +
@@ -403,13 +425,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 426 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
+            #line 441 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 426 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
+            #line 441 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
             this.Write(" SetProperty<TValue>(in JsonPropertyName name, TValue value)\r\n        where TValu" +
                     "e : struct, IJsonValue\r\n    {\r\n        return new(this.GetPropertyBackingWith(na" +
                     "me, value.AsAny));\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public ");
@@ -417,52 +439,52 @@ namespace ");
             #line default
             #line hidden
             
-            #line 433 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
+            #line 448 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 433 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
+            #line 448 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
             this.Write(" RemoveProperty(in JsonPropertyName name)\r\n    {\r\n        return new(this.GetProp" +
                     "ertyBackingWithout(name));\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public ");
             
             #line default
             #line hidden
             
-            #line 439 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
+            #line 454 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 439 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
+            #line 454 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
             this.Write(" RemoveProperty(string name)\r\n    {\r\n        return new(this.GetPropertyBackingWi" +
                     "thout(name));\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public ");
             
             #line default
             #line hidden
             
-            #line 445 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
+            #line 460 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 445 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
+            #line 460 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
             this.Write(" RemoveProperty(ReadOnlySpan<char> name)\r\n    {\r\n        return new(this.GetPrope" +
                     "rtyBackingWithout(name));\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public ");
             
             #line default
             #line hidden
             
-            #line 451 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
+            #line 466 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 451 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
+            #line 466 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
             this.Write(" RemoveProperty(ReadOnlySpan<byte> utf8Name)\r\n    {\r\n        return new(this.GetP" +
                     "ropertyBackingWithout(utf8Name));\r\n    }\r\n\r\n    /// <summary>\r\n    /// Builds an" +
                     " <see cref=\"ImmutableList{JsonObjectProperty}\"/> from the object.\r\n    /// </sum" +
@@ -527,7 +549,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 547 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
+            #line 562 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
  EndNesting(); 
             
             #line default

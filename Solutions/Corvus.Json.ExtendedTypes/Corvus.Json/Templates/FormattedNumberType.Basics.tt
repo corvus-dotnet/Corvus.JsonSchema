@@ -6,6 +6,7 @@
 // </copyright>
 
 using System.Numerics;
+using System.Text.Json;
 
 using Corvus.Json.Internal;
 
@@ -177,6 +178,20 @@ public readonly partial struct <#= TypeName #>
         this.jsonElementBacking = default;
         this.backing = Backing.Number;
         this.numberBacking = new(value);
+    }
+
+    /// <summary>
+    /// Conversion from JsonNumber.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator <#= TypeName #>(JsonNumber value)
+    {
+        if (value.HasDotnetBacking && value.ValueKind == JsonValueKind.Number)
+        {
+            return new(value.AsBinaryJsonNumber);
+        }
+
+        return new(value.AsJsonElement);
     }
 
     /// <summary>
