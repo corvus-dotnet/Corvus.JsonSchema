@@ -8,6 +8,7 @@
 //------------------------------------------------------------------------------
 #nullable enable
 using System.Collections.Immutable;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
@@ -19,7 +20,7 @@ public readonly partial struct Schema
     /// <summary>
     /// A type generated from a JsonSchema specification.
     /// </summary>
-    public readonly partial struct NonNegativeIntegerDefault0 : IJsonNumber<NonNegativeIntegerDefault0>
+    public readonly partial struct NonNegativeIntegerDefault0 : IJsonNumber<NonNegativeIntegerDefault0>, IAdditionOperators<NonNegativeIntegerDefault0, NonNegativeIntegerDefault0, NonNegativeIntegerDefault0>, ISubtractionOperators<NonNegativeIntegerDefault0, NonNegativeIntegerDefault0, NonNegativeIntegerDefault0>, IMultiplyOperators<NonNegativeIntegerDefault0, NonNegativeIntegerDefault0, NonNegativeIntegerDefault0>, IDivisionOperators<NonNegativeIntegerDefault0, NonNegativeIntegerDefault0, NonNegativeIntegerDefault0>, IIncrementOperators<NonNegativeIntegerDefault0>, IDecrementOperators<NonNegativeIntegerDefault0>
     {
         /// <summary>
         /// Initializes a new instance of the <see cref = "NonNegativeIntegerDefault0"/> struct.
@@ -588,6 +589,72 @@ public readonly partial struct Schema
         public static bool operator >=(in NonNegativeIntegerDefault0 left, in NonNegativeIntegerDefault0 right)
         {
             return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && Compare(left, right) >= 0;
+        }
+
+        /// <summary>
+        /// Adds two values together to compute their sum.
+        /// </summary>
+        /// <param name = "left">The left hand side.</param>
+        /// <param name = "right">The right hand side.</param>
+        /// <returns>The resulting value.</returns>
+        public static NonNegativeIntegerDefault0 operator +(NonNegativeIntegerDefault0 left, NonNegativeIntegerDefault0 right)
+        {
+            return new(left.AsBinaryJsonNumber + right.AsBinaryJsonNumber);
+        }
+
+        /// <summary>
+        /// Subtracts two values together to compute their difference.
+        /// </summary>
+        /// <param name = "left">The left hand side.</param>
+        /// <param name = "right">The right hand side.</param>
+        /// <returns>The resulting value.</returns>
+        public static NonNegativeIntegerDefault0 operator -(NonNegativeIntegerDefault0 left, NonNegativeIntegerDefault0 right)
+        {
+            return new(left.AsBinaryJsonNumber - right.AsBinaryJsonNumber);
+        }
+
+        /// <summary>
+        /// Multiplies two values together.
+        /// </summary>
+        /// <param name = "left">The left hand side.</param>
+        /// <param name = "right">The right hand side.</param>
+        /// <returns>The resulting value.</returns>
+        public static NonNegativeIntegerDefault0 operator *(NonNegativeIntegerDefault0 left, NonNegativeIntegerDefault0 right)
+        {
+            return new(left.AsBinaryJsonNumber * right.AsBinaryJsonNumber);
+        }
+
+        /// <summary>
+        /// Divides two values.
+        /// </summary>
+        /// <param name = "left">The left hand side.</param>
+        /// <param name = "right">The right hand side.</param>
+        /// <returns>The resulting value.</returns>
+        public static NonNegativeIntegerDefault0 operator /(NonNegativeIntegerDefault0 left, NonNegativeIntegerDefault0 right)
+        {
+            return new(left.AsBinaryJsonNumber / right.AsBinaryJsonNumber);
+        }
+
+        /// <summary>
+        /// Increments the value.
+        /// </summary>
+        /// <param name = "value">The value.</param>
+        /// <returns>The resulting value.</returns>
+        public static NonNegativeIntegerDefault0 operator ++(NonNegativeIntegerDefault0 value)
+        {
+            BinaryJsonNumber num = value.AsBinaryJsonNumber;
+            return new(num++);
+        }
+
+        /// <summary>
+        /// Decrements the value.
+        /// </summary>
+        /// <param name = "value">The value.</param>
+        /// <returns>The resulting value.</returns>
+        public static NonNegativeIntegerDefault0 operator --(NonNegativeIntegerDefault0 value)
+        {
+            BinaryJsonNumber num = value.AsBinaryJsonNumber;
+            return new(num--);
         }
 
         /// <summary>
