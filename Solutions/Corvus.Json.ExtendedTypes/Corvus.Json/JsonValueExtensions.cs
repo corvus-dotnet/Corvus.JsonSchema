@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Buffers;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -16,6 +17,50 @@ namespace Corvus.Json;
 /// </summary>
 public static class JsonValueExtensions
 {
+    /// <summary>
+    /// Gets a property.
+    /// </summary>
+    /// <typeparam name="T">The type of the <see cref="IJsonObject{T}"/> from which to get the property.</typeparam>
+    /// <typeparam name="TValue">The type of the result.</typeparam>
+    /// <typeparam name="TString">The type of the string containing the name.</typeparam>
+    /// <param name="jsonObject">The instance of the <see cref="IJsonObject{T}"/> from which to get the property.</param>
+    /// <param name="name">The name of the property.</param>
+    /// <param name="property">The resulting property, if any.</param>
+    /// <returns><see langword="true"/> if the property exists.</returns>
+    public static bool TryGetProperty<T, TValue, TString>(this T jsonObject, in TString name, out TValue property)
+        where T : struct, IJsonObject<T>
+        where TValue : struct, IJsonValue<TValue>
+        where TString : struct, IJsonString<TString>
+    {
+        Debug.Assert(name.IsValid(), $"The string must be a valid {name.GetType().Name}");
+
+        if (name.HasDotnetBacking)
+        {
+            return jsonObject.TryGetProperty((string)name, out property);
+        }
+        else
+        {
+            if (jsonObject.HasDotnetBacking)
+            {
+                return name.TryGetValue(TryGetString, jsonObject, out property);
+            }
+            else
+            {
+                return name.TryGetValue(TryGetStringUtf8, jsonObject, out property);
+            }
+        }
+
+        static bool TryGetString(ReadOnlySpan<char> span, in T state, out TValue value)
+        {
+            return state.TryGetProperty(span, out value);
+        }
+
+        static bool TryGetStringUtf8(ReadOnlySpan<char> span, in T state, out TValue value)
+        {
+            return state.TryGetProperty(span, out value);
+        }
+    }
+
     /// <summary>
     /// Clones an <see cref="IJsonValue"/> to enable it to be
     /// used safely outside of its construction context.
