@@ -380,7 +380,7 @@ internal class JsonSchemaRegistry
     /// Tries to get the located schema for the given scope.
     /// </summary>
     /// <param name="location">The Location for which to find the schema.</param>
-    /// <param name="schema">The schema found at the locatio.</param>
+    /// <param name="schema">The schema found at the location.</param>
     /// <returns><see langword="true"/> when the schema is found.</returns>
     public bool TryGetValue(JsonReference location, [NotNullWhen(true)] out LocatedSchema? schema)
     {

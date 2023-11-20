@@ -106,7 +106,7 @@ public class JsonValueSteps
     /* serialization */
 
     /// <summary>
-    /// Serializes an <see cref="IJsonValue"/> from the context variable <see cref="SubjectUnderTest"/>, deserializaes and stores the resulting <see cref="JsonAny"/> in the context variable <see cref="SerializationResult"/>.
+    /// Serializes an <see cref="IJsonValue"/> from the context variable <see cref="SubjectUnderTest"/>, deserializes and stores the resulting <see cref="JsonAny"/> in the context variable <see cref="SerializationResult"/>.
     /// </summary>
     [When("the json value is round-tripped via a string")]
     public void WhenTheJsonValueIsRound_TrippedViaAString()
