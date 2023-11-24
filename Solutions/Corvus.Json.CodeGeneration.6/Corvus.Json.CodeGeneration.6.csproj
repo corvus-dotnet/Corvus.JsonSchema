@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 	<Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
 
 	<PropertyGroup>
@@ -35,7 +35,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Update="Roslynator.Analyzers" Version="4.6.2" />
+		<PackageReference Update="Roslynator.Analyzers" Version="4.6.4" />
 	</ItemGroup>
 
 	<ItemGroup>

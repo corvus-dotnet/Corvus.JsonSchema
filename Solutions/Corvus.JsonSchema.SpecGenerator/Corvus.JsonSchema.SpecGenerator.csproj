@@ -28,7 +28,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <PackageReference Update="Roslynator.Analyzers" Version="4.6.2" />
+	  <PackageReference Update="Roslynator.Analyzers" Version="4.6.4" />
 	</ItemGroup>
 
 </Project>
