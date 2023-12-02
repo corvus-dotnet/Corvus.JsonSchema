@@ -3,6 +3,8 @@ Support for [Json Schema](https://json-schema.org/) validation and entity genera
 
 For an introduction to the concepts here, take a look at [this blog post](https://endjin.com/blog/2021/05/csharp-serialization-with-system-text-json-schema).
 
+There's also [a talk by @idg10](https://endjin.com/what-we-think/talks/high-performance-json-serialization-with-code-generation-on-csharp-11-and-dotnet-7-0) on the techniques used in this library.
+
 ## Getting started
 
 To get started, install the dotnet global tool.
