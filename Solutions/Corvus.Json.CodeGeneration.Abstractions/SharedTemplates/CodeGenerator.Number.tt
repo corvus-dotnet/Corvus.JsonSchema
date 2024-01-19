@@ -212,7 +212,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     /// <param name="value">The value to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a number.</exception>
     /// <exception cref="FormatException">The value was not formatted as a byte.</exception>
-    public static explicit operator byte(<#= TypeDeclaration.DotnetTypeName #> value)
+    public static <#= ConversionOperatorToByte #> operator byte(<#= TypeDeclaration.DotnetTypeName #> value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -233,7 +233,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     /// <param name="value">The value to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a number.</exception>
     /// <exception cref="FormatException">The value was not formatted as a decimal.</exception>
-    public static explicit operator decimal(<#= TypeDeclaration.DotnetTypeName #> value)
+    public static <#= ConversionOperatorToDecimal #> operator decimal(<#= TypeDeclaration.DotnetTypeName #> value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -254,7 +254,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     /// <param name="value">The value to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a number.</exception>
     /// <exception cref="FormatException">The value was not formatted as a double.</exception>
-    public static explicit operator double(<#= TypeDeclaration.DotnetTypeName #> value)
+    public static <#= ConversionOperatorToDouble #> operator double(<#= TypeDeclaration.DotnetTypeName #> value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -275,7 +275,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     /// <param name="value">The value to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a number.</exception>
     /// <exception cref="FormatException">The value was not formatted as an Int16.</exception>
-    public static explicit operator short(<#= TypeDeclaration.DotnetTypeName #> value)
+    public static <#= ConversionOperatorToInt16 #> operator short(<#= TypeDeclaration.DotnetTypeName #> value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -296,7 +296,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     /// <param name="value">The value to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a number.</exception>
     /// <exception cref="FormatException">The value was not formatted as an Int32.</exception>
-    public static explicit operator int(<#= TypeDeclaration.DotnetTypeName #> value)
+    public static <#= ConversionOperatorToInt32 #> operator int(<#= TypeDeclaration.DotnetTypeName #> value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -317,7 +317,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     /// <param name="value">The value to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a number.</exception>
     /// <exception cref="FormatException">The value was not formatted as an Int64.</exception>
-    public static explicit operator long(<#= TypeDeclaration.DotnetTypeName #> value)
+    public static <#= ConversionOperatorToInt64 #> operator long(<#= TypeDeclaration.DotnetTypeName #> value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -338,7 +338,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     /// <param name="value">The value to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a number.</exception>
     /// <exception cref="FormatException">The value was not formatted as an Int64.</exception>
-    public static explicit operator Int128(<#= TypeDeclaration.DotnetTypeName #> value)
+    public static <#= ConversionOperatorToInt128 #> operator Int128(<#= TypeDeclaration.DotnetTypeName #> value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -359,7 +359,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     /// <param name="value">The value to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a number.</exception>
     /// <exception cref="FormatException">The value was not formatted as an SByte.</exception>
-    public static explicit operator sbyte(<#= TypeDeclaration.DotnetTypeName #> value)
+    public static <#= ConversionOperatorToSByte #> operator sbyte(<#= TypeDeclaration.DotnetTypeName #> value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -380,7 +380,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     /// <param name="value">The value to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a number.</exception>
     /// <exception cref="FormatException">The value was not formatted as a Single.</exception>
-    public static explicit operator Half(<#= TypeDeclaration.DotnetTypeName #> value)
+    public static <#= ConversionOperatorToHalf #> operator Half(<#= TypeDeclaration.DotnetTypeName #> value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -401,7 +401,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     /// <param name="value">The value to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a number.</exception>
     /// <exception cref="FormatException">The value was not formatted as a Single.</exception>
-    public static explicit operator float(<#= TypeDeclaration.DotnetTypeName #> value)
+    public static <#= ConversionOperatorToSingle #> operator float(<#= TypeDeclaration.DotnetTypeName #> value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -422,7 +422,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     /// <param name="value">The value to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a number.</exception>
     /// <exception cref="FormatException">The value was not formatted as an UInt16.</exception>
-    public static explicit operator ushort(<#= TypeDeclaration.DotnetTypeName #> value)
+    public static <#= ConversionOperatorToUInt16 #> operator ushort(<#= TypeDeclaration.DotnetTypeName #> value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -443,7 +443,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     /// <param name="value">The value to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a number.</exception>
     /// <exception cref="FormatException">The value was not formatted as an UInt32.</exception>
-    public static explicit operator uint(<#= TypeDeclaration.DotnetTypeName #> value)
+    public static <#= ConversionOperatorToUInt32 #> operator uint(<#= TypeDeclaration.DotnetTypeName #> value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -464,7 +464,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     /// <param name="value">The value to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a number.</exception>
     /// <exception cref="FormatException">The value was not formatted as an UInt64.</exception>
-    public static explicit operator ulong(<#= TypeDeclaration.DotnetTypeName #> value)
+    public static <#= ConversionOperatorToUInt64 #> operator ulong(<#= TypeDeclaration.DotnetTypeName #> value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -485,7 +485,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     /// <param name="value">The value to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a number.</exception>
     /// <exception cref="FormatException">The value was not formatted as an UInt64.</exception>
-    public static explicit operator UInt128(<#= TypeDeclaration.DotnetTypeName #> value)
+    public static <#= ConversionOperatorToUInt128 #> operator UInt128(<#= TypeDeclaration.DotnetTypeName #> value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {

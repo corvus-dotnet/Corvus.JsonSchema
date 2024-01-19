@@ -266,6 +266,245 @@ public static class BuiltInTypes
     }
 
     /// <summary>
+    /// Determines if the format allows implicit conversion to sbyte.
+    /// </summary>
+    /// <param name="format">The format string, or null if there is no format.</param>
+    /// <returns><see langword="true"/> if the format allows implicit conversion to sbyte.</returns>
+    public static bool ImplicitConversionToSByte(string? format)
+    {
+        return format switch
+        {
+            "sbyte" => true,
+            _ => false,
+        };
+    }
+
+    /// <summary>
+    /// Determines if the format allows implicit conversion to byte.
+    /// </summary>
+    /// <param name="format">The format string, or null if there is no format.</param>
+    /// <returns><see langword="true"/> if the format allows implicit conversion to byte.</returns>
+    public static bool ImplicitConversionToByte(string? format)
+    {
+        return format switch
+        {
+            "byte" => true,
+            _ => false,
+        };
+    }
+
+    /// <summary>
+    /// Determines if the format allows implicit conversion to int16.
+    /// </summary>
+    /// <param name="format">The format string, or null if there is no format.</param>
+    /// <returns><see langword="true"/> if the format allows implicit conversion to int16.</returns>
+    public static bool ImplicitConversionToInt16(string? format)
+    {
+        return format switch
+        {
+            "sbyte" => true,
+            "byte" => true,
+            "int16" => true,
+            _ => false,
+        };
+    }
+
+    /// <summary>
+    /// Determines if the format allows implicit conversion to uint16.
+    /// </summary>
+    /// <param name="format">The format string, or null if there is no format.</param>
+    /// <returns><see langword="true"/> if the format allows implicit conversion to uint16.</returns>
+    public static bool ImplicitConversionToUInt16(string? format)
+    {
+        return format switch
+        {
+            "byte" => true,
+            "uint16" => true,
+            _ => false,
+        };
+    }
+
+    /// <summary>
+    /// Determines if the format allows implicit conversion to int32.
+    /// </summary>
+    /// <param name="format">The format string, or null if there is no format.</param>
+    /// <returns><see langword="true"/> if the format allows implicit conversion to int32.</returns>
+    public static bool ImplicitConversionToInt32(string? format)
+    {
+        return format switch
+        {
+            "sbyte" => true,
+            "byte" => true,
+            "int16" => true,
+            "uint16" => true,
+            "int32" => true,
+            _ => false,
+        };
+    }
+
+    /// <summary>
+    /// Determines if the format allows implicit conversion to uint32.
+    /// </summary>
+    /// <param name="format">The format string, or null if there is no format.</param>
+    /// <returns><see langword="true"/> if the format allows implicit conversion to uint32.</returns>
+    public static bool ImplicitConversionToUInt32(string? format)
+    {
+        return format switch
+        {
+            "byte" => true,
+            "uint16" => true,
+            "uint32" => true,
+            _ => false,
+        };
+    }
+
+    /// <summary>
+    /// Determines if the format allows implicit conversion to int64.
+    /// </summary>
+    /// <param name="format">The format string, or null if there is no format.</param>
+    /// <returns><see langword="true"/> if the format allows implicit conversion to uint64.</returns>
+    public static bool ImplicitConversionToInt64(string? format)
+    {
+        return format switch
+        {
+            "sbyte" => true,
+            "byte" => true,
+            "int16" => true,
+            "uint16" => true,
+            "int32" => true,
+            "uint32" => true,
+            "int64" => true,
+            _ => false,
+        };
+    }
+
+    /// <summary>
+    /// Determines if the format allows implicit conversion to uint64.
+    /// </summary>
+    /// <param name="format">The format string, or null if there is no format.</param>
+    /// <returns><see langword="true"/> if the format allows implicit conversion to uint64.</returns>
+    public static bool ImplicitConversionToUInt64(string? format)
+    {
+        return format switch
+        {
+            "byte" => true,
+            "uint16" => true,
+            "uint32" => true,
+            "uint64" => true,
+            _ => false,
+        };
+    }
+
+    /// <summary>
+    /// Determines if the format allows implicit conversion to int128.
+    /// </summary>
+    /// <param name="format">The format string, or null if there is no format.</param>
+    /// <returns><see langword="true"/> if the format allows implicit conversion to int128.</returns>
+    public static bool ImplicitConversionToInt128(string? format)
+    {
+        return format switch
+        {
+            "int128" => true,
+            _ => false,
+        };
+    }
+
+    /// <summary>
+    /// Determines if the format allows implicit conversion to uint128.
+    /// </summary>
+    /// <param name="format">The format string, or null if there is no format.</param>
+    /// <returns><see langword="true"/> if the format allows implicit conversion to uint128.</returns>
+    public static bool ImplicitConversionToUInt128(string? format)
+    {
+        return format switch
+        {
+            "uint128" => true,
+            _ => false,
+        };
+    }
+
+    /// <summary>
+    /// Determines if the format allows implicit conversion to half.
+    /// </summary>
+    /// <param name="format">The format string, or null if there is no format.</param>
+    /// <returns><see langword="true"/> if the format allows implicit conversion to half.</returns>
+    public static bool ImplicitConversionToHalf(string? format)
+    {
+        return format switch
+        {
+            "half" => true,
+            _ => false,
+        };
+    }
+
+    /// <summary>
+    /// Determines if the format allows implicit conversion to single.
+    /// </summary>
+    /// <param name="format">The format string, or null if there is no format.</param>
+    /// <returns><see langword="true"/> if the format allows implicit conversion to single.</returns>
+    public static bool ImplicitConversionToSingle(string? format)
+    {
+        return format switch
+        {
+            "sbyte" => true,
+            "byte" => true,
+            "int16" => true,
+            "uint16" => true,
+            "int32" => true,
+            "uint32" => true,
+            "int64" => true,
+            "uint64" => true,
+            "single" => true,
+            _ => false,
+        };
+    }
+
+    /// <summary>
+    /// Determines if the format allows implicit conversion to double.
+    /// </summary>
+    /// <param name="format">The format string, or null if there is no format.</param>
+    /// <returns><see langword="true"/> if the format allows implicit conversion to double.</returns>
+    public static bool ImplicitConversionToDouble(string? format)
+    {
+        return format switch
+        {
+            "sbyte" => true,
+            "byte" => true,
+            "int16" => true,
+            "uint16" => true,
+            "int32" => true,
+            "uint32" => true,
+            "int64" => true,
+            "uint64" => true,
+            "single" => true,
+            "double" => true,
+            _ => false,
+        };
+    }
+
+    /// <summary>
+    /// Determines if the format allows implicit conversion to decimal.
+    /// </summary>
+    /// <param name="format">The format string, or null if there is no format.</param>
+    /// <returns><see langword="true"/> if the format allows implicit conversion to decimal.</returns>
+    public static bool ImplicitConversionToDecimal(string? format)
+    {
+        return format switch
+        {
+            "sbyte" => true,
+            "byte" => true,
+            "int16" => true,
+            "uint16" => true,
+            "int32" => true,
+            "uint32" => true,
+            "int64" => true,
+            "uint64" => true,
+            "double" => true,
+            _ => false,
+        };
+    }
+
+    /// <summary>
     /// Gets the built in type and namespace for the given type and optional format.
     /// </summary>
     /// <param name="type">The type for which to get the type declaration.</param>

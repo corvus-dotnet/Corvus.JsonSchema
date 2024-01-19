@@ -783,7 +783,19 @@ namespace ");
     /// <param name=""value"">The value to convert.</param>
     /// <exception cref=""InvalidOperationException"">The value was not a number.</exception>
     /// <exception cref=""FormatException"">The value was not formatted as a byte.</exception>
-    public static explicit operator byte(");
+    public static ");
+            
+            #line default
+            #line hidden
+            
+            #line 215 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( ConversionOperatorToByte ));
+            
+            #line default
+            #line hidden
+            
+            #line 215 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Number.tt"
+            this.Write(" operator byte(");
             
             #line default
             #line hidden
@@ -816,7 +828,19 @@ namespace ");
     /// <param name=""value"">The value to convert.</param>
     /// <exception cref=""InvalidOperationException"">The value was not a number.</exception>
     /// <exception cref=""FormatException"">The value was not formatted as a decimal.</exception>
-    public static explicit operator decimal(");
+    public static ");
+            
+            #line default
+            #line hidden
+            
+            #line 236 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( ConversionOperatorToDecimal ));
+            
+            #line default
+            #line hidden
+            
+            #line 236 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Number.tt"
+            this.Write(" operator decimal(");
             
             #line default
             #line hidden
@@ -849,7 +873,19 @@ namespace ");
     /// <param name=""value"">The value to convert.</param>
     /// <exception cref=""InvalidOperationException"">The value was not a number.</exception>
     /// <exception cref=""FormatException"">The value was not formatted as a double.</exception>
-    public static explicit operator double(");
+    public static ");
+            
+            #line default
+            #line hidden
+            
+            #line 257 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( ConversionOperatorToDouble ));
+            
+            #line default
+            #line hidden
+            
+            #line 257 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Number.tt"
+            this.Write(" operator double(");
             
             #line default
             #line hidden
@@ -882,7 +918,19 @@ namespace ");
     /// <param name=""value"">The value to convert.</param>
     /// <exception cref=""InvalidOperationException"">The value was not a number.</exception>
     /// <exception cref=""FormatException"">The value was not formatted as an Int16.</exception>
-    public static explicit operator short(");
+    public static ");
+            
+            #line default
+            #line hidden
+            
+            #line 278 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( ConversionOperatorToInt16 ));
+            
+            #line default
+            #line hidden
+            
+            #line 278 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Number.tt"
+            this.Write(" operator short(");
             
             #line default
             #line hidden
@@ -915,7 +963,19 @@ namespace ");
     /// <param name=""value"">The value to convert.</param>
     /// <exception cref=""InvalidOperationException"">The value was not a number.</exception>
     /// <exception cref=""FormatException"">The value was not formatted as an Int32.</exception>
-    public static explicit operator int(");
+    public static ");
+            
+            #line default
+            #line hidden
+            
+            #line 299 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( ConversionOperatorToInt32 ));
+            
+            #line default
+            #line hidden
+            
+            #line 299 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Number.tt"
+            this.Write(" operator int(");
             
             #line default
             #line hidden
@@ -948,7 +1008,19 @@ namespace ");
     /// <param name=""value"">The value to convert.</param>
     /// <exception cref=""InvalidOperationException"">The value was not a number.</exception>
     /// <exception cref=""FormatException"">The value was not formatted as an Int64.</exception>
-    public static explicit operator long(");
+    public static ");
+            
+            #line default
+            #line hidden
+            
+            #line 320 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( ConversionOperatorToInt64 ));
+            
+            #line default
+            #line hidden
+            
+            #line 320 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Number.tt"
+            this.Write(" operator long(");
             
             #line default
             #line hidden
@@ -981,7 +1053,19 @@ namespace ");
     /// <param name=""value"">The value to convert.</param>
     /// <exception cref=""InvalidOperationException"">The value was not a number.</exception>
     /// <exception cref=""FormatException"">The value was not formatted as an Int64.</exception>
-    public static explicit operator Int128(");
+    public static ");
+            
+            #line default
+            #line hidden
+            
+            #line 341 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( ConversionOperatorToInt128 ));
+            
+            #line default
+            #line hidden
+            
+            #line 341 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Number.tt"
+            this.Write(" operator Int128(");
             
             #line default
             #line hidden
@@ -1014,7 +1098,19 @@ namespace ");
     /// <param name=""value"">The value to convert.</param>
     /// <exception cref=""InvalidOperationException"">The value was not a number.</exception>
     /// <exception cref=""FormatException"">The value was not formatted as an SByte.</exception>
-    public static explicit operator sbyte(");
+    public static ");
+            
+            #line default
+            #line hidden
+            
+            #line 362 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( ConversionOperatorToSByte ));
+            
+            #line default
+            #line hidden
+            
+            #line 362 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Number.tt"
+            this.Write(" operator sbyte(");
             
             #line default
             #line hidden
@@ -1047,7 +1143,19 @@ namespace ");
     /// <param name=""value"">The value to convert.</param>
     /// <exception cref=""InvalidOperationException"">The value was not a number.</exception>
     /// <exception cref=""FormatException"">The value was not formatted as a Single.</exception>
-    public static explicit operator Half(");
+    public static ");
+            
+            #line default
+            #line hidden
+            
+            #line 383 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( ConversionOperatorToHalf ));
+            
+            #line default
+            #line hidden
+            
+            #line 383 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Number.tt"
+            this.Write(" operator Half(");
             
             #line default
             #line hidden
@@ -1080,7 +1188,19 @@ namespace ");
     /// <param name=""value"">The value to convert.</param>
     /// <exception cref=""InvalidOperationException"">The value was not a number.</exception>
     /// <exception cref=""FormatException"">The value was not formatted as a Single.</exception>
-    public static explicit operator float(");
+    public static ");
+            
+            #line default
+            #line hidden
+            
+            #line 404 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( ConversionOperatorToSingle ));
+            
+            #line default
+            #line hidden
+            
+            #line 404 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Number.tt"
+            this.Write(" operator float(");
             
             #line default
             #line hidden
@@ -1113,7 +1233,19 @@ namespace ");
     /// <param name=""value"">The value to convert.</param>
     /// <exception cref=""InvalidOperationException"">The value was not a number.</exception>
     /// <exception cref=""FormatException"">The value was not formatted as an UInt16.</exception>
-    public static explicit operator ushort(");
+    public static ");
+            
+            #line default
+            #line hidden
+            
+            #line 425 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( ConversionOperatorToUInt16 ));
+            
+            #line default
+            #line hidden
+            
+            #line 425 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Number.tt"
+            this.Write(" operator ushort(");
             
             #line default
             #line hidden
@@ -1146,7 +1278,19 @@ namespace ");
     /// <param name=""value"">The value to convert.</param>
     /// <exception cref=""InvalidOperationException"">The value was not a number.</exception>
     /// <exception cref=""FormatException"">The value was not formatted as an UInt32.</exception>
-    public static explicit operator uint(");
+    public static ");
+            
+            #line default
+            #line hidden
+            
+            #line 446 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( ConversionOperatorToUInt32 ));
+            
+            #line default
+            #line hidden
+            
+            #line 446 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Number.tt"
+            this.Write(" operator uint(");
             
             #line default
             #line hidden
@@ -1179,7 +1323,19 @@ namespace ");
     /// <param name=""value"">The value to convert.</param>
     /// <exception cref=""InvalidOperationException"">The value was not a number.</exception>
     /// <exception cref=""FormatException"">The value was not formatted as an UInt64.</exception>
-    public static explicit operator ulong(");
+    public static ");
+            
+            #line default
+            #line hidden
+            
+            #line 467 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( ConversionOperatorToUInt64 ));
+            
+            #line default
+            #line hidden
+            
+            #line 467 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Number.tt"
+            this.Write(" operator ulong(");
             
             #line default
             #line hidden
@@ -1212,7 +1368,19 @@ namespace ");
     /// <param name=""value"">The value to convert.</param>
     /// <exception cref=""InvalidOperationException"">The value was not a number.</exception>
     /// <exception cref=""FormatException"">The value was not formatted as an UInt64.</exception>
-    public static explicit operator UInt128(");
+    public static ");
+            
+            #line default
+            #line hidden
+            
+            #line 488 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( ConversionOperatorToUInt128 ));
+            
+            #line default
+            #line hidden
+            
+            #line 488 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Number.tt"
+            this.Write(" operator UInt128(");
             
             #line default
             #line hidden
