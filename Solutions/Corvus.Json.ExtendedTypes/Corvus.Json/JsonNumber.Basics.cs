@@ -300,6 +300,27 @@ public readonly partial struct JsonNumber
     }
 
     /// <summary>
+    /// Conversion to Int128.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+    /// <exception cref="FormatException">The value was not formatted as an Int128.</exception>
+    public static explicit operator Int128(JsonNumber value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
+        {
+            return value.jsonElementBacking.SafeGetInt128();
+        }
+
+        if ((value.backing & Backing.Number) != 0)
+        {
+            return value.numberBacking.CreateChecked<Int128>();
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    /// <summary>
     /// Conversion to SByte.
     /// </summary>
     /// <param name="value">The value to convert.</param>
@@ -420,6 +441,27 @@ public readonly partial struct JsonNumber
         if ((value.backing & Backing.Number) != 0)
         {
             return value.numberBacking.CreateChecked<ulong>();
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Conversion to UInt128.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+    /// <exception cref="FormatException">The value was not formatted as an UInt128.</exception>
+    public static explicit operator UInt128(JsonNumber value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
+        {
+            return value.jsonElementBacking.SafeGetUInt128();
+        }
+
+        if ((value.backing & Backing.Number) != 0)
+        {
+            return value.numberBacking.CreateChecked<UInt128>();
         }
 
         throw new InvalidOperationException();

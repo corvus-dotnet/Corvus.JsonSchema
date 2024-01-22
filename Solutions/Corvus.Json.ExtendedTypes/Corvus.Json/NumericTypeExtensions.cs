@@ -20,7 +20,7 @@ public static class NumericTypeExtensions
     /// <param name="value">The value to get.</param>
     /// <param name="result">The value as an integer.</param>
     /// <returns><see langword="true"/> if the value coudld be represented as an int32.</returns>
-    public static bool TryGetInt32(this JsonElement value, [NotNullWhen(true)] out int result)
+    public static bool TryGetInt32WithFallbacks(this JsonElement value, [NotNullWhen(true)] out int result)
     {
         if (value.TryGetInt32(out result))
         {
@@ -50,7 +50,7 @@ public static class NumericTypeExtensions
     /// <exception cref="FormatException">The value could not be formatted as an integer.</exception>
     public static int SafeGetInt32(this JsonElement value)
     {
-        if (TryGetInt32(value, out int result))
+        if (TryGetInt32WithFallbacks(value, out int result))
         {
             return result;
         }
@@ -64,7 +64,7 @@ public static class NumericTypeExtensions
     /// <param name="value">The value to get.</param>
     /// <param name="result">The value as an integer.</param>
     /// <returns><see langword="true"/> if the value coudld be represented as an int16.</returns>
-    public static bool TryGetInt16(this JsonElement value, [NotNullWhen(true)] out short result)
+    public static bool TryGetInt16WithFallbacks(this JsonElement value, [NotNullWhen(true)] out short result)
     {
         if (value.TryGetInt16(out result))
         {
@@ -94,7 +94,7 @@ public static class NumericTypeExtensions
     /// <exception cref="FormatException">The value could not be formatted as an integer.</exception>
     public static short SafeGetInt16(this JsonElement value)
     {
-        if (TryGetInt16(value, out short result))
+        if (TryGetInt16WithFallbacks(value, out short result))
         {
             return result;
         }
@@ -108,7 +108,7 @@ public static class NumericTypeExtensions
     /// <param name="value">The value to get.</param>
     /// <param name="result">The value as an floateger.</param>
     /// <returns><see langword="true"/> if the value coudld be represented as an single.</returns>
-    public static bool TryGetHalf(this JsonElement value, [NotNullWhen(true)] out Half result)
+    public static bool TryGetHalfWithFallbacks(this JsonElement value, [NotNullWhen(true)] out Half result)
     {
         result = default;
         if (value.TryGetDouble(out double doubleResult))
@@ -133,7 +133,7 @@ public static class NumericTypeExtensions
     /// <exception cref="FormatException">The value could not be formatted as an floateger.</exception>
     public static Half SafeGetHalf(this JsonElement value)
     {
-        if (TryGetHalf(value, out Half result))
+        if (TryGetHalfWithFallbacks(value, out Half result))
         {
             return result;
         }
@@ -147,7 +147,7 @@ public static class NumericTypeExtensions
     /// <param name="value">The value to get.</param>
     /// <param name="result">The value as an floateger.</param>
     /// <returns><see langword="true"/> if the value coudld be represented as an single.</returns>
-    public static bool TryGetSingle(this JsonElement value, [NotNullWhen(true)] out float result)
+    public static bool TryGetSingleWithFallbacks(this JsonElement value, [NotNullWhen(true)] out float result)
     {
         if (value.TryGetSingle(out result))
         {
@@ -177,7 +177,7 @@ public static class NumericTypeExtensions
     /// <exception cref="FormatException">The value could not be formatted as an floateger.</exception>
     public static float SafeGetSingle(this JsonElement value)
     {
-        if (TryGetSingle(value, out float result))
+        if (TryGetSingleWithFallbacks(value, out float result))
         {
             return result;
         }
@@ -223,7 +223,7 @@ public static class NumericTypeExtensions
     /// <param name="value">The value to get.</param>
     /// <param name="result">The value as an integer.</param>
     /// <returns><see langword="true"/> if the value coudld be represented as an int64.</returns>
-    public static bool TryGetInt64(this JsonElement value, [NotNullWhen(true)] out long result)
+    public static bool TryGetInt64WithFallbacks(this JsonElement value, [NotNullWhen(true)] out long result)
     {
         if (value.TryGetInt64(out result))
         {
@@ -253,7 +253,7 @@ public static class NumericTypeExtensions
     /// <exception cref="FormatException">The value could not be formatted as an integer.</exception>
     public static long SafeGetInt64(this JsonElement value)
     {
-        if (TryGetInt64(value, out long result))
+        if (TryGetInt64WithFallbacks(value, out long result))
         {
             return result;
         }
@@ -267,26 +267,23 @@ public static class NumericTypeExtensions
     /// <param name="value">The value to get.</param>
     /// <param name="result">The value as an integer.</param>
     /// <returns><see langword="true"/> if the value coudld be represented as an int64.</returns>
-    public static bool TryGetInt128(this JsonElement value, [NotNullWhen(true)] out Int128 result)
+    public static bool TryGetInt128WithFallbacks(this JsonElement value, [NotNullWhen(true)] out Int128 result)
     {
-        if (value.TryGetInt128(out result))
+        try
         {
+            result = value.Deserialize<Int128>();
             return true;
         }
-
-        if (value.TryGetDouble(out double doubleResult))
+        catch (JsonException)
         {
-            if (doubleResult < (double)Int128.MinValue || doubleResult > (double)Int128.MaxValue)
-            {
-                return false;
-            }
-
-            result = (Int128)doubleResult;
-            return Math.Abs((double)result - doubleResult) < Error;
+            result = default;
+            return false;
         }
-
-        result = default;
-        return false;
+        catch (FormatException)
+        {
+            result = default;
+            return false;
+        }
     }
 
     /// <summary>
@@ -297,7 +294,7 @@ public static class NumericTypeExtensions
     /// <exception cref="FormatException">The value could not be formatted as an integer.</exception>
     public static Int128 SafeGetInt128(this JsonElement value)
     {
-        if (TryGetInt128(value, out Int128 result))
+        if (TryGetInt128WithFallbacks(value, out Int128 result))
         {
             return result;
         }
@@ -311,7 +308,7 @@ public static class NumericTypeExtensions
     /// <param name="value">The value to get.</param>
     /// <param name="result">The value as an integer.</param>
     /// <returns><see langword="true"/> if the value coudld be represented as an int64.</returns>
-    public static bool TryGetUInt32(this JsonElement value, [NotNullWhen(true)] out uint result)
+    public static bool TryGetUInt32WithFallbacks(this JsonElement value, [NotNullWhen(true)] out uint result)
     {
         if (value.TryGetUInt32(out result))
         {
@@ -341,7 +338,7 @@ public static class NumericTypeExtensions
     /// <exception cref="FormatException">The value could not be formatted as an integer.</exception>
     public static uint SafeGetUInt32(this JsonElement value)
     {
-        if (TryGetUInt32(value, out uint result))
+        if (TryGetUInt32WithFallbacks(value, out uint result))
         {
             return result;
         }
@@ -355,7 +352,7 @@ public static class NumericTypeExtensions
     /// <param name="value">The value to get.</param>
     /// <param name="result">The value as an integer.</param>
     /// <returns><see langword="true"/> if the value coudld be represented as an int64.</returns>
-    public static bool TryGetUInt16(this JsonElement value, [NotNullWhen(true)] out ushort result)
+    public static bool TryGetUInt16WithFallbacks(this JsonElement value, [NotNullWhen(true)] out ushort result)
     {
         if (value.TryGetUInt16(out result))
         {
@@ -385,7 +382,7 @@ public static class NumericTypeExtensions
     /// <exception cref="FormatException">The value could not be formatted as an integer.</exception>
     public static ushort SafeGetUInt16(this JsonElement value)
     {
-        if (TryGetUInt16(value, out ushort result))
+        if (TryGetUInt16WithFallbacks(value, out ushort result))
         {
             return result;
         }
@@ -399,7 +396,7 @@ public static class NumericTypeExtensions
     /// <param name="value">The value to get.</param>
     /// <param name="result">The value as an integer.</param>
     /// <returns><see langword="true"/> if the value coudld be represented as an int64.</returns>
-    public static bool TryGetUInt64(this JsonElement value, [NotNullWhen(true)] out ulong result)
+    public static bool TryGetUInt64WithFallbacks(this JsonElement value, [NotNullWhen(true)] out ulong result)
     {
         if (value.TryGetUInt64(out result))
         {
@@ -429,7 +426,7 @@ public static class NumericTypeExtensions
     /// <exception cref="FormatException">The value could not be formatted as an integer.</exception>
     public static ulong SafeGetUInt64(this JsonElement value)
     {
-        if (TryGetUInt64(value, out ulong result))
+        if (TryGetUInt64WithFallbacks(value, out ulong result))
         {
             return result;
         }
@@ -443,26 +440,23 @@ public static class NumericTypeExtensions
     /// <param name="value">The value to get.</param>
     /// <param name="result">The value as an integer.</param>
     /// <returns><see langword="true"/> if the value coudld be represented as an int64.</returns>
-    public static bool TryGetUInt128(this JsonElement value, [NotNullWhen(true)] out UInt128 result)
+    public static bool TryGetUInt128WithFallbacks(this JsonElement value, [NotNullWhen(true)] out UInt128 result)
     {
-        if (value.TryGetUInt128(out result))
+        try
         {
+            result = value.Deserialize<UInt128>();
             return true;
         }
-
-        if (value.TryGetDouble(out double doubleResult))
+        catch (FormatException)
         {
-            if (doubleResult < (double)UInt128.MinValue || doubleResult > (double)UInt128.MaxValue)
-            {
-                return false;
-            }
-
-            result = (UInt128)doubleResult;
-            return Math.Abs((double)result - doubleResult) < Error;
+            result = default;
+            return false;
         }
-
-        result = default;
-        return false;
+        catch (JsonException)
+        {
+            result = default;
+            return false;
+        }
     }
 
     /// <summary>
@@ -473,7 +467,7 @@ public static class NumericTypeExtensions
     /// <exception cref="FormatException">The value could not be formatted as an integer.</exception>
     public static UInt128 SafeGetUInt128(this JsonElement value)
     {
-        if (TryGetUInt128(value, out UInt128 result))
+        if (TryGetUInt128WithFallbacks(value, out UInt128 result))
         {
             return result;
         }
@@ -487,7 +481,7 @@ public static class NumericTypeExtensions
     /// <param name="value">The value to get.</param>
     /// <param name="result">The value as an integer.</param>
     /// <returns><see langword="true"/> if the value coudld be represented as an int64.</returns>
-    public static bool TryGetByte(this JsonElement value, [NotNullWhen(true)] out byte result)
+    public static bool TryGetByteWithFallbacks(this JsonElement value, [NotNullWhen(true)] out byte result)
     {
         if (value.TryGetByte(out result))
         {
@@ -517,7 +511,7 @@ public static class NumericTypeExtensions
     /// <exception cref="FormatException">The value could not be formatted as a byte.</exception>
     public static byte SafeGetByte(this JsonElement value)
     {
-        if (TryGetByte(value, out byte result))
+        if (TryGetByteWithFallbacks(value, out byte result))
         {
             return result;
         }
@@ -531,7 +525,7 @@ public static class NumericTypeExtensions
     /// <param name="value">The value to get.</param>
     /// <param name="result">The value as an sbyte.</param>
     /// <returns><see langword="true"/> if the value could be retrieved as an sbyte.</returns>
-    public static bool TryGetSByte(this JsonElement value, [NotNullWhen(true)] out sbyte result)
+    public static bool TryGetSByteWithFallbacks(this JsonElement value, [NotNullWhen(true)] out sbyte result)
     {
         if (value.TryGetSByte(out result))
         {
@@ -561,7 +555,7 @@ public static class NumericTypeExtensions
     /// <exception cref="FormatException">The value could not be formatted as an integer.</exception>
     public static sbyte SafeGetSByte(this JsonElement value)
     {
-        if (TryGetSByte(value, out sbyte result))
+        if (TryGetSByteWithFallbacks(value, out sbyte result))
         {
             return result;
         }

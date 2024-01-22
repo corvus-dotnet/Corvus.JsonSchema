@@ -18,6 +18,13 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <SpecFlowObsoleteCodeBehindFiles Remove="Features\AdditionalSchema\Draft201909\numeric-format.feature.cs" />
+	  <SpecFlowObsoleteCodeBehindFiles Remove="Features\AdditionalSchema\Draft202012\format.feature.cs" />
+	  <SpecFlowObsoleteCodeBehindFiles Remove="Features\AdditionalSchema\Draft6\numeric-format.feature.cs" />
+	  <SpecFlowObsoleteCodeBehindFiles Remove="Features\AdditionalSchema\Draft7\numeric-format.feature.cs" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<PackageReference Include="Corvus.Testing.SpecFlow.NUnit" Version="2.0.1" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
 		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.9.0-preview-23503-02" />
@@ -50,6 +57,22 @@
 		<ProjectReference Include="..\Corvus.Json.CodeGeneration.7\Corvus.Json.CodeGeneration.7.csproj" />
 
 		<ProjectReference Include="..\Corvus.Json.Patch\Corvus.Json.Patch.csproj" />
+
+		<Compile Update="Features\AdditionalSchema\Draft201909\numeric-format.feature.cs">
+		  <DependentUpon>%(Filename)</DependentUpon>
+		</Compile>
+
+		<Compile Update="Features\AdditionalSchema\Draft202012\numeric-format.feature.cs">
+		  <DependentUpon>numeric-format.feature</DependentUpon>
+		</Compile>
+
+		<Compile Update="Features\AdditionalSchema\Draft6\numeric-format.feature.cs">
+		  <DependentUpon>%(Filename)</DependentUpon>
+		</Compile>
+
+		<Compile Update="Features\AdditionalSchema\Draft7\numeric-format.feature.cs">
+		  <DependentUpon>%(Filename)</DependentUpon>
+		</Compile>
 		<PackageReference Update="StyleCop.Analyzers" Version="1.2.0-beta.435" />
 
 	</ItemGroup>
@@ -67,6 +90,25 @@
 
 	<ItemGroup>
 	  <PackageReference Update="Roslynator.Analyzers" Version="4.6.2" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <SpecFlowFeatureFiles Update="Features\AdditionalSchema\Draft201909\numeric-format.feature">
+	    <Visible>$(UsingMicrosoftNETSdk)</Visible>
+	    <CodeBehindFile>%(RelativeDir)%(Filename).feature$(DefaultLanguageSourceExtension)</CodeBehindFile>
+	  </SpecFlowFeatureFiles>
+	  <SpecFlowFeatureFiles Update="Features\AdditionalSchema\Draft202012\numeric-format.feature">
+	    <Visible>$(UsingMicrosoftNETSdk)</Visible>
+	    <CodeBehindFile>%(RelativeDir)%(Filename).feature$(DefaultLanguageSourceExtension)</CodeBehindFile>
+	  </SpecFlowFeatureFiles>
+	  <SpecFlowFeatureFiles Update="Features\AdditionalSchema\Draft6\numeric-format.feature">
+	    <Visible>$(UsingMicrosoftNETSdk)</Visible>
+	    <CodeBehindFile>%(RelativeDir)%(Filename).feature$(DefaultLanguageSourceExtension)</CodeBehindFile>
+	  </SpecFlowFeatureFiles>
+	  <SpecFlowFeatureFiles Update="Features\AdditionalSchema\Draft7\numeric-format.feature">
+	    <Visible>$(UsingMicrosoftNETSdk)</Visible>
+	    <CodeBehindFile>%(RelativeDir)%(Filename).feature$(DefaultLanguageSourceExtension)</CodeBehindFile>
+	  </SpecFlowFeatureFiles>
 	</ItemGroup>
 
 </Project>

@@ -31,11 +31,25 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 {
     private ValidationContext ValidateFormat(JsonValueKind valueKind, in ValidationContext result, ValidationLevel level)
     {
+<#  if (IsJsonRelativePointer || IsJsonDate || IsJsonDateTime || IsJsonDuration || IsJsonTime || IsJsonEmail ||
+        IsJsonHostname || IsJsonIdnEmail || IsJsonIdnHostname || IsJsonIpV4 || IsJsonIpV6 || IsJsonIri ||
+        IsJsonIriReference || IsJsonPointer || IsJsonRegex || IsJsonTime || IsJsonUri || IsJsonUriReference ||
+        IsJsonUriTemplate || IsJsonBase64Content || IsJsonBase64String || IsJsonContent || IsJsonUuid)
+    { #>
         if (valueKind != JsonValueKind.String)
         {
             return result;
         }
-<#  if (IsJsonRelativePointer)
+<#  }
+    else
+    {#>
+        if (valueKind != JsonValueKind.Number)
+        {
+            return result;
+        }
+<#  }
+
+    if (IsJsonRelativePointer)
     { #>
         return Corvus.Json.Validate.TypeRelativePointer(this, result, level);
 <#  }

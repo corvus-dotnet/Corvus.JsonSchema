@@ -572,8 +572,10 @@ public static partial class Validate
         }
         else
         {
-            double value = (double)instance.AsNumber;
-            if (value != Math.Floor(value) || value > long.MaxValue || value < long.MinValue)
+            JsonNumber number = instance.AsNumber;
+            double value = (double)number;
+            var i128 = (Int128)number;
+            if (value != Math.Floor(value) || i128 > long.MaxValue || i128 < long.MinValue)
             {
                 if (level >= ValidationLevel.Detailed)
                 {
@@ -627,8 +629,10 @@ public static partial class Validate
         }
         else
         {
-            double value = (double)instance.AsNumber;
-            if (value != Math.Floor(value) || value > ulong.MaxValue || value < ulong.MinValue)
+            JsonNumber number = instance.AsNumber;
+            double value = (double)number;
+            var i128 = (Int128)number;
+            if (value != Math.Floor(value) || i128 > ulong.MaxValue || i128 < ulong.MinValue)
             {
                 if (level >= ValidationLevel.Detailed)
                 {
@@ -682,11 +686,15 @@ public static partial class Validate
         }
         else
         {
-            double value = (double)instance.AsNumber;
-            if (value != Math.Floor(value) || value > (double)Int128.MaxValue || value < (double)Int128.MinValue)
+            try
+            {
+                _ = (Int128)instance.AsNumber;
+            }
+            catch (FormatException)
             {
                 if (level >= ValidationLevel.Detailed)
                 {
+                    double value = (double)instance.AsNumber;
                     return validationContext.WithResult(isValid: false, $"Validation 6.1.1 type - should have been int128 'number' but was '{valueKind}' with value {value} and fractional part {value - Math.Floor(value)}.");
                 }
                 else if (level >= ValidationLevel.Basic)
@@ -737,11 +745,15 @@ public static partial class Validate
         }
         else
         {
-            double value = (double)instance.AsNumber;
-            if (value != Math.Floor(value) || value > (double)UInt128.MaxValue || value < (double)UInt128.MinValue)
+            try
+            {
+                _ = (UInt128)instance.AsNumber;
+            }
+            catch (FormatException)
             {
                 if (level >= ValidationLevel.Detailed)
                 {
+                    double value = (double)instance.AsNumber;
                     return validationContext.WithResult(isValid: false, $"Validation 6.1.1 type - should have been uint128 'number' but was '{valueKind}' with value {value} and fractional part {value - Math.Floor(value)}.");
                 }
                 else if (level >= ValidationLevel.Basic)
@@ -792,11 +804,15 @@ public static partial class Validate
         }
         else
         {
-            double value = (double)instance.AsNumber;
-            if (value > (double)Half.MaxValue || value < (double)Half.MinValue)
+            try
+            {
+                _ = (Half)instance.AsNumber;
+            }
+            catch (FormatException)
             {
                 if (level >= ValidationLevel.Detailed)
                 {
+                    double value = (double)instance.AsNumber;
                     return validationContext.WithResult(isValid: false, $"Validation 6.1.1 type - should have been half 'number' but was '{valueKind}' with value {value} and fractional part {value - Math.Floor(value)}.");
                 }
                 else if (level >= ValidationLevel.Basic)
@@ -847,11 +863,15 @@ public static partial class Validate
         }
         else
         {
-            double value = (double)instance.AsNumber;
-            if (value > float.MaxValue || value < float.MinValue)
+            try
+            {
+                _ = (float)instance.AsNumber;
+            }
+            catch (FormatException)
             {
                 if (level >= ValidationLevel.Detailed)
                 {
+                    double value = (double)instance.AsNumber;
                     return validationContext.WithResult(isValid: false, $"Validation 6.1.1 type - should have been single 'number' but was '{valueKind}' with value {value} and fractional part {value - Math.Floor(value)}.");
                 }
                 else if (level >= ValidationLevel.Basic)
@@ -901,9 +921,25 @@ public static partial class Validate
             }
         }
 
+        try
+        {
+            _ = (double)instance.AsNumber;
+        }
+        catch (FormatException)
+        {
+            if (level >= ValidationLevel.Basic)
+            {
+                return validationContext.WithResult(isValid: false, "Validation 6.1.1 type - should have been double 'number'.");
+            }
+            else
+            {
+                return validationContext.WithResult(isValid: false);
+            }
+        }
+
         if (level == ValidationLevel.Verbose)
         {
-            return validationContext.WithResult(isValid: true, "Validation 6.1.1 type - was uint16 'number'.");
+            return validationContext.WithResult(isValid: true, "Validation 6.1.1 type - was double 'number'.");
         }
 
         return validationContext;
@@ -938,15 +974,13 @@ public static partial class Validate
         }
         else
         {
-            // This potentially loses precision but we don't mind - we are just looking at magnitude
-            double value = (double)instance.AsNumber;
-            if (value > (double)decimal.MaxValue || value < (double)decimal.MinValue)
+            try
             {
-                if (level >= ValidationLevel.Detailed)
-                {
-                    return validationContext.WithResult(isValid: false, $"Validation 6.1.1 type - should have been single 'number' but was '{valueKind}' with value {value} and fractional part {value - Math.Floor(value)}.");
-                }
-                else if (level >= ValidationLevel.Basic)
+                _ = (decimal)instance.AsNumber;
+            }
+            catch (FormatException)
+            {
+                if (level >= ValidationLevel.Basic)
                 {
                     return validationContext.WithResult(isValid: false, "Validation 6.1.1 type - should have been single 'number'.");
                 }
@@ -959,7 +993,7 @@ public static partial class Validate
 
         if (level == ValidationLevel.Verbose)
         {
-            return validationContext.WithResult(isValid: true, "Validation 6.1.1 type - was uint16 'number'.");
+            return validationContext.WithResult(isValid: true, "Validation 6.1.1 type - was decimal 'number'.");
         }
 
         return validationContext;
