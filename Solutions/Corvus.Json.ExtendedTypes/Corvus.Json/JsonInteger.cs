@@ -2,12 +2,10 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using Corvus.Json.Internal;
-
 namespace Corvus.Json;
 
 /// <summary>
-/// Represents a JSON date.
+/// Represents a JSON integer of any size.
 /// </summary>
 public readonly partial struct JsonInteger
 {

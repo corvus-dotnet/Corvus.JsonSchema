@@ -153,7 +153,7 @@ public class JsonValueCastSteps
     }
 
     /// <summary>
-    /// Comparse the IJsonValue in the <see cref="CastResultKey"/> with the serialized <paramref name="jsonObject"/>.
+    /// Compare the IJsonValue in the <see cref="CastResultKey"/> with the serialized <paramref name="jsonObject"/>.
     /// </summary>
     /// <param name="jsonObject">The serialized JsonObject with which to compare the result.</param>
     [Then("the result should equal the JsonObject (.*)")]
@@ -167,7 +167,7 @@ public class JsonValueCastSteps
     /// </summary>
     /// <param name="immutableDictionary">The immutable dictionary with which to compare the result.</param>
     [Then("the result should equal the ImmutableDictionary<JsonPropertyName,JsonAny> (.*)")]
-    public void ThenTheResultShouldEqualTheImmutablDictionary(string immutableDictionary)
+    public void ThenTheResultShouldEqualTheImmutableDictionary(string immutableDictionary)
     {
         ImmutableList<JsonObjectProperty> expected = JsonAny.ParseValue(immutableDictionary).AsObject.AsPropertyBacking();
         ImmutableList<JsonObjectProperty> actual = this.scenarioContext.Get<ImmutableList<JsonObjectProperty>>(CastResultKey);

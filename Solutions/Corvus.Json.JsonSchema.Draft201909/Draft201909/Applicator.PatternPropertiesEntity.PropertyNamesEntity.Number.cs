@@ -39,118 +39,6 @@ public readonly partial struct Applicator
             }
 
             /// <summary>
-            /// Initializes a new instance of the <see cref = "PropertyNamesEntity"/> struct.
-            /// </summary>
-            /// <param name = "value">The value from which to initialize the number.</param>
-            public PropertyNamesEntity(decimal value) : this(new BinaryJsonNumber(value))
-            {
-            }
-
-            /// <summary>
-            /// Initializes a new instance of the <see cref = "PropertyNamesEntity"/> struct.
-            /// </summary>
-            /// <param name = "value">The value from which to initialize the number.</param>
-            public PropertyNamesEntity(double value) : this(new BinaryJsonNumber(value))
-            {
-            }
-
-            /// <summary>
-            /// Initializes a new instance of the <see cref = "PropertyNamesEntity"/> struct.
-            /// </summary>
-            /// <param name = "value">The value from which to initialize the number.</param>
-            public PropertyNamesEntity(Half value) : this(new BinaryJsonNumber(value))
-            {
-            }
-
-            /// <summary>
-            /// Initializes a new instance of the <see cref = "PropertyNamesEntity"/> struct.
-            /// </summary>
-            /// <param name = "value">The value from which to initialize the number.</param>
-            public PropertyNamesEntity(float value) : this(new BinaryJsonNumber(value))
-            {
-            }
-
-            /// <summary>
-            /// Initializes a new instance of the <see cref = "PropertyNamesEntity"/> struct.
-            /// </summary>
-            /// <param name = "value">The value from which to initialize the number.</param>
-            public PropertyNamesEntity(byte value) : this(new BinaryJsonNumber(value))
-            {
-            }
-
-            /// <summary>
-            /// Initializes a new instance of the <see cref = "PropertyNamesEntity"/> struct.
-            /// </summary>
-            /// <param name = "value">The value from which to initialize the number.</param>
-            public PropertyNamesEntity(short value) : this(new BinaryJsonNumber(value))
-            {
-            }
-
-            /// <summary>
-            /// Initializes a new instance of the <see cref = "PropertyNamesEntity"/> struct.
-            /// </summary>
-            /// <param name = "value">The value from which to initialize the number.</param>
-            public PropertyNamesEntity(int value) : this(new BinaryJsonNumber(value))
-            {
-            }
-
-            /// <summary>
-            /// Initializes a new instance of the <see cref = "PropertyNamesEntity"/> struct.
-            /// </summary>
-            /// <param name = "value">The value from which to initialize the number.</param>
-            public PropertyNamesEntity(long value) : this(new BinaryJsonNumber(value))
-            {
-            }
-
-            /// <summary>
-            /// Initializes a new instance of the <see cref = "PropertyNamesEntity"/> struct.
-            /// </summary>
-            /// <param name = "value">The value from which to initialize the number.</param>
-            public PropertyNamesEntity(Int128 value) : this(new BinaryJsonNumber(value))
-            {
-            }
-
-            /// <summary>
-            /// Initializes a new instance of the <see cref = "PropertyNamesEntity"/> struct.
-            /// </summary>
-            /// <param name = "value">The value from which to initialize the number.</param>
-            public PropertyNamesEntity(sbyte value) : this(new BinaryJsonNumber(value))
-            {
-            }
-
-            /// <summary>
-            /// Initializes a new instance of the <see cref = "PropertyNamesEntity"/> struct.
-            /// </summary>
-            /// <param name = "value">The value from which to initialize the number.</param>
-            public PropertyNamesEntity(ushort value) : this(new BinaryJsonNumber(value))
-            {
-            }
-
-            /// <summary>
-            /// Initializes a new instance of the <see cref = "PropertyNamesEntity"/> struct.
-            /// </summary>
-            /// <param name = "value">The value from which to initialize the number.</param>
-            public PropertyNamesEntity(uint value) : this(new BinaryJsonNumber(value))
-            {
-            }
-
-            /// <summary>
-            /// Initializes a new instance of the <see cref = "PropertyNamesEntity"/> struct.
-            /// </summary>
-            /// <param name = "value">The value from which to initialize the number.</param>
-            public PropertyNamesEntity(ulong value) : this(new BinaryJsonNumber(value))
-            {
-            }
-
-            /// <summary>
-            /// Initializes a new instance of the <see cref = "PropertyNamesEntity"/> struct.
-            /// </summary>
-            /// <param name = "value">The value from which to initialize the number.</param>
-            public PropertyNamesEntity(UInt128 value) : this(new BinaryJsonNumber(value))
-            {
-            }
-
-            /// <summary>
             /// Conversion from JsonNumber.
             /// </summary>
             /// <param name = "value">The value from which to convert.</param>
@@ -462,108 +350,108 @@ public readonly partial struct Applicator
             /// Conversion from decimal.
             /// </summary>
             /// <param name = "value">The value to convert.</param>
-            public static implicit operator PropertyNamesEntity(decimal value)
+            public static explicit operator PropertyNamesEntity(decimal value)
             {
-                return new(value);
+                return new(new BinaryJsonNumber(value));
             }
 
             /// <summary>
             /// Conversion from double.
             /// </summary>
             /// <param name = "value">The value to convert.</param>
-            public static implicit operator PropertyNamesEntity(double value)
+            public static explicit operator PropertyNamesEntity(double value)
             {
-                return new(value);
+                return new(new BinaryJsonNumber(value));
             }
 
             /// <summary>
             /// Conversion from Half.
             /// </summary>
             /// <param name = "value">The value to convert.</param>
-            public static implicit operator PropertyNamesEntity(Half value)
+            public static explicit operator PropertyNamesEntity(Half value)
             {
-                return new(value);
+                return new(new BinaryJsonNumber(value));
             }
 
             /// <summary>
             /// Conversion from float.
             /// </summary>
             /// <param name = "value">The value to convert.</param>
-            public static implicit operator PropertyNamesEntity(float value)
+            public static explicit operator PropertyNamesEntity(float value)
             {
-                return new(value);
+                return new(new BinaryJsonNumber(value));
             }
 
             /// <summary>
             /// Conversion from byte.
             /// </summary>
             /// <param name = "value">The value to convert.</param>
-            public static implicit operator PropertyNamesEntity(byte value)
+            public static explicit operator PropertyNamesEntity(byte value)
             {
-                return new(value);
+                return new(new BinaryJsonNumber(value));
             }
 
             /// <summary>
             /// Conversion from short.
             /// </summary>
             /// <param name = "value">The value to convert.</param>
-            public static implicit operator PropertyNamesEntity(short value)
+            public static explicit operator PropertyNamesEntity(short value)
             {
-                return new(value);
+                return new(new BinaryJsonNumber(value));
             }
 
             /// <summary>
             /// Conversion from int.
             /// </summary>
             /// <param name = "value">The value to convert.</param>
-            public static implicit operator PropertyNamesEntity(int value)
+            public static explicit operator PropertyNamesEntity(int value)
             {
-                return new(value);
+                return new(new BinaryJsonNumber(value));
             }
 
             /// <summary>
             /// Conversion from long.
             /// </summary>
             /// <param name = "value">The value to convert.</param>
-            public static implicit operator PropertyNamesEntity(long value)
+            public static explicit operator PropertyNamesEntity(long value)
             {
-                return new(value);
+                return new(new BinaryJsonNumber(value));
             }
 
             /// <summary>
             /// Conversion from sbyte.
             /// </summary>
             /// <param name = "value">The value to convert.</param>
-            public static implicit operator PropertyNamesEntity(sbyte value)
+            public static explicit operator PropertyNamesEntity(sbyte value)
             {
-                return new(value);
+                return new(new BinaryJsonNumber(value));
             }
 
             /// <summary>
             /// Conversion from ushort.
             /// </summary>
             /// <param name = "value">The value to convert.</param>
-            public static implicit operator PropertyNamesEntity(ushort value)
+            public static explicit operator PropertyNamesEntity(ushort value)
             {
-                return new(value);
+                return new(new BinaryJsonNumber(value));
             }
 
             /// <summary>
             /// Conversion from uint.
             /// </summary>
             /// <param name = "value">The value to convert.</param>
-            public static implicit operator PropertyNamesEntity(uint value)
+            public static explicit operator PropertyNamesEntity(uint value)
             {
-                return new(value);
+                return new(new BinaryJsonNumber(value));
             }
 
             /// <summary>
             /// Conversion from ulong.
             /// </summary>
             /// <param name = "value">The value to convert.</param>
-            public static implicit operator PropertyNamesEntity(ulong value)
+            public static explicit operator PropertyNamesEntity(ulong value)
             {
-                return new(value);
+                return new(new BinaryJsonNumber(value));
             }
 
             /// <summary>
@@ -702,7 +590,7 @@ public readonly partial struct Applicator
                 }
 
                 // After this point there is no need to check both value kinds because our first quick test verified that they were the same.
-                // If either one is a Backing.Number or a JsonValueKind.Number then we know the rhs is conmpatible.
+                // If either one is a Backing.Number or a JsonValueKind.Number then we know the rhs is compatible.
                 if (lhs.backing == Backing.Number && rhs.backing == Backing.Number)
                 {
                     return BinaryJsonNumber.Compare(lhs.numberBacking, rhs.numberBacking);

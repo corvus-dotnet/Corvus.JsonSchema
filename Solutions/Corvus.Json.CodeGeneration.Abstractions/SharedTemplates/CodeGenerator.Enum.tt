@@ -49,6 +49,13 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
         /// {Description}.
         /// </remarks>
         public static readonly <#= TypeDeclaration.DotnetTypeName #> <#= enumValue.AsPropertyName #> = <#= TypeDeclaration.DotnetTypeName #>.Parse(<#= enumValue.SerializedValue #>);
+        /// <summary>
+        /// Gets the <#= enumValue.AsPropertyName #> as a raw UTF8 string.
+        /// </summary>
+        /// <remarks>
+        /// {Description}.
+        /// </remarks>
+        public static ReadOnlySpan<byte> <#= enumValue.AsPropertyName #>Utf8 => <#= enumValue.SerializedValue #>u8;
 <#      }
         else if (enumValue.IsBoolean)
         { #>

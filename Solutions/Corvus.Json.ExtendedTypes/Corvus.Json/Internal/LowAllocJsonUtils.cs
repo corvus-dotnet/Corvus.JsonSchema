@@ -56,6 +56,40 @@ public static class LowAllocJsonUtils
     }
 
     /// <summary>
+    /// Process raw JSON value.
+    /// </summary>
+    /// <typeparam name="TState">The type of the state for the processor.</typeparam>
+    /// <typeparam name="TResult">The type of the result of processing.</typeparam>
+    /// <param name="element">The json element to process.</param>
+    /// <param name="state">The state passed to the processor.</param>
+    /// <param name="callback">The processing callback.</param>
+    /// <param name="result">The result of processing.</param>
+    /// <returns><c>True</c> if the processing succeeded, otherwise false.</returns>
+    public static bool ProcessRawValue<TState, TResult>(
+        this JsonElement element,
+        in TState state,
+        in Utf8Parser<TState, TResult> callback,
+        [NotNullWhen(true)] out TResult? result)
+    {
+        PooledWriter? writerPair = null;
+        try
+        {
+            writerPair = WriterPool.Get();
+            (Utf8JsonWriter w, ArrayPoolBufferWriter<byte> writer) = writerPair.Get();
+            element.WriteTo(w);
+            w.Flush();
+            return callback(writer.WrittenSpan, state, out result);
+        }
+        finally
+        {
+            if (writerPair is not null)
+            {
+                WriterPool.Return(writerPair);
+            }
+        }
+    }
+
+    /// <summary>
     /// Concatenate two JSON values, as a UTF8 JSON string (including quotes).
     /// </summary>
     /// <typeparam name="T1">The type of the first value.</typeparam>
