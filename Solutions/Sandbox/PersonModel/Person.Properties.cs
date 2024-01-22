@@ -203,7 +203,7 @@ public readonly partial struct Person
     /// <summary>
     /// Gets NetWorth.
     /// </summary>
-    public Corvus.Json.JsonNumber NetWorth
+    public Corvus.Json.JsonDecimal NetWorth
     {
         get
         {
@@ -216,7 +216,7 @@ public readonly partial struct Person
 
                 if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.NetWorthUtf8, out JsonElement result))
                 {
-                    return new Corvus.Json.JsonNumber(result);
+                    return new Corvus.Json.JsonDecimal(result);
                 }
             }
 
@@ -224,7 +224,7 @@ public readonly partial struct Person
             {
                 if (this.objectBacking.TryGetValue(JsonPropertyNames.NetWorth, out JsonAny result))
                 {
-                    return result.As<Corvus.Json.JsonNumber>();
+                    return result.As<Corvus.Json.JsonDecimal>();
                 }
             }
 
@@ -235,7 +235,7 @@ public readonly partial struct Person
     /// <summary>
     /// Creates an instance of a <see cref = "Person"/>.
     /// </summary>
-    public static Person Create(Corvus.Json.Benchmarking.Models.PersonName name, Corvus.Json.JsonDate? dateOfBirth = null, Corvus.Json.JsonEmail? email = null, Corvus.Json.Benchmarking.Models.HeightRangeDouble? height = null, Corvus.Json.JsonNumber? netWorth = null)
+    public static Person Create(Corvus.Json.Benchmarking.Models.PersonName name, Corvus.Json.JsonDate? dateOfBirth = null, Corvus.Json.JsonEmail? email = null, Corvus.Json.Benchmarking.Models.HeightRangeDouble? height = null, Corvus.Json.JsonDecimal? netWorth = null)
     {
         var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
         builder.Add(JsonPropertyNames.Name, name.AsAny);
@@ -254,7 +254,7 @@ public readonly partial struct Person
             builder.Add(JsonPropertyNames.Height, height__.AsAny);
         }
 
-        if (netWorth is Corvus.Json.JsonNumber netWorth__)
+        if (netWorth is Corvus.Json.JsonDecimal netWorth__)
         {
             builder.Add(JsonPropertyNames.NetWorth, netWorth__.AsAny);
         }
@@ -307,7 +307,7 @@ public readonly partial struct Person
     /// </summary>
     /// <param name = "value">The value to set.</param>
     /// <returns>The entity with the updated property.</returns>
-    public Person WithNetWorth(in Corvus.Json.JsonNumber value)
+    public Person WithNetWorth(in Corvus.Json.JsonDecimal value)
     {
         return this.SetProperty(JsonPropertyNames.NetWorth, value);
     }
@@ -329,7 +329,7 @@ public readonly partial struct Person
 
     private static ValidationContext __CorvusValidateNetWorth(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        return property.ValueAs<Corvus.Json.JsonNumber>().Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonDecimal>().Validate(validationContext, level);
     }
 
     private static ValidationContext __CorvusValidateHeight(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)

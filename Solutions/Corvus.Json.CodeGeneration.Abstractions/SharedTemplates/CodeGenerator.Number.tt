@@ -63,8 +63,8 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 <#  } #>
     }
 
-<#  if (!IsJsonInteger)
-    {#>
+<# if(ConversionOperatorToDecimal == "implicit")
+   { #>
     /// <summary>
     /// Initializes a new instance of the <see cref="<#= TypeDeclaration.DotnetTypeName #>"/> struct.
     /// </summary>
@@ -74,6 +74,9 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     {
     }
 
+<# }
+   else if(ConversionOperatorToDouble == "implicit" || (!IsJsonInteger && !HasFormat))
+   { #>
     /// <summary>
     /// Initializes a new instance of the <see cref="<#= TypeDeclaration.DotnetTypeName #>"/> struct.
     /// </summary>
@@ -83,6 +86,9 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     {
     }
 
+<# }
+   else if(ConversionOperatorToHalf == "implicit")
+   { #>
     /// <summary>
     /// Initializes a new instance of the <see cref="<#= TypeDeclaration.DotnetTypeName #>"/> struct.
     /// </summary>
@@ -92,6 +98,9 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     {
     }
 
+<# }
+   else if(ConversionOperatorToSingle == "implicit")
+   { #>
     /// <summary>
     /// Initializes a new instance of the <see cref="<#= TypeDeclaration.DotnetTypeName #>"/> struct.
     /// </summary>
@@ -100,8 +109,10 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
         : this(new BinaryJsonNumber(value))
     {
     }
-<#  }#>
 
+<# }
+   else if(ConversionOperatorToByte == "implicit")
+   { #>
     /// <summary>
     /// Initializes a new instance of the <see cref="<#= TypeDeclaration.DotnetTypeName #>"/> struct.
     /// </summary>
@@ -111,6 +122,9 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     {
     }
 
+<# }
+   else if(ConversionOperatorToInt16 == "implicit")
+   { #>
     /// <summary>
     /// Initializes a new instance of the <see cref="<#= TypeDeclaration.DotnetTypeName #>"/> struct.
     /// </summary>
@@ -120,6 +134,9 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     {
     }
 
+<# }
+   else if(ConversionOperatorToInt32 == "implicit")
+   { #>
     /// <summary>
     /// Initializes a new instance of the <see cref="<#= TypeDeclaration.DotnetTypeName #>"/> struct.
     /// </summary>
@@ -129,6 +146,9 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     {
     }
 
+<# }
+   else if(ConversionOperatorToInt64 == "implicit" || (IsJsonInteger && !HasFormat))
+   { #>
     /// <summary>
     /// Initializes a new instance of the <see cref="<#= TypeDeclaration.DotnetTypeName #>"/> struct.
     /// </summary>
@@ -138,6 +158,9 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     {
     }
 
+<# }
+   else if(ConversionOperatorToInt128 == "implicit")
+   { #>
     /// <summary>
     /// Initializes a new instance of the <see cref="<#= TypeDeclaration.DotnetTypeName #>"/> struct.
     /// </summary>
@@ -147,6 +170,9 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     {
     }
 
+<# }
+   else if(ConversionOperatorToSByte == "implicit")
+   { #>
     /// <summary>
     /// Initializes a new instance of the <see cref="<#= TypeDeclaration.DotnetTypeName #>"/> struct.
     /// </summary>
@@ -156,6 +182,9 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     {
     }
 
+<# }
+   else if(ConversionOperatorToUInt16 == "implicit")
+   { #>
     /// <summary>
     /// Initializes a new instance of the <see cref="<#= TypeDeclaration.DotnetTypeName #>"/> struct.
     /// </summary>
@@ -165,6 +194,9 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     {
     }
 
+<# }
+   else if(ConversionOperatorToUInt32 == "implicit")
+   { #>
     /// <summary>
     /// Initializes a new instance of the <see cref="<#= TypeDeclaration.DotnetTypeName #>"/> struct.
     /// </summary>
@@ -174,6 +206,9 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     {
     }
 
+<# }
+   else if(ConversionOperatorToUInt64 == "implicit")
+   { #>
     /// <summary>
     /// Initializes a new instance of the <see cref="<#= TypeDeclaration.DotnetTypeName #>"/> struct.
     /// </summary>
@@ -183,6 +218,9 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     {
     }
 
+<# }
+   else if(ConversionOperatorToUInt128 == "implicit")
+   { #>
     /// <summary>
     /// Initializes a new instance of the <see cref="<#= TypeDeclaration.DotnetTypeName #>"/> struct.
     /// </summary>
@@ -192,6 +230,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     {
     }
 
+<# }#>
     /// <summary>
     /// Conversion from JsonNumber.
     /// </summary>
@@ -500,153 +539,112 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
         throw new InvalidOperationException();
     }
 
-<#  if (IsJsonInteger)
-    {#>
     /// <summary>
     /// Conversion from decimal.
     /// </summary>
     /// <param name="value">The value to convert.</param>
-    public static explicit operator <#= TypeDeclaration.DotnetTypeName #>(decimal value)
+    public static <#= ConversionOperatorToDecimal #> operator <#= TypeDeclaration.DotnetTypeName #>(decimal value)
     {
-        return new((long)value);
+        return new(new BinaryJsonNumber(value));
     }
 
     /// <summary>
     /// Conversion from double.
     /// </summary>
     /// <param name="value">The value to convert.</param>
-    public static explicit operator <#= TypeDeclaration.DotnetTypeName #>(double value)
+    public static <#= ConversionOperatorToDouble #> operator <#= TypeDeclaration.DotnetTypeName #>(double value)
     {
-        return new((long)value);
+        return new(new BinaryJsonNumber(value));
     }
 
     /// <summary>
     /// Conversion from Half.
     /// </summary>
     /// <param name="value">The value to convert.</param>
-    public static explicit operator <#= TypeDeclaration.DotnetTypeName #>(Half value)
+    public static <#= ConversionOperatorToHalf #> operator <#= TypeDeclaration.DotnetTypeName #>(Half value)
     {
-        return new((long)value);
+        return new(new BinaryJsonNumber(value));
     }
 
     /// <summary>
     /// Conversion from float.
     /// </summary>
     /// <param name="value">The value to convert.</param>
-    public static explicit operator <#= TypeDeclaration.DotnetTypeName #>(float value)
+    public static <#= ConversionOperatorToSingle #> operator <#= TypeDeclaration.DotnetTypeName #>(float value)
     {
-        return new((long)value);
+        return new(new BinaryJsonNumber(value));
     }
-<#  }
-    else
-    {#>
-    /// <summary>
-    /// Conversion from decimal.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    public static implicit operator <#= TypeDeclaration.DotnetTypeName #>(decimal value)
-    {
-        return new(value);
-    }
-
-    /// <summary>
-    /// Conversion from double.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    public static implicit operator <#= TypeDeclaration.DotnetTypeName #>(double value)
-    {
-        return new(value);
-    }
-
-    /// <summary>
-    /// Conversion from Half.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    public static implicit operator <#= TypeDeclaration.DotnetTypeName #>(Half value)
-    {
-        return new(value);
-    }
-
-    /// <summary>
-    /// Conversion from float.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    public static implicit operator <#= TypeDeclaration.DotnetTypeName #>(float value)
-    {
-        return new(value);
-    }
-<#  }#>
 
     /// <summary>
     /// Conversion from byte.
     /// </summary>
     /// <param name="value">The value to convert.</param>
-    public static implicit operator <#= TypeDeclaration.DotnetTypeName #>(byte value)
+    public static <#= ConversionOperatorToByte #> operator <#= TypeDeclaration.DotnetTypeName #>(byte value)
     {
-        return new(value);
+        return new(new BinaryJsonNumber(value));
     }
 
     /// <summary>
     /// Conversion from short.
     /// </summary>
     /// <param name="value">The value to convert.</param>
-    public static implicit operator <#= TypeDeclaration.DotnetTypeName #>(short value)
+    public static <#= ConversionOperatorToInt16 #> operator <#= TypeDeclaration.DotnetTypeName #>(short value)
     {
-        return new(value);
+        return new(new BinaryJsonNumber(value));
     }
 
     /// <summary>
     /// Conversion from int.
     /// </summary>
     /// <param name="value">The value to convert.</param>
-    public static implicit operator <#= TypeDeclaration.DotnetTypeName #>(int value)
+    public static <#= ConversionOperatorToInt32 #> operator <#= TypeDeclaration.DotnetTypeName #>(int value)
     {
-        return new(value);
+        return new(new BinaryJsonNumber(value));
     }
 
     /// <summary>
     /// Conversion from long.
     /// </summary>
     /// <param name="value">The value to convert.</param>
-    public static implicit operator <#= TypeDeclaration.DotnetTypeName #>(long value)
+    public static <#= ConversionOperatorToInt64 #> operator <#= TypeDeclaration.DotnetTypeName #>(long value)
     {
-        return new(value);
+        return new(new BinaryJsonNumber(value));
     }
 
     /// <summary>
     /// Conversion from sbyte.
     /// </summary>
     /// <param name="value">The value to convert.</param>
-    public static implicit operator <#= TypeDeclaration.DotnetTypeName #>(sbyte value)
+    public static <#= ConversionOperatorToSByte #> operator <#= TypeDeclaration.DotnetTypeName #>(sbyte value)
     {
-        return new(value);
+        return new(new BinaryJsonNumber(value));
     }
 
     /// <summary>
     /// Conversion from ushort.
     /// </summary>
     /// <param name="value">The value to convert.</param>
-    public static implicit operator <#= TypeDeclaration.DotnetTypeName #>(ushort value)
+    public static <#= ConversionOperatorToUInt16 #> operator <#= TypeDeclaration.DotnetTypeName #>(ushort value)
     {
-        return new(value);
+        return new(new BinaryJsonNumber(value));
     }
 
     /// <summary>
     /// Conversion from uint.
     /// </summary>
     /// <param name="value">The value to convert.</param>
-    public static implicit operator <#= TypeDeclaration.DotnetTypeName #>(uint value)
+    public static <#= ConversionOperatorToUInt32 #> operator <#= TypeDeclaration.DotnetTypeName #>(uint value)
     {
-        return new(value);
+        return new(new BinaryJsonNumber(value));
     }
 
     /// <summary>
     /// Conversion from ulong.
     /// </summary>
     /// <param name="value">The value to convert.</param>
-    public static implicit operator <#= TypeDeclaration.DotnetTypeName #>(ulong value)
+    public static <#= ConversionOperatorToUInt64 #> operator <#= TypeDeclaration.DotnetTypeName #>(ulong value)
     {
-        return new(value);
+        return new(new BinaryJsonNumber(value));
     }
 
     /// <summary>
@@ -786,7 +784,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
         }
 
         // After this point there is no need to check both value kinds because our first quick test verified that they were the same.
-        // If either one is a Backing.Number or a JsonValueKind.Number then we know the rhs is conmpatible.
+        // If either one is a Backing.Number or a JsonValueKind.Number then we know the rhs is compatible.
         if (lhs.backing == Backing.Number &&
             rhs.backing == Backing.Number)
         {
@@ -811,7 +809,143 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 
         throw new InvalidOperationException();
     }
+<# if(ConversionOperatorToByte == "implicit")
+   { #>
 
+   /// <summary>
+   /// Gets the value as a byte.
+   /// </summary>
+   /// <returns>The value as a byte.</returns>
+    public byte AsByte() => (byte)this;
+<# }
+   if(ConversionOperatorToSByte == "implicit")
+   { #>
+
+   /// <summary>
+   /// Gets the value as an sbyte.
+   /// </summary>
+   /// <returns>The value as an sbyte.</returns>
+    public sbyte AsSByte() => (sbyte)this;
+<# }
+   if(ConversionOperatorToInt16 == "implicit")
+   { #>
+
+   /// <summary>
+   /// Gets the value as a short.
+   /// </summary>
+   /// <returns>The value as a short.</returns>
+    public short AsInt16() => (short)this;
+<# }
+
+   if(ConversionOperatorToUInt16== "implicit")
+   { #>
+
+   /// <summary>
+   /// Gets the value as a ushort.
+   /// </summary>
+   /// <returns>The value as a ushort.</returns>
+    public ushort AsUInt16() => (ushort)this;
+<# }
+
+   if(ConversionOperatorToInt32 == "implicit")
+   { #>
+
+   /// <summary>
+   /// Gets the value as a int.
+   /// </summary>
+   /// <returns>The value as an int.</returns>
+    public int AsInt32() => (int)this;
+<# }
+
+   if(ConversionOperatorToUInt32 == "implicit")
+   { #>
+
+   /// <summary>
+   /// Gets the value as a uint.
+   /// </summary>
+   /// <returns>The value as a uint.</returns>
+    public uint AsUInt32() => (uint)this;
+<# }
+ 
+   if(ConversionOperatorToInt64 == "implicit")
+   { #>
+
+   /// <summary>
+   /// Gets the value as a long.
+   /// </summary>
+   /// <returns>The value as a long.</returns>
+    public long AsInt64() => (long)this;
+<# }
+
+   if(ConversionOperatorToUInt64 == "implicit")
+   { #>
+
+   /// <summary>
+   /// Gets the value as a ulong.
+   /// </summary>
+   /// <returns>The value as a ulong.</returns>
+    public ulong AsUInt64() => (ulong)this;
+<# }
+
+   if(ConversionOperatorToInt128 == "implicit")
+   { #>
+
+   /// <summary>
+   /// Gets the value as an Int128.
+   /// </summary>
+   /// <returns>The value as an Int128.</returns>
+    public Int128 AsInt128() => (Int128)this;
+<# }
+
+   if(ConversionOperatorToUInt128 == "implicit")
+   { #>
+
+   /// <summary>
+   /// Gets the value as a UInt128.
+   /// </summary>
+   /// <returns>The value as a UInt128.</returns>
+    public UInt128 AsUInt128() => (UInt128)this;
+<# }
+
+   if(ConversionOperatorToHalf == "implicit")
+   { #>
+
+   /// <summary>
+   /// Gets the value as a Half.
+   /// </summary>
+   /// <returns>The value as a Half.</returns>
+    public Half AsHalf() => (Half)this;
+<# }
+
+   if(ConversionOperatorToSingle == "implicit")
+   { #>
+
+   /// <summary>
+   /// Gets the value as a float.
+   /// </summary>
+   /// <returns>The value as a float.</returns>
+    public float AsSingle() => (float)this;
+<# }
+
+   if(ConversionOperatorToDouble == "implicit")
+   { #>
+
+   /// <summary>
+   /// Gets the value as a double.
+   /// </summary>
+   /// <returns>The value as a double.</returns>
+    public double AsDouble() => (double)this;
+<# }
+
+   if(ConversionOperatorToDecimal == "implicit")
+   { #>
+
+   /// <summary>
+   /// Gets the value as a decimal.
+   /// </summary>
+   /// <returns>The value as a decimal.</returns>
+    public decimal AsDecimal() => (decimal)this;
+<# } #>
 
     /// <inheritdoc/>
     public BinaryJsonNumber AsBinaryJsonNumber => this.HasDotnetBacking ? this.numberBacking : BinaryJsonNumber.FromJson(this.jsonElementBacking);

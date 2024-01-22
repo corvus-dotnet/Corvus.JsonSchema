@@ -42,111 +42,7 @@ public readonly partial struct Schema
             /// Initializes a new instance of the <see cref = "AllOf1Entity"/> struct.
             /// </summary>
             /// <param name = "value">The value from which to initialize the number.</param>
-            public AllOf1Entity(decimal value) : this(new BinaryJsonNumber(value))
-            {
-            }
-
-            /// <summary>
-            /// Initializes a new instance of the <see cref = "AllOf1Entity"/> struct.
-            /// </summary>
-            /// <param name = "value">The value from which to initialize the number.</param>
             public AllOf1Entity(double value) : this(new BinaryJsonNumber(value))
-            {
-            }
-
-            /// <summary>
-            /// Initializes a new instance of the <see cref = "AllOf1Entity"/> struct.
-            /// </summary>
-            /// <param name = "value">The value from which to initialize the number.</param>
-            public AllOf1Entity(Half value) : this(new BinaryJsonNumber(value))
-            {
-            }
-
-            /// <summary>
-            /// Initializes a new instance of the <see cref = "AllOf1Entity"/> struct.
-            /// </summary>
-            /// <param name = "value">The value from which to initialize the number.</param>
-            public AllOf1Entity(float value) : this(new BinaryJsonNumber(value))
-            {
-            }
-
-            /// <summary>
-            /// Initializes a new instance of the <see cref = "AllOf1Entity"/> struct.
-            /// </summary>
-            /// <param name = "value">The value from which to initialize the number.</param>
-            public AllOf1Entity(byte value) : this(new BinaryJsonNumber(value))
-            {
-            }
-
-            /// <summary>
-            /// Initializes a new instance of the <see cref = "AllOf1Entity"/> struct.
-            /// </summary>
-            /// <param name = "value">The value from which to initialize the number.</param>
-            public AllOf1Entity(short value) : this(new BinaryJsonNumber(value))
-            {
-            }
-
-            /// <summary>
-            /// Initializes a new instance of the <see cref = "AllOf1Entity"/> struct.
-            /// </summary>
-            /// <param name = "value">The value from which to initialize the number.</param>
-            public AllOf1Entity(int value) : this(new BinaryJsonNumber(value))
-            {
-            }
-
-            /// <summary>
-            /// Initializes a new instance of the <see cref = "AllOf1Entity"/> struct.
-            /// </summary>
-            /// <param name = "value">The value from which to initialize the number.</param>
-            public AllOf1Entity(long value) : this(new BinaryJsonNumber(value))
-            {
-            }
-
-            /// <summary>
-            /// Initializes a new instance of the <see cref = "AllOf1Entity"/> struct.
-            /// </summary>
-            /// <param name = "value">The value from which to initialize the number.</param>
-            public AllOf1Entity(Int128 value) : this(new BinaryJsonNumber(value))
-            {
-            }
-
-            /// <summary>
-            /// Initializes a new instance of the <see cref = "AllOf1Entity"/> struct.
-            /// </summary>
-            /// <param name = "value">The value from which to initialize the number.</param>
-            public AllOf1Entity(sbyte value) : this(new BinaryJsonNumber(value))
-            {
-            }
-
-            /// <summary>
-            /// Initializes a new instance of the <see cref = "AllOf1Entity"/> struct.
-            /// </summary>
-            /// <param name = "value">The value from which to initialize the number.</param>
-            public AllOf1Entity(ushort value) : this(new BinaryJsonNumber(value))
-            {
-            }
-
-            /// <summary>
-            /// Initializes a new instance of the <see cref = "AllOf1Entity"/> struct.
-            /// </summary>
-            /// <param name = "value">The value from which to initialize the number.</param>
-            public AllOf1Entity(uint value) : this(new BinaryJsonNumber(value))
-            {
-            }
-
-            /// <summary>
-            /// Initializes a new instance of the <see cref = "AllOf1Entity"/> struct.
-            /// </summary>
-            /// <param name = "value">The value from which to initialize the number.</param>
-            public AllOf1Entity(ulong value) : this(new BinaryJsonNumber(value))
-            {
-            }
-
-            /// <summary>
-            /// Initializes a new instance of the <see cref = "AllOf1Entity"/> struct.
-            /// </summary>
-            /// <param name = "value">The value from which to initialize the number.</param>
-            public AllOf1Entity(UInt128 value) : this(new BinaryJsonNumber(value))
             {
             }
 
@@ -462,108 +358,108 @@ public readonly partial struct Schema
             /// Conversion from decimal.
             /// </summary>
             /// <param name = "value">The value to convert.</param>
-            public static implicit operator AllOf1Entity(decimal value)
+            public static explicit operator AllOf1Entity(decimal value)
             {
-                return new(value);
+                return new(new BinaryJsonNumber(value));
             }
 
             /// <summary>
             /// Conversion from double.
             /// </summary>
             /// <param name = "value">The value to convert.</param>
-            public static implicit operator AllOf1Entity(double value)
+            public static explicit operator AllOf1Entity(double value)
             {
-                return new(value);
+                return new(new BinaryJsonNumber(value));
             }
 
             /// <summary>
             /// Conversion from Half.
             /// </summary>
             /// <param name = "value">The value to convert.</param>
-            public static implicit operator AllOf1Entity(Half value)
+            public static explicit operator AllOf1Entity(Half value)
             {
-                return new(value);
+                return new(new BinaryJsonNumber(value));
             }
 
             /// <summary>
             /// Conversion from float.
             /// </summary>
             /// <param name = "value">The value to convert.</param>
-            public static implicit operator AllOf1Entity(float value)
+            public static explicit operator AllOf1Entity(float value)
             {
-                return new(value);
+                return new(new BinaryJsonNumber(value));
             }
 
             /// <summary>
             /// Conversion from byte.
             /// </summary>
             /// <param name = "value">The value to convert.</param>
-            public static implicit operator AllOf1Entity(byte value)
+            public static explicit operator AllOf1Entity(byte value)
             {
-                return new(value);
+                return new(new BinaryJsonNumber(value));
             }
 
             /// <summary>
             /// Conversion from short.
             /// </summary>
             /// <param name = "value">The value to convert.</param>
-            public static implicit operator AllOf1Entity(short value)
+            public static explicit operator AllOf1Entity(short value)
             {
-                return new(value);
+                return new(new BinaryJsonNumber(value));
             }
 
             /// <summary>
             /// Conversion from int.
             /// </summary>
             /// <param name = "value">The value to convert.</param>
-            public static implicit operator AllOf1Entity(int value)
+            public static explicit operator AllOf1Entity(int value)
             {
-                return new(value);
+                return new(new BinaryJsonNumber(value));
             }
 
             /// <summary>
             /// Conversion from long.
             /// </summary>
             /// <param name = "value">The value to convert.</param>
-            public static implicit operator AllOf1Entity(long value)
+            public static explicit operator AllOf1Entity(long value)
             {
-                return new(value);
+                return new(new BinaryJsonNumber(value));
             }
 
             /// <summary>
             /// Conversion from sbyte.
             /// </summary>
             /// <param name = "value">The value to convert.</param>
-            public static implicit operator AllOf1Entity(sbyte value)
+            public static explicit operator AllOf1Entity(sbyte value)
             {
-                return new(value);
+                return new(new BinaryJsonNumber(value));
             }
 
             /// <summary>
             /// Conversion from ushort.
             /// </summary>
             /// <param name = "value">The value to convert.</param>
-            public static implicit operator AllOf1Entity(ushort value)
+            public static explicit operator AllOf1Entity(ushort value)
             {
-                return new(value);
+                return new(new BinaryJsonNumber(value));
             }
 
             /// <summary>
             /// Conversion from uint.
             /// </summary>
             /// <param name = "value">The value to convert.</param>
-            public static implicit operator AllOf1Entity(uint value)
+            public static explicit operator AllOf1Entity(uint value)
             {
-                return new(value);
+                return new(new BinaryJsonNumber(value));
             }
 
             /// <summary>
             /// Conversion from ulong.
             /// </summary>
             /// <param name = "value">The value to convert.</param>
-            public static implicit operator AllOf1Entity(ulong value)
+            public static explicit operator AllOf1Entity(ulong value)
             {
-                return new(value);
+                return new(new BinaryJsonNumber(value));
             }
 
             /// <summary>
@@ -702,7 +598,7 @@ public readonly partial struct Schema
                 }
 
                 // After this point there is no need to check both value kinds because our first quick test verified that they were the same.
-                // If either one is a Backing.Number or a JsonValueKind.Number then we know the rhs is conmpatible.
+                // If either one is a Backing.Number or a JsonValueKind.Number then we know the rhs is compatible.
                 if (lhs.backing == Backing.Number && rhs.backing == Backing.Number)
                 {
                     return BinaryJsonNumber.Compare(lhs.numberBacking, rhs.numberBacking);

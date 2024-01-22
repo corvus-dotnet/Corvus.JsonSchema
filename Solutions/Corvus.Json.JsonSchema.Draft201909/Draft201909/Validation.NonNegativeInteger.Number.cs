@@ -37,79 +37,7 @@ public readonly partial struct Validation
         /// Initializes a new instance of the <see cref = "NonNegativeInteger"/> struct.
         /// </summary>
         /// <param name = "value">The value from which to initialize the number.</param>
-        public NonNegativeInteger(byte value) : this(new BinaryJsonNumber(value))
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref = "NonNegativeInteger"/> struct.
-        /// </summary>
-        /// <param name = "value">The value from which to initialize the number.</param>
-        public NonNegativeInteger(short value) : this(new BinaryJsonNumber(value))
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref = "NonNegativeInteger"/> struct.
-        /// </summary>
-        /// <param name = "value">The value from which to initialize the number.</param>
-        public NonNegativeInteger(int value) : this(new BinaryJsonNumber(value))
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref = "NonNegativeInteger"/> struct.
-        /// </summary>
-        /// <param name = "value">The value from which to initialize the number.</param>
         public NonNegativeInteger(long value) : this(new BinaryJsonNumber(value))
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref = "NonNegativeInteger"/> struct.
-        /// </summary>
-        /// <param name = "value">The value from which to initialize the number.</param>
-        public NonNegativeInteger(Int128 value) : this(new BinaryJsonNumber(value))
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref = "NonNegativeInteger"/> struct.
-        /// </summary>
-        /// <param name = "value">The value from which to initialize the number.</param>
-        public NonNegativeInteger(sbyte value) : this(new BinaryJsonNumber(value))
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref = "NonNegativeInteger"/> struct.
-        /// </summary>
-        /// <param name = "value">The value from which to initialize the number.</param>
-        public NonNegativeInteger(ushort value) : this(new BinaryJsonNumber(value))
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref = "NonNegativeInteger"/> struct.
-        /// </summary>
-        /// <param name = "value">The value from which to initialize the number.</param>
-        public NonNegativeInteger(uint value) : this(new BinaryJsonNumber(value))
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref = "NonNegativeInteger"/> struct.
-        /// </summary>
-        /// <param name = "value">The value from which to initialize the number.</param>
-        public NonNegativeInteger(ulong value) : this(new BinaryJsonNumber(value))
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref = "NonNegativeInteger"/> struct.
-        /// </summary>
-        /// <param name = "value">The value from which to initialize the number.</param>
-        public NonNegativeInteger(UInt128 value) : this(new BinaryJsonNumber(value))
         {
         }
 
@@ -427,7 +355,7 @@ public readonly partial struct Validation
         /// <param name = "value">The value to convert.</param>
         public static explicit operator NonNegativeInteger(decimal value)
         {
-            return new((long)value);
+            return new(new BinaryJsonNumber(value));
         }
 
         /// <summary>
@@ -436,7 +364,7 @@ public readonly partial struct Validation
         /// <param name = "value">The value to convert.</param>
         public static explicit operator NonNegativeInteger(double value)
         {
-            return new((long)value);
+            return new(new BinaryJsonNumber(value));
         }
 
         /// <summary>
@@ -445,7 +373,7 @@ public readonly partial struct Validation
         /// <param name = "value">The value to convert.</param>
         public static explicit operator NonNegativeInteger(Half value)
         {
-            return new((long)value);
+            return new(new BinaryJsonNumber(value));
         }
 
         /// <summary>
@@ -454,79 +382,79 @@ public readonly partial struct Validation
         /// <param name = "value">The value to convert.</param>
         public static explicit operator NonNegativeInteger(float value)
         {
-            return new((long)value);
+            return new(new BinaryJsonNumber(value));
         }
 
         /// <summary>
         /// Conversion from byte.
         /// </summary>
         /// <param name = "value">The value to convert.</param>
-        public static implicit operator NonNegativeInteger(byte value)
+        public static explicit operator NonNegativeInteger(byte value)
         {
-            return new(value);
+            return new(new BinaryJsonNumber(value));
         }
 
         /// <summary>
         /// Conversion from short.
         /// </summary>
         /// <param name = "value">The value to convert.</param>
-        public static implicit operator NonNegativeInteger(short value)
+        public static explicit operator NonNegativeInteger(short value)
         {
-            return new(value);
+            return new(new BinaryJsonNumber(value));
         }
 
         /// <summary>
         /// Conversion from int.
         /// </summary>
         /// <param name = "value">The value to convert.</param>
-        public static implicit operator NonNegativeInteger(int value)
+        public static explicit operator NonNegativeInteger(int value)
         {
-            return new(value);
+            return new(new BinaryJsonNumber(value));
         }
 
         /// <summary>
         /// Conversion from long.
         /// </summary>
         /// <param name = "value">The value to convert.</param>
-        public static implicit operator NonNegativeInteger(long value)
+        public static explicit operator NonNegativeInteger(long value)
         {
-            return new(value);
+            return new(new BinaryJsonNumber(value));
         }
 
         /// <summary>
         /// Conversion from sbyte.
         /// </summary>
         /// <param name = "value">The value to convert.</param>
-        public static implicit operator NonNegativeInteger(sbyte value)
+        public static explicit operator NonNegativeInteger(sbyte value)
         {
-            return new(value);
+            return new(new BinaryJsonNumber(value));
         }
 
         /// <summary>
         /// Conversion from ushort.
         /// </summary>
         /// <param name = "value">The value to convert.</param>
-        public static implicit operator NonNegativeInteger(ushort value)
+        public static explicit operator NonNegativeInteger(ushort value)
         {
-            return new(value);
+            return new(new BinaryJsonNumber(value));
         }
 
         /// <summary>
         /// Conversion from uint.
         /// </summary>
         /// <param name = "value">The value to convert.</param>
-        public static implicit operator NonNegativeInteger(uint value)
+        public static explicit operator NonNegativeInteger(uint value)
         {
-            return new(value);
+            return new(new BinaryJsonNumber(value));
         }
 
         /// <summary>
         /// Conversion from ulong.
         /// </summary>
         /// <param name = "value">The value to convert.</param>
-        public static implicit operator NonNegativeInteger(ulong value)
+        public static explicit operator NonNegativeInteger(ulong value)
         {
-            return new(value);
+            return new(new BinaryJsonNumber(value));
         }
 
         /// <summary>
@@ -665,7 +593,7 @@ public readonly partial struct Validation
             }
 
             // After this point there is no need to check both value kinds because our first quick test verified that they were the same.
-            // If either one is a Backing.Number or a JsonValueKind.Number then we know the rhs is conmpatible.
+            // If either one is a Backing.Number or a JsonValueKind.Number then we know the rhs is compatible.
             if (lhs.backing == Backing.Number && rhs.backing == Backing.Number)
             {
                 return BinaryJsonNumber.Compare(lhs.numberBacking, rhs.numberBacking);

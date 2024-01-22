@@ -16,7 +16,7 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft6 {
     public partial class CodeGeneratorValidateFormat : CodeGeneratorValidateFormatBase {
         
         
-        #line 141 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+        #line 197 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
 
     public bool ShouldGenerate
     {
@@ -230,19 +230,215 @@ namespace ");
             
             #line 73 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
   }
-    else if (IsJsonInteger)
+    else if (ConversionOperatorToByte == "implicit")
     { 
             
             #line default
             #line hidden
             
             #line 76 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
-            this.Write("        return Corvus.Json.Validate.TypeInteger(this, result, level);\r\n");
+            this.Write("        return Corvus.Json.Validate.TypeByte(this, result, level);\r\n");
             
             #line default
             #line hidden
             
             #line 77 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+  }
+    else if (ConversionOperatorToSByte == "implicit")
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 80 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+            this.Write("        return Corvus.Json.Validate.TypeSByte(this, result, level);\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 81 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+  }
+    else if (ConversionOperatorToInt16 == "implicit")
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 84 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+            this.Write("        return Corvus.Json.Validate.TypeInt16(this, result, level);\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 85 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+  }
+    else if (ConversionOperatorToUInt16 == "implicit")
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 88 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+            this.Write("        return Corvus.Json.Validate.TypeUInt16(this, result, level);\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 89 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+  }
+    else if (ConversionOperatorToInt32 == "implicit")
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 92 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+            this.Write("        return Corvus.Json.Validate.TypeInt32(this, result, level);\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 93 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+  }
+    else if (ConversionOperatorToUInt32 == "implicit")
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 96 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+            this.Write("        return Corvus.Json.Validate.TypeUInt32(this, result, level);\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 97 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+  }
+    else if (ConversionOperatorToInt64 == "implicit")
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 100 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+            this.Write("        return Corvus.Json.Validate.TypeInt64(this, result, level);\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 101 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+  }
+    else if (ConversionOperatorToUInt64 == "implicit")
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 104 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+            this.Write("        return Corvus.Json.Validate.TypeUInt64(this, result, level);\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 105 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+  }
+    else if (ConversionOperatorToInt128 == "implicit")
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 108 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+            this.Write("        return Corvus.Json.Validate.TypeInt128(this, result, level);\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 109 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+  }
+    else if (ConversionOperatorToUInt128 == "implicit")
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 112 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+            this.Write("        return Corvus.Json.Validate.TypeUInt128(this, result, level);\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 113 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+  }
+    else if (ConversionOperatorToHalf == "implicit")
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 116 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+            this.Write("        return Corvus.Json.Validate.TypeHalf(this, result, level);\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 117 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+  }
+    else if (ConversionOperatorToSingle == "implicit")
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 120 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+            this.Write("        return Corvus.Json.Validate.TypeSingle(this, result, level);\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 121 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+  }
+    else if (ConversionOperatorToDouble == "implicit")
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 124 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+            this.Write("        return Corvus.Json.Validate.TypeDouble(this, result, level);\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 125 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+  }
+    else if (ConversionOperatorToDecimal == "implicit")
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 128 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+            this.Write("        return Corvus.Json.Validate.TypeDecimal(this, result, level);\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 129 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+  }
+    else if (IsJsonInteger)
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 132 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+            this.Write("        return Corvus.Json.Validate.TypeInteger(this, result, level);\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 133 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
   }
     else if (IsJsonIpV4)
     { 
@@ -250,13 +446,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 80 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+            #line 136 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
             this.Write("        return Corvus.Json.Validate.TypeIpV4(this, result, level);\r\n");
             
             #line default
             #line hidden
             
-            #line 81 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+            #line 137 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
   }
     else if (IsJsonIpV6)
     { 
@@ -264,13 +460,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 84 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+            #line 140 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
             this.Write("        return Corvus.Json.Validate.TypeIpV6(this, result, level);\r\n");
             
             #line default
             #line hidden
             
-            #line 85 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+            #line 141 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
   }
     else if (IsJsonIri)
     { 
@@ -278,13 +474,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 88 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+            #line 144 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
             this.Write("        return Corvus.Json.Validate.TypeIri(this, result, level);\r\n");
             
             #line default
             #line hidden
             
-            #line 89 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+            #line 145 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
   }
     else if (IsJsonIriReference)
     { 
@@ -292,13 +488,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 92 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+            #line 148 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
             this.Write("        return Corvus.Json.Validate.TypeIriReference(this, result, level);\r\n");
             
             #line default
             #line hidden
             
-            #line 93 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+            #line 149 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
   }
     else if (IsJsonPointer)
     { 
@@ -306,13 +502,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 96 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+            #line 152 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
             this.Write("        return Corvus.Json.Validate.TypePointer(this, result, level);\r\n");
             
             #line default
             #line hidden
             
-            #line 97 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+            #line 153 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
   }
     else if (IsJsonRegex)
     { 
@@ -320,13 +516,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 100 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+            #line 156 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
             this.Write("        return Corvus.Json.Validate.TypeRegex(this, result, level);\r\n");
             
             #line default
             #line hidden
             
-            #line 101 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+            #line 157 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
   }
     else if (IsJsonTime)
     { 
@@ -334,13 +530,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 104 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+            #line 160 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
             this.Write("        return Corvus.Json.Validate.TypeTime(this, result, level);\r\n");
             
             #line default
             #line hidden
             
-            #line 105 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+            #line 161 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
   }
     else if (IsJsonUri)
     { 
@@ -348,13 +544,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 108 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+            #line 164 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
             this.Write("        return Corvus.Json.Validate.TypeUri(this, result, level);\r\n");
             
             #line default
             #line hidden
             
-            #line 109 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+            #line 165 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
   }
     else if (IsJsonUriReference)
     { 
@@ -362,13 +558,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 112 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+            #line 168 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
             this.Write("        return Corvus.Json.Validate.TypeUriReference(this, result, level);\r\n");
             
             #line default
             #line hidden
             
-            #line 113 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+            #line 169 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
   }
     else if (IsJsonUriTemplate)
     { 
@@ -376,13 +572,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 116 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+            #line 172 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
             this.Write("        return Corvus.Json.Validate.TypeUriTemplate(this, result, level);\r\n");
             
             #line default
             #line hidden
             
-            #line 117 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+            #line 173 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
   }
     else if (IsJsonBase64Content)
     { 
@@ -390,14 +586,14 @@ namespace ");
             #line default
             #line hidden
             
-            #line 120 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+            #line 176 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
             this.Write("        return Corvus.Json.Validate.TypeBase64Content(this, result, level, false)" +
                     ";\r\n");
             
             #line default
             #line hidden
             
-            #line 121 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+            #line 177 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
   }
     else if (IsJsonBase64String)
     { 
@@ -405,14 +601,14 @@ namespace ");
             #line default
             #line hidden
             
-            #line 124 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+            #line 180 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
             this.Write("        return Corvus.Json.Validate.TypeBase64String(this, result, level, false);" +
                     "\r\n");
             
             #line default
             #line hidden
             
-            #line 125 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+            #line 181 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
   }
     else if (IsJsonContent)
     { 
@@ -420,13 +616,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 128 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+            #line 184 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
             this.Write("        return Corvus.Json.Validate.TypeContent(this, result, level, false);\r\n");
             
             #line default
             #line hidden
             
-            #line 129 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+            #line 185 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
   }
     else if (IsJsonUuid)
     { 
@@ -434,13 +630,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 132 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+            #line 188 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
             this.Write("        return Corvus.Json.Validate.TypeUuid(this, result, level);\r\n");
             
             #line default
             #line hidden
             
-            #line 133 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+            #line 189 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
   }
     else
     { 
@@ -448,25 +644,25 @@ namespace ");
             #line default
             #line hidden
             
-            #line 136 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+            #line 192 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
             this.Write("        return result;\r\n");
             
             #line default
             #line hidden
             
-            #line 137 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+            #line 193 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 138 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+            #line 194 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
             this.Write("    }\r\n}\r\n");
             
             #line default
             #line hidden
             
-            #line 140 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
+            #line 196 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.Format.tt"
  EndNesting(); 
             
             #line default

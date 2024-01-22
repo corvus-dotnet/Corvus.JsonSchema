@@ -47,72 +47,72 @@ public static class BuiltInTypes
     /// <summary>
     /// A clr <see cref="sbyte"/> type.
     /// </summary>
-    public static readonly (string Ns, string Type) ClrSByteTypeDeclaration = ("Corvus.Json", "JsonInteger");
+    public static readonly (string Ns, string Type) ClrSByteTypeDeclaration = ("Corvus.Json", "JsonSByte");
 
     /// <summary>
     /// A clr <see cref="short"/> type.
     /// </summary>
-    public static readonly (string Ns, string Type) ClrInt16TypeDeclaration = ("Corvus.Json", "JsonInteger");
+    public static readonly (string Ns, string Type) ClrInt16TypeDeclaration = ("Corvus.Json", "JsonInt16");
 
     /// <summary>
     /// A clr <see cref="int"/> type.
     /// </summary>
-    public static readonly (string Ns, string Type) ClrInt32TypeDeclaration = ("Corvus.Json", "JsonInteger");
+    public static readonly (string Ns, string Type) ClrInt32TypeDeclaration = ("Corvus.Json", "JsonInt32");
 
     /// <summary>
     /// A clr <see cref="long"/> type.
     /// </summary>
-    public static readonly (string Ns, string Type) ClrInt64TypeDeclaration = ("Corvus.Json", "JsonInteger");
+    public static readonly (string Ns, string Type) ClrInt64TypeDeclaration = ("Corvus.Json", "JsonInt64");
 
     /// <summary>
     /// A clr <see cref="Int128"/> type.
     /// </summary>
-    public static readonly (string Ns, string Type) ClrInt128TypeDeclaration = ("Corvus.Json", "JsonInteger");
+    public static readonly (string Ns, string Type) ClrInt128TypeDeclaration = ("Corvus.Json", "JsonInt128");
 
     /// <summary>
     /// A clr <see cref="byte"/> type.
     /// </summary>
-    public static readonly (string Ns, string Type) ClrByteTypeDeclaration = ("Corvus.Json", "JsonInteger");
+    public static readonly (string Ns, string Type) ClrByteTypeDeclaration = ("Corvus.Json", "JsonByte");
 
     /// <summary>
     /// A clr <see cref="ushort"/> type.
     /// </summary>
-    public static readonly (string Ns, string Type) ClrUInt16TypeDeclaration = ("Corvus.Json", "JsonInteger");
+    public static readonly (string Ns, string Type) ClrUInt16TypeDeclaration = ("Corvus.Json", "JsonUInt16");
 
     /// <summary>
     /// A clr <see cref="uint"/> type.
     /// </summary>
-    public static readonly (string Ns, string Type) ClrUInt32TypeDeclaration = ("Corvus.Json", "JsonInteger");
+    public static readonly (string Ns, string Type) ClrUInt32TypeDeclaration = ("Corvus.Json", "JsonUInt32");
 
     /// <summary>
     /// A clr <see cref="ulong"/> type.
     /// </summary>
-    public static readonly (string Ns, string Type) ClrUInt64TypeDeclaration = ("Corvus.Json", "JsonInteger");
+    public static readonly (string Ns, string Type) ClrUInt64TypeDeclaration = ("Corvus.Json", "JsonUInt64");
 
     /// <summary>
     /// A clr <see cref="UInt128"/> type.
     /// </summary>
-    public static readonly (string Ns, string Type) ClrUInt128TypeDeclaration = ("Corvus.Json", "JsonInteger");
+    public static readonly (string Ns, string Type) ClrUInt128TypeDeclaration = ("Corvus.Json", "JsonUInt128");
 
     /// <summary>
     /// A clr <see cref="Half"/> type.
     /// </summary>
-    public static readonly (string Ns, string Type) ClrHalfTypeDeclaration = ("Corvus.Json", "JsonNumber");
+    public static readonly (string Ns, string Type) ClrHalfTypeDeclaration = ("Corvus.Json", "JsonHalf");
 
     /// <summary>
     /// A clr <see cref="float"/> type.
     /// </summary>
-    public static readonly (string Ns, string Type) ClrSingleTypeDeclaration = ("Corvus.Json", "JsonNumber");
+    public static readonly (string Ns, string Type) ClrSingleTypeDeclaration = ("Corvus.Json", "JsonSingle");
 
     /// <summary>
     /// A clr <see cref="double"/> type.
     /// </summary>
-    public static readonly (string Ns, string Type) ClrDoubleTypeDeclaration = ("Corvus.Json", "JsonNumber");
+    public static readonly (string Ns, string Type) ClrDoubleTypeDeclaration = ("Corvus.Json", "JsonDouble");
 
     /// <summary>
     /// A clr <see cref="decimal"/> type.
     /// </summary>
-    public static readonly (string Ns, string Type) ClrDecimalTypeDeclaration = ("Corvus.Json", "JsonNumber");
+    public static readonly (string Ns, string Type) ClrDecimalTypeDeclaration = ("Corvus.Json", "JsonDecimal");
 
     /// <summary>
     /// A clr <see cref="string"/> type.
@@ -302,8 +302,6 @@ public static class BuiltInTypes
     {
         return format switch
         {
-            "sbyte" => true,
-            "byte" => true,
             "int16" => true,
             _ => false,
         };
@@ -318,7 +316,6 @@ public static class BuiltInTypes
     {
         return format switch
         {
-            "byte" => true,
             "uint16" => true,
             _ => false,
         };
@@ -333,10 +330,6 @@ public static class BuiltInTypes
     {
         return format switch
         {
-            "sbyte" => true,
-            "byte" => true,
-            "int16" => true,
-            "uint16" => true,
             "int32" => true,
             _ => false,
         };
@@ -351,8 +344,6 @@ public static class BuiltInTypes
     {
         return format switch
         {
-            "byte" => true,
-            "uint16" => true,
             "uint32" => true,
             _ => false,
         };
@@ -367,12 +358,6 @@ public static class BuiltInTypes
     {
         return format switch
         {
-            "sbyte" => true,
-            "byte" => true,
-            "int16" => true,
-            "uint16" => true,
-            "int32" => true,
-            "uint32" => true,
             "int64" => true,
             _ => false,
         };
@@ -387,9 +372,6 @@ public static class BuiltInTypes
     {
         return format switch
         {
-            "byte" => true,
-            "uint16" => true,
-            "uint32" => true,
             "uint64" => true,
             _ => false,
         };
@@ -446,14 +428,6 @@ public static class BuiltInTypes
     {
         return format switch
         {
-            "sbyte" => true,
-            "byte" => true,
-            "int16" => true,
-            "uint16" => true,
-            "int32" => true,
-            "uint32" => true,
-            "int64" => true,
-            "uint64" => true,
             "single" => true,
             _ => false,
         };
@@ -468,15 +442,6 @@ public static class BuiltInTypes
     {
         return format switch
         {
-            "sbyte" => true,
-            "byte" => true,
-            "int16" => true,
-            "uint16" => true,
-            "int32" => true,
-            "uint32" => true,
-            "int64" => true,
-            "uint64" => true,
-            "single" => true,
             "double" => true,
             _ => false,
         };
@@ -491,15 +456,7 @@ public static class BuiltInTypes
     {
         return format switch
         {
-            "sbyte" => true,
-            "byte" => true,
-            "int16" => true,
-            "uint16" => true,
-            "int32" => true,
-            "uint32" => true,
-            "int64" => true,
-            "uint64" => true,
-            "double" => true,
+            "decimal" => true,
             _ => false,
         };
     }
@@ -530,7 +487,7 @@ public static class BuiltInTypes
     }
 
     /// <summary>
-    /// Gets a value indiciating whether the format specified is for a string.
+    /// Gets a value indicating whether the format specified is for a string.
     /// </summary>
     /// <param name="format">The format to test.</param>
     /// <returns><c>True</c> if it is a string format.</returns>

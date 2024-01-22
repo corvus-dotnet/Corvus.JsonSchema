@@ -37,111 +37,7 @@ public readonly partial struct Validation
         /// Initializes a new instance of the <see cref = "MinContainsEntity"/> struct.
         /// </summary>
         /// <param name = "value">The value from which to initialize the number.</param>
-        public MinContainsEntity(decimal value) : this(new BinaryJsonNumber(value))
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref = "MinContainsEntity"/> struct.
-        /// </summary>
-        /// <param name = "value">The value from which to initialize the number.</param>
         public MinContainsEntity(double value) : this(new BinaryJsonNumber(value))
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref = "MinContainsEntity"/> struct.
-        /// </summary>
-        /// <param name = "value">The value from which to initialize the number.</param>
-        public MinContainsEntity(Half value) : this(new BinaryJsonNumber(value))
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref = "MinContainsEntity"/> struct.
-        /// </summary>
-        /// <param name = "value">The value from which to initialize the number.</param>
-        public MinContainsEntity(float value) : this(new BinaryJsonNumber(value))
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref = "MinContainsEntity"/> struct.
-        /// </summary>
-        /// <param name = "value">The value from which to initialize the number.</param>
-        public MinContainsEntity(byte value) : this(new BinaryJsonNumber(value))
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref = "MinContainsEntity"/> struct.
-        /// </summary>
-        /// <param name = "value">The value from which to initialize the number.</param>
-        public MinContainsEntity(short value) : this(new BinaryJsonNumber(value))
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref = "MinContainsEntity"/> struct.
-        /// </summary>
-        /// <param name = "value">The value from which to initialize the number.</param>
-        public MinContainsEntity(int value) : this(new BinaryJsonNumber(value))
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref = "MinContainsEntity"/> struct.
-        /// </summary>
-        /// <param name = "value">The value from which to initialize the number.</param>
-        public MinContainsEntity(long value) : this(new BinaryJsonNumber(value))
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref = "MinContainsEntity"/> struct.
-        /// </summary>
-        /// <param name = "value">The value from which to initialize the number.</param>
-        public MinContainsEntity(Int128 value) : this(new BinaryJsonNumber(value))
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref = "MinContainsEntity"/> struct.
-        /// </summary>
-        /// <param name = "value">The value from which to initialize the number.</param>
-        public MinContainsEntity(sbyte value) : this(new BinaryJsonNumber(value))
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref = "MinContainsEntity"/> struct.
-        /// </summary>
-        /// <param name = "value">The value from which to initialize the number.</param>
-        public MinContainsEntity(ushort value) : this(new BinaryJsonNumber(value))
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref = "MinContainsEntity"/> struct.
-        /// </summary>
-        /// <param name = "value">The value from which to initialize the number.</param>
-        public MinContainsEntity(uint value) : this(new BinaryJsonNumber(value))
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref = "MinContainsEntity"/> struct.
-        /// </summary>
-        /// <param name = "value">The value from which to initialize the number.</param>
-        public MinContainsEntity(ulong value) : this(new BinaryJsonNumber(value))
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref = "MinContainsEntity"/> struct.
-        /// </summary>
-        /// <param name = "value">The value from which to initialize the number.</param>
-        public MinContainsEntity(UInt128 value) : this(new BinaryJsonNumber(value))
         {
         }
 
@@ -457,108 +353,108 @@ public readonly partial struct Validation
         /// Conversion from decimal.
         /// </summary>
         /// <param name = "value">The value to convert.</param>
-        public static implicit operator MinContainsEntity(decimal value)
+        public static explicit operator MinContainsEntity(decimal value)
         {
-            return new(value);
+            return new(new BinaryJsonNumber(value));
         }
 
         /// <summary>
         /// Conversion from double.
         /// </summary>
         /// <param name = "value">The value to convert.</param>
-        public static implicit operator MinContainsEntity(double value)
+        public static explicit operator MinContainsEntity(double value)
         {
-            return new(value);
+            return new(new BinaryJsonNumber(value));
         }
 
         /// <summary>
         /// Conversion from Half.
         /// </summary>
         /// <param name = "value">The value to convert.</param>
-        public static implicit operator MinContainsEntity(Half value)
+        public static explicit operator MinContainsEntity(Half value)
         {
-            return new(value);
+            return new(new BinaryJsonNumber(value));
         }
 
         /// <summary>
         /// Conversion from float.
         /// </summary>
         /// <param name = "value">The value to convert.</param>
-        public static implicit operator MinContainsEntity(float value)
+        public static explicit operator MinContainsEntity(float value)
         {
-            return new(value);
+            return new(new BinaryJsonNumber(value));
         }
 
         /// <summary>
         /// Conversion from byte.
         /// </summary>
         /// <param name = "value">The value to convert.</param>
-        public static implicit operator MinContainsEntity(byte value)
+        public static explicit operator MinContainsEntity(byte value)
         {
-            return new(value);
+            return new(new BinaryJsonNumber(value));
         }
 
         /// <summary>
         /// Conversion from short.
         /// </summary>
         /// <param name = "value">The value to convert.</param>
-        public static implicit operator MinContainsEntity(short value)
+        public static explicit operator MinContainsEntity(short value)
         {
-            return new(value);
+            return new(new BinaryJsonNumber(value));
         }
 
         /// <summary>
         /// Conversion from int.
         /// </summary>
         /// <param name = "value">The value to convert.</param>
-        public static implicit operator MinContainsEntity(int value)
+        public static explicit operator MinContainsEntity(int value)
         {
-            return new(value);
+            return new(new BinaryJsonNumber(value));
         }
 
         /// <summary>
         /// Conversion from long.
         /// </summary>
         /// <param name = "value">The value to convert.</param>
-        public static implicit operator MinContainsEntity(long value)
+        public static explicit operator MinContainsEntity(long value)
         {
-            return new(value);
+            return new(new BinaryJsonNumber(value));
         }
 
         /// <summary>
         /// Conversion from sbyte.
         /// </summary>
         /// <param name = "value">The value to convert.</param>
-        public static implicit operator MinContainsEntity(sbyte value)
+        public static explicit operator MinContainsEntity(sbyte value)
         {
-            return new(value);
+            return new(new BinaryJsonNumber(value));
         }
 
         /// <summary>
         /// Conversion from ushort.
         /// </summary>
         /// <param name = "value">The value to convert.</param>
-        public static implicit operator MinContainsEntity(ushort value)
+        public static explicit operator MinContainsEntity(ushort value)
         {
-            return new(value);
+            return new(new BinaryJsonNumber(value));
         }
 
         /// <summary>
         /// Conversion from uint.
         /// </summary>
         /// <param name = "value">The value to convert.</param>
-        public static implicit operator MinContainsEntity(uint value)
+        public static explicit operator MinContainsEntity(uint value)
         {
-            return new(value);
+            return new(new BinaryJsonNumber(value));
         }
 
         /// <summary>
         /// Conversion from ulong.
         /// </summary>
         /// <param name = "value">The value to convert.</param>
-        public static implicit operator MinContainsEntity(ulong value)
+        public static explicit operator MinContainsEntity(ulong value)
         {
-            return new(value);
+            return new(new BinaryJsonNumber(value));
         }
 
         /// <summary>
@@ -697,7 +593,7 @@ public readonly partial struct Validation
             }
 
             // After this point there is no need to check both value kinds because our first quick test verified that they were the same.
-            // If either one is a Backing.Number or a JsonValueKind.Number then we know the rhs is conmpatible.
+            // If either one is a Backing.Number or a JsonValueKind.Number then we know the rhs is compatible.
             if (lhs.backing == Backing.Number && rhs.backing == Backing.Number)
             {
                 return BinaryJsonNumber.Compare(lhs.numberBacking, rhs.numberBacking);

@@ -316,7 +316,7 @@ public readonly partial struct JsonInteger : IJsonNumber<JsonInteger>
         }
 
         // After this point there is no need to check both value kinds because our first quick test verified that they were the same.
-        // If either one is a Backing.Number or a JsonValueKind.Number then we know the rhs is conmpatible.
+        // If either one is a Backing.Number or a JsonValueKind.Number then we know the rhs is compatible.
         if (lhs.backing == Backing.Number &&
             rhs.backing == Backing.Number)
         {
