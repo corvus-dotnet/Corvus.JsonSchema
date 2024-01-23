@@ -55,7 +55,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
         /// <remarks>
         /// {Description}.
         /// </remarks>
-        public static ReadOnlySpan<byte> <#= enumValue.AsPropertyName #>Utf8 => <#= enumValue.SerializedValue #>u8;
+        public static ReadOnlySpan<byte> <#= enumValue.AsPropertyName #>Utf8 => <#= enumValue.RawStringValue #>u8;
 <#      }
         else if (enumValue.IsBoolean)
         { #>

@@ -2422,6 +2422,16 @@ public partial class CodeGeneratorPatternProperties
         throw new ArgumentNullException(nameof(value));
     }
 
+    private static string GetRawStringValueAsQuotedString(JsonAny? value)
+    {
+        if (value is JsonAny actualValue && actualValue.ValueKind == JsonValueKind.String)
+        {
+            return Formatting.FormatLiteralOrNull(actualValue.AsJsonElement.GetRawText()[1..^1], true);
+        }
+
+        throw new ArgumentNullException(nameof(value));
+    }
+
     private bool MatchType(string typeToMatch)
     {
         if (this.TypeDeclaration.Schema().Type.IsNotUndefined())
@@ -2727,6 +2737,7 @@ public partial class CodeGeneratorPatternProperties
             this.IsArray = value.ValueKind == JsonValueKind.Array;
             this.IsNull = value.IsNull();
             this.SerializedValue = GetRawTextAsQuotedString(value);
+            this.RawStringValue = value.ValueKind == JsonValueKind.String ? GetRawStringValueAsQuotedString(value) : null;
             this.AsPropertyName = Formatting.ToPascalCaseWithReservedWords(this.SerializedValue.Trim('"')).ToString();
         }
 
@@ -2764,6 +2775,11 @@ public partial class CodeGeneratorPatternProperties
         /// Gets the serialized value. This will be quoted for strings, objects, and arrays, otherwise raw.
         /// </summary>
         public string SerializedValue { get; }
+
+        /// <summary>
+        /// Gets the raw value of a string value, as a quoted string. This will be null if the value was not a string.
+        /// </summary>
+        public string? RawStringValue { get; }
 
         /// <summary>
         /// Gets the serialized value as a property name.

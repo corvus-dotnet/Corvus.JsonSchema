@@ -34,12 +34,28 @@ public readonly partial struct Validation
             /// </remarks>
             public static readonly SimpleTypes Array = SimpleTypes.Parse("\"array\"");
             /// <summary>
+            /// Gets the Array as a raw UTF8 string.
+            /// </summary>
+            /// <remarks>
+            /// {Description}.
+            /// </remarks>
+            public static ReadOnlySpan<byte> ArrayUtf8 => "array"u8;
+
+            /// <summary>
             /// Boolean.
             /// </summary>
             /// <remarks>
             /// {Description}.
             /// </remarks>
             public static readonly SimpleTypes Boolean = SimpleTypes.Parse("\"boolean\"");
+            /// <summary>
+            /// Gets the Boolean as a raw UTF8 string.
+            /// </summary>
+            /// <remarks>
+            /// {Description}.
+            /// </remarks>
+            public static ReadOnlySpan<byte> BooleanUtf8 => "boolean"u8;
+
             /// <summary>
             /// Integer.
             /// </summary>
@@ -48,12 +64,28 @@ public readonly partial struct Validation
             /// </remarks>
             public static readonly SimpleTypes Integer = SimpleTypes.Parse("\"integer\"");
             /// <summary>
+            /// Gets the Integer as a raw UTF8 string.
+            /// </summary>
+            /// <remarks>
+            /// {Description}.
+            /// </remarks>
+            public static ReadOnlySpan<byte> IntegerUtf8 => "integer"u8;
+
+            /// <summary>
             /// Null.
             /// </summary>
             /// <remarks>
             /// {Description}.
             /// </remarks>
             public static readonly SimpleTypes Null = SimpleTypes.Parse("\"null\"");
+            /// <summary>
+            /// Gets the Null as a raw UTF8 string.
+            /// </summary>
+            /// <remarks>
+            /// {Description}.
+            /// </remarks>
+            public static ReadOnlySpan<byte> NullUtf8 => "null"u8;
+
             /// <summary>
             /// Number.
             /// </summary>
@@ -62,6 +94,14 @@ public readonly partial struct Validation
             /// </remarks>
             public static readonly SimpleTypes Number = SimpleTypes.Parse("\"number\"");
             /// <summary>
+            /// Gets the Number as a raw UTF8 string.
+            /// </summary>
+            /// <remarks>
+            /// {Description}.
+            /// </remarks>
+            public static ReadOnlySpan<byte> NumberUtf8 => "number"u8;
+
+            /// <summary>
             /// Object.
             /// </summary>
             /// <remarks>
@@ -69,12 +109,28 @@ public readonly partial struct Validation
             /// </remarks>
             public static readonly SimpleTypes Object = SimpleTypes.Parse("\"object\"");
             /// <summary>
+            /// Gets the Object as a raw UTF8 string.
+            /// </summary>
+            /// <remarks>
+            /// {Description}.
+            /// </remarks>
+            public static ReadOnlySpan<byte> ObjectUtf8 => "object"u8;
+
+            /// <summary>
             /// String.
             /// </summary>
             /// <remarks>
             /// {Description}.
             /// </remarks>
             public static readonly SimpleTypes String = SimpleTypes.Parse("\"string\"");
+            /// <summary>
+            /// Gets the String as a raw UTF8 string.
+            /// </summary>
+            /// <remarks>
+            /// {Description}.
+            /// </remarks>
+            public static ReadOnlySpan<byte> StringUtf8 => "string"u8;
+
             /// <summary>
             /// [{Title} || Item 0] (with predictable naming).
             /// </summary>

@@ -209,7 +209,7 @@ namespace ");
             #line hidden
             
             #line 58 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( enumValue.SerializedValue ));
+            this.Write(this.ToStringHelper.ToStringWithCulture( enumValue.RawStringValue ));
             
             #line default
             #line hidden
