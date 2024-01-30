@@ -1,4 +1,4 @@
 {
   "AUTO_MERGE_PACKAGE_WILDCARD_EXPRESSIONS": "[\"Endjin.*\",\"Corvus.*\"]",
-  "AUTO_RELEASE_PACKAGE_WILDCARD_EXPRESSIONS": "[\"Corvus.AzureFunctionsKeepAlive\",\"Corvus.Configuration\",\"Corvus.ContentHandling\",\"Corvus.Deployment\",\"Corvus.DotLiquidAsync\",\"Corvus.EventStore\",\"Corvus.Extensions\",\"Corvus.Extensions.CosmosDb\",\"Corvus.Extensions.Newtonsoft.Json\",\"Corvus.Extensions.System.Text.Json\",\"Corvus.Identity\",\"Corvus.JsonSchema\",\"Corvus.Leasing\",\"Corvus.Monitoring\",\"Corvus.Retry\",\"Corvus.Storage\",\"Corvus.Tenancy\"]"
+  "AUTO_RELEASE_PACKAGE_WILDCARD_EXPRESSIONS": "[\"Corvus.AzureFunctionsKeepAlive\",\"Corvus.Configuration\",\"Corvus.ContentHandling\",\"Corvus.Deployment\",\"Corvus.Deployment.Dataverse\",\"Corvus.DotLiquidAsync\",\"Corvus.EventStore\",\"Corvus.Extensions\",\"Corvus.Extensions.CosmosDb\",\"Corvus.Extensions.Newtonsoft.Json\",\"Corvus.Extensions.System.Text.Json\",\"Corvus.Identity\",\"Corvus.JsonSchema\",\"Corvus.Leasing\",\"Corvus.Monitoring\",\"Corvus.Python\",\"Corvus.Retry\",\"Corvus.Storage\",\"Corvus.Tenancy\"]"
 }
