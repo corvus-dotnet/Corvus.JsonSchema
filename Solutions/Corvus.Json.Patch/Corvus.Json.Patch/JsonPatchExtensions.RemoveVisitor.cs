@@ -18,7 +18,13 @@ public static partial class JsonPatchExtensions
     {
         public RemoveVisitor(in JsonPatchDocument.RemoveEntity patchOperation)
         {
-            this.Path = patchOperation.Path;
+            this.Path = (string)patchOperation.Path;
+            this.BeginTerminator = this.Path.LastIndexOf('/') + 1;
+        }
+
+        public RemoveVisitor(string path)
+        {
+            this.Path = path;
             this.BeginTerminator = this.Path.LastIndexOf('/') + 1;
         }
 

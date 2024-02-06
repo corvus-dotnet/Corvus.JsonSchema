@@ -23,7 +23,8 @@ public readonly partial struct Format
     /// <summary>
     /// JSON property name for <see cref = "FormatValue"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> FormatValueUtf8JsonPropertyName = new byte[]{102, 111, 114, 109, 97, 116};
+    public static ReadOnlySpan<byte> FormatValueUtf8JsonPropertyName => "format"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "FormatValue"/>.
     /// </summary>
@@ -42,7 +43,7 @@ public readonly partial struct Format
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(FormatValueUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(FormatValueUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonString(result);
                 }
@@ -100,7 +101,7 @@ public readonly partial struct Format
     {
         if (hasJsonElementBacking)
         {
-            if (property.NameEquals(FormatValueUtf8JsonPropertyName.Span))
+            if (property.NameEquals(FormatValueUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateFormatValue;
                 return true;

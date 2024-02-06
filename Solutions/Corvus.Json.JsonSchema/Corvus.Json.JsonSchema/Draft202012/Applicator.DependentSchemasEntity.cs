@@ -21,6 +21,7 @@ public readonly partial struct Applicator
     /// <summary>
     /// A type generated from a JsonSchema specification.
     /// </summary>
+    [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<DependentSchemasEntity>))]
     public readonly partial struct DependentSchemasEntity
     {
         private readonly Backing backing;
@@ -54,7 +55,12 @@ public readonly partial struct Applicator
         /// <summary>
         /// Gets an Undefined instance.
         /// </summary>
-        public static DependentSchemasEntity Undefined { get; } = default;
+        public static DependentSchemasEntity Undefined { get; }
+        /// <summary>
+        /// Gets the default instance of the type.
+        /// </summary>
+        public static DependentSchemasEntity DefaultInstance { get; } = DependentSchemasEntity.ParseValue("{}"u8);
+
         /// <inheritdoc/>
         public JsonAny AsAny
         {
@@ -463,6 +469,36 @@ public readonly partial struct Applicator
         {
             using var jsonDocument = JsonDocument.Parse(utf8Json, options);
             return new DependentSchemasEntity(jsonDocument.RootElement.Clone());
+        }
+
+        /// <summary>
+        /// Parses a JSON value from a buffer.
+        /// </summary>
+        /// <param name = "buffer">The buffer from which to parse the value.</param>
+        /// <returns>The parsed value.</returns>
+        static DependentSchemasEntity ParseValue(ReadOnlySpan<char> buffer)
+        {
+            return IJsonValue<DependentSchemasEntity>.ParseValue(buffer);
+        }
+
+        /// <summary>
+        /// Parses a JSON value from a buffer.
+        /// </summary>
+        /// <param name = "buffer">The buffer from which to parse the value.</param>
+        /// <returns>The parsed value.</returns>
+        static DependentSchemasEntity ParseValue(ReadOnlySpan<byte> buffer)
+        {
+            return IJsonValue<DependentSchemasEntity>.ParseValue(buffer);
+        }
+
+        /// <summary>
+        /// Parses a JSON value from a buffer.
+        /// </summary>
+        /// <param name = "reader">The reader from which to parse the value.</param>
+        /// <returns>The parsed value.</returns>
+        static DependentSchemasEntity ParseValue(ref Utf8JsonReader reader)
+        {
+            return IJsonValue<DependentSchemasEntity>.ParseValue(ref reader);
         }
 
         /// <summary>

@@ -23,7 +23,8 @@ public readonly partial struct PersonName
     /// <summary>
     /// JSON property name for <see cref = "FamilyName"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> FamilyNameUtf8JsonPropertyName = new byte[]{102, 97, 109, 105, 108, 121, 78, 97, 109, 101};
+    public static ReadOnlySpan<byte> FamilyNameUtf8JsonPropertyName => "familyName"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "FamilyName"/>.
     /// </summary>
@@ -31,7 +32,8 @@ public readonly partial struct PersonName
     /// <summary>
     /// JSON property name for <see cref = "GivenName"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> GivenNameUtf8JsonPropertyName = new byte[]{103, 105, 118, 101, 110, 78, 97, 109, 101};
+    public static ReadOnlySpan<byte> GivenNameUtf8JsonPropertyName => "givenName"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "GivenName"/>.
     /// </summary>
@@ -39,7 +41,8 @@ public readonly partial struct PersonName
     /// <summary>
     /// JSON property name for <see cref = "OtherNames"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> OtherNamesUtf8JsonPropertyName = new byte[]{111, 116, 104, 101, 114, 78, 97, 109, 101, 115};
+    public static ReadOnlySpan<byte> OtherNamesUtf8JsonPropertyName => "otherNames"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "OtherNames"/>.
     /// </summary>
@@ -58,7 +61,7 @@ public readonly partial struct PersonName
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(FamilyNameUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(FamilyNameUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.Benchmarking.Models.PersonNameElement(result);
                 }
@@ -90,7 +93,7 @@ public readonly partial struct PersonName
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(GivenNameUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(GivenNameUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.Benchmarking.Models.PersonNameElement(result);
                 }
@@ -122,7 +125,7 @@ public readonly partial struct PersonName
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(OtherNamesUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(OtherNamesUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.Benchmarking.Models.OtherNames(result);
                 }
@@ -216,17 +219,17 @@ public readonly partial struct PersonName
     {
         if (hasJsonElementBacking)
         {
-            if (property.NameEquals(FamilyNameUtf8JsonPropertyName.Span))
+            if (property.NameEquals(FamilyNameUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateFamilyName;
                 return true;
             }
-            else if (property.NameEquals(GivenNameUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(GivenNameUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateGivenName;
                 return true;
             }
-            else if (property.NameEquals(OtherNamesUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(OtherNamesUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateOtherNames;
                 return true;

@@ -19,6 +19,7 @@ namespace Corvus.Json.Patch.SpecGenerator;
 /// <summary>
 /// A type generated from a JsonSchema specification.
 /// </summary>
+[System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<ScenarioWithError>))]
 public readonly partial struct ScenarioWithError
 {
     private readonly Backing backing;
@@ -52,7 +53,12 @@ public readonly partial struct ScenarioWithError
     /// <summary>
     /// Gets an Undefined instance.
     /// </summary>
-    public static ScenarioWithError Undefined { get; } = default;
+    public static ScenarioWithError Undefined { get; }
+    /// <summary>
+    /// Gets the default instance of the type.
+    /// </summary>
+    public static ScenarioWithError DefaultInstance { get; }
+
     /// <inheritdoc/>
     public JsonAny AsAny
     {
@@ -461,6 +467,36 @@ public readonly partial struct ScenarioWithError
     {
         using var jsonDocument = JsonDocument.Parse(utf8Json, options);
         return new ScenarioWithError(jsonDocument.RootElement.Clone());
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name = "buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static ScenarioWithError ParseValue(ReadOnlySpan<char> buffer)
+    {
+        return IJsonValue<ScenarioWithError>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name = "buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static ScenarioWithError ParseValue(ReadOnlySpan<byte> buffer)
+    {
+        return IJsonValue<ScenarioWithError>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name = "reader">The reader from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static ScenarioWithError ParseValue(ref Utf8JsonReader reader)
+    {
+        return IJsonValue<ScenarioWithError>.ParseValue(ref reader);
     }
 
     /// <summary>

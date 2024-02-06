@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Collections.Immutable;
+using System.Text.Json;
 
 namespace Corvus.Json.CodeGeneration;
 
@@ -11,6 +12,13 @@ namespace Corvus.Json.CodeGeneration;
 /// </summary>
 public interface IJsonSchemaBuilder
 {
+    /// <summary>
+    /// Adds a virtual document to the document resolver for this builder.
+    /// </summary>
+    /// <param name="path">The virtual path to the document.</param>
+    /// <param name="jsonDocument">The document to add.</param>
+    void AddDocument(string path, JsonDocument jsonDocument);
+
     /// <summary>
     /// Builds types for the schema provided by the given reference.
     /// </summary>

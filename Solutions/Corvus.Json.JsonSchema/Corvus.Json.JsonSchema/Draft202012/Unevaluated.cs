@@ -19,6 +19,7 @@ namespace Corvus.Json.JsonSchema.Draft202012;
 /// <summary>
 /// A type generated from a JsonSchema specification.
 /// </summary>
+[System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<Unevaluated>))]
 public readonly partial struct Unevaluated
 {
     private readonly Backing backing;
@@ -55,7 +56,12 @@ public readonly partial struct Unevaluated
     /// <summary>
     /// Gets an Undefined instance.
     /// </summary>
-    public static Unevaluated Undefined { get; } = default;
+    public static Unevaluated Undefined { get; }
+    /// <summary>
+    /// Gets the default instance of the type.
+    /// </summary>
+    public static Unevaluated DefaultInstance { get; }
+
     /// <inheritdoc/>
     public JsonAny AsAny
     {
@@ -494,6 +500,36 @@ public readonly partial struct Unevaluated
     {
         using var jsonDocument = JsonDocument.Parse(utf8Json, options);
         return new Unevaluated(jsonDocument.RootElement.Clone());
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name = "buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static Unevaluated ParseValue(ReadOnlySpan<char> buffer)
+    {
+        return IJsonValue<Unevaluated>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name = "buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static Unevaluated ParseValue(ReadOnlySpan<byte> buffer)
+    {
+        return IJsonValue<Unevaluated>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name = "reader">The reader from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static Unevaluated ParseValue(ref Utf8JsonReader reader)
+    {
+        return IJsonValue<Unevaluated>.ParseValue(ref reader);
     }
 
     /// <summary>

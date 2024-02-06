@@ -21,6 +21,7 @@ public readonly partial struct Core
     /// <summary>
     /// A type generated from a JsonSchema specification.
     /// </summary>
+    [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<VocabularyEntity>))]
     public readonly partial struct VocabularyEntity
     {
         private readonly Backing backing;
@@ -54,7 +55,12 @@ public readonly partial struct Core
         /// <summary>
         /// Gets an Undefined instance.
         /// </summary>
-        public static VocabularyEntity Undefined { get; } = default;
+        public static VocabularyEntity Undefined { get; }
+        /// <summary>
+        /// Gets the default instance of the type.
+        /// </summary>
+        public static VocabularyEntity DefaultInstance { get; }
+
         /// <inheritdoc/>
         public JsonAny AsAny
         {
@@ -463,6 +469,36 @@ public readonly partial struct Core
         {
             using var jsonDocument = JsonDocument.Parse(utf8Json, options);
             return new VocabularyEntity(jsonDocument.RootElement.Clone());
+        }
+
+        /// <summary>
+        /// Parses a JSON value from a buffer.
+        /// </summary>
+        /// <param name = "buffer">The buffer from which to parse the value.</param>
+        /// <returns>The parsed value.</returns>
+        static VocabularyEntity ParseValue(ReadOnlySpan<char> buffer)
+        {
+            return IJsonValue<VocabularyEntity>.ParseValue(buffer);
+        }
+
+        /// <summary>
+        /// Parses a JSON value from a buffer.
+        /// </summary>
+        /// <param name = "buffer">The buffer from which to parse the value.</param>
+        /// <returns>The parsed value.</returns>
+        static VocabularyEntity ParseValue(ReadOnlySpan<byte> buffer)
+        {
+            return IJsonValue<VocabularyEntity>.ParseValue(buffer);
+        }
+
+        /// <summary>
+        /// Parses a JSON value from a buffer.
+        /// </summary>
+        /// <param name = "reader">The reader from which to parse the value.</param>
+        /// <returns>The parsed value.</returns>
+        static VocabularyEntity ParseValue(ref Utf8JsonReader reader)
+        {
+            return IJsonValue<VocabularyEntity>.ParseValue(ref reader);
         }
 
         /// <summary>

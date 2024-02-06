@@ -50,6 +50,11 @@ public readonly partial struct JsonUriTemplate : IJsonString<JsonUriTemplate>
     /// </summary>
     public static JsonUriTemplate Undefined { get; }
 
+    /// <summary>
+    /// Gets a default instance.
+    /// </summary>
+    public static JsonUriTemplate DefaultInstance { get; }
+
     /// <inheritdoc/>
     public JsonAny AsAny
     {

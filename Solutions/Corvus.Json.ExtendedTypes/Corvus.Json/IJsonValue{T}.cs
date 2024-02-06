@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Buffers;
+using System.Text;
 using System.Text.Json;
 
 namespace Corvus.Json;
@@ -23,6 +24,11 @@ public interface IJsonValue<T> : IEquatable<T>, IJsonValue
     /// Gets the undefined value.
     /// </summary>
     static abstract T Undefined { get; }
+
+    /// <summary>
+    /// Gets the default instance.
+    /// </summary>
+    static abstract T DefaultInstance { get; }
 
     /// <summary>
     /// Gets an instance of the JSON value from a JsonAny value.
@@ -130,4 +136,54 @@ public interface IJsonValue<T> : IEquatable<T>, IJsonValue
     /// <param name="options">The (optional) JsonDocumentOptions.</param>
     /// <returns>An instance built from the JSON string.</returns>
     static abstract T Parse(ReadOnlySequence<byte> utf8Json, JsonDocumentOptions options = default);
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static T ParseValue(ReadOnlySpan<char> buffer)
+    {
+        int maxByteCount = Encoding.UTF8.GetMaxByteCount(buffer.Length);
+        byte[]? pooledBytes = null;
+
+        Span<byte> utf8Buffer = maxByteCount <= JsonConstants.StackallocThreshold ?
+            stackalloc byte[maxByteCount] :
+            (pooledBytes = ArrayPool<byte>.Shared.Rent(maxByteCount));
+
+        try
+        {
+            int written = Encoding.UTF8.GetBytes(buffer, utf8Buffer);
+            Utf8JsonReader reader = new(utf8Buffer[..written]);
+            return ParseValue(ref reader);
+        }
+        finally
+        {
+            if (pooledBytes is not null)
+            {
+                ArrayPool<byte>.Shared.Return(pooledBytes, true);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static T ParseValue(ReadOnlySpan<byte> buffer)
+    {
+        Utf8JsonReader reader = new(buffer);
+        return ParseValue(ref reader);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="reader">The reader from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static T ParseValue(ref Utf8JsonReader reader)
+    {
+        return T.FromJson(JsonElement.ParseValue(ref reader));
+    }
 }

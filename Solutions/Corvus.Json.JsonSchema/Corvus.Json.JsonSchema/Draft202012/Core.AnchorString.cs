@@ -21,6 +21,7 @@ public readonly partial struct Core
     /// <summary>
     /// A type generated from a JsonSchema specification.
     /// </summary>
+    [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<AnchorString>))]
     public readonly partial struct AnchorString
     {
         private readonly Backing backing;
@@ -54,7 +55,12 @@ public readonly partial struct Core
         /// <summary>
         /// Gets an Undefined instance.
         /// </summary>
-        public static AnchorString Undefined { get; } = default;
+        public static AnchorString Undefined { get; }
+        /// <summary>
+        /// Gets the default instance of the type.
+        /// </summary>
+        public static AnchorString DefaultInstance { get; }
+
         /// <inheritdoc/>
         public JsonAny AsAny
         {
@@ -463,6 +469,36 @@ public readonly partial struct Core
         {
             using var jsonDocument = JsonDocument.Parse(utf8Json, options);
             return new AnchorString(jsonDocument.RootElement.Clone());
+        }
+
+        /// <summary>
+        /// Parses a JSON value from a buffer.
+        /// </summary>
+        /// <param name = "buffer">The buffer from which to parse the value.</param>
+        /// <returns>The parsed value.</returns>
+        static AnchorString ParseValue(ReadOnlySpan<char> buffer)
+        {
+            return IJsonValue<AnchorString>.ParseValue(buffer);
+        }
+
+        /// <summary>
+        /// Parses a JSON value from a buffer.
+        /// </summary>
+        /// <param name = "buffer">The buffer from which to parse the value.</param>
+        /// <returns>The parsed value.</returns>
+        static AnchorString ParseValue(ReadOnlySpan<byte> buffer)
+        {
+            return IJsonValue<AnchorString>.ParseValue(buffer);
+        }
+
+        /// <summary>
+        /// Parses a JSON value from a buffer.
+        /// </summary>
+        /// <param name = "reader">The reader from which to parse the value.</param>
+        /// <returns>The parsed value.</returns>
+        static AnchorString ParseValue(ref Utf8JsonReader reader)
+        {
+            return IJsonValue<AnchorString>.ParseValue(ref reader);
         }
 
         /// <summary>

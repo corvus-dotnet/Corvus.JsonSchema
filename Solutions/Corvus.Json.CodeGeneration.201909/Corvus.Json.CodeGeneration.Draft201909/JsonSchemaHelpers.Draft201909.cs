@@ -113,6 +113,7 @@ public static class JsonSchemaHelpers
             "exclusiveMaximum",
             "exclusiveMinimum",
             "format",
+            "$id",
             "if",
             "items",
             "maxContains",

@@ -50,6 +50,11 @@ public readonly partial struct JsonObject : IJsonObject<JsonObject>
     /// </summary>
     public static JsonObject Undefined { get; }
 
+    /// <summary>
+    /// Gets a default instance.
+    /// </summary>
+    public static JsonObject DefaultInstance { get; }
+
     /// <inheritdoc/>
     public JsonAny AsAny
     {
@@ -409,6 +414,36 @@ public readonly partial struct JsonObject : IJsonObject<JsonObject>
     {
         using var jsonDocument = JsonDocument.Parse(utf8Json, options);
         return new JsonObject(jsonDocument.RootElement.Clone());
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    public static JsonObject ParseValue(ReadOnlySpan<char> buffer)
+    {
+        return IJsonValue<JsonObject>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    public static JsonObject ParseValue(ReadOnlySpan<byte> buffer)
+    {
+        return IJsonValue<JsonObject>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="reader">The reader from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    public static JsonObject ParseValue(ref Utf8JsonReader reader)
+    {
+        return IJsonValue<JsonObject>.ParseValue(ref reader);
     }
 
     /// <summary>

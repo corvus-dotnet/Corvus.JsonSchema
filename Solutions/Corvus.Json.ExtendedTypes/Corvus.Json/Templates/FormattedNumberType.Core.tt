@@ -24,6 +24,7 @@ namespace Corvus.Json;
 /// <summary>
 /// Represents a <#= JsonTypeName #>.
 /// </summary>
+[System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<<#= TypeName #>>))]
 public readonly partial struct <#= TypeName #> : IJsonNumber<<#= TypeName #>>
 {
     private readonly Backing backing;
@@ -60,6 +61,11 @@ public readonly partial struct <#= TypeName #> : IJsonNumber<<#= TypeName #>>
     /// Gets an Undefined instance.
     /// </summary>
     public static <#= TypeName #> Undefined { get; }
+
+    /// <summary>
+    /// Gets a default instance.
+    /// </summary>
+    public static <#= TypeName #> DefaultInstance { get; }
 
     /// <inheritdoc/>
     public JsonAny AsAny
@@ -238,6 +244,28 @@ public readonly partial struct <#= TypeName #> : IJsonNumber<<#= TypeName #>>
     public static bool operator !=(in <#= TypeName #> left, in <#= TypeName #> right)
     {
         return !left.Equals(right);
+    }
+
+    /// <summary>
+    /// Less than operator.
+    /// </summary>
+    /// <param name="left">The LHS of the comparison.</param>
+    /// <param name="right">The RHS of the comparison.</param>
+    /// <returns><see langword="true"/> if the left is less than the right, otherwise <see langword="false"/>.</returns>
+    public static bool operator <(in <#= TypeName #> left, in <#= TypeName #> right)
+    {
+        return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && (double)left < (double)right;
+    }
+
+    /// <summary>
+    /// Greater than operator.
+    /// </summary>
+    /// <param name="left">The LHS of the comparison.</param>
+    /// <param name="right">The RHS of the comparison.</param>
+    /// <returns><see langword="true"/> if the left is greater than the right, otherwise <see langword="false"/>.</returns>
+    public static bool operator >(in <#= TypeName #> left, in <#= TypeName #> right)
+    {
+        return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && (double)left > (double)right;
     }
 
     /// <summary>
@@ -438,6 +466,36 @@ public readonly partial struct <#= TypeName #> : IJsonNumber<<#= TypeName #>>
     {
         using var jsonDocument = JsonDocument.Parse(utf8Json, options);
         return new <#= TypeName #>(jsonDocument.RootElement.Clone());
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    public static <#= TypeName #> ParseValue(ReadOnlySpan<char> buffer)
+    {
+        return IJsonValue<<#= TypeName #>>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    public static <#= TypeName #> ParseValue(ReadOnlySpan<byte> buffer)
+    {
+        return IJsonValue<<#= TypeName #>>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="reader">The reader from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    public static <#= TypeName #> ParseValue(ref Utf8JsonReader reader)
+    {
+        return IJsonValue<<#= TypeName #>>.ParseValue(ref reader);
     }
 
     /// <summary>

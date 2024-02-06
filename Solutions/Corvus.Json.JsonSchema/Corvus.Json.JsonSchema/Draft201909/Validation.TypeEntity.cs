@@ -21,6 +21,7 @@ public readonly partial struct Validation
     /// <summary>
     /// A type generated from a JsonSchema specification.
     /// </summary>
+    [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<TypeEntity>))]
     public readonly partial struct TypeEntity
     {
         private readonly Backing backing;
@@ -57,7 +58,12 @@ public readonly partial struct Validation
         /// <summary>
         /// Gets an Undefined instance.
         /// </summary>
-        public static TypeEntity Undefined { get; } = default;
+        public static TypeEntity Undefined { get; }
+        /// <summary>
+        /// Gets the default instance of the type.
+        /// </summary>
+        public static TypeEntity DefaultInstance { get; }
+
         /// <inheritdoc/>
         public JsonAny AsAny
         {
@@ -490,6 +496,36 @@ public readonly partial struct Validation
         {
             using var jsonDocument = JsonDocument.Parse(utf8Json, options);
             return new TypeEntity(jsonDocument.RootElement.Clone());
+        }
+
+        /// <summary>
+        /// Parses a JSON value from a buffer.
+        /// </summary>
+        /// <param name = "buffer">The buffer from which to parse the value.</param>
+        /// <returns>The parsed value.</returns>
+        static TypeEntity ParseValue(ReadOnlySpan<char> buffer)
+        {
+            return IJsonValue<TypeEntity>.ParseValue(buffer);
+        }
+
+        /// <summary>
+        /// Parses a JSON value from a buffer.
+        /// </summary>
+        /// <param name = "buffer">The buffer from which to parse the value.</param>
+        /// <returns>The parsed value.</returns>
+        static TypeEntity ParseValue(ReadOnlySpan<byte> buffer)
+        {
+            return IJsonValue<TypeEntity>.ParseValue(buffer);
+        }
+
+        /// <summary>
+        /// Parses a JSON value from a buffer.
+        /// </summary>
+        /// <param name = "reader">The reader from which to parse the value.</param>
+        /// <returns>The parsed value.</returns>
+        static TypeEntity ParseValue(ref Utf8JsonReader reader)
+        {
+            return IJsonValue<TypeEntity>.ParseValue(ref reader);
         }
 
         /// <summary>

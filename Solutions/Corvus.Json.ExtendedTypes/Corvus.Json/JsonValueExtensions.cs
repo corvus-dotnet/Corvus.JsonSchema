@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Buffers;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
@@ -15,6 +16,24 @@ namespace Corvus.Json;
 /// </summary>
 public static class JsonValueExtensions
 {
+    /// <summary>
+    /// Clones an <see cref="IJsonValue"/> to enable it to be
+    /// used safely outside of its construction context.
+    /// </summary>
+    /// <typeparam name="TValue">The type of the value to be cloned.</typeparam>
+    /// <param name="value">The value to be cloned.</param>
+    /// <returns>An instance of the value that is safe to be used detached from its previous context.</returns>
+    public static TValue Clone<TValue>(this TValue value)
+        where TValue : struct, IJsonValue<TValue>
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return TValue.FromJson(value.AsJsonElement.Clone());
+        }
+
+        return value;
+    }
+
     /// <summary>
     /// Serialize the entity to a string.
     /// </summary>
@@ -162,24 +181,24 @@ public static class JsonValueExtensions
     public static T AsDotnetBackedValue<T>(this T value)
         where T : struct, IJsonValue<T>
     {
-            if (value.HasJsonElementBacking)
+        if (value.HasJsonElementBacking)
+        {
+            JsonValueKind valueKind = value.ValueKind;
+
+            return valueKind switch
             {
-                JsonValueKind valueKind = value.ValueKind;
+                JsonValueKind.Object => T.FromObject(new JsonObject(value.AsObject.AsImmutableDictionary())),
+                JsonValueKind.Array => T.FromArray(new JsonArray(value.AsArray.AsImmutableList())),
+                JsonValueKind.Number => T.FromNumber(new JsonNumber((double)value.AsNumber)),
+                JsonValueKind.String => T.FromString(new JsonString((string)value.AsString)),
+                JsonValueKind.True => T.FromBoolean(new JsonBoolean(true)),
+                JsonValueKind.False => T.FromBoolean(new JsonBoolean(false)),
+                JsonValueKind.Null => T.Null,
+                _ => value,
+            };
+        }
 
-                return valueKind switch
-                {
-                    JsonValueKind.Object => T.FromObject(new JsonObject(value.AsObject.AsImmutableDictionary())),
-                    JsonValueKind.Array => T.FromArray(new JsonArray(value.AsArray.AsImmutableList())),
-                    JsonValueKind.Number => T.FromNumber(new JsonNumber((double)value.AsNumber)),
-                    JsonValueKind.String => T.FromString(new JsonString((string)value.AsString)),
-                    JsonValueKind.True => T.FromBoolean(new JsonBoolean(true)),
-                    JsonValueKind.False => T.FromBoolean(new JsonBoolean(false)),
-                    JsonValueKind.Null => T.Null,
-                    _ => value,
-                };
-            }
-
-            return value;
+        return value;
     }
 
     /// <summary>
@@ -197,5 +216,89 @@ public static class JsonValueExtensions
         }
 
         return value;
+    }
+
+    /// <summary>
+    /// Parses a value from a JsonString type.
+    /// </summary>
+    /// <typeparam name="T">The type of the <see cref="IJsonString{T}"/> to parse.</typeparam>
+    /// <typeparam name="TState">The state passed in to the parser.</typeparam>
+    /// <typeparam name="TResult">The result of parsing the string.</typeparam>
+    /// <param name="jsonValue">The instance of the <see cref="IJsonString{T}"/> to parse.</param>
+    /// <param name="parser">The parser to perform the conversion.</param>
+    /// <param name="state">The state to be passed to the parser.</param>
+    /// <param name="result">The result of the parsing.</param>
+    /// <returns><see langword="true"/> if the result was parsed successfully, otherwise <see langword="false"/>.</returns>
+    public static bool TryGetValue<T, TState, TResult>(this T jsonValue, Parser<TState, TResult> parser, in TState state, [NotNullWhen(true)] out TResult? result)
+        where T : struct, IJsonString<T>
+    {
+        if (jsonValue.HasJsonElementBacking)
+        {
+            return jsonValue.AsJsonElement.TryGetValue(parser, state, out result);
+        }
+
+        return parser(jsonValue.AsSpan(), state, out result);
+    }
+
+    /// <summary>
+    /// Parses a value from a JsonString type.
+    /// </summary>
+    /// <typeparam name="T">The type of the <see cref="IJsonString{T}"/> to parse.</typeparam>
+    /// <typeparam name="TState">The state passed in to the parser.</typeparam>
+    /// <typeparam name="TResult">The result of parsing the string.</typeparam>
+    /// <param name="jsonValue">The instance of the <see cref="IJsonString{T}"/> to parse.</param>
+    /// <param name="parser">The parser to perform the conversion.</param>
+    /// <param name="state">The state to be passed to the parser.</param>
+    /// <param name="result">The result of the parsing.</param>
+    /// <returns><see langword="true"/> if the result was parsed successfully, otherwise <see langword="false"/>.</returns>
+    public static bool TryGetValue<T, TState, TResult>(this T jsonValue, Utf8Parser<TState, TResult> parser, in TState state, [NotNullWhen(true)] out TResult? result)
+        where T : struct, IJsonString<T>
+    {
+        return TryGetValue(jsonValue, parser, state, true, out result);
+    }
+
+    /// <summary>
+    /// Parses a value from a JsonString type.
+    /// </summary>
+    /// <typeparam name="T">The type of the <see cref="IJsonString{T}"/> to parse.</typeparam>
+    /// <typeparam name="TState">The state passed in to the parser.</typeparam>
+    /// <typeparam name="TResult">The result of parsing the string.</typeparam>
+    /// <param name="jsonValue">The instance of the <see cref="IJsonString{T}"/> to parse.</param>
+    /// <param name="parser">The parser to perform the conversion.</param>
+    /// <param name="state">The state to be passed to the parser.</param>
+    /// <param name="decode">Determines whether to decode the UTF8 bytes.</param>
+    /// <param name="result">The result of the parsing.</param>
+    /// <returns><see langword="true"/> if the result was parsed successfully, otherwise <see langword="false"/>.</returns>
+    public static bool TryGetValue<T, TState, TResult>(this T jsonValue, Utf8Parser<TState, TResult> parser, in TState state, bool decode, [NotNullWhen(true)] out TResult? result)
+        where T : struct, IJsonString<T>
+    {
+        if (jsonValue.HasJsonElementBacking)
+        {
+            return jsonValue.AsJsonElement.TryGetValue(parser, state, decode, out result);
+        }
+
+        if (!jsonValue.TryGetString(out string? value))
+        {
+            result = default;
+            return false;
+        }
+
+        int maxByteCount = Encoding.UTF8.GetMaxByteCount(value.Length);
+        byte[]? pooledBytes = null;
+
+        Span<byte> bytes = maxByteCount <= JsonConstants.StackallocThreshold ?
+            stackalloc byte[maxByteCount] :
+            (pooledBytes = ArrayPool<byte>.Shared.Rent(maxByteCount));
+
+        int written = Encoding.UTF8.GetBytes(value, bytes);
+
+        bool success = parser(bytes[..written], state, out result);
+
+        if (pooledBytes is byte[] pb)
+        {
+            ArrayPool<byte>.Shared.Return(pb);
+        }
+
+        return success;
     }
 }

@@ -13,6 +13,7 @@ namespace Corvus.Json;
 /// <summary>
 /// Represents any JSON value, validating false.
 /// </summary>
+[System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<JsonNotAny>))]
 public readonly partial struct JsonNotAny
 {
     private readonly Backing backing;
@@ -60,7 +61,12 @@ public readonly partial struct JsonNotAny
     /// <summary>
     /// Gets an Undefined instance.
     /// </summary>
-    public static JsonNotAny Undefined { get; } = default;
+    public static JsonNotAny Undefined { get; }
+
+    /// <summary>
+    /// Gets a default instance.
+    /// </summary>
+    public static JsonNotAny DefaultInstance { get; }
 
     /// <inheritdoc/>
     public JsonAny AsAny => this;
@@ -712,6 +718,36 @@ public readonly partial struct JsonNotAny
     {
         using var jsonDocument = JsonDocument.Parse(utf8Json, options);
         return new JsonNotAny(jsonDocument.RootElement.Clone());
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    public static JsonNotAny ParseValue(ReadOnlySpan<char> buffer)
+    {
+        return IJsonValue<JsonNotAny>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    public static JsonNotAny ParseValue(ReadOnlySpan<byte> buffer)
+    {
+        return IJsonValue<JsonNotAny>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="reader">The reader from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    public static JsonNotAny ParseValue(ref Utf8JsonReader reader)
+    {
+        return IJsonValue<JsonNotAny>.ParseValue(ref reader);
     }
 
     /// <summary>

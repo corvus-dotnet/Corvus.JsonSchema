@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Collections.Immutable;
+using System.IO;
 using System.Reflection;
 using System.Runtime.Loader;
 using System.Text;
@@ -80,6 +81,30 @@ global using global::System.Threading.Tasks;";
     }
 
     /// <summary>
+    /// Generate the schema for the given type.
+    /// </summary>
+    /// <param name="schema">The schema.</param>
+    /// <param name="virtualFileName">The virtual file name for the schema.</param>
+    /// <param name="featureName">The unique name of the feature.</param>
+    /// <param name="scenarioName">The unique name of the scenario.</param>
+    /// <returns>A <see cref="Task{Type}"/> which, when complete, returns the <see cref="Type"/> generated for the schema.</returns>
+    public async Task<Type> GenerateTypeFor(string schema, string virtualFileName, string featureName, string scenarioName)
+    {
+        string baseDirectory = this.configuration[$"{this.settingsKey}:testBaseDirectory"]!;
+        string path = Path.Combine(baseDirectory, virtualFileName);
+
+        if (SchemaReferenceNormalization.TryNormalizeSchemaReference(path, out string? result))
+        {
+            path = result;
+        }
+
+        this.builder.AddDocument(path, JsonDocument.Parse(schema));
+
+        (string rootType, ImmutableDictionary<JsonReference, TypeAndCode> generatedTypes) = await this.builder.BuildTypesFor(new JsonReference(path), $"{featureName}Feature.{scenarioName}", rebase: true).ConfigureAwait(false);
+        return CompileGeneratedType(this.assemblyLoadContext!, rootType, generatedTypes);
+    }
+
+    /// <summary>
     /// Generates a type for the given root Schema element.
     /// </summary>
     /// <param name="writeBenchmarks">If <c>true</c>, write benchmark files.</param>
@@ -98,34 +123,7 @@ global using global::System.Threading.Tasks;";
 
         (string rootType, ImmutableDictionary<JsonReference, TypeAndCode> generatedTypes) = await this.builder.BuildTypesFor(new JsonReference(path), $"{featureName}Feature.{scenarioName}", rebase: true).ConfigureAwait(false);
 
-        bool isCorvusType = rootType.StartsWith("Corvus.");
-
-        IEnumerable<SyntaxTree> syntaxTrees = ParseSyntaxTrees(generatedTypes);
-
-        // We are happy with the defaults (debug etc.)
-        var options = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary);
-        IEnumerable<MetadataReference> references = BuildMetadataReferences();
-        var compilation = CSharpCompilation.Create($"Driver.GeneratedTypes_{Guid.NewGuid()}", syntaxTrees, references, options);
-
-        using var outputStream = new MemoryStream();
-        EmitResult result = compilation.Emit(outputStream);
-
-        if (!result.Success)
-        {
-            throw new Exception("Unable to compile generated code\r\n" + BuildCompilationErrors(result));
-        }
-
-        outputStream.Flush();
-        outputStream.Position = 0;
-
-        Assembly generatedAssembly = this.assemblyLoadContext!.LoadFromStream(outputStream);
-
-        if (isCorvusType)
-        {
-            return AssemblyLoadContext.Default.Assemblies.Single(a => a.GetName().Name == "Corvus.Json.ExtendedTypes").ExportedTypes.Single(t => t.FullName == rootType);
-        }
-
-        return generatedAssembly.ExportedTypes.Single(t => t.FullName == rootType);
+        return CompileGeneratedType(this.assemblyLoadContext!, rootType, generatedTypes);
     }
 
     /// <summary>
@@ -157,6 +155,37 @@ global using global::System.Threading.Tasks;";
     {
         using var document = JsonDocument.Parse(data);
         return this.CreateInstance(type, document.RootElement.Clone());
+    }
+
+    private static Type CompileGeneratedType(AssemblyLoadContext assemblyLoadContext, string rootType, ImmutableDictionary<JsonReference, TypeAndCode> generatedTypes)
+    {
+        bool isCorvusType = rootType.StartsWith("Corvus.");
+
+        IEnumerable<SyntaxTree> syntaxTrees = ParseSyntaxTrees(generatedTypes);
+
+        // We are happy with the defaults (debug etc.)
+        var options = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary);
+        IEnumerable<MetadataReference> references = BuildMetadataReferences();
+        var compilation = CSharpCompilation.Create($"Driver.GeneratedTypes_{Guid.NewGuid()}", syntaxTrees, references, options);
+        using MemoryStream outputStream = new();
+        EmitResult result = compilation.Emit(outputStream);
+
+        if (!result.Success)
+        {
+            throw new Exception("Unable to compile generated code\r\n" + BuildCompilationErrors(result));
+        }
+
+        outputStream.Flush();
+        outputStream.Position = 0;
+
+        Assembly generatedAssembly = assemblyLoadContext.LoadFromStream(outputStream);
+
+        if (isCorvusType)
+        {
+            return AssemblyLoadContext.Default.Assemblies.Single(a => a.GetName().Name == "Corvus.Json.ExtendedTypes").ExportedTypes.Single(t => t.FullName == rootType);
+        }
+
+        return generatedAssembly.ExportedTypes.Single(t => t.FullName == rootType);
     }
 
     private static string BuildCompilationErrors(EmitResult result)

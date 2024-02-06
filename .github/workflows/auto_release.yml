@@ -62,6 +62,16 @@ jobs:
             core.info("labels: " + JSON.stringify(labels.data))
             if ( labels.data.map(l => l.name).includes("no_release") ) {
               core.info("Label found")
+              if ( labels.data.map(l => l.name).includes("pending_release") ) {
+                // Remove the 'pending_release' label
+                await github.rest.issues.removeLabel({
+                  owner: context.payload.repository.owner.login,
+                  repo: context.payload.repository.name,
+                  issue_number: context.payload.pull_request.number,
+                  name: 'pending_release'
+                })
+              }
+              
               return true
             }
             return false
@@ -99,7 +109,9 @@ jobs:
         result-encoding: string
     - name: Display open_pr_list
       run: |
-        echo "open_pr_list : ${{ steps.get_open_pr_list.outputs.result }}"
+        cat <<EOF
+        open_pr_list : ${{ steps.get_open_pr_list.outputs.result }}
+        EOF
 
     - name: Get 'pending_release' PRs
       id: get_release_pending_pr_list
@@ -116,11 +128,13 @@ jobs:
 
           releasePendingPrDetails = pulls.data.items.
                             filter(function (x) { return x.labels.map(l=>l.name).includes('pending_release') }).
+                            filter(function (x) { return !x.labels.map(l=>l.name).includes('no_release') }).
                             map(p=>`#${p.number} '${p.title}' in ${p.repository_url}`);
           core.info(`releasePendingPrDetails: ${JSON.stringify(releasePendingPrDetails)}`);
 
           const release_pending_prs = pulls.data.items.
                                         filter(function (x) { return x.labels.map(l=>l.name).includes('pending_release') }).
+                                        filter(function (x) { return !x.labels.map(l=>l.name).includes('no_release') }).
                                         map(p=>p.number);
           core.info(`release_pending_prs: ${JSON.stringify(release_pending_prs)}`);
           core.setOutput('is_release_pending', (release_pending_prs.length > 0));
@@ -129,7 +143,9 @@ jobs:
 
     - name: Display release_pending_pr_list
       run: |
-        echo "release_pending_pr_list : ${{ steps.get_release_pending_pr_list.outputs.result }}"
+        cat <<EOF
+        release_pending_pr_list : ${{ steps.get_release_pending_pr_list.outputs.result }}
+        EOF
         echo "is_release_pending : ${{ steps.get_release_pending_pr_list.outputs.is_release_pending }}"
 
     - uses: actions/checkout@v3
@@ -165,7 +181,9 @@ jobs:
     - name: Display job outputs
       run: |
         echo "no_open_prs: ${{ steps.watch_dependabot_prs.outputs.is_complete }}"
-        echo "pending_release_pr_list: ${{ steps.get_release_pending_pr_list.outputs.result }}"
+        cat <<EOF
+        pending_release_pr_list: ${{ steps.get_release_pending_pr_list.outputs.result }}
+        EOF
         echo "is_human_pr: ${{ steps.is_human_pr.outputs.result }}"
         echo "ready_to_release : ${{ steps.set_ready_for_release.outputs.result }}"
 
@@ -193,7 +211,6 @@ jobs:
       id: run_gitversion
       run: |
         pwsh -noprofile -c 'dotnet-gitversion /diag'
-        pwsh -noprofile -c '(dotnet-gitversion | ConvertFrom-Json).psobject.properties | % { echo ("::set-output name={0}::{1}" -f $_.name, $_.value) }'
 
     - name: Generate token
       id: generate_token
@@ -211,7 +228,7 @@ jobs:
           const tag = await github.request(('POST ' + uri_path), {
             owner: context.payload.repository.owner.login,
             repo: context.payload.repository.name,
-            ref: 'refs/tags/${{ steps.run_gitversion.outputs.MajorMinorPatch }}',
+            ref: 'refs/tags/${{ env.GitVersion_MajorMinorPatch }}',
             sha: '${{ needs.lookup_default_branch.outputs.head_commit }}'
           })
 

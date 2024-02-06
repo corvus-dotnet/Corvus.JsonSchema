@@ -19,6 +19,7 @@ namespace Corvus.Json.Benchmarking.Models;
 /// <summary>
 /// A type generated from a JsonSchema specification.
 /// </summary>
+[System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<PersonName>))]
 public readonly partial struct PersonName
 {
     private readonly Backing backing;
@@ -52,7 +53,12 @@ public readonly partial struct PersonName
     /// <summary>
     /// Gets an Undefined instance.
     /// </summary>
-    public static PersonName Undefined { get; } = default;
+    public static PersonName Undefined { get; }
+    /// <summary>
+    /// Gets the default instance of the type.
+    /// </summary>
+    public static PersonName DefaultInstance { get; }
+
     /// <inheritdoc/>
     public JsonAny AsAny
     {
@@ -461,6 +467,36 @@ public readonly partial struct PersonName
     {
         using var jsonDocument = JsonDocument.Parse(utf8Json, options);
         return new PersonName(jsonDocument.RootElement.Clone());
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name = "buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static PersonName ParseValue(ReadOnlySpan<char> buffer)
+    {
+        return IJsonValue<PersonName>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name = "buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static PersonName ParseValue(ReadOnlySpan<byte> buffer)
+    {
+        return IJsonValue<PersonName>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name = "reader">The reader from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static PersonName ParseValue(ref Utf8JsonReader reader)
+    {
+        return IJsonValue<PersonName>.ParseValue(ref reader);
     }
 
     /// <summary>

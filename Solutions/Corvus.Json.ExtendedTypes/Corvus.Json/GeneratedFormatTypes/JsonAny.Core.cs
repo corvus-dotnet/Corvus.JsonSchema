@@ -13,6 +13,7 @@ namespace Corvus.Json;
 /// <summary>
 /// Represents any JSON value.
 /// </summary>
+[System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<JsonAny>))]
 public readonly partial struct JsonAny
 {
     private readonly Backing backing;
@@ -60,7 +61,12 @@ public readonly partial struct JsonAny
     /// <summary>
     /// Gets an Undefined instance.
     /// </summary>
-    public static JsonAny Undefined { get; } = default;
+    public static JsonAny Undefined { get; }
+
+    /// <summary>
+    /// Gets a default instance.
+    /// </summary>
+    public static JsonAny DefaultInstance { get; }
 
     /// <inheritdoc/>
     public JsonAny AsAny => this;
@@ -554,6 +560,36 @@ public readonly partial struct JsonAny
     {
         using var jsonDocument = JsonDocument.Parse(utf8Json, options);
         return new JsonAny(jsonDocument.RootElement.Clone());
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    public static JsonAny ParseValue(ReadOnlySpan<char> buffer)
+    {
+        return IJsonValue<JsonAny>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    public static JsonAny ParseValue(ReadOnlySpan<byte> buffer)
+    {
+        return IJsonValue<JsonAny>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="reader">The reader from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    public static JsonAny ParseValue(ref Utf8JsonReader reader)
+    {
+        return IJsonValue<JsonAny>.ParseValue(ref reader);
     }
 
     /// <summary>

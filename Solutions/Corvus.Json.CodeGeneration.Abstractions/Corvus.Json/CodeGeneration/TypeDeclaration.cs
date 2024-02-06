@@ -425,6 +425,12 @@ public class TypeDeclaration
             return false;
         }
 
+        // You can't reduce a type with an ID and a dynamic anchor.
+        if (this.LocatedSchema.HasDynamicAnchor() && this.LocatedSchema.Schema.HasProperty(this.typeBuilder.JsonSchemaConfiguration.IdKeyword))
+        {
+            return false;
+        }
+
         foreach (JsonObjectProperty property in this.LocatedSchema.Schema.EnumerateObject())
         {
             if (this.typeBuilder.JsonSchemaConfiguration.IrreducibleKeywords.Contains(property.Name))

@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Collections.Immutable;
 using Corvus.Json.Patch.Model;
 
 namespace Corvus.Json.Patch;
@@ -10,6 +11,68 @@ namespace Corvus.Json.Patch;
 /// </summary>
 public readonly record struct PatchBuilder(JsonAny Value, JsonPatchDocument PatchOperations)
 {
+    private static readonly JsonObject EmptyObject = JsonObject.FromProperties(ImmutableDictionary<JsonPropertyName, JsonAny>.Empty);
+
+    /// <summary>
+    /// Adds or replaces the value found at the given location, building any missing intermediate structure as object properties.
+    /// </summary>
+    /// <param name="value">The value to add or replace at the <paramref name="path"/>.</param>
+    /// <param name="path">The location at which to add or replace the <paramref name="value"/>.</param>
+    /// <returns>An instance of a <see cref="PatchBuilder"/> with the updated value, and the operation added to the operation array.</returns>
+    public PatchBuilder DeepAddOrReplaceObjectProperties(JsonAny value, ReadOnlySpan<char> path)
+    {
+        if (path.Length == 0)
+        {
+            return this.Replace(value, path);
+        }
+
+        bool goingDeep = false;
+        int nextSlash;
+        int currentIndex = 0;
+
+        // To avoid constantly re-walking the tree, we stash the "last found" node,
+        // and trim the path as we go.
+        JsonAny currentNode = this.Value;
+
+        // Ignore a trailing slash
+        ReadOnlySpan<char> currentPath = (path[^1] == '/') ? path[..^1] : path;
+        PatchBuilder currentBuilder = this;
+
+        while ((nextSlash = currentPath.IndexOf("/", StringComparison.Ordinal)) >= 0)
+        {
+            currentIndex += nextSlash;
+
+            if (!goingDeep && currentNode.TryResolvePointer(currentPath[..nextSlash], out currentNode))
+            {
+                currentPath = currentPath[(nextSlash + 1)..];
+                currentIndex++;
+            }
+            else
+            {
+                goingDeep = true;
+                currentBuilder =
+                    currentBuilder.Add(
+                        EmptyObject,
+                        path[..currentIndex]);
+                currentPath = currentPath[(nextSlash + 1)..];
+                currentIndex++;
+            }
+        }
+
+        // We do not have a trailing slash (we dealt with that above) so there will always be
+        // something to do at the end to add or replace the final value.
+
+        // If we are not going deep, we may be replacing the element at the path
+        if (!goingDeep && this.Value.TryResolvePointer(path, out _))
+        {
+            return currentBuilder.Replace(value, path);
+        }
+        else
+        {
+            return currentBuilder.Add(value, path);
+        }
+    }
+
     /// <summary>
     /// Add the given <paramref name="value"/> to the entity at the given <paramref name="path"/>.
     /// </summary>
@@ -19,7 +82,7 @@ public readonly record struct PatchBuilder(JsonAny Value, JsonPatchDocument Patc
     /// <exception cref="JsonPatchException">Thrown if the value cannot be added at the given path.</exception>
     public PatchBuilder Add(JsonAny value, JsonPointer path)
     {
-        var operation = JsonPatchDocument.AddEntity.Create(value, path);
+        var operation = JsonPatchDocument.AddEntity.Create(path, value);
         if (this.Value.TryApplyPatch(JsonPatchDocument.FromItems(operation), out JsonAny result))
         {
             return new(result, this.PatchOperations.Add(operation));
@@ -90,7 +153,7 @@ public readonly record struct PatchBuilder(JsonAny Value, JsonPatchDocument Patc
     /// <exception cref="JsonPatchException">Thrown if the value cannot be replaced at the given path.</exception>
     public PatchBuilder Replace(JsonAny value, JsonPointer path)
     {
-        var operation = JsonPatchDocument.ReplaceEntity.Create(value, path);
+        var operation = JsonPatchDocument.ReplaceEntity.Create(path, value);
         if (this.Value.TryApplyPatch(JsonPatchDocument.FromItems(operation), out JsonAny result))
         {
             return new(result, this.PatchOperations.Add(operation));
@@ -108,7 +171,7 @@ public readonly record struct PatchBuilder(JsonAny Value, JsonPatchDocument Patc
     /// <exception cref="JsonPatchException">Thrown if the value cannot be replaced at the given path.</exception>
     public PatchBuilder Test(JsonAny value, JsonPointer path)
     {
-        var operation = JsonPatchDocument.Test.Create(value, path);
+        var operation = JsonPatchDocument.Test.Create(path, value);
         if (this.Value.TryApplyPatch(JsonPatchDocument.FromItems(operation), out JsonAny result))
         {
             return new(result, this.PatchOperations.Add(operation));

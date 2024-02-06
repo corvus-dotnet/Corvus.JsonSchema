@@ -127,13 +127,19 @@ public static partial class JsonValueHelpers
     private static int GetHashCodeForString<T>(in T value)
     where T : struct, IJsonValue<T>
     {
-        if (value.HasJsonElementBacking)
+        if (value.AsString.TryGetValue(ProcessHashCode, (object?)null, out int hashCode))
         {
-            string? result1 = value.AsJsonElement.GetString();
-            return result1!.GetHashCode(); // It cannot be null if valueKind is string.
+            return hashCode;
         }
 
-        return ((string)value.AsAny).GetHashCode();
+        return UndefinedHashCode;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static bool ProcessHashCode(ReadOnlySpan<char> span, in object? state, out int value)
+        {
+            value = string.GetHashCode(span);
+            return true;
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

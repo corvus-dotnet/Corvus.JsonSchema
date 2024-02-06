@@ -106,4 +106,13 @@ public class LocatedSchema
     {
         return new LocatedSchema(location, this.Schema, this.anchors);
     }
+
+    /// <summary>
+    /// Determines whether the schema has a dynamic anchor.
+    /// </summary>
+    /// <returns><see langword="true"/> if the schema contains a dynamic anchor.</returns>
+    internal bool HasDynamicAnchor()
+    {
+        return this.anchors.Any(a => a.Value.IsDynamic);
+    }
 }

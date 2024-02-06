@@ -21,6 +21,7 @@ public readonly partial struct Schema
     /// <summary>
     /// A type generated from a JsonSchema specification.
     /// </summary>
+    [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<PatternPropertiesEntity>))]
     public readonly partial struct PatternPropertiesEntity
     {
         private readonly Backing backing;
@@ -54,7 +55,12 @@ public readonly partial struct Schema
         /// <summary>
         /// Gets an Undefined instance.
         /// </summary>
-        public static PatternPropertiesEntity Undefined { get; } = default;
+        public static PatternPropertiesEntity Undefined { get; }
+        /// <summary>
+        /// Gets the default instance of the type.
+        /// </summary>
+        public static PatternPropertiesEntity DefaultInstance { get; } = PatternPropertiesEntity.ParseValue("{}"u8);
+
         /// <inheritdoc/>
         public JsonAny AsAny
         {
@@ -463,6 +469,36 @@ public readonly partial struct Schema
         {
             using var jsonDocument = JsonDocument.Parse(utf8Json, options);
             return new PatternPropertiesEntity(jsonDocument.RootElement.Clone());
+        }
+
+        /// <summary>
+        /// Parses a JSON value from a buffer.
+        /// </summary>
+        /// <param name = "buffer">The buffer from which to parse the value.</param>
+        /// <returns>The parsed value.</returns>
+        static PatternPropertiesEntity ParseValue(ReadOnlySpan<char> buffer)
+        {
+            return IJsonValue<PatternPropertiesEntity>.ParseValue(buffer);
+        }
+
+        /// <summary>
+        /// Parses a JSON value from a buffer.
+        /// </summary>
+        /// <param name = "buffer">The buffer from which to parse the value.</param>
+        /// <returns>The parsed value.</returns>
+        static PatternPropertiesEntity ParseValue(ReadOnlySpan<byte> buffer)
+        {
+            return IJsonValue<PatternPropertiesEntity>.ParseValue(buffer);
+        }
+
+        /// <summary>
+        /// Parses a JSON value from a buffer.
+        /// </summary>
+        /// <param name = "reader">The reader from which to parse the value.</param>
+        /// <returns>The parsed value.</returns>
+        static PatternPropertiesEntity ParseValue(ref Utf8JsonReader reader)
+        {
+            return IJsonValue<PatternPropertiesEntity>.ParseValue(ref reader);
         }
 
         /// <summary>

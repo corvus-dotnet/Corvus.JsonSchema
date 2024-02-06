@@ -21,6 +21,7 @@ public readonly partial struct MetaData
     /// <summary>
     /// A type generated from a JsonSchema specification.
     /// </summary>
+    [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<DeprecatedEntity>))]
     public readonly partial struct DeprecatedEntity
     {
         private readonly Backing backing;
@@ -54,7 +55,12 @@ public readonly partial struct MetaData
         /// <summary>
         /// Gets an Undefined instance.
         /// </summary>
-        public static DeprecatedEntity Undefined { get; } = default;
+        public static DeprecatedEntity Undefined { get; }
+        /// <summary>
+        /// Gets the default instance of the type.
+        /// </summary>
+        public static DeprecatedEntity DefaultInstance { get; } = DeprecatedEntity.ParseValue("false"u8);
+
         /// <inheritdoc/>
         public JsonAny AsAny
         {
@@ -469,6 +475,36 @@ public readonly partial struct MetaData
         {
             using var jsonDocument = JsonDocument.Parse(utf8Json, options);
             return new DeprecatedEntity(jsonDocument.RootElement.Clone());
+        }
+
+        /// <summary>
+        /// Parses a JSON value from a buffer.
+        /// </summary>
+        /// <param name = "buffer">The buffer from which to parse the value.</param>
+        /// <returns>The parsed value.</returns>
+        static DeprecatedEntity ParseValue(ReadOnlySpan<char> buffer)
+        {
+            return IJsonValue<DeprecatedEntity>.ParseValue(buffer);
+        }
+
+        /// <summary>
+        /// Parses a JSON value from a buffer.
+        /// </summary>
+        /// <param name = "buffer">The buffer from which to parse the value.</param>
+        /// <returns>The parsed value.</returns>
+        static DeprecatedEntity ParseValue(ReadOnlySpan<byte> buffer)
+        {
+            return IJsonValue<DeprecatedEntity>.ParseValue(buffer);
+        }
+
+        /// <summary>
+        /// Parses a JSON value from a buffer.
+        /// </summary>
+        /// <param name = "reader">The reader from which to parse the value.</param>
+        /// <returns>The parsed value.</returns>
+        static DeprecatedEntity ParseValue(ref Utf8JsonReader reader)
+        {
+            return IJsonValue<DeprecatedEntity>.ParseValue(ref reader);
         }
 
         /// <summary>

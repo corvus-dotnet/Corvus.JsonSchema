@@ -88,7 +88,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 
 <#  foreach (var property in Defaults)
     { #>
-        builder.Add(<#= property.DotnetPropertyName #>JsonPropertyName, JsonAny.Parse(<#= Formatting.FormatLiteralOrNull(property.DefaultValue, true) #>));
+        builder.Add(<#= property.DotnetPropertyName #>JsonPropertyName, <#= property.Type.FullyQualifiedDotnetTypeName #>.DefaultInstance );
 <#  } #>
         return builder.ToImmutable();
     }

@@ -19,6 +19,7 @@ namespace Corvus.Json.Benchmarking.Models;
 /// <summary>
 /// A type generated from a JsonSchema specification.
 /// </summary>
+[System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<PersonArray>))]
 public readonly partial struct PersonArray
 {
     private readonly Backing backing;
@@ -52,7 +53,12 @@ public readonly partial struct PersonArray
     /// <summary>
     /// Gets an Undefined instance.
     /// </summary>
-    public static PersonArray Undefined { get; } = default;
+    public static PersonArray Undefined { get; }
+    /// <summary>
+    /// Gets the default instance of the type.
+    /// </summary>
+    public static PersonArray DefaultInstance { get; }
+
     /// <inheritdoc/>
     public JsonAny AsAny
     {
@@ -461,6 +467,36 @@ public readonly partial struct PersonArray
     {
         using var jsonDocument = JsonDocument.Parse(utf8Json, options);
         return new PersonArray(jsonDocument.RootElement.Clone());
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name = "buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static PersonArray ParseValue(ReadOnlySpan<char> buffer)
+    {
+        return IJsonValue<PersonArray>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name = "buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static PersonArray ParseValue(ReadOnlySpan<byte> buffer)
+    {
+        return IJsonValue<PersonArray>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name = "reader">The reader from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static PersonArray ParseValue(ref Utf8JsonReader reader)
+    {
+        return IJsonValue<PersonArray>.ParseValue(ref reader);
     }
 
     /// <summary>

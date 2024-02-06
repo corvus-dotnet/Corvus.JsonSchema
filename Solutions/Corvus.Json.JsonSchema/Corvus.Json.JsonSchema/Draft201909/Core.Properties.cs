@@ -21,65 +21,19 @@ namespace Corvus.Json.JsonSchema.Draft201909;
 public readonly partial struct Core
 {
     /// <summary>
-    /// JSON property name for <see cref = "Id"/>.
-    /// </summary>
-    public static readonly ReadOnlyMemory<byte> IdUtf8JsonPropertyName = new byte[]{36, 105, 100};
-    /// <summary>
-    /// JSON property name for <see cref = "Id"/>.
-    /// </summary>
-    public const string IdJsonPropertyName = "$id";
-    /// <summary>
-    /// JSON property name for <see cref = "Schema"/>.
-    /// </summary>
-    public static readonly ReadOnlyMemory<byte> SchemaUtf8JsonPropertyName = new byte[]{36, 115, 99, 104, 101, 109, 97};
-    /// <summary>
-    /// JSON property name for <see cref = "Schema"/>.
-    /// </summary>
-    public const string SchemaJsonPropertyName = "$schema";
-    /// <summary>
     /// JSON property name for <see cref = "Anchor"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> AnchorUtf8JsonPropertyName = new byte[]{36, 97, 110, 99, 104, 111, 114};
+    public static ReadOnlySpan<byte> AnchorUtf8JsonPropertyName => "$anchor"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "Anchor"/>.
     /// </summary>
     public const string AnchorJsonPropertyName = "$anchor";
     /// <summary>
-    /// JSON property name for <see cref = "Ref"/>.
-    /// </summary>
-    public static readonly ReadOnlyMemory<byte> RefUtf8JsonPropertyName = new byte[]{36, 114, 101, 102};
-    /// <summary>
-    /// JSON property name for <see cref = "Ref"/>.
-    /// </summary>
-    public const string RefJsonPropertyName = "$ref";
-    /// <summary>
-    /// JSON property name for <see cref = "RecursiveRef"/>.
-    /// </summary>
-    public static readonly ReadOnlyMemory<byte> RecursiveRefUtf8JsonPropertyName = new byte[]{36, 114, 101, 99, 117, 114, 115, 105, 118, 101, 82, 101, 102};
-    /// <summary>
-    /// JSON property name for <see cref = "RecursiveRef"/>.
-    /// </summary>
-    public const string RecursiveRefJsonPropertyName = "$recursiveRef";
-    /// <summary>
-    /// JSON property name for <see cref = "RecursiveAnchor"/>.
-    /// </summary>
-    public static readonly ReadOnlyMemory<byte> RecursiveAnchorUtf8JsonPropertyName = new byte[]{36, 114, 101, 99, 117, 114, 115, 105, 118, 101, 65, 110, 99, 104, 111, 114};
-    /// <summary>
-    /// JSON property name for <see cref = "RecursiveAnchor"/>.
-    /// </summary>
-    public const string RecursiveAnchorJsonPropertyName = "$recursiveAnchor";
-    /// <summary>
-    /// JSON property name for <see cref = "Vocabulary"/>.
-    /// </summary>
-    public static readonly ReadOnlyMemory<byte> VocabularyUtf8JsonPropertyName = new byte[]{36, 118, 111, 99, 97, 98, 117, 108, 97, 114, 121};
-    /// <summary>
-    /// JSON property name for <see cref = "Vocabulary"/>.
-    /// </summary>
-    public const string VocabularyJsonPropertyName = "$vocabulary";
-    /// <summary>
     /// JSON property name for <see cref = "Comment"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> CommentUtf8JsonPropertyName = new byte[]{36, 99, 111, 109, 109, 101, 110, 116};
+    public static ReadOnlySpan<byte> CommentUtf8JsonPropertyName => "$comment"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "Comment"/>.
     /// </summary>
@@ -87,75 +41,66 @@ public readonly partial struct Core
     /// <summary>
     /// JSON property name for <see cref = "Defs"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> DefsUtf8JsonPropertyName = new byte[]{36, 100, 101, 102, 115};
+    public static ReadOnlySpan<byte> DefsUtf8JsonPropertyName => "$defs"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "Defs"/>.
     /// </summary>
     public const string DefsJsonPropertyName = "$defs";
     /// <summary>
-    /// Gets Id.
+    /// JSON property name for <see cref = "Id"/>.
     /// </summary>
-    public Corvus.Json.JsonSchema.Draft201909.Core.IdEntity Id
-    {
-        get
-        {
-            if ((this.backing & Backing.JsonElement) != 0)
-            {
-                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
-                {
-                    return default;
-                }
-
-                if (this.jsonElementBacking.TryGetProperty(IdUtf8JsonPropertyName.Span, out JsonElement result))
-                {
-                    return new Corvus.Json.JsonSchema.Draft201909.Core.IdEntity(result);
-                }
-            }
-
-            if ((this.backing & Backing.Object) != 0)
-            {
-                if (this.objectBacking.TryGetValue(IdJsonPropertyName, out JsonAny result))
-                {
-                    return result.As<Corvus.Json.JsonSchema.Draft201909.Core.IdEntity>();
-                }
-            }
-
-            return default;
-        }
-    }
+    public static ReadOnlySpan<byte> IdUtf8JsonPropertyName => "$id"u8;
 
     /// <summary>
-    /// Gets Schema.
+    /// JSON property name for <see cref = "Id"/>.
     /// </summary>
-    public Corvus.Json.JsonUri Schema
-    {
-        get
-        {
-            if ((this.backing & Backing.JsonElement) != 0)
-            {
-                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
-                {
-                    return default;
-                }
+    public const string IdJsonPropertyName = "$id";
+    /// <summary>
+    /// JSON property name for <see cref = "RecursiveAnchor"/>.
+    /// </summary>
+    public static ReadOnlySpan<byte> RecursiveAnchorUtf8JsonPropertyName => "$recursiveAnchor"u8;
 
-                if (this.jsonElementBacking.TryGetProperty(SchemaUtf8JsonPropertyName.Span, out JsonElement result))
-                {
-                    return new Corvus.Json.JsonUri(result);
-                }
-            }
+    /// <summary>
+    /// JSON property name for <see cref = "RecursiveAnchor"/>.
+    /// </summary>
+    public const string RecursiveAnchorJsonPropertyName = "$recursiveAnchor";
+    /// <summary>
+    /// JSON property name for <see cref = "RecursiveRef"/>.
+    /// </summary>
+    public static ReadOnlySpan<byte> RecursiveRefUtf8JsonPropertyName => "$recursiveRef"u8;
 
-            if ((this.backing & Backing.Object) != 0)
-            {
-                if (this.objectBacking.TryGetValue(SchemaJsonPropertyName, out JsonAny result))
-                {
-                    return result.As<Corvus.Json.JsonUri>();
-                }
-            }
+    /// <summary>
+    /// JSON property name for <see cref = "RecursiveRef"/>.
+    /// </summary>
+    public const string RecursiveRefJsonPropertyName = "$recursiveRef";
+    /// <summary>
+    /// JSON property name for <see cref = "Ref"/>.
+    /// </summary>
+    public static ReadOnlySpan<byte> RefUtf8JsonPropertyName => "$ref"u8;
 
-            return default;
-        }
-    }
+    /// <summary>
+    /// JSON property name for <see cref = "Ref"/>.
+    /// </summary>
+    public const string RefJsonPropertyName = "$ref";
+    /// <summary>
+    /// JSON property name for <see cref = "Schema"/>.
+    /// </summary>
+    public static ReadOnlySpan<byte> SchemaUtf8JsonPropertyName => "$schema"u8;
 
+    /// <summary>
+    /// JSON property name for <see cref = "Schema"/>.
+    /// </summary>
+    public const string SchemaJsonPropertyName = "$schema";
+    /// <summary>
+    /// JSON property name for <see cref = "Vocabulary"/>.
+    /// </summary>
+    public static ReadOnlySpan<byte> VocabularyUtf8JsonPropertyName => "$vocabulary"u8;
+
+    /// <summary>
+    /// JSON property name for <see cref = "Vocabulary"/>.
+    /// </summary>
+    public const string VocabularyJsonPropertyName = "$vocabulary";
     /// <summary>
     /// Gets Anchor.
     /// </summary>
@@ -170,7 +115,7 @@ public readonly partial struct Core
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(AnchorUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(AnchorUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonSchema.Draft201909.Core.AnchorEntity(result);
                 }
@@ -181,134 +126,6 @@ public readonly partial struct Core
                 if (this.objectBacking.TryGetValue(AnchorJsonPropertyName, out JsonAny result))
                 {
                     return result.As<Corvus.Json.JsonSchema.Draft201909.Core.AnchorEntity>();
-                }
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets Ref.
-    /// </summary>
-    public Corvus.Json.JsonUriReference Ref
-    {
-        get
-        {
-            if ((this.backing & Backing.JsonElement) != 0)
-            {
-                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
-                {
-                    return default;
-                }
-
-                if (this.jsonElementBacking.TryGetProperty(RefUtf8JsonPropertyName.Span, out JsonElement result))
-                {
-                    return new Corvus.Json.JsonUriReference(result);
-                }
-            }
-
-            if ((this.backing & Backing.Object) != 0)
-            {
-                if (this.objectBacking.TryGetValue(RefJsonPropertyName, out JsonAny result))
-                {
-                    return result.As<Corvus.Json.JsonUriReference>();
-                }
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets RecursiveRef.
-    /// </summary>
-    public Corvus.Json.JsonUriReference RecursiveRef
-    {
-        get
-        {
-            if ((this.backing & Backing.JsonElement) != 0)
-            {
-                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
-                {
-                    return default;
-                }
-
-                if (this.jsonElementBacking.TryGetProperty(RecursiveRefUtf8JsonPropertyName.Span, out JsonElement result))
-                {
-                    return new Corvus.Json.JsonUriReference(result);
-                }
-            }
-
-            if ((this.backing & Backing.Object) != 0)
-            {
-                if (this.objectBacking.TryGetValue(RecursiveRefJsonPropertyName, out JsonAny result))
-                {
-                    return result.As<Corvus.Json.JsonUriReference>();
-                }
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets RecursiveAnchor.
-    /// </summary>
-    public Corvus.Json.JsonSchema.Draft201909.Core.RecursiveAnchorEntity RecursiveAnchor
-    {
-        get
-        {
-            if ((this.backing & Backing.JsonElement) != 0)
-            {
-                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
-                {
-                    return default;
-                }
-
-                if (this.jsonElementBacking.TryGetProperty(RecursiveAnchorUtf8JsonPropertyName.Span, out JsonElement result))
-                {
-                    return new Corvus.Json.JsonSchema.Draft201909.Core.RecursiveAnchorEntity(result);
-                }
-            }
-
-            if ((this.backing & Backing.Object) != 0)
-            {
-                if (this.objectBacking.TryGetValue(RecursiveAnchorJsonPropertyName, out JsonAny result))
-                {
-                    return result.As<Corvus.Json.JsonSchema.Draft201909.Core.RecursiveAnchorEntity>();
-                }
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets Vocabulary.
-    /// </summary>
-    public Corvus.Json.JsonSchema.Draft201909.Core.VocabularyEntity Vocabulary
-    {
-        get
-        {
-            if ((this.backing & Backing.JsonElement) != 0)
-            {
-                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
-                {
-                    return default;
-                }
-
-                if (this.jsonElementBacking.TryGetProperty(VocabularyUtf8JsonPropertyName.Span, out JsonElement result))
-                {
-                    return new Corvus.Json.JsonSchema.Draft201909.Core.VocabularyEntity(result);
-                }
-            }
-
-            if ((this.backing & Backing.Object) != 0)
-            {
-                if (this.objectBacking.TryGetValue(VocabularyJsonPropertyName, out JsonAny result))
-                {
-                    return result.As<Corvus.Json.JsonSchema.Draft201909.Core.VocabularyEntity>();
                 }
             }
 
@@ -330,7 +147,7 @@ public readonly partial struct Core
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(CommentUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(CommentUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonString(result);
                 }
@@ -362,7 +179,7 @@ public readonly partial struct Core
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(DefsUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(DefsUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonSchema.Draft201909.Core.DefsEntity(result);
                 }
@@ -381,44 +198,206 @@ public readonly partial struct Core
     }
 
     /// <summary>
+    /// Gets Id.
+    /// </summary>
+    public Corvus.Json.JsonSchema.Draft201909.Core.IdEntity Id
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                {
+                    return default;
+                }
+
+                if (this.jsonElementBacking.TryGetProperty(IdUtf8JsonPropertyName, out JsonElement result))
+                {
+                    return new Corvus.Json.JsonSchema.Draft201909.Core.IdEntity(result);
+                }
+            }
+
+            if ((this.backing & Backing.Object) != 0)
+            {
+                if (this.objectBacking.TryGetValue(IdJsonPropertyName, out JsonAny result))
+                {
+                    return result.As<Corvus.Json.JsonSchema.Draft201909.Core.IdEntity>();
+                }
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets RecursiveAnchor.
+    /// </summary>
+    public Corvus.Json.JsonSchema.Draft201909.Core.RecursiveAnchorEntity RecursiveAnchor
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                {
+                    return default;
+                }
+
+                if (this.jsonElementBacking.TryGetProperty(RecursiveAnchorUtf8JsonPropertyName, out JsonElement result))
+                {
+                    return new Corvus.Json.JsonSchema.Draft201909.Core.RecursiveAnchorEntity(result);
+                }
+            }
+
+            if ((this.backing & Backing.Object) != 0)
+            {
+                if (this.objectBacking.TryGetValue(RecursiveAnchorJsonPropertyName, out JsonAny result))
+                {
+                    return result.As<Corvus.Json.JsonSchema.Draft201909.Core.RecursiveAnchorEntity>();
+                }
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets RecursiveRef.
+    /// </summary>
+    public Corvus.Json.JsonUriReference RecursiveRef
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                {
+                    return default;
+                }
+
+                if (this.jsonElementBacking.TryGetProperty(RecursiveRefUtf8JsonPropertyName, out JsonElement result))
+                {
+                    return new Corvus.Json.JsonUriReference(result);
+                }
+            }
+
+            if ((this.backing & Backing.Object) != 0)
+            {
+                if (this.objectBacking.TryGetValue(RecursiveRefJsonPropertyName, out JsonAny result))
+                {
+                    return result.As<Corvus.Json.JsonUriReference>();
+                }
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets Ref.
+    /// </summary>
+    public Corvus.Json.JsonUriReference Ref
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                {
+                    return default;
+                }
+
+                if (this.jsonElementBacking.TryGetProperty(RefUtf8JsonPropertyName, out JsonElement result))
+                {
+                    return new Corvus.Json.JsonUriReference(result);
+                }
+            }
+
+            if ((this.backing & Backing.Object) != 0)
+            {
+                if (this.objectBacking.TryGetValue(RefJsonPropertyName, out JsonAny result))
+                {
+                    return result.As<Corvus.Json.JsonUriReference>();
+                }
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets Schema.
+    /// </summary>
+    public Corvus.Json.JsonUri Schema
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                {
+                    return default;
+                }
+
+                if (this.jsonElementBacking.TryGetProperty(SchemaUtf8JsonPropertyName, out JsonElement result))
+                {
+                    return new Corvus.Json.JsonUri(result);
+                }
+            }
+
+            if ((this.backing & Backing.Object) != 0)
+            {
+                if (this.objectBacking.TryGetValue(SchemaJsonPropertyName, out JsonAny result))
+                {
+                    return result.As<Corvus.Json.JsonUri>();
+                }
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets Vocabulary.
+    /// </summary>
+    public Corvus.Json.JsonSchema.Draft201909.Core.VocabularyEntity Vocabulary
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                {
+                    return default;
+                }
+
+                if (this.jsonElementBacking.TryGetProperty(VocabularyUtf8JsonPropertyName, out JsonElement result))
+                {
+                    return new Corvus.Json.JsonSchema.Draft201909.Core.VocabularyEntity(result);
+                }
+            }
+
+            if ((this.backing & Backing.Object) != 0)
+            {
+                if (this.objectBacking.TryGetValue(VocabularyJsonPropertyName, out JsonAny result))
+                {
+                    return result.As<Corvus.Json.JsonSchema.Draft201909.Core.VocabularyEntity>();
+                }
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
     /// Creates an instance of a <see cref = "Core"/>.
     /// </summary>
-    public static Core Create(Corvus.Json.JsonSchema.Draft201909.Core.IdEntity? id = null, Corvus.Json.JsonUri? schema = null, Corvus.Json.JsonSchema.Draft201909.Core.AnchorEntity? anchor = null, Corvus.Json.JsonUriReference? @ref = null, Corvus.Json.JsonUriReference? recursiveRef = null, Corvus.Json.JsonSchema.Draft201909.Core.RecursiveAnchorEntity? recursiveAnchor = null, Corvus.Json.JsonSchema.Draft201909.Core.VocabularyEntity? vocabulary = null, Corvus.Json.JsonString? comment = null, Corvus.Json.JsonSchema.Draft201909.Core.DefsEntity? defs = null)
+    public static Core Create(Corvus.Json.JsonSchema.Draft201909.Core.AnchorEntity? anchor = null, Corvus.Json.JsonString? comment = null, Corvus.Json.JsonSchema.Draft201909.Core.DefsEntity? defs = null, Corvus.Json.JsonSchema.Draft201909.Core.IdEntity? id = null, Corvus.Json.JsonSchema.Draft201909.Core.RecursiveAnchorEntity? recursiveAnchor = null, Corvus.Json.JsonUriReference? recursiveRef = null, Corvus.Json.JsonUriReference? @ref = null, Corvus.Json.JsonUri? schema = null, Corvus.Json.JsonSchema.Draft201909.Core.VocabularyEntity? vocabulary = null)
     {
         var builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
-        if (id is Corvus.Json.JsonSchema.Draft201909.Core.IdEntity id__)
-        {
-            builder.Add(IdJsonPropertyName, id__.AsAny);
-        }
-
-        if (schema is Corvus.Json.JsonUri schema__)
-        {
-            builder.Add(SchemaJsonPropertyName, schema__.AsAny);
-        }
-
         if (anchor is Corvus.Json.JsonSchema.Draft201909.Core.AnchorEntity anchor__)
         {
             builder.Add(AnchorJsonPropertyName, anchor__.AsAny);
-        }
-
-        if (@ref is Corvus.Json.JsonUriReference @ref__)
-        {
-            builder.Add(RefJsonPropertyName, @ref__.AsAny);
-        }
-
-        if (recursiveRef is Corvus.Json.JsonUriReference recursiveRef__)
-        {
-            builder.Add(RecursiveRefJsonPropertyName, recursiveRef__.AsAny);
-        }
-
-        if (recursiveAnchor is Corvus.Json.JsonSchema.Draft201909.Core.RecursiveAnchorEntity recursiveAnchor__)
-        {
-            builder.Add(RecursiveAnchorJsonPropertyName, recursiveAnchor__.AsAny);
-        }
-
-        if (vocabulary is Corvus.Json.JsonSchema.Draft201909.Core.VocabularyEntity vocabulary__)
-        {
-            builder.Add(VocabularyJsonPropertyName, vocabulary__.AsAny);
         }
 
         if (comment is Corvus.Json.JsonString comment__)
@@ -431,27 +410,37 @@ public readonly partial struct Core
             builder.Add(DefsJsonPropertyName, defs__.AsAny);
         }
 
+        if (id is Corvus.Json.JsonSchema.Draft201909.Core.IdEntity id__)
+        {
+            builder.Add(IdJsonPropertyName, id__.AsAny);
+        }
+
+        if (recursiveAnchor is Corvus.Json.JsonSchema.Draft201909.Core.RecursiveAnchorEntity recursiveAnchor__)
+        {
+            builder.Add(RecursiveAnchorJsonPropertyName, recursiveAnchor__.AsAny);
+        }
+
+        if (recursiveRef is Corvus.Json.JsonUriReference recursiveRef__)
+        {
+            builder.Add(RecursiveRefJsonPropertyName, recursiveRef__.AsAny);
+        }
+
+        if (@ref is Corvus.Json.JsonUriReference @ref__)
+        {
+            builder.Add(RefJsonPropertyName, @ref__.AsAny);
+        }
+
+        if (schema is Corvus.Json.JsonUri schema__)
+        {
+            builder.Add(SchemaJsonPropertyName, schema__.AsAny);
+        }
+
+        if (vocabulary is Corvus.Json.JsonSchema.Draft201909.Core.VocabularyEntity vocabulary__)
+        {
+            builder.Add(VocabularyJsonPropertyName, vocabulary__.AsAny);
+        }
+
         return builder.ToImmutable();
-    }
-
-    /// <summary>
-    /// Sets $id.
-    /// </summary>
-    /// <param name = "value">The value to set.</param>
-    /// <returns>The entity with the updated property.</returns>
-    public Core WithId(in Corvus.Json.JsonSchema.Draft201909.Core.IdEntity value)
-    {
-        return this.SetProperty(IdJsonPropertyName, value);
-    }
-
-    /// <summary>
-    /// Sets $schema.
-    /// </summary>
-    /// <param name = "value">The value to set.</param>
-    /// <returns>The entity with the updated property.</returns>
-    public Core WithSchema(in Corvus.Json.JsonUri value)
-    {
-        return this.SetProperty(SchemaJsonPropertyName, value);
     }
 
     /// <summary>
@@ -462,46 +451,6 @@ public readonly partial struct Core
     public Core WithAnchor(in Corvus.Json.JsonSchema.Draft201909.Core.AnchorEntity value)
     {
         return this.SetProperty(AnchorJsonPropertyName, value);
-    }
-
-    /// <summary>
-    /// Sets $ref.
-    /// </summary>
-    /// <param name = "value">The value to set.</param>
-    /// <returns>The entity with the updated property.</returns>
-    public Core WithRef(in Corvus.Json.JsonUriReference value)
-    {
-        return this.SetProperty(RefJsonPropertyName, value);
-    }
-
-    /// <summary>
-    /// Sets $recursiveRef.
-    /// </summary>
-    /// <param name = "value">The value to set.</param>
-    /// <returns>The entity with the updated property.</returns>
-    public Core WithRecursiveRef(in Corvus.Json.JsonUriReference value)
-    {
-        return this.SetProperty(RecursiveRefJsonPropertyName, value);
-    }
-
-    /// <summary>
-    /// Sets $recursiveAnchor.
-    /// </summary>
-    /// <param name = "value">The value to set.</param>
-    /// <returns>The entity with the updated property.</returns>
-    public Core WithRecursiveAnchor(in Corvus.Json.JsonSchema.Draft201909.Core.RecursiveAnchorEntity value)
-    {
-        return this.SetProperty(RecursiveAnchorJsonPropertyName, value);
-    }
-
-    /// <summary>
-    /// Sets $vocabulary.
-    /// </summary>
-    /// <param name = "value">The value to set.</param>
-    /// <returns>The entity with the updated property.</returns>
-    public Core WithVocabulary(in Corvus.Json.JsonSchema.Draft201909.Core.VocabularyEntity value)
-    {
-        return this.SetProperty(VocabularyJsonPropertyName, value);
     }
 
     /// <summary>
@@ -522,6 +471,66 @@ public readonly partial struct Core
     public Core WithDefs(in Corvus.Json.JsonSchema.Draft201909.Core.DefsEntity value)
     {
         return this.SetProperty(DefsJsonPropertyName, value);
+    }
+
+    /// <summary>
+    /// Sets $id.
+    /// </summary>
+    /// <param name = "value">The value to set.</param>
+    /// <returns>The entity with the updated property.</returns>
+    public Core WithId(in Corvus.Json.JsonSchema.Draft201909.Core.IdEntity value)
+    {
+        return this.SetProperty(IdJsonPropertyName, value);
+    }
+
+    /// <summary>
+    /// Sets $recursiveAnchor.
+    /// </summary>
+    /// <param name = "value">The value to set.</param>
+    /// <returns>The entity with the updated property.</returns>
+    public Core WithRecursiveAnchor(in Corvus.Json.JsonSchema.Draft201909.Core.RecursiveAnchorEntity value)
+    {
+        return this.SetProperty(RecursiveAnchorJsonPropertyName, value);
+    }
+
+    /// <summary>
+    /// Sets $recursiveRef.
+    /// </summary>
+    /// <param name = "value">The value to set.</param>
+    /// <returns>The entity with the updated property.</returns>
+    public Core WithRecursiveRef(in Corvus.Json.JsonUriReference value)
+    {
+        return this.SetProperty(RecursiveRefJsonPropertyName, value);
+    }
+
+    /// <summary>
+    /// Sets $ref.
+    /// </summary>
+    /// <param name = "value">The value to set.</param>
+    /// <returns>The entity with the updated property.</returns>
+    public Core WithRef(in Corvus.Json.JsonUriReference value)
+    {
+        return this.SetProperty(RefJsonPropertyName, value);
+    }
+
+    /// <summary>
+    /// Sets $schema.
+    /// </summary>
+    /// <param name = "value">The value to set.</param>
+    /// <returns>The entity with the updated property.</returns>
+    public Core WithSchema(in Corvus.Json.JsonUri value)
+    {
+        return this.SetProperty(SchemaJsonPropertyName, value);
+    }
+
+    /// <summary>
+    /// Sets $vocabulary.
+    /// </summary>
+    /// <param name = "value">The value to set.</param>
+    /// <returns>The entity with the updated property.</returns>
+    public Core WithVocabulary(in Corvus.Json.JsonSchema.Draft201909.Core.VocabularyEntity value)
+    {
+        return this.SetProperty(VocabularyJsonPropertyName, value);
     }
 
     private static ValidationContext __CorvusValidateId(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
@@ -580,47 +589,47 @@ public readonly partial struct Core
     {
         if (hasJsonElementBacking)
         {
-            if (property.NameEquals(IdUtf8JsonPropertyName.Span))
+            if (property.NameEquals(IdUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateId;
                 return true;
             }
-            else if (property.NameEquals(SchemaUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(SchemaUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateSchema;
                 return true;
             }
-            else if (property.NameEquals(AnchorUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(AnchorUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateAnchor;
                 return true;
             }
-            else if (property.NameEquals(RefUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(RefUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateRef;
                 return true;
             }
-            else if (property.NameEquals(RecursiveRefUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(RecursiveRefUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateRecursiveRef;
                 return true;
             }
-            else if (property.NameEquals(RecursiveAnchorUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(RecursiveAnchorUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateRecursiveAnchor;
                 return true;
             }
-            else if (property.NameEquals(VocabularyUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(VocabularyUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateVocabulary;
                 return true;
             }
-            else if (property.NameEquals(CommentUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(CommentUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateComment;
                 return true;
             }
-            else if (property.NameEquals(DefsUtf8JsonPropertyName.Span))
+            else if (property.NameEquals(DefsUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateDefs;
                 return true;

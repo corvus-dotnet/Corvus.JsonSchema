@@ -19,6 +19,7 @@ namespace Corvus.Json.Benchmarking.Models;
 /// <summary>
 /// A type generated from a JsonSchema specification.
 /// </summary>
+[System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<PersonNameElementArray>))]
 public readonly partial struct PersonNameElementArray
 {
     private readonly Backing backing;
@@ -52,7 +53,12 @@ public readonly partial struct PersonNameElementArray
     /// <summary>
     /// Gets an Undefined instance.
     /// </summary>
-    public static PersonNameElementArray Undefined { get; } = default;
+    public static PersonNameElementArray Undefined { get; }
+    /// <summary>
+    /// Gets the default instance of the type.
+    /// </summary>
+    public static PersonNameElementArray DefaultInstance { get; }
+
     /// <inheritdoc/>
     public JsonAny AsAny
     {
@@ -461,6 +467,36 @@ public readonly partial struct PersonNameElementArray
     {
         using var jsonDocument = JsonDocument.Parse(utf8Json, options);
         return new PersonNameElementArray(jsonDocument.RootElement.Clone());
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name = "buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static PersonNameElementArray ParseValue(ReadOnlySpan<char> buffer)
+    {
+        return IJsonValue<PersonNameElementArray>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name = "buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static PersonNameElementArray ParseValue(ReadOnlySpan<byte> buffer)
+    {
+        return IJsonValue<PersonNameElementArray>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name = "reader">The reader from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static PersonNameElementArray ParseValue(ref Utf8JsonReader reader)
+    {
+        return IJsonValue<PersonNameElementArray>.ParseValue(ref reader);
     }
 
     /// <summary>

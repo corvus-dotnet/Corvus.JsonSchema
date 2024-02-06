@@ -23,7 +23,8 @@ public readonly partial struct NotDisabled
     /// <summary>
     /// JSON property name for <see cref = "Disabled"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> DisabledUtf8JsonPropertyName = new byte[]{100, 105, 115, 97, 98, 108, 101, 100};
+    public static ReadOnlySpan<byte> DisabledUtf8JsonPropertyName => "disabled"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "Disabled"/>.
     /// </summary>
@@ -42,7 +43,7 @@ public readonly partial struct NotDisabled
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(DisabledUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(DisabledUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonNotAny(result);
                 }
@@ -100,7 +101,7 @@ public readonly partial struct NotDisabled
     {
         if (hasJsonElementBacking)
         {
-            if (property.NameEquals(DisabledUtf8JsonPropertyName.Span))
+            if (property.NameEquals(DisabledUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateDisabled;
                 return true;

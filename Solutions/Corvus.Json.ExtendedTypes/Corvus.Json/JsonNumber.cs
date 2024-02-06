@@ -50,6 +50,11 @@ public readonly partial struct JsonNumber : IJsonNumber<JsonNumber>
     /// </summary>
     public static JsonNumber Undefined { get; }
 
+    /// <summary>
+    /// Gets a default instance.
+    /// </summary>
+    public static JsonNumber DefaultInstance { get; }
+
     /// <inheritdoc/>
     public JsonAny AsAny
     {
@@ -217,6 +222,28 @@ public readonly partial struct JsonNumber : IJsonNumber<JsonNumber>
     public static bool operator !=(in JsonNumber left, in JsonNumber right)
     {
         return !left.Equals(right);
+    }
+
+    /// <summary>
+    /// Less than operator.
+    /// </summary>
+    /// <param name="left">The LHS of the comparison.</param>
+    /// <param name="right">The RHS of the comparison.</param>
+    /// <returns><see langword="true"/> if the left is less than the right, otherwise <see langword="false"/>.</returns>
+    public static bool operator <(in JsonNumber left, in JsonNumber right)
+    {
+        return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && (double)left < (double)right;
+    }
+
+    /// <summary>
+    /// Greater than operator.
+    /// </summary>
+    /// <param name="left">The LHS of the comparison.</param>
+    /// <param name="right">The RHS of the comparison.</param>
+    /// <returns><see langword="true"/> if the left is greater than the right, otherwise <see langword="false"/>.</returns>
+    public static bool operator >(in JsonNumber left, in JsonNumber right)
+    {
+        return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && (double)left > (double)right;
     }
 
     /// <summary>
@@ -417,6 +444,36 @@ public readonly partial struct JsonNumber : IJsonNumber<JsonNumber>
     {
         using var jsonDocument = JsonDocument.Parse(utf8Json, options);
         return new JsonNumber(jsonDocument.RootElement.Clone());
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    public static JsonNumber ParseValue(ReadOnlySpan<char> buffer)
+    {
+        return IJsonValue<JsonNumber>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    public static JsonNumber ParseValue(ReadOnlySpan<byte> buffer)
+    {
+        return IJsonValue<JsonNumber>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="reader">The reader from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    public static JsonNumber ParseValue(ref Utf8JsonReader reader)
+    {
+        return IJsonValue<JsonNumber>.ParseValue(ref reader);
     }
 
     /// <summary>

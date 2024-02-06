@@ -21,6 +21,7 @@ public readonly partial struct MetaData
     /// <summary>
     /// A type generated from a JsonSchema specification.
     /// </summary>
+    [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<JsonAnyArray>))]
     public readonly partial struct JsonAnyArray
     {
         private readonly Backing backing;
@@ -54,7 +55,12 @@ public readonly partial struct MetaData
         /// <summary>
         /// Gets an Undefined instance.
         /// </summary>
-        public static JsonAnyArray Undefined { get; } = default;
+        public static JsonAnyArray Undefined { get; }
+        /// <summary>
+        /// Gets the default instance of the type.
+        /// </summary>
+        public static JsonAnyArray DefaultInstance { get; }
+
         /// <inheritdoc/>
         public JsonAny AsAny
         {
@@ -463,6 +469,36 @@ public readonly partial struct MetaData
         {
             using var jsonDocument = JsonDocument.Parse(utf8Json, options);
             return new JsonAnyArray(jsonDocument.RootElement.Clone());
+        }
+
+        /// <summary>
+        /// Parses a JSON value from a buffer.
+        /// </summary>
+        /// <param name = "buffer">The buffer from which to parse the value.</param>
+        /// <returns>The parsed value.</returns>
+        static JsonAnyArray ParseValue(ReadOnlySpan<char> buffer)
+        {
+            return IJsonValue<JsonAnyArray>.ParseValue(buffer);
+        }
+
+        /// <summary>
+        /// Parses a JSON value from a buffer.
+        /// </summary>
+        /// <param name = "buffer">The buffer from which to parse the value.</param>
+        /// <returns>The parsed value.</returns>
+        static JsonAnyArray ParseValue(ReadOnlySpan<byte> buffer)
+        {
+            return IJsonValue<JsonAnyArray>.ParseValue(buffer);
+        }
+
+        /// <summary>
+        /// Parses a JSON value from a buffer.
+        /// </summary>
+        /// <param name = "reader">The reader from which to parse the value.</param>
+        /// <returns>The parsed value.</returns>
+        static JsonAnyArray ParseValue(ref Utf8JsonReader reader)
+        {
+            return IJsonValue<JsonAnyArray>.ParseValue(ref reader);
         }
 
         /// <summary>

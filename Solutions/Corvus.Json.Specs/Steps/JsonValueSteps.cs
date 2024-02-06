@@ -5,10 +5,12 @@
 using System.Buffers;
 using System.Collections.Immutable;
 using System.Net;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Corvus.Json;
+using Corvus.Json.Internal;
 using NodaTime;
 using NodaTime.Text;
 using NUnit.Framework;
@@ -31,6 +33,7 @@ public class JsonValueSteps
     /// The key for a serialization result.
     /// </summary>
     internal const string SerializationResult = "SerializationResult";
+    internal const string SerializationException = "SerializationException";
 
     private readonly ScenarioContext scenarioContext;
 
@@ -118,6 +121,37 @@ public class JsonValueSteps
     }
 
     /// <summary>
+    /// Serializes an <see cref="IJsonValue"/> from the context variable <see cref="SubjectUnderTest"/>, deserializes and stores the resulting <see cref="JsonAny"/> in the context variable <see cref="SerializationResult"/>.
+    /// </summary>
+    [When("the json value is round-tripped via Serialization without enabling inefficient serialization")]
+    public void WhenTheJsonValueIsRound_TrippedViaSerializationNoInefficientSerialization()
+    {
+        try
+        {
+            JsonValueConverter.EnableInefficientDeserializationSupport = false;
+            IJsonValue sut = this.scenarioContext.Get<IJsonValue>(SubjectUnderTest);
+            string json = JsonSerializer.Serialize(sut);
+            this.scenarioContext.Set(JsonSerializer.Deserialize<JsonAny>(json), SerializationResult);
+        }
+        catch (Exception ex)
+        {
+            this.scenarioContext.Set(ex, SerializationException);
+        }
+    }
+
+    /// <summary>
+    /// Serializes an <see cref="IJsonValue"/> from the context variable <see cref="SubjectUnderTest"/>, deserializes and stores the resulting <see cref="JsonAny"/> in the context variable <see cref="SerializationResult"/>.
+    /// </summary>
+    [When("the json value is round-tripped via Serialization enabling inefficient serialization")]
+    public void WhenTheJsonValueIsRound_TrippedViaSerializationWithInefficientSerialization()
+    {
+        JsonValueConverter.EnableInefficientDeserializationSupport = true;
+        IJsonValue sut = this.scenarioContext.Get<IJsonValue>(SubjectUnderTest);
+        string json = JsonSerializer.Serialize(sut, sut.GetType());
+        this.scenarioContext.Set(JsonSerializer.Deserialize<JsonAny>(json), SerializationResult);
+    }
+
+    /// <summary>
     /// Serializes an <see cref="IJsonValue"/> from the context variable <see cref="SubjectUnderTest"/>, using <see cref="JsonValueExtensions.Serialize{TValue}(TValue)"/>, and deserializes and stores the resulting <see cref="JsonAny"/> in the context variable <see cref="SerializationResult"/>.
     /// </summary>
     [When("the json value is round-trip serialized via a string")]
@@ -125,6 +159,17 @@ public class JsonValueSteps
     {
         JsonAny sut = this.scenarioContext.Get<IJsonValue>(SubjectUnderTest).AsAny;
         this.scenarioContext.Set(JsonAny.Parse(sut.Serialize()), SerializationResult);
+    }
+
+    /// <summary>
+    /// Ensures that the <see cref="SerializationException"/> has been set with an <see cref="InvalidOperationException"/>.
+    /// </summary>
+    [Then("the deserialization operation should throw an InvalidOperationException")]
+    public void ThenASerializationInvalidOperationExceptionShouldBeThrown()
+    {
+        Assert.IsTrue(this.scenarioContext.ContainsKey(SerializationException));
+        object ex = this.scenarioContext.Get<object>(SerializationException);
+        Assert.IsInstanceOf<InvalidOperationException>(ex);
     }
 
     /// <summary>
@@ -290,7 +335,20 @@ public class JsonValueSteps
         }
         else
         {
-            this.scenarioContext.Set(JsonAny.Parse(value).AsDotnetBackedValue(), SubjectUnderTest);
+            JsonAny result = JsonAny.Parse(value).AsDotnetBackedValue();
+            if (result.ValueKind == JsonValueKind.Object)
+            {
+                foreach (JsonObjectProperty property in result.EnumerateObject())
+                {
+                    if (property.Value.ValueKind == JsonValueKind.String &&
+                        property.Value.Equals("\u003cundefined\u003e"))
+                    {
+                        result = result.SetProperty(property.Name, JsonString.Undefined);
+                    }
+                }
+            }
+
+            this.scenarioContext.Set(result, SubjectUnderTest);
         }
     }
 

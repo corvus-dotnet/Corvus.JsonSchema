@@ -107,7 +107,7 @@ internal struct SpecDirectories
     /// Enumerates the input test files.
     /// </summary>
     /// <returns>An enumerable of the input test files and their corresponding output feature files.</returns>
-    public IEnumerable<TestSet> EnumerateTests()
+    public readonly IEnumerable<TestSet> EnumerateTests()
     {
         IEnumerable<TestSet>
             EnumerateCore(string parentTestSetInputDirectory, string inputDirectory, string outputDirectory, string? parentTestSet, TestSelector selector)
@@ -187,7 +187,7 @@ internal struct SpecDirectories
     }
 
     /// <inheritdoc/>
-    public override bool Equals(object? obj)
+    public override readonly bool Equals(object? obj)
     {
         return obj is SpecDirectories other &&
                this.TestsDirectory == other.TestsDirectory &&
@@ -196,7 +196,7 @@ internal struct SpecDirectories
     }
 
     /// <inheritdoc/>
-    public override int GetHashCode()
+    public override readonly int GetHashCode()
     {
         return HashCode.Combine(this.TestsDirectory, this.RemotesDirectory, this.OutputDirectory);
     }

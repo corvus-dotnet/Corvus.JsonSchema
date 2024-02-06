@@ -21,9 +21,19 @@ namespace Corvus.Json.Patch.SpecGenerator;
 public readonly partial struct DisabledScenario
 {
     /// <summary>
+    /// JSON property name for <see cref = "Comment"/>.
+    /// </summary>
+    public static ReadOnlySpan<byte> CommentUtf8JsonPropertyName => "comment"u8;
+
+    /// <summary>
+    /// JSON property name for <see cref = "Comment"/>.
+    /// </summary>
+    public const string CommentJsonPropertyName = "comment";
+    /// <summary>
     /// JSON property name for <see cref = "Disabled"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> DisabledUtf8JsonPropertyName = new byte[]{100, 105, 115, 97, 98, 108, 101, 100};
+    public static ReadOnlySpan<byte> DisabledUtf8JsonPropertyName => "disabled"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "Disabled"/>.
     /// </summary>
@@ -31,7 +41,8 @@ public readonly partial struct DisabledScenario
     /// <summary>
     /// JSON property name for <see cref = "Doc"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> DocUtf8JsonPropertyName = new byte[]{100, 111, 99};
+    public static ReadOnlySpan<byte> DocUtf8JsonPropertyName => "doc"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "Doc"/>.
     /// </summary>
@@ -39,19 +50,44 @@ public readonly partial struct DisabledScenario
     /// <summary>
     /// JSON property name for <see cref = "Patch"/>.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> PatchUtf8JsonPropertyName = new byte[]{112, 97, 116, 99, 104};
+    public static ReadOnlySpan<byte> PatchUtf8JsonPropertyName => "patch"u8;
+
     /// <summary>
     /// JSON property name for <see cref = "Patch"/>.
     /// </summary>
     public const string PatchJsonPropertyName = "patch";
     /// <summary>
-    /// JSON property name for <see cref = "Comment"/>.
+    /// Gets Comment.
     /// </summary>
-    public static readonly ReadOnlyMemory<byte> CommentUtf8JsonPropertyName = new byte[]{99, 111, 109, 109, 101, 110, 116};
-    /// <summary>
-    /// JSON property name for <see cref = "Comment"/>.
-    /// </summary>
-    public const string CommentJsonPropertyName = "comment";
+    public Corvus.Json.JsonString Comment
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                {
+                    return default;
+                }
+
+                if (this.jsonElementBacking.TryGetProperty(CommentUtf8JsonPropertyName, out JsonElement result))
+                {
+                    return new Corvus.Json.JsonString(result);
+                }
+            }
+
+            if ((this.backing & Backing.Object) != 0)
+            {
+                if (this.objectBacking.TryGetValue(CommentJsonPropertyName, out JsonAny result))
+                {
+                    return result.As<Corvus.Json.JsonString>();
+                }
+            }
+
+            return default;
+        }
+    }
+
     /// <summary>
     /// Gets Disabled.
     /// </summary>
@@ -66,7 +102,7 @@ public readonly partial struct DisabledScenario
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(DisabledUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(DisabledUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonAny(result);
                 }
@@ -98,7 +134,7 @@ public readonly partial struct DisabledScenario
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(DocUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(DocUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonAny(result);
                 }
@@ -130,7 +166,7 @@ public readonly partial struct DisabledScenario
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(PatchUtf8JsonPropertyName.Span, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(PatchUtf8JsonPropertyName, out JsonElement result))
                 {
                     return new Corvus.Json.JsonAny(result);
                 }
@@ -141,38 +177,6 @@ public readonly partial struct DisabledScenario
                 if (this.objectBacking.TryGetValue(PatchJsonPropertyName, out JsonAny result))
                 {
                     return result.As<Corvus.Json.JsonAny>();
-                }
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets Comment.
-    /// </summary>
-    public Corvus.Json.JsonString Comment
-    {
-        get
-        {
-            if ((this.backing & Backing.JsonElement) != 0)
-            {
-                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
-                {
-                    return default;
-                }
-
-                if (this.jsonElementBacking.TryGetProperty(CommentUtf8JsonPropertyName.Span, out JsonElement result))
-                {
-                    return new Corvus.Json.JsonString(result);
-                }
-            }
-
-            if ((this.backing & Backing.Object) != 0)
-            {
-                if (this.objectBacking.TryGetValue(CommentJsonPropertyName, out JsonAny result))
-                {
-                    return result.As<Corvus.Json.JsonString>();
                 }
             }
 
@@ -195,6 +199,16 @@ public readonly partial struct DisabledScenario
         }
 
         return builder.ToImmutable();
+    }
+
+    /// <summary>
+    /// Sets comment.
+    /// </summary>
+    /// <param name = "value">The value to set.</param>
+    /// <returns>The entity with the updated property.</returns>
+    public DisabledScenario WithComment(in Corvus.Json.JsonString value)
+    {
+        return this.SetProperty(CommentJsonPropertyName, value);
     }
 
     /// <summary>
@@ -227,16 +241,6 @@ public readonly partial struct DisabledScenario
         return this.SetProperty(PatchJsonPropertyName, value);
     }
 
-    /// <summary>
-    /// Sets comment.
-    /// </summary>
-    /// <param name = "value">The value to set.</param>
-    /// <returns>The entity with the updated property.</returns>
-    public DisabledScenario WithComment(in Corvus.Json.JsonString value)
-    {
-        return this.SetProperty(CommentJsonPropertyName, value);
-    }
-
     private static ValidationContext __CorvusValidateDisabled(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
         return property.ValueAs<Corvus.Json.JsonAny>().Validate(validationContext, level);
@@ -253,7 +257,7 @@ public readonly partial struct DisabledScenario
     {
         if (hasJsonElementBacking)
         {
-            if (property.NameEquals(DisabledUtf8JsonPropertyName.Span))
+            if (property.NameEquals(DisabledUtf8JsonPropertyName))
             {
                 propertyValidator = __CorvusValidateDisabled;
                 return true;

@@ -25,7 +25,7 @@ public class ValidateSmallDocument
     ""dateOfBirth"": ""1944-07-14""
 }";
 
-    private static readonly JsonEverything.ValidationOptions Options = new() { OutputFormat = JsonEverything.OutputFormat.Flag };
+    private static readonly JsonEverything.EvaluationOptions Options = new() { OutputFormat = JsonEverything.OutputFormat.Flag };
 
     private JsonDocument? objectDocument;
     private Person person;
@@ -78,9 +78,9 @@ public class ValidateSmallDocument
     /// Validates using the JsonEverything types.
     /// </summary>
     [Benchmark(Baseline = true)]
-    public void ValidateSmallDocumentJsonEveything()
+    public void ValidateSmallDocumentJsonEverything()
     {
-        JsonEverything.ValidationResults result = this.schema!.Validate(this.node, Options);
+        JsonEverything.EvaluationResults result = this.schema!.Evaluate(this.node, Options);
         if (!result.IsValid)
         {
             throw new InvalidOperationException();

@@ -46,13 +46,7 @@ public readonly partial struct JsonBase64Content
         }
         else if (this.ValueKind == JsonValueKind.String)
         {
-            string? result = this.jsonElementBacking.GetString();
-            if (result is null)
-            {
-                throw new InvalidOperationException();
-            }
-
-            return result;
+            return this.jsonElementBacking.GetString() ?? throw new InvalidOperationException();
         }
 
         throw new InvalidOperationException();

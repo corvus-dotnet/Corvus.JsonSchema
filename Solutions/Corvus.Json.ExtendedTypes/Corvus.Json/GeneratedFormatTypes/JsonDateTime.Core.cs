@@ -50,6 +50,11 @@ public readonly partial struct JsonDateTime : IJsonString<JsonDateTime>
     /// </summary>
     public static JsonDateTime Undefined { get; }
 
+    /// <summary>
+    /// Gets a default instance.
+    /// </summary>
+    public static JsonDateTime DefaultInstance { get; }
+
     /// <inheritdoc/>
     public JsonAny AsAny
     {

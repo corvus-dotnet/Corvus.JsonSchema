@@ -19,6 +19,7 @@ namespace Corvus.Json.JsonSchema.Draft202012;
 /// <summary>
 /// A type generated from a JsonSchema specification.
 /// </summary>
+[System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<Applicator>))]
 public readonly partial struct Applicator
 {
     private readonly Backing backing;
@@ -55,7 +56,12 @@ public readonly partial struct Applicator
     /// <summary>
     /// Gets an Undefined instance.
     /// </summary>
-    public static Applicator Undefined { get; } = default;
+    public static Applicator Undefined { get; }
+    /// <summary>
+    /// Gets the default instance of the type.
+    /// </summary>
+    public static Applicator DefaultInstance { get; }
+
     /// <inheritdoc/>
     public JsonAny AsAny
     {
@@ -494,6 +500,36 @@ public readonly partial struct Applicator
     {
         using var jsonDocument = JsonDocument.Parse(utf8Json, options);
         return new Applicator(jsonDocument.RootElement.Clone());
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name = "buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static Applicator ParseValue(ReadOnlySpan<char> buffer)
+    {
+        return IJsonValue<Applicator>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name = "buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static Applicator ParseValue(ReadOnlySpan<byte> buffer)
+    {
+        return IJsonValue<Applicator>.ParseValue(buffer);
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name = "reader">The reader from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    static Applicator ParseValue(ref Utf8JsonReader reader)
+    {
+        return IJsonValue<Applicator>.ParseValue(ref reader);
     }
 
     /// <summary>

@@ -391,6 +391,7 @@ public static class SchemaExtensionsDraft201909
             draft201909Schema.ExclusiveMaximum.IsUndefined() &&
             draft201909Schema.ExclusiveMinimum.IsUndefined() &&
             draft201909Schema.Format.IsUndefined() &&
+            draft201909Schema.Id.IsUndefined() &&
             draft201909Schema.If.IsUndefined() &&
             draft201909Schema.Items.IsUndefined() &&
             draft201909Schema.MaxContains.IsUndefined() &&
@@ -452,6 +453,7 @@ public static class SchemaExtensionsDraft201909
             draft201909Schema.ExclusiveMaximum.IsUndefined() &&
             draft201909Schema.ExclusiveMinimum.IsUndefined() &&
             draft201909Schema.Format.IsUndefined() &&
+            draft201909Schema.Id.IsUndefined() &&
             draft201909Schema.If.IsUndefined() &&
             draft201909Schema.Items.IsUndefined() &&
             draft201909Schema.MaxContains.IsUndefined() &&
@@ -510,6 +512,7 @@ public static class SchemaExtensionsDraft201909
             draft201909Schema.ExclusiveMaximum.IsUndefined() &&
             draft201909Schema.ExclusiveMinimum.IsUndefined() &&
             draft201909Schema.Format.IsUndefined() &&
+            draft201909Schema.Id.IsUndefined() &&
             draft201909Schema.If.IsUndefined() &&
             draft201909Schema.Items.IsUndefined() &&
             draft201909Schema.MaxContains.IsUndefined() &&
