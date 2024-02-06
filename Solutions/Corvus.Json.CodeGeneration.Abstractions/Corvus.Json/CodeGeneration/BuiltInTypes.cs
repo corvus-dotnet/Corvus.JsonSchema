@@ -47,72 +47,72 @@ public static class BuiltInTypes
     /// <summary>
     /// A clr <see cref="sbyte"/> type.
     /// </summary>
-    public static readonly (string Ns, string Type) ClrSByteTypeDeclaration = ("Corvus.Json", "JsonInteger");
+    public static readonly (string Ns, string Type) ClrSByteTypeDeclaration = ("Corvus.Json", "JsonSByte");
 
     /// <summary>
     /// A clr <see cref="short"/> type.
     /// </summary>
-    public static readonly (string Ns, string Type) ClrInt16TypeDeclaration = ("Corvus.Json", "JsonInteger");
+    public static readonly (string Ns, string Type) ClrInt16TypeDeclaration = ("Corvus.Json", "JsonInt16");
 
     /// <summary>
     /// A clr <see cref="int"/> type.
     /// </summary>
-    public static readonly (string Ns, string Type) ClrInt32TypeDeclaration = ("Corvus.Json", "JsonInteger");
+    public static readonly (string Ns, string Type) ClrInt32TypeDeclaration = ("Corvus.Json", "JsonInt32");
 
     /// <summary>
     /// A clr <see cref="long"/> type.
     /// </summary>
-    public static readonly (string Ns, string Type) ClrInt64TypeDeclaration = ("Corvus.Json", "JsonInteger");
+    public static readonly (string Ns, string Type) ClrInt64TypeDeclaration = ("Corvus.Json", "JsonInt64");
 
     /// <summary>
     /// A clr <see cref="Int128"/> type.
     /// </summary>
-    public static readonly (string Ns, string Type) ClrInt128TypeDeclaration = ("Corvus.Json", "JsonInteger");
+    public static readonly (string Ns, string Type) ClrInt128TypeDeclaration = ("Corvus.Json", "JsonInt128");
 
     /// <summary>
     /// A clr <see cref="byte"/> type.
     /// </summary>
-    public static readonly (string Ns, string Type) ClrByteTypeDeclaration = ("Corvus.Json", "JsonInteger");
+    public static readonly (string Ns, string Type) ClrByteTypeDeclaration = ("Corvus.Json", "JsonByte");
 
     /// <summary>
     /// A clr <see cref="ushort"/> type.
     /// </summary>
-    public static readonly (string Ns, string Type) ClrUInt16TypeDeclaration = ("Corvus.Json", "JsonInteger");
+    public static readonly (string Ns, string Type) ClrUInt16TypeDeclaration = ("Corvus.Json", "JsonUInt16");
 
     /// <summary>
     /// A clr <see cref="uint"/> type.
     /// </summary>
-    public static readonly (string Ns, string Type) ClrUInt32TypeDeclaration = ("Corvus.Json", "JsonInteger");
+    public static readonly (string Ns, string Type) ClrUInt32TypeDeclaration = ("Corvus.Json", "JsonUInt32");
 
     /// <summary>
     /// A clr <see cref="ulong"/> type.
     /// </summary>
-    public static readonly (string Ns, string Type) ClrUInt64TypeDeclaration = ("Corvus.Json", "JsonInteger");
+    public static readonly (string Ns, string Type) ClrUInt64TypeDeclaration = ("Corvus.Json", "JsonUInt64");
 
     /// <summary>
     /// A clr <see cref="UInt128"/> type.
     /// </summary>
-    public static readonly (string Ns, string Type) ClrUInt128TypeDeclaration = ("Corvus.Json", "JsonInteger");
+    public static readonly (string Ns, string Type) ClrUInt128TypeDeclaration = ("Corvus.Json", "JsonUInt128");
 
     /// <summary>
     /// A clr <see cref="Half"/> type.
     /// </summary>
-    public static readonly (string Ns, string Type) ClrHalfTypeDeclaration = ("Corvus.Json", "JsonNumber");
+    public static readonly (string Ns, string Type) ClrHalfTypeDeclaration = ("Corvus.Json", "JsonHalf");
 
     /// <summary>
     /// A clr <see cref="float"/> type.
     /// </summary>
-    public static readonly (string Ns, string Type) ClrSingleTypeDeclaration = ("Corvus.Json", "JsonNumber");
+    public static readonly (string Ns, string Type) ClrSingleTypeDeclaration = ("Corvus.Json", "JsonSingle");
 
     /// <summary>
     /// A clr <see cref="double"/> type.
     /// </summary>
-    public static readonly (string Ns, string Type) ClrDoubleTypeDeclaration = ("Corvus.Json", "JsonNumber");
+    public static readonly (string Ns, string Type) ClrDoubleTypeDeclaration = ("Corvus.Json", "JsonDouble");
 
     /// <summary>
     /// A clr <see cref="decimal"/> type.
     /// </summary>
-    public static readonly (string Ns, string Type) ClrDecimalTypeDeclaration = ("Corvus.Json", "JsonNumber");
+    public static readonly (string Ns, string Type) ClrDecimalTypeDeclaration = ("Corvus.Json", "JsonDecimal");
 
     /// <summary>
     /// A clr <see cref="string"/> type.
@@ -266,6 +266,202 @@ public static class BuiltInTypes
     }
 
     /// <summary>
+    /// Determines if the format allows implicit conversion to sbyte.
+    /// </summary>
+    /// <param name="format">The format string, or null if there is no format.</param>
+    /// <returns><see langword="true"/> if the format allows implicit conversion to sbyte.</returns>
+    public static bool ImplicitConversionToSByte(string? format)
+    {
+        return format switch
+        {
+            "sbyte" => true,
+            _ => false,
+        };
+    }
+
+    /// <summary>
+    /// Determines if the format allows implicit conversion to byte.
+    /// </summary>
+    /// <param name="format">The format string, or null if there is no format.</param>
+    /// <returns><see langword="true"/> if the format allows implicit conversion to byte.</returns>
+    public static bool ImplicitConversionToByte(string? format)
+    {
+        return format switch
+        {
+            "byte" => true,
+            _ => false,
+        };
+    }
+
+    /// <summary>
+    /// Determines if the format allows implicit conversion to int16.
+    /// </summary>
+    /// <param name="format">The format string, or null if there is no format.</param>
+    /// <returns><see langword="true"/> if the format allows implicit conversion to int16.</returns>
+    public static bool ImplicitConversionToInt16(string? format)
+    {
+        return format switch
+        {
+            "int16" => true,
+            _ => false,
+        };
+    }
+
+    /// <summary>
+    /// Determines if the format allows implicit conversion to uint16.
+    /// </summary>
+    /// <param name="format">The format string, or null if there is no format.</param>
+    /// <returns><see langword="true"/> if the format allows implicit conversion to uint16.</returns>
+    public static bool ImplicitConversionToUInt16(string? format)
+    {
+        return format switch
+        {
+            "uint16" => true,
+            _ => false,
+        };
+    }
+
+    /// <summary>
+    /// Determines if the format allows implicit conversion to int32.
+    /// </summary>
+    /// <param name="format">The format string, or null if there is no format.</param>
+    /// <returns><see langword="true"/> if the format allows implicit conversion to int32.</returns>
+    public static bool ImplicitConversionToInt32(string? format)
+    {
+        return format switch
+        {
+            "int32" => true,
+            _ => false,
+        };
+    }
+
+    /// <summary>
+    /// Determines if the format allows implicit conversion to uint32.
+    /// </summary>
+    /// <param name="format">The format string, or null if there is no format.</param>
+    /// <returns><see langword="true"/> if the format allows implicit conversion to uint32.</returns>
+    public static bool ImplicitConversionToUInt32(string? format)
+    {
+        return format switch
+        {
+            "uint32" => true,
+            _ => false,
+        };
+    }
+
+    /// <summary>
+    /// Determines if the format allows implicit conversion to int64.
+    /// </summary>
+    /// <param name="format">The format string, or null if there is no format.</param>
+    /// <returns><see langword="true"/> if the format allows implicit conversion to uint64.</returns>
+    public static bool ImplicitConversionToInt64(string? format)
+    {
+        return format switch
+        {
+            "int64" => true,
+            _ => false,
+        };
+    }
+
+    /// <summary>
+    /// Determines if the format allows implicit conversion to uint64.
+    /// </summary>
+    /// <param name="format">The format string, or null if there is no format.</param>
+    /// <returns><see langword="true"/> if the format allows implicit conversion to uint64.</returns>
+    public static bool ImplicitConversionToUInt64(string? format)
+    {
+        return format switch
+        {
+            "uint64" => true,
+            _ => false,
+        };
+    }
+
+    /// <summary>
+    /// Determines if the format allows implicit conversion to int128.
+    /// </summary>
+    /// <param name="format">The format string, or null if there is no format.</param>
+    /// <returns><see langword="true"/> if the format allows implicit conversion to int128.</returns>
+    public static bool ImplicitConversionToInt128(string? format)
+    {
+        return format switch
+        {
+            "int128" => true,
+            _ => false,
+        };
+    }
+
+    /// <summary>
+    /// Determines if the format allows implicit conversion to uint128.
+    /// </summary>
+    /// <param name="format">The format string, or null if there is no format.</param>
+    /// <returns><see langword="true"/> if the format allows implicit conversion to uint128.</returns>
+    public static bool ImplicitConversionToUInt128(string? format)
+    {
+        return format switch
+        {
+            "uint128" => true,
+            _ => false,
+        };
+    }
+
+    /// <summary>
+    /// Determines if the format allows implicit conversion to half.
+    /// </summary>
+    /// <param name="format">The format string, or null if there is no format.</param>
+    /// <returns><see langword="true"/> if the format allows implicit conversion to half.</returns>
+    public static bool ImplicitConversionToHalf(string? format)
+    {
+        return format switch
+        {
+            "half" => true,
+            _ => false,
+        };
+    }
+
+    /// <summary>
+    /// Determines if the format allows implicit conversion to single.
+    /// </summary>
+    /// <param name="format">The format string, or null if there is no format.</param>
+    /// <returns><see langword="true"/> if the format allows implicit conversion to single.</returns>
+    public static bool ImplicitConversionToSingle(string? format)
+    {
+        return format switch
+        {
+            "single" => true,
+            _ => false,
+        };
+    }
+
+    /// <summary>
+    /// Determines if the format allows implicit conversion to double.
+    /// </summary>
+    /// <param name="format">The format string, or null if there is no format.</param>
+    /// <returns><see langword="true"/> if the format allows implicit conversion to double.</returns>
+    public static bool ImplicitConversionToDouble(string? format)
+    {
+        return format switch
+        {
+            "double" => true,
+            _ => false,
+        };
+    }
+
+    /// <summary>
+    /// Determines if the format allows implicit conversion to decimal.
+    /// </summary>
+    /// <param name="format">The format string, or null if there is no format.</param>
+    /// <returns><see langword="true"/> if the format allows implicit conversion to decimal.</returns>
+    public static bool ImplicitConversionToDecimal(string? format)
+    {
+        return format switch
+        {
+            "decimal" => true,
+            _ => false,
+        };
+    }
+
+    /// <summary>
     /// Gets the built in type and namespace for the given type and optional format.
     /// </summary>
     /// <param name="type">The type for which to get the type declaration.</param>
@@ -291,7 +487,7 @@ public static class BuiltInTypes
     }
 
     /// <summary>
-    /// Gets a value indiciating whether the format specified is for a string.
+    /// Gets a value indicating whether the format specified is for a string.
     /// </summary>
     /// <param name="format">The format to test.</param>
     /// <returns><c>True</c> if it is a string format.</returns>

@@ -35,111 +35,7 @@ public readonly partial struct HeightRangeDouble : IJsonNumber<HeightRangeDouble
     /// Initializes a new instance of the <see cref = "HeightRangeDouble"/> struct.
     /// </summary>
     /// <param name = "value">The value from which to initialize the number.</param>
-    public HeightRangeDouble(decimal value) : this(new BinaryJsonNumber(value))
-    {
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref = "HeightRangeDouble"/> struct.
-    /// </summary>
-    /// <param name = "value">The value from which to initialize the number.</param>
     public HeightRangeDouble(double value) : this(new BinaryJsonNumber(value))
-    {
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref = "HeightRangeDouble"/> struct.
-    /// </summary>
-    /// <param name = "value">The value from which to initialize the number.</param>
-    public HeightRangeDouble(Half value) : this(new BinaryJsonNumber(value))
-    {
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref = "HeightRangeDouble"/> struct.
-    /// </summary>
-    /// <param name = "value">The value from which to initialize the number.</param>
-    public HeightRangeDouble(float value) : this(new BinaryJsonNumber(value))
-    {
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref = "HeightRangeDouble"/> struct.
-    /// </summary>
-    /// <param name = "value">The value from which to initialize the number.</param>
-    public HeightRangeDouble(byte value) : this(new BinaryJsonNumber(value))
-    {
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref = "HeightRangeDouble"/> struct.
-    /// </summary>
-    /// <param name = "value">The value from which to initialize the number.</param>
-    public HeightRangeDouble(short value) : this(new BinaryJsonNumber(value))
-    {
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref = "HeightRangeDouble"/> struct.
-    /// </summary>
-    /// <param name = "value">The value from which to initialize the number.</param>
-    public HeightRangeDouble(int value) : this(new BinaryJsonNumber(value))
-    {
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref = "HeightRangeDouble"/> struct.
-    /// </summary>
-    /// <param name = "value">The value from which to initialize the number.</param>
-    public HeightRangeDouble(long value) : this(new BinaryJsonNumber(value))
-    {
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref = "HeightRangeDouble"/> struct.
-    /// </summary>
-    /// <param name = "value">The value from which to initialize the number.</param>
-    public HeightRangeDouble(Int128 value) : this(new BinaryJsonNumber(value))
-    {
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref = "HeightRangeDouble"/> struct.
-    /// </summary>
-    /// <param name = "value">The value from which to initialize the number.</param>
-    public HeightRangeDouble(sbyte value) : this(new BinaryJsonNumber(value))
-    {
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref = "HeightRangeDouble"/> struct.
-    /// </summary>
-    /// <param name = "value">The value from which to initialize the number.</param>
-    public HeightRangeDouble(ushort value) : this(new BinaryJsonNumber(value))
-    {
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref = "HeightRangeDouble"/> struct.
-    /// </summary>
-    /// <param name = "value">The value from which to initialize the number.</param>
-    public HeightRangeDouble(uint value) : this(new BinaryJsonNumber(value))
-    {
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref = "HeightRangeDouble"/> struct.
-    /// </summary>
-    /// <param name = "value">The value from which to initialize the number.</param>
-    public HeightRangeDouble(ulong value) : this(new BinaryJsonNumber(value))
-    {
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref = "HeightRangeDouble"/> struct.
-    /// </summary>
-    /// <param name = "value">The value from which to initialize the number.</param>
-    public HeightRangeDouble(UInt128 value) : this(new BinaryJsonNumber(value))
     {
     }
 
@@ -455,108 +351,108 @@ public readonly partial struct HeightRangeDouble : IJsonNumber<HeightRangeDouble
     /// Conversion from decimal.
     /// </summary>
     /// <param name = "value">The value to convert.</param>
-    public static implicit operator HeightRangeDouble(decimal value)
+    public static explicit operator HeightRangeDouble(decimal value)
     {
-        return new(value);
+        return new(new BinaryJsonNumber(value));
     }
 
     /// <summary>
     /// Conversion from double.
     /// </summary>
     /// <param name = "value">The value to convert.</param>
-    public static implicit operator HeightRangeDouble(double value)
+    public static explicit operator HeightRangeDouble(double value)
     {
-        return new(value);
+        return new(new BinaryJsonNumber(value));
     }
 
     /// <summary>
     /// Conversion from Half.
     /// </summary>
     /// <param name = "value">The value to convert.</param>
-    public static implicit operator HeightRangeDouble(Half value)
+    public static explicit operator HeightRangeDouble(Half value)
     {
-        return new(value);
+        return new(new BinaryJsonNumber(value));
     }
 
     /// <summary>
     /// Conversion from float.
     /// </summary>
     /// <param name = "value">The value to convert.</param>
-    public static implicit operator HeightRangeDouble(float value)
+    public static explicit operator HeightRangeDouble(float value)
     {
-        return new(value);
+        return new(new BinaryJsonNumber(value));
     }
 
     /// <summary>
     /// Conversion from byte.
     /// </summary>
     /// <param name = "value">The value to convert.</param>
-    public static implicit operator HeightRangeDouble(byte value)
+    public static explicit operator HeightRangeDouble(byte value)
     {
-        return new(value);
+        return new(new BinaryJsonNumber(value));
     }
 
     /// <summary>
     /// Conversion from short.
     /// </summary>
     /// <param name = "value">The value to convert.</param>
-    public static implicit operator HeightRangeDouble(short value)
+    public static explicit operator HeightRangeDouble(short value)
     {
-        return new(value);
+        return new(new BinaryJsonNumber(value));
     }
 
     /// <summary>
     /// Conversion from int.
     /// </summary>
     /// <param name = "value">The value to convert.</param>
-    public static implicit operator HeightRangeDouble(int value)
+    public static explicit operator HeightRangeDouble(int value)
     {
-        return new(value);
+        return new(new BinaryJsonNumber(value));
     }
 
     /// <summary>
     /// Conversion from long.
     /// </summary>
     /// <param name = "value">The value to convert.</param>
-    public static implicit operator HeightRangeDouble(long value)
+    public static explicit operator HeightRangeDouble(long value)
     {
-        return new(value);
+        return new(new BinaryJsonNumber(value));
     }
 
     /// <summary>
     /// Conversion from sbyte.
     /// </summary>
     /// <param name = "value">The value to convert.</param>
-    public static implicit operator HeightRangeDouble(sbyte value)
+    public static explicit operator HeightRangeDouble(sbyte value)
     {
-        return new(value);
+        return new(new BinaryJsonNumber(value));
     }
 
     /// <summary>
     /// Conversion from ushort.
     /// </summary>
     /// <param name = "value">The value to convert.</param>
-    public static implicit operator HeightRangeDouble(ushort value)
+    public static explicit operator HeightRangeDouble(ushort value)
     {
-        return new(value);
+        return new(new BinaryJsonNumber(value));
     }
 
     /// <summary>
     /// Conversion from uint.
     /// </summary>
     /// <param name = "value">The value to convert.</param>
-    public static implicit operator HeightRangeDouble(uint value)
+    public static explicit operator HeightRangeDouble(uint value)
     {
-        return new(value);
+        return new(new BinaryJsonNumber(value));
     }
 
     /// <summary>
     /// Conversion from ulong.
     /// </summary>
     /// <param name = "value">The value to convert.</param>
-    public static implicit operator HeightRangeDouble(ulong value)
+    public static explicit operator HeightRangeDouble(ulong value)
     {
-        return new(value);
+        return new(new BinaryJsonNumber(value));
     }
 
     /// <summary>
@@ -695,7 +591,7 @@ public readonly partial struct HeightRangeDouble : IJsonNumber<HeightRangeDouble
         }
 
         // After this point there is no need to check both value kinds because our first quick test verified that they were the same.
-        // If either one is a Backing.Number or a JsonValueKind.Number then we know the rhs is conmpatible.
+        // If either one is a Backing.Number or a JsonValueKind.Number then we know the rhs is compatible.
         if (lhs.backing == Backing.Number && rhs.backing == Backing.Number)
         {
             return BinaryJsonNumber.Compare(lhs.numberBacking, rhs.numberBacking);

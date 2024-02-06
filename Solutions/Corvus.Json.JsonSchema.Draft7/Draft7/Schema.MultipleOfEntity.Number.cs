@@ -37,111 +37,7 @@ public readonly partial struct Schema
         /// Initializes a new instance of the <see cref = "MultipleOfEntity"/> struct.
         /// </summary>
         /// <param name = "value">The value from which to initialize the number.</param>
-        public MultipleOfEntity(decimal value) : this(new BinaryJsonNumber(value))
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref = "MultipleOfEntity"/> struct.
-        /// </summary>
-        /// <param name = "value">The value from which to initialize the number.</param>
         public MultipleOfEntity(double value) : this(new BinaryJsonNumber(value))
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref = "MultipleOfEntity"/> struct.
-        /// </summary>
-        /// <param name = "value">The value from which to initialize the number.</param>
-        public MultipleOfEntity(Half value) : this(new BinaryJsonNumber(value))
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref = "MultipleOfEntity"/> struct.
-        /// </summary>
-        /// <param name = "value">The value from which to initialize the number.</param>
-        public MultipleOfEntity(float value) : this(new BinaryJsonNumber(value))
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref = "MultipleOfEntity"/> struct.
-        /// </summary>
-        /// <param name = "value">The value from which to initialize the number.</param>
-        public MultipleOfEntity(byte value) : this(new BinaryJsonNumber(value))
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref = "MultipleOfEntity"/> struct.
-        /// </summary>
-        /// <param name = "value">The value from which to initialize the number.</param>
-        public MultipleOfEntity(short value) : this(new BinaryJsonNumber(value))
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref = "MultipleOfEntity"/> struct.
-        /// </summary>
-        /// <param name = "value">The value from which to initialize the number.</param>
-        public MultipleOfEntity(int value) : this(new BinaryJsonNumber(value))
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref = "MultipleOfEntity"/> struct.
-        /// </summary>
-        /// <param name = "value">The value from which to initialize the number.</param>
-        public MultipleOfEntity(long value) : this(new BinaryJsonNumber(value))
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref = "MultipleOfEntity"/> struct.
-        /// </summary>
-        /// <param name = "value">The value from which to initialize the number.</param>
-        public MultipleOfEntity(Int128 value) : this(new BinaryJsonNumber(value))
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref = "MultipleOfEntity"/> struct.
-        /// </summary>
-        /// <param name = "value">The value from which to initialize the number.</param>
-        public MultipleOfEntity(sbyte value) : this(new BinaryJsonNumber(value))
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref = "MultipleOfEntity"/> struct.
-        /// </summary>
-        /// <param name = "value">The value from which to initialize the number.</param>
-        public MultipleOfEntity(ushort value) : this(new BinaryJsonNumber(value))
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref = "MultipleOfEntity"/> struct.
-        /// </summary>
-        /// <param name = "value">The value from which to initialize the number.</param>
-        public MultipleOfEntity(uint value) : this(new BinaryJsonNumber(value))
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref = "MultipleOfEntity"/> struct.
-        /// </summary>
-        /// <param name = "value">The value from which to initialize the number.</param>
-        public MultipleOfEntity(ulong value) : this(new BinaryJsonNumber(value))
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref = "MultipleOfEntity"/> struct.
-        /// </summary>
-        /// <param name = "value">The value from which to initialize the number.</param>
-        public MultipleOfEntity(UInt128 value) : this(new BinaryJsonNumber(value))
         {
         }
 
@@ -457,108 +353,108 @@ public readonly partial struct Schema
         /// Conversion from decimal.
         /// </summary>
         /// <param name = "value">The value to convert.</param>
-        public static implicit operator MultipleOfEntity(decimal value)
+        public static explicit operator MultipleOfEntity(decimal value)
         {
-            return new(value);
+            return new(new BinaryJsonNumber(value));
         }
 
         /// <summary>
         /// Conversion from double.
         /// </summary>
         /// <param name = "value">The value to convert.</param>
-        public static implicit operator MultipleOfEntity(double value)
+        public static explicit operator MultipleOfEntity(double value)
         {
-            return new(value);
+            return new(new BinaryJsonNumber(value));
         }
 
         /// <summary>
         /// Conversion from Half.
         /// </summary>
         /// <param name = "value">The value to convert.</param>
-        public static implicit operator MultipleOfEntity(Half value)
+        public static explicit operator MultipleOfEntity(Half value)
         {
-            return new(value);
+            return new(new BinaryJsonNumber(value));
         }
 
         /// <summary>
         /// Conversion from float.
         /// </summary>
         /// <param name = "value">The value to convert.</param>
-        public static implicit operator MultipleOfEntity(float value)
+        public static explicit operator MultipleOfEntity(float value)
         {
-            return new(value);
+            return new(new BinaryJsonNumber(value));
         }
 
         /// <summary>
         /// Conversion from byte.
         /// </summary>
         /// <param name = "value">The value to convert.</param>
-        public static implicit operator MultipleOfEntity(byte value)
+        public static explicit operator MultipleOfEntity(byte value)
         {
-            return new(value);
+            return new(new BinaryJsonNumber(value));
         }
 
         /// <summary>
         /// Conversion from short.
         /// </summary>
         /// <param name = "value">The value to convert.</param>
-        public static implicit operator MultipleOfEntity(short value)
+        public static explicit operator MultipleOfEntity(short value)
         {
-            return new(value);
+            return new(new BinaryJsonNumber(value));
         }
 
         /// <summary>
         /// Conversion from int.
         /// </summary>
         /// <param name = "value">The value to convert.</param>
-        public static implicit operator MultipleOfEntity(int value)
+        public static explicit operator MultipleOfEntity(int value)
         {
-            return new(value);
+            return new(new BinaryJsonNumber(value));
         }
 
         /// <summary>
         /// Conversion from long.
         /// </summary>
         /// <param name = "value">The value to convert.</param>
-        public static implicit operator MultipleOfEntity(long value)
+        public static explicit operator MultipleOfEntity(long value)
         {
-            return new(value);
+            return new(new BinaryJsonNumber(value));
         }
 
         /// <summary>
         /// Conversion from sbyte.
         /// </summary>
         /// <param name = "value">The value to convert.</param>
-        public static implicit operator MultipleOfEntity(sbyte value)
+        public static explicit operator MultipleOfEntity(sbyte value)
         {
-            return new(value);
+            return new(new BinaryJsonNumber(value));
         }
 
         /// <summary>
         /// Conversion from ushort.
         /// </summary>
         /// <param name = "value">The value to convert.</param>
-        public static implicit operator MultipleOfEntity(ushort value)
+        public static explicit operator MultipleOfEntity(ushort value)
         {
-            return new(value);
+            return new(new BinaryJsonNumber(value));
         }
 
         /// <summary>
         /// Conversion from uint.
         /// </summary>
         /// <param name = "value">The value to convert.</param>
-        public static implicit operator MultipleOfEntity(uint value)
+        public static explicit operator MultipleOfEntity(uint value)
         {
-            return new(value);
+            return new(new BinaryJsonNumber(value));
         }
 
         /// <summary>
         /// Conversion from ulong.
         /// </summary>
         /// <param name = "value">The value to convert.</param>
-        public static implicit operator MultipleOfEntity(ulong value)
+        public static explicit operator MultipleOfEntity(ulong value)
         {
-            return new(value);
+            return new(new BinaryJsonNumber(value));
         }
 
         /// <summary>
@@ -697,7 +593,7 @@ public readonly partial struct Schema
             }
 
             // After this point there is no need to check both value kinds because our first quick test verified that they were the same.
-            // If either one is a Backing.Number or a JsonValueKind.Number then we know the rhs is conmpatible.
+            // If either one is a Backing.Number or a JsonValueKind.Number then we know the rhs is compatible.
             if (lhs.backing == Backing.Number && rhs.backing == Backing.Number)
             {
                 return BinaryJsonNumber.Compare(lhs.numberBacking, rhs.numberBacking);

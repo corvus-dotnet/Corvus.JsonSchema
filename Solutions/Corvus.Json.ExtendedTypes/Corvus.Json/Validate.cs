@@ -214,6 +214,792 @@ public static partial class Validate
     }
 
     /// <summary>
+    /// Validates the format byte.
+    /// </summary>
+    /// <typeparam name="T">The type of <see cref="IJsonValue"/> to validate.</typeparam>
+    /// <param name="instance">The instance to validate.</param>
+    /// <param name="validationContext">The validation context.</param>
+    /// <param name="level">The validation level.</param>
+    /// <returns>The updated validation context.</returns>
+    public static ValidationContext TypeByte<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+        where T : struct, IJsonValue<T>
+    {
+        JsonValueKind valueKind = instance.ValueKind;
+        if (valueKind != JsonValueKind.Number)
+        {
+            if (level >= ValidationLevel.Detailed)
+            {
+                return validationContext.WithResult(isValid: false, $"Validation 6.1.1 type - should have been byte 'number' but was '{valueKind}'.");
+            }
+            else if (level >= ValidationLevel.Basic)
+            {
+                return validationContext.WithResult(isValid: false, "Validation 6.1.1 type - should have been byte 'number'.,");
+            }
+            else
+            {
+                return validationContext.WithResult(isValid: false);
+            }
+        }
+        else
+        {
+            double value = (double)instance.AsNumber;
+            if (value != Math.Floor(value) || value > byte.MaxValue || value < byte.MinValue)
+            {
+                if (level >= ValidationLevel.Detailed)
+                {
+                    return validationContext.WithResult(isValid: false, $"Validation 6.1.1 type - should have been byte 'number' but was '{valueKind}' with value {value} and fractional part {value - Math.Floor(value)}.");
+                }
+                else if (level >= ValidationLevel.Basic)
+                {
+                    return validationContext.WithResult(isValid: false, "Validation 6.1.1 type - should have been byte 'number'.");
+                }
+                else
+                {
+                    return validationContext.WithResult(isValid: false);
+                }
+            }
+        }
+
+        if (level == ValidationLevel.Verbose)
+        {
+            return validationContext.WithResult(isValid: true, "Validation 6.1.1 type - was byte 'number'.");
+        }
+
+        return validationContext;
+    }
+
+    /// <summary>
+    /// Validates the format sbyte.
+    /// </summary>
+    /// <typeparam name="T">The type of <see cref="IJsonValue"/> to validate.</typeparam>
+    /// <param name="instance">The instance to validate.</param>
+    /// <param name="validationContext">The validation context.</param>
+    /// <param name="level">The validation level.</param>
+    /// <returns>The updated validation context.</returns>
+    public static ValidationContext TypeSByte<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+        where T : struct, IJsonValue<T>
+    {
+        JsonValueKind valueKind = instance.ValueKind;
+        if (valueKind != JsonValueKind.Number)
+        {
+            if (level >= ValidationLevel.Detailed)
+            {
+                return validationContext.WithResult(isValid: false, $"Validation 6.1.1 type - should have been an sbyte 'number' was '{valueKind}'.");
+            }
+            else if (level >= ValidationLevel.Basic)
+            {
+                return validationContext.WithResult(isValid: false, "Validation 6.1.1 type - should have been an sbyte 'number'.");
+            }
+            else
+            {
+                return validationContext.WithResult(isValid: false);
+            }
+        }
+        else
+        {
+            double value = (double)instance.AsNumber;
+            if (value != Math.Floor(value) || value > sbyte.MaxValue || value < sbyte.MinValue)
+            {
+                if (level >= ValidationLevel.Detailed)
+                {
+                    return validationContext.WithResult(isValid: false, $"Validation 6.1.1 type - should have been sbyte 'number' but was '{valueKind}' with value {value} and fractional part {value - Math.Floor(value)}.");
+                }
+                else if (level >= ValidationLevel.Basic)
+                {
+                    return validationContext.WithResult(isValid: false, "Validation 6.1.1 type - should have been sbyte 'number'.");
+                }
+                else
+                {
+                    return validationContext.WithResult(isValid: false);
+                }
+            }
+        }
+
+        if (level == ValidationLevel.Verbose)
+        {
+            return validationContext.WithResult(isValid: true, "Validation 6.1.1 type - was sbyte 'number'.");
+        }
+
+        return validationContext;
+    }
+
+    /// <summary>
+    /// Validates the format int16.
+    /// </summary>
+    /// <typeparam name="T">The type of <see cref="IJsonValue"/> to validate.</typeparam>
+    /// <param name="instance">The instance to validate.</param>
+    /// <param name="validationContext">The validation context.</param>
+    /// <param name="level">The validation level.</param>
+    /// <returns>The updated validation context.</returns>
+    public static ValidationContext TypeInt16<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+        where T : struct, IJsonValue<T>
+    {
+        JsonValueKind valueKind = instance.ValueKind;
+        if (valueKind != JsonValueKind.Number)
+        {
+            if (level >= ValidationLevel.Detailed)
+            {
+                return validationContext.WithResult(isValid: false, $"Validation 6.1.1 type - should have been an int16 'number' was '{valueKind}'.");
+            }
+            else if (level >= ValidationLevel.Basic)
+            {
+                return validationContext.WithResult(isValid: false, "Validation 6.1.1 type - should have been an int16 'number'.");
+            }
+            else
+            {
+                return validationContext.WithResult(isValid: false);
+            }
+        }
+        else
+        {
+            double value = (double)instance.AsNumber;
+            if (value != Math.Floor(value) || value > short.MaxValue || value < short.MinValue)
+            {
+                if (level >= ValidationLevel.Detailed)
+                {
+                    return validationContext.WithResult(isValid: false, $"Validation 6.1.1 type - should have been int16 'number' but was '{valueKind}' with value {value} and fractional part {value - Math.Floor(value)}.");
+                }
+                else if (level >= ValidationLevel.Basic)
+                {
+                    return validationContext.WithResult(isValid: false, "Validation 6.1.1 type - should have been int16 'number'.");
+                }
+                else
+                {
+                    return validationContext.WithResult(isValid: false);
+                }
+            }
+        }
+
+        if (level == ValidationLevel.Verbose)
+        {
+            return validationContext.WithResult(isValid: true, "Validation 6.1.1 type - was int16  'number'.");
+        }
+
+        return validationContext;
+    }
+
+    /// <summary>
+    /// Validates the format uint16.
+    /// </summary>
+    /// <typeparam name="T">The type of <see cref="IJsonValue"/> to validate.</typeparam>
+    /// <param name="instance">The instance to validate.</param>
+    /// <param name="validationContext">The validation context.</param>
+    /// <param name="level">The validation level.</param>
+    /// <returns>The updated validation context.</returns>
+    public static ValidationContext TypeUInt16<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+        where T : struct, IJsonValue<T>
+    {
+        JsonValueKind valueKind = instance.ValueKind;
+        if (valueKind != JsonValueKind.Number)
+        {
+            if (level >= ValidationLevel.Detailed)
+            {
+                return validationContext.WithResult(isValid: false, $"Validation 6.1.1 type - should have been an uint16 'number' was '{valueKind}'.");
+            }
+            else if (level >= ValidationLevel.Basic)
+            {
+                return validationContext.WithResult(isValid: false, "Validation 6.1.1 type - should have been an uint16 'number'.");
+            }
+            else
+            {
+                return validationContext.WithResult(isValid: false);
+            }
+        }
+        else
+        {
+            double value = (double)instance.AsNumber;
+            if (value != Math.Floor(value) || value > ushort.MaxValue || value < ushort.MinValue)
+            {
+                if (level >= ValidationLevel.Detailed)
+                {
+                    return validationContext.WithResult(isValid: false, $"Validation 6.1.1 type - should have been uint16 'number' but was '{valueKind}' with value {value} and fractional part {value - Math.Floor(value)}.");
+                }
+                else if (level >= ValidationLevel.Basic)
+                {
+                    return validationContext.WithResult(isValid: false, "Validation 6.1.1 type - should have been uint16 'number'.");
+                }
+                else
+                {
+                    return validationContext.WithResult(isValid: false);
+                }
+            }
+        }
+
+        if (level == ValidationLevel.Verbose)
+        {
+            return validationContext.WithResult(isValid: true, "Validation 6.1.1 type - was uint16 'number'.");
+        }
+
+        return validationContext;
+    }
+
+    /// <summary>
+    /// Validates the format int32.
+    /// </summary>
+    /// <typeparam name="T">The type of <see cref="IJsonValue"/> to validate.</typeparam>
+    /// <param name="instance">The instance to validate.</param>
+    /// <param name="validationContext">The validation context.</param>
+    /// <param name="level">The validation level.</param>
+    /// <returns>The updated validation context.</returns>
+    public static ValidationContext TypeInt32<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+        where T : struct, IJsonValue<T>
+    {
+        JsonValueKind valueKind = instance.ValueKind;
+        if (valueKind != JsonValueKind.Number)
+        {
+            if (level >= ValidationLevel.Detailed)
+            {
+                return validationContext.WithResult(isValid: false, $"Validation 6.1.1 type - should have been an int32 'number' was '{valueKind}'.");
+            }
+            else if (level >= ValidationLevel.Basic)
+            {
+                return validationContext.WithResult(isValid: false, "Validation 6.1.1 type - should have been an int32 'number'.");
+            }
+            else
+            {
+                return validationContext.WithResult(isValid: false);
+            }
+        }
+        else
+        {
+            double value = (double)instance.AsNumber;
+            if (value != Math.Floor(value) || value > int.MaxValue || value < int.MinValue)
+            {
+                if (level >= ValidationLevel.Detailed)
+                {
+                    return validationContext.WithResult(isValid: false, $"Validation 6.1.1 type - should have been int32 'number' but was '{valueKind}' with value {value} and fractional part {value - Math.Floor(value)}.");
+                }
+                else if (level >= ValidationLevel.Basic)
+                {
+                    return validationContext.WithResult(isValid: false, "Validation 6.1.1 type - should have been int32 'number'.");
+                }
+                else
+                {
+                    return validationContext.WithResult(isValid: false);
+                }
+            }
+        }
+
+        if (level == ValidationLevel.Verbose)
+        {
+            return validationContext.WithResult(isValid: true, "Validation 6.1.1 type - was int32 'number'.");
+        }
+
+        return validationContext;
+    }
+
+    /// <summary>
+    /// Validates the format uint32.
+    /// </summary>
+    /// <typeparam name="T">The type of <see cref="IJsonValue"/> to validate.</typeparam>
+    /// <param name="instance">The instance to validate.</param>
+    /// <param name="validationContext">The validation context.</param>
+    /// <param name="level">The validation level.</param>
+    /// <returns>The updated validation context.</returns>
+    public static ValidationContext TypeUInt32<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+        where T : struct, IJsonValue<T>
+    {
+        JsonValueKind valueKind = instance.ValueKind;
+        if (valueKind != JsonValueKind.Number)
+        {
+            if (level >= ValidationLevel.Detailed)
+            {
+                return validationContext.WithResult(isValid: false, $"Validation 6.1.1 type - should have been an uint32 'number' was '{valueKind}'.");
+            }
+            else if (level >= ValidationLevel.Basic)
+            {
+                return validationContext.WithResult(isValid: false, "Validation 6.1.1 type - should have been an uint32 'number'.");
+            }
+            else
+            {
+                return validationContext.WithResult(isValid: false);
+            }
+        }
+        else
+        {
+            double value = (double)instance.AsNumber;
+            if (value != Math.Floor(value) || value > uint.MaxValue || value < uint.MinValue)
+            {
+                if (level >= ValidationLevel.Detailed)
+                {
+                    return validationContext.WithResult(isValid: false, $"Validation 6.1.1 type - should have been uint32 'number' but was '{valueKind}' with value {value} and fractional part {value - Math.Floor(value)}.");
+                }
+                else if (level >= ValidationLevel.Basic)
+                {
+                    return validationContext.WithResult(isValid: false, "Validation 6.1.1 type - should have been uint32 'number'.");
+                }
+                else
+                {
+                    return validationContext.WithResult(isValid: false);
+                }
+            }
+        }
+
+        if (level == ValidationLevel.Verbose)
+        {
+            return validationContext.WithResult(isValid: true, "Validation 6.1.1 type - was uint32 'number'.");
+        }
+
+        return validationContext;
+    }
+
+    /// <summary>
+    /// Validates the format int64.
+    /// </summary>
+    /// <typeparam name="T">The type of <see cref="IJsonValue"/> to validate.</typeparam>
+    /// <param name="instance">The instance to validate.</param>
+    /// <param name="validationContext">The validation context.</param>
+    /// <param name="level">The validation level.</param>
+    /// <returns>The updated validation context.</returns>
+    public static ValidationContext TypeInt64<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+        where T : struct, IJsonValue<T>
+    {
+        JsonValueKind valueKind = instance.ValueKind;
+        if (valueKind != JsonValueKind.Number)
+        {
+            if (level >= ValidationLevel.Detailed)
+            {
+                return validationContext.WithResult(isValid: false, $"Validation 6.1.1 type - should have been an uint16 'number' was '{valueKind}'.");
+            }
+            else if (level >= ValidationLevel.Basic)
+            {
+                return validationContext.WithResult(isValid: false, "Validation 6.1.1 type - should have been an uint16 'number'.");
+            }
+            else
+            {
+                return validationContext.WithResult(isValid: false);
+            }
+        }
+        else
+        {
+            JsonNumber number = instance.AsNumber;
+            double value = (double)number;
+            var i128 = (Int128)number;
+            if (value != Math.Floor(value) || i128 > long.MaxValue || i128 < long.MinValue)
+            {
+                if (level >= ValidationLevel.Detailed)
+                {
+                    return validationContext.WithResult(isValid: false, $"Validation 6.1.1 type - should have been int64 'number' but was '{valueKind}' with value {value} and fractional part {value - Math.Floor(value)}.");
+                }
+                else if (level >= ValidationLevel.Basic)
+                {
+                    return validationContext.WithResult(isValid: false, "Validation 6.1.1 type - should have been int64 'number'.");
+                }
+                else
+                {
+                    return validationContext.WithResult(isValid: false);
+                }
+            }
+        }
+
+        if (level == ValidationLevel.Verbose)
+        {
+            return validationContext.WithResult(isValid: true, "Validation 6.1.1 type - was int64 'number'.");
+        }
+
+        return validationContext;
+    }
+
+    /// <summary>
+    /// Validates the format uint64.
+    /// </summary>
+    /// <typeparam name="T">The type of <see cref="IJsonValue"/> to validate.</typeparam>
+    /// <param name="instance">The instance to validate.</param>
+    /// <param name="validationContext">The validation context.</param>
+    /// <param name="level">The validation level.</param>
+    /// <returns>The updated validation context.</returns>
+    public static ValidationContext TypeUInt64<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+        where T : struct, IJsonValue<T>
+    {
+        JsonValueKind valueKind = instance.ValueKind;
+        if (valueKind != JsonValueKind.Number)
+        {
+            if (level >= ValidationLevel.Detailed)
+            {
+                return validationContext.WithResult(isValid: false, $"Validation 6.1.1 type - should have been an uint64 'number' was '{valueKind}'.");
+            }
+            else if (level >= ValidationLevel.Basic)
+            {
+                return validationContext.WithResult(isValid: false, "Validation 6.1.1 type - should have been an uint64 'number'.");
+            }
+            else
+            {
+                return validationContext.WithResult(isValid: false);
+            }
+        }
+        else
+        {
+            JsonNumber number = instance.AsNumber;
+            double value = (double)number;
+            var i128 = (Int128)number;
+            if (value != Math.Floor(value) || i128 > ulong.MaxValue || i128 < ulong.MinValue)
+            {
+                if (level >= ValidationLevel.Detailed)
+                {
+                    return validationContext.WithResult(isValid: false, $"Validation 6.1.1 type - should have been uint64 'number' but was '{valueKind}' with value {value} and fractional part {value - Math.Floor(value)}.");
+                }
+                else if (level >= ValidationLevel.Basic)
+                {
+                    return validationContext.WithResult(isValid: false, "Validation 6.1.1 type - should have been uint64 'number'.");
+                }
+                else
+                {
+                    return validationContext.WithResult(isValid: false);
+                }
+            }
+        }
+
+        if (level == ValidationLevel.Verbose)
+        {
+            return validationContext.WithResult(isValid: true, "Validation 6.1.1 type - was uint16 'number'.");
+        }
+
+        return validationContext;
+    }
+
+    /// <summary>
+    /// Validates the format int128.
+    /// </summary>
+    /// <typeparam name="T">The type of <see cref="IJsonValue"/> to validate.</typeparam>
+    /// <param name="instance">The instance to validate.</param>
+    /// <param name="validationContext">The validation context.</param>
+    /// <param name="level">The validation level.</param>
+    /// <returns>The updated validation context.</returns>
+    public static ValidationContext TypeInt128<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+        where T : struct, IJsonValue<T>
+    {
+        JsonValueKind valueKind = instance.ValueKind;
+        if (valueKind != JsonValueKind.Number)
+        {
+            if (level >= ValidationLevel.Detailed)
+            {
+                return validationContext.WithResult(isValid: false, $"Validation 6.1.1 type - should have been an int128 'number' was '{valueKind}'.");
+            }
+            else if (level >= ValidationLevel.Basic)
+            {
+                return validationContext.WithResult(isValid: false, "Validation 6.1.1 type - should have been an int128 'number'.");
+            }
+            else
+            {
+                return validationContext.WithResult(isValid: false);
+            }
+        }
+        else
+        {
+            try
+            {
+                _ = (Int128)instance.AsNumber;
+            }
+            catch (FormatException)
+            {
+                if (level >= ValidationLevel.Detailed)
+                {
+                    double value = (double)instance.AsNumber;
+                    return validationContext.WithResult(isValid: false, $"Validation 6.1.1 type - should have been int128 'number' but was '{valueKind}' with value {value} and fractional part {value - Math.Floor(value)}.");
+                }
+                else if (level >= ValidationLevel.Basic)
+                {
+                    return validationContext.WithResult(isValid: false, "Validation 6.1.1 type - should have been int128 'number'.");
+                }
+                else
+                {
+                    return validationContext.WithResult(isValid: false);
+                }
+            }
+        }
+
+        if (level == ValidationLevel.Verbose)
+        {
+            return validationContext.WithResult(isValid: true, "Validation 6.1.1 type - was int128 'number'.");
+        }
+
+        return validationContext;
+    }
+
+    /// <summary>
+    /// Validates the format uint128.
+    /// </summary>
+    /// <typeparam name="T">The type of <see cref="IJsonValue"/> to validate.</typeparam>
+    /// <param name="instance">The instance to validate.</param>
+    /// <param name="validationContext">The validation context.</param>
+    /// <param name="level">The validation level.</param>
+    /// <returns>The updated validation context.</returns>
+    public static ValidationContext TypeUInt128<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+        where T : struct, IJsonValue<T>
+    {
+        JsonValueKind valueKind = instance.ValueKind;
+        if (valueKind != JsonValueKind.Number)
+        {
+            if (level >= ValidationLevel.Detailed)
+            {
+                return validationContext.WithResult(isValid: false, $"Validation 6.1.1 type - should have been an uint128 'number' was '{valueKind}'.");
+            }
+            else if (level >= ValidationLevel.Basic)
+            {
+                return validationContext.WithResult(isValid: false, "Validation 6.1.1 type - should have been an uint128 'number'.");
+            }
+            else
+            {
+                return validationContext.WithResult(isValid: false);
+            }
+        }
+        else
+        {
+            try
+            {
+                _ = (UInt128)instance.AsNumber;
+            }
+            catch (FormatException)
+            {
+                if (level >= ValidationLevel.Detailed)
+                {
+                    double value = (double)instance.AsNumber;
+                    return validationContext.WithResult(isValid: false, $"Validation 6.1.1 type - should have been uint128 'number' but was '{valueKind}' with value {value} and fractional part {value - Math.Floor(value)}.");
+                }
+                else if (level >= ValidationLevel.Basic)
+                {
+                    return validationContext.WithResult(isValid: false, "Validation 6.1.1 type - should have been uint128 'number'.");
+                }
+                else
+                {
+                    return validationContext.WithResult(isValid: false);
+                }
+            }
+        }
+
+        if (level == ValidationLevel.Verbose)
+        {
+            return validationContext.WithResult(isValid: true, "Validation 6.1.1 type - was uint128 'number'.");
+        }
+
+        return validationContext;
+    }
+
+    /// <summary>
+    /// Validates the format half.
+    /// </summary>
+    /// <typeparam name="T">The type of <see cref="IJsonValue"/> to validate.</typeparam>
+    /// <param name="instance">The instance to validate.</param>
+    /// <param name="validationContext">The validation context.</param>
+    /// <param name="level">The validation level.</param>
+    /// <returns>The updated validation context.</returns>
+    public static ValidationContext TypeHalf<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+        where T : struct, IJsonValue<T>
+    {
+        JsonValueKind valueKind = instance.ValueKind;
+        if (valueKind != JsonValueKind.Number)
+        {
+            if (level >= ValidationLevel.Detailed)
+            {
+                return validationContext.WithResult(isValid: false, $"Validation 6.1.1 type - should have been a half 'number' was '{valueKind}'.");
+            }
+            else if (level >= ValidationLevel.Basic)
+            {
+                return validationContext.WithResult(isValid: false, "Validation 6.1.1 type - should have been a half 'number'.");
+            }
+            else
+            {
+                return validationContext.WithResult(isValid: false);
+            }
+        }
+        else
+        {
+            try
+            {
+                _ = (Half)instance.AsNumber;
+            }
+            catch (FormatException)
+            {
+                if (level >= ValidationLevel.Detailed)
+                {
+                    double value = (double)instance.AsNumber;
+                    return validationContext.WithResult(isValid: false, $"Validation 6.1.1 type - should have been half 'number' but was '{valueKind}' with value {value} and fractional part {value - Math.Floor(value)}.");
+                }
+                else if (level >= ValidationLevel.Basic)
+                {
+                    return validationContext.WithResult(isValid: false, "Validation 6.1.1 type - should have been half 'number'.");
+                }
+                else
+                {
+                    return validationContext.WithResult(isValid: false);
+                }
+            }
+        }
+
+        if (level == ValidationLevel.Verbose)
+        {
+            return validationContext.WithResult(isValid: true, "Validation 6.1.1 type - was half 'number'.");
+        }
+
+        return validationContext;
+    }
+
+    /// <summary>
+    /// Validates the format single.
+    /// </summary>
+    /// <typeparam name="T">The type of <see cref="IJsonValue"/> to validate.</typeparam>
+    /// <param name="instance">The instance to validate.</param>
+    /// <param name="validationContext">The validation context.</param>
+    /// <param name="level">The validation level.</param>
+    /// <returns>The updated validation context.</returns>
+    public static ValidationContext TypeSingle<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+        where T : struct, IJsonValue<T>
+    {
+        JsonValueKind valueKind = instance.ValueKind;
+        if (valueKind != JsonValueKind.Number)
+        {
+            if (level >= ValidationLevel.Detailed)
+            {
+                return validationContext.WithResult(isValid: false, $"Validation 6.1.1 type - should have been a single 'number' was '{valueKind}'.");
+            }
+            else if (level >= ValidationLevel.Basic)
+            {
+                return validationContext.WithResult(isValid: false, "Validation 6.1.1 type - should have been a single 'number'.");
+            }
+            else
+            {
+                return validationContext.WithResult(isValid: false);
+            }
+        }
+        else
+        {
+            try
+            {
+                _ = (float)instance.AsNumber;
+            }
+            catch (FormatException)
+            {
+                if (level >= ValidationLevel.Detailed)
+                {
+                    double value = (double)instance.AsNumber;
+                    return validationContext.WithResult(isValid: false, $"Validation 6.1.1 type - should have been single 'number' but was '{valueKind}' with value {value} and fractional part {value - Math.Floor(value)}.");
+                }
+                else if (level >= ValidationLevel.Basic)
+                {
+                    return validationContext.WithResult(isValid: false, "Validation 6.1.1 type - should have been single 'number'.");
+                }
+                else
+                {
+                    return validationContext.WithResult(isValid: false);
+                }
+            }
+        }
+
+        if (level == ValidationLevel.Verbose)
+        {
+            return validationContext.WithResult(isValid: true, "Validation 6.1.1 type - was uint16 'number'.");
+        }
+
+        return validationContext;
+    }
+
+    /// <summary>
+    /// Validates the format double.
+    /// </summary>
+    /// <typeparam name="T">The type of <see cref="IJsonValue"/> to validate.</typeparam>
+    /// <param name="instance">The instance to validate.</param>
+    /// <param name="validationContext">The validation context.</param>
+    /// <param name="level">The validation level.</param>
+    /// <returns>The updated validation context.</returns>
+    public static ValidationContext TypeDouble<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+        where T : struct, IJsonValue<T>
+    {
+        JsonValueKind valueKind = instance.ValueKind;
+        if (valueKind != JsonValueKind.Number)
+        {
+            if (level >= ValidationLevel.Detailed)
+            {
+                return validationContext.WithResult(isValid: false, $"Validation 6.1.1 type - should have been a single 'number' was '{valueKind}'.");
+            }
+            else if (level >= ValidationLevel.Basic)
+            {
+                return validationContext.WithResult(isValid: false, "Validation 6.1.1 type - should have been a single 'number'.");
+            }
+            else
+            {
+                return validationContext.WithResult(isValid: false);
+            }
+        }
+
+        try
+        {
+            _ = (double)instance.AsNumber;
+        }
+        catch (FormatException)
+        {
+            if (level >= ValidationLevel.Basic)
+            {
+                return validationContext.WithResult(isValid: false, "Validation 6.1.1 type - should have been double 'number'.");
+            }
+            else
+            {
+                return validationContext.WithResult(isValid: false);
+            }
+        }
+
+        if (level == ValidationLevel.Verbose)
+        {
+            return validationContext.WithResult(isValid: true, "Validation 6.1.1 type - was double 'number'.");
+        }
+
+        return validationContext;
+    }
+
+    /// <summary>
+    /// Validates the format decimal.
+    /// </summary>
+    /// <typeparam name="T">The type of <see cref="IJsonValue"/> to validate.</typeparam>
+    /// <param name="instance">The instance to validate.</param>
+    /// <param name="validationContext">The validation context.</param>
+    /// <param name="level">The validation level.</param>
+    /// <returns>The updated validation context.</returns>
+    public static ValidationContext TypeDecimal<T>(in T instance, in ValidationContext validationContext, ValidationLevel level)
+        where T : struct, IJsonValue<T>
+    {
+        JsonValueKind valueKind = instance.ValueKind;
+        if (valueKind != JsonValueKind.Number)
+        {
+            if (level >= ValidationLevel.Detailed)
+            {
+                return validationContext.WithResult(isValid: false, $"Validation 6.1.1 type - should have been a decimal 'number' was '{valueKind}'.");
+            }
+            else if (level >= ValidationLevel.Basic)
+            {
+                return validationContext.WithResult(isValid: false, "Validation 6.1.1 type - should have been a decimal 'number'.");
+            }
+            else
+            {
+                return validationContext.WithResult(isValid: false);
+            }
+        }
+        else
+        {
+            try
+            {
+                _ = (decimal)instance.AsNumber;
+            }
+            catch (FormatException)
+            {
+                if (level >= ValidationLevel.Basic)
+                {
+                    return validationContext.WithResult(isValid: false, "Validation 6.1.1 type - should have been single 'number'.");
+                }
+                else
+                {
+                    return validationContext.WithResult(isValid: false);
+                }
+            }
+        }
+
+        if (level == ValidationLevel.Verbose)
+        {
+            return validationContext.WithResult(isValid: true, "Validation 6.1.1 type - was decimal 'number'.");
+        }
+
+        return validationContext;
+    }
+
+    /// <summary>
     /// Validates the format uri-template.
     /// </summary>
     /// <typeparam name="T">The type of <see cref="IJsonValue"/> to validate.</typeparam>

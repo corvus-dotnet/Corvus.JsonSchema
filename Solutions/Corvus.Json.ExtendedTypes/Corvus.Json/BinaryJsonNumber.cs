@@ -1756,7 +1756,32 @@ public readonly struct BinaryJsonNumber :
         // When we read a JSON value we prefer a double
         if (jsonElement.TryGetDouble(out double jsonNumberDouble))
         {
-            return new BinaryJsonNumber(jsonNumberDouble);
+            if (jsonNumberDouble < 0)
+            {
+                if (jsonElement.TryGetInt128WithFallbacks(out Int128 jsonNumberInt128))
+                {
+                    if (jsonNumberInt128 != (Int128)jsonNumberDouble)
+                    {
+                        // This should be an int128 rather than a double
+                        return new BinaryJsonNumber(jsonNumberInt128);
+                    }
+                }
+
+                return new BinaryJsonNumber(jsonNumberDouble);
+            }
+            else
+            {
+                if (jsonElement.TryGetUInt128WithFallbacks(out UInt128 jsonNumberUInt128))
+                {
+                    if (jsonNumberUInt128 != (UInt128)jsonNumberDouble)
+                    {
+                        // This should be an int128 rather than a double
+                        return new BinaryJsonNumber(jsonNumberUInt128);
+                    }
+                }
+
+                return new BinaryJsonNumber(jsonNumberDouble);
+            }
         }
 
         // But if we can't, we'll go with a decimal
@@ -2941,7 +2966,7 @@ public readonly struct BinaryJsonNumber :
 
                 if (PreciseConversionTo<decimal>.TryFrom(numberBase, out decimal numberBaseAsDecimal))
                 {
-                    return  new(decimal.MaxMagnitude(binaryNumberDecimal, numberBaseAsDecimal));
+                    return new(decimal.MaxMagnitude(binaryNumberDecimal, numberBaseAsDecimal));
                 }
                 else
                 {
