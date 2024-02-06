@@ -16,4 +16,4 @@ config.AddJob(
         .WithOutlierMode(OutlierMode.RemoveAll)
         .WithStrategy(RunStrategy.Throughput));
 
-BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).RunAll(config);
+BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(config: config);

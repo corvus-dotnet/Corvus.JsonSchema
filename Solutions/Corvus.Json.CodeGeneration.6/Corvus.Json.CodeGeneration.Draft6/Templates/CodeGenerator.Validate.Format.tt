@@ -31,11 +31,25 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 {
     private ValidationContext ValidateFormat(JsonValueKind valueKind, in ValidationContext result, ValidationLevel level)
     {
+<#  if (IsJsonRelativePointer || IsJsonDate || IsJsonDateTime || IsJsonDuration || IsJsonTime || IsJsonEmail ||
+        IsJsonHostname || IsJsonIdnEmail || IsJsonIdnHostname || IsJsonIpV4 || IsJsonIpV6 || IsJsonIri ||
+        IsJsonIriReference || IsJsonPointer || IsJsonRegex || IsJsonTime || IsJsonUri || IsJsonUriReference ||
+        IsJsonUriTemplate || IsJsonBase64Content || IsJsonBase64String || IsJsonContent || IsJsonUuid)
+    { #>
         if (valueKind != JsonValueKind.String)
         {
             return result;
         }
-<#  if (IsJsonRelativePointer)
+<#  }
+    else
+    {#>
+        if (valueKind != JsonValueKind.Number)
+        {
+            return result;
+        }
+<#  }
+
+    if (IsJsonRelativePointer)
     { #>
         return Corvus.Json.Validate.TypeRelativePointer(this, result, level);
 <#  }
@@ -70,6 +84,62 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     else if (IsJsonIdnHostname)
     { #>
         return Corvus.Json.Validate.TypeIdnHostName(this, result, level);
+<#  }
+    else if (ConversionOperatorToByte == "implicit")
+    { #>
+        return Corvus.Json.Validate.TypeByte(this, result, level);
+<#  }
+    else if (ConversionOperatorToSByte == "implicit")
+    { #>
+        return Corvus.Json.Validate.TypeSByte(this, result, level);
+<#  }
+    else if (ConversionOperatorToInt16 == "implicit")
+    { #>
+        return Corvus.Json.Validate.TypeInt16(this, result, level);
+<#  }
+    else if (ConversionOperatorToUInt16 == "implicit")
+    { #>
+        return Corvus.Json.Validate.TypeUInt16(this, result, level);
+<#  }
+    else if (ConversionOperatorToInt32 == "implicit")
+    { #>
+        return Corvus.Json.Validate.TypeInt32(this, result, level);
+<#  }
+    else if (ConversionOperatorToUInt32 == "implicit")
+    { #>
+        return Corvus.Json.Validate.TypeUInt32(this, result, level);
+<#  }
+    else if (ConversionOperatorToInt64 == "implicit")
+    { #>
+        return Corvus.Json.Validate.TypeInt64(this, result, level);
+<#  }
+    else if (ConversionOperatorToUInt64 == "implicit")
+    { #>
+        return Corvus.Json.Validate.TypeUInt64(this, result, level);
+<#  }
+    else if (ConversionOperatorToInt128 == "implicit")
+    { #>
+        return Corvus.Json.Validate.TypeInt128(this, result, level);
+<#  }
+    else if (ConversionOperatorToUInt128 == "implicit")
+    { #>
+        return Corvus.Json.Validate.TypeUInt128(this, result, level);
+<#  }
+    else if (ConversionOperatorToHalf == "implicit")
+    { #>
+        return Corvus.Json.Validate.TypeHalf(this, result, level);
+<#  }
+    else if (ConversionOperatorToSingle == "implicit")
+    { #>
+        return Corvus.Json.Validate.TypeSingle(this, result, level);
+<#  }
+    else if (ConversionOperatorToDouble == "implicit")
+    { #>
+        return Corvus.Json.Validate.TypeDouble(this, result, level);
+<#  }
+    else if (ConversionOperatorToDecimal == "implicit")
+    { #>
+        return Corvus.Json.Validate.TypeDecimal(this, result, level);
 <#  }
     else if (IsJsonInteger)
     { #>

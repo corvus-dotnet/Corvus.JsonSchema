@@ -24,17 +24,6 @@ public readonly partial struct JsonInteger
     /// Initializes a new instance of the <see cref="JsonInteger"/> struct.
     /// </summary>
     /// <param name="value">The value from which to initialize the number.</param>
-    public JsonInteger(byte value)
-    {
-        this.jsonElementBacking = default;
-        this.backing = Backing.Number;
-        this.numberBacking = new(value);
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="JsonInteger"/> struct.
-    /// </summary>
-    /// <param name="value">The value from which to initialize the number.</param>
     public JsonInteger(short value)
     {
         this.jsonElementBacking = default;
@@ -69,6 +58,17 @@ public readonly partial struct JsonInteger
     /// </summary>
     /// <param name="value">The value from which to initialize the number.</param>
     public JsonInteger(Int128 value)
+    {
+        this.jsonElementBacking = default;
+        this.backing = Backing.Number;
+        this.numberBacking = new(value);
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonInteger"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to initialize the number.</param>
+    public JsonInteger(byte value)
     {
         this.jsonElementBacking = default;
         this.backing = Backing.Number;
@@ -444,7 +444,7 @@ public readonly partial struct JsonInteger
         throw new InvalidOperationException();
     }
 
-        /// <summary>
+    /// <summary>
     /// Conversion to UInt64.
     /// </summary>
     /// <param name="value">The value to convert.</param>
@@ -471,7 +471,7 @@ public readonly partial struct JsonInteger
     /// <param name="value">The value to convert.</param>
     public static explicit operator JsonInteger(decimal value)
     {
-        return new((long)value);
+        return new(new BinaryJsonNumber(value));
     }
 
     /// <summary>
@@ -480,7 +480,16 @@ public readonly partial struct JsonInteger
     /// <param name="value">The value to convert.</param>
     public static explicit operator JsonInteger(double value)
     {
-        return new((long)value);
+        return new(new BinaryJsonNumber(value));
+    }
+
+    /// <summary>
+    /// Conversion from single.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static explicit operator JsonInteger(float value)
+    {
+        return new(new BinaryJsonNumber(value));
     }
 
     /// <summary>
@@ -489,88 +498,97 @@ public readonly partial struct JsonInteger
     /// <param name="value">The value to convert.</param>
     public static explicit operator JsonInteger(Half value)
     {
-        return new((long)value);
-    }
-
-    /// <summary>
-    /// Conversion from short.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    public static implicit operator JsonInteger(short value)
-    {
-        return new(value);
-    }
-
-    /// <summary>
-    /// Conversion from float.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    public static explicit operator JsonInteger(float value)
-    {
-        return new((long)value);
+        return new(new BinaryJsonNumber(value));
     }
 
     /// <summary>
     /// Conversion from byte.
     /// </summary>
     /// <param name="value">The value to convert.</param>
-    public static implicit operator JsonInteger(byte value)
+    public static explicit operator JsonInteger(byte value)
     {
-        return new(value);
-    }
-
-    /// <summary>
-    /// Conversion from int.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    public static implicit operator JsonInteger(int value)
-    {
-        return new(value);
-    }
-
-    /// <summary>
-    /// Conversion from long.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    public static implicit operator JsonInteger(long value)
-    {
-        return new(value);
+        return new(new BinaryJsonNumber(value));
     }
 
     /// <summary>
     /// Conversion from sbyte.
     /// </summary>
     /// <param name="value">The value to convert.</param>
-    public static implicit operator JsonInteger(sbyte value)
+    public static explicit operator JsonInteger(sbyte value)
     {
-        return new(value);
+        return new(new BinaryJsonNumber(value));
     }
 
     /// <summary>
-    /// Conversion from ushort.
+    /// Conversion from int16.
     /// </summary>
     /// <param name="value">The value to convert.</param>
-    public static implicit operator JsonInteger(ushort value)
+    public static explicit operator JsonInteger(short value)
     {
-        return new(value);
+        return new(new BinaryJsonNumber(value));
     }
 
     /// <summary>
-    /// Conversion from uint.
+    /// Conversion from uint16.
     /// </summary>
     /// <param name="value">The value to convert.</param>
-    public static implicit operator JsonInteger(uint value)
+    public static explicit operator JsonInteger(ushort value)
     {
-        return new(value);
+        return new(new BinaryJsonNumber(value));
+    }
+
+    /// <summary>
+    /// Conversion from int32.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static explicit operator JsonInteger(int value)
+    {
+        return new(new BinaryJsonNumber(value));
+    }
+
+    /// <summary>
+    /// Conversion from uint32.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static explicit operator JsonInteger(uint value)
+    {
+        return new(new BinaryJsonNumber(value));
+    }
+
+    /// <summary>
+    /// Conversion from int64.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static implicit operator JsonInteger(long value)
+    {
+        return new(new BinaryJsonNumber(value));
     }
 
     /// <summary>
     /// Conversion from ulong.
     /// </summary>
     /// <param name="value">The value to convert.</param>
-    public static implicit operator JsonInteger(ulong value)
+    public static explicit operator JsonInteger(ulong value)
     {
-        return new(value);
+        return new(new BinaryJsonNumber(value));
+    }
+
+    /// <summary>
+    /// Conversion from int128.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static explicit operator JsonInteger(Int128 value)
+    {
+        return new(new BinaryJsonNumber(value));
+    }
+
+    /// <summary>
+    /// Conversion from uint128.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static explicit operator JsonInteger(UInt128 value)
+    {
+        return new(new BinaryJsonNumber(value));
     }
 
     /// <summary>

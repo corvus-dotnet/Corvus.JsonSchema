@@ -2001,6 +2001,76 @@ public partial class CodeGeneratorArray
     }
 
     /// <summary>
+    /// Gets a value indicating whether this can implicitly convert to a byte format.
+    /// </summary>
+    public string ConversionOperatorToByte => BuiltInTypes.ImplicitConversionToByte(this.TypeDeclaration.Schema().Format.GetString()) ? "implicit" : "explicit";
+
+    /// <summary>
+    /// Gets a value indicating whether this can implicitly convert to an int16 format.
+    /// </summary>
+    public string ConversionOperatorToInt16 => BuiltInTypes.ImplicitConversionToInt16(this.TypeDeclaration.Schema().Format.GetString()) ? "implicit" : "explicit";
+
+    /// <summary>
+    /// Gets a value indicating whether this can implicitly convert to an int32 format.
+    /// </summary>
+    public string ConversionOperatorToInt32 => BuiltInTypes.ImplicitConversionToInt32(this.TypeDeclaration.Schema().Format.GetString()) ? "implicit" : "explicit";
+
+    /// <summary>
+    /// Gets a value indicating whether this can implicitly convert to an int64 format.
+    /// </summary>
+    public string ConversionOperatorToInt64 => BuiltInTypes.ImplicitConversionToInt64(this.TypeDeclaration.Schema().Format.GetString()) ? "implicit" : "explicit";
+
+    /// <summary>
+    /// Gets a value indicating whether this can implicitly convert to an int128 format.
+    /// </summary>
+    public string ConversionOperatorToInt128 => BuiltInTypes.ImplicitConversionToInt128(this.TypeDeclaration.Schema().Format.GetString()) ? "implicit" : "explicit";
+
+    /// <summary>
+    /// Gets a value indicating whether this can implicitly convert to an sbyte format.
+    /// </summary>
+    public string ConversionOperatorToSByte => BuiltInTypes.ImplicitConversionToSByte(this.TypeDeclaration.Schema().Format.GetString()) ? "implicit" : "explicit";
+
+    /// <summary>
+    /// Gets a value indicating whether this can implicitly convert to an uint16 format.
+    /// </summary>
+    public string ConversionOperatorToUInt16 => BuiltInTypes.ImplicitConversionToUInt16(this.TypeDeclaration.Schema().Format.GetString()) ? "implicit" : "explicit";
+
+    /// <summary>
+    /// Gets a value indicating whether this can implicitly convert to an uint32 format.
+    /// </summary>
+    public string ConversionOperatorToUInt32 => BuiltInTypes.ImplicitConversionToUInt32(this.TypeDeclaration.Schema().Format.GetString()) ? "implicit" : "explicit";
+
+    /// <summary>
+    /// Gets a value indicating whether this can implicitly convert to an uint64 format.
+    /// </summary>
+    public string ConversionOperatorToUInt64 => BuiltInTypes.ImplicitConversionToUInt64(this.TypeDeclaration.Schema().Format.GetString()) ? "implicit" : "explicit";
+
+    /// <summary>
+    /// Gets a value indicating whether this can implicitly convert to an uint128 format.
+    /// </summary>
+    public string ConversionOperatorToUInt128 => BuiltInTypes.ImplicitConversionToUInt128(this.TypeDeclaration.Schema().Format.GetString()) ? "implicit" : "explicit";
+
+    /// <summary>
+    /// Gets a value indicating whether this can implicitly convert to an double format.
+    /// </summary>
+    public string ConversionOperatorToDouble => BuiltInTypes.ImplicitConversionToDouble(this.TypeDeclaration.Schema().Format.GetString()) ? "implicit" : "explicit";
+
+    /// <summary>
+    /// Gets a value indicating whether this can implicitly convert to an decimal format.
+    /// </summary>
+    public string ConversionOperatorToDecimal => BuiltInTypes.ImplicitConversionToDecimal(this.TypeDeclaration.Schema().Format.GetString()) ? "implicit" : "explicit";
+
+    /// <summary>
+    /// Gets a value indicating whether this can implicitly convert to a half format.
+    /// </summary>
+    public string ConversionOperatorToHalf => BuiltInTypes.ImplicitConversionToHalf(this.TypeDeclaration.Schema().Format.GetString()) ? "implicit" : "explicit";
+
+    /// <summary>
+    /// Gets a value indicating whether this can implicitly convert to a single format.
+    /// </summary>
+    public string ConversionOperatorToSingle => BuiltInTypes.ImplicitConversionToSingle(this.TypeDeclaration.Schema().Format.GetString()) ? "implicit" : "explicit";
+
+    /// <summary>
     /// Gets a value indicating whether this is an IPV4 address.
     /// </summary>
     public bool IsJsonIpV4
@@ -2352,6 +2422,16 @@ public partial class CodeGeneratorArray
         throw new ArgumentNullException(nameof(value));
     }
 
+    private static string GetRawStringValueAsQuotedString(JsonAny? value)
+    {
+        if (value is JsonAny actualValue && actualValue.ValueKind == JsonValueKind.String)
+        {
+            return Formatting.FormatLiteralOrNull(actualValue.AsJsonElement.GetRawText()[1..^1], true);
+        }
+
+        throw new ArgumentNullException(nameof(value));
+    }
+
     private bool MatchType(string typeToMatch)
     {
         if (this.TypeDeclaration.Schema().Type.IsNotUndefined())
@@ -2657,6 +2737,7 @@ public partial class CodeGeneratorArray
             this.IsArray = value.ValueKind == JsonValueKind.Array;
             this.IsNull = value.IsNull();
             this.SerializedValue = GetRawTextAsQuotedString(value);
+            this.RawStringValue = value.ValueKind == JsonValueKind.String ? GetRawStringValueAsQuotedString(value) : null;
             this.AsPropertyName = Formatting.ToPascalCaseWithReservedWords(this.SerializedValue.Trim('"')).ToString();
         }
 
@@ -2694,6 +2775,11 @@ public partial class CodeGeneratorArray
         /// Gets the serialized value. This will be quoted for strings, objects, and arrays, otherwise raw.
         /// </summary>
         public string SerializedValue { get; }
+
+        /// <summary>
+        /// Gets the raw value of a string value, as a quoted string. This will be null if the value was not a string.
+        /// </summary>
+        public string? RawStringValue { get; }
 
         /// <summary>
         /// Gets the serialized value as a property name.

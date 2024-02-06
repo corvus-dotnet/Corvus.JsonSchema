@@ -296,7 +296,7 @@ public readonly partial struct JsonNumber :
         }
 
         // After this point there is no need to check both value kinds because our first quick test verified that they were the same.
-        // If either one is a Backing.Number or a JsonValueKind.Number then we know the rhs is conmpatible.
+        // If either one is a Backing.Number or a JsonValueKind.Number then we know the rhs is compatible.
         if (lhs.backing == Backing.Number &&
             rhs.backing == Backing.Number)
         {
@@ -623,7 +623,7 @@ public readonly partial struct JsonNumber :
         }
 
         // After this point there is no need to check both value kinds because our first quick test verified that they were the same.
-        // If either one is a Backing.Number or a JsonValueKind.Number then we know the other is conmpatible.
+        // If either one is a Backing.Number or a JsonValueKind.Number then we know the other is compatible.
         if (this.backing == Backing.Number &&
             other.backing == Backing.JsonElement)
         {

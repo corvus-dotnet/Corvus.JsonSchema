@@ -1,6 +1,20 @@
 ﻿<#@ template language="C#" #>
 <#@ parameter type="System.String" name="TypeName"#>
 <#@ parameter type="System.String" name="JsonTypeName"#>
+<#@ parameter type="System.String" name="ConversionOperatorToByte" #>
+<#@ parameter type="System.String" name="ConversionOperatorToSByte" #>
+<#@ parameter type="System.String" name="ConversionOperatorToInt16" #>
+<#@ parameter type="System.String" name="ConversionOperatorToUInt16" #>
+<#@ parameter type="System.String" name="ConversionOperatorToInt32" #>
+<#@ parameter type="System.String" name="ConversionOperatorToUInt32" #>
+<#@ parameter type="System.String" name="ConversionOperatorToInt64" #>
+<#@ parameter type="System.String" name="ConversionOperatorToUInt64" #>
+<#@ parameter type="System.String" name="ConversionOperatorToInt128" #>
+<#@ parameter type="System.String" name="ConversionOperatorToUInt128" #>
+<#@ parameter type="System.String" name="ConversionOperatorToHalf" #>
+<#@ parameter type="System.String" name="ConversionOperatorToSingle" #>
+<#@ parameter type="System.String" name="ConversionOperatorToDouble" #>
+<#@ parameter type="System.String" name="ConversionOperatorToDecimal" #>
 // <copyright file="<#= TypeName #>.Basics.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
@@ -23,18 +37,7 @@ public readonly partial struct <#= TypeName #>
    IIncrementOperators<<#= TypeName #>>,
    IDecrementOperators<<#= TypeName #>>
 {
-    /// <summary>
-    /// Initializes a new instance of the <see cref="<#= TypeName #>"/> struct.
-    /// </summary>
-    /// <param name="value">The value from which to initialize the number.</param>
-    public <#= TypeName #>(byte value)
-    {
-        this.jsonElementBacking = default;
-        this.backing = Backing.Number;
-        this.numberBacking = new(value);
-    }
-
-<# if (JsonTypeName != "integer")
+<# if (JsonTypeName == "number" || JsonTypeName == "decimal")
     {#>
     /// <summary>
     /// Initializes a new instance of the <see cref="<#= TypeName #>"/> struct.
@@ -47,6 +50,10 @@ public readonly partial struct <#= TypeName #>
         this.numberBacking = new(value);
     }
 
+<#  }
+    
+    if (JsonTypeName == "number" || JsonTypeName == "double")
+    {#>
     /// <summary>
     /// Initializes a new instance of the <see cref="<#= TypeName #>"/> struct.
     /// </summary>
@@ -58,6 +65,10 @@ public readonly partial struct <#= TypeName #>
         this.numberBacking = new(value);
     }
 
+<#  }
+    
+    if (JsonTypeName == "number" || JsonTypeName == "half")
+    {#>
     /// <summary>
     /// Initializes a new instance of the <see cref="<#= TypeName #>"/> struct.
     /// </summary>
@@ -69,6 +80,10 @@ public readonly partial struct <#= TypeName #>
         this.numberBacking = new(value);
     }
 
+<#  }
+
+    if (JsonTypeName == "number" || JsonTypeName == "single")
+    {#>
     /// <summary>
     /// Initializes a new instance of the <see cref="<#= TypeName #>"/> struct.
     /// </summary>
@@ -80,7 +95,10 @@ public readonly partial struct <#= TypeName #>
         this.numberBacking = new(value);
     }
 
-<#  }#>
+<#  }
+    
+    if (JsonTypeName == "integer" || JsonTypeName == "int16")
+    {#>
     /// <summary>
     /// Initializes a new instance of the <see cref="<#= TypeName #>"/> struct.
     /// </summary>
@@ -92,6 +110,10 @@ public readonly partial struct <#= TypeName #>
         this.numberBacking = new(value);
     }
 
+<#  }
+    
+    if (JsonTypeName == "integer" || JsonTypeName == "int32")
+    {#>
     /// <summary>
     /// Initializes a new instance of the <see cref="<#= TypeName #>"/> struct.
     /// </summary>
@@ -103,6 +125,10 @@ public readonly partial struct <#= TypeName #>
         this.numberBacking = new(value);
     }
 
+<#  }
+    
+    if (JsonTypeName == "integer" || JsonTypeName == "int64")
+    {#>
     /// <summary>
     /// Initializes a new instance of the <see cref="<#= TypeName #>"/> struct.
     /// </summary>
@@ -114,6 +140,10 @@ public readonly partial struct <#= TypeName #>
         this.numberBacking = new(value);
     }
 
+<#  }
+    
+    if (JsonTypeName == "integer" || JsonTypeName == "int128")
+    {#>
     /// <summary>
     /// Initializes a new instance of the <see cref="<#= TypeName #>"/> struct.
     /// </summary>
@@ -125,6 +155,25 @@ public readonly partial struct <#= TypeName #>
         this.numberBacking = new(value);
     }
 
+<#  }
+    
+    if (JsonTypeName == "integer" || JsonTypeName == "byte")
+    {#>
+    /// <summary>
+    /// Initializes a new instance of the <see cref="<#= TypeName #>"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to initialize the number.</param>
+    public <#= TypeName #>(byte value)
+    {
+        this.jsonElementBacking = default;
+        this.backing = Backing.Number;
+        this.numberBacking = new(value);
+    }
+
+<#  }
+    
+    if (JsonTypeName == "integer" || JsonTypeName == "sbyte")
+    {#>
     /// <summary>
     /// Initializes a new instance of the <see cref="<#= TypeName #>"/> struct.
     /// </summary>
@@ -136,6 +185,10 @@ public readonly partial struct <#= TypeName #>
         this.numberBacking = new(value);
     }
 
+<#  }
+    
+    if (JsonTypeName == "integer" || JsonTypeName == "uint16")
+    {#>
     /// <summary>
     /// Initializes a new instance of the <see cref="<#= TypeName #>"/> struct.
     /// </summary>
@@ -147,6 +200,10 @@ public readonly partial struct <#= TypeName #>
         this.numberBacking = new(value);
     }
 
+<#  }
+    
+    if (JsonTypeName == "integer" || JsonTypeName == "uint32")
+    {#>
     /// <summary>
     /// Initializes a new instance of the <see cref="<#= TypeName #>"/> struct.
     /// </summary>
@@ -158,6 +215,10 @@ public readonly partial struct <#= TypeName #>
         this.numberBacking = new(value);
     }
 
+<#  }
+    
+    if (JsonTypeName == "integer" || JsonTypeName == "uint64")
+    {#>
     /// <summary>
     /// Initializes a new instance of the <see cref="<#= TypeName #>"/> struct.
     /// </summary>
@@ -169,6 +230,10 @@ public readonly partial struct <#= TypeName #>
         this.numberBacking = new(value);
     }
 
+<#  }
+    
+    if (JsonTypeName == "integer" || JsonTypeName == "uint128")
+    {#>
     /// <summary>
     /// Initializes a new instance of the <see cref="<#= TypeName #>"/> struct.
     /// </summary>
@@ -180,6 +245,7 @@ public readonly partial struct <#= TypeName #>
         this.numberBacking = new(value);
     }
 
+<#  }#>
     /// <summary>
     /// Conversion from JsonNumber.
     /// </summary>
@@ -227,7 +293,7 @@ public readonly partial struct <#= TypeName #>
     /// <param name="value">The value to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a number.</exception>
     /// <exception cref="FormatException">The value was not formatted as a byte.</exception>
-    public static explicit operator byte(<#= TypeName #> value)
+    public static <#= ConversionOperatorToByte ?? "explicit" #> operator byte(<#= TypeName #> value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -248,7 +314,7 @@ public readonly partial struct <#= TypeName #>
     /// <param name="value">The value to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a number.</exception>
     /// <exception cref="FormatException">The value was not formatted as a decimal.</exception>
-    public static explicit operator decimal(<#= TypeName #> value)
+    public static <#= ConversionOperatorToDecimal ?? "explicit" #> operator decimal(<#= TypeName #> value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -269,7 +335,7 @@ public readonly partial struct <#= TypeName #>
     /// <param name="value">The value to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a number.</exception>
     /// <exception cref="FormatException">The value was not formatted as a double.</exception>
-    public static explicit operator double(<#= TypeName #> value)
+    public static <#= ConversionOperatorToDouble ?? "explicit" #> operator double(<#= TypeName #> value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -290,7 +356,7 @@ public readonly partial struct <#= TypeName #>
     /// <param name="value">The value to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a number.</exception>
     /// <exception cref="FormatException">The value was not formatted as an Int16.</exception>
-    public static explicit operator short(<#= TypeName #> value)
+    public static <#= ConversionOperatorToInt16 ?? "explicit" #> operator short(<#= TypeName #> value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -311,7 +377,7 @@ public readonly partial struct <#= TypeName #>
     /// <param name="value">The value to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a number.</exception>
     /// <exception cref="FormatException">The value was not formatted as an Int32.</exception>
-    public static explicit operator int(<#= TypeName #> value)
+    public static <#= ConversionOperatorToInt32 ?? "explicit" #> operator int(<#= TypeName #> value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -332,7 +398,7 @@ public readonly partial struct <#= TypeName #>
     /// <param name="value">The value to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a number.</exception>
     /// <exception cref="FormatException">The value was not formatted as an Int64.</exception>
-    public static explicit operator long(<#= TypeName #> value)
+    public static <#= ConversionOperatorToInt64 ?? "explicit" #> operator long(<#= TypeName #> value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -353,7 +419,7 @@ public readonly partial struct <#= TypeName #>
     /// <param name="value">The value to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a number.</exception>
     /// <exception cref="FormatException">The value was not formatted as an Int64.</exception>
-    public static explicit operator Int128(<#= TypeName #> value)
+    public static <#= ConversionOperatorToInt128 ?? "explicit" #> operator Int128(<#= TypeName #> value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -374,7 +440,7 @@ public readonly partial struct <#= TypeName #>
     /// <param name="value">The value to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a number.</exception>
     /// <exception cref="FormatException">The value was not formatted as an SByte.</exception>
-    public static explicit operator sbyte(<#= TypeName #> value)
+    public static <#= ConversionOperatorToSByte ?? "explicit" #> operator sbyte(<#= TypeName #> value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -395,7 +461,7 @@ public readonly partial struct <#= TypeName #>
     /// <param name="value">The value to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a number.</exception>
     /// <exception cref="FormatException">The value was not formatted as a Single.</exception>
-    public static explicit operator Half(<#= TypeName #> value)
+    public static <#= ConversionOperatorToHalf ?? "explicit" #> operator Half(<#= TypeName #> value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -416,7 +482,7 @@ public readonly partial struct <#= TypeName #>
     /// <param name="value">The value to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a number.</exception>
     /// <exception cref="FormatException">The value was not formatted as a Single.</exception>
-    public static explicit operator float(<#= TypeName #> value)
+    public static <#= ConversionOperatorToSingle ?? "explicit" #> operator float(<#= TypeName #> value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -437,7 +503,7 @@ public readonly partial struct <#= TypeName #>
     /// <param name="value">The value to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a number.</exception>
     /// <exception cref="FormatException">The value was not formatted as an UInt16.</exception>
-    public static explicit operator ushort(<#= TypeName #> value)
+    public static <#= ConversionOperatorToUInt16 ?? "explicit" #> operator ushort(<#= TypeName #> value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -458,7 +524,7 @@ public readonly partial struct <#= TypeName #>
     /// <param name="value">The value to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a number.</exception>
     /// <exception cref="FormatException">The value was not formatted as an UInt32.</exception>
-    public static explicit operator uint(<#= TypeName #> value)
+    public static <#= ConversionOperatorToUInt32 ?? "explicit" #> operator uint(<#= TypeName #> value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -479,7 +545,7 @@ public readonly partial struct <#= TypeName #>
     /// <param name="value">The value to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a number.</exception>
     /// <exception cref="FormatException">The value was not formatted as an UInt64.</exception>
-    public static explicit operator ulong(<#= TypeName #> value)
+    public static <#= ConversionOperatorToUInt64 ?? "explicit" #> operator ulong(<#= TypeName #> value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -494,13 +560,13 @@ public readonly partial struct <#= TypeName #>
         throw new InvalidOperationException();
     }
 
-        /// <summary>
+    /// <summary>
     /// Conversion to UInt64.
     /// </summary>
     /// <param name="value">The value to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a number.</exception>
     /// <exception cref="FormatException">The value was not formatted as an UInt64.</exception>
-    public static explicit operator UInt128(<#= TypeName #> value)
+    public static <#= ConversionOperatorToUInt128 ?? "explicit" #> operator UInt128(<#= TypeName #> value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -515,155 +581,187 @@ public readonly partial struct <#= TypeName #>
         throw new InvalidOperationException();
     }
 
-<#  if (JsonTypeName == "integer")
+<#  if (JsonTypeName == "number" || JsonTypeName == "integer" || JsonTypeName == "decimal")
     {#>
     /// <summary>
     /// Conversion from decimal.
     /// </summary>
     /// <param name="value">The value to convert.</param>
-    public static explicit operator <#= TypeName #>(decimal value)
+    public static <#= ConversionOperatorToDecimal ?? (JsonTypeName == "number" ? "implicit" : "explicit") #> operator <#= TypeName #>(decimal value)
     {
-        return new((long)value);
+        return new(new BinaryJsonNumber(value));
     }
 
-    /// <summary>
-    /// Conversion from double.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    public static explicit operator <#= TypeName #>(double value)
-    {
-        return new((long)value);
-    }
-
-    /// <summary>
-    /// Conversion from Half.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    public static explicit operator <#= TypeName #>(Half value)
-    {
-        return new((long)value);
-    }
-
-    /// <summary>
-    /// Conversion from short.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    public static implicit operator <#= TypeName #>(short value)
-    {
-        return new(value);
-    }
-
-    /// <summary>
-    /// Conversion from float.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    public static explicit operator <#= TypeName #>(float value)
-    {
-        return new((long)value);
-    }
 <#  }
-    else
-    {#>
-    /// <summary>
-    /// Conversion from decimal.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    public static implicit operator <#= TypeName #>(decimal value)
-    {
-        return new(value);
-    }
 
+    if (JsonTypeName == "number" || JsonTypeName == "integer" || JsonTypeName == "double")
+    {#>
     /// <summary>
     /// Conversion from double.
     /// </summary>
     /// <param name="value">The value to convert.</param>
-    public static implicit operator <#= TypeName #>(double value)
+    public static <#= ConversionOperatorToDouble ?? (JsonTypeName == "number" ? "implicit" : "explicit") #> operator <#= TypeName #>(double value)
     {
-        return new(value);
+        return new(new BinaryJsonNumber(value));
     }
 
+<#  }
+
+    if (JsonTypeName == "number" || JsonTypeName == "integer" || JsonTypeName == "single")
+    {#>
+    /// <summary>
+    /// Conversion from single.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static <#= ConversionOperatorToSingle ?? "explicit" #> operator <#= TypeName #>(float value)
+    {
+        return new(new BinaryJsonNumber(value));
+    }
+
+<#  }
+
+    if (JsonTypeName == "number" || JsonTypeName == "integer" || JsonTypeName == "half")
+    {#>
     /// <summary>
     /// Conversion from Half.
     /// </summary>
     /// <param name="value">The value to convert.</param>
-    public static implicit operator <#= TypeName #>(Half value)
+    public static <#= ConversionOperatorToHalf ?? (JsonTypeName == "number" ? "implicit" : "explicit") #> operator <#= TypeName #>(Half value)
     {
-        return new(value);
+        return new(new BinaryJsonNumber(value));
     }
 
-    /// <summary>
-    /// Conversion from float.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    public static implicit operator <#= TypeName #>(float value)
-    {
-        return new(value);
-    }
-<#  }#>
+<#  }
 
+    if (JsonTypeName == "number" || JsonTypeName == "integer" || JsonTypeName == "byte")
+    {#>
     /// <summary>
     /// Conversion from byte.
     /// </summary>
     /// <param name="value">The value to convert.</param>
-    public static implicit operator <#= TypeName #>(byte value)
+    public static <#= ConversionOperatorToByte ?? "explicit" #> operator <#= TypeName #>(byte value)
     {
-        return new(value);
+        return new(new BinaryJsonNumber(value));
     }
 
-    /// <summary>
-    /// Conversion from int.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    public static implicit operator <#= TypeName #>(int value)
-    {
-        return new(value);
-    }
+<#  }
 
-    /// <summary>
-    /// Conversion from long.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    public static implicit operator <#= TypeName #>(long value)
-    {
-        return new(value);
-    }
-
+    if (JsonTypeName == "number" || JsonTypeName == "integer" || JsonTypeName == "sbyte")
+    {#>
     /// <summary>
     /// Conversion from sbyte.
     /// </summary>
     /// <param name="value">The value to convert.</param>
-    public static implicit operator <#= TypeName #>(sbyte value)
+    public static <#= ConversionOperatorToSByte ?? "explicit" #> operator <#= TypeName #>(sbyte value)
     {
-        return new(value);
+        return new(new BinaryJsonNumber(value));
     }
 
+<#  }
+
+    if (JsonTypeName == "number" || JsonTypeName == "integer" || JsonTypeName == "int16")
+    {#>
     /// <summary>
-    /// Conversion from ushort.
+    /// Conversion from int16.
     /// </summary>
     /// <param name="value">The value to convert.</param>
-    public static implicit operator <#= TypeName #>(ushort value)
+    public static <#= ConversionOperatorToInt16 ?? "explicit" #> operator <#= TypeName #>(short value)
     {
-        return new(value);
+        return new(new BinaryJsonNumber(value));
     }
 
+<#  }
+
+    if (JsonTypeName == "number" || JsonTypeName == "integer" || JsonTypeName == "uint16")
+    {#>
     /// <summary>
-    /// Conversion from uint.
+    /// Conversion from uint16.
     /// </summary>
     /// <param name="value">The value to convert.</param>
-    public static implicit operator <#= TypeName #>(uint value)
+    public static <#= ConversionOperatorToUInt16 ?? "explicit" #> operator <#= TypeName #>(ushort value)
     {
-        return new(value);
+        return new(new BinaryJsonNumber(value));
     }
 
+<#  }
+
+    if (JsonTypeName == "number" || JsonTypeName == "integer" || JsonTypeName == "int32")
+    {#>
+    /// <summary>
+    /// Conversion from int32.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static <#= ConversionOperatorToInt32 ?? "explicit" #> operator <#= TypeName #>(int value)
+    {
+        return new(new BinaryJsonNumber(value));
+    }
+
+<#  }
+
+    if (JsonTypeName == "number" || JsonTypeName == "integer" || JsonTypeName == "uint32")
+    {#>
+    /// <summary>
+    /// Conversion from uint32.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static <#= ConversionOperatorToUInt32 ?? "explicit" #> operator <#= TypeName #>(uint value)
+    {
+        return new(new BinaryJsonNumber(value));
+    }
+
+<#  }
+
+    if (JsonTypeName == "number" || JsonTypeName == "integer" || JsonTypeName == "int64")
+    {#>
+    /// <summary>
+    /// Conversion from int64.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static <#= ConversionOperatorToInt64 ?? "implicit" #> operator <#= TypeName #>(long value)
+    {
+        return new(new BinaryJsonNumber(value));
+    }
+
+<#  }
+
+    if (JsonTypeName == "number" || JsonTypeName == "integer" || JsonTypeName == "uint64")
+    {#>
     /// <summary>
     /// Conversion from ulong.
     /// </summary>
     /// <param name="value">The value to convert.</param>
-    public static implicit operator <#= TypeName #>(ulong value)
+    public static <#= ConversionOperatorToUInt64 ?? "explicit" #> operator <#= TypeName #>(ulong value)
     {
-        return new(value);
+        return new(new BinaryJsonNumber(value));
     }
 
+<#  }
+
+    if (JsonTypeName == "number" || JsonTypeName == "integer" || JsonTypeName == "int128")
+    {#>
+    /// <summary>
+    /// Conversion from int128.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static <#= ConversionOperatorToInt128 ?? "explicit" #> operator <#= TypeName #>(Int128 value)
+    {
+        return new(new BinaryJsonNumber(value));
+    }
+
+<#  }
+
+    if (JsonTypeName == "number" || JsonTypeName == "integer" || JsonTypeName == "uint128")
+    {#>
+    /// <summary>
+    /// Conversion from uint128.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static <#= ConversionOperatorToUInt128 ?? "explicit" #> operator <#= TypeName #>(UInt128 value)
+    {
+        return new(new BinaryJsonNumber(value));
+    }
+
+<#  }#>
     /// <summary>
     /// Adds two values together to compute their sum.
     /// </summary>

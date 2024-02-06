@@ -57,6 +57,34 @@ t4 -o ./GeneratedFormatTypes/JsonUuid.Basics.cs -p"=TypeName=JsonUuid" -p"=JsonT
 REM See ./Templates/FormattedNumberType.Core.tt for details
 t4 -o ./GeneratedFormatTypes/JsonInteger.Core.cs -p"=TypeName=JsonInteger" -p"=JsonTypeName=integer" -p"=ValidateMethodName=TypeInteger" ./Templates/FormattedNumberType.Core.tt
 t4 -o ./GeneratedFormatTypes/JsonInteger.Basics.cs -p"=TypeName=JsonInteger" -p"=JsonTypeName=integer" ./Templates/FormattedNumberType.Basics.tt
+t4 -o ./GeneratedFormatTypes/JsonByte.Core.cs -p"=TypeName=JsonByte" -p"=JsonTypeName= byte" -p"=ConversionOperatorToByte=implicit" -p="ValidateMethodName=TypeByte" ./Templates/FormattedNumberType.Core.tt
+t4 -o ./GeneratedFormatTypes/JsonByte.Basics.cs -p"=TypeName=JsonByte" -p"=JsonTypeName=byte" -p"=ConversionOperatorToByte=implicit" ./Templates/FormattedNumberType.Basics.tt
+t4 -o ./GeneratedFormatTypes/JsonSByte.Core.cs -p"=TypeName=JsonSByte" -p"=JsonTypeName=sbyte" -p"=ConversionOperatorToSByte=implicit" -p="ValidateMethodName=TypeSByte" ./Templates/FormattedNumberType.Core.tt
+t4 -o ./GeneratedFormatTypes/JsonSByte.Basics.cs -p"=TypeName=JsonSByte" -p"=JsonTypeName=sbyte" -p"=ConversionOperatorToSByte=implicit" ./Templates/FormattedNumberType.Basics.tt
+t4 -o ./GeneratedFormatTypes/JsonInt16.Core.cs -p"=TypeName=JsonInt16" -p"=JsonTypeName=int16" -p"=ConversionOperatorToInt16=implicit"  -p="ValidateMethodName=TypeInt16" ./Templates/FormattedNumberType.Core.tt
+t4 -o ./GeneratedFormatTypes/JsonInt16.Basics.cs -p"=TypeName=JsonInt16" -p"=JsonTypeName=int16" -p"=ConversionOperatorToInt16=implicit" ./Templates/FormattedNumberType.Basics.tt
+t4 -o ./GeneratedFormatTypes/JsonUInt16.Core.cs -p"=TypeName=JsonUInt16" -p"=JsonTypeName=uint16" -p"=ConversionOperatorToUInt16=implicit"  -p="ValidateMethodName=TypeUInt16" ./Templates/FormattedNumberType.Core.tt
+t4 -o ./GeneratedFormatTypes/JsonUInt16.Basics.cs -p"=TypeName=JsonUInt16" -p"=JsonTypeName=uint16" -p"=ConversionOperatorToUInt16=implicit" ./Templates/FormattedNumberType.Basics.tt
+t4 -o ./GeneratedFormatTypes/JsonInt32.Core.cs -p"=TypeName=JsonInt32" -p"=JsonTypeName=int32" -p"=ConversionOperatorToInt32=implicit"  -p="ValidateMethodName=TypeInt32" ./Templates/FormattedNumberType.Core.tt
+t4 -o ./GeneratedFormatTypes/JsonInt32.Basics.cs -p"=TypeName=JsonInt32" -p"=JsonTypeName=int32" -p"=ConversionOperatorToInt32=implicit" ./Templates/FormattedNumberType.Basics.tt
+t4 -o ./GeneratedFormatTypes/JsonUInt32.Core.cs -p"=TypeName=JsonUInt32" -p"=JsonTypeName=uint32" -p"=ConversionOperatorToUInt32=implicit"  -p="ValidateMethodName=TypeUInt32" ./Templates/FormattedNumberType.Core.tt
+t4 -o ./GeneratedFormatTypes/JsonUInt32.Basics.cs -p"=TypeName=JsonUInt32" -p"=JsonTypeName=uint32" -p"=ConversionOperatorToUInt32=implicit" ./Templates/FormattedNumberType.Basics.tt
+t4 -o ./GeneratedFormatTypes/JsonInt64.Core.cs -p"=TypeName=JsonInt64" -p"=JsonTypeName=int64" -p"=ConversionOperatorToInt64=implicit"  -p="ValidateMethodName=TypeInt64" ./Templates/FormattedNumberType.Core.tt
+t4 -o ./GeneratedFormatTypes/JsonInt64.Basics.cs -p"=TypeName=JsonInt64" -p"=JsonTypeName=int64" -p"=ConversionOperatorToInt64=implicit" ./Templates/FormattedNumberType.Basics.tt
+t4 -o ./GeneratedFormatTypes/JsonUInt64.Core.cs -p"=TypeName=JsonUInt64" -p"=JsonTypeName=uint64" -p"=ConversionOperatorToUInt64=implicit"  -p="ValidateMethodName=TypeUInt64" ./Templates/FormattedNumberType.Core.tt
+t4 -o ./GeneratedFormatTypes/JsonUInt64.Basics.cs -p"=TypeName=JsonUInt64" -p"=JsonTypeName=uint64" -p"=ConversionOperatorToUInt64=implicit" ./Templates/FormattedNumberType.Basics.tt
+t4 -o ./GeneratedFormatTypes/JsonInt128.Core.cs -p"=TypeName=JsonInt128" -p"=JsonTypeName=int128" -p"=ConversionOperatorToInt128=implicit"  -p="ValidateMethodName=TypeInt128" ./Templates/FormattedNumberType.Core.tt
+t4 -o ./GeneratedFormatTypes/JsonInt128.Basics.cs -p"=TypeName=JsonInt128" -p"=JsonTypeName=int128" -p"=ConversionOperatorToInt128=implicit" ./Templates/FormattedNumberType.Basics.tt
+t4 -o ./GeneratedFormatTypes/JsonUInt128.Core.cs -p"=TypeName=JsonUInt128" -p"=JsonTypeName=uint128" -p"=ConversionOperatorToUInt128=implicit"  -p="ValidateMethodName=TypeUInt128" ./Templates/FormattedNumberType.Core.tt
+t4 -o ./GeneratedFormatTypes/JsonUInt128.Basics.cs -p"=TypeName=JsonUInt128" -p"=JsonTypeName=uint128" -p"=ConversionOperatorToUInt128=implicit" ./Templates/FormattedNumberType.Basics.tt
+t4 -o ./GeneratedFormatTypes/JsonHalf.Core.cs -p"=TypeName=JsonHalf" -p"=JsonTypeName=half" -p"=ConversionOperatorToHalf=implicit"  -p="ValidateMethodName=TypeHalf" ./Templates/FormattedNumberType.Core.tt
+t4 -o ./GeneratedFormatTypes/JsonHalf.Basics.cs -p"=TypeName=JsonHalf" -p"=JsonTypeName=half" -p"=ConversionOperatorToHalf=implicit" ./Templates/FormattedNumberType.Basics.tt
+t4 -o ./GeneratedFormatTypes/JsonSingle.Core.cs -p"=TypeName=JsonSingle" -p"=JsonTypeName=single" -p"=ConversionOperatorToSingle=implicit"  -p="ValidateMethodName=TypeSingle" ./Templates/FormattedNumberType.Core.tt
+t4 -o ./GeneratedFormatTypes/JsonSingle.Basics.cs -p"=TypeName=JsonSingle" -p"=JsonTypeName=single" -p"=ConversionOperatorToSingle=implicit" ./Templates/FormattedNumberType.Basics.tt
+t4 -o ./GeneratedFormatTypes/JsonDouble.Core.cs -p"=TypeName=JsonDouble" -p"=JsonTypeName=double" -p"=ConversionOperatorToDouble=implicit"  -p="ValidateMethodName=TypeDouble" ./Templates/FormattedNumberType.Core.tt
+t4 -o ./GeneratedFormatTypes/JsonDouble.Basics.cs -p"=TypeName=JsonDouble" -p"=JsonTypeName=double" -p"=ConversionOperatorToDouble=implicit" ./Templates/FormattedNumberType.Basics.tt
+t4 -o ./GeneratedFormatTypes/JsonDecimal.Core.cs -p"=TypeName=JsonDecimal" -p"=JsonTypeName=decimal" -p"=ConversionOperatorToDecimal=implicit"  -p="ValidateMethodName=TypeDecimal" ./Templates/FormattedNumberType.Core.tt
+t4 -o ./GeneratedFormatTypes/JsonDecimal.Basics.cs -p"=TypeName=JsonDecimal" -p"=JsonTypeName=decimal" -p"=ConversionOperatorToDecimal=implicit" ./Templates/FormattedNumberType.Basics.tt
 
 REM See ./Templates/CustomAny.Core.tt for details
 t4 -o ./GeneratedFormatTypes/JsonAny.Core.cs -p"=TypeName=JsonAny" -p"=Summary=Represents any JSON value." -p"=HasConversionsToJsonAny=false" ./Templates/CustomAny.Core.tt
