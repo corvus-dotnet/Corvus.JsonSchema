@@ -11,14 +11,4 @@ namespace Corvus.Json;
 /// </summary>
 public readonly partial struct JsonInteger
 {
-    /// <summary>
-    /// Initializes a new instance of the <see cref="JsonInteger"/> struct.
-    /// </summary>
-    /// <param name="value">The integer value.</param>
-    public JsonInteger(long value)
-    {
-        this.jsonElementBacking = default;
-        this.backing = Backing.Number;
-        this.numberBacking = value;
-    }
 }

@@ -1,7 +1,9 @@
 # Corvus.JsonSchema
-Support for Json Schema validation and entity generation
+Support for [Json Schema](https://json-schema.org/) validation and entity generation
 
 For an introduction to the concepts here, take a look at [this blog post](https://endjin.com/blog/2021/05/csharp-serialization-with-system-text-json-schema).
+
+There's also [a talk by @idg10](https://endjin.com/what-we-think/talks/high-performance-json-serialization-with-code-generation-on-csharp-11-and-dotnet-7-0) on the techniques used in this library.
 
 ## Getting started
 
@@ -228,9 +230,9 @@ A dotnet command line tool that generates C# code from JSON schema.
 
 Builds on System.Text.Json to provide a rich object model over JSON data, with validation for well-known types.
 
-### Corvus.Json.JsonSchema
+### Corvus.Json.JsonSchema.*
 
-An object model for working with JSON Schema documents. *This does not provide validation of data - it is purely a model for reading,  writing, and validating JSON Schema documents of various flavours.*
+Object models for working with JSON Schema documents. *This does not provide validation of data - it is purely a model for reading,  writing, and validating JSON Schema documents of various flavours.*
 
 ### Corvus.Json.CodeGeneration.Abstractions
 
@@ -275,3 +277,54 @@ Generates Feature Files in `Corvus.Json.Specs` for the JSON Patch tests.
 ### Corvus.JsonPatch.Benchmarking
 
 Benchmark suites for various components.
+
+## V2.0 Updates
+
+There have been considerable breaking changes with V2.0 of the generator. This section will help you understand what has changed, and how to update your code.
+
+### Json Schema Models
+
+The JSON Schema Models have been broken out into separate projects.
+
+  - Corvus.Json.JsonSchema.Draft6
+  - Corvus.Json.JsonSchema.Draft7
+  - Corvus.Json.JsonSchema.Draft201909
+  - Corvus.Json.JsonSchema.Draft202012
+
+### Code Generation
+
+### Property Names
+
+The static values for JSON Property Names have been moved from the root type, to a nested subtype called `PropertyNamesEntity`
+
+### Conversions and operators
+
+The implicit/explicit conversions and operators have been rationalised. More explicit conversions are required, at the expense of the implicit conversions.
+
+However, most implicit conversions from/to intrinsic types are still supported.
+
+
+## System.Text.Json support by other projects
+
+There is a thriving ecosystem of System.Text.Json-based projects out there. 
+
+In particular I would point you at
+
+[JsonEverything](https://github.com/gregsdennis/json-everything) by [@gregsdennis](https://github.com/gregsdennis)
+
+- JSON Schema, drafts 6 and higher ([Specification](https://json-schema.org))
+- JSON Path ([RFC in progress](https://github.com/ietf-wg-jsonpath/draft-ietf-jsonpath-jsonpath)) (.Net Standard 2.1)
+- JSON Patch ([RFC 6902](https://tools.ietf.org/html/rfc6902))
+- JsonLogic ([Website](https://jsonlogic.com)) (.Net Standard 2.1)
+- JSON Pointer ([RFC 6901](https://tools.ietf.org/html/rfc6901))
+- Relative JSON Pointer ([Specification](https://tools.ietf.org/id/draft-handrews-relative-json-pointer-00.html))
+- Json.More.Net (Useful System.Text.Json extensions)
+- Yaml2JsonNode
+
+[JsonCons.Net](https://github.com/danielaparker/JsonCons.Net) by [@danielParker](https://github.com/danielaparker)
+
+- JSON Pointer
+- JSON Patch
+- JSON Merge Patch
+- JSON Path
+- JMES Path

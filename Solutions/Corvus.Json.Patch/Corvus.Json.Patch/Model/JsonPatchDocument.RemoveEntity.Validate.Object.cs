@@ -38,7 +38,7 @@ public readonly partial struct JsonPatchDocument
                     result = result.WithLocalProperty(propertyCount);
                     if (level > ValidationLevel.Basic)
                     {
-                        result = result.PushDocumentProperty("properties", property.Name);
+                        result = result.PushDocumentProperty("properties", property.Name.GetString());
                     }
 
                     var propertyResult = propertyValidator(property, result.CreateChildContext(), level);

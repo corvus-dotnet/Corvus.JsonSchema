@@ -163,7 +163,7 @@ public readonly struct UriTemplate
     /// <remarks>This serializes the object, and treats each property on the resulting <see cref="JsonObject"/> as a named parameter value.</remarks>
     public UriTemplate SetParameters<T>(T parameters, JsonWriterOptions options = default)
     {
-        return this.SetParameters(JsonAny.From(parameters, options));
+        return this.SetParameters(JsonAny.CreateFromSerializedInstance(parameters, options));
     }
 
     /// <summary>
@@ -194,7 +194,7 @@ public readonly struct UriTemplate
         builder.AddRange(this.parameters);
         foreach (JsonObjectProperty property in parameters.EnumerateObject())
         {
-            string name = property.Name;
+            string name = property.Name.GetString();
             if (builder.ContainsKey(name))
             {
                 builder.Remove(name);
@@ -259,7 +259,7 @@ public readonly struct UriTemplate
     /// <returns>An instance of the template with the updated parameters.</returns>
     public UriTemplate SetParameter(string name, string value)
     {
-        return new UriTemplate(this.template, this.resolvePartially, this.parameters.SetItem(name, value), this.parser);
+        return new UriTemplate(this.template, this.resolvePartially, this.parameters.SetItem(name, new(value)), this.parser);
     }
 
     /// <summary>
@@ -270,7 +270,7 @@ public readonly struct UriTemplate
     /// <returns>An instance of the template with the updated parameters.</returns>
     public UriTemplate SetParameter(string name, double value)
     {
-        return new UriTemplate(this.template, this.resolvePartially, this.parameters.SetItem(name, value), this.parser);
+        return new UriTemplate(this.template, this.resolvePartially, this.parameters.SetItem(name, new(new BinaryJsonNumber(value))), this.parser);
     }
 
     /// <summary>
@@ -281,7 +281,7 @@ public readonly struct UriTemplate
     /// <returns>An instance of the template with the updated parameters.</returns>
     public UriTemplate SetParameter(string name, int value)
     {
-        return new UriTemplate(this.template, this.resolvePartially, this.parameters.SetItem(name, value), this.parser);
+        return new UriTemplate(this.template, this.resolvePartially, this.parameters.SetItem(name, new(new BinaryJsonNumber(value))), this.parser);
     }
 
     /// <summary>
@@ -292,7 +292,7 @@ public readonly struct UriTemplate
     /// <returns>An instance of the template with the updated parameters.</returns>
     public UriTemplate SetParameter(string name, long value)
     {
-        return new UriTemplate(this.template, this.resolvePartially, this.parameters.SetItem(name, value), this.parser);
+        return new UriTemplate(this.template, this.resolvePartially, this.parameters.SetItem(name, new(new BinaryJsonNumber(value))), this.parser);
     }
 
     /// <summary>
@@ -303,7 +303,7 @@ public readonly struct UriTemplate
     /// <returns>An instance of the template with the updated parameters.</returns>
     public UriTemplate SetParameter(string name, bool value)
     {
-        return new UriTemplate(this.template, this.resolvePartially, this.parameters.SetItem(name, value), this.parser);
+        return new UriTemplate(this.template, this.resolvePartially, this.parameters.SetItem(name, new(value)), this.parser);
     }
 
     /// <summary>
@@ -314,7 +314,7 @@ public readonly struct UriTemplate
     /// <returns>An instance of the template with the updated parameters.</returns>
     public UriTemplate SetParameter(string name, IEnumerable<string> value)
     {
-        return new UriTemplate(this.template, this.resolvePartially, this.parameters.SetItem(name, JsonAny.FromRange(value)), this.parser);
+        return new UriTemplate(this.template, this.resolvePartially, this.parameters.SetItem(name, JsonArray.FromRange(value)), this.parser);
     }
 
     /// <summary>
@@ -325,7 +325,7 @@ public readonly struct UriTemplate
     /// <returns>An instance of the template with the updated parameters.</returns>
     public UriTemplate SetParameter(string name, IDictionary<string, string> value)
     {
-        return new UriTemplate(this.template, this.resolvePartially, this.parameters.SetItem(name, JsonAny.From(value)), this.parser);
+        return new UriTemplate(this.template, this.resolvePartially, this.parameters.SetItem(name, JsonAny.CreateFromSerializedInstance(value)), this.parser);
     }
 
     /// <summary>
@@ -351,8 +351,8 @@ public readonly struct UriTemplate
     public string Resolve()
     {
         ArrayBufferWriter<char> output = new();
-        var properties = this.parameters.ToImmutableDictionary(k => (JsonPropertyName)k.Key, v => v.Value);
-        if (!JsonUriTemplateResolver.TryResolveResult(this.template.AsSpan(), output, this.resolvePartially, JsonAny.FromProperties(properties)))
+        var properties = this.parameters.ToImmutableDictionary(k => new JsonPropertyName(k.Key), v => v.Value);
+        if (!JsonUriTemplateResolver.TryResolveResult(this.template.AsSpan(), output, this.resolvePartially, JsonObject.FromProperties(properties)))
         {
             throw new ArgumentException("Malformed template.");
         }

@@ -18,7 +18,7 @@ public readonly partial struct JsonInteger : IJsonNumber<JsonInteger>
 {
     private readonly Backing backing;
     private readonly JsonElement jsonElementBacking;
-    private readonly double numberBacking;
+    private readonly BinaryJsonNumber numberBacking;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonInteger"/> struct.
@@ -39,6 +39,17 @@ public readonly partial struct JsonInteger : IJsonNumber<JsonInteger>
         this.jsonElementBacking = value;
         this.backing = Backing.JsonElement;
         this.numberBacking = default;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonInteger"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to construct the instance.</param>
+    public JsonInteger(in BinaryJsonNumber value)
+    {
+        this.jsonElementBacking = default;
+        this.backing = Backing.Number;
+        this.numberBacking = value;
     }
 
     /// <summary>
@@ -105,8 +116,7 @@ public readonly partial struct JsonInteger : IJsonNumber<JsonInteger>
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonString AsString
+    JsonString IJsonValue.AsString
     {
         get
         {
@@ -120,8 +130,7 @@ public readonly partial struct JsonInteger : IJsonNumber<JsonInteger>
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonBoolean AsBoolean
+    JsonBoolean IJsonValue.AsBoolean
     {
         get
         {
@@ -154,8 +163,7 @@ public readonly partial struct JsonInteger : IJsonNumber<JsonInteger>
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonObject AsObject
+    JsonObject IJsonValue.AsObject
     {
         get
         {
@@ -169,8 +177,7 @@ public readonly partial struct JsonInteger : IJsonNumber<JsonInteger>
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonArray AsArray
+    JsonArray IJsonValue.AsArray
     {
         get
         {
@@ -213,6 +220,9 @@ public readonly partial struct JsonInteger : IJsonNumber<JsonInteger>
         }
     }
 
+    /// <inheritdoc/>
+    public BinaryJsonNumber AsBinaryJsonNumber => this.HasDotnetBacking ? this.numberBacking : BinaryJsonNumber.FromJson(this.jsonElementBacking);
+
     /// <summary>
     /// Equality operator.
     /// </summary>
@@ -243,7 +253,7 @@ public readonly partial struct JsonInteger : IJsonNumber<JsonInteger>
     /// <returns><see langword="true"/> if the left is less than the right, otherwise <see langword="false"/>.</returns>
     public static bool operator <(in JsonInteger left, in JsonInteger right)
     {
-        return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && (double)left < (double)right;
+        return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && Compare(left, right) < 0;
     }
 
     /// <summary>
@@ -254,7 +264,82 @@ public readonly partial struct JsonInteger : IJsonNumber<JsonInteger>
     /// <returns><see langword="true"/> if the left is greater than the right, otherwise <see langword="false"/>.</returns>
     public static bool operator >(in JsonInteger left, in JsonInteger right)
     {
-        return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && (double)left > (double)right;
+        return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && Compare(left, right) > 0;
+    }
+
+    /// <summary>
+    /// Less than operator.
+    /// </summary>
+    /// <param name="left">The LHS of the comparison.</param>
+    /// <param name="right">The RHS of the comparison.</param>
+    /// <returns><see langword="true"/> if the left is less than the right, otherwise <see langword="false"/>.</returns>
+    public static bool operator <=(in JsonInteger left, in JsonInteger right)
+    {
+        return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && Compare(left, right) <= 0;
+    }
+
+    /// <summary>
+    /// Greater than operator.
+    /// </summary>
+    /// <param name="left">The LHS of the comparison.</param>
+    /// <param name="right">The RHS of the comparison.</param>
+    /// <returns><see langword="true"/> if the left is greater than the right, otherwise <see langword="false"/>.</returns>
+    public static bool operator >=(in JsonInteger left, in JsonInteger right)
+    {
+        return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && Compare(left, right) >= 0;
+    }
+
+    /// <summary>
+    /// Compare with another number.
+    /// </summary>
+    /// <param name="lhs">The lhs of the comparison.</param>
+    /// <param name="rhs">The rhs of the comparison.</param>
+    /// <returns>0 if the numbers are equal, -1 if the lhs is less than the rhs, and 1 if the lhs is greater than the rhs.</returns>
+    public static int Compare(in JsonInteger lhs, in JsonInteger rhs)
+    {
+        if (lhs.ValueKind != rhs.ValueKind)
+        {
+            // We can't be equal if we are not the same underlying type
+            return lhs.IsNullOrUndefined() ? 1 : -1;
+        }
+
+        if (lhs.IsNull())
+        {
+            // Nulls are always equal
+            return 0;
+        }
+
+        if (lhs.backing == Backing.Number &&
+            rhs.backing == Backing.Number)
+        {
+            return BinaryJsonNumber.Compare(lhs.numberBacking, rhs.numberBacking);
+        }
+
+        // After this point there is no need to check both value kinds because our first quick test verified that they were the same.
+        // If either one is a Backing.Number or a JsonValueKind.Number then we know the rhs is conmpatible.
+        if (lhs.backing == Backing.Number &&
+            rhs.backing == Backing.Number)
+        {
+            return BinaryJsonNumber.Compare(lhs.numberBacking, rhs.numberBacking);
+        }
+
+        if (lhs.backing == Backing.Number &&
+            rhs.backing == Backing.JsonElement)
+        {
+            return BinaryJsonNumber.Compare(lhs.numberBacking, rhs.jsonElementBacking);
+        }
+
+        if (lhs.backing == Backing.JsonElement && rhs.backing == Backing.Number)
+        {
+            return BinaryJsonNumber.Compare(lhs.jsonElementBacking, rhs.numberBacking);
+        }
+
+        if (lhs.backing == Backing.JsonElement && rhs.backing == Backing.JsonElement && rhs.jsonElementBacking.ValueKind == JsonValueKind.Number)
+        {
+            return JsonValueHelpers.NumericCompare(lhs.jsonElementBacking, rhs.jsonElementBacking);
+        }
+
+        throw new InvalidOperationException();
     }
 
     /// <summary>
@@ -276,7 +361,7 @@ public readonly partial struct JsonInteger : IJsonNumber<JsonInteger>
         JsonValueKind valueKind = value.ValueKind;
         return valueKind switch
         {
-            JsonValueKind.Number => new((double)value),
+            JsonValueKind.Number => new(value.AsNumber.AsBinaryJsonNumber),
             JsonValueKind.Null => Null,
             _ => Undefined,
         };
@@ -301,9 +386,7 @@ public readonly partial struct JsonInteger : IJsonNumber<JsonInteger>
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>The value will be undefined if it cannot be initialized with the specified instance.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static JsonInteger FromString<TValue>(in TValue value)
-        where TValue : struct, IJsonString<TValue>
+    static JsonInteger IJsonValue<JsonInteger>.FromString<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -321,9 +404,7 @@ public readonly partial struct JsonInteger : IJsonNumber<JsonInteger>
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>The value will be undefined if it cannot be initialized with the specified instance.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static JsonInteger FromBoolean<TValue>(in TValue value)
-        where TValue : struct, IJsonBoolean<TValue>
+    static JsonInteger IJsonValue<JsonInteger>.FromBoolean<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -351,7 +432,7 @@ public readonly partial struct JsonInteger : IJsonNumber<JsonInteger>
 
         if (value.ValueKind == JsonValueKind.Number)
         {
-            return new((double)value);
+            return new(value.AsBinaryJsonNumber);
         }
 
         return Undefined;
@@ -365,9 +446,7 @@ public readonly partial struct JsonInteger : IJsonNumber<JsonInteger>
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>The value will be undefined if it cannot be initialized with the specified instance.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static JsonInteger FromArray<TValue>(in TValue value)
-        where TValue : struct, IJsonArray<TValue>
+    static JsonInteger IJsonValue<JsonInteger>.FromArray<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -385,9 +464,7 @@ public readonly partial struct JsonInteger : IJsonNumber<JsonInteger>
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>The value will be undefined if it cannot be initialized with the specified instance.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static JsonInteger FromObject<TValue>(in TValue value)
-        where TValue : struct, IJsonObject<TValue>
+    static JsonInteger IJsonValue<JsonInteger>.FromObject<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -488,7 +565,7 @@ public readonly partial struct JsonInteger : IJsonNumber<JsonInteger>
     }
 
     /// <summary>
-    /// Gets the value as the target value.
+    /// Gets the value as an instance of the target value.
     /// </summary>
     /// <typeparam name="TTarget">The type of the target.</typeparam>
     /// <returns>An instance of the target type.</returns>
@@ -523,14 +600,18 @@ public readonly partial struct JsonInteger : IJsonNumber<JsonInteger>
     }
 
     /// <inheritdoc/>
-    public bool Equals<T>(T other)
+    public bool Equals<T>(in T other)
         where T : struct, IJsonValue<T>
     {
         return JsonValueHelpers.CompareValues(this, other);
     }
 
-    /// <inheritdoc/>
-    public bool Equals(JsonInteger other)
+    /// <summary>
+    /// Equality comparison.
+    /// </summary>
+    /// <param name="other">The other item with which to compare.</param>
+    /// <returns><see langword="true"/> if the values were equal.</returns>
+    public bool Equals(in JsonInteger other)
     {
         return JsonValueHelpers.CompareValues(this, other);
     }
@@ -556,7 +637,7 @@ public readonly partial struct JsonInteger : IJsonNumber<JsonInteger>
 
         if ((this.backing & Backing.Number) != 0)
         {
-            writer.WriteNumberValue(this.numberBacking);
+            this.numberBacking.WriteTo(writer);
             return;
         }
     }

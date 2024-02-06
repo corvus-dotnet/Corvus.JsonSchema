@@ -18,7 +18,7 @@ public readonly partial struct JsonArray
     /// <summary>
     /// Gets an empty array.
     /// </summary>
-    public static readonly JsonArray EmptyArray = From(ImmutableList<JsonAny>.Empty);
+    public static readonly JsonArray EmptyArray = From([]);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonArray"/> struct.
@@ -69,15 +69,6 @@ public readonly partial struct JsonArray
     }
 
     /// <summary>
-    /// Conversion from JsonAny.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonArray(JsonAny value)
-    {
-        return value.AsArray;
-    }
-
-    /// <summary>
     /// Conversion to JsonAny.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
@@ -87,21 +78,12 @@ public readonly partial struct JsonArray
     }
 
     /// <summary>
-    /// Conversion from immutable list.
+    /// Conversion from JsonAny.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
-    public static implicit operator ImmutableList<JsonAny>(JsonArray value)
+    public static implicit operator JsonArray(JsonAny value)
     {
-        return value.GetImmutableList();
-    }
-
-    /// <summary>s
-    /// Conversion to immutable list.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonArray(ImmutableList<JsonAny> value)
-    {
-        return new(value);
+        return value.As<JsonArray>();
     }
 
     /// <summary>
@@ -132,9 +114,7 @@ public readonly partial struct JsonArray
     /// <returns>A JsonAny instantiated from the given array.</returns>
     public static JsonArray FromItems(in JsonAny value1)
     {
-        ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
-        builder.Add(value1.AsAny);
-        return new(builder.ToImmutable());
+        return new([value1.AsAny]);
     }
 
     /// <summary>
@@ -145,10 +125,7 @@ public readonly partial struct JsonArray
     /// <returns>A JsonAny instantiated from the given array.</returns>
     public static JsonArray FromItems(in JsonAny value1, in JsonAny value2)
     {
-        ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
-        builder.Add(value1);
-        builder.Add(value2);
-        return new(builder.ToImmutable());
+        return new([value1, value2]);
     }
 
     /// <summary>
@@ -156,15 +133,11 @@ public readonly partial struct JsonArray
     /// </summary>
     /// <param name="value1">The first value from which to construct the instance.</param>
     /// <param name="value2">The second value from which to construct the instance.</param>
-    /// <param name="value3">The thirdvalue from which to construct the instance.</param>
+    /// <param name="value3">The third value from which to construct the instance.</param>
     /// <returns>A JsonAny instantiated from the given array.</returns>
     public static JsonArray FromItems(in JsonAny value1, in JsonAny value2, in JsonAny value3)
     {
-        ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
-        builder.Add(value1);
-        builder.Add(value2);
-        builder.Add(value3);
-        return new(builder.ToImmutable());
+        return new([value1, value2, value3]);
     }
 
     /// <summary>
@@ -217,13 +190,7 @@ public readonly partial struct JsonArray
     /// <returns>The new array created from the items.</returns>
     public static JsonArray FromRange(IEnumerable<JsonAny> items)
     {
-        ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
-        foreach (JsonAny item in items)
-        {
-            builder.Add(item);
-        }
-
-        return new JsonArray(builder.ToImmutable());
+        return new JsonArray([.. items]);
     }
 
     /// <summary>
@@ -236,7 +203,7 @@ public readonly partial struct JsonArray
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         foreach (string item in items)
         {
-            builder.Add(new JsonAny(item));
+            builder.Add((JsonAny)item);
         }
 
         return new JsonArray(builder.ToImmutable());
@@ -252,7 +219,7 @@ public readonly partial struct JsonArray
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         foreach (double item in items)
         {
-            builder.Add(new JsonAny(item));
+            builder.Add(new JsonAny(new BinaryJsonNumber(item)));
         }
 
         return new JsonArray(builder.ToImmutable());
@@ -268,7 +235,7 @@ public readonly partial struct JsonArray
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         foreach (float item in items)
         {
-            builder.Add(new JsonAny(item));
+            builder.Add(new JsonAny(new BinaryJsonNumber(item)));
         }
 
         return new JsonArray(builder.ToImmutable());
@@ -284,7 +251,7 @@ public readonly partial struct JsonArray
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         foreach (int item in items)
         {
-            builder.Add(new JsonAny(item));
+            builder.Add(new JsonAny(new BinaryJsonNumber(item)));
         }
 
         return new JsonArray(builder.ToImmutable());
@@ -300,7 +267,7 @@ public readonly partial struct JsonArray
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         foreach (long item in items)
         {
-            builder.Add(new JsonAny(item));
+            builder.Add(new JsonAny(new BinaryJsonNumber(item)));
         }
 
         return new JsonArray(builder.ToImmutable());
@@ -316,7 +283,7 @@ public readonly partial struct JsonArray
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         foreach (bool item in items)
         {
-            builder.Add(new JsonAny(item));
+            builder.Add((JsonAny)item);
         }
 
         return new JsonArray(builder.ToImmutable());

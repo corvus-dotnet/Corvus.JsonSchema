@@ -123,8 +123,7 @@ public readonly partial struct JsonIpV4 : IJsonString<JsonIpV4>
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonBoolean AsBoolean
+    JsonBoolean IJsonValue.AsBoolean
     {
         get
         {
@@ -138,8 +137,7 @@ public readonly partial struct JsonIpV4 : IJsonString<JsonIpV4>
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonNumber AsNumber
+    JsonNumber IJsonValue.AsNumber
     {
         get
         {
@@ -153,8 +151,7 @@ public readonly partial struct JsonIpV4 : IJsonString<JsonIpV4>
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonObject AsObject
+    JsonObject IJsonValue.AsObject
     {
         get
         {
@@ -168,8 +165,7 @@ public readonly partial struct JsonIpV4 : IJsonString<JsonIpV4>
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonArray AsArray
+    JsonArray IJsonValue.AsArray
     {
         get
         {
@@ -253,7 +249,7 @@ public readonly partial struct JsonIpV4 : IJsonString<JsonIpV4>
         JsonValueKind valueKind = value.ValueKind;
         return valueKind switch
         {
-            JsonValueKind.String => new((string)value),
+            JsonValueKind.String => new((string)value.AsString),
             JsonValueKind.Null => Null,
             _ => Undefined,
         };
@@ -302,9 +298,7 @@ public readonly partial struct JsonIpV4 : IJsonString<JsonIpV4>
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>The value will be undefined if it cannot be initialized with the specified instance.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static JsonIpV4 FromBoolean<TValue>(in TValue value)
-        where TValue : struct, IJsonBoolean<TValue>
+    static JsonIpV4 IJsonValue<JsonIpV4>.FromBoolean<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -322,9 +316,7 @@ public readonly partial struct JsonIpV4 : IJsonString<JsonIpV4>
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>The value will be undefined if it cannot be initialized with the specified instance.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static JsonIpV4 FromNumber<TValue>(in TValue value)
-        where TValue : struct, IJsonNumber<TValue>
+    static JsonIpV4 IJsonValue<JsonIpV4>.FromNumber<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -342,9 +334,7 @@ public readonly partial struct JsonIpV4 : IJsonString<JsonIpV4>
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>The value will be undefined if it cannot be initialized with the specified instance.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static JsonIpV4 FromArray<TValue>(in TValue value)
-        where TValue : struct, IJsonArray<TValue>
+    static JsonIpV4 IJsonValue<JsonIpV4>.FromArray<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -362,9 +352,7 @@ public readonly partial struct JsonIpV4 : IJsonString<JsonIpV4>
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>The value will be undefined if it cannot be initialized with the specified instance.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static JsonIpV4 FromObject<TValue>(in TValue value)
-        where TValue : struct, IJsonObject<TValue>
+    static JsonIpV4 IJsonValue<JsonIpV4>.FromObject<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -435,7 +423,7 @@ public readonly partial struct JsonIpV4 : IJsonString<JsonIpV4>
     }
 
     /// <summary>
-    /// Gets the value as the target value.
+    /// Gets the value as an instance of the target value.
     /// </summary>
     /// <typeparam name="TTarget">The type of the target.</typeparam>
     /// <returns>An instance of the target type.</returns>
@@ -470,14 +458,18 @@ public readonly partial struct JsonIpV4 : IJsonString<JsonIpV4>
     }
 
     /// <inheritdoc/>
-    public bool Equals<T>(T other)
+    public bool Equals<T>(in T other)
         where T : struct, IJsonValue<T>
     {
         return JsonValueHelpers.CompareValues(this, other);
     }
 
-    /// <inheritdoc/>
-    public bool Equals(JsonIpV4 other)
+    /// <summary>
+    /// Equality comparison.
+    /// </summary>
+    /// <param name="other">The other item with which to compare.</param>
+    /// <returns><see langword="true"/> if the values were equal.</returns>
+    public bool Equals(in JsonIpV4 other)
     {
         return JsonValueHelpers.CompareValues(this, other);
     }

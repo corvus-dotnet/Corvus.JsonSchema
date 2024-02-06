@@ -21,23 +21,57 @@ namespace Corvus.Json.Benchmarking.Models;
 public readonly partial struct Person
 {
     /// <summary>
-    /// JSON property name for <see cref = "DateOfBirth"/>.
+    /// The well-known property names in the JSON object.
     /// </summary>
-    public static ReadOnlySpan<byte> DateOfBirthUtf8JsonPropertyName => "dateOfBirth"u8;
+    public static class JsonPropertyNames
+    {
+        /// <summary>
+        /// JSON property name for <see cref = "DateOfBirth"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> DateOfBirthUtf8 => "dateOfBirth"u8;
 
-    /// <summary>
-    /// JSON property name for <see cref = "DateOfBirth"/>.
-    /// </summary>
-    public const string DateOfBirthJsonPropertyName = "dateOfBirth";
-    /// <summary>
-    /// JSON property name for <see cref = "Name"/>.
-    /// </summary>
-    public static ReadOnlySpan<byte> NameUtf8JsonPropertyName => "name"u8;
+        /// <summary>
+        /// JSON property name for <see cref = "DateOfBirth"/>.
+        /// </summary>
+        public const string DateOfBirth = "dateOfBirth";
+        /// <summary>
+        /// JSON property name for <see cref = "Email"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> EmailUtf8 => "email"u8;
 
-    /// <summary>
-    /// JSON property name for <see cref = "Name"/>.
-    /// </summary>
-    public const string NameJsonPropertyName = "name";
+        /// <summary>
+        /// JSON property name for <see cref = "Email"/>.
+        /// </summary>
+        public const string Email = "email";
+        /// <summary>
+        /// JSON property name for <see cref = "Height"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> HeightUtf8 => "height"u8;
+
+        /// <summary>
+        /// JSON property name for <see cref = "Height"/>.
+        /// </summary>
+        public const string Height = "height";
+        /// <summary>
+        /// JSON property name for <see cref = "Name"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> NameUtf8 => "name"u8;
+
+        /// <summary>
+        /// JSON property name for <see cref = "Name"/>.
+        /// </summary>
+        public const string Name = "name";
+        /// <summary>
+        /// JSON property name for <see cref = "NetWorth"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> NetWorthUtf8 => "netWorth"u8;
+
+        /// <summary>
+        /// JSON property name for <see cref = "NetWorth"/>.
+        /// </summary>
+        public const string NetWorth = "netWorth";
+    }
+
     /// <summary>
     /// Gets DateOfBirth.
     /// </summary>
@@ -52,7 +86,7 @@ public readonly partial struct Person
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(DateOfBirthUtf8JsonPropertyName, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.DateOfBirthUtf8, out JsonElement result))
                 {
                     return new Corvus.Json.JsonDate(result);
                 }
@@ -60,9 +94,73 @@ public readonly partial struct Person
 
             if ((this.backing & Backing.Object) != 0)
             {
-                if (this.objectBacking.TryGetValue(DateOfBirthJsonPropertyName, out JsonAny result))
+                if (this.objectBacking.TryGetValue(JsonPropertyNames.DateOfBirth, out JsonAny result))
                 {
                     return result.As<Corvus.Json.JsonDate>();
+                }
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets Email.
+    /// </summary>
+    public Corvus.Json.JsonEmail Email
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                {
+                    return default;
+                }
+
+                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.EmailUtf8, out JsonElement result))
+                {
+                    return new Corvus.Json.JsonEmail(result);
+                }
+            }
+
+            if ((this.backing & Backing.Object) != 0)
+            {
+                if (this.objectBacking.TryGetValue(JsonPropertyNames.Email, out JsonAny result))
+                {
+                    return result.As<Corvus.Json.JsonEmail>();
+                }
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets Height.
+    /// </summary>
+    public Corvus.Json.Benchmarking.Models.HeightRangeDouble Height
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                {
+                    return default;
+                }
+
+                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.HeightUtf8, out JsonElement result))
+                {
+                    return new Corvus.Json.Benchmarking.Models.HeightRangeDouble(result);
+                }
+            }
+
+            if ((this.backing & Backing.Object) != 0)
+            {
+                if (this.objectBacking.TryGetValue(JsonPropertyNames.Height, out JsonAny result))
+                {
+                    return result.As<Corvus.Json.Benchmarking.Models.HeightRangeDouble>();
                 }
             }
 
@@ -84,7 +182,7 @@ public readonly partial struct Person
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(NameUtf8JsonPropertyName, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.NameUtf8, out JsonElement result))
                 {
                     return new Corvus.Json.Benchmarking.Models.PersonName(result);
                 }
@@ -92,7 +190,7 @@ public readonly partial struct Person
 
             if ((this.backing & Backing.Object) != 0)
             {
-                if (this.objectBacking.TryGetValue(NameJsonPropertyName, out JsonAny result))
+                if (this.objectBacking.TryGetValue(JsonPropertyNames.Name, out JsonAny result))
                 {
                     return result.As<Corvus.Json.Benchmarking.Models.PersonName>();
                 }
@@ -103,18 +201,65 @@ public readonly partial struct Person
     }
 
     /// <summary>
+    /// Gets NetWorth.
+    /// </summary>
+    public Corvus.Json.JsonNumber NetWorth
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                {
+                    return default;
+                }
+
+                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.NetWorthUtf8, out JsonElement result))
+                {
+                    return new Corvus.Json.JsonNumber(result);
+                }
+            }
+
+            if ((this.backing & Backing.Object) != 0)
+            {
+                if (this.objectBacking.TryGetValue(JsonPropertyNames.NetWorth, out JsonAny result))
+                {
+                    return result.As<Corvus.Json.JsonNumber>();
+                }
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
     /// Creates an instance of a <see cref = "Person"/>.
     /// </summary>
-    public static Person Create(Corvus.Json.Benchmarking.Models.PersonName name, Corvus.Json.JsonDate? dateOfBirth = null)
+    public static Person Create(Corvus.Json.Benchmarking.Models.PersonName name, Corvus.Json.JsonDate? dateOfBirth = null, Corvus.Json.JsonEmail? email = null, Corvus.Json.Benchmarking.Models.HeightRangeDouble? height = null, Corvus.Json.JsonNumber? netWorth = null)
     {
-        var builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
-        builder.Add(NameJsonPropertyName, name.AsAny);
+        var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
+        builder.Add(JsonPropertyNames.Name, name.AsAny);
         if (dateOfBirth is Corvus.Json.JsonDate dateOfBirth__)
         {
-            builder.Add(DateOfBirthJsonPropertyName, dateOfBirth__.AsAny);
+            builder.Add(JsonPropertyNames.DateOfBirth, dateOfBirth__.AsAny);
         }
 
-        return builder.ToImmutable();
+        if (email is Corvus.Json.JsonEmail email__)
+        {
+            builder.Add(JsonPropertyNames.Email, email__.AsAny);
+        }
+
+        if (height is Corvus.Json.Benchmarking.Models.HeightRangeDouble height__)
+        {
+            builder.Add(JsonPropertyNames.Height, height__.AsAny);
+        }
+
+        if (netWorth is Corvus.Json.JsonNumber netWorth__)
+        {
+            builder.Add(JsonPropertyNames.NetWorth, netWorth__.AsAny);
+        }
+
+        return new(builder.ToImmutable());
     }
 
     /// <summary>
@@ -124,7 +269,27 @@ public readonly partial struct Person
     /// <returns>The entity with the updated property.</returns>
     public Person WithDateOfBirth(in Corvus.Json.JsonDate value)
     {
-        return this.SetProperty(DateOfBirthJsonPropertyName, value);
+        return this.SetProperty(JsonPropertyNames.DateOfBirth, value);
+    }
+
+    /// <summary>
+    /// Sets email.
+    /// </summary>
+    /// <param name = "value">The value to set.</param>
+    /// <returns>The entity with the updated property.</returns>
+    public Person WithEmail(in Corvus.Json.JsonEmail value)
+    {
+        return this.SetProperty(JsonPropertyNames.Email, value);
+    }
+
+    /// <summary>
+    /// Sets height.
+    /// </summary>
+    /// <param name = "value">The value to set.</param>
+    /// <returns>The entity with the updated property.</returns>
+    public Person WithHeight(in Corvus.Json.Benchmarking.Models.HeightRangeDouble value)
+    {
+        return this.SetProperty(JsonPropertyNames.Height, value);
     }
 
     /// <summary>
@@ -134,7 +299,17 @@ public readonly partial struct Person
     /// <returns>The entity with the updated property.</returns>
     public Person WithName(in Corvus.Json.Benchmarking.Models.PersonName value)
     {
-        return this.SetProperty(NameJsonPropertyName, value);
+        return this.SetProperty(JsonPropertyNames.Name, value);
+    }
+
+    /// <summary>
+    /// Sets netWorth.
+    /// </summary>
+    /// <param name = "value">The value to set.</param>
+    /// <returns>The entity with the updated property.</returns>
+    public Person WithNetWorth(in Corvus.Json.JsonNumber value)
+    {
+        return this.SetProperty(JsonPropertyNames.NetWorth, value);
     }
 
     private static ValidationContext __CorvusValidateName(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
@@ -145,6 +320,21 @@ public readonly partial struct Person
     private static ValidationContext __CorvusValidateDateOfBirth(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
         return property.ValueAs<Corvus.Json.JsonDate>().Validate(validationContext, level);
+    }
+
+    private static ValidationContext __CorvusValidateEmail(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
+    {
+        return property.ValueAs<Corvus.Json.JsonEmail>().Validate(validationContext, level);
+    }
+
+    private static ValidationContext __CorvusValidateNetWorth(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
+    {
+        return property.ValueAs<Corvus.Json.JsonNumber>().Validate(validationContext, level);
+    }
+
+    private static ValidationContext __CorvusValidateHeight(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
+    {
+        return property.ValueAs<Corvus.Json.Benchmarking.Models.HeightRangeDouble>().Validate(validationContext, level);
     }
 
     /// <summary>
@@ -158,27 +348,57 @@ public readonly partial struct Person
     {
         if (hasJsonElementBacking)
         {
-            if (property.NameEquals(NameUtf8JsonPropertyName))
+            if (property.NameEquals(JsonPropertyNames.NameUtf8))
             {
                 propertyValidator = __CorvusValidateName;
                 return true;
             }
-            else if (property.NameEquals(DateOfBirthUtf8JsonPropertyName))
+            else if (property.NameEquals(JsonPropertyNames.DateOfBirthUtf8))
             {
                 propertyValidator = __CorvusValidateDateOfBirth;
+                return true;
+            }
+            else if (property.NameEquals(JsonPropertyNames.EmailUtf8))
+            {
+                propertyValidator = __CorvusValidateEmail;
+                return true;
+            }
+            else if (property.NameEquals(JsonPropertyNames.NetWorthUtf8))
+            {
+                propertyValidator = __CorvusValidateNetWorth;
+                return true;
+            }
+            else if (property.NameEquals(JsonPropertyNames.HeightUtf8))
+            {
+                propertyValidator = __CorvusValidateHeight;
                 return true;
             }
         }
         else
         {
-            if (property.NameEquals(NameJsonPropertyName))
+            if (property.NameEquals(JsonPropertyNames.Name))
             {
                 propertyValidator = __CorvusValidateName;
                 return true;
             }
-            else if (property.NameEquals(DateOfBirthJsonPropertyName))
+            else if (property.NameEquals(JsonPropertyNames.DateOfBirth))
             {
                 propertyValidator = __CorvusValidateDateOfBirth;
+                return true;
+            }
+            else if (property.NameEquals(JsonPropertyNames.Email))
+            {
+                propertyValidator = __CorvusValidateEmail;
+                return true;
+            }
+            else if (property.NameEquals(JsonPropertyNames.NetWorth))
+            {
+                propertyValidator = __CorvusValidateNetWorth;
+                return true;
+            }
+            else if (property.NameEquals(JsonPropertyNames.Height))
+            {
+                propertyValidator = __CorvusValidateHeight;
                 return true;
             }
         }

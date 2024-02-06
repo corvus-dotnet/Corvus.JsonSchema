@@ -19,28 +19,10 @@ namespace Corvus.Json.Patch.SpecGenerator;
 public readonly partial struct DisabledScenario
 {
     /// <summary>
-    /// Conversion from <see cref = "Corvus.Json.Patch.SpecGenerator.ScenarioCommon"/>.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator DisabledScenario(Corvus.Json.Patch.SpecGenerator.ScenarioCommon value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        return value.ValueKind switch
-        {
-            JsonValueKind.Object => new((ImmutableDictionary<JsonPropertyName, JsonAny>)value),
-            _ => Undefined
-        };
-    }
-
-    /// <summary>
     /// Conversion to <see cref = "Corvus.Json.Patch.SpecGenerator.ScenarioCommon"/>.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator Corvus.Json.Patch.SpecGenerator.ScenarioCommon(DisabledScenario value)
+    public static explicit operator Corvus.Json.Patch.SpecGenerator.ScenarioCommon(DisabledScenario value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -53,5 +35,23 @@ public readonly partial struct DisabledScenario
         }
 
         return Corvus.Json.Patch.SpecGenerator.ScenarioCommon.Undefined;
+    }
+
+    /// <summary>
+    /// Conversion from <see cref = "Corvus.Json.Patch.SpecGenerator.ScenarioCommon"/>.
+    /// </summary>
+    /// <param name = "value">The value from which to convert.</param>
+    public static implicit operator DisabledScenario(Corvus.Json.Patch.SpecGenerator.ScenarioCommon value)
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        return value.ValueKind switch
+        {
+            JsonValueKind.Object => new(value.AsPropertyBacking()),
+            _ => Undefined
+        };
     }
 }

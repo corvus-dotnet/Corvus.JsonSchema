@@ -75,29 +75,6 @@ public readonly partial struct OtherNames : IJsonArray<OtherNames>
     }
 
     /// <summary>
-    /// Conversion from JsonArray.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator JsonArray(OtherNames value)
-    {
-        return value.AsArray;
-    }
-
-    /// <summary>s
-    /// Conversion to JsonArray.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator OtherNames(JsonArray value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        return new(value.AsImmutableList());
-    }
-
-    /// <summary>
     /// Conversion from immutable list.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
@@ -113,6 +90,20 @@ public readonly partial struct OtherNames : IJsonArray<OtherNames>
     public static implicit operator OtherNames(ImmutableList<JsonAny> value)
     {
         return new(value);
+    }
+
+    /// <summary>
+    /// Conversion from JsonArray.
+    /// </summary>
+    /// <param name = "value">The value from which to convert.</param>
+    public static implicit operator OtherNames(JsonArray value)
+    {
+        if (value.HasDotnetBacking && value.ValueKind == JsonValueKind.Array)
+        {
+            return new(value.AsImmutableList());
+        }
+
+        return new(value.AsJsonElement);
     }
 
     /// <summary>
@@ -281,7 +272,7 @@ public readonly partial struct OtherNames : IJsonArray<OtherNames>
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         foreach (string item in items)
         {
-            builder.Add(new JsonAny(item));
+            builder.Add((JsonAny)item);
         }
 
         return new OtherNames(builder.ToImmutable());
@@ -297,7 +288,7 @@ public readonly partial struct OtherNames : IJsonArray<OtherNames>
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         foreach (double item in items)
         {
-            builder.Add(new JsonAny(item));
+            builder.Add((JsonAny)item);
         }
 
         return new OtherNames(builder.ToImmutable());
@@ -313,7 +304,7 @@ public readonly partial struct OtherNames : IJsonArray<OtherNames>
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         foreach (float item in items)
         {
-            builder.Add(new JsonAny(item));
+            builder.Add((JsonAny)item);
         }
 
         return new OtherNames(builder.ToImmutable());
@@ -329,7 +320,7 @@ public readonly partial struct OtherNames : IJsonArray<OtherNames>
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         foreach (int item in items)
         {
-            builder.Add(new JsonAny(item));
+            builder.Add((JsonAny)item);
         }
 
         return new OtherNames(builder.ToImmutable());
@@ -345,7 +336,7 @@ public readonly partial struct OtherNames : IJsonArray<OtherNames>
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         foreach (long item in items)
         {
-            builder.Add(new JsonAny(item));
+            builder.Add((JsonAny)item);
         }
 
         return new OtherNames(builder.ToImmutable());
@@ -361,7 +352,7 @@ public readonly partial struct OtherNames : IJsonArray<OtherNames>
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         foreach (bool item in items)
         {
-            builder.Add(new JsonAny(item));
+            builder.Add((JsonAny)item);
         }
 
         return new OtherNames(builder.ToImmutable());

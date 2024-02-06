@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 
 namespace Corvus.Json;
@@ -10,7 +11,7 @@ namespace Corvus.Json;
 /// <summary>
 /// A property on a <see cref="IJsonObject{T}"/>.
 /// </summary>
-public readonly struct JsonObjectProperty : IEquatable<JsonObjectProperty>
+public readonly struct JsonObjectProperty
 {
     private readonly Backing backing;
     private readonly JsonProperty jsonProperty;
@@ -21,7 +22,7 @@ public readonly struct JsonObjectProperty : IEquatable<JsonObjectProperty>
     /// Initializes a new instance of the <see cref="JsonObjectProperty"/> struct.
     /// </summary>
     /// <param name="jsonProperty">The JSON property over which to construct this instance.</param>
-    public JsonObjectProperty(JsonProperty jsonProperty)
+    public JsonObjectProperty(in JsonProperty jsonProperty)
     {
         this.backing = Backing.JsonProperty;
         this.jsonProperty = jsonProperty;
@@ -34,7 +35,7 @@ public readonly struct JsonObjectProperty : IEquatable<JsonObjectProperty>
     /// </summary>
     /// <param name="name">The property name.</param>
     /// <param name="value">The property value.</param>
-    public JsonObjectProperty(JsonPropertyName name, JsonAny value)
+    public JsonObjectProperty(in JsonPropertyName name, in JsonAny value)
     {
         this.backing = Backing.NameValue;
         this.jsonProperty = default;
@@ -102,7 +103,7 @@ public readonly struct JsonObjectProperty : IEquatable<JsonObjectProperty>
         {
             if ((this.backing & Backing.JsonProperty) != 0)
             {
-                return this.jsonProperty.Name;
+                return new(this.jsonProperty.Name);
             }
 
             if ((this.backing & Backing.NameValue) != 0)
@@ -120,7 +121,7 @@ public readonly struct JsonObjectProperty : IEquatable<JsonObjectProperty>
     /// <param name="left">The LHS of the comparison.</param>
     /// <param name="right">The RHS of the comparison.</param>
     /// <returns>True if they are equal.</returns>
-    public static bool operator ==(JsonObjectProperty left, JsonObjectProperty right)
+    public static bool operator ==(in JsonObjectProperty left, in JsonObjectProperty right)
     {
         return left.Equals(right);
     }
@@ -131,7 +132,7 @@ public readonly struct JsonObjectProperty : IEquatable<JsonObjectProperty>
     /// <param name="left">The LHS of the comparison.</param>
     /// <param name="right">The RHS of the comparison.</param>
     /// <returns>True if they are not equal.</returns>
-    public static bool operator !=(JsonObjectProperty left, JsonObjectProperty right)
+    public static bool operator !=(in JsonObjectProperty left, in JsonObjectProperty right)
     {
         return !left.Equals(right);
     }
@@ -141,6 +142,7 @@ public readonly struct JsonObjectProperty : IEquatable<JsonObjectProperty>
     /// </summary>
     /// <typeparam name="T">The type for which to get the value.</typeparam>
     /// <returns>An instance of the value as the given type.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T ValueAs<T>()
         where T : struct, IJsonValue<T>
     {
@@ -177,7 +179,7 @@ public readonly struct JsonObjectProperty : IEquatable<JsonObjectProperty>
     /// </exception>
     public bool TryGetName<TState, TResult>(in Utf8Parser<TState, TResult> parser, in TState state, [NotNullWhen(true)] out TResult? value)
     {
-        return this.name.Name.TryGetValue(parser, state, out value);
+        return this.name.TryGetValue(parser, state, out value);
     }
 
     /// <summary>
@@ -207,7 +209,7 @@ public readonly struct JsonObjectProperty : IEquatable<JsonObjectProperty>
 
         if ((this.backing & Backing.NameValue) != 0)
         {
-            return this.name.Name.TryGetValue(parser, state, out value);
+            return this.name.TryGetValue(parser, state, out value);
         }
 
         value = default;
@@ -228,7 +230,7 @@ public readonly struct JsonObjectProperty : IEquatable<JsonObjectProperty>
 
         if ((this.backing & Backing.NameValue) != 0)
         {
-            return this.name.Equals(utf8Name);
+            return this.name.EqualsUtf8String(utf8Name);
         }
 
         return false;
@@ -248,6 +250,26 @@ public readonly struct JsonObjectProperty : IEquatable<JsonObjectProperty>
 
         if ((this.backing & Backing.NameValue) != 0)
         {
+            return this.name.EqualsString(name);
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Compares the specified text to the name of this property.
+    /// </summary>
+    /// <param name="name">The name to match.</param>
+    /// <returns><c>True</c> if the name matches.</returns>
+    public bool NameEquals(in JsonPropertyName name)
+    {
+        if ((this.backing & Backing.JsonProperty) != 0)
+        {
+            return name.EqualsPropertyNameOf(this.jsonProperty);
+        }
+
+        if ((this.backing & Backing.NameValue) != 0)
+        {
             return this.name.Equals(name);
         }
 
@@ -259,19 +281,30 @@ public readonly struct JsonObjectProperty : IEquatable<JsonObjectProperty>
     /// </summary>
     /// <param name="name">The name to match.</param>
     /// <returns><c>True</c> if the name matches.</returns>
-    public bool NameEquals(JsonString name)
+    public bool NameEquals(in JsonString name)
     {
         if ((this.backing & Backing.JsonProperty) != 0)
         {
-            return this.jsonProperty.NameEquals(name);
+            if (name.TryGetValue(NameEquals, this.jsonProperty, out bool result))
+            {
+                return result;
+            }
+
+            return false;
         }
 
         if ((this.backing & Backing.NameValue) != 0)
         {
-            return this.name.Equals(name);
+            return this.name.EqualsJsonString(name);
         }
 
         return false;
+
+        static bool NameEquals(ReadOnlySpan<char> span, in JsonProperty state, out bool result)
+        {
+            result = state.NameEquals(span);
+            return true;
+        }
     }
 
     /// <summary>
@@ -300,8 +333,12 @@ public readonly struct JsonObjectProperty : IEquatable<JsonObjectProperty>
         return obj is JsonObjectProperty property && this.Equals(property);
     }
 
-    /// <inheritdoc/>
-    public bool Equals(JsonObjectProperty other)
+    /// <summary>
+    /// Equality comparison.
+    /// </summary>
+    /// <param name="other">The other item with which to compare.</param>
+    /// <returns><see langword="true"/> if the two objects are equal.</returns>
+    public bool Equals(in JsonObjectProperty other)
     {
         return this.Value.Equals(other.Value) &&
                this.Name.Equals(other.Name);
@@ -311,5 +348,23 @@ public readonly struct JsonObjectProperty : IEquatable<JsonObjectProperty>
     public override int GetHashCode()
     {
         return HashCode.Combine(this.Value, this.Name);
+    }
+
+    /// <summary>
+    /// Writes the property to a JSON object writer.
+    /// </summary>
+    /// <param name="writer">The writer to which to write the property.</param>
+    public void WriteTo(Utf8JsonWriter writer)
+    {
+        if ((this.backing & Backing.JsonProperty) != 0)
+        {
+            this.jsonProperty.WriteTo(writer);
+        }
+
+        if ((this.backing & Backing.NameValue) != 0)
+        {
+            this.name.WriteTo(writer);
+            this.value.WriteTo(writer);
+        }
     }
 }

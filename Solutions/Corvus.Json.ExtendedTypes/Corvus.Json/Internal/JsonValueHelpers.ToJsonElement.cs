@@ -4,6 +4,7 @@
 
 using System.Buffers;
 using System.Collections.Immutable;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 
 namespace Corvus.Json.Internal;
@@ -26,13 +27,13 @@ public static partial class JsonValueHelpers
     /// <summary>
     /// Write a number to a <see cref="JsonElement"/>.
     /// </summary>
-    /// <param name="value">The value to write.</param>
+    /// <param name="numberBacking">The byte array backing the number.</param>
     /// <returns>The <see cref="JsonElement"/> serialized from the value.</returns>
-    public static JsonElement NumberToJsonElement(double value)
+    public static JsonElement NumberToJsonElement(in BinaryJsonNumber numberBacking)
     {
         var abw = new ArrayBufferWriter<byte>();
         using var writer = new Utf8JsonWriter(abw);
-        writer.WriteNumberValue(value);
+        numberBacking.WriteTo(writer);
         writer.Flush();
         var reader = new Utf8JsonReader(abw.WrittenSpan);
         using var document = JsonDocument.ParseValue(ref reader);
@@ -44,7 +45,7 @@ public static partial class JsonValueHelpers
     /// </summary>
     /// <param name="properties">The property dictionary to write.</param>
     /// <returns>The <see cref="JsonElement"/> serialized from the value.</returns>
-    public static JsonElement ObjectToJsonElement(ImmutableDictionary<JsonPropertyName, JsonAny> properties)
+    public static JsonElement ObjectToJsonElement(ImmutableList<JsonObjectProperty> properties)
     {
         var abw = new ArrayBufferWriter<byte>();
         using var writer = new Utf8JsonWriter(abw);

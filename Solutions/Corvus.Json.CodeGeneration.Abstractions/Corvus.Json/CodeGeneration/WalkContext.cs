@@ -50,6 +50,8 @@ internal class WalkContext
     public JsonSchemaScope LeaveScope()
     {
         JsonSchemaScope currentScope = this.scopeStack.Pop();
+
+        // As we pop the scope, put any types that were dynamically replaced with the original values.
         foreach ((JsonReference location, TypeDeclaration type) in currentScope.ReplacedDynamicTypes)
         {
             this.typeBuilder.ReplaceLocatedTypeDeclaration(location, type);
@@ -200,6 +202,7 @@ internal class WalkContext
     /// <param name="previousDeclaration">The previous type declaration.</param>
     internal void ReplaceDeclarationInScope(JsonReference subschemaLocation, TypeDeclaration previousDeclaration)
     {
+        // We pop the item off the stack, update its replaced dynamic types, and push it back on.
         JsonSchemaScope currentScope = this.scopeStack.Pop();
         this.scopeStack.Push(new(currentScope.Location, currentScope.Pointer, currentScope.Schema, currentScope.IsDynamicScope, currentScope.ReplacedDynamicTypes.Add((subschemaLocation, previousDeclaration))));
     }

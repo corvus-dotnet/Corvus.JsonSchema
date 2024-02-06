@@ -26,7 +26,7 @@ namespace Benchmarks
         {
             this.jePatch = BuildJEPatch("[{\"op\":\"copy\",\"from\":\"/baz/0\",\"path\":\"/boo\"}]");
                 
-            this.corvusPatch = Corvus.Json.JsonAny.Parse("[{\"op\":\"copy\",\"from\":\"/baz/0\",\"path\":\"/boo\"}]");
+            this.corvusPatch = Corvus.Json.Patch.Model.JsonPatchDocument.Parse("[{\"op\":\"copy\",\"from\":\"/baz/0\",\"path\":\"/boo\"}]");
 
             await this.GlobalSetupJson("{\"baz\":[{\"qux\":\"hello\"}],\"bar\":1}").ConfigureAwait(false);
         }

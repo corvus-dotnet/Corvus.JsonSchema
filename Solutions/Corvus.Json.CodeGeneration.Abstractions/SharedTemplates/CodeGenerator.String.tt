@@ -44,7 +44,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonStri
         this.backing = Backing.String;
 
         this.stringBacking = value;
-<#  if(IsImplicitBoolean || IsNotImplicitType)
+<#  if (IsImplicitBoolean && !(IsImplicitNumber || IsNotImplicitType))
     { #>
         this.boolBacking = default;
 <#  }
@@ -58,85 +58,8 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonStri
 <#  }
     if(IsImplicitObject || IsNotImplicitType)
     { #>
-        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
 <#  } #>
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="<#= TypeDeclaration.DotnetTypeName #>"/> struct.
-    /// </summary>
-    /// <param name="value">The value from which to construct the instance.</param>
-    public <#= TypeDeclaration.DotnetTypeName #>(in ReadOnlySpan<char> value)
-    {
-        this.jsonElementBacking = default;
-        this.backing = Backing.String;
-        this.stringBacking = value.ToString();
-<#  if(IsImplicitBoolean || IsNotImplicitType)
-    { #>
-        this.boolBacking = default;
-<#  }
-    if(IsImplicitNumber || IsNotImplicitType)
-    { #>
-        this.numberBacking = default;
-<#  }
-    if(IsImplicitArray || IsNotImplicitType)
-    { #>
-        this.arrayBacking = ImmutableList<JsonAny>.Empty;
-<#  }
-    if(IsImplicitObject || IsNotImplicitType)
-    { #>
-        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
-<#  } #>
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="<#= TypeDeclaration.DotnetTypeName #>"/> struct.
-    /// </summary>
-    /// <param name="utf8Value">The value from which to construct the instance.</param>
-    public <#= TypeDeclaration.DotnetTypeName #>(in ReadOnlySpan<byte> utf8Value)
-    {
-        this.jsonElementBacking = default;
-        this.backing = Backing.String;
-        this.stringBacking = Encoding.UTF8.GetString(utf8Value);
-<#  if(IsImplicitBoolean || IsNotImplicitType)
-    { #>
-        this.boolBacking = default;
-<#  }
-    if(IsImplicitNumber || IsNotImplicitType)
-    { #>
-        this.numberBacking = default;
-<#  }
-    if(IsImplicitArray || IsNotImplicitType)
-    { #>
-        this.arrayBacking = ImmutableList<JsonAny>.Empty;
-<#  }
-    if(IsImplicitObject || IsNotImplicitType)
-    { #>
-        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
-<#  } #>
-    }
-
-    /// <summary>
-    /// Conversion from JsonString.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonString(<#= TypeDeclaration.DotnetTypeName #> value)
-    {
-        return value.AsString;
-    }
-
-    /// <summary>
-    /// Conversion to JsonString.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator <#= TypeDeclaration.DotnetTypeName #>(JsonString value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        return new((string)value);
     }
 
     /// <summary>
@@ -149,11 +72,25 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonStri
     }
 
     /// <summary>
+    /// Conversion from JsonString.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator <#= TypeDeclaration.DotnetTypeName #>(JsonString value)
+    {
+        if (value.HasDotnetBacking && value.ValueKind == JsonValueKind.String)
+        {
+            return new((string)value);
+        }
+
+        return new(value.AsJsonElement);
+    }
+
+    /// <summary>
     /// Conversion to string.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a string.</exception>
-    public static implicit operator string(<#= TypeDeclaration.DotnetTypeName #> value)
+    public static explicit operator string(<#= TypeDeclaration.DotnetTypeName #> value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -171,34 +108,6 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonStri
         }
 
         throw new InvalidOperationException();
-    }
-
-    /// <summary>
-    /// Conversion from string.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator <#= TypeDeclaration.DotnetTypeName #>(ReadOnlySpan<char> value)
-    {
-        return new(value);
-    }
-
-    /// <summary>
-    /// Conversion to string.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    /// <exception cref="InvalidOperationException">The value was not a string.</exception>
-    public static implicit operator ReadOnlySpan<char>(<#= TypeDeclaration.DotnetTypeName #> value)
-    {
-        return ((string)value).AsSpan();
-    }
-
-    /// <summary>
-    /// Conversion from string.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator <#= TypeDeclaration.DotnetTypeName #>(ReadOnlySpan<byte> value)
-    {
-        return new(value);
     }
 
     /// <summary>
@@ -402,27 +311,11 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonStri
         return false;
     }
 
-    /// <inheritdoc/>
-    public ReadOnlySpan<char> AsSpan()
-    {
-        if ((this.backing & Backing.String) != 0)
-        {
-            return this.stringBacking.AsSpan();
-        }
-
-        if ((this.backing & Backing.JsonElement) != 0 && this.jsonElementBacking.ValueKind == JsonValueKind.String)
-        {
-            return this.jsonElementBacking.GetString().AsSpan();
-        }
-
-        throw new InvalidOperationException();
-    }
-
     /// <summary>
     /// Gets the string value.
     /// </summary>
     /// <returns><c>The string if this value represents a string</c>, otherwise <c>null</c>.</returns>
-    public string? AsOptionalString()
+    public string? GetString()
     {
         if (this.TryGetString(out string? value))
         {

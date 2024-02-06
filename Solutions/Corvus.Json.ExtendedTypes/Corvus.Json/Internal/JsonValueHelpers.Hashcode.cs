@@ -30,8 +30,8 @@ public static partial class JsonValueHelpers
         {
             JsonValueKind.Array => GetArrayHashCode(value.AsArray),
             JsonValueKind.Object => GetObjectHashCode(value.AsObject),
-            JsonValueKind.Number => GetHashCodeForNumber(value),
-            JsonValueKind.String => GetHashCodeForString(value),
+            JsonValueKind.Number => GetHashCodeForNumber(value.AsNumber),
+            JsonValueKind.String => GetHashCodeForString(value.AsString),
             JsonValueKind.True => true.GetHashCode(),
             JsonValueKind.False => false.GetHashCode(),
             JsonValueKind.Null => NullHashCode,
@@ -49,10 +49,10 @@ public static partial class JsonValueHelpers
         JsonValueKind valueKind = value.ValueKind;
         return valueKind switch
         {
-            JsonValueKind.Array => GetArrayHashCode(value),
-            JsonValueKind.Object => GetObjectHashCode(value),
-            JsonValueKind.Number => GetHashCodeForNumber(value),
-            JsonValueKind.String => GetHashCodeForString(value),
+            JsonValueKind.Array => GetArrayHashCode(value.AsArray),
+            JsonValueKind.Object => GetObjectHashCode(value.AsObject),
+            JsonValueKind.Number => GetHashCodeForNumber(value.AsNumber),
+            JsonValueKind.String => GetHashCodeForString(value.AsString),
             JsonValueKind.True => true.GetHashCode(),
             JsonValueKind.False => false.GetHashCode(),
             JsonValueKind.Null => NullHashCode,
@@ -97,7 +97,7 @@ public static partial class JsonValueHelpers
         ImmutableArray<JsonObjectProperty> sortedProperties =
                 value.EnumerateObject()
                     .ToImmutableArray()
-                    .Sort((x, y) => StringComparer.Ordinal.Compare((string)x.Name, (string)y.Name));
+                    .Sort((x, y) => x.Name.CompareTo(y.Name));
 
         foreach (JsonObjectProperty item in sortedProperties)
         {
@@ -125,9 +125,9 @@ public static partial class JsonValueHelpers
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int GetHashCodeForString<T>(in T value)
-    where T : struct, IJsonValue<T>
+    where T : struct, IJsonString<T>
     {
-        if (value.AsString.TryGetValue(ProcessHashCode, (object?)null, out int hashCode))
+        if (value.TryGetValue(ProcessHashCode, (object?)null, out int hashCode))
         {
             return hashCode;
         }
@@ -144,14 +144,23 @@ public static partial class JsonValueHelpers
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int GetHashCodeForNumber<T>(in T value)
-        where T : struct, IJsonValue<T>
+        where T : struct, IJsonNumber<T>
     {
         if (value.HasJsonElementBacking)
         {
-            double result1 = value.AsJsonElement.GetDouble();
-            return result1.GetHashCode(); // It cannot be null if valueKind is string.
+            // We get a double if we can, otherwise we fall back to a decimal.
+            if (value.AsJsonElement.TryGetDouble(out double result1))
+            {
+                return result1.GetHashCode();
+            }
+
+            if (value.AsJsonElement.TryGetDecimal(out decimal result2))
+            {
+                return result2.GetHashCode();
+            }
         }
 
-        return ((double)value.AsAny).GetHashCode();
+        // This has the same double if possible, then decimal semantics.
+        return value.AsBinaryJsonNumber.GetHashCode();
     }
 }

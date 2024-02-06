@@ -49,15 +49,6 @@ public readonly partial struct JsonUuid
         this.stringBacking = Encoding.UTF8.GetString(utf8Value);
     }
 
-        /// <summary>
-    /// Conversion from JsonAny.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonUuid(JsonAny value)
-    {
-        return JsonUuid.FromAny(value);
-    }
-
     /// <summary>
     /// Conversion to JsonAny.
     /// </summary>
@@ -68,7 +59,16 @@ public readonly partial struct JsonUuid
     }
 
     /// <summary>
-    /// Conversion from JsonString.
+    /// Conversion from JsonAny.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator JsonUuid(JsonAny value)
+    {
+        return value.As<JsonUuid>();
+    }
+
+    /// <summary>
+    /// Conversion to JsonString.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
     public static implicit operator JsonString(JsonUuid value)
@@ -77,17 +77,17 @@ public readonly partial struct JsonUuid
     }
 
     /// <summary>
-    /// Conversion to JsonString.
+    /// Conversion from JsonString.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
     public static implicit operator JsonUuid(JsonString value)
     {
-        if (value.HasJsonElementBacking)
+        if (value.HasDotnetBacking && value.ValueKind == JsonValueKind.String)
         {
-            return new(value.AsJsonElement);
+            return new((string)value);
         }
 
-        return new((string)value);
+        return new(value.AsJsonElement);
     }
 
     /// <summary>
@@ -104,7 +104,7 @@ public readonly partial struct JsonUuid
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a string.</exception>
-    public static implicit operator string(JsonUuid value)
+    public static explicit operator string(JsonUuid value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -122,34 +122,6 @@ public readonly partial struct JsonUuid
         }
 
         throw new InvalidOperationException();
-    }
-
-    /// <summary>
-    /// Conversion from string.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonUuid(ReadOnlySpan<char> value)
-    {
-        return new(value);
-    }
-
-    /// <summary>
-    /// Conversion to string.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    /// <exception cref="InvalidOperationException">The value was not a string.</exception>
-    public static implicit operator ReadOnlySpan<char>(JsonUuid value)
-    {
-        return ((string)value).AsSpan();
-    }
-
-    /// <summary>
-    /// Conversion from string.
-    /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonUuid(ReadOnlySpan<byte> value)
-    {
-        return new(value);
     }
 
     /// <summary>
@@ -383,27 +355,11 @@ public readonly partial struct JsonUuid
         return false;
     }
 
-    /// <inheritdoc/>
-    public ReadOnlySpan<char> AsSpan()
-    {
-        if ((this.backing & Backing.String) != 0)
-        {
-            return this.stringBacking.AsSpan();
-        }
-
-        if ((this.backing & Backing.JsonElement) != 0 && this.jsonElementBacking.ValueKind == JsonValueKind.String)
-        {
-            return this.jsonElementBacking.GetString().AsSpan();
-        }
-
-        throw new InvalidOperationException();
-    }
-
     /// <summary>
     /// Gets the string value.
     /// </summary>
     /// <returns><c>The string if this value represents a string</c>, otherwise <c>null</c>.</returns>
-    public string? AsOptionalString()
+    public string? GetString()
     {
         if (this.TryGetString(out string? value))
         {

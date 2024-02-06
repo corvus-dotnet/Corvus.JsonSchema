@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Numerics;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json;
@@ -11,25 +12,417 @@ namespace Corvus.Json;
 /// </summary>
 [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<JsonNumber>))]
 public readonly partial struct JsonNumber
+    : IAdditionOperators<JsonNumber, JsonNumber, JsonNumber>,
+      ISubtractionOperators<JsonNumber, JsonNumber, JsonNumber>,
+      IMultiplyOperators<JsonNumber, JsonNumber, JsonNumber>,
+      IDivisionOperators<JsonNumber, JsonNumber, JsonNumber>,
+      IIncrementOperators<JsonNumber>,
+      IDecrementOperators<JsonNumber>
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonNumber"/> struct.
     /// </summary>
-    /// <param name="value">The value from which to construct the instance.</param>
+    /// <param name="value">The value from which to initialize the number.</param>
+    public JsonNumber(byte value)
+    {
+        this.jsonElementBacking = default;
+        this.backing = Backing.Number;
+        this.numberBacking = new(value);
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonNumber"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to initialize the number.</param>
+    public JsonNumber(decimal value)
+    {
+        this.jsonElementBacking = default;
+        this.backing = Backing.Number;
+        this.numberBacking = new(value);
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonNumber"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to initialize the number.</param>
     public JsonNumber(double value)
     {
         this.jsonElementBacking = default;
         this.backing = Backing.Number;
-        this.numberBacking = value;
+        this.numberBacking = new(value);
     }
 
     /// <summary>
-    /// Conversion from JsonAny.
+    /// Initializes a new instance of the <see cref="JsonNumber"/> struct.
     /// </summary>
-    /// <param name="value">The value from which to convert.</param>
-    public static implicit operator JsonNumber(JsonAny value)
+    /// <param name="value">The value from which to initialize the number.</param>
+    public JsonNumber(Half value)
     {
-        return value.AsNumber;
+        this.jsonElementBacking = default;
+        this.backing = Backing.Number;
+        this.numberBacking = new(value);
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonNumber"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to initialize the number.</param>
+    public JsonNumber(short value)
+    {
+        this.jsonElementBacking = default;
+        this.backing = Backing.Number;
+        this.numberBacking = new(value);
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonNumber"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to initialize the number.</param>
+    public JsonNumber(int value)
+    {
+        this.jsonElementBacking = default;
+        this.backing = Backing.Number;
+        this.numberBacking = new(value);
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonNumber"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to initialize the number.</param>
+    public JsonNumber(long value)
+    {
+        this.jsonElementBacking = default;
+        this.backing = Backing.Number;
+        this.numberBacking = new(value);
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonNumber"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to initialize the number.</param>
+    public JsonNumber(Int128 value)
+    {
+        this.jsonElementBacking = default;
+        this.backing = Backing.Number;
+        this.numberBacking = new(value);
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonNumber"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to initialize the number.</param>
+    public JsonNumber(sbyte value)
+    {
+        this.jsonElementBacking = default;
+        this.backing = Backing.Number;
+        this.numberBacking = new(value);
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonNumber"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to initialize the number.</param>
+    public JsonNumber(float value)
+    {
+        this.jsonElementBacking = default;
+        this.backing = Backing.Number;
+        this.numberBacking = new(value);
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonNumber"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to initialize the number.</param>
+    public JsonNumber(ushort value)
+    {
+        this.jsonElementBacking = default;
+        this.backing = Backing.Number;
+        this.numberBacking = new(value);
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonNumber"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to initialize the number.</param>
+    public JsonNumber(uint value)
+    {
+        this.jsonElementBacking = default;
+        this.backing = Backing.Number;
+        this.numberBacking = new(value);
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonNumber"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to initialize the number.</param>
+    public JsonNumber(ulong value)
+    {
+        this.jsonElementBacking = default;
+        this.backing = Backing.Number;
+        this.numberBacking = new(value);
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonNumber"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to initialize the number.</param>
+    public JsonNumber(UInt128 value)
+    {
+        this.jsonElementBacking = default;
+        this.backing = Backing.Number;
+        this.numberBacking = new(value);
+    }
+
+    /// <summary>
+    /// Conversion to byte.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+    /// <exception cref="FormatException">The value was not formatted as a byte.</exception>
+    public static explicit operator byte(JsonNumber value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
+        {
+            return value.jsonElementBacking.SafeGetByte();
+        }
+
+        if ((value.backing & Backing.Number) != 0)
+        {
+            return value.numberBacking.CreateChecked<byte>();
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Conversion to decimal.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+    /// <exception cref="FormatException">The value was not formatted as a decimal.</exception>
+    public static explicit operator decimal(JsonNumber value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
+        {
+            return value.jsonElementBacking.SafeGetDecimal();
+        }
+
+        if ((value.backing & Backing.Number) != 0)
+        {
+            return value.numberBacking.CreateChecked<decimal>();
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Conversion to double.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+    /// <exception cref="FormatException">The value was not formatted as a double.</exception>
+    public static explicit operator double(JsonNumber value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
+        {
+            return value.jsonElementBacking.SafeGetDouble();
+        }
+
+        if ((value.backing & Backing.Number) != 0)
+        {
+            return value.numberBacking.CreateChecked<double>();
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Conversion to Int16.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+    /// <exception cref="FormatException">The value was not formatted as an Int16.</exception>
+    public static explicit operator short(JsonNumber value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
+        {
+            return value.jsonElementBacking.SafeGetInt16();
+        }
+
+        if ((value.backing & Backing.Number) != 0)
+        {
+            return value.numberBacking.CreateChecked<short>();
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Conversion to Int32.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+    /// <exception cref="FormatException">The value was not formatted as an Int32.</exception>
+    public static explicit operator int(JsonNumber value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
+        {
+            return value.jsonElementBacking.SafeGetInt32();
+        }
+
+        if ((value.backing & Backing.Number) != 0)
+        {
+            return value.numberBacking.CreateChecked<int>();
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Conversion to Int64.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+    /// <exception cref="FormatException">The value was not formatted as an Int64.</exception>
+    public static explicit operator long(JsonNumber value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
+        {
+            return value.jsonElementBacking.SafeGetInt64();
+        }
+
+        if ((value.backing & Backing.Number) != 0)
+        {
+            return value.numberBacking.CreateChecked<long>();
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Conversion to SByte.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+    /// <exception cref="FormatException">The value was not formatted as an SByte.</exception>
+    public static explicit operator sbyte(JsonNumber value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
+        {
+            return value.jsonElementBacking.SafeGetSByte();
+        }
+
+        if ((value.backing & Backing.Number) != 0)
+        {
+            return value.numberBacking.CreateChecked<sbyte>();
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Conversion to Half.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+    /// <exception cref="FormatException">The value was not formatted as a Single.</exception>
+    public static explicit operator Half(JsonNumber value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
+        {
+            return value.jsonElementBacking.SafeGetHalf();
+        }
+
+        if ((value.backing & Backing.Number) != 0)
+        {
+            return value.numberBacking.CreateChecked<Half>();
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Conversion to Single.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+    /// <exception cref="FormatException">The value was not formatted as a Single.</exception>
+    public static explicit operator float(JsonNumber value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
+        {
+            return value.jsonElementBacking.SafeGetSingle();
+        }
+
+        if ((value.backing & Backing.Number) != 0)
+        {
+            return value.numberBacking.CreateChecked<float>();
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Conversion to UInt16.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+    /// <exception cref="FormatException">The value was not formatted as an UInt16.</exception>
+    public static explicit operator ushort(JsonNumber value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
+        {
+            return value.jsonElementBacking.SafeGetUInt16();
+        }
+
+        if ((value.backing & Backing.Number) != 0)
+        {
+            return value.numberBacking.CreateChecked<ushort>();
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Conversion to UInt32.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+    /// <exception cref="FormatException">The value was not formatted as an UInt32.</exception>
+    public static explicit operator uint(JsonNumber value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
+        {
+            return value.jsonElementBacking.SafeGetUInt32();
+        }
+
+        if ((value.backing & Backing.Number) != 0)
+        {
+            return value.numberBacking.CreateChecked<uint>();
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Conversion to UInt64.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+    /// <exception cref="FormatException">The value was not formatted as an UInt64.</exception>
+    public static explicit operator ulong(JsonNumber value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
+        {
+            return value.jsonElementBacking.SafeGetUInt64();
+        }
+
+        if ((value.backing & Backing.Number) != 0)
+        {
+            return value.numberBacking.CreateChecked<ulong>();
+        }
+
+        throw new InvalidOperationException();
     }
 
     /// <summary>
@@ -42,6 +435,24 @@ public readonly partial struct JsonNumber
     }
 
     /// <summary>
+    /// Conversion from byte.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static implicit operator JsonNumber(byte value)
+    {
+        return new(value);
+    }
+
+    /// <summary>
+    /// Conversion from decimal.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static implicit operator JsonNumber(decimal value)
+    {
+        return new(value);
+    }
+
+    /// <summary>
     /// Conversion from double.
     /// </summary>
     /// <param name="value">The value to convert.</param>
@@ -51,59 +462,21 @@ public readonly partial struct JsonNumber
     }
 
     /// <summary>
-    /// Conversion to double.
+    /// Conversion from Half.
     /// </summary>
     /// <param name="value">The value to convert.</param>
-    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
-    /// <exception cref="FormatException">The value was not formatted as a double.</exception>
-    public static implicit operator double(JsonNumber value)
-    {
-        if ((value.backing & Backing.JsonElement) != 0)
-        {
-            return value.jsonElementBacking.GetDouble();
-        }
-
-        if ((value.backing & Backing.Number) != 0)
-        {
-            return value.numberBacking;
-        }
-
-        throw new InvalidOperationException();
-    }
-
-    /// <summary>
-    /// Conversion from float.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    public static implicit operator JsonNumber(float value)
+    public static implicit operator JsonNumber(Half value)
     {
         return new(value);
     }
 
     /// <summary>
-    /// Conversion to double.
+    /// Conversion from short.
     /// </summary>
     /// <param name="value">The value to convert.</param>
-    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
-    /// <exception cref="FormatException">The value was not formatted as a float.</exception>
-    public static implicit operator float(JsonNumber value)
+    public static implicit operator JsonNumber(short value)
     {
-        if ((value.backing & Backing.JsonElement) != 0)
-        {
-            return value.jsonElementBacking.GetSingle();
-        }
-
-        if ((value.backing & Backing.Number) != 0)
-        {
-            if (value.numberBacking < float.MinValue || value.numberBacking > float.MaxValue)
-            {
-                throw new FormatException();
-            }
-
-            return (float)value.numberBacking;
-        }
-
-        throw new InvalidOperationException();
+        return new(value);
     }
 
     /// <summary>
@@ -116,204 +489,12 @@ public readonly partial struct JsonNumber
     }
 
     /// <summary>
-    /// Conversion to int.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
-    /// <exception cref="FormatException">The value was not formatted as an int.</exception>
-    public static implicit operator int(JsonNumber value)
-    {
-        if ((value.backing & Backing.JsonElement) != 0)
-        {
-            return value.jsonElementBacking.SafeGetInt32();
-        }
-
-        if ((value.backing & Backing.Number) != 0)
-        {
-            if (value.numberBacking < int.MinValue || value.numberBacking > int.MaxValue)
-            {
-                throw new FormatException();
-            }
-
-            return (int)value.numberBacking;
-        }
-
-        throw new InvalidOperationException();
-    }
-
-    /// <summary>
     /// Conversion from long.
     /// </summary>
     /// <param name="value">The value to convert.</param>
     public static implicit operator JsonNumber(long value)
     {
         return new(value);
-    }
-
-    /// <summary>
-    /// Conversion to long.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
-    /// <exception cref="FormatException">The value was not formatted as a long.</exception>
-    public static implicit operator long(JsonNumber value)
-    {
-        if ((value.backing & Backing.JsonElement) != 0)
-        {
-            return value.jsonElementBacking.SafeGetInt64();
-        }
-
-        if ((value.backing & Backing.Number) != 0)
-        {
-            if (value.numberBacking < long.MinValue || value.numberBacking > long.MaxValue)
-            {
-                throw new FormatException();
-            }
-
-            return (long)value.numberBacking;
-        }
-
-        throw new InvalidOperationException();
-    }
-
-    /// <summary>
-    /// Conversion from uint.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    public static explicit operator JsonNumber(uint value)
-    {
-        return new(value);
-    }
-
-    /// <summary>
-    /// Conversion to uint.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
-    /// <exception cref="FormatException">The value was not formatted as a uint.</exception>
-    public static implicit operator uint(JsonNumber value)
-    {
-        if ((value.backing & Backing.JsonElement) != 0)
-        {
-            return value.jsonElementBacking.SafeGetUInt32();
-        }
-
-        if ((value.backing & Backing.Number) != 0)
-        {
-            if (value.numberBacking < uint.MinValue || value.numberBacking > uint.MaxValue)
-            {
-                throw new FormatException();
-            }
-
-            return (uint)value.numberBacking;
-        }
-
-        throw new InvalidOperationException();
-    }
-
-    /// <summary>
-    /// Conversion from ushort.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    public static implicit operator JsonNumber(ushort value)
-    {
-        return new(value);
-    }
-
-    /// <summary>
-    /// Conversion to ushort.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
-    /// <exception cref="FormatException">The value was not formatted as a ushort.</exception>
-    public static implicit operator ushort(JsonNumber value)
-    {
-        if ((value.backing & Backing.JsonElement) != 0)
-        {
-            return value.jsonElementBacking.SafeGetUInt16();
-        }
-
-        if ((value.backing & Backing.Number) != 0)
-        {
-            if (value.numberBacking < ushort.MinValue || value.numberBacking > ushort.MaxValue)
-            {
-                throw new FormatException();
-            }
-
-            return (ushort)value.numberBacking;
-        }
-
-        throw new InvalidOperationException();
-    }
-
-    /// <summary>
-    /// Conversion from ulong.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    public static implicit operator JsonNumber(ulong value)
-    {
-        return new(value);
-    }
-
-    /// <summary>
-    /// Conversion to ulong.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
-    /// <exception cref="FormatException">The value was not formatted as a ulong.</exception>
-    public static implicit operator ulong(JsonNumber value)
-    {
-        if ((value.backing & Backing.JsonElement) != 0)
-        {
-            return value.jsonElementBacking.SafeGetUInt64();
-        }
-
-        if ((value.backing & Backing.Number) != 0)
-        {
-            if (value.numberBacking < ulong.MinValue || value.numberBacking > ulong.MaxValue)
-            {
-                throw new FormatException();
-            }
-
-            return (ulong)value.numberBacking;
-        }
-
-        throw new InvalidOperationException();
-    }
-
-    /// <summary>
-    /// Conversion from byte.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    public static implicit operator JsonNumber(byte value)
-    {
-        return new(value);
-    }
-
-    /// <summary>
-    /// Conversion to byte.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
-    /// <exception cref="FormatException">The value was not formatted as a byte.</exception>
-    public static implicit operator byte(JsonNumber value)
-    {
-        if ((value.backing & Backing.JsonElement) != 0)
-        {
-            return value.jsonElementBacking.SafeGetByte();
-        }
-
-        if ((value.backing & Backing.Number) != 0)
-        {
-            if (value.numberBacking < byte.MinValue || value.numberBacking > byte.MaxValue)
-            {
-                throw new FormatException();
-            }
-
-            return (byte)value.numberBacking;
-        }
-
-        throw new InvalidOperationException();
     }
 
     /// <summary>
@@ -326,28 +507,104 @@ public readonly partial struct JsonNumber
     }
 
     /// <summary>
-    /// Conversion to sbyte.
+    /// Conversion from float.
     /// </summary>
     /// <param name="value">The value to convert.</param>
-    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
-    /// <exception cref="FormatException">The value was not formatted as an sbyte.</exception>
-    public static implicit operator sbyte(JsonNumber value)
+    public static implicit operator JsonNumber(float value)
     {
-        if ((value.backing & Backing.JsonElement) != 0)
-        {
-            return value.jsonElementBacking.SafeGetSByte();
-        }
+        return new(value);
+    }
 
-        if ((value.backing & Backing.Number) != 0)
-        {
-            if (value.numberBacking < sbyte.MinValue || value.numberBacking > sbyte.MaxValue)
-            {
-                throw new FormatException();
-            }
+    /// <summary>
+    /// Conversion from ushort.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static implicit operator JsonNumber(ushort value)
+    {
+        return new(value);
+    }
 
-            return (sbyte)value.numberBacking;
-        }
+    /// <summary>
+    /// Conversion from uint.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static implicit operator JsonNumber(uint value)
+    {
+        return new(value);
+    }
 
-        throw new InvalidOperationException();
+    /// <summary>
+    /// Conversion from ulong.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static implicit operator JsonNumber(ulong value)
+    {
+        return new(value);
+    }
+
+    /// <summary>
+    /// Adds two values together to compute their sum.
+    /// </summary>
+    /// <param name="left">The left hand side.</param>
+    /// <param name="right">The right hand side.</param>
+    /// <returns>The resulting value.</returns>
+    public static JsonNumber operator +(JsonNumber left, JsonNumber right)
+    {
+        return new JsonNumber(left.AsBinaryJsonNumber + right.AsBinaryJsonNumber);
+    }
+
+    /// <summary>
+    /// Subtracts two values together to compute their difference.
+    /// </summary>
+    /// <param name="left">The left hand side.</param>
+    /// <param name="right">The right hand side.</param>
+    /// <returns>The resulting value.</returns>
+    public static JsonNumber operator -(JsonNumber left, JsonNumber right)
+    {
+        return new(left.AsBinaryJsonNumber - right.AsBinaryJsonNumber);
+    }
+
+    /// <summary>
+    /// Multiplies two values together.
+    /// </summary>
+    /// <param name="left">The left hand side.</param>
+    /// <param name="right">The right hand side.</param>
+    /// <returns>The resulting value.</returns>
+    public static JsonNumber operator *(JsonNumber left, JsonNumber right)
+    {
+        return new(left.AsBinaryJsonNumber * right.AsBinaryJsonNumber);
+    }
+
+    /// <summary>
+    /// Divides two values.
+    /// </summary>
+    /// <param name="left">The left hand side.</param>
+    /// <param name="right">The right hand side.</param>
+    /// <returns>The resulting value.</returns>
+    public static JsonNumber operator /(JsonNumber left, JsonNumber right)
+    {
+        return new(left.AsBinaryJsonNumber / right.AsBinaryJsonNumber);
+    }
+
+    /// <summary>
+    /// Increments the value.
+    /// </summary>
+    /// <param name="value">The value.</param>
+    /// <returns>The resulting value.</returns>
+    public static JsonNumber operator ++(JsonNumber value)
+    {
+        BinaryJsonNumber num = value.AsBinaryJsonNumber;
+        return new(num++);
+    }
+
+    /// <summary>
+    /// Decrements the value.
+    /// </summary>
+    /// <param name="value">The value.</param>
+    /// <returns>The resulting value.</returns>
+    public static JsonNumber operator --(JsonNumber value)
+    {
+        BinaryJsonNumber num = value.AsBinaryJsonNumber;
+        return new(num--);
     }
 }

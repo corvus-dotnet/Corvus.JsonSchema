@@ -92,8 +92,7 @@ public readonly partial struct JsonNull : IJsonValue<JsonNull>
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonString AsString
+    JsonString IJsonValue.AsString
     {
         get
         {
@@ -107,8 +106,7 @@ public readonly partial struct JsonNull : IJsonValue<JsonNull>
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonBoolean AsBoolean
+    JsonBoolean IJsonValue.AsBoolean
     {
         get
         {
@@ -122,8 +120,7 @@ public readonly partial struct JsonNull : IJsonValue<JsonNull>
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonNumber AsNumber
+    JsonNumber IJsonValue.AsNumber
     {
         get
         {
@@ -137,8 +134,7 @@ public readonly partial struct JsonNull : IJsonValue<JsonNull>
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonObject AsObject
+    JsonObject IJsonValue.AsObject
     {
         get
         {
@@ -152,8 +148,7 @@ public readonly partial struct JsonNull : IJsonValue<JsonNull>
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonArray AsArray
+    JsonArray IJsonValue.AsArray
     {
         get
         {
@@ -439,7 +434,7 @@ public readonly partial struct JsonNull : IJsonValue<JsonNull>
     }
 
     /// <summary>
-    /// Gets the value as the target value.
+    /// Gets the value as an instance of the target value.
     /// </summary>
     /// <typeparam name="TTarget">The type of the target.</typeparam>
     /// <returns>An instance of the target type.</returns>
@@ -469,14 +464,18 @@ public readonly partial struct JsonNull : IJsonValue<JsonNull>
     }
 
     /// <inheritdoc/>
-    public bool Equals<T>(T other)
+    public bool Equals<T>(in T other)
         where T : struct, IJsonValue<T>
     {
         return JsonValueHelpers.CompareValues(this, other);
     }
 
-    /// <inheritdoc/>
-    public bool Equals(JsonNull other)
+    /// <summary>
+    /// Equality comparison.
+    /// </summary>
+    /// <param name="other">The other item with which to compare.</param>
+    /// <returns><see langword="true"/> if the values were equal.</returns>
+    public bool Equals(in JsonNull other)
     {
         return JsonValueHelpers.CompareValues(this, other);
     }

@@ -74,7 +74,7 @@ internal class JsonSchemaRegistry
                 // This is not a root path, so we need to construct a JSON document that references the root path instead.
                 // This will not actually be constructed, as it will be resolved to the reference type instead.
                 // It allows us to indirect through this reference as if it were a "root" type.
-                var referenceSchema = JsonAny.FromProperties(("$ref", (string)jsonSchemaPath));
+                var referenceSchema = JsonObject.FromProperties(("$ref", (string)jsonSchemaPath));
                 jsonSchemaPath = DefaultAbsoluteLocation.Apply(new JsonReference($"{Guid.NewGuid()}/Schema"));
                 return await AddSchemaForUpdatedPathAndElement(jsonSchemaPath, referenceSchema.AsJsonElement).ConfigureAwait(false);
             }
@@ -144,10 +144,12 @@ internal class JsonSchemaRegistry
             return currentLocation;
         }
 
-        if (!RefMatters(schema) && schema.TryGetProperty(this.JsonSchemaConfiguration.IdKeyword, out JsonAny id))
+        JsonObject schemaObject = schema.AsObject;
+
+        if (!RefMatters(schemaObject) && schemaObject.TryGetProperty(this.JsonSchemaConfiguration.IdKeyword, out JsonAny id))
         {
             JsonReference previousLocation = currentLocation;
-            currentLocation = currentLocation.Apply(new JsonReference(id));
+            currentLocation = currentLocation.Apply(new JsonReference((string)id.AsString));
 
             // We skip adding if we are leaving early
             if (!leavingEarly)
@@ -184,30 +186,30 @@ internal class JsonSchemaRegistry
             return currentLocation;
         }
 
-        AddAnchors(currentLocation, schema);
-        AddSubschemas(currentLocation, schema);
+        AddAnchors(currentLocation, schemaObject);
+        AddSubschemas(currentLocation, schemaObject);
 
         return currentLocation;
 
-        bool RefMatters(JsonAny schema)
+        bool RefMatters(JsonObject schema)
         {
             return (this.JsonSchemaConfiguration.ValidatingAs & ValidationSemantics.Pre201909) != 0 && schema.HasProperty(this.JsonSchemaConfiguration.RefKeyword);
         }
 
-        void AddAnchors(JsonReference currentLocation, JsonAny schema)
+        void AddAnchors(JsonReference currentLocation, JsonObject schema)
         {
             foreach (AnchorKeyword anchorKeyword in this.JsonSchemaConfiguration.AnchorKeywords)
             {
-                if (schema.TryGetProperty(anchorKeyword.Name, out JsonAny value))
+                if (schema.AsObject.TryGetProperty(anchorKeyword.Name, out JsonAny value))
                 {
                     if (value.ValueKind == JsonValueKind.String)
                     {
-                        this.AddNamedAnchor(currentLocation, value);
-                    }
-
-                    if (anchorKeyword.IsDynamic)
-                    {
-                        this.AddDynamicAnchor(currentLocation, value);
+                        string valueString = (string)value.AsString;
+                        this.AddNamedAnchor(currentLocation, valueString);
+                        if (anchorKeyword.IsDynamic)
+                        {
+                            this.AddDynamicAnchor(currentLocation, valueString);
+                        }
                     }
 
                     if (anchorKeyword.IsRecursive && value.ValueKind == JsonValueKind.True)
@@ -218,7 +220,7 @@ internal class JsonSchemaRegistry
             }
         }
 
-        void AddSubschemas(JsonReference currentLocation, JsonAny schema)
+        void AddSubschemas(JsonReference currentLocation, JsonObject schema)
         {
             foreach (RefResolvableKeyword keyword in this.JsonSchemaConfiguration.RefResolvableKeywords)
             {
@@ -277,7 +279,7 @@ internal class JsonSchemaRegistry
             }
 
             int index = 0;
-            foreach (JsonAny subschema in value.EnumerateArray())
+            foreach (JsonAny subschema in value.AsArray.EnumerateArray())
             {
                 JsonReference subschemaLocation = propertyLocation.AppendArrayIndexToFragment(index);
                 this.AddSchemaAndSubschema(subschemaLocation, subschema);
@@ -293,7 +295,7 @@ internal class JsonSchemaRegistry
             }
             else if (value.ValueKind == JsonValueKind.Array)
             {
-                AddSubschemasForArrayOfSchemaProperty(propertyName, value, currentLocation);
+                AddSubschemasForArrayOfSchemaProperty(propertyName, value.AsArray, currentLocation);
             }
             else
             {
@@ -311,11 +313,11 @@ internal class JsonSchemaRegistry
             }
 
             int index = 0;
-            foreach (JsonObjectProperty property in value.EnumerateObject())
+            foreach (JsonObjectProperty property in value.AsObject.EnumerateObject())
             {
                 if (property.ValueKind == JsonValueKind.Object || property.ValueKind == JsonValueKind.True || property.ValueKind == JsonValueKind.False)
                 {
-                    JsonReference subschemaLocation = propertyLocation.AppendUnencodedPropertyNameToFragment(property.Name);
+                    JsonReference subschemaLocation = propertyLocation.AppendUnencodedPropertyNameToFragment(property.Name.GetString());
                     this.AddSchemaAndSubschema(subschemaLocation, property.Value);
                     ++index;
                 }
@@ -331,9 +333,9 @@ internal class JsonSchemaRegistry
             }
 
             int index = 0;
-            foreach (JsonObjectProperty property in value.EnumerateObject())
+            foreach (JsonObjectProperty property in value.AsObject.EnumerateObject())
             {
-                JsonReference subschemaLocation = propertyLocation.AppendUnencodedPropertyNameToFragment(property.Name);
+                JsonReference subschemaLocation = propertyLocation.AppendUnencodedPropertyNameToFragment(property.Name.GetString());
                 this.AddSchemaAndSubschema(subschemaLocation, property.Value);
                 ++index;
             }
@@ -378,7 +380,7 @@ internal class JsonSchemaRegistry
     /// Tries to get the located schema for the given scope.
     /// </summary>
     /// <param name="location">The Location for which to find the schema.</param>
-    /// <param name="schema">The schema found at the locatio.</param>
+    /// <param name="schema">The schema found at the location.</param>
     /// <returns><see langword="true"/> when the schema is found.</returns>
     public bool TryGetValue(JsonReference location, [NotNullWhen(true)] out LocatedSchema? schema)
     {

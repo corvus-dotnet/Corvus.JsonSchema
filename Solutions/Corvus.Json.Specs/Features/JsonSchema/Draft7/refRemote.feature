@@ -24,7 +24,7 @@ Scenario Outline: remote ref
 
 Scenario Outline: fragment within remote ref
 /* Schema: 
-{"$ref": "http://localhost:1234/subSchemas.json#/integer"}
+{"$ref": "http://localhost:1234/subSchemas.json#/definitions/integer"}
 */
     Given the input JSON file "refRemote.json"
     And the schema at "#/1/schema"
@@ -42,7 +42,7 @@ Scenario Outline: fragment within remote ref
 Scenario Outline: ref within remote ref
 /* Schema: 
 {
-            "$ref": "http://localhost:1234/subSchemas.json#/refToInteger"
+            "$ref": "http://localhost:1234/subSchemas.json#/definitions/refToInteger"
         }
 */
     Given the input JSON file "refRemote.json"

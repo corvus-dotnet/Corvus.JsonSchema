@@ -14,15 +14,14 @@ namespace Corvus.Json;
 /// Represents any JSON value.
 /// </summary>
 [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<JsonAny>))]
-public readonly partial struct JsonAny
+public readonly partial struct JsonAny : IJsonValue<JsonAny>
 {
     private readonly Backing backing;
     private readonly JsonElement jsonElementBacking;
     private readonly string stringBacking;
-    private readonly bool boolBacking;
-    private readonly double numberBacking;
+    private readonly BinaryJsonNumber numericBacking;
     private readonly ImmutableList<JsonAny> arrayBacking;
-    private readonly ImmutableDictionary<JsonPropertyName, JsonAny> objectBacking;
+    private readonly ImmutableList<JsonObjectProperty> objectBacking;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonAny"/> struct.
@@ -32,10 +31,8 @@ public readonly partial struct JsonAny
         this.jsonElementBacking = default;
         this.backing = Backing.JsonElement;
         this.stringBacking = string.Empty;
-        this.boolBacking = default;
-        this.numberBacking = default;
         this.arrayBacking = ImmutableList<JsonAny>.Empty;
-        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
     }
 
     /// <summary>
@@ -47,10 +44,75 @@ public readonly partial struct JsonAny
         this.jsonElementBacking = value;
         this.backing = Backing.JsonElement;
         this.stringBacking = string.Empty;
-        this.boolBacking = default;
-        this.numberBacking = default;
         this.arrayBacking = ImmutableList<JsonAny>.Empty;
-        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonAny"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to construct the instance.</param>
+    public JsonAny(string value)
+    {
+        this.jsonElementBacking = default;
+        this.backing = Backing.String;
+        this.stringBacking = value;
+        this.arrayBacking = ImmutableList<JsonAny>.Empty;
+        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonAny"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to construct the instance.</param>
+    public JsonAny(in BinaryJsonNumber value)
+    {
+        this.jsonElementBacking = default;
+        this.backing = Backing.Number;
+        this.numericBacking = value;
+        this.stringBacking = string.Empty;
+        this.arrayBacking = ImmutableList<JsonAny>.Empty;
+        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonAny"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to construct the instance.</param>
+    public JsonAny(bool value)
+    {
+        this.jsonElementBacking = default;
+        this.backing = Backing.Bool;
+        this.stringBacking = string.Empty;
+        this.numericBacking = new(value); // We reuse the binary number to avoid allocating an extra int.
+        this.arrayBacking = ImmutableList<JsonAny>.Empty;
+        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonAny"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to construct the instance.</param>
+    public JsonAny(ImmutableList<JsonAny> value)
+    {
+        this.jsonElementBacking = default;
+        this.backing = Backing.Array;
+        this.stringBacking = string.Empty;
+        this.arrayBacking = value;
+        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonAny"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to construct the instance.</param>
+    public JsonAny(ImmutableList<JsonObjectProperty> value)
+    {
+        this.jsonElementBacking = default;
+        this.backing = Backing.Object;
+        this.stringBacking = string.Empty;
+        this.arrayBacking = ImmutableList<JsonAny>.Empty;
+        this.objectBacking = value;
     }
 
     /// <summary>
@@ -88,12 +150,12 @@ public readonly partial struct JsonAny
 
             if ((this.backing & Backing.Bool) != 0)
             {
-                return JsonValueHelpers.BoolToJsonElement(this.boolBacking);
+                return JsonValueHelpers.BoolToJsonElement(this.numericBacking.GetByteAsBool());
             }
 
             if ((this.backing & Backing.Number) != 0)
             {
-                return JsonValueHelpers.NumberToJsonElement(this.numberBacking);
+                return JsonValueHelpers.NumberToJsonElement(this.numericBacking);
             }
 
             if ((this.backing & Backing.Null) != 0)
@@ -146,7 +208,7 @@ public readonly partial struct JsonAny
 
             if ((this.backing & Backing.Bool) != 0)
             {
-                return new(this.boolBacking);
+                return new(this.numericBacking.GetByteAsBool());
             }
 
             throw new InvalidOperationException();
@@ -165,7 +227,7 @@ public readonly partial struct JsonAny
 
             if ((this.backing & Backing.Number) != 0)
             {
-                return new(this.numberBacking);
+                return new(this.numericBacking);
             }
 
             throw new InvalidOperationException();
@@ -233,7 +295,7 @@ public readonly partial struct JsonAny
 
             if ((this.backing & Backing.Bool) != 0)
             {
-                return this.boolBacking ? JsonValueKind.True : JsonValueKind.False;
+                return this.numericBacking.GetByteAsBool() ? JsonValueKind.True : JsonValueKind.False;
             }
 
             if ((this.backing & Backing.Number) != 0)
@@ -325,7 +387,7 @@ public readonly partial struct JsonAny
 
         if (value.ValueKind == JsonValueKind.String)
         {
-            return new((string)value);
+            return new((string)value.AsString);
         }
 
         return Undefined;
@@ -378,7 +440,7 @@ public readonly partial struct JsonAny
 
         if (value.ValueKind == JsonValueKind.Number)
         {
-            return new((double)value);
+            return new(value.AsBinaryJsonNumber);
         }
 
         return Undefined;
@@ -402,7 +464,7 @@ public readonly partial struct JsonAny
 
         if (value.ValueKind == JsonValueKind.Array)
         {
-            return new((ImmutableList<JsonAny>)value);
+            return new(value.AsArray.AsImmutableList());
         }
 
         return Undefined;
@@ -426,7 +488,7 @@ public readonly partial struct JsonAny
 
         if (value.ValueKind == JsonValueKind.Object)
         {
-            return new((ImmutableDictionary<JsonPropertyName, JsonAny>)value);
+            return new(value.AsObject.AsPropertyBacking());
         }
 
         return Undefined;
@@ -439,7 +501,7 @@ public readonly partial struct JsonAny
     /// <param name="instance">The object from which to create the instance.</param>
     /// <param name="options">The (optional) <see cref="JsonWriterOptions"/>.</param>
     /// <returns>A <see cref="JsonAny"/> derived from serializing the object.</returns>
-    public static JsonAny From<T>(T instance, JsonWriterOptions options = default)
+    public static JsonAny CreateFromSerializedInstance<T>(T instance, JsonWriterOptions options = default)
     {
         var abw = new ArrayBufferWriter<byte>();
         using var writer = new Utf8JsonWriter(abw, options);
@@ -466,9 +528,14 @@ public readonly partial struct JsonAny
             return new(boolResult);
         }
 
-        if (double.TryParse(value, out double numberResult))
+        if (double.TryParse(value, out double doubleResult))
         {
-            return new(numberResult);
+            return new(new BinaryJsonNumber(doubleResult));
+        }
+
+        if (decimal.TryParse(value, out decimal decimalResult))
+        {
+            return new(new BinaryJsonNumber(decimalResult));
         }
 
         return new(value);
@@ -478,10 +545,9 @@ public readonly partial struct JsonAny
     /// Parses a naked value from a URI string.
     /// </summary>
     /// <param name="value">The value to parse.</param>
-    /// <param name="options">The (optional) JsonDocumentOptions.</param>
     /// <returns>A <see cref="JsonAny"/> instance representing the value.</returns>
     /// <remarks>Note that this only applies to <c>null</c>, <c>bool</c>, <c>number</c> and <c>string</c> types.</remarks>
-    public static JsonAny ParseUriValue(ReadOnlyMemory<char> value, JsonDocumentOptions options = default)
+    public static JsonAny ParseUriValue(ReadOnlyMemory<char> value)
     {
         ReadOnlySpan<char> valueSpan = value.Span;
         if (valueSpan.SequenceEqual("null"))
@@ -494,12 +560,17 @@ public readonly partial struct JsonAny
             return new(boolResult);
         }
 
-        if (double.TryParse(valueSpan, out double numberResult))
+        if (double.TryParse(valueSpan, out double doubleResult))
         {
-            return new(numberResult);
+            return new(new BinaryJsonNumber(doubleResult));
         }
 
-        return new(valueSpan);
+        if (decimal.TryParse(valueSpan, out decimal decimalResult))
+        {
+            return new(new BinaryJsonNumber(decimalResult));
+        }
+
+        return new(valueSpan.ToString());
     }
 
     /// <summary>
@@ -593,7 +664,7 @@ public readonly partial struct JsonAny
     }
 
     /// <summary>
-    /// Gets the value as the target value.
+    /// Gets the value as an instance of the target value.
     /// </summary>
     /// <typeparam name="TTarget">The type of the target.</typeparam>
     /// <returns>An instance of the target type.</returns>
@@ -623,14 +694,18 @@ public readonly partial struct JsonAny
     }
 
     /// <inheritdoc/>
-    public bool Equals<T>(T other)
+    public bool Equals<T>(in T other)
         where T : struct, IJsonValue<T>
     {
         return JsonValueHelpers.CompareValues(this, other);
     }
 
-    /// <inheritdoc/>
-    public bool Equals(JsonAny other)
+    /// <summary>
+    /// Equality comparison.
+    /// </summary>
+    /// <param name="other">The other item with which to compare.</param>
+    /// <returns><see langword="true"/> if the values were equal.</returns>
+    public bool Equals(in JsonAny other)
     {
         return JsonValueHelpers.CompareValues(this, other);
     }
@@ -656,13 +731,13 @@ public readonly partial struct JsonAny
 
         if ((this.backing & Backing.Bool) != 0)
         {
-            writer.WriteBooleanValue(this.boolBacking);
+            writer.WriteBooleanValue(this.numericBacking.GetByteAsBool());
             return;
         }
 
         if ((this.backing & Backing.Number) != 0)
         {
-            writer.WriteNumberValue(this.numberBacking);
+            this.numericBacking.WriteTo(writer);
             return;
         }
 

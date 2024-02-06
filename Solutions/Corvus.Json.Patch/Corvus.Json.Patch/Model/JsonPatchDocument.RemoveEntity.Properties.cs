@@ -23,23 +23,30 @@ public readonly partial struct JsonPatchDocument
     public readonly partial struct RemoveEntity
     {
         /// <summary>
-        /// JSON property name for <see cref = "Op"/>.
+        /// The well-known property names in the JSON object.
         /// </summary>
-        public static ReadOnlySpan<byte> OpUtf8JsonPropertyName => "op"u8;
+        public static class JsonPropertyNames
+        {
+            /// <summary>
+            /// JSON property name for <see cref = "Op"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> OpUtf8 => "op"u8;
 
-        /// <summary>
-        /// JSON property name for <see cref = "Op"/>.
-        /// </summary>
-        public const string OpJsonPropertyName = "op";
-        /// <summary>
-        /// JSON property name for <see cref = "Path"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> PathUtf8JsonPropertyName => "path"u8;
+            /// <summary>
+            /// JSON property name for <see cref = "Op"/>.
+            /// </summary>
+            public const string Op = "op";
+            /// <summary>
+            /// JSON property name for <see cref = "Path"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> PathUtf8 => "path"u8;
 
-        /// <summary>
-        /// JSON property name for <see cref = "Path"/>.
-        /// </summary>
-        public const string PathJsonPropertyName = "path";
+            /// <summary>
+            /// JSON property name for <see cref = "Path"/>.
+            /// </summary>
+            public const string Path = "path";
+        }
+
         /// <summary>
         /// Gets Op.
         /// </summary>
@@ -54,7 +61,7 @@ public readonly partial struct JsonPatchDocument
                         return default;
                     }
 
-                    if (this.jsonElementBacking.TryGetProperty(OpUtf8JsonPropertyName, out JsonElement result))
+                    if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.OpUtf8, out JsonElement result))
                     {
                         return new Corvus.Json.Patch.Model.JsonPatchDocument.RemoveEntity.OpEntity(result);
                     }
@@ -62,7 +69,7 @@ public readonly partial struct JsonPatchDocument
 
                 if ((this.backing & Backing.Object) != 0)
                 {
-                    if (this.objectBacking.TryGetValue(OpJsonPropertyName, out JsonAny result))
+                    if (this.objectBacking.TryGetValue(JsonPropertyNames.Op, out JsonAny result))
                     {
                         return result.As<Corvus.Json.Patch.Model.JsonPatchDocument.RemoveEntity.OpEntity>();
                     }
@@ -86,7 +93,7 @@ public readonly partial struct JsonPatchDocument
                         return default;
                     }
 
-                    if (this.jsonElementBacking.TryGetProperty(PathUtf8JsonPropertyName, out JsonElement result))
+                    if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.PathUtf8, out JsonElement result))
                     {
                         return new Corvus.Json.JsonPointer(result);
                     }
@@ -94,7 +101,7 @@ public readonly partial struct JsonPatchDocument
 
                 if ((this.backing & Backing.Object) != 0)
                 {
-                    if (this.objectBacking.TryGetValue(PathJsonPropertyName, out JsonAny result))
+                    if (this.objectBacking.TryGetValue(JsonPropertyNames.Path, out JsonAny result))
                     {
                         return result.As<Corvus.Json.JsonPointer>();
                     }
@@ -109,10 +116,10 @@ public readonly partial struct JsonPatchDocument
         /// </summary>
         public static RemoveEntity Create(Corvus.Json.JsonPointer path)
         {
-            var builder = ImmutableDictionary.CreateBuilder<JsonPropertyName, JsonAny>();
-            builder.Add(OpJsonPropertyName, new Corvus.Json.Patch.Model.JsonPatchDocument.RemoveEntity.OpEntity().AsAny);
-            builder.Add(PathJsonPropertyName, path.AsAny);
-            return builder.ToImmutable();
+            var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
+            builder.Add(JsonPropertyNames.Op, new Corvus.Json.Patch.Model.JsonPatchDocument.RemoveEntity.OpEntity().AsAny);
+            builder.Add(JsonPropertyNames.Path, path.AsAny);
+            return new(builder.ToImmutable());
         }
 
         /// <summary>
@@ -122,7 +129,7 @@ public readonly partial struct JsonPatchDocument
         /// <returns>The entity with the updated property.</returns>
         public RemoveEntity WithPath(in Corvus.Json.JsonPointer value)
         {
-            return this.SetProperty(PathJsonPropertyName, value);
+            return this.SetProperty(JsonPropertyNames.Path, value);
         }
 
         private static ValidationContext __CorvusValidateOp(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
@@ -141,7 +148,7 @@ public readonly partial struct JsonPatchDocument
         {
             if (hasJsonElementBacking)
             {
-                if (property.NameEquals(OpUtf8JsonPropertyName))
+                if (property.NameEquals(JsonPropertyNames.OpUtf8))
                 {
                     propertyValidator = __CorvusValidateOp;
                     return true;
@@ -149,7 +156,7 @@ public readonly partial struct JsonPatchDocument
             }
             else
             {
-                if (property.NameEquals(OpJsonPropertyName))
+                if (property.NameEquals(JsonPropertyNames.Op))
                 {
                     propertyValidator = __CorvusValidateOp;
                     return true;

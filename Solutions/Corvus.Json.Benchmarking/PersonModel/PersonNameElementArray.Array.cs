@@ -73,29 +73,6 @@ public readonly partial struct PersonNameElementArray : IJsonArray<PersonNameEle
     }
 
     /// <summary>
-    /// Conversion from JsonArray.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator JsonArray(PersonNameElementArray value)
-    {
-        return value.AsArray;
-    }
-
-    /// <summary>s
-    /// Conversion to JsonArray.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator PersonNameElementArray(JsonArray value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        return new(value.AsImmutableList());
-    }
-
-    /// <summary>
     /// Conversion from immutable list.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
@@ -111,6 +88,20 @@ public readonly partial struct PersonNameElementArray : IJsonArray<PersonNameEle
     public static implicit operator PersonNameElementArray(ImmutableList<JsonAny> value)
     {
         return new(value);
+    }
+
+    /// <summary>
+    /// Conversion from JsonArray.
+    /// </summary>
+    /// <param name = "value">The value from which to convert.</param>
+    public static implicit operator PersonNameElementArray(JsonArray value)
+    {
+        if (value.HasDotnetBacking && value.ValueKind == JsonValueKind.Array)
+        {
+            return new(value.AsImmutableList());
+        }
+
+        return new(value.AsJsonElement);
     }
 
     /// <summary>

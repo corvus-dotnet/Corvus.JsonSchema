@@ -25,6 +25,8 @@ public static partial class Validate
     private static readonly Regex UuidTemplatePattern = CreateUuidTemplatePattern();
     private static readonly Regex JsonPointerPattern = CreateJsonPointerPattern();
     private static readonly Regex JsonRelativePointerPattern = CreateJsonRelativePointerPattern();
+    private static readonly Regex IdnEmailReplacePattern = CreateIdnEmailReplacePattern();
+    private static readonly Regex IdnEmailMatchPattern = CreateIdnEmailMatchPattern();
 
     private static readonly IdnMapping IdnMapping = new() { AllowUnassigned = true, UseStd3AsciiRules = true };
 
@@ -185,7 +187,7 @@ public static partial class Validate
         }
         else
         {
-            double value = instance.AsNumber;
+            double value = (double)instance.AsNumber;
             if (value != Math.Floor(value))
             {
                 if (level >= ValidationLevel.Detailed)
@@ -241,15 +243,7 @@ public static partial class Validate
 
         ValidationContext result = validationContext;
 
-        if (instance.HasJsonElementBacking)
-        {
-            // We know it is a string, so we should always return true, no need to check the result.
-            instance.AsJsonElement.TryGetValue(UriTemplateValidator, new ValidationContextWrapper(result, level), out result);
-        }
-        else
-        {
-            UriTemplateValidator(instance.AsString.AsSpan(), new ValidationContextWrapper(result, level), out result);
-        }
+        instance.AsString.TryGetValue(UriTemplateValidator, new ValidationContextWrapper(result, level), out result);
 
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
@@ -325,26 +319,15 @@ public static partial class Validate
             }
         }
 
-        JsonString email = instance.AsString;
+        string email = (string)instance.AsString;
 
         bool isMatch = false;
 
         try
         {
             // Normalize the domain
-            email = Regex.Replace(email, "(@)(.+)$", DomainMapper, RegexOptions.None, TimeSpan.FromMilliseconds(200));
-            try
-            {
-                isMatch = Regex.IsMatch(
-                    email,
-                    @"^[^@\s]+@[^@\s]+\.[^@\s]+$",
-                    RegexOptions.IgnoreCase,
-                    TimeSpan.FromMilliseconds(250));
-            }
-            catch (RegexMatchTimeoutException)
-            {
-                isMatch = false;
-            }
+            email = IdnEmailReplacePattern.Replace(email, DomainMapper);
+            isMatch = IdnEmailMatchPattern.IsMatch(email);
 
             // Examines the domain part of the email and normalizes it.
             static string DomainMapper(Match match)
@@ -417,7 +400,7 @@ public static partial class Validate
             }
         }
 
-        string value = instance.AsString;
+        string value = (string)instance.AsString;
 
         bool isMatch;
         if (value.StartsWith("xn--"))
@@ -502,15 +485,7 @@ public static partial class Validate
 
         ValidationContext result = validationContext;
 
-        if (instance.HasJsonElementBacking)
-        {
-            // We know it is a string, so we should always return true, no need to check the result.
-            instance.AsJsonElement.TryGetValue(HostnameValidator, new ValidationContextWrapper(result, level), out result);
-        }
-        else
-        {
-            HostnameValidator(instance.AsString.AsSpan(), new ValidationContextWrapper(result, level), out result);
-        }
+        instance.AsString.TryGetValue(HostnameValidator, new ValidationContextWrapper(result, level), out result);
 
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
@@ -599,15 +574,7 @@ public static partial class Validate
 
         ValidationContext result = validationContext;
 
-        if (instance.HasJsonElementBacking)
-        {
-            // We know it is a string, so we should always return true, no need to check the result.
-            instance.AsJsonElement.TryGetValue(UuidValidator, new ValidationContextWrapper(result, level), out result);
-        }
-        else
-        {
-            UuidValidator(instance.AsString.AsSpan(), new ValidationContextWrapper(result, level), out result);
-        }
+        instance.AsString.TryGetValue(UuidValidator, new ValidationContextWrapper(result, level), out result);
 
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
@@ -677,15 +644,7 @@ public static partial class Validate
 
         ValidationContext result = validationContext;
 
-        if (instance.HasJsonElementBacking)
-        {
-            // We know it is a string, so we should always return true, no need to check the result.
-            instance.AsJsonElement.TryGetValue(DurationValidator, new ValidationContextWrapper(result, level), out result);
-        }
-        else
-        {
-            DurationValidator(instance.AsString.AsSpan(), new ValidationContextWrapper(result, level), out result);
-        }
+        instance.AsString.TryGetValue(DurationValidator, new ValidationContextWrapper(result, level), out result);
 
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
@@ -755,15 +714,7 @@ public static partial class Validate
 
         ValidationContext result = validationContext;
 
-        if (instance.HasJsonElementBacking)
-        {
-            // We know it is a string, so we should always return true, no need to check the result.
-            instance.AsJsonElement.TryGetValue(EmailValidator, new ValidationContextWrapper(result, level), out result);
-        }
-        else
-        {
-            EmailValidator(instance.AsString.AsSpan(), new ValidationContextWrapper(result, level), out result);
-        }
+        instance.AsString.TryGetValue(EmailValidator, new ValidationContextWrapper(result, level), out result);
 
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
@@ -833,15 +784,7 @@ public static partial class Validate
 
         ValidationContext result = validationContext;
 
-        if (instance.HasJsonElementBacking)
-        {
-            // We know it is a string, so we should always return true, no need to check the result.
-            instance.AsJsonElement.TryGetValue(RelativePointerValidator, new ValidationContextWrapper(result, level), out result);
-        }
-        else
-        {
-            RelativePointerValidator(instance.AsString.AsSpan(), new ValidationContextWrapper(result, level), out result);
-        }
+        instance.AsString.TryGetValue(RelativePointerValidator, new ValidationContextWrapper(result, level), out result);
 
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
@@ -911,15 +854,7 @@ public static partial class Validate
 
         ValidationContext result = validationContext;
 
-        if (instance.HasJsonElementBacking)
-        {
-            // We know it is a string, so we should always return true, no need to check the result.
-            instance.AsJsonElement.TryGetValue(PointerValidator, new ValidationContextWrapper(result, level), out result);
-        }
-        else
-        {
-            PointerValidator(instance.AsString.AsSpan(), new ValidationContextWrapper(result, level), out result);
-        }
+        instance.AsString.TryGetValue(PointerValidator, new ValidationContextWrapper(result, level), out result);
 
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
@@ -1739,7 +1674,7 @@ public static partial class Validate
     /// <param name="minimum">The optional minimum validation.</param>
     /// <param name="exclusiveMinimum">The optional exclusive minimum validation.</param>
     /// <returns>The updated validation context.</returns>
-    public static ValidationContext ValidateNumber<TValue>(in TValue value, in ValidationContext validationContext, ValidationLevel level, double? multipleOf, double? maximum, double? exclusiveMaximum, double? minimum, double? exclusiveMinimum)
+    public static ValidationContext ValidateNumber<TValue>(in TValue value, in ValidationContext validationContext, ValidationLevel level, in BinaryJsonNumber multipleOf, in BinaryJsonNumber maximum, in BinaryJsonNumber exclusiveMaximum, in BinaryJsonNumber minimum, in BinaryJsonNumber exclusiveMinimum)
         where TValue : struct, IJsonValue
     {
         if (value.ValueKind != JsonValueKind.Number)
@@ -1747,27 +1682,27 @@ public static partial class Validate
             if (level == ValidationLevel.Verbose)
             {
                 ValidationContext ignoredResult = validationContext;
-                if (multipleOf is not null)
+                if (multipleOf.HasValue)
                 {
                     ignoredResult = ignoredResult.WithResult(isValid: true, "Validation 6.2.1 multipleOf - ignored because the value is not a number");
                 }
 
-                if (maximum is not null)
+                if (maximum.HasValue)
                 {
                     ignoredResult = ignoredResult.WithResult(isValid: true, "Validation 6.2.2 maximum- ignored because the value is not a number");
                 }
 
-                if (exclusiveMaximum is not null)
+                if (exclusiveMaximum.HasValue)
                 {
                     ignoredResult = ignoredResult.WithResult(isValid: true, "Validation 6.2.3 exclusiveMaximum - ignored because the value is not a number");
                 }
 
-                if (minimum is not null)
+                if (minimum.HasValue)
                 {
                     ignoredResult = ignoredResult.WithResult(isValid: true, "Validation 6.2.4 minimum - ignored because the value is not a number");
                 }
 
-                if (exclusiveMinimum is not null)
+                if (exclusiveMinimum.HasValue)
                 {
                     ignoredResult = ignoredResult.WithResult(isValid: true, "Validation 6.2.5 exclusiveMinimum - ignored because the value is not a number");
                 }
@@ -1780,134 +1715,269 @@ public static partial class Validate
 
         ValidationContext result = validationContext;
 
-        double currentValue = value.AsNumber;
-
-        if (multipleOf is double mo)
+        if (value.HasJsonElementBacking)
         {
-            if (Math.Abs(Math.IEEERemainder(currentValue, mo)) <= 1.0E-9)
+            JsonElement number = value.AsNumber.AsJsonElement;
+            if (multipleOf.HasValue)
             {
-                if (level == ValidationLevel.Verbose)
+                if (BinaryJsonNumber.IsMultipleOf(number, multipleOf))
                 {
-                    result = result.WithResult(isValid: true, $"Validation 6.2.1 multipleOf -  {currentValue} was a multiple of {mo}.");
-                }
-            }
-            else
-            {
-                if (level >= ValidationLevel.Detailed)
-                {
-                    result = result.WithResult(isValid: false, $"Validation 6.2.1 multipleOf -  {currentValue} was not a multiple of {mo}.");
-                }
-                else if (level >= ValidationLevel.Basic)
-                {
-                    result = result.WithResult(isValid: false, "Validation 6.2.1 multipleOf - was not a multiple of the required value.");
+                    if (level == ValidationLevel.Verbose)
+                    {
+                        result = result.WithResult(isValid: true, $"Validation 6.2.1 multipleOf -  {value} was a multiple of {multipleOf}.");
+                    }
                 }
                 else
                 {
-                    return validationContext.WithResult(isValid: false);
+                    if (level >= ValidationLevel.Detailed)
+                    {
+                        result = result.WithResult(isValid: false, $"Validation 6.2.1 multipleOf -  {value} was not a multiple of {multipleOf}.");
+                    }
+                    else if (level >= ValidationLevel.Basic)
+                    {
+                        result = result.WithResult(isValid: false, "Validation 6.2.1 multipleOf - was not a multiple of the required value.");
+                    }
+                    else
+                    {
+                        return validationContext.WithResult(isValid: false);
+                    }
+                }
+            }
+
+            if (maximum.HasValue)
+            {
+                if (maximum >= number)
+                {
+                    if (level == ValidationLevel.Verbose)
+                    {
+                        result = result.WithResult(isValid: true, $"Validation 6.2.2 maximum -  {value} was less than or equal to {maximum}.");
+                    }
+                }
+                else
+                {
+                    if (level >= ValidationLevel.Detailed)
+                    {
+                        result = result.WithResult(isValid: false, $"Validation 6.2.2 maximum -  {value} was greater than {maximum}.");
+                    }
+                    else if (level >= ValidationLevel.Basic)
+                    {
+                        result = result.WithResult(isValid: false, "Validation 6.2.2 maximum - was greater than the required value.");
+                    }
+                    else
+                    {
+                        return validationContext.WithResult(isValid: false);
+                    }
+                }
+            }
+
+            if (exclusiveMaximum.HasValue)
+            {
+                if (exclusiveMaximum > number)
+                {
+                    if (level == ValidationLevel.Verbose)
+                    {
+                        result = result.WithResult(isValid: true, $"Validation 6.2.3 exclusiveMaximum -  {value} was less than {exclusiveMaximum}.");
+                    }
+                }
+                else
+                {
+                    if (level >= ValidationLevel.Detailed)
+                    {
+                        result = result.WithResult(isValid: false, $"Validation 6.2.3 exclusiveMaximum -  {value} was greater than or equal to {exclusiveMaximum}.");
+                    }
+                    else if (level >= ValidationLevel.Basic)
+                    {
+                        result = result.WithResult(isValid: false, "Validation 6.2.3 exclusiveMaximum - was greater than or equal to the required value.");
+                    }
+                    else
+                    {
+                        return validationContext.WithResult(isValid: false);
+                    }
+                }
+            }
+
+            if (minimum.HasValue)
+            {
+                if (minimum <= number)
+                {
+                    if (level == ValidationLevel.Verbose)
+                    {
+                        result = result.WithResult(isValid: true, $"Validation 6.2.4 minimum -  {value} was greater than or equal to {minimum}.");
+                    }
+                }
+                else
+                {
+                    if (level >= ValidationLevel.Detailed)
+                    {
+                        result = result.WithResult(isValid: false, $"Validation 6.2.4 minimum - {value} was less than {minimum}.");
+                    }
+                    else if (level >= ValidationLevel.Basic)
+                    {
+                        result = result.WithResult(isValid: false, "Validation 6.2.4 minimum - was less than the required value.");
+                    }
+                    else
+                    {
+                        return validationContext.WithResult(isValid: false);
+                    }
+                }
+            }
+
+            if (exclusiveMinimum.HasValue)
+            {
+                if (exclusiveMinimum < number)
+                {
+                    if (level == ValidationLevel.Verbose)
+                    {
+                        result = result.WithResult(isValid: true, $"Validation 6.2.5 exclusiveMinimum -  {value} was greater than {exclusiveMinimum}.");
+                    }
+                }
+                else
+                {
+                    if (level >= ValidationLevel.Detailed)
+                    {
+                        result = result.WithResult(isValid: false, $"Validation 6.2.5 exclusiveMinimum -  {value} was less than or equal to {exclusiveMinimum}.");
+                    }
+                    else if (level >= ValidationLevel.Basic)
+                    {
+                        result = result.WithResult(isValid: false, "Validation 6.2.5 exclusiveMinimum - was less than or equal to the required value.");
+                    }
+                    else
+                    {
+                        return validationContext.WithResult(isValid: false);
+                    }
                 }
             }
         }
-
-        if (maximum is double max)
+        else
         {
-            if (currentValue <= max)
+            BinaryJsonNumber currentValue = value.AsNumber.AsBinaryJsonNumber;
+            if (multipleOf.HasValue)
             {
-                if (level == ValidationLevel.Verbose)
+                if (currentValue.IsMultipleOf(multipleOf))
                 {
-                    result = result.WithResult(isValid: true, $"Validation 6.2.2 maximum -  {currentValue} was less than or equal to {max}.");
-                }
-            }
-            else
-            {
-                if (level >= ValidationLevel.Detailed)
-                {
-                    result = result.WithResult(isValid: false, $"Validation 6.2.2 maximum -  {currentValue} was greater than {max}.");
-                }
-                else if (level >= ValidationLevel.Basic)
-                {
-                    result = result.WithResult(isValid: false, "Validation 6.2.2 maximum - was greater than the required value.");
+                    if (level == ValidationLevel.Verbose)
+                    {
+                        result = result.WithResult(isValid: true, $"Validation 6.2.1 multipleOf -  {currentValue} was a multiple of {multipleOf}.");
+                    }
                 }
                 else
                 {
-                    return validationContext.WithResult(isValid: false);
+                    if (level >= ValidationLevel.Detailed)
+                    {
+                        result = result.WithResult(isValid: false, $"Validation 6.2.1 multipleOf -  {currentValue} was not a multiple of {multipleOf}.");
+                    }
+                    else if (level >= ValidationLevel.Basic)
+                    {
+                        result = result.WithResult(isValid: false, "Validation 6.2.1 multipleOf - was not a multiple of the required value.");
+                    }
+                    else
+                    {
+                        return validationContext.WithResult(isValid: false);
+                    }
                 }
             }
-        }
 
-        if (exclusiveMaximum is double emax)
-        {
-            if (currentValue < emax)
+            if (maximum.HasValue)
             {
-                if (level == ValidationLevel.Verbose)
+                if (currentValue <= maximum)
                 {
-                    result = result.WithResult(isValid: true, $"Validation 6.2.3 exclusiveMaximum -  {currentValue} was less than {emax}.");
-                }
-            }
-            else
-            {
-                if (level >= ValidationLevel.Detailed)
-                {
-                    result = result.WithResult(isValid: false, $"Validation 6.2.3 exclusiveMaximum -  {currentValue} was greater than or equal to {emax}.");
-                }
-                else if (level >= ValidationLevel.Basic)
-                {
-                    result = result.WithResult(isValid: false, "Validation 6.2.3 exclusiveMaximum - was greater than or equal to the required value.");
+                    if (level == ValidationLevel.Verbose)
+                    {
+                        result = result.WithResult(isValid: true, $"Validation 6.2.2 maximum -  {currentValue} was less than or equal to {maximum}.");
+                    }
                 }
                 else
                 {
-                    return validationContext.WithResult(isValid: false);
+                    if (level >= ValidationLevel.Detailed)
+                    {
+                        result = result.WithResult(isValid: false, $"Validation 6.2.2 maximum -  {currentValue} was greater than {maximum}.");
+                    }
+                    else if (level >= ValidationLevel.Basic)
+                    {
+                        result = result.WithResult(isValid: false, "Validation 6.2.2 maximum - was greater than the required value.");
+                    }
+                    else
+                    {
+                        return validationContext.WithResult(isValid: false);
+                    }
                 }
             }
-        }
 
-        if (minimum is double min)
-        {
-            if (currentValue >= min)
+            if (exclusiveMaximum.HasValue)
             {
-                if (level == ValidationLevel.Verbose)
+                if (currentValue < exclusiveMaximum)
                 {
-                    result = result.WithResult(isValid: true, $"Validation 6.2.4 minimum -  {currentValue} was greater than or equal to {min}.");
-                }
-            }
-            else
-            {
-                if (level >= ValidationLevel.Detailed)
-                {
-                    result = result.WithResult(isValid: false, $"Validation 6.2.4 minimum - {currentValue} was less than {min}.");
-                }
-                else if (level >= ValidationLevel.Basic)
-                {
-                    result = result.WithResult(isValid: false, "Validation 6.2.4 minimum - was less than the required value.");
+                    if (level == ValidationLevel.Verbose)
+                    {
+                        result = result.WithResult(isValid: true, $"Validation 6.2.3 exclusiveMaximum -  {currentValue} was less than {exclusiveMaximum}.");
+                    }
                 }
                 else
                 {
-                    return validationContext.WithResult(isValid: false);
+                    if (level >= ValidationLevel.Detailed)
+                    {
+                        result = result.WithResult(isValid: false, $"Validation 6.2.3 exclusiveMaximum -  {currentValue} was greater than or equal to {exclusiveMaximum}.");
+                    }
+                    else if (level >= ValidationLevel.Basic)
+                    {
+                        result = result.WithResult(isValid: false, "Validation 6.2.3 exclusiveMaximum - was greater than or equal to the required value.");
+                    }
+                    else
+                    {
+                        return validationContext.WithResult(isValid: false);
+                    }
                 }
             }
-        }
 
-        if (exclusiveMinimum is double emin)
-        {
-            if (currentValue > emin)
+            if (minimum.HasValue)
             {
-                if (level == ValidationLevel.Verbose)
+                if (currentValue >= minimum)
                 {
-                    result = result.WithResult(isValid: true, $"Validation 6.2.5 exclusiveMinimum -  {currentValue} was greater than {emin}.");
-                }
-            }
-            else
-            {
-                if (level >= ValidationLevel.Detailed)
-                {
-                    result = result.WithResult(isValid: false, $"Validation 6.2.5 exclusiveMinimum -  {currentValue} was less than or equal to {emin}.");
-                }
-                else if (level >= ValidationLevel.Basic)
-                {
-                    result = result.WithResult(isValid: false, "Validation 6.2.5 exclusiveMinimum - was less than or equal to the required value.");
+                    if (level == ValidationLevel.Verbose)
+                    {
+                        result = result.WithResult(isValid: true, $"Validation 6.2.4 minimum -  {currentValue} was greater than or equal to {minimum}.");
+                    }
                 }
                 else
                 {
-                    return validationContext.WithResult(isValid: false);
+                    if (level >= ValidationLevel.Detailed)
+                    {
+                        result = result.WithResult(isValid: false, $"Validation 6.2.4 minimum - {currentValue} was less than {minimum}.");
+                    }
+                    else if (level >= ValidationLevel.Basic)
+                    {
+                        result = result.WithResult(isValid: false, "Validation 6.2.4 minimum - was less than the required value.");
+                    }
+                    else
+                    {
+                        return validationContext.WithResult(isValid: false);
+                    }
+                }
+            }
+
+            if (exclusiveMinimum.HasValue)
+            {
+                if (currentValue > exclusiveMinimum)
+                {
+                    if (level == ValidationLevel.Verbose)
+                    {
+                        result = result.WithResult(isValid: true, $"Validation 6.2.5 exclusiveMinimum -  {currentValue} was greater than {exclusiveMinimum}.");
+                    }
+                }
+                else
+                {
+                    if (level >= ValidationLevel.Detailed)
+                    {
+                        result = result.WithResult(isValid: false, $"Validation 6.2.5 exclusiveMinimum -  {currentValue} was less than or equal to {exclusiveMinimum}.");
+                    }
+                    else if (level >= ValidationLevel.Basic)
+                    {
+                        result = result.WithResult(isValid: false, "Validation 6.2.5 exclusiveMinimum - was less than or equal to the required value.");
+                    }
+                    else
+                    {
+                        return validationContext.WithResult(isValid: false);
+                    }
                 }
             }
         }
@@ -1959,15 +2029,7 @@ public static partial class Validate
 
         if (maxLength is not null || minLength is not null || pattern is not null)
         {
-            if (value.HasJsonElementBacking)
-            {
-                // We know it is a string, so we should always return true, no need to check the result.
-                value.AsJsonElement.TryGetValue(StringValidator, new StringValidationContextWrapper(result, level, minLength, maxLength, pattern), out result);
-            }
-            else
-            {
-                StringValidator(value.AsString.AsSpan(), new StringValidationContextWrapper(result, level, minLength, maxLength, pattern), out result);
-            }
+            value.AsString.TryGetValue(StringValidator, new StringValidationContextWrapper(result, level, minLength, maxLength, pattern), out result);
 
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
@@ -2745,15 +2807,7 @@ public static partial class Validate
 
         ValidationContext result = validationContext;
 
-        if (instance.HasJsonElementBacking)
-        {
-            // We know it is a string, so we should always return true, no need to check the result.
-            instance.AsJsonElement.TryGetValue(IPV6Validator, new ValidationContextWrapper(result, level), out result);
-        }
-        else
-        {
-            IPV6Validator(instance.AsString.AsSpan(), new ValidationContextWrapper(result, level), out result);
-        }
+        instance.AsString.TryGetValue(IPV6Validator, new ValidationContextWrapper(result, level), out result);
 
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
@@ -2826,16 +2880,7 @@ public static partial class Validate
         }
 
         ValidationContext result = validationContext;
-
-        if (instance.HasJsonElementBacking)
-        {
-            // We know it is a string, so we should always return true, no need to check the result.
-            instance.AsJsonElement.TryGetValue(IPV6Validator, new ValidationContextWrapper(result, level), out result);
-        }
-        else
-        {
-            IPV6Validator(instance.AsString.AsSpan(), new ValidationContextWrapper(result, level), out result);
-        }
+        instance.AsString.TryGetValue(IPV6Validator, new ValidationContextWrapper(result, level), out result);
 
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
@@ -2963,6 +3008,12 @@ public static partial class Validate
 
     [GeneratedRegex("^(0|[1-9][0-9]*)(#|(/(/|[^/~]|(~[01]))*))?$", RegexOptions.Compiled)]
     private static partial Regex CreateJsonRelativePointerPattern();
+
+    [GeneratedRegex("(@)(.+)$", RegexOptions.Compiled)]
+    private static partial Regex CreateIdnEmailReplacePattern();
+
+    [GeneratedRegex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", RegexOptions.Compiled)]
+    private static partial Regex CreateIdnEmailMatchPattern();
 
     private readonly record struct ValidationContextWrapper(in ValidationContext Context, ValidationLevel Level);
 

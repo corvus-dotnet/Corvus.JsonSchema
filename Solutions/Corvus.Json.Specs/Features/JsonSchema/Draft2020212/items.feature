@@ -212,13 +212,12 @@ Scenario Outline: prefixItems validation adjusts the starting index for items
         | #/007/tests/000/data | true  | valid items                                                                      |
         | #/007/tests/001/data | false | wrong type of second item                                                        |
 
-Scenario Outline: items with null instance elements
+Scenario Outline: items with heterogeneous array
 /* Schema: 
 {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
-            "items": {
-                "type": "null"
-            }
+            "prefixItems": [{}],
+            "items": false
         }
 */
     Given the input JSON file "items.json"
@@ -231,4 +230,26 @@ Scenario Outline: items with null instance elements
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
-        | #/008/tests/000/data | true  | allows null elements                                                             |
+        | #/008/tests/000/data | false | heterogeneous invalid instance                                                   |
+        | #/008/tests/001/data | true  | valid instance                                                                   |
+
+Scenario Outline: items with null instance elements
+/* Schema: 
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "items": {
+                "type": "null"
+            }
+        }
+*/
+    Given the input JSON file "items.json"
+    And the schema at "#/9/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        | #/009/tests/000/data | true  | allows null elements                                                             |

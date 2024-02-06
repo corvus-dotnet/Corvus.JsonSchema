@@ -32,7 +32,7 @@ public readonly partial struct JsonPatchDocument
                 if (level > ValidationLevel.Basic)
                 {
                     result = result.UsingStack();
-                    result = result.PushSchemaLocation("C:/Users/matth/source/repos/Corvus.JsonSchema/Solutions/Corvus.Json.Patch/Corvus.Json.Patch/Model/json-patch.json#/$defs/Test/properties/op");
+                    result = result.PushSchemaLocation("D:/source/corvus-dotnet/Corvus.JsonSchema/Solutions/Corvus.Json.Patch/Corvus.Json.Patch/Model/json-patch.json#/$defs/Test/properties/op");
                 }
 
                 result = Corvus.Json.Validate.ValidateConst(this, result, level, __CorvusConstValue);

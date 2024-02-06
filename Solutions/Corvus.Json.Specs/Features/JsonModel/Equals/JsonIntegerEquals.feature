@@ -34,6 +34,7 @@ Scenario Outline: Equals for integer json element backed value as an IJsonValue
 		| 1         | "Hello"                        | false  |
 		| 1         | "Goodbye"                      | false  |
 		| 1         | 1                              | true   |
+		| 1         | 1.0                            | true   |
 		| 1         | 1.1                            | false  |
 		| 1         | [1,2,3]                        | false  |
 		| 1         | { "first": "1" }               | false  |
@@ -61,6 +62,7 @@ Scenario Outline: Equals for integer dotnet backed value as an IJsonValue
 		| 1         | "Hello"                        | false  |
 		| 1         | "Goodbye"                      | false  |
 		| 1         | 1                              | true   |
+		| 1         | 1.0                            | true   |
 		| 1         | 1.1                            | false  |
 		| 1         | [1,2,3]                        | false  |
 		| 1         | { "first": "1" }               | false  |
@@ -88,6 +90,7 @@ Scenario Outline: Equals for integer json element backed value as an object
 		| 1         | "Hello"                        | false  |
 		| 1         | "Goodbye"                      | false  |
 		| 1         | 1                              | true   |
+		| 1         | 1.0                            | true   |
 		| 1         | 1.1                            | false  |
 		| 1         | [1,2,3]                        | false  |
 		| 1         | { "first": "1" }               | false  |
@@ -116,6 +119,7 @@ Scenario Outline: Equals for integer dotnet backed value as an object
 		| 1         | "Hello"                        | false  |
 		| 1         | "Goodbye"                      | false  |
 		| 1         | 1                              | true   |
+		| 1         | 1.0                            | true   |
 		| 1         | 1.1                            | false  |
 		| 1         | [1,2,3]                        | false  |
 		| 1         | { "first": "1" }               | false  |

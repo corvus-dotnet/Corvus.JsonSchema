@@ -43,13 +43,13 @@ public class JsonValueEqualitySteps
     {
         if (expected != "null")
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonString>(JsonValueSteps.SubjectUnderTest).Equals(new JsonString((string)JsonAny.Parse(expected))), EqualsObjectBackedResultKey);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonString>(JsonValueSteps.SubjectUnderTest).Equals(JsonString.Parse(expected).AsDotnetBackedValue()), EqualsObjectBackedResultKey);
         }
 
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonString>(JsonValueSteps.SubjectUnderTest).Equals((JsonString)JsonAny.Parse(expected)), EqualsResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonString>(JsonValueSteps.SubjectUnderTest) == (JsonString)JsonAny.Parse(expected), EqualityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonString>(JsonValueSteps.SubjectUnderTest) != (JsonString)JsonAny.Parse(expected), InequalityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonString>(JsonValueSteps.SubjectUnderTest).GetHashCode() == ((JsonString)JsonAny.Parse(expected)).GetHashCode(), HashCodeResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonString>(JsonValueSteps.SubjectUnderTest).Equals(JsonString.Parse(expected)), EqualsResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonString>(JsonValueSteps.SubjectUnderTest) == JsonString.Parse(expected), EqualityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonString>(JsonValueSteps.SubjectUnderTest) != JsonString.Parse(expected), InequalityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonString>(JsonValueSteps.SubjectUnderTest).GetHashCode() == JsonString.Parse(expected).GetHashCode(), HashCodeResultKey);
     }
 
     /// <summary>
@@ -88,13 +88,13 @@ public class JsonValueEqualitySteps
     {
         if (expected != "null")
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonBoolean>(JsonValueSteps.SubjectUnderTest).Equals(new JsonBoolean((bool)JsonAny.Parse(expected))), EqualsObjectBackedResultKey);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonBoolean>(JsonValueSteps.SubjectUnderTest).Equals(JsonBoolean.Parse(expected).AsDotnetBackedValue()), EqualsObjectBackedResultKey);
         }
 
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonBoolean>(JsonValueSteps.SubjectUnderTest).Equals((JsonBoolean)JsonAny.Parse(expected)), EqualsResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonBoolean>(JsonValueSteps.SubjectUnderTest) == (JsonBoolean)JsonAny.Parse(expected), EqualityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonBoolean>(JsonValueSteps.SubjectUnderTest) != (JsonBoolean)JsonAny.Parse(expected), InequalityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonBoolean>(JsonValueSteps.SubjectUnderTest).GetHashCode() == ((JsonBoolean)JsonAny.Parse(expected)).GetHashCode(), HashCodeResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonBoolean>(JsonValueSteps.SubjectUnderTest).Equals(JsonBoolean.Parse(expected)), EqualsResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonBoolean>(JsonValueSteps.SubjectUnderTest) == JsonBoolean.Parse(expected), EqualityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonBoolean>(JsonValueSteps.SubjectUnderTest) != JsonBoolean.Parse(expected), InequalityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonBoolean>(JsonValueSteps.SubjectUnderTest).GetHashCode() == JsonBoolean.Parse(expected).GetHashCode(), HashCodeResultKey);
     }
 
     /// <summary>
@@ -276,10 +276,10 @@ public class JsonValueEqualitySteps
             this.scenarioContext.Set(this.scenarioContext.Get<JsonArray>(JsonValueSteps.SubjectUnderTest).Equals(JsonAny.Parse(expected).AsArray.AsDotnetBackedValue()), EqualsObjectBackedResultKey);
         }
 
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonArray>(JsonValueSteps.SubjectUnderTest).Equals((JsonArray)JsonAny.Parse(expected)), EqualsResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonArray>(JsonValueSteps.SubjectUnderTest) == (JsonArray)JsonAny.Parse(expected), EqualityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonArray>(JsonValueSteps.SubjectUnderTest) != (JsonArray)JsonAny.Parse(expected), InequalityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonArray>(JsonValueSteps.SubjectUnderTest).GetHashCode() == ((JsonArray)JsonAny.Parse(expected)).GetHashCode(), HashCodeResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonArray>(JsonValueSteps.SubjectUnderTest).Equals(JsonArray.Parse(expected)), EqualsResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonArray>(JsonValueSteps.SubjectUnderTest) == JsonArray.Parse(expected), EqualityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonArray>(JsonValueSteps.SubjectUnderTest) != JsonArray.Parse(expected), InequalityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonArray>(JsonValueSteps.SubjectUnderTest).GetHashCode() == JsonArray.Parse(expected).GetHashCode(), HashCodeResultKey);
     }
 
     /// <summary>
@@ -318,13 +318,13 @@ public class JsonValueEqualitySteps
     {
         if (expected != "null")
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonBase64Content>(JsonValueSteps.SubjectUnderTest).Equals(new JsonBase64Content((string)JsonAny.Parse(expected))), EqualsObjectBackedResultKey);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonBase64Content>(JsonValueSteps.SubjectUnderTest).Equals(JsonBase64Content.Parse(expected).AsDotnetBackedValue()), EqualsObjectBackedResultKey);
         }
 
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonBase64Content>(JsonValueSteps.SubjectUnderTest).Equals((JsonBase64Content)JsonAny.Parse(expected)), EqualsResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonBase64Content>(JsonValueSteps.SubjectUnderTest) == (JsonBase64Content)JsonAny.Parse(expected), EqualityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonBase64Content>(JsonValueSteps.SubjectUnderTest) != (JsonBase64Content)JsonAny.Parse(expected), InequalityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonBase64Content>(JsonValueSteps.SubjectUnderTest).GetHashCode() == ((JsonBase64Content)JsonAny.Parse(expected)).GetHashCode(), HashCodeResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonBase64Content>(JsonValueSteps.SubjectUnderTest).Equals(JsonBase64Content.Parse(expected)), EqualsResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonBase64Content>(JsonValueSteps.SubjectUnderTest) == JsonBase64Content.Parse(expected), EqualityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonBase64Content>(JsonValueSteps.SubjectUnderTest) != JsonBase64Content.Parse(expected), InequalityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonBase64Content>(JsonValueSteps.SubjectUnderTest).GetHashCode() == JsonBase64Content.Parse(expected).GetHashCode(), HashCodeResultKey);
     }
 
     /// <summary>
@@ -363,13 +363,13 @@ public class JsonValueEqualitySteps
     {
         if (expected != "null")
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonBase64String>(JsonValueSteps.SubjectUnderTest).Equals(new JsonBase64String((string)JsonAny.Parse(expected))), EqualsObjectBackedResultKey);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonBase64String>(JsonValueSteps.SubjectUnderTest).Equals(JsonBase64String.Parse(expected).AsDotnetBackedValue()), EqualsObjectBackedResultKey);
         }
 
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonBase64String>(JsonValueSteps.SubjectUnderTest).Equals((JsonBase64String)JsonAny.Parse(expected)), EqualsResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonBase64String>(JsonValueSteps.SubjectUnderTest) == (JsonBase64String)JsonAny.Parse(expected), EqualityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonBase64String>(JsonValueSteps.SubjectUnderTest) != (JsonBase64String)JsonAny.Parse(expected), InequalityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonBase64String>(JsonValueSteps.SubjectUnderTest).GetHashCode() == ((JsonBase64String)JsonAny.Parse(expected)).GetHashCode(), HashCodeResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonBase64String>(JsonValueSteps.SubjectUnderTest).Equals(JsonBase64String.Parse(expected)), EqualsResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonBase64String>(JsonValueSteps.SubjectUnderTest) == JsonBase64String.Parse(expected), EqualityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonBase64String>(JsonValueSteps.SubjectUnderTest) != JsonBase64String.Parse(expected), InequalityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonBase64String>(JsonValueSteps.SubjectUnderTest).GetHashCode() == JsonBase64String.Parse(expected).GetHashCode(), HashCodeResultKey);
     }
 
     /// <summary>
@@ -408,13 +408,13 @@ public class JsonValueEqualitySteps
     {
         if (expected != "null")
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonContent>(JsonValueSteps.SubjectUnderTest).Equals(new JsonContent((string)JsonAny.Parse(expected))), EqualsObjectBackedResultKey);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonContent>(JsonValueSteps.SubjectUnderTest).Equals(JsonContent.Parse(expected).AsDotnetBackedValue()), EqualsObjectBackedResultKey);
         }
 
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonContent>(JsonValueSteps.SubjectUnderTest).Equals((JsonContent)JsonAny.Parse(expected)), EqualsResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonContent>(JsonValueSteps.SubjectUnderTest) == (JsonContent)JsonAny.Parse(expected), EqualityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonContent>(JsonValueSteps.SubjectUnderTest) != (JsonContent)JsonAny.Parse(expected), InequalityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonContent>(JsonValueSteps.SubjectUnderTest).GetHashCode() == ((JsonContent)JsonAny.Parse(expected)).GetHashCode(), HashCodeResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonContent>(JsonValueSteps.SubjectUnderTest).Equals(JsonContent.Parse(expected)), EqualsResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonContent>(JsonValueSteps.SubjectUnderTest) == JsonContent.Parse(expected), EqualityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonContent>(JsonValueSteps.SubjectUnderTest) != JsonContent.Parse(expected), InequalityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonContent>(JsonValueSteps.SubjectUnderTest).GetHashCode() == JsonContent.Parse(expected).GetHashCode(), HashCodeResultKey);
     }
 
     /// <summary>
@@ -453,13 +453,13 @@ public class JsonValueEqualitySteps
     {
         if (expected != "null")
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonDate>(JsonValueSteps.SubjectUnderTest).Equals(new JsonDate((string)JsonAny.Parse(expected))), EqualsObjectBackedResultKey);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonDate>(JsonValueSteps.SubjectUnderTest).Equals(JsonDate.Parse(expected).AsDotnetBackedValue()), EqualsObjectBackedResultKey);
         }
 
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonDate>(JsonValueSteps.SubjectUnderTest).Equals((JsonDate)JsonAny.Parse(expected)), EqualsResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonDate>(JsonValueSteps.SubjectUnderTest) == (JsonDate)JsonAny.Parse(expected), EqualityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonDate>(JsonValueSteps.SubjectUnderTest) != (JsonDate)JsonAny.Parse(expected), InequalityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonDate>(JsonValueSteps.SubjectUnderTest).GetHashCode() == ((JsonDate)JsonAny.Parse(expected)).GetHashCode(), HashCodeResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonDate>(JsonValueSteps.SubjectUnderTest).Equals(JsonDate.Parse(expected)), EqualsResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonDate>(JsonValueSteps.SubjectUnderTest) == JsonDate.Parse(expected), EqualityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonDate>(JsonValueSteps.SubjectUnderTest) != JsonDate.Parse(expected), InequalityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonDate>(JsonValueSteps.SubjectUnderTest).GetHashCode() == JsonDate.Parse(expected).GetHashCode(), HashCodeResultKey);
     }
 
     /// <summary>
@@ -498,13 +498,13 @@ public class JsonValueEqualitySteps
     {
         if (expected != "null")
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonDateTime>(JsonValueSteps.SubjectUnderTest).Equals(new JsonDateTime((string)JsonAny.Parse(expected))), EqualsObjectBackedResultKey);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonDateTime>(JsonValueSteps.SubjectUnderTest).Equals(JsonDateTime.Parse(expected).AsDotnetBackedValue()), EqualsObjectBackedResultKey);
         }
 
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonDateTime>(JsonValueSteps.SubjectUnderTest).Equals((JsonDateTime)JsonAny.Parse(expected)), EqualsResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonDateTime>(JsonValueSteps.SubjectUnderTest) == (JsonDateTime)JsonAny.Parse(expected), EqualityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonDateTime>(JsonValueSteps.SubjectUnderTest) != (JsonDateTime)JsonAny.Parse(expected), InequalityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonDateTime>(JsonValueSteps.SubjectUnderTest).GetHashCode() == ((JsonDateTime)JsonAny.Parse(expected)).GetHashCode(), HashCodeResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonDateTime>(JsonValueSteps.SubjectUnderTest).Equals(JsonDateTime.Parse(expected)), EqualsResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonDateTime>(JsonValueSteps.SubjectUnderTest) == JsonDateTime.Parse(expected), EqualityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonDateTime>(JsonValueSteps.SubjectUnderTest) != JsonDateTime.Parse(expected), InequalityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonDateTime>(JsonValueSteps.SubjectUnderTest).GetHashCode() == JsonDateTime.Parse(expected).GetHashCode(), HashCodeResultKey);
     }
 
     /// <summary>
@@ -543,13 +543,13 @@ public class JsonValueEqualitySteps
     {
         if (expected != "null")
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonDuration>(JsonValueSteps.SubjectUnderTest).Equals(new JsonDuration((string)JsonAny.Parse(expected))), EqualsObjectBackedResultKey);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonDuration>(JsonValueSteps.SubjectUnderTest).Equals(JsonDuration.Parse(expected).AsDotnetBackedValue()), EqualsObjectBackedResultKey);
         }
 
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonDuration>(JsonValueSteps.SubjectUnderTest).Equals((JsonDuration)JsonAny.Parse(expected)), EqualsResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonDuration>(JsonValueSteps.SubjectUnderTest) == (JsonDuration)JsonAny.Parse(expected), EqualityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonDuration>(JsonValueSteps.SubjectUnderTest) != (JsonDuration)JsonAny.Parse(expected), InequalityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonDuration>(JsonValueSteps.SubjectUnderTest).GetHashCode() == ((JsonDuration)JsonAny.Parse(expected)).GetHashCode(), HashCodeResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonDuration>(JsonValueSteps.SubjectUnderTest).Equals(JsonDuration.Parse(expected)), EqualsResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonDuration>(JsonValueSteps.SubjectUnderTest) == JsonDuration.Parse(expected), EqualityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonDuration>(JsonValueSteps.SubjectUnderTest) != JsonDuration.Parse(expected), InequalityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonDuration>(JsonValueSteps.SubjectUnderTest).GetHashCode() == JsonDuration.Parse(expected).GetHashCode(), HashCodeResultKey);
     }
 
     /// <summary>
@@ -588,13 +588,13 @@ public class JsonValueEqualitySteps
     {
         if (expected != "null")
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonEmail>(JsonValueSteps.SubjectUnderTest).Equals(new JsonEmail((string)JsonAny.Parse(expected))), EqualsObjectBackedResultKey);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonEmail>(JsonValueSteps.SubjectUnderTest).Equals(JsonEmail.Parse(expected).AsDotnetBackedValue()), EqualsObjectBackedResultKey);
         }
 
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonEmail>(JsonValueSteps.SubjectUnderTest).Equals((JsonEmail)JsonAny.Parse(expected)), EqualsResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonEmail>(JsonValueSteps.SubjectUnderTest) == (JsonEmail)JsonAny.Parse(expected), EqualityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonEmail>(JsonValueSteps.SubjectUnderTest) != (JsonEmail)JsonAny.Parse(expected), InequalityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonEmail>(JsonValueSteps.SubjectUnderTest).GetHashCode() == ((JsonEmail)JsonAny.Parse(expected)).GetHashCode(), HashCodeResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonEmail>(JsonValueSteps.SubjectUnderTest).Equals(JsonEmail.Parse(expected)), EqualsResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonEmail>(JsonValueSteps.SubjectUnderTest) == JsonEmail.Parse(expected), EqualityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonEmail>(JsonValueSteps.SubjectUnderTest) != JsonEmail.Parse(expected), InequalityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonEmail>(JsonValueSteps.SubjectUnderTest).GetHashCode() == JsonEmail.Parse(expected).GetHashCode(), HashCodeResultKey);
     }
 
     /// <summary>
@@ -633,13 +633,13 @@ public class JsonValueEqualitySteps
     {
         if (expected != "null")
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonIdnEmail>(JsonValueSteps.SubjectUnderTest).Equals(new JsonIdnEmail((string)JsonAny.Parse(expected))), EqualsObjectBackedResultKey);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonIdnEmail>(JsonValueSteps.SubjectUnderTest).Equals(JsonIdnEmail.Parse(expected).AsDotnetBackedValue()), EqualsObjectBackedResultKey);
         }
 
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonIdnEmail>(JsonValueSteps.SubjectUnderTest).Equals((JsonIdnEmail)JsonAny.Parse(expected)), EqualsResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonIdnEmail>(JsonValueSteps.SubjectUnderTest) == (JsonIdnEmail)JsonAny.Parse(expected), EqualityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonIdnEmail>(JsonValueSteps.SubjectUnderTest) != (JsonIdnEmail)JsonAny.Parse(expected), InequalityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonIdnEmail>(JsonValueSteps.SubjectUnderTest).GetHashCode() == ((JsonIdnEmail)JsonAny.Parse(expected)).GetHashCode(), HashCodeResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonIdnEmail>(JsonValueSteps.SubjectUnderTest).Equals(JsonIdnEmail.Parse(expected)), EqualsResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonIdnEmail>(JsonValueSteps.SubjectUnderTest) == JsonIdnEmail.Parse(expected), EqualityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonIdnEmail>(JsonValueSteps.SubjectUnderTest) != JsonIdnEmail.Parse(expected), InequalityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonIdnEmail>(JsonValueSteps.SubjectUnderTest).GetHashCode() == JsonIdnEmail.Parse(expected).GetHashCode(), HashCodeResultKey);
     }
 
     /// <summary>
@@ -678,13 +678,13 @@ public class JsonValueEqualitySteps
     {
         if (expected != "null")
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonHostname>(JsonValueSteps.SubjectUnderTest).Equals(new JsonHostname((string)JsonAny.Parse(expected))), EqualsObjectBackedResultKey);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonHostname>(JsonValueSteps.SubjectUnderTest).Equals(JsonHostname.Parse(expected).AsDotnetBackedValue()), EqualsObjectBackedResultKey);
         }
 
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonHostname>(JsonValueSteps.SubjectUnderTest).Equals((JsonHostname)JsonAny.Parse(expected)), EqualsResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonHostname>(JsonValueSteps.SubjectUnderTest) == (JsonHostname)JsonAny.Parse(expected), EqualityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonHostname>(JsonValueSteps.SubjectUnderTest) != (JsonHostname)JsonAny.Parse(expected), InequalityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonHostname>(JsonValueSteps.SubjectUnderTest).GetHashCode() == ((JsonHostname)JsonAny.Parse(expected)).GetHashCode(), HashCodeResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonHostname>(JsonValueSteps.SubjectUnderTest).Equals(JsonHostname.Parse(expected)), EqualsResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonHostname>(JsonValueSteps.SubjectUnderTest) == JsonHostname.Parse(expected), EqualityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonHostname>(JsonValueSteps.SubjectUnderTest) != JsonHostname.Parse(expected), InequalityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonHostname>(JsonValueSteps.SubjectUnderTest).GetHashCode() == JsonHostname.Parse(expected).GetHashCode(), HashCodeResultKey);
     }
 
     /// <summary>
@@ -723,13 +723,13 @@ public class JsonValueEqualitySteps
     {
         if (expected != "null")
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonIdnHostname>(JsonValueSteps.SubjectUnderTest).Equals(new JsonIdnHostname((string)JsonAny.Parse(expected))), EqualsObjectBackedResultKey);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonIdnHostname>(JsonValueSteps.SubjectUnderTest).Equals(JsonIdnHostname.Parse(expected).AsDotnetBackedValue()), EqualsObjectBackedResultKey);
         }
 
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonIdnHostname>(JsonValueSteps.SubjectUnderTest).Equals((JsonIdnHostname)JsonAny.Parse(expected)), EqualsResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonIdnHostname>(JsonValueSteps.SubjectUnderTest) == (JsonIdnHostname)JsonAny.Parse(expected), EqualityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonIdnHostname>(JsonValueSteps.SubjectUnderTest) != (JsonIdnHostname)JsonAny.Parse(expected), InequalityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonIdnHostname>(JsonValueSteps.SubjectUnderTest).GetHashCode() == ((JsonIdnHostname)JsonAny.Parse(expected)).GetHashCode(), HashCodeResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonIdnHostname>(JsonValueSteps.SubjectUnderTest).Equals(JsonIdnHostname.Parse(expected)), EqualsResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonIdnHostname>(JsonValueSteps.SubjectUnderTest) == JsonIdnHostname.Parse(expected), EqualityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonIdnHostname>(JsonValueSteps.SubjectUnderTest) != JsonIdnHostname.Parse(expected), InequalityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonIdnHostname>(JsonValueSteps.SubjectUnderTest).GetHashCode() == JsonIdnHostname.Parse(expected).GetHashCode(), HashCodeResultKey);
     }
 
     /// <summary>
@@ -816,13 +816,13 @@ public class JsonValueEqualitySteps
     {
         if (expected != "null")
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonInteger>(JsonValueSteps.SubjectUnderTest).Equals(new JsonInteger((long)JsonAny.Parse(expected))), EqualsObjectBackedResultKey);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonInteger>(JsonValueSteps.SubjectUnderTest).Equals(JsonInteger.Parse(expected).AsDotnetBackedValue()), EqualsObjectBackedResultKey);
         }
 
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonInteger>(JsonValueSteps.SubjectUnderTest).Equals((JsonInteger)JsonAny.Parse(expected)), EqualsResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonInteger>(JsonValueSteps.SubjectUnderTest) == (JsonInteger)JsonAny.Parse(expected), EqualityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonInteger>(JsonValueSteps.SubjectUnderTest) != (JsonInteger)JsonAny.Parse(expected), InequalityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonInteger>(JsonValueSteps.SubjectUnderTest).GetHashCode() == ((JsonInteger)JsonAny.Parse(expected)).GetHashCode(), HashCodeResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonInteger>(JsonValueSteps.SubjectUnderTest).Equals(JsonInteger.Parse(expected)), EqualsResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonInteger>(JsonValueSteps.SubjectUnderTest) == JsonInteger.Parse(expected), EqualityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonInteger>(JsonValueSteps.SubjectUnderTest) != JsonInteger.Parse(expected), InequalityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonInteger>(JsonValueSteps.SubjectUnderTest).GetHashCode() == JsonInteger.Parse(expected).GetHashCode(), HashCodeResultKey);
     }
 
     /// <summary>
@@ -861,10 +861,10 @@ public class JsonValueEqualitySteps
     {
         if (expected != "null")
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonNumber>(JsonValueSteps.SubjectUnderTest) < new JsonNumber((double)JsonAny.Parse(expected)), EqualsObjectBackedResultKey);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonNumber>(JsonValueSteps.SubjectUnderTest) < JsonNumber.Parse(expected).AsDotnetBackedValue(), EqualsObjectBackedResultKey);
         }
 
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonNumber>(JsonValueSteps.SubjectUnderTest) < (JsonNumber)JsonAny.Parse(expected), EqualsResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonNumber>(JsonValueSteps.SubjectUnderTest) < JsonNumber.Parse(expected), EqualsResultKey);
     }
 
     [When("I compare it as greater than the number (.*)")]
@@ -872,10 +872,10 @@ public class JsonValueEqualitySteps
     {
         if (expected != "null")
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonNumber>(JsonValueSteps.SubjectUnderTest) > new JsonNumber((double)JsonAny.Parse(expected)), EqualsObjectBackedResultKey);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonNumber>(JsonValueSteps.SubjectUnderTest) > JsonNumber.Parse(expected).AsDotnetBackedValue(), EqualsObjectBackedResultKey);
         }
 
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonNumber>(JsonValueSteps.SubjectUnderTest) > (JsonNumber)JsonAny.Parse(expected), EqualsResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonNumber>(JsonValueSteps.SubjectUnderTest) > JsonNumber.Parse(expected), EqualsResultKey);
     }
 
     /// <summary>
@@ -887,13 +887,13 @@ public class JsonValueEqualitySteps
     {
         if (expected != "null")
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonNumber>(JsonValueSteps.SubjectUnderTest).Equals(new JsonNumber((double)JsonAny.Parse(expected))), EqualsObjectBackedResultKey);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonNumber>(JsonValueSteps.SubjectUnderTest).Equals(JsonNumber.Parse(expected).AsDotnetBackedValue()), EqualsObjectBackedResultKey);
         }
 
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonNumber>(JsonValueSteps.SubjectUnderTest).Equals((JsonNumber)JsonAny.Parse(expected)), EqualsResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonNumber>(JsonValueSteps.SubjectUnderTest) == (JsonNumber)JsonAny.Parse(expected), EqualityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonNumber>(JsonValueSteps.SubjectUnderTest) != (JsonNumber)JsonAny.Parse(expected), InequalityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonNumber>(JsonValueSteps.SubjectUnderTest).GetHashCode() == ((JsonNumber)JsonAny.Parse(expected)).GetHashCode(), HashCodeResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonNumber>(JsonValueSteps.SubjectUnderTest).Equals(JsonNumber.Parse(expected)), EqualsResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonNumber>(JsonValueSteps.SubjectUnderTest) == JsonNumber.Parse(expected), EqualityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonNumber>(JsonValueSteps.SubjectUnderTest) != JsonNumber.Parse(expected), InequalityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonNumber>(JsonValueSteps.SubjectUnderTest).GetHashCode() == JsonNumber.Parse(expected).GetHashCode(), HashCodeResultKey);
     }
 
     /// <summary>
@@ -932,13 +932,13 @@ public class JsonValueEqualitySteps
     {
         if (expected != "null")
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonIpV4>(JsonValueSteps.SubjectUnderTest).Equals(new JsonIpV4((string)JsonAny.Parse(expected))), EqualsObjectBackedResultKey);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonIpV4>(JsonValueSteps.SubjectUnderTest).Equals(JsonIpV4.Parse(expected).AsDotnetBackedValue()), EqualsObjectBackedResultKey);
         }
 
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonIpV4>(JsonValueSteps.SubjectUnderTest).Equals((JsonIpV4)JsonAny.Parse(expected)), EqualsResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonIpV4>(JsonValueSteps.SubjectUnderTest) == (JsonIpV4)JsonAny.Parse(expected), EqualityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonIpV4>(JsonValueSteps.SubjectUnderTest) != (JsonIpV4)JsonAny.Parse(expected), InequalityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonIpV4>(JsonValueSteps.SubjectUnderTest).GetHashCode() == ((JsonIpV4)JsonAny.Parse(expected)).GetHashCode(), HashCodeResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonIpV4>(JsonValueSteps.SubjectUnderTest).Equals(JsonIpV4.Parse(expected)), EqualsResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonIpV4>(JsonValueSteps.SubjectUnderTest) == JsonIpV4.Parse(expected), EqualityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonIpV4>(JsonValueSteps.SubjectUnderTest) != JsonIpV4.Parse(expected), InequalityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonIpV4>(JsonValueSteps.SubjectUnderTest).GetHashCode() == JsonIpV4.Parse(expected).GetHashCode(), HashCodeResultKey);
     }
 
     /// <summary>
@@ -977,13 +977,13 @@ public class JsonValueEqualitySteps
     {
         if (expected != "null")
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonIpV6>(JsonValueSteps.SubjectUnderTest).Equals(new JsonIpV6((string)JsonAny.Parse(expected))), EqualsObjectBackedResultKey);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonIpV6>(JsonValueSteps.SubjectUnderTest).Equals(JsonIpV6.Parse(expected).AsDotnetBackedValue()), EqualsObjectBackedResultKey);
         }
 
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonIpV6>(JsonValueSteps.SubjectUnderTest).Equals((JsonIpV6)JsonAny.Parse(expected)), EqualsResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonIpV6>(JsonValueSteps.SubjectUnderTest) == (JsonIpV6)JsonAny.Parse(expected), EqualityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonIpV6>(JsonValueSteps.SubjectUnderTest) != (JsonIpV6)JsonAny.Parse(expected), InequalityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonIpV6>(JsonValueSteps.SubjectUnderTest).GetHashCode() == ((JsonIpV6)JsonAny.Parse(expected)).GetHashCode(), HashCodeResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonIpV6>(JsonValueSteps.SubjectUnderTest).Equals(JsonIpV6.Parse(expected)), EqualsResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonIpV6>(JsonValueSteps.SubjectUnderTest) == JsonIpV6.Parse(expected), EqualityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonIpV6>(JsonValueSteps.SubjectUnderTest) != JsonIpV6.Parse(expected), InequalityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonIpV6>(JsonValueSteps.SubjectUnderTest).GetHashCode() == JsonIpV6.Parse(expected).GetHashCode(), HashCodeResultKey);
     }
 
     /// <summary>
@@ -1022,13 +1022,13 @@ public class JsonValueEqualitySteps
     {
         if (expected != "null")
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonUri>(JsonValueSteps.SubjectUnderTest).Equals(new JsonUri((string)JsonAny.Parse(expected))), EqualsObjectBackedResultKey);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonUri>(JsonValueSteps.SubjectUnderTest).Equals(JsonUri.Parse(expected).AsDotnetBackedValue()), EqualsObjectBackedResultKey);
         }
 
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonUri>(JsonValueSteps.SubjectUnderTest).Equals((JsonUri)JsonAny.Parse(expected)), EqualsResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonUri>(JsonValueSteps.SubjectUnderTest) == (JsonUri)JsonAny.Parse(expected), EqualityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonUri>(JsonValueSteps.SubjectUnderTest) != (JsonUri)JsonAny.Parse(expected), InequalityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonUri>(JsonValueSteps.SubjectUnderTest).GetHashCode() == ((JsonUri)JsonAny.Parse(expected)).GetHashCode(), HashCodeResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonUri>(JsonValueSteps.SubjectUnderTest).Equals(JsonUri.Parse(expected)), EqualsResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonUri>(JsonValueSteps.SubjectUnderTest) == JsonUri.Parse(expected), EqualityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonUri>(JsonValueSteps.SubjectUnderTest) != JsonUri.Parse(expected), InequalityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonUri>(JsonValueSteps.SubjectUnderTest).GetHashCode() == JsonUri.Parse(expected).GetHashCode(), HashCodeResultKey);
     }
 
     /// <summary>
@@ -1067,13 +1067,13 @@ public class JsonValueEqualitySteps
     {
         if (expected != "null")
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonUriReference>(JsonValueSteps.SubjectUnderTest).Equals(new JsonUriReference((string)JsonAny.Parse(expected))), EqualsObjectBackedResultKey);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonUriReference>(JsonValueSteps.SubjectUnderTest).Equals(JsonUriReference.Parse(expected).AsDotnetBackedValue()), EqualsObjectBackedResultKey);
         }
 
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonUriReference>(JsonValueSteps.SubjectUnderTest).Equals((JsonUriReference)JsonAny.Parse(expected)), EqualsResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonUriReference>(JsonValueSteps.SubjectUnderTest) == (JsonUriReference)JsonAny.Parse(expected), EqualityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonUriReference>(JsonValueSteps.SubjectUnderTest) != (JsonUriReference)JsonAny.Parse(expected), InequalityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonUriReference>(JsonValueSteps.SubjectUnderTest).GetHashCode() == ((JsonUriReference)JsonAny.Parse(expected)).GetHashCode(), HashCodeResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonUriReference>(JsonValueSteps.SubjectUnderTest).Equals(JsonUriReference.Parse(expected)), EqualsResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonUriReference>(JsonValueSteps.SubjectUnderTest) == JsonUriReference.Parse(expected), EqualityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonUriReference>(JsonValueSteps.SubjectUnderTest) != JsonUriReference.Parse(expected), InequalityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonUriReference>(JsonValueSteps.SubjectUnderTest).GetHashCode() == JsonUriReference.Parse(expected).GetHashCode(), HashCodeResultKey);
     }
 
     /// <summary>
@@ -1112,13 +1112,13 @@ public class JsonValueEqualitySteps
     {
         if (expected != "null")
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonIri>(JsonValueSteps.SubjectUnderTest).Equals(new JsonIri((string)JsonAny.Parse(expected))), EqualsObjectBackedResultKey);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonIri>(JsonValueSteps.SubjectUnderTest).Equals(JsonIri.Parse(expected).AsDotnetBackedValue()), EqualsObjectBackedResultKey);
         }
 
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonIri>(JsonValueSteps.SubjectUnderTest).Equals((JsonIri)JsonAny.Parse(expected)), EqualsResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonIri>(JsonValueSteps.SubjectUnderTest) == (JsonIri)JsonAny.Parse(expected), EqualityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonIri>(JsonValueSteps.SubjectUnderTest) != (JsonIri)JsonAny.Parse(expected), InequalityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonIri>(JsonValueSteps.SubjectUnderTest).GetHashCode() == ((JsonIri)JsonAny.Parse(expected)).GetHashCode(), HashCodeResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonIri>(JsonValueSteps.SubjectUnderTest).Equals(JsonIri.Parse(expected)), EqualsResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonIri>(JsonValueSteps.SubjectUnderTest) == JsonIri.Parse(expected), EqualityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonIri>(JsonValueSteps.SubjectUnderTest) != JsonIri.Parse(expected), InequalityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonIri>(JsonValueSteps.SubjectUnderTest).GetHashCode() == JsonIri.Parse(expected).GetHashCode(), HashCodeResultKey);
     }
 
     /// <summary>
@@ -1157,13 +1157,13 @@ public class JsonValueEqualitySteps
     {
         if (expected != "null")
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonIriReference>(JsonValueSteps.SubjectUnderTest).Equals(new JsonIriReference((string)JsonAny.Parse(expected))), EqualsObjectBackedResultKey);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonIriReference>(JsonValueSteps.SubjectUnderTest).Equals(JsonIriReference.Parse(expected).AsDotnetBackedValue()), EqualsObjectBackedResultKey);
         }
 
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonIriReference>(JsonValueSteps.SubjectUnderTest).Equals((JsonIriReference)JsonAny.Parse(expected)), EqualsResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonIriReference>(JsonValueSteps.SubjectUnderTest) == (JsonIriReference)JsonAny.Parse(expected), EqualityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonIriReference>(JsonValueSteps.SubjectUnderTest) != (JsonIriReference)JsonAny.Parse(expected), InequalityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonIriReference>(JsonValueSteps.SubjectUnderTest).GetHashCode() == ((JsonIriReference)JsonAny.Parse(expected)).GetHashCode(), HashCodeResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonIriReference>(JsonValueSteps.SubjectUnderTest).Equals(JsonIriReference.Parse(expected)), EqualsResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonIriReference>(JsonValueSteps.SubjectUnderTest) == JsonIriReference.Parse(expected), EqualityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonIriReference>(JsonValueSteps.SubjectUnderTest) != JsonIriReference.Parse(expected), InequalityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonIriReference>(JsonValueSteps.SubjectUnderTest).GetHashCode() == JsonIriReference.Parse(expected).GetHashCode(), HashCodeResultKey);
     }
 
     /// <summary>
@@ -1202,13 +1202,13 @@ public class JsonValueEqualitySteps
     {
         if (expected != "null")
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonObject>(JsonValueSteps.SubjectUnderTest).Equals(new JsonObject(((JsonObject)JsonAny.Parse(expected)).AsImmutableDictionary())), EqualsObjectBackedResultKey);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonObject>(JsonValueSteps.SubjectUnderTest).Equals(JsonObject.Parse(expected).AsDotnetBackedValue()), EqualsObjectBackedResultKey);
         }
 
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonObject>(JsonValueSteps.SubjectUnderTest).Equals((JsonObject)JsonAny.Parse(expected)), EqualsResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonObject>(JsonValueSteps.SubjectUnderTest) == (JsonObject)JsonAny.Parse(expected), EqualityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonObject>(JsonValueSteps.SubjectUnderTest) != (JsonObject)JsonAny.Parse(expected), InequalityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonObject>(JsonValueSteps.SubjectUnderTest).GetHashCode() == ((JsonObject)JsonAny.Parse(expected)).GetHashCode(), HashCodeResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonObject>(JsonValueSteps.SubjectUnderTest).Equals(JsonObject.Parse(expected)), EqualsResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonObject>(JsonValueSteps.SubjectUnderTest) == JsonObject.Parse(expected), EqualityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonObject>(JsonValueSteps.SubjectUnderTest) != JsonObject.Parse(expected), InequalityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonObject>(JsonValueSteps.SubjectUnderTest).GetHashCode() == JsonObject.Parse(expected).GetHashCode(), HashCodeResultKey);
     }
 
     /// <summary>
@@ -1247,13 +1247,13 @@ public class JsonValueEqualitySteps
     {
         if (expected != "null")
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonPointer>(JsonValueSteps.SubjectUnderTest).Equals(new JsonPointer((string)JsonAny.Parse(expected))), EqualsObjectBackedResultKey);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonPointer>(JsonValueSteps.SubjectUnderTest).Equals(JsonPointer.Parse(expected).AsDotnetBackedValue()), EqualsObjectBackedResultKey);
         }
 
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonPointer>(JsonValueSteps.SubjectUnderTest).Equals((JsonPointer)JsonAny.Parse(expected)), EqualsResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonPointer>(JsonValueSteps.SubjectUnderTest) == (JsonPointer)JsonAny.Parse(expected), EqualityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonPointer>(JsonValueSteps.SubjectUnderTest) != (JsonPointer)JsonAny.Parse(expected), InequalityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonPointer>(JsonValueSteps.SubjectUnderTest).GetHashCode() == ((JsonPointer)JsonAny.Parse(expected)).GetHashCode(), HashCodeResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonPointer>(JsonValueSteps.SubjectUnderTest).Equals(JsonPointer.Parse(expected)), EqualsResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonPointer>(JsonValueSteps.SubjectUnderTest) == JsonPointer.Parse(expected), EqualityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonPointer>(JsonValueSteps.SubjectUnderTest) != JsonPointer.Parse(expected), InequalityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonPointer>(JsonValueSteps.SubjectUnderTest).GetHashCode() == JsonPointer.Parse(expected).GetHashCode(), HashCodeResultKey);
     }
 
     /// <summary>
@@ -1292,13 +1292,13 @@ public class JsonValueEqualitySteps
     {
         if (expected != "null")
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonRelativePointer>(JsonValueSteps.SubjectUnderTest).Equals(new JsonRelativePointer((string)JsonAny.Parse(expected))), EqualsObjectBackedResultKey);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonRelativePointer>(JsonValueSteps.SubjectUnderTest).Equals(JsonRelativePointer.Parse(expected).AsDotnetBackedValue()), EqualsObjectBackedResultKey);
         }
 
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonRelativePointer>(JsonValueSteps.SubjectUnderTest).Equals((JsonRelativePointer)JsonAny.Parse(expected)), EqualsResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonRelativePointer>(JsonValueSteps.SubjectUnderTest) == (JsonRelativePointer)JsonAny.Parse(expected), EqualityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonRelativePointer>(JsonValueSteps.SubjectUnderTest) != (JsonRelativePointer)JsonAny.Parse(expected), InequalityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonRelativePointer>(JsonValueSteps.SubjectUnderTest).GetHashCode() == ((JsonRelativePointer)JsonAny.Parse(expected)).GetHashCode(), HashCodeResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonRelativePointer>(JsonValueSteps.SubjectUnderTest).Equals(JsonRelativePointer.Parse(expected)), EqualsResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonRelativePointer>(JsonValueSteps.SubjectUnderTest) == JsonRelativePointer.Parse(expected), EqualityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonRelativePointer>(JsonValueSteps.SubjectUnderTest) != JsonRelativePointer.Parse(expected), InequalityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonRelativePointer>(JsonValueSteps.SubjectUnderTest).GetHashCode() == JsonRelativePointer.Parse(expected).GetHashCode(), HashCodeResultKey);
     }
 
     /// <summary>
@@ -1337,13 +1337,13 @@ public class JsonValueEqualitySteps
     {
         if (expected != "null")
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonRegex>(JsonValueSteps.SubjectUnderTest).Equals(new JsonRegex((string)JsonAny.Parse(expected))), EqualsObjectBackedResultKey);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonRegex>(JsonValueSteps.SubjectUnderTest).Equals(JsonRegex.Parse(expected).AsDotnetBackedValue()), EqualsObjectBackedResultKey);
         }
 
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonRegex>(JsonValueSteps.SubjectUnderTest).Equals((JsonRegex)JsonAny.Parse(expected)), EqualsResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonRegex>(JsonValueSteps.SubjectUnderTest) == (JsonRegex)JsonAny.Parse(expected), EqualityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonRegex>(JsonValueSteps.SubjectUnderTest) != (JsonRegex)JsonAny.Parse(expected), InequalityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonRegex>(JsonValueSteps.SubjectUnderTest).GetHashCode() == ((JsonRegex)JsonAny.Parse(expected)).GetHashCode(), HashCodeResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonRegex>(JsonValueSteps.SubjectUnderTest).Equals(JsonRegex.Parse(expected)), EqualsResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonRegex>(JsonValueSteps.SubjectUnderTest) == JsonRegex.Parse(expected), EqualityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonRegex>(JsonValueSteps.SubjectUnderTest) != JsonRegex.Parse(expected), InequalityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonRegex>(JsonValueSteps.SubjectUnderTest).GetHashCode() == JsonRegex.Parse(expected).GetHashCode(), HashCodeResultKey);
     }
 
     /// <summary>
@@ -1382,13 +1382,13 @@ public class JsonValueEqualitySteps
     {
         if (expected != "null")
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonUriTemplate>(JsonValueSteps.SubjectUnderTest).Equals(new JsonUriTemplate((string)JsonAny.Parse(expected))), EqualsObjectBackedResultKey);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonUriTemplate>(JsonValueSteps.SubjectUnderTest).Equals(JsonUriTemplate.Parse(expected).AsDotnetBackedValue()), EqualsObjectBackedResultKey);
         }
 
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonUriTemplate>(JsonValueSteps.SubjectUnderTest).Equals((JsonUriTemplate)JsonAny.Parse(expected)), EqualsResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonUriTemplate>(JsonValueSteps.SubjectUnderTest) == (JsonUriTemplate)JsonAny.Parse(expected), EqualityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonUriTemplate>(JsonValueSteps.SubjectUnderTest) != (JsonUriTemplate)JsonAny.Parse(expected), InequalityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonUriTemplate>(JsonValueSteps.SubjectUnderTest).GetHashCode() == ((JsonUriTemplate)JsonAny.Parse(expected)).GetHashCode(), HashCodeResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonUriTemplate>(JsonValueSteps.SubjectUnderTest).Equals(JsonUriTemplate.Parse(expected)), EqualsResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonUriTemplate>(JsonValueSteps.SubjectUnderTest) == JsonUriTemplate.Parse(expected), EqualityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonUriTemplate>(JsonValueSteps.SubjectUnderTest) != JsonUriTemplate.Parse(expected), InequalityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonUriTemplate>(JsonValueSteps.SubjectUnderTest).GetHashCode() == JsonUriTemplate.Parse(expected).GetHashCode(), HashCodeResultKey);
     }
 
     /// <summary>
@@ -1427,13 +1427,13 @@ public class JsonValueEqualitySteps
     {
         if (expected != "null")
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonTime>(JsonValueSteps.SubjectUnderTest).Equals(new JsonTime((string)JsonAny.Parse(expected))), EqualsObjectBackedResultKey);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonTime>(JsonValueSteps.SubjectUnderTest).Equals(JsonTime.Parse(expected).AsDotnetBackedValue()), EqualsObjectBackedResultKey);
         }
 
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonTime>(JsonValueSteps.SubjectUnderTest).Equals((JsonTime)JsonAny.Parse(expected)), EqualsResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonTime>(JsonValueSteps.SubjectUnderTest) == (JsonTime)JsonAny.Parse(expected), EqualityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonTime>(JsonValueSteps.SubjectUnderTest) != (JsonTime)JsonAny.Parse(expected), InequalityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonTime>(JsonValueSteps.SubjectUnderTest).GetHashCode() == ((JsonTime)JsonAny.Parse(expected)).GetHashCode(), HashCodeResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonTime>(JsonValueSteps.SubjectUnderTest).Equals(JsonTime.Parse(expected)), EqualsResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonTime>(JsonValueSteps.SubjectUnderTest) == JsonTime.Parse(expected), EqualityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonTime>(JsonValueSteps.SubjectUnderTest) != JsonTime.Parse(expected), InequalityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonTime>(JsonValueSteps.SubjectUnderTest).GetHashCode() == JsonTime.Parse(expected).GetHashCode(), HashCodeResultKey);
     }
 
     /// <summary>
@@ -1472,13 +1472,13 @@ public class JsonValueEqualitySteps
     {
         if (expected != "null")
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonUuid>(JsonValueSteps.SubjectUnderTest).Equals(new JsonUuid((string)JsonAny.Parse(expected))), EqualsObjectBackedResultKey);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonUuid>(JsonValueSteps.SubjectUnderTest).Equals(JsonUuid.Parse(expected).AsDotnetBackedValue()), EqualsObjectBackedResultKey);
         }
 
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonUuid>(JsonValueSteps.SubjectUnderTest).Equals((JsonUuid)JsonAny.Parse(expected)), EqualsResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonUuid>(JsonValueSteps.SubjectUnderTest) == (JsonUuid)JsonAny.Parse(expected), EqualityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonUuid>(JsonValueSteps.SubjectUnderTest) != (JsonUuid)JsonAny.Parse(expected), InequalityResultKey);
-        this.scenarioContext.Set(this.scenarioContext.Get<JsonUuid>(JsonValueSteps.SubjectUnderTest).GetHashCode() == ((JsonUuid)JsonAny.Parse(expected)).GetHashCode(), HashCodeResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonUuid>(JsonValueSteps.SubjectUnderTest).Equals(JsonUuid.Parse(expected)), EqualsResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonUuid>(JsonValueSteps.SubjectUnderTest) == JsonUuid.Parse(expected), EqualityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonUuid>(JsonValueSteps.SubjectUnderTest) != JsonUuid.Parse(expected), InequalityResultKey);
+        this.scenarioContext.Set(this.scenarioContext.Get<JsonUuid>(JsonValueSteps.SubjectUnderTest).GetHashCode() == JsonUuid.Parse(expected).GetHashCode(), HashCodeResultKey);
     }
 
     /// <summary>
@@ -1510,7 +1510,7 @@ public class JsonValueEqualitySteps
     /// Asserts that the result from a previous comparison stored in the context variable <c>Result</c> is as expected.
     /// </summary>
     [Then("the result should be true")]
-    private void ThenTheResultShouldBeTrue()
+    public void ThenTheResultShouldBeTrue()
     {
         this.ThenTheResultShouldBe(true);
     }
@@ -1519,12 +1519,12 @@ public class JsonValueEqualitySteps
     /// Asserts that the result from a previous comparison stored in the context variable <c>Result</c> is as expected.
     /// </summary>
     [Then("the result should be false")]
-    private void ThenTheResultShouldBeFalse()
+    public void ThenTheResultShouldBeFalse()
     {
         this.ThenTheResultShouldBe(false);
     }
 
-    private void ThenTheResultShouldBe(bool expected)
+    public void ThenTheResultShouldBe(bool expected)
     {
         Assert.AreEqual(expected, this.scenarioContext.Get<bool>(EqualsResultKey));
         if (this.scenarioContext.ContainsKey(EqualityResultKey))

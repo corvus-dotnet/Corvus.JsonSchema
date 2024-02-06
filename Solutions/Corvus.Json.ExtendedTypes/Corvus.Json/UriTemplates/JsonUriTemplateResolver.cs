@@ -10,7 +10,7 @@ namespace Corvus.Json.UriTemplates;
 
 /// <summary>
 /// A wrapper around <see cref="UriTemplateResolver{TParameterProvider, TParameterPayload}"/>
-/// for a <see cref="JsonTemplateParameterProvider"/>.
+/// for a <see cref="JsonTemplateParameterProvider{TPayload}"/>.
 /// </summary>
 public static class JsonUriTemplateResolver
 {
@@ -18,6 +18,7 @@ public static class JsonUriTemplateResolver
     /// Resolve the template into an output result.
     /// </summary>
     /// <typeparam name="TState">The type of the state passed to the callback.</typeparam>
+    /// <typeparam name="T">The type of the Json parameters.</typeparam>
     /// <param name="template">The template to resolve.</param>
     /// <param name="resolvePartially">If <see langword="true"/> then partially resolve the result.</param>
     /// <param name="parameters">The parameters to apply to the template.</param>
@@ -26,15 +27,17 @@ public static class JsonUriTemplateResolver
     /// <param name="state">The state passed to the callback(s).</param>
     /// <returns><see langword="true"/> if the URI matched the template, and the parameters were resolved successfully.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool TryResolveResult<TState>(ReadOnlySpan<char> template, bool resolvePartially, in JsonAny parameters, ParameterNameCallback<TState>? parameterNameCallback, ResolvedUriTemplateCallback<TState> callback, ref TState state)
+    public static bool TryResolveResult<TState, T>(ReadOnlySpan<char> template, bool resolvePartially, in T parameters, ParameterNameCallback<TState>? parameterNameCallback, ResolvedUriTemplateCallback<TState> callback, ref TState state)
+        where T : struct, IJsonObject<T>
     {
-        return UriTemplateResolver<JsonTemplateParameterProvider, JsonAny>.TryResolveResult(template, resolvePartially, parameters, callback, parameterNameCallback, ref state);
+        return UriTemplateResolver<JsonTemplateParameterProvider<T>, T>.TryResolveResult(JsonTemplateParameterProvider<T>.Instance, template, resolvePartially, parameters, callback, parameterNameCallback, ref state);
     }
 
     /// <summary>
     /// Resolve the template into an output result.
     /// </summary>
     /// <typeparam name="TState">The type of the state passed to the callback.</typeparam>
+    /// <typeparam name="T">The type of the Json parameters.</typeparam>
     /// <param name="template">The template to resolve.</param>
     /// <param name="resolvePartially">If <see langword="true"/> then partially resolve the result.</param>
     /// <param name="parameters">The parameters to apply to the template.</param>
@@ -42,24 +45,27 @@ public static class JsonUriTemplateResolver
     /// <param name="state">The state passed to the callback(s).</param>
     /// <returns><see langword="true"/> if the URI matched the template, and the parameters were resolved successfully.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool TryResolveResult<TState>(ReadOnlySpan<char> template, bool resolvePartially, in JsonAny parameters, ResolvedUriTemplateCallback<TState> callback, ref TState state)
+    public static bool TryResolveResult<TState, T>(ReadOnlySpan<char> template, bool resolvePartially, in T parameters, ResolvedUriTemplateCallback<TState> callback, ref TState state)
+        where T : struct, IJsonObject<T>
     {
-        return UriTemplateResolver<JsonTemplateParameterProvider, JsonAny>.TryResolveResult(template, resolvePartially, parameters, callback, null, ref state);
+        return UriTemplateResolver<JsonTemplateParameterProvider<T>, T>.TryResolveResult(JsonTemplateParameterProvider<T>.Instance, template, resolvePartially, parameters, callback, null, ref state);
     }
 
     /// <summary>
     /// Resolve the template into an output result.
     /// </summary>
+    /// <typeparam name="T">The type of the Json parameters.</typeparam>
     /// <param name="template">The template to resolve.</param>
     /// <param name="output">The output buffer into which to resolve the template.</param>
     /// <param name="resolvePartially">If <see langword="true"/> then partially resolve the result.</param>
     /// <param name="parameters">The parameters to apply to the template.</param>
     /// <returns><see langword="true"/> if the URI matched the template, and the parameters were resolved successfully.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool TryResolveResult(ReadOnlySpan<char> template, IBufferWriter<char> output, bool resolvePartially, in JsonAny parameters)
+    public static bool TryResolveResult<T>(ReadOnlySpan<char> template, IBufferWriter<char> output, bool resolvePartially, in T parameters)
+        where T : struct, IJsonObject<T>
     {
         object? nullState = default;
-        return UriTemplateResolver<JsonTemplateParameterProvider, JsonAny>.TryResolveResult(template, output, resolvePartially, parameters, null, ref nullState);
+        return UriTemplateResolver<JsonTemplateParameterProvider<T>, T>.TryResolveResult(JsonTemplateParameterProvider<T>.Instance, template, output, resolvePartially, parameters, null, ref nullState);
     }
 
     /// <summary>
@@ -73,7 +79,7 @@ public static class JsonUriTemplateResolver
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool TryGetParameterNames<TState>(ReadOnlySpan<char> template, ParameterNameCallback<TState> callback, ref TState state)
     {
-        return UriTemplateResolver<JsonTemplateParameterProvider, JsonAny>.TryResolveResult(template, true, JsonAny.Null, Nop, callback, ref state);
+        return UriTemplateResolver<JsonTemplateParameterProvider<JsonObject>, JsonObject>.TryResolveResult(JsonTemplateParameterProvider<JsonObject>.Instance, template, true, JsonObject.Null, Nop, callback, ref state);
 
         static void Nop(ReadOnlySpan<char> value, ref TState state)
         {

@@ -24,7 +24,7 @@ public readonly partial struct PersonName
 {
     private readonly Backing backing;
     private readonly JsonElement jsonElementBacking;
-    private readonly ImmutableDictionary<JsonPropertyName, JsonAny> objectBacking;
+    private readonly ImmutableList<JsonObjectProperty> objectBacking;
     /// <summary>
     /// Initializes a new instance of the <see cref = "PersonName"/> struct.
     /// </summary>
@@ -32,7 +32,7 @@ public readonly partial struct PersonName
     {
         this.jsonElementBacking = default;
         this.backing = Backing.JsonElement;
-        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
     }
 
     /// <summary>
@@ -43,7 +43,7 @@ public readonly partial struct PersonName
     {
         this.jsonElementBacking = value;
         this.backing = Backing.JsonElement;
-        this.objectBacking = ImmutableDictionary<JsonPropertyName, JsonAny>.Empty;
+        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
     }
 
     /// <summary>
@@ -108,8 +108,7 @@ public readonly partial struct PersonName
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonString AsString
+    JsonString IJsonValue.AsString
     {
         get
         {
@@ -123,8 +122,7 @@ public readonly partial struct PersonName
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonBoolean AsBoolean
+    JsonBoolean IJsonValue.AsBoolean
     {
         get
         {
@@ -138,8 +136,7 @@ public readonly partial struct PersonName
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonNumber AsNumber
+    JsonNumber IJsonValue.AsNumber
     {
         get
         {
@@ -172,8 +169,7 @@ public readonly partial struct PersonName
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonArray AsArray
+    JsonArray IJsonValue.AsArray
     {
         get
         {
@@ -232,9 +228,10 @@ public readonly partial struct PersonName
     /// Conversion from JsonAny.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator PersonName(JsonAny value)
+    /// <exception cref = "InvalidOperationException">The value was not compatible with this type.</exception>
+    public static implicit operator PersonName(in JsonAny value)
     {
-        return PersonName.FromAny(value);
+        return value.As<PersonName>();
     }
 
     /// <summary>
@@ -288,7 +285,7 @@ public readonly partial struct PersonName
         JsonValueKind valueKind = value.ValueKind;
         return valueKind switch
         {
-            JsonValueKind.Object => new((ImmutableDictionary<JsonPropertyName, JsonAny>)value),
+            JsonValueKind.Object => new(value.AsObject.AsPropertyBacking()),
             JsonValueKind.Null => Null,
             _ => Undefined,
         };
@@ -313,9 +310,7 @@ public readonly partial struct PersonName
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be PersonName.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static PersonName FromBoolean<TValue>(in TValue value)
-        where TValue : struct, IJsonBoolean<TValue>
+    static PersonName IJsonValue<PersonName>.FromBoolean<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -333,9 +328,7 @@ public readonly partial struct PersonName
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be PersonName.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static PersonName FromString<TValue>(in TValue value)
-        where TValue : struct, IJsonString<TValue>
+    static PersonName IJsonValue<PersonName>.FromString<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -353,9 +346,7 @@ public readonly partial struct PersonName
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be PersonName.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static PersonName FromNumber<TValue>(in TValue value)
-        where TValue : struct, IJsonNumber<TValue>
+    static PersonName IJsonValue<PersonName>.FromNumber<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -373,9 +364,7 @@ public readonly partial struct PersonName
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be PersonName.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static PersonName FromArray<TValue>(in TValue value)
-        where TValue : struct, IJsonArray<TValue>
+    static PersonName IJsonValue<PersonName>.FromArray<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -403,7 +392,7 @@ public readonly partial struct PersonName
 
         if (value.ValueKind == JsonValueKind.Object)
         {
-            return new((ImmutableDictionary<JsonPropertyName, JsonAny>)value);
+            return new(value.AsPropertyBacking());
         }
 
         return Undefined;
@@ -500,7 +489,7 @@ public readonly partial struct PersonName
     }
 
     /// <summary>
-    /// Gets the value as the target value.
+    /// Gets the value as an instance of the target value.
     /// </summary>
     /// <typeparam name = "TTarget">The type of the target.</typeparam>
     /// <returns>An instance of the target type.</returns>
@@ -533,14 +522,18 @@ public readonly partial struct PersonName
     }
 
     /// <inheritdoc/>
-    public bool Equals<T>(T other)
+    public bool Equals<T>(in T other)
         where T : struct, IJsonValue<T>
     {
         return JsonValueHelpers.CompareValues(this, other);
     }
 
-    /// <inheritdoc/>
-    public bool Equals(PersonName other)
+    /// <summary>
+    /// Equality comparison.
+    /// </summary>
+    /// <param name = "other">The other item with which to compare.</param>
+    /// <returns><see langword="true"/> if the values were equal.</returns>
+    public bool Equals(in PersonName other)
     {
         return JsonValueHelpers.CompareValues(this, other);
     }

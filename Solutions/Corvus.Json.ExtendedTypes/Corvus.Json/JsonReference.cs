@@ -116,7 +116,7 @@ public readonly struct JsonReference : IEquatable<JsonReference>
     /// Implicit conversion from a string.
     /// </summary>
     /// <param name="reference">The reference as a string.</param>
-    public static implicit operator string?(JsonReference? reference)
+    public static explicit operator string?(JsonReference? reference)
     {
         return reference?.ToString();
     }

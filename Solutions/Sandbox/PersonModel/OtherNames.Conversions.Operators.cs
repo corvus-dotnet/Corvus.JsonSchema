@@ -19,6 +19,25 @@ namespace Corvus.Json.Benchmarking.Models;
 public readonly partial struct OtherNames
 {
     /// <summary>
+    /// Conversion to <see cref = "Corvus.Json.Benchmarking.Models.PersonNameElement"/>.
+    /// </summary>
+    /// <param name = "value">The value from which to convert.</param>
+    public static explicit operator Corvus.Json.Benchmarking.Models.PersonNameElement(OtherNames value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        if ((value.backing & Backing.String) != 0)
+        {
+            return new(value.stringBacking);
+        }
+
+        return Corvus.Json.Benchmarking.Models.PersonNameElement.Undefined;
+    }
+
+    /// <summary>
     /// Conversion from <see cref = "Corvus.Json.Benchmarking.Models.PersonNameElement"/>.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
@@ -37,22 +56,22 @@ public readonly partial struct OtherNames
     }
 
     /// <summary>
-    /// Conversion to <see cref = "Corvus.Json.Benchmarking.Models.PersonNameElement"/>.
+    /// Conversion to <see cref = "Corvus.Json.Benchmarking.Models.PersonNameElementArray"/>.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator Corvus.Json.Benchmarking.Models.PersonNameElement(OtherNames value)
+    public static explicit operator Corvus.Json.Benchmarking.Models.PersonNameElementArray(OtherNames value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
             return new(value.AsJsonElement);
         }
 
-        if ((value.backing & Backing.String) != 0)
+        if ((value.backing & Backing.Array) != 0)
         {
-            return new(value.stringBacking);
+            return new(value.arrayBacking);
         }
 
-        return Corvus.Json.Benchmarking.Models.PersonNameElement.Undefined;
+        return Corvus.Json.Benchmarking.Models.PersonNameElementArray.Undefined;
     }
 
     /// <summary>
@@ -68,27 +87,8 @@ public readonly partial struct OtherNames
 
         return value.ValueKind switch
         {
-            JsonValueKind.Array => new((ImmutableList<JsonAny>)value),
+            JsonValueKind.Array => new(value.AsImmutableList()),
             _ => Undefined
         };
-    }
-
-    /// <summary>
-    /// Conversion to <see cref = "Corvus.Json.Benchmarking.Models.PersonNameElementArray"/>.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator Corvus.Json.Benchmarking.Models.PersonNameElementArray(OtherNames value)
-    {
-        if ((value.backing & Backing.JsonElement) != 0)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        if ((value.backing & Backing.Array) != 0)
-        {
-            return new(value.arrayBacking);
-        }
-
-        return Corvus.Json.Benchmarking.Models.PersonNameElementArray.Undefined;
     }
 }

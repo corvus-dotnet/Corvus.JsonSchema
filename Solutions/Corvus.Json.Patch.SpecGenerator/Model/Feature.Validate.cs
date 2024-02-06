@@ -28,7 +28,7 @@ public readonly partial struct Feature
         if (level > ValidationLevel.Basic)
         {
             result = result.UsingStack();
-            result = result.PushSchemaLocation("C:/Users/matth/source/repos/Corvus.JsonSchema/Solutions/Corvus.Json.Patch.SpecGenerator/Model/json-patch-test.json#/$defs/Feature");
+            result = result.PushSchemaLocation("D:/source/corvus-dotnet/Corvus.JsonSchema/Solutions/Corvus.Json.Patch.SpecGenerator/Model/json-patch-test.json#/$defs/Feature");
         }
 
         JsonValueKind valueKind = this.ValueKind;

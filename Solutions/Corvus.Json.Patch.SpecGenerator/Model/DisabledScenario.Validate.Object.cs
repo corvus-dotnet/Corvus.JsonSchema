@@ -37,7 +37,7 @@ public readonly partial struct DisabledScenario
                 result = result.WithLocalProperty(propertyCount);
                 if (level > ValidationLevel.Basic)
                 {
-                    result = result.PushDocumentProperty("properties", property.Name);
+                    result = result.PushDocumentProperty("properties", property.Name.GetString());
                 }
 
                 var propertyResult = propertyValidator(property, result.CreateChildContext(), level);
@@ -52,7 +52,7 @@ public readonly partial struct DisabledScenario
                     return result;
                 }
 
-                if ((this.HasJsonElementBacking && property.NameEquals(DisabledUtf8JsonPropertyName)) || (!this.HasJsonElementBacking && property.NameEquals(DisabledJsonPropertyName)))
+                if ((this.HasJsonElementBacking && property.NameEquals(JsonPropertyNames.DisabledUtf8)) || (!this.HasJsonElementBacking && property.NameEquals(JsonPropertyNames.Disabled)))
                 {
                     foundDisabled = true;
                 }

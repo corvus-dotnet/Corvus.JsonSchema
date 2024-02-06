@@ -11,11 +11,6 @@ Scenario: Cast to JsonAny for dotnet backed value as an idnEmail
 	When I cast the JsonIdnEmail to JsonAny
 	Then the result should equal the JsonAny "hello@endjin.com"
 
-Scenario: Cast from JsonAny for json element backed value as an idnEmail
-	Given the JsonAny for "hello@endjin.com"
-	When I cast the JsonAny to JsonIdnEmail
-	Then the result should equal the JsonIdnEmail "hello@endjin.com"
-
 Scenario: Cast to JsonString for json element backed value as an idnEmail
 	Given the JsonElement backed JsonIdnEmail "hello@endjin.com"
 	When I cast the JsonIdnEmail to JsonString
@@ -29,21 +24,6 @@ Scenario: Cast to JsonString for dotnet backed value as an idnEmail
 Scenario: Cast from JsonString for json element backed value as an idnEmail
 	Given the JsonString for "hello@endjin.com"
 	When I cast the JsonString to JsonIdnEmail
-	Then the result should equal the JsonIdnEmail "hello@endjin.com"
-
-Scenario: Cast to ReadOnlySpan<char> for json element backed value as an idnEmail
-	Given the JsonElement backed JsonIdnEmail "hello@endjin.com"
-	When I cast the JsonIdnEmail to ReadOnlySpan<char>
-	Then the result should equal the ReadOnlySpan<char> "hello@endjin.com"
-
-Scenario: Cast to ReadOnlySpan<char> for dotnet backed value as an idnEmail
-	Given the dotnet backed JsonIdnEmail "hello@endjin.com"
-	When I cast the JsonIdnEmail to ReadOnlySpan<char>
-	Then the result should equal the ReadOnlySpan<char> "hello@endjin.com"
-
-Scenario: Cast from ReadOnlySpan<char> for json element backed value as an idnEmail
-	Given the ReadOnlyMemory<char> for "hello@endjin.com"
-	When I cast the ReadOnlySpan<char> to JsonIdnEmail
 	Then the result should equal the JsonIdnEmail "hello@endjin.com"
 
 Scenario: Cast to string for json element backed value as an idnEmail

@@ -91,6 +91,7 @@ Scenario Outline: dependencies with escaped characters
 Scenario Outline: dependent subschema incompatible with root
 /* Schema: 
 {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
             "properties": {
                 "foo": {}
             },

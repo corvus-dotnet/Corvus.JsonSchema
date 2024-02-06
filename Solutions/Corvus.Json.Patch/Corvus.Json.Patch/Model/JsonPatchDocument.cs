@@ -108,8 +108,7 @@ public readonly partial struct JsonPatchDocument
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonString AsString
+    JsonString IJsonValue.AsString
     {
         get
         {
@@ -123,8 +122,7 @@ public readonly partial struct JsonPatchDocument
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonBoolean AsBoolean
+    JsonBoolean IJsonValue.AsBoolean
     {
         get
         {
@@ -138,8 +136,7 @@ public readonly partial struct JsonPatchDocument
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonNumber AsNumber
+    JsonNumber IJsonValue.AsNumber
     {
         get
         {
@@ -153,8 +150,7 @@ public readonly partial struct JsonPatchDocument
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonObject AsObject
+    JsonObject IJsonValue.AsObject
     {
         get
         {
@@ -232,9 +228,10 @@ public readonly partial struct JsonPatchDocument
     /// Conversion from JsonAny.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator JsonPatchDocument(JsonAny value)
+    /// <exception cref = "InvalidOperationException">The value was not compatible with this type.</exception>
+    public static implicit operator JsonPatchDocument(in JsonAny value)
     {
-        return JsonPatchDocument.FromAny(value);
+        return value.As<JsonPatchDocument>();
     }
 
     /// <summary>
@@ -288,7 +285,7 @@ public readonly partial struct JsonPatchDocument
         JsonValueKind valueKind = value.ValueKind;
         return valueKind switch
         {
-            JsonValueKind.Array => new((ImmutableList<JsonAny>)value),
+            JsonValueKind.Array => new(value.AsArray.AsImmutableList()),
             JsonValueKind.Null => Null,
             _ => Undefined,
         };
@@ -313,9 +310,7 @@ public readonly partial struct JsonPatchDocument
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be JsonPatchDocument.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static JsonPatchDocument FromBoolean<TValue>(in TValue value)
-        where TValue : struct, IJsonBoolean<TValue>
+    static JsonPatchDocument IJsonValue<JsonPatchDocument>.FromBoolean<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -333,9 +328,7 @@ public readonly partial struct JsonPatchDocument
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be JsonPatchDocument.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static JsonPatchDocument FromString<TValue>(in TValue value)
-        where TValue : struct, IJsonString<TValue>
+    static JsonPatchDocument IJsonValue<JsonPatchDocument>.FromString<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -353,9 +346,7 @@ public readonly partial struct JsonPatchDocument
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be JsonPatchDocument.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static JsonPatchDocument FromNumber<TValue>(in TValue value)
-        where TValue : struct, IJsonNumber<TValue>
+    static JsonPatchDocument IJsonValue<JsonPatchDocument>.FromNumber<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -383,7 +374,7 @@ public readonly partial struct JsonPatchDocument
 
         if (value.ValueKind == JsonValueKind.Array)
         {
-            return new((ImmutableList<JsonAny>)value);
+            return new(value.AsImmutableList());
         }
 
         return Undefined;
@@ -397,9 +388,7 @@ public readonly partial struct JsonPatchDocument
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be JsonPatchDocument.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static JsonPatchDocument FromObject<TValue>(in TValue value)
-        where TValue : struct, IJsonObject<TValue>
+    static JsonPatchDocument IJsonValue<JsonPatchDocument>.FromObject<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -500,7 +489,7 @@ public readonly partial struct JsonPatchDocument
     }
 
     /// <summary>
-    /// Gets the value as the target value.
+    /// Gets the value as an instance of the target value.
     /// </summary>
     /// <typeparam name = "TTarget">The type of the target.</typeparam>
     /// <returns>An instance of the target type.</returns>
@@ -533,14 +522,18 @@ public readonly partial struct JsonPatchDocument
     }
 
     /// <inheritdoc/>
-    public bool Equals<T>(T other)
+    public bool Equals<T>(in T other)
         where T : struct, IJsonValue<T>
     {
         return JsonValueHelpers.CompareValues(this, other);
     }
 
-    /// <inheritdoc/>
-    public bool Equals(JsonPatchDocument other)
+    /// <summary>
+    /// Equality comparison.
+    /// </summary>
+    /// <param name = "other">The other item with which to compare.</param>
+    /// <returns><see langword="true"/> if the values were equal.</returns>
+    public bool Equals(in JsonPatchDocument other)
     {
         return JsonValueHelpers.CompareValues(this, other);
     }

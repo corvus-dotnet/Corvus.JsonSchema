@@ -106,8 +106,7 @@ public readonly partial struct JsonArray : IJsonArray<JsonArray>
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonString AsString
+    JsonString IJsonValue.AsString
     {
         get
         {
@@ -121,8 +120,7 @@ public readonly partial struct JsonArray : IJsonArray<JsonArray>
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonBoolean AsBoolean
+    JsonBoolean IJsonValue.AsBoolean
     {
         get
         {
@@ -136,8 +134,7 @@ public readonly partial struct JsonArray : IJsonArray<JsonArray>
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonNumber AsNumber
+    JsonNumber IJsonValue.AsNumber
     {
         get
         {
@@ -151,8 +148,7 @@ public readonly partial struct JsonArray : IJsonArray<JsonArray>
     }
 
     /// <inheritdoc/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public JsonObject AsObject
+    JsonObject IJsonValue.AsObject
     {
         get
         {
@@ -245,7 +241,7 @@ public readonly partial struct JsonArray : IJsonArray<JsonArray>
         JsonValueKind valueKind = value.ValueKind;
         return valueKind switch
         {
-            JsonValueKind.Array => new((ImmutableList<JsonAny>)value),
+            JsonValueKind.Array => new(value.AsArray.AsImmutableList()),
             JsonValueKind.Null => Null,
             _ => Undefined,
         };
@@ -270,9 +266,7 @@ public readonly partial struct JsonArray : IJsonArray<JsonArray>
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>The value will be undefined if it cannot be initialized with the specified instance.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static JsonArray FromString<TValue>(in TValue value)
-        where TValue : struct, IJsonString<TValue>
+    static JsonArray IJsonValue<JsonArray>.FromString<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -290,9 +284,7 @@ public readonly partial struct JsonArray : IJsonArray<JsonArray>
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>The value will be undefined if it cannot be initialized with the specified instance.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static JsonArray FromBoolean<TValue>(in TValue value)
-        where TValue : struct, IJsonBoolean<TValue>
+    static JsonArray IJsonValue<JsonArray>.FromBoolean<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -310,9 +302,7 @@ public readonly partial struct JsonArray : IJsonArray<JsonArray>
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>The value will be undefined if it cannot be initialized with the specified instance.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static JsonArray FromNumber<TValue>(in TValue value)
-        where TValue : struct, IJsonNumber<TValue>
+    static JsonArray IJsonValue<JsonArray>.FromNumber<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -340,7 +330,7 @@ public readonly partial struct JsonArray : IJsonArray<JsonArray>
 
         if (value.ValueKind == JsonValueKind.Array)
         {
-            return new((ImmutableList<JsonAny>)value);
+            return new(value.AsImmutableList());
         }
 
         return Undefined;
@@ -354,9 +344,7 @@ public readonly partial struct JsonArray : IJsonArray<JsonArray>
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>The value will be undefined if it cannot be initialized with the specified instance.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static JsonArray FromObject<TValue>(in TValue value)
-        where TValue : struct, IJsonObject<TValue>
+    static JsonArray IJsonValue<JsonArray>.FromObject<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -457,7 +445,7 @@ public readonly partial struct JsonArray : IJsonArray<JsonArray>
     }
 
     /// <summary>
-    /// Gets the value as the target value.
+    /// Gets the value as an instance of the target value.
     /// </summary>
     /// <typeparam name="TTarget">The type of the target.</typeparam>
     /// <returns>An instance of the target type.</returns>
@@ -492,14 +480,18 @@ public readonly partial struct JsonArray : IJsonArray<JsonArray>
     }
 
     /// <inheritdoc/>
-    public bool Equals<T>(T other)
+    public bool Equals<T>(in T other)
         where T : struct, IJsonValue<T>
     {
         return JsonValueHelpers.CompareValues(this, other);
     }
 
-    /// <inheritdoc/>
-    public bool Equals(JsonArray other)
+    /// <summary>
+    /// Equals comparison.
+    /// </summary>
+    /// <param name="other">The value with which to compare.</param>
+    /// <returns><see langword="true"/> if the values are equal.</returns>
+    public bool Equals(in JsonArray other)
     {
         return JsonValueHelpers.CompareValues(this, other);
     }

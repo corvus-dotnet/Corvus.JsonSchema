@@ -42,7 +42,7 @@ public class JsonPropertiesSteps
     {
         try
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonObject>(JsonValueSteps.SubjectUnderTest).SetProperty(propertyName, JsonAny.Parse(value)), ObjectResult);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonObject>(JsonValueSteps.SubjectUnderTest).SetProperty(new JsonPropertyName(propertyName), JsonAny.Parse(value)), ObjectResult);
         }
         catch (Exception ex)
         {
@@ -61,7 +61,7 @@ public class JsonPropertiesSteps
     {
         try
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest).SetProperty(propertyName, JsonAny.Parse(value)), ObjectResult);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest).AsObject.SetProperty(new JsonPropertyName(propertyName), JsonAny.Parse(value)).AsAny, ObjectResult);
         }
         catch (Exception ex)
         {
@@ -80,7 +80,7 @@ public class JsonPropertiesSteps
     {
         try
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest).SetProperty(propertyName, JsonNotAny.Parse(value)), ObjectResult);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest).AsObject.SetProperty(new JsonPropertyName(propertyName), JsonNotAny.Parse(value)).As<JsonNotAny>(), ObjectResult);
         }
         catch (Exception ex)
         {
@@ -94,12 +94,12 @@ public class JsonPropertiesSteps
     /// </summary>
     /// <param name="propertyName">The name of the property.</param>
     /// <param name="value">The serialized value of the property.</param>
-    [When("I set the property (.*) to the value (.*) on the JsonObject using a ReadOnlySpan<char>")]
-    public void WhenISetThePropertyNamedWithValueToTheJsonObjectUsingAReadOnlySpanChar(string propertyName, string value)
+    [When("I set the property (.*) to the value (.*) on the JsonObject using a JsonElement")]
+    public void WhenISetThePropertyNamedWithValueToTheJsonObjectUsingAJsonElement(string propertyName, string value)
     {
         try
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonObject>(JsonValueSteps.SubjectUnderTest).SetProperty(propertyName.AsSpan(), JsonAny.Parse(value)), ObjectResult);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonObject>(JsonValueSteps.SubjectUnderTest).SetProperty(JsonPropertyName.ParseValue($"\"{propertyName}\""), JsonAny.Parse(value)), ObjectResult);
         }
         catch (Exception ex)
         {
@@ -113,12 +113,12 @@ public class JsonPropertiesSteps
     /// </summary>
     /// <param name="propertyName">The name of the property.</param>
     /// <param name="value">The serialized value of the property.</param>
-    [When("I set the property (.*) to the value (.*) on the JsonAny using a ReadOnlySpan<char>")]
-    public void WhenISetThePropertyNamedWithValueToTheJsonAnyUsingAReadOnlySpanChar(string propertyName, string value)
+    [When("I set the property (.*) to the value (.*) on the JsonAny using a JsonElement")]
+    public void WhenISetThePropertyNamedWithValueToTheJsonAnyUsingAJsonElement(string propertyName, string value)
     {
         try
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest).SetProperty(propertyName.AsSpan(), JsonAny.Parse(value)), ObjectResult);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest).AsObject.SetProperty(JsonPropertyName.ParseValue($"\"{propertyName}\""), JsonAny.Parse(value)).AsAny, ObjectResult);
         }
         catch (Exception ex)
         {
@@ -132,69 +132,12 @@ public class JsonPropertiesSteps
     /// </summary>
     /// <param name="propertyName">The name of the property.</param>
     /// <param name="value">The serialized value of the property.</param>
-    [When("I set the property (.*) to the value (.*) on the JsonNotAny using a ReadOnlySpan<char>")]
-    public void WhenISetThePropertyNamedWithValueToTheJsonNotAnyUsingAReadOnlySpanChar(string propertyName, string value)
+    [When("I set the property (.*) to the value (.*) on the JsonNotAny using a JsonElement")]
+    public void WhenISetThePropertyNamedWithValueToTheJsonNotAnyUsingAJsonElement(string propertyName, string value)
     {
         try
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest).SetProperty(propertyName.AsSpan(), JsonNotAny.Parse(value)), ObjectResult);
-        }
-        catch (Exception ex)
-        {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest), ObjectResult);
-            this.scenarioContext.Set(ex, ExceptionResult);
-        }
-    }
-
-    /// <summary>
-    /// Set a property to an <see cref="JsonObject"/> found in <see cref="JsonValueSteps.SubjectUnderTest"/> and store it in <see cref="ObjectResult"/>.
-    /// </summary>
-    /// <param name="propertyName">The name of the property.</param>
-    /// <param name="value">The serialized value of the property.</param>
-    [When("I set the property (.*) to the value (.*) on the JsonObject using a ReadOnlySpan<byte>")]
-    public void WhenISetThePropertyNamedWithValueToTheJsonObjectUsingAReadOnlySpanByte(string propertyName, string value)
-    {
-        try
-        {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonObject>(JsonValueSteps.SubjectUnderTest).SetProperty(Encoding.UTF8.GetBytes(propertyName), JsonAny.Parse(value)), ObjectResult);
-        }
-        catch (Exception ex)
-        {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonObject>(JsonValueSteps.SubjectUnderTest), ObjectResult);
-            this.scenarioContext.Set(ex, ExceptionResult);
-        }
-    }
-
-    /// <summary>
-    /// Set a property to an <see cref="JsonAny"/> found in <see cref="JsonValueSteps.SubjectUnderTest"/> and store it in <see cref="ObjectResult"/>.
-    /// </summary>
-    /// <param name="propertyName">The name of the property.</param>
-    /// <param name="value">The serialized value of the property.</param>
-    [When("I set the property (.*) to the value (.*) on the JsonAny using a ReadOnlySpan<byte>")]
-    public void WhenISetThePropertyNamedWithValueToTheJsonAnyUsingAReadOnlySpanByte(string propertyName, string value)
-    {
-        try
-        {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest).SetProperty(Encoding.UTF8.GetBytes(propertyName), JsonAny.Parse(value)), ObjectResult);
-        }
-        catch (Exception ex)
-        {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest), ObjectResult);
-            this.scenarioContext.Set(ex, ExceptionResult);
-        }
-    }
-
-    /// <summary>
-    /// Set a property to an <see cref="JsonNotAny"/> found in <see cref="JsonValueSteps.SubjectUnderTest"/> and store it in <see cref="ObjectResult"/>.
-    /// </summary>
-    /// <param name="propertyName">The name of the property.</param>
-    /// <param name="value">The serialized value of the property.</param>
-    [When("I set the property (.*) to the value (.*) on the JsonNotAny using a ReadOnlySpan<byte>")]
-    public void WhenISetThePropertyNamedWithValueToTheJsonNotAnyUsingAReadOnlySpanByte(string propertyName, string value)
-    {
-        try
-        {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest).SetProperty(Encoding.UTF8.GetBytes(propertyName), JsonNotAny.Parse(value)), ObjectResult);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest).AsObject.SetProperty(JsonPropertyName.ParseValue($"\"{propertyName}\""), JsonNotAny.Parse(value)).As<JsonNotAny>(), ObjectResult);
         }
         catch (Exception ex)
         {
@@ -213,14 +156,37 @@ public class JsonPropertiesSteps
     {
         if (value == "<undefined>")
         {
-            Assert.IsFalse(this.scenarioContext.Get<JsonAny>(ObjectResult).TryGetProperty(propertyName, out _));
+            Assert.IsFalse(this.scenarioContext.Get<JsonAny>(ObjectResult).AsObject.TryGetProperty(propertyName, out _));
         }
         else
         {
             JsonAny sut = this.scenarioContext.Get<JsonAny>(ObjectResult);
             if (sut.IsNotUndefined())
             {
-                Assert.IsTrue(this.scenarioContext.Get<JsonAny>(ObjectResult).TryGetProperty(propertyName, out JsonAny actualValue));
+                Assert.IsTrue(this.scenarioContext.Get<JsonAny>(ObjectResult).AsObject.TryGetProperty(propertyName, out JsonAny actualValue));
+                Assert.AreEqual(JsonAny.Parse(value), actualValue);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Validate the given property on a <see cref="JsonAny"/> found in the scenario context with key <see cref="ObjectResult"/>.
+    /// </summary>
+    /// <param name="propertyName">The name of the property.</param>
+    /// <param name="value">The serialized value of the property.</param>
+    [Then("the property (.*) on the JsonAny should be (.*) using JsonElement")]
+    public void ThenThePropertyNamedOnTheJsonAnyShouldBeUsingJsonElement(string propertyName, string value)
+    {
+        if (value == "<undefined>")
+        {
+            Assert.IsFalse(this.scenarioContext.Get<JsonAny>(ObjectResult).AsObject.TryGetProperty(JsonPropertyName.ParseValue($"\"{propertyName}\""), out _));
+        }
+        else
+        {
+            JsonAny sut = this.scenarioContext.Get<JsonAny>(ObjectResult);
+            if (sut.IsNotUndefined())
+            {
+                Assert.IsTrue(this.scenarioContext.Get<JsonAny>(ObjectResult).AsObject.TryGetProperty(JsonPropertyName.ParseValue($"\"{propertyName}\""), out JsonAny actualValue));
                 Assert.AreEqual(JsonAny.Parse(value), actualValue);
             }
         }
@@ -236,14 +202,14 @@ public class JsonPropertiesSteps
     {
         if (value == "<undefined>")
         {
-            Assert.IsFalse(this.scenarioContext.Get<JsonAny>(ObjectResult).TryGetProperty(propertyName.AsSpan(), out _));
+            Assert.IsFalse(this.scenarioContext.Get<JsonAny>(ObjectResult).AsObject.TryGetProperty(propertyName.AsSpan(), out _));
         }
         else
         {
             JsonAny sut = this.scenarioContext.Get<JsonAny>(ObjectResult);
             if (sut.IsNotUndefined())
             {
-                Assert.IsTrue(this.scenarioContext.Get<JsonAny>(ObjectResult).TryGetProperty(propertyName.AsSpan(), out JsonAny actualValue));
+                Assert.IsTrue(this.scenarioContext.Get<JsonAny>(ObjectResult).AsObject.TryGetProperty(propertyName.AsSpan(), out JsonAny actualValue));
                 Assert.AreEqual(JsonAny.Parse(value), actualValue);
             }
         }
@@ -259,14 +225,14 @@ public class JsonPropertiesSteps
     {
         if (value == "<undefined>")
         {
-            Assert.IsFalse(this.scenarioContext.Get<JsonAny>(ObjectResult).TryGetProperty(Encoding.UTF8.GetBytes(propertyName), out _));
+            Assert.IsFalse(this.scenarioContext.Get<JsonAny>(ObjectResult).AsObject.TryGetProperty(Encoding.UTF8.GetBytes(propertyName), out _));
         }
         else
         {
             JsonAny sut = this.scenarioContext.Get<JsonAny>(ObjectResult);
             if (sut.IsNotUndefined())
             {
-                Assert.IsTrue(this.scenarioContext.Get<JsonAny>(ObjectResult).TryGetProperty(Encoding.UTF8.GetBytes(propertyName), out JsonAny actualValue));
+                Assert.IsTrue(this.scenarioContext.Get<JsonAny>(ObjectResult).AsObject.TryGetProperty(Encoding.UTF8.GetBytes(propertyName), out JsonAny actualValue));
                 Assert.AreEqual(JsonAny.Parse(value), actualValue);
             }
         }
@@ -282,14 +248,37 @@ public class JsonPropertiesSteps
     {
         if (value == "<undefined>")
         {
-            Assert.IsFalse(this.scenarioContext.Get<JsonNotAny>(ObjectResult).TryGetProperty(propertyName, out _));
+            Assert.IsFalse(this.scenarioContext.Get<JsonNotAny>(ObjectResult).AsObject.TryGetProperty(propertyName, out _));
         }
         else
         {
             JsonNotAny sut = this.scenarioContext.Get<JsonNotAny>(ObjectResult);
             if (sut.IsNotUndefined())
             {
-                Assert.IsTrue(this.scenarioContext.Get<JsonNotAny>(ObjectResult).TryGetProperty(propertyName, out JsonNotAny actualValue));
+                Assert.IsTrue(this.scenarioContext.Get<JsonNotAny>(ObjectResult).AsObject.TryGetProperty(propertyName, out JsonNotAny actualValue));
+                Assert.AreEqual(JsonNotAny.Parse(value), actualValue);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Validate the given property on a <see cref="JsonNotAny"/> found in the scenario context with key <see cref="ObjectResult"/>.
+    /// </summary>
+    /// <param name="propertyName">The name of the property.</param>
+    /// <param name="value">The serialized value of the property.</param>
+    [Then("the property (.*) on the JsonNotAny should be (.*) using JsonElement")]
+    public void ThenThePropertyNamedOnTheJsonNotAnyUsingJsonElementShouldBe(string propertyName, string value)
+    {
+        if (value == "<undefined>")
+        {
+            Assert.IsFalse(this.scenarioContext.Get<JsonNotAny>(ObjectResult).AsObject.TryGetProperty(JsonPropertyName.ParseValue($"\"{propertyName}\""), out _));
+        }
+        else
+        {
+            JsonNotAny sut = this.scenarioContext.Get<JsonNotAny>(ObjectResult);
+            if (sut.IsNotUndefined())
+            {
+                Assert.IsTrue(this.scenarioContext.Get<JsonNotAny>(ObjectResult).AsObject.TryGetProperty(JsonPropertyName.ParseValue($"\"{propertyName}\""), out JsonNotAny actualValue));
                 Assert.AreEqual(JsonNotAny.Parse(value), actualValue);
             }
         }
@@ -305,14 +294,14 @@ public class JsonPropertiesSteps
     {
         if (value == "<undefined>")
         {
-            Assert.IsFalse(this.scenarioContext.Get<JsonNotAny>(ObjectResult).TryGetProperty(propertyName.AsSpan(), out _));
+            Assert.IsFalse(this.scenarioContext.Get<JsonNotAny>(ObjectResult).AsObject.TryGetProperty(propertyName.AsSpan(), out _));
         }
         else
         {
             JsonNotAny sut = this.scenarioContext.Get<JsonNotAny>(ObjectResult);
             if (sut.IsNotUndefined())
             {
-                Assert.IsTrue(this.scenarioContext.Get<JsonNotAny>(ObjectResult).TryGetProperty(propertyName.AsSpan(), out JsonNotAny actualValue));
+                Assert.IsTrue(this.scenarioContext.Get<JsonNotAny>(ObjectResult).AsObject.TryGetProperty(propertyName.AsSpan(), out JsonNotAny actualValue));
                 Assert.AreEqual(JsonNotAny.Parse(value), actualValue);
             }
         }
@@ -328,14 +317,14 @@ public class JsonPropertiesSteps
     {
         if (value == "<undefined>")
         {
-            Assert.IsFalse(this.scenarioContext.Get<JsonNotAny>(ObjectResult).TryGetProperty(Encoding.UTF8.GetBytes(propertyName), out _));
+            Assert.IsFalse(this.scenarioContext.Get<JsonNotAny>(ObjectResult).AsObject.TryGetProperty(Encoding.UTF8.GetBytes(propertyName), out _));
         }
         else
         {
             JsonNotAny sut = this.scenarioContext.Get<JsonNotAny>(ObjectResult);
             if (sut.IsNotUndefined())
             {
-                Assert.IsTrue(this.scenarioContext.Get<JsonNotAny>(ObjectResult).TryGetProperty(Encoding.UTF8.GetBytes(propertyName), out JsonNotAny actualValue));
+                Assert.IsTrue(this.scenarioContext.Get<JsonNotAny>(ObjectResult).AsObject.TryGetProperty(Encoding.UTF8.GetBytes(propertyName), out JsonNotAny actualValue));
                 Assert.AreEqual(JsonNotAny.Parse(value), actualValue);
             }
         }
@@ -392,6 +381,24 @@ public class JsonPropertiesSteps
     /// </summary>
     /// <param name="propertyName">The name of the property.</param>
     /// <param name="value">The serialized value of the property.</param>
+    [Then("the property (.*) on the JsonObject should be (.*) using JsonElement")]
+    public void ThenThePropertyNamedOnTheJsonObjectShouldBeUsingJsonElement(string propertyName, string value)
+    {
+        if (value == "<undefined>")
+        {
+            Assert.IsFalse(this.scenarioContext.Get<JsonObject>(ObjectResult).TryGetProperty(JsonPropertyName.ParseValue($"\"{propertyName}\""), out _));
+        }
+        else
+        {
+            JsonObject sut = this.scenarioContext.Get<JsonObject>(ObjectResult);
+            if (sut.IsNotUndefined())
+            {
+                Assert.IsTrue(this.scenarioContext.Get<JsonObject>(ObjectResult).TryGetProperty(JsonPropertyName.ParseValue($"\"{propertyName}\""), out JsonAny actualValue));
+                Assert.AreEqual(JsonAny.Parse(value), actualValue);
+            }
+        }
+    }
+
     [Then("the property (.*) on the JsonObject should be (.*) using ReadOnlySpan<byte>")]
     public void ThenThePropertyNamedOnTheJsonObjectShouldBeUsingReadOnlySpanOfByte(string propertyName, string value)
     {
@@ -437,7 +444,7 @@ public class JsonPropertiesSteps
     {
         try
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest).RemoveProperty(propertyName), ObjectResult);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest).AsObject.RemoveProperty(propertyName).AsAny, ObjectResult);
         }
         catch (Exception ex)
         {
@@ -455,7 +462,7 @@ public class JsonPropertiesSteps
     {
         try
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest).RemoveProperty(propertyName), ObjectResult);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest).AsObject.RemoveProperty(propertyName).As<JsonNotAny>(), ObjectResult);
         }
         catch (Exception ex)
         {
@@ -491,7 +498,7 @@ public class JsonPropertiesSteps
     {
         try
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest).RemoveProperty(propertyName.AsSpan()), ObjectResult);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest).AsObject.RemoveProperty(propertyName.AsSpan()).AsAny, ObjectResult);
         }
         catch (Exception ex)
         {
@@ -509,7 +516,7 @@ public class JsonPropertiesSteps
     {
         try
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest).RemoveProperty(propertyName.AsSpan()), ObjectResult);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest).AsObject.RemoveProperty(propertyName.AsSpan()).As<JsonNotAny>(), ObjectResult);
         }
         catch (Exception ex)
         {
@@ -536,7 +543,7 @@ public class JsonPropertiesSteps
         }
     }
 
-        /// <summary>
+    /// <summary>
     /// Remove a property from an <see cref="JsonAny"/> found in <see cref="JsonValueSteps.SubjectUnderTest"/> and store it in <see cref="ObjectResult"/>.
     /// </summary>
     /// <param name="propertyName">The name of the property.</param>
@@ -545,7 +552,7 @@ public class JsonPropertiesSteps
     {
         try
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest).RemoveProperty(Encoding.UTF8.GetBytes(propertyName)), ObjectResult);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest).AsObject.RemoveProperty(Encoding.UTF8.GetBytes(propertyName)).AsAny, ObjectResult);
         }
         catch (Exception ex)
         {
@@ -564,7 +571,7 @@ public class JsonPropertiesSteps
         JsonAny result = this.scenarioContext.Get<JsonAny>(ObjectResult);
         if (result.ValueKind == JsonValueKind.Object)
         {
-            Assert.IsFalse(result.HasProperty(propertyName));
+            Assert.IsFalse(result.AsObject.HasProperty(propertyName));
         }
     }
 
@@ -578,7 +585,7 @@ public class JsonPropertiesSteps
         JsonAny result = this.scenarioContext.Get<JsonAny>(ObjectResult);
         if (result.ValueKind == JsonValueKind.Object)
         {
-            Assert.IsFalse(result.HasProperty(propertyName.AsSpan()));
+            Assert.IsFalse(result.AsObject.HasProperty(propertyName.AsSpan()));
         }
     }
 
@@ -592,7 +599,7 @@ public class JsonPropertiesSteps
         JsonAny result = this.scenarioContext.Get<JsonAny>(ObjectResult);
         if (result.ValueKind == JsonValueKind.Object)
         {
-            Assert.IsFalse(result.HasProperty(Encoding.UTF8.GetBytes(propertyName)));
+            Assert.IsFalse(result.AsObject.HasProperty(Encoding.UTF8.GetBytes(propertyName)));
         }
     }
 
@@ -603,7 +610,7 @@ public class JsonPropertiesSteps
     [When("I try to get the property (.*) on the JsonAny using string")]
     public void WhenITryToGetThePropertyOnTheJsonAnyUsingString(string propertyName)
     {
-        bool canGet = this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest).TryGetProperty(propertyName, out JsonAny actualValue);
+        bool canGet = this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest).AsObject.TryGetProperty(propertyName, out JsonAny actualValue);
         this.scenarioContext.Set(canGet, PropertyExistsResult);
         if (canGet)
         {
@@ -618,7 +625,7 @@ public class JsonPropertiesSteps
     [When("I try to get the property (.*) on the JsonAny using ReadOnlySpan<char>")]
     public void WhenITryToGetThePropertyOnTheJsonAnyUsingReadOnlySpanOfChar(string propertyName)
     {
-        bool canGet = this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest).TryGetProperty(propertyName.AsSpan(), out JsonAny actualValue);
+        bool canGet = this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest).AsObject.TryGetProperty(propertyName.AsSpan(), out JsonAny actualValue);
         this.scenarioContext.Set(canGet, PropertyExistsResult);
         if (canGet)
         {
@@ -633,7 +640,7 @@ public class JsonPropertiesSteps
     [When("I try to get the property (.*) on the JsonAny using ReadOnlySpan<byte>")]
     public void WhenITryToGetThePropertyOnTheJsonAnyUsingReadOnlySpanOfByte(string propertyName)
     {
-        bool canGet = this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest).TryGetProperty(Encoding.UTF8.GetBytes(propertyName), out JsonAny actualValue);
+        bool canGet = this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest).AsObject.TryGetProperty(Encoding.UTF8.GetBytes(propertyName), out JsonAny actualValue);
         this.scenarioContext.Set(canGet, PropertyExistsResult);
         if (canGet)
         {
@@ -648,7 +655,7 @@ public class JsonPropertiesSteps
     [When("I check the existence of the property (.*) on the JsonAny using string")]
     public void WhenICheckTheExistenceOfThePropertyOnTheJsonAnyUsingString(string propertyName)
     {
-        bool canGet = this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest).HasProperty(propertyName);
+        bool canGet = this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest).AsObject.HasProperty(propertyName);
         this.scenarioContext.Set(canGet, PropertyExistsResult);
     }
 
@@ -661,7 +668,7 @@ public class JsonPropertiesSteps
     {
         try
         {
-            this.scenarioContext.Set(this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest).RemoveProperty(Encoding.UTF8.GetBytes(propertyName)), ObjectResult);
+            this.scenarioContext.Set(this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest).AsObject.RemoveProperty(Encoding.UTF8.GetBytes(propertyName)).As<JsonNotAny>(), ObjectResult);
         }
         catch (Exception ex)
         {
@@ -680,7 +687,7 @@ public class JsonPropertiesSteps
         JsonNotAny result = this.scenarioContext.Get<JsonNotAny>(ObjectResult);
         if (result.ValueKind == JsonValueKind.Object)
         {
-            Assert.IsFalse(result.HasProperty(propertyName));
+            Assert.IsFalse(result.AsObject.HasProperty(propertyName));
         }
     }
 
@@ -694,7 +701,7 @@ public class JsonPropertiesSteps
         JsonNotAny result = this.scenarioContext.Get<JsonNotAny>(ObjectResult);
         if (result.ValueKind == JsonValueKind.Object)
         {
-            Assert.IsFalse(result.HasProperty(propertyName.AsSpan()));
+            Assert.IsFalse(result.AsObject.HasProperty(propertyName.AsSpan()));
         }
     }
 
@@ -708,7 +715,7 @@ public class JsonPropertiesSteps
         JsonNotAny result = this.scenarioContext.Get<JsonNotAny>(ObjectResult);
         if (result.ValueKind == JsonValueKind.Object)
         {
-            Assert.IsFalse(result.HasProperty(Encoding.UTF8.GetBytes(propertyName)));
+            Assert.IsFalse(result.AsObject.HasProperty(Encoding.UTF8.GetBytes(propertyName)));
         }
     }
 
@@ -719,7 +726,7 @@ public class JsonPropertiesSteps
     [When("I try to get the property (.*) on the JsonNotAny using string")]
     public void WhenITryToGetThePropertyOnTheJsonNotAnyUsingString(string propertyName)
     {
-        bool canGet = this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest).TryGetProperty(propertyName, out JsonAny actualValue);
+        bool canGet = this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest).AsObject.TryGetProperty(propertyName, out JsonAny actualValue);
         this.scenarioContext.Set(canGet, PropertyExistsResult);
         if (canGet)
         {
@@ -734,7 +741,7 @@ public class JsonPropertiesSteps
     [When("I try to get the property (.*) on the JsonNotAny using ReadOnlySpan<char>")]
     public void WhenITryToGetThePropertyOnTheJsonNotAnyUsingReadOnlySpanOfChar(string propertyName)
     {
-        bool canGet = this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest).TryGetProperty(propertyName.AsSpan(), out JsonAny actualValue);
+        bool canGet = this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest).AsObject.TryGetProperty(propertyName.AsSpan(), out JsonAny actualValue);
         this.scenarioContext.Set(canGet, PropertyExistsResult);
         if (canGet)
         {
@@ -749,7 +756,7 @@ public class JsonPropertiesSteps
     [When("I try to get the property (.*) on the JsonNotAny using ReadOnlySpan<byte>")]
     public void WhenITryToGetThePropertyOnTheJsonNotAnyUsingReadOnlySpanOfByte(string propertyName)
     {
-        bool canGet = this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest).TryGetProperty(Encoding.UTF8.GetBytes(propertyName), out JsonAny actualValue);
+        bool canGet = this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest).AsObject.TryGetProperty(Encoding.UTF8.GetBytes(propertyName), out JsonAny actualValue);
         this.scenarioContext.Set(canGet, PropertyExistsResult);
         if (canGet)
         {
@@ -764,7 +771,7 @@ public class JsonPropertiesSteps
     [When("I check the existence of the property (.*) on the JsonNotAny using string")]
     public void WhenICheckTheExistenceOfThePropertyOnTheJsonNotAnyUsingString(string propertyName)
     {
-        bool canGet = this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest).HasProperty(propertyName);
+        bool canGet = this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest).AsObject.HasProperty(propertyName);
         this.scenarioContext.Set(canGet, PropertyExistsResult);
     }
 
@@ -884,7 +891,7 @@ public class JsonPropertiesSteps
     [When("I check the existence of the property (.*) on the JsonAny using ReadOnlySpan<char>")]
     public void WhenICheckTheExistenceOfThePropertyOnTheJsonAnyUsingReadOnlySpanOfChar(string propertyName)
     {
-        bool canGet = this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest).HasProperty(propertyName.AsSpan());
+        bool canGet = this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest).AsObject.HasProperty(propertyName.AsSpan());
         this.scenarioContext.Set(canGet, PropertyExistsResult);
     }
 
@@ -895,7 +902,7 @@ public class JsonPropertiesSteps
     [When("I check the existence of the property (.*) on the JsonNotAny using ReadOnlySpan<char>")]
     public void WhenICheckTheExistenceOfThePropertyOnTheJsonNotAnyUsingReadOnlySpanOfChar(string propertyName)
     {
-        bool canGet = this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest).HasProperty(propertyName.AsSpan());
+        bool canGet = this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest).AsObject.HasProperty(propertyName.AsSpan());
         this.scenarioContext.Set(canGet, PropertyExistsResult);
     }
 
@@ -917,7 +924,7 @@ public class JsonPropertiesSteps
     [When("I check the existence of the property (.*) on the JsonAny using ReadOnlySpan<byte>")]
     public void WhenICheckTheExistenceOfThePropertyOnTheJsonAnyUsingReadOnlySpanOfByte(string propertyName)
     {
-        bool canGet = this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest).HasProperty(Encoding.UTF8.GetBytes(propertyName));
+        bool canGet = this.scenarioContext.Get<JsonAny>(JsonValueSteps.SubjectUnderTest).AsObject.HasProperty(Encoding.UTF8.GetBytes(propertyName));
         this.scenarioContext.Set(canGet, PropertyExistsResult);
     }
 
@@ -928,7 +935,7 @@ public class JsonPropertiesSteps
     [When("I check the existence of the property (.*) on the JsonNotAny using ReadOnlySpan<byte>")]
     public void WhenICheckTheExistenceOfThePropertyOnTheJsonNotAnyUsingReadOnlySpanOfByte(string propertyName)
     {
-        bool canGet = this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest).HasProperty(Encoding.UTF8.GetBytes(propertyName));
+        bool canGet = this.scenarioContext.Get<JsonNotAny>(JsonValueSteps.SubjectUnderTest).AsObject.HasProperty(Encoding.UTF8.GetBytes(propertyName));
         this.scenarioContext.Set(canGet, PropertyExistsResult);
     }
 

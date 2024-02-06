@@ -52,7 +52,7 @@ public static class SchemaExtensionsDraft6
     {
         if (draft6Schema.TryGetProperty("media", out JsonAny media) && media.ValueKind == JsonValueKind.Object)
         {
-            if (media.TryGetProperty("type", out JsonAny type) && type.ValueKind == JsonValueKind.String)
+            if (media.AsObject.TryGetProperty("type", out JsonAny type) && type.ValueKind == JsonValueKind.String)
             {
                 return type.AsString;
             }
@@ -70,7 +70,7 @@ public static class SchemaExtensionsDraft6
     {
         if (draft6Schema.TryGetProperty("media", out JsonAny media) && media.ValueKind == JsonValueKind.Object)
         {
-            if (media.TryGetProperty("binaryEncoding", out JsonAny encoding) && encoding.ValueKind == JsonValueKind.String)
+            if (media.AsObject.TryGetProperty("binaryEncoding", out JsonAny encoding) && encoding.ValueKind == JsonValueKind.String)
             {
                 return encoding.AsString;
             }
@@ -198,6 +198,19 @@ public static class SchemaExtensionsDraft6
     {
         return
             draft6Schema.IsExplicitStringType() || (draft6Schema.Type.IsSimpleTypesArray && draft6Schema.Type.AsSimpleTypesArray.EnumerateArray().Any(type => type.Equals(JsonSchema.Draft6.Schema.SimpleTypes.EnumValues.String))) || draft6Schema.MinLength.IsNotUndefined() || draft6Schema.MaxLength.IsNotUndefined() || draft6Schema.Pattern.IsNotUndefined() || draft6Schema.HasStringEnum() || draft6Schema.HasStringConst();
+    }
+
+    /// <summary>
+    /// Determines if this is an integer type.
+    /// </summary>
+    /// <param name="draft6Schema">The schema to test.</param>
+    /// <returns><c>True</c> if the schema has a single type value, or no type value but a format value.</returns>
+    public static bool IsJsonInteger(this Schema draft6Schema)
+    {
+        return
+            draft6Schema.Type.IsSimpleTypes && (
+                draft6Schema.Type.Equals(JsonSchema.Draft6.Schema.SimpleTypes.EnumValues.Integer) ||
+                (draft6Schema.Format.IsNullOrUndefined() && draft6Schema.Format == "integer"));
     }
 
     /// <summary>
@@ -378,6 +391,16 @@ public static class SchemaExtensionsDraft6
             draft6Schema.Ref.IsUndefined() &&
             draft6Schema.Required.IsUndefined() &&
             draft6Schema.UniqueItems.IsUndefined());
+    }
+
+    /// <summary>
+    /// Determines if this schema is a primitive type.
+    /// </summary>
+    /// <param name="draft6Schema">The schema to test.</param>
+    /// <returns><c>True</c> if the schema has a single type value, or no type value and no format value.</returns>
+    public static bool IsBuiltInPrimitiveType(this Schema draft6Schema)
+    {
+        return draft6Schema.IsBuiltInType() && draft6Schema.Format.IsUndefined();
     }
 
     /// <summary>

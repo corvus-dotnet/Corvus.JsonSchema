@@ -28,7 +28,7 @@ public readonly partial struct NotDisabled
         if (level > ValidationLevel.Basic)
         {
             result = result.UsingStack();
-            result = result.PushSchemaLocation("C:/Users/matth/source/repos/Corvus.JsonSchema/Solutions/Corvus.Json.Patch.SpecGenerator/Model/json-patch-test.json#/$defs/NotDisabled");
+            result = result.PushSchemaLocation("D:/source/corvus-dotnet/Corvus.JsonSchema/Solutions/Corvus.Json.Patch.SpecGenerator/Model/json-patch-test.json#/$defs/NotDisabled");
         }
 
         JsonValueKind valueKind = this.ValueKind;

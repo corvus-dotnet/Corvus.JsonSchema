@@ -251,8 +251,10 @@ Scenario: Partially apply parameters from a JSON Object from Invalid URL
 	Given I create a UriTemplate for "http://{environment}.example.org/{version}/customers{?active,country}" with partial resolution
 	When I set the template parameters from the JsonObject {"environment": "dev", "version": "v2"}
 	Then the resolved template should be one of
-		| values                                               |
-		| http://dev.example.org/v2/customers{?active,country} |
+		| values                                                 |
+		| http://dev.example.org/v2/customers{?active,country}   |
+		| http://dev.example.org/v2/customers{?active}{&country} |
+		| http://dev.example.org/v2/customers{?country}{&active} |
 
 Scenario: Partially apply parameters from a JSON Object to a path from string not url
 	Given I create a UriTemplate for "http://example.org{/folders*}{?filename}" with partial resolution

@@ -165,6 +165,19 @@ public static class SchemaExtensionsDraft7
     }
 
     /// <summary>
+    /// Determines if this is an integer type.
+    /// </summary>
+    /// <param name="draft7Schema">The schema to test.</param>
+    /// <returns><c>True</c> if the schema has a single type value, or no type value but a format value.</returns>
+    public static bool IsJsonInteger(this Schema draft7Schema)
+    {
+        return
+            draft7Schema.Type.IsSimpleTypes && (
+                draft7Schema.Type.Equals(JsonSchema.Draft7.Schema.SimpleTypes.EnumValues.Integer) ||
+                (draft7Schema.Format.IsNullOrUndefined() && draft7Schema.Format == "integer"));
+    }
+
+    /// <summary>
     /// Gets a value indicating whether is has an object enum type.
     /// </summary>
     /// <param name="draft7Schema">The schema to validate.</param>
@@ -347,6 +360,16 @@ public static class SchemaExtensionsDraft7
             draft7Schema.Then.IsUndefined() &&
             draft7Schema.UniqueItems.IsUndefined() &&
             draft7Schema.WriteOnly.IsUndefined());
+    }
+
+    /// <summary>
+    /// Determines if this schema is a primitive type.
+    /// </summary>
+    /// <param name="draft7Schema">The schema to test.</param>
+    /// <returns><c>True</c> if the schema has a single type value, or no type value and no format value.</returns>
+    public static bool IsBuiltInPrimitiveType(this Schema draft7Schema)
+    {
+        return draft7Schema.IsBuiltInType() && draft7Schema.Format.IsUndefined();
     }
 
     /// <summary>
