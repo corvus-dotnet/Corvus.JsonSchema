@@ -3,7 +3,9 @@
 // </copyright>
 
 using System.Collections.Immutable;
+using System.Text;
 using System.Text.Json;
+using Corvus.Json.JsonSchema.Draft7;
 
 namespace Corvus.Json.CodeGeneration.Draft7;
 
@@ -345,7 +347,7 @@ public static class JsonSchemaHelpers
             {
                 foreach (JsonString requiredName in schema.Required.EnumerateArray())
                 {
-                    target.AddOrReplaceProperty(new PropertyDeclaration(builder.AnyTypeDeclarationInstance, (string)requiredName, !treatRequiredAsOptional, source == target, false, null));
+                    target.AddOrReplaceProperty(new PropertyDeclaration(builder.AnyTypeDeclarationInstance, (string)requiredName, !treatRequiredAsOptional, source == target, false, null, null));
                 }
             }
 
@@ -400,10 +402,48 @@ public static class JsonSchemaHelpers
 
                     if (source.RefResolvablePropertyDeclarations.TryGetValue(propertyRef.AppendUnencodedPropertyNameToFragment(propertyName), out TypeDeclaration? propertyTypeDeclaration))
                     {
-                        target.AddOrReplaceProperty(new PropertyDeclaration(propertyTypeDeclaration, propertyName, isRequired, source == target, propertyTypeDeclaration.Schema().Default.IsNotUndefined(), propertyTypeDeclaration.Schema().Default is JsonAny def ? def.ToString() : default));
+                        target.AddOrReplaceProperty(new PropertyDeclaration(propertyTypeDeclaration, propertyName, isRequired, source == target, propertyTypeDeclaration.Schema().Default.IsNotUndefined(), propertyTypeDeclaration.Schema().Default is JsonAny def ? def.ToString() : default, FormatDocumentation(propertyTypeDeclaration.Schema())));
                     }
                 }
             }
         };
+    }
+
+    private static string? FormatDocumentation(Schema schema)
+    {
+        StringBuilder documentation = new();
+        if (schema.Title.IsNotNullOrUndefined())
+        {
+            documentation.Append("<para>");
+            documentation.Append(Formatting.FormatLiteralOrNull(schema.Title.GetString(), false));
+            documentation.Append("</para>");
+        }
+
+        if (schema.Description.IsNotNullOrUndefined())
+        {
+            documentation.Append("<para>");
+            documentation.Append(Formatting.FormatLiteralOrNull(schema.Description.GetString(), false));
+            documentation.Append("</para>");
+        }
+
+        if (schema.Examples.IsNotNullOrUndefined())
+        {
+            documentation.Append("<para>");
+            documentation.Append("Examples:");
+            documentation.Append("</para>");
+            foreach (JsonAny example in schema.Examples.EnumerateArray())
+            {
+                documentation.Append("<para>");
+                documentation.Append(Formatting.FormatLiteralOrNull(example.ToString(), false));
+                documentation.Append("</para>");
+            }
+        }
+
+        if (documentation.Length > 0)
+        {
+            return documentation.ToString();
+        }
+
+        return null;
     }
 }
