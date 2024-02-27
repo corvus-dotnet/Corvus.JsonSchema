@@ -384,7 +384,7 @@ public static class JsonSchemaHelpers
 
             if (schema.AllOf.IsNotUndefined())
             {
-                foreach (TypeDeclaration allOfTypeDeclaration in source.RefResolvablePropertyDeclarations.Where(k => k.Key.StartsWith("#/allOf")).Select(k => k.Value))
+                foreach (TypeDeclaration allOfTypeDeclaration in source.RefResolvablePropertyDeclarations.Where(k => k.Key.StartsWith("#/allOf")).OrderBy(k => k.Key).Select(k => k.Value))
                 {
                     builder.FindAndBuildProperties(allOfTypeDeclaration, target, typesVisited, treatRequiredAsOptional);
                 }
@@ -402,7 +402,7 @@ public static class JsonSchemaHelpers
 
             if (schema.DependentSchemas.IsNotUndefined())
             {
-                foreach (TypeDeclaration dependentypeDeclaration in source.RefResolvablePropertyDeclarations.Where(k => k.Key.StartsWith("#/dependentSchemas")).Select(k => k.Value))
+                foreach (TypeDeclaration dependentypeDeclaration in source.RefResolvablePropertyDeclarations.Where(k => k.Key.StartsWith("#/dependentSchemas")).OrderBy(k => k.Key).Select(k => k.Value))
                 {
                     builder.FindAndBuildProperties(dependentypeDeclaration, target, typesVisited, true);
                 }
@@ -410,7 +410,7 @@ public static class JsonSchemaHelpers
 
             if (schema.Dependencies.IsNotUndefined())
             {
-                foreach (TypeDeclaration dependentypeDeclaration in source.RefResolvablePropertyDeclarations.Where(k => k.Key.StartsWith("#/dependencies")).Select(k => k.Value))
+                foreach (TypeDeclaration dependentypeDeclaration in source.RefResolvablePropertyDeclarations.Where(k => k.Key.StartsWith("#/dependencies")).OrderBy(k => k.Key).Select(k => k.Value))
                 {
                     builder.FindAndBuildProperties(dependentypeDeclaration, target, typesVisited, true);
                 }
