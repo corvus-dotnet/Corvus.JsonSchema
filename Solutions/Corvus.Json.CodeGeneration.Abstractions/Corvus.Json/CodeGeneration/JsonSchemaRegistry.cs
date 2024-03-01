@@ -4,6 +4,7 @@
 
 using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 
 namespace Corvus.Json.CodeGeneration;
@@ -52,7 +53,11 @@ internal class JsonSchemaRegistry
 
         if (basePath.Uri.StartsWith(DefaultAbsoluteLocation.Uri))
         {
-            basePath = new JsonReference(jsonSchemaPath.Uri[DefaultAbsoluteLocation.Uri.Length..], ReadOnlySpan<char>.Empty);
+            // This code assumes the OS is not Windows and the default uri ends in a slash.
+            System.Diagnostics.Trace.Assert( !System.OperatingSystem.IsWindows() );
+            System.Diagnostics.Trace.Assert(DefaultAbsoluteLocation.Uri[DefaultAbsoluteLocation.Uri.Length - 1] == '/');
+            // keep the final slash as first char in the basePath for nix-like systems
+            basePath = new JsonReference(jsonSchemaPath.Uri[(DefaultAbsoluteLocation.Uri.Length - 1)..], ReadOnlySpan<char>.Empty);
         }
 
         JsonElement? optionalDocumentRoot = await this.documentResolver.TryResolve(basePath).ConfigureAwait(false) ?? throw new InvalidOperationException($"Unable to locate the root document at '{basePath}'");
