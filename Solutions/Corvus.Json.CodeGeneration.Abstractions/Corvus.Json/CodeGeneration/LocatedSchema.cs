@@ -11,7 +11,7 @@ namespace Corvus.Json.CodeGeneration;
 /// </summary>
 public class LocatedSchema
 {
-    private readonly Dictionary<string, Anchor> anchors = new();
+    private readonly Dictionary<string, Anchor> anchors = [];
 
     /// <summary>
     /// Initializes a new instance of the <see cref="LocatedSchema"/> class.

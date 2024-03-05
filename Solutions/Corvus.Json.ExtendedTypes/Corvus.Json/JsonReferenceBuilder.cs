@@ -205,7 +205,7 @@ public readonly ref struct JsonReferenceBuilder
     {
         if (!this.HasAuthority)
         {
-            return ReadOnlySpan<char>.Empty;
+            return [];
         }
 
         int index = 0;
@@ -221,7 +221,7 @@ public readonly ref struct JsonReferenceBuilder
     {
         if (!this.HasAuthority)
         {
-            return ReadOnlySpan<char>.Empty;
+            return [];
         }
 
         int index = 0;
@@ -232,7 +232,7 @@ public readonly ref struct JsonReferenceBuilder
 
         if (index == this.Authority.Length)
         {
-            return ReadOnlySpan<char>.Empty;
+            return [];
         }
 
         return this.Authority[(index + 1)..];

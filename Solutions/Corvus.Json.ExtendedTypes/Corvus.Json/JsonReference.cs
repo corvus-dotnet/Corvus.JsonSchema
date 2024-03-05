@@ -270,7 +270,7 @@ public readonly struct JsonReference : IEquatable<JsonReference>
             }
             else
             {
-                authority = ReadOnlySpan<char>.Empty;
+                authority = [];
             }
         }
 
@@ -328,7 +328,7 @@ public readonly struct JsonReference : IEquatable<JsonReference>
             }
             else
             {
-                return new JsonReference(this.Uri, ReadOnlySpan<char>.Empty);
+                return new JsonReference(this.Uri, []);
             }
         }
 
@@ -365,7 +365,7 @@ public readonly struct JsonReference : IEquatable<JsonReference>
         {
             if (!strict && scheme.Equals(baseReference.Scheme, StringComparison.Ordinal))
             {
-                scheme = ReadOnlySpan<char>.Empty;
+                scheme = [];
             }
 
             if (scheme.Length > 0)
@@ -667,7 +667,7 @@ public readonly struct JsonReference : IEquatable<JsonReference>
             return this.reference.Span[hi..];
         }
 
-        return ReadOnlySpan<char>.Empty;
+        return [];
     }
 
     private ReadOnlySpan<char> FindFragment(int start)
@@ -676,13 +676,13 @@ public readonly struct JsonReference : IEquatable<JsonReference>
 
         if (index >= this.reference.Length)
         {
-            return ReadOnlySpan<char>.Empty;
+            return [];
         }
 
         // Expect the leading '#'
         if (this.reference.Span[index] != '#')
         {
-            return ReadOnlySpan<char>.Empty;
+            return [];
         }
 
         return this.reference.Span[(index + 1)..];
@@ -694,13 +694,13 @@ public readonly struct JsonReference : IEquatable<JsonReference>
 
         if (index >= this.reference.Length)
         {
-            return ReadOnlySpan<char>.Empty;
+            return [];
         }
 
         // Expect the leading ?
         if (this.reference.Span[index] != '?')
         {
-            return ReadOnlySpan<char>.Empty;
+            return [];
         }
 
         index++;
@@ -719,7 +719,7 @@ public readonly struct JsonReference : IEquatable<JsonReference>
 
         if (index >= this.reference.Length)
         {
-            return ReadOnlySpan<char>.Empty;
+            return [];
         }
 
         while (index < this.reference.Length && this.reference.Span[index] != '?' && this.reference.Span[index] != '#')
@@ -737,7 +737,7 @@ public readonly struct JsonReference : IEquatable<JsonReference>
         // Expect the leading '//'
         if (index >= this.reference.Length || this.reference.Span[index] != '/' || this.reference.Span[index + 1] != '/')
         {
-            return ReadOnlySpan<char>.Empty;
+            return [];
         }
 
         index += 2;
@@ -755,7 +755,7 @@ public readonly struct JsonReference : IEquatable<JsonReference>
         // First character must be a letter for this to be a scheme.
         if (this.reference.Length == 0 || !char.IsLetter(this.reference.Span[0]))
         {
-            return ReadOnlySpan<char>.Empty;
+            return [];
         }
 
         // Start from the second character
@@ -770,6 +770,6 @@ public readonly struct JsonReference : IEquatable<JsonReference>
             return this.reference.Span[..(index + 1)];
         }
 
-        return ReadOnlySpan<char>.Empty;
+        return [];
     }
 }

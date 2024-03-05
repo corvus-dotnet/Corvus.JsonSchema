@@ -104,7 +104,7 @@ public readonly partial struct JsonArray
     /// <returns>A JsonAny instantiated from the given array.</returns>
     public static JsonArray FromItems(params JsonAny[] value)
     {
-        return new(value.ToImmutableList());
+        return new([.. value]);
     }
 
     /// <summary>

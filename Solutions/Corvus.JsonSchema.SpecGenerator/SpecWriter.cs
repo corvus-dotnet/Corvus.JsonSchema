@@ -37,7 +37,7 @@ internal static class SpecWriter
         var builder = new StringBuilder();
 
         WriteFeatureHeading(testSet.TestSetName, Path.GetFileNameWithoutExtension(testSet.InputFile), builder);
-        HashSet<string> writtenScenarios = new();
+        HashSet<string> writtenScenarios = [];
         int index = 0;
         foreach (JsonElement scenarioDefinition in testDocument.RootElement.EnumerateArray())
         {

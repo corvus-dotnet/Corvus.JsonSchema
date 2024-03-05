@@ -169,7 +169,7 @@ public partial class CodeGeneratorValidateArray
     {
         get
         {
-            return this.TypeDeclaration.Properties.OrderBy(p => p.DotnetPropertyName).ToImmutableArray();
+            return [.. this.TypeDeclaration.Properties.OrderBy(p => p.DotnetPropertyName)];
         }
     }
 
@@ -180,7 +180,7 @@ public partial class CodeGeneratorValidateArray
     {
         get
         {
-            return this.TypeDeclaration.Properties.Where(p => p.IsDefinedInLocalScope && p.IsRequired).OrderBy(p => p.DotnetPropertyName).ToImmutableArray();
+            return [.. this.TypeDeclaration.Properties.Where(p => p.IsDefinedInLocalScope && p.IsRequired).OrderBy(p => p.DotnetPropertyName)];
         }
     }
 
@@ -191,7 +191,7 @@ public partial class CodeGeneratorValidateArray
     {
         get
         {
-            return this.TypeDeclaration.Properties.Where(p => p.IsDefinedInLocalScope && !p.IsRequired).OrderBy(p => p.DotnetPropertyName).ToImmutableArray();
+            return [.. this.TypeDeclaration.Properties.Where(p => p.IsDefinedInLocalScope && !p.IsRequired).OrderBy(p => p.DotnetPropertyName)];
         }
     }
 
@@ -202,7 +202,7 @@ public partial class CodeGeneratorValidateArray
     {
         get
         {
-            return this.TypeDeclaration.Properties.Where(p => p.IsRequired).OrderBy(p => p.DotnetPropertyName).ToImmutableArray();
+            return [.. this.TypeDeclaration.Properties.Where(p => p.IsRequired).OrderBy(p => p.DotnetPropertyName)];
         }
     }
 
@@ -213,7 +213,7 @@ public partial class CodeGeneratorValidateArray
     {
         get
         {
-            return this.TypeDeclaration.Properties.Where(p => !p.IsRequired).OrderBy(p => p.DotnetPropertyName).ToImmutableArray();
+            return [.. this.TypeDeclaration.Properties.Where(p => !p.IsRequired).OrderBy(p => p.DotnetPropertyName)];
         }
     }
 
@@ -224,7 +224,7 @@ public partial class CodeGeneratorValidateArray
     {
         get
         {
-            return this.TypeDeclaration.Properties.Where(p => p.HasDefaultValue).OrderBy(p => p.DotnetPropertyName).ToImmutableArray();
+            return [.. this.TypeDeclaration.Properties.Where(p => p.HasDefaultValue).OrderBy(p => p.DotnetPropertyName)];
         }
     }
 
@@ -985,7 +985,7 @@ public partial class CodeGeneratorValidateArray
     }
 
     /// <summary>
-    /// Gets the dotnet typename for the non-naked reference.
+    /// Gets the dotnet type name for the non-naked reference.
     /// </summary>
     public string RefDotnetTypeName
     {

@@ -3,7 +3,6 @@
 // </copyright>
 
 using System.Diagnostics.CodeAnalysis;
-using System.Text.Json;
 
 namespace Corvus.Json.CodeGeneration;
 
@@ -42,7 +41,7 @@ public partial class JsonSchemaTypeBuilder
     /// </summary>
     private TypeDeclaration ReduceTypeDeclarations(TypeDeclaration root)
     {
-        Dictionary<TypeDeclaration, TypeDeclaration?> reductionCache = new();
+        Dictionary<TypeDeclaration, TypeDeclaration?> reductionCache = [];
         if (this.TryReduceTypeDeclarationsCore(root, reductionCache, out TypeDeclaration? reducedType))
         {
             if (root.LocatedSchema.Location != reducedType.LocatedSchema.Location)

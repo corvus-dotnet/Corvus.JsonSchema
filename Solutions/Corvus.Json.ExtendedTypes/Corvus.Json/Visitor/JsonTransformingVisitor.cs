@@ -41,7 +41,7 @@ public static partial class JsonTransformingVisitor
         try
         {
             VisitResult visitResult = default;
-            Visit(ReadOnlySpan<char>.Empty, root.AsAny, visitor, pathBuffer, ref visitResult);
+            Visit([], root.AsAny, visitor, pathBuffer, ref visitResult);
 
             if (visitResult.Walk == Walk.TerminateAtThisNodeAndAbandonAllChanges)
             {

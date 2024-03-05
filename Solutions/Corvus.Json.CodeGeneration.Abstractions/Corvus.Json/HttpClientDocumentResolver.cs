@@ -14,7 +14,7 @@ public class HttpClientDocumentResolver : IDocumentResolver
     private static readonly ReadOnlyMemory<char> LocalHost = "localhost".AsMemory();
 
     private readonly HttpClient httpClient;
-    private readonly Dictionary<string, JsonDocument> documents = new();
+    private readonly Dictionary<string, JsonDocument> documents = [];
     private readonly bool supportLocalhost;
     private bool disposedValue;
 

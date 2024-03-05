@@ -27,7 +27,7 @@ public partial class JsonSchemaTypeBuilder
 
             // Figure out a base schema location from the location of the anchored schema.
             baseSchemaForReferenceLocation = schemaForRef.Location.WithFragment(string.Empty);
-            schemaForRefPointer = new JsonReference(ReadOnlySpan<char>.Empty, schemaForRef.Location.Fragment);
+            schemaForRefPointer = new JsonReference([], schemaForRef.Location.Fragment);
         }
         else
         {
@@ -87,14 +87,14 @@ public partial class JsonSchemaTypeBuilder
 
     private bool HasRecursiveReferences(TypeDeclaration typeDeclaration)
     {
-        HashSet<TypeDeclaration> visitedTypes = new();
+        HashSet<TypeDeclaration> visitedTypes = [];
         return this.HasRecursiveReferences(typeDeclaration, visitedTypes);
     }
 
     private HashSet<string> GetDynamicReferences(TypeDeclaration typeDeclaration)
     {
-        HashSet<string> result = new();
-        HashSet<TypeDeclaration> visitedTypes = new();
+        HashSet<string> result = [];
+        HashSet<TypeDeclaration> visitedTypes = [];
         this.GetDynamicReferences(typeDeclaration, result, visitedTypes);
         return result;
     }
@@ -391,7 +391,7 @@ public partial class JsonSchemaTypeBuilder
             // If we've already located it, this must be the thing.
             if (this.schemaRegistry.TryGetValue(new JsonReference(baseSchemaForReferenceLocation.Uri, reference.Fragment), out _))
             {
-                schemaForRefPointer = new JsonReference(ReadOnlySpan<char>.Empty, reference.Fragment);
+                schemaForRefPointer = new JsonReference([], reference.Fragment);
             }
             else
             {
@@ -450,7 +450,7 @@ public partial class JsonSchemaTypeBuilder
         {
             if (JsonPointerUtilities.TryResolvePointer(rootElement, fragment, out JsonElement? resolvedElement))
             {
-                var pointerRef = new JsonReference(ReadOnlySpan<char>.Empty, fragment);
+                var pointerRef = new JsonReference([], fragment);
                 JsonReference location = baseSchemaForReferenceLocation.Apply(pointerRef);
                 this.schemaRegistry.AddSchemaAndSubschema(location, JsonAny.FromJson(resolvedElement.Value));
                 result = (baseSchemaForReferenceLocation, pointerRef);

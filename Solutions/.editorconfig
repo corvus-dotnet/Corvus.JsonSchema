@@ -109,3 +109,6 @@ dotnet_diagnostic.RCS1194.severity = None
 
 # Localize string constants - apps that want localization can turn this back on
 dotnet_diagnostic.CA1303.severity = None
+
+# IDE0290: Use primary constructor
+csharp_style_prefer_primary_constructors = false
