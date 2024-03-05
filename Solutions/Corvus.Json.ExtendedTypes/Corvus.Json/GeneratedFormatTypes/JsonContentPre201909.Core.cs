@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Buffers;
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json.Internal;

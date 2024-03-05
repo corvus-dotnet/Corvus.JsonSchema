@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Text.Json;
 using Corvus.Json.CodeGeneration.Draft202012;
@@ -1017,7 +1018,7 @@ public partial class CodeGeneratorValidateMediaTypeAndEncoding
     }
 
     /// <summary>
-    /// Gets the dotnet typename for the non-naked reference.
+    /// Gets the dotnet type name for the non-naked reference.
     /// </summary>
     public string RefDotnetTypeName
     {
