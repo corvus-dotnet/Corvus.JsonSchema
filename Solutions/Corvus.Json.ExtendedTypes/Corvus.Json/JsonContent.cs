@@ -239,7 +239,7 @@ public readonly partial struct JsonContent
             return str!.AsSpan();
         }
 
-        return ReadOnlySpan<char>.Empty;
+        return [];
     }
 
     /// <summary>

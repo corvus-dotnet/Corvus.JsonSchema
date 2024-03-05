@@ -3,12 +3,10 @@
 // </copyright>
 
 using System.Collections.Immutable;
-using System.IO;
 using System.Reflection;
 using System.Runtime.Loader;
 using System.Text;
 using System.Text.Json;
-using Corvus.Extensions;
 using Corvus.Json;
 using Corvus.Json.CodeGeneration;
 using Microsoft.CodeAnalysis;

@@ -54,7 +54,7 @@ public class TypeDeclaration
     /// <summary>
     /// Gets the dotnet property declarations for the type.
     /// </summary>
-    public ImmutableArray<PropertyDeclaration> Properties { get; private set; } = ImmutableArray<PropertyDeclaration>.Empty;
+    public ImmutableArray<PropertyDeclaration> Properties { get; private set; } = [];
 
     /// <summary>
     /// Gets the ref-resolvable property declarations for the type declaration.
@@ -78,7 +78,7 @@ public class TypeDeclaration
     /// <summary>
     /// Gets the set of type declarations nested in this type.
     /// </summary>
-    public ImmutableHashSet<TypeDeclaration> Children { get; private set; } = ImmutableHashSet<TypeDeclaration>.Empty;
+    public ImmutableHashSet<TypeDeclaration> Children { get; private set; } = [];
 
     /// <summary>
     /// Gets the namespace in which to put this type.
@@ -128,9 +128,9 @@ public class TypeDeclaration
     /// <returns>A set of types that need to be built.</returns>
     public ImmutableArray<TypeDeclaration> GetTypesToGenerate()
     {
-        HashSet<TypeDeclaration> typesToGenerate = new();
+        HashSet<TypeDeclaration> typesToGenerate = [];
         GetTypesToGenerateCore(this, typesToGenerate);
-        return typesToGenerate.ToImmutableArray();
+        return [.. typesToGenerate];
     }
 
     /// <summary>

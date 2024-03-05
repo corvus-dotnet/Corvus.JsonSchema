@@ -31,8 +31,8 @@ public readonly partial struct JsonNotAny : IJsonValue<JsonNotAny>
         this.jsonElementBacking = default;
         this.backing = Backing.JsonElement;
         this.stringBacking = string.Empty;
-        this.arrayBacking = ImmutableList<JsonAny>.Empty;
-        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
+        this.arrayBacking = [];
+        this.objectBacking = [];
     }
 
     /// <summary>
@@ -44,8 +44,8 @@ public readonly partial struct JsonNotAny : IJsonValue<JsonNotAny>
         this.jsonElementBacking = value;
         this.backing = Backing.JsonElement;
         this.stringBacking = string.Empty;
-        this.arrayBacking = ImmutableList<JsonAny>.Empty;
-        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
+        this.arrayBacking = [];
+        this.objectBacking = [];
     }
 
     /// <summary>
@@ -57,8 +57,8 @@ public readonly partial struct JsonNotAny : IJsonValue<JsonNotAny>
         this.jsonElementBacking = default;
         this.backing = Backing.String;
         this.stringBacking = value;
-        this.arrayBacking = ImmutableList<JsonAny>.Empty;
-        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
+        this.arrayBacking = [];
+        this.objectBacking = [];
     }
 
     /// <summary>
@@ -71,8 +71,8 @@ public readonly partial struct JsonNotAny : IJsonValue<JsonNotAny>
         this.backing = Backing.Number;
         this.numericBacking = value;
         this.stringBacking = string.Empty;
-        this.arrayBacking = ImmutableList<JsonAny>.Empty;
-        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
+        this.arrayBacking = [];
+        this.objectBacking = [];
     }
 
     /// <summary>
@@ -85,8 +85,8 @@ public readonly partial struct JsonNotAny : IJsonValue<JsonNotAny>
         this.backing = Backing.Bool;
         this.stringBacking = string.Empty;
         this.numericBacking = new(value); // We reuse the binary number to avoid allocating an extra int.
-        this.arrayBacking = ImmutableList<JsonAny>.Empty;
-        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
+        this.arrayBacking = [];
+        this.objectBacking = [];
     }
 
     /// <summary>
@@ -99,7 +99,7 @@ public readonly partial struct JsonNotAny : IJsonValue<JsonNotAny>
         this.backing = Backing.Array;
         this.stringBacking = string.Empty;
         this.arrayBacking = value;
-        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
+        this.objectBacking = [];
     }
 
     /// <summary>
@@ -111,7 +111,7 @@ public readonly partial struct JsonNotAny : IJsonValue<JsonNotAny>
         this.jsonElementBacking = default;
         this.backing = Backing.Object;
         this.stringBacking = string.Empty;
-        this.arrayBacking = ImmutableList<JsonAny>.Empty;
+        this.arrayBacking = [];
         this.objectBacking = value;
     }
 

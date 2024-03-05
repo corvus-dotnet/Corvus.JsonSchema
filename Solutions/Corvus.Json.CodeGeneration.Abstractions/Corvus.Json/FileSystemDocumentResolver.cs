@@ -12,7 +12,7 @@ namespace Corvus.Json;
 public class FileSystemDocumentResolver : IDocumentResolver
 {
     private readonly string baseDirectory;
-    private readonly Dictionary<string, JsonDocument> documents = new();
+    private readonly Dictionary<string, JsonDocument> documents = [];
     private bool disposedValue;
 
     /// <summary>

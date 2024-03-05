@@ -94,13 +94,13 @@ public partial class JsonSchemaTypeBuilder
 
     private void SetBuiltInTypeNamesAndNamespaces(TypeDeclaration rootTypeDeclaration)
     {
-        HashSet<TypeDeclaration> visitedTypeDeclarations = new();
+        HashSet<TypeDeclaration> visitedTypeDeclarations = [];
         this.SetBuiltInTypeNamesAndNamespaces(rootTypeDeclaration, visitedTypeDeclarations);
     }
 
     private void SetTypeNamesAndNamespaces(TypeDeclaration rootTypeDeclaration, string rootNamespace, ImmutableDictionary<string, string>? baseUriToNamespaceMap, string? rootTypeName)
     {
-        HashSet<TypeDeclaration> visitedTypeDeclarations = new();
+        HashSet<TypeDeclaration> visitedTypeDeclarations = [];
         this.SetTypeNamesAndNamespaces(rootTypeDeclaration, rootNamespace, baseUriToNamespaceMap, rootTypeName, visitedTypeDeclarations, index: null, isRootTypeDeclaration: true);
         visitedTypeDeclarations.Clear();
         this.RecursivelyFixArrayNames(rootTypeDeclaration, visitedTypeDeclarations, true);
@@ -240,7 +240,7 @@ public partial class JsonSchemaTypeBuilder
         if (reference.HasQuery)
         {
             // Remove the query.
-            reference = new JsonReferenceBuilder(reference.Scheme, reference.Authority, reference.Path, ReadOnlySpan<char>.Empty, reference.Fragment);
+            reference = new JsonReferenceBuilder(reference.Scheme, reference.Authority, reference.Path, [], reference.Fragment);
         }
 
         ReadOnlySpan<char> typename;

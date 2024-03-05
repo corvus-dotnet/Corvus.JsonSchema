@@ -15,7 +15,7 @@ public partial class JsonSchemaTypeBuilder
 {
     private static readonly JsonReference BuiltInsLocation = new("https://github.com/Corvus-dotnet/Corvus/tree/master/schema/builtins");
 
-    private readonly Dictionary<string, TypeDeclaration> locatedTypeDeclarations = new();
+    private readonly Dictionary<string, TypeDeclaration> locatedTypeDeclarations = [];
     private readonly JsonSchemaRegistry schemaRegistry;
     private readonly IDocumentResolver documentResolver;
     private readonly IPropertyBuilder propertyBuilder;
@@ -168,13 +168,13 @@ public partial class JsonSchemaTypeBuilder
 
     private static void SetParents(TypeDeclaration rootTypeDeclaration)
     {
-        HashSet<TypeDeclaration> visitedTypes = new();
+        HashSet<TypeDeclaration> visitedTypes = [];
         SetParentsCore(rootTypeDeclaration, visitedTypes);
     }
 
     private void FindAndBuildPropertiesCore(TypeDeclaration rootTypeDeclaration)
     {
-        HashSet<TypeDeclaration> typesVisitedForBuild = new();
+        HashSet<TypeDeclaration> typesVisitedForBuild = [];
 
         this.FindAndBuildPropertiesCore(rootTypeDeclaration, typesVisitedForBuild);
 
@@ -191,7 +191,7 @@ public partial class JsonSchemaTypeBuilder
 
         typesVisitedForBuild.Add(type);
 
-        HashSet<TypeDeclaration> typesVisited = new();
+        HashSet<TypeDeclaration> typesVisited = [];
 
         this.JsonSchemaConfiguration.FindAndBuildPropertiesAdapter(this.propertyBuilder, type, type, typesVisited, false);
 

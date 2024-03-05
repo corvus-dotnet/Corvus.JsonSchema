@@ -3,7 +3,6 @@
 // </copyright>
 
 using System.Collections.Immutable;
-using System.Text;
 using Corvus.Json.CodeGeneration.Generators.Draft202012;
 
 namespace Corvus.Json.CodeGeneration.Draft202012;

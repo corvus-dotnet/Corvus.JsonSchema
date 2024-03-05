@@ -3,7 +3,6 @@
 // </copyright>
 
 using System.Diagnostics.CodeAnalysis;
-using System.IO;
 using Corvus.Json.Patch.Model;
 using Corvus.Json.Visitor;
 

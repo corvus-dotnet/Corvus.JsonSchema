@@ -14,7 +14,7 @@ namespace Corvus.Json.CodeGeneration;
 internal class JsonSchemaRegistry
 {
     private static readonly JsonReference DefaultAbsoluteLocation = new("https://endjin.com/");
-    private readonly Dictionary<string, LocatedSchema> locatedSchema = new();
+    private readonly Dictionary<string, LocatedSchema> locatedSchema = [];
     private readonly IDocumentResolver documentResolver;
 
     /// <summary>
@@ -52,7 +52,7 @@ internal class JsonSchemaRegistry
 
         if (basePath.Uri.StartsWith(DefaultAbsoluteLocation.Uri))
         {
-            basePath = new JsonReference(jsonSchemaPath.Uri[DefaultAbsoluteLocation.Uri.Length..], ReadOnlySpan<char>.Empty);
+            basePath = new JsonReference(jsonSchemaPath.Uri[DefaultAbsoluteLocation.Uri.Length..], []);
         }
 
         JsonElement? optionalDocumentRoot = await this.documentResolver.TryResolve(basePath).ConfigureAwait(false) ?? throw new InvalidOperationException($"Unable to locate the root document at '{basePath}'");
