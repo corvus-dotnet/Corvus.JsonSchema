@@ -220,7 +220,7 @@ public partial class JsonSchemaTypeBuilder
         }
 
         int childIndex = 0;
-        foreach (TypeDeclaration child in typeDeclaration.RefResolvablePropertyDeclarations.Values.OrderBy(t => t.LocatedSchema.Location))
+        foreach (TypeDeclaration child in typeDeclaration.RefResolvablePropertyDeclarations.Values.OrderBy(t => t.LocatedSchema.Location.AsDecodedString()))
         {
             this.SetTypeNamesAndNamespaces(child, rootNamespace, baseUriToNamespaceMap, rootTypeName, visitedTypeDeclarations, childIndex, false);
             ++childIndex;
