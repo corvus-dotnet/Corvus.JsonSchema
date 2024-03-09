@@ -49,6 +49,10 @@ public readonly partial struct Validation
         }
 
         /// <summary>
+        /// Gets the schema location from which this type was generated.
+        /// </summary>
+        public static string SchemaLocation { get; } = "https://json-schema.org/draft/2019-09/meta/validation#/properties/minContains";
+        /// <summary>
         /// Gets a Null instance.
         /// </summary>
         public static MinContainsEntity Null { get; } = new(JsonValueHelpers.NullElement);

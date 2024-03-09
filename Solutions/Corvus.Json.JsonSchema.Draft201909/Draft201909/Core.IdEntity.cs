@@ -49,6 +49,10 @@ public readonly partial struct Core
         }
 
         /// <summary>
+        /// Gets the schema location from which this type was generated.
+        /// </summary>
+        public static string SchemaLocation { get; } = "https://json-schema.org/draft/2019-09/meta/core#/properties/$id";
+        /// <summary>
         /// Gets a Null instance.
         /// </summary>
         public static IdEntity Null { get; } = new(JsonValueHelpers.NullElement);

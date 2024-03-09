@@ -1,5 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id":  "https://endjin.com/schemas/person-schema.json",
   "title": "JSON Schema for a Person entity coming back from a 3rd party API (e.g. a storage format in a database)",
   "type": "object",
   "$defs": {

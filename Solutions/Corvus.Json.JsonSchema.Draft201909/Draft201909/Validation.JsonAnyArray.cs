@@ -49,6 +49,10 @@ public readonly partial struct Validation
         }
 
         /// <summary>
+        /// Gets the schema location from which this type was generated.
+        /// </summary>
+        public static string SchemaLocation { get; } = "https://json-schema.org/draft/2019-09/meta/validation#/properties/enum";
+        /// <summary>
         /// Gets a Null instance.
         /// </summary>
         public static JsonAnyArray Null { get; } = new(JsonValueHelpers.NullElement);

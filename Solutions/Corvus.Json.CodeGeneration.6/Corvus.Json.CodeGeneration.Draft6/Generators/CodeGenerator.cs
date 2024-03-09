@@ -415,7 +415,7 @@ namespace ");
             #line hidden
             
             #line 119 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( Formatting.FormatLiteralOrNull(TypeDeclaration.LocatedSchema.Location.ToString(), true) ));
+            this.Write(this.ToStringHelper.ToStringWithCulture( Formatting.FormatLiteralOrNull(TypeDeclaration.RelativeSchemaLocation.ToString(), true) ));
             
             #line default
             #line hidden

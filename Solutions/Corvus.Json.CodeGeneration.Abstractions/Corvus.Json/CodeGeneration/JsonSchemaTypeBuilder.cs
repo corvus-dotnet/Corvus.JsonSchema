@@ -19,6 +19,7 @@ public partial class JsonSchemaTypeBuilder
     private readonly JsonSchemaRegistry schemaRegistry;
     private readonly IDocumentResolver documentResolver;
     private readonly IPropertyBuilder propertyBuilder;
+    private JsonReference baseLocation;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonSchemaTypeBuilder"/> class.
@@ -55,6 +56,12 @@ public partial class JsonSchemaTypeBuilder
     {
         // First we do a document "load" - this enables us to build the map of the schema, anchors etc.
         JsonReference scope = await this.schemaRegistry.RegisterDocumentSchema(documentPath, rebaseAsRoot).ConfigureAwait(false);
+
+        if (!this.baseLocation.HasUri)
+        {
+            // Move down to the base location.
+            this.baseLocation = scope.Apply(new("../"));
+        }
 
         // Then we do a second "contextual" pass over the loaded schema from the root location. This enables
         // us to build correct dynamic references.
@@ -134,6 +141,17 @@ public partial class JsonSchemaTypeBuilder
     public void AddDocument(string path, JsonDocument jsonDocument)
     {
         this.documentResolver.AddDocument(path, jsonDocument);
+    }
+
+    /// <summary>
+    /// Gets reference for the target location relative to the base location.
+    /// </summary>
+    /// <param name="target">The target location.</param>
+    /// <returns>The relative location.</returns>
+    /// <remarks>The target must be an absolute location.</remarks>
+    public JsonReference GetRelativeLocationFor(JsonReference target)
+    {
+        return this.baseLocation.MakeRelative(target);
     }
 
     /// <summary>

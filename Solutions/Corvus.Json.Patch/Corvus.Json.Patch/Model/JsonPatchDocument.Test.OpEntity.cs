@@ -41,6 +41,10 @@ public readonly partial struct JsonPatchDocument
             }
 
             /// <summary>
+            /// Gets the schema location from which this type was generated.
+            /// </summary>
+            public static string SchemaLocation { get; } = "D:/source/corvus-dotnet/Corvus.JsonSchema/Solutions/Corvus.Json.Patch/Corvus.Json.Patch/Model/json-patch.json#/$defs/Test/properties/op";
+            /// <summary>
             /// Gets a Null instance.
             /// </summary>
             public static OpEntity Null { get; } = new(JsonValueHelpers.NullElement);

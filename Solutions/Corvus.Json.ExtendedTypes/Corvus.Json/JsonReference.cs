@@ -2,9 +2,11 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System;
 using System.Buffers;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Text;
 
 namespace Corvus.Json;
 
@@ -18,6 +20,8 @@ public readonly struct JsonReference : IEquatable<JsonReference>
     /// Gets a reference to the root fragment.
     /// </summary>
     public static readonly JsonReference RootFragment = new("#");
+
+    private static readonly SearchValues<char> SegmentSeparatorChars = SearchValues.Create(@":\/?#");
 
     private readonly ReadOnlyMemory<char> reference;
 
@@ -427,6 +431,111 @@ public readonly struct JsonReference : IEquatable<JsonReference>
         {
             ArrayPool<char>.Shared.Return(pathBuffer);
         }
+    }
+
+    /// <summary>
+    /// Makes a relative reference from an absolute base reference and an absolute target reference.
+    /// </summary>
+    /// <param name="other">The target reference.</param>
+    /// <returns>A reference relative to the base reference.</returns>
+    /// <exception cref="InvalidOperationException">One of the references was not absolute.</exception>
+    public JsonReference MakeRelative(in JsonReference other)
+    {
+        if (!this.HasAbsoluteUri)
+        {
+            throw new InvalidOperationException("The base reference must be absolute to produce a relative URI");
+        }
+
+        if (!other.HasAbsoluteUri)
+        {
+            throw new InvalidOperationException("The target reference must be absolute to produce a relative URI");
+        }
+
+        JsonReferenceBuilder uriBuilder = this.AsBuilder();
+        JsonReferenceBuilder otherBuilder = this.AsBuilder();
+
+        if (uriBuilder.Scheme.Equals(otherBuilder.Scheme, StringComparison.Ordinal) &&
+            uriBuilder.Host.Equals(otherBuilder.Host, StringComparison.Ordinal) &&
+            uriBuilder.Port.Equals(otherBuilder.Port, StringComparison.Ordinal))
+        {
+            string relativeUriString = PathDifference(uriBuilder.Path, otherBuilder.Path, false);
+
+            // Relative Uri's cannot have a colon ':' in the first path segment (RFC 3986, Section 4.2)
+            if (CheckForColonInFirstPathSegment(relativeUriString) &&
+                !other.Uri.Equals(relativeUriString.AsSpan(), StringComparison.Ordinal))
+            {
+                relativeUriString = "./" + relativeUriString;
+            }
+
+            var builder = new JsonReferenceBuilder(
+                uriBuilder.Scheme,
+                uriBuilder.Authority,
+                relativeUriString.AsSpan(),
+                otherBuilder.Query,
+                otherBuilder.Fragment);
+
+            return builder.AsReference();
+        }
+
+        return other;
+    }
+
+    private static bool CheckForColonInFirstPathSegment(ReadOnlySpan<char> uriString)
+    {
+        // Check for anything that may terminate the first regular path segment
+        // or an illegal colon
+        int index = uriString.IndexOfAny(SegmentSeparatorChars);
+        return (uint)index < (uint)uriString.Length && uriString[index] == ':';
+    }
+
+    private static JsonReference PathDifference(ReadOnlySpan<char> path1, ReadOnlySpan<char> path2, bool compareCase)
+    {
+        int i;
+        int si = -1;
+
+        for (i = 0; (i < path1.Length) && (i < path2.Length); ++i)
+        {
+            if ((path1[i] != path2[i])
+                && (compareCase
+                    || (char.ToLowerInvariant(path1[i])
+                        != char.ToLowerInvariant(path2[i]))))
+            {
+                break;
+            }
+            else if (path1[i] == '/')
+            {
+                si = i;
+            }
+        }
+
+        if (i == 0)
+        {
+            return new(path2.ToString());
+        }
+
+        if ((i == path1.Length) && (i == path2.Length))
+        {
+            return default;
+        }
+
+        var relPath = new StringBuilder();
+
+        // Walk down several dirs
+        for (; i < path1.Length; ++i)
+        {
+            if (path1[i] == '/')
+            {
+                relPath.Append("../");
+            }
+        }
+
+        // Same path except that path1 ended with a file name and path2 didn't
+        if (relPath.Length == 0 && path2.Length - 1 == si)
+        {
+            return new("./"); // Truncate the file name
+        }
+
+        return new(relPath.Append(path2[(si + 1)..]).ToString());
     }
 
     private static int Merge(ReadOnlySpan<char> basePath, ReadOnlySpan<char> path, bool baseHasAuthority, in Memory<char> pathMemory)

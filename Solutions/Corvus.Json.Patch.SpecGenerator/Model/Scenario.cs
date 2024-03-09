@@ -47,6 +47,10 @@ public readonly partial struct Scenario
     }
 
     /// <summary>
+    /// Gets the schema location from which this type was generated.
+    /// </summary>
+    public static string SchemaLocation { get; } = "D:/source/corvus-dotnet/Corvus.JsonSchema/Solutions/Corvus.Json.Patch.SpecGenerator/Model/json-patch-test.json#/$defs/Scenario";
+    /// <summary>
     /// Gets a Null instance.
     /// </summary>
     public static Scenario Null { get; } = new(JsonValueHelpers.NullElement);

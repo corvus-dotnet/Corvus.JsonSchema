@@ -116,7 +116,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     /// <summary>
     /// Gets the schema location from which this type was generated.
     /// </summary>
-    public static string SchemaLocation { get; } = <#= Formatting.FormatLiteralOrNull(TypeDeclaration.LocatedSchema.Location.ToString(), true) #>;
+    public static string SchemaLocation { get; } = <#= Formatting.FormatLiteralOrNull(TypeDeclaration.RelativeSchemaLocation.ToString(), true) #>;
 
     /// <summary>
     /// Gets a Null instance.
