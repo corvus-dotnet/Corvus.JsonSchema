@@ -220,7 +220,7 @@ public partial class JsonSchemaTypeBuilder
         }
 
         int childIndex = 0;
-        foreach (TypeDeclaration child in typeDeclaration.RefResolvablePropertyDeclarations.Values)
+        foreach (TypeDeclaration child in typeDeclaration.RefResolvablePropertyDeclarations.Values.OrderBy(t => t.LocatedSchema.Location.ToString()))
         {
             this.SetTypeNamesAndNamespaces(child, rootNamespace, baseUriToNamespaceMap, rootTypeName, visitedTypeDeclarations, childIndex, false);
             ++childIndex;
@@ -254,24 +254,44 @@ public partial class JsonSchemaTypeBuilder
             }
             else if (reference.HasPath)
             {
-                int lastSlash = reference.Path.LastIndexOf('/');
-                if (lastSlash == reference.Path.Length - 1 && lastSlash > 0)
-                {
-                    lastSlash = reference.Path[..(lastSlash - 1)].LastIndexOf('/');
-                    typename = Formatting.ToPascalCaseWithReservedWords(reference.Path[(lastSlash + 1)..].ToString());
-                }
-                else if (lastSlash == reference.Path.Length - 1)
-                {
-                    typename = fallbackBaseName;
-                }
-                else
-                {
-                    typename = Formatting.ToPascalCaseWithReservedWords(reference.Path[(lastSlash + 1)..].ToString());
-                }
+                typename = GetNameFromPath(fallbackBaseName, reference);
             }
             else
             {
                 typename = fallbackBaseName;
+            }
+
+            if (!this.CollidesWithGeneratedName(typeDeclaration, typename) && this.MatchesExistingType(typename, rootNamespace))
+            {
+                if (reference.HasPath && reference.HasFragment)
+                {
+                    typename = $"{GetNameFromPath(fallbackBaseName, reference)}{typename}";
+                }
+
+                while (this.MatchesExistingType(typename, rootNamespace))
+                {
+                    int startOfSuffix = typename.Length;
+                    bool found = false;
+                    while (startOfSuffix > 0)
+                    {
+                        if (!char.IsDigit(typename[^startOfSuffix]))
+                        {
+                            break;
+                        }
+
+                        found = true;
+                        startOfSuffix--;
+                    }
+
+                    int suffix = 1;
+
+                    if (found)
+                    {
+                        suffix = int.Parse(typename[startOfSuffix..]);
+                    }
+
+                    typename = $"{typename[..startOfSuffix]}{suffix}";
+                }
             }
 
             // If we have a collision with a parent name or a named reserved by the code generator, we do not
@@ -364,6 +384,41 @@ public partial class JsonSchemaTypeBuilder
         }
 
         typeDeclaration.SetNamespace(rootNamespace);
+
+        static ReadOnlySpan<char> GetNameFromPath(string fallbackBaseName, JsonReferenceBuilder reference)
+        {
+            ReadOnlySpan<char> typename;
+            int lastSlash = reference.Path.LastIndexOf('/');
+            if (lastSlash == reference.Path.Length - 1 && lastSlash > 0)
+            {
+                lastSlash = reference.Path[..(lastSlash - 1)].LastIndexOf('/');
+                typename = Formatting.ToPascalCaseWithReservedWords(reference.Path[(lastSlash + 1)..].ToString());
+            }
+            else if (lastSlash == reference.Path.Length - 1)
+            {
+                typename = fallbackBaseName;
+            }
+            else
+            {
+                int lastDot = reference.Path.LastIndexOf('.');
+                if (lastDot > 0)
+                {
+                    typename = Formatting.ToPascalCaseWithReservedWords(reference.Path[(lastSlash + 1)..lastDot].ToString());
+                }
+                else
+                {
+                    typename = Formatting.ToPascalCaseWithReservedWords(reference.Path[(lastSlash + 1)..].ToString());
+                }
+            }
+
+            return typename;
+        }
+    }
+
+    private bool MatchesExistingType(ReadOnlySpan<char> typename, string rootNamespace)
+    {
+        string fqtn = $"{rootNamespace}.{typename.ToString()}";
+        return this.locatedTypeDeclarations.Any(t => t.Value.FullyQualifiedDotnetTypeName == fqtn);
     }
 
     private bool IsDirectlyInDefinitions(JsonReferenceBuilder reference)
