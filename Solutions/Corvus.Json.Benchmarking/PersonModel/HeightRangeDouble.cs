@@ -17,7 +17,7 @@ using Corvus.Json.Internal;
 
 namespace Corvus.Json.Benchmarking.Models;
 /// <summary>
-/// Generated from JSON Schema.
+/// A numeric representation of a person's height in meters.
 /// </summary>
 [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<HeightRangeDouble>))]
 public readonly partial struct HeightRangeDouble

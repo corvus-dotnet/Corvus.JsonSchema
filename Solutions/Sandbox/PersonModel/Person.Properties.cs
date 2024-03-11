@@ -16,7 +16,7 @@ using Corvus.Json.Internal;
 
 namespace Corvus.Json.Benchmarking.Models;
 /// <summary>
-/// Generated from JSON Schema.
+/// Represents a person.
 /// </summary>
 public readonly partial struct Person
 {
@@ -75,6 +75,11 @@ public readonly partial struct Person
     /// <summary>
     /// Gets DateOfBirth.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A person's date of birth.
+    /// </para>
+    /// </remarks>
     public Corvus.Json.JsonDate DateOfBirth
     {
         get
@@ -107,6 +112,11 @@ public readonly partial struct Person
     /// <summary>
     /// Gets Email.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A person's email address.
+    /// </para>
+    /// </remarks>
     public Corvus.Json.JsonEmail Email
     {
         get
@@ -139,6 +149,11 @@ public readonly partial struct Person
     /// <summary>
     /// Gets Height.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A person's height in meters.
+    /// </para>
+    /// </remarks>
     public Corvus.Json.Benchmarking.Models.HeightRangeDouble Height
     {
         get
@@ -171,6 +186,11 @@ public readonly partial struct Person
     /// <summary>
     /// Gets Name.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A person's name.
+    /// </para>
+    /// </remarks>
     public Corvus.Json.Benchmarking.Models.PersonName Name
     {
         get
@@ -203,6 +223,11 @@ public readonly partial struct Person
     /// <summary>
     /// Gets NetWorth.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A person's net worth, in the local currency.
+    /// </para>
+    /// </remarks>
     public Corvus.Json.JsonDecimal NetWorth
     {
         get

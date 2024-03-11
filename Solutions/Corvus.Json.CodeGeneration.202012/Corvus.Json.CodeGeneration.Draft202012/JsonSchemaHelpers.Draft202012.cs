@@ -475,6 +475,7 @@ public static class JsonSchemaHelpers
         if (schema.Title.IsNotNullOrUndefined())
         {
             documentation.AppendLine("/// <para>");
+            documentation.Append("/// ");
             documentation.AppendLine(Formatting.FormatLiteralOrNull(schema.Title.GetString(), false));
             documentation.AppendLine("/// </para>");
         }

@@ -10,29 +10,38 @@
       }
     },
     "Person": {
+      "title": "Represents a person.",
       "type": "object",
 
       "required": [ "name" ],
       "properties": {
-        "name": { "$ref": "#/$defs/PersonName" },
+        "name": {
+          "title": "A person's name.",
+          "$ref": "#/$defs/PersonName"
+        },
         "dateOfBirth": {
           "type": "string",
-          "format": "date"
+          "format": "date",
+          "title": "A person's date of birth."
         },
         "email": {
           "type": "string",
-          "format": "email"
+          "format": "email",
+          "title": "A person's email address."
         },
         "netWorth": {
           "type": "number",
-          "format": "decimal"
+          "format": "decimal",
+          "title": "A person's net worth, in the local currency."
         },
         "height": {
+          "title": "A person's height in meters.",
           "$ref": "#/%24defs/HeightRangeDouble"
         }
       }
     },
     "HeightRangeDouble": {
+      "title": "A numeric representation of a person's height in meters.",
       "type": "number",
       "minimum": 0,
       "maximum": 3.0
@@ -74,6 +83,7 @@
       }
     },
     "OtherNames": {
+      "description":  "A person's other (middle) names.\nThis may be either a single name represented as a string, or an array of strings, representing one or more other names.",
       "oneOf": [
         { "$ref": "#/$defs/PersonNameElement" },
         { "$ref": "#/$defs/PersonNameElementArray" }
@@ -81,12 +91,15 @@
     },
     "PersonNameElementArray": {
       "type": "array",
+      "title": "A component of a person's name.",
+      "description": "This is an array of strings, each of which is a component of a person's name.",
       "items": {
         "$ref": "#/$defs/PersonNameElement"
       }
     },
     "PersonNameElement": {
       "type": "string",
+      "title":  "A component of a person's name.",
       "minLength": 1,
       "maxLength": 256
     },

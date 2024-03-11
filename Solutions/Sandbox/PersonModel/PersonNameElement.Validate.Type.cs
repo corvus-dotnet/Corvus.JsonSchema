@@ -12,7 +12,7 @@ using Corvus.Json;
 
 namespace Corvus.Json.Benchmarking.Models;
 /// <summary>
-/// Generated from JSON Schema.
+/// A component of a person's name.
 /// </summary>
 public readonly partial struct PersonNameElement
 {

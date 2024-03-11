@@ -17,8 +17,13 @@ using Corvus.Json.Internal;
 
 namespace Corvus.Json.Benchmarking.Models;
 /// <summary>
-/// Generated from JSON Schema.
+/// A component of a person's name.
 /// </summary>
+/// <remarks>
+/// <para>
+/// This is an array of strings, each of which is a component of a person's name.
+/// </para>
+/// </remarks>
 [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<PersonNameElementArray>))]
 public readonly partial struct PersonNameElementArray
 {

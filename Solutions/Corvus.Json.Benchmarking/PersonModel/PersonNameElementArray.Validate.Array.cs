@@ -12,8 +12,13 @@ using Corvus.Json;
 
 namespace Corvus.Json.Benchmarking.Models;
 /// <summary>
-/// Generated from JSON Schema.
+/// A component of a person's name.
 /// </summary>
+/// <remarks>
+/// <para>
+/// This is an array of strings, each of which is a component of a person's name.
+/// </para>
+/// </remarks>
 public readonly partial struct PersonNameElementArray
 {
     private ValidationContext ValidateArray(JsonValueKind valueKind, in ValidationContext validationContext, ValidationLevel level)

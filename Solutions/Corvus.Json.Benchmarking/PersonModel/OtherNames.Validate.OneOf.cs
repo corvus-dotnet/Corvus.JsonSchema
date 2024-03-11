@@ -13,6 +13,14 @@ namespace Corvus.Json.Benchmarking.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
+/// <remarks>
+/// <para>
+/// A person's other (middle) names.
+/// </para>
+/// <para>
+/// This may be either a single name represented as a string, or an array of strings, representing one or more other names.
+/// </para>
+/// </remarks>
 public readonly partial struct OtherNames
 {
     private ValidationContext ValidateOneOf(in ValidationContext validationContext, ValidationLevel level)
