@@ -16,7 +16,7 @@ using Corvus.Json.Internal;
 
 namespace Corvus.Json.Benchmarking.Models;
 /// <summary>
-/// A type generated from a JsonSchema specification.
+/// Generated from JSON Schema.
 /// </summary>
 public readonly partial struct HeightRangeDouble : IJsonNumber<HeightRangeDouble>, IAdditionOperators<HeightRangeDouble, HeightRangeDouble, HeightRangeDouble>, ISubtractionOperators<HeightRangeDouble, HeightRangeDouble, HeightRangeDouble>, IMultiplyOperators<HeightRangeDouble, HeightRangeDouble, HeightRangeDouble>, IDivisionOperators<HeightRangeDouble, HeightRangeDouble, HeightRangeDouble>, IIncrementOperators<HeightRangeDouble>, IDecrementOperators<HeightRangeDouble>
 {

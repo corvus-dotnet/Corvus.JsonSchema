@@ -481,7 +481,8 @@ public static class JsonSchemaHelpers
 
         if (schema.Description.IsNotNullOrUndefined())
         {
-            string[]? lines = schema.Description.GetString()?.Split(Environment.NewLine);
+            // Unescaped new lines in the string value.
+            string[]? lines = schema.Description.GetString()?.Split("\n");
             if (lines is string[] l)
             {
                 foreach (string line in l)
@@ -498,12 +499,11 @@ public static class JsonSchemaHelpers
         {
             documentation.AppendLine("/// <para>");
             documentation.AppendLine("/// Examples:");
-            documentation.AppendLine("/// </para>");
             foreach (JsonAny example in schema.Examples.EnumerateArray())
             {
-                documentation.AppendLine("/// <para>");
+                documentation.AppendLine("/// <example>");
                 documentation.AppendLine("/// <code>");
-                string[] lines = example.ToString().Split(Environment.NewLine);
+                string[] lines = example.ToString().Split("\\n");
                 foreach (string line in lines)
                 {
                     documentation.Append("/// ");
@@ -511,8 +511,10 @@ public static class JsonSchemaHelpers
                 }
 
                 documentation.AppendLine("/// </code>");
-                documentation.AppendLine("/// </para>");
+                documentation.AppendLine("/// </example>");
             }
+
+            documentation.AppendLine("/// </para>");
         }
 
         if (documentation.Length > 0)

@@ -14,7 +14,7 @@ namespace Corvus.Json.JsonSchema.Draft7;
 public readonly partial struct Schema
 {
     /// <summary>
-    /// A type generated from a JsonSchema specification.
+    /// Generated from JSON Schema.
     /// </summary>
     public readonly partial struct JsonAnyArray
     {
@@ -30,7 +30,7 @@ public readonly partial struct Schema
             if (level > ValidationLevel.Basic)
             {
                 result = result.UsingStack();
-                result = result.PushSchemaLocation("http://json-schema.org/draft-07/schema#/properties/examples");
+                result = result.PushSchemaLocation("http://json-schema.org/draft-07/schema#/properties/enum");
             }
 
             JsonValueKind valueKind = this.ValueKind;

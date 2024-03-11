@@ -17,7 +17,7 @@ using Corvus.Json.Internal;
 
 namespace Corvus.Json.JsonSchema.Draft202012;
 /// <summary>
-/// A type generated from a JsonSchema specification.
+/// Meta-data vocabulary meta-schema
 /// </summary>
 [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<MetaData>))]
 public readonly partial struct MetaData

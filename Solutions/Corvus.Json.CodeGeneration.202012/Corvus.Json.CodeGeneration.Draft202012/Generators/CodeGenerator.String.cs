@@ -16,7 +16,7 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft202012 {
     public partial class CodeGeneratorString : CodeGeneratorStringBase {
         
         
-        #line 420 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+        #line 418 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
 
     public bool ShouldGenerate
     {
@@ -88,76 +88,81 @@ namespace ");
             #line hidden
             
             #line 32 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
-            this.Write("/// <summary>\r\n/// A type generated from a JsonSchema specification.\r\n/// </summa" +
-                    "ry>\r\npublic readonly partial struct ");
+            this.Write(this.ToStringHelper.ToStringWithCulture( FormattedTypeDocumentation ));
             
             #line default
             #line hidden
             
-            #line 35 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 32 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            this.Write("\r\npublic readonly partial struct ");
+            
+            #line default
+            #line hidden
+            
+            #line 33 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 35 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 33 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
             this.Write(" : IJsonString<");
             
             #line default
             #line hidden
             
-            #line 35 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 33 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 35 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 33 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
             this.Write(">\r\n{\r\n    /// <summary>\r\n    /// Initializes a new instance of the <see cref=\"");
             
             #line default
             #line hidden
             
-            #line 38 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 36 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 38 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 36 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
             this.Write("\"/> struct.\r\n    /// </summary>\r\n    /// <param name=\"value\">The value from which" +
                     " to construct the instance.</param>\r\n    public ");
             
             #line default
             #line hidden
             
-            #line 41 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 39 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 41 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 39 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
             this.Write("(string value)\r\n    {\r\n        this.jsonElementBacking = default;\r\n        this.b" +
                     "acking = Backing.String;\r\n\r\n        this.stringBacking = value;\r\n");
             
             #line default
             #line hidden
             
-            #line 47 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 45 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
   if (IsImplicitBoolean && !(IsImplicitNumber || IsNotImplicitType))
     { 
             
             #line default
             #line hidden
             
-            #line 49 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 47 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
             this.Write("        this.boolBacking = default;\r\n");
             
             #line default
             #line hidden
             
-            #line 50 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 48 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
   }
     if(IsImplicitNumber || IsNotImplicitType)
     { 
@@ -165,13 +170,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 53 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 51 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
             this.Write("        this.numberBacking = default;\r\n");
             
             #line default
             #line hidden
             
-            #line 54 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 52 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
   }
     if(IsImplicitArray || IsNotImplicitType)
     { 
@@ -179,13 +184,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 57 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 55 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
             this.Write("        this.arrayBacking = ImmutableList<JsonAny>.Empty;\r\n");
             
             #line default
             #line hidden
             
-            #line 58 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 56 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
   }
     if(IsImplicitObject || IsNotImplicitType)
     { 
@@ -193,19 +198,19 @@ namespace ");
             #line default
             #line hidden
             
-            #line 61 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 59 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
             this.Write("        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;\r\n");
             
             #line default
             #line hidden
             
-            #line 62 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 60 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 63 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 61 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
             this.Write("    }\r\n\r\n    /// <summary>\r\n    /// Conversion from string.\r\n    /// </summary>\r\n" +
                     "    /// <param name=\"value\">The value from which to convert.</param>\r\n    public" +
                     " static implicit operator ");
@@ -213,13 +218,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 69 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 67 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 69 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 67 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
             this.Write("(string value)\r\n    {\r\n        return new(value);\r\n    }\r\n\r\n    /// <summary>\r\n  " +
                     "  /// Conversion from JsonString.\r\n    /// </summary>\r\n    /// <param name=\"valu" +
                     "e\">The value from which to convert.</param>\r\n    public static implicit operator" +
@@ -228,13 +233,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 78 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 76 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 78 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 76 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
             this.Write(@"(JsonString value)
     {
         if (value.HasDotnetBacking && value.ValueKind == JsonValueKind.String)
@@ -255,13 +260,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 93 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 91 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 93 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 91 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
             this.Write(@" value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
@@ -288,13 +293,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 114 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 112 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 114 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 112 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
             this.Write(@".
     /// </summary>
     /// <typeparam name=""T1"">The type of the first value.</typeparam>
@@ -308,13 +313,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 122 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 120 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 122 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 120 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
             this.Write(@" Concatenate<T1, T2>(Span<byte> buffer, in T1 firstValue, in T2 secondValue)
         where T1 : struct, IJsonValue<T1>
         where T2 : struct, IJsonValue<T2>
@@ -329,13 +334,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 131 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 129 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 131 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 129 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
             this.Write(@".
     /// </summary>
     /// <typeparam name=""T1"">The type of the first value.</typeparam>
@@ -351,13 +356,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 141 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 139 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 141 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 139 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
             this.Write(@" Concatenate<T1, T2, T3>(Span<byte> buffer, in T1 firstValue, in T2 secondValue, in T3 thirdValue)
         where T1 : struct, IJsonValue<T1>
         where T2 : struct, IJsonValue<T2>
@@ -373,13 +378,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 151 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 149 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 151 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 149 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
             this.Write(@".
     /// </summary>
     /// <typeparam name=""T1"">The type of the first value.</typeparam>
@@ -397,13 +402,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 163 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 161 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 163 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 161 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
             this.Write(@" Concatenate<T1, T2, T3, T4>(Span<byte> buffer, in T1 firstValue, in T2 secondValue, in T3 thirdValue, in T4 fourthValue)
         where T1 : struct, IJsonValue<T1>
         where T2 : struct, IJsonValue<T2>
@@ -420,13 +425,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 174 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 172 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 174 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 172 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
             this.Write(@".
     /// </summary>
     /// <typeparam name=""T1"">The type of the first value.</typeparam>
@@ -446,13 +451,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 188 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 186 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 188 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 186 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
             this.Write(@" Concatenate<T1, T2, T3, T4, T5>(Span<byte> buffer, in T1 firstValue, in T2 secondValue, in T3 thirdValue, in T4 fourthValue, in T5 fifthValue)
         where T1 : struct, IJsonValue<T1>
         where T2 : struct, IJsonValue<T2>
@@ -470,13 +475,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 200 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 198 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 200 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 198 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
             this.Write(@".
     /// </summary>
     /// <typeparam name=""T1"">The type of the first value.</typeparam>
@@ -498,13 +503,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 216 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 214 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 216 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 214 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
             this.Write(@" Concatenate<T1, T2, T3, T4, T5, T6>(Span<byte> buffer, in T1 firstValue, in T2 secondValue, in T3 thirdValue, in T4 fourthValue, in T5 fifthValue, in T6 sixthValue)
         where T1 : struct, IJsonValue<T1>
         where T2 : struct, IJsonValue<T2>
@@ -523,13 +528,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 229 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 227 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 229 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 227 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
             this.Write(@".
     /// </summary>
     /// <typeparam name=""T1"">The type of the first value.</typeparam>
@@ -553,13 +558,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 247 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 245 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 247 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 245 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
             this.Write(@" Concatenate<T1, T2, T3, T4, T5, T6, T7>(Span<byte> buffer, in T1 firstValue, in T2 secondValue, in T3 thirdValue, in T4 fourthValue, in T5 fifthValue, in T6 sixthValue, in T7 seventhValue)
         where T1 : struct, IJsonValue<T1>
         where T2 : struct, IJsonValue<T2>
@@ -579,13 +584,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 261 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 259 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 261 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 259 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
             this.Write(@".
     /// </summary>
     /// <typeparam name=""T1"">The type of the first value.</typeparam>
@@ -611,13 +616,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 281 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 279 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 281 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 279 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
             this.Write(" Concatenate<T1, T2, T3, T4, T5, T6, T7, T8>(Span<byte> buffer, in T1 firstValue," +
                     " in T2 secondValue, in T3 thirdValue, in T4 fourthValue, in T5 fifthValue, in T6" +
                     " sixthValue, in T7 seventhValue, in T8 eighthValue)\r\n        where T1 : struct, " +
@@ -680,7 +685,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 419 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 417 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
  EndNesting(); 
             
             #line default

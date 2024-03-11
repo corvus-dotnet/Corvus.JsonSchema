@@ -17,7 +17,7 @@ using Corvus.Json.Internal;
 
 namespace Corvus.Json.JsonSchema.Draft202012;
 /// <summary>
-/// A type generated from a JsonSchema specification.
+/// Format vocabulary meta-schema for annotation results
 /// </summary>
 [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<FormatAnnotation>))]
 public readonly partial struct FormatAnnotation

@@ -16,7 +16,7 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft202012 {
     public partial class CodeGeneratorValidateRef : CodeGeneratorValidateRefBase {
         
         
-        #line 76 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Ref.tt"
+        #line 74 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Ref.tt"
 
     public bool ShouldGenerate
     {
@@ -82,19 +82,24 @@ namespace ");
             #line hidden
             
             #line 26 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Ref.tt"
-            this.Write("/// <summary>\r\n/// A type generated from a JsonSchema specification.\r\n/// </summa" +
-                    "ry>\r\npublic readonly partial struct ");
+            this.Write(this.ToStringHelper.ToStringWithCulture( FormattedTypeDocumentation ));
             
             #line default
             #line hidden
             
-            #line 29 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Ref.tt"
+            #line 26 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Ref.tt"
+            this.Write("\r\npublic readonly partial struct ");
+            
+            #line default
+            #line hidden
+            
+            #line 27 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Ref.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 29 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Ref.tt"
+            #line 27 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Ref.tt"
             this.Write(@"
 {
     private ValidationContext ValidateRef(in ValidationContext validationContext, ValidationLevel level)
@@ -111,13 +116,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 40 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Ref.tt"
+            #line 38 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Ref.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( RefDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 40 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Ref.tt"
+            #line 38 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Ref.tt"
             this.Write(@">().Validate(validationContext.CreateChildContext(), level);
 
         if (!refResult.IsValid)
@@ -158,7 +163,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 75 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Ref.tt"
+            #line 73 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Ref.tt"
  EndNesting(); 
             
             #line default

@@ -17,7 +17,7 @@ using Corvus.Json.Internal;
 
 namespace Corvus.Json.JsonSchema.Draft202012;
 /// <summary>
-/// A type generated from a JsonSchema specification.
+/// Unevaluated applicator vocabulary meta-schema
 /// </summary>
 [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<Unevaluated>))]
 public readonly partial struct Unevaluated

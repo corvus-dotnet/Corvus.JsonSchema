@@ -18,8 +18,13 @@ namespace Corvus.Json.Patch.Model;
 public readonly partial struct JsonPatchDocument
 {
     /// <summary>
-    /// A type generated from a JsonSchema specification.
+    /// Generated from JSON Schema.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Copy operation. "from" is a JSON Pointer.
+    /// </para>
+    /// </remarks>
     public readonly partial struct Copy
     {
         private ValidationContext ValidateObject(JsonValueKind valueKind, in ValidationContext validationContext, ValidationLevel level)

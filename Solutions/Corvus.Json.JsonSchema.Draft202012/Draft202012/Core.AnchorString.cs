@@ -19,7 +19,7 @@ namespace Corvus.Json.JsonSchema.Draft202012;
 public readonly partial struct Core
 {
     /// <summary>
-    /// A type generated from a JsonSchema specification.
+    /// Generated from JSON Schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<AnchorString>))]
     public readonly partial struct AnchorString

@@ -16,7 +16,7 @@ using Corvus.Json.Internal;
 
 namespace Corvus.Json.JsonSchema.Draft6;
 /// <summary>
-/// A type generated from a JsonSchema specification.
+/// Core schema meta-schema
 /// </summary>
 public readonly partial struct Schema
 {
@@ -372,6 +372,11 @@ public readonly partial struct Schema
     /// <summary>
     /// Gets AdditionalItems.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Core schema meta-schema
+    /// </para>
+    /// </remarks>
     public Corvus.Json.JsonSchema.Draft6.Schema AdditionalItems
     {
         get
@@ -404,6 +409,11 @@ public readonly partial struct Schema
     /// <summary>
     /// Gets AdditionalProperties.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Core schema meta-schema
+    /// </para>
+    /// </remarks>
     public Corvus.Json.JsonSchema.Draft6.Schema AdditionalProperties
     {
         get
@@ -532,6 +542,11 @@ public readonly partial struct Schema
     /// <summary>
     /// Gets Contains.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Core schema meta-schema
+    /// </para>
+    /// </remarks>
     public Corvus.Json.JsonSchema.Draft6.Schema Contains
     {
         get
@@ -1204,6 +1219,11 @@ public readonly partial struct Schema
     /// <summary>
     /// Gets Not.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Core schema meta-schema
+    /// </para>
+    /// </remarks>
     public Corvus.Json.JsonSchema.Draft6.Schema Not
     {
         get
@@ -1364,6 +1384,11 @@ public readonly partial struct Schema
     /// <summary>
     /// Gets PropertyNames.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Core schema meta-schema
+    /// </para>
+    /// </remarks>
     public Corvus.Json.JsonSchema.Draft6.Schema PropertyNames
     {
         get

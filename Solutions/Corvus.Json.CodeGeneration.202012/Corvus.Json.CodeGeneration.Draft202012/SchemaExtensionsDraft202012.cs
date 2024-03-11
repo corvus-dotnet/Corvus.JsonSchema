@@ -52,7 +52,8 @@ public static class SchemaExtensionsDraft202012
 
             if (schema.Description.IsNotNullOrUndefined())
             {
-                string[]? lines = schema.Description.GetString()?.Split(Environment.NewLine);
+                // Unescaped new lines in the string value.
+                string[]? lines = schema.Description.GetString()?.Split("\n");
                 if (lines is string[] l)
                 {
                     foreach (string line in l)
@@ -69,12 +70,13 @@ public static class SchemaExtensionsDraft202012
             {
                 documentation.AppendLine("/// <para>");
                 documentation.AppendLine("/// Examples:");
-                documentation.AppendLine("/// </para>");
                 foreach (JsonAny example in schema.Examples.EnumerateArray())
                 {
-                    documentation.AppendLine("/// <para>");
+                    documentation.AppendLine("/// <example>");
                     documentation.AppendLine("/// <code>");
-                    string[] lines = example.ToString().Split(Environment.NewLine);
+
+                    // Escaped new lines in the formatted JSON
+                    string[] lines = example.ToString().Split("\\n");
                     foreach (string line in lines)
                     {
                         documentation.Append("/// ");
@@ -82,8 +84,10 @@ public static class SchemaExtensionsDraft202012
                     }
 
                     documentation.AppendLine("/// </code>");
-                    documentation.AppendLine("/// </para>");
+                    documentation.AppendLine("/// </example>");
                 }
+
+                documentation.AppendLine("/// </para>");
             }
 
             documentation.AppendLine("/// </remarks>");

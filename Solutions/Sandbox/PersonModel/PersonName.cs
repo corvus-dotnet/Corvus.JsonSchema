@@ -17,8 +17,34 @@ using Corvus.Json.Internal;
 
 namespace Corvus.Json.Benchmarking.Models;
 /// <summary>
-/// A type generated from a JsonSchema specification.
+/// A name of a person.
 /// </summary>
+/// <remarks>
+/// <para>
+/// This supports the full range of names, including those with multiple parts, prefixes, and suffixes.
+/// </para>
+/// <para>
+/// It is not restricted to a single part, such as a given name or family name.
+/// </para>
+/// <para>
+/// Examples:
+/// <example>
+/// <code>
+/// {"familyName":"Jones","givenName":"Terry"}
+/// </code>
+/// </example>
+/// <example>
+/// <code>
+/// {"familyName":"Jones","givenName":"Terry","otherNames":["Lee","Gary"]}
+/// </code>
+/// </example>
+/// <example>
+/// <code>
+/// {"familyName":"Jones","givenName":"Terry","otherNames":"Lee"}
+/// </code>
+/// </example>
+/// </para>
+/// </remarks>
 [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<PersonName>))]
 public readonly partial struct PersonName
 {

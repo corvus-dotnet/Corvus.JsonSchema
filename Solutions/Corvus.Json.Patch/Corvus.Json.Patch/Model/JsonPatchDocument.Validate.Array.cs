@@ -12,7 +12,7 @@ using Corvus.Json;
 
 namespace Corvus.Json.Patch.Model;
 /// <summary>
-/// A type generated from a JsonSchema specification.
+/// Generated from JSON Schema.
 /// </summary>
 public readonly partial struct JsonPatchDocument
 {

@@ -16,7 +16,7 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft6 {
     public partial class CodeGeneratorValidateMediaTypeAndEncoding : CodeGeneratorValidateMediaTypeAndEncodingBase {
         
         
-        #line 54 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.MediaTypeAndEncoding.tt"
+        #line 52 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.MediaTypeAndEncoding.tt"
 
     public bool ShouldGenerate
     {
@@ -83,19 +83,24 @@ namespace ");
             #line hidden
             
             #line 27 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.MediaTypeAndEncoding.tt"
-            this.Write("/// <summary>\r\n/// A type generated from a JsonSchema specification.\r\n/// </summa" +
-                    "ry>\r\npublic readonly partial struct ");
+            this.Write(this.ToStringHelper.ToStringWithCulture( FormattedTypeDocumentation ));
             
             #line default
             #line hidden
             
-            #line 30 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.MediaTypeAndEncoding.tt"
+            #line 27 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.MediaTypeAndEncoding.tt"
+            this.Write("\r\npublic readonly partial struct ");
+            
+            #line default
+            #line hidden
+            
+            #line 28 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.MediaTypeAndEncoding.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 30 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.MediaTypeAndEncoding.tt"
+            #line 28 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.MediaTypeAndEncoding.tt"
             this.Write("\r\n{\r\n    private ValidationContext ValidateMediaTypeAndEncoding(JsonValueKind val" +
                     "ueKind, ValidationContext result, ValidationLevel level)\r\n    {\r\n        if (val" +
                     "ueKind != JsonValueKind.String)\r\n        {\r\n            return result;\r\n        " +
@@ -104,20 +109,20 @@ namespace ");
             #line default
             #line hidden
             
-            #line 39 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.MediaTypeAndEncoding.tt"
+            #line 37 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.MediaTypeAndEncoding.tt"
   if (IsJsonBase64Content)
     { 
             
             #line default
             #line hidden
             
-            #line 41 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.MediaTypeAndEncoding.tt"
+            #line 39 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.MediaTypeAndEncoding.tt"
             this.Write("        return this.As<JsonBase64ContentPre201909>().Validate(result, level);\r\n");
             
             #line default
             #line hidden
             
-            #line 42 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.MediaTypeAndEncoding.tt"
+            #line 40 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.MediaTypeAndEncoding.tt"
   }
     if (IsJsonBase64String)
     { 
@@ -125,13 +130,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 45 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.MediaTypeAndEncoding.tt"
+            #line 43 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.MediaTypeAndEncoding.tt"
             this.Write("        return this.As<JsonBase64StringPre201909>().Validate(result, level);\r\n");
             
             #line default
             #line hidden
             
-            #line 46 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.MediaTypeAndEncoding.tt"
+            #line 44 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.MediaTypeAndEncoding.tt"
   }
     if (IsJsonContent)
     { 
@@ -139,25 +144,25 @@ namespace ");
             #line default
             #line hidden
             
-            #line 49 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.MediaTypeAndEncoding.tt"
+            #line 47 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.MediaTypeAndEncoding.tt"
             this.Write("        return this.As<JsonContentPre201909>().Validate(result, level);\r\n");
             
             #line default
             #line hidden
             
-            #line 50 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.MediaTypeAndEncoding.tt"
+            #line 48 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.MediaTypeAndEncoding.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 51 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.MediaTypeAndEncoding.tt"
+            #line 49 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.MediaTypeAndEncoding.tt"
             this.Write("    }\r\n}\r\n");
             
             #line default
             #line hidden
             
-            #line 53 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.MediaTypeAndEncoding.tt"
+            #line 51 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.MediaTypeAndEncoding.tt"
  EndNesting(); 
             
             #line default

@@ -20,7 +20,7 @@ public readonly partial struct Schema
     public readonly partial struct NonNegativeIntegerDefault0
     {
         /// <summary>
-        /// A type generated from a JsonSchema specification.
+        /// Generated from JSON Schema.
         /// </summary>
         public readonly partial struct AllOf1Entity : IJsonNumber<AllOf1Entity>, IAdditionOperators<AllOf1Entity, AllOf1Entity, AllOf1Entity>, ISubtractionOperators<AllOf1Entity, AllOf1Entity, AllOf1Entity>, IMultiplyOperators<AllOf1Entity, AllOf1Entity, AllOf1Entity>, IDivisionOperators<AllOf1Entity, AllOf1Entity, AllOf1Entity>, IIncrementOperators<AllOf1Entity>, IDecrementOperators<AllOf1Entity>
         {

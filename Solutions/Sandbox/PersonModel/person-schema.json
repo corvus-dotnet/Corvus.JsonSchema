@@ -39,7 +39,24 @@
     },
     "PersonName": {
       "type": "object",
-      "description": "A name of a person.",
+      "title": "A name of a person.",
+      "description": "This supports the full range of names, including those with multiple parts, prefixes, and suffixes.\nIt is not restricted to a single part, such as a given name or family name.",
+      "examples": [
+        {
+          "familyName": "Jones",
+          "givenName": "Terry"
+        },
+        {
+          "familyName": "Jones",
+          "givenName": "Terry",
+          "otherNames": [ "Lee", "Gary" ]
+        },
+        {
+          "familyName": "Jones",
+          "givenName": "Terry",
+          "otherNames": "Lee"
+        }
+      ],
       "required": [ "familyName" ],
       "properties": {
         "givenName": {

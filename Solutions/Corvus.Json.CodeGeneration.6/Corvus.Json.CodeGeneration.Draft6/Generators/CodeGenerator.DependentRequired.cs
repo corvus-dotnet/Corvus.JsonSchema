@@ -16,7 +16,7 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft6 {
     public partial class CodeGeneratorDependentRequired : CodeGeneratorDependentRequiredBase {
         
         
-        #line 87 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
+        #line 85 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
 
     public bool ShouldGenerate
     {
@@ -87,19 +87,24 @@ namespace ");
             #line hidden
             
             #line 31 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
-            this.Write("/// <summary>\r\n/// A type generated from a JsonSchema specification.\r\n/// </summa" +
-                    "ry>\r\npublic readonly partial struct ");
+            this.Write(this.ToStringHelper.ToStringWithCulture( FormattedTypeDocumentation ));
             
             #line default
             #line hidden
             
-            #line 34 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
+            #line 31 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
+            this.Write("\r\npublic readonly partial struct ");
+            
+            #line default
+            #line hidden
+            
+            #line 32 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 34 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
+            #line 32 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
             this.Write(@"
 {
     private static readonly ImmutableList<__CorvusDependency> __CorvusDependentRequired = BuildDependentRequired();
@@ -114,45 +119,45 @@ namespace ");
             #line default
             #line hidden
             
-            #line 43 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
+            #line 41 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
   foreach (var dependentRequired in DependentRequired)
     { 
             
             #line default
             #line hidden
             
-            #line 45 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
+            #line 43 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
             this.Write("        builder.Add(\r\n            new __CorvusDependency(\r\n                new by" +
                     "te[] { ");
             
             #line default
             #line hidden
             
-            #line 47 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
+            #line 45 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( GetEncodedBytes(dependentRequired.Name) ));
             
             #line default
             #line hidden
             
-            #line 47 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
+            #line 45 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
             this.Write(" },\r\n                ");
             
             #line default
             #line hidden
             
-            #line 48 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
+            #line 46 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( Formatting.FormatLiteralOrNull(dependentRequired.Name, true) ));
             
             #line default
             #line hidden
             
-            #line 48 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
+            #line 46 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
             this.Write(",\r\n                ImmutableArray.Create<ReadOnlyMemory<byte>>(");
             
             #line default
             #line hidden
             
-            #line 49 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
+            #line 47 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
 
         bool isFirst = true;
         foreach (var dependentRequiredValue in dependentRequired.RequiredNames)
@@ -163,13 +168,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 55 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
+            #line 53 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
             this.Write(",\r\n");
             
             #line default
             #line hidden
             
-            #line 56 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
+            #line 54 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
           }
             else
             {
@@ -179,37 +184,37 @@ namespace ");
             #line default
             #line hidden
             
-            #line 61 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
+            #line 59 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
             this.Write("                   new byte[] { ");
             
             #line default
             #line hidden
             
-            #line 61 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
+            #line 59 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( GetEncodedBytes(dependentRequiredValue) ));
             
             #line default
             #line hidden
             
-            #line 61 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
+            #line 59 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
             this.Write(" }\r\n");
             
             #line default
             #line hidden
             
-            #line 62 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
+            #line 60 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
       } 
             
             #line default
             #line hidden
             
-            #line 63 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
+            #line 61 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
             this.Write("),\r\n                ImmutableArray.Create<string>(");
             
             #line default
             #line hidden
             
-            #line 64 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
+            #line 62 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
 
         isFirst = true;
         foreach (var dependentRequiredValue in dependentRequired.RequiredNames)
@@ -220,13 +225,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 70 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
+            #line 68 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
             this.Write(",\r\n");
             
             #line default
             #line hidden
             
-            #line 71 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
+            #line 69 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
           }
             else
             {
@@ -236,31 +241,31 @@ namespace ");
             #line default
             #line hidden
             
-            #line 76 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
+            #line 74 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
             this.Write("                   ");
             
             #line default
             #line hidden
             
-            #line 76 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
+            #line 74 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( Formatting.FormatLiteralOrNull(dependentRequired.Name, true) ));
             
             #line default
             #line hidden
             
-            #line 76 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
+            #line 74 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
       } 
             
             #line default
             #line hidden
             
-            #line 77 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
+            #line 75 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
             this.Write(")));\r\n    ");
             
             #line default
             #line hidden
             
-            #line 78 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
+            #line 76 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
 
     }
     
@@ -268,7 +273,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 81 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
+            #line 79 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
             this.Write("        return builder.ToImmutable();\r\n    }\r\n\r\n    private readonly record struc" +
                     "t __CorvusDependency(ReadOnlyMemory<byte> Utf8Name, string Name, ImmutableArray<" +
                     "ReadOnlyMemory<byte>> Utf8Dependency, ImmutableArray<string> Dependency);\r\n}\r\n");
@@ -276,7 +281,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 86 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
+            #line 84 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
  EndNesting(); 
             
             #line default

@@ -12,7 +12,7 @@ using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.Draft202012;
 /// <summary>
-/// A type generated from a JsonSchema specification.
+/// Validation vocabulary meta-schema
 /// </summary>
 public readonly partial struct Validation
 {

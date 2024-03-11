@@ -21,7 +21,7 @@ public readonly partial struct Applicator
     public readonly partial struct PatternPropertiesEntity
     {
         /// <summary>
-        /// A type generated from a JsonSchema specification.
+        /// Generated from JSON Schema.
         /// </summary>
         [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<PropertyNamesEntity>))]
         public readonly partial struct PropertyNamesEntity

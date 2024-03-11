@@ -24,9 +24,7 @@ using Corvus.Json;
 namespace <#= Namespace #>;
 
 <# BeginNesting(); #>
-/// <summary>
-/// A type generated from a JsonSchema specification.
-/// </summary>
+<#= FormattedTypeDocumentation #>
 public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 {
     private ValidationContext ValidateMediaTypeAndEncoding(JsonValueKind valueKind, ValidationContext result, ValidationLevel level)

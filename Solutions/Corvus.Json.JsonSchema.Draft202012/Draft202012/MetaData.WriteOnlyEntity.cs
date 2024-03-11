@@ -19,7 +19,7 @@ namespace Corvus.Json.JsonSchema.Draft202012;
 public readonly partial struct MetaData
 {
     /// <summary>
-    /// A type generated from a JsonSchema specification.
+    /// Generated from JSON Schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<WriteOnlyEntity>))]
     public readonly partial struct WriteOnlyEntity

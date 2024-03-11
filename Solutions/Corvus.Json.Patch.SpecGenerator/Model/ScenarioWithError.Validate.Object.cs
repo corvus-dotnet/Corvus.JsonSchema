@@ -16,7 +16,7 @@ using Corvus.Json.Internal;
 
 namespace Corvus.Json.Patch.SpecGenerator;
 /// <summary>
-/// A type generated from a JsonSchema specification.
+/// Generated from JSON Schema.
 /// </summary>
 public readonly partial struct ScenarioWithError
 {

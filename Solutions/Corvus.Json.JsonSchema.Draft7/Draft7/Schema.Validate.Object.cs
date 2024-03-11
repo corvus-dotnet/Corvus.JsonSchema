@@ -16,7 +16,7 @@ using Corvus.Json.Internal;
 
 namespace Corvus.Json.JsonSchema.Draft7;
 /// <summary>
-/// A type generated from a JsonSchema specification.
+/// Core schema meta-schema
 /// </summary>
 public readonly partial struct Schema
 {

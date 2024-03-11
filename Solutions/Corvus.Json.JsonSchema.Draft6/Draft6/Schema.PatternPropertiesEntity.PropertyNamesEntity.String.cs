@@ -21,7 +21,7 @@ public readonly partial struct Schema
     public readonly partial struct PatternPropertiesEntity
     {
         /// <summary>
-        /// A type generated from a JsonSchema specification.
+        /// Generated from JSON Schema.
         /// </summary>
         public readonly partial struct PropertyNamesEntity : IJsonString<PropertyNamesEntity>
         {

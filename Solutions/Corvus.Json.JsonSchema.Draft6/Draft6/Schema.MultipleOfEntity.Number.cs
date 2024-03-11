@@ -18,7 +18,7 @@ namespace Corvus.Json.JsonSchema.Draft6;
 public readonly partial struct Schema
 {
     /// <summary>
-    /// A type generated from a JsonSchema specification.
+    /// Generated from JSON Schema.
     /// </summary>
     public readonly partial struct MultipleOfEntity : IJsonNumber<MultipleOfEntity>, IAdditionOperators<MultipleOfEntity, MultipleOfEntity, MultipleOfEntity>, ISubtractionOperators<MultipleOfEntity, MultipleOfEntity, MultipleOfEntity>, IMultiplyOperators<MultipleOfEntity, MultipleOfEntity, MultipleOfEntity>, IDivisionOperators<MultipleOfEntity, MultipleOfEntity, MultipleOfEntity>, IIncrementOperators<MultipleOfEntity>, IDecrementOperators<MultipleOfEntity>
     {

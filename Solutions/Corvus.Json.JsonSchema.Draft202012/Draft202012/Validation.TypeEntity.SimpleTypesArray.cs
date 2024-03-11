@@ -21,7 +21,7 @@ public readonly partial struct Validation
     public readonly partial struct TypeEntity
     {
         /// <summary>
-        /// A type generated from a JsonSchema specification.
+        /// Generated from JSON Schema.
         /// </summary>
         [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<SimpleTypesArray>))]
         public readonly partial struct SimpleTypesArray

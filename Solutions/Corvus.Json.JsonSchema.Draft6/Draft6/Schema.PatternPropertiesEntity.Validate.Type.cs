@@ -14,7 +14,7 @@ namespace Corvus.Json.JsonSchema.Draft6;
 public readonly partial struct Schema
 {
     /// <summary>
-    /// A type generated from a JsonSchema specification.
+    /// Generated from JSON Schema.
     /// </summary>
     public readonly partial struct PatternPropertiesEntity
     {
