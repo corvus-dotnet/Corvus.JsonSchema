@@ -96,9 +96,12 @@ public class ValidateLargeDocument
     public void ValidateLargeArrayJsonEverything()
     {
         JsonEverything.EvaluationResults result = this.schema!.Evaluate(this.node, Options);
-        if (!result.IsValid)
+        if (!result.IsValid && result.Errors is IReadOnlyDictionary<string, string> errors)
         {
-            result.Errors.ForEach(result => Console.WriteLine(result.Value));
+            foreach (KeyValuePair<string, string> r in errors)
+            {
+                Console.WriteLine(r.Value);
+            }
         }
     }
 }

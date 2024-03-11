@@ -14,12 +14,12 @@ public readonly struct ValidationContext
     /// <summary>
     /// Gets a valid context.
     /// </summary>
-    public static readonly ValidationContext ValidContext = new(true, ImmutableArray<ulong>.Empty, ImmutableArray<ulong>.Empty, ImmutableArray<ulong>.Empty, ImmutableArray<ulong>.Empty, ImmutableStack<(JsonReference ValidationLocation, JsonReference SchemaLocation, JsonReference DocumentLocation)>.Empty, ImmutableArray<ValidationResult>.Empty, UsingFeatures.None);
+    public static readonly ValidationContext ValidContext = new(true, [], [], [], [], [], [], UsingFeatures.None);
 
     /// <summary>
     /// Gets an invalid context.
     /// </summary>
-    public static readonly ValidationContext InvalidContext = new(false, ImmutableArray<ulong>.Empty, ImmutableArray<ulong>.Empty, ImmutableArray<ulong>.Empty, ImmutableArray<ulong>.Empty, ImmutableStack<(JsonReference ValidationLocation, JsonReference SchemaLocation, JsonReference DocumentLocation)>.Empty, ImmutableArray<ValidationResult>.Empty, UsingFeatures.None);
+    public static readonly ValidationContext InvalidContext = new(false, [], [], [], [], [], [], UsingFeatures.None);
 
     private static readonly ImmutableStack<(JsonReference ValidationLocation, JsonReference SchemaLocation, JsonReference DocumentLocation)> RootLocationStack = ImmutableStack.Create((JsonReference.RootFragment, JsonReference.RootFragment, JsonReference.RootFragment));
 
@@ -81,7 +81,7 @@ public readonly struct ValidationContext
     {
         bool usingResults = (this.usingFeatures & UsingFeatures.Results) != 0;
 
-        return new ValidationContext(this.IsValid, this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack, usingResults ? this.Results : ImmutableArray<ValidationResult>.Empty, this.usingFeatures | UsingFeatures.Results);
+        return new ValidationContext(this.IsValid, this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack, usingResults ? this.Results : [], this.usingFeatures | UsingFeatures.Results);
     }
 
     /// <summary>
@@ -360,7 +360,7 @@ public readonly struct ValidationContext
         bool usingEvaluatedItems = (this.usingFeatures & UsingFeatures.EvaluatedItems) != 0;
         bool usingEvaluatedProperties = (this.usingFeatures & UsingFeatures.EvaluatedProperties) != 0;
 
-        return new ValidationContext(true, usingEvaluatedItems ? ImmutableArray.Create<ulong>(0) : ImmutableArray<ulong>.Empty, usingEvaluatedProperties ? ImmutableArray.Create<ulong>(0) : ImmutableArray<ulong>.Empty, usingEvaluatedItems ? ImmutableArray.Create<ulong>(0) : ImmutableArray<ulong>.Empty, usingEvaluatedProperties ? ImmutableArray.Create<ulong>(0) : ImmutableArray<ulong>.Empty, this.locationStack, ImmutableArray<ValidationResult>.Empty, this.usingFeatures);
+        return new ValidationContext(true, usingEvaluatedItems ? ImmutableArray.Create<ulong>(0) : [], usingEvaluatedProperties ? ImmutableArray.Create<ulong>(0) : [], usingEvaluatedItems ? ImmutableArray.Create<ulong>(0) : [], usingEvaluatedProperties ? ImmutableArray.Create<ulong>(0) : [], this.locationStack, [], this.usingFeatures);
     }
 
     /// <summary>

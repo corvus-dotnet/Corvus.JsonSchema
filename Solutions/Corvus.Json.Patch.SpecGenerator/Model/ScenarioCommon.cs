@@ -47,6 +47,10 @@ public readonly partial struct ScenarioCommon
     }
 
     /// <summary>
+    /// Gets the schema location from which this type was generated.
+    /// </summary>
+    public static string SchemaLocation { get; } = "json-patch-test.json#/$defs/ScenarioCommon";
+    /// <summary>
     /// Gets a Null instance.
     /// </summary>
     public static ScenarioCommon Null { get; } = new(JsonValueHelpers.NullElement);

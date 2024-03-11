@@ -49,6 +49,10 @@ public readonly partial struct Validation
         }
 
         /// <summary>
+        /// Gets the schema location from which this type was generated.
+        /// </summary>
+        public static string SchemaLocation { get; } = "https://json-schema.org/draft/2020-12/meta/validation#/$defs/simpleTypes";
+        /// <summary>
         /// Gets a Null instance.
         /// </summary>
         public static SimpleTypes Null { get; } = new(JsonValueHelpers.NullElement);

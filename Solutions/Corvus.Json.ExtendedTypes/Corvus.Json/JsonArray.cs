@@ -4,7 +4,6 @@
 
 using System.Buffers;
 using System.Collections.Immutable;
-using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json.Internal;
@@ -28,7 +27,7 @@ public readonly partial struct JsonArray : IJsonArray<JsonArray>
     {
         this.jsonElementBacking = default;
         this.backing = Backing.JsonElement;
-        this.arrayBacking = ImmutableList<JsonAny>.Empty;
+        this.arrayBacking = [];
     }
 
     /// <summary>
@@ -39,7 +38,7 @@ public readonly partial struct JsonArray : IJsonArray<JsonArray>
     {
         this.jsonElementBacking = value;
         this.backing = Backing.JsonElement;
-        this.arrayBacking = ImmutableList<JsonAny>.Empty;
+        this.arrayBacking = [];
     }
 
     /// <summary>

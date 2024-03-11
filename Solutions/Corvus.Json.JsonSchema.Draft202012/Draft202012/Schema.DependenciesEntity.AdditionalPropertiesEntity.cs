@@ -57,6 +57,10 @@ public readonly partial struct Schema
             }
 
             /// <summary>
+            /// Gets the schema location from which this type was generated.
+            /// </summary>
+            public static string SchemaLocation { get; } = "https://json-schema.org/draft/2020-12/schema#/properties/dependencies/additionalProperties";
+            /// <summary>
             /// Gets a Null instance.
             /// </summary>
             public static AdditionalPropertiesEntity Null { get; } = new(JsonValueHelpers.NullElement);

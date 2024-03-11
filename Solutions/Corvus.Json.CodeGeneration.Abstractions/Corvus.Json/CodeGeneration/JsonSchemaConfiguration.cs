@@ -34,17 +34,17 @@ public class JsonSchemaConfiguration
     /// <summary>
     /// Gets or sets the reference keywords for the schema model.
     /// </summary>
-    public ImmutableArray<RefKeyword> RefKeywords { get; set; } = ImmutableArray<RefKeyword>.Empty;
+    public ImmutableArray<RefKeyword> RefKeywords { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the anchor keywords for the schema model.
     /// </summary>
-    public ImmutableArray<AnchorKeyword> AnchorKeywords { get; set; } = ImmutableArray<AnchorKeyword>.Empty;
+    public ImmutableArray<AnchorKeyword> AnchorKeywords { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the ref-resolvable keywords for the schema model.
     /// </summary>
-    public ImmutableArray<RefResolvableKeyword> RefResolvableKeywords { get; set; } = ImmutableArray<RefResolvableKeyword>.Empty;
+    public ImmutableArray<RefResolvableKeyword> RefResolvableKeywords { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the list of non-reducing keywords for the schema model.
@@ -52,7 +52,7 @@ public class JsonSchemaConfiguration
     /// <remarks>
     /// These are the keywords that, if placed alongside a reference keyword, prevent the local type from being reduced to the referenced type.
     /// </remarks>
-    public ImmutableHashSet<string> IrreducibleKeywords { get; set; } = ImmutableHashSet<string>.Empty;
+    public ImmutableHashSet<string> IrreducibleKeywords { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the list of definition keywords for the schema model.
@@ -60,12 +60,12 @@ public class JsonSchemaConfiguration
     /// <remarks>
     /// These are the keywords that, while they are ref resolvable, do not contribute directly to a type declaration.
     /// </remarks>
-    public ImmutableHashSet<string> DefinitionKeywords { get; set; } = ImmutableHashSet<string>.Empty;
+    public ImmutableHashSet<string> DefinitionKeywords { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the list of words reserved by the generator, which may not be used as names.
     /// </summary>
-    public ImmutableHashSet<string> GeneratorReservedWords { get; set; } = ImmutableHashSet<string>.Empty;
+    public ImmutableHashSet<string> GeneratorReservedWords { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the validation semantic model to use.

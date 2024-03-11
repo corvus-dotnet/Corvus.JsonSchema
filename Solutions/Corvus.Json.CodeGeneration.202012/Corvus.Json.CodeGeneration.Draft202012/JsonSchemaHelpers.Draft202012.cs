@@ -312,7 +312,7 @@ public static class JsonSchemaHelpers
     }
 
     /// <summary>
-    /// Creates the predicate that determiens whether this Schema() represents a simple type.
+    /// Creates the predicate that determines whether this Schema() represents a simple type.
     /// </summary>
     /// <returns><see langword="true"/> if the Schema() is a simple type.</returns>
     private static Predicate<JsonAny> CreateDraft202012IsSimpleType()
@@ -386,7 +386,7 @@ public static class JsonSchemaHelpers
 
             if (schema.AllOf.IsNotUndefined())
             {
-                foreach (TypeDeclaration allOfTypeDeclaration in source.RefResolvablePropertyDeclarations.Where(k => k.Key.StartsWith("#/allOf")).Select(k => k.Value))
+                foreach (TypeDeclaration allOfTypeDeclaration in source.RefResolvablePropertyDeclarations.Where(k => k.Key.StartsWith("#/allOf")).OrderBy(k => k.Key).Select(k => k.Value))
                 {
                     builder.FindAndBuildProperties(allOfTypeDeclaration, target, typesVisited, treatRequiredAsOptional);
                 }
@@ -404,17 +404,17 @@ public static class JsonSchemaHelpers
 
             if (schema.DependentSchemas.IsNotUndefined())
             {
-                foreach (TypeDeclaration dependentypeDeclaration in source.RefResolvablePropertyDeclarations.Where(k => k.Key.StartsWith("#/dependentSchemas")).Select(k => k.Value))
+                foreach (TypeDeclaration dependentTypeDeclaration in source.RefResolvablePropertyDeclarations.Where(k => k.Key.StartsWith("#/dependentSchemas")).OrderBy(k => k.Key).Select(k => k.Value))
                 {
-                    builder.FindAndBuildProperties(dependentypeDeclaration, target, typesVisited, true);
+                    builder.FindAndBuildProperties(dependentTypeDeclaration, target, typesVisited, true);
                 }
             }
 
             if (schema.Dependencies.IsNotUndefined())
             {
-                foreach (TypeDeclaration dependentypeDeclaration in source.RefResolvablePropertyDeclarations.Where(k => k.Key.StartsWith("#/dependencies")).Select(k => k.Value))
+                foreach (TypeDeclaration dependentTypeDeclaration in source.RefResolvablePropertyDeclarations.Where(k => k.Key.StartsWith("#/dependencies")).OrderBy(k => k.Key).Select(k => k.Value))
                 {
-                    builder.FindAndBuildProperties(dependentypeDeclaration, target, typesVisited, true);
+                    builder.FindAndBuildProperties(dependentTypeDeclaration, target, typesVisited, true);
                 }
             }
 

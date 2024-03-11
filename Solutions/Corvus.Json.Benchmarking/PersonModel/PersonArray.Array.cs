@@ -47,7 +47,7 @@ public readonly partial struct PersonArray : IJsonArray<PersonArray>
     }
 
     /// <inheritdoc/>
-    public JsonAny this[int index]
+    JsonAny IJsonArray<PersonArray>.this[int index]
     {
         get
         {
@@ -61,6 +61,38 @@ public readonly partial struct PersonArray : IJsonArray<PersonArray>
                 try
                 {
                     return this.arrayBacking[index];
+                }
+                catch (ArgumentOutOfRangeException ex)
+                {
+                    throw new IndexOutOfRangeException(ex.Message, ex);
+                }
+            }
+
+            throw new InvalidOperationException();
+        }
+    }
+
+    /// <summary>
+    /// Gets the item at the given index.
+    /// </summary>
+    /// <param name = "index">The index at which to retrieve the item.</param>
+    /// <returns>The item at the given index.</returns>
+    /// <exception cref = "IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
+    /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
+    public Corvus.Json.Benchmarking.Models.Person this[int index]
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                return new Corvus.Json.Benchmarking.Models.Person(this.jsonElementBacking[index]);
+            }
+
+            if ((this.backing & Backing.Array) != 0)
+            {
+                try
+                {
+                    return this.arrayBacking[index].As<Corvus.Json.Benchmarking.Models.Person>();
                 }
                 catch (ArgumentOutOfRangeException ex)
                 {

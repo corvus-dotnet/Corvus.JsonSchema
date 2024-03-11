@@ -239,7 +239,7 @@ public readonly partial struct JsonContentPre201909
             return str!.AsSpan();
         }
 
-        return ReadOnlySpan<char>.Empty;
+        return [];
     }
 
     /// <summary>

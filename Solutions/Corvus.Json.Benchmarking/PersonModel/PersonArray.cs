@@ -47,6 +47,10 @@ public readonly partial struct PersonArray
     }
 
     /// <summary>
+    /// Gets the schema location from which this type was generated.
+    /// </summary>
+    public static string SchemaLocation { get; } = "person-schema.json#/$defs/PersonArray";
+    /// <summary>
     /// Gets a Null instance.
     /// </summary>
     public static PersonArray Null { get; } = new(JsonValueHelpers.NullElement);

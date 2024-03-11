@@ -73,6 +73,10 @@ public readonly partial struct PersonName
     }
 
     /// <summary>
+    /// Gets the schema location from which this type was generated.
+    /// </summary>
+    public static string SchemaLocation { get; } = "person-schema.json#/$defs/PersonName";
+    /// <summary>
     /// Gets a Null instance.
     /// </summary>
     public static PersonName Null { get; } = new(JsonValueHelpers.NullElement);

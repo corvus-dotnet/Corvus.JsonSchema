@@ -47,6 +47,10 @@ public readonly partial struct DisabledScenario
     }
 
     /// <summary>
+    /// Gets the schema location from which this type was generated.
+    /// </summary>
+    public static string SchemaLocation { get; } = "json-patch-test.json#/$defs/DisabledScenario";
+    /// <summary>
     /// Gets a Null instance.
     /// </summary>
     public static DisabledScenario Null { get; } = new(JsonValueHelpers.NullElement);

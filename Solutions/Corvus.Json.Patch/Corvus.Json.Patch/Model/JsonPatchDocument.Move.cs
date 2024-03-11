@@ -54,6 +54,10 @@ public readonly partial struct JsonPatchDocument
         }
 
         /// <summary>
+        /// Gets the schema location from which this type was generated.
+        /// </summary>
+        public static string SchemaLocation { get; } = "json-patch.json#/$defs/Move";
+        /// <summary>
         /// Gets a Null instance.
         /// </summary>
         public static Move Null { get; } = new(JsonValueHelpers.NullElement);

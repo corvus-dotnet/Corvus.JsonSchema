@@ -49,6 +49,10 @@ public readonly partial struct MetaData
         }
 
         /// <summary>
+        /// Gets the schema location from which this type was generated.
+        /// </summary>
+        public static string SchemaLocation { get; } = "https://json-schema.org/draft/2020-12/meta/meta-data#/properties/examples";
+        /// <summary>
         /// Gets a Null instance.
         /// </summary>
         public static JsonAnyArray Null { get; } = new(JsonValueHelpers.NullElement);
