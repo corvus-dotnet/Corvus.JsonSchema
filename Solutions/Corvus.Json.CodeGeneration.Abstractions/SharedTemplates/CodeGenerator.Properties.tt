@@ -53,7 +53,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     { #>
 
     /// <summary>
-    /// Gets <#= property.DotnetPropertyName #>.
+    /// Gets the <#= property.IsRequired ? "" : "(optional) " #><c><#= Formatting.FormatLiteralOrNull(property.JsonPropertyName, false) #></c> property.<#= property.IsRequired ? " If the instance is valid, this property will be not be <c>undefined</c>." : "" #>
     /// </summary>
 <#      if (property.HasXmlDocumentationRemarks)
 		{ #>

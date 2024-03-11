@@ -216,19 +216,43 @@ namespace ");
             #line hidden
             
             #line 54 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Properties.tt"
-            this.Write("\r\n    /// <summary>\r\n    /// Gets ");
+            this.Write("\r\n    /// <summary>\r\n    /// Gets the ");
             
             #line default
             #line hidden
             
             #line 56 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Properties.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( property.DotnetPropertyName ));
+            this.Write(this.ToStringHelper.ToStringWithCulture( property.IsRequired ? "" : "(optional) " ));
             
             #line default
             #line hidden
             
             #line 56 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Properties.tt"
-            this.Write(".\r\n    /// </summary>\r\n");
+            this.Write("<c>");
+            
+            #line default
+            #line hidden
+            
+            #line 56 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Properties.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( Formatting.FormatLiteralOrNull(property.JsonPropertyName, false) ));
+            
+            #line default
+            #line hidden
+            
+            #line 56 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Properties.tt"
+            this.Write("</c> property.");
+            
+            #line default
+            #line hidden
+            
+            #line 56 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Properties.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( property.IsRequired ? " If the instance is valid, this property will be not be <c>undefined</c>." : "" ));
+            
+            #line default
+            #line hidden
+            
+            #line 56 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Properties.tt"
+            this.Write("\r\n    /// </summary>\r\n");
             
             #line default
             #line hidden

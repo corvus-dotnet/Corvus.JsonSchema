@@ -73,7 +73,7 @@ public readonly partial struct Person
     }
 
     /// <summary>
-    /// Gets DateOfBirth.
+    /// Gets the (optional) <c>dateOfBirth</c> property.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -110,7 +110,7 @@ public readonly partial struct Person
     }
 
     /// <summary>
-    /// Gets Email.
+    /// Gets the (optional) <c>email</c> property.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -147,7 +147,7 @@ public readonly partial struct Person
     }
 
     /// <summary>
-    /// Gets Height.
+    /// Gets the (optional) <c>height</c> property.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -184,7 +184,7 @@ public readonly partial struct Person
     }
 
     /// <summary>
-    /// Gets Name.
+    /// Gets the <c>name</c> property. If the instance is valid, this property will be not be <c>undefined</c>.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -221,7 +221,7 @@ public readonly partial struct Person
     }
 
     /// <summary>
-    /// Gets NetWorth.
+    /// Gets the (optional) <c>netWorth</c> property.
     /// </summary>
     /// <remarks>
     /// <para>

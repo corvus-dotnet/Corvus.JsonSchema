@@ -109,7 +109,7 @@ public readonly partial struct Core
     }
 
     /// <summary>
-    /// Gets Anchor.
+    /// Gets the (optional) <c>$anchor</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft202012.Core.AnchorString Anchor
     {
@@ -141,7 +141,7 @@ public readonly partial struct Core
     }
 
     /// <summary>
-    /// Gets Comment.
+    /// Gets the (optional) <c>$comment</c> property.
     /// </summary>
     public Corvus.Json.JsonString Comment
     {
@@ -173,7 +173,7 @@ public readonly partial struct Core
     }
 
     /// <summary>
-    /// Gets Defs.
+    /// Gets the (optional) <c>$defs</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft202012.Core.DefsEntity Defs
     {
@@ -205,7 +205,7 @@ public readonly partial struct Core
     }
 
     /// <summary>
-    /// Gets DynamicAnchor.
+    /// Gets the (optional) <c>$dynamicAnchor</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft202012.Core.AnchorString DynamicAnchor
     {
@@ -237,7 +237,7 @@ public readonly partial struct Core
     }
 
     /// <summary>
-    /// Gets DynamicRef.
+    /// Gets the (optional) <c>$dynamicRef</c> property.
     /// </summary>
     public Corvus.Json.JsonUriReference DynamicRef
     {
@@ -269,7 +269,7 @@ public readonly partial struct Core
     }
 
     /// <summary>
-    /// Gets Id.
+    /// Gets the (optional) <c>$id</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft202012.Core.IdEntity Id
     {
@@ -301,7 +301,7 @@ public readonly partial struct Core
     }
 
     /// <summary>
-    /// Gets Ref.
+    /// Gets the (optional) <c>$ref</c> property.
     /// </summary>
     public Corvus.Json.JsonUriReference Ref
     {
@@ -333,7 +333,7 @@ public readonly partial struct Core
     }
 
     /// <summary>
-    /// Gets Schema.
+    /// Gets the (optional) <c>$schema</c> property.
     /// </summary>
     public Corvus.Json.JsonUri Schema
     {
@@ -365,7 +365,7 @@ public readonly partial struct Core
     }
 
     /// <summary>
-    /// Gets Vocabulary.
+    /// Gets the (optional) <c>$vocabulary</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft202012.Core.VocabularyEntity Vocabulary
     {

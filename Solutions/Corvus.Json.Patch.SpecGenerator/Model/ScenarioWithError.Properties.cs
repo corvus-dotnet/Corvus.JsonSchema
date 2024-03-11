@@ -73,7 +73,7 @@ public readonly partial struct ScenarioWithError
     }
 
     /// <summary>
-    /// Gets Comment.
+    /// Gets the (optional) <c>comment</c> property.
     /// </summary>
     public Corvus.Json.JsonString Comment
     {
@@ -105,7 +105,7 @@ public readonly partial struct ScenarioWithError
     }
 
     /// <summary>
-    /// Gets Disabled.
+    /// Gets the (optional) <c>disabled</c> property.
     /// </summary>
     public Corvus.Json.JsonNotAny Disabled
     {
@@ -137,7 +137,7 @@ public readonly partial struct ScenarioWithError
     }
 
     /// <summary>
-    /// Gets Doc.
+    /// Gets the <c>doc</c> property. If the instance is valid, this property will be not be <c>undefined</c>.
     /// </summary>
     public Corvus.Json.JsonAny Doc
     {
@@ -169,7 +169,7 @@ public readonly partial struct ScenarioWithError
     }
 
     /// <summary>
-    /// Gets Error.
+    /// Gets the <c>error</c> property. If the instance is valid, this property will be not be <c>undefined</c>.
     /// </summary>
     public Corvus.Json.JsonAny Error
     {
@@ -201,7 +201,7 @@ public readonly partial struct ScenarioWithError
     }
 
     /// <summary>
-    /// Gets Patch.
+    /// Gets the <c>patch</c> property. If the instance is valid, this property will be not be <c>undefined</c>.
     /// </summary>
     public Corvus.Json.JsonAny Patch
     {

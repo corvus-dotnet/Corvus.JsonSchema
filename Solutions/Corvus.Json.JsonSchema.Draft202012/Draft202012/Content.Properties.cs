@@ -55,7 +55,7 @@ public readonly partial struct Content
     }
 
     /// <summary>
-    /// Gets ContentEncoding.
+    /// Gets the (optional) <c>contentEncoding</c> property.
     /// </summary>
     public Corvus.Json.JsonString ContentEncoding
     {
@@ -87,7 +87,7 @@ public readonly partial struct Content
     }
 
     /// <summary>
-    /// Gets ContentMediaType.
+    /// Gets the (optional) <c>contentMediaType</c> property.
     /// </summary>
     public Corvus.Json.JsonString ContentMediaType
     {
@@ -119,7 +119,7 @@ public readonly partial struct Content
     }
 
     /// <summary>
-    /// Gets ContentSchema.
+    /// Gets the (optional) <c>contentSchema</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft202012.Schema ContentSchema
     {

@@ -81,7 +81,7 @@ public readonly partial struct PersonName
     }
 
     /// <summary>
-    /// Gets FamilyName.
+    /// Gets the <c>familyName</c> property. If the instance is valid, this property will be not be <c>undefined</c>.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -118,7 +118,7 @@ public readonly partial struct PersonName
     }
 
     /// <summary>
-    /// Gets GivenName.
+    /// Gets the (optional) <c>givenName</c> property.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -155,7 +155,7 @@ public readonly partial struct PersonName
     }
 
     /// <summary>
-    /// Gets OtherNames.
+    /// Gets the (optional) <c>otherNames</c> property.
     /// </summary>
     /// <remarks>
     /// <para>

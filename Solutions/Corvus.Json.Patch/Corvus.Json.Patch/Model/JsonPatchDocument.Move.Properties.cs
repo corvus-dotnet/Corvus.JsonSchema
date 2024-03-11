@@ -62,7 +62,7 @@ public readonly partial struct JsonPatchDocument
         }
 
         /// <summary>
-        /// Gets FromValue.
+        /// Gets the <c>from</c> property. If the instance is valid, this property will be not be <c>undefined</c>.
         /// </summary>
         public Corvus.Json.JsonPointer FromValue
         {
@@ -94,7 +94,7 @@ public readonly partial struct JsonPatchDocument
         }
 
         /// <summary>
-        /// Gets Op.
+        /// Gets the <c>op</c> property. If the instance is valid, this property will be not be <c>undefined</c>.
         /// </summary>
         public Corvus.Json.Patch.Model.JsonPatchDocument.Move.OpEntity Op
         {
@@ -126,7 +126,7 @@ public readonly partial struct JsonPatchDocument
         }
 
         /// <summary>
-        /// Gets Path.
+        /// Gets the <c>path</c> property. If the instance is valid, this property will be not be <c>undefined</c>.
         /// </summary>
         public Corvus.Json.JsonPointer Path
         {

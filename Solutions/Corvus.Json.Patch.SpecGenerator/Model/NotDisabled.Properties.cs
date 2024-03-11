@@ -37,7 +37,7 @@ public readonly partial struct NotDisabled
     }
 
     /// <summary>
-    /// Gets Disabled.
+    /// Gets the (optional) <c>disabled</c> property.
     /// </summary>
     public Corvus.Json.JsonNotAny Disabled
     {
