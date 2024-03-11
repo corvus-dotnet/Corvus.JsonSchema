@@ -55,12 +55,12 @@ public partial class JsonSchemaTypeBuilder
     public async Task<TypeDeclaration?> AddTypeDeclarationsFor(JsonReference documentPath, string rootNamespace, bool rebaseAsRoot = false, ImmutableDictionary<string, string>? baseUriToNamespaceMap = null, string? rootTypeName = null)
     {
         // First we do a document "load" - this enables us to build the map of the schema, anchors etc.
-        JsonReference scope = await this.schemaRegistry.RegisterDocumentSchema(documentPath, rebaseAsRoot).ConfigureAwait(false);
+        (JsonReference scope, JsonReference baseReference) = await this.schemaRegistry.RegisterDocumentSchema(documentPath, rebaseAsRoot).ConfigureAwait(false);
 
         if (!this.baseLocation.HasUri)
         {
             // Move down to the base location.
-            this.baseLocation = scope.Apply(new("../"));
+            this.baseLocation = baseReference.Apply(new("."));
         }
 
         // Then we do a second "contextual" pass over the loaded schema from the root location. This enables
@@ -151,7 +151,12 @@ public partial class JsonSchemaTypeBuilder
     /// <remarks>The target must be an absolute location.</remarks>
     public JsonReference GetRelativeLocationFor(JsonReference target)
     {
-        return this.baseLocation.MakeRelative(target);
+        if (target.IsImplicitFile)
+        {
+            return this.baseLocation.MakeRelative(target);
+        }
+
+        return target;
     }
 
     /// <summary>
@@ -229,7 +234,7 @@ public partial class JsonSchemaTypeBuilder
     {
         if (!this.schemaRegistry.TryGetValue(context.SubschemaLocation, out LocatedSchema? schema))
         {
-            throw new InvalidOperationException($"Unable to find the schema at ${context.SubschemaLocation}");
+            throw new InvalidOperationException($"Unable to find the schema at {context.SubschemaLocation}");
         }
 
         if (TryGetBooleanSchemaTypeDeclaration(schema, out TypeDeclaration? booleanTypeDeclaration))

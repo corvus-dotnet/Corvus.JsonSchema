@@ -52,7 +52,7 @@ public readonly partial struct OtherNames
     /// <summary>
     /// Gets the schema location from which this type was generated.
     /// </summary>
-    public static string SchemaLocation { get; } = "D:/source/corvus-dotnet/Corvus.JsonSchema/Solutions/Sandbox/PersonModel/person-schema.json#/$defs/OtherNames";
+    public static string SchemaLocation { get; } = "person-schema.json#/$defs/OtherNames";
     /// <summary>
     /// Gets a Null instance.
     /// </summary>

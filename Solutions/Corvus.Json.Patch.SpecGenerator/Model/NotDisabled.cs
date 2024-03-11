@@ -49,7 +49,7 @@ public readonly partial struct NotDisabled
     /// <summary>
     /// Gets the schema location from which this type was generated.
     /// </summary>
-    public static string SchemaLocation { get; } = "D:/source/corvus-dotnet/Corvus.JsonSchema/Solutions/Corvus.Json.Patch.SpecGenerator/Model/json-patch-test.json#/$defs/NotDisabled";
+    public static string SchemaLocation { get; } = "json-patch-test.json#/$defs/NotDisabled";
     /// <summary>
     /// Gets a Null instance.
     /// </summary>

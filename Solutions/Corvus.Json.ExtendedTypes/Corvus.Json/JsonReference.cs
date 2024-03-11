@@ -108,6 +108,22 @@ public readonly struct JsonReference : IEquatable<JsonReference>
     public ReadOnlySpan<char> Fragment => this.FindFragment();
 
     /// <summary>
+    /// Gets a value indicating whether this is an implicit file reference.
+    /// </summary>
+    public bool IsImplicitFile
+    {
+        get
+        {
+            return
+                this.HasUri &&
+                this.Uri.Length > 2 &&
+                char.IsAsciiLetter(this.Uri[0]) &&
+                this.Uri[1] is ':' &&
+                this.Uri[2] is '/' or '\\';
+        }
+    }
+
+    /// <summary>
     /// Implicit conversion from a string.
     /// </summary>
     /// <param name="reference">The reference as a string.</param>
@@ -452,29 +468,24 @@ public readonly struct JsonReference : IEquatable<JsonReference>
         }
 
         JsonReferenceBuilder uriBuilder = this.AsBuilder();
-        JsonReferenceBuilder otherBuilder = this.AsBuilder();
+        JsonReferenceBuilder otherBuilder = other.AsBuilder();
 
         if (uriBuilder.Scheme.Equals(otherBuilder.Scheme, StringComparison.Ordinal) &&
             uriBuilder.Host.Equals(otherBuilder.Host, StringComparison.Ordinal) &&
             uriBuilder.Port.Equals(otherBuilder.Port, StringComparison.Ordinal))
         {
-            string relativeUriString = PathDifference(uriBuilder.Path, otherBuilder.Path, false);
+            ReadOnlySpan<char> thisPath = this.IsImplicitFile ? this.Uri : uriBuilder.Path;
+            ReadOnlySpan<char> otherPath = other.IsImplicitFile ? other.Uri : otherBuilder.Path;
+            string relativeUriString = PathDifference(thisPath, otherPath, false);
 
             // Relative Uri's cannot have a colon ':' in the first path segment (RFC 3986, Section 4.2)
             if (CheckForColonInFirstPathSegment(relativeUriString) &&
-                !other.Uri.Equals(relativeUriString.AsSpan(), StringComparison.Ordinal))
+                !otherPath.Equals(relativeUriString.AsSpan(), StringComparison.Ordinal))
             {
                 relativeUriString = "./" + relativeUriString;
             }
 
-            var builder = new JsonReferenceBuilder(
-                uriBuilder.Scheme,
-                uriBuilder.Authority,
-                relativeUriString.AsSpan(),
-                otherBuilder.Query,
-                otherBuilder.Fragment);
-
-            return builder.AsReference();
+            return new(relativeUriString, other.Fragment);
         }
 
         return other;

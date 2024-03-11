@@ -49,7 +49,7 @@ public readonly partial struct PersonArray
     /// <summary>
     /// Gets the schema location from which this type was generated.
     /// </summary>
-    public static string SchemaLocation { get; } = "D:/source/corvus-dotnet/Corvus.JsonSchema/Solutions/Sandbox/PersonModel/person-schema.json#/$defs/PersonArray";
+    public static string SchemaLocation { get; } = "person-schema.json#/$defs/PersonArray";
     /// <summary>
     /// Gets a Null instance.
     /// </summary>

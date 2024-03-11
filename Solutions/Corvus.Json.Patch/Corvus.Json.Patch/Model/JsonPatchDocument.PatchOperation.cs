@@ -51,7 +51,7 @@ public readonly partial struct JsonPatchDocument
         /// <summary>
         /// Gets the schema location from which this type was generated.
         /// </summary>
-        public static string SchemaLocation { get; } = "D:/source/corvus-dotnet/Corvus.JsonSchema/Solutions/Corvus.Json.Patch/Corvus.Json.Patch/Model/json-patch.json#/$defs/PatchOperation";
+        public static string SchemaLocation { get; } = "json-patch.json#/$defs/PatchOperation";
         /// <summary>
         /// Gets a Null instance.
         /// </summary>

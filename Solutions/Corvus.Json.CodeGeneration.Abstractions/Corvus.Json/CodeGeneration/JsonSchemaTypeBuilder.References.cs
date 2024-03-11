@@ -476,7 +476,7 @@ public partial class JsonSchemaTypeBuilder
     {
         if (!this.schemaRegistry.TryGetValue(baseSchemaForReferenceLocation, out LocatedSchema? baseReferenceSchema))
         {
-            JsonReference registeredSchemaReference = await this.schemaRegistry.RegisterDocumentSchema(baseSchemaForReferenceLocation).ConfigureAwait(false);
+            (JsonReference registeredSchemaReference, _) = await this.schemaRegistry.RegisterDocumentSchema(baseSchemaForReferenceLocation).ConfigureAwait(false);
             if (!this.schemaRegistry.TryGetValue(registeredSchemaReference, out baseReferenceSchema))
             {
                 return null;
