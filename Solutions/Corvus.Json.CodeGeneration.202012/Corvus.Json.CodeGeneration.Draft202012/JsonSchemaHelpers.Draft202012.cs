@@ -474,30 +474,44 @@ public static class JsonSchemaHelpers
         StringBuilder documentation = new();
         if (schema.Title.IsNotNullOrUndefined())
         {
-            documentation.AppendLine("<para>");
+            documentation.AppendLine("/// <para>");
             documentation.AppendLine(Formatting.FormatLiteralOrNull(schema.Title.GetString(), false));
-            documentation.AppendLine("</para>");
+            documentation.AppendLine("/// </para>");
         }
 
         if (schema.Description.IsNotNullOrUndefined())
         {
-            documentation.AppendLine("<para>");
-            documentation.AppendLine(Formatting.FormatLiteralOrNull(schema.Description.GetString(), false));
-            documentation.AppendLine("</para>");
+            string[]? lines = schema.Description.GetString()?.Split(Environment.NewLine);
+            if (lines is string[] l)
+            {
+                foreach (string line in l)
+                {
+                    documentation.AppendLine("/// <para>");
+                    documentation.Append("/// ");
+                    documentation.AppendLine(Formatting.FormatLiteralOrNull(line, false));
+                    documentation.AppendLine("/// </para>");
+                }
+            }
         }
 
         if (schema.Examples.IsNotNullOrUndefined())
         {
-            documentation.AppendLine("<para>");
-            documentation.AppendLine("Examples:");
-            documentation.AppendLine("</para>");
+            documentation.AppendLine("/// <para>");
+            documentation.AppendLine("/// Examples:");
+            documentation.AppendLine("/// </para>");
             foreach (JsonAny example in schema.Examples.EnumerateArray())
             {
-                documentation.AppendLine("<para>");
-                documentation.AppendLine("<code>");
-                documentation.AppendLine(Formatting.FormatLiteralOrNull(example.ToString(), false));
-                documentation.AppendLine("</code>");
-                documentation.AppendLine("</para>");
+                documentation.AppendLine("/// <para>");
+                documentation.AppendLine("/// <code>");
+                string[] lines = example.ToString().Split(Environment.NewLine);
+                foreach (string line in lines)
+                {
+                    documentation.Append("/// ");
+                    documentation.AppendLine(Formatting.FormatLiteralOrNull(line, false));
+                }
+
+                documentation.AppendLine("/// </code>");
+                documentation.AppendLine("/// </para>");
             }
         }
 
