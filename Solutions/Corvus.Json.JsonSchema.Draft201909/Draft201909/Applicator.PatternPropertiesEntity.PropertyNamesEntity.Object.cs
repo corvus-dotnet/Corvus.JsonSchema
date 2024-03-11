@@ -19,7 +19,7 @@ public readonly partial struct Applicator
     public readonly partial struct PatternPropertiesEntity
     {
         /// <summary>
-        /// A type generated from a JsonSchema specification.
+        /// Generated from JSON Schema.
         /// </summary>
         public readonly partial struct PropertyNamesEntity : IJsonObject<PropertyNamesEntity>
         {

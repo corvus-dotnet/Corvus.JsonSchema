@@ -19,7 +19,7 @@ namespace Corvus.Json.JsonSchema.Draft201909;
 public readonly partial struct Validation
 {
     /// <summary>
-    /// A type generated from a JsonSchema specification.
+    /// Generated from JSON Schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<TypeEntity>))]
     public readonly partial struct TypeEntity

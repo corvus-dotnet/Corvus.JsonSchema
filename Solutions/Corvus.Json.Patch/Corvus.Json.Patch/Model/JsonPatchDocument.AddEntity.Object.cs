@@ -17,8 +17,13 @@ namespace Corvus.Json.Patch.Model;
 public readonly partial struct JsonPatchDocument
 {
     /// <summary>
-    /// A type generated from a JsonSchema specification.
+    /// Generated from JSON Schema.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Add operation. Value can be any JSON value.
+    /// </para>
+    /// </remarks>
     public readonly partial struct AddEntity : IJsonObject<AddEntity>
     {
         /// <summary>

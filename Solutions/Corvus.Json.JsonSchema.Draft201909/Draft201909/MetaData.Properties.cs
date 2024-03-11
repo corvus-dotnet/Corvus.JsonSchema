@@ -16,7 +16,7 @@ using Corvus.Json.Internal;
 
 namespace Corvus.Json.JsonSchema.Draft201909;
 /// <summary>
-/// A type generated from a JsonSchema specification.
+/// Meta-data vocabulary meta-schema
 /// </summary>
 public readonly partial struct MetaData
 {
@@ -91,7 +91,7 @@ public readonly partial struct MetaData
     }
 
     /// <summary>
-    /// Gets Default.
+    /// Gets the (optional) <c>default</c> property.
     /// </summary>
     public Corvus.Json.JsonAny Default
     {
@@ -123,7 +123,7 @@ public readonly partial struct MetaData
     }
 
     /// <summary>
-    /// Gets Deprecated.
+    /// Gets the (optional) <c>deprecated</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft201909.MetaData.DeprecatedEntity Deprecated
     {
@@ -155,7 +155,7 @@ public readonly partial struct MetaData
     }
 
     /// <summary>
-    /// Gets Description.
+    /// Gets the (optional) <c>description</c> property.
     /// </summary>
     public Corvus.Json.JsonString Description
     {
@@ -187,7 +187,7 @@ public readonly partial struct MetaData
     }
 
     /// <summary>
-    /// Gets Examples.
+    /// Gets the (optional) <c>examples</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft201909.MetaData.JsonAnyArray Examples
     {
@@ -219,7 +219,7 @@ public readonly partial struct MetaData
     }
 
     /// <summary>
-    /// Gets ReadOnly.
+    /// Gets the (optional) <c>readOnly</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft201909.MetaData.ReadOnlyEntity ReadOnly
     {
@@ -251,7 +251,7 @@ public readonly partial struct MetaData
     }
 
     /// <summary>
-    /// Gets Title.
+    /// Gets the (optional) <c>title</c> property.
     /// </summary>
     public Corvus.Json.JsonString Title
     {
@@ -283,7 +283,7 @@ public readonly partial struct MetaData
     }
 
     /// <summary>
-    /// Gets WriteOnly.
+    /// Gets the (optional) <c>writeOnly</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft201909.MetaData.WriteOnlyEntity WriteOnly
     {

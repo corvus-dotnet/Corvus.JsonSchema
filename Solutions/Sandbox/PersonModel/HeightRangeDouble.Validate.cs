@@ -12,7 +12,7 @@ using Corvus.Json;
 
 namespace Corvus.Json.Benchmarking.Models;
 /// <summary>
-/// A type generated from a JsonSchema specification.
+/// A numeric representation of a person's height in meters.
 /// </summary>
 public readonly partial struct HeightRangeDouble
 {

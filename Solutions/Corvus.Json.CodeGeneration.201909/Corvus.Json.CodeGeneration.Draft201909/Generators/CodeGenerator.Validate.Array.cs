@@ -16,7 +16,7 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft201909 {
     public partial class CodeGeneratorValidateArray : CodeGeneratorValidateArrayBase {
         
         
-        #line 373 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+        #line 371 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
 
     public bool ShouldGenerate
     {
@@ -83,19 +83,24 @@ namespace ");
             #line hidden
             
             #line 27 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
-            this.Write("/// <summary>\r\n/// A type generated from a JsonSchema specification.\r\n/// </summa" +
-                    "ry>\r\npublic readonly partial struct ");
+            this.Write(this.ToStringHelper.ToStringWithCulture( FormattedTypeDocumentation ));
             
             #line default
             #line hidden
             
-            #line 30 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 27 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            this.Write("\r\npublic readonly partial struct ");
+            
+            #line default
+            #line hidden
+            
+            #line 28 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 30 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 28 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write(@"
 {
     private ValidationContext ValidateArray(JsonValueKind valueKind, in ValidationContext validationContext, ValidationLevel level)
@@ -111,20 +116,20 @@ namespace ");
             #line default
             #line hidden
             
-            #line 40 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 38 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
   if (HasItems || HasContains || HasUniqueItems || HasUnevaluatedItems || HasAdditionalItems)
     { 
             
             #line default
             #line hidden
             
-            #line 42 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 40 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write("\r\n        int arrayLength = 0;\r\n");
             
             #line default
             #line hidden
             
-            #line 44 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 42 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
   }
     else
     { 
@@ -132,13 +137,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 47 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 45 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write("        int arrayLength = this.GetArrayLength();\r\n");
             
             #line default
             #line hidden
             
-            #line 48 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 46 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
   }
     if (HasContains)
     { 
@@ -146,13 +151,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 51 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 49 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write("        int containsCount = 0;\r\n");
             
             #line default
             #line hidden
             
-            #line 52 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 50 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
   }
     if (HasItems || HasContains || HasUniqueItems || HasUnevaluatedItems || HasAdditionalItems)
     { 
@@ -160,7 +165,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 55 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 53 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write(@"        using var arrayEnumerator = this.EnumerateArray();
 
         while (arrayEnumerator.MoveNext())
@@ -175,14 +180,14 @@ namespace ");
             #line default
             #line hidden
             
-            #line 64 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 62 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
       if (HasUniqueItems)
         { 
             
             #line default
             #line hidden
             
-            #line 66 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 64 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write(@"            using var innerEnumerator = this.EnumerateArray();
             int innerIndex = -1;
             while (innerIndex < arrayLength && innerEnumerator.MoveNext())
@@ -213,7 +218,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 91 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 89 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
       }
         if (HasContains)
         { 
@@ -221,19 +226,19 @@ namespace ");
             #line default
             #line hidden
             
-            #line 94 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 92 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write("\r\n            ValidationContext containsResult = arrayEnumerator.Current.As<");
             
             #line default
             #line hidden
             
-            #line 95 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 93 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( ContainsDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 95 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 93 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write(">().Validate(result.CreateChildContext(), level);\r\n\r\n            if (containsResu" +
                     "lt.IsValid)\r\n            {\r\n                result = result.WithLocalItemIndex(a" +
                     "rrayLength);\r\n                containsCount++;\r\n");
@@ -241,45 +246,45 @@ namespace ");
             #line default
             #line hidden
             
-            #line 101 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 99 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
           if (HasMaxContains)
             { 
             
             #line default
             #line hidden
             
-            #line 103 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 101 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write("                if (level == ValidationLevel.Flag && containsCount > ");
             
             #line default
             #line hidden
             
-            #line 103 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 101 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( MaxContains ));
             
             #line default
             #line hidden
             
-            #line 103 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 101 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write(")\r\n                {\r\n                    return result.WithResult(isValid: false" +
                     ");\r\n                }\r\n");
             
             #line default
             #line hidden
             
-            #line 107 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 105 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
           } 
             
             #line default
             #line hidden
             
-            #line 108 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 106 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write("            }\r\n");
             
             #line default
             #line hidden
             
-            #line 109 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 107 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
       }
         if (HasSingleItemsType)
         { 
@@ -287,7 +292,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 112 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 110 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write("\r\n            if (level > ValidationLevel.Basic)\r\n            {\r\n                " +
                     "result = result.PushValidationLocationProperty(\"items\");\r\n            }\r\n\r\n     " +
                     "       result = arrayEnumerator.Current.As<");
@@ -295,13 +300,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 118 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 116 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 118 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 116 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write(@">().Validate(result, level);
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
@@ -320,7 +325,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 131 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 129 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
       }
         else if (HasMultipleItemsType)
         { 
@@ -328,13 +333,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 134 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 132 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write("            switch (arrayLength)\r\n            {\r\n");
             
             #line default
             #line hidden
             
-            #line 136 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 134 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
           int itemsIndex = 0;
             foreach (var item in Items)
             { 
@@ -342,19 +347,19 @@ namespace ");
             #line default
             #line hidden
             
-            #line 139 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 137 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write("                case ");
             
             #line default
             #line hidden
             
-            #line 139 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 137 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( itemsIndex ));
             
             #line default
             #line hidden
             
-            #line 139 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 137 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write(":\r\n                    if (level > ValidationLevel.Basic)\r\n                    {\r" +
                     "\n                        result = result.PushValidationLocationProperty(\"items\")" +
                     ";\r\n                    }\r\n\r\n                    result = arrayEnumerator.Current" +
@@ -363,13 +368,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 145 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 143 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( item ));
             
             #line default
             #line hidden
             
-            #line 145 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 143 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write(@">().Validate(result, level);
                     if (level == ValidationLevel.Flag && !result.IsValid)
                     {
@@ -388,27 +393,27 @@ namespace ");
             #line default
             #line hidden
             
-            #line 158 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 156 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
               itemsIndex++;
             } 
             
             #line default
             #line hidden
             
-            #line 160 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 158 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write("\r\n                default:\r\n");
             
             #line default
             #line hidden
             
-            #line 162 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 160 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
           if (!AllowsAdditionalItems)
             { 
             
             #line default
             #line hidden
             
-            #line 164 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 162 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write(@"                    if (level >= ValidationLevel.Detailed)
                     {
                         result = result.WithResult(isValid: false, $""9.3.1.2. additionalItems - Additional items are not permitted at index {arrayLength}."");
@@ -426,7 +431,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 176 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 174 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
           }
             if (AllowsAdditionalItems)
             {
@@ -438,7 +443,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 183 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 181 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write("                    if (level > ValidationLevel.Basic)\r\n                    {\r\n  " +
                     "                      result = result.PushValidationLocationProperty(\"additional" +
                     "Items\");\r\n                    }\r\n\r\n                    result = arrayEnumerator." +
@@ -447,13 +452,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 188 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 186 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( AdditionalItemsDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 188 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 186 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write(@">().Validate(result, level);
                     if (level == ValidationLevel.Flag && !result.IsValid)
                     {
@@ -469,19 +474,19 @@ namespace ");
             #line default
             #line hidden
             
-            #line 198 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 196 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
                   } 
             
             #line default
             #line hidden
             
-            #line 199 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 197 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write("\r\n                    result = result.WithLocalItemIndex(arrayLength);\r\n");
             
             #line default
             #line hidden
             
-            #line 201 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 199 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
               }
                 else if (HasUnevaluatedItems)
                 { 
@@ -489,7 +494,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 204 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 202 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write(@"                    if (!result.HasEvaluatedLocalOrAppliedItemIndex(arrayLength))
                     {
                         if (level > ValidationLevel.Basic)
@@ -502,13 +507,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 211 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 209 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( UnevaluatedItemsDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 211 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 209 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write(@">().Validate(result, level);
 
                         if (level == ValidationLevel.Flag && !result.IsValid)
@@ -528,20 +533,20 @@ namespace ");
             #line default
             #line hidden
             
-            #line 225 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 223 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
               }
             } 
             
             #line default
             #line hidden
             
-            #line 227 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 225 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write("                    break;\r\n                }\r\n");
             
             #line default
             #line hidden
             
-            #line 229 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 227 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
       }
         else
         {
@@ -553,7 +558,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 236 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 234 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write(@"
             if (!result.HasEvaluatedLocalOrAppliedItemIndex(arrayLength))
             {
@@ -567,13 +572,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 244 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 242 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(  UnevaluatedItemsDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 244 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 242 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write(@">().Validate(result, level);
 
                 if (level == ValidationLevel.Flag && !result.IsValid)
@@ -593,7 +598,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 258 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 256 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
               }
             }
         } 
@@ -601,7 +606,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 261 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 259 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write("\r\n            if (level > ValidationLevel.Basic)\r\n            {\r\n                " +
                     "result = result.PopLocation(); // array index\r\n            }\r\n\r\n            arra" +
                     "yLength++;\r\n        }\r\n");
@@ -609,7 +614,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 269 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 267 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
   }
     if (HasMaxItems)
     { 
@@ -617,19 +622,19 @@ namespace ");
             #line default
             #line hidden
             
-            #line 272 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 270 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write("\r\n        if (arrayLength > ");
             
             #line default
             #line hidden
             
-            #line 273 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 271 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( MaxItems ));
             
             #line default
             #line hidden
             
-            #line 273 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 271 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write(")\r\n        {\r\n            if (level >= ValidationLevel.Detailed)\r\n            {\r\n" +
                     "                result = result.WithResult(isValid: false, $\"6.4.1. maxItems - {" +
                     "arrayLength} exceeds maximum number of items ");
@@ -637,13 +642,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 277 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 275 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( MaxItems ));
             
             #line default
             #line hidden
             
-            #line 277 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 275 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write(".\");\r\n            }\r\n            else if (level >= ValidationLevel.Basic)\r\n      " +
                     "      {\r\n                result = result.WithResult(isValid: false, \"6.4.1. maxI" +
                     "tems - item count exceeds maximum number of items ");
@@ -651,20 +656,20 @@ namespace ");
             #line default
             #line hidden
             
-            #line 281 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 279 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( MaxItems ));
             
             #line default
             #line hidden
             
-            #line 281 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 279 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write(".\");\r\n            }\r\n            else\r\n            {\r\n                return resu" +
                     "lt.WithResult(isValid: false);\r\n            }\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 288 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 286 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
   }
     if (HasMinItems)
     { 
@@ -672,19 +677,19 @@ namespace ");
             #line default
             #line hidden
             
-            #line 291 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 289 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write("        if (arrayLength < ");
             
             #line default
             #line hidden
             
-            #line 291 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 289 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( MinItems ));
             
             #line default
             #line hidden
             
-            #line 291 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 289 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write(")\r\n        {\r\n            if (level >= ValidationLevel.Detailed)\r\n            {\r\n" +
                     "                result = result.WithResult(isValid: false, $\"6.4.2. minItems - {" +
                     "arrayLength} is less than the minimum number of items ");
@@ -692,13 +697,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 295 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 293 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( MinItems ));
             
             #line default
             #line hidden
             
-            #line 295 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 293 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write(".\");\r\n            }\r\n            else if (level >= ValidationLevel.Basic)\r\n      " +
                     "      {\r\n                result = result.WithResult(isValid: false, \"6.4.2. minI" +
                     "tems - item count is less than the minimum number of items ");
@@ -706,20 +711,20 @@ namespace ");
             #line default
             #line hidden
             
-            #line 299 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 297 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( MinItems ));
             
             #line default
             #line hidden
             
-            #line 299 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 297 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write(".\");\r\n            }\r\n            else\r\n            {\r\n                return resu" +
                     "lt.WithResult(isValid: false);\r\n            }\r\n\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 307 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 305 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
   }
     if (HasContains)
     {
@@ -729,19 +734,19 @@ namespace ");
             #line default
             #line hidden
             
-            #line 312 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 310 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write("\r\n        if (containsCount > ");
             
             #line default
             #line hidden
             
-            #line 313 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 311 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( MaxContains ));
             
             #line default
             #line hidden
             
-            #line 313 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 311 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write(")\r\n        {\r\n            if (level >= ValidationLevel.Detailed)\r\n            {\r\n" +
                     "                result = result.WithResult(isValid: false, $\"6.4.4. maxContains " +
                     "- {containsCount} exceeds maximum number of matching items ");
@@ -749,13 +754,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 317 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 315 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( MaxContains ));
             
             #line default
             #line hidden
             
-            #line 317 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 315 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write(".\");\r\n            }\r\n            else if (level >= ValidationLevel.Basic)\r\n      " +
                     "      {\r\n                result = result.WithResult(isValid: false, \"6.4.4. maxC" +
                     "ontains - item count exceeds maximum number of matching items ");
@@ -763,20 +768,20 @@ namespace ");
             #line default
             #line hidden
             
-            #line 321 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 319 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( MaxContains ));
             
             #line default
             #line hidden
             
-            #line 321 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 319 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write(".\");\r\n            }\r\n            else\r\n            {\r\n                return resu" +
                     "lt.WithResult(isValid: false);\r\n            }\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 328 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 326 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
       }
         if (HasMinContains)
         { 
@@ -784,19 +789,19 @@ namespace ");
             #line default
             #line hidden
             
-            #line 331 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 329 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write("\r\n        if (containsCount < ");
             
             #line default
             #line hidden
             
-            #line 332 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 330 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( MinContains ));
             
             #line default
             #line hidden
             
-            #line 332 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 330 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write(")\r\n        {\r\n            if (level >= ValidationLevel.Detailed)\r\n            {\r\n" +
                     "                result = result.WithResult(isValid: false, $\"6.4.5. minContains " +
                     "- {containsCount} is less than minimum number of matching items ");
@@ -804,13 +809,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 336 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 334 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( MinContains ));
             
             #line default
             #line hidden
             
-            #line 336 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 334 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write(".\");\r\n            }\r\n            else if (level >= ValidationLevel.Basic)\r\n      " +
                     "      {\r\n                result = result.WithResult(isValid: false, \"6.4.5. minC" +
                     "ontains - item count is less than minimum number of matching items ");
@@ -818,20 +823,20 @@ namespace ");
             #line default
             #line hidden
             
-            #line 340 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 338 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( MinContains ));
             
             #line default
             #line hidden
             
-            #line 340 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 338 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write(".\");\r\n            }\r\n            else\r\n            {\r\n                return resu" +
                     "lt.WithResult(isValid: false);\r\n            }\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 347 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 345 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
       }
         else
         { 
@@ -839,7 +844,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 350 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 348 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write(@"
         if (containsCount == 0)
         {
@@ -861,20 +866,20 @@ namespace ");
             #line default
             #line hidden
             
-            #line 366 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 364 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
       }
     } 
             
             #line default
             #line hidden
             
-            #line 368 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 366 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
             this.Write("\r\n        return result;\r\n    }\r\n}\r\n");
             
             #line default
             #line hidden
             
-            #line 372 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
+            #line 370 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft201909\Templates\CodeGenerator.Validate.Array.tt"
  EndNesting(); 
             
             #line default

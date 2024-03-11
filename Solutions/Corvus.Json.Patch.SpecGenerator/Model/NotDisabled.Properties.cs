@@ -16,7 +16,7 @@ using Corvus.Json.Internal;
 
 namespace Corvus.Json.Patch.SpecGenerator;
 /// <summary>
-/// A type generated from a JsonSchema specification.
+/// Generated from JSON Schema.
 /// </summary>
 public readonly partial struct NotDisabled
 {
@@ -37,7 +37,7 @@ public readonly partial struct NotDisabled
     }
 
     /// <summary>
-    /// Gets Disabled.
+    /// Gets the (optional) <c>disabled</c> property.
     /// </summary>
     public Corvus.Json.JsonNotAny Disabled
     {

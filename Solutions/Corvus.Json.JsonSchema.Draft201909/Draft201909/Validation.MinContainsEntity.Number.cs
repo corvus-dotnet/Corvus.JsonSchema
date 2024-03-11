@@ -18,7 +18,7 @@ namespace Corvus.Json.JsonSchema.Draft201909;
 public readonly partial struct Validation
 {
     /// <summary>
-    /// A type generated from a JsonSchema specification.
+    /// Generated from JSON Schema.
     /// </summary>
     public readonly partial struct MinContainsEntity : IJsonNumber<MinContainsEntity>, IAdditionOperators<MinContainsEntity, MinContainsEntity, MinContainsEntity>, ISubtractionOperators<MinContainsEntity, MinContainsEntity, MinContainsEntity>, IMultiplyOperators<MinContainsEntity, MinContainsEntity, MinContainsEntity>, IDivisionOperators<MinContainsEntity, MinContainsEntity, MinContainsEntity>, IIncrementOperators<MinContainsEntity>, IDecrementOperators<MinContainsEntity>
     {

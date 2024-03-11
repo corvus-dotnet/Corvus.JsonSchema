@@ -18,7 +18,7 @@ namespace Corvus.Json.JsonSchema.Draft7;
 public readonly partial struct Schema
 {
     /// <summary>
-    /// A type generated from a JsonSchema specification.
+    /// Generated from JSON Schema.
     /// </summary>
     public readonly partial struct NonNegativeInteger : IJsonNumber<NonNegativeInteger>, IAdditionOperators<NonNegativeInteger, NonNegativeInteger, NonNegativeInteger>, ISubtractionOperators<NonNegativeInteger, NonNegativeInteger, NonNegativeInteger>, IMultiplyOperators<NonNegativeInteger, NonNegativeInteger, NonNegativeInteger>, IDivisionOperators<NonNegativeInteger, NonNegativeInteger, NonNegativeInteger>, IIncrementOperators<NonNegativeInteger>, IDecrementOperators<NonNegativeInteger>
     {

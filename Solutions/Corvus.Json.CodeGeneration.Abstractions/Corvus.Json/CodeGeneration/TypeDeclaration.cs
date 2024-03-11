@@ -425,7 +425,8 @@ public class TypeDeclaration
         // Merge whether this is a required property with the parent
         PropertyDeclaration propertyToAdd =
             propertyDeclaration.WithRequired(
-                propertyDeclaration.IsRequired || original.IsRequired);
+                propertyDeclaration.IsRequired || original.IsRequired)
+            .WithXmlDocumentationRemarks(propertyDeclaration.XmlDocumentationRemarks ?? original.XmlDocumentationRemarks);
 
         this.Properties = this.Properties.SetItem(index, propertyToAdd);
     }

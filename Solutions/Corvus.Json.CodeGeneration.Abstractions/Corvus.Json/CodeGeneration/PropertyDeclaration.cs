@@ -18,7 +18,8 @@ public class PropertyDeclaration
     /// <param name="isInLocalScope">Whether the property is in the local scope.</param>
     /// <param name="hasDefaultValue">Determines whether this property has a default value.</param>
     /// <param name="defaultValue">Gets the raw string value for the default value, or null if there is no default value.</param>
-    public PropertyDeclaration(TypeDeclaration type, string jsonPropertyName, bool isRequired, bool isInLocalScope, bool hasDefaultValue, string? defaultValue)
+    /// <param name="xmlDocumentationRemarks">Gets the formatted documentation for the property.</param>
+    public PropertyDeclaration(TypeDeclaration type, string jsonPropertyName, bool isRequired, bool isInLocalScope, bool hasDefaultValue, string? defaultValue, string? xmlDocumentationRemarks)
     {
         this.Type = type;
         this.JsonPropertyName = jsonPropertyName;
@@ -26,6 +27,7 @@ public class PropertyDeclaration
         this.IsDefinedInLocalScope = isInLocalScope;
         this.DefaultValue = defaultValue;
         this.HasDefaultValue = hasDefaultValue;
+        this.XmlDocumentationRemarks = xmlDocumentationRemarks;
     }
 
     /// <summary>
@@ -47,7 +49,7 @@ public class PropertyDeclaration
     /// Gets a value indicating whether this property is defined in the local scope.
     /// </summary>
     /// <remarks>If true, then this property is defined in the current schema. If false, it
-    /// has been dervied from a merged type.</remarks>
+    /// has been derived from a merged type.</remarks>
     public bool IsDefinedInLocalScope { get; }
 
     /// <summary>
@@ -76,12 +78,35 @@ public class PropertyDeclaration
     public string? DefaultValue { get; }
 
     /// <summary>
+    /// Gets a value indicating whether this property has formatted XML documentation remarks.
+    /// </summary>
+    public bool HasXmlDocumentationRemarks => !string.IsNullOrWhiteSpace(this.XmlDocumentationRemarks);
+
+    /// <summary>
+    /// Gets the formatted XML documentation remarks for the property declaration.
+    /// </summary>
+    /// <remarks>
+    /// If present, this may be embedded between &lt;remarks&gt; and &lt;/remarks&gt; elements in the generated code.
+    /// </remarks>
+    public string? XmlDocumentationRemarks { get; }
+
+    /// <summary>
     /// Construct a copy with the specified <see cref="IsRequired"/> value.
     /// </summary>
     /// <param name="isRequired">Whether the property is required.</param>
     /// <returns>The new instance with isRequired set.</returns>
     public PropertyDeclaration WithRequired(bool isRequired)
     {
-        return new PropertyDeclaration(this.Type, this.JsonPropertyName, isRequired, this.IsDefinedInLocalScope, this.HasDefaultValue, this.DefaultValue);
+        return new PropertyDeclaration(this.Type, this.JsonPropertyName, isRequired, this.IsDefinedInLocalScope, this.HasDefaultValue, this.DefaultValue, this.XmlDocumentationRemarks);
+    }
+
+    /// <summary>
+    /// Construct a copy with the specified <see cref="XmlDocumentationRemarks"/> value.
+    /// </summary>
+    /// <param name="xmlDocumentationRemarks">Gets the formatted documentation for the property.</param>
+    /// <returns>The new instance with isRequired set.</returns>
+    public PropertyDeclaration WithXmlDocumentationRemarks(string? xmlDocumentationRemarks)
+    {
+        return new PropertyDeclaration(this.Type, this.JsonPropertyName, this.IsRequired, this.IsDefinedInLocalScope, this.HasDefaultValue, this.DefaultValue, xmlDocumentationRemarks);
     }
 }

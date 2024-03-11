@@ -16,7 +16,7 @@ using Corvus.Json.Internal;
 
 namespace Corvus.Json.Patch.SpecGenerator;
 /// <summary>
-/// A type generated from a JsonSchema specification.
+/// Generated from JSON Schema.
 /// </summary>
 public readonly partial struct ScenarioCommon
 {
@@ -55,7 +55,7 @@ public readonly partial struct ScenarioCommon
     }
 
     /// <summary>
-    /// Gets Comment.
+    /// Gets the (optional) <c>comment</c> property.
     /// </summary>
     public Corvus.Json.JsonString Comment
     {
@@ -87,7 +87,7 @@ public readonly partial struct ScenarioCommon
     }
 
     /// <summary>
-    /// Gets Doc.
+    /// Gets the <c>doc</c> property. If the instance is valid, this property will be not be <c>undefined</c>.
     /// </summary>
     public Corvus.Json.JsonAny Doc
     {
@@ -119,7 +119,7 @@ public readonly partial struct ScenarioCommon
     }
 
     /// <summary>
-    /// Gets Patch.
+    /// Gets the <c>patch</c> property. If the instance is valid, this property will be not be <c>undefined</c>.
     /// </summary>
     public Corvus.Json.JsonAny Patch
     {

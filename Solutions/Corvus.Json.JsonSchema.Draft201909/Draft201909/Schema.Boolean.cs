@@ -16,7 +16,7 @@ using Corvus.Json.Internal;
 
 namespace Corvus.Json.JsonSchema.Draft201909;
 /// <summary>
-/// A type generated from a JsonSchema specification.
+/// Core and Validation specifications meta-schema
 /// </summary>
 public readonly partial struct Schema : IJsonBoolean<Schema>
 {

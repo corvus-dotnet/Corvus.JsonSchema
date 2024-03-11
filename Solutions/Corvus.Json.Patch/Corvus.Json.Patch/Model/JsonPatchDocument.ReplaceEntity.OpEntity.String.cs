@@ -21,7 +21,7 @@ public readonly partial struct JsonPatchDocument
     public readonly partial struct ReplaceEntity
     {
         /// <summary>
-        /// A type generated from a JsonSchema specification.
+        /// Generated from JSON Schema.
         /// </summary>
         public readonly partial struct OpEntity : IJsonString<OpEntity>
         {

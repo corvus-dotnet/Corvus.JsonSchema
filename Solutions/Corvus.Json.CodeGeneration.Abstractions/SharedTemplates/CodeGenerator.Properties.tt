@@ -28,9 +28,7 @@ using Corvus.Json.Internal;
 namespace <#= Namespace #>;
 
 <# BeginNesting(); #>
-/// <summary>
-/// A type generated from a JsonSchema specification.
-/// </summary>
+<#= FormattedTypeDocumentation #>
 public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 {
     /// <summary>
@@ -55,8 +53,13 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     { #>
 
     /// <summary>
-    /// Gets <#= property.DotnetPropertyName #>.
+    /// Gets the <#= property.IsRequired ? "" : "(optional) " #><c><#= Formatting.FormatLiteralOrNull(property.JsonPropertyName, false) #></c> property.<#= property.IsRequired ? " If the instance is valid, this property will be not be <c>undefined</c>." : "" #>
     /// </summary>
+<#      if (property.HasXmlDocumentationRemarks)
+		{ #>
+    /// <remarks>
+    <#= property.XmlDocumentationRemarks #>/// </remarks>
+<#      } #>
     public <#= property.Type.FullyQualifiedDotnetTypeName #> <#= property.DotnetPropertyName #>
     {
         get

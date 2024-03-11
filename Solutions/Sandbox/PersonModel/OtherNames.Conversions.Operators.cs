@@ -14,8 +14,16 @@ using Corvus.Json.Internal;
 
 namespace Corvus.Json.Benchmarking.Models;
 /// <summary>
-/// A type generated from a JsonSchema specification.
+/// Generated from JSON Schema.
 /// </summary>
+/// <remarks>
+/// <para>
+/// A person's other (middle) names.
+/// </para>
+/// <para>
+/// This may be either a single name represented as a string, or an array of strings, representing one or more other names.
+/// </para>
+/// </remarks>
 public readonly partial struct OtherNames
 {
     /// <summary>

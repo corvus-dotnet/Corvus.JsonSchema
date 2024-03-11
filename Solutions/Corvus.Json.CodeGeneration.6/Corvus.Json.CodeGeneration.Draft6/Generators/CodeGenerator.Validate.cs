@@ -57,50 +57,55 @@ namespace ");
             #line hidden
             
             #line 21 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
-            this.Write("/// <summary>\r\n/// A type generated from a JsonSchema specification.\r\n/// </summa" +
-                    "ry>\r\npublic readonly partial struct ");
+            this.Write(this.ToStringHelper.ToStringWithCulture( FormattedTypeDocumentation ));
             
             #line default
             #line hidden
             
-            #line 24 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 21 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            this.Write("\r\npublic readonly partial struct ");
+            
+            #line default
+            #line hidden
+            
+            #line 22 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 24 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 22 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write("\r\n{\r\n");
             
             #line default
             #line hidden
             
-            #line 26 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 24 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
   if (HasMultipleOf)
     { 
             
             #line default
             #line hidden
             
-            #line 28 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 26 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write("    private static readonly BinaryJsonNumber __Corvus_MultipleOf = new(");
             
             #line default
             #line hidden
             
-            #line 28 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 26 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( MultipleOf ));
             
             #line default
             #line hidden
             
-            #line 28 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 26 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write(");\r\n\r\n");
             
             #line default
             #line hidden
             
-            #line 30 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 28 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
   }
 
     if (HasMaximum)
@@ -109,25 +114,25 @@ namespace ");
             #line default
             #line hidden
             
-            #line 34 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 32 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write("    private static readonly BinaryJsonNumber __Corvus_Maximum = new(");
             
             #line default
             #line hidden
             
-            #line 34 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 32 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( Maximum ));
             
             #line default
             #line hidden
             
-            #line 34 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 32 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write(");\r\n\r\n");
             
             #line default
             #line hidden
             
-            #line 36 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 34 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
   }
 
     if (HasMinimum)
@@ -136,25 +141,25 @@ namespace ");
             #line default
             #line hidden
             
-            #line 40 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 38 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write("    private static readonly BinaryJsonNumber __Corvus_Minimum = new(");
             
             #line default
             #line hidden
             
-            #line 40 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 38 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( Minimum ));
             
             #line default
             #line hidden
             
-            #line 40 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 38 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write(");\r\n\r\n");
             
             #line default
             #line hidden
             
-            #line 42 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 40 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
   }
 
     if (HasExclusiveMaximum)
@@ -163,25 +168,25 @@ namespace ");
             #line default
             #line hidden
             
-            #line 46 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 44 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write("    private static readonly BinaryJsonNumber __Corvus_ExclusiveMaximum = new(");
             
             #line default
             #line hidden
             
-            #line 46 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 44 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( ExclusiveMaximum ));
             
             #line default
             #line hidden
             
-            #line 46 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 44 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write(");\r\n\r\n");
             
             #line default
             #line hidden
             
-            #line 48 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 46 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
   }
 
     if (HasExclusiveMinimum)
@@ -190,31 +195,31 @@ namespace ");
             #line default
             #line hidden
             
-            #line 52 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 50 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write("    private static readonly BinaryJsonNumber __Corvus_ExclusiveMinimum = new(");
             
             #line default
             #line hidden
             
-            #line 52 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 50 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( ExclusiveMinimum ));
             
             #line default
             #line hidden
             
-            #line 52 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 50 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write(");\r\n\r\n");
             
             #line default
             #line hidden
             
-            #line 54 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 52 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 55 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 53 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write(@"    /// <inheritdoc/>
     public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
     {
@@ -232,32 +237,32 @@ namespace ");
             #line default
             #line hidden
             
-            #line 67 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 65 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.LocatedSchema.Location ));
             
             #line default
             #line hidden
             
-            #line 67 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 65 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write("\");\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 69 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 67 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
   if (HasAdditionalProperties)
     { 
             
             #line default
             #line hidden
             
-            #line 71 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 69 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write("\r\n        result = result.UsingEvaluatedProperties();\r\n");
             
             #line default
             #line hidden
             
-            #line 73 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 71 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
   }
     if (HasAdditionalItems)
     { 
@@ -265,13 +270,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 76 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 74 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write("\r\n        result = result.UsingEvaluatedItems();\r\n");
             
             #line default
             #line hidden
             
-            #line 78 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 76 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
   }
     if (HasRef)
     { 
@@ -279,7 +284,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 81 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 79 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write("\r\n        result = this.ValidateRef(result, level);\r\n        if (level == Validat" +
                     "ionLevel.Flag && !result.IsValid)\r\n        {\r\n            return result;\r\n      " +
                     "  }\r\n");
@@ -287,7 +292,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 87 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 85 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
   }
     if ((HasExplicitType || HasFormat || HasMediaTypeOrEncoding) || (HasItems || HasContains || HasUniqueItems || HasMaxItems || HasMinItems|| HasAdditionalItems) || (HasDependentRequired || HasLocalProperties || HasRequired || HasMaxProperties || HasMinProperties || HasDependentSchemas || HasPropertyNames || HasPatternProperties || ((AllowsAdditionalProperties && (HasAdditionalProperties)))))
     { 
@@ -295,13 +300,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 90 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 88 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write("\r\n        JsonValueKind valueKind = this.ValueKind;\r\n");
             
             #line default
             #line hidden
             
-            #line 92 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 90 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
   }
     if (HasExplicitType || HasFormat || HasMediaTypeOrEncoding)
     {
@@ -311,7 +316,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 97 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 95 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write("\r\n        result = this.ValidateType(valueKind, result, level);\r\n        if (leve" +
                     "l == ValidationLevel.Flag && !result.IsValid)\r\n        {\r\n            return res" +
                     "ult;\r\n        }\r\n");
@@ -319,7 +324,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 103 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 101 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
       }
         if (HasFormat)
         { 
@@ -327,7 +332,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 106 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 104 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write("\r\n        result = this.ValidateFormat(valueKind, result, level);\r\n        if (le" +
                     "vel == ValidationLevel.Flag && !result.IsValid)\r\n        {\r\n            return r" +
                     "esult;\r\n        }\r\n");
@@ -335,7 +340,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 112 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 110 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
       }
         if (HasMediaTypeOrEncoding)
         { 
@@ -343,7 +348,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 115 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 113 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write("\r\n        result = this.ValidateMediaTypeAndEncoding(valueKind, result, level);\r\n" +
                     "        if (level == ValidationLevel.Flag && !result.IsValid)\r\n        {\r\n      " +
                     "      return result;\r\n        }\r\n");
@@ -351,7 +356,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 121 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 119 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
       }
     }
     if (HasConst)
@@ -360,7 +365,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 125 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 123 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write("\r\n        result = Corvus.Json.Validate.ValidateConst(this, result, level, __Corv" +
                     "usConstValue);\r\n        if (level == ValidationLevel.Flag && !result.IsValid)\r\n " +
                     "       {\r\n            return result;\r\n        }\r\n");
@@ -368,7 +373,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 131 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 129 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
   }
     if (HasEnum)
     { 
@@ -376,70 +381,70 @@ namespace ");
             #line default
             #line hidden
             
-            #line 134 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 132 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write("        result = Corvus.Json.Validate.ValidateEnum(\r\n            this,\r\n         " +
                     "   result,\r\n            level");
             
             #line default
             #line hidden
             
-            #line 137 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 135 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( EnumValues.Length > 0 ? "," : ");" ));
             
             #line default
             #line hidden
             
-            #line 137 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 135 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write("\r\n");
             
             #line default
             #line hidden
             
-            #line 138 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 136 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
       for(int enumIndex = 0; enumIndex < EnumValues.Length; ++enumIndex)
         { 
             
             #line default
             #line hidden
             
-            #line 140 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 138 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write("            EnumValues.Item");
             
             #line default
             #line hidden
             
-            #line 140 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 138 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( enumIndex ));
             
             #line default
             #line hidden
             
-            #line 140 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 138 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( enumIndex < (EnumValues.Length - 1) ? "," : ");" ));
             
             #line default
             #line hidden
             
-            #line 140 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 138 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write("\r\n");
             
             #line default
             #line hidden
             
-            #line 141 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 139 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
       } 
             
             #line default
             #line hidden
             
-            #line 142 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 140 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write("        if (level == ValidationLevel.Flag && !result.IsValid)\r\n        {\r\n       " +
                     "     return result;\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 146 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 144 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
   }
     if (HasMultipleOf || HasMaximum || HasMinimum || HasExclusiveMaximum || HasExclusiveMinimum)
     { 
@@ -447,19 +452,43 @@ namespace ");
             #line default
             #line hidden
             
-            #line 149 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 147 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write("\r\n        result = Corvus.Json.Validate.ValidateNumber(\r\n            this,\r\n     " +
                     "       result,\r\n            level,\r\n            ");
             
             #line default
             #line hidden
             
-            #line 154 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 152 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( HasMultipleOf ? "__Corvus_MultipleOf" : "BinaryJsonNumber.None" ));
             
             #line default
             #line hidden
             
+            #line 152 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            this.Write(",\r\n            ");
+            
+            #line default
+            #line hidden
+            
+            #line 153 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( HasMaximum ? "__Corvus_Maximum" : "BinaryJsonNumber.None" ));
+            
+            #line default
+            #line hidden
+            
+            #line 153 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            this.Write(",\r\n            ");
+            
+            #line default
+            #line hidden
+            
+            #line 154 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( HasExclusiveMaximum ? "__Corvus_ExclusiveMaximum" : "BinaryJsonNumber.None" ));
+            
+            #line default
+            #line hidden
+            
             #line 154 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write(",\r\n            ");
             
@@ -467,7 +496,7 @@ namespace ");
             #line hidden
             
             #line 155 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( HasMaximum ? "__Corvus_Maximum" : "BinaryJsonNumber.None" ));
+            this.Write(this.ToStringHelper.ToStringWithCulture( HasMinimum ? "__Corvus_Minimum" : "BinaryJsonNumber.None" ));
             
             #line default
             #line hidden
@@ -479,43 +508,19 @@ namespace ");
             #line hidden
             
             #line 156 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( HasExclusiveMaximum ? "__Corvus_ExclusiveMaximum" : "BinaryJsonNumber.None" ));
-            
-            #line default
-            #line hidden
-            
-            #line 156 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
-            this.Write(",\r\n            ");
-            
-            #line default
-            #line hidden
-            
-            #line 157 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( HasMinimum ? "__Corvus_Minimum" : "BinaryJsonNumber.None" ));
-            
-            #line default
-            #line hidden
-            
-            #line 157 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
-            this.Write(",\r\n            ");
-            
-            #line default
-            #line hidden
-            
-            #line 158 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( HasExclusiveMinimum ? "__Corvus_ExclusiveMinimum" : "BinaryJsonNumber.None" ));
             
             #line default
             #line hidden
             
-            #line 158 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 156 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write(");\r\n\r\n        if (level == ValidationLevel.Flag && !result.IsValid)\r\n        {\r\n " +
                     "           return result;\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 164 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 162 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
   }
     if (HasMaxLength || HasMinLength || HasPattern)
     { 
@@ -523,51 +528,51 @@ namespace ");
             #line default
             #line hidden
             
-            #line 167 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 165 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write("\r\n        result = Corvus.Json.Validate.ValidateString(\r\n            this,\r\n     " +
                     "       result,\r\n            level,\r\n            ");
             
             #line default
             #line hidden
             
-            #line 172 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 170 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( HasMaxLength ? MaxLength : "null" ));
             
             #line default
             #line hidden
             
-            #line 172 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 170 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write(",\r\n            ");
             
             #line default
             #line hidden
             
-            #line 173 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 171 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( HasMinLength ? MinLength : "null" ));
             
             #line default
             #line hidden
             
-            #line 173 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 171 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write(",\r\n            ");
             
             #line default
             #line hidden
             
-            #line 174 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 172 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( HasPattern ? "__CorvusPatternExpression" : "null" ));
             
             #line default
             #line hidden
             
-            #line 174 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 172 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write(");\r\n\r\n        if (level == ValidationLevel.Flag && !result.IsValid)\r\n        {\r\n " +
                     "           return result;\r\n        }\r\n");
             
             #line default
             #line hidden
             
-            #line 180 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 178 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
   }
     if (HasNot)
     { 
@@ -575,7 +580,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 183 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 181 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write("\r\n        result = this.ValidateNot(result, level);\r\n        if (level == Validat" +
                     "ionLevel.Flag && !result.IsValid)\r\n        {\r\n            return result;\r\n      " +
                     "  }\r\n");
@@ -583,7 +588,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 189 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 187 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
   }
     if (HasAllOf)
     { 
@@ -591,7 +596,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 192 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 190 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write("\r\n        result = this.ValidateAllOf(result, level);\r\n        if (level == Valid" +
                     "ationLevel.Flag && !result.IsValid)\r\n        {\r\n            return result;\r\n    " +
                     "    }\r\n");
@@ -599,7 +604,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 198 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 196 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
   }
     if (HasAnyOf)
     { 
@@ -607,7 +612,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 201 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 199 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write("\r\n        result = this.ValidateAnyOf(result, level);\r\n        if (level == Valid" +
                     "ationLevel.Flag && !result.IsValid)\r\n        {\r\n            return result;\r\n    " +
                     "    }\r\n");
@@ -615,7 +620,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 207 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 205 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
   }
     if (HasOneOf)
     { 
@@ -623,7 +628,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 210 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 208 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write("\r\n        result = this.ValidateOneOf(result, level);\r\n        if (level == Valid" +
                     "ationLevel.Flag && !result.IsValid)\r\n        {\r\n            return result;\r\n    " +
                     "    }\r\n");
@@ -631,7 +636,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 216 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 214 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
   }
     if (HasDependentRequired || HasLocalProperties || HasRequired || HasMaxProperties || HasMinProperties || HasDependentSchemas || HasPropertyNames || HasPatternProperties || ((AllowsAdditionalProperties && (HasAdditionalProperties)) || !AllowsAdditionalProperties))
     { 
@@ -639,7 +644,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 219 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 217 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write("\r\n        result = this.ValidateObject(valueKind, result, level);\r\n        if (le" +
                     "vel == ValidationLevel.Flag && !result.IsValid)\r\n        {\r\n            return r" +
                     "esult;\r\n        }\r\n");
@@ -647,7 +652,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 225 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 223 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
   }
     if (HasItems || HasContains || HasUniqueItems || HasMaxItems || HasMinItems || HasAdditionalItems)
     { 
@@ -655,7 +660,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 228 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 226 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write("\r\n        result = this.ValidateArray(valueKind, result, level);\r\n        if (lev" +
                     "el == ValidationLevel.Flag && !result.IsValid)\r\n        {\r\n            return re" +
                     "sult;\r\n        }\r\n");
@@ -663,20 +668,20 @@ namespace ");
             #line default
             #line hidden
             
-            #line 234 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 232 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 235 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 233 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
             this.Write("        if (level != ValidationLevel.Flag)\r\n        {\r\n            result = resul" +
                     "t.PopLocation();\r\n        }\r\n\r\n        return result;\r\n    }\r\n}\r\n");
             
             #line default
             #line hidden
             
-            #line 243 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
+            #line 241 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.Draft6\Templates\CodeGenerator.Validate.tt"
  EndNesting(); 
             
             #line default

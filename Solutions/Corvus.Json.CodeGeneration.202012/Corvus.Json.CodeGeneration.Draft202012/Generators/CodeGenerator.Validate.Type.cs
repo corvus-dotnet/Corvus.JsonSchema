@@ -16,7 +16,7 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft202012 {
     public partial class CodeGeneratorValidateType : CodeGeneratorValidateTypeBase {
         
         
-        #line 150 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
+        #line 148 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
 
     public bool ShouldGenerate
     {
@@ -83,19 +83,24 @@ namespace ");
             #line hidden
             
             #line 27 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
-            this.Write("/// <summary>\r\n/// A type generated from a JsonSchema specification.\r\n/// </summa" +
-                    "ry>\r\npublic readonly partial struct ");
+            this.Write(this.ToStringHelper.ToStringWithCulture( FormattedTypeDocumentation ));
             
             #line default
             #line hidden
             
-            #line 30 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
+            #line 27 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
+            this.Write("\r\npublic readonly partial struct ");
+            
+            #line default
+            #line hidden
+            
+            #line 28 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 30 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
+            #line 28 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
             this.Write("\r\n{\r\n    private ValidationContext ValidateType(JsonValueKind valueKind, in Valid" +
                     "ationContext validationContext, ValidationLevel level)\r\n    {\r\n        Validatio" +
                     "nContext result = validationContext;\r\n        bool isValid = false;\r\n");
@@ -103,14 +108,14 @@ namespace ");
             #line default
             #line hidden
             
-            #line 36 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
+            #line 34 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
   if (HasStringType)
     { 
             
             #line default
             #line hidden
             
-            #line 38 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
+            #line 36 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
             this.Write(@"
         ValidationContext localResultString = Corvus.Json.Validate.TypeString(valueKind, result.CreateChildContext(), level);
         if (level == ValidationLevel.Flag && localResultString.IsValid)
@@ -127,7 +132,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 49 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
+            #line 47 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
   }
     if (HasObjectType)
     { 
@@ -135,7 +140,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 52 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
+            #line 50 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
             this.Write(@"
         ValidationContext localResultObject = Corvus.Json.Validate.TypeObject(valueKind, result.CreateChildContext(), level);
         if (level == ValidationLevel.Flag && localResultObject.IsValid)
@@ -152,7 +157,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 63 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
+            #line 61 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
   }
     if (HasArrayType)
     { 
@@ -160,7 +165,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 66 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
+            #line 64 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
             this.Write(@"
         ValidationContext localResultArray = Corvus.Json.Validate.TypeArray(valueKind, result.CreateChildContext(), level);
         if (level == ValidationLevel.Flag && localResultArray.IsValid)
@@ -177,7 +182,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 77 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
+            #line 75 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
   }
     if (HasNumberType)
     { 
@@ -185,7 +190,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 80 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
+            #line 78 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
             this.Write(@"
         ValidationContext localResultNumber = Corvus.Json.Validate.TypeNumber(valueKind, result.CreateChildContext(), level);
         if (level == ValidationLevel.Flag && localResultNumber.IsValid)
@@ -202,7 +207,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 91 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
+            #line 89 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
   }
     if (HasIntegerType)
     { 
@@ -210,7 +215,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 94 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
+            #line 92 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
             this.Write(@"
         ValidationContext localResultInteger = Corvus.Json.Validate.TypeInteger(this, result.CreateChildContext(), level);
         if (level == ValidationLevel.Flag && localResultInteger.IsValid)
@@ -227,7 +232,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 105 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
+            #line 103 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
   }
     if (HasBooleanType)
     { 
@@ -235,7 +240,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 108 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
+            #line 106 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
             this.Write(@"
         ValidationContext localResultBoolean = Corvus.Json.Validate.TypeBoolean(valueKind, result.CreateChildContext(), level);
         if (level == ValidationLevel.Flag && localResultBoolean.IsValid)
@@ -252,7 +257,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 119 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
+            #line 117 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
   }
     if (HasNullType)
     { 
@@ -260,7 +265,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 122 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
+            #line 120 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
             this.Write(@"
         ValidationContext localResultNull = Corvus.Json.Validate.TypeNull(valueKind, result.CreateChildContext(), level);
         if (level == ValidationLevel.Flag && localResultNull.IsValid)
@@ -277,31 +282,67 @@ namespace ");
             #line default
             #line hidden
             
-            #line 133 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
+            #line 131 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 134 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
+            #line 132 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
             this.Write("\r\n        result = result.MergeResults(\r\n            isValid,\r\n            level," +
                     "\r\n");
             
             #line default
             #line hidden
             
-            #line 138 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
+            #line 136 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( HasStringType ? "           localResultString" : "" ));
             
             #line default
             #line hidden
             
-            #line 138 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
+            #line 136 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( HasStringType ? (HasObjectType || HasArrayType || HasNumberType || HasIntegerType || HasBooleanType || HasNullType ? "," : ");") : "" ));
             
             #line default
             #line hidden
             
+            #line 136 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
+            this.Write("\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 137 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( HasObjectType ? "           localResultObject" : "" ));
+            
+            #line default
+            #line hidden
+            
+            #line 137 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( HasObjectType ? (HasArrayType || HasNumberType || HasIntegerType || HasBooleanType || HasNullType ? "," : ");") : "" ));
+            
+            #line default
+            #line hidden
+            
+            #line 137 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
+            this.Write("\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 138 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( HasArrayType ? "            localResultArray" : "" ));
+            
+            #line default
+            #line hidden
+            
+            #line 138 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( HasArrayType ? (HasNumberType || HasIntegerType || HasBooleanType || HasNullType ? "," : ");") : "" ));
+            
+            #line default
+            #line hidden
+            
             #line 138 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
             this.Write("\r\n");
             
@@ -309,53 +350,53 @@ namespace ");
             #line hidden
             
             #line 139 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( HasObjectType ? "           localResultObject" : "" ));
-            
-            #line default
-            #line hidden
-            
-            #line 139 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( HasObjectType ? (HasArrayType || HasNumberType || HasIntegerType || HasBooleanType || HasNullType ? "," : ");") : "" ));
-            
-            #line default
-            #line hidden
-            
-            #line 139 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
-            this.Write("\r\n");
-            
-            #line default
-            #line hidden
-            
-            #line 140 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( HasArrayType ? "            localResultArray" : "" ));
-            
-            #line default
-            #line hidden
-            
-            #line 140 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( HasArrayType ? (HasNumberType || HasIntegerType || HasBooleanType || HasNullType ? "," : ");") : "" ));
-            
-            #line default
-            #line hidden
-            
-            #line 140 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
-            this.Write("\r\n");
-            
-            #line default
-            #line hidden
-            
-            #line 141 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( HasNumberType ? "           localResultNumber" : "" ));
             
             #line default
             #line hidden
             
-            #line 141 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
+            #line 139 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( HasNumberType ? (HasIntegerType || HasBooleanType || HasNullType ? "," : ");") : "" ));
             
             #line default
             #line hidden
             
+            #line 139 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
+            this.Write("\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 140 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( HasIntegerType ? "          localResultInteger" : "" ));
+            
+            #line default
+            #line hidden
+            
+            #line 140 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( HasIntegerType ? (HasBooleanType || HasNullType ? "," : ");") : "" ));
+            
+            #line default
+            #line hidden
+            
+            #line 140 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
+            this.Write("\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 141 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( HasBooleanType ? "          localResultBoolean" : "" ));
+            
+            #line default
+            #line hidden
+            
+            #line 141 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( HasBooleanType ? (HasNullType ? "," : ");") : "" ));
+            
+            #line default
+            #line hidden
+            
             #line 141 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
             this.Write("\r\n");
             
@@ -363,54 +404,18 @@ namespace ");
             #line hidden
             
             #line 142 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( HasIntegerType ? "          localResultInteger" : "" ));
-            
-            #line default
-            #line hidden
-            
-            #line 142 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( HasIntegerType ? (HasBooleanType || HasNullType ? "," : ");") : "" ));
-            
-            #line default
-            #line hidden
-            
-            #line 142 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
-            this.Write("\r\n");
-            
-            #line default
-            #line hidden
-            
-            #line 143 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( HasBooleanType ? "          localResultBoolean" : "" ));
-            
-            #line default
-            #line hidden
-            
-            #line 143 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( HasBooleanType ? (HasNullType ? "," : ");") : "" ));
-            
-            #line default
-            #line hidden
-            
-            #line 143 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
-            this.Write("\r\n");
-            
-            #line default
-            #line hidden
-            
-            #line 144 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( HasNullType ? "         localResultNull);" : "" ));
             
             #line default
             #line hidden
             
-            #line 144 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
+            #line 142 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
             this.Write("\r\n\r\n            return result;\r\n        }\r\n}\r\n");
             
             #line default
             #line hidden
             
-            #line 149 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
+            #line 147 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Validate.Type.tt"
  EndNesting(); 
             
             #line default

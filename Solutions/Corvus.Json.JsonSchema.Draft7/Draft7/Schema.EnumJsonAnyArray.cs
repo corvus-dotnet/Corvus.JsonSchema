@@ -19,7 +19,7 @@ namespace Corvus.Json.JsonSchema.Draft7;
 public readonly partial struct Schema
 {
     /// <summary>
-    /// A type generated from a JsonSchema specification.
+    /// Generated from JSON Schema.
     /// </summary>
     [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<EnumJsonAnyArray>))]
     public readonly partial struct EnumJsonAnyArray
@@ -51,7 +51,7 @@ public readonly partial struct Schema
         /// <summary>
         /// Gets the schema location from which this type was generated.
         /// </summary>
-        public static string SchemaLocation { get; } = "https://json-schema.org";
+        public static string SchemaLocation { get; } = "http://json-schema.org/draft-07/schema#/properties/enum";
         /// <summary>
         /// Gets a Null instance.
         /// </summary>

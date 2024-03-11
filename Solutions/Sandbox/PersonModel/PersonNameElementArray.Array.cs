@@ -16,8 +16,13 @@ using Corvus.Json.Internal;
 
 namespace Corvus.Json.Benchmarking.Models;
 /// <summary>
-/// A type generated from a JsonSchema specification.
+/// A component of a person's name.
 /// </summary>
+/// <remarks>
+/// <para>
+/// This is an array of strings, each of which is a component of a person's name.
+/// </para>
+/// </remarks>
 public readonly partial struct PersonNameElementArray : IJsonArray<PersonNameElementArray>
 {
     /// <summary>

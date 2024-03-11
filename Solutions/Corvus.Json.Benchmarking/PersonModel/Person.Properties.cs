@@ -16,7 +16,7 @@ using Corvus.Json.Internal;
 
 namespace Corvus.Json.Benchmarking.Models;
 /// <summary>
-/// A type generated from a JsonSchema specification.
+/// Represents a person.
 /// </summary>
 public readonly partial struct Person
 {
@@ -73,8 +73,13 @@ public readonly partial struct Person
     }
 
     /// <summary>
-    /// Gets DateOfBirth.
+    /// Gets the (optional) <c>dateOfBirth</c> property.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A person's date of birth.
+    /// </para>
+    /// </remarks>
     public Corvus.Json.JsonDate DateOfBirth
     {
         get
@@ -105,8 +110,13 @@ public readonly partial struct Person
     }
 
     /// <summary>
-    /// Gets Email.
+    /// Gets the (optional) <c>email</c> property.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A person's email address.
+    /// </para>
+    /// </remarks>
     public Corvus.Json.JsonEmail Email
     {
         get
@@ -137,8 +147,13 @@ public readonly partial struct Person
     }
 
     /// <summary>
-    /// Gets Height.
+    /// Gets the (optional) <c>height</c> property.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A person's height in meters.
+    /// </para>
+    /// </remarks>
     public Corvus.Json.Benchmarking.Models.HeightRangeDouble Height
     {
         get
@@ -169,8 +184,13 @@ public readonly partial struct Person
     }
 
     /// <summary>
-    /// Gets Name.
+    /// Gets the <c>name</c> property. If the instance is valid, this property will be not be <c>undefined</c>.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A person's name.
+    /// </para>
+    /// </remarks>
     public Corvus.Json.Benchmarking.Models.PersonName Name
     {
         get
@@ -201,8 +221,13 @@ public readonly partial struct Person
     }
 
     /// <summary>
-    /// Gets NetWorth.
+    /// Gets the (optional) <c>netWorth</c> property.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A person's net worth, in the local currency.
+    /// </para>
+    /// </remarks>
     public Corvus.Json.JsonDecimal NetWorth
     {
         get

@@ -17,7 +17,7 @@ using Corvus.Json.Internal;
 
 namespace Corvus.Json.JsonSchema.Draft201909;
 /// <summary>
-/// A type generated from a JsonSchema specification.
+/// Applicator vocabulary meta-schema
 /// </summary>
 [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<Applicator>))]
 public readonly partial struct Applicator

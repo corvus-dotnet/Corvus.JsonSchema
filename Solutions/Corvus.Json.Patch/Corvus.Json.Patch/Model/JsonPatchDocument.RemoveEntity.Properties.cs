@@ -18,8 +18,13 @@ namespace Corvus.Json.Patch.Model;
 public readonly partial struct JsonPatchDocument
 {
     /// <summary>
-    /// A type generated from a JsonSchema specification.
+    /// Generated from JSON Schema.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Remove operation. Only a path is specified.
+    /// </para>
+    /// </remarks>
     public readonly partial struct RemoveEntity
     {
         /// <summary>
@@ -48,7 +53,7 @@ public readonly partial struct JsonPatchDocument
         }
 
         /// <summary>
-        /// Gets Op.
+        /// Gets the <c>op</c> property. If the instance is valid, this property will be not be <c>undefined</c>.
         /// </summary>
         public Corvus.Json.Patch.Model.JsonPatchDocument.RemoveEntity.OpEntity Op
         {
@@ -80,7 +85,7 @@ public readonly partial struct JsonPatchDocument
         }
 
         /// <summary>
-        /// Gets Path.
+        /// Gets the <c>path</c> property. If the instance is valid, this property will be not be <c>undefined</c>.
         /// </summary>
         public Corvus.Json.JsonPointer Path
         {

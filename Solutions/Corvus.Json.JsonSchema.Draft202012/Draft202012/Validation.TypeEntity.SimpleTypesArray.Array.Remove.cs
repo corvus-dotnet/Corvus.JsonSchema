@@ -16,7 +16,7 @@ public readonly partial struct Validation
     public readonly partial struct TypeEntity
     {
         /// <summary>
-        /// A type generated from a JsonSchema specification.
+        /// Generated from JSON Schema.
         /// </summary>
         public readonly partial struct SimpleTypesArray
         {

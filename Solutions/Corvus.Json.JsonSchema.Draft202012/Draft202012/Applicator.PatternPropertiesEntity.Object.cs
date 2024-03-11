@@ -17,7 +17,7 @@ namespace Corvus.Json.JsonSchema.Draft202012;
 public readonly partial struct Applicator
 {
     /// <summary>
-    /// A type generated from a JsonSchema specification.
+    /// Generated from JSON Schema.
     /// </summary>
     public readonly partial struct PatternPropertiesEntity : IJsonObject<PatternPropertiesEntity>
     {

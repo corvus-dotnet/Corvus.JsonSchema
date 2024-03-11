@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Text;
 using System.Text.Json;
 using Corvus.Json.JsonSchema.Draft6;
 
@@ -20,6 +21,77 @@ public static class SchemaExtensionsDraft6
     public static Schema Schema(this TypeDeclaration typeDeclaration)
     {
         return typeDeclaration.LocatedSchema.Schema.As<Schema>();
+    }
+
+    /// <summary>
+    /// Format the documentation for the type.
+    /// </summary>
+    /// <param name="typeDeclaration">The type for which to format documentation.</param>
+    /// <returns>The class-level documentation for the type.</returns>
+    public static string FormatTypeDocumentation(this TypeDeclaration typeDeclaration)
+    {
+        StringBuilder documentation = new();
+        Schema schema = typeDeclaration.Schema();
+        documentation.AppendLine("/// <summary>");
+
+        if (schema.Title.IsNotNullOrUndefined())
+        {
+            documentation.Append("/// ");
+            documentation.AppendLine(Formatting.FormatLiteralOrNull(schema.Title.GetString(), false));
+        }
+        else
+        {
+            documentation.AppendLine("/// Generated from JSON Schema.");
+        }
+
+        documentation.AppendLine("/// </summary>");
+
+        if (schema.Description.IsNotNullOrUndefined() || schema.Examples.IsNotNullOrUndefined())
+        {
+            documentation.AppendLine("/// <remarks>");
+
+            if (schema.Description.IsNotNullOrUndefined())
+            {
+                // Unescaped new lines in the string value.
+                string[]? lines = schema.Description.GetString()?.Split("\n");
+                if (lines is string[] l)
+                {
+                    foreach (string line in l)
+                    {
+                        documentation.AppendLine("/// <para>");
+                        documentation.Append("/// ");
+                        documentation.AppendLine(Formatting.FormatLiteralOrNull(line, false));
+                        documentation.AppendLine("/// </para>");
+                    }
+                }
+            }
+
+            if (schema.Examples.IsNotNullOrUndefined())
+            {
+                documentation.AppendLine("/// <para>");
+                documentation.AppendLine("/// Examples:");
+                foreach (JsonAny example in schema.Examples.EnumerateArray())
+                {
+                    documentation.AppendLine("/// <example>");
+                    documentation.AppendLine("/// <code>");
+                    string[] lines = example.ToString().Split("\\n");
+                    foreach (string line in lines)
+                    {
+                        documentation.Append("/// ");
+                        documentation.AppendLine(Formatting.FormatLiteralOrNull(line, false));
+                    }
+
+                    documentation.AppendLine("/// </code>");
+                    documentation.AppendLine("/// </example>");
+                }
+
+                documentation.AppendLine("/// </para>");
+            }
+
+            documentation.AppendLine("/// </remarks>");
+        }
+
+        return documentation.ToString();
     }
 
     /// <summary>

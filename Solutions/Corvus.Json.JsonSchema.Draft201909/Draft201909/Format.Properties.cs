@@ -16,7 +16,7 @@ using Corvus.Json.Internal;
 
 namespace Corvus.Json.JsonSchema.Draft201909;
 /// <summary>
-/// A type generated from a JsonSchema specification.
+/// Format vocabulary meta-schema
 /// </summary>
 public readonly partial struct Format
 {
@@ -37,7 +37,7 @@ public readonly partial struct Format
     }
 
     /// <summary>
-    /// Gets FormatValue.
+    /// Gets the (optional) <c>format</c> property.
     /// </summary>
     public Corvus.Json.JsonString FormatValue
     {

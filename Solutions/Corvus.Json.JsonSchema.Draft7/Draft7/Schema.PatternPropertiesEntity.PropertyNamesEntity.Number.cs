@@ -20,7 +20,7 @@ public readonly partial struct Schema
     public readonly partial struct PatternPropertiesEntity
     {
         /// <summary>
-        /// A type generated from a JsonSchema specification.
+        /// Generated from JSON Schema.
         /// </summary>
         public readonly partial struct PropertyNamesEntity : IJsonNumber<PropertyNamesEntity>, IAdditionOperators<PropertyNamesEntity, PropertyNamesEntity, PropertyNamesEntity>, ISubtractionOperators<PropertyNamesEntity, PropertyNamesEntity, PropertyNamesEntity>, IMultiplyOperators<PropertyNamesEntity, PropertyNamesEntity, PropertyNamesEntity>, IDivisionOperators<PropertyNamesEntity, PropertyNamesEntity, PropertyNamesEntity>, IIncrementOperators<PropertyNamesEntity>, IDecrementOperators<PropertyNamesEntity>
         {
