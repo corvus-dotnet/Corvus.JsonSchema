@@ -49,6 +49,10 @@ public readonly partial struct Schema
         }
 
         /// <summary>
+        /// Gets the schema location from which this type was generated.
+        /// </summary>
+        public static string SchemaLocation { get; } = "https://json-schema.org/draft/2020-12/meta/applicator?dynamicScope=https%3A%2F%2Fjson-schema.org%2Fdraft%2F2020-12%2Fschema#/$defs/schemaArray";
+        /// <summary>
         /// Gets a Null instance.
         /// </summary>
         public static SchemaArray Null { get; } = new(JsonValueHelpers.NullElement);

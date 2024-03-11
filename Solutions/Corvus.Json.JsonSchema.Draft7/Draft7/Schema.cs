@@ -50,6 +50,10 @@ public readonly partial struct Schema
     }
 
     /// <summary>
+    /// Gets the schema location from which this type was generated.
+    /// </summary>
+    public static string SchemaLocation { get; } = "https://json-schema.org/draft-07/schema";
+    /// <summary>
     /// Gets a Null instance.
     /// </summary>
     public static Schema Null { get; } = new(JsonValueHelpers.NullElement);

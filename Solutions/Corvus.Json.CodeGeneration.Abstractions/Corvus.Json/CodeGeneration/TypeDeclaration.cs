@@ -52,6 +52,18 @@ public class TypeDeclaration
     public JsonReference? RecursiveScope { get; private set; }
 
     /// <summary>
+    /// Gets the location for the schema that defines this type, relative to the
+    /// base location.
+    /// </summary>
+    public JsonReference RelativeSchemaLocation
+    {
+        get
+        {
+            return this.typeBuilder.GetRelativeLocationFor(this.LocatedSchema.Location);
+        }
+    }
+
+    /// <summary>
     /// Gets the dotnet property declarations for the type.
     /// </summary>
     public ImmutableArray<PropertyDeclaration> Properties { get; private set; } = [];

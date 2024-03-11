@@ -19,6 +19,7 @@ public partial class JsonSchemaTypeBuilder
     private readonly JsonSchemaRegistry schemaRegistry;
     private readonly IDocumentResolver documentResolver;
     private readonly IPropertyBuilder propertyBuilder;
+    private JsonReference baseLocation;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonSchemaTypeBuilder"/> class.
@@ -54,7 +55,13 @@ public partial class JsonSchemaTypeBuilder
     public async Task<TypeDeclaration?> AddTypeDeclarationsFor(JsonReference documentPath, string rootNamespace, bool rebaseAsRoot = false, ImmutableDictionary<string, string>? baseUriToNamespaceMap = null, string? rootTypeName = null)
     {
         // First we do a document "load" - this enables us to build the map of the schema, anchors etc.
-        JsonReference scope = await this.schemaRegistry.RegisterDocumentSchema(documentPath, rebaseAsRoot).ConfigureAwait(false);
+        (JsonReference scope, JsonReference baseReference) = await this.schemaRegistry.RegisterDocumentSchema(documentPath, rebaseAsRoot).ConfigureAwait(false);
+
+        if (!this.baseLocation.HasUri)
+        {
+            // Move down to the base location.
+            this.baseLocation = baseReference.Apply(new("."));
+        }
 
         // Then we do a second "contextual" pass over the loaded schema from the root location. This enables
         // us to build correct dynamic references.
@@ -137,6 +144,22 @@ public partial class JsonSchemaTypeBuilder
     }
 
     /// <summary>
+    /// Gets reference for the target location relative to the base location.
+    /// </summary>
+    /// <param name="target">The target location.</param>
+    /// <returns>The relative location.</returns>
+    /// <remarks>The target must be an absolute location.</remarks>
+    public JsonReference GetRelativeLocationFor(JsonReference target)
+    {
+        if (target.IsImplicitFile)
+        {
+            return this.baseLocation.MakeRelative(target);
+        }
+
+        return target;
+    }
+
+    /// <summary>
     /// Replaces a located type declaration.
     /// </summary>
     /// <param name="location">The location for the replacement.</param>
@@ -211,7 +234,7 @@ public partial class JsonSchemaTypeBuilder
     {
         if (!this.schemaRegistry.TryGetValue(context.SubschemaLocation, out LocatedSchema? schema))
         {
-            throw new InvalidOperationException($"Unable to find the schema at ${context.SubschemaLocation}");
+            throw new InvalidOperationException($"Unable to find the schema at {context.SubschemaLocation}");
         }
 
         if (TryGetBooleanSchemaTypeDeclaration(schema, out TypeDeclaration? booleanTypeDeclaration))

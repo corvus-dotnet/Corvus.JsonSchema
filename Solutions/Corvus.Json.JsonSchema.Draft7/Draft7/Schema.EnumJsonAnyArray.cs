@@ -49,6 +49,10 @@ public readonly partial struct Schema
         }
 
         /// <summary>
+        /// Gets the schema location from which this type was generated.
+        /// </summary>
+        public static string SchemaLocation { get; } = "https://json-schema.org";
+        /// <summary>
         /// Gets a Null instance.
         /// </summary>
         public static EnumJsonAnyArray Null { get; } = new(JsonValueHelpers.NullElement);

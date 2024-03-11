@@ -39,9 +39,9 @@ internal class JsonSchemaRegistry
     /// <param name="jsonSchemaPath">The path to the JSON schema root document.</param>
     /// <param name="rebaseAsRoot">Whether to rebase this path as a root document. This should only be done for a JSON schema island in a larger non-schema document.
     /// If <see langoword="true"/>, then references in this document should be taken as if the fragment was the root of a document.</param>
-    /// <returns>A <see cref="Task"/> which, when complete, provides the base URI for the document.</returns>
+    /// <returns>A <see cref="Task"/> which, when complete, provides the root scope for the document (which may be a generated $ref for a path with a fragment), and the base reference to the document containing the root element.</returns>
     /// <remarks><paramref name="jsonSchemaPath"/> must point to a root scope. If it has a pointer into the document, then <paramref name="rebaseAsRoot"/> must be true.</remarks>
-    public async Task<JsonReference> RegisterDocumentSchema(JsonReference jsonSchemaPath, bool rebaseAsRoot = false)
+    public async Task<(JsonReference RootUri, JsonReference BaseReference)> RegisterDocumentSchema(JsonReference jsonSchemaPath, bool rebaseAsRoot = false)
     {
         if (SchemaReferenceNormalization.TryNormalizeSchemaReference(jsonSchemaPath, out string? result))
         {
@@ -67,7 +67,8 @@ internal class JsonSchemaRegistry
                 jsonSchemaPath = DefaultAbsoluteLocation.Apply(new JsonReference($"{Guid.NewGuid()}/Schema"));
 
                 // And add the document back to the document resolver against that root URI
-                return await AddSchemaForUpdatedPathAndElement(jsonSchemaPath, newBase).ConfigureAwait(false);
+                JsonReference docref = await AddSchemaForUpdatedPathAndElement(jsonSchemaPath, newBase).ConfigureAwait(false);
+                return (docref, basePath);
             }
             else
             {
@@ -76,7 +77,8 @@ internal class JsonSchemaRegistry
                 // It allows us to indirect through this reference as if it were a "root" type.
                 var referenceSchema = JsonObject.FromProperties(("$ref", (string)jsonSchemaPath));
                 jsonSchemaPath = DefaultAbsoluteLocation.Apply(new JsonReference($"{Guid.NewGuid()}/Schema"));
-                return await AddSchemaForUpdatedPathAndElement(jsonSchemaPath, referenceSchema.AsJsonElement).ConfigureAwait(false);
+                JsonReference docref = await AddSchemaForUpdatedPathAndElement(jsonSchemaPath, referenceSchema.AsJsonElement).ConfigureAwait(false);
+                return (docref, basePath);
             }
         }
 
@@ -100,7 +102,7 @@ internal class JsonSchemaRegistry
             }
         }
 
-        return this.AddSchemaAndSubschema(basePath, baseSchema);
+        return (this.AddSchemaAndSubschema(basePath, baseSchema), basePath);
 
         async Task<JsonReference> AddSchemaForUpdatedPathAndElement(JsonReference jsonSchemaPath, JsonElement newBase)
         {

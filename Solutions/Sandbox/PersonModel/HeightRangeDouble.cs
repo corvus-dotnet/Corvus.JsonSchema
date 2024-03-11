@@ -47,6 +47,10 @@ public readonly partial struct HeightRangeDouble
     }
 
     /// <summary>
+    /// Gets the schema location from which this type was generated.
+    /// </summary>
+    public static string SchemaLocation { get; } = "person-schema.json#/$defs/HeightRangeDouble";
+    /// <summary>
     /// Gets a Null instance.
     /// </summary>
     public static HeightRangeDouble Null { get; } = new(JsonValueHelpers.NullElement);

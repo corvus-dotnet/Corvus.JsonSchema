@@ -51,6 +51,10 @@ public readonly partial struct Applicator
             }
 
             /// <summary>
+            /// Gets the schema location from which this type was generated.
+            /// </summary>
+            public static string SchemaLocation { get; } = "https://json-schema.org/draft/2020-12/meta/applicator#/properties/patternProperties/propertyNames";
+            /// <summary>
             /// Gets a Null instance.
             /// </summary>
             public static PropertyNamesEntity Null { get; } = new(JsonValueHelpers.NullElement);

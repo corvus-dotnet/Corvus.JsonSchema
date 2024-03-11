@@ -47,6 +47,10 @@ public readonly partial struct ScenarioWithResult
     }
 
     /// <summary>
+    /// Gets the schema location from which this type was generated.
+    /// </summary>
+    public static string SchemaLocation { get; } = "json-patch-test.json#/$defs/ScenarioWithResult";
+    /// <summary>
     /// Gets a Null instance.
     /// </summary>
     public static ScenarioWithResult Null { get; } = new(JsonValueHelpers.NullElement);
