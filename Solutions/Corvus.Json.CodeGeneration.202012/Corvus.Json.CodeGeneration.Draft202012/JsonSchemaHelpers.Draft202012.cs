@@ -453,7 +453,7 @@ public static class JsonSchemaHelpers
 
                     if (source.RefResolvablePropertyDeclarations.TryGetValue(propertyRef.AppendUnencodedPropertyNameToFragment(propertyName), out TypeDeclaration? propertyTypeDeclaration))
                     {
-                        target.AddOrReplaceProperty(new PropertyDeclaration(propertyTypeDeclaration, propertyName, isRequired, source == target, propertyTypeDeclaration.Schema().Default.IsNotUndefined(), propertyTypeDeclaration.Schema().Default is JsonAny def ? def.ToString() : default, FormatDocumentation(propertyTypeDeclaration.Schema())));
+                        target.AddOrReplaceProperty(new PropertyDeclaration(propertyTypeDeclaration, propertyName, isRequired, source == target, propertyTypeDeclaration.Schema().Default.IsNotUndefined(), propertyTypeDeclaration.Schema().Default is JsonAny def ? def.ToString() : default, FormatDocumentation(property.Value.As<Schema>())));
                     }
                 }
             }
@@ -474,28 +474,30 @@ public static class JsonSchemaHelpers
         StringBuilder documentation = new();
         if (schema.Title.IsNotNullOrUndefined())
         {
-            documentation.Append("<para>");
-            documentation.Append(Formatting.FormatLiteralOrNull(schema.Title.GetString(), false));
-            documentation.Append("</para>");
+            documentation.AppendLine("<para>");
+            documentation.AppendLine(Formatting.FormatLiteralOrNull(schema.Title.GetString(), false));
+            documentation.AppendLine("</para>");
         }
 
         if (schema.Description.IsNotNullOrUndefined())
         {
-            documentation.Append("<para>");
-            documentation.Append(Formatting.FormatLiteralOrNull(schema.Description.GetString(), false));
-            documentation.Append("</para>");
+            documentation.AppendLine("<para>");
+            documentation.AppendLine(Formatting.FormatLiteralOrNull(schema.Description.GetString(), false));
+            documentation.AppendLine("</para>");
         }
 
         if (schema.Examples.IsNotNullOrUndefined())
         {
-            documentation.Append("<para>");
-            documentation.Append("Examples:");
-            documentation.Append("</para>");
+            documentation.AppendLine("<para>");
+            documentation.AppendLine("Examples:");
+            documentation.AppendLine("</para>");
             foreach (JsonAny example in schema.Examples.EnumerateArray())
             {
-                documentation.Append("<para>");
-                documentation.Append(Formatting.FormatLiteralOrNull(example.ToString(), false));
-                documentation.Append("</para>");
+                documentation.AppendLine("<para>");
+                documentation.AppendLine("<code>");
+                documentation.AppendLine(Formatting.FormatLiteralOrNull(example.ToString(), false));
+                documentation.AppendLine("</code>");
+                documentation.AppendLine("</para>");
             }
         }
 

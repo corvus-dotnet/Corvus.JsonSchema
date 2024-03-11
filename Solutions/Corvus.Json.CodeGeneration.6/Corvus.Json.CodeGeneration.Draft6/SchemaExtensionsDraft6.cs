@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Text;
 using System.Text.Json;
 using Corvus.Json.JsonSchema.Draft6;
 
@@ -20,6 +21,60 @@ public static class SchemaExtensionsDraft6
     public static Schema Schema(this TypeDeclaration typeDeclaration)
     {
         return typeDeclaration.LocatedSchema.Schema.As<Schema>();
+    }
+
+    /// <summary>
+    /// Format the documentation for the type.
+    /// </summary>
+    /// <param name="typeDeclaration">The type for which to format documentation.</param>
+    /// <returns>The class-level documentation for the type.</returns>
+    public static string FormatTypeDocumentation(this TypeDeclaration typeDeclaration)
+    {
+        StringBuilder documentation = new();
+        Schema schema = typeDeclaration.Schema();
+        documentation.AppendLine("<summary>");
+
+        if (schema.Title.IsNotNullOrUndefined())
+        {
+            documentation.AppendLine(Formatting.FormatLiteralOrNull(schema.Title.GetString(), false));
+        }
+        else
+        {
+            documentation.AppendLine($"Generated from JSON Schema.");
+        }
+
+        documentation.AppendLine("</summary>");
+
+        if (schema.Description.IsNotNullOrUndefined() || schema.Examples.IsNotNullOrUndefined())
+        {
+            documentation.AppendLine("<remarks>");
+
+            if (schema.Description.IsNotNullOrUndefined())
+            {
+                documentation.AppendLine("<para>");
+                documentation.AppendLine(Formatting.FormatLiteralOrNull(schema.Description.GetString(), false));
+                documentation.AppendLine("</para>");
+            }
+
+            if (schema.Examples.IsNotNullOrUndefined())
+            {
+                documentation.AppendLine("<para>");
+                documentation.AppendLine("Examples:");
+                documentation.AppendLine("</para>");
+                foreach (JsonAny example in schema.Examples.EnumerateArray())
+                {
+                    documentation.AppendLine("<para>");
+                    documentation.AppendLine("<code>");
+                    documentation.AppendLine(Formatting.FormatLiteralOrNull(example.ToString(), false));
+                    documentation.AppendLine("</code>");
+                    documentation.AppendLine("</para>");
+                }
+            }
+
+            documentation.AppendLine("</remarks>");
+        }
+
+        return documentation.ToString();
     }
 
     /// <summary>

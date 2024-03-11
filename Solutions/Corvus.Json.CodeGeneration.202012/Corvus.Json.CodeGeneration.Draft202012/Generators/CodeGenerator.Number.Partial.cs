@@ -37,6 +37,11 @@ public partial class CodeGeneratorNumber
     public TypeDeclaration TypeDeclaration { get; set; }
 
     /// <summary>
+    /// Gets the formatted documentation for the type.
+    /// </summary>
+    public string FormattedTypeDocumentation => this.TypeDeclaration.FormatTypeDocumentation();
+
+    /// <summary>
     /// Gets a value indicating whether this is an object type.
     /// </summary>
     public string Namespace => this.TypeDeclaration.Namespace!;
