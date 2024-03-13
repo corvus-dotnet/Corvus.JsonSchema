@@ -41,68 +41,47 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
         if (enumValue.IsString)
         { #>
         /// <summary>
-        /// <#= enumValue.AsPropertyName #>.
+        /// Gets <#= enumValue.RawStringValue #> as a JSON value.
         /// </summary>
-        /// <remarks>
-        /// {Description}.
-        /// </remarks>
         public static readonly <#= TypeDeclaration.DotnetTypeName #> <#= enumValue.AsPropertyName #> = <#= TypeDeclaration.DotnetTypeName #>.Parse(<#= enumValue.SerializedValue #>);
         /// <summary>
-        /// Gets the <#= enumValue.AsPropertyName #> as a raw UTF8 string.
+        /// Gets <#= enumValue.RawStringValue #> as a UTF8 string.
         /// </summary>
-        /// <remarks>
-        /// {Description}.
-        /// </remarks>
         public static ReadOnlySpan<byte> <#= enumValue.AsPropertyName #>Utf8 => <#= enumValue.RawStringValue #>u8;
 <#      }
         else if (enumValue.IsBoolean)
         { #>
         /// <summary>
-        /// [{Title} || Item <#= enumItemIndex#>] (with predictable naming).
+        /// Gets <#= enumValue.SerializedValue #> as a JSON value.
         /// </summary>
-        /// <remarks>
-        /// {Description}.
-        /// </remarks>
         public static readonly <#= TypeDeclaration.DotnetTypeName #> Item<#= enumItemIndex #> = <#= TypeDeclaration.DotnetTypeName #>.Parse(<#= enumValue.SerializedValue #>);
 <#      }
         else if (enumValue.IsNumber)
         { #>
         /// <summary>
-        /// [{Title} || Item <#= enumItemIndex #>] (with predictable naming).
+        /// Gets <#= enumValue.SerializedValue #> as a JSON value.
         /// </summary>
-        /// <remarks>
-        /// {Description}.
-        /// </remarks>
         public static readonly <#= TypeDeclaration.DotnetTypeName #> Item<#= enumItemIndex #> = <#= TypeDeclaration.DotnetTypeName #>.Parse(<#= enumValue.SerializedValue #>);
 <#      }
         else if (enumValue.IsObject)
         { #>
         /// <summary>
-        /// [{Title} || Item <#= enumItemIndex#>] (with predictable naming).
+        /// Gets <#= enumValue.SerializedValue #> as a JSON value.
         /// </summary>
-        /// <remarks>
-        /// {Description}.
-        /// </remarks>
         public static readonly <#= TypeDeclaration.DotnetTypeName #> Item<#= enumItemIndex#> = <#= TypeDeclaration.DotnetTypeName #>.Parse(<#= enumValue.SerializedValue #>);
 <#      }
         else if (enumValue.IsArray)
         { #>
         /// <summary>
-        /// [{Title} || Item <#= enumItemIndex #>] (with predictable naming).
+        /// Gets <#= enumValue.SerializedValue #> as a JSON value.
         /// </summary>
-        /// <remarks>
-        /// {Description}.
-        /// </remarks>
         public static readonly <#= TypeDeclaration.DotnetTypeName #> Item<#= enumItemIndex #> = <#= TypeDeclaration.DotnetTypeName #>.Parse(<#= enumValue.SerializedValue #>);
 <#      }
         else if (enumValue.IsNull)
         { #>
         /// <summary>
-        /// [{Title} || Item <#= enumItemIndex #>] (with predictable naming).
+        /// Gets "null" as a JSON value.
         /// </summary>
-        /// <remarks>
-        /// {Description}.
-        /// </remarks>
         public static readonly <#= TypeDeclaration.DotnetTypeName #> Item<#= enumItemIndex#> = <#= TypeDeclaration.DotnetTypeName #>.Parse("null");
 <#      }
         ++enumItemIndex;
@@ -114,11 +93,8 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
         if (enumValue.IsString)
         { #>
         /// <summary>
-        /// [{Title} || Item <#= enumItemIndex #>] (with predictable naming).
+        /// Gets <#= enumValue.RawStringValue #> as a JSON value.
         /// </summary>
-        /// <remarks>
-        /// {Description}.
-        /// </remarks>
         internal static readonly <#= TypeDeclaration.DotnetTypeName #> Item<#= enumItemIndex #> = <#= TypeDeclaration.DotnetTypeName #>.Parse(<#= enumValue.SerializedValue #>);
 <#      }
             enumItemIndex++;
