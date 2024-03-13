@@ -113,6 +113,7 @@ public static class JsonSchemaHelpers
     {
         return
         [
+            "SchemaLocation",
             "Item",
             "Add",
             "AddRange",
