@@ -27,158 +27,95 @@ public readonly partial struct Validation
         public static class EnumValues
         {
             /// <summary>
-            /// Array.
+            /// Gets "array" as a JSON value.
             /// </summary>
-            /// <remarks>
-            /// {Description}.
-            /// </remarks>
             public static readonly SimpleTypes Array = SimpleTypes.Parse("\"array\"");
             /// <summary>
-            /// Gets the Array as a raw UTF8 string.
+            /// Gets "array" as a UTF8 string.
             /// </summary>
-            /// <remarks>
-            /// {Description}.
-            /// </remarks>
             public static ReadOnlySpan<byte> ArrayUtf8 => "array"u8;
 
             /// <summary>
-            /// Boolean.
+            /// Gets "boolean" as a JSON value.
             /// </summary>
-            /// <remarks>
-            /// {Description}.
-            /// </remarks>
             public static readonly SimpleTypes Boolean = SimpleTypes.Parse("\"boolean\"");
             /// <summary>
-            /// Gets the Boolean as a raw UTF8 string.
+            /// Gets "boolean" as a UTF8 string.
             /// </summary>
-            /// <remarks>
-            /// {Description}.
-            /// </remarks>
             public static ReadOnlySpan<byte> BooleanUtf8 => "boolean"u8;
 
             /// <summary>
-            /// Integer.
+            /// Gets "integer" as a JSON value.
             /// </summary>
-            /// <remarks>
-            /// {Description}.
-            /// </remarks>
             public static readonly SimpleTypes Integer = SimpleTypes.Parse("\"integer\"");
             /// <summary>
-            /// Gets the Integer as a raw UTF8 string.
+            /// Gets "integer" as a UTF8 string.
             /// </summary>
-            /// <remarks>
-            /// {Description}.
-            /// </remarks>
             public static ReadOnlySpan<byte> IntegerUtf8 => "integer"u8;
 
             /// <summary>
-            /// Null.
+            /// Gets "null" as a JSON value.
             /// </summary>
-            /// <remarks>
-            /// {Description}.
-            /// </remarks>
             public static readonly SimpleTypes Null = SimpleTypes.Parse("\"null\"");
             /// <summary>
-            /// Gets the Null as a raw UTF8 string.
+            /// Gets "null" as a UTF8 string.
             /// </summary>
-            /// <remarks>
-            /// {Description}.
-            /// </remarks>
             public static ReadOnlySpan<byte> NullUtf8 => "null"u8;
 
             /// <summary>
-            /// Number.
+            /// Gets "number" as a JSON value.
             /// </summary>
-            /// <remarks>
-            /// {Description}.
-            /// </remarks>
             public static readonly SimpleTypes Number = SimpleTypes.Parse("\"number\"");
             /// <summary>
-            /// Gets the Number as a raw UTF8 string.
+            /// Gets "number" as a UTF8 string.
             /// </summary>
-            /// <remarks>
-            /// {Description}.
-            /// </remarks>
             public static ReadOnlySpan<byte> NumberUtf8 => "number"u8;
 
             /// <summary>
-            /// Object.
+            /// Gets "object" as a JSON value.
             /// </summary>
-            /// <remarks>
-            /// {Description}.
-            /// </remarks>
             public static readonly SimpleTypes Object = SimpleTypes.Parse("\"object\"");
             /// <summary>
-            /// Gets the Object as a raw UTF8 string.
+            /// Gets "object" as a UTF8 string.
             /// </summary>
-            /// <remarks>
-            /// {Description}.
-            /// </remarks>
             public static ReadOnlySpan<byte> ObjectUtf8 => "object"u8;
 
             /// <summary>
-            /// String.
+            /// Gets "string" as a JSON value.
             /// </summary>
-            /// <remarks>
-            /// {Description}.
-            /// </remarks>
             public static readonly SimpleTypes String = SimpleTypes.Parse("\"string\"");
             /// <summary>
-            /// Gets the String as a raw UTF8 string.
+            /// Gets "string" as a UTF8 string.
             /// </summary>
-            /// <remarks>
-            /// {Description}.
-            /// </remarks>
             public static ReadOnlySpan<byte> StringUtf8 => "string"u8;
 
             /// <summary>
-            /// [{Title} || Item 0] (with predictable naming).
+            /// Gets "array" as a JSON value.
             /// </summary>
-            /// <remarks>
-            /// {Description}.
-            /// </remarks>
             internal static readonly SimpleTypes Item0 = SimpleTypes.Parse("\"array\"");
             /// <summary>
-            /// [{Title} || Item 1] (with predictable naming).
+            /// Gets "boolean" as a JSON value.
             /// </summary>
-            /// <remarks>
-            /// {Description}.
-            /// </remarks>
             internal static readonly SimpleTypes Item1 = SimpleTypes.Parse("\"boolean\"");
             /// <summary>
-            /// [{Title} || Item 2] (with predictable naming).
+            /// Gets "integer" as a JSON value.
             /// </summary>
-            /// <remarks>
-            /// {Description}.
-            /// </remarks>
             internal static readonly SimpleTypes Item2 = SimpleTypes.Parse("\"integer\"");
             /// <summary>
-            /// [{Title} || Item 3] (with predictable naming).
+            /// Gets "null" as a JSON value.
             /// </summary>
-            /// <remarks>
-            /// {Description}.
-            /// </remarks>
             internal static readonly SimpleTypes Item3 = SimpleTypes.Parse("\"null\"");
             /// <summary>
-            /// [{Title} || Item 4] (with predictable naming).
+            /// Gets "number" as a JSON value.
             /// </summary>
-            /// <remarks>
-            /// {Description}.
-            /// </remarks>
             internal static readonly SimpleTypes Item4 = SimpleTypes.Parse("\"number\"");
             /// <summary>
-            /// [{Title} || Item 5] (with predictable naming).
+            /// Gets "object" as a JSON value.
             /// </summary>
-            /// <remarks>
-            /// {Description}.
-            /// </remarks>
             internal static readonly SimpleTypes Item5 = SimpleTypes.Parse("\"object\"");
             /// <summary>
-            /// [{Title} || Item 6] (with predictable naming).
+            /// Gets "string" as a JSON value.
             /// </summary>
-            /// <remarks>
-            /// {Description}.
-            /// </remarks>
             internal static readonly SimpleTypes Item6 = SimpleTypes.Parse("\"string\"");
         }
     }
