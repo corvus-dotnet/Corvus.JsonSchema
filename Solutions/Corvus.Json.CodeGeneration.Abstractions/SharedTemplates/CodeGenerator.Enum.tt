@@ -31,11 +31,243 @@ namespace <#= Namespace #>;
 public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 {
     /// <summary>
+    /// Matches the value against each of the enumeration values, and returns the result of calling the provided match function for the first match found.
+    /// </summary>
+    /// <param name="context">The context to pass to the match function.</param>
+<#  int enumItemIndex = 0;
+    foreach (var enumValue in EnumValues)
+    { #>
+    /// <param name="match<#= enumValue.IsString ? enumValue.AsPropertyName : $"Item{enumItemIndex}" #>">The function to call if the value matches the JSON value <#= enumValue.SerializedValue #>.</param>
+<#      enumItemIndex++;
+    } #>
+    /// <param name="defaultMatch">The fallback match.</param>
+    public TOut Match<TIn, TOut>(
+        in TIn context<#  enumItemIndex = 0;
+    foreach (var enumValue in EnumValues)
+    { #>,
+
+        Func<TIn, TOut> match<#= enumValue.IsString ? enumValue.AsPropertyName : $"Item{enumItemIndex}" #><#      enumItemIndex++;
+    } #>,
+        Func<TIn, TOut> defaultMatch)
+    {
+<#  if (EnumValues.All(i => i.IsString))
+    { #>
+        if (this.ValueKind == JsonValueKind.String)
+        {
+            if (this.HasJsonElementBacking)
+            {
+<#      foreach (var enumValue in EnumValues)
+        { #>
+                if (this.jsonElementBacking.ValueEquals(EnumValues.<#= enumValue.AsPropertyName #>Utf8))
+                {
+                    return match<#= enumValue.AsPropertyName #>(context);
+                }
+<#      } #>
+            }
+            else
+            {
+                switch(this.stringBacking)
+                {
+<#      foreach (var enumValue in EnumValues)
+        { #>
+                    case <#= enumValue.RawStringValue #>:
+                        return match<#= enumValue.AsPropertyName  #>(context);
+<#      } #>
+                    default:
+                        break;
+                }
+            }
+        }
+<#  }
+    else
+    {
+        enumItemIndex = 0;
+        foreach (var enumValue in EnumValues)
+        {
+            if (enumValue.IsString)
+            { #>
+            if (this.ValueKind == JsonValueKind.String)
+            {
+                if (this.HasJsonElementBacking)
+                {
+                    if (this.jsonElementBacking.ValueEquals(EnumValues.<#= enumValue.AsPropertyName #>Utf8))
+                    {
+                        return match<#= enumValue.AsPropertyName #>(context);
+                    }
+                }
+                else
+                {
+                    if (this.stringBacking == EnumValues.<#= enumValue.AsPropertyName #>)
+                    {
+                        return match<#= enumValue.AsPropertyName  #>(context);
+                    }
+                }
+            }
+<#          }
+            else if (enumValue.IsBoolean)
+            { #>
+            if (this.ValueKind == EnumValues.Item<#= enumItemIndex #>.ValueKind)
+            {
+                return matchItem<#= enumItemIndex #>(context);
+            }
+<#          }
+            else if (enumValue.IsNumber)
+            { #>
+            if (this.Equals(EnumValues.Item<#= enumItemIndex #>.AsNumber))
+            {
+                return matchItem<#= enumItemIndex #>(context);
+            }
+<#          }
+            else if (enumValue.IsObject)
+            { #>
+            if (this.Equals(EnumValues.Item<#= enumItemIndex #>.AsObject))
+            {
+                return matchItem<#= enumItemIndex #>(context);
+            }
+<#          }
+            else if (enumValue.IsArray)
+            { #>
+            if (this.Equals(EnumValues.Item<#= enumItemIndex #>.AsArray))
+            {
+                return matchItem<#= enumItemIndex #>(context);
+            }
+<#          }
+            else if (enumValue.IsNull)
+            { #>
+            if (this.ValueKind == JsonValueKind.Null)
+			{
+				return matchItem<#= enumItemIndex #>(context);
+			}
+<#          }
+
+            ++enumItemIndex;
+        }
+    }#>
+
+        return defaultMatch(context);
+    }
+
+    /// <summary>
+    /// Matches the value against each of the enumeration values, and returns the result of calling the provided match function for the first match found.
+    /// </summary>
+<#  enumItemIndex = 0;
+    foreach (var enumValue in EnumValues)
+    { #>
+    /// <param name="match<#= enumValue.IsString ? enumValue.AsPropertyName : $"Item{enumItemIndex}" #>">The function to call if the value matches the JSON value <#= enumValue.SerializedValue #>.</param>
+<#      enumItemIndex++;
+    } #>
+    /// <param name="defaultMatch">The fallback match.</param>
+    public TOut Match<TOut>(<#  enumItemIndex = 0;
+    foreach (var enumValue in EnumValues)
+    { #><#= enumItemIndex > 0 ? "," : ""#>
+
+        Func<TOut> match<#= enumValue.IsString ? enumValue.AsPropertyName : $"Item{enumItemIndex}" #><#      enumItemIndex++;
+    } #>,
+        Func<TOut> defaultMatch)
+    {
+<#  if (EnumValues.All(i => i.IsString))
+    { #>
+        if (this.ValueKind == JsonValueKind.String)
+        {
+            if (this.HasJsonElementBacking)
+            {
+<#      foreach (var enumValue in EnumValues)
+        { #>
+                if (this.jsonElementBacking.ValueEquals(EnumValues.<#= enumValue.AsPropertyName #>Utf8))
+                {
+                    return match<#= enumValue.AsPropertyName #>();
+                }
+<#      } #>
+            }
+            else
+            {
+                switch(this.stringBacking)
+                {
+<#      foreach (var enumValue in EnumValues)
+        { #>
+                    case <#= enumValue.RawStringValue #>:
+                        return match<#= enumValue.AsPropertyName  #>();
+<#      } #>
+                    default:
+                        break;
+                }
+            }
+        }
+<#  }
+    else
+    {
+        enumItemIndex = 0;
+        foreach (var enumValue in EnumValues)
+        {
+            if (enumValue.IsString)
+            { #>
+            if (this.ValueKind == JsonValueKind.String)
+            {
+                if (this.HasJsonElementBacking)
+                {
+                    if (this.jsonElementBacking.ValueEquals(EnumValues.<#= enumValue.AsPropertyName #>Utf8))
+                    {
+                        return match<#= enumValue.AsPropertyName #>();
+                    }
+                }
+                else
+                {
+                    if (this.stringBacking == EnumValues.<#= enumValue.AsPropertyName #>)
+                    {
+                        return match<#= enumValue.AsPropertyName  #>();
+                    }
+                }
+            }
+<#          }
+            else if (enumValue.IsBoolean)
+            { #>
+            if (this.ValueKind == EnumValues.Item<#= enumItemIndex #>.ValueKind)
+            {
+                return matchItem<#= enumItemIndex #>();
+            }
+<#          }
+            else if (enumValue.IsNumber)
+            { #>
+            if (this.Equals(EnumValues.Item<#= enumItemIndex #>.AsNumber))
+            {
+                return matchItem<#= enumItemIndex #>();
+            }
+<#          }
+            else if (enumValue.IsObject)
+            { #>
+            if (this.Equals(EnumValues.Item<#= enumItemIndex #>.AsObject))
+            {
+                return matchItem<#= enumItemIndex #>();
+            }
+<#          }
+            else if (enumValue.IsArray)
+            { #>
+            if (this.Equals(EnumValues.Item<#= enumItemIndex #>.AsArray))
+            {
+                return matchItem<#= enumItemIndex #>();
+            }
+<#          }
+            else if (enumValue.IsNull)
+            { #>
+            if (this.ValueKind == JsonValueKind.Null)
+			{
+				return matchItem<#= enumItemIndex #>();
+			}
+<#          }
+
+            ++enumItemIndex;
+        }
+    }#>
+
+        return defaultMatch();
+    }
+
+    /// <summary>
     /// Permitted values.
     /// </summary>
     public static class EnumValues
     {
-<#  int enumItemIndex = 0;
+<#  enumItemIndex = 0;
     foreach (var enumValue in EnumValues)
     {
         if (enumValue.IsString)
@@ -84,6 +316,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
         /// </summary>
         public static readonly <#= TypeDeclaration.DotnetTypeName #> Item<#= enumItemIndex#> = <#= TypeDeclaration.DotnetTypeName #>.Parse("null");
 <#      }
+
         ++enumItemIndex;
     }
 
@@ -97,7 +330,8 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
         /// </summary>
         internal static readonly <#= TypeDeclaration.DotnetTypeName #> Item<#= enumItemIndex #> = <#= TypeDeclaration.DotnetTypeName #>.Parse(<#= enumValue.SerializedValue #>);
 <#      }
-            enumItemIndex++;
+
+        enumItemIndex++;
     } #>
     }
 }
