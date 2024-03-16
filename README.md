@@ -13,6 +13,8 @@ To get started, install the dotnet global tool.
 dotnet tool install --global Corvus.Json.JsonSchema.TypeGeneratorTool
 ```
 
+[On Linux/MacOS you may need to ensure that the `.dotnet/tools` folder is in your path.]
+
 Validate it is installed correctly
 
 ```
@@ -160,7 +162,7 @@ Then run the tool to generate C# files for that schema in the JsonSchemaSample.A
 generatejsonschematypes --rootNamespace JsonSchemaSample.Api --rootPath '#/$defs/Person' person-from-api.json
 ```
 
-Compile this code in a project with a reference to the `Corvus.Json.ExtendedTypes` nuget package, and you can then work with the Dotnet type model. e.g.
+Compile this code in a project with a reference to the `Corvus.Json.ExtendedTypes` nuget package, and you can then work with the Dotnet type model, and JSON Schema validation e.g.
 
 ```csharp
 string jsonText = @"{
@@ -174,15 +176,18 @@ string jsonText = @"{
 
 var person = Person.Parse(jsonText);
 Console.WriteLine(person.Name.FamilyName);
+Console.WriteLine($"The person {person.IsValid() ? "is" : "is not"} valid JSON");
 ```
 
 We also provide  a [full hands-on-lab](docs/GettingStartedWithJsonSchemaCodeGeneration.md).
+
+# Development environment
 
 ## Use of dotnet-t4
 
 This project uses [dotnet-t4](https://www.nuget.org/packages/dotnet-t4) to generate the code-behind for the t4 templates that actually emit the code for a particular template. If you add or update templates, you will need to run the relevant `BuildTemplates.cmd` batch file to regenerate them. (There is one that will
 regenerate all templates in the `/Solutions` folder; you can find others in the individual generator projects - more details on this can be found in the section on the Organization of the repository, below).
- 
+
 Unfortunately, there have been breaking changes in the 2.3.x series of this tool that mean it no longer generates relative line annotations by default.
 
 You should install this specific version until [this issue](https://github.com/mono/t4/issues/152) is resolved satisfactorily.
@@ -303,10 +308,11 @@ The implicit/explicit conversions and operators have been rationalised. More exp
 
 However, most implicit conversions from/to intrinsic types are still supported.
 
+One significant change is that there is *no* implicit conversion to `string` - this must be done explicity, or directly through one of the comparison functions like `EqualsString()` or `EqualsUtf8String()`. This is to prevent a common source of accidental allocations and the corresponding performance hit.
 
 ## System.Text.Json support by other projects
 
-There is a thriving ecosystem of System.Text.Json-based projects out there. 
+There is a thriving ecosystem of System.Text.Json-based projects out there.
 
 In particular I would point you at
 
