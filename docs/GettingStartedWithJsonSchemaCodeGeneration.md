@@ -12,7 +12,7 @@ TL;DR - this is a getting started Hands-On-Lab that walks you through our new JS
 
 ## Context
 
-In my [previous post](https://endjin.com/blog/2021/05/csharp-serialization-with-system-text-json-schema), I introduced the concepts behind our JSON object model extensions, built over [System.Text.Json](https://docs.microsoft.com/en-us/dotnet/api/system.text.json?view=net-6.0).
+In my [previous post](https://endjin.com/blog/2021/05/csharp-serialization-with-system-text-json-schema), I introduced the concepts behind our JSON object model extensions, built over [System.Text.Json](https://docs.microsoft.com/en-us/dotnet/api/system.text.json?view=net-8.0).
 
 > You don't need to read that post to work with this lab.
 
@@ -20,7 +20,7 @@ In summary, we looked at how a code generation tool could take JSON Schema and e
 
 It also demonstrated how this model could support interoperability between types generated from different schema, and even compiled into different libraries, without any shared user code.
 
-I'm pleased to say that we've now published our initial preview release of this tooling over on github/nuget. This is the [library containing the core extensions to the JSON object model](https://www.nuget.org/packages/Corvus.Json.ExtendedTypes) and this is the [tool which generates code from JSON-schema definitions](https://www.nuget.org/packages/Corvus.Json.JsonSchema.TypeGeneratorTool) (including those embedded in OpenAPI 3.1 documents).
+I'm pleased to say that we've now published this tooling over on github/nuget. This is the [library containing the core extensions to the JSON object model](https://www.nuget.org/packages/Corvus.Json.ExtendedTypes) and this is the [tool which generates code from JSON-schema definitions](https://www.nuget.org/packages/Corvus.Json.JsonSchema.TypeGeneratorTool).
 
 If you want to incorporate this into your tool chain, read on!
 
@@ -46,13 +46,13 @@ But this is intended to be a step-by-step guide. Please let us know in the comme
 
 ### You'll need
 
-- the [.NET 7 SDK Preview](https://dotnet.microsoft.com/en-us/download/dotnet/7.0) (maybe you've already installed [Visual Studio 2022 17.4 Preview 1](https://visualstudio.microsoft.com/vs/preview/) and acquired it that way; but you don't have to install Visual Studio to get started; you can download these SDK bits and use the completely free/OSS toolchain to follow along.)
+- the [.NET 8 SDK or later](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) (maybe you've already installed [Visual Studio 2022](https://visualstudio.microsoft.com/vs/) and acquired it that way; but you don't have to install Visual Studio to get started; you can download these SDK bits and use the completely free/OSS toolchain to follow along.)
 - a shell, with the SDK developer tools in the path. I'm using [PowerShell](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.2) in the [Windows Terminal](https://docs.microsoft.com/en-us/windows/terminal/install), [configured with the Visual Studio "Developer" config for PowerShell](https://blog.yannickreekmans.be/developer-powershell-command-prompt-visual-studio-windows-terminal/).
 - A text editor or IDE. I'm using [VS Code](https://code.visualstudio.com/).
 
 ### Things that would help
 
-- Some familiarity with building C# code with dotnet7.0
+- Some familiarity with building C# code with dotnet8.0
 - Some familiarity with [json-schema](https://json-schema.org/understanding-json-schema/)
 - Some familiarity with JSON reading, writing, and serialization, preferably with `System.Text.Json`
 
@@ -64,17 +64,17 @@ First, you need to install the code generator. I choose to do so globally. From 
 dotnet tool install --global Corvus.Json.JsonSchema.TypeGeneratorTool --prerelease
 ```
 
-We'll also create a console app to host our sample, using dotnet7.0s
+We'll also create a console app to host our sample, using dotnet8.0s
 
 ```
-dotnet new console -o JsonSchemaSample -f net7.0
+dotnet new console -o JsonSchemaSample -f net8.0
 cd JsonSchemaSample
 ```
 
 And we'll add a reference to our JSON object model extensions to the project. We can use the `dotnet add` command to do that, or you could use your favourite package manager, or IDE.
 
 ```
-dotnet add package Corvus.Json.ExtendedTypes --prerelease
+dotnet add package Corvus.Json.ExtendedTypes
 ```
 
 Just to make sure that's all OK, and our editor is also working, let's inspect `JsonSchemaSample.csproj`.
@@ -92,50 +92,13 @@ When the editor loads up the project file, it should look something like this. N
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Corvus.Json.ExtendedTypes" Version="1.0.0-v1-pre1.139" />
-  </ItemGroup>
-
-</Project>
-
-```
-
-While we are in preview mode, we will also need to add something to this project file to allow us to use preview language features.
-
-Insert the following after the initial `<PropertyGroup />` block.
-
-```xml
-	<PropertyGroup>
-		<LangVersion>preview</LangVersion>
-		<EnablePreviewFeatures>true</EnablePreviewFeatures>
-	</PropertyGroup>
-```
-
-It will now look like this. The exact pre-release version of Corvus.Json.ExtendedTypes may, of course, vary.
-
-
-```xml
-<Project Sdk="Microsoft.NET.Sdk">
-
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net7.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
-
-	<PropertyGroup>
-		<LangVersion>preview</LangVersion>
-		<EnablePreviewFeatures>true</EnablePreviewFeatures>
-	</PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Corvus.Json.ExtendedTypes" Version="1.0.0-v1-pre1.139" />
+    <PackageReference Include="Corvus.Json.ExtendedTypes" Version="2.0.15" />
   </ItemGroup>
 
 </Project>
@@ -538,7 +501,7 @@ dotnet build
 This emits an executable in the bin folder. We can run it...
 
 ```
-.\bin\Debug\net7.0\JsonSchemaSample.exe
+.\bin\Debug\net8.0\JsonSchemaSample.exe
 ```
 
  and check we get the standard `Hello, World!` message.
@@ -600,14 +563,17 @@ You're probably already familiar with this process. [`JsonDocument.Parse`](https
 Add this code beneath your `using` statements.
 
 ```csharp
-string jsonText = @"{
-    ""name"": {
-      ""familyName"": ""Oldroyd"",
-      ""givenName"": ""Michael"",
-      ""otherNames"": [""Francis"", ""James""]
+string jsonText =
+  """
+  {
+    "name": {
+      "familyName": "Oldroyd",
+      "givenName": "Michael",
+      "otherNames": ["Francis", "James"]
     },
-    ""dateOfBirth"": ""1944-07-14""
-}";
+    "dateOfBirth": "1944-07-14"
+  }
+  """;
 
 using JsonDocument document = JsonDocument.Parse(jsonText);
 ```
@@ -623,7 +589,7 @@ So let's wrap that element in our `Person` type.
 Add the following line of code:
 
 ```csharp
-Person michaelOldroyd = new Person(document.RootElement);
+Person michaelOldroyd = new(document.RootElement);
 ```
 
 Now we can access the elements of that JSON payload via our dotnet `Person` and related types.
@@ -631,8 +597,8 @@ Now we can access the elements of that JSON payload via our dotnet `Person` and 
 > Unless otherwise indicated, I'm now going to assume that you are adding any code blocks that appear in this Lab at the bottom of the `program.cs` file.
 
 ```csharp
-string familyName = michaelOldroyd.Name.FamilyName;
-string givenName = michaelOldroyd.Name.GivenName;
+string familyName = (string)michaelOldroyd.Name.FamilyName;
+string givenName = (string)michaelOldroyd.Name.GivenName;
 LocalDate dateOfBirth = michaelOldroyd.DateOfBirth;
 
 Console.WriteLine($"{familyName}, {givenName}: {dateOfBirth}");
@@ -644,7 +610,7 @@ Let's build and run that again.
 
 ```
 dotnet build
-.\bin\Debug\net7.0\JsonSchemaSample.exe
+.\bin\Debug\net8.0\JsonSchemaSample.exe
 ```
 
 As we'd hope, it produces (something like) the following output:
@@ -659,7 +625,7 @@ So far, so "just like serialization". But - and here's the rather nifty thing ab
 
 It's true that we then went on to allocate a bunch of strings when we accessed the bits we were interested in, and passed them to `Console.WriteLine()`, but that's just the cost of interoperating with a world where we don't yet have `ReadOnlySpan<char>`-like strings!
 
-> There are optimizations that could still be done, at the expense of ease-of-use. In particular, we're expecting to see a vFuture version of `System.Text.Json` where it is better able to expose the underlying data without unecessary string allocation, and we intend to invest in that area.
+> There are optimizations that could still be done, at the expense of ease-of-use. In particular, we're expecting to see a vFuture version of `System.Text.Json` where it is better able to expose the underlying data without unecessary string allocation, and we intend to invest in that area. Note also that the string allocations are why we required you to explicitly cast to string rather than allow an implicit conversion, as for the `LocalDate`.
 
 But, by and large, we didn't allocate anything - we continued to work over the underlying UTF8 bytes. This, as we will see, is very powerful.
 
@@ -696,7 +662,7 @@ When we build and run...
 
 ```
 dotnet build
-.\bin\Debug\net7.0\JsonSchemaSample.exe
+.\bin\Debug\net8.0\JsonSchemaSample.exe
 ```
 
 We get the following output:
@@ -746,7 +712,7 @@ Build and run again...
 
 ```
 dotnet build
-.\bin\Debug\net7.0\JsonSchemaSample.exe
+.\bin\Debug\net8.0\JsonSchemaSample.exe
 ```
 
 ...and we should see the same result.
@@ -763,7 +729,7 @@ Oldroyd, Michael: 14 July 1944
 >
 > Because we have not explicitly created the `JsonDocument` we are no longer in control of its lifetime.
 >
-> The `JsonAny.Parse()` implementation has used [`JsonElement.Clone()`](https://docs.microsoft.com/en-us/dotnet/api/system.text.json.jsonelement.clone?view=net-7.0) to give us a backing `JsonElement` that outlives the original `JsonDocument`, and has disposed of that underlying document for us.
+> The `JsonAny.Parse()` implementation has used [`JsonElement.Clone()`](https://docs.microsoft.com/en-us/dotnet/api/system.text.json.jsonelement.clone?view=net-8.0) to give us a backing `JsonElement` that outlives the original `JsonDocument`, and has disposed of that underlying document for us.
 >
 > This creates a clone of the relevant segment of the underlying document, and relies on GC to clean it up when it is no longer in use.
 >
@@ -803,8 +769,8 @@ We've actually used other implicit conversions several times already in the code
 Look again at the code that is accessing the values to output them to our Console:
 
 ```csharp
-string familyName = michaelOldroyd.Name.FamilyName;
-string givenName = michaelOldroyd.Name.GivenName;
+string familyName = (string)michaelOldroyd.Name.FamilyName;
+string givenName = (string)michaelOldroyd.Name.GivenName;
 LocalDate dateOfBirth = michaelOldroyd.DateOfBirth;
 ```
 
@@ -890,7 +856,7 @@ If we build and run again...
 
 ```
 dotnet build
-.\bin\Debug\net7.0\JsonSchemaSample.exe
+.\bin\Debug\net8.0\JsonSchemaSample.exe
 ```
 
 we see the output:
@@ -926,7 +892,7 @@ Build and run...
 
 ```
 dotnet build
-.\bin\Debug\net7.0\JsonSchemaSample.exe
+.\bin\Debug\net8.0\JsonSchemaSample.exe
 ```
 
 ...and we see
@@ -942,7 +908,7 @@ Which is as we expected. But, in fact, even though it is invalid, we can still m
 Let's add a bit of code to inspect the `invalidOldroyd`.
 
 ```csharp
-string givenName2 = invalidOldroyd.Name.GivenName;
+string givenName2 = (string)invalidOldroyd.Name.GivenName;
 LocalDate dateOfBirth2 = invalidOldroyd.DateOfBirth;
 
 Console.WriteLine($"{givenName2}: {dateOfBirth2}");
@@ -952,7 +918,7 @@ Build and run...
 
 ```
 dotnet build
-.\bin\Debug\net7.0\JsonSchemaSample.exe
+.\bin\Debug\net8.0\JsonSchemaSample.exe
 ```
 
 ...and we see
@@ -990,7 +956,7 @@ Person invalidOldroyd = JsonAny.Parse(invalidJsonText);
 bool isValid2 = invalidOldroyd.IsValid();
 Console.WriteLine($"invalidOldroyd {(isValid2 ? "is" : "is not")} valid.");
 
-string givenName2 = invalidOldroyd.Name.GivenName;
+string givenName2 = (string)invalidOldroyd.Name.GivenName;
 LocalDate dateOfBirth2 = invalidOldroyd.DateOfBirth;
 
 Console.WriteLine($"{givenName2}: {dateOfBirth2}");
@@ -1012,7 +978,7 @@ When we build and run...
 
 ```
 dotnet build
-.\bin\Debug\net7.0\JsonSchemaSample.exe
+.\bin\Debug\net8.0\JsonSchemaSample.exe
 ```
 
 We see...
@@ -1050,7 +1016,7 @@ Let's replace the code that extracts the given name with the following:
 ```csharp
 string givenName =
     michaelOldroyd.Name.GivenName.IsNotUndefined()
-        ? michaelOldroyd.Name.GivenName
+        ? (string)michaelOldroyd.Name.GivenName
         : "[no given name specified]";
 ```
 
@@ -1060,7 +1026,7 @@ This time, when we build and run...
 
 ```
 dotnet build
-.\bin\Debug\net7.0\JsonSchemaSample.exe
+.\bin\Debug\net8.0\JsonSchemaSample.exe
 ```
 
 We get:
@@ -1102,7 +1068,7 @@ Let's build and run, to verify the output.
 
 ```
 dotnet build
-.\bin\Debug\net7.0\JsonSchemaSample.exe
+.\bin\Debug\net8.0\JsonSchemaSample.exe
 ```
 
 We are expecting it to produce the usual output, and for the instance still to be valid.
@@ -1148,7 +1114,7 @@ Build and run...
 
 ```
 dotnet build
-.\bin\Debug\net7.0\JsonSchemaSample.exe
+.\bin\Debug\net8.0\JsonSchemaSample.exe
 ```
 
 And we see the `occupation` added to the output.
@@ -1195,7 +1161,7 @@ Build and run...
 
 ```
 dotnet build
-.\bin\Debug\net7.0\JsonSchemaSample.exe
+.\bin\Debug\net8.0\JsonSchemaSample.exe
 ```
 
 ...and we can see that this code enumerates all of the properties on the `Person` object, and writes them out to the console.
@@ -1269,7 +1235,7 @@ OK - let's build and run again...
 
 ```
 dotnet build
-.\bin\Debug\net7.0\JsonSchemaSample.exe
+.\bin\Debug\net8.0\JsonSchemaSample.exe
 ```
 
 and the output looks like this:
@@ -1310,7 +1276,7 @@ Build and run...
 
 ```
 dotnet build
-.\bin\Debug\net7.0\JsonSchemaSample.exe
+.\bin\Debug\net8.0\JsonSchemaSample.exe
 ```
 
 ...and we see the serialized output in the console.
@@ -1367,7 +1333,7 @@ Build and run again...
 
 ```
 dotnet build
-.\bin\Debug\net7.0\JsonSchemaSample.exe
+.\bin\Debug\net8.0\JsonSchemaSample.exe
 ```
 
 ...and we see the other names written to the console.
