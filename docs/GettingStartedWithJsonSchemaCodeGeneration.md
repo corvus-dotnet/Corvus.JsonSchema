@@ -46,13 +46,13 @@ But this is intended to be a step-by-step guide. Please let us know in the comme
 
 ### You'll need
 
-- the [.NET 7 SDK Preview](https://dotnet.microsoft.com/en-us/download/dotnet/7.0) (maybe you've already installed [Visual Studio 2022 17.4 Preview 1](https://visualstudio.microsoft.com/vs/preview/) and acquired it that way; but you don't have to install Visual Studio to get started; you can download these SDK bits and use the completely free/OSS toolchain to follow along.)
+- the [.NET 8 SDK Preview](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) (maybe you've already installed [Visual Studio 2022 17.4 Preview 1](https://visualstudio.microsoft.com/vs/preview/) and acquired it that way; but you don't have to install Visual Studio to get started; you can download these SDK bits and use the completely free/OSS toolchain to follow along.)
 - a shell, with the SDK developer tools in the path. I'm using [PowerShell](https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-7.2) in the [Windows Terminal](https://docs.microsoft.com/en-us/windows/terminal/install), [configured with the Visual Studio "Developer" config for PowerShell](https://blog.yannickreekmans.be/developer-powershell-command-prompt-visual-studio-windows-terminal/).
 - A text editor or IDE. I'm using [VS Code](https://code.visualstudio.com/).
 
 ### Things that would help
 
-- Some familiarity with building C# code with dotnet7.0
+- Some familiarity with building C# code with dotnet8.0
 - Some familiarity with [json-schema](https://json-schema.org/understanding-json-schema/)
 - Some familiarity with JSON reading, writing, and serialization, preferably with `System.Text.Json`
 
@@ -64,10 +64,10 @@ First, you need to install the code generator. I choose to do so globally. From 
 dotnet tool install --global Corvus.Json.JsonSchema.TypeGeneratorTool --prerelease
 ```
 
-We'll also create a console app to host our sample, using dotnet7.0s
+We'll also create a console app to host our sample, using dotnet8.0s
 
 ```
-dotnet new console -o JsonSchemaSample -f net7.0
+dotnet new console -o JsonSchemaSample -f net8.0
 cd JsonSchemaSample
 ```
 
@@ -92,7 +92,7 @@ When the editor loads up the project file, it should look something like this. N
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
@@ -124,7 +124,7 @@ It will now look like this. The exact pre-release version of Corvus.Json.Extende
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
@@ -538,7 +538,7 @@ dotnet build
 This emits an executable in the bin folder. We can run it...
 
 ```
-.\bin\Debug\net7.0\JsonSchemaSample.exe
+.\bin\Debug\net8.0\JsonSchemaSample.exe
 ```
 
  and check we get the standard `Hello, World!` message.
@@ -644,7 +644,7 @@ Let's build and run that again.
 
 ```
 dotnet build
-.\bin\Debug\net7.0\JsonSchemaSample.exe
+.\bin\Debug\net8.0\JsonSchemaSample.exe
 ```
 
 As we'd hope, it produces (something like) the following output:
@@ -696,7 +696,7 @@ When we build and run...
 
 ```
 dotnet build
-.\bin\Debug\net7.0\JsonSchemaSample.exe
+.\bin\Debug\net8.0\JsonSchemaSample.exe
 ```
 
 We get the following output:
@@ -746,7 +746,7 @@ Build and run again...
 
 ```
 dotnet build
-.\bin\Debug\net7.0\JsonSchemaSample.exe
+.\bin\Debug\net8.0\JsonSchemaSample.exe
 ```
 
 ...and we should see the same result.
@@ -763,7 +763,7 @@ Oldroyd, Michael: 14 July 1944
 >
 > Because we have not explicitly created the `JsonDocument` we are no longer in control of its lifetime.
 >
-> The `JsonAny.Parse()` implementation has used [`JsonElement.Clone()`](https://docs.microsoft.com/en-us/dotnet/api/system.text.json.jsonelement.clone?view=net-7.0) to give us a backing `JsonElement` that outlives the original `JsonDocument`, and has disposed of that underlying document for us.
+> The `JsonAny.Parse()` implementation has used [`JsonElement.Clone()`](https://docs.microsoft.com/en-us/dotnet/api/system.text.json.jsonelement.clone?view=net-8.0) to give us a backing `JsonElement` that outlives the original `JsonDocument`, and has disposed of that underlying document for us.
 >
 > This creates a clone of the relevant segment of the underlying document, and relies on GC to clean it up when it is no longer in use.
 >
@@ -890,7 +890,7 @@ If we build and run again...
 
 ```
 dotnet build
-.\bin\Debug\net7.0\JsonSchemaSample.exe
+.\bin\Debug\net8.0\JsonSchemaSample.exe
 ```
 
 we see the output:
@@ -926,7 +926,7 @@ Build and run...
 
 ```
 dotnet build
-.\bin\Debug\net7.0\JsonSchemaSample.exe
+.\bin\Debug\net8.0\JsonSchemaSample.exe
 ```
 
 ...and we see
@@ -952,7 +952,7 @@ Build and run...
 
 ```
 dotnet build
-.\bin\Debug\net7.0\JsonSchemaSample.exe
+.\bin\Debug\net8.0\JsonSchemaSample.exe
 ```
 
 ...and we see
@@ -1012,7 +1012,7 @@ When we build and run...
 
 ```
 dotnet build
-.\bin\Debug\net7.0\JsonSchemaSample.exe
+.\bin\Debug\net8.0\JsonSchemaSample.exe
 ```
 
 We see...
@@ -1060,7 +1060,7 @@ This time, when we build and run...
 
 ```
 dotnet build
-.\bin\Debug\net7.0\JsonSchemaSample.exe
+.\bin\Debug\net8.0\JsonSchemaSample.exe
 ```
 
 We get:
@@ -1102,7 +1102,7 @@ Let's build and run, to verify the output.
 
 ```
 dotnet build
-.\bin\Debug\net7.0\JsonSchemaSample.exe
+.\bin\Debug\net8.0\JsonSchemaSample.exe
 ```
 
 We are expecting it to produce the usual output, and for the instance still to be valid.
@@ -1148,7 +1148,7 @@ Build and run...
 
 ```
 dotnet build
-.\bin\Debug\net7.0\JsonSchemaSample.exe
+.\bin\Debug\net8.0\JsonSchemaSample.exe
 ```
 
 And we see the `occupation` added to the output.
@@ -1195,7 +1195,7 @@ Build and run...
 
 ```
 dotnet build
-.\bin\Debug\net7.0\JsonSchemaSample.exe
+.\bin\Debug\net8.0\JsonSchemaSample.exe
 ```
 
 ...and we can see that this code enumerates all of the properties on the `Person` object, and writes them out to the console.
@@ -1269,7 +1269,7 @@ OK - let's build and run again...
 
 ```
 dotnet build
-.\bin\Debug\net7.0\JsonSchemaSample.exe
+.\bin\Debug\net8.0\JsonSchemaSample.exe
 ```
 
 and the output looks like this:
@@ -1310,7 +1310,7 @@ Build and run...
 
 ```
 dotnet build
-.\bin\Debug\net7.0\JsonSchemaSample.exe
+.\bin\Debug\net8.0\JsonSchemaSample.exe
 ```
 
 ...and we see the serialized output in the console.
@@ -1367,7 +1367,7 @@ Build and run again...
 
 ```
 dotnet build
-.\bin\Debug\net7.0\JsonSchemaSample.exe
+.\bin\Debug\net8.0\JsonSchemaSample.exe
 ```
 
 ...and we see the other names written to the console.
@@ -1429,7 +1429,7 @@ var michaelOldroyd = JsonAny.From(jsonAnon);
 
 That's all very well if you are creating a whole document in one go, but what if you want to build or compose a document from constituent parts?
 
-In dotnet7, `System.Text.Json` added the `Nodes` namespace with [`JsonObject`](https://docs.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject?view=net-6.0) and [`JsonArray`](https://docs.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonarray?view=net-6.0) types to help you build JSON documents.
+In dotnet8, `System.Text.Json` added the `Nodes` namespace with [`JsonObject`](https://docs.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonobject?view=net-6.0) and [`JsonArray`](https://docs.microsoft.com/en-us/dotnet/api/system.text.json.nodes.jsonarray?view=net-6.0) types to help you build JSON documents.
 
 Our extended and generated types *do not* use `JsonObject` under the covers to create new JSON documents, but they *do* build on similar factory patterns. We use our knowledge of the JSON schema from which the types were generated to help us create semantically valid data structures.
 
