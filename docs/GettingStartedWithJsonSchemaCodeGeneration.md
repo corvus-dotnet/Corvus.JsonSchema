@@ -873,13 +873,16 @@ What if we now deliberately create a JSON document which is not valid according 
 Let's add the following code:
 
 ```csharp
-string invalidJsonText = @"{
-    ""name"": {
-      ""givenName"": ""Michael"",
-      ""otherNames"": [""Francis"", ""James""]
-    },
-    ""dateOfBirth"": ""1944-07-14""
-}";
+string invalidJsonText =
+    """
+        {
+        "name": {
+          "givenName": "Michael",
+          "otherNames": ["Francis", "James"]
+        },
+        "dateOfBirth": "1944-07-14"
+    }
+    """;
 
 Person invalidOldroyd = JsonAny.Parse(invalidJsonText);
 bool isValid2 = invalidOldroyd.IsValid();
@@ -944,13 +947,16 @@ To make things clear, let's delete our "invalid data" code, and go back to our v
 
 (*These are the lines to remove*)
 ```csharp
-string invalidJsonText = @"{
-    ""name"": {
-      ""givenName"": ""Michael"",
-      ""otherNames"": [""Francis"", ""James""]
+string invalidJsonText = 
+"""
+{
+    "name": {
+      "givenName": "Michael",
+      "otherNames": ["Francis", "James"]
     },
-    ""dateOfBirth"": ""1944-07-14""
-}";
+    "dateOfBirth": "1944-07-14"
+}
+""";
 
 Person invalidOldroyd = JsonAny.Parse(invalidJsonText);
 bool isValid2 = invalidOldroyd.IsValid();
@@ -965,13 +971,16 @@ Console.WriteLine($"{givenName2}: {dateOfBirth2}");
 Now, let's adjust our valid JSON text, removing the optional `givenName` property, so the `jsonText` assignment looks like this
 
 ```csharp
-string jsonText = @"{
-    ""name"": {
-      ""familyName"": ""Oldroyd"",
-      ""otherNames"": [""Francis"", ""James""]
+string jsonText = 
+"""
+{
+    "name": {
+      "familyName": "Oldroyd",
+      "otherNames": ["Francis", "James"]
     },
-    ""dateOfBirth"": ""1944-07-14""
-}";
+    "dateOfBirth": "1944-07-14"
+}
+""";
 ```
 
 When we build and run...
@@ -1051,15 +1060,18 @@ Remember that in a JSON schema, the default behaviour is to allow additional pro
 We can demonstrate this with an addition to our JSON text.
 
 ```csharp
-string jsonText = @"{
-    ""name"": {
-      ""familyName"": ""Oldroyd"",
-      ""givenName"": ""Michael"",
-      ""otherNames"": [""Francis"", ""James""]
+string jsonText = 
+"""
+{
+    "name": {
+      "familyName": "Oldroyd",
+      "givenName": "Michael",
+      "otherNames": ["Francis", "James"]
     },
-    ""occupation"": ""Farrier"",
-    ""dateOfBirth"": ""1944-07-14""
-}";
+    "occupation": "Farrier",
+    "dateOfBirth": "1944-07-14"
+}
+""";
 ```
 
 I've added back the `givenName` property, and included an additional property called `occupation`.
@@ -1132,17 +1144,20 @@ If we aren't fishing for a well known additional property, but want to operate o
 Let's add a few more *additional properties* to our JSON document.
 
 ```csharp
-string jsonText = @"{
-    ""name"": {
-      ""familyName"": ""Oldroyd"",
-      ""givenName"": ""Michael"",
-      ""otherNames"": [""Francis"", ""James""]
+string jsonText = 
+"""
+{
+    "name": {
+      "familyName": "Oldroyd",
+      "givenName": "Michael",
+      "otherNames": ["Francis", "James"]
     },
-    ""occupation"": ""Farrier"",
-    ""selfEmployed"": false,
-    ""salary"": 26000,
-    ""dateOfBirth"": ""1944-07-14""
-}";
+    "occupation": "Farrier",
+    "selfEmployed": false,
+    "salary": 26000,
+    "dateOfBirth": "1944-07-14"
+}
+""";
 ```
 
 You can see we've added a `bool` property called `selfEmployed` and a `number` property called `salary`.
@@ -1180,7 +1195,7 @@ michaelOldroyd is valid.
 
 The JSON `JsonObjectProperty` type has a `Name` property which gives us the underlying JSON form of the actual property name, as a `string`. Its `Value` property returns the value as a `JsonAny`.
 
-> Note: the name is actually a `JsonPropertyName` which is freely convertible to a string. This allows us to optimize the underlying storage mechanism for property names.
+> Note: the name is actually a `JsonPropertyName` which is convertible to a string, either explicitly (via a cast or a call to `(Try)GetString()`. This allows us to optimize the underlying storage mechanism for property names.
 
 It also exposes a `ValueAs<T>()` method to get the value as a specific type of `IJsonValue`, plus `ValueKind` if you want to explore its underlying type. These are analagous to the methods on `JsonAny` but you avoid converting to `JsonAny` explicitly, just to examine property information.
 
@@ -1188,28 +1203,36 @@ The result of all this is that we have emitted our additional properties to the 
 
 You'll not be surprised to learn that there is.
 
-If we go and look at any of our code generated types, you'll see that the generator has emitted `const` fields for the well-known properties of thos `object` types that have them. They take the form `<PropertyName>JsonPropertyName` and `<PropertyName>Utf8JsonPropertyName`.
+If we go and look at any of our code generated types, you'll see that the generator has emitted `const` fields for the well-known properties of thos `object` types that have them, They are in a nested class `JsonPropertyNames`.
 
 ```csharp
 /// <summary>
-/// JSON property name for <see cref = "Name"/>.
+/// The well-known property names in the JSON object.
 /// </summary>
-public static readonly ReadOnlyMemory<byte>NameUtf8JsonPropertyName = new byte[]{110, 97, 109, 101};
-/// <summary>
-/// JSON property name for <see cref = "Name"/>.
-/// </summary>
-public static readonly string NameJsonPropertyName ="name";
-/// <summary>
-/// JSON property name for <see cref = "DateOfBirth"/>.
-/// </summary>
-public static readonly ReadOnlyMemory<byte>DateOfBirthUtf8JsonPropertyName = new byte[]{100, 97, 116,101, 79, 102, 66, 105, 114, 116, 104};
-/// <summary>
-/// JSON property name for <see cref = "DateOfBirth"/>.
-/// </summary>
-public static readonly string DateOfBirthJsonPropertyName = "dateOfBirth";
+public static class JsonPropertyNames
+{
+    /// <summary>
+    /// JSON property name for <see cref = "DateOfBirth"/>.
+    /// </summary>
+    public static ReadOnlySpan<byte> DateOfBirthUtf8 => "dateOfBirth"u8;
+
+    /// <summary>
+    /// JSON property name for <see cref = "DateOfBirth"/>.
+    /// </summary>
+    public const string DateOfBirth = "dateOfBirth";
+    /// <summary>
+    /// JSON property name for <see cref = "Name"/>.
+    /// </summary>
+    public static ReadOnlySpan<byte> NameUtf8 => "name"u8;
+
+    /// <summary>
+    /// JSON property name for <see cref = "Name"/>.
+    /// </summary>
+    public const string Name = "name";
+}
 ```
 
-As you might expect, these fields expose the `char` and UTF8-encoded `byte` versions of the relevant JSON property names.
+As you might expect, these fields expose both the `char` and UTF8-encoded `byte` versions of the relevant JSON property names.
 
 We can use these to add a filter to our enumerator, to eliminate the well-known properties, and just work over the additional properties.
 
@@ -1218,8 +1241,8 @@ Replace the `foreach` loop with the following:
 ```csharp
 foreach(JsonObjectProperty property in michaelOldroyd.EnumerateObject())
 {
-    if (property.NameEquals(Person.DateOfBirthUtf8JsonPropertyName.Span) ||
-        property.NameEquals(Person.NameUtf8JsonPropertyName.Span))
+    if (property.NameEquals(Person.JsonPropertyNames.DateOfBirthUtf8) ||
+        property.NameEquals(Person.JsonPropertyNames.NameUtf8))
     {
         // Skip the properties we already know about
         continue;
@@ -1229,7 +1252,7 @@ foreach(JsonObjectProperty property in michaelOldroyd.EnumerateObject())
 }
 ```
 
-> Notice how we are using the `NameEquals()` method, with the pre-encoded `UTF8JsonPropertyName` properties. This allows us to avoid allocating strings to compare property names, if we are operating on data backed by a `JsonElement`, as in this case.
+> Notice how we are using the `NameEquals()` method, with the pre-encoded `XXXUtf8` properties. This allows us to avoid allocating strings to compare property names, if we are operating on data backed by a `JsonElement`, as in this case.
 
 OK - let's build and run again...
 
@@ -1306,14 +1329,17 @@ using Corvus.Json;
 using JsonSchemaSample.Api;
 using NodaTime;
 
-string jsonText = @"{
-    ""name"": {
-      ""familyName"": ""Oldroyd"",
-      ""givenName"": ""Michael"",
-      ""otherNames"": [""Francis"", ""James""]
+string jsonText = 
+"""
+{
+    "name": {
+      "familyName": "Oldroyd",
+      "givenName": "Michael",
+      "otherNames": ["Francis", "James"]
     },
-    ""dateOfBirth"": ""1944-07-14""
-}";
+    "dateOfBirth": "1944-07-14"
+}
+""";
 
 var michaelOldroyd = Person.Parse(jsonText);
 ```
@@ -1362,14 +1388,17 @@ Another way to create JSON quickly is to use anonymous types. This is slightly l
 Instead of our JSON string.
 
 ```csharp
-string jsonText = @"{
-    ""name"": {
-      ""familyName"": ""Oldroyd"",
-      ""givenName"": ""Michael"",
-      ""otherNames"": [""Francis"", ""James""]
+string jsonText = 
+"""
+{
+    "name": {
+        "familyName": "Oldroyd",
+        "givenName": "Michael",
+        "otherNames": ["Francis", "James"]
     },
-    ""dateOfBirth"": ""1944-07-14""
-  }";
+    "dateOfBirth": "1944-07-14"
+}
+""";
 ```
 
 we could use anonymous types like this:
@@ -1592,14 +1621,17 @@ using Corvus.Json;
 using JsonSchemaSample.Api;
 using NodaTime;
 
-string jsonText = @"{
-    ""name"": {
-      ""familyName"": ""Oldroyd"",
-      ""givenName"": ""Michael"",
-      ""otherNames"": [""Francis"", ""James""]
+string jsonText = 
+"""
+{
+    "name": {
+      "familyName": "Oldroyd",
+      "givenName": "Michael",
+      "otherNames": ["Francis", "James"]
     },
-    ""dateOfBirth"": ""1944-07-14""
-}";
+    "dateOfBirth": "1944-07-14"
+}
+""";
 
 var michaelOldroyd = Person.Parse(jsonText);
 ```
