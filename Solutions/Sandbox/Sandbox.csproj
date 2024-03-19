@@ -14,6 +14,7 @@
 	
 	<ItemGroup>
 	  <ProjectReference Include="..\Corvus.Json.ExtendedTypes\Corvus.Json.ExtendedTypes.csproj" />
+	  <ProjectReference Include="..\Corvus.Json.JsonSchema.Draft202012\Corvus.Json.JsonSchema.Draft202012.csproj" />
 	  <ProjectReference Include="..\Corvus.Json.Patch\Corvus.Json.Patch.csproj" />
 	  <ProjectReference Include="..\Corvus.JsonPatch.Benchmarking\Corvus.JsonPatch.Benchmarking.csproj" />
 	</ItemGroup>

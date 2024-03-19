@@ -22,6 +22,165 @@ public readonly partial struct Validation
     public readonly partial struct SimpleTypes
     {
         /// <summary>
+        /// Matches the value against each of the enumeration values, and returns the result of calling the provided match function for the first match found.
+        /// </summary>
+        /// <param name = "context">The context to pass to the match function.</param>
+        /// <param name = "matchArray">The function to call if the value matches the JSON value "\"array\"".</param>
+        /// <param name = "matchBoolean">The function to call if the value matches the JSON value "\"boolean\"".</param>
+        /// <param name = "matchInteger">The function to call if the value matches the JSON value "\"integer\"".</param>
+        /// <param name = "matchNull">The function to call if the value matches the JSON value "\"null\"".</param>
+        /// <param name = "matchNumber">The function to call if the value matches the JSON value "\"number\"".</param>
+        /// <param name = "matchObject">The function to call if the value matches the JSON value "\"object\"".</param>
+        /// <param name = "matchString">The function to call if the value matches the JSON value "\"string\"".</param>
+        /// <param name = "defaultMatch">The fallback match.</param>
+        public TOut Match<TIn, TOut>(in TIn context, Func<TIn, TOut> matchArray, Func<TIn, TOut> matchBoolean, Func<TIn, TOut> matchInteger, Func<TIn, TOut> matchNull, Func<TIn, TOut> matchNumber, Func<TIn, TOut> matchObject, Func<TIn, TOut> matchString, Func<TIn, TOut> defaultMatch)
+        {
+            if (this.ValueKind == JsonValueKind.String)
+            {
+                if (this.HasJsonElementBacking)
+                {
+                    if (this.jsonElementBacking.ValueEquals(EnumValues.ArrayUtf8))
+                    {
+                        return matchArray(context);
+                    }
+
+                    if (this.jsonElementBacking.ValueEquals(EnumValues.BooleanUtf8))
+                    {
+                        return matchBoolean(context);
+                    }
+
+                    if (this.jsonElementBacking.ValueEquals(EnumValues.IntegerUtf8))
+                    {
+                        return matchInteger(context);
+                    }
+
+                    if (this.jsonElementBacking.ValueEquals(EnumValues.NullUtf8))
+                    {
+                        return matchNull(context);
+                    }
+
+                    if (this.jsonElementBacking.ValueEquals(EnumValues.NumberUtf8))
+                    {
+                        return matchNumber(context);
+                    }
+
+                    if (this.jsonElementBacking.ValueEquals(EnumValues.ObjectUtf8))
+                    {
+                        return matchObject(context);
+                    }
+
+                    if (this.jsonElementBacking.ValueEquals(EnumValues.StringUtf8))
+                    {
+                        return matchString(context);
+                    }
+                }
+                else
+                {
+                    switch (this.stringBacking)
+                    {
+                        case "array":
+                            return matchArray(context);
+                        case "boolean":
+                            return matchBoolean(context);
+                        case "integer":
+                            return matchInteger(context);
+                        case "null":
+                            return matchNull(context);
+                        case "number":
+                            return matchNumber(context);
+                        case "object":
+                            return matchObject(context);
+                        case "string":
+                            return matchString(context);
+                        default:
+                            break;
+                    }
+                }
+            }
+
+            return defaultMatch(context);
+        }
+
+        /// <summary>
+        /// Matches the value against each of the enumeration values, and returns the result of calling the provided match function for the first match found.
+        /// </summary>
+        /// <param name = "matchArray">The function to call if the value matches the JSON value "\"array\"".</param>
+        /// <param name = "matchBoolean">The function to call if the value matches the JSON value "\"boolean\"".</param>
+        /// <param name = "matchInteger">The function to call if the value matches the JSON value "\"integer\"".</param>
+        /// <param name = "matchNull">The function to call if the value matches the JSON value "\"null\"".</param>
+        /// <param name = "matchNumber">The function to call if the value matches the JSON value "\"number\"".</param>
+        /// <param name = "matchObject">The function to call if the value matches the JSON value "\"object\"".</param>
+        /// <param name = "matchString">The function to call if the value matches the JSON value "\"string\"".</param>
+        /// <param name = "defaultMatch">The fallback match.</param>
+        public TOut Match<TOut>(Func<TOut> matchArray, Func<TOut> matchBoolean, Func<TOut> matchInteger, Func<TOut> matchNull, Func<TOut> matchNumber, Func<TOut> matchObject, Func<TOut> matchString, Func<TOut> defaultMatch)
+        {
+            if (this.ValueKind == JsonValueKind.String)
+            {
+                if (this.HasJsonElementBacking)
+                {
+                    if (this.jsonElementBacking.ValueEquals(EnumValues.ArrayUtf8))
+                    {
+                        return matchArray();
+                    }
+
+                    if (this.jsonElementBacking.ValueEquals(EnumValues.BooleanUtf8))
+                    {
+                        return matchBoolean();
+                    }
+
+                    if (this.jsonElementBacking.ValueEquals(EnumValues.IntegerUtf8))
+                    {
+                        return matchInteger();
+                    }
+
+                    if (this.jsonElementBacking.ValueEquals(EnumValues.NullUtf8))
+                    {
+                        return matchNull();
+                    }
+
+                    if (this.jsonElementBacking.ValueEquals(EnumValues.NumberUtf8))
+                    {
+                        return matchNumber();
+                    }
+
+                    if (this.jsonElementBacking.ValueEquals(EnumValues.ObjectUtf8))
+                    {
+                        return matchObject();
+                    }
+
+                    if (this.jsonElementBacking.ValueEquals(EnumValues.StringUtf8))
+                    {
+                        return matchString();
+                    }
+                }
+                else
+                {
+                    switch (this.stringBacking)
+                    {
+                        case "array":
+                            return matchArray();
+                        case "boolean":
+                            return matchBoolean();
+                        case "integer":
+                            return matchInteger();
+                        case "null":
+                            return matchNull();
+                        case "number":
+                            return matchNumber();
+                        case "object":
+                            return matchObject();
+                        case "string":
+                            return matchString();
+                        default:
+                            break;
+                    }
+                }
+            }
+
+            return defaultMatch();
+        }
+
+        /// <summary>
         /// Permitted values.
         /// </summary>
         public static class EnumValues

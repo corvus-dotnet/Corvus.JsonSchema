@@ -16,7 +16,7 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft201909 {
     public partial class CodeGeneratorIfThenElse : CodeGeneratorIfThenElseBase {
         
         
-        #line 104 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
+        #line 78 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
 
     public bool ShouldGenerate
     {
@@ -110,281 +110,214 @@ namespace ");
             #line hidden
             
             #line 33 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
-  if (HasThen)
+  if (HasThen && !HasElse)
     { 
             
             #line default
             #line hidden
             
             #line 35 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
-            this.Write("    /// <summary>\r\n    /// Gets this value cast to the \'then\' type for the If/The" +
-                    "n/Else clause.\r\n    /// </summary>\r\n    public ");
-            
-            #line default
-            #line hidden
-            
-            #line 38 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture(ThenFullyQualifiedDotnetTypeName));
-            
-            #line default
-            #line hidden
-            
-            #line 38 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
-            this.Write(" ");
-            
-            #line default
-            #line hidden
-            
-            #line 38 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( IfDotnetTypeName ));
-            
-            #line default
-            #line hidden
-            
-            #line 38 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
-            this.Write("Matched\r\n    {\r\n        get\r\n        {\r\n            return this.As<");
-            
-            #line default
-            #line hidden
-            
-            #line 42 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture(ThenFullyQualifiedDotnetTypeName));
-            
-            #line default
-            #line hidden
-            
-            #line 42 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
-            this.Write(">();\r\n        }\r\n    }\r\n");
-            
-            #line default
-            #line hidden
-            
-            #line 45 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
-  }
-
-    if (HasElse)
-    { 
-            
-            #line default
-            #line hidden
-            
-            #line 49 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
-            this.Write("\r\n    /// <summary>\r\n    /// Gets this value cast to the \'else\' type for the If/T" +
-                    "hen/Else clause.\r\n    /// </summary>\r\n    public ");
-            
-            #line default
-            #line hidden
-            
-            #line 53 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture(ElseFullyQualifiedDotnetTypeName));
-            
-            #line default
-            #line hidden
-            
-            #line 53 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
-            this.Write(" ");
-            
-            #line default
-            #line hidden
-            
-            #line 53 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( IfDotnetTypeName ));
-            
-            #line default
-            #line hidden
-            
-            #line 53 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
-            this.Write("NotMatched\r\n    {\r\n        get\r\n        {\r\n            return this.As<");
-            
-            #line default
-            #line hidden
-            
-            #line 57 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture(ElseFullyQualifiedDotnetTypeName));
-            
-            #line default
-            #line hidden
-            
-            #line 57 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
-            this.Write(">();\r\n        }\r\n    }\r\n");
-            
-            #line default
-            #line hidden
-            
-            #line 60 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
-  }
-
-    if (HasThen)
-    { 
-            
-            #line default
-            #line hidden
-            
-            #line 64 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
             this.Write(@"
     /// <summary>
     /// Gets a value indicating whether this matches an If/Then case, return the value as the type defined for the then case.
     /// </summary>
     /// <param name=""result"">This value cast to the 'then' type, when the 'if' schema matches, otherwise an Undefined instance of the 'then' type.</param>
     /// <returns><c>True</c> if the 'if' case matched, and the 'else' instance was provided.</returns>
-    public bool TryMatch");
+    public bool MatchIf");
             
             #line default
             #line hidden
             
-            #line 70 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
+            #line 41 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( IfDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 70 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
+            #line 41 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
             this.Write("(out ");
             
             #line default
             #line hidden
             
-            #line 70 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
+            #line 41 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( ThenFullyQualifiedDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 70 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
+            #line 41 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
             this.Write(" result)\r\n    {\r\n        if (this.As<");
             
             #line default
             #line hidden
             
-            #line 72 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
+            #line 43 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( IfFullyQualifiedDotnetTypeName));
             
             #line default
             #line hidden
             
-            #line 72 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
+            #line 43 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
             this.Write(">().IsValid())\r\n        {\r\n            result = this.As<");
             
             #line default
             #line hidden
             
-            #line 74 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
+            #line 45 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(ThenFullyQualifiedDotnetTypeName));
             
             #line default
             #line hidden
             
-            #line 74 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
+            #line 45 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
             this.Write(">();\r\n            return true;\r\n        }\r\n\r\n        result = ");
             
             #line default
             #line hidden
             
-            #line 78 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
+            #line 49 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(ThenFullyQualifiedDotnetTypeName));
             
             #line default
             #line hidden
             
-            #line 78 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
+            #line 49 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
             this.Write(".Undefined;\r\n        return false;\r\n    }\r\n");
             
             #line default
             #line hidden
             
-            #line 81 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
+            #line 52 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
   }
-    if (HasElse)
+    if (HasThen && HasElse)
     { 
             
             #line default
             #line hidden
             
-            #line 84 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
+            #line 55 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
             this.Write(@"
     /// <summary>
-    /// Gets a value indicating whether this matches an If/Then/Else case, providing the 'else' type when the 'if' schema does not match.
+    /// Gets a value indicating whether this matches an If/Then/Else case, returning the value as the type defined for the then or else case.
     /// </summary>
-    /// <param name=""result"">This value cast to the 'else' type, when the 'if' schema does not match, otherwise an Undefined instance of the else type.</param>
-    /// <returns><c>True</c> if the if case did not match, and the else instance was provided.</returns>
-    public bool TryNotMatched");
+    /// <param name=""then"">This value cast to the 'then' type, when the 'if' schema matches, otherwise an Undefined instance of the 'then' type.</param>
+    /// <param name=""else"">This value cast to the 'else' type, when the 'if' schema does not match, otherwise an Undefined instance of the 'else' type.</param>
+    /// <returns><c>True</c> if the 'if' case matched, and the 'then' instance was provided, otherwise <c>False</c>.</returns>
+    public bool MatchIf");
             
             #line default
             #line hidden
             
-            #line 90 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
+            #line 62 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( IfDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 90 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
+            #line 62 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
             this.Write("(out ");
             
             #line default
             #line hidden
             
-            #line 90 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
+            #line 62 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( ThenFullyQualifiedDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 62 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
+            this.Write(" @then, out ");
+            
+            #line default
+            #line hidden
+            
+            #line 62 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( ElseFullyQualifiedDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 90 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
-            this.Write(" result)\r\n    {\r\n        if (!this.As<");
+            #line 62 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
+            this.Write(" @else)\r\n    {\r\n        if (this.As<");
             
             #line default
             #line hidden
             
-            #line 92 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
+            #line 64 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( IfFullyQualifiedDotnetTypeName));
             
             #line default
             #line hidden
             
-            #line 92 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
-            this.Write(">().IsValid())\r\n        {\r\n            result = this.As<");
+            #line 64 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
+            this.Write(">().IsValid())\r\n        {\r\n            @then = this.As<");
             
             #line default
             #line hidden
             
-            #line 94 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
+            #line 66 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture(ThenFullyQualifiedDotnetTypeName));
+            
+            #line default
+            #line hidden
+            
+            #line 66 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
+            this.Write(">();\r\n            @else = ");
+            
+            #line default
+            #line hidden
+            
+            #line 67 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(ElseFullyQualifiedDotnetTypeName));
             
             #line default
             #line hidden
             
-            #line 94 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
-            this.Write(">();\r\n            return true;\r\n        }\r\n\r\n        result = ");
+            #line 67 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
+            this.Write(".Undefined;\r\n            return true;\r\n        }\r\n\r\n        @then = ");
             
             #line default
             #line hidden
             
-            #line 98 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
+            #line 71 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture(ThenFullyQualifiedDotnetTypeName));
+            
+            #line default
+            #line hidden
+            
+            #line 71 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
+            this.Write(".Undefined;\r\n        @else = this.As<");
+            
+            #line default
+            #line hidden
+            
+            #line 72 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(ElseFullyQualifiedDotnetTypeName));
             
             #line default
             #line hidden
             
-            #line 98 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
-            this.Write(".Undefined;\r\n        return false;\r\n    }\r\n");
+            #line 72 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
+            this.Write(">();\r\n        return false;\r\n    }\r\n");
             
             #line default
             #line hidden
             
-            #line 101 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
+            #line 75 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 102 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
+            #line 76 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
             this.Write("}\r\n");
             
             #line default
             #line hidden
             
-            #line 103 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
+            #line 77 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.IfThenElse.tt"
  EndNesting(); 
             
             #line default

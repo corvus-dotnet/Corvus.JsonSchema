@@ -30,36 +30,7 @@ namespace <#= Namespace #>;
 <#= FormattedTypeDocumentation #>
 public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 {
-<#  if (HasThen)
-    { #>
-    /// <summary>
-    /// Gets this value cast to the 'then' type for the If/Then/Else clause.
-    /// </summary>
-    public <#=ThenFullyQualifiedDotnetTypeName#> <#= IfDotnetTypeName #>Matched
-    {
-        get
-        {
-            return this.As<<#=ThenFullyQualifiedDotnetTypeName#>>();
-        }
-    }
-<#  }
-
-    if (HasElse)
-    { #>
-
-    /// <summary>
-    /// Gets this value cast to the 'else' type for the If/Then/Else clause.
-    /// </summary>
-    public <#=ElseFullyQualifiedDotnetTypeName#> <#= IfDotnetTypeName #>NotMatched
-    {
-        get
-        {
-            return this.As<<#=ElseFullyQualifiedDotnetTypeName#>>();
-        }
-    }
-<#  }
-
-    if (HasThen)
+<#  if (HasThen && !HasElse)
     { #>
 
     /// <summary>
@@ -67,7 +38,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     /// </summary>
     /// <param name="result">This value cast to the 'then' type, when the 'if' schema matches, otherwise an Undefined instance of the 'then' type.</param>
     /// <returns><c>True</c> if the 'if' case matched, and the 'else' instance was provided.</returns>
-    public bool TryMatch<#= IfDotnetTypeName #>(out <#= ThenFullyQualifiedDotnetTypeName #> result)
+    public bool MatchIf<#= IfDotnetTypeName #>(out <#= ThenFullyQualifiedDotnetTypeName #> result)
     {
         if (this.As<<#= IfFullyQualifiedDotnetTypeName#>>().IsValid())
         {
@@ -79,23 +50,26 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
         return false;
     }
 <#  }
-    if (HasElse)
+    if (HasThen && HasElse)
     { #>
 
     /// <summary>
-    /// Gets a value indicating whether this matches an If/Then/Else case, providing the 'else' type when the 'if' schema does not match.
+    /// Gets a value indicating whether this matches an If/Then/Else case, returning the value as the type defined for the then or else case.
     /// </summary>
-    /// <param name="result">This value cast to the 'else' type, when the 'if' schema does not match, otherwise an Undefined instance of the else type.</param>
-    /// <returns><c>True</c> if the if case did not match, and the else instance was provided.</returns>
-    public bool TryNotMatched<#= IfDotnetTypeName #>(out <#= ElseFullyQualifiedDotnetTypeName #> result)
+    /// <param name="then">This value cast to the 'then' type, when the 'if' schema matches, otherwise an Undefined instance of the 'then' type.</param>
+    /// <param name="else">This value cast to the 'else' type, when the 'if' schema does not match, otherwise an Undefined instance of the 'else' type.</param>
+    /// <returns><c>True</c> if the 'if' case matched, and the 'then' instance was provided, otherwise <c>False</c>.</returns>
+    public bool MatchIf<#= IfDotnetTypeName #>(out <#= ThenFullyQualifiedDotnetTypeName #> @then, out <#= ElseFullyQualifiedDotnetTypeName #> @else)
     {
-        if (!this.As<<#= IfFullyQualifiedDotnetTypeName#>>().IsValid())
+        if (this.As<<#= IfFullyQualifiedDotnetTypeName#>>().IsValid())
         {
-            result = this.As<<#=ElseFullyQualifiedDotnetTypeName#>>();
+            @then = this.As<<#=ThenFullyQualifiedDotnetTypeName#>>();
+            @else = <#=ElseFullyQualifiedDotnetTypeName#>.Undefined;
             return true;
         }
 
-        result = <#=ElseFullyQualifiedDotnetTypeName#>.Undefined;
+        @then = <#=ThenFullyQualifiedDotnetTypeName#>.Undefined;
+        @else = this.As<<#=ElseFullyQualifiedDotnetTypeName#>>();
         return false;
     }
 <#  } #>

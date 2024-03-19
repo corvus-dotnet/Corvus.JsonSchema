@@ -16,7 +16,7 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft7 {
     public partial class CodeGeneratorEnum : CodeGeneratorEnumBase {
         
         
-        #line 105 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+        #line 343 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
 
     public bool ShouldGenerate
     {
@@ -104,14 +104,957 @@ namespace ");
             #line hidden
             
             #line 31 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
-            this.Write("\r\n{\r\n    /// <summary>\r\n    /// Permitted values.\r\n    /// </summary>\r\n    public" +
-                    " static class EnumValues\r\n    {\r\n");
+            this.Write(@"
+{
+    /// <summary>
+    /// Matches the value against each of the enumeration values, and returns the result of calling the provided match function for the first match found.
+    /// </summary>
+    /// <param name=""context"">The context to pass to the match function.</param>
+");
             
             #line default
             #line hidden
             
-            #line 38 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 37 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
   int enumItemIndex = 0;
+    foreach (var enumValue in EnumValues)
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 40 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("    /// <param name=\"match");
+            
+            #line default
+            #line hidden
+            
+            #line 40 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( enumValue.IsString ? enumValue.AsPropertyName : $"Item{enumItemIndex}" ));
+            
+            #line default
+            #line hidden
+            
+            #line 40 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("\">The function to call if the value matches the JSON value ");
+            
+            #line default
+            #line hidden
+            
+            #line 40 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( enumValue.SerializedValue ));
+            
+            #line default
+            #line hidden
+            
+            #line 40 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(".</param>\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 41 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+      enumItemIndex++;
+    } 
+            
+            #line default
+            #line hidden
+            
+            #line 43 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("    /// <param name=\"defaultMatch\">The fallback match.</param>\r\n    public TOut M" +
+                    "atch<TIn, TOut>(\r\n        in TIn context");
+            
+            #line default
+            #line hidden
+            
+            #line 45 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+  enumItemIndex = 0;
+    foreach (var enumValue in EnumValues)
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 48 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(",\r\n\r\n        Func<TIn, TOut> match");
+            
+            #line default
+            #line hidden
+            
+            #line 50 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( enumValue.IsString ? enumValue.AsPropertyName : $"Item{enumItemIndex}" ));
+            
+            #line default
+            #line hidden
+            
+            #line 50 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+      enumItemIndex++;
+    } 
+            
+            #line default
+            #line hidden
+            
+            #line 52 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(",\r\n        Func<TIn, TOut> defaultMatch)\r\n    {\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 55 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+  if (EnumValues.All(i => i.IsString))
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 57 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("        if (this.ValueKind == JsonValueKind.String)\r\n        {\r\n            if (t" +
+                    "his.HasJsonElementBacking)\r\n            {\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 61 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+      foreach (var enumValue in EnumValues)
+        { 
+            
+            #line default
+            #line hidden
+            
+            #line 63 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("                if (this.jsonElementBacking.ValueEquals(EnumValues.");
+            
+            #line default
+            #line hidden
+            
+            #line 63 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( enumValue.AsPropertyName ));
+            
+            #line default
+            #line hidden
+            
+            #line 63 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("Utf8))\r\n                {\r\n                    return match");
+            
+            #line default
+            #line hidden
+            
+            #line 65 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( enumValue.AsPropertyName ));
+            
+            #line default
+            #line hidden
+            
+            #line 65 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("(context);\r\n                }\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 67 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+      } 
+            
+            #line default
+            #line hidden
+            
+            #line 68 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("            }\r\n            else\r\n            {\r\n                switch(this.strin" +
+                    "gBacking)\r\n                {\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 73 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+      foreach (var enumValue in EnumValues)
+        { 
+            
+            #line default
+            #line hidden
+            
+            #line 75 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("                    case ");
+            
+            #line default
+            #line hidden
+            
+            #line 75 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( enumValue.RawStringValue ));
+            
+            #line default
+            #line hidden
+            
+            #line 75 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(":\r\n                        return match");
+            
+            #line default
+            #line hidden
+            
+            #line 76 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( enumValue.AsPropertyName  ));
+            
+            #line default
+            #line hidden
+            
+            #line 76 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("(context);\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 77 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+      } 
+            
+            #line default
+            #line hidden
+            
+            #line 78 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("                    default:\r\n                        break;\r\n                }\r\n" +
+                    "            }\r\n        }\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 83 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+  }
+    else
+    {
+        enumItemIndex = 0;
+        foreach (var enumValue in EnumValues)
+        {
+            if (enumValue.IsString)
+            { 
+            
+            #line default
+            #line hidden
+            
+            #line 91 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("            if (this.ValueKind == JsonValueKind.String)\r\n            {\r\n         " +
+                    "       if (this.HasJsonElementBacking)\r\n                {\r\n                    i" +
+                    "f (this.jsonElementBacking.ValueEquals(EnumValues.");
+            
+            #line default
+            #line hidden
+            
+            #line 95 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( enumValue.AsPropertyName ));
+            
+            #line default
+            #line hidden
+            
+            #line 95 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("Utf8))\r\n                    {\r\n                        return match");
+            
+            #line default
+            #line hidden
+            
+            #line 97 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( enumValue.AsPropertyName ));
+            
+            #line default
+            #line hidden
+            
+            #line 97 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("(context);\r\n                    }\r\n                }\r\n                else\r\n     " +
+                    "           {\r\n                    if (this.stringBacking == EnumValues.");
+            
+            #line default
+            #line hidden
+            
+            #line 102 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( enumValue.AsPropertyName ));
+            
+            #line default
+            #line hidden
+            
+            #line 102 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(")\r\n                    {\r\n                        return match");
+            
+            #line default
+            #line hidden
+            
+            #line 104 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( enumValue.AsPropertyName  ));
+            
+            #line default
+            #line hidden
+            
+            #line 104 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("(context);\r\n                    }\r\n                }\r\n            }\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 108 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+          }
+            else if (enumValue.IsBoolean)
+            { 
+            
+            #line default
+            #line hidden
+            
+            #line 111 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("            if (this.ValueKind == EnumValues.Item");
+            
+            #line default
+            #line hidden
+            
+            #line 111 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( enumItemIndex ));
+            
+            #line default
+            #line hidden
+            
+            #line 111 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(".ValueKind)\r\n            {\r\n                return matchItem");
+            
+            #line default
+            #line hidden
+            
+            #line 113 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( enumItemIndex ));
+            
+            #line default
+            #line hidden
+            
+            #line 113 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("(context);\r\n            }\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 115 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+          }
+            else if (enumValue.IsNumber)
+            { 
+            
+            #line default
+            #line hidden
+            
+            #line 118 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("            if (this.Equals(EnumValues.Item");
+            
+            #line default
+            #line hidden
+            
+            #line 118 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( enumItemIndex ));
+            
+            #line default
+            #line hidden
+            
+            #line 118 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(".AsNumber))\r\n            {\r\n                return matchItem");
+            
+            #line default
+            #line hidden
+            
+            #line 120 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( enumItemIndex ));
+            
+            #line default
+            #line hidden
+            
+            #line 120 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("(context);\r\n            }\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 122 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+          }
+            else if (enumValue.IsObject)
+            { 
+            
+            #line default
+            #line hidden
+            
+            #line 125 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("            if (this.Equals(EnumValues.Item");
+            
+            #line default
+            #line hidden
+            
+            #line 125 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( enumItemIndex ));
+            
+            #line default
+            #line hidden
+            
+            #line 125 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(".AsObject))\r\n            {\r\n                return matchItem");
+            
+            #line default
+            #line hidden
+            
+            #line 127 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( enumItemIndex ));
+            
+            #line default
+            #line hidden
+            
+            #line 127 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("(context);\r\n            }\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 129 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+          }
+            else if (enumValue.IsArray)
+            { 
+            
+            #line default
+            #line hidden
+            
+            #line 132 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("            if (this.Equals(EnumValues.Item");
+            
+            #line default
+            #line hidden
+            
+            #line 132 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( enumItemIndex ));
+            
+            #line default
+            #line hidden
+            
+            #line 132 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(".AsArray))\r\n            {\r\n                return matchItem");
+            
+            #line default
+            #line hidden
+            
+            #line 134 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( enumItemIndex ));
+            
+            #line default
+            #line hidden
+            
+            #line 134 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("(context);\r\n            }\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 136 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+          }
+            else if (enumValue.IsNull)
+            { 
+            
+            #line default
+            #line hidden
+            
+            #line 139 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("            if (this.ValueKind == JsonValueKind.Null)\r\n\t\t\t{\r\n\t\t\t\treturn matchItem" +
+                    "");
+            
+            #line default
+            #line hidden
+            
+            #line 141 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( enumItemIndex ));
+            
+            #line default
+            #line hidden
+            
+            #line 141 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("(context);\r\n\t\t\t}\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 143 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+          }
+
+            ++enumItemIndex;
+        }
+    }
+            
+            #line default
+            #line hidden
+            
+            #line 148 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("\r\n        return defaultMatch(context);\r\n    }\r\n\r\n    /// <summary>\r\n    /// Matc" +
+                    "hes the value against each of the enumeration values, and returns the result of " +
+                    "calling the provided match function for the first match found.\r\n    /// </summar" +
+                    "y>\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 155 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+  enumItemIndex = 0;
+    foreach (var enumValue in EnumValues)
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 158 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("    /// <param name=\"match");
+            
+            #line default
+            #line hidden
+            
+            #line 158 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( enumValue.IsString ? enumValue.AsPropertyName : $"Item{enumItemIndex}" ));
+            
+            #line default
+            #line hidden
+            
+            #line 158 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("\">The function to call if the value matches the JSON value ");
+            
+            #line default
+            #line hidden
+            
+            #line 158 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( enumValue.SerializedValue ));
+            
+            #line default
+            #line hidden
+            
+            #line 158 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(".</param>\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 159 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+      enumItemIndex++;
+    } 
+            
+            #line default
+            #line hidden
+            
+            #line 161 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("    /// <param name=\"defaultMatch\">The fallback match.</param>\r\n    public TOut M" +
+                    "atch<TOut>(");
+            
+            #line default
+            #line hidden
+            
+            #line 162 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+  enumItemIndex = 0;
+    foreach (var enumValue in EnumValues)
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 165 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( enumItemIndex > 0 ? "," : ""));
+            
+            #line default
+            #line hidden
+            
+            #line 165 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("\r\n\r\n        Func<TOut> match");
+            
+            #line default
+            #line hidden
+            
+            #line 167 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( enumValue.IsString ? enumValue.AsPropertyName : $"Item{enumItemIndex}" ));
+            
+            #line default
+            #line hidden
+            
+            #line 167 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+      enumItemIndex++;
+    } 
+            
+            #line default
+            #line hidden
+            
+            #line 169 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(",\r\n        Func<TOut> defaultMatch)\r\n    {\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 172 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+  if (EnumValues.All(i => i.IsString))
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 174 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("        if (this.ValueKind == JsonValueKind.String)\r\n        {\r\n            if (t" +
+                    "his.HasJsonElementBacking)\r\n            {\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 178 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+      foreach (var enumValue in EnumValues)
+        { 
+            
+            #line default
+            #line hidden
+            
+            #line 180 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("                if (this.jsonElementBacking.ValueEquals(EnumValues.");
+            
+            #line default
+            #line hidden
+            
+            #line 180 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( enumValue.AsPropertyName ));
+            
+            #line default
+            #line hidden
+            
+            #line 180 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("Utf8))\r\n                {\r\n                    return match");
+            
+            #line default
+            #line hidden
+            
+            #line 182 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( enumValue.AsPropertyName ));
+            
+            #line default
+            #line hidden
+            
+            #line 182 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("();\r\n                }\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 184 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+      } 
+            
+            #line default
+            #line hidden
+            
+            #line 185 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("            }\r\n            else\r\n            {\r\n                switch(this.strin" +
+                    "gBacking)\r\n                {\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 190 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+      foreach (var enumValue in EnumValues)
+        { 
+            
+            #line default
+            #line hidden
+            
+            #line 192 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("                    case ");
+            
+            #line default
+            #line hidden
+            
+            #line 192 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( enumValue.RawStringValue ));
+            
+            #line default
+            #line hidden
+            
+            #line 192 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(":\r\n                        return match");
+            
+            #line default
+            #line hidden
+            
+            #line 193 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( enumValue.AsPropertyName  ));
+            
+            #line default
+            #line hidden
+            
+            #line 193 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("();\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 194 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+      } 
+            
+            #line default
+            #line hidden
+            
+            #line 195 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("                    default:\r\n                        break;\r\n                }\r\n" +
+                    "            }\r\n        }\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 200 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+  }
+    else
+    {
+        enumItemIndex = 0;
+        foreach (var enumValue in EnumValues)
+        {
+            if (enumValue.IsString)
+            { 
+            
+            #line default
+            #line hidden
+            
+            #line 208 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("            if (this.ValueKind == JsonValueKind.String)\r\n            {\r\n         " +
+                    "       if (this.HasJsonElementBacking)\r\n                {\r\n                    i" +
+                    "f (this.jsonElementBacking.ValueEquals(EnumValues.");
+            
+            #line default
+            #line hidden
+            
+            #line 212 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( enumValue.AsPropertyName ));
+            
+            #line default
+            #line hidden
+            
+            #line 212 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("Utf8))\r\n                    {\r\n                        return match");
+            
+            #line default
+            #line hidden
+            
+            #line 214 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( enumValue.AsPropertyName ));
+            
+            #line default
+            #line hidden
+            
+            #line 214 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("();\r\n                    }\r\n                }\r\n                else\r\n            " +
+                    "    {\r\n                    if (this.stringBacking == EnumValues.");
+            
+            #line default
+            #line hidden
+            
+            #line 219 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( enumValue.AsPropertyName ));
+            
+            #line default
+            #line hidden
+            
+            #line 219 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(")\r\n                    {\r\n                        return match");
+            
+            #line default
+            #line hidden
+            
+            #line 221 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( enumValue.AsPropertyName  ));
+            
+            #line default
+            #line hidden
+            
+            #line 221 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("();\r\n                    }\r\n                }\r\n            }\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 225 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+          }
+            else if (enumValue.IsBoolean)
+            { 
+            
+            #line default
+            #line hidden
+            
+            #line 228 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("            if (this.ValueKind == EnumValues.Item");
+            
+            #line default
+            #line hidden
+            
+            #line 228 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( enumItemIndex ));
+            
+            #line default
+            #line hidden
+            
+            #line 228 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(".ValueKind)\r\n            {\r\n                return matchItem");
+            
+            #line default
+            #line hidden
+            
+            #line 230 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( enumItemIndex ));
+            
+            #line default
+            #line hidden
+            
+            #line 230 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("();\r\n            }\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 232 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+          }
+            else if (enumValue.IsNumber)
+            { 
+            
+            #line default
+            #line hidden
+            
+            #line 235 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("            if (this.Equals(EnumValues.Item");
+            
+            #line default
+            #line hidden
+            
+            #line 235 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( enumItemIndex ));
+            
+            #line default
+            #line hidden
+            
+            #line 235 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(".AsNumber))\r\n            {\r\n                return matchItem");
+            
+            #line default
+            #line hidden
+            
+            #line 237 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( enumItemIndex ));
+            
+            #line default
+            #line hidden
+            
+            #line 237 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("();\r\n            }\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 239 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+          }
+            else if (enumValue.IsObject)
+            { 
+            
+            #line default
+            #line hidden
+            
+            #line 242 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("            if (this.Equals(EnumValues.Item");
+            
+            #line default
+            #line hidden
+            
+            #line 242 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( enumItemIndex ));
+            
+            #line default
+            #line hidden
+            
+            #line 242 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(".AsObject))\r\n            {\r\n                return matchItem");
+            
+            #line default
+            #line hidden
+            
+            #line 244 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( enumItemIndex ));
+            
+            #line default
+            #line hidden
+            
+            #line 244 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("();\r\n            }\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 246 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+          }
+            else if (enumValue.IsArray)
+            { 
+            
+            #line default
+            #line hidden
+            
+            #line 249 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("            if (this.Equals(EnumValues.Item");
+            
+            #line default
+            #line hidden
+            
+            #line 249 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( enumItemIndex ));
+            
+            #line default
+            #line hidden
+            
+            #line 249 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(".AsArray))\r\n            {\r\n                return matchItem");
+            
+            #line default
+            #line hidden
+            
+            #line 251 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( enumItemIndex ));
+            
+            #line default
+            #line hidden
+            
+            #line 251 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("();\r\n            }\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 253 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+          }
+            else if (enumValue.IsNull)
+            { 
+            
+            #line default
+            #line hidden
+            
+            #line 256 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("            if (this.ValueKind == JsonValueKind.Null)\r\n\t\t\t{\r\n\t\t\t\treturn matchItem" +
+                    "");
+            
+            #line default
+            #line hidden
+            
+            #line 258 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( enumItemIndex ));
+            
+            #line default
+            #line hidden
+            
+            #line 258 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("();\r\n\t\t\t}\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 260 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+          }
+
+            ++enumItemIndex;
+        }
+    }
+            
+            #line default
+            #line hidden
+            
+            #line 265 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            this.Write("\r\n        return defaultMatch();\r\n    }\r\n\r\n    /// <summary>\r\n    /// Permitted v" +
+                    "alues.\r\n    /// </summary>\r\n    public static class EnumValues\r\n    {\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 274 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+  enumItemIndex = 0;
     foreach (var enumValue in EnumValues)
     {
         if (enumValue.IsString)
@@ -120,110 +1063,110 @@ namespace ");
             #line default
             #line hidden
             
-            #line 43 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 279 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write("        /// <summary>\r\n        /// Gets ");
             
             #line default
             #line hidden
             
-            #line 44 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 280 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( enumValue.RawStringValue ));
             
             #line default
             #line hidden
             
-            #line 44 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 280 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(" as a JSON value.\r\n        /// </summary>\r\n        public static readonly ");
             
             #line default
             #line hidden
             
-            #line 46 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 282 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 46 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 282 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(" ");
             
             #line default
             #line hidden
             
-            #line 46 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 282 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( enumValue.AsPropertyName ));
             
             #line default
             #line hidden
             
-            #line 46 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 282 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(" = ");
             
             #line default
             #line hidden
             
-            #line 46 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 282 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 46 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 282 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(".Parse(");
             
             #line default
             #line hidden
             
-            #line 46 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 282 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( enumValue.SerializedValue ));
             
             #line default
             #line hidden
             
-            #line 46 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 282 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(");\r\n        /// <summary>\r\n        /// Gets ");
             
             #line default
             #line hidden
             
-            #line 48 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 284 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( enumValue.RawStringValue ));
             
             #line default
             #line hidden
             
-            #line 48 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 284 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(" as a UTF8 string.\r\n        /// </summary>\r\n        public static ReadOnlySpan<by" +
                     "te> ");
             
             #line default
             #line hidden
             
-            #line 50 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 286 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( enumValue.AsPropertyName ));
             
             #line default
             #line hidden
             
-            #line 50 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 286 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write("Utf8 => ");
             
             #line default
             #line hidden
             
-            #line 50 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 286 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( enumValue.RawStringValue ));
             
             #line default
             #line hidden
             
-            #line 50 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 286 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write("u8;\r\n");
             
             #line default
             #line hidden
             
-            #line 51 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 287 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
       }
         else if (enumValue.IsBoolean)
         { 
@@ -231,73 +1174,73 @@ namespace ");
             #line default
             #line hidden
             
-            #line 54 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 290 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write("        /// <summary>\r\n        /// Gets ");
             
             #line default
             #line hidden
             
-            #line 55 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 291 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( enumValue.SerializedValue ));
             
             #line default
             #line hidden
             
-            #line 55 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 291 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(" as a JSON value.\r\n        /// </summary>\r\n        public static readonly ");
             
             #line default
             #line hidden
             
-            #line 57 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 293 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 57 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 293 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(" Item");
             
             #line default
             #line hidden
             
-            #line 57 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 293 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( enumItemIndex ));
             
             #line default
             #line hidden
             
-            #line 57 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 293 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(" = ");
             
             #line default
             #line hidden
             
-            #line 57 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 293 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 57 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 293 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(".Parse(");
             
             #line default
             #line hidden
             
-            #line 57 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 293 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( enumValue.SerializedValue ));
             
             #line default
             #line hidden
             
-            #line 57 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 293 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(");\r\n");
             
             #line default
             #line hidden
             
-            #line 58 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 294 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
       }
         else if (enumValue.IsNumber)
         { 
@@ -305,73 +1248,73 @@ namespace ");
             #line default
             #line hidden
             
-            #line 61 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 297 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write("        /// <summary>\r\n        /// Gets ");
             
             #line default
             #line hidden
             
-            #line 62 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 298 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( enumValue.SerializedValue ));
             
             #line default
             #line hidden
             
-            #line 62 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 298 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(" as a JSON value.\r\n        /// </summary>\r\n        public static readonly ");
             
             #line default
             #line hidden
             
-            #line 64 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 300 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 64 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 300 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(" Item");
             
             #line default
             #line hidden
             
-            #line 64 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 300 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( enumItemIndex ));
             
             #line default
             #line hidden
             
-            #line 64 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 300 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(" = ");
             
             #line default
             #line hidden
             
-            #line 64 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 300 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 64 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 300 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(".Parse(");
             
             #line default
             #line hidden
             
-            #line 64 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 300 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( enumValue.SerializedValue ));
             
             #line default
             #line hidden
             
-            #line 64 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 300 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(");\r\n");
             
             #line default
             #line hidden
             
-            #line 65 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 301 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
       }
         else if (enumValue.IsObject)
         { 
@@ -379,73 +1322,73 @@ namespace ");
             #line default
             #line hidden
             
-            #line 68 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 304 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write("        /// <summary>\r\n        /// Gets ");
             
             #line default
             #line hidden
             
-            #line 69 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 305 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( enumValue.SerializedValue ));
             
             #line default
             #line hidden
             
-            #line 69 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 305 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(" as a JSON value.\r\n        /// </summary>\r\n        public static readonly ");
             
             #line default
             #line hidden
             
-            #line 71 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 307 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 71 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 307 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(" Item");
             
             #line default
             #line hidden
             
-            #line 71 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 307 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( enumItemIndex));
             
             #line default
             #line hidden
             
-            #line 71 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 307 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(" = ");
             
             #line default
             #line hidden
             
-            #line 71 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 307 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 71 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 307 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(".Parse(");
             
             #line default
             #line hidden
             
-            #line 71 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 307 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( enumValue.SerializedValue ));
             
             #line default
             #line hidden
             
-            #line 71 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 307 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(");\r\n");
             
             #line default
             #line hidden
             
-            #line 72 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 308 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
       }
         else if (enumValue.IsArray)
         { 
@@ -453,73 +1396,73 @@ namespace ");
             #line default
             #line hidden
             
-            #line 75 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 311 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write("        /// <summary>\r\n        /// Gets ");
             
             #line default
             #line hidden
             
-            #line 76 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 312 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( enumValue.SerializedValue ));
             
             #line default
             #line hidden
             
-            #line 76 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 312 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(" as a JSON value.\r\n        /// </summary>\r\n        public static readonly ");
             
             #line default
             #line hidden
             
-            #line 78 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 314 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 78 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 314 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(" Item");
             
             #line default
             #line hidden
             
-            #line 78 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 314 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( enumItemIndex ));
             
             #line default
             #line hidden
             
-            #line 78 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 314 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(" = ");
             
             #line default
             #line hidden
             
-            #line 78 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 314 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 78 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 314 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(".Parse(");
             
             #line default
             #line hidden
             
-            #line 78 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 314 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( enumValue.SerializedValue ));
             
             #line default
             #line hidden
             
-            #line 78 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 314 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(");\r\n");
             
             #line default
             #line hidden
             
-            #line 79 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 315 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
       }
         else if (enumValue.IsNull)
         { 
@@ -527,51 +1470,52 @@ namespace ");
             #line default
             #line hidden
             
-            #line 82 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 318 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write("        /// <summary>\r\n        /// Gets \"null\" as a JSON value.\r\n        /// </su" +
                     "mmary>\r\n        public static readonly ");
             
             #line default
             #line hidden
             
-            #line 85 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 321 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 85 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 321 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(" Item");
             
             #line default
             #line hidden
             
-            #line 85 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 321 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( enumItemIndex));
             
             #line default
             #line hidden
             
-            #line 85 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 321 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(" = ");
             
             #line default
             #line hidden
             
-            #line 85 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 321 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 85 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 321 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(".Parse(\"null\");\r\n");
             
             #line default
             #line hidden
             
-            #line 86 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 322 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
       }
+
         ++enumItemIndex;
     }
 
@@ -584,87 +1528,88 @@ namespace ");
             #line default
             #line hidden
             
-            #line 95 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 332 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write("        /// <summary>\r\n        /// Gets ");
             
             #line default
             #line hidden
             
-            #line 96 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 333 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( enumValue.RawStringValue ));
             
             #line default
             #line hidden
             
-            #line 96 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 333 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(" as a JSON value.\r\n        /// </summary>\r\n        internal static readonly ");
             
             #line default
             #line hidden
             
-            #line 98 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 335 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 98 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 335 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(" Item");
             
             #line default
             #line hidden
             
-            #line 98 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 335 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( enumItemIndex ));
             
             #line default
             #line hidden
             
-            #line 98 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 335 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(" = ");
             
             #line default
             #line hidden
             
-            #line 98 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 335 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 98 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 335 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(".Parse(");
             
             #line default
             #line hidden
             
-            #line 98 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 335 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( enumValue.SerializedValue ));
             
             #line default
             #line hidden
             
-            #line 98 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 335 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write(");\r\n");
             
             #line default
             #line hidden
             
-            #line 99 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 336 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
       }
-            enumItemIndex++;
+
+        enumItemIndex++;
     } 
             
             #line default
             #line hidden
             
-            #line 102 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 340 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
             this.Write("    }\r\n}\r\n");
             
             #line default
             #line hidden
             
-            #line 104 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
+            #line 342 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Enum.tt"
  EndNesting(); 
             
             #line default

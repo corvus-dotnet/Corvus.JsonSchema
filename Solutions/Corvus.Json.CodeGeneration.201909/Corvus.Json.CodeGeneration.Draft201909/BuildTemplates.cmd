@@ -19,6 +19,9 @@ t4 -o Generators/CodeGenerator.Pattern.cs -c Corvus.Json.CodeGeneration.Generato
 t4 -o Generators/CodeGenerator.PatternProperties.cs -c Corvus.Json.CodeGeneration.Generators.Draft201909.CodeGeneratorPatternProperties ../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.PatternProperties.tt
 t4 -o Generators/CodeGenerator.Properties.cs -c Corvus.Json.CodeGeneration.Generators.Draft201909.CodeGeneratorProperties ../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Properties.tt
 t4 -o Generators/CodeGenerator.String.cs -c Corvus.Json.CodeGeneration.Generators.Draft201909.CodeGeneratorString ../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.String.tt
+t4 -o Generators/CodeGenerator.AnyOf.cs -c Corvus.Json.CodeGeneration.Generators.Draft201909.CodeGeneratorAnyOf ../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.AnyOf.tt
+t4 -o Generators/CodeGenerator.OneOf.cs -c Corvus.Json.CodeGeneration.Generators.Draft201909.CodeGeneratorOneOf ../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.OneOf.tt
+
 t4 -o Generators/CodeGenerator.cs -c Corvus.Json.CodeGeneration.Generators.Draft201909.CodeGenerator ../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.tt
 t4 -o Generators/CodeGenerator.Validate.AllOf.cs -c Corvus.Json.CodeGeneration.Generators.Draft201909.CodeGeneratorValidateAllOf ../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AllOf.tt
 t4 -o Generators/CodeGenerator.Validate.AnyOf.cs -c Corvus.Json.CodeGeneration.Generators.Draft201909.CodeGeneratorValidateAnyOf ../../Corvus.Json.CodeGeneration.Abstractions/SharedTemplates/CodeGenerator.Validate.AnyOf.tt
@@ -69,3 +72,5 @@ t4 -o Generators/CodeGenerator.Validate.OneOf.Partial.cs -p=PartialClassName=Cod
 t4 -o Generators/CodeGenerator.Validate.Ref.Partial.cs -p=PartialClassName=CodeGeneratorValidateRef -p"=PartialFileName=CodeGenerator.Validate.Ref.Partial.cs" ./Templates/CodeGeneratorPartial.tt
 t4 -o Generators/CodeGenerator.Validate.Partial.cs -p=PartialClassName=CodeGeneratorValidate -p"=PartialFileName=CodeGenerator.Validate.Partial.cs" ./Templates/CodeGeneratorPartial.tt
 t4 -o Generators/CodeGenerator.Validate.Type.Partial.cs -p=PartialClassName=CodeGeneratorValidateType -p"=PartialFileName=CodeGenerator.Validate.Type.Partial.cs" ./Templates/CodeGeneratorPartial.tt
+t4 -o Generators/CodeGenerator.AnyOf.Partial.cs -p=PartialClassName=CodeGeneratorAnyOf -p"=PartialFileName=CodeGenerator.AnyOf.Partial.cs" ./Templates/CodeGeneratorPartial.tt
+t4 -o Generators/CodeGenerator.OneOf.Partial.cs -p=PartialClassName=CodeGeneratorOneOf -p"=PartialFileName=CodeGenerator.OneOf.Partial.cs" ./Templates/CodeGeneratorPartial.tt
