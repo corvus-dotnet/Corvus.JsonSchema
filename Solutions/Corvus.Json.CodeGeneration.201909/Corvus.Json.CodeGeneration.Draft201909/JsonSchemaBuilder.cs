@@ -39,6 +39,8 @@ public class JsonSchemaBuilder : JsonSchemaBuilderBase
     protected override (JsonReference Location, TypeAndCode TypeAndCode) GenerateFilesForType((JsonReference Location, TypeDeclaration TypeDeclaration) typeForGeneration)
     {
         var codeGenerator = new CodeGenerator(this, typeForGeneration.TypeDeclaration);
+        var codeGeneratorOneOf = new CodeGeneratorOneOf(this, typeForGeneration.TypeDeclaration);
+        var codeGeneratorAnyOf = new CodeGeneratorAnyOf(this, typeForGeneration.TypeDeclaration);
         var codeGeneratorArrayAdd = new CodeGeneratorArrayAdd(this, typeForGeneration.TypeDeclaration);
         var codeGeneratorArrayRemove = new CodeGeneratorArrayRemove(this, typeForGeneration.TypeDeclaration);
         var codeGeneratorArray = new CodeGeneratorArray(this, typeForGeneration.TypeDeclaration);
@@ -76,6 +78,16 @@ public class JsonSchemaBuilder : JsonSchemaBuilderBase
 
         files.Add(new(codeGenerator.TransformText(), $"{fileName}.cs"));
         files.Add(new(codeGeneratorValidate.TransformText(), $"{fileName}.Validate.cs"));
+
+        if (codeGeneratorAnyOf.ShouldGenerate)
+        {
+            files.Add(new(codeGeneratorAnyOf.TransformText(), $"{fileName}.AnyOf.cs"));
+        }
+
+        if (codeGeneratorOneOf.ShouldGenerate)
+        {
+            files.Add(new(codeGeneratorOneOf.TransformText(), $"{fileName}.OneOf.cs"));
+        }
 
         if (codeGeneratorArrayAdd.ShouldGenerate)
         {
