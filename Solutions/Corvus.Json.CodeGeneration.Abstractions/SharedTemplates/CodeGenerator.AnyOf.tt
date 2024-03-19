@@ -77,8 +77,8 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     public TOut Match<TOut>(<#  anyOfItemIndex = 0;
     foreach (var anyOf in AnyOf)
     { #>
-        Func<<#= anyOf #>, TOut> match<#= anyOfItemIndex #><#      anyOfItemIndex++;
-    } #>,
+        Func<<#= anyOf #>, TOut> match<#= anyOfItemIndex #>,<#      anyOfItemIndex++;
+    } #>
         Func<<#= TypeDeclaration.DotnetTypeName #>, TOut> defaultMatch)
     {
 <#  anyOfItemIndex = 0;
