@@ -159,7 +159,7 @@ e.g. Create a JSON schema file called `person-from-api.json`
 Then run the tool to generate C# files for that schema in the JsonSchemaSample.Api namespace, adjacent to that document.
 
 ```
-generatejsonschematypes --rootNamespace JsonSchemaSample.Api --rootPath '#/$defs/Person' person-from-api.json
+generatejsonschematypes --rootNamespace JsonSchemaSample.Api --rootPath #/$defs/Person person-from-api.json
 ```
 
 Compile this code in a project with a reference to the `Corvus.Json.ExtendedTypes` nuget package, and you can then work with the Dotnet type model, and JSON Schema validation e.g.
