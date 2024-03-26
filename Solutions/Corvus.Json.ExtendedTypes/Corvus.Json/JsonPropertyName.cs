@@ -61,6 +61,12 @@ public readonly struct JsonPropertyName
     public static implicit operator JsonPropertyName(string value) => new(value);
 
     /// <summary>
+    /// Conversion to string.
+    /// </summary>
+    /// <param name="value">The string value from which to convert.</param>
+    public static explicit operator string(JsonPropertyName value) => value.GetString();
+
+    /// <summary>
     /// Equals operator.
     /// </summary>
     /// <param name="left">The lhs.</param>
@@ -499,6 +505,11 @@ public readonly struct JsonPropertyName
     /// <inheritdoc/>
     public override string? ToString()
     {
+        if (this.TryGetString(out string? value))
+        {
+            return value;
+        }
+
         return base.ToString();
     }
 
