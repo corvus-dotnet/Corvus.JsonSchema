@@ -23,7 +23,7 @@ jobs:
       is_auto_release_candidate: ${{ steps.parse_dependabot_pr_autorelease.outputs.is_interesting_package }}
       semver_increment: ${{ steps.parse_dependabot_pr_automerge.outputs.semver_increment }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 #v4.1.1
       - name: Read pr-autoflow configuration
         id: get_pr_autoflow_config
         uses: endjin/pr-autoflow/actions/read-configuration@v4
@@ -79,9 +79,11 @@ jobs:
         if: |
           needs.evaluate_dependabot_pr.outputs.is_auto_merge_candidate == 'True' &&
           (needs.evaluate_dependabot_pr.outputs.semver_increment == 'minor' || needs.evaluate_dependabot_pr.outputs.semver_increment == 'patch')
-        uses: actions/github-script@v6
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea   # v7.0.1
         with:
           github-token: '${{ secrets.GITHUB_TOKEN }}'
+          retries: 6  # final retry should wait 64 seconds
+          retry-exempt-status-codes: 400,401,404,422    # GH will raise rate limits with 403 & 429 status codes
           script: |
             await github.rest.pulls.update({
               owner: context.payload.repository.owner.login,
@@ -97,9 +99,11 @@ jobs:
     steps:
     - name: Check for 'no_release' label on PR
       id: check_for_norelease_label
-      uses: actions/github-script@v6
+      uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea   # v7.0.1
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
+        retries: 6  # final retry should wait 64 seconds
+        retry-exempt-status-codes: 400,401,404,422    # GH will raise rate limits with 403 & 429 status codes
         script: |
             const labels = await github.rest.issues.listLabelsOnIssue({
               owner: context.payload.repository.owner.login,
@@ -129,7 +133,7 @@ jobs:
       #       the usual 'Action' secrets as this workflow is triggered by Dependabot.
       - name: Generate token
         id: generate_token
-        uses: tibdex/github-app-token@v1
+        uses: tibdex/github-app-token@32691ba7c9e7063bd457bd8f2a5703138591fa58   # v1.9
         with:
           app_id: ${{ secrets.DEPENDJINBOT_APP_ID }}
           private_key: ${{ secrets.DEPENDJINBOT_PRIVATE_KEY }}
@@ -150,9 +154,11 @@ jobs:
             (github.actor != 'dependabot[bot]' && github.actor != 'dependjinbot[bot]') ||
             needs.evaluate_dependabot_pr.outputs.is_auto_release_candidate == 'True'
           )
-        uses: actions/github-script@v6
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea   # v7.0.1
         with:
           github-token: '${{ secrets.GITHUB_TOKEN }}'
+          retries: 6  # final retry should wait 64 seconds
+          retry-exempt-status-codes: 400,401,404,422    # GH will raise rate limits with 403 & 429 status codes
           script: |
             await github.rest.issues.addLabels({
               owner: context.payload.repository.owner.login,
