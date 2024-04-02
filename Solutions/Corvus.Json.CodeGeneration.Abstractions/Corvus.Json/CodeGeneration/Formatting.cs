@@ -164,6 +164,7 @@ public static class Formatting
                         {
                             chars[setIndex] = char.ToLowerInvariant(chars[readIndex]);
                             uppercasedCount = 0;
+                            setIndex++;
                             continue;
                         }
                     }
@@ -182,8 +183,8 @@ public static class Formatting
             {
                 chars[setIndex] = chars[readIndex];
 
-                // We capitalize the next character we find after a run of digits
-                capitalizeNext = true;
+                // We do not capitalize the next character we find after a run of digits
+                capitalizeNext = false;
                 setIndex++;
             }
             else
