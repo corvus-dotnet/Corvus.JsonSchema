@@ -444,11 +444,6 @@ public readonly partial struct Schema
     /// <summary>
     /// Gets the (optional) <c>additionalItems</c> property.
     /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Core schema meta-schema
-    /// </para>
-    /// </remarks>
     public Corvus.Json.JsonSchema.Draft7.Schema AdditionalItems
     {
         get
@@ -481,11 +476,6 @@ public readonly partial struct Schema
     /// <summary>
     /// Gets the (optional) <c>additionalProperties</c> property.
     /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Core schema meta-schema
-    /// </para>
-    /// </remarks>
     public Corvus.Json.JsonSchema.Draft7.Schema AdditionalProperties
     {
         get
@@ -646,11 +636,6 @@ public readonly partial struct Schema
     /// <summary>
     /// Gets the (optional) <c>contains</c> property.
     /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Core schema meta-schema
-    /// </para>
-    /// </remarks>
     public Corvus.Json.JsonSchema.Draft7.Schema Contains
     {
         get
@@ -875,11 +860,6 @@ public readonly partial struct Schema
     /// <summary>
     /// Gets the (optional) <c>else</c> property.
     /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Core schema meta-schema
-    /// </para>
-    /// </remarks>
     public Corvus.Json.JsonSchema.Draft7.Schema Else
     {
         get
@@ -1104,11 +1084,6 @@ public readonly partial struct Schema
     /// <summary>
     /// Gets the (optional) <c>if</c> property.
     /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Core schema meta-schema
-    /// </para>
-    /// </remarks>
     public Corvus.Json.JsonSchema.Draft7.Schema If
     {
         get
@@ -1461,11 +1436,6 @@ public readonly partial struct Schema
     /// <summary>
     /// Gets the (optional) <c>not</c> property.
     /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Core schema meta-schema
-    /// </para>
-    /// </remarks>
     public Corvus.Json.JsonSchema.Draft7.Schema Not
     {
         get
@@ -1626,11 +1596,6 @@ public readonly partial struct Schema
     /// <summary>
     /// Gets the (optional) <c>propertyNames</c> property.
     /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Core schema meta-schema
-    /// </para>
-    /// </remarks>
     public Corvus.Json.JsonSchema.Draft7.Schema PropertyNames
     {
         get
@@ -1791,11 +1756,6 @@ public readonly partial struct Schema
     /// <summary>
     /// Gets the (optional) <c>then</c> property.
     /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Core schema meta-schema
-    /// </para>
-    /// </remarks>
     public Corvus.Json.JsonSchema.Draft7.Schema Then
     {
         get

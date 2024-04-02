@@ -197,6 +197,7 @@ public static class JsonSchemaHelpers
             "FromNumber",
             "FromArray",
             "FromObject",
+            "Match",
             "Parse",
             "As",
             "Equals",
