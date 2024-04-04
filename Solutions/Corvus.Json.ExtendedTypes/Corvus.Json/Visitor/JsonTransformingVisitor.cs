@@ -2,9 +2,12 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System;
 using System.Buffers;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using Corvus.Json.Internal;
 
@@ -149,7 +152,11 @@ public static partial class JsonTransformingVisitor
             path.CopyTo(itemPath);
             itemPath[path.Length] = '/';
 
-            index.TryFormat(itemPath[(path.Length + 1)..], out int digitsWritten);
+#if NET8_0_OR_GREATER
+            index.TryFormat(itemPath[(path.Length + 1)..], out _);
+#else
+            TryFormat(index, itemPath[(path.Length + 1)..], digits);
+#endif
 
             // Visit the array item, and determine whether we've transformed it.
             Visit(itemPath, item.AsAny, visitor, pathBuffer, ref result);
@@ -234,6 +241,19 @@ public static partial class JsonTransformingVisitor
         result.Transformed = Transformed.No;
         result.Walk = Walk.Continue;
     }
+
+#if NETSTANDARD2_0
+    private static void TryFormat(int value, Span<char> span, int digits)
+    {
+        int digitValue;
+        while (value != 0 || digits > 0)
+        {
+            digits--;
+            digitValue = Math.DivRem(value, 10, out value);
+            span[digits] = (char)(digitValue + '0');
+        }
+    }
+#endif
 
     private static void VisitObject(ReadOnlySpan<char> path, in JsonObject asObject, Visitor visitor, char[] pathBuffer, ref VisitResult result)
     {

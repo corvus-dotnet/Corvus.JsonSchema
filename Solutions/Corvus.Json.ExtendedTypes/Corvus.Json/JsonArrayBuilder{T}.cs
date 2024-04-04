@@ -4,6 +4,7 @@
 
 using System.Buffers;
 using System.Collections.Immutable;
+using System.Linq;
 using System.Text.Json;
 
 namespace Corvus.Json;
@@ -26,7 +27,11 @@ public static class JsonArrayBuilder<T>
     {
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         builder.Add(value1.AsAny);
+#if NET8_0_OR_GREATER
         return T.From(builder.ToImmutable());
+#else
+        return JsonValueNetStandard20Extensions.From<T>(builder.ToImmutable());
+#endif
     }
 
     /// <summary>
@@ -44,7 +49,11 @@ public static class JsonArrayBuilder<T>
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         builder.Add(value1.AsAny);
         builder.Add(value2.AsAny);
+#if NET8_0_OR_GREATER
         return T.From(builder.ToImmutable());
+#else
+        return JsonValueNetStandard20Extensions.From<T>(builder.ToImmutable());
+#endif
     }
 
     /// <summary>
@@ -66,7 +75,11 @@ public static class JsonArrayBuilder<T>
         builder.Add(value1.AsAny);
         builder.Add(value2.AsAny);
         builder.Add(value3.AsAny);
+#if NET8_0_OR_GREATER
         return T.From(builder.ToImmutable());
+#else
+        return JsonValueNetStandard20Extensions.From<T>(builder.ToImmutable());
+#endif
     }
 
     /// <summary>
@@ -92,7 +105,11 @@ public static class JsonArrayBuilder<T>
         builder.Add(value2.AsAny);
         builder.Add(value3.AsAny);
         builder.Add(value4.AsAny);
+#if NET8_0_OR_GREATER
         return T.From(builder.ToImmutable());
+#else
+        return JsonValueNetStandard20Extensions.From<T>(builder.ToImmutable());
+#endif
     }
 
     /// <summary>
@@ -110,7 +127,11 @@ public static class JsonArrayBuilder<T>
             builder.Add(item.AsAny);
         }
 
+#if NET8_0_OR_GREATER
         return T.From(builder.ToImmutable());
+#else
+        return JsonValueNetStandard20Extensions.From<T>(builder.ToImmutable());
+#endif
     }
 
     /// <summary>
@@ -136,7 +157,11 @@ public static class JsonArrayBuilder<T>
             writer.Reset();
         }
 
+#if NET8_0_OR_GREATER
         return T.From(builder.ToImmutable());
+#else
+        return JsonValueNetStandard20Extensions.From<T>(builder.ToImmutable());
+#endif
     }
 
     /// <summary>
@@ -146,7 +171,12 @@ public static class JsonArrayBuilder<T>
     /// <returns>The new array created from the items.</returns>
     public static T FromRange(IEnumerable<string> value)
     {
+#if NET8_0_OR_GREATER
         return T.From(value.Select(static v => new JsonAny(v)).ToImmutableList());
+#else
+        return JsonValueNetStandard20Extensions.From<T>(value.Select(static v => new JsonAny(v)).ToImmutableList());
+#endif
+
     }
 
     /// <summary>
@@ -156,7 +186,11 @@ public static class JsonArrayBuilder<T>
     /// <returns>The new array created from the items.</returns>
     public static T FromRange(IEnumerable<double> value)
     {
+#if NET8_0_OR_GREATER
         return T.From(value.Select(static v => new JsonAny(new BinaryJsonNumber(v))).ToImmutableList());
+#else
+        return JsonValueNetStandard20Extensions.From<T>(value.Select(static v => new JsonAny(new BinaryJsonNumber(v))).ToImmutableList());
+#endif
     }
 
     /// <summary>
@@ -166,7 +200,11 @@ public static class JsonArrayBuilder<T>
     /// <returns>The new array created from the items.</returns>
     public static T FromRange(IEnumerable<long> value)
     {
+#if NET8_0_OR_GREATER
         return T.From(value.Select(static v => new JsonAny(new BinaryJsonNumber(v))).ToImmutableList());
+#else
+        return JsonValueNetStandard20Extensions.From<T>(value.Select(static v => new JsonAny(new BinaryJsonNumber(v))).ToImmutableList());
+#endif
     }
 
     /// <summary>
@@ -176,6 +214,10 @@ public static class JsonArrayBuilder<T>
     /// <returns>The new array created from the items.</returns>
     public static T FromRange(IEnumerable<bool> value)
     {
+#if NET8_0_OR_GREATER
         return T.From(value.Select(static v => new JsonAny(v)).ToImmutableList());
+#else
+        return JsonValueNetStandard20Extensions.From<T>(value.Select(static v => new JsonAny(v)).ToImmutableList());
+#endif
     }
 }

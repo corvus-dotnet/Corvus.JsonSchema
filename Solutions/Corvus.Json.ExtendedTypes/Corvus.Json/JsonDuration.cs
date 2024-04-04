@@ -5,6 +5,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using Corvus.Json.Internal;
+using NodaTime;
 
 namespace Corvus.Json;
 
@@ -97,11 +98,18 @@ public readonly partial struct JsonDuration : IJsonString<JsonDuration>
     {
         if ((this.backing & Backing.String) != 0)
         {
+#if NET8_0_OR_GREATER
             if (Period.PeriodParser(this.stringBacking, out PeriodBuilder builder))
             {
                 result = builder.BuildPeriod();
                 return true;
             }
+#else
+            if (Period.TryParse(this.stringBacking.AsSpan(), out result))
+            {
+                return true;
+            }
+#endif
 
             result = default;
             return false;
@@ -109,11 +117,18 @@ public readonly partial struct JsonDuration : IJsonString<JsonDuration>
 
         if (this.jsonElementBacking.ValueKind == JsonValueKind.String)
         {
+#if NET8_0_OR_GREATER
             if (this.jsonElementBacking.TryGetValue(static (ReadOnlySpan<char> text, in object? _, out PeriodBuilder builder) => Period.PeriodParser(text, out builder), default, out PeriodBuilder builder))
             {
                 result = builder.BuildPeriod();
                 return true;
             }
+#else
+            if (this.jsonElementBacking.TryGetValue(static (ReadOnlySpan<char> text, in object? _, out Period period) => Period.TryParse(text, out period), default, out result))
+            {
+                return true;
+            }
+#endif
 
             result = default;
             return false;

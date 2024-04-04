@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text;
@@ -188,6 +189,7 @@ public static class JsonPointerUtilities
 
         static void DecodeHex(ReadOnlySpan<char> encodedFragment, Span<char> fragment, ref int readIndex, ref int writeIndex)
         {
+#if NET8_0_OR_GREATER
             int writtenBytes = 0;
             Span<byte> utf8bytes = stackalloc byte[encodedFragment.Length - readIndex];
 
@@ -214,6 +216,44 @@ public static class JsonPointerUtilities
             Encoding.UTF8.GetChars(utf8bytes[..writtenBytes], fragment.Slice(writeIndex, writtenBytes));
             writeIndex += writtenBytes;
         }
+#else
+            int writtenBytes = 0;
+            byte[] utf8bytes = ArrayPool<byte>.Shared.Rent(encodedFragment.Length - readIndex);
+            char[] output = ArrayPool<char>.Shared.Rent(fragment.Length - writeIndex);
+
+            try
+            {
+                while (encodedFragment[readIndex] == '%')
+                {
+                    if (readIndex >= encodedFragment.Length - 2)
+                    {
+                        throw new JsonException($"Unexpected end of sequence in escaped %. Expected two digits but found the end of the element: {fragment.ToString()}");
+                    }
+
+                    if (int.TryParse(encodedFragment.Slice(readIndex + 1, 2).ToString(), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out int characterCode))
+                    {
+                        utf8bytes[writtenBytes] = (byte)characterCode;
+                        writtenBytes += 1;
+                    }
+                    else
+                    {
+                        throw new JsonException($"Unexpected end of sequence in escaped %. Expected two digits but could not parse.");
+                    }
+
+                    readIndex += 3;
+                }
+
+                Encoding.UTF8.GetChars(utf8bytes, 0, writtenBytes, output, 0);
+                output.AsSpan(0, writtenBytes).CopyTo(fragment.Slice(writeIndex, writtenBytes));
+                writeIndex += writtenBytes;
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(utf8bytes);
+                ArrayPool<char>.Shared.Return(output);
+            }
+        }
+#endif
     }
 
     /// <summary>
@@ -335,7 +375,11 @@ public static class JsonPointerUtilities
             }
             else if (current.ValueKind == JsonValueKind.Array)
             {
+#if NET8_0_OR_GREATER
                 if (int.TryParse(component, out int targetArrayIndex))
+#else
+                if (int.TryParse(component.ToString(), out int targetArrayIndex))
+#endif
                 {
                     int arrayIndex = 0;
                     JsonElement.ArrayEnumerator enumerator = current.EnumerateArray();
@@ -459,7 +503,11 @@ public static class JsonPointerUtilities
             }
             else if (current.ValueKind == JsonValueKind.Array)
             {
+#if NET8_0_OR_GREATER
                 if (int.TryParse(component, out int targetArrayIndex))
+#else
+                if (int.TryParse(component.ToString(), out int targetArrayIndex))
+#endif
                 {
                     int arrayIndex = 0;
                     JsonElement.ArrayEnumerator enumerator = current.EnumerateArray();

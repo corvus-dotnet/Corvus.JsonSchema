@@ -102,9 +102,40 @@ public static class UriExtensions
         {
             string key = m.Groups[1].Value.ToLowerInvariant();
             string value = m.Groups[2].Value;
-            parameters.Add(key, JsonAny.ParseUriValue(value));
+            parameters.Add(key, ParseUriValue(value));
         }
 
         return parameters.ToImmutable();
+    }
+
+    /// <summary>
+    /// Parses a naked value from a URI string.
+    /// </summary>
+    /// <param name="value">The value to parse.</param>
+    /// <returns>A <see cref="JsonAny"/> instance representing the value.</returns>
+    /// <remarks>Note that this only applies to <c>null</c>, <c>bool</c>, <c>number</c> and <c>string</c> types.</remarks>
+    internal static JsonAny ParseUriValue(string value)
+    {
+        if (value == "null")
+        {
+            return JsonAny.Null;
+        }
+
+        if (bool.TryParse(value, out bool boolResult))
+        {
+            return new(boolResult);
+        }
+
+        if (double.TryParse(value, out double doubleResult))
+        {
+            return new(new BinaryJsonNumber(doubleResult));
+        }
+
+        if (decimal.TryParse(value, out decimal decimalResult))
+        {
+            return new(new BinaryJsonNumber(decimalResult));
+        }
+
+        return new(value);
     }
 }

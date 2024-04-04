@@ -38,7 +38,11 @@ public readonly struct ParsedValue<T> : IDisposable
     public static ParsedValue<T> Parse(Stream utf8Json)
     {
         var document = JsonDocument.Parse(utf8Json);
+#if NET8_0_OR_GREATER
         return new(document, T.FromJson(document.RootElement));
+#else
+        return new(document, JsonValueNetStandard20Extensions.FromJsonElement<T>(document.RootElement));
+#endif
     }
 
     /// <summary>
@@ -49,7 +53,11 @@ public readonly struct ParsedValue<T> : IDisposable
     public static ParsedValue<T> Parse(string json)
     {
         var document = JsonDocument.Parse(json);
+#if NET8_0_OR_GREATER
         return new(document, T.FromJson(document.RootElement));
+#else
+        return new(document, JsonValueNetStandard20Extensions.FromJsonElement<T>(document.RootElement));
+#endif
     }
 
     /// <summary>
@@ -60,7 +68,11 @@ public readonly struct ParsedValue<T> : IDisposable
     public static ParsedValue<T> Parse(ReadOnlyMemory<byte> utf8Json)
     {
         var document = JsonDocument.Parse(utf8Json);
+#if NET8_0_OR_GREATER
         return new(document, T.FromJson(document.RootElement));
+#else
+        return new(document, JsonValueNetStandard20Extensions.FromJsonElement<T>(document.RootElement));
+#endif
     }
 
     /// <summary>
@@ -71,7 +83,11 @@ public readonly struct ParsedValue<T> : IDisposable
     public static ParsedValue<T> Parse(ReadOnlyMemory<char> json)
     {
         var document = JsonDocument.Parse(json);
+#if NET8_0_OR_GREATER
         return new(document, T.FromJson(document.RootElement));
+#else
+        return new(document, JsonValueNetStandard20Extensions.FromJsonElement<T>(document.RootElement));
+#endif
     }
 
     /// <inheritdoc/>

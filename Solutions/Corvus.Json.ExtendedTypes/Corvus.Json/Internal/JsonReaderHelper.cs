@@ -10,6 +10,7 @@
 using System;
 using System.Buffers;
 using System.Buffers.Text;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
@@ -73,6 +74,19 @@ namespace Corvus.Json
             return propertyName;
         }
 
+#if NETSTANDARD2_0
+        public static int GetUnescapedArrayInPlace(byte[] utf8Source, int length, int idx)
+        {
+            // The escaped name is always >= than the unescaped, so it is safe to use escaped name for the buffer length.
+            byte[]? pooledName = null;
+
+
+            Unescape(utf8Source, utf8Source.AsSpan(0, length), idx, out int written);
+            Debug.Assert(written > 0);
+
+            return written;
+        }
+#endif
         internal static void Unescape(ReadOnlySpan<byte> source, Span<byte> destination, int idx, out int written)
         {
             Debug.Assert(idx >= 0 && idx < source.Length);
@@ -125,7 +139,7 @@ namespace Corvus.Json
                     else if (currentByte == 'u')
                     {
                         // The source is known to be valid JSON, and hence if we see a \u, it is guaranteed to have 4 hex digits following it
-                        // Otherwise, the Utf8JsonReader would have alreayd thrown an exception.
+                        // Otherwise, the Utf8JsonReader would have already thrown an exception.
                         Debug.Assert(source.Length >= idx + 5);
 
                         bool result = Utf8Parser.TryParse(source.Slice(idx + 1, 4), out int scalar, out int bytesConsumed, 'x');
@@ -152,7 +166,7 @@ namespace Corvus.Json
                             }
 
                             // The source is known to be valid JSON, and hence if we see a \u, it is guaranteed to have 4 hex digits following it
-                            // Otherwise, the Utf8JsonReader would have alreayd thrown an exception.
+                            // Otherwise, the Utf8JsonReader would have already thrown an exception.
                             result = Utf8Parser.TryParse(source.Slice(idx, 4), out int lowSurrogate, out bytesConsumed, 'x');
                             Debug.Assert(result);
                             Debug.Assert(bytesConsumed == 4);
@@ -189,7 +203,26 @@ namespace Corvus.Json
         {
             try
             {
+#if NET8_0_OR_GREATER
                 return s_utf8Encoding.GetChars(utf8Unescaped, destination);
+#else
+                char[] chars = ArrayPool<char>.Shared.Rent(destination.Length);
+                byte[] bytes = ArrayPool<byte>.Shared.Rent(utf8Unescaped.Length);
+                
+                utf8Unescaped.CopyTo(bytes);
+
+                try
+                {
+                    int written = s_utf8Encoding.GetChars(bytes, 0, bytes.Length, chars, 0);
+                    chars.AsSpan(0, written).CopyTo(destination);
+                    return written;
+                }
+                finally
+                {
+                    ArrayPool<char>.Shared.Return(chars);
+                    ArrayPool<byte>.Shared.Return(bytes);
+                }
+#endif
             }
             catch (DecoderFallbackException dfe)
             {

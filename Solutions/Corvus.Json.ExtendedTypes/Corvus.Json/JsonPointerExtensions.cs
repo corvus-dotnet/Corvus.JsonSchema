@@ -264,7 +264,11 @@ public static class JsonPointerExtensions
                         }
                     }
 
+#if NET8_0_OR_GREATER
                     if (int.TryParse(component, out int targetArrayIndex))
+#else
+                    if (int.TryParse(component.ToString(), out int targetArrayIndex))
+#endif
                     {
                         int arrayIndex = 0;
                         JsonArrayEnumerator enumerator = current.AsArray.EnumerateArray();

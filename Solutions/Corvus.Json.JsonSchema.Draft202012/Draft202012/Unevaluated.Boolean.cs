@@ -60,7 +60,7 @@ public readonly partial struct Unevaluated : IJsonBoolean<Unevaluated>
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
     /// <exception cref = "InvalidOperationException">The value was not a string.</exception>
-    public static explicit operator bool (Unevaluated value)
+    public static implicit operator bool (Unevaluated value)
     {
         return value.GetBoolean() ?? throw new InvalidOperationException();
     }

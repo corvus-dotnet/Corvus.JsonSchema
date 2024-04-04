@@ -60,7 +60,7 @@ public readonly partial struct FormatAnnotation : IJsonBoolean<FormatAnnotation>
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
     /// <exception cref = "InvalidOperationException">The value was not a string.</exception>
-    public static explicit operator bool (FormatAnnotation value)
+    public static implicit operator bool (FormatAnnotation value)
     {
         return value.GetBoolean() ?? throw new InvalidOperationException();
     }

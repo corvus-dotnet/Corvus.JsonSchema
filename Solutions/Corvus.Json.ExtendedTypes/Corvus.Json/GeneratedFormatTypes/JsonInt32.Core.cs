@@ -377,6 +377,7 @@ public readonly partial struct JsonInt32 : IJsonNumber<JsonInt32>
     {
         return new(value);
     }
+#if NET8_0_OR_GREATER
 
     /// <summary>
     /// Gets an instance of the JSON value from a string value.
@@ -395,6 +396,8 @@ public readonly partial struct JsonInt32 : IJsonNumber<JsonInt32>
 
         return Undefined;
     }
+#endif
+#if NET8_0_OR_GREATER
 
     /// <summary>
     /// Gets an instance of the JSON value from a boolean value.
@@ -413,6 +416,7 @@ public readonly partial struct JsonInt32 : IJsonNumber<JsonInt32>
 
         return Undefined;
     }
+#endif
 
     /// <summary>
     /// Gets an instance of the JSON value from a double value.
@@ -437,6 +441,7 @@ public readonly partial struct JsonInt32 : IJsonNumber<JsonInt32>
 
         return Undefined;
     }
+#if NET8_0_OR_GREATER
 
     /// <summary>
     /// Gets an instance of the JSON value from an array value.
@@ -455,6 +460,8 @@ public readonly partial struct JsonInt32 : IJsonNumber<JsonInt32>
 
         return Undefined;
     }
+#endif
+#if NET8_0_OR_GREATER
 
     /// <summary>
     /// Gets an instance of the JSON value from an object value.
@@ -473,6 +480,7 @@ public readonly partial struct JsonInt32 : IJsonNumber<JsonInt32>
 
         return Undefined;
     }
+#endif
 
     /// <summary>
     /// Parses a JSON string into a JsonInt32.
@@ -541,7 +549,11 @@ public readonly partial struct JsonInt32 : IJsonNumber<JsonInt32>
     /// <returns>The parsed value.</returns>
     public static JsonInt32 ParseValue(ReadOnlySpan<char> buffer)
     {
+#if NET8_0_OR_GREATER
         return IJsonValue<JsonInt32>.ParseValue(buffer);
+#else
+        return JsonValueHelpers.ParseValue<JsonInt32>(buffer);
+#endif
     }
 
     /// <summary>
@@ -551,7 +563,11 @@ public readonly partial struct JsonInt32 : IJsonNumber<JsonInt32>
     /// <returns>The parsed value.</returns>
     public static JsonInt32 ParseValue(ReadOnlySpan<byte> buffer)
     {
+#if NET8_0_OR_GREATER
         return IJsonValue<JsonInt32>.ParseValue(buffer);
+#else
+        return JsonValueHelpers.ParseValue<JsonInt32>(buffer);
+#endif
     }
 
     /// <summary>
@@ -561,7 +577,11 @@ public readonly partial struct JsonInt32 : IJsonNumber<JsonInt32>
     /// <returns>The parsed value.</returns>
     public static JsonInt32 ParseValue(ref Utf8JsonReader reader)
     {
+#if NET8_0_OR_GREATER
         return IJsonValue<JsonInt32>.ParseValue(ref reader);
+#else
+        return JsonValueHelpers.ParseValue<JsonInt32>(ref reader);
+#endif
     }
 
     /// <summary>
@@ -573,6 +593,7 @@ public readonly partial struct JsonInt32 : IJsonNumber<JsonInt32>
     public TTarget As<TTarget>()
         where TTarget : struct, IJsonValue<TTarget>
     {
+#if NET8_0_OR_GREATER
         if ((this.backing & Backing.JsonElement) != 0)
         {
             return TTarget.FromJson(this.jsonElementBacking);
@@ -589,6 +610,9 @@ public readonly partial struct JsonInt32 : IJsonNumber<JsonInt32>
         }
 
         return TTarget.Undefined;
+#else
+        return this.As<JsonInt32, TTarget>();
+#endif
     }
 
     /// <inheritdoc/>

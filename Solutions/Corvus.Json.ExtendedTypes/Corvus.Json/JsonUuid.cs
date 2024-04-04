@@ -86,7 +86,11 @@ public readonly partial struct JsonUuid
     /// <returns><see langword="true"/> if the address was parsed successfully.</returns>
     internal static bool GuidParser(ReadOnlySpan<char> span, in object? state, out Guid value)
     {
+#if NET8_0_OR_GREATER
         if (Guid.TryParse(span, out Guid guid))
+#else
+        if (Guid.TryParse(span.ToString(), out Guid guid))
+#endif
         {
             value = guid;
             return true;

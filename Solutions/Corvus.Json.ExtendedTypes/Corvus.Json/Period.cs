@@ -356,11 +356,18 @@ public readonly struct Period : IEquatable<Period>
     /// <returns><see langword="true"/> if the period could be parsed from the string.</returns>
     public static bool TryParse(ReadOnlySpan<char> value, [NotNullWhen(true)] out Period result)
     {
+#if NET8_0_OR_GREATER
         if (PeriodParser(value, out PeriodBuilder builder))
         {
             result = builder.BuildPeriod();
             return true;
         }
+#else
+        if (Period.TryParse(value, out result))
+        {
+            return true;
+        }
+#endif
 
         result = Zero;
         return false;
@@ -378,7 +385,11 @@ public readonly struct Period : IEquatable<Period>
             return result;
         }
 
+#if NET8_0_OR_GREATER
         throw new InvalidOperationException($"Unable to parse a period from the string '{value}'");
+#else
+        throw new InvalidOperationException($"Unable to parse a period from the string '{value.ToString()}'");
+#endif
     }
 
     /// <summary>
@@ -628,6 +639,7 @@ public readonly struct Period : IEquatable<Period>
         this.Ticks == other.Ticks &&
         this.Nanoseconds == other.Nanoseconds;
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// A parser for a json period.
     /// </summary>
@@ -763,6 +775,7 @@ public readonly struct Period : IEquatable<Period>
 
         return unitsSoFar != 0;
     }
+#endif
 
     /// <summary>
     /// Equality comparer which simply normalizes periods before comparing them.

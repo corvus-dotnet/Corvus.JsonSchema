@@ -29,7 +29,11 @@ public readonly partial struct JsonDateTime
     /// Initializes a new instance of the <see cref="JsonDateTime"/> struct.
     /// </summary>
     /// <param name="value">The date time offset from which to construct the date.</param>
+#if NET8_0_OR_GREATER
     public JsonDateTime(in DateTimeOffset value)
+#else
+    public JsonDateTime(DateTimeOffset value)
+#endif
     {
         this.jsonElementBacking = default;
         this.stringBacking = FormatDateTime(OffsetDateTime.FromDateTimeOffset(value));

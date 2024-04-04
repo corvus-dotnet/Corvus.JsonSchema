@@ -90,7 +90,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonBool
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a string.</exception>
-    public static explicit operator bool(<#= TypeDeclaration.DotnetTypeName #> value)
+    public static implicit operator bool(<#= TypeDeclaration.DotnetTypeName #> value)
     {
         return value.GetBoolean() ?? throw new InvalidOperationException();
     }

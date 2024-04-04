@@ -188,6 +188,7 @@ public interface IJsonArray<T> : IJsonValue<T>
     /// <returns>An instance of the array with the item set to the given value.</returns>
     T SetItem(int index, in JsonAny value);
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Construct an instance of the array from a list of json values.
     /// </summary>
@@ -210,4 +211,5 @@ public interface IJsonArray<T> : IJsonValue<T>
     /// <returns>An instance of the array constructed from the list.</returns>
     static abstract T FromRange<TItem>(IEnumerable<TItem> items)
         where TItem : struct, IJsonValue<TItem>;
+#endif
 }

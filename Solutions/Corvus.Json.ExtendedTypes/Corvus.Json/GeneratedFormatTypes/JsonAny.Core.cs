@@ -511,69 +511,6 @@ public readonly partial struct JsonAny : IJsonValue<JsonAny>
     }
 
     /// <summary>
-    /// Parses a naked value from a URI string.
-    /// </summary>
-    /// <param name="value">The value to parse.</param>
-    /// <returns>A <see cref="JsonAny"/> instance representing the value.</returns>
-    /// <remarks>Note that this only applies to <c>null</c>, <c>bool</c>, <c>number</c> and <c>string</c> types.</remarks>
-    public static JsonAny ParseUriValue(string value)
-    {
-        if (value == "null")
-        {
-            return JsonAny.Null;
-        }
-
-        if (bool.TryParse(value, out bool boolResult))
-        {
-            return new(boolResult);
-        }
-
-        if (double.TryParse(value, out double doubleResult))
-        {
-            return new(new BinaryJsonNumber(doubleResult));
-        }
-
-        if (decimal.TryParse(value, out decimal decimalResult))
-        {
-            return new(new BinaryJsonNumber(decimalResult));
-        }
-
-        return new(value);
-    }
-
-    /// <summary>
-    /// Parses a naked value from a URI string.
-    /// </summary>
-    /// <param name="value">The value to parse.</param>
-    /// <returns>A <see cref="JsonAny"/> instance representing the value.</returns>
-    /// <remarks>Note that this only applies to <c>null</c>, <c>bool</c>, <c>number</c> and <c>string</c> types.</remarks>
-    public static JsonAny ParseUriValue(ReadOnlyMemory<char> value)
-    {
-        ReadOnlySpan<char> valueSpan = value.Span;
-        if (valueSpan.SequenceEqual("null"))
-        {
-            return JsonAny.Null;
-        }
-
-        if (bool.TryParse(valueSpan, out bool boolResult))
-        {
-            return new(boolResult);
-        }
-
-        if (double.TryParse(valueSpan, out double doubleResult))
-        {
-            return new(new BinaryJsonNumber(doubleResult));
-        }
-
-        if (decimal.TryParse(valueSpan, out decimal decimalResult))
-        {
-            return new(new BinaryJsonNumber(decimalResult));
-        }
-
-        return new(valueSpan.ToString());
-    }
-
-    /// <summary>
     /// Parses a JSON string into a JsonAny.
     /// </summary>
     /// <param name="json">The json string to parse.</param>
@@ -640,7 +577,11 @@ public readonly partial struct JsonAny : IJsonValue<JsonAny>
     /// <returns>The parsed value.</returns>
     public static JsonAny ParseValue(ReadOnlySpan<char> buffer)
     {
+#if NET8_0_OR_GREATER
         return IJsonValue<JsonAny>.ParseValue(buffer);
+#else
+        return JsonValueHelpers.ParseValue<JsonAny>(buffer);
+#endif
     }
 
     /// <summary>
@@ -650,7 +591,11 @@ public readonly partial struct JsonAny : IJsonValue<JsonAny>
     /// <returns>The parsed value.</returns>
     public static JsonAny ParseValue(ReadOnlySpan<byte> buffer)
     {
+#if NET8_0_OR_GREATER
         return IJsonValue<JsonAny>.ParseValue(buffer);
+#else
+        return JsonValueHelpers.ParseValue<JsonAny>(buffer);
+#endif
     }
 
     /// <summary>
@@ -660,7 +605,11 @@ public readonly partial struct JsonAny : IJsonValue<JsonAny>
     /// <returns>The parsed value.</returns>
     public static JsonAny ParseValue(ref Utf8JsonReader reader)
     {
+#if NET8_0_OR_GREATER
         return IJsonValue<JsonAny>.ParseValue(ref reader);
+#else
+        return JsonValueHelpers.ParseValue<JsonAny>(ref reader);
+#endif
     }
 
     /// <summary>
@@ -672,6 +621,7 @@ public readonly partial struct JsonAny : IJsonValue<JsonAny>
     public TTarget As<TTarget>()
         where TTarget : struct, IJsonValue<TTarget>
     {
+#if NET8_0_OR_GREATER
         if (this.HasJsonElementBacking)
         {
             return TTarget.FromJson(this.AsJsonElement);
@@ -683,6 +633,9 @@ public readonly partial struct JsonAny : IJsonValue<JsonAny>
         }
 
         return TTarget.Undefined;
+#else
+        return this.As<JsonAny, TTarget>();
+#endif
     }
 
     /// <inheritdoc/>

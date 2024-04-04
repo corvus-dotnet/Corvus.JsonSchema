@@ -13,12 +13,14 @@ namespace Corvus.Json;
 /// Represents a JSON int64.
 /// </summary>
 public readonly partial struct JsonInt64
+#if NET8_0_OR_GREATER
  : IAdditionOperators<JsonInt64, JsonInt64, JsonInt64>,
    ISubtractionOperators<JsonInt64, JsonInt64, JsonInt64>,
    IMultiplyOperators<JsonInt64, JsonInt64, JsonInt64>,
    IDivisionOperators<JsonInt64, JsonInt64, JsonInt64>,
    IIncrementOperators<JsonInt64>,
    IDecrementOperators<JsonInt64>
+#endif
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonInt64"/> struct.
@@ -198,6 +200,7 @@ public readonly partial struct JsonInt64
         throw new InvalidOperationException();
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion to Int128.
     /// </summary>
@@ -218,6 +221,7 @@ public readonly partial struct JsonInt64
 
         throw new InvalidOperationException();
     }
+#endif
 
     /// <summary>
     /// Conversion to SByte.
@@ -240,6 +244,7 @@ public readonly partial struct JsonInt64
         throw new InvalidOperationException();
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion to Half.
     /// </summary>
@@ -260,6 +265,7 @@ public readonly partial struct JsonInt64
 
         throw new InvalidOperationException();
     }
+#endif
 
     /// <summary>
     /// Conversion to Single.
@@ -345,6 +351,7 @@ public readonly partial struct JsonInt64
         throw new InvalidOperationException();
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion to UInt64.
     /// </summary>
@@ -365,6 +372,7 @@ public readonly partial struct JsonInt64
 
         throw new InvalidOperationException();
     }
+#endif
 
     /// <summary>
     /// Conversion from int64.

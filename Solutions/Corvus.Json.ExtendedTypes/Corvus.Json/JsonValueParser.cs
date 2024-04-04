@@ -22,6 +22,7 @@ public static class JsonValueParser
     public static T ParseValue<T>(ReadOnlySpan<char> buffer)
     where T : struct, IJsonValue<T>
     {
+#if NET8_0_OR_GREATER
         int maxByteCount = Encoding.UTF8.GetMaxByteCount(buffer.Length);
         byte[]? pooledBytes = null;
 
@@ -42,6 +43,24 @@ public static class JsonValueParser
                 ArrayPool<byte>.Shared.Return(pooledBytes, true);
             }
         }
+#else
+        int maxByteCount = Encoding.UTF8.GetMaxByteCount(buffer.Length);
+        byte[] utf8Buffer = ArrayPool<byte>.Shared.Rent(maxByteCount);
+        char[] charBuffer = ArrayPool<char>.Shared.Rent(buffer.Length);
+        buffer.CopyTo(charBuffer);
+
+        try
+        {
+            int written = Encoding.UTF8.GetBytes(charBuffer, 0, buffer.Length, utf8Buffer, 0);
+            Utf8JsonReader reader = new(utf8Buffer.AsSpan(0, written));
+            return ParseValue<T>(ref reader);
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(utf8Buffer, true);
+            ArrayPool<char>.Shared.Return(charBuffer, true);
+        }
+#endif
     }
 
     /// <summary>
@@ -66,6 +85,10 @@ public static class JsonValueParser
     public static T ParseValue<T>(ref Utf8JsonReader reader)
         where T : struct, IJsonValue<T>
     {
+#if NET8_0_OR_GREATER
         return T.FromJson(JsonElement.ParseValue(ref reader));
+#else
+        return JsonValueNetStandard20Extensions.FromJsonElement<T>(JsonElement.ParseValue(ref reader));
+#endif
     }
 }

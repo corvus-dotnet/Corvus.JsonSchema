@@ -13,13 +13,16 @@ namespace Corvus.Json;
 /// Represents a JSON half.
 /// </summary>
 public readonly partial struct JsonHalf
+#if NET8_0_OR_GREATER
  : IAdditionOperators<JsonHalf, JsonHalf, JsonHalf>,
    ISubtractionOperators<JsonHalf, JsonHalf, JsonHalf>,
    IMultiplyOperators<JsonHalf, JsonHalf, JsonHalf>,
    IDivisionOperators<JsonHalf, JsonHalf, JsonHalf>,
    IIncrementOperators<JsonHalf>,
    IDecrementOperators<JsonHalf>
+#endif
 {
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonHalf"/> struct.
     /// </summary>
@@ -30,6 +33,7 @@ public readonly partial struct JsonHalf
         this.backing = Backing.Number;
         this.numberBacking = new(value);
     }
+ #endif
 
     /// <summary>
     /// Conversion from JsonNumber.
@@ -198,6 +202,7 @@ public readonly partial struct JsonHalf
         throw new InvalidOperationException();
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion to Int128.
     /// </summary>
@@ -218,6 +223,7 @@ public readonly partial struct JsonHalf
 
         throw new InvalidOperationException();
     }
+#endif
 
     /// <summary>
     /// Conversion to SByte.
@@ -240,6 +246,7 @@ public readonly partial struct JsonHalf
         throw new InvalidOperationException();
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion to Half.
     /// </summary>
@@ -260,6 +267,7 @@ public readonly partial struct JsonHalf
 
         throw new InvalidOperationException();
     }
+#endif
 
     /// <summary>
     /// Conversion to Single.
@@ -345,6 +353,7 @@ public readonly partial struct JsonHalf
         throw new InvalidOperationException();
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion to UInt64.
     /// </summary>
@@ -365,7 +374,9 @@ public readonly partial struct JsonHalf
 
         throw new InvalidOperationException();
     }
+#endif
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion from Half.
     /// </summary>
@@ -374,6 +385,8 @@ public readonly partial struct JsonHalf
     {
         return new(new BinaryJsonNumber(value));
     }
+
+#endif
 
     /// <summary>
     /// Adds two values together to compute their sum.

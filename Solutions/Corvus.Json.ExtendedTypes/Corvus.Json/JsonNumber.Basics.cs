@@ -12,12 +12,14 @@ namespace Corvus.Json;
 /// </summary>
 [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<JsonNumber>))]
 public readonly partial struct JsonNumber
+#if NET8_0_OR_GREATER
     : IAdditionOperators<JsonNumber, JsonNumber, JsonNumber>,
       ISubtractionOperators<JsonNumber, JsonNumber, JsonNumber>,
       IMultiplyOperators<JsonNumber, JsonNumber, JsonNumber>,
       IDivisionOperators<JsonNumber, JsonNumber, JsonNumber>,
       IIncrementOperators<JsonNumber>,
       IDecrementOperators<JsonNumber>
+#endif
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonNumber"/> struct.
@@ -52,6 +54,7 @@ public readonly partial struct JsonNumber
         this.numberBacking = new(value);
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonNumber"/> struct.
     /// </summary>
@@ -62,6 +65,7 @@ public readonly partial struct JsonNumber
         this.backing = Backing.Number;
         this.numberBacking = new(value);
     }
+#endif
 
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonNumber"/> struct.
@@ -96,6 +100,7 @@ public readonly partial struct JsonNumber
         this.numberBacking = new(value);
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonNumber"/> struct.
     /// </summary>
@@ -106,6 +111,7 @@ public readonly partial struct JsonNumber
         this.backing = Backing.Number;
         this.numberBacking = new(value);
     }
+#endif
 
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonNumber"/> struct.
@@ -162,6 +168,7 @@ public readonly partial struct JsonNumber
         this.numberBacking = new(value);
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonNumber"/> struct.
     /// </summary>
@@ -172,6 +179,7 @@ public readonly partial struct JsonNumber
         this.backing = Backing.Number;
         this.numberBacking = new(value);
     }
+#endif
 
     /// <summary>
     /// Conversion to byte.
@@ -299,6 +307,7 @@ public readonly partial struct JsonNumber
         throw new InvalidOperationException();
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion to Int128.
     /// </summary>
@@ -319,6 +328,7 @@ public readonly partial struct JsonNumber
 
         throw new InvalidOperationException();
     }
+#endif
 
     /// <summary>
     /// Conversion to SByte.
@@ -341,6 +351,7 @@ public readonly partial struct JsonNumber
         throw new InvalidOperationException();
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion to Half.
     /// </summary>
@@ -361,6 +372,7 @@ public readonly partial struct JsonNumber
 
         throw new InvalidOperationException();
     }
+#endif
 
     /// <summary>
     /// Conversion to Single.
@@ -446,6 +458,7 @@ public readonly partial struct JsonNumber
         throw new InvalidOperationException();
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion to UInt128.
     /// </summary>
@@ -466,6 +479,7 @@ public readonly partial struct JsonNumber
 
         throw new InvalidOperationException();
     }
+#endif
 
     /// <summary>
     /// Conversion to JsonAny.
@@ -503,6 +517,7 @@ public readonly partial struct JsonNumber
         return new(value);
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion from Half.
     /// </summary>
@@ -511,6 +526,7 @@ public readonly partial struct JsonNumber
     {
         return new(value);
     }
+#endif
 
     /// <summary>
     /// Conversion from short.

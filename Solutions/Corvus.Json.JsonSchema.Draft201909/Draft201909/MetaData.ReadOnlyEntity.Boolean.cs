@@ -61,7 +61,7 @@ public readonly partial struct MetaData
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
         /// <exception cref = "InvalidOperationException">The value was not a string.</exception>
-        public static explicit operator bool (ReadOnlyEntity value)
+        public static implicit operator bool (ReadOnlyEntity value)
         {
             return value.GetBoolean() ?? throw new InvalidOperationException();
         }

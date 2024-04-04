@@ -46,7 +46,21 @@ public readonly partial struct JsonIriReference
     {
         this.jsonElementBacking = default;
         this.backing = Backing.String;
+#if NET8_0_OR_GREATER
         this.stringBacking = Encoding.UTF8.GetString(utf8Value);
+#else
+        byte[] bytes = ArrayPool<byte>.Shared.Rent(utf8Value.Length);
+
+        try
+        {
+            utf8Value.CopyTo(bytes);
+            this.stringBacking = Encoding.UTF8.GetString(bytes);
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(bytes);
+        }
+#endif
     }
 
     /// <summary>
@@ -138,7 +152,11 @@ public readonly partial struct JsonIriReference
         where T2 : struct, IJsonValue<T2>
     {
         int written = LowAllocJsonUtils.ConcatenateAsUtf8JsonString(buffer, firstValue, secondValue);
+#if NET8_0_OR_GREATER
         return IJsonValue<JsonIriReference>.ParseValue(buffer[..written]);
+#else
+        return JsonValueHelpers.ParseValue<JsonIriReference>(buffer[..written]);
+#endif
     }
 
     /// <summary>
@@ -158,7 +176,11 @@ public readonly partial struct JsonIriReference
         where T3 : struct, IJsonValue<T3>
     {
         int written = LowAllocJsonUtils.ConcatenateAsUtf8JsonString(buffer, firstValue, secondValue, thirdValue);
+#if NET8_0_OR_GREATER
         return IJsonValue<JsonIriReference>.ParseValue(buffer[..written]);
+#else
+        return JsonValueHelpers.ParseValue<JsonIriReference>(buffer[..written]);
+#endif
     }
 
     /// <summary>
@@ -181,7 +203,11 @@ public readonly partial struct JsonIriReference
         where T4 : struct, IJsonValue<T4>
     {
         int written = LowAllocJsonUtils.ConcatenateAsUtf8JsonString(buffer, firstValue, secondValue, thirdValue, fourthValue);
+#if NET8_0_OR_GREATER
         return IJsonValue<JsonIriReference>.ParseValue(buffer[..written]);
+#else
+        return JsonValueHelpers.ParseValue<JsonIriReference>(buffer[..written]);
+#endif
     }
 
     /// <summary>
@@ -207,7 +233,11 @@ public readonly partial struct JsonIriReference
         where T5 : struct, IJsonValue<T5>
     {
         int written = LowAllocJsonUtils.ConcatenateAsUtf8JsonString(buffer, firstValue, secondValue, thirdValue, fourthValue, fifthValue);
+#if NET8_0_OR_GREATER
         return IJsonValue<JsonIriReference>.ParseValue(buffer[..written]);
+#else
+        return JsonValueHelpers.ParseValue<JsonIriReference>(buffer[..written]);
+#endif
     }
 
     /// <summary>
@@ -236,7 +266,11 @@ public readonly partial struct JsonIriReference
         where T6 : struct, IJsonValue<T6>
     {
         int written = LowAllocJsonUtils.ConcatenateAsUtf8JsonString(buffer, firstValue, secondValue, thirdValue, fourthValue, fifthValue, sixthValue);
+#if NET8_0_OR_GREATER
         return IJsonValue<JsonIriReference>.ParseValue(buffer[..written]);
+#else
+        return JsonValueHelpers.ParseValue<JsonIriReference>(buffer[..written]);
+#endif
     }
 
     /// <summary>
@@ -268,7 +302,11 @@ public readonly partial struct JsonIriReference
         where T7 : struct, IJsonValue<T7>
     {
         int written = LowAllocJsonUtils.ConcatenateAsUtf8JsonString(buffer, firstValue, secondValue, thirdValue, fourthValue, fifthValue, sixthValue, seventhValue);
+#if NET8_0_OR_GREATER
         return IJsonValue<JsonIriReference>.ParseValue(buffer[..written]);
+#else
+        return JsonValueHelpers.ParseValue<JsonIriReference>(buffer[..written]);
+#endif
     }
 
     /// <summary>
@@ -303,37 +341,11 @@ public readonly partial struct JsonIriReference
         where T8 : struct, IJsonValue<T8>
     {
         int written = LowAllocJsonUtils.ConcatenateAsUtf8JsonString(buffer, firstValue, secondValue, thirdValue, fourthValue, fifthValue, sixthValue, seventhValue, eighthValue);
+#if NET8_0_OR_GREATER
         return IJsonValue<JsonIriReference>.ParseValue(buffer[..written]);
-    }
-
-    /// <summary>
-    /// Parses a JSON value from a buffer.
-    /// </summary>
-    /// <param name="buffer">The buffer from which to parse the value.</param>
-    /// <returns>The parsed value.</returns>
-    public static JsonIriReference ParseValue(ReadOnlySpan<char> buffer)
-    {
-        return IJsonValue<JsonIriReference>.ParseValue(buffer);
-    }
-
-    /// <summary>
-    /// Parses a JSON value from a buffer.
-    /// </summary>
-    /// <param name="buffer">The buffer from which to parse the value.</param>
-    /// <returns>The parsed value.</returns>
-    public static JsonIriReference ParseValue(ReadOnlySpan<byte> buffer)
-    {
-        return IJsonValue<JsonIriReference>.ParseValue(buffer);
-    }
-
-    /// <summary>
-    /// Parses a JSON value from a buffer.
-    /// </summary>
-    /// <param name="reader">The reader from which to parse the value.</param>
-    /// <returns>The parsed value.</returns>
-    public static JsonIriReference ParseValue(ref Utf8JsonReader reader)
-    {
-        return IJsonValue<JsonIriReference>.ParseValue(ref reader);
+#else
+        return JsonValueHelpers.ParseValue<JsonIriReference>(buffer[..written]);
+#endif
     }
 
     /// <inheritdoc/>
@@ -387,6 +399,7 @@ public readonly partial struct JsonIriReference
         if ((this.backing & Backing.String) != 0)
         {
             int maxCharCount = Encoding.UTF8.GetMaxCharCount(utf8Bytes.Length);
+#if NET8_0_OR_GREATER
             char[]? pooledChars = null;
 
             Span<char> chars = maxCharCount <= JsonConstants.StackallocThreshold ?
@@ -400,11 +413,27 @@ public readonly partial struct JsonIriReference
             }
             finally
             {
-                if (pooledChars is not null)
+                if (pooledChars is char[] pc)
                 {
-                    ArrayPool<char>.Shared.Return(pooledChars, true);
+                    ArrayPool<char>.Shared.Return(pc);
                 }
             }
+#else
+            char[] chars = ArrayPool<char>.Shared.Rent(maxCharCount);
+            byte[] bytes = ArrayPool<byte>.Shared.Rent(utf8Bytes.Length);
+            utf8Bytes.CopyTo(bytes);
+
+            try
+            {
+                int written = Encoding.UTF8.GetChars(bytes, 0, bytes.Length, chars, 0);
+                return chars.SequenceEqual(this.stringBacking);
+            }
+            finally
+            {
+                ArrayPool<char>.Shared.Return(chars);
+                ArrayPool<byte>.Shared.Return(bytes);
+            }
+#endif
         }
 
         return false;
@@ -454,7 +483,11 @@ public readonly partial struct JsonIriReference
 
         if ((this.backing & Backing.String) != 0)
         {
+#if NET8_0_OR_GREATER
             return chars.SequenceEqual(this.stringBacking);
+#else
+            return chars.SequenceEqual(this.stringBacking.AsSpan());
+#endif
         }
 
         return false;

@@ -102,6 +102,7 @@ public static class NumericTypeExtensions
         throw new FormatException();
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Safely get an half value.
     /// </summary>
@@ -140,6 +141,7 @@ public static class NumericTypeExtensions
 
         throw new FormatException();
     }
+#endif
 
     /// <summary>
     /// Safely get an single value.
@@ -261,8 +263,9 @@ public static class NumericTypeExtensions
         throw new FormatException();
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
-    /// Safely get an int64 value.
+    /// Safely get an int128 value.
     /// </summary>
     /// <param name="value">The value to get.</param>
     /// <param name="result">The value as an integer.</param>
@@ -287,7 +290,7 @@ public static class NumericTypeExtensions
     }
 
     /// <summary>
-    /// Safely get an int64 value.
+    /// Safely get an int128 value.
     /// </summary>
     /// <param name="value">The value to get.</param>
     /// <returns>The value as an integer.</returns>
@@ -301,6 +304,7 @@ public static class NumericTypeExtensions
 
         throw new FormatException();
     }
+#endif
 
     /// <summary>
     /// Safely get an uint32 value.
@@ -434,6 +438,7 @@ public static class NumericTypeExtensions
         throw new FormatException();
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Safely get a UInt128 value.
     /// </summary>
@@ -474,6 +479,7 @@ public static class NumericTypeExtensions
 
         throw new FormatException();
     }
+#endif
 
     /// <summary>
     /// Safely get a byte value.

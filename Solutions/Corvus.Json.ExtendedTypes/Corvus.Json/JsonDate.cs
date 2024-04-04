@@ -30,7 +30,11 @@ public readonly partial struct JsonDate
     /// Initializes a new instance of the <see cref="JsonDate"/> struct.
     /// </summary>
     /// <param name="value">The date time from which to construct the date.</param>
+#if NET8_0_OR_GREATER
     public JsonDate(in DateTime value)
+#else
+    public JsonDate(DateTime value)
+#endif
     {
         this.jsonElementBacking = default;
         this.stringBacking = FormatDate(LocalDate.FromDateTime(value));
@@ -42,7 +46,11 @@ public readonly partial struct JsonDate
     /// </summary>
     /// <param name="value">The date time from which to construct the date.</param>
     /// <param name="calendar">The calendar system with which to interpret the date.</param>
+#if NET8_0_OR_GREATER
     public JsonDate(in DateTime value, CalendarSystem calendar)
+#else
+    public JsonDate(DateTime value, CalendarSystem calendar)
+#endif
     {
         this.jsonElementBacking = default;
         this.stringBacking = FormatDate(LocalDate.FromDateTime(value, calendar));
@@ -96,7 +104,11 @@ public readonly partial struct JsonDate
 
         if (this.jsonElementBacking.ValueKind == JsonValueKind.String)
         {
+#if NET8_0_OR_GREATER
             return this.jsonElementBacking.TryGetValue(DateParser, default(object?), out result);
+#else
+            return DateParser(this.jsonElementBacking.GetString(), default, out result);
+#endif
         }
 
         result = default;
@@ -108,7 +120,11 @@ public readonly partial struct JsonDate
         return LocalDatePattern.Iso.Format(value);
     }
 
+#if NET8_0_OR_GREATER
     private static bool DateParser(ReadOnlySpan<char> text, in object? state, out LocalDate value)
+#else
+    private static bool DateParser(string text, in object? state, out LocalDate value)
+#endif
     {
         if (text.Length != 10 ||
             text[4] != '-' ||

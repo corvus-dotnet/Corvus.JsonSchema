@@ -13,12 +13,14 @@ namespace Corvus.Json;
 /// Represents a JSON int16.
 /// </summary>
 public readonly partial struct JsonInt16
+#if NET8_0_OR_GREATER
  : IAdditionOperators<JsonInt16, JsonInt16, JsonInt16>,
    ISubtractionOperators<JsonInt16, JsonInt16, JsonInt16>,
    IMultiplyOperators<JsonInt16, JsonInt16, JsonInt16>,
    IDivisionOperators<JsonInt16, JsonInt16, JsonInt16>,
    IIncrementOperators<JsonInt16>,
    IDecrementOperators<JsonInt16>
+#endif
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonInt16"/> struct.
@@ -198,6 +200,7 @@ public readonly partial struct JsonInt16
         throw new InvalidOperationException();
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion to Int128.
     /// </summary>
@@ -218,6 +221,7 @@ public readonly partial struct JsonInt16
 
         throw new InvalidOperationException();
     }
+#endif
 
     /// <summary>
     /// Conversion to SByte.
@@ -240,6 +244,7 @@ public readonly partial struct JsonInt16
         throw new InvalidOperationException();
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion to Half.
     /// </summary>
@@ -260,6 +265,7 @@ public readonly partial struct JsonInt16
 
         throw new InvalidOperationException();
     }
+#endif
 
     /// <summary>
     /// Conversion to Single.
@@ -345,6 +351,7 @@ public readonly partial struct JsonInt16
         throw new InvalidOperationException();
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion to UInt64.
     /// </summary>
@@ -365,6 +372,7 @@ public readonly partial struct JsonInt16
 
         throw new InvalidOperationException();
     }
+#endif
 
     /// <summary>
     /// Conversion from int16.
