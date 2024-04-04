@@ -360,11 +360,12 @@ public readonly partial struct Format
         return Undefined;
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Gets an instance of the JSON value from a string value.
     /// </summary>
-    /// <typeparam name = "TValue">The type of the value.</typeparam>
-    /// <param name = "value">The value from which to instantiate the instance.</param>
+    /// <typeparam name="TValue">The type of the value.</typeparam>
+    /// <param name="value">The value from which to instantiate the instance.</param>
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be Format.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -377,12 +378,13 @@ public readonly partial struct Format
 
         return Undefined;
     }
-
+#endif
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Gets an instance of the JSON value from a number value.
     /// </summary>
-    /// <typeparam name = "TValue">The type of the value.</typeparam>
-    /// <param name = "value">The value from which to instantiate the instance.</param>
+    /// <typeparam name="TValue">The type of the value.</typeparam>
+    /// <param name="value">The value from which to instantiate the instance.</param>
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be Format.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -395,12 +397,13 @@ public readonly partial struct Format
 
         return Undefined;
     }
-
+#endif
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Gets an instance of the JSON value from an array value.
     /// </summary>
-    /// <typeparam name = "TValue">The type of the value.</typeparam>
-    /// <param name = "value">The value from which to instantiate the instance.</param>
+    /// <typeparam name="TValue">The type of the value.</typeparam>
+    /// <param name="value">The value from which to instantiate the instance.</param>
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be Format.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -413,7 +416,7 @@ public readonly partial struct Format
 
         return Undefined;
     }
-
+#endif
     /// <summary>
     /// Gets an instance of the JSON value from an object value.
     /// </summary>
@@ -505,7 +508,11 @@ public readonly partial struct Format
     /// <returns>The parsed value.</returns>
     static Format ParseValue(ReadOnlySpan<char> buffer)
     {
+#if NET8_0_OR_GREATER
         return IJsonValue<Format>.ParseValue(buffer);
+#else
+        return JsonValueHelpers.ParseValue<Format>(buffer);
+#endif
     }
 
     /// <summary>
@@ -515,7 +522,11 @@ public readonly partial struct Format
     /// <returns>The parsed value.</returns>
     static Format ParseValue(ReadOnlySpan<byte> buffer)
     {
+#if NET8_0_OR_GREATER
         return IJsonValue<Format>.ParseValue(buffer);
+#else
+        return JsonValueHelpers.ParseValue<Format>(buffer);
+#endif
     }
 
     /// <summary>
@@ -525,7 +536,11 @@ public readonly partial struct Format
     /// <returns>The parsed value.</returns>
     static Format ParseValue(ref Utf8JsonReader reader)
     {
+#if NET8_0_OR_GREATER
         return IJsonValue<Format>.ParseValue(ref reader);
+#else
+        return JsonValueHelpers.ParseValue<Format>(ref reader);
+#endif
     }
 
     /// <summary>
@@ -537,6 +552,7 @@ public readonly partial struct Format
     public TTarget As<TTarget>()
         where TTarget : struct, IJsonValue<TTarget>
     {
+#if NET8_0_OR_GREATER
         if ((this.backing & Backing.JsonElement) != 0)
         {
             return TTarget.FromJson(this.jsonElementBacking);
@@ -558,6 +574,9 @@ public readonly partial struct Format
         }
 
         return TTarget.Undefined;
+#else
+        return this.As<Format, TTarget>();
+#endif
     }
 
     /// <inheritdoc/>

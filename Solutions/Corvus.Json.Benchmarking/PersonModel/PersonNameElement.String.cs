@@ -285,8 +285,13 @@ public readonly partial struct PersonNameElement : IJsonString<PersonNameElement
         if ((this.backing & Backing.String) != 0)
         {
             int maxCharCount = Encoding.UTF8.GetMaxCharCount(utf8Bytes.Length);
+#if NET8_0_OR_GREATER
             char[]? pooledChars = null;
-            Span<char> chars = maxCharCount <= JsonValueHelpers.MaxStackAlloc ? stackalloc char[maxCharCount] : (pooledChars = ArrayPool<char>.Shared.Rent(maxCharCount));
+
+            Span<char> chars = maxCharCount <= JsonValueHelpers.MaxStackAlloc  ?
+                stackalloc char[maxCharCount] :
+                (pooledChars = ArrayPool<char>.Shared.Rent(maxCharCount));
+
             try
             {
                 int written = Encoding.UTF8.GetChars(utf8Bytes, chars);
@@ -294,11 +299,26 @@ public readonly partial struct PersonNameElement : IJsonString<PersonNameElement
             }
             finally
             {
-                if (pooledChars is not null)
+                if (pooledChars is char[] pc)
                 {
-                    ArrayPool<char>.Shared.Return(pooledChars, true);
+                    ArrayPool<char>.Shared.Return(pc);
                 }
             }
+#else
+            char[] chars = ArrayPool<char>.Shared.Rent(maxCharCount);
+            byte[] bytes = ArrayPool<byte>.Shared.Rent(utf8Bytes.Length);
+            utf8Bytes.CopyTo(bytes);
+            try
+            {
+                int written = Encoding.UTF8.GetChars(bytes, 0, bytes.Length, chars, 0);
+                return chars.SequenceEqual(this.stringBacking);
+            }
+            finally
+            {
+                ArrayPool<char>.Shared.Return(chars);
+                ArrayPool<byte>.Shared.Return(bytes);
+            }
+#endif
         }
 
         return false;
@@ -348,7 +368,11 @@ public readonly partial struct PersonNameElement : IJsonString<PersonNameElement
 
         if ((this.backing & Backing.String) != 0)
         {
+#if NET8_0_OR_GREATER
             return chars.SequenceEqual(this.stringBacking);
+#else
+            return chars.SequenceEqual(this.stringBacking.AsSpan());
+#endif
         }
 
         return false;

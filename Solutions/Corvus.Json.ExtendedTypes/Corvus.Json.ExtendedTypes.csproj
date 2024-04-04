@@ -22,6 +22,7 @@
 		<Compile Remove="Corvus.Json\Internal\RuneNetStandard20.cs" />
 		<Compile Remove="Corvus.Json\Internal\JsonValueNetStandard20Extensions.cs" />
 		<Compile Remove="Corvus.Json\Internal\JsonValueHelpers.NetStandard20.cs" />
+		<Compile Remove="Corvus.Json\Internal\ArrayBufferWriterNetStandard20.cs" />
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">

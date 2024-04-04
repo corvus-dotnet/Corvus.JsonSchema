@@ -6,10 +6,13 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // </licensing>
 
+#define MAKE_ABW_PUBLIC
+
 #pragma warning disable
 
 using System.Buffers;
 using System.Diagnostics;
+
 
 namespace Corvus.Json
 {

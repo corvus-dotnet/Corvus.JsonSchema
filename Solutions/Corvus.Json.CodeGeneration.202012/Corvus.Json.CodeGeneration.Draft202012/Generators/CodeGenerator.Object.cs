@@ -16,7 +16,7 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft202012 {
     public partial class CodeGeneratorObject : CodeGeneratorObjectBase {
         
         
-        #line 561 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
+        #line 593 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
 
     public bool ShouldGenerate
     {
@@ -385,58 +385,69 @@ namespace ");
                     "sonPropertyName name, out TValue value)\r\n        where TValue : struct, IJsonVal" +
                     "ue<TValue>\r\n    {\r\n        if ((this.backing & Backing.JsonElement) != 0)\r\n     " +
                     "   {\r\n            if (name.TryGetProperty(this.jsonElementBacking, out JsonEleme" +
-                    "nt result))\r\n            {\r\n                value = TValue.FromJson(result);\r\n  " +
-                    "              return true;\r\n            }\r\n\r\n            value = default;\r\n     " +
-                    "       return false;\r\n        }\r\n\r\n        if ((this.backing & Backing.Object) !" +
-                    "= 0)\r\n        {\r\n            if (this.objectBacking.TryGetValue(name, out JsonAn" +
-                    "y result))\r\n            {\r\n                value = TValue.FromAny(result);\r\n    " +
-                    "            return true;\r\n            }\r\n\r\n            value = default;\r\n       " +
-                    "     return false;\r\n        }\r\n\r\n        throw new InvalidOperationException();\r" +
-                    "\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public bool TryGetProperty<TValue>(string n" +
-                    "ame, out TValue value)\r\n        where TValue : struct, IJsonValue<TValue>\r\n    {" +
-                    "\r\n        if ((this.backing & Backing.JsonElement) != 0)\r\n        {\r\n           " +
-                    " if (this.jsonElementBacking.TryGetProperty(name, out JsonElement result))\r\n    " +
-                    "        {\r\n                value = TValue.FromJson(result);\r\n                ret" +
-                    "urn true;\r\n            }\r\n\r\n            value = default;\r\n            return fal" +
-                    "se;\r\n        }\r\n\r\n        if ((this.backing & Backing.Object) != 0)\r\n        {\r\n" +
-                    "            if (this.objectBacking.TryGetValue(name, out JsonAny result))\r\n     " +
-                    "       {\r\n                value = TValue.FromAny(result);\r\n                retur" +
-                    "n true;\r\n            }\r\n\r\n            value = default;\r\n            return false" +
-                    ";\r\n        }\r\n\r\n        throw new InvalidOperationException();\r\n    }\r\n\r\n    ///" +
-                    " <inheritdoc/>\r\n    public bool TryGetProperty<TValue>(ReadOnlySpan<char> name, " +
-                    "out TValue value)\r\n        where TValue : struct, IJsonValue<TValue>\r\n    {\r\n   " +
-                    "     if ((this.backing & Backing.JsonElement) != 0)\r\n        {\r\n            if (" +
-                    "this.jsonElementBacking.TryGetProperty(name, out JsonElement result))\r\n         " +
-                    "   {\r\n                value = TValue.FromJson(result);\r\n                return t" +
-                    "rue;\r\n            }\r\n\r\n            value = default;\r\n            return false;\r\n" +
-                    "        }\r\n\r\n        if ((this.backing & Backing.Object) != 0)\r\n        {\r\n     " +
-                    "       if (this.objectBacking.TryGetValue(name, out JsonAny result))\r\n          " +
-                    "  {\r\n                value = TValue.FromAny(result);\r\n                return tru" +
-                    "e;\r\n            }\r\n\r\n            value = default;\r\n            return false;\r\n  " +
-                    "      }\r\n\r\n        throw new InvalidOperationException();\r\n    }\r\n\r\n    /// <inh" +
-                    "eritdoc/>\r\n    public bool TryGetProperty<TValue>(ReadOnlySpan<byte> utf8Name, o" +
-                    "ut TValue value)\r\n        where TValue : struct, IJsonValue<TValue>\r\n    {\r\n    " +
-                    "    if ((this.backing & Backing.JsonElement) != 0)\r\n        {\r\n            if (t" +
-                    "his.jsonElementBacking.TryGetProperty(utf8Name, out JsonElement result))\r\n      " +
-                    "      {\r\n                value = TValue.FromJson(result);\r\n                retur" +
-                    "n true;\r\n            }\r\n\r\n            value = default;\r\n            return false" +
-                    ";\r\n        }\r\n\r\n        if ((this.backing & Backing.Object) != 0)\r\n        {\r\n  " +
-                    "          if (this.objectBacking.TryGetValue(utf8Name, out JsonAny result))\r\n   " +
-                    "         {\r\n                value = TValue.FromAny(result);\r\n                ret" +
-                    "urn true;\r\n            }\r\n\r\n            value = default;\r\n            return fal" +
-                    "se;\r\n        }\r\n\r\n        throw new InvalidOperationException();\r\n    }\r\n\r\n    /" +
-                    "// <inheritdoc/>\r\n    public ");
+                    "nt result))\r\n            {\r\n#if NET8_0_OR_GREATER\r\n                value = TValu" +
+                    "e.FromJson(result);\r\n#else\r\n                value = JsonValueNetStandard20Extens" +
+                    "ions.FromJsonElement<TValue>(result);\r\n#endif\r\n                return true;\r\n   " +
+                    "         }\r\n\r\n            value = default;\r\n            return false;\r\n        }" +
+                    "\r\n\r\n        if ((this.backing & Backing.Object) != 0)\r\n        {\r\n            if" +
+                    " (this.objectBacking.TryGetValue(name, out JsonAny result))\r\n            {\r\n#if " +
+                    "NET8_0_OR_GREATER\r\n                value = TValue.FromAny(result);\r\n#else\r\n     " +
+                    "           value = result.As<TValue>();\r\n#endif\r\n                return true;\r\n " +
+                    "           }\r\n\r\n            value = default;\r\n            return false;\r\n       " +
+                    " }\r\n\r\n        throw new InvalidOperationException();\r\n    }\r\n\r\n    /// <inheritd" +
+                    "oc/>\r\n    public bool TryGetProperty<TValue>(string name, out TValue value)\r\n   " +
+                    "     where TValue : struct, IJsonValue<TValue>\r\n    {\r\n        if ((this.backing" +
+                    " & Backing.JsonElement) != 0)\r\n        {\r\n            if (this.jsonElementBackin" +
+                    "g.TryGetProperty(name, out JsonElement result))\r\n            {\r\n#if NET8_0_OR_GR" +
+                    "EATER\r\n                value = TValue.FromJson(result);\r\n#else\r\n                " +
+                    "value = JsonValueNetStandard20Extensions.FromJsonElement<TValue>(result);\r\n#endi" +
+                    "f\r\n                return true;\r\n            }\r\n\r\n            value = default;\r\n" +
+                    "            return false;\r\n        }\r\n\r\n        if ((this.backing & Backing.Obje" +
+                    "ct) != 0)\r\n        {\r\n            if (this.objectBacking.TryGetValue(name, out J" +
+                    "sonAny result))\r\n            {\r\n#if NET8_0_OR_GREATER\r\n                value = T" +
+                    "Value.FromAny(result);\r\n#else\r\n                value = result.As<TValue>();\r\n#en" +
+                    "dif\r\n                return true;\r\n            }\r\n\r\n            value = default;" +
+                    "\r\n            return false;\r\n        }\r\n\r\n        throw new InvalidOperationExce" +
+                    "ption();\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public bool TryGetProperty<TValue>" +
+                    "(ReadOnlySpan<char> name, out TValue value)\r\n        where TValue : struct, IJso" +
+                    "nValue<TValue>\r\n    {\r\n        if ((this.backing & Backing.JsonElement) != 0)\r\n " +
+                    "       {\r\n            if (this.jsonElementBacking.TryGetProperty(name, out JsonE" +
+                    "lement result))\r\n            {\r\n#if NET8_0_OR_GREATER\r\n                value = T" +
+                    "Value.FromJson(result);\r\n#else\r\n                value = JsonValueNetStandard20Ex" +
+                    "tensions.FromJsonElement<TValue>(result);\r\n#endif\r\n                return true;\r" +
+                    "\n            }\r\n\r\n            value = default;\r\n            return false;\r\n     " +
+                    "   }\r\n\r\n        if ((this.backing & Backing.Object) != 0)\r\n        {\r\n          " +
+                    "  if (this.objectBacking.TryGetValue(name, out JsonAny result))\r\n            {\r\n" +
+                    "#if NET8_0_OR_GREATER\r\n                value = TValue.FromAny(result);\r\n#else\r\n " +
+                    "               value = result.As<TValue>();\r\n#endif\r\n                return true" +
+                    ";\r\n            }\r\n\r\n            value = default;\r\n            return false;\r\n   " +
+                    "     }\r\n\r\n        throw new InvalidOperationException();\r\n    }\r\n\r\n    /// <inhe" +
+                    "ritdoc/>\r\n    public bool TryGetProperty<TValue>(ReadOnlySpan<byte> utf8Name, ou" +
+                    "t TValue value)\r\n        where TValue : struct, IJsonValue<TValue>\r\n    {\r\n     " +
+                    "   if ((this.backing & Backing.JsonElement) != 0)\r\n        {\r\n            if (th" +
+                    "is.jsonElementBacking.TryGetProperty(utf8Name, out JsonElement result))\r\n       " +
+                    "     {\r\n#if NET8_0_OR_GREATER\r\n                value = TValue.FromJson(result);\r" +
+                    "\n#else\r\n                value = JsonValueNetStandard20Extensions.FromJsonElement" +
+                    "<TValue>(result);\r\n#endif\r\n                return true;\r\n            }\r\n\r\n      " +
+                    "      value = default;\r\n            return false;\r\n        }\r\n\r\n        if ((thi" +
+                    "s.backing & Backing.Object) != 0)\r\n        {\r\n            if (this.objectBacking" +
+                    ".TryGetValue(utf8Name, out JsonAny result))\r\n            {\r\n#if NET8_0_OR_GREATE" +
+                    "R\r\n                value = TValue.FromAny(result);\r\n#else\r\n                value" +
+                    " = result.As<TValue>();\r\n#endif\r\n                return true;\r\n            }\r\n\r\n" +
+                    "            value = default;\r\n            return false;\r\n        }\r\n\r\n        th" +
+                    "row new InvalidOperationException();\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public" +
+                    " ");
             
             #line default
             #line hidden
             
-            #line 439 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
+            #line 471 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 439 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
+            #line 471 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
             this.Write(" SetProperty<TValue>(in JsonPropertyName name, TValue value)\r\n        where TValu" +
                     "e : struct, IJsonValue\r\n    {\r\n        return new(this.GetPropertyBackingWith(na" +
                     "me, value.AsAny));\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public ");
@@ -444,52 +455,52 @@ namespace ");
             #line default
             #line hidden
             
-            #line 446 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
+            #line 478 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 446 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
+            #line 478 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
             this.Write(" RemoveProperty(in JsonPropertyName name)\r\n    {\r\n        return new(this.GetProp" +
                     "ertyBackingWithout(name));\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public ");
             
             #line default
             #line hidden
             
-            #line 452 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
+            #line 484 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 452 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
+            #line 484 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
             this.Write(" RemoveProperty(string name)\r\n    {\r\n        return new(this.GetPropertyBackingWi" +
                     "thout(name));\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public ");
             
             #line default
             #line hidden
             
-            #line 458 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
+            #line 490 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 458 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
+            #line 490 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
             this.Write(" RemoveProperty(ReadOnlySpan<char> name)\r\n    {\r\n        return new(this.GetPrope" +
                     "rtyBackingWithout(name));\r\n    }\r\n\r\n    /// <inheritdoc/>\r\n    public ");
             
             #line default
             #line hidden
             
-            #line 464 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
+            #line 496 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 464 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
+            #line 496 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
             this.Write(" RemoveProperty(ReadOnlySpan<byte> utf8Name)\r\n    {\r\n        return new(this.GetP" +
                     "ropertyBackingWithout(utf8Name));\r\n    }\r\n\r\n    /// <summary>\r\n    /// Builds an" +
                     " <see cref=\"ImmutableList{JsonObjectProperty}\"/> from the object.\r\n    /// </sum" +
@@ -554,7 +565,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 560 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
+            #line 592 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.Object.tt"
  EndNesting(); 
             
             #line default

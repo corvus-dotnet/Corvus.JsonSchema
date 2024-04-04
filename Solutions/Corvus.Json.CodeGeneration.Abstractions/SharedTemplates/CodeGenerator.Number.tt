@@ -29,7 +29,8 @@ namespace <#= Namespace #>;
 
 <# BeginNesting(); #>
 <#= FormattedTypeDocumentation #>
-public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> 
+public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
+#if NET8_0_OR_GREATER
 : IJsonNumber<<#= TypeDeclaration.DotnetTypeName #>>,
   IAdditionOperators<<#= TypeDeclaration.DotnetTypeName #>, <#= TypeDeclaration.DotnetTypeName #>, <#= TypeDeclaration.DotnetTypeName #>>,
   ISubtractionOperators<<#= TypeDeclaration.DotnetTypeName #>, <#= TypeDeclaration.DotnetTypeName #>, <#= TypeDeclaration.DotnetTypeName #>>,
@@ -37,6 +38,9 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
   IDivisionOperators<<#= TypeDeclaration.DotnetTypeName #>, <#= TypeDeclaration.DotnetTypeName #>, <#= TypeDeclaration.DotnetTypeName #>>,
   IIncrementOperators<<#= TypeDeclaration.DotnetTypeName #>>,
   IDecrementOperators<<#= TypeDeclaration.DotnetTypeName #>>
+#else
+: IJsonNumber<<#= TypeDeclaration.DotnetTypeName #>>
+#endif
 {
    /// <summary>
     /// Initializes a new instance of the <see cref="<#= TypeDeclaration.DotnetTypeName #>"/> struct.
@@ -87,6 +91,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 <# }
    else if(ConversionOperatorToHalf == "implicit")
    { #>
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Initializes a new instance of the <see cref="<#= TypeDeclaration.DotnetTypeName #>"/> struct.
     /// </summary>
@@ -95,6 +100,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
         : this(new BinaryJsonNumber(value))
     {
     }
+#endif
 
 <# }
    else if(ConversionOperatorToSingle == "implicit")
@@ -159,6 +165,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 <# }
    else if(ConversionOperatorToInt128 == "implicit")
    { #>
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Initializes a new instance of the <see cref="<#= TypeDeclaration.DotnetTypeName #>"/> struct.
     /// </summary>
@@ -167,6 +174,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
         : this(new BinaryJsonNumber(value))
     {
     }
+#endif
 
 <# }
    else if(ConversionOperatorToSByte == "implicit")
@@ -219,6 +227,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 <# }
    else if(ConversionOperatorToUInt128 == "implicit")
    { #>
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Initializes a new instance of the <see cref="<#= TypeDeclaration.DotnetTypeName #>"/> struct.
     /// </summary>
@@ -227,6 +236,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
         : this(new BinaryJsonNumber(value))
     {
     }
+#endif
 
 <# }#>
     /// <summary>
@@ -369,6 +379,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
         throw new InvalidOperationException();
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion to Int128.
     /// </summary>
@@ -389,6 +400,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 
         throw new InvalidOperationException();
     }
+#endif
 
     /// <summary>
     /// Conversion to SByte.
@@ -411,6 +423,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
         throw new InvalidOperationException();
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion to Half.
     /// </summary>
@@ -431,6 +444,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 
         throw new InvalidOperationException();
     }
+#endif
 
     /// <summary>
     /// Conversion to Single.
@@ -516,6 +530,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
         throw new InvalidOperationException();
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion to UInt128.
     /// </summary>
@@ -536,6 +551,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
 
         throw new InvalidOperationException();
     }
+#endif
 
     /// <summary>
     /// Conversion from decimal.
@@ -555,6 +571,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
         return new(new BinaryJsonNumber(value));
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion from Half.
     /// </summary>
@@ -563,6 +580,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     {
         return new(new BinaryJsonNumber(value));
     }
+#endif
 
     /// <summary>
     /// Conversion from float.
@@ -888,31 +906,37 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
    if(ConversionOperatorToInt128 == "implicit")
    { #>
 
+#if NET8_0_OR_GREATER
    /// <summary>
    /// Gets the value as an Int128.
    /// </summary>
    /// <returns>The value as an Int128.</returns>
     public Int128 AsInt128() => (Int128)this;
+#endif
 <# }
 
    if(ConversionOperatorToUInt128 == "implicit")
    { #>
 
+#if NET8_0_OR_GREATER
    /// <summary>
    /// Gets the value as a UInt128.
    /// </summary>
    /// <returns>The value as a UInt128.</returns>
     public UInt128 AsUInt128() => (UInt128)this;
+#endif
 <# }
 
    if(ConversionOperatorToHalf == "implicit")
    { #>
 
+#if NET8_0_OR_GREATER
    /// <summary>
    /// Gets the value as a Half.
    /// </summary>
    /// <returns>The value as a Half.</returns>
     public Half AsHalf() => (Half)this;
+#endif
 <# }
 
    if(ConversionOperatorToSingle == "implicit")

@@ -16,7 +16,7 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft7 {
     public partial class CodeGeneratorString : CodeGeneratorStringBase {
         
         
-        #line 418 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+        #line 439 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
 
     public bool ShouldGenerate
     {
@@ -652,40 +652,48 @@ namespace ");
                     "ElementBacking.ValueKind == JsonValueKind.String)\r\n            {\r\n              " +
                     "  return this.jsonElementBacking.ValueEquals(utf8Bytes);\r\n            }\r\n       " +
                     " }\r\n\r\n        if ((this.backing & Backing.String) != 0)\r\n        {\r\n            " +
-                    "int maxCharCount = Encoding.UTF8.GetMaxCharCount(utf8Bytes.Length);\r\n           " +
-                    " char[]? pooledChars = null;\r\n\r\n            Span<char> chars = maxCharCount <= J" +
-                    "sonValueHelpers.MaxStackAlloc ?\r\n                stackalloc char[maxCharCount] :" +
-                    "\r\n                (pooledChars = ArrayPool<char>.Shared.Rent(maxCharCount));\r\n\r\n" +
-                    "            try\r\n            {\r\n                int written = Encoding.UTF8.GetC" +
-                    "hars(utf8Bytes, chars);\r\n                return chars[..written].SequenceEqual(t" +
-                    "his.stringBacking);\r\n            }\r\n            finally\r\n            {\r\n        " +
-                    "        if (pooledChars is not null)\r\n                {\r\n                    Arr" +
-                    "ayPool<char>.Shared.Return(pooledChars, true);\r\n                }\r\n            }" +
-                    "\r\n        }\r\n\r\n        return false;\r\n    }\r\n\r\n    /// <summary>\r\n    /// Compar" +
-                    "e to a sequence of characters.\r\n    /// </summary>\r\n    /// <param name=\"chars\">" +
-                    "The character sequence to compare.</param>\r\n    /// <returns><c>True</c> if teh " +
-                    "sequences match.</returns>\r\n    public bool EqualsString(string chars)\r\n    {\r\n " +
-                    "       if ((this.backing & Backing.JsonElement) != 0)\r\n        {\r\n            if" +
-                    " (this.jsonElementBacking.ValueKind == JsonValueKind.String)\r\n            {\r\n   " +
-                    "             return this.jsonElementBacking.ValueEquals(chars);\r\n            }\r\n" +
-                    "\r\n            return false;\r\n        }\r\n\r\n        if ((this.backing & Backing.St" +
-                    "ring) != 0)\r\n        {\r\n            return chars.Equals(this.stringBacking, Stri" +
-                    "ngComparison.Ordinal);\r\n        }\r\n\r\n        return false;\r\n    }\r\n\r\n    /// <su" +
-                    "mmary>\r\n    /// Compare to a sequence of characters.\r\n    /// </summary>\r\n    //" +
-                    "/ <param name=\"chars\">The character sequence to compare.</param>\r\n    /// <retur" +
-                    "ns><c>True</c> if teh sequences match.</returns>\r\n    public bool EqualsString(R" +
-                    "eadOnlySpan<char> chars)\r\n    {\r\n        if ((this.backing & Backing.JsonElement" +
-                    ") != 0)\r\n        {\r\n            if (this.jsonElementBacking.ValueKind == JsonVal" +
-                    "ueKind.String)\r\n            {\r\n                return this.jsonElementBacking.Va" +
-                    "lueEquals(chars);\r\n            }\r\n\r\n            return false;\r\n        }\r\n\r\n    " +
-                    "    if ((this.backing & Backing.String) != 0)\r\n        {\r\n            return cha" +
-                    "rs.SequenceEqual(this.stringBacking);\r\n        }\r\n\r\n        return false;\r\n    }" +
-                    "\r\n}\r\n");
+                    "int maxCharCount = Encoding.UTF8.GetMaxCharCount(utf8Bytes.Length);\r\n#if NET8_0_" +
+                    "OR_GREATER\r\n            char[]? pooledChars = null;\r\n\r\n            Span<char> ch" +
+                    "ars = maxCharCount <= JsonValueHelpers.MaxStackAlloc  ?\r\n                stackal" +
+                    "loc char[maxCharCount] :\r\n                (pooledChars = ArrayPool<char>.Shared." +
+                    "Rent(maxCharCount));\r\n\r\n            try\r\n            {\r\n                int writ" +
+                    "ten = Encoding.UTF8.GetChars(utf8Bytes, chars);\r\n                return chars[.." +
+                    "written].SequenceEqual(this.stringBacking);\r\n            }\r\n            finally\r" +
+                    "\n            {\r\n                if (pooledChars is char[] pc)\r\n                {" +
+                    "\r\n                    ArrayPool<char>.Shared.Return(pc);\r\n                }\r\n   " +
+                    "         }\r\n#else\r\n            char[] chars = ArrayPool<char>.Shared.Rent(maxCha" +
+                    "rCount);\r\n            byte[] bytes = ArrayPool<byte>.Shared.Rent(utf8Bytes.Lengt" +
+                    "h);\r\n            utf8Bytes.CopyTo(bytes);\r\n\r\n            try\r\n            {\r\n   " +
+                    "             int written = Encoding.UTF8.GetChars(bytes, 0, bytes.Length, chars," +
+                    " 0);\r\n                return chars.SequenceEqual(this.stringBacking);\r\n         " +
+                    "   }\r\n            finally\r\n            {\r\n                ArrayPool<char>.Shared" +
+                    ".Return(chars);\r\n                ArrayPool<byte>.Shared.Return(bytes);\r\n        " +
+                    "    }\r\n#endif\r\n        }\r\n\r\n        return false;\r\n    }\r\n\r\n    /// <summary>\r\n " +
+                    "   /// Compare to a sequence of characters.\r\n    /// </summary>\r\n    /// <param " +
+                    "name=\"chars\">The character sequence to compare.</param>\r\n    /// <returns><c>Tru" +
+                    "e</c> if teh sequences match.</returns>\r\n    public bool EqualsString(string cha" +
+                    "rs)\r\n    {\r\n        if ((this.backing & Backing.JsonElement) != 0)\r\n        {\r\n " +
+                    "           if (this.jsonElementBacking.ValueKind == JsonValueKind.String)\r\n     " +
+                    "       {\r\n                return this.jsonElementBacking.ValueEquals(chars);\r\n  " +
+                    "          }\r\n\r\n            return false;\r\n        }\r\n\r\n        if ((this.backing" +
+                    " & Backing.String) != 0)\r\n        {\r\n            return chars.Equals(this.string" +
+                    "Backing, StringComparison.Ordinal);\r\n        }\r\n\r\n        return false;\r\n    }\r\n" +
+                    "\r\n    /// <summary>\r\n    /// Compare to a sequence of characters.\r\n    /// </sum" +
+                    "mary>\r\n    /// <param name=\"chars\">The character sequence to compare.</param>\r\n " +
+                    "   /// <returns><c>True</c> if teh sequences match.</returns>\r\n    public bool E" +
+                    "qualsString(ReadOnlySpan<char> chars)\r\n    {\r\n        if ((this.backing & Backin" +
+                    "g.JsonElement) != 0)\r\n        {\r\n            if (this.jsonElementBacking.ValueKi" +
+                    "nd == JsonValueKind.String)\r\n            {\r\n                return this.jsonElem" +
+                    "entBacking.ValueEquals(chars);\r\n            }\r\n\r\n            return false;\r\n    " +
+                    "    }\r\n\r\n        if ((this.backing & Backing.String) != 0)\r\n        {\r\n#if NET8_" +
+                    "0_OR_GREATER\r\n            return chars.SequenceEqual(this.stringBacking);\r\n#else" +
+                    "\r\n            return chars.SequenceEqual(this.stringBacking.AsSpan());\r\n#endif\r\n" +
+                    "        }\r\n\r\n        return false;\r\n    }\r\n}\r\n");
             
             #line default
             #line hidden
             
-            #line 417 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
+            #line 438 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.String.tt"
  EndNesting(); 
             
             #line default

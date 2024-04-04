@@ -291,7 +291,11 @@ public readonly partial struct Person : IJsonObject<Person>
         {
             if (name.TryGetProperty(this.jsonElementBacking, out JsonElement result))
             {
+#if NET8_0_OR_GREATER
                 value = TValue.FromJson(result);
+#else
+                value = JsonValueNetStandard20Extensions.FromJsonElement<TValue>(result);
+#endif
                 return true;
             }
 
@@ -303,7 +307,11 @@ public readonly partial struct Person : IJsonObject<Person>
         {
             if (this.objectBacking.TryGetValue(name, out JsonAny result))
             {
+#if NET8_0_OR_GREATER
                 value = TValue.FromAny(result);
+#else
+                value = result.As<TValue>();
+#endif
                 return true;
             }
 
@@ -322,7 +330,11 @@ public readonly partial struct Person : IJsonObject<Person>
         {
             if (this.jsonElementBacking.TryGetProperty(name, out JsonElement result))
             {
+#if NET8_0_OR_GREATER
                 value = TValue.FromJson(result);
+#else
+                value = JsonValueNetStandard20Extensions.FromJsonElement<TValue>(result);
+#endif
                 return true;
             }
 
@@ -334,7 +346,11 @@ public readonly partial struct Person : IJsonObject<Person>
         {
             if (this.objectBacking.TryGetValue(name, out JsonAny result))
             {
+#if NET8_0_OR_GREATER
                 value = TValue.FromAny(result);
+#else
+                value = result.As<TValue>();
+#endif
                 return true;
             }
 
@@ -353,7 +369,11 @@ public readonly partial struct Person : IJsonObject<Person>
         {
             if (this.jsonElementBacking.TryGetProperty(name, out JsonElement result))
             {
+#if NET8_0_OR_GREATER
                 value = TValue.FromJson(result);
+#else
+                value = JsonValueNetStandard20Extensions.FromJsonElement<TValue>(result);
+#endif
                 return true;
             }
 
@@ -365,7 +385,11 @@ public readonly partial struct Person : IJsonObject<Person>
         {
             if (this.objectBacking.TryGetValue(name, out JsonAny result))
             {
+#if NET8_0_OR_GREATER
                 value = TValue.FromAny(result);
+#else
+                value = result.As<TValue>();
+#endif
                 return true;
             }
 
@@ -384,7 +408,11 @@ public readonly partial struct Person : IJsonObject<Person>
         {
             if (this.jsonElementBacking.TryGetProperty(utf8Name, out JsonElement result))
             {
+#if NET8_0_OR_GREATER
                 value = TValue.FromJson(result);
+#else
+                value = JsonValueNetStandard20Extensions.FromJsonElement<TValue>(result);
+#endif
                 return true;
             }
 
@@ -396,7 +424,11 @@ public readonly partial struct Person : IJsonObject<Person>
         {
             if (this.objectBacking.TryGetValue(utf8Name, out JsonAny result))
             {
+#if NET8_0_OR_GREATER
                 value = TValue.FromAny(result);
+#else
+                value = result.As<TValue>();
+#endif
                 return true;
             }
 
