@@ -439,6 +439,20 @@ public readonly partial struct JsonUriTemplate : IJsonString<JsonUriTemplate>
     /// </summary>
     /// <param name="buffer">The buffer from which to parse the value.</param>
     /// <returns>The parsed value.</returns>
+    public static JsonUriTemplate ParseValue(string buffer)
+    {
+#if NET8_0_OR_GREATER
+        return IJsonValue<JsonUriTemplate>.ParseValue(buffer);
+#else
+        return JsonValueHelpers.ParseValue<JsonUriTemplate>(buffer.AsSpan());
+#endif
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
     public static JsonUriTemplate ParseValue(ReadOnlySpan<char> buffer)
     {
 #if NET8_0_OR_GREATER

@@ -439,6 +439,20 @@ public readonly partial struct JsonRegex : IJsonString<JsonRegex>
     /// </summary>
     /// <param name="buffer">The buffer from which to parse the value.</param>
     /// <returns>The parsed value.</returns>
+    public static JsonRegex ParseValue(string buffer)
+    {
+#if NET8_0_OR_GREATER
+        return IJsonValue<JsonRegex>.ParseValue(buffer);
+#else
+        return JsonValueHelpers.ParseValue<JsonRegex>(buffer.AsSpan());
+#endif
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
     public static JsonRegex ParseValue(ReadOnlySpan<char> buffer)
     {
 #if NET8_0_OR_GREATER

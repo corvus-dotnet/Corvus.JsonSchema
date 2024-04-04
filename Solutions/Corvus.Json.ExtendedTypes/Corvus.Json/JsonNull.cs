@@ -409,6 +409,16 @@ public readonly partial struct JsonNull : IJsonValue<JsonNull>
     /// </summary>
     /// <param name="buffer">The buffer from which to parse the value.</param>
     /// <returns>The parsed value.</returns>
+    public static JsonNull ParseValue(string buffer)
+    {
+        return ParseValue(buffer.AsSpan());
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
     public static JsonNull ParseValue(ReadOnlySpan<char> buffer)
     {
 #if NET8_0_OR_GREATER

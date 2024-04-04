@@ -420,6 +420,20 @@ public readonly partial struct JsonObject : IJsonObject<JsonObject>
     /// </summary>
     /// <param name="buffer">The buffer from which to parse the value.</param>
     /// <returns>The parsed value.</returns>
+    public static JsonObject ParseValue(string buffer)
+    {
+#if NET8_0_OR_GREATER
+        return IJsonValue<JsonObject>.ParseValue(buffer);
+#else
+        return JsonValueHelpers.ParseValue<JsonObject>(buffer.AsSpan());
+#endif
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
     public static JsonObject ParseValue(ReadOnlySpan<char> buffer)
     {
 #if NET8_0_OR_GREATER

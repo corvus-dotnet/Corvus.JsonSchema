@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Net.Http;
 using Corvus.Json;
 using Corvus.Json.CodeGeneration;
 using Drivers;

@@ -242,7 +242,7 @@ public static partial class JsonTransformingVisitor
         result.Walk = Walk.Continue;
     }
 
-#if NETSTANDARD2_0
+#if !NET8_0_OR_GREATER
     private static void TryFormat(int value, Span<char> span, int digits)
     {
         int digitValue;

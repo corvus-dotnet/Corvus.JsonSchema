@@ -439,6 +439,20 @@ public readonly partial struct JsonIpV6 : IJsonString<JsonIpV6>
     /// </summary>
     /// <param name="buffer">The buffer from which to parse the value.</param>
     /// <returns>The parsed value.</returns>
+    public static JsonIpV6 ParseValue(string buffer)
+    {
+#if NET8_0_OR_GREATER
+        return IJsonValue<JsonIpV6>.ParseValue(buffer);
+#else
+        return JsonValueHelpers.ParseValue<JsonIpV6>(buffer.AsSpan());
+#endif
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
     public static JsonIpV6 ParseValue(ReadOnlySpan<char> buffer)
     {
 #if NET8_0_OR_GREATER

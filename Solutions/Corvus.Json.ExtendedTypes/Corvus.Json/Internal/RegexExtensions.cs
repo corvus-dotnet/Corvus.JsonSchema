@@ -2,7 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-#if NETSTANDARD2_0
+#if !NET8_0_OR_GREATER
 using System.Text.RegularExpressions;
 
 namespace Corvus.Json;

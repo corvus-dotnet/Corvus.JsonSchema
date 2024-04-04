@@ -40,7 +40,11 @@ public class JsonStringTryGetValueSteps
 
         static bool TryGetIntegerUsingChar(ReadOnlySpan<char> span, in int state, [NotNullWhen(true)] out int? value)
         {
+#if NET8_0_OR_GREATER
             if (int.TryParse(span, out int baseValue))
+#else
+            if (int.TryParse(span.ToString(), out int baseValue))
+#endif
             {
                 value = baseValue * state;
                 return true;
@@ -62,7 +66,11 @@ public class JsonStringTryGetValueSteps
 
         static bool TryGetIntegerUsingUtf8(ReadOnlySpan<byte> span, in int state, [NotNullWhen(true)] out int? value)
         {
+#if NET8_0_OR_GREATER
             if (int.TryParse(Encoding.UTF8.GetString(span), out int baseValue))
+#else
+            if (int.TryParse(Encoding.UTF8.GetString(span.ToArray()), out int baseValue))
+#endif
             {
                 value = baseValue * state;
                 return true;
@@ -101,10 +109,33 @@ public class JsonStringTryGetValueSteps
         Assert.IsNull(result.Value);
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// The result of a TryParse() operation.
     /// </summary>
     /// <param name="Success">Captures the return value of TryParse().</param>
     /// <param name="Value">Captures the value produced by TryParse().</param>
     internal readonly record struct ParseResult(bool Success, int? Value);
+#else
+    /// <summary>
+    /// The result of a TryParse() operation.
+    /// </summary>
+    internal readonly struct ParseResult
+    {
+        /// <summary>
+        /// Create and instance of a <see cref="ParseResult"/>.
+        /// </summary>
+        /// <param name="success">Captures the return value of TryParse().</param>
+        /// <param name="value">Captures the value produced by TryParse().</param>
+        public ParseResult(bool success, int? value)
+        {
+            this.Success = success;
+            this.Value = value;
+        }
+
+        public bool Success { get; }
+
+        public int? Value { get; }
+    }
+#endif
 }

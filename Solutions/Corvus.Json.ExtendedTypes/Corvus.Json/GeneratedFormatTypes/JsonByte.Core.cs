@@ -547,6 +547,20 @@ public readonly partial struct JsonByte : IJsonNumber<JsonByte>
     /// </summary>
     /// <param name="buffer">The buffer from which to parse the value.</param>
     /// <returns>The parsed value.</returns>
+    public static JsonByte ParseValue(string buffer)
+    {
+#if NET8_0_OR_GREATER
+        return IJsonValue<JsonByte>.ParseValue(buffer);
+#else
+        return JsonValueHelpers.ParseValue<JsonByte>(buffer.AsSpan());
+#endif
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
     public static JsonByte ParseValue(ReadOnlySpan<char> buffer)
     {
 #if NET8_0_OR_GREATER

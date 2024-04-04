@@ -439,6 +439,20 @@ public readonly partial struct JsonIdnEmail : IJsonString<JsonIdnEmail>
     /// </summary>
     /// <param name="buffer">The buffer from which to parse the value.</param>
     /// <returns>The parsed value.</returns>
+    public static JsonIdnEmail ParseValue(string buffer)
+    {
+#if NET8_0_OR_GREATER
+        return IJsonValue<JsonIdnEmail>.ParseValue(buffer);
+#else
+        return JsonValueHelpers.ParseValue<JsonIdnEmail>(buffer.AsSpan());
+#endif
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
     public static JsonIdnEmail ParseValue(ReadOnlySpan<char> buffer)
     {
 #if NET8_0_OR_GREATER

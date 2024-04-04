@@ -74,7 +74,7 @@ namespace Corvus.Json
             return propertyName;
         }
 
-#if NETSTANDARD2_0
+#if !NET8_0_OR_GREATER
         public static int GetUnescapedArrayInPlace(byte[] utf8Source, int length, int idx)
         {
             // The escaped name is always >= than the unescaped, so it is safe to use escaped name for the buffer length.

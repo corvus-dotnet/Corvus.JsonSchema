@@ -6,12 +6,43 @@ using System.Collections.Immutable;
 using Corvus.Json.Patch.Model;
 
 namespace Corvus.Json.Patch;
+#if NET8_0_OR_GREATER
 /// <summary>
 /// Collates a patch operation on a <see cref="IJsonValue"/>.
 /// </summary>
 public readonly record struct PatchBuilder(JsonAny Value, JsonPatchDocument PatchOperations)
 {
+#else
+/// <summary>
+/// Collates a patch operation on a <see cref="IJsonValue"/>.
+/// </summary>
+public readonly struct PatchBuilder
+{
+#endif
     private static readonly JsonObject EmptyObject = JsonObject.FromProperties(ImmutableList<JsonObjectProperty>.Empty);
+
+#if !NET8_0_OR_GREATER
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PatchBuilder"/> struct.
+    /// </summary>
+    /// <param name="value">The value.</param>
+    /// <param name="patchOperations">The operations to apply.</param>
+    public PatchBuilder(JsonAny value, JsonPatchDocument patchOperations)
+    {
+        this.Value = value;
+        this.PatchOperations = patchOperations;
+    }
+
+    /// <summary>
+    /// Gets the value.
+    /// </summary>
+    public JsonAny Value { get; }
+
+    /// <summary>
+    /// Gets the patch operations.
+    /// </summary>
+    public JsonPatchDocument PatchOperations { get; }
+#endif
 
     /// <summary>
     /// Adds or replaces the value found at the given location, building any missing intermediate structure as object properties.
@@ -38,7 +69,11 @@ public readonly record struct PatchBuilder(JsonAny Value, JsonPatchDocument Patc
         ReadOnlySpan<char> currentPath = (path[^1] == '/') ? path[..^1] : path;
         PatchBuilder currentBuilder = this;
 
+#if NET8_0_OR_GREATER
         while ((nextSlash = currentPath.IndexOf("/", StringComparison.Ordinal)) >= 0)
+#else
+        while ((nextSlash = currentPath.IndexOf('/')) >= 0)
+#endif
         {
             currentIndex += nextSlash;
 

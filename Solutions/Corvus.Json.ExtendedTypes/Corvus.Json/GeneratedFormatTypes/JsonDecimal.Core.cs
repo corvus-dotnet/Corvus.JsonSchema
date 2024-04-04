@@ -547,6 +547,20 @@ public readonly partial struct JsonDecimal : IJsonNumber<JsonDecimal>
     /// </summary>
     /// <param name="buffer">The buffer from which to parse the value.</param>
     /// <returns>The parsed value.</returns>
+    public static JsonDecimal ParseValue(string buffer)
+    {
+#if NET8_0_OR_GREATER
+        return IJsonValue<JsonDecimal>.ParseValue(buffer);
+#else
+        return JsonValueHelpers.ParseValue<JsonDecimal>(buffer.AsSpan());
+#endif
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
     public static JsonDecimal ParseValue(ReadOnlySpan<char> buffer)
     {
 #if NET8_0_OR_GREATER

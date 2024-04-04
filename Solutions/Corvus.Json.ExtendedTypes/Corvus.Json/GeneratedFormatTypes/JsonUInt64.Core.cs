@@ -547,6 +547,20 @@ public readonly partial struct JsonUInt64 : IJsonNumber<JsonUInt64>
     /// </summary>
     /// <param name="buffer">The buffer from which to parse the value.</param>
     /// <returns>The parsed value.</returns>
+    public static JsonUInt64 ParseValue(string buffer)
+    {
+#if NET8_0_OR_GREATER
+        return IJsonValue<JsonUInt64>.ParseValue(buffer);
+#else
+        return JsonValueHelpers.ParseValue<JsonUInt64>(buffer.AsSpan());
+#endif
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
     public static JsonUInt64 ParseValue(ReadOnlySpan<char> buffer)
     {
 #if NET8_0_OR_GREATER

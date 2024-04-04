@@ -439,6 +439,20 @@ public readonly partial struct JsonIriReference : IJsonString<JsonIriReference>
     /// </summary>
     /// <param name="buffer">The buffer from which to parse the value.</param>
     /// <returns>The parsed value.</returns>
+    public static JsonIriReference ParseValue(string buffer)
+    {
+#if NET8_0_OR_GREATER
+        return IJsonValue<JsonIriReference>.ParseValue(buffer);
+#else
+        return JsonValueHelpers.ParseValue<JsonIriReference>(buffer.AsSpan());
+#endif
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
     public static JsonIriReference ParseValue(ReadOnlySpan<char> buffer)
     {
 #if NET8_0_OR_GREATER

@@ -51,7 +51,7 @@ public class JsonValueCastSteps
     [Then("the result should equal the JsonNotAny (.*)")]
     public void ThenTheResultShouldEqualTheJsonNotAny(string match)
     {
-        Assert.AreEqual(JsonNotAny.ParseValue(match), this.scenarioContext.Get<JsonNotAny>(CastResultKey));
+        Assert.AreEqual(JsonNotAny.ParseValue(match.AsSpan()), this.scenarioContext.Get<JsonNotAny>(CastResultKey));
     }
 
     /// <summary>
@@ -62,7 +62,7 @@ public class JsonValueCastSteps
     [Then("the result should equal within (.*) the JsonNotAny (.*)")]
     public void ThenTheResultShouldEqualTheJsonNotAnyWithin(string match, double margin)
     {
-        Assert.AreEqual((double)JsonNotAny.ParseValue(match).AsNumber, (double)this.scenarioContext.Get<JsonNotAny>(CastResultKey).AsNumber, margin);
+        Assert.AreEqual((double)JsonNotAny.ParseValue(match.AsSpan()).AsNumber, (double)this.scenarioContext.Get<JsonNotAny>(CastResultKey).AsNumber, margin);
     }
 
     /// <summary>
@@ -72,7 +72,7 @@ public class JsonValueCastSteps
     [Then("the result should equal the JsonAny (.*)")]
     public void ThenTheResultShouldEqualTheJsonAny(string match)
     {
-        Assert.AreEqual(JsonAny.ParseValue(match), this.scenarioContext.Get<JsonAny>(CastResultKey));
+        Assert.AreEqual(JsonAny.ParseValue(match.AsSpan()), this.scenarioContext.Get<JsonAny>(CastResultKey));
     }
 
     /// <summary>
@@ -83,7 +83,7 @@ public class JsonValueCastSteps
     [Then("the result should equal within (.*) the JsonAny (.*)")]
     public void ThenTheResultShouldEqualTheJsonAnyWithin(string match, double margin)
     {
-        Assert.AreEqual((double)JsonNumber.ParseValue(match), (double)this.scenarioContext.Get<JsonAny>(CastResultKey).AsNumber, margin);
+        Assert.AreEqual((double)JsonNumber.ParseValue(match.AsSpan()), (double)this.scenarioContext.Get<JsonAny>(CastResultKey).AsNumber, margin);
     }
 
     /// <summary>
@@ -93,7 +93,7 @@ public class JsonValueCastSteps
     [Then("the result should equal the JsonArray (.*)")]
     public void ThenTheResultShouldEqualTheJsonArray(string jsonArray)
     {
-        Assert.AreEqual(JsonAny.ParseValue(jsonArray).AsArray, this.scenarioContext.Get<IJsonValue>(CastResultKey));
+        Assert.AreEqual(JsonAny.ParseValue(jsonArray.AsSpan()).AsArray, this.scenarioContext.Get<IJsonValue>(CastResultKey));
     }
 
     /// <summary>
@@ -103,7 +103,7 @@ public class JsonValueCastSteps
     [Then("the result should equal the ImmutableList<JsonAny> (.*)")]
     public void ThenTheResultShouldEqualTheImmutableList(string immutableList)
     {
-        ImmutableList<JsonAny> expected = JsonArray.ParseValue(immutableList).AsImmutableList();
+        ImmutableList<JsonAny> expected = JsonArray.ParseValue(immutableList.AsSpan()).AsImmutableList();
         ImmutableList<JsonAny> actual = this.scenarioContext.Get<ImmutableList<JsonAny>>(CastResultKey);
         CollectionAssert.AreEqual(expected, actual);
     }
@@ -455,6 +455,7 @@ public class JsonValueCastSteps
         this.scenarioContext.Set((JsonEmail)this.scenarioContext.Get<string>(JsonValueSteps.SubjectUnderTest), CastResultKey);
     }
 
+#if NET8_0_OR_GREATER
     /* uriTemplate */
 
     /// <summary>
@@ -512,6 +513,8 @@ public class JsonValueCastSteps
     {
         this.scenarioContext.Set((JsonUriTemplate)this.scenarioContext.Get<string>(JsonValueSteps.SubjectUnderTest), CastResultKey);
     }
+
+#endif
 
     /* pointer */
 

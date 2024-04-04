@@ -378,6 +378,16 @@ public readonly struct Period : IEquatable<Period>
     /// </summary>
     /// <param name="value">The string to parse.</param>
     /// <returns>The resulting period.</returns>
+    public static Period Parse(string value)
+    {
+        return Parse(value.AsSpan());
+    }
+
+    /// <summary>
+    /// Parses a string into a Period.
+    /// </summary>
+    /// <param name="value">The string to parse.</param>
+    /// <returns>The resulting period.</returns>
     public static Period Parse(ReadOnlySpan<char> value)
     {
         if (TryParse(value, out Period result))

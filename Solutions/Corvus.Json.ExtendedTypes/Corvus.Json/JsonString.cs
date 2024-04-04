@@ -423,6 +423,20 @@ public readonly partial struct JsonString : IJsonString<JsonString>
     /// </summary>
     /// <param name="buffer">The buffer from which to parse the value.</param>
     /// <returns>The parsed value.</returns>
+    public static JsonString ParseValue(string buffer)
+    {
+#if NET8_0_OR_GREATER
+        return IJsonValue<JsonString>.ParseValue(buffer);
+#else
+        return JsonValueHelpers.ParseValue<JsonString>(buffer.AsSpan());
+#endif
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
     public static JsonString ParseValue(ReadOnlySpan<char> buffer)
     {
 #if NET8_0_OR_GREATER

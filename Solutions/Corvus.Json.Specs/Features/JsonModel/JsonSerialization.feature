@@ -1,4 +1,4 @@
-﻿Feature: JsonSerialization
+Feature: JsonSerialization
 	Writing entities
 
 Scenario: Serialize an object with an undefined property value
@@ -379,18 +379,6 @@ Scenario: Write a dotnet-backed JsonUriReference to a string
 	When the json value is round-tripped via a string
 	Then the round-tripped result should be a String
 	And the round-tripped result should be equal to the JsonAny "http://foo.bar/?baz=qux#quux"
-
-Scenario: Write a jsonelement-backed JsonUriTemplate to a string
-	Given the JsonElement backed JsonUriTemplate "http://example.com/dictionary/{term:1}/{term}"
-	When the json value is round-tripped via a string
-	Then the round-tripped result should be a String
-	And the round-tripped result should be equal to the JsonAny "http://example.com/dictionary/{term:1}/{term}"
-
-Scenario: Write a dotnet-backed JsonUriTemplate to a string
-	Given the dotnet backed JsonUriTemplate "http://example.com/dictionary/{term:1}/{term}"
-	When the json value is round-tripped via a string
-	Then the round-tripped result should be a String
-	And the round-tripped result should be equal to the JsonAny "http://example.com/dictionary/{term:1}/{term}"
 
 Scenario: Write a jsonelement-backed JsonUuid to a string
 	Given the JsonElement backed JsonUuid "c3f2a2a3-72c1-4abc-a741-b0e7095f20d1"

@@ -2,7 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-#if NETSTANDARD2_0
+#if !NET8_0_OR_GREATER
 
 using System.Buffers;
 using System.Text;
@@ -31,7 +31,7 @@ public static partial class JsonValueHelpers
         buffer.CopyTo(sourceBuffer);
         try
         {
-            int written = Encoding.UTF8.GetBytes(sourceBuffer, 0, sourceBuffer.Length, utf8Buffer, 0);
+            int written = Encoding.UTF8.GetBytes(sourceBuffer, 0, buffer.Length, utf8Buffer, 0);
             Utf8JsonReader reader = new(utf8Buffer.AsSpan(0, written));
             return ParseValue<T>(ref reader);
         }

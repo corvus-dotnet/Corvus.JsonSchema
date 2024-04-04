@@ -58,9 +58,9 @@ public class JsonPatchSteps
     {
         try
         {
-            var value = JsonAny.ParseValue(serializedValue);
+            var value = JsonAny.ParseValue(serializedValue.AsSpan());
             JsonAny document = this.scenarioContext.Get<JsonAny>(DocumentKey);
-            PatchBuilder builder = document.BeginPatch().DeepAddOrReplaceObjectProperties(value, path);
+            PatchBuilder builder = document.BeginPatch().DeepAddOrReplaceObjectProperties(value, path.AsSpan());
             this.scenarioContext.Set(builder, BuilderKey);
             this.scenarioContext.Set(builder.PatchOperations, PatchKey);
             this.scenarioContext.Set(builder.Value, OutputKey);
@@ -77,9 +77,9 @@ public class JsonPatchSteps
         try
         {
             // We force it to an object and back so we catch the type mismatch problem seen in #204
-            var value = JsonAny.ParseValue(serializedValue);
+            var value = JsonAny.ParseValue(serializedValue.AsSpan());
             JsonObject document = this.scenarioContext.Get<JsonAny>(DocumentKey).AsObject;
-            if (document.TrySetDeepProperty(path, value, out JsonObject result))
+            if (document.TrySetDeepProperty(path.AsSpan(), value, out JsonObject result))
             {
                 this.scenarioContext.Set(result.AsAny, OutputKey);
             }

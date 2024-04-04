@@ -423,6 +423,20 @@ public readonly partial struct JsonArray : IJsonArray<JsonArray>
     /// </summary>
     /// <param name="buffer">The buffer from which to parse the value.</param>
     /// <returns>The parsed value.</returns>
+    public static JsonArray ParseValue(string buffer)
+    {
+#if NET8_0_OR_GREATER
+        return IJsonValue<JsonArray>.ParseValue(buffer);
+#else
+        return JsonValueHelpers.ParseValue<JsonArray>(buffer.AsSpan());
+#endif
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
     public static JsonArray ParseValue(ReadOnlySpan<char> buffer)
     {
 #if NET8_0_OR_GREATER

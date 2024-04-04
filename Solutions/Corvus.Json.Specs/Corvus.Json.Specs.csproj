@@ -1,8 +1,8 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 	<Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
 
 	<PropertyGroup>
-		<TargetFramework>net8.0</TargetFramework>
+		<TargetFrameworks>net481;net8.0</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<IsPackable>false</IsPackable>
@@ -16,6 +16,16 @@
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
 		<NoWarn>RCS1029;CS1591</NoWarn>
 	</PropertyGroup>
+
+	<ItemGroup Condition="'$(TargetFramework)' == 'net481'">
+		<PackageReference Include="Microsoft.Extensions.DependencyModel" Version="8.0.0" />
+		<PackageReference Include="System.Runtime.Loader" Version="4.3.0" />
+		<PackageReference Include="System.Net.Http" Version="4.3.4" />
+		<Compile Remove="Features\UriTemplates\**" />
+		<Compile Remove="Features\JsonModel\Cast\JsonUriTemplateCast.*" />
+		<Compile Remove="Features\JsonModel\Equals\JsonUriTemplateEquals.*" />
+		<Compile Remove="Steps\UriTemplateSteps.cs" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Corvus.Testing.SpecFlow.NUnit" Version="3.0.2" />
@@ -62,7 +72,14 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <PackageReference Update="Roslynator.Analyzers" Version="4.6.2" />
+		<PackageReference Update="Roslynator.Analyzers" Version="4.6.2" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <SpecFlowFeatureFiles Update="Features\UriTemplates\JsonUriTemplateSerialization.feature">
+	    <Visible>$(UsingMicrosoftNETSdk)</Visible>
+	    <CodeBehindFile>%(RelativeDir)%(Filename).feature$(DefaultLanguageSourceExtension)</CodeBehindFile>
+	  </SpecFlowFeatureFiles>
 	</ItemGroup>
 
 </Project>

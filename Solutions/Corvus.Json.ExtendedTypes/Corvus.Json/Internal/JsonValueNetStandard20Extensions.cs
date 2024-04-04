@@ -2,7 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-#if NETSTANDARD2_0
+#if !NET8_0_OR_GREATER
 
 using System;
 using System.Buffers;
@@ -234,29 +234,6 @@ public static class JsonValueNetStandard20Extensions
 
             return dynamic.CreateDelegate(typeof(JsonValueConverter<TSource, TTarget>));
         }
-        else if (typeof(TSource) == typeof(JsonAny))
-        {
-            MethodInfo fromAny = returnType.GetMethod("From", BindingFlags.Public | BindingFlags.Static);
-            if (fromAny == null)
-            {
-                return new JsonValueConverter<TSource, TTarget>(CreateDefault);
-            }
-
-            var dynamic = new DynamicMethod(
-                $"${returnType.Name}_From{sourceType.Name}",
-                returnType,
-                argumentTypes,
-                returnType);
-
-            ILGenerator il = dynamic.GetILGenerator();
-
-            // Emit code to call the fromAny static method on the targetType using the value provided.
-            il.Emit(OpCodes.Ldarg_0);
-            il.Emit(OpCodes.Call, fromAny);
-            il.Emit(OpCodes.Ret);
-
-            return dynamic.CreateDelegate(typeof(JsonValueConverter<TSource, TTarget>));
-        }
         else if (typeof(TSource) == typeof(JsonElement))
         {
             MethodInfo? fromJson = returnType.GetMethod("FromJson", BindingFlags.Static | BindingFlags.Public);
@@ -311,7 +288,7 @@ public static class JsonValueNetStandard20Extensions
                 return new JsonValueConverter<TSource, TTarget>(CreateDefault);
             }
 
-            MethodInfo asAny = sourceType.GetMethod("AsAny", BindingFlags.Public);
+            PropertyInfo asAny = sourceType.GetProperty("AsAny", BindingFlags.Public | BindingFlags.Instance);
             if (asAny == null)
             {
                 return new JsonValueConverter<TSource, TTarget>(CreateDefault);
@@ -328,7 +305,7 @@ public static class JsonValueNetStandard20Extensions
             // Emit code to call the fromAny static method on the targetType using the value returned by the
             // asAny method on the sourceType.
             il.Emit(OpCodes.Ldarg_0);
-            il.Emit(OpCodes.Call, asAny);
+            il.Emit(OpCodes.Call, asAny.GetGetMethod());
             il.Emit(OpCodes.Call, fromAny);
             il.Emit(OpCodes.Ret);
 

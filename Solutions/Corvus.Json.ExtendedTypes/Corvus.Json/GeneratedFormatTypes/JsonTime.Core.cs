@@ -439,6 +439,20 @@ public readonly partial struct JsonTime : IJsonString<JsonTime>
     /// </summary>
     /// <param name="buffer">The buffer from which to parse the value.</param>
     /// <returns>The parsed value.</returns>
+    public static JsonTime ParseValue(string buffer)
+    {
+#if NET8_0_OR_GREATER
+        return IJsonValue<JsonTime>.ParseValue(buffer);
+#else
+        return JsonValueHelpers.ParseValue<JsonTime>(buffer.AsSpan());
+#endif
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
     public static JsonTime ParseValue(ReadOnlySpan<char> buffer)
     {
 #if NET8_0_OR_GREATER

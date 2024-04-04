@@ -439,6 +439,20 @@ public readonly partial struct JsonBase64String : IJsonString<JsonBase64String>
     /// </summary>
     /// <param name="buffer">The buffer from which to parse the value.</param>
     /// <returns>The parsed value.</returns>
+    public static JsonBase64String ParseValue(string buffer)
+    {
+#if NET8_0_OR_GREATER
+        return IJsonValue<JsonBase64String>.ParseValue(buffer);
+#else
+        return JsonValueHelpers.ParseValue<JsonBase64String>(buffer.AsSpan());
+#endif
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
     public static JsonBase64String ParseValue(ReadOnlySpan<char> buffer)
     {
 #if NET8_0_OR_GREATER

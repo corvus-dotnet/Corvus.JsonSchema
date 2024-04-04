@@ -427,6 +427,20 @@ public readonly partial struct JsonBoolean : IJsonBoolean<JsonBoolean>
     /// </summary>
     /// <param name="buffer">The buffer from which to parse the value.</param>
     /// <returns>The parsed value.</returns>
+    public static JsonBoolean ParseValue(string buffer)
+    {
+#if NET8_0_OR_GREATER
+        return IJsonValue<JsonBoolean>.ParseValue(buffer);
+#else
+        return JsonValueHelpers.ParseValue<JsonBoolean>(buffer.AsSpan());
+#endif
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
     public static JsonBoolean ParseValue(ReadOnlySpan<char> buffer)
     {
 #if NET8_0_OR_GREATER

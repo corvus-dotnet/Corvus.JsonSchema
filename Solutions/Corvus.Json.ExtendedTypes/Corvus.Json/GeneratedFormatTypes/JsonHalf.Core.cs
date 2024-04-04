@@ -547,6 +547,20 @@ public readonly partial struct JsonHalf : IJsonNumber<JsonHalf>
     /// </summary>
     /// <param name="buffer">The buffer from which to parse the value.</param>
     /// <returns>The parsed value.</returns>
+    public static JsonHalf ParseValue(string buffer)
+    {
+#if NET8_0_OR_GREATER
+        return IJsonValue<JsonHalf>.ParseValue(buffer);
+#else
+        return JsonValueHelpers.ParseValue<JsonHalf>(buffer.AsSpan());
+#endif
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
     public static JsonHalf ParseValue(ReadOnlySpan<char> buffer)
     {
 #if NET8_0_OR_GREATER

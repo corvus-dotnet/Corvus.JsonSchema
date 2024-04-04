@@ -1371,6 +1371,7 @@ public class JsonValueEqualitySteps
         }
     }
 
+#if NET8_0_OR_GREATER
     /* uriTemplate */
 
     /// <summary>
@@ -1415,6 +1416,7 @@ public class JsonValueEqualitySteps
             this.scenarioContext.Set(((object)this.scenarioContext.Get<JsonUriTemplate>(JsonValueSteps.SubjectUnderTest)).GetHashCode() == obj.GetHashCode(), HashCodeResultKey);
         }
     }
+#endif
 
     /* time */
 

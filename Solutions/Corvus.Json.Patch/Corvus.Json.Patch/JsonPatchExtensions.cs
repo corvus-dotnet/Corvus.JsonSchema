@@ -153,7 +153,7 @@ public static partial class JsonPatchExtensions
             return true;
         }
 
-        if (!node.TryResolvePointer(sourcePath, out JsonAny source))
+        if (!node.TryResolvePointer(sourcePath.AsSpan(), out JsonAny source))
         {
             result = node;
             return false;
@@ -190,7 +190,7 @@ public static partial class JsonPatchExtensions
             return true;
         }
 
-        if (!node.TryResolvePointer(sourcePath, out JsonAny source))
+        if (!node.TryResolvePointer(sourcePath.AsSpan(), out JsonAny source))
         {
             result = node;
             return false;
@@ -309,7 +309,11 @@ public static partial class JsonPatchExtensions
             return false;
         }
 
+#if NET8_0_OR_GREATER
         return int.TryParse(pathSegment, out index);
+#else
+        return int.TryParse(pathSegment.ToString(), out index);
+#endif
     }
 
     private static bool TryApplyAdd(in JsonAny node, in JsonPatchDocument.PatchOperation patchOperation, out JsonAny result)
@@ -334,7 +338,7 @@ public static partial class JsonPatchExtensions
             return true;
         }
 
-        if (!node.TryResolvePointer(from, out JsonAny source))
+        if (!node.TryResolvePointer(from.AsSpan(), out JsonAny source))
         {
             result = node;
             return false;
@@ -364,7 +368,7 @@ public static partial class JsonPatchExtensions
             return true;
         }
 
-        if (!node.TryResolvePointer(from, out JsonAny source))
+        if (!node.TryResolvePointer(from.AsSpan(), out JsonAny source))
         {
             result = node;
             return false;

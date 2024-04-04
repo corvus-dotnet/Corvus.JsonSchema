@@ -189,7 +189,7 @@ public readonly struct JsonPropertyName
         buffer.CopyTo(sourceBuffer);
         try
         {
-            int written = Encoding.UTF8.GetBytes(sourceBuffer, 0, sourceBuffer.Length, utf8Buffer, 0);
+            int written = Encoding.UTF8.GetBytes(sourceBuffer, 0, buffer.Length, utf8Buffer, 0);
             Utf8JsonReader reader = new(utf8Buffer.AsSpan(0, written));
             return ParseValue(ref reader);
         }
