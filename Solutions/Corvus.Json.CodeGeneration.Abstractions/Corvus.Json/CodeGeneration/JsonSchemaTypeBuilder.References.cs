@@ -8,6 +8,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Web;
 using Microsoft.CodeAnalysis;
+using Microsoft.Extensions.Primitives;
 
 namespace Corvus.Json.CodeGeneration;
 
@@ -149,11 +150,19 @@ public partial class JsonSchemaTypeBuilder
                     var reference = new JsonReference((string)value);
                     if (reference.HasFragment)
                     {
+#if NET8_0_OR_GREATER
                         ReadOnlySpan<char> fragmentWithoutLeadingHash = reference.Fragment[1..];
                         if (AnchorPattern.IsMatch(fragmentWithoutLeadingHash))
                         {
                             result.Add(fragmentWithoutLeadingHash.ToString());
                         }
+#else
+                        string fragmentWIthoutLeadingHash = reference.Fragment[1..].ToString();
+                        if (AnchorPattern.IsMatch(fragmentWIthoutLeadingHash))
+                        {
+                            result.Add(fragmentWIthoutLeadingHash);
+                        }
+#endif
                     }
                 }
             }
@@ -185,7 +194,11 @@ public partial class JsonSchemaTypeBuilder
                         await this.AddSubschemaForRecursiveRef(subschemaPath, value.AsString, context, typeDeclaration).ConfigureAwait(false);
                         break;
                     default:
+#if NET8_0_OR_GREATER
                         throw new InvalidOperationException($"Unknown reference kind '{Enum.GetName(keyword.RefKind)}' at '{context.SubschemaLocation}'");
+#else
+                        throw new InvalidOperationException($"Unknown reference kind '{Enum.GetName(typeof(RefKind), keyword.RefKind)}' at '{context.SubschemaLocation}'");
+#endif
                 }
 
                 context.LeaveScope();
@@ -425,8 +438,13 @@ public partial class JsonSchemaTypeBuilder
             }
 
             Span<char> decodedSegment = new char[segment.Length];
+#if NET8_0_OR_GREATER
             int written = JsonPointerUtilities.DecodePointer(segment, decodedSegment);
             currentBuilder.Append(decodedSegment[..written]);
+#else
+            int written = JsonPointerUtilities.DecodePointer(segment.AsSpan(), decodedSegment);
+            currentBuilder.Append(decodedSegment[..written].ToString());
+#endif
             if (this.schemaRegistry.TryGetValue(baseSchemaForReferenceLocation.WithFragment(currentBuilder.ToString()), out LocatedSchema? locatedSchema))
             {
                 failed = false;

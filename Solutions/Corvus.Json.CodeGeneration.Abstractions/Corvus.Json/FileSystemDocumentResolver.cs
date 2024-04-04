@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Text.Json;
+using Corvus.Json.CodeGeneration;
 
 namespace Corvus.Json;
 
@@ -51,7 +52,7 @@ public class FileSystemDocumentResolver : IDocumentResolver
     {
         this.CheckDisposed();
 
-        string path = Path.Combine(this.baseDirectory, new string(reference.Uri));
+        string path = Path.Combine(this.baseDirectory, reference.Uri.ToString());
 
         if (this.documents.TryGetValue(path, out JsonDocument? result))
         {

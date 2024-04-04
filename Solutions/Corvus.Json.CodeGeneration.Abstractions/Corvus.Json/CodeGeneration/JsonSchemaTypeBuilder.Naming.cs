@@ -258,14 +258,18 @@ public partial class JsonSchemaTypeBuilder
             }
             else
             {
-                typename = fallbackBaseName;
+                typename = fallbackBaseName.AsSpan();
             }
 
             if (!this.CollidesWithGeneratedName(typeDeclaration, typename) && this.MatchesExistingType(typename, rootNamespace))
             {
                 if (reference.HasPath && reference.HasFragment)
                 {
+#if NET8_0_OR_GREATER
                     typename = $"{GetNameFromPath(fallbackBaseName, reference)}{typename}";
+#else
+                    typename = $"{GetNameFromPath(fallbackBaseName, reference).ToString()}{typename.ToString()}".AsSpan();
+#endif
                 }
 
                 while (this.MatchesExistingType(typename, rootNamespace))
@@ -287,10 +291,18 @@ public partial class JsonSchemaTypeBuilder
 
                     if (found)
                     {
+#if NET8_0_OR_GREATER
                         suffix = int.Parse(typename[startOfSuffix..]);
+#else
+                        suffix = int.Parse(typename[startOfSuffix..].ToString());
+#endif
                     }
 
+#if NET8_0_OR_GREATER
                     typename = $"{typename[..startOfSuffix]}{suffix}";
+#else
+                    typename = $"{typename[..startOfSuffix].ToString()}{suffix}".AsSpan();
+#endif
                 }
             }
 
@@ -320,10 +332,10 @@ public partial class JsonSchemaTypeBuilder
 
                     typename = Formatting.ToPascalCaseWithReservedWords(reference.Fragment[(lastSlash + 1)..].ToString());
                 }
-                else if (reference.Fragment[(lastSlash + 1)..].SequenceEqual("items") && lastSlash > 0)
+                else if (reference.Fragment[(lastSlash + 1)..].SequenceEqual("items".AsSpan()) && lastSlash > 0)
                 {
                     int previousSlash = reference.Fragment[..(lastSlash - 1)].LastIndexOf('/');
-                    if (reference.Fragment[(previousSlash + 1)..lastSlash].SequenceEqual("properties"))
+                    if (reference.Fragment[(previousSlash + 1)..lastSlash].SequenceEqual("properties".AsSpan()))
                     {
                         // If it is a property called "Items" then use the property name.
                         typename = Formatting.ToPascalCaseWithReservedWords(reference.Fragment[(lastSlash + 1)..].ToString());
@@ -360,7 +372,7 @@ public partial class JsonSchemaTypeBuilder
             }
             else
             {
-                typename = fallbackBaseName;
+                typename = fallbackBaseName.AsSpan();
             }
         }
 
@@ -396,7 +408,7 @@ public partial class JsonSchemaTypeBuilder
             }
             else if (lastSlash == reference.Path.Length - 1)
             {
-                typename = fallbackBaseName;
+                typename = fallbackBaseName.AsSpan();
             }
             else
             {
@@ -425,7 +437,7 @@ public partial class JsonSchemaTypeBuilder
     {
         foreach (string keyword in this.JsonSchemaConfiguration.DefinitionKeywords)
         {
-            if (reference.HasFragment && reference.Fragment.Length > 1 && reference.Fragment.LastIndexOf('/') == keyword.Length + 1 && reference.Fragment[1..].StartsWith(keyword))
+            if (reference.HasFragment && reference.Fragment.Length > 1 && reference.Fragment.LastIndexOf('/') == keyword.Length + 1 && reference.Fragment[1..].StartsWith(keyword.AsSpan()))
             {
                 return true;
             }

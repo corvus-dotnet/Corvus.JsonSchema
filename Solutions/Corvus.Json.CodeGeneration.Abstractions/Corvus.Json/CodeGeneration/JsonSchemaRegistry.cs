@@ -256,7 +256,11 @@ internal class JsonSchemaRegistry
                     AddSubschemasForSchemaIfValueIsASchemaLikeKindProperty(keyword.Name, value, currentLocation);
                     break;
                 default:
+#if NET8_0_OR_GREATER
                     throw new InvalidOperationException($"Unrecognized property ref resolvable property kind: {Enum.GetName(keyword.RefResolvablePropertyKind)}");
+#else
+                    throw new InvalidOperationException($"Unrecognized property ref resolvable property kind: {Enum.GetName(typeof(RefResolvablePropertyKind), keyword.RefResolvablePropertyKind)}");
+#endif
             }
         }
 

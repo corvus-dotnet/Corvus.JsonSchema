@@ -23,9 +23,6 @@ public static class JsonPointerUtilities
     /// </summary>
     public const string EmptyPointer = "#";
 
-    private static readonly HashSet<char> ReservedCharacters = ['%', '"'];
-    private static readonly char[] HexDigits = new char[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
-
     /// <summary>
     /// A callback for a segment handler in pointer resolution.
     /// </summary>
@@ -83,7 +80,7 @@ public static class JsonPointerUtilities
     /// <summary>
     /// Resolve a json element from a fragment pointer into a json document.
     /// </summary>
-    /// <param name="root">The root eleement from which to start resolving the pointer.</param>
+    /// <param name="root">The root element from which to start resolving the pointer.</param>
     /// <param name="fragment">The fragment in <c>#/blah/foo/3/bar/baz</c> form.</param>
     /// <param name="element">The element found at the given location.</param>
     /// <returns><c>true</c> if the element was found.</returns>
@@ -111,7 +108,7 @@ public static class JsonPointerUtilities
     /// Resolve a json element from a fragment pointer into a json document.
     /// </summary>
     /// <typeparam name="TState">The type of the state for the segment handler.</typeparam>
-    /// <param name="root">The root eleement from which to start resolving the pointer.</param>
+    /// <param name="root">The root element from which to start resolving the pointer.</param>
     /// <param name="fragment">The fragment in <c>#/blah/foo/3/bar/baz</c> form.</param>
     /// <param name="element">The element found at the given location.</param>
     /// <param name="handleSegment">A callback for each segment found during resolution.</param>
@@ -207,7 +204,7 @@ public static class JsonPointerUtilities
                 }
                 else
                 {
-                    throw new JsonException($"Unexpected end of sequence in escaped %. Expected two digits but could not parse.");
+                    throw new JsonException("Unexpected end of sequence in escaped %. Expected two digits but could not parse.");
                 }
 
                 readIndex += 3;
@@ -306,7 +303,7 @@ public static class JsonPointerUtilities
     /// <summary>
     /// Resolve a json element from a fragment pointer into a json document.
     /// </summary>
-    /// <param name="root">The root eleement from which to start resolving the pointer.</param>
+    /// <param name="root">The root element from which to start resolving the pointer.</param>
     /// <param name="fragment">The fragment in <c>#/blah/foo/3/bar/baz</c> form.</param>
     /// <param name="throwOnFailure">If true, we throw on failure.</param>
     /// <param name="element">The element found at the given location.</param>
@@ -431,7 +428,7 @@ public static class JsonPointerUtilities
     /// Resolve a json element from a fragment pointer into a json document.
     /// </summary>
     /// <typeparam name="TState">The type of the state for the segment handler.</typeparam>
-    /// <param name="root">The root eleement from which to start resolving the pointer.</param>
+    /// <param name="root">The root element from which to start resolving the pointer.</param>
     /// <param name="fragment">The fragment in <c>#/blah/foo/3/bar/baz</c> form.</param>
     /// <param name="throwOnFailure">If true, we throw on failure.</param>
     /// <param name="element">The element found at the given location.</param>
