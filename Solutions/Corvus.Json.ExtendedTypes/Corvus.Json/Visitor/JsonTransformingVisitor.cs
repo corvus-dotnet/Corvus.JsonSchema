@@ -245,12 +245,11 @@ public static partial class JsonTransformingVisitor
 #if !NET8_0_OR_GREATER
     private static void TryFormat(int value, Span<char> span, int digits)
     {
-        int digitValue;
-        while (value != 0 || digits > 0)
+        while (value > 0)
         {
             digits--;
-            digitValue = Math.DivRem(value, 10, out value);
-            span[digits] = (char)(digitValue + '0');
+            span[digits] = (char)((value % 10) + '0');
+            value /= 10;
         }
     }
 #endif
