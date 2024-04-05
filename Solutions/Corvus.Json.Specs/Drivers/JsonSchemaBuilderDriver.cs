@@ -175,11 +175,12 @@ global using global::System.Threading.Tasks;";
     {
         bool isCorvusType = rootType.StartsWith("Corvus.");
 
-        IEnumerable<SyntaxTree> syntaxTrees = ParseSyntaxTrees(generatedTypes);
+        (IEnumerable<MetadataReference> references, IEnumerable<string?> defines) = BuildMetadataReferencesAndDefines();
+
+        IEnumerable<SyntaxTree> syntaxTrees = ParseSyntaxTrees(generatedTypes, defines);
 
         // We are happy with the defaults (debug etc.)
         var options = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary);
-        IEnumerable<MetadataReference> references = BuildMetadataReferences();
         var compilation = CSharpCompilation.Create($"Driver.GeneratedTypes_{Guid.NewGuid()}", syntaxTrees, references, options);
         using MemoryStream outputStream = new();
         EmitResult result = compilation.Emit(outputStream);
@@ -206,11 +207,12 @@ global using global::System.Threading.Tasks;";
     {
         bool isCorvusType = rootType.StartsWith("Corvus.");
 
-        IEnumerable<SyntaxTree> syntaxTrees = ParseSyntaxTrees(generatedTypes);
+        (IEnumerable<MetadataReference> references, IEnumerable<string?> defines) = BuildMetadataReferencesAndDefines();
+
+        IEnumerable<SyntaxTree> syntaxTrees = ParseSyntaxTrees(generatedTypes, defines);
 
         // We are happy with the defaults (debug etc.)
         var options = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary);
-        IEnumerable<MetadataReference> references = BuildMetadataReferences();
         var compilation = CSharpCompilation.Create($"Driver.GeneratedTypes_{Guid.NewGuid()}", syntaxTrees, references, options);
         using MemoryStream outputStream = new();
         EmitResult result = compilation.Emit(outputStream);
@@ -223,7 +225,7 @@ global using global::System.Threading.Tasks;";
         outputStream.Flush();
         outputStream.Position = 0;
 
-        Assembly generatedAssembly = AssemblyLoadContext.Default.LoadFromStream(outputStream);
+        var generatedAssembly = Assembly.Load(outputStream.ToArray());
 
         if (isCorvusType)
         {
@@ -245,22 +247,25 @@ global using global::System.Threading.Tasks;";
         return builder.ToString();
     }
 
-    private static IEnumerable<MetadataReference> BuildMetadataReferences()
+    private static (IEnumerable<MetadataReference> MetadataReferences, IEnumerable<string?> Defines) BuildMetadataReferencesAndDefines()
     {
-        return from l in DependencyContext.Default?.CompileLibraries
+        DependencyContext? ctx = DependencyContext.Default ?? DependencyContext.Load(Assembly.GetExecutingAssembly());
+        if (ctx is null)
+        {
+            throw new InvalidOperationException("Unable to find compilation context.");
+        }
+
+        return (from l in ctx.CompileLibraries
                from r in l.ResolveReferencePaths()
-               select MetadataReference.CreateFromFile(r);
+               select MetadataReference.CreateFromFile(r),
+               ctx.CompilationOptions.Defines.AsEnumerable());
     }
 
-    private static IEnumerable<SyntaxTree> ParseSyntaxTrees(ImmutableDictionary<JsonReference, TypeAndCode> generatedTypes)
+    private static IEnumerable<SyntaxTree> ParseSyntaxTrees(ImmutableDictionary<JsonReference, TypeAndCode> generatedTypes, IEnumerable<string?> defines)
     {
         CSharpParseOptions parseOptions = CSharpParseOptions.Default
-#if NET8_0_OR_GREATER
             .WithLanguageVersion(LanguageVersion.Preview)
-            .WithPreprocessorSymbols("NET8_0_OR_GREATER");
-#else
-            .WithLanguageVersion(LanguageVersion.Preview);
-#endif
+            .WithPreprocessorSymbols(defines.Where(s => s is not null).Cast<string>());
         yield return CSharpSyntaxTree.ParseText(GlobalUsingStatements, options: parseOptions, path: "GlobalUsingStatements.cs");
 
         foreach (KeyValuePair<JsonReference, TypeAndCode> type in generatedTypes)
