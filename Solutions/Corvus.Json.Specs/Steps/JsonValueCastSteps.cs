@@ -455,7 +455,6 @@ public class JsonValueCastSteps
         this.scenarioContext.Set((JsonEmail)this.scenarioContext.Get<string>(JsonValueSteps.SubjectUnderTest), CastResultKey);
     }
 
-#if NET8_0_OR_GREATER
     /* uriTemplate */
 
     /// <summary>
@@ -513,8 +512,6 @@ public class JsonValueCastSteps
     {
         this.scenarioContext.Set((JsonUriTemplate)this.scenarioContext.Get<string>(JsonValueSteps.SubjectUnderTest), CastResultKey);
     }
-
-#endif
 
     /* pointer */
 

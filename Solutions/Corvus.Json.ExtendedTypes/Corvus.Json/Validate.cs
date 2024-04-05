@@ -693,7 +693,6 @@ public static partial class Validate
         return validationContext;
     }
 
-#if NET8_0_OR_GREATER
     /// <summary>
     /// Validates the format int128.
     /// </summary>
@@ -721,6 +720,7 @@ public static partial class Validate
                 return validationContext.WithResult(isValid: false);
             }
         }
+#if NET8_0_OR_GREATER
         else
         {
             try
@@ -744,6 +744,7 @@ public static partial class Validate
                 }
             }
         }
+#endif
 
         if (level == ValidationLevel.Verbose)
         {
@@ -780,6 +781,7 @@ public static partial class Validate
                 return validationContext.WithResult(isValid: false);
             }
         }
+#if NET8_0_OR_GREATER
         else
         {
             try
@@ -803,6 +805,7 @@ public static partial class Validate
                 }
             }
         }
+#endif
 
         if (level == ValidationLevel.Verbose)
         {
@@ -839,6 +842,7 @@ public static partial class Validate
                 return validationContext.WithResult(isValid: false);
             }
         }
+#if NET8_0_OR_GREATER
         else
         {
             try
@@ -862,6 +866,7 @@ public static partial class Validate
                 }
             }
         }
+#endif
 
         if (level == ValidationLevel.Verbose)
         {
@@ -870,7 +875,6 @@ public static partial class Validate
 
         return validationContext;
     }
-#endif
 
     /// <summary>
     /// Validates the format single.

@@ -363,8 +363,10 @@ public readonly struct Period : IEquatable<Period>
             return true;
         }
 #else
-        if (Period.TryParse(value, out result))
+        ParseResult<NodaTime.Period> parseResult = PeriodPattern.NormalizingIso.Parse(value.ToString());
+        if (parseResult.Success)
         {
+            result = parseResult.Value;
             return true;
         }
 #endif
