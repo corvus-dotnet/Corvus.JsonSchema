@@ -5099,7 +5099,7 @@ public readonly struct BinaryJsonNumber :
     {
         if (this.numericKind == Kind.Bool)
         {
-            return this.ulongBacking != 0;
+            return this.longBacking != 0;
         }
 
         throw new FormatException();
