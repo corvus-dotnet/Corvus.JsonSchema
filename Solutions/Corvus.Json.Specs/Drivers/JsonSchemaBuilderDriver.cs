@@ -59,14 +59,14 @@ global using global::System.Threading.Tasks;";
         this.documentResolver.Dispose();
 
 #if NET8_0_OR_GREATER
-        if (this.assemblyLoadContext is not null)
-        {
-            this.assemblyLoadContext.Unload();
-            this.assemblyLoadContext = null;
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-            GC.SuppressFinalize(this);
-        }
+        ////if (this.assemblyLoadContext is not null)
+        ////{
+        ////    this.assemblyLoadContext.Unload();
+        ////    this.assemblyLoadContext = null;
+        ////    GC.Collect();
+        ////    GC.WaitForPendingFinalizers();
+        ////    GC.SuppressFinalize(this);
+        ////}
 #endif
     }
 
