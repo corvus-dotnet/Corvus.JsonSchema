@@ -16,7 +16,7 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft202012 {
     public partial class CodeGeneratorDependentRequired : CodeGeneratorDependentRequiredBase {
         
         
-        #line 103 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
+        #line 104 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
 
     public bool ShouldGenerate
     {
@@ -277,6 +277,7 @@ namespace ");
             this.Write(@"        return builder.ToImmutable();
     }
 
+
 #if NET8_0_OR_GREATER
     private readonly record struct __CorvusDependency(ReadOnlyMemory<byte> Utf8Name, string Name, ImmutableArray<ReadOnlyMemory<byte>> Utf8Dependency, ImmutableArray<string> Dependency);
 #else
@@ -302,7 +303,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 102 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
+            #line 103 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
  EndNesting(); 
             
             #line default
