@@ -75,7 +75,25 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
         return builder.ToImmutable();
     }
 
+#ifdef NET8_0_OR_GREATER
     private readonly record struct __CorvusDependency(ReadOnlyMemory<byte> Utf8Name, string Name, ImmutableArray<ReadOnlyMemory<byte>> Utf8Dependency, ImmutableArray<string> Dependency);
+#else
+    private readonly struct __CorvusDependency
+    {
+        public __CorvusDependency(ReadOnlyMemory<byte> utf8Name, string name, ImmutableArray<ReadOnlyMemory<byte>> utf8Dependency, ImmutableArray<string> dependency)
+        {
+            Utf8Name = utf8Name;
+            Name = name;
+            Utf8Dependency = utf8Dependency;
+            Dependency = dependency;
+        }
+
+        public ReadOnlyMemory<byte> Utf8Name { get; }
+        public string Name { get; }
+        public ImmutableArray<ReadOnlyMemory<byte>> Utf8Dependency { get; }
+        public ImmutableArray<string> Dependency { get; }
+    }
+#endif
 }
 <# EndNesting(); #>
 <#+
