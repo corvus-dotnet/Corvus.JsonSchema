@@ -80,11 +80,26 @@ namespace Corvus.Json
             // The escaped name is always >= than the unescaped, so it is safe to use escaped name for the buffer length.
             byte[]? pooledName = null;
 
+            Span<byte> utf8Unescaped = length <= JsonConstants.StackallocThreshold ?
+                stackalloc byte[length] :
+                (pooledName = ArrayPool<byte>.Shared.Rent(length));
 
-            Unescape(utf8Source, utf8Source.AsSpan(0, length), idx, out int written);
-            Debug.Assert(written > 0);
 
-            return written;
+            try
+            {
+                Unescape(utf8Source.AsSpan(0,length), utf8Unescaped, idx, out int written);
+                utf8Unescaped[..written].CopyTo(utf8Source);
+
+                Debug.Assert(written > 0);
+               return written;
+            }
+            finally
+            {
+                if (pooledName is byte[] p)
+                {
+                    ArrayPool<byte>.Shared.Return(p);
+                }
+            }
         }
 #endif
         internal static void Unescape(ReadOnlySpan<byte> source, Span<byte> destination, int idx, out int written)
@@ -213,7 +228,7 @@ namespace Corvus.Json
 
                 try
                 {
-                    int written = s_utf8Encoding.GetChars(bytes, 0, bytes.Length, chars, 0);
+                    int written = s_utf8Encoding.GetChars(bytes, 0, utf8Unescaped.Length, chars, 0);
                     chars.AsSpan(0, written).CopyTo(destination);
                     return written;
                 }
