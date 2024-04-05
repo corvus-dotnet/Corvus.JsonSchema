@@ -1175,7 +1175,6 @@ public class JsonValueSteps
         }
     }
 
-#if NET8_0_OR_GREATER
     /* uriTemplate */
 
     /// <summary>
@@ -1204,7 +1203,6 @@ public class JsonValueSteps
             this.scenarioContext.Set(JsonAny.Parse(value).As<JsonUriTemplate>().AsDotnetBackedValue(), SubjectUnderTest);
         }
     }
-#endif
 
     /* time */
 

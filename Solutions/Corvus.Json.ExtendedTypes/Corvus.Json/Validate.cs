@@ -1037,7 +1037,6 @@ public static partial class Validate
         return validationContext;
     }
 
-#if NET8_0_OR_GREATER
     /// <summary>
     /// Validates the format uri-template.
     /// </summary>
@@ -1085,7 +1084,11 @@ public static partial class Validate
             {
                 if (context.Level >= ValidationLevel.Detailed)
                 {
+#if NET8_0_OR_GREATER
                     result = context.Context.WithResult(isValid: false, $"Validation 6.1.1 type - should have been 'string' with format 'uri-template', but was '{input}'.");
+#else
+                    result = context.Context.WithResult(isValid: false, $"Validation 6.1.1 type - should have been 'string' with format 'uri-template', but was '{input.ToString()}'.");
+#endif
                 }
                 else if (context.Level >= ValidationLevel.Basic)
                 {
@@ -1107,7 +1110,6 @@ public static partial class Validate
             return true;
         }
     }
-#endif
 
     /// <summary>
     /// Validates the format idn-email.

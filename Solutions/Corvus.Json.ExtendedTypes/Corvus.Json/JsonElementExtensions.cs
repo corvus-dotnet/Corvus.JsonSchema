@@ -126,11 +126,7 @@ public static class JsonElementExtensions
             stackalloc byte[JsonConstants.StackallocThreshold] :
             (sourceArray = ArrayPool<byte>.Shared.Rent(length));
             JsonReaderHelper.Unescape(rawInput, sourceUnescaped, idx, out int written);
-#if NET8_0_OR_GREATER
             sourceUnescaped = sourceUnescaped[..written];
-#else
-            sourceUnescaped = sourceUnescaped.Slice(0, written);
-#endif
             try
             {
                 return state.Parser(sourceUnescaped, state.State, out value);
@@ -161,11 +157,7 @@ public static class JsonElementExtensions
                 (pooledName = ArrayPool<byte>.Shared.Rent(length));
 
             JsonReaderHelper.Unescape(rawInput, utf8Unescaped, idx, out int written);
-#if NET8_0_OR_GREATER
             utf8Unescaped = utf8Unescaped[..written];
-#else
-            utf8Unescaped = utf8Unescaped.Slice(0, written);
-#endif
             try
             {
                 return ProcessDecodedText(utf8Unescaped, state, out result);
@@ -192,11 +184,7 @@ public static class JsonElementExtensions
         stackalloc char[JsonConstants.StackallocThreshold] :
         (sourceTranscodedArray = ArrayPool<char>.Shared.Rent(length));
         int writtenTranscoded = JsonReaderHelper.TranscodeHelper(decodedUtf8String, sourceTranscoded);
-#if NET8_0_OR_GREATER
         sourceTranscoded = sourceTranscoded[..writtenTranscoded];
-#else
-        sourceTranscoded = sourceTranscoded.Slice(0, writtenTranscoded);
-#endif
         bool success = false;
         if (state.Parser(sourceTranscoded, state.State, out TResult? tmp))
         {

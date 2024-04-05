@@ -32,15 +32,12 @@
 		<PackageReference Include="IndexRange" Version="1.0.3" />
 		<Compile Remove="Corvus.Json\Internal\FromNodaTime\PeriodBuilder.cs" />
 		<Compile Remove="Corvus.Json\Internal\FromNodaTime\ValueCursor.cs" />
-		<Compile Remove="Corvus.Json\GeneratedFormatTypes\JsonUriTemplate.Basics.cs" />
-		<Compile Remove="Corvus.Json\GeneratedFormatTypes\JsonUriTemplate.Core.cs" />
 		<Compile Remove="Corvus.Json\GeneratedFormatTypes\JsonInt128.Basics.cs" />
 		<Compile Remove="Corvus.Json\GeneratedFormatTypes\JsonInt128.Core.cs" />
 		<Compile Remove="Corvus.Json\GeneratedFormatTypes\JsonUInt128.Basics.cs" />
 		<Compile Remove="Corvus.Json\GeneratedFormatTypes\JsonUInt128.Core.cs" />
 		<Compile Remove="Corvus.Json\GeneratedFormatTypes\JsonHalf.Basics.cs" />
 		<Compile Remove="Corvus.Json\GeneratedFormatTypes\JsonHalf.Core.cs" />
-		<Compile Remove="Corvus.Json\JsonUriTemplate.cs" />
 		<Compile Remove="Corvus.Json\JsonInt128.cs" />
 		<Compile Remove="Corvus.Json\JsonUInt128.cs" />
 		<Compile Remove="Corvus.Json\JsonHalf.cs" />
