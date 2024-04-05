@@ -3578,6 +3578,7 @@ using System.Buffers.Binary;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text.Json;
@@ -3596,6 +3597,7 @@ public readonly struct BinaryJsonNumber :
     private readonly ulong ulongBacking;
     private readonly decimal decimalBacking;
     private readonly double doubleBacking;
+    private readonly float singleBacking;
 
     private readonly Kind numericKind;
 
@@ -3675,7 +3677,7 @@ public readonly struct BinaryJsonNumber :
     /// <param name="value">The value from which to initialize the number.</param>
     public BinaryJsonNumber(float value)
     {
-        this.doubleBacking = value;
+        this.singleBacking = value;
         this.numericKind = Kind.Single;
     }
 
@@ -4053,7 +4055,7 @@ public readonly struct BinaryJsonNumber :
                 Kind.Int32 => new(((int)left.longBacking) + ((int)right.longBacking)),
                 Kind.Int64 => new(left.longBacking + right.longBacking),
                 Kind.SByte => new(((sbyte)left.longBacking) + ((sbyte)right.longBacking)),
-                Kind.Single => new(((float)left.doubleBacking) + ((float)right.doubleBacking)),
+                Kind.Single => new(left.singleBacking + right.singleBacking),
                 Kind.UInt16 => new(((ushort)left.ulongBacking) + ((ushort)right.ulongBacking)),
                 Kind.UInt32 => new(((uint)left.ulongBacking) + ((uint)right.ulongBacking)),
                 Kind.UInt64 => new(left.ulongBacking + right.ulongBacking),
@@ -4098,7 +4100,7 @@ public readonly struct BinaryJsonNumber :
                 Kind.Int32 => new(((int)left.longBacking) - ((int)right.longBacking)),
                 Kind.Int64 => new(left.longBacking - right.longBacking),
                 Kind.SByte => new(((sbyte)left.longBacking) - ((sbyte)right.longBacking)),
-                Kind.Single => new(((float)left.doubleBacking) - ((float)right.doubleBacking)),
+                Kind.Single => new(left.singleBacking - right.singleBacking),
                 Kind.UInt16 => new(((ushort)left.ulongBacking) - ((ushort)right.ulongBacking)),
                 Kind.UInt32 => new(((uint)left.ulongBacking) - ((uint)right.ulongBacking)),
                 Kind.UInt64 => new(left.ulongBacking - right.ulongBacking),
@@ -4143,7 +4145,7 @@ public readonly struct BinaryJsonNumber :
                 Kind.Int32 => new(((int)left.longBacking) * ((int)right.longBacking)),
                 Kind.Int64 => new(left.longBacking * right.longBacking),
                 Kind.SByte => new(((sbyte)left.longBacking) * ((sbyte)right.longBacking)),
-                Kind.Single => new(((float)left.doubleBacking) * ((float)right.doubleBacking)),
+                Kind.Single => new(left.singleBacking * right.singleBacking),
                 Kind.UInt16 => new(((ushort)left.ulongBacking) * ((ushort)right.ulongBacking)),
                 Kind.UInt32 => new(((uint)left.ulongBacking) * ((uint)right.ulongBacking)),
                 Kind.UInt64 => new(left.ulongBacking * right.ulongBacking),
@@ -4188,7 +4190,7 @@ public readonly struct BinaryJsonNumber :
                 Kind.Int32 => new(((int)left.longBacking) / ((int)right.longBacking)),
                 Kind.Int64 => new(left.longBacking / right.longBacking),
                 Kind.SByte => new(((sbyte)left.longBacking) / ((sbyte)right.longBacking)),
-                Kind.Single => new(((float)left.doubleBacking) / ((float)right.doubleBacking)),
+                Kind.Single => new(left.singleBacking / right.singleBacking),
                 Kind.UInt16 => new(((ushort)left.ulongBacking) / ((ushort)right.ulongBacking)),
                 Kind.UInt32 => new(((uint)left.ulongBacking) / ((uint)right.ulongBacking)),
                 Kind.UInt64 => new(left.ulongBacking / right.ulongBacking),
@@ -4230,7 +4232,7 @@ public readonly struct BinaryJsonNumber :
             Kind.Int32 => new(((int)value.longBacking) - 1),
             Kind.Int64 => new(value.longBacking - 1),
             Kind.SByte => new(((sbyte)value.longBacking) - 1),
-            Kind.Single => new(((float)value.doubleBacking) - 1),
+            Kind.Single => new(value.singleBacking - 1f),
             Kind.UInt16 => new(((ushort)value.ulongBacking) - 1),
             Kind.UInt32 => new(((uint)value.ulongBacking) - 1),
             Kind.UInt64 => new(value.ulongBacking - 1),
@@ -4277,7 +4279,7 @@ public readonly struct BinaryJsonNumber :
             Kind.Int32 => new(((int)value.longBacking) + 1),
             Kind.Int64 => new(value.longBacking + 1),
             Kind.SByte => new(((sbyte)value.longBacking) + 1),
-            Kind.Single => new(((float)value.doubleBacking) + 1),
+            Kind.Single => new(value.singleBacking + 1f),
             Kind.UInt16 => new(((ushort)value.ulongBacking) + 1),
             Kind.UInt32 => new(((uint)value.ulongBacking) + 1),
             Kind.UInt64 => new(value.ulongBacking + 1),
@@ -4302,7 +4304,7 @@ public readonly struct BinaryJsonNumber :
             Kind.Int32 => new(-(int)value.longBacking),
             Kind.Int64 => new(-value.longBacking),
             Kind.SByte => new(-(sbyte)value.longBacking),
-            Kind.Single => new(-(float)value.doubleBacking),
+            Kind.Single => new(-value.singleBacking),
             Kind.UInt16 => new(-(ushort)value.ulongBacking),
             Kind.UInt32 => new(-(uint)value.ulongBacking),
             Kind.UInt64 => value,
@@ -4327,7 +4329,7 @@ public readonly struct BinaryJsonNumber :
             Kind.Int32 => new(+(int)value.longBacking),
             Kind.Int64 => new(+value.longBacking),
             Kind.SByte => new(+(sbyte)value.longBacking),
-            Kind.Single => new(+(float)value.doubleBacking),
+            Kind.Single => new(+value.singleBacking),
             Kind.UInt16 => new(+(ushort)value.ulongBacking),
             Kind.UInt32 => new(+(uint)value.ulongBacking),
             Kind.UInt64 => new(+value.ulongBacking),
@@ -4352,7 +4354,7 @@ public readonly struct BinaryJsonNumber :
             Kind.Int32 => new(Math.Abs((int)value.longBacking)),
             Kind.Int64 => new(Math.Abs(value.longBacking)),
             Kind.SByte => new(Math.Abs((sbyte)value.longBacking)),
-            Kind.Single => new(Math.Abs((float)value.doubleBacking)),
+            Kind.Single => new(Math.Abs(value.singleBacking)),
             Kind.UInt16 => value,
             Kind.UInt32 => value,
             Kind.UInt64 => value,
@@ -4370,7 +4372,7 @@ public readonly struct BinaryJsonNumber :
         return value.numericKind switch
         {
             Kind.Double => double.IsInfinity(value.doubleBacking),
-            Kind.Single => float.IsInfinity((float)value.doubleBacking),
+            Kind.Single => float.IsInfinity(value.singleBacking),
             _ => false,
         };
     }
@@ -4385,7 +4387,7 @@ public readonly struct BinaryJsonNumber :
         return value.numericKind switch
         {
             Kind.Double => double.IsNaN(value.doubleBacking),
-            Kind.Single => float.IsNaN((float)value.doubleBacking),
+            Kind.Single => float.IsNaN(value.singleBacking),
             _ => false,
         };
     }
@@ -4400,7 +4402,7 @@ public readonly struct BinaryJsonNumber :
         return value.numericKind switch
         {
             Kind.Double => double.IsNegativeInfinity(value.doubleBacking),
-            Kind.Single => float.IsNegativeInfinity((float)value.doubleBacking),
+            Kind.Single => float.IsNegativeInfinity(value.singleBacking),
             _ => false,
         };
     }
@@ -4415,7 +4417,7 @@ public readonly struct BinaryJsonNumber :
         return value.numericKind switch
         {
             Kind.Double => double.IsNegativeInfinity(value.doubleBacking),
-            Kind.Single => float.IsNegativeInfinity((float)value.doubleBacking),
+            Kind.Single => float.IsNegativeInfinity(value.singleBacking),
             _ => false,
         };
     }
@@ -4435,7 +4437,7 @@ public readonly struct BinaryJsonNumber :
             Kind.Int32 => ((int)value.longBacking).Equals(0),
             Kind.Int64 => value.longBacking.Equals(0),
             Kind.SByte => ((sbyte)value.longBacking).Equals(0),
-            Kind.Single => ((float)value.doubleBacking).Equals(0),
+            Kind.Single => value.singleBacking.Equals(0f),
             _ => true,
         };
     }
@@ -4618,7 +4620,7 @@ public readonly struct BinaryJsonNumber :
                 Kind.Int32 => left.longBacking.Equals(right.longBacking),
                 Kind.Int64 => left.longBacking.Equals(right.longBacking),
                 Kind.SByte => left.longBacking.Equals(right.longBacking),
-                Kind.Single => left.doubleBacking.Equals(right.doubleBacking),
+                Kind.Single => left.singleBacking.Equals(right.singleBacking),
                 Kind.UInt16 => left.ulongBacking.Equals(right.ulongBacking),
                 Kind.UInt32 => left.ulongBacking.Equals(right.ulongBacking),
                 Kind.UInt64 => left.ulongBacking.Equals(right.ulongBacking),
@@ -4629,13 +4631,19 @@ public readonly struct BinaryJsonNumber :
         return right.numericKind switch
         {
             Kind.Byte => left.GetDouble().Equals(right.GetDouble()),
-            Kind.Decimal => ((decimal)left.GetDouble()).Equals(right.decimalBacking),
+            Kind.Decimal =>
+                left.numericKind == Kind.Single
+                ? right.decimalBacking.Equals((decimal)left.singleBacking)
+                : ((decimal)left.GetDouble()).Equals(right.decimalBacking),
             Kind.Double => left.GetDouble().Equals(right.doubleBacking),
             Kind.Int16 => left.GetDouble().Equals(right.GetDouble()),
             Kind.Int32 => left.GetDouble().Equals(right.GetDouble()),
             Kind.Int64 => left.GetDouble().Equals(right.GetDouble()),
             Kind.SByte => left.GetDouble().Equals(right.GetDouble()),
-            Kind.Single => left.GetDouble().Equals(right.GetDouble()),
+            Kind.Single =>
+                left.numericKind == Kind.Decimal
+                    ? left.decimalBacking.Equals((decimal)right.singleBacking)
+                    : left.GetDouble().Equals(right.GetDouble()),
             Kind.UInt16 => left.GetDouble().Equals(right.GetDouble()),
             Kind.UInt32 => left.GetDouble().Equals(right.GetDouble()),
             Kind.UInt64 => left.GetDouble().Equals(right.GetDouble()),
@@ -4680,19 +4688,19 @@ public readonly struct BinaryJsonNumber :
         {
             if (jsonNumber.TryGetDecimal(out decimal jsonNumberDecimal))
             {
-                return Equals(binaryNumber, jsonNumberDecimal);
+                return Equals(binaryNumber.decimalBacking, jsonNumberDecimal);
             }
 
             if (jsonNumber.TryGetDouble(out double jsonNumberDouble))
             {
-                return Equals(binaryNumber, jsonNumberDouble);
+                return Equals((double)binaryNumber.decimalBacking, jsonNumberDouble);
             }
         }
         else
         {
             if (jsonNumber.TryGetDouble(out double jsonNumberDouble))
             {
-                return Equals(binaryNumber, jsonNumberDouble);
+                return Equals(binaryNumber.GetDouble(), jsonNumberDouble);
             }
         }
 
@@ -4721,7 +4729,7 @@ public readonly struct BinaryJsonNumber :
                 Kind.Int32 => left.longBacking.CompareTo(right.longBacking),
                 Kind.Int64 => left.longBacking.CompareTo(right.longBacking),
                 Kind.SByte => left.longBacking.CompareTo(right.longBacking),
-                Kind.Single => left.doubleBacking.CompareTo(right.doubleBacking),
+                Kind.Single => left.singleBacking.CompareTo(right.singleBacking),
                 Kind.UInt16 => left.ulongBacking.CompareTo(right.ulongBacking),
                 Kind.UInt32 => left.ulongBacking.CompareTo(right.ulongBacking),
                 Kind.UInt64 => left.ulongBacking.CompareTo(right.ulongBacking),
@@ -4729,7 +4737,7 @@ public readonly struct BinaryJsonNumber :
             };
         }
 
-        return left.numericKind switch
+        return right.numericKind switch
         {
             Kind.Byte => left.GetDouble().CompareTo(right.GetDouble()),
             Kind.Decimal => ((decimal)left.GetDouble()).CompareTo(right.decimalBacking),
@@ -4944,17 +4952,17 @@ public readonly struct BinaryJsonNumber :
     {
         return this.numericKind switch
         {
-            Kind.Byte => checked((TOther)(object)this.ulongBacking),
-            Kind.Decimal => checked((TOther)(object)this.decimalBacking),
-            Kind.Double => checked((TOther)(object)this.doubleBacking),
-            Kind.Int16 => checked((TOther)(object)this.longBacking),
-            Kind.Int32 => checked((TOther)(object)this.longBacking),
-            Kind.Int64 => checked((TOther)(object)this.longBacking),
-            Kind.SByte => checked((TOther)(object)this.longBacking),
-            Kind.Single => checked((TOther)(object)this.doubleBacking),
-            Kind.UInt16 => checked((TOther)(object)this.ulongBacking),
-            Kind.UInt32 => checked((TOther)(object)this.ulongBacking),
-            Kind.UInt64 => checked((TOther)(object)this.ulongBacking),
+            Kind.Byte => CastTo<TOther>.From(this.ulongBacking),
+            Kind.Decimal => CastTo<TOther>.From(this.decimalBacking),
+            Kind.Double => CastTo<TOther>.From(this.doubleBacking),
+            Kind.Int16 => CastTo<TOther>.From(this.longBacking),
+            Kind.Int32 => CastTo<TOther>.From(this.longBacking),
+            Kind.Int64 => CastTo<TOther>.From(this.longBacking),
+            Kind.SByte => CastTo<TOther>.From(this.longBacking),
+            Kind.Single => CastTo<TOther>.From(this.singleBacking),
+            Kind.UInt16 => CastTo<TOther>.From(this.ulongBacking),
+            Kind.UInt32 => CastTo<TOther>.From(this.ulongBacking),
+            Kind.UInt64 => CastTo<TOther>.From(this.ulongBacking),
             _ => throw new NotSupportedException(),
         };
     }
@@ -4971,7 +4979,7 @@ public readonly struct BinaryJsonNumber :
             Kind.Int32 => this.longBacking.ToString(),
             Kind.Int64 => this.longBacking.ToString(),
             Kind.SByte => this.longBacking.ToString(),
-            Kind.Single => this.doubleBacking.ToString(),
+            Kind.Single => this.singleBacking.ToString(),
             Kind.UInt16 => this.ulongBacking.ToString(),
             Kind.UInt32 => this.ulongBacking.ToString(),
             Kind.UInt64 => this.ulongBacking.ToString(),
@@ -4998,7 +5006,7 @@ public readonly struct BinaryJsonNumber :
                 Kind.Int32 => Math.Abs(this.longBacking) % Math.Abs(multipleOf.longBacking) == 0,
                 Kind.Int64 => Math.Abs(this.longBacking) % Math.Abs(multipleOf.longBacking) == 0,
                 Kind.SByte => Math.Abs(this.longBacking) % Math.Abs(multipleOf.longBacking) == 0,
-                Kind.Single => Math.Abs(Math.IEEERemainder(this.doubleBacking, multipleOf.doubleBacking)) <= 1.0E-5,
+                Kind.Single => Math.Abs(Math.IEEERemainder(this.singleBacking, multipleOf.singleBacking)) <= 1.0E-5,
                 Kind.UInt16 => this.ulongBacking % multipleOf.ulongBacking == 0,
                 Kind.UInt32 => this.ulongBacking % multipleOf.ulongBacking == 0,
                 Kind.UInt64 => this.ulongBacking % multipleOf.ulongBacking == 0,
@@ -5135,7 +5143,7 @@ public readonly struct BinaryJsonNumber :
                 writer.WriteNumberValue(this.longBacking);
                 break;
             case Kind.Single:
-                writer.WriteNumberValue(this.doubleBacking);
+                writer.WriteNumberValue(this.singleBacking);
                 break;
             case Kind.UInt16:
                 writer.WriteNumberValue(this.ulongBacking);
@@ -5164,12 +5172,49 @@ public readonly struct BinaryJsonNumber :
             Kind.Int32 => this.longBacking,
             Kind.Int64 => this.longBacking,
             Kind.SByte => this.longBacking,
-            Kind.Single => checked((float)this.doubleBacking),
+            Kind.Single => this.singleBacking,
             Kind.UInt16 => this.ulongBacking,
             Kind.UInt32 => this.ulongBacking,
             Kind.UInt64 => this.ulongBacking,
             _ => throw new NotSupportedException(),
         };
+    }
+
+    /// <summary>
+    /// Class to cast to a specified type.
+    /// </summary>
+    /// <typeparam name="T">Target type.</typeparam>
+    /// <remarks>
+    /// The original code was derived from a StackOverflow answer here https://stackoverflow.com/a/23391746.
+    /// </remarks>
+    public static class CastTo<T>
+    {
+        /// <summary>
+        /// Casts from the source type to the target type.
+        /// </summary>
+        /// <param name="s">An instance of the source type to be case to the target type.</param>
+        /// <typeparam name="TSource">Source type to cast from. Usually a generic type.</typeparam>
+        /// <returns>An instance of the target type, cast from the source type.</returns>
+        /// <remarks>
+        /// This does not cause boxing for value types. It is especially useful in generic methods.
+        /// </remarks>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1000:Do not declare static members on generic types", Justification = "The intended usage is meant to be self describing, e.g. CastTo<int>.From(x) means 'cast to int from x', so the usual reasoning behind CA1000 does not apply here")]
+        public static T From<TSource>(TSource s)
+        {
+            return Cache<TSource>.Caster(s);
+        }
+
+        private static class Cache<TSsource>
+        {
+            public static readonly Func<TSsource, T> Caster = Get();
+
+            private static Func<TSsource, T> Get()
+            {
+                ParameterExpression p = Expression.Parameter(typeof(TSsource));
+                UnaryExpression c = Expression.ConvertChecked(p, typeof(T));
+                return Expression.Lambda<Func<TSsource, T>>(c, p).Compile();
+            }
+        }
     }
 }
 #endif
