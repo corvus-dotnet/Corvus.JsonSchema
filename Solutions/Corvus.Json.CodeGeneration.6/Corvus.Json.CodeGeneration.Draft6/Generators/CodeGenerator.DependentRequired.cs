@@ -16,7 +16,7 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft6 {
     public partial class CodeGeneratorDependentRequired : CodeGeneratorDependentRequiredBase {
         
         
-        #line 85 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
+        #line 103 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
 
     public bool ShouldGenerate
     {
@@ -274,14 +274,35 @@ namespace ");
             #line hidden
             
             #line 79 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
-            this.Write("        return builder.ToImmutable();\r\n    }\r\n\r\n    private readonly record struc" +
-                    "t __CorvusDependency(ReadOnlyMemory<byte> Utf8Name, string Name, ImmutableArray<" +
-                    "ReadOnlyMemory<byte>> Utf8Dependency, ImmutableArray<string> Dependency);\r\n}\r\n");
+            this.Write(@"        return builder.ToImmutable();
+    }
+
+#if NET8_0_OR_GREATER
+    private readonly record struct __CorvusDependency(ReadOnlyMemory<byte> Utf8Name, string Name, ImmutableArray<ReadOnlyMemory<byte>> Utf8Dependency, ImmutableArray<string> Dependency);
+#else
+    private readonly struct __CorvusDependency
+    {
+        public __CorvusDependency(ReadOnlyMemory<byte> utf8Name, string name, ImmutableArray<ReadOnlyMemory<byte>> utf8Dependency, ImmutableArray<string> dependency)
+        {
+            Utf8Name = utf8Name;
+            Name = name;
+            Utf8Dependency = utf8Dependency;
+            Dependency = dependency;
+        }
+
+        public ReadOnlyMemory<byte> Utf8Name { get; }
+        public string Name { get; }
+        public ImmutableArray<ReadOnlyMemory<byte>> Utf8Dependency { get; }
+        public ImmutableArray<string> Dependency { get; }
+    }
+#endif
+}
+");
             
             #line default
             #line hidden
             
-            #line 84 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
+            #line 102 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.DependentRequired.tt"
  EndNesting(); 
             
             #line default
