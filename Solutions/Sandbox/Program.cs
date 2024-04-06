@@ -20,64 +20,15 @@ using var parsedPerson = ParsedValue<Person>.Parse(
 
 
 Person person = parsedPerson.Instance;
-PersonName personName = person.Name;
 
-
-using var schema = ParsedValue<Schema>.Parse(File.ReadAllText("D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\Solutions\\Sandbox\\PersonModel\\person-schema.json"));
-
-if (schema.Instance.Type.TryGetAsSimpleTypes(out Validation.SimpleTypes simpleTypes))
+for(int i = 0; i < 100; ++i)
 {
-    MatchSimpleType(simpleTypes);
-}
-else if (schema.Instance.Type.TryGetAsSimpleTypesArray(out Validation.TypeEntity.SimpleTypesArray simpleTypesArray))
-{
-    foreach (Validation.SimpleTypes simpleTypesFromArray in simpleTypesArray.EnumerateArray())
-    {
-        MatchSimpleType(simpleTypesFromArray);
-    }
+    bool _ = person.IsValid();
 }
 
-static void MatchSimpleType(Validation.SimpleTypes simpleTypes)
+Thread.Sleep(2000);
+
+for (int i = 0; i < 10000; ++i)
 {
-    simpleTypes.Match(
-        matchArray: static () =>
-        {
-            Console.WriteLine($"It's an array!");
-            return JsonValueKind.Array;
-        },
-        matchObject: static () =>
-        {
-            Console.WriteLine($"It's an object!");
-            return JsonValueKind.Object;
-        },
-        matchString: static () =>
-        {
-            Console.WriteLine($"It's a string!");
-            return JsonValueKind.String;
-        },
-        matchNumber: static () =>
-        {
-            Console.WriteLine($"It's a number!");
-            return JsonValueKind.Number;
-        },
-        matchBoolean: static () =>
-        {
-            Console.WriteLine($"It's a boolean!");
-            return JsonValueKind.True;
-        },
-        matchInteger: static () =>
-        {
-            Console.WriteLine($"It's an integer!");
-            return JsonValueKind.Number;
-        },
-        matchNull: static () =>
-        {
-            Console.WriteLine($"It's a null!");
-            return JsonValueKind.Null;
-        },
-        defaultMatch: static () =>
-        {
-            Console.WriteLine($"Doesn't seem to be anything");
-            return JsonValueKind.Null;
-        });
+    bool _ = person.IsValid();
 }

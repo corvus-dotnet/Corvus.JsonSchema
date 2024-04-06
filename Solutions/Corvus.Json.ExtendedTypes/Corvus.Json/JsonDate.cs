@@ -99,16 +99,12 @@ public readonly partial struct JsonDate
     {
         if ((this.backing & Backing.String) != 0)
         {
-            return DateParser(this.stringBacking, default, out result);
+            return DateParser(this.stringBacking.AsSpan(), default, out result);
         }
 
         if (this.jsonElementBacking.ValueKind == JsonValueKind.String)
         {
-#if NET8_0_OR_GREATER
             return this.jsonElementBacking.TryGetValue(DateParser, default(object?), out result);
-#else
-            return DateParser(this.jsonElementBacking.GetString(), default, out result);
-#endif
         }
 
         result = default;
@@ -120,11 +116,7 @@ public readonly partial struct JsonDate
         return LocalDatePattern.Iso.Format(value);
     }
 
-#if NET8_0_OR_GREATER
     private static bool DateParser(ReadOnlySpan<char> text, in object? state, out LocalDate value)
-#else
-    private static bool DateParser(string text, in object? state, out LocalDate value)
-#endif
     {
         if (text.Length != 10 ||
             text[4] != '-' ||
