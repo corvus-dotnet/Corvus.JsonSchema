@@ -245,7 +245,7 @@ public static partial class JsonTransformingVisitor
 #if !NET8_0_OR_GREATER
     private static void TryFormat(int value, Span<char> span, int digits)
     {
-        while (value > 0)
+        while (digits > 0)
         {
             digits--;
             span[digits] = (char)((value % 10) + '0');
