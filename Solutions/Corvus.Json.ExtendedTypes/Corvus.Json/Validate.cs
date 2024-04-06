@@ -4,6 +4,7 @@
 
 using System.Globalization;
 using System.Net;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -2890,11 +2891,7 @@ public static partial class Validate
 
         if (maxLength is not null || minLength is not null || pattern is not null)
         {
-#if NET8_0_OR_GREATER
             value.AsString.TryGetValue(StringValidator, new StringValidationContextWrapper(result, level, minLength, maxLength, pattern), out result);
-#else
-            StringValidator((string)value.AsString, new StringValidationContextWrapper(result, level, minLength, maxLength, pattern), out result);
-#endif
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
@@ -2903,34 +2900,26 @@ public static partial class Validate
 
         return result;
 
-#if NET8_0_OR_GREATER
         static bool StringValidator(ReadOnlySpan<char> input, in StringValidationContextWrapper context, out ValidationContext result)
         {
-            // Emitted if minLength or maxLength
-            int length = 0;
-
-            SpanRuneEnumerator enumerator = input.EnumerateRunes();
-            while (enumerator.MoveNext())
-            {
-                length++;
-            }
-
+            int? length = null;
             result = context.Context;
 
             if (context.MaxLength is int maxl)
             {
+                length ??= CountRunes(input);
                 if (length <= maxl)
                 {
                     if (context.Level == ValidationLevel.Verbose)
                     {
-                        result = result.WithResult(isValid: true, $"Validation 6.3.1 maxLength - {input} of {length} was less than or equal to {maxl}.");
+                        result = result.WithResult(isValid: true, $"Validation 6.3.1 maxLength - {input.ToString()} of {length} was less than or equal to {maxl}.");
                     }
                 }
                 else
                 {
                     if (context.Level >= ValidationLevel.Detailed)
                     {
-                        result = result.WithResult(isValid: false, $"Validation 6.3.1 maxLength - {input} of {length} was greater than {maxl}.");
+                        result = result.WithResult(isValid: false, $"Validation 6.3.1 maxLength - {input.ToString()} of {length} was greater than {maxl}.");
                     }
                     else if (context.Level >= ValidationLevel.Basic)
                     {
@@ -2946,18 +2935,19 @@ public static partial class Validate
 
             if (context.MinLength is int minl)
             {
+                length ??= CountRunes(input);
                 if (length >= minl)
                 {
                     if (context.Level == ValidationLevel.Verbose)
                     {
-                        result = result.WithResult(isValid: true, $"Validation 6.3.2 minLength - {input} of {length} was greater than or equal to {minl}.");
+                        result = result.WithResult(isValid: true, $"Validation 6.3.2 minLength - {input.ToString()} of {length} was greater than or equal to {minl}.");
                     }
                 }
                 else
                 {
                     if (context.Level >= ValidationLevel.Detailed)
                     {
-                        result = result.WithResult(isValid: false, $"Validation 6.3.2 minLength - {input} of {length} was less than {minl}.");
+                        result = result.WithResult(isValid: false, $"Validation 6.3.2 minLength - {input.ToString()} of {length} was less than {minl}.");
                     }
                     else if (context.Level >= ValidationLevel.Basic)
                     {
@@ -2977,14 +2967,14 @@ public static partial class Validate
                 {
                     if (context.Level == ValidationLevel.Verbose)
                     {
-                        result = result.WithResult(isValid: true, $"Validation 6.3.3 pattern - {input} matched {prex}.");
+                        result = result.WithResult(isValid: true, $"Validation 6.3.3 pattern - {input.ToString()} matched {prex}.");
                     }
                 }
                 else
                 {
                     if (context.Level >= ValidationLevel.Detailed)
                     {
-                        result = result.WithResult(isValid: false, $"Validation 6.3.3 pattern - {input} did not match {prex}.");
+                        result = result.WithResult(isValid: false, $"Validation 6.3.3 pattern - {input.ToString()} did not match {prex}.");
                     }
                     else if (context.Level >= ValidationLevel.Basic)
                     {
@@ -2998,98 +2988,25 @@ public static partial class Validate
             }
 
             return true;
-        }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            static int CountRunes(ReadOnlySpan<char> str)
+            {
+#if NET8_0_OR_GREATER
+                var length = 0;
+                SpanRuneEnumerator enumerator = str.EnumerateRunes();
+                while (enumerator.MoveNext())
+                {
+                    length++;
+                }
+
+                return length;
 #else
-        static bool StringValidator(string input, in StringValidationContextWrapper context, out ValidationContext result)
-        {
-            int length = new StringInfo(input).LengthInTextElements;
-
-            result = context.Context;
-
-            if (context.MaxLength is int maxl)
-            {
-                if (length <= maxl)
-                {
-                    if (context.Level == ValidationLevel.Verbose)
-                    {
-                        result = result.WithResult(isValid: true, $"Validation 6.3.1 maxLength - {input} of {length} was less than or equal to {maxl}.");
-                    }
-                }
-                else
-                {
-                    if (context.Level >= ValidationLevel.Detailed)
-                    {
-                        result = result.WithResult(isValid: false, $"Validation 6.3.1 maxLength - {input} of {length} was greater than {maxl}.");
-                    }
-                    else if (context.Level >= ValidationLevel.Basic)
-                    {
-                        result = result.WithResult(isValid: false, "Validation 6.3.1 maxLength - was greater than the required length.");
-                    }
-                    else
-                    {
-                        result = context.Context.WithResult(isValid: false);
-                        return true;
-                    }
-                }
-            }
-
-            if (context.MinLength is int minl)
-            {
-                if (length >= minl)
-                {
-                    if (context.Level == ValidationLevel.Verbose)
-                    {
-                        result = result.WithResult(isValid: true, $"Validation 6.3.2 minLength - {input} of {length} was greater than or equal to {minl}.");
-                    }
-                }
-                else
-                {
-                    if (context.Level >= ValidationLevel.Detailed)
-                    {
-                        result = result.WithResult(isValid: false, $"Validation 6.3.2 minLength - {input} of {length} was less than {minl}.");
-                    }
-                    else if (context.Level >= ValidationLevel.Basic)
-                    {
-                        result = result.WithResult(isValid: false, "Validation 6.3.2 minLength - was less than the required length.");
-                    }
-                    else
-                    {
-                        result = context.Context.WithResult(isValid: false);
-                        return true;
-                    }
-                }
-            }
-
-            if (context.Pattern is Regex prex)
-            {
-                if (prex.IsMatch(input))
-                {
-                    if (context.Level == ValidationLevel.Verbose)
-                    {
-                        result = result.WithResult(isValid: true, $"Validation 6.3.3 pattern - {input} matched {prex}.");
-                    }
-                }
-                else
-                {
-                    if (context.Level >= ValidationLevel.Detailed)
-                    {
-                        result = result.WithResult(isValid: false, $"Validation 6.3.3 pattern - {input} did not match {prex}.");
-                    }
-                    else if (context.Level >= ValidationLevel.Basic)
-                    {
-                        result = result.WithResult(isValid: false, "Validation 6.3.13 pattern - did not match the required pattern.");
-                    }
-                    else
-                    {
-                        result = result.WithResult(isValid: false);
-                    }
-                }
-            }
-
-            return true;
-        }
-
+                StringInfo info = new(str.ToString());
+                return info.LengthInTextElements;
 #endif
+            }
+        }
     }
 
     /// <summary>
