@@ -4628,6 +4628,13 @@ public readonly struct BinaryJsonNumber :
             };
         }
 
+        if (left.numericKind == Kind.Decimal)
+        {
+            return right.numericKind == Kind.Single
+            ? left.decimalBacking.Equals((decimal)right.singleBacking)
+            : ((decimal)right.GetDouble()).Equals(left.decimalBacking);
+        }
+
         return right.numericKind switch
         {
             Kind.Byte => left.GetDouble().Equals(right.GetDouble()),
@@ -4693,7 +4700,7 @@ public readonly struct BinaryJsonNumber :
 
             if (jsonNumber.TryGetDouble(out double jsonNumberDouble))
             {
-                return Equals((double)binaryNumber.decimalBacking, jsonNumberDouble);
+                return Equals(binaryNumber.decimalBacking, (decimal)jsonNumberDouble);
             }
         }
         else
