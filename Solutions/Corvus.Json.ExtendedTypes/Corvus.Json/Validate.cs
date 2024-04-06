@@ -592,7 +592,7 @@ public static partial class Validate
                 }
             }
 #else
-            if (value != Math.Floor(value))
+            if (value != Math.Floor(value) || (instance.HasJsonElementBacking && !instance.AsJsonElement.TryGetInt64(out long _)))
             {
                 if (level >= ValidationLevel.Detailed)
                 {
@@ -667,7 +667,7 @@ public static partial class Validate
                 }
             }
 #else
-            if (value != Math.Floor(value))
+            if (value != Math.Floor(value) || value < 0 || (instance.HasJsonElementBacking && !instance.AsJsonElement.TryGetUInt64(out ulong _)))
             {
                 if (level >= ValidationLevel.Detailed)
                 {
@@ -687,7 +687,7 @@ public static partial class Validate
 
         if (level == ValidationLevel.Verbose)
         {
-            return validationContext.WithResult(isValid: true, "Validation 6.1.1 type - was uint16 'number'.");
+            return validationContext.WithResult(isValid: true, "Validation 6.1.1 type - was uint64 'number'.");
         }
 
         return validationContext;
@@ -803,6 +803,23 @@ public static partial class Validate
                 {
                     return validationContext.WithResult(isValid: false);
                 }
+            }
+        }
+#else
+        double value = (double)instance.AsNumber;
+        if (value != Math.Floor(value) || value < 0)
+        {
+            if (level >= ValidationLevel.Detailed)
+            {
+                return validationContext.WithResult(isValid: false, $"Validation 6.1.1 type - should have been uint128 'number' but was '{valueKind}' with value {value} and fractional part {value - Math.Floor(value)}.");
+            }
+            else if (level >= ValidationLevel.Basic)
+            {
+                return validationContext.WithResult(isValid: false, "Validation 6.1.1 type - should have been uint128 'number'.");
+            }
+            else
+            {
+                return validationContext.WithResult(isValid: false);
             }
         }
 #endif
