@@ -274,6 +274,7 @@ public static class JsonValueNetStandard20Extensions
             ILGenerator il = dynamic.GetILGenerator();
 
             // Emit code to call the fromAny static method on the targetType using the value provided.
+            il.DeclareLocal(returnType);
             il.Emit(OpCodes.Ldarg_0);
             il.Emit(OpCodes.Call, fromAny);
             il.Emit(OpCodes.Ret);
@@ -304,6 +305,7 @@ public static class JsonValueNetStandard20Extensions
 
             // Emit code to call the fromAny static method on the targetType using the value returned by the
             // asAny method on the sourceType.
+            il.DeclareLocal(returnType);
             il.Emit(OpCodes.Ldarg_0);
             il.Emit(OpCodes.Call, asAny.GetGetMethod());
             il.Emit(OpCodes.Call, fromAny);
