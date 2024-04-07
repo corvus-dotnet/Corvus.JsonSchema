@@ -4,15 +4,11 @@
 
 #if !NET8_0_OR_GREATER
 
-using System;
-using System.Buffers;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Text.Json;
 
 namespace Corvus.Json;
@@ -39,111 +35,7 @@ public static class JsonValueNetStandard20Extensions
         where TSource : struct, IJsonValue
         where TTarget : struct, IJsonValue
     {
-        if (source.HasJsonElementBacking)
-        {
-            return FromJsonElement<TTarget>(source.AsJsonElement);
-        }
-
-        return source.ValueKind switch
-        {
-            JsonValueKind.Array => FromArray<TTarget>(source.AsArray()),
-            JsonValueKind.Object => FromObject<TTarget>(source.AsObject()),
-            JsonValueKind.Number => FromNumber<TTarget>(source.AsNumber()),
-            JsonValueKind.String => FromString<TTarget>(source.AsString()),
-            JsonValueKind.False or JsonValueKind.True => FromBoolean<TTarget>(source.AsBoolean()),
-            _ => default,
-        };
-    }
-
-    /// <summary>
-    /// Convert to a JsonNumber.
-    /// </summary>
-    /// <typeparam name="T">The type from which to convert.</typeparam>
-    /// <param name="value">The value to convert.</param>
-    /// <returns>A <see cref="JsonNumber"/>.</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static JsonNumber AsNumber<T>(this T value)
-        where T : struct, IJsonValue
-    {
-        return value.AsAny.AsNumber;
-    }
-
-    /// <summary>
-    /// Convert to a JsonObject.
-    /// </summary>
-    /// <typeparam name="T">The type from which to convert.</typeparam>
-    /// <param name="value">The value to convert.</param>
-    /// <returns>A <see cref="JsonObject"/>.</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static JsonObject AsObject<T>(this T value)
-        where T : struct, IJsonValue
-    {
-        return value.AsAny.AsObject;
-    }
-
-    /// <summary>
-    /// Convert to a JsonArray.
-    /// </summary>
-    /// <typeparam name="T">The type from which to convert.</typeparam>
-    /// <param name="value">The value to convert.</param>
-    /// <returns>A <see cref="JsonArray"/>.</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static JsonArray AsArray<T>(this T value)
-        where T : struct, IJsonValue
-    {
-        return value.AsAny.AsArray;
-    }
-
-    /// <summary>
-    /// Convert to a JsonString.
-    /// </summary>
-    /// <typeparam name="T">The type from which to convert.</typeparam>
-    /// <param name="value">The value to convert.</param>
-    /// <returns>A <see cref="JsonString"/>.</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static JsonString AsString<T>(this T value)
-        where T : struct, IJsonValue
-    {
-        return value.AsAny.AsString;
-    }
-
-    /// <summary>
-    /// Convert to a JsonBoolean.
-    /// </summary>
-    /// <typeparam name="T">The type from which to convert.</typeparam>
-    /// <param name="value">The value to convert.</param>
-    /// <returns>A <see cref="JsonBoolean"/>.</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static JsonBoolean AsBoolean<T>(this T value)
-        where T : struct, IJsonValue
-    {
-        return value.AsAny.AsBoolean;
-    }
-
-    /// <summary>
-    /// Convert to a JsonNull.
-    /// </summary>
-    /// <typeparam name="T">The type from which to convert.</typeparam>
-    /// <param name="value">The value to convert.</param>
-    /// <returns>A <see cref="JsonNull"/>.</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static JsonNull AsNull<T>(this T value)
-        where T : struct, IJsonValue
-    {
-        return default;
-    }
-
-    /// <summary>
-    /// Create an instance of the given type from a <see cref="JsonElement"/>.
-    /// </summary>
-    /// <typeparam name="TTarget">The target type.</typeparam>
-    /// <param name="jsonElement">The <see cref="JsonElement"/> from which to create the instance.</param>
-    /// <returns>An instance of the given type backed by the JsonElement.</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static TTarget FromJsonElement<TTarget>(in JsonElement jsonElement)
-        where TTarget : struct, IJsonValue
-    {
-        return From<JsonElement, TTarget>(jsonElement);
+        return From<TSource, TTarget>(source);
     }
 
     /// <summary>
@@ -159,39 +51,17 @@ public static class JsonValueNetStandard20Extensions
         return From<ImmutableList<JsonAny>, TTarget>(list);
     }
 
+    /// <summary>
+    /// Create an instance of the given type from a <see cref="JsonElement"/>.
+    /// </summary>
+    /// <typeparam name="TTarget">The target type.</typeparam>
+    /// <param name="jsonElement">The <see cref="JsonElement"/> from which to create the instance.</param>
+    /// <returns>An instance of the given type backed by the JsonElement.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static TTarget FromBoolean<TTarget>(in JsonBoolean jsonBoolean)
-        where TTarget : struct, IJsonValue
+    public static TTarget FromJsonElement<TTarget>(in JsonElement jsonElement)
+        where TTarget : struct, IJsonValue<TTarget>
     {
-        return From<JsonBoolean, TTarget>(jsonBoolean);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static TTarget FromString<TTarget>(in JsonString jsonString)
-        where TTarget : struct, IJsonValue
-    {
-        return From<JsonString, TTarget>(jsonString);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static TTarget FromNumber<TTarget>(in JsonNumber jsonNumber)
-        where TTarget : struct, IJsonValue
-    {
-        return From<JsonNumber, TTarget>(jsonNumber);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static TTarget FromObject<TTarget>(in JsonObject jsonObject)
-        where TTarget : struct, IJsonValue
-    {
-        return From<JsonObject, TTarget>(jsonObject);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static TTarget FromArray<TTarget>(in JsonArray jsonArray)
-        where TTarget : struct, IJsonValue
-    {
-        return From<JsonArray, TTarget>(jsonArray);
+        return From<JsonElement, TTarget>(jsonElement);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
