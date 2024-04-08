@@ -169,7 +169,11 @@ task PreVersion {}
 task PostVersion {}
 task PreBuild {}
 task PostBuild {}
-task PreTest {}
+task PreTest {
+    if ($IsLinux) {
+        $AdditionalTestArgs += @("--framework", "net8.0")
+    }
+}
 task PostTest {}
 task PreTestReport {}
 task PostTestReport {}
@@ -180,4 +184,63 @@ task PostPackage {}
 task PrePublish {}
 task PostPublish {}
 task RunLast {}
+
+# Override the default testing task so we can optionally override the target framework
+$AdditionalTestArgs = @()
+task RunTests -If {!$SkipTest -and $SolutionToBuild} {
+    # Only setup the default CI/CD platform test loggers if they haven't already been customised
+    if ($DotNetTestLoggers.Count -eq 0 -and $DotNetTestLogger -eq $_defaultDotNetTestLogger) {
+        if ($script:IsAzureDevOps) {
+            Write-Build Green "Configuring Azure Pipelines test logger"
+            $DotNetTestLogger = "AzurePipelines"
+        }
+        elseif ($script:IsGitHubActions) {
+            Write-Build Green "Configuring GitHub Actions test logger"
+            $DotNetTestLogger = "GitHubActions"
+        }    
+    }
+
+    # Setup the arguments we need to pass to 'dotnet test'
+    $dotnetTestArgs = @(
+        "--configuration", $Configuration
+        "--no-build"
+        "--no-restore"
+        '/p:CollectCoverage="{0}"' -f $EnableCoverage
+        "/p:CoverletOutputFormat=cobertura"
+        '/p:ExcludeByFile="{0}"' -f $ExcludeFilesFromCodeCoverage.Replace(",","%2C")
+        "--verbosity", $LogLevel
+        "--test-adapter-path", "$PSScriptRoot/../bin"
+        ($DotNetTestFileLoggerProps ? $DotNetTestFileLoggerProps : "/fl")
+    )
+
+    # If multiple test loggers have been specified then use that newer config property
+    if ($DotNetTestLoggers.Count -gt 0) {
+        $DotNetTestLoggers | ForEach-Object {
+            $dotnetTestArgs += @("--logger", $_)
+        }
+    }
+    # Otherwise fallback to the original behaviour so we are backwards-compatible
+    else {
+        $dotnetTestArgs += @("--logger", $DotNetTestLogger)
+    }
+
+    if ($AdditionalTestArgs) {
+        $dotnetTestArgs += $AdditionalTestArgs
+    }
+    
+
+    try {
+        exec { 
+            dotnet test $SolutionToBuild @dotnetTestArgs
+        }
+    }
+    finally {
+        if ((Test-Path $DotNetTestLogFile) -and $IsAzureDevOps) {
+            Write-Host "##vso[artifact.upload artifactname=logs]$((Resolve-Path $DotNetTestLogFile).Path)"
+        }
+
+        # Generate test report file
+        _GenerateTestReport
+    }
+}
 
