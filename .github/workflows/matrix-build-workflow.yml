@@ -175,14 +175,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
-        # includes: 
-        # - netfx: 'net8'
-        #   os: ubuntu-latest
-        # - netfx: 'net8'
-        #   os: windows-latest
-        # - netfx: 'net481'
-        #   os: windows-latest
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 #v4.1.1
       with:
