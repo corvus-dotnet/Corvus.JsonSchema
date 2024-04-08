@@ -3,7 +3,7 @@ on:
   push:
     branches:
     - main
-    - feature/netstandard20
+    - feature/gha-migration
     tags:
     - '*'
   pull_request:
