@@ -1,0 +1,77 @@
+name: build
+on:
+  push:
+    branches:
+    - main
+    tags:
+    - '*'
+  pull_request:
+    branches:
+    - main
+  workflow_dispatch:
+    inputs:
+      forcePublish:
+        description: When true the Publish stage will always be run, otherwise it only runs for tagged versions.
+        required: false
+        default: false
+        type: boolean
+      skipCleanup:
+        description: When true the pipeline clean-up stage will not be run. For example, the cache used between pipeline stages will be retained.
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  actions: write  # enable cache clean-up
+  checks: write  # enable test result annotations
+  contents: write  # enable creating releases
+  issues: read
+  packages: write  # enable publishing packages
+  pull-requests: write  # enable test result annotations
+
+jobs:
+  prepareConfig:
+    name: Prepare Configuration
+    runs-on: ubuntu-latest
+    outputs:
+      RESOLVED_ENV_VARS: ${{ steps.prepareEnvVarsAndSecrets.outputs.environmentVariablesYamlBase64 }}
+      RESOLVED_SECRETS: ${{ steps.prepareEnvVarsAndSecrets.outputs.secretsYamlBase64 }}
+    steps:
+    # Declare any environment variables and/or secrets that need to be available inside the build process
+    - uses: endjin/Endjin.RecommendedPractices.GitHubActions/actions/prepare-env-vars-and-secrets@main
+      id: prepareEnvVarsAndSecrets
+      with:
+        environmentVariablesYaml: |
+          BUILDVAR_NuGetPublishSource: "${{ startsWith(github.ref, 'refs/tags/') && 'https://api.nuget.org/v3/index.json' || format('https://nuget.pkg.github.com/{0}/index.json', github.repository_owner) }}"
+        secretsYaml: |
+          NUGET_API_KEY: "${{ startsWith(github.ref, 'refs/tags/') && secrets.NUGET_APIKEY || secrets.BUILD_PUBLISHER_PAT }}"
+
+  build:
+    needs: prepareConfig
+    uses: endjin/Endjin.RecommendedPractices.GitHubActions/.github/workflows/scripted-build-pipeline.yml@main
+    with:
+      netSdkVersion: '8.0.x'
+      additionalNetSdkVersion: '7.0.x'
+      # workflow_dispatch inputs are always strings, the type property is just for the UI
+      forcePublish: ${{ github.event.inputs.forcePublish == 'true' || github.event_name == 'pull_request' }}
+      skipCleanup: ${{ github.event.inputs.skipCleanup == 'true' }}
+      # testArtifactName: ''
+      # testArtifactPath: ''
+      compilePhaseEnv: ${{ needs.prepareConfig.outputs.RESOLVED_ENV_VARS }}
+      testPhaseEnv: ${{ needs.prepareConfig.outputs.RESOLVED_ENV_VARS }}
+      packagePhaseEnv: ${{ needs.prepareConfig.outputs.RESOLVED_ENV_VARS }}
+      publishPhaseEnv: ${{ needs.prepareConfig.outputs.RESOLVED_ENV_VARS }}
+
+    secrets:
+      compilePhaseAzureCredentials: ${{ secrets.AZURE_READER_CREDENTIALS }}
+      # testPhaseAzureCredentials: ${{ secrets.TESTS_KV_READER_CREDENTIALS }}
+      # packagePhaseAzureCredentials: ${{ secrets.AZURE_PUBLISH_CREDENTIALS }}
+      # publishPhaseAzureCredentials: ${{ secrets.AZURE_PUBLISH_CREDENTIALS }}
+      # compilePhaseSecrets: ${{ needs.prepareConfig.outputs.RESOLVED_SECRETS }}
+      # testPhaseSecrets: ${{ needs.prepareConfig.outputs.RESOLVED_SECRETS }}
+      # packagePhaseSecrets: ${{ needs.prepareConfig.outputs.RESOLVED_SECRETS }}
+      publishPhaseSecrets: ${{ needs.prepareConfig.outputs.RESOLVED_SECRETS }}
