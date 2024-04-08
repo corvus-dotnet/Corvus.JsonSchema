@@ -202,6 +202,7 @@ task RunTests -If {!$SkipTest -and $SolutionToBuild} {
 
     # Workaround $PSScriptRoot not resolving to the module location, when overridden here
     $moduleDir = Split-Path -Parent (Get-Module Endjin.RecommendedPractices.Build | Select-Object -ExpandProperty Path)
+    Write-Build Magenta "ModuleDir: $moduleDir"
 
     # Setup the arguments we need to pass to 'dotnet test'
     $dotnetTestArgs = @(
@@ -232,7 +233,6 @@ task RunTests -If {!$SkipTest -and $SolutionToBuild} {
     }
     
     Write-Build Magenta "CmdLine: dotnet test $SolutionToBuild $dotnetTestArgs"
-    Write-Build Magenta "BinDir: $(gci "$PSScriptRoot/../bin" | out-string)"
 
     try {
         exec { 
