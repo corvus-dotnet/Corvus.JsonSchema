@@ -187,7 +187,6 @@ task RunLast {}
 
 # Override the default testing task so we can optionally override the target framework
 $AdditionalTestArgs = @()
-$DotNetTestLogger = @()
 task RunTests -If {!$SkipTest -and $SolutionToBuild} {
     # Only setup the default CI/CD platform test loggers if they haven't already been customised
     if ($DotNetTestLoggers.Count -eq 0 -and $DotNetTestLogger -eq $_defaultDotNetTestLogger) {
@@ -196,8 +195,8 @@ task RunTests -If {!$SkipTest -and $SolutionToBuild} {
             $DotNetTestLogger = "AzurePipelines"
         }
         elseif ($script:IsGitHubActions) {
-            Write-Build Green "Configuring GitHub Actions test logger"
-            $DotNetTestLogger = "GitHubActions"
+            # Write-Build Green "Configuring GitHub Actions test logger"
+            # $DotNetTestLogger = "GitHubActions"
         }    
     }
 
