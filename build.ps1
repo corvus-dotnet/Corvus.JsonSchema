@@ -195,10 +195,13 @@ task RunTests -If {!$SkipTest -and $SolutionToBuild} {
             $DotNetTestLogger = "AzurePipelines"
         }
         elseif ($script:IsGitHubActions) {
-            # Write-Build Green "Configuring GitHub Actions test logger"
-            # $DotNetTestLogger = "GitHubActions"
+            Write-Build Green "Configuring GitHub Actions test logger"
+            $DotNetTestLogger = "GitHubActions"
         }    
     }
+
+    # Workaround $PSScriptRoot not resolving to the module location, when overridden here
+    $moduleDir = Split-Path -Parent (Get-Module Endjin.RecommendedPractices.Build | Select-Object -ExpandProperty Path)
 
     # Setup the arguments we need to pass to 'dotnet test'
     $dotnetTestArgs = @(
@@ -209,7 +212,7 @@ task RunTests -If {!$SkipTest -and $SolutionToBuild} {
         "/p:CoverletOutputFormat=cobertura"
         '/p:ExcludeByFile="{0}"' -f $ExcludeFilesFromCodeCoverage.Replace(",","%2C")
         "--verbosity", $LogLevel
-        "--test-adapter-path", "$PSScriptRoot/../bin"
+        "--test-adapter-path", "$moduleDir/bin"
         ($DotNetTestFileLoggerProps ? $DotNetTestFileLoggerProps : "/fl")
     )
 
@@ -230,7 +233,7 @@ task RunTests -If {!$SkipTest -and $SolutionToBuild} {
     
     Write-Build Magenta "CmdLine: dotnet test $SolutionToBuild $dotnetTestArgs"
     Write-Build Magenta "BinDir: $(gci "$PSScriptRoot/../bin" | out-string)"
-    
+
     try {
         exec { 
             dotnet test $SolutionToBuild @dotnetTestArgs
