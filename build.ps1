@@ -228,7 +228,9 @@ task RunTests -If {!$SkipTest -and $SolutionToBuild} {
         $dotnetTestArgs += $AdditionalTestArgs
     }
     
-
+    Write-Build Magenta "CmdLine: dotnet test $SolutionToBuild $dotnetTestArgs"
+    Write-Build Magenta "BinDir: $(gci "$PSScriptRoot/../bin" | out-string)"
+    
     try {
         exec { 
             dotnet test $SolutionToBuild @dotnetTestArgs
