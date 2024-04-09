@@ -108,9 +108,6 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
-    permissions:
-      contents: write
-      packages: write
     outputs:
       semver: ${{ steps.run_build.outputs.semver }}
       major: ${{ steps.run_build.outputs.major }}
@@ -226,9 +223,18 @@ jobs:
       with:
         recreate: true
         path: code-coverage-results.md
-    - name: Publish Test Results
-      uses: EnricoMi/publish-unit-test-result-action@e780361cd1fc1b1a170624547b3ffda64787d365   # v2.12.0
-      if: always()
+
+    # Conditional test result publishing as we can't use the docker version of the action on Windows
+    - name: Publish Test Results (Linux)
+      uses: EnricoMi/publish-unit-test-result-action/linux@e780361cd1fc1b1a170624547b3ffda64787d365   # v2.12.0
+      if: always() && matrix.os == 'ubuntu-latest'
+      with:
+        nunit_files: "*TestResults.xml"    # produced by Pester
+        trx_files: "**/test-results_*.trx" # produced by dotnet test
+        junit_files: "**/*-test-results.xml" # produced by PyTest & Behave
+    - name: Publish Test Results (Windows)
+      uses: EnricoMi/publish-unit-test-result-action/windows@e780361cd1fc1b1a170624547b3ffda64787d365   # v2.12.0
+      if: always() && matrix.os == 'windows-latest'
       with:
         nunit_files: "*TestResults.xml"    # produced by Pester
         trx_files: "**/test-results_*.trx" # produced by dotnet test
