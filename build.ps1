@@ -174,9 +174,9 @@ task PreBuild {
 }
 task PostBuild {}
 task PreTest {
-    # if ($IsLinux) {
-    #     $AdditionalTestArgs += @("--framework", "net8.0")
-    # }
+    if ($IsLinux) {
+        $AdditionalTestArgs += @("--framework", "net8.0")
+    }
 }
 task PostTest {}
 task PreTestReport {}
@@ -191,7 +191,7 @@ task RunLast {}
 
 # Override the default testing task so we can optionally override the target framework
 $AdditionalTestArgs = @()
-task _RunTests -If {!$SkipTest -and $SolutionToBuild} {
+task RunTests -If {!$SkipTest -and $SolutionToBuild} {
     # Only setup the default CI/CD platform test loggers if they haven't already been customised
     if ($DotNetTestLoggers.Count -eq 0 -and $DotNetTestLogger -eq $_defaultDotNetTestLogger) {
         if ($script:IsAzureDevOps) {
