@@ -167,12 +167,16 @@ task PreInit {}
 task PostInit {}
 task PreVersion {}
 task PostVersion {}
-task PreBuild {}
+task PreBuild {
+    Write-Host "Initialising submodule"
+    exec { & git submodule init }
+    exec { & git submodule update }
+}
 task PostBuild {}
 task PreTest {
-    if ($IsLinux) {
-        $AdditionalTestArgs += @("--framework", "net8.0")
-    }
+    # if ($IsLinux) {
+    #     $AdditionalTestArgs += @("--framework", "net8.0")
+    # }
 }
 task PostTest {}
 task PreTestReport {}
@@ -187,7 +191,7 @@ task RunLast {}
 
 # Override the default testing task so we can optionally override the target framework
 $AdditionalTestArgs = @()
-task RunTests -If {!$SkipTest -and $SolutionToBuild} {
+task _RunTests -If {!$SkipTest -and $SolutionToBuild} {
     # Only setup the default CI/CD platform test loggers if they haven't already been customised
     if ($DotNetTestLoggers.Count -eq 0 -and $DotNetTestLogger -eq $_defaultDotNetTestLogger) {
         if ($script:IsAzureDevOps) {
@@ -207,8 +211,8 @@ task RunTests -If {!$SkipTest -and $SolutionToBuild} {
     # Setup the arguments we need to pass to 'dotnet test'
     $dotnetTestArgs = @(
         "--configuration", $Configuration
-        # "--no-build"
-        # "--no-restore"
+        "--no-build"
+        "--no-restore"
         '/p:CollectCoverage="{0}"' -f $EnableCoverage
         "/p:CoverletOutputFormat=cobertura"
         '/p:ExcludeByFile="{0}"' -f $ExcludeFilesFromCodeCoverage.Replace(",","%2C")
