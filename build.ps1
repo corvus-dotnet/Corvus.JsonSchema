@@ -61,7 +61,7 @@ param (
     [string] $PackagesDir = "_packages",
 
     [Parameter()]
-    [ValidateSet("minimal","normal","detailed")]
+    [ValidateSet("quiet","minimal","normal","detailed")]
     [string] $LogLevel = "minimal",
 
     [Parameter()]
@@ -174,11 +174,22 @@ task PreBuild {
 }
 task PostBuild {}
 task PreTest {
+    # Blunt attempt to mitigate issues from the huge build logs produced when running the Specs
+    if ($IsRunningOnBuildServer) {
+        $script:LogLevelBackup = $LogLevel
+        $script:LogLevel = "quiet"
+    }
+
     if ($IsLinux) {
         $script:AdditionalTestArgs += @("--framework", "net8.0")
     }
 }
-task PostTest {}
+task PostTest {
+    # Revert back to original logging level
+    if ($IsRunningOnBuildServer) {
+        $script:LogLevel = $LogLevelBackup
+    }
+}
 task PreTestReport {}
 task PostTestReport {}
 task PreAnalysis {}
