@@ -253,3 +253,21 @@ task RunTests -If {!$SkipTest -and $SolutionToBuild} {
     }
 }
 
+# Modified helper to reflect multiple coverage reports (i.e. net8.0 & net481)
+function _GenerateTestReport {
+    Install-DotNetTool -Name "dotnet-reportgenerator-globaltool" -Version $ReportGeneratorToolVersion
+
+    $coverageOutputFileWildcard = "coverage*cobertura.xml"
+    $testReportGlob = "$SourcesDir/**/**/$coverageOutputFileWildcard"
+    if (!(Get-ChildItem -Path $SourceDir -Filter $coverageOutputFileWildcard -Recurse)) {
+        Write-Warning "No code coverage reports found for the file pattern '$testReportGlob' - skipping test report"
+    }
+    else {
+        exec {
+            reportgenerator "-reports:$testReportGlob" `
+                            "-targetdir:$CoverageDir" `
+                            "-reporttypes:$TestReportTypes"
+        }
+    }
+}
+
