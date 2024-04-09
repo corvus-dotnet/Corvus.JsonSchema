@@ -212,11 +212,11 @@ jobs:
         additionalNetSdkVersion: ${{ inputs.additionalNetSdkVersion }}
         tasks: 'Test,TestReport'
         configuration: ${{ inputs.configuration }}
-        inputCachePaths: |
-          .nuget-packages
-          Solutions
-          solutions
-          ${{ inputs.additionalCachePaths }}
+        # inputCachePaths: |
+        #   .nuget-packages
+        #   Solutions
+        #   solutions
+        #   ${{ inputs.additionalCachePaths }}
         artifactName: ${{ inputs.testArtifactName }}
         artifactPath: ${{ inputs.testArtifactPath }}
       env:

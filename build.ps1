@@ -207,8 +207,8 @@ task RunTests -If {!$SkipTest -and $SolutionToBuild} {
     # Setup the arguments we need to pass to 'dotnet test'
     $dotnetTestArgs = @(
         "--configuration", $Configuration
-        "--no-build"
-        "--no-restore"
+        # "--no-build"
+        # "--no-restore"
         '/p:CollectCoverage="{0}"' -f $EnableCoverage
         "/p:CoverletOutputFormat=cobertura"
         '/p:ExcludeByFile="{0}"' -f $ExcludeFilesFromCodeCoverage.Replace(",","%2C")
