@@ -226,14 +226,14 @@ jobs:
 
     # Conditional test result publishing as we can't use the docker version of the action on Windows
     - name: Publish Test Results (Linux)
-      uses: EnricoMi/publish-unit-test-result-action/linux@e780361cd1fc1b1a170624547b3ffda64787d365   # v2.12.0
+      uses: EnricoMi/publish-unit-test-result-action/linux@30eadd5010312f995f0d3b3cff7fe2984f69409e   # v2.16.1
       if: always() && matrix.os == 'ubuntu-latest'
       with:
         nunit_files: "*TestResults.xml"    # produced by Pester
         trx_files: "**/test-results_*.trx" # produced by dotnet test
         junit_files: "**/*-test-results.xml" # produced by PyTest & Behave
     - name: Publish Test Results (Windows)
-      uses: EnricoMi/publish-unit-test-result-action/windows@e780361cd1fc1b1a170624547b3ffda64787d365   # v2.12.0
+      uses: EnricoMi/publish-unit-test-result-action/windows@30eadd5010312f995f0d3b3cff7fe2984f69409e   # v2.16.1
       if: always() && matrix.os == 'windows-latest'
       with:
         nunit_files: "*TestResults.xml"    # produced by Pester
