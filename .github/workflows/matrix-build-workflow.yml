@@ -103,7 +103,7 @@ env:
 jobs:
   compile:
     name: Compile & Analyse
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     outputs:
       semver: ${{ steps.run_compile.outputs.semver }}
       major: ${{ steps.run_compile.outputs.major }}
@@ -114,6 +114,7 @@ jobs:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 #v4.1.1
       with:
         fetch-depth: 0
+        submodules: true
     - uses: endjin/Endjin.RecommendedPractices.GitHubActions/actions/set-env-vars-and-secrets@main
       with: 
         environmentVariablesYamlBase64: ${{ inputs.compilePhaseEnv}}
@@ -212,11 +213,11 @@ jobs:
         additionalNetSdkVersion: ${{ inputs.additionalNetSdkVersion }}
         tasks: 'Test,TestReport'
         configuration: ${{ inputs.configuration }}
-        # inputCachePaths: |
-        #   .nuget-packages
-        #   Solutions
-        #   solutions
-        #   ${{ inputs.additionalCachePaths }}
+        inputCachePaths: |
+          .nuget-packages
+          Solutions
+          solutions
+          ${{ inputs.additionalCachePaths }}
         artifactName: ${{ inputs.testArtifactName }}
         artifactPath: ${{ inputs.testArtifactPath }}
       env:
@@ -224,7 +225,6 @@ jobs:
         # testing new multiple test logger support - will only affect repos using latest version of build module
         BUILDVAR_DotNetTestLoggers: >
           [
-            "GitHubActions",
             "trx;LogFilePrefix=test-results_"
           ]
     - id: check_coverage
@@ -287,7 +287,7 @@ jobs:
     needs:
     - compile
     name: Package
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 #v4.1.1
       with:
