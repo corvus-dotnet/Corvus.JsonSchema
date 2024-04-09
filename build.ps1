@@ -175,7 +175,7 @@ task PreBuild {
 task PostBuild {}
 task PreTest {
     if ($IsLinux) {
-        $AdditionalTestArgs += @("--framework", "net8.0")
+        $script:AdditionalTestArgs += @("--framework", "net8.0")
     }
 }
 task PostTest {}
