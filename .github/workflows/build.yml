@@ -53,7 +53,7 @@ jobs:
 
   build:
     needs: prepareConfig
-    uses: ./.github/workflows/matrix-build-workflow-single-job.yml
+    uses: ./.github/workflows/matrix-build-workflow.yml
     with:
       netSdkVersion: '8.0.x'
       # additionalNetSdkVersion: '7.0.x'
