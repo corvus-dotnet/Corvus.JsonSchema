@@ -67,10 +67,15 @@ on:
         default: false
         type: boolean
       buildScriptPath:
-          description: The path to the build script to run.
-          required: false
-          default: ./build.ps1
-          type: string
+        description: The path to the build script to run.
+        required: false
+        default: ./build.ps1
+        type: string
+      enableCrossOsCaching:
+        description: "When true the enables the 'enableCrossOsArchive' property on the GitHub Actions cache task. ref: https://github.com/actions/cache/blob/main/tips-and-workarounds.md#cross-os-cache"
+        required: false
+        default: false
+        type: boolean
 
     secrets:
       compilePhaseAzureCredentials:
@@ -139,7 +144,7 @@ jobs:
       with:
         creds: ${{ secrets.compilePhaseAzureCredentials }}
         enable-AzPSSession: true
-    - uses: endjin/Endjin.RecommendedPractices.GitHubActions/actions/run-scripted-build@main
+    - uses: endjin/Endjin.RecommendedPractices.GitHubActions/actions/run-scripted-build@feature/multi-os-cache
       id: run_compile
       with:
         displayName: Compile & Analyse
@@ -154,6 +159,7 @@ jobs:
           Solutions
           solutions
           ${{ inputs.additionalCachePaths }}
+        enableCrossOsCaching: ${{ inputs.enableCrossOsCaching}}
       env:
         BUILDVAR_AnalysisOutputStorageAccountName: ${{ vars.SBOM_OUTPUT_STORAGE_ACCOUNT_NAME}}
         BUILDVAR_AnalysisOutputContainerName: ${{ vars.SBOM_OUTPUT_STORAGE_CONTAINER_NAME}}
@@ -205,7 +211,7 @@ jobs:
       with:
         creds: ${{ secrets.testPhaseAzureCredentials }}
         enable-AzPSSession: true
-    - uses: endjin/Endjin.RecommendedPractices.GitHubActions/actions/run-scripted-build@main
+    - uses: endjin/Endjin.RecommendedPractices.GitHubActions/actions/run-scripted-build@feature/multi-os-cache
       with:
         displayName: Run Tests
         buildScriptPath: ${{ inputs.buildScriptPath }}
@@ -218,6 +224,7 @@ jobs:
           Solutions
           solutions
           ${{ inputs.additionalCachePaths }}
+        enableCrossOsCaching: ${{ inputs.enableCrossOsCaching}}
         artifactName: ${{ inputs.testArtifactName }}
         artifactPath: ${{ inputs.testArtifactPath }}
       env:
@@ -325,7 +332,7 @@ jobs:
       with:
         creds: ${{ secrets.packagePhaseAzureCredentials }}
         enable-AzPSSession: true     
-    - uses: endjin/Endjin.RecommendedPractices.GitHubActions/actions/run-scripted-build@main
+    - uses: endjin/Endjin.RecommendedPractices.GitHubActions/actions/run-scripted-build@feature/multi-os-cache
       with:
         displayName: Build Packages
         buildScriptPath: ${{ inputs.buildScriptPath }}
@@ -338,6 +345,7 @@ jobs:
           Solutions
           solutions
           ${{ inputs.additionalCachePaths }}
+        enableCrossOsCaching: ${{ inputs.enableCrossOsCaching}}
         outputCachePaths: |
           _packages
           ${{ inputs.additionalCachePaths }}
@@ -381,7 +389,7 @@ jobs:
       with:
         creds: ${{ secrets.publishPhaseAzureCredentials }}
         enable-AzPSSession: true    
-    - uses: endjin/Endjin.RecommendedPractices.GitHubActions/actions/run-scripted-build@main
+    - uses: endjin/Endjin.RecommendedPractices.GitHubActions/actions/run-scripted-build@feature/multi-os-cache
       with:
         displayName: Publish Packages
         buildScriptPath: ${{ inputs.buildScriptPath }}
@@ -391,6 +399,7 @@ jobs:
         inputCachePaths: |
           _packages
           ${{ inputs.additionalCachePaths }}
+        enableCrossOsCaching: ${{ inputs.enableCrossOsCaching}}
         artifactName: ${{ inputs.publishArtifactName }}
         artifactPath: ${{ inputs.publishArtifactPath }}
       env:
