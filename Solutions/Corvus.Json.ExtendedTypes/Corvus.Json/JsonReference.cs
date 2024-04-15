@@ -14,7 +14,13 @@ namespace Corvus.Json;
 /// A JSON $ref as a URI or JsonPointer.
 /// </summary>
 [DebuggerDisplay("{reference}")]
-public readonly struct JsonReference : IEquatable<JsonReference>
+public readonly struct JsonReference
+#if NET8_0_OR_GREATER
+    : IEquatable<JsonReference>,
+    ISpanFormattable
+#else
+    : IEquatable<JsonReference>
+#endif
 {
     /// <summary>
     /// Gets a reference to the root fragment.
@@ -507,6 +513,22 @@ public readonly struct JsonReference : IEquatable<JsonReference>
 
         return other;
     }
+
+#if NET8_0_OR_GREATER
+    /// <inheritdoc/>
+    public bool TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
+    {
+        bool result = this.reference.Span.TryCopyTo(destination);
+        charsWritten = result ? this.reference.Length : 0;
+        return result;
+    }
+
+    /// <inheritdoc/>
+    public string ToString(string? format, IFormatProvider? formatProvider)
+    {
+        return this.reference.ToString();
+    }
+#endif
 
     private static bool CheckForColonInFirstPathSegment(ReadOnlySpan<char> uriString)
     {
