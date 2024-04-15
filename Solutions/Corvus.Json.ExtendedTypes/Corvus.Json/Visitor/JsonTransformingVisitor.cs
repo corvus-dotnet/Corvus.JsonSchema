@@ -37,7 +37,7 @@ public static partial class JsonTransformingVisitor
     /// <param name="visitor">The method to apply to each node.</param>
     /// <param name="result">The result of the transformation.</param>
     /// <returns>The transformed tree.</returns>
-    public static bool Visit<T>(this T root, Visitor visitor, out JsonAny result)
+    public static bool Visit<T>(this T root, in Visitor visitor, out JsonAny result)
         where T : struct, IJsonValue
     {
         char[] pathBuffer = ArrayPool<char>.Shared.Rent(BufferChunkSize);
@@ -63,7 +63,7 @@ public static partial class JsonTransformingVisitor
         }
     }
 
-    private static void Visit(ReadOnlySpan<char> path, in JsonAny nodeToVisit, Visitor visitor, char[] pathBuffer, ref VisitResult result)
+    private static void Visit(ReadOnlySpan<char> path, in JsonAny nodeToVisit, in Visitor visitor, char[] pathBuffer, ref VisitResult result)
     {
         // First, visit the entity itself
         visitor(path, nodeToVisit, ref result);
@@ -110,7 +110,7 @@ public static partial class JsonTransformingVisitor
         }
     }
 
-    private static void VisitArray(ReadOnlySpan<char> path, in JsonArray asArray, Visitor visitor, char[] pathBuffer, ref VisitResult result)
+    private static void VisitArray(ReadOnlySpan<char> path, in JsonArray asArray, in Visitor visitor, char[] pathBuffer, ref VisitResult result)
     {
         bool terminateEntireWalkApplyingChanges = false;
         bool hasTransformedItems = false;
@@ -254,7 +254,7 @@ public static partial class JsonTransformingVisitor
     }
 #endif
 
-    private static void VisitObject(ReadOnlySpan<char> path, in JsonObject asObject, Visitor visitor, char[] pathBuffer, ref VisitResult result)
+    private static void VisitObject(ReadOnlySpan<char> path, in JsonObject asObject, in Visitor visitor, char[] pathBuffer, ref VisitResult result)
     {
         bool hasTransformedProperties = false;
         bool terminateEntireWalkApplyingChanges = false;
@@ -367,7 +367,7 @@ public static partial class JsonTransformingVisitor
         return;
     }
 
-    private static int ExtendBufferAndCopy(ref char[] pathBuffer, ReadOnlySpan<char> path, JsonPropertyName name)
+    private static int ExtendBufferAndCopy(ref char[] pathBuffer, ReadOnlySpan<char> path, in JsonPropertyName name)
     {
         int desiredLength = path.Length + name.EstimateCharLength() + 1;
         TryExtendBuffer(ref pathBuffer, desiredLength);

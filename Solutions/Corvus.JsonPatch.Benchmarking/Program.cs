@@ -7,28 +7,20 @@ using BenchmarkDotNet.Engines;
 using BenchmarkDotNet.Environments;
 using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Running;
-using BenchmarkDotNet.Validators;
 using Perfolizer.Mathematics.OutlierDetection;
 
-/// <summary>
-/// Benchmark runner.
-/// </summary>
-internal class Program
-{
-    private static void Main(string[] args)
-    {
-        BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(
-            args,
-            GetGlobalConfig());
-    }
+var config = ManualConfig.Create(DefaultConfig.Instance);
+config.AddJob(
+    Job.Default
+        .AsBaseline()
+        .WithRuntime(CoreRuntime.Core80)
+        .WithOutlierMode(OutlierMode.RemoveAll)
+        .WithStrategy(RunStrategy.Throughput));
 
-    private static IConfig? GetGlobalConfig()
-    {
-        return DefaultConfig.Instance
-        .AddJob(Job.Default
-            .WithRuntime(CoreRuntime.Core80)
-            .WithOutlierMode(OutlierMode.RemoveAll)
-            .WithStrategy(RunStrategy.Throughput).AsDefault())
-        .AddValidator(ExecutionValidator.DontFailOnError);
-    }
-}
+config.AddJob(
+    Job.Default
+        .WithRuntime(ClrRuntime.Net481)
+        .WithOutlierMode(OutlierMode.RemoveAll)
+        .WithStrategy(RunStrategy.Throughput));
+
+BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(config: config);
