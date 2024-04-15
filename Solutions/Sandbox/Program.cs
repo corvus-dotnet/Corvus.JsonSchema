@@ -30,3 +30,13 @@ for (int i = 0; i < 10000; ++i)
 {
     bool _ = person.IsValid();
 }
+
+ValidationContext result = person.Validate(ValidationContext.ValidContext, ValidationLevel.Detailed);
+
+if (!result.IsValid)
+{
+    foreach (ValidationResult error in result.Results)
+    {
+        Console.WriteLine(error);
+    }
+}

@@ -176,7 +176,7 @@ namespace ");
             #line hidden
             
             #line 48 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.AnyOf.tt"
-            this.Write(",\r\n\r\n        Func<");
+            this.Write(",\r\n\r\n        Matcher<");
             
             #line default
             #line hidden
@@ -207,7 +207,7 @@ namespace ");
             #line hidden
             
             #line 52 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.AnyOf.tt"
-            this.Write(",\r\n        Func<");
+            this.Write(",\r\n        Matcher<");
             
             #line default
             #line hidden
@@ -375,7 +375,7 @@ namespace ");
             #line hidden
             
             #line 82 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.AnyOf.tt"
-            this.Write("        Func<");
+            this.Write("        Matcher<");
             
             #line default
             #line hidden
@@ -412,7 +412,7 @@ namespace ");
             #line hidden
             
             #line 84 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.Abstractions\SharedTemplates\CodeGenerator.AnyOf.tt"
-            this.Write("        Func<");
+            this.Write("        Matcher<");
             
             #line default
             #line hidden

@@ -1,9 +1,69 @@
 # Corvus.JsonSchema
-Support for [Json Schema](https://json-schema.org/) validation and entity generation
+Build-time code generation for [Json Schema](https://json-schema.org/) validation, and serialization.
 
-For an introduction to the concepts here, take a look at [this blog post](https://endjin.com/blog/2021/05/csharp-serialization-with-system-text-json-schema).
+It supports serialization of *every feature of JSON schema* from draft7 to draft2020-12. (i.e. it doesn't give up on complex structure and lapse back to 'anonymous JSON objects' like most dotnet tooling.)
+
+## Supported platforms
+
+It now works with **every supported .NET version** by providing netstandard2.0 packages, with optimized packages that take advantage of features in NET8.0 and later.
+
+## Concepts
+
+For a more detailed introduction to the concepts, take a look at [this blog post](https://endjin.com/blog/2021/05/csharp-serialization-with-system-text-json-schema).
 
 There's also [a talk by @idg10](https://endjin.com/what-we-think/talks/high-performance-json-serialization-with-code-generation-on-csharp-11-and-dotnet-7-0) on the techniques used in this library.
+
+What kind of things is Corvus.JsonSchema good for?
+
+There are 2 key features: 
+
+### Validation
+
+Corvus.JsonSchema provides ultra-fast, zero/low validation of JSON data against a JSON Schema.
+
+You use our `generatejsonschematypes` tool to generate code (on Windows, Linux or MacOS) from an existing JSON Schema document, and compile it in a standard dotnet assembly.
+
+You can then form simple flag-based validation:
+
+```csharp
+string jsonText = 
+    """
+    {
+        "name": {
+            "familyName": "Oldroyd",
+            "givenName": "Michael",
+            "otherNames": ["Francis", "James"]
+        },
+        "dateOfBirth": "1944-07-14"
+    }
+    """;
+
+var person = Person.Parse(jsonText);
+
+Console.WriteLine($"The person {person.IsValid() ? "is" : "is not"} valid JSON");
+```
+
+Or you can retrieve detailed validation results including JSON Schema output format location information:
+
+```csharp
+var result = person.Validate(ValidationContext.ValidContext, ValidationLevel.Detailed);
+
+if (!result.IsValid)
+{
+    foreach (ValidationResult error in result.Results)
+    {
+        Console.WriteLine(error);
+}
+```
+
+
+### Serialization
+
+The same generated code provides object models for JSON Schema documents that give you rich, idiomatic C# types with strongly typed properties, pattern matching and efficient cast operations.
+
+You can operate directly over the JSON data, or mix-and-match building new JSON models from dotnet primitive types.
+
+
 
 ## Getting started
 
