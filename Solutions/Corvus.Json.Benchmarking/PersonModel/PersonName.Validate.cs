@@ -54,7 +54,7 @@ public readonly partial struct PersonName
         if (level > ValidationLevel.Basic)
         {
             result = result.UsingStack();
-            result = result.PushSchemaLocation("D:/source/corvus-dotnet/Corvus.JsonSchema/Solutions/Sandbox/PersonModel/person-schema.json#/$defs/PersonName");
+            result = result.PushSchemaLocation("person-schema.json#/$defs/PersonName");
         }
 
         JsonValueKind valueKind = this.ValueKind;

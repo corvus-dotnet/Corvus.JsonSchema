@@ -238,7 +238,7 @@ namespace ");
             #line hidden
             
             #line 65 "D:\source\corvus-dotnet\Corvus.JsonSchema\Solutions\Corvus.Json.CodeGeneration.7\Corvus.Json.CodeGeneration.Draft7\Templates\CodeGenerator.Validate.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.LocatedSchema.Location ));
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.RelativeSchemaLocation ));
             
             #line default
             #line hidden

@@ -28,7 +28,7 @@ public readonly partial struct ScenarioWithResult
         if (level > ValidationLevel.Basic)
         {
             result = result.UsingStack();
-            result = result.PushSchemaLocation("D:/source/corvus-dotnet/Corvus.JsonSchema/Solutions/Corvus.Json.Patch.SpecGenerator/Model/json-patch-test.json#/$defs/ScenarioWithResult");
+            result = result.PushSchemaLocation("json-patch-test.json#/$defs/ScenarioWithResult");
         }
 
         JsonValueKind valueKind = this.ValueKind;
