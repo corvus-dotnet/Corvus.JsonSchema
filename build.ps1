@@ -127,7 +127,7 @@ $SkipVersion = $false
 $SkipBuild = $false
 $CleanBuild = $Clean
 $SkipTest = $false
-$SkipTestReport = $true     # Temporarily skip the test report due .NET 7 MSBuild issue
+$SkipTestReport = $false
 $SkipPackage = $false
 $SkipAnalysis = $false
 
@@ -149,12 +149,13 @@ $NuSpecFilesToPackage = @(
 # - Use file path or directory path with globbing (e.g dir1/*.cs)
 # - Use single or multiple paths (separated by comma) (e.g. **/dir1/class1.cs,**/dir2/*.cs,**/dir3/**/*.cs)
 #
-$ExcludeFilesFromCodeCoverage = ""
+$ExcludeFilesFromCodeCoverage = "Solutions/**/*.tt,Solutions/**/*.g.cs"
 
 #
 # Update to the latest report generator versions
 #
 $ReportGeneratorToolVersion = "5.1.10"
+$CovenantVersion = "0.19.0"
 
 
 # Synopsis: Build, Test and Package
@@ -263,7 +264,10 @@ task RunTests -If {!$SkipTest -and $SolutionToBuild} {
         }
 
         # Generate test report file
-        _GenerateTestReport
+        if (!$SkipTestReport) {
+            # _GenerateTestReport
+            _GenerateCodeCoverageMarkdownReport
+        }
     }
 }
 
@@ -285,3 +289,28 @@ function _GenerateTestReport {
     }
 }
 
+$CodeCoverageLowerThreshold = 60
+$CodeCoverageUpperThreshold = 80
+function _GenerateCodeCoverageMarkdownReport {
+    
+    Install-DotNetTool -Name Endjin.CodeCoverageSummary -Global
+    $coverageOutputFileWildcard = "coverage*cobertura.xml"
+    $coverageOutputFileGlob = "**/$coverageOutputFileWildcard"
+    $coverageFiles = Get-ChildItem -Path $SourcesDir -Filter $coverageOutputFileWildcard -Recurse
+    if (!$coverageFiles) {
+        Write-Warning "No code coverage reports found for the file pattern '$coverageOutputFileWildcard' - skipping code coverage summary"
+    }
+    else {
+        exec {
+            endjinccs --files $coverageOutputFileGlob `
+                        --badge true `
+                        --fail false `
+                        --format markdown `
+                        --hidebranch false `
+                        --hidecomplexity false `
+                        --indicators true `
+                        --output both `
+                        --thresholds ("{0} {1}" -f $CodeCoverageLowerThreshold, $CodeCoverageUpperThreshold)
+        }
+    }
+}

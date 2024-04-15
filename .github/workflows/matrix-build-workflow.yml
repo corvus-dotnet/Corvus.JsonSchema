@@ -256,19 +256,19 @@ jobs:
         name: CoverageReport      
         path: _codeCoverage
     # NOTE: Won't work on Windows runners, as the action is a Docker container
-    - name: Generate Code Coverage Summary Report
-      if: always() && steps.check_coverage.outputs.EXISTS == 'true'
-      uses: irongut/CodeCoverageSummary@51cc3a756ddcd398d447c044c02cb6aa83fdae95    # v1.3.0
-      with:
-        filename: ${{ env.CODE_COVERAGE_RESULTS_DIR }}/${{ env.CODE_COVERAGE_RESULTS_FILE }}
-        badge: true
-        fail_below_min: false
-        format: markdown
-        hide_branch_rate: false
-        hide_complexity: false
-        indicators: true
-        output: both
-        thresholds: '${{ env.CODE_COVERAGE_LOWER_THRESHOLD }} ${{ env.CODE_COVERAGE_UPPER_THRESHOLD }}'
+    # - name: Generate Code Coverage Summary Report
+    #   if: always() && steps.check_coverage.outputs.EXISTS == 'true'
+    #   uses: irongut/CodeCoverageSummary@51cc3a756ddcd398d447c044c02cb6aa83fdae95    # v1.3.0
+    #   with:
+    #     filename: ${{ env.CODE_COVERAGE_RESULTS_DIR }}/${{ env.CODE_COVERAGE_RESULTS_FILE }}
+    #     badge: true
+    #     fail_below_min: false
+    #     format: markdown
+    #     hide_branch_rate: false
+    #     hide_complexity: false
+    #     indicators: true
+    #     output: both
+    #     thresholds: '${{ env.CODE_COVERAGE_LOWER_THRESHOLD }} ${{ env.CODE_COVERAGE_UPPER_THRESHOLD }}'
     - name: Publish Code Coverage Summary Report
       # NOTE: Skip this is we're running from a fork, as we won't have permissions to annotate the check run
       if: always() && steps.check_coverage.outputs.EXISTS == 'true' && github.event.pull_request.head.repo.full_name == github.repository
