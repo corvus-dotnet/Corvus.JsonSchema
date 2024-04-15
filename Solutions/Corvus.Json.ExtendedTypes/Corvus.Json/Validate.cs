@@ -2993,7 +2993,7 @@ public static partial class Validate
             static int CountRunes(ReadOnlySpan<char> str)
             {
 #if NET8_0_OR_GREATER
-                var length = 0;
+                int length = 0;
                 SpanRuneEnumerator enumerator = str.EnumerateRunes();
                 while (enumerator.MoveNext())
                 {
@@ -3002,8 +3002,7 @@ public static partial class Validate
 
                 return length;
 #else
-                StringInfo info = new(str.ToString());
-                return info.LengthInTextElements;
+                return StringInfo.GetTextLengthInRunes(str);
 #endif
             }
         }
