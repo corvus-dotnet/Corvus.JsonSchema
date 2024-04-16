@@ -56,14 +56,11 @@ if (!result.IsValid)
 }
 ```
 
-
 ### Serialization
 
 The same generated code provides object models for JSON Schema documents that give you rich, idiomatic C# types with strongly typed properties, pattern matching and efficient cast operations.
 
 You can operate directly over the JSON data, or mix-and-match building new JSON models from dotnet primitive types.
-
-
 
 ## Getting started
 
@@ -247,10 +244,6 @@ We also provide  a [full hands-on-lab](docs/GettingStartedWithJsonSchemaCodeGene
 
 This project uses [dotnet-t4](https://www.nuget.org/packages/dotnet-t4) to generate the code-behind for the t4 templates that actually emit the code for a particular template. If you add or update templates, you will need to run the relevant `BuildTemplates.cmd` batch file to regenerate them. (There is one that will
 regenerate all templates in the `/Solutions` folder; you can find others in the individual generator projects - more details on this can be found in the section on the Organization of the repository, below).
-
-Unfortunately, there have been breaking changes in the 2.3.x series of this tool that mean it no longer generates relative line annotations by default.
-
-You should install this specific version until [this issue](https://github.com/mono/t4/issues/152) is resolved satisfactorily.
 
 ```
 dotnet tool install --global dotnet-t4 --version 2.2.1
