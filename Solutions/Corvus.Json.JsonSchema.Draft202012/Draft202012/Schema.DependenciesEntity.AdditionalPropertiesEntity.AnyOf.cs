@@ -30,7 +30,7 @@ public readonly partial struct Schema
             /// <param name = "match0">The function to call if the value matches the <see cref = "Corvus.Json.JsonSchema.Draft202012.Schema"/> type.</param>
             /// <param name = "match1">The function to call if the value matches the <see cref = "Corvus.Json.JsonSchema.Draft202012.Validation.StringArray"/> type.</param>
             /// <param name = "defaultMatch">The fallback match.</param>
-            public TOut Match<TIn, TOut>(in TIn context, Func<Corvus.Json.JsonSchema.Draft202012.Schema, TIn, TOut> match0, Func<Corvus.Json.JsonSchema.Draft202012.Validation.StringArray, TIn, TOut> match1, Func<AdditionalPropertiesEntity, TIn, TOut> defaultMatch)
+            public TOut Match<TIn, TOut>(in TIn context, Matcher<Corvus.Json.JsonSchema.Draft202012.Schema, TIn, TOut> match0, Matcher<Corvus.Json.JsonSchema.Draft202012.Validation.StringArray, TIn, TOut> match1, Matcher<AdditionalPropertiesEntity, TIn, TOut> defaultMatch)
             {
                 var anyOf0 = this.As<Corvus.Json.JsonSchema.Draft202012.Schema>();
                 if (anyOf0.IsValid())
@@ -53,7 +53,7 @@ public readonly partial struct Schema
             /// <param name = "match0">The function to call if the value matches the <see cref = "Corvus.Json.JsonSchema.Draft202012.Schema"/> type.</param>
             /// <param name = "match1">The function to call if the value matches the <see cref = "Corvus.Json.JsonSchema.Draft202012.Validation.StringArray"/> type.</param>
             /// <param name = "defaultMatch">The fallback match.</param>
-            public TOut Match<TOut>(Func<Corvus.Json.JsonSchema.Draft202012.Schema, TOut> match0, Func<Corvus.Json.JsonSchema.Draft202012.Validation.StringArray, TOut> match1, Func<AdditionalPropertiesEntity, TOut> defaultMatch)
+            public TOut Match<TOut>(Matcher<Corvus.Json.JsonSchema.Draft202012.Schema, TOut> match0, Matcher<Corvus.Json.JsonSchema.Draft202012.Validation.StringArray, TOut> match1, Matcher<AdditionalPropertiesEntity, TOut> defaultMatch)
             {
                 var anyOf0 = this.As<Corvus.Json.JsonSchema.Draft202012.Schema>();
                 if (anyOf0.IsValid())

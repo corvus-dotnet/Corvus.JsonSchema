@@ -2,6 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Diagnostics;
+
 namespace Corvus.Json;
 
 /// <summary>
@@ -39,4 +41,15 @@ public readonly struct ValidationResult
     /// Gets the location.
     /// </summary>
     public (JsonReference ValidationLocation, JsonReference SchemaLocation, JsonReference DocumentLocation)? Location { get; }
+
+    /// <inheritdoc/>
+    public override string ToString()
+    {
+        if (this.Location is (JsonReference, JsonReference, JsonReference) location)
+        {
+            return $"{location.DocumentLocation} {(this.Valid ? "Valid" : "Invalid")} {(this.Message is string m ? m : string.Empty)}{(this.Message is not null ? " " : string.Empty)}[{location.ValidationLocation}, {location.SchemaLocation}]";
+        }
+
+        return this.Valid ? "Valid" : "Invalid";
+    }
 }

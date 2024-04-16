@@ -27,7 +27,7 @@ public readonly partial struct Scenario
     /// <param name = "match1">The function to call if the value matches the <see cref = "Corvus.Json.Patch.SpecGenerator.ScenarioWithError"/> type.</param>
     /// <param name = "match2">The function to call if the value matches the <see cref = "Corvus.Json.Patch.SpecGenerator.DisabledScenario"/> type.</param>
     /// <param name = "defaultMatch">The fallback match.</param>
-    public TOut Match<TIn, TOut>(in TIn context, Func<Corvus.Json.Patch.SpecGenerator.ScenarioWithResult, TIn, TOut> match0, Func<Corvus.Json.Patch.SpecGenerator.ScenarioWithError, TIn, TOut> match1, Func<Corvus.Json.Patch.SpecGenerator.DisabledScenario, TIn, TOut> match2, Func<Scenario, TIn, TOut> defaultMatch)
+    public TOut Match<TIn, TOut>(in TIn context, Matcher<Corvus.Json.Patch.SpecGenerator.ScenarioWithResult, TIn, TOut> match0, Matcher<Corvus.Json.Patch.SpecGenerator.ScenarioWithError, TIn, TOut> match1, Matcher<Corvus.Json.Patch.SpecGenerator.DisabledScenario, TIn, TOut> match2, Matcher<Scenario, TIn, TOut> defaultMatch)
     {
         var oneOf0 = this.As<Corvus.Json.Patch.SpecGenerator.ScenarioWithResult>();
         if (oneOf0.IsValid())
@@ -57,7 +57,7 @@ public readonly partial struct Scenario
     /// <param name = "match1">The function to call if the value matches the <see cref = "Corvus.Json.Patch.SpecGenerator.ScenarioWithError"/> type.</param>
     /// <param name = "match2">The function to call if the value matches the <see cref = "Corvus.Json.Patch.SpecGenerator.DisabledScenario"/> type.</param>
     /// <param name = "defaultMatch">The fallback match.</param>
-    public TOut Match<TOut>(Func<Corvus.Json.Patch.SpecGenerator.ScenarioWithResult, TOut> match0, Func<Corvus.Json.Patch.SpecGenerator.ScenarioWithError, TOut> match1, Func<Corvus.Json.Patch.SpecGenerator.DisabledScenario, TOut> match2, Func<Scenario, TOut> defaultMatch)
+    public TOut Match<TOut>(Matcher<Corvus.Json.Patch.SpecGenerator.ScenarioWithResult, TOut> match0, Matcher<Corvus.Json.Patch.SpecGenerator.ScenarioWithError, TOut> match1, Matcher<Corvus.Json.Patch.SpecGenerator.DisabledScenario, TOut> match2, Matcher<Scenario, TOut> defaultMatch)
     {
         var oneOf0 = this.As<Corvus.Json.Patch.SpecGenerator.ScenarioWithResult>();
         if (oneOf0.IsValid())

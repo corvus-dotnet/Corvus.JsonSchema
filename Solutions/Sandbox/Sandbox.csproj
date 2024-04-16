@@ -2,7 +2,7 @@
 
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
-		<TargetFrameworks>net481</TargetFrameworks>
+		<TargetFrameworks>net8.0</TargetFrameworks>
 		<LangVersion>Latest</LangVersion>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>

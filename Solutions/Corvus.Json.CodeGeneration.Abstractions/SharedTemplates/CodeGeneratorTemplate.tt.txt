@@ -10,11 +10,11 @@
     // When you add a new code behind file, you will need to add it to the BuildTemplates.cmd file
     // 1. You need to generate the code behind itself e.g.:
     //
-    //   t4 -o Generators/CodeGenerator.Array.Add.cs -c Corvus.Json.CodeGeneration.Generators.CodeGeneratorArrayAdd ./Templates/CodeGenerator.Array.Add.tt
+    //   t4 -l -o Generators/CodeGenerator.Array.Add.cs -c Corvus.Json.CodeGeneration.Generators.CodeGeneratorArrayAdd ./Templates/CodeGenerator.Array.Add.tt
     // 
     // 2. You will also need to generate the supporting partial. This provides the type generation context data from the type builder to the main template. e.g.:
     //
-    //   t4 -o Generators/CodeGenerator.Array.Add.Partial.cs -p=PartialClassName=CodeGeneratorArrayAdd -p"=PartialFileName=CodeGenerator.Array.Add.Partial.cs" ./Templates/CodeGeneratorPartial.tt
+    //   t4 -l -o Generators/CodeGenerator.Array.Add.Partial.cs -p=PartialClassName=CodeGeneratorArrayAdd -p"=PartialFileName=CodeGenerator.Array.Add.Partial.cs" ./Templates/CodeGeneratorPartial.tt
     //
     // You will also need to add it to JsonSchemaBuilder.cs, GenerateFileForType().
     // 1. Instantiate the generator e.g.:

@@ -46,9 +46,9 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     foreach (var anyOf in AnyOf)
     { #>,
 
-        Func<<#= anyOf #>, TIn, TOut> match<#= anyOfItemIndex #><#      anyOfItemIndex++;
+        Matcher<<#= anyOf #>, TIn, TOut> match<#= anyOfItemIndex #><#      anyOfItemIndex++;
     } #>,
-        Func<<#= TypeDeclaration.DotnetTypeName #>, TIn, TOut> defaultMatch)
+        Matcher<<#= TypeDeclaration.DotnetTypeName #>, TIn, TOut> defaultMatch)
     {
 <#  anyOfItemIndex = 0;
     foreach (var anyOf in AnyOf)
@@ -77,9 +77,9 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     public TOut Match<TOut>(<#  anyOfItemIndex = 0;
     foreach (var anyOf in AnyOf)
     { #>
-        Func<<#= anyOf #>, TOut> match<#= anyOfItemIndex #>,<#      anyOfItemIndex++;
+        Matcher<<#= anyOf #>, TOut> match<#= anyOfItemIndex #>,<#      anyOfItemIndex++;
     } #>
-        Func<<#= TypeDeclaration.DotnetTypeName #>, TOut> defaultMatch)
+        Matcher<<#= TypeDeclaration.DotnetTypeName #>, TOut> defaultMatch)
     {
 <#  anyOfItemIndex = 0;
     foreach (var anyOf in AnyOf)

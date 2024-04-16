@@ -94,7 +94,7 @@ public static partial class JsonPatchExtensions
     /// <param name="value">The value to add.</param>
     /// <param name="result">The resulting entity.</param>
     /// <returns><see langword="true"/> if the value was added, otherwise <see langword="false"/>.</returns>
-    public static bool TryAdd<T>(this T node, string path, JsonAny value, out T result)
+    public static bool TryAdd<T>(this T node, string path, in JsonAny value, out T result)
         where T : struct, IJsonValue<T>
     {
         if (path.Length == 0)
@@ -119,7 +119,7 @@ public static partial class JsonPatchExtensions
     /// <param name="value">The value to replace.</param>
     /// <param name="result">The resulting entity.</param>
     /// <returns><see langword="true"/> if the value was replaced, otherwise <see langword="false"/>.</returns>
-    public static bool TryReplace<T>(this T node, string path, JsonAny value, out T result)
+    public static bool TryReplace<T>(this T node, string path, in JsonAny value, out T result)
         where T : struct, IJsonValue<T>
     {
         if (path.Length == 0)
