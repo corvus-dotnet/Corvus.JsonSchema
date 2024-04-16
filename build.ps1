@@ -265,7 +265,7 @@ task RunTests -If {!$SkipTest -and $SolutionToBuild} {
 
         # Generate test report file
         if (!$SkipTestReport) {
-            # _GenerateTestReport
+            _GenerateTestReport
             _GenerateCodeCoverageMarkdownReport
         }
     }

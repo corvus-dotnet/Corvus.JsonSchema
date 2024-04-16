@@ -270,7 +270,7 @@ jobs:
       if: always() && steps.check_coverage.outputs.EXISTS == 'true'
       uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8    # v4.3.0
       with:
-        name: CoverageReport-${{ matrix.os}}
+        name: CoverageReport-${{ matrix.os }}
         path: _codeCoverage
     # NOTE: Won't work on Windows runners, as the action is a Docker container
     # - name: Generate Code Coverage Summary Report
@@ -286,14 +286,14 @@ jobs:
     #     indicators: true
     #     output: both
     #     thresholds: '${{ env.CODE_COVERAGE_LOWER_THRESHOLD }} ${{ env.CODE_COVERAGE_UPPER_THRESHOLD }}'
-    - name: Publish Code Coverage Summary Report
-      # NOTE: Skip this is we're running from a fork, as we won't have permissions to annotate the check run
-      if: always() && steps.check_coverage_summary.outputs.EXISTS == 'true' && github.event.pull_request.head.repo.full_name == github.repository
-      uses: dtinth/markdown-report-action@af8143d37cced4c514fd67539a2e58c2f432da09    # v1.0.0
-      with:
-        name: Code Coverage
-        title: Code Coverage Report
-        body-file: ${{ env.CODE_COVERAGE_SUMMARY_DIR }}/${{ env.CODE_COVERAGE_SUMMARY_FILE }}
+    # - name: Publish Code Coverage Summary Report
+    #   # NOTE: Skip this is we're running from a fork, as we won't have permissions to annotate the check run
+    #   if: always() && steps.check_coverage_summary.outputs.EXISTS == 'true' && github.event.pull_request.head.repo.full_name == github.repository
+    #   uses: dtinth/markdown-report-action@af8143d37cced4c514fd67539a2e58c2f432da09    # v1.0.0
+    #   with:
+    #     name: Code Coverage
+    #     title: Code Coverage Report
+    #     body-file: ${{ env.CODE_COVERAGE_SUMMARY_DIR }}/${{ env.CODE_COVERAGE_SUMMARY_FILE }}
     - name: Add Code Coverage PR comment
       # TODO: Test whether this works when running from a fork?
       if: always() && steps.check_coverage_summary.outputs.EXISTS == 'true' && github.event_name == 'pull_request'
