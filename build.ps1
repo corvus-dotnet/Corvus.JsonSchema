@@ -265,8 +265,15 @@ task RunTests -If {!$SkipTest -and $SolutionToBuild} {
 
         # Generate test report file
         if (!$SkipTestReport) {
+            Write-Host "DEBUG: BEFORE: Show code coverage files:"
+            gci -Path $SourcesDir -Filter "*cobertura*.xml" -Recurse | Out-String | Write-Host
+
             _GenerateTestReport
             _GenerateCodeCoverageMarkdownReport
+
+            Write-Host "DEBUG: AFTER: Show code coverage files:"
+            gci -Path $SourcesDir -Filter "*cobertura*.xml" -Recurse | Out-String | Write-Host
+            gci -Path $SourcesDir -Filter "*coverage*.md" -Recurse | Out-String | Write-Host
         }
     }
 }
