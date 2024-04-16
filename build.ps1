@@ -149,7 +149,9 @@ $NuSpecFilesToPackage = @(
 # - Use file path or directory path with globbing (e.g dir1/*.cs)
 # - Use single or multiple paths (separated by comma) (e.g. **/dir1/class1.cs,**/dir2/*.cs,**/dir3/**/*.cs)
 #
-$ExcludeFilesFromCodeCoverage = "Solutions/**/*.tt,Solutions/**/*.g.cs"
+# NOTE: These exclusions suppress errors from the test report tool caused by a mismatch of relative paths
+#       between the code generation and the test report tooling.
+$ExcludeFilesFromCodeCoverage = "**/*.tt,**/*.g.cs,**/Generators/CodeGenerator.cs,**/Generators/CodeGenerator.Validate.cs"
 
 #
 # Update to the latest report generator versions
