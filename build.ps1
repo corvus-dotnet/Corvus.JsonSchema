@@ -255,10 +255,12 @@ task RunTests -If {!$SkipTest -and $SolutionToBuild} {
     }
 
     # Add coverlet.collector configuration options that must be last on the command line
-    $dotnetTestArgs += @(
-        "--"
-        "DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.ExcludeByFile={0}" -f $ExcludeFilesFromCodeCoverage
-    )
+    if ($ExcludeFilesFromCodeCoverage) {
+        $dotnetTestArgs += @(
+            "--"
+            "DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.ExcludeByFile={0}" -f $ExcludeFilesFromCodeCoverage
+        )    
+    }
     
     Write-Build Magenta "CmdLine: dotnet test $SolutionToBuild $dotnetTestArgs"
 

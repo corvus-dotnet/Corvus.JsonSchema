@@ -307,6 +307,9 @@ jobs:
       with:
         recreate: true
         path: ${{ env.CODE_COVERAGE_SUMMARY_DIR }}/${{ env.CODE_COVERAGE_SUMMARY_FILE }}
+        header: ${{ matrix.os }}-${{ matrix.framework }}
+        message: |
+          Code coverage report for ${{ matrix.os }}-${{ matrix.framework }}:
     # Conditional test result publishing as we can't use the docker version of the action on Windows
     - name: Publish Test Results (Linux)
       uses: EnricoMi/publish-unit-test-result-action/linux@30eadd5010312f995f0d3b3cff7fe2984f69409e   # v2.16.1
