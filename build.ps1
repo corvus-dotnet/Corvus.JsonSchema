@@ -151,7 +151,7 @@ $NuSpecFilesToPackage = @(
 #
 # NOTE: These exclusions suppress errors from the test report tool caused by a mismatch of relative paths
 #       between the code generation and the test report tooling.
-$ExcludeFilesFromCodeCoverage = "**/*.tt,**/*.g.cs,**/Generators/CodeGenerator.cs,**/Generators/CodeGenerator.Validate.cs"
+$ExcludeFilesFromCodeCoverage = ""
 
 #
 # Update to the latest report generator versions
@@ -270,7 +270,7 @@ task RunTests -If {!$SkipTest -and $SolutionToBuild} {
             Write-Host "DEBUG: BEFORE: Show code coverage files:"
             gci -Path $SourcesDir -Filter "*cobertura*.xml" -Recurse | Out-String | Write-Host
 
-            _GenerateTestReport
+            # _GenerateTestReport
             _GenerateCodeCoverageMarkdownReport
 
             Write-Host "DEBUG: AFTER: Show code coverage files:"
