@@ -182,13 +182,6 @@ task PreTest {
         $script:LogLevelBackup = $LogLevel
         $script:LogLevel = "quiet"
     }
-
-    # if ($IsLinux) {
-        $script:AdditionalTestArgs += @("--framework", "net8.0")
-    # }
-
-    Write-Host "DEBUG: Show compiled specs assemblies:"
-    gci Solutions/Corvus.Json.Specs/bin/$Configuration -Filter *.Specs.dll -Recurse | Out-String | Write-Host
 }
 task PostTest {
     # Revert back to original logging level
