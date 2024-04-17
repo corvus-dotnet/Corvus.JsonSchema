@@ -151,7 +151,7 @@ $NuSpecFilesToPackage = @(
 #
 # NOTE: These exclusions suppress errors from the test report tool caused by a mismatch of relative paths
 #       between the code generation and the test report tooling.
-$ExcludeFilesFromCodeCoverage = ""
+$ExcludeFilesFromCodeCoverage = ""  #"**/*.tt,**/*.g.cs,**/Generators/CodeGenerator.cs,**/Generators/CodeGenerator.Validate.cs"
 
 #
 # Update to the latest report generator versions
@@ -183,9 +183,9 @@ task PreTest {
         $script:LogLevel = "quiet"
     }
 
-    if ($IsLinux) {
+    # if ($IsLinux) {
         $script:AdditionalTestArgs += @("--framework", "net8.0")
-    }
+    # }
 
     Write-Host "DEBUG: Show compiled specs assemblies:"
     gci Solutions/Corvus.Json.Specs/bin/$Configuration -Filter *.Specs.dll -Recurse | Out-String | Write-Host
@@ -230,9 +230,10 @@ task RunTests -If {!$SkipTest -and $SolutionToBuild} {
         "--configuration", $Configuration
         "--no-build"
         "--no-restore"
-        '/p:CollectCoverage="{0}"' -f $EnableCoverage
-        "/p:CoverletOutputFormat=cobertura"
-        '/p:ExcludeByFile="{0}"' -f $ExcludeFilesFromCodeCoverage.Replace(",","%2C")
+        '--collect:"XPlat Code Coverage;Format=cobertura"' 
+        # '/p:CollectCoverage="{0}"' -f $EnableCoverage
+        # "/p:CoverletOutputFormat=cobertura"
+        # '/p:ExcludeByFile="{0}"' -f $ExcludeFilesFromCodeCoverage.Replace(",","%2C")
         "--verbosity", $LogLevel
         "--test-adapter-path", "$moduleDir/bin"
         ($DotNetTestFileLoggerProps ? $DotNetTestFileLoggerProps : "/fl")
@@ -252,6 +253,12 @@ task RunTests -If {!$SkipTest -and $SolutionToBuild} {
     if ($AdditionalTestArgs) {
         $dotnetTestArgs += $AdditionalTestArgs
     }
+
+    # Add coverlet.collector configuration options that must be last on the command line
+    $dotnetTestArgs += @(
+        "--"
+        "DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.ExcludeByFile={0}" -f $ExcludeFilesFromCodeCoverage
+    )
     
     Write-Build Magenta "CmdLine: dotnet test $SolutionToBuild $dotnetTestArgs"
 

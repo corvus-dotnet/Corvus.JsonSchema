@@ -184,6 +184,11 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
+        framework: [net8.0, net481]
+        exclude:
+          - os: ubuntu-latest
+            framework: net481
+
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 #v4.1.1
@@ -236,21 +241,22 @@ jobs:
           [
             "trx;LogFilePrefix=test-results_"
           ]
-    - id: check_coverage
-      name: Check Code Coverage Output
-      if: always()
-      run: |
-        # check if the code coverage file exists, but ensure the build doesn't fail if it can't be found
-        try {
-          $coverageFile = Join-Path $env:CODE_COVERAGE_RESULTS_DIR $env:CODE_COVERAGE_RESULTS_FILE
-          Write-Host "Checking for code coverage file: $coverageFile"
-          if (Test-Path $coverageFile) {
-            Write-Host "Code coverage file exists"
-            echo "EXISTS=true" >> $env:GITHUB_OUTPUT
-          }
-        }
-        catch {}
-      shell: pwsh
+        BUILDVAR_AdditionalTestArgs: --framework ${{ matrix.framework }}
+    # - id: check_coverage
+    #   name: Check Code Coverage Output
+    #   if: always()
+    #   run: |
+    #     # check if the code coverage file exists, but ensure the build doesn't fail if it can't be found
+    #     try {
+    #       $coverageFile = Join-Path $env:CODE_COVERAGE_RESULTS_DIR $env:CODE_COVERAGE_RESULTS_FILE
+    #       Write-Host "Checking for code coverage file: $coverageFile"
+    #       if (Test-Path $coverageFile) {
+    #         Write-Host "Code coverage file exists"
+    #         echo "EXISTS=true" >> $env:GITHUB_OUTPUT
+    #       }
+    #     }
+    #     catch {}
+    #   shell: pwsh
     - id: check_coverage_summary
       name: Check Code Coverage Summary Output
       if: always()
@@ -266,12 +272,12 @@ jobs:
         }
         catch {}
       shell: pwsh
-    - name: Store Code Coverage Artefacts
-      if: always() && steps.check_coverage.outputs.EXISTS == 'true'
-      uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8    # v4.3.0
-      with:
-        name: CoverageReport-${{ matrix.os }}
-        path: _codeCoverage
+    # - name: Store Code Coverage Artefacts
+    #   if: always() && steps.check_coverage.outputs.EXISTS == 'true'
+    #   uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8    # v4.3.0
+    #   with:
+    #     name: CoverageReport-${{ matrix.os }}
+    #     path: _codeCoverage
     # NOTE: Won't work on Windows runners, as the action is a Docker container
     # - name: Generate Code Coverage Summary Report
     #   if: always() && steps.check_coverage.outputs.EXISTS == 'true'
