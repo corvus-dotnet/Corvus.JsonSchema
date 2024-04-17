@@ -241,7 +241,11 @@ jobs:
           [
             "trx;LogFilePrefix=test-results_"
           ]
-        BUILDVAR_AdditionalTestArgs: --framework ${{ matrix.framework }}
+        BUILDVAR_AdditionalTestArgs: >
+          [
+            "--framework",
+            "${{ matrix.framework }}"
+          ]
     # - id: check_coverage
     #   name: Check Code Coverage Output
     #   if: always()
