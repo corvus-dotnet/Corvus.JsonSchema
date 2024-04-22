@@ -241,7 +241,7 @@ jobs:
           [
             "trx;LogFilePrefix=test-results_"
           ]
-        BUILDVAR_BuildFrameworkMoniker: ${{ matrix.framework }}
+        BUILDVAR_TargetFrameworkMoniker: ${{ matrix.framework }}
     # - id: check_coverage
     #   name: Check Code Coverage Output
     #   if: always()
