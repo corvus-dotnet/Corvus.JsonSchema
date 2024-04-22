@@ -201,6 +201,7 @@ task RunLast {}
 
 # Override the default testing task so we can optionally override the target framework
 $AdditionalTestArgs = @()
+$TargetFrameworkMoniker = ""
 task RunTests -If {!$SkipTest -and $SolutionToBuild} {
     # Only setup the default CI/CD platform test loggers if they haven't already been customised
     if ($DotNetTestLoggers.Count -eq 0 -and $DotNetTestLogger -eq $_defaultDotNetTestLogger) {
@@ -223,7 +224,7 @@ task RunTests -If {!$SkipTest -and $SolutionToBuild} {
         "--configuration", $Configuration
         "--no-build"
         "--no-restore"
-        '--collect:"XPlat Code Coverage;Format=cobertura"' 
+        # '--collect:"XPlat Code Coverage;Format=cobertura"'
         # '/p:CollectCoverage="{0}"' -f $EnableCoverage
         # "/p:CoverletOutputFormat=cobertura"
         # '/p:ExcludeByFile="{0}"' -f $ExcludeFilesFromCodeCoverage.Replace(",","%2C")
@@ -243,23 +244,35 @@ task RunTests -If {!$SkipTest -and $SolutionToBuild} {
         $dotnetTestArgs += @("--logger", $DotNetTestLogger)
     }
 
+    if ($TargetFrameworkMoniker) {
+        $dotnetTestArgs += @("--framework", $TargetFrameworkMoniker)
+    }
+
     if ($AdditionalTestArgs) {
         $dotnetTestArgs += $AdditionalTestArgs
     }
 
     # Add coverlet.collector configuration options that must be last on the command line
-    if ($ExcludeFilesFromCodeCoverage) {
-        $dotnetTestArgs += @(
-            "--"
-            "DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.ExcludeByFile={0}" -f $ExcludeFilesFromCodeCoverage
-        )    
-    }
+    # if ($ExcludeFilesFromCodeCoverage) {
+    #     $dotnetTestArgs += @(
+    #         "--"
+    #         "DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.ExcludeByFile={0}" -f $ExcludeFilesFromCodeCoverage
+    #     )    
+    # }
     
-    Write-Build Magenta "CmdLine: dotnet test $SolutionToBuild $dotnetTestArgs"
+    
+
+    <#
+    dotnet-coverage collect -o dotnet-collect-coverage.481.cobertura.xml -f cobertura dotnet test ./Solutions/Corvus.JsonSchema.sln --configuration Release --no-build --no-restore --verbosity quiet --% /flp:verbosity=detailed;logfile=dotnet-test.log --logger console;verbosity=quiet --framework net481#>
+    Install-DotNetTool -Name "dotnet-coverage" -Global
+
+    $coverageOutput = "coverage{0}.cobertura.xml" -f ($TargetFrameworkMoniker ? ".$TargetFrameworkMoniker" : "")
+    Write-Build Magenta "CmdLine: dotnet-coverage collect -o $coverageOutput -f cobertura dotnet test $SolutionToBuild $dotnetTestArgs"
 
     try {
         exec { 
-            dotnet test $SolutionToBuild @dotnetTestArgs
+            dotnet-coverage collect -o $coverageOutput -f cobertura dotnet test $SolutionToBuild @dotnetTestArgs
+            # dotnet test $SolutionToBuild @dotnetTestArgs
         }
     }
     finally {
