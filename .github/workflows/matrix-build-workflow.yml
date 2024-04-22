@@ -110,7 +110,7 @@ env:
 jobs:
   compile:
     name: Compile & Analyse
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     outputs:
       semver: ${{ steps.run_compile.outputs.semver }}
       major: ${{ steps.run_compile.outputs.major }}
