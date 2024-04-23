@@ -336,5 +336,14 @@ function _GenerateCodeCoverageMarkdownReport {
                         --output both `
                         --thresholds ("{0} {1}" -f $CodeCoverageLowerThreshold, $CodeCoverageUpperThreshold)
         }
+
+        # Inject a title so we can distinguish between reports across multiple test runs,
+        # when they are published to GitHub as PR comments.
+        $generatedReportPath = Join-Path -Resolve $SourcesDir "code-coverage-results.md"
+        $generatedContent = Get-Content -Raw -Path $generatedReportPath
+        $testRunOs = if ($IsLinux) { "Linux" } elseif ($IsMacOS) { "MacOS" } else { "Windows" }
+        $reportTitle = "# Code Coverage Summary Report - $testRunOs ($TargetFrameworkMoniker)"
+        Write-Build White "Updating generated code coverage report with title: $reportTitle"
+        Set-Content -Path $generatedReportPath -Value ($reportTitle + "`n" + $generatedContent)
     }
 }
