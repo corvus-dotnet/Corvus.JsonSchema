@@ -242,21 +242,6 @@ jobs:
             "trx;LogFilePrefix=test-results_"
           ]
         BUILDVAR_TargetFrameworkMoniker: ${{ matrix.framework }}
-    # - id: check_coverage
-    #   name: Check Code Coverage Output
-    #   if: always()
-    #   run: |
-    #     # check if the code coverage file exists, but ensure the build doesn't fail if it can't be found
-    #     try {
-    #       $coverageFile = Join-Path $env:CODE_COVERAGE_RESULTS_DIR $env:CODE_COVERAGE_RESULTS_FILE
-    #       Write-Host "Checking for code coverage file: $coverageFile"
-    #       if (Test-Path $coverageFile) {
-    #         Write-Host "Code coverage file exists"
-    #         echo "EXISTS=true" >> $env:GITHUB_OUTPUT
-    #       }
-    #     }
-    #     catch {}
-    #   shell: pwsh
     - id: check_coverage_summary
       name: Check Code Coverage Summary Output
       if: always()
@@ -272,34 +257,6 @@ jobs:
         }
         catch {}
       shell: pwsh
-    # - name: Store Code Coverage Artefacts
-    #   if: always() && steps.check_coverage.outputs.EXISTS == 'true'
-    #   uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8    # v4.3.0
-    #   with:
-    #     name: CoverageReport-${{ matrix.os }}
-    #     path: _codeCoverage
-    # NOTE: Won't work on Windows runners, as the action is a Docker container
-    # - name: Generate Code Coverage Summary Report
-    #   if: always() && steps.check_coverage.outputs.EXISTS == 'true'
-    #   uses: irongut/CodeCoverageSummary@51cc3a756ddcd398d447c044c02cb6aa83fdae95    # v1.3.0
-    #   with:
-    #     filename: ${{ env.CODE_COVERAGE_RESULTS_DIR }}/${{ env.CODE_COVERAGE_RESULTS_FILE }}
-    #     badge: true
-    #     fail_below_min: false
-    #     format: markdown
-    #     hide_branch_rate: false
-    #     hide_complexity: false
-    #     indicators: true
-    #     output: both
-    #     thresholds: '${{ env.CODE_COVERAGE_LOWER_THRESHOLD }} ${{ env.CODE_COVERAGE_UPPER_THRESHOLD }}'
-    # - name: Publish Code Coverage Summary Report
-    #   # NOTE: Skip this is we're running from a fork, as we won't have permissions to annotate the check run
-    #   if: always() && steps.check_coverage_summary.outputs.EXISTS == 'true' && github.event.pull_request.head.repo.full_name == github.repository
-    #   uses: dtinth/markdown-report-action@af8143d37cced4c514fd67539a2e58c2f432da09    # v1.0.0
-    #   with:
-    #     name: Code Coverage
-    #     title: Code Coverage Report
-    #     body-file: ${{ env.CODE_COVERAGE_SUMMARY_DIR }}/${{ env.CODE_COVERAGE_SUMMARY_FILE }}
     - name: Add Code Coverage PR comment
       # TODO: Test whether this works when running from a fork?
       if: always() && steps.check_coverage_summary.outputs.EXISTS == 'true' && github.event_name == 'pull_request'

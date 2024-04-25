@@ -151,7 +151,7 @@ $NuSpecFilesToPackage = @(
 #
 # NOTE: These exclusions suppress errors from the test report tool caused by a mismatch of relative paths
 #       between the code generation and the test report tooling.
-$ExcludeFilesFromCodeCoverage = ""  #"**/*.tt,**/*.g.cs,**/Generators/CodeGenerator.cs,**/Generators/CodeGenerator.Validate.cs"
+# $ExcludeFilesFromCodeCoverage = ""
 
 #
 # Update to the latest report generator versions
@@ -177,7 +177,7 @@ task PreBuild {
 }
 task PostBuild {}
 task PreTest {
-    # Blunt attempt to mitigate issues from the huge build logs produced when running the Specs
+    # Turn down logging when running Specs, otherwise it overloads the GitHub Actions web interface
     if ($IsRunningOnBuildServer) {
         $script:LogLevelBackup = $LogLevel
         $script:LogLevel = "quiet"
@@ -217,17 +217,12 @@ task RunTests -If {!$SkipTest -and $SolutionToBuild} {
 
     # Workaround $PSScriptRoot not resolving to the module location, when overridden here
     $moduleDir = Split-Path -Parent (Get-Module Endjin.RecommendedPractices.Build | Select-Object -ExpandProperty Path)
-    Write-Build Magenta "ModuleDir: $moduleDir"
 
     # Setup the arguments we need to pass to 'dotnet test'
     $dotnetTestArgs = @(
         "--configuration", $Configuration
         "--no-build"
         "--no-restore"
-        # '--collect:"XPlat Code Coverage;Format=cobertura"'
-        # '/p:CollectCoverage="{0}"' -f $EnableCoverage
-        # "/p:CoverletOutputFormat=cobertura"
-        # '/p:ExcludeByFile="{0}"' -f $ExcludeFilesFromCodeCoverage.Replace(",","%2C")
         "--verbosity", $LogLevel
         "--test-adapter-path", "$moduleDir/bin"
         ($DotNetTestFileLoggerProps ? $DotNetTestFileLoggerProps : "/fl")
@@ -252,18 +247,7 @@ task RunTests -If {!$SkipTest -and $SolutionToBuild} {
         $dotnetTestArgs += $AdditionalTestArgs
     }
 
-    # Add coverlet.collector configuration options that must be last on the command line
-    # if ($ExcludeFilesFromCodeCoverage) {
-    #     $dotnetTestArgs += @(
-    #         "--"
-    #         "DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.ExcludeByFile={0}" -f $ExcludeFilesFromCodeCoverage
-    #     )    
-    # }
-    
-    
-
-    <#
-    dotnet-coverage collect -o dotnet-collect-coverage.481.cobertura.xml -f cobertura dotnet test ./Solutions/Corvus.JsonSchema.sln --configuration Release --no-build --no-restore --verbosity quiet --% /flp:verbosity=detailed;logfile=dotnet-test.log --logger console;verbosity=quiet --framework net481#>
+    # Install the dotnet-coverage global tool
     Install-DotNetTool -Name "dotnet-coverage" -Global
 
     $coverageOutput = "coverage{0}.cobertura.xml" -f ($TargetFrameworkMoniker ? ".$TargetFrameworkMoniker" : "")
@@ -272,7 +256,6 @@ task RunTests -If {!$SkipTest -and $SolutionToBuild} {
     try {
         exec { 
             dotnet-coverage collect -o $coverageOutput -f cobertura dotnet test $SolutionToBuild @dotnetTestArgs
-            # dotnet test $SolutionToBuild @dotnetTestArgs
         }
     }
     finally {
@@ -282,37 +265,12 @@ task RunTests -If {!$SkipTest -and $SolutionToBuild} {
 
         # Generate test report file
         if (!$SkipTestReport) {
-            Write-Host "DEBUG: BEFORE: Show code coverage files:"
-            gci -Path $SourcesDir -Filter "*cobertura*.xml" -Recurse | Out-String | Write-Host
-
-            # _GenerateTestReport
             _GenerateCodeCoverageMarkdownReport
-
-            Write-Host "DEBUG: AFTER: Show code coverage files:"
-            gci -Path $SourcesDir -Filter "*cobertura*.xml" -Recurse | Out-String | Write-Host
-            gci -Path $SourcesDir -Filter "*coverage*.md" -Recurse | Out-String | Write-Host
         }
     }
 }
 
-# Modified helper to reflect multiple coverage reports (i.e. net8.0 & net481)
-function _GenerateTestReport {
-    Install-DotNetTool -Name "dotnet-reportgenerator-globaltool" -Version $ReportGeneratorToolVersion
-
-    $coverageOutputFileWildcard = "coverage*cobertura.xml"
-    $testReportGlob = "$SourcesDir/**/**/$coverageOutputFileWildcard"
-    if (!(Get-ChildItem -Path $SourceDir -Filter $coverageOutputFileWildcard -Recurse)) {
-        Write-Warning "No code coverage reports found for the file pattern '$testReportGlob' - skipping test report"
-    }
-    else {
-        exec {
-            reportgenerator "-reports:$testReportGlob" `
-                            "-targetdir:$CoverageDir" `
-                            "-reporttypes:$TestReportTypes"
-        }
-    }
-}
-
+# Generate a markdown report from the code coverage files
 $CodeCoverageLowerThreshold = 60
 $CodeCoverageUpperThreshold = 80
 function _GenerateCodeCoverageMarkdownReport {
