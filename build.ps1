@@ -159,6 +159,9 @@ $NuSpecFilesToPackage = @(
 $ReportGeneratorToolVersion = "5.1.10"
 $CovenantVersion = "0.19.0"
 
+$CreateGitHubRelease = $true
+$PublishNuGetPackagesAsGitHubReleaseArtefacts = $true
+
 
 # Synopsis: Build, Test and Package
 task . FullBuild
