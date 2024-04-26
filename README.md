@@ -239,7 +239,7 @@ e.g. Create a JSON schema file called `person-from-api.json`
 Then run the tool to generate C# files for that schema in the JsonSchemaSample.Api namespace, adjacent to that document.
 
 ```
-generatejsonschematypes --rootNamespace JsonSchemaSample.Api --rootPath '#/$defs/Person' person-from-api.json
+generatejsonschematypes --rootNamespace JsonSchemaSample.Api --rootPath #/$defs/Person person-from-api.json
 ```
 
 Compile this code in a project with a reference to the `Corvus.Json.ExtendedTypes` nuget package, and you can then work with the Dotnet type model, and JSON Schema validation e.g.
@@ -317,7 +317,7 @@ Object models for working with JSON Schema documents. *This does not provide val
 
 ### Corvus.Json.CodeGeneration.Abstractions
 
-Common code to assist with building code generators for various flavours of JSON schema. It includes a common data model for asbtracting schema into C# types in the form of a `TypeDeclaration.cs`, a set of T4 templates in `/SharedTemplates/*.tt` for common JSON schema features, and useful `Formatting.cs` utilities.
+Common code to assist with building code generators for various flavours of JSON schema. It includes a common data model for abstracting schema into C# types in the form of a `TypeDeclaration.cs`, a set of T4 templates in `/SharedTemplates/*.tt` for common JSON schema features, and useful `Formatting.cs` utilities.
 
 ### Corvus.CodeGeneration.202012
 ### Corvus.CodeGeneration.201909
@@ -361,7 +361,7 @@ Benchmark suites for various components.
 
 ## V3.0 Updates
 
-The big change with v3.0 is support for older (supported) versions of .NET, including the .NET Framework, through netstandardd2.0.
+The big change with v3.0 is support for older (supported) versions of .NET, including the .NET Framework, through netstandard2.0.
 
 Additional changes include:
 
@@ -393,7 +393,7 @@ The implicit/explicit conversions and operators have been rationalised. More exp
 
 However, most implicit conversions from/to intrinsic types are still supported.
 
-One significant change is that there is *no* implicit conversion to `string` - this must be done explicity, or directly through one of the comparison functions like `EqualsString()` or `EqualsUtf8String()`. This is to prevent a common source of accidental allocations and the corresponding performance hit.
+One significant change is that there is *no* implicit conversion to `string` - this must be done explicitly, or directly through one of the comparison functions like `EqualsString()` or `EqualsUtf8String()`. This is to prevent a common source of accidental allocations and the corresponding performance hit.
 
 ## System.Text.Json support by other projects
 
