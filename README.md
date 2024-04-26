@@ -9,21 +9,51 @@ It now works with **every supported .NET version** by providing netstandard2.0 p
 
 ## Concepts
 
+### Introduction
+
+For a quick introduction, you could read [this blog post by Ian Griffiths (@idg10)](https://endjin.com/blog/2024/04/dotnet-jsonelement-schema), a C# MVP and Technical Fellow at [endjin](https://endjin.com).
+
+There's also [a talk by Ian](https://endjin.com/what-we-think/talks/high-performance-json-serialization-with-code-generation-on-csharp-11-and-dotnet-7-0) on the techniques used in this library.
+
+### History
+
 For a more detailed introduction to the concepts, take a look at [this blog post](https://endjin.com/blog/2021/05/csharp-serialization-with-system-text-json-schema).
 
-There's also [a talk by @idg10](https://endjin.com/what-we-think/talks/high-performance-json-serialization-with-code-generation-on-csharp-11-and-dotnet-7-0) on the techniques used in this library.
-
-What kind of things is Corvus.JsonSchema good for?
+### What kind of things is Corvus.JsonSchema good for?
 
 There are 2 key features: 
 
-### Validation
-
-Corvus.JsonSchema provides ultra-fast, zero/low validation of JSON data against a JSON Schema.
+### Serialization
 
 You use our `generatejsonschematypes` tool to generate code (on Windows, Linux or MacOS) from an existing JSON Schema document, and compile it in a standard dotnet assembly.
 
-You can then form simple flag-based validation:
+The generated code provides object models for JSON Schema documents that give you rich, idiomatic C# types with strongly typed properties, pattern matching and efficient cast operations.
+
+You can operate directly over the JSON data, or mix-and-match building new JSON models from dotnet primitive types.
+
+```csharp
+string jsonText = 
+    """
+    {
+        "name": {
+            "familyName": "Oldroyd",
+            "givenName": "Michael",
+            "otherNames": ["Francis", "James"]
+        },
+        "dateOfBirth": "1944-07-14"
+    }
+    """;
+
+var person = Person.Parse(jsonText);
+
+Console.WriteLine($"{person.Name.FamilyName}"});
+```
+
+### Validation
+
+The same object-model provides ultra-fast, zero/low validation of JSON data against a JSON Schema.
+
+Having "deserialized" (really 'mapped') the JSON into the object model you can make use of the validation:
 
 ```csharp
 string jsonText = 
@@ -55,13 +85,6 @@ if (!result.IsValid)
         Console.WriteLine(error);
 }
 ```
-
-### Serialization
-
-The same generated code provides object models for JSON Schema documents that give you rich, idiomatic C# types with strongly typed properties, pattern matching and efficient cast operations.
-
-You can operate directly over the JSON data, or mix-and-match building new JSON models from dotnet primitive types.
-
 ## Getting started
 
 To get started, install the dotnet global tool.
@@ -336,6 +359,15 @@ Generates Feature Files in `Corvus.Json.Specs` for the JSON Patch tests.
 
 Benchmark suites for various components.
 
+## V3.0 Updates
+
+The big change with v3.0 is support for older (supported) versions of .NET, including the .NET Framework, through netstandardd2.0.
+
+Additional changes include:
+
+    - Pattern matching methods for anyOf, oneOf and enum types.
+    - Implicit cast to bool for boolean types
+    
 ## V2.0 Updates
 
 There have been considerable breaking changes with V2.0 of the generator. This section will help you understand what has changed, and how to update your code.
