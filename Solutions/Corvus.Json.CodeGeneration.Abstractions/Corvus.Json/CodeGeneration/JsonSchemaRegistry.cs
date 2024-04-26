@@ -13,7 +13,7 @@ namespace Corvus.Json.CodeGeneration;
 /// </summary>
 internal class JsonSchemaRegistry
 {
-    private static readonly JsonReference DefaultAbsoluteLocation = new("https://endjin.com/");
+    private static readonly JsonReference DefaultAbsoluteLocation = new("https://endjin.com");
     private readonly Dictionary<string, LocatedSchema> locatedSchema = [];
     private readonly IDocumentResolver documentResolver;
 
