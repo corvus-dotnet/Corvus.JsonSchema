@@ -8,7 +8,6 @@ on:
   pull_request:
     branches:
     - main
-    - feature/netstandard20
   workflow_dispatch:
     inputs:
       forcePublish:
