@@ -22,7 +22,7 @@ on:
         type: boolean
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.sha }}
   cancel-in-progress: true
 
 permissions:
