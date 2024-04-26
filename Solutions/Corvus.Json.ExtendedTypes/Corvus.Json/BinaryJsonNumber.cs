@@ -754,7 +754,7 @@ public readonly struct BinaryJsonNumber :
     /// </summary>
     /// <param name="left">The lhs.</param>
     /// <param name="right">The rhs.</param>
-    /// <returns><see langword="true"/> if the the values are not equal.</returns>
+    /// <returns><see langword="true"/> if the values are not equal.</returns>
     public static bool operator !=(BinaryJsonNumber left, BinaryJsonNumber right)
     {
         return !left.Equals(right);
