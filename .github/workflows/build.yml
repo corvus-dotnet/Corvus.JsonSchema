@@ -8,7 +8,6 @@ on:
   pull_request:
     branches:
     - main
-    - feature/netstandard20
   workflow_dispatch:
     inputs:
       forcePublish:
@@ -23,7 +22,7 @@ on:
         type: boolean
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.sha }}
   cancel-in-progress: true
 
 permissions:
@@ -58,7 +57,7 @@ jobs:
       netSdkVersion: '8.0.x'
       # additionalNetSdkVersion: '7.0.x'
       # workflow_dispatch inputs are always strings, the type property is just for the UI
-      forcePublish: ${{ github.event.inputs.forcePublish == 'true' || github.event_name == 'pull_request' }}
+      forcePublish: ${{ github.event.inputs.forcePublish == 'true' }}
       skipCleanup: ${{ github.event.inputs.skipCleanup == 'true' }}
       # testArtifactName: ''
       # testArtifactPath: ''
