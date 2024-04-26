@@ -28,7 +28,7 @@ public readonly partial struct Schema
         /// <param name = "match0">The function to call if the value matches the <see cref = "Corvus.Json.JsonSchema.Draft6.Schema.SimpleTypes"/> type.</param>
         /// <param name = "match1">The function to call if the value matches the <see cref = "Corvus.Json.JsonSchema.Draft6.Schema.TypeEntity.SimpleTypesArray"/> type.</param>
         /// <param name = "defaultMatch">The fallback match.</param>
-        public TOut Match<TIn, TOut>(in TIn context, Func<Corvus.Json.JsonSchema.Draft6.Schema.SimpleTypes, TIn, TOut> match0, Func<Corvus.Json.JsonSchema.Draft6.Schema.TypeEntity.SimpleTypesArray, TIn, TOut> match1, Func<TypeEntity, TIn, TOut> defaultMatch)
+        public TOut Match<TIn, TOut>(in TIn context, Matcher<Corvus.Json.JsonSchema.Draft6.Schema.SimpleTypes, TIn, TOut> match0, Matcher<Corvus.Json.JsonSchema.Draft6.Schema.TypeEntity.SimpleTypesArray, TIn, TOut> match1, Matcher<TypeEntity, TIn, TOut> defaultMatch)
         {
             var anyOf0 = this.As<Corvus.Json.JsonSchema.Draft6.Schema.SimpleTypes>();
             if (anyOf0.IsValid())
@@ -51,7 +51,7 @@ public readonly partial struct Schema
         /// <param name = "match0">The function to call if the value matches the <see cref = "Corvus.Json.JsonSchema.Draft6.Schema.SimpleTypes"/> type.</param>
         /// <param name = "match1">The function to call if the value matches the <see cref = "Corvus.Json.JsonSchema.Draft6.Schema.TypeEntity.SimpleTypesArray"/> type.</param>
         /// <param name = "defaultMatch">The fallback match.</param>
-        public TOut Match<TOut>(Func<Corvus.Json.JsonSchema.Draft6.Schema.SimpleTypes, TOut> match0, Func<Corvus.Json.JsonSchema.Draft6.Schema.TypeEntity.SimpleTypesArray, TOut> match1, Func<TypeEntity, TOut> defaultMatch)
+        public TOut Match<TOut>(Matcher<Corvus.Json.JsonSchema.Draft6.Schema.SimpleTypes, TOut> match0, Matcher<Corvus.Json.JsonSchema.Draft6.Schema.TypeEntity.SimpleTypesArray, TOut> match1, Matcher<TypeEntity, TOut> defaultMatch)
         {
             var anyOf0 = this.As<Corvus.Json.JsonSchema.Draft6.Schema.SimpleTypes>();
             if (anyOf0.IsValid())

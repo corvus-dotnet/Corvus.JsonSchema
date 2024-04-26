@@ -20,13 +20,17 @@ internal class BinaryJsonNumberComparisonLessThanOrEqualsGreaterThanOrEquals
         new object[] { (sbyte)3, (short)4, Expectation.True },
         new object[] { (sbyte)3, 4, Expectation.True },
         new object[] { (sbyte)3, 4L, Expectation.True },
+#if NET8_0_OR_GREATER
         new object[] { (sbyte)3, new Int128(0, 4), Expectation.True },
+#endif
         new object[] { (sbyte)3, (byte)4, Expectation.True },
         new object[] { (sbyte)3, (ushort)4, Expectation.True },
         new object[] { (sbyte)3, 4U, Expectation.True },
         new object[] { (sbyte)3, 4UL, Expectation.True },
+#if NET8_0_OR_GREATER
         new object[] { (sbyte)3, new UInt128(0, 4), Expectation.True },
         new object[] { (sbyte)3, (Half)4, Expectation.True },
+#endif
         new object[] { (sbyte)3, 4F, Expectation.True },
         new object[] { (sbyte)3, 4M, Expectation.True },
         new object[] { (sbyte)3, 4D, Expectation.True },
@@ -42,13 +46,17 @@ internal class BinaryJsonNumberComparisonLessThanOrEqualsGreaterThanOrEquals
         new object[] { (short)3, (short)4, Expectation.True },
         new object[] { (short)3, 4, Expectation.True },
         new object[] { (short)3, 4L, Expectation.True },
+#if NET8_0_OR_GREATER
         new object[] { (short)3, new Int128(0, 4), Expectation.True },
+#endif
         new object[] { (short)3, (byte)4, Expectation.True },
         new object[] { (short)3, (ushort)4, Expectation.True },
         new object[] { (short)3, 4U, Expectation.True },
         new object[] { (short)3, 4UL, Expectation.True },
+#if NET8_0_OR_GREATER
         new object[] { (short)3, new UInt128(0, 4), Expectation.True },
         new object[] { (short)3, (Half)4, Expectation.True },
+#endif
         new object[] { (short)3, 4F, Expectation.True },
         new object[] { (short)3, 4M, Expectation.True },
         new object[] { (short)3, 4D, Expectation.True },
@@ -64,13 +72,17 @@ internal class BinaryJsonNumberComparisonLessThanOrEqualsGreaterThanOrEquals
         new object[] { 3, (short)4, Expectation.True },
         new object[] { 3, 4, Expectation.True },
         new object[] { 3, 4L, Expectation.True },
+#if NET8_0_OR_GREATER
         new object[] { 3, new Int128(0, 4), Expectation.True },
+#endif
         new object[] { 3, (byte)4, Expectation.True },
         new object[] { 3, (ushort)4, Expectation.True },
         new object[] { 3, 4U, Expectation.True },
         new object[] { 3, 4UL, Expectation.True },
+#if NET8_0_OR_GREATER
         new object[] { 3, new UInt128(0, 4), Expectation.True },
         new object[] { 3, (Half)4, Expectation.True },
+#endif
         new object[] { 3, 4F, Expectation.True },
         new object[] { 3, 4M, Expectation.True },
         new object[] { 3, 4D, Expectation.True },
@@ -86,19 +98,24 @@ internal class BinaryJsonNumberComparisonLessThanOrEqualsGreaterThanOrEquals
         new object[] { 3L, (short)4, Expectation.True },
         new object[] { 3L, 4, Expectation.True },
         new object[] { 3L, 4L, Expectation.True },
+#if NET8_0_OR_GREATER
         new object[] { 3L, new Int128(0, 4), Expectation.True },
+#endif
         new object[] { 3L, (byte)4, Expectation.True },
         new object[] { 3L, (ushort)4, Expectation.True },
         new object[] { 3L, 4U, Expectation.True },
         new object[] { 3L, 4UL, Expectation.True },
+#if NET8_0_OR_GREATER
         new object[] { 3L, new UInt128(0, 4), Expectation.True },
         new object[] { 3L, (Half)4, Expectation.True },
+#endif
         new object[] { 3L, 4F, Expectation.True },
         new object[] { 3L, 4M, Expectation.True },
         new object[] { 3L, 4D, Expectation.True },
         new object[] { 3L, GetJsonElement(4D), Expectation.True },
     ];
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Expectations for Equals.
     /// </summary>
@@ -120,6 +137,7 @@ internal class BinaryJsonNumberComparisonLessThanOrEqualsGreaterThanOrEquals
         new object[] { new Int128(0, 3), 4D, Expectation.True },
         new object[] { new Int128(0, 3), GetJsonElement(4D), Expectation.True },
     ];
+#endif
 
     /// <summary>
     /// Expectations for Equals.
@@ -130,13 +148,17 @@ internal class BinaryJsonNumberComparisonLessThanOrEqualsGreaterThanOrEquals
         new object[] { (byte)3, (short)4, Expectation.True },
         new object[] { (byte)3, 4, Expectation.True },
         new object[] { (byte)3, 4L, Expectation.True },
+#if NET8_0_OR_GREATER
         new object[] { (byte)3, new Int128(0, 4), Expectation.True },
+#endif
         new object[] { (byte)3, (byte)4, Expectation.True },
         new object[] { (byte)3, (ushort)4, Expectation.True },
         new object[] { (byte)3, 4U, Expectation.True },
         new object[] { (byte)3, 4UL, Expectation.True },
+#if NET8_0_OR_GREATER
         new object[] { (byte)3, new UInt128(0, 4), Expectation.True },
         new object[] { (byte)3, (Half)4, Expectation.True },
+#endif
         new object[] { (byte)3, 4F, Expectation.True },
         new object[] { (byte)3, 4M, Expectation.True },
         new object[] { (byte)3, 4D, Expectation.True },
@@ -152,13 +174,17 @@ internal class BinaryJsonNumberComparisonLessThanOrEqualsGreaterThanOrEquals
         new object[] { (ushort)3, (short)4, Expectation.True },
         new object[] { (ushort)3, 4, Expectation.True },
         new object[] { (ushort)3, 4L, Expectation.True },
+#if NET8_0_OR_GREATER
         new object[] { (ushort)3, new Int128(0, 4), Expectation.True },
+#endif
         new object[] { (ushort)3, (byte)4, Expectation.True },
         new object[] { (ushort)3, (ushort)4, Expectation.True },
         new object[] { (ushort)3, 4U, Expectation.True },
         new object[] { (ushort)3, 4UL, Expectation.True },
+#if NET8_0_OR_GREATER
         new object[] { (ushort)3, new UInt128(0, 4), Expectation.True },
         new object[] { (ushort)3, (Half)4, Expectation.True },
+#endif
         new object[] { (ushort)3, 4F, Expectation.True },
         new object[] { (ushort)3, 4M, Expectation.True },
         new object[] { (ushort)3, 4D, Expectation.True },
@@ -174,13 +200,17 @@ internal class BinaryJsonNumberComparisonLessThanOrEqualsGreaterThanOrEquals
         new object[] { 3U, (short)4, Expectation.True },
         new object[] { 3U, 4, Expectation.True },
         new object[] { 3U, 4L, Expectation.True },
+#if NET8_0_OR_GREATER
         new object[] { 3U, new Int128(0, 4), Expectation.True },
+#endif
         new object[] { 3U, (byte)4, Expectation.True },
         new object[] { 3U, (ushort)4, Expectation.True },
         new object[] { 3U, 4U, Expectation.True },
         new object[] { 3U, 4UL, Expectation.True },
+#if NET8_0_OR_GREATER
         new object[] { 3U, new UInt128(0, 4), Expectation.True },
         new object[] { 3U, (Half)4, Expectation.True },
+#endif
         new object[] { 3U, 4F, Expectation.True },
         new object[] { 3U, 4M, Expectation.True },
         new object[] { 3U, 4D, Expectation.True },
@@ -196,19 +226,24 @@ internal class BinaryJsonNumberComparisonLessThanOrEqualsGreaterThanOrEquals
         new object[] { 3UL, (short)4, Expectation.True },
         new object[] { 3UL, 4, Expectation.True },
         new object[] { 3UL, 4L, Expectation.True },
+#if NET8_0_OR_GREATER
         new object[] { 3UL, new Int128(0, 4), Expectation.True },
+#endif
         new object[] { 3UL, (byte)4, Expectation.True },
         new object[] { 3UL, (ushort)4, Expectation.True },
         new object[] { 3UL, 4U, Expectation.True },
         new object[] { 3UL, 4UL, Expectation.True },
+#if NET8_0_OR_GREATER
         new object[] { 3UL, new UInt128(0, 4), Expectation.True },
         new object[] { 3UL, (Half)4, Expectation.True },
+#endif
         new object[] { 3UL, 4F, Expectation.True },
         new object[] { 3UL, 4M, Expectation.True },
         new object[] { 3UL, 4D, Expectation.True },
         new object[] { 3UL, GetJsonElement(4D), Expectation.True },
     ];
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Expectations for Equals.
     /// </summary>
@@ -252,6 +287,7 @@ internal class BinaryJsonNumberComparisonLessThanOrEqualsGreaterThanOrEquals
         new object[] { (Half)3, 4D, Expectation.True },
         new object[] { (Half)3, GetJsonElement(4D), Expectation.True },
     ];
+#endif
 
     /// <summary>
     /// Expectations for Equals.
@@ -262,13 +298,17 @@ internal class BinaryJsonNumberComparisonLessThanOrEqualsGreaterThanOrEquals
         new object[] { 3F, (short)4, Expectation.True },
         new object[] { 3F, 4, Expectation.True },
         new object[] { 3F, 4L, Expectation.True },
+#if NET8_0_OR_GREATER
         new object[] { 3F, new Int128(0, 4), Expectation.True },
+#endif
         new object[] { 3F, (byte)4, Expectation.True },
         new object[] { 3F, (ushort)4, Expectation.True },
         new object[] { 3F, 4U, Expectation.True },
         new object[] { 3F, 4UL, Expectation.True },
+#if NET8_0_OR_GREATER
         new object[] { 3F, new UInt128(0, 4), Expectation.True },
         new object[] { 3F, (Half)4, Expectation.True },
+#endif
         new object[] { 3F, 4F, Expectation.True },
         new object[] { 3F, 4M, Expectation.True },
         new object[] { 3F, 4D, Expectation.True },
@@ -284,13 +324,17 @@ internal class BinaryJsonNumberComparisonLessThanOrEqualsGreaterThanOrEquals
         new object[] { 3M, (short)4, Expectation.True },
         new object[] { 3M, 4, Expectation.True },
         new object[] { 3M, 4L, Expectation.True },
+#if NET8_0_OR_GREATER
         new object[] { 3M, new Int128(0, 4), Expectation.True },
+#endif
         new object[] { 3M, (byte)4, Expectation.True },
         new object[] { 3M, (ushort)4, Expectation.True },
         new object[] { 3M, 4U, Expectation.True },
+#if NET8_0_OR_GREATER
         new object[] { 3M, 4UL, Expectation.True },
         new object[] { 3M, new UInt128(0, 4), Expectation.True },
         new object[] { 3M, (Half)4, Expectation.True },
+#endif
         new object[] { 3M, 4F, Expectation.True },
         new object[] { 3M, 4M, Expectation.True },
         new object[] { 3M, 4D, Expectation.True },
@@ -306,13 +350,17 @@ internal class BinaryJsonNumberComparisonLessThanOrEqualsGreaterThanOrEquals
         new object[] { 3D, (short)4, Expectation.True },
         new object[] { 3D, 4, Expectation.True },
         new object[] { 3D, 4L, Expectation.True },
+#if NET8_0_OR_GREATER
         new object[] { 3D, new Int128(0, 4), Expectation.True },
+#endif
         new object[] { 3D, (byte)4, Expectation.True },
         new object[] { 3D, (ushort)4, Expectation.True },
         new object[] { 3D, 4U, Expectation.True },
         new object[] { 3D, 4UL, Expectation.True },
+#if NET8_0_OR_GREATER
         new object[] { 3D, new UInt128(0, 4), Expectation.True },
         new object[] { 3D, (Half)4, Expectation.True },
+#endif
         new object[] { 3D, 4F, Expectation.True },
         new object[] { 3D, 4M, Expectation.True },
         new object[] { 3D, 4D, Expectation.True },
@@ -328,13 +376,17 @@ internal class BinaryJsonNumberComparisonLessThanOrEqualsGreaterThanOrEquals
         new object[] { (sbyte)4, (short)4, Expectation.True },
         new object[] { (sbyte)4, 4, Expectation.True },
         new object[] { (sbyte)4, 4L, Expectation.True },
+#if NET8_0_OR_GREATER
         new object[] { (sbyte)4, new Int128(0, 4), Expectation.True },
+#endif
         new object[] { (sbyte)4, (byte)4, Expectation.True },
         new object[] { (sbyte)4, (ushort)4, Expectation.True },
         new object[] { (sbyte)4, 4U, Expectation.True },
         new object[] { (sbyte)4, 4UL, Expectation.True },
+#if NET8_0_OR_GREATER
         new object[] { (sbyte)4, new UInt128(0, 4), Expectation.True },
         new object[] { (sbyte)4, (Half)4, Expectation.True },
+#endif
         new object[] { (sbyte)4, 4F, Expectation.True },
         new object[] { (sbyte)4, 4M, Expectation.True },
         new object[] { (sbyte)4, 4D, Expectation.True },
@@ -350,13 +402,17 @@ internal class BinaryJsonNumberComparisonLessThanOrEqualsGreaterThanOrEquals
         new object[] { (short)4, (short)4, Expectation.True },
         new object[] { (short)4, 4, Expectation.True },
         new object[] { (short)4, 4L, Expectation.True },
+#if NET8_0_OR_GREATER
         new object[] { (short)4, new Int128(0, 4), Expectation.True },
+#endif
         new object[] { (short)4, (byte)4, Expectation.True },
         new object[] { (short)4, (ushort)4, Expectation.True },
         new object[] { (short)4, 4U, Expectation.True },
         new object[] { (short)4, 4UL, Expectation.True },
+#if NET8_0_OR_GREATER
         new object[] { (short)4, new UInt128(0, 4), Expectation.True },
         new object[] { (short)4, (Half)4, Expectation.True },
+#endif
         new object[] { (short)4, 4F, Expectation.True },
         new object[] { (short)4, 4M, Expectation.True },
         new object[] { (short)4, 4D, Expectation.True },
@@ -372,13 +428,17 @@ internal class BinaryJsonNumberComparisonLessThanOrEqualsGreaterThanOrEquals
         new object[] { 4, (short)4, Expectation.True },
         new object[] { 4, 4, Expectation.True },
         new object[] { 4, 4L, Expectation.True },
+#if NET8_0_OR_GREATER
         new object[] { 4, new Int128(0, 4), Expectation.True },
+#endif
         new object[] { 4, (byte)4, Expectation.True },
         new object[] { 4, (ushort)4, Expectation.True },
         new object[] { 4, 4U, Expectation.True },
         new object[] { 4, 4UL, Expectation.True },
+#if NET8_0_OR_GREATER
         new object[] { 4, new UInt128(0, 4), Expectation.True },
         new object[] { 4, (Half)4, Expectation.True },
+#endif
         new object[] { 4, 4F, Expectation.True },
         new object[] { 4, 4M, Expectation.True },
         new object[] { 4, 4D, Expectation.True },
@@ -394,18 +454,24 @@ internal class BinaryJsonNumberComparisonLessThanOrEqualsGreaterThanOrEquals
         new object[] { 4L, (short)4, Expectation.True },
         new object[] { 4L, 4, Expectation.True },
         new object[] { 4L, 4L, Expectation.True },
+#if NET8_0_OR_GREATER
         new object[] { 4L, new Int128(0, 4), Expectation.True },
+#endif
         new object[] { 4L, (byte)4, Expectation.True },
         new object[] { 4L, (ushort)4, Expectation.True },
         new object[] { 4L, 4U, Expectation.True },
         new object[] { 4L, 4UL, Expectation.True },
+#if NET8_0_OR_GREATER
         new object[] { 4L, new UInt128(0, 4), Expectation.True },
         new object[] { 4L, (Half)4, Expectation.True },
+#endif
         new object[] { 4L, 4F, Expectation.True },
         new object[] { 4L, 4M, Expectation.True },
         new object[] { 4L, 4D, Expectation.True },
         new object[] { 4L, GetJsonElement(4D), Expectation.True },
     ];
+
+#if NET8_0_OR_GREATER
 
     /// <summary>
     /// Expectations for Equals.
@@ -428,6 +494,7 @@ internal class BinaryJsonNumberComparisonLessThanOrEqualsGreaterThanOrEquals
         new object[] { new Int128(0, 4), 4D, Expectation.True },
         new object[] { new Int128(0, 4), GetJsonElement(4D), Expectation.True },
     ];
+#endif
 
     /// <summary>
     /// Expectations for Equals.
@@ -438,13 +505,17 @@ internal class BinaryJsonNumberComparisonLessThanOrEqualsGreaterThanOrEquals
         new object[] { (byte)4, (short)4, Expectation.True },
         new object[] { (byte)4, 4, Expectation.True },
         new object[] { (byte)4, 4L, Expectation.True },
+#if NET8_0_OR_GREATER
         new object[] { (byte)4, new Int128(0, 4), Expectation.True },
+#endif
         new object[] { (byte)4, (byte)4, Expectation.True },
         new object[] { (byte)4, (ushort)4, Expectation.True },
         new object[] { (byte)4, 4U, Expectation.True },
         new object[] { (byte)4, 4UL, Expectation.True },
+#if NET8_0_OR_GREATER
         new object[] { (byte)4, new UInt128(0, 4), Expectation.True },
         new object[] { (byte)4, (Half)4, Expectation.True },
+#endif
         new object[] { (byte)4, 4F, Expectation.True },
         new object[] { (byte)4, 4M, Expectation.True },
         new object[] { (byte)4, 4D, Expectation.True },
@@ -460,13 +531,17 @@ internal class BinaryJsonNumberComparisonLessThanOrEqualsGreaterThanOrEquals
         new object[] { (ushort)4, (short)4, Expectation.True },
         new object[] { (ushort)4, 4, Expectation.True },
         new object[] { (ushort)4, 4L, Expectation.True },
+#if NET8_0_OR_GREATER
         new object[] { (ushort)4, new Int128(0, 4), Expectation.True },
+#endif
         new object[] { (ushort)4, (byte)4, Expectation.True },
         new object[] { (ushort)4, (ushort)4, Expectation.True },
         new object[] { (ushort)4, 4U, Expectation.True },
         new object[] { (ushort)4, 4UL, Expectation.True },
+#if NET8_0_OR_GREATER
         new object[] { (ushort)4, new UInt128(0, 4), Expectation.True },
         new object[] { (ushort)4, (Half)4, Expectation.True },
+#endif
         new object[] { (ushort)4, 4F, Expectation.True },
         new object[] { (ushort)4, 4M, Expectation.True },
         new object[] { (ushort)4, 4D, Expectation.True },
@@ -482,13 +557,17 @@ internal class BinaryJsonNumberComparisonLessThanOrEqualsGreaterThanOrEquals
         new object[] { 4U, (short)4, Expectation.True },
         new object[] { 4U, 4, Expectation.True },
         new object[] { 4U, 4L, Expectation.True },
+#if NET8_0_OR_GREATER
         new object[] { 4U, new Int128(0, 4), Expectation.True },
+#endif
         new object[] { 4U, (byte)4, Expectation.True },
         new object[] { 4U, (ushort)4, Expectation.True },
         new object[] { 4U, 4U, Expectation.True },
         new object[] { 4U, 4UL, Expectation.True },
+#if NET8_0_OR_GREATER
         new object[] { 4U, new UInt128(0, 4), Expectation.True },
         new object[] { 4U, (Half)4, Expectation.True },
+#endif
         new object[] { 4U, 4F, Expectation.True },
         new object[] { 4U, 4M, Expectation.True },
         new object[] { 4U, 4D, Expectation.True },
@@ -504,19 +583,24 @@ internal class BinaryJsonNumberComparisonLessThanOrEqualsGreaterThanOrEquals
         new object[] { 4UL, (short)4, Expectation.True },
         new object[] { 4UL, 4, Expectation.True },
         new object[] { 4UL, 4L, Expectation.True },
+#if NET8_0_OR_GREATER
         new object[] { 4UL, new Int128(0, 4), Expectation.True },
+#endif
         new object[] { 4UL, (byte)4, Expectation.True },
         new object[] { 4UL, (ushort)4, Expectation.True },
         new object[] { 4UL, 4U, Expectation.True },
         new object[] { 4UL, 4UL, Expectation.True },
+#if NET8_0_OR_GREATER
         new object[] { 4UL, new UInt128(0, 4), Expectation.True },
         new object[] { 4UL, (Half)4, Expectation.True },
+#endif
         new object[] { 4UL, 4F, Expectation.True },
         new object[] { 4UL, 4M, Expectation.True },
         new object[] { 4UL, 4D, Expectation.True },
         new object[] { 4UL, GetJsonElement(4D), Expectation.True },
     ];
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Expectations for Equals.
     /// </summary>
@@ -560,6 +644,7 @@ internal class BinaryJsonNumberComparisonLessThanOrEqualsGreaterThanOrEquals
         new object[] { (Half)4, 4D, Expectation.True },
         new object[] { (Half)4, GetJsonElement(4D), Expectation.True },
     ];
+#endif
 
     /// <summary>
     /// Expectations for Equals.
@@ -570,13 +655,17 @@ internal class BinaryJsonNumberComparisonLessThanOrEqualsGreaterThanOrEquals
         new object[] { 4F, (short)4, Expectation.True },
         new object[] { 4F, 4, Expectation.True },
         new object[] { 4F, 4L, Expectation.True },
+#if NET8_0_OR_GREATER
         new object[] { 4F, new Int128(0, 4), Expectation.True },
+#endif
         new object[] { 4F, (byte)4, Expectation.True },
         new object[] { 4F, (ushort)4, Expectation.True },
         new object[] { 4F, 4U, Expectation.True },
         new object[] { 4F, 4UL, Expectation.True },
+#if NET8_0_OR_GREATER
         new object[] { 4F, new UInt128(0, 4), Expectation.True },
         new object[] { 4F, (Half)4, Expectation.True },
+#endif
         new object[] { 4F, 4F, Expectation.True },
         new object[] { 4F, 4M, Expectation.True },
         new object[] { 4F, 4D, Expectation.True },
@@ -592,13 +681,17 @@ internal class BinaryJsonNumberComparisonLessThanOrEqualsGreaterThanOrEquals
         new object[] { 4M, (short)4, Expectation.True },
         new object[] { 4M, 4, Expectation.True },
         new object[] { 4M, 4L, Expectation.True },
+#if NET8_0_OR_GREATER
         new object[] { 4M, new Int128(0, 4), Expectation.True },
-        new object[] { 4M, (byte)4, Expectation.True },
+#endif
+         new object[] { 4M, (byte)4, Expectation.True },
         new object[] { 4M, (ushort)4, Expectation.True },
         new object[] { 4M, 4U, Expectation.True },
         new object[] { 4M, 4UL, Expectation.True },
+#if NET8_0_OR_GREATER
         new object[] { 4M, new UInt128(0, 4), Expectation.True },
         new object[] { 4M, (Half)4, Expectation.True },
+#endif
         new object[] { 4M, 4F, Expectation.True },
         new object[] { 4M, 4M, Expectation.True },
         new object[] { 4M, 4D, Expectation.True },
@@ -614,13 +707,17 @@ internal class BinaryJsonNumberComparisonLessThanOrEqualsGreaterThanOrEquals
         new object[] { 4D, (short)4, Expectation.True },
         new object[] { 4D, 4, Expectation.True },
         new object[] { 4D, 4L, Expectation.True },
+#if NET8_0_OR_GREATER
         new object[] { 4D, new Int128(0, 4), Expectation.True },
+#endif
         new object[] { 4D, (byte)4, Expectation.True },
         new object[] { 4D, (ushort)4, Expectation.True },
         new object[] { 4D, 4U, Expectation.True },
         new object[] { 4D, 4UL, Expectation.True },
+#if NET8_0_OR_GREATER
         new object[] { 4D, new UInt128(0, 4), Expectation.True },
         new object[] { 4D, (Half)4, Expectation.True },
+#endif
         new object[] { 4D, 4F, Expectation.True },
         new object[] { 4D, 4M, Expectation.True },
         new object[] { 4D, 4D, Expectation.True },
@@ -652,13 +749,17 @@ internal class BinaryJsonNumberComparisonLessThanOrEqualsGreaterThanOrEquals
     [TestCaseSource(nameof(LessThanExpectationsInt16))]
     [TestCaseSource(nameof(LessThanExpectationsInt32))]
     [TestCaseSource(nameof(LessThanExpectationsInt64))]
+#if NET8_0_OR_GREATER
     [TestCaseSource(nameof(LessThanExpectationsInt128))]
+#endif
     [TestCaseSource(nameof(LessThanExpectationsByte))]
     [TestCaseSource(nameof(LessThanExpectationsUInt16))]
     [TestCaseSource(nameof(LessThanExpectationsUInt32))]
     [TestCaseSource(nameof(LessThanExpectationsUInt64))]
+#if NET8_0_OR_GREATER
     [TestCaseSource(nameof(LessThanExpectationsUInt128))]
     [TestCaseSource(nameof(LessThanExpectationsHalf))]
+#endif
     [TestCaseSource(nameof(LessThanExpectationsSingle))]
     [TestCaseSource(nameof(LessThanExpectationsDecimal))]
     [TestCaseSource(nameof(LessThanExpectationsDouble))]
@@ -716,13 +817,17 @@ internal class BinaryJsonNumberComparisonLessThanOrEqualsGreaterThanOrEquals
     [TestCaseSource(nameof(EqualsExpectationsInt16))]
     [TestCaseSource(nameof(EqualsExpectationsInt32))]
     [TestCaseSource(nameof(EqualsExpectationsInt64))]
+#if NET8_0_OR_GREATER
     [TestCaseSource(nameof(EqualsExpectationsInt128))]
+#endif
     [TestCaseSource(nameof(EqualsExpectationsByte))]
     [TestCaseSource(nameof(EqualsExpectationsUInt16))]
     [TestCaseSource(nameof(EqualsExpectationsUInt32))]
     [TestCaseSource(nameof(EqualsExpectationsUInt64))]
+#if NET8_0_OR_GREATER
     [TestCaseSource(nameof(EqualsExpectationsUInt128))]
     [TestCaseSource(nameof(EqualsExpectationsHalf))]
+#endif
     [TestCaseSource(nameof(EqualsExpectationsSingle))]
     [TestCaseSource(nameof(EqualsExpectationsDecimal))]
     [TestCaseSource(nameof(EqualsExpectationsDouble))]
@@ -798,11 +903,12 @@ internal class BinaryJsonNumberComparisonLessThanOrEqualsGreaterThanOrEquals
             return new(int64);
         }
 
+#if NET8_0_OR_GREATER
         if (value is Int128 int128)
         {
             return new(int128);
         }
-
+#endif
         if (value is byte b)
         {
             return new(b);
@@ -823,6 +929,7 @@ internal class BinaryJsonNumberComparisonLessThanOrEqualsGreaterThanOrEquals
             return new(uint64);
         }
 
+#if NET8_0_OR_GREATER
         if (value is UInt128 uint128)
         {
             return new(uint128);
@@ -832,7 +939,7 @@ internal class BinaryJsonNumberComparisonLessThanOrEqualsGreaterThanOrEquals
         {
             return new(half);
         }
-
+#endif
         if (value is float singleValue)
         {
             return new(singleValue);
@@ -852,24 +959,6 @@ internal class BinaryJsonNumberComparisonLessThanOrEqualsGreaterThanOrEquals
     }
 
     private static JsonElement GetJsonElement(double v)
-    {
-        using var doc = JsonDocument.Parse(v.ToString());
-        return doc.RootElement.Clone();
-    }
-
-    private static JsonElement GetJsonElement(float v)
-    {
-        using var doc = JsonDocument.Parse(v.ToString());
-        return doc.RootElement.Clone();
-    }
-
-    private static JsonElement GetJsonElement(decimal v)
-    {
-        using var doc = JsonDocument.Parse(v.ToString());
-        return doc.RootElement.Clone();
-    }
-
-    private static JsonElement GetJsonElement(int v)
     {
         using var doc = JsonDocument.Parse(v.ToString());
         return doc.RootElement.Clone();

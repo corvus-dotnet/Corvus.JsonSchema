@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
 using System.Text;
 using System.Text.Json;
 using Corvus.Json.Internal;
@@ -21,7 +22,20 @@ public readonly partial struct JsonBase64StringPre201909
     /// <remarks>This encodes the byte array as a base 64 string.</remarks>
     public static JsonBase64StringPre201909 FromByteArray(ReadOnlySpan<byte> value)
     {
+#if NET8_0_OR_GREATER
         return new JsonBase64StringPre201909(Encoding.UTF8.GetString(value));
+#else
+        byte[] bytes = ArrayPool<byte>.Shared.Rent(value.Length);
+        try
+        {
+            value.CopyTo(bytes);
+            return new JsonBase64StringPre201909(Encoding.UTF8.GetString(bytes));
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(bytes);
+        }
+#endif
     }
 
     /// <summary>
@@ -32,7 +46,11 @@ public readonly partial struct JsonBase64StringPre201909
     {
         if ((this.backing & Backing.String) != 0)
         {
+#if NET8_0_OR_GREATER
             return this.stringBacking;
+#else
+            return this.stringBacking.AsSpan();
+#endif
         }
         else if (this.ValueKind == JsonValueKind.String)
         {
@@ -42,7 +60,11 @@ public readonly partial struct JsonBase64StringPre201909
                 throw new InvalidOperationException();
             }
 
+#if NET8_0_OR_GREATER
             return result;
+#else
+            return result.AsSpan();
+#endif
         }
 
         throw new InvalidOperationException();
@@ -56,6 +78,7 @@ public readonly partial struct JsonBase64StringPre201909
     {
         if ((this.backing & Backing.String) != 0)
         {
+#if NET8_0_OR_GREATER
             Span<byte> decoded = new byte[this.stringBacking.Length];
             if (!Convert.TryFromBase64String(this.stringBacking, decoded, out int bytesWritten))
             {
@@ -63,6 +86,9 @@ public readonly partial struct JsonBase64StringPre201909
             }
 
             return decoded[..bytesWritten];
+#else
+            return Convert.FromBase64String(this.stringBacking).AsSpan();
+#endif
         }
 
         if (this.jsonElementBacking.ValueKind == JsonValueKind.String)
@@ -84,8 +110,20 @@ public readonly partial struct JsonBase64StringPre201909
     {
         if ((this.backing & Backing.String) != 0)
         {
+#if NET8_0_OR_GREATER
             Span<byte> decoded = stackalloc byte[this.stringBacking.Length];
             return Convert.TryFromBase64String(this.stringBacking, decoded, out _);
+#else
+            try
+            {
+                Convert.FromBase64String(this.stringBacking);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+#endif
         }
 
         if (this.jsonElementBacking.ValueKind == JsonValueKind.String)

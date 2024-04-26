@@ -24,7 +24,11 @@ public class JsonValueConverter<T> : System.Text.Json.Serialization.JsonConverte
             throw new InvalidOperationException($"Deserialization of IJsonValue is not advised. Prefer constructing from a JsonDocument instance to avoid managed allocations. If you require support for integration purposes, enable this with {nameof(JsonValueConverter.EnableInefficientDeserializationSupport)}.");
         }
 
+#if NET8_0_OR_GREATER
         return T.FromJson(JsonElement.ParseValue(ref reader));
+#else
+        return JsonValueNetStandard20Extensions.FromJsonElement<T>(JsonElement.ParseValue(ref reader));
+#endif
     }
 
     /// <inheritdoc/>

@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System;
 using System.Buffers;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
@@ -13,9 +14,13 @@ namespace Corvus.Json;
 /// Represents a JSON number.
 /// </summary>
 public readonly partial struct JsonNumber :
+#if NET8_0_OR_GREATER
     IJsonNumber<JsonNumber>,
     ISpanFormattable,
     IUtf8SpanFormattable
+#else
+    IJsonNumber<JsonNumber>
+#endif
 {
     private readonly Backing backing;
     private readonly JsonElement jsonElementBacking;
@@ -358,6 +363,7 @@ public readonly partial struct JsonNumber :
         return new(value);
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Gets an instance of the JSON value from a string value.
     /// </summary>
@@ -393,6 +399,7 @@ public readonly partial struct JsonNumber :
 
         return Undefined;
     }
+#endif
 
     /// <summary>
     /// Gets an instance of the JSON value from a double value.
@@ -417,6 +424,7 @@ public readonly partial struct JsonNumber :
         return Undefined;
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Gets an instance of the JSON value from an array value.
     /// </summary>
@@ -452,6 +460,7 @@ public readonly partial struct JsonNumber :
 
         return Undefined;
     }
+#endif
 
     /// <summary>
     /// Parses a JSON string into a JsonNumber.
@@ -518,9 +527,27 @@ public readonly partial struct JsonNumber :
     /// </summary>
     /// <param name="buffer">The buffer from which to parse the value.</param>
     /// <returns>The parsed value.</returns>
+    public static JsonNumber ParseValue(string buffer)
+    {
+#if NET8_0_OR_GREATER
+        return IJsonValue<JsonNumber>.ParseValue(buffer);
+#else
+        return JsonValueHelpers.ParseValue<JsonNumber>(buffer.AsSpan());
+#endif
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
     public static JsonNumber ParseValue(ReadOnlySpan<char> buffer)
     {
+#if NET8_0_OR_GREATER
         return IJsonValue<JsonNumber>.ParseValue(buffer);
+#else
+        return JsonValueHelpers.ParseValue<JsonNumber>(buffer);
+#endif
     }
 
     /// <summary>
@@ -530,7 +557,11 @@ public readonly partial struct JsonNumber :
     /// <returns>The parsed value.</returns>
     public static JsonNumber ParseValue(ReadOnlySpan<byte> buffer)
     {
+#if NET8_0_OR_GREATER
         return IJsonValue<JsonNumber>.ParseValue(buffer);
+#else
+        return JsonValueHelpers.ParseValue<JsonNumber>(buffer);
+#endif
     }
 
     /// <summary>
@@ -540,7 +571,11 @@ public readonly partial struct JsonNumber :
     /// <returns>The parsed value.</returns>
     public static JsonNumber ParseValue(ref Utf8JsonReader reader)
     {
+#if NET8_0_OR_GREATER
         return IJsonValue<JsonNumber>.ParseValue(ref reader);
+#else
+        return JsonValueHelpers.ParseValue<JsonNumber>(ref reader);
+#endif
     }
 
     /// <summary>
@@ -564,6 +599,7 @@ public readonly partial struct JsonNumber :
     public TTarget As<TTarget>()
         where TTarget : struct, IJsonValue<TTarget>
     {
+#if NET8_0_OR_GREATER
         if ((this.backing & Backing.JsonElement) != 0)
         {
             return TTarget.FromJson(this.jsonElementBacking);
@@ -580,6 +616,9 @@ public readonly partial struct JsonNumber :
         }
 
         return TTarget.Undefined;
+#else
+        return this.As<JsonNumber, TTarget>();
+#endif
     }
 
     /// <inheritdoc/>
@@ -708,6 +747,7 @@ public readonly partial struct JsonNumber :
         throw new InvalidOperationException();
     }
 
+#if NET8_0_OR_GREATER
     /// <inheritdoc/>
     public bool TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
     {
@@ -782,4 +822,5 @@ public readonly partial struct JsonNumber :
 
         throw new InvalidOperationException();
     }
+#endif
 }

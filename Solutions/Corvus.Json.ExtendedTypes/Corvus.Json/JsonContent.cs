@@ -45,6 +45,7 @@ public readonly partial struct JsonContent
 #pragma warning disable RCS1075 // Avoid empty catch clause that catches System.Exception.
             try
             {
+#if NET8_0_OR_GREATER
                 byte[]? rentedFromPool = null;
                 int required = Encoding.UTF8.GetMaxByteCount(this.stringBacking.Length);
                 Span<byte> utf8SourceBuffer =
@@ -76,6 +77,33 @@ public readonly partial struct JsonContent
                         ArrayPool<byte>.Shared.Return(rentedFromPool, true);
                     }
                 }
+#else
+                int required = Encoding.UTF8.GetMaxByteCount(this.stringBacking.Length);
+                byte[] utf8SourceBuffer = ArrayPool<byte>.Shared.Rent(required);
+
+                try
+                {
+                    int written = Encoding.UTF8.GetBytes(this.stringBacking, 0, this.stringBacking.Length, utf8SourceBuffer, 0);
+                    ReadOnlySpan<byte> utf8Source = utf8SourceBuffer.AsSpan(0, written);
+
+                    int idx = utf8Source.IndexOf(JsonConstants.BackSlash);
+
+                    if (idx >= 0)
+                    {
+                        written = JsonReaderHelper.GetUnescapedArrayInPlace(utf8SourceBuffer, written, idx);
+                    }
+
+                    var reader2 = new Utf8JsonReader(utf8SourceBuffer.AsSpan(0, written));
+                    if (JsonDocument.TryParseValue(ref reader2, out result))
+                    {
+                        return EncodedContentMediaTypeParseStatus.Success;
+                    }
+                }
+                finally
+                {
+                    ArrayPool<byte>.Shared.Return(utf8SourceBuffer, true);
+                }
+#endif
             }
             catch (Exception)
             {
@@ -92,6 +120,7 @@ public readonly partial struct JsonContent
 #pragma warning disable RCS1075 // Avoid empty catch clause that catches System.Exception.
             try
             {
+#if NET8_0_OR_GREATER
                 string sourceString = this.jsonElementBacking.GetString()!;
                 byte[]? rentedFromPool = null;
                 int required = Encoding.UTF8.GetMaxByteCount(sourceString.Length);
@@ -124,6 +153,34 @@ public readonly partial struct JsonContent
                         ArrayPool<byte>.Shared.Return(rentedFromPool, true);
                     }
                 }
+#else
+                string sourceString = this.jsonElementBacking.GetString()!;
+                int required = Encoding.UTF8.GetMaxByteCount(sourceString.Length);
+                byte[] utf8SourceBuffer = ArrayPool<byte>.Shared.Rent(required);
+
+                try
+                {
+                    int written = Encoding.UTF8.GetBytes(sourceString, 0, sourceString.Length, utf8SourceBuffer, 0);
+                    ReadOnlySpan<byte> utf8Source = utf8SourceBuffer.AsSpan(0, written);
+
+                    int idx = utf8Source.IndexOf(JsonConstants.BackSlash);
+
+                    if (idx >= 0)
+                    {
+                        written = JsonReaderHelper.GetUnescapedArrayInPlace(utf8SourceBuffer, written, idx);
+                    }
+
+                    var reader2 = new Utf8JsonReader(utf8SourceBuffer.AsSpan(0, written));
+                    if (JsonDocument.TryParseValue(ref reader2, out result))
+                    {
+                        return EncodedContentMediaTypeParseStatus.Success;
+                    }
+                }
+                finally
+                {
+                    ArrayPool<byte>.Shared.Return(utf8SourceBuffer, true);
+                }
+#endif
             }
             catch (Exception)
             {
@@ -149,6 +206,7 @@ public readonly partial struct JsonContent
         if ((this.backing & Backing.String) != 0)
         {
             string sourceString = this.stringBacking;
+#if NET8_0_OR_GREATER
             byte[]? rentedFromPool = null;
             int required = Encoding.UTF8.GetMaxByteCount(sourceString.Length);
             Span<byte> utf8SourceBuffer =
@@ -177,6 +235,31 @@ public readonly partial struct JsonContent
                     ArrayPool<byte>.Shared.Return(rentedFromPool, true);
                 }
             }
+#else
+            int required = Encoding.UTF8.GetMaxByteCount(sourceString.Length);
+
+            byte[] utf8SourceBuffer = ArrayPool<byte>.Shared.Rent(required);
+
+            try
+            {
+                int written = Encoding.UTF8.GetBytes(sourceString, 0, sourceString.Length, utf8SourceBuffer, 0);
+                ReadOnlySpan<byte> utf8Source = utf8SourceBuffer.AsSpan(0, written);
+
+                int idx = utf8Source.IndexOf(JsonConstants.BackSlash);
+
+                if (idx >= 0)
+                {
+                    written = JsonReaderHelper.GetUnescapedArrayInPlace(utf8SourceBuffer, written, idx);
+                }
+
+                result = Encoding.UTF8.GetString(utf8SourceBuffer, 0, written);
+                return true;
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(utf8SourceBuffer, true);
+            }
+#endif
         }
 
         if (this.jsonElementBacking.ValueKind == JsonValueKind.String)
@@ -201,6 +284,7 @@ public readonly partial struct JsonContent
     {
         if ((this.backing & Backing.String) != 0)
         {
+#if NET8_0_OR_GREATER
             string sourceString = this.stringBacking;
             byte[]? rentedFromPool = null;
             int required = Encoding.UTF8.GetMaxByteCount(sourceString.Length);
@@ -231,6 +315,30 @@ public readonly partial struct JsonContent
                     ArrayPool<byte>.Shared.Return(rentedFromPool, true);
                 }
             }
+#else
+            string sourceString = this.stringBacking;
+            int required = Encoding.UTF8.GetMaxByteCount(sourceString.Length);
+            byte[]? utf8SourceBuffer = ArrayPool<byte>.Shared.Rent(required);
+
+            try
+            {
+                int written = Encoding.UTF8.GetBytes(sourceString, 0, sourceString.Length, utf8SourceBuffer, 0);
+                ReadOnlySpan<byte> utf8Source = utf8SourceBuffer.AsSpan(0, written);
+
+                int idx = utf8Source.IndexOf(JsonConstants.BackSlash);
+
+                if (idx >= 0)
+                {
+                    written = JsonReaderHelper.GetUnescapedArrayInPlace(utf8SourceBuffer, written, idx);
+                }
+
+                return Encoding.UTF8.GetChars(utf8SourceBuffer, 0, written);
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(utf8SourceBuffer, true);
+            }
+#endif
         }
 
         if (this.jsonElementBacking.ValueKind == JsonValueKind.String)

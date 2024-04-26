@@ -44,7 +44,13 @@ public class FakeWebDocumentResolver : IDocumentResolver
     {
         this.CheckDisposed();
 
-        return this.documents.TryAdd(uri, document);
+        if (!this.documents.ContainsKey(uri))
+        {
+            this.documents.Add(uri, document);
+            return true;
+        }
+
+        return false;
     }
 
     /// <inheritdoc/>
@@ -99,12 +105,7 @@ public class FakeWebDocumentResolver : IDocumentResolver
         {
             JsonReferenceBuilder builder = reference.AsBuilder();
 
-            if (!builder.Host.SequenceEqual("localhost".AsSpan()) || !builder.Port.SequenceEqual("1234".AsSpan()))
-            {
-                return false;
-            }
-
-            return true;
+            return builder.Host.SequenceEqual("localhost".AsSpan()) && builder.Port.SequenceEqual("1234".AsSpan());
         }
 
         string GetPath(JsonReference reference)

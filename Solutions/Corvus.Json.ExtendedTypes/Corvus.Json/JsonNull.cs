@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System;
 using System.Buffers;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
@@ -408,9 +409,23 @@ public readonly partial struct JsonNull : IJsonValue<JsonNull>
     /// </summary>
     /// <param name="buffer">The buffer from which to parse the value.</param>
     /// <returns>The parsed value.</returns>
+    public static JsonNull ParseValue(string buffer)
+    {
+        return ParseValue(buffer.AsSpan());
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
     public static JsonNull ParseValue(ReadOnlySpan<char> buffer)
     {
+#if NET8_0_OR_GREATER
         return IJsonValue<JsonNull>.ParseValue(buffer);
+#else
+        return JsonValueHelpers.ParseValue<JsonNull>(buffer);
+#endif
     }
 
     /// <summary>
@@ -420,7 +435,11 @@ public readonly partial struct JsonNull : IJsonValue<JsonNull>
     /// <returns>The parsed value.</returns>
     public static JsonNull ParseValue(ReadOnlySpan<byte> buffer)
     {
+#if NET8_0_OR_GREATER
         return IJsonValue<JsonNull>.ParseValue(buffer);
+#else
+        return JsonValueHelpers.ParseValue<JsonNull>(buffer);
+#endif
     }
 
     /// <summary>
@@ -430,7 +449,11 @@ public readonly partial struct JsonNull : IJsonValue<JsonNull>
     /// <returns>The parsed value.</returns>
     public static JsonNull ParseValue(ref Utf8JsonReader reader)
     {
+#if NET8_0_OR_GREATER
         return IJsonValue<JsonNull>.ParseValue(ref reader);
+#else
+        return JsonValueHelpers.ParseValue<JsonNull>(ref reader);
+#endif
     }
 
     /// <summary>
@@ -442,6 +465,7 @@ public readonly partial struct JsonNull : IJsonValue<JsonNull>
     public TTarget As<TTarget>()
         where TTarget : struct, IJsonValue<TTarget>
     {
+#if NET8_0_OR_GREATER
         if ((this.backing & Backing.JsonElement) != 0)
         {
             return TTarget.FromJson(this.jsonElementBacking);
@@ -453,6 +477,9 @@ public readonly partial struct JsonNull : IJsonValue<JsonNull>
         }
 
         return TTarget.Undefined;
+#else
+        return this.As<JsonNull, TTarget>();
+#endif
     }
 
     /// <inheritdoc/>

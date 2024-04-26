@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System;
 using System.Buffers;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
@@ -256,6 +257,7 @@ public readonly partial struct JsonObject : IJsonObject<JsonObject>
         return new(value);
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Gets an instance of the JSON value from a string value.
     /// </summary>
@@ -327,6 +329,7 @@ public readonly partial struct JsonObject : IJsonObject<JsonObject>
 
         return Undefined;
     }
+#endif
 
     /// <summary>
     /// Gets an instance of the JSON value from an object value.
@@ -417,9 +420,27 @@ public readonly partial struct JsonObject : IJsonObject<JsonObject>
     /// </summary>
     /// <param name="buffer">The buffer from which to parse the value.</param>
     /// <returns>The parsed value.</returns>
+    public static JsonObject ParseValue(string buffer)
+    {
+#if NET8_0_OR_GREATER
+        return IJsonValue<JsonObject>.ParseValue(buffer);
+#else
+        return JsonValueHelpers.ParseValue<JsonObject>(buffer.AsSpan());
+#endif
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
     public static JsonObject ParseValue(ReadOnlySpan<char> buffer)
     {
+#if NET8_0_OR_GREATER
         return IJsonValue<JsonObject>.ParseValue(buffer);
+#else
+        return JsonValueHelpers.ParseValue<JsonObject>(buffer);
+#endif
     }
 
     /// <summary>
@@ -429,7 +450,11 @@ public readonly partial struct JsonObject : IJsonObject<JsonObject>
     /// <returns>The parsed value.</returns>
     public static JsonObject ParseValue(ReadOnlySpan<byte> buffer)
     {
+#if NET8_0_OR_GREATER
         return IJsonValue<JsonObject>.ParseValue(buffer);
+#else
+        return JsonValueHelpers.ParseValue<JsonObject>(buffer);
+#endif
     }
 
     /// <summary>
@@ -439,7 +464,11 @@ public readonly partial struct JsonObject : IJsonObject<JsonObject>
     /// <returns>The parsed value.</returns>
     public static JsonObject ParseValue(ref Utf8JsonReader reader)
     {
+#if NET8_0_OR_GREATER
         return IJsonValue<JsonObject>.ParseValue(ref reader);
+#else
+        return JsonValueHelpers.ParseValue<JsonObject>(ref reader);
+#endif
     }
 
     /// <summary>
@@ -451,6 +480,7 @@ public readonly partial struct JsonObject : IJsonObject<JsonObject>
     public TTarget As<TTarget>()
         where TTarget : struct, IJsonValue<TTarget>
     {
+#if NET8_0_OR_GREATER
         if ((this.backing & Backing.JsonElement) != 0)
         {
             return TTarget.FromJson(this.jsonElementBacking);
@@ -467,6 +497,9 @@ public readonly partial struct JsonObject : IJsonObject<JsonObject>
         }
 
         return TTarget.Undefined;
+#else
+        return this.As<JsonObject, TTarget>();
+#endif
     }
 
     /// <inheritdoc/>

@@ -13,6 +13,7 @@ namespace Corvus.Json;
 public interface IJsonBoolean<T> : IJsonValue<T>
     where T : struct, IJsonBoolean<T>
 {
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion from bool.
     /// </summary>
@@ -24,7 +25,8 @@ public interface IJsonBoolean<T> : IJsonValue<T>
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
     /// <exception cref="InvalidOperationException">The value was not a string.</exception>
-    static abstract explicit operator bool(T value);
+    static abstract implicit operator bool(T value);
+#endif
 
     /// <summary>
     /// Try to retrieve the value as a boolean.

@@ -15,6 +15,7 @@ namespace Corvus.Json;
 public interface IJsonValue<T> : IJsonValue
     where T : struct, IJsonValue<T>
 {
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Gets the null value.
     /// </summary>
@@ -186,4 +187,5 @@ public interface IJsonValue<T> : IJsonValue
     {
         return T.FromJson(JsonElement.ParseValue(ref reader));
     }
+#endif
 }

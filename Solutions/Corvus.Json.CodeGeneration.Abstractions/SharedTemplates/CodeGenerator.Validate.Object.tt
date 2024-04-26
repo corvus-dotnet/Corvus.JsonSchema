@@ -67,7 +67,11 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
                         {
                             if (level >= ValidationLevel.Detailed)
                             {
+#if NET8_0_OR_GREATER
                                 result = result.WithResult(isValid: false, $"6.5.4. dependentRequired - dependent property \"{Encoding.UTF8.GetString(dSpan)}\" not found.");
+#else
+                                result = result.WithResult(isValid: false, $"6.5.4. dependentRequired - dependent property \"{Encoding.UTF8.GetString(dSpan.ToArray())}\" not found.");
+#endif
                             }
                             else if (level >= ValidationLevel.Basic)
                             {

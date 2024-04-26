@@ -22,7 +22,18 @@ public readonly partial struct Applicator
         /// <summary>
         /// Generated from JSON Schema.
         /// </summary>
-        public readonly partial struct PropertyNamesEntity : IJsonNumber<PropertyNamesEntity>, IAdditionOperators<PropertyNamesEntity, PropertyNamesEntity, PropertyNamesEntity>, ISubtractionOperators<PropertyNamesEntity, PropertyNamesEntity, PropertyNamesEntity>, IMultiplyOperators<PropertyNamesEntity, PropertyNamesEntity, PropertyNamesEntity>, IDivisionOperators<PropertyNamesEntity, PropertyNamesEntity, PropertyNamesEntity>, IIncrementOperators<PropertyNamesEntity>, IDecrementOperators<PropertyNamesEntity>
+        public readonly partial struct PropertyNamesEntity 
+#if NET8_0_OR_GREATER
+: IJsonNumber<PropertyNamesEntity>,
+  IAdditionOperators<PropertyNamesEntity, PropertyNamesEntity, PropertyNamesEntity>,
+  ISubtractionOperators<PropertyNamesEntity, PropertyNamesEntity, PropertyNamesEntity>,
+  IMultiplyOperators<PropertyNamesEntity, PropertyNamesEntity, PropertyNamesEntity>,
+  IDivisionOperators<PropertyNamesEntity, PropertyNamesEntity, PropertyNamesEntity>,
+  IIncrementOperators<PropertyNamesEntity>,
+  IDecrementOperators<PropertyNamesEntity>
+#else
+        : IJsonNumber<PropertyNamesEntity>
+#endif
         {
             /// <summary>
             /// Initializes a new instance of the <see cref = "PropertyNamesEntity"/> struct.
@@ -178,27 +189,28 @@ public readonly partial struct Applicator
                 throw new InvalidOperationException();
             }
 
-            /// <summary>
-            /// Conversion to Int128.
-            /// </summary>
-            /// <param name = "value">The value to convert.</param>
-            /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-            /// <exception cref = "FormatException">The value was not formatted as an Int64.</exception>
-            public static explicit operator Int128(PropertyNamesEntity value)
-            {
-                if ((value.backing & Backing.JsonElement) != 0)
-                {
-                    return value.jsonElementBacking.SafeGetInt128();
-                }
+#if NET8_0_OR_GREATER
+    /// <summary>
+    /// Conversion to Int128.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+    /// <exception cref="FormatException">The value was not formatted as an Int64.</exception>
+    public static explicit operator Int128(PropertyNamesEntity value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
+        {
+            return value.jsonElementBacking.SafeGetInt128();
+        }
 
-                if ((value.backing & Backing.Number) != 0)
-                {
-                    return value.numberBacking.CreateChecked<Int128>();
-                }
+        if ((value.backing & Backing.Number) != 0)
+        {
+            return value.numberBacking.CreateChecked<Int128>();
+        }
 
-                throw new InvalidOperationException();
-            }
-
+        throw new InvalidOperationException();
+    }
+#endif
             /// <summary>
             /// Conversion to SByte.
             /// </summary>
@@ -220,27 +232,28 @@ public readonly partial struct Applicator
                 throw new InvalidOperationException();
             }
 
-            /// <summary>
-            /// Conversion to Half.
-            /// </summary>
-            /// <param name = "value">The value to convert.</param>
-            /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-            /// <exception cref = "FormatException">The value was not formatted as a Single.</exception>
-            public static explicit operator Half(PropertyNamesEntity value)
-            {
-                if ((value.backing & Backing.JsonElement) != 0)
-                {
-                    return value.jsonElementBacking.SafeGetHalf();
-                }
+#if NET8_0_OR_GREATER
+    /// <summary>
+    /// Conversion to Half.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+    /// <exception cref="FormatException">The value was not formatted as a Single.</exception>
+    public static explicit operator Half(PropertyNamesEntity value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
+        {
+            return value.jsonElementBacking.SafeGetHalf();
+        }
 
-                if ((value.backing & Backing.Number) != 0)
-                {
-                    return value.numberBacking.CreateChecked<Half>();
-                }
+        if ((value.backing & Backing.Number) != 0)
+        {
+            return value.numberBacking.CreateChecked<Half>();
+        }
 
-                throw new InvalidOperationException();
-            }
-
+        throw new InvalidOperationException();
+    }
+#endif
             /// <summary>
             /// Conversion to Single.
             /// </summary>
@@ -325,27 +338,28 @@ public readonly partial struct Applicator
                 throw new InvalidOperationException();
             }
 
-            /// <summary>
-            /// Conversion to UInt128.
-            /// </summary>
-            /// <param name = "value">The value to convert.</param>
-            /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-            /// <exception cref = "FormatException">The value was not formatted as an UInt64.</exception>
-            public static explicit operator UInt128(PropertyNamesEntity value)
-            {
-                if ((value.backing & Backing.JsonElement) != 0)
-                {
-                    return value.jsonElementBacking.SafeGetUInt128();
-                }
+#if NET8_0_OR_GREATER
+    /// <summary>
+    /// Conversion to UInt128.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+    /// <exception cref="FormatException">The value was not formatted as an UInt64.</exception>
+    public static explicit operator UInt128(PropertyNamesEntity value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
+        {
+            return value.jsonElementBacking.SafeGetUInt128();
+        }
 
-                if ((value.backing & Backing.Number) != 0)
-                {
-                    return value.numberBacking.CreateChecked<UInt128>();
-                }
+        if ((value.backing & Backing.Number) != 0)
+        {
+            return value.numberBacking.CreateChecked<UInt128>();
+        }
 
-                throw new InvalidOperationException();
-            }
-
+        throw new InvalidOperationException();
+    }
+#endif
             /// <summary>
             /// Conversion from decimal.
             /// </summary>
@@ -364,15 +378,16 @@ public readonly partial struct Applicator
                 return new(new BinaryJsonNumber(value));
             }
 
-            /// <summary>
-            /// Conversion from Half.
-            /// </summary>
-            /// <param name = "value">The value to convert.</param>
-            public static explicit operator PropertyNamesEntity(Half value)
-            {
-                return new(new BinaryJsonNumber(value));
-            }
-
+#if NET8_0_OR_GREATER
+    /// <summary>
+    /// Conversion from Half.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static explicit operator PropertyNamesEntity(Half value)
+    {
+        return new(new BinaryJsonNumber(value));
+    }
+#endif
             /// <summary>
             /// Conversion from float.
             /// </summary>

@@ -287,20 +287,40 @@ public readonly partial struct Schema
             if ((this.backing & Backing.String) != 0)
             {
                 int maxCharCount = Encoding.UTF8.GetMaxCharCount(utf8Bytes.Length);
-                char[]? pooledChars = null;
-                Span<char> chars = maxCharCount <= JsonValueHelpers.MaxStackAlloc ? stackalloc char[maxCharCount] : (pooledChars = ArrayPool<char>.Shared.Rent(maxCharCount));
+#if NET8_0_OR_GREATER
+            char[]? pooledChars = null;
+
+            Span<char> chars = maxCharCount <= JsonValueHelpers.MaxStackAlloc  ?
+                stackalloc char[maxCharCount] :
+                (pooledChars = ArrayPool<char>.Shared.Rent(maxCharCount));
+
+            try
+            {
+                int written = Encoding.UTF8.GetChars(utf8Bytes, chars);
+                return chars[..written].SequenceEqual(this.stringBacking);
+            }
+            finally
+            {
+                if (pooledChars is char[] pc)
+                {
+                    ArrayPool<char>.Shared.Return(pc);
+                }
+            }
+#else
+                char[] chars = ArrayPool<char>.Shared.Rent(maxCharCount);
+                byte[] bytes = ArrayPool<byte>.Shared.Rent(utf8Bytes.Length);
+                utf8Bytes.CopyTo(bytes);
                 try
                 {
-                    int written = Encoding.UTF8.GetChars(utf8Bytes, chars);
-                    return chars[..written].SequenceEqual(this.stringBacking);
+                    int written = Encoding.UTF8.GetChars(bytes, 0, bytes.Length, chars, 0);
+                    return chars.SequenceEqual(this.stringBacking);
                 }
                 finally
                 {
-                    if (pooledChars is not null)
-                    {
-                        ArrayPool<char>.Shared.Return(pooledChars, true);
-                    }
+                    ArrayPool<char>.Shared.Return(chars);
+                    ArrayPool<byte>.Shared.Return(bytes);
                 }
+#endif
             }
 
             return false;
@@ -350,7 +370,11 @@ public readonly partial struct Schema
 
             if ((this.backing & Backing.String) != 0)
             {
-                return chars.SequenceEqual(this.stringBacking);
+#if NET8_0_OR_GREATER
+            return chars.SequenceEqual(this.stringBacking);
+#else
+                return chars.SequenceEqual(this.stringBacking.AsSpan());
+#endif
             }
 
             return false;

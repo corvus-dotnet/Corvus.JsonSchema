@@ -284,11 +284,16 @@ public readonly partial struct JsonDateTime : IJsonString<JsonDateTime>
 
         if (value.ValueKind == JsonValueKind.String)
         {
+#if NET8_0_OR_GREATER
             return new((string)value);
+#else
+            return new((string)value.AsString);
+#endif
         }
 
         return Undefined;
     }
+#if NET8_0_OR_GREATER
 
     /// <summary>
     /// Gets an instance of the JSON value from a boolean value.
@@ -307,6 +312,8 @@ public readonly partial struct JsonDateTime : IJsonString<JsonDateTime>
 
         return Undefined;
     }
+#endif
+#if NET8_0_OR_GREATER
 
     /// <summary>
     /// Gets an instance of the JSON value from a double value.
@@ -325,6 +332,8 @@ public readonly partial struct JsonDateTime : IJsonString<JsonDateTime>
 
         return Undefined;
     }
+#endif
+#if NET8_0_OR_GREATER
 
     /// <summary>
     /// Gets an instance of the JSON value from an array value.
@@ -343,6 +352,8 @@ public readonly partial struct JsonDateTime : IJsonString<JsonDateTime>
 
         return Undefined;
     }
+#endif
+#if NET8_0_OR_GREATER
 
     /// <summary>
     /// Gets an instance of the JSON value from an object value.
@@ -361,6 +372,7 @@ public readonly partial struct JsonDateTime : IJsonString<JsonDateTime>
 
         return Undefined;
     }
+#endif
 
     /// <summary>
     /// Parses a JSON string into a JsonDateTime.
@@ -423,6 +435,62 @@ public readonly partial struct JsonDateTime : IJsonString<JsonDateTime>
     }
 
     /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    public static JsonDateTime ParseValue(string buffer)
+    {
+#if NET8_0_OR_GREATER
+        return IJsonValue<JsonDateTime>.ParseValue(buffer);
+#else
+        return JsonValueHelpers.ParseValue<JsonDateTime>(buffer.AsSpan());
+#endif
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    public static JsonDateTime ParseValue(ReadOnlySpan<char> buffer)
+    {
+#if NET8_0_OR_GREATER
+        return IJsonValue<JsonDateTime>.ParseValue(buffer);
+#else
+        return JsonValueHelpers.ParseValue<JsonDateTime>(buffer);
+#endif
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="buffer">The buffer from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    public static JsonDateTime ParseValue(ReadOnlySpan<byte> buffer)
+    {
+#if NET8_0_OR_GREATER
+        return IJsonValue<JsonDateTime>.ParseValue(buffer);
+#else
+        return JsonValueHelpers.ParseValue<JsonDateTime>(buffer);
+#endif
+    }
+
+    /// <summary>
+    /// Parses a JSON value from a buffer.
+    /// </summary>
+    /// <param name="reader">The reader from which to parse the value.</param>
+    /// <returns>The parsed value.</returns>
+    public static JsonDateTime ParseValue(ref Utf8JsonReader reader)
+    {
+#if NET8_0_OR_GREATER
+        return IJsonValue<JsonDateTime>.ParseValue(ref reader);
+#else
+        return JsonValueHelpers.ParseValue<JsonDateTime>(ref reader);
+#endif
+    }
+
+    /// <summary>
     /// Gets the value as an instance of the target value.
     /// </summary>
     /// <typeparam name="TTarget">The type of the target.</typeparam>
@@ -431,6 +499,7 @@ public readonly partial struct JsonDateTime : IJsonString<JsonDateTime>
     public TTarget As<TTarget>()
         where TTarget : struct, IJsonValue<TTarget>
     {
+#if NET8_0_OR_GREATER
         if ((this.backing & Backing.JsonElement) != 0)
         {
             return TTarget.FromJson(this.jsonElementBacking);
@@ -447,6 +516,9 @@ public readonly partial struct JsonDateTime : IJsonString<JsonDateTime>
         }
 
         return TTarget.Undefined;
+#else
+        return this.As<JsonDateTime, TTarget>();
+#endif
     }
 
     /// <inheritdoc/>

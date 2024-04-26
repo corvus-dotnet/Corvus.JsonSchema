@@ -25,6 +25,7 @@ public readonly partial struct JsonTime
         this.backing = Backing.String;
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonTime"/> struct.
     /// </summary>
@@ -43,6 +44,7 @@ public readonly partial struct JsonTime
         : this(new OffsetTime(LocalTime.FromTimeOnly(value), offset))
     {
     }
+#endif
 
     /// <summary>
     /// Implicit conversion to OffsetTime.
@@ -62,6 +64,7 @@ public readonly partial struct JsonTime
         return new JsonTime(value);
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Implicit conversion to OffsetTime.
     /// </summary>
@@ -79,6 +82,7 @@ public readonly partial struct JsonTime
     {
         return new JsonTime(value);
     }
+#endif
 
     /// <summary>
     /// Gets the value as a OffsetTime.

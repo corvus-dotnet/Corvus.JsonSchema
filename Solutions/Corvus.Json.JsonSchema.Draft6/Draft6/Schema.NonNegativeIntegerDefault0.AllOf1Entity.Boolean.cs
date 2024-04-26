@@ -66,7 +66,7 @@ public readonly partial struct Schema
             /// </summary>
             /// <param name = "value">The value from which to convert.</param>
             /// <exception cref = "InvalidOperationException">The value was not a string.</exception>
-            public static explicit operator bool (AllOf1Entity value)
+            public static implicit operator bool (AllOf1Entity value)
             {
                 return value.GetBoolean() ?? throw new InvalidOperationException();
             }

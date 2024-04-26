@@ -37,7 +37,7 @@ public readonly partial struct JsonPatchDocument
         /// <param name = "match4">The function to call if the value matches the <see cref = "Corvus.Json.Patch.Model.JsonPatchDocument.Copy"/> type.</param>
         /// <param name = "match5">The function to call if the value matches the <see cref = "Corvus.Json.Patch.Model.JsonPatchDocument.Test"/> type.</param>
         /// <param name = "defaultMatch">The fallback match.</param>
-        public TOut Match<TIn, TOut>(in TIn context, Func<Corvus.Json.Patch.Model.JsonPatchDocument.AddEntity, TIn, TOut> match0, Func<Corvus.Json.Patch.Model.JsonPatchDocument.RemoveEntity, TIn, TOut> match1, Func<Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceEntity, TIn, TOut> match2, Func<Corvus.Json.Patch.Model.JsonPatchDocument.Move, TIn, TOut> match3, Func<Corvus.Json.Patch.Model.JsonPatchDocument.Copy, TIn, TOut> match4, Func<Corvus.Json.Patch.Model.JsonPatchDocument.Test, TIn, TOut> match5, Func<PatchOperation, TIn, TOut> defaultMatch)
+        public TOut Match<TIn, TOut>(in TIn context, Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.AddEntity, TIn, TOut> match0, Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.RemoveEntity, TIn, TOut> match1, Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceEntity, TIn, TOut> match2, Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.Move, TIn, TOut> match3, Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.Copy, TIn, TOut> match4, Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.Test, TIn, TOut> match5, Matcher<PatchOperation, TIn, TOut> defaultMatch)
         {
             var oneOf0 = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.AddEntity>();
             if (oneOf0.IsValid())
@@ -88,7 +88,7 @@ public readonly partial struct JsonPatchDocument
         /// <param name = "match4">The function to call if the value matches the <see cref = "Corvus.Json.Patch.Model.JsonPatchDocument.Copy"/> type.</param>
         /// <param name = "match5">The function to call if the value matches the <see cref = "Corvus.Json.Patch.Model.JsonPatchDocument.Test"/> type.</param>
         /// <param name = "defaultMatch">The fallback match.</param>
-        public TOut Match<TOut>(Func<Corvus.Json.Patch.Model.JsonPatchDocument.AddEntity, TOut> match0, Func<Corvus.Json.Patch.Model.JsonPatchDocument.RemoveEntity, TOut> match1, Func<Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceEntity, TOut> match2, Func<Corvus.Json.Patch.Model.JsonPatchDocument.Move, TOut> match3, Func<Corvus.Json.Patch.Model.JsonPatchDocument.Copy, TOut> match4, Func<Corvus.Json.Patch.Model.JsonPatchDocument.Test, TOut> match5, Func<PatchOperation, TOut> defaultMatch)
+        public TOut Match<TOut>(Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.AddEntity, TOut> match0, Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.RemoveEntity, TOut> match1, Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.ReplaceEntity, TOut> match2, Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.Move, TOut> match3, Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.Copy, TOut> match4, Matcher<Corvus.Json.Patch.Model.JsonPatchDocument.Test, TOut> match5, Matcher<PatchOperation, TOut> defaultMatch)
         {
             var oneOf0 = this.As<Corvus.Json.Patch.Model.JsonPatchDocument.AddEntity>();
             if (oneOf0.IsValid())

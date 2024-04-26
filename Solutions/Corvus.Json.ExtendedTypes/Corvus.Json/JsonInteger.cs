@@ -7,6 +7,4 @@ namespace Corvus.Json;
 /// <summary>
 /// Represents a JSON integer of any size.
 /// </summary>
-public readonly partial struct JsonInteger
-{
-}
+public readonly partial struct JsonInteger;

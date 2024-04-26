@@ -53,7 +53,11 @@ public static class SchemaExtensionsDraft201909
             if (schema.Description.IsNotNullOrUndefined())
             {
                 // Unescaped new lines in the string value.
+#if NET8_0_OR_GREATER
                 string[]? lines = schema.Description.GetString()?.Split("\n");
+#else
+                string[]? lines = schema.Description.GetString()?.Split('\n');
+#endif
                 if (lines is string[] l)
                 {
                     foreach (string line in l)
@@ -74,7 +78,11 @@ public static class SchemaExtensionsDraft201909
                 {
                     documentation.AppendLine("/// <example>");
                     documentation.AppendLine("/// <code>");
+#if NET8_0_OR_GREATER
                     string[] lines = example.ToString().Split("\\n");
+#else
+                    string[] lines = example.ToString().Split(["\\n"], StringSplitOptions.None);
+#endif
                     foreach (string line in lines)
                     {
                         documentation.Append("/// ");

@@ -148,12 +148,20 @@ public readonly struct JsonObjectProperty
     {
         if ((this.backing & Backing.JsonProperty) != 0)
         {
+#if NET8_0_OR_GREATER
             return T.FromJson(this.jsonProperty.Value);
+#else
+            return JsonValueNetStandard20Extensions.FromJsonElement<T>(this.jsonProperty.Value);
+#endif
         }
 
         if ((this.backing & Backing.NameValue) != 0)
         {
+#if NET8_0_OR_GREATER
             return T.FromAny(this.value);
+#else
+            return this.value.As<T>();
+#endif
         }
 
         return default;
@@ -204,7 +212,11 @@ public readonly struct JsonObjectProperty
     {
         if ((this.backing & Backing.JsonProperty) != 0)
         {
+#if NET8_0_OR_GREATER
             return parser(this.jsonProperty.Name, state, out value);
+#else
+            return parser(this.jsonProperty.Name.AsSpan(), state, out value);
+#endif
         }
 
         if ((this.backing & Backing.NameValue) != 0)

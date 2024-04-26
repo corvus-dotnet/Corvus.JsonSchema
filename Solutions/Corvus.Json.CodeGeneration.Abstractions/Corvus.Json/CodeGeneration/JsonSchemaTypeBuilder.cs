@@ -405,7 +405,7 @@ public partial class JsonSchemaTypeBuilder
         }
 
         string idv = (string)idValue;
-        if (context.Scope.Location.Uri.EndsWith(idv))
+        if (context.Scope.Location.Uri.EndsWith(idv.AsSpan()))
         {
             // Ignore ID if we were already directly in the dynamic scope.
             return false;

@@ -37,7 +37,9 @@ global using global::System.Threading.Tasks;";
     private readonly IJsonSchemaBuilder builder;
     private readonly string settingsKey;
     private readonly FileSystemDocumentResolver documentResolver = new();
+#if NET8_0_OR_GREATER
     private TestAssemblyLoadContext? assemblyLoadContext = new();
+#endif
 
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonSchemaBuilderDriver"/> class.
@@ -54,15 +56,18 @@ global using global::System.Threading.Tasks;";
 
     public void Dispose()
     {
-        if (this.assemblyLoadContext is not null)
-        {
-            this.documentResolver.Dispose();
-            this.assemblyLoadContext!.Unload();
-            this.assemblyLoadContext = null;
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-            GC.SuppressFinalize(this);
-        }
+        this.documentResolver.Dispose();
+
+#if NET8_0_OR_GREATER
+        ////if (this.assemblyLoadContext is not null)
+        ////{
+        ////    this.assemblyLoadContext.Unload();
+        ////    this.assemblyLoadContext = null;
+        ////    GC.Collect();
+        ////    GC.WaitForPendingFinalizers();
+        ////    GC.SuppressFinalize(this);
+        ////}
+#endif
     }
 
     /// <summary>
@@ -99,7 +104,11 @@ global using global::System.Threading.Tasks;";
         this.builder.AddDocument(path, JsonDocument.Parse(schema));
 
         (string rootType, ImmutableDictionary<JsonReference, TypeAndCode> generatedTypes) = await this.builder.BuildTypesFor(new JsonReference(path), $"{featureName}Feature.{scenarioName}", rebase: true).ConfigureAwait(false);
+#if NET8_0_OR_GREATER
         return CompileGeneratedType(this.assemblyLoadContext!, rootType, generatedTypes);
+#else
+        return CompileGeneratedType(rootType, generatedTypes);
+#endif
     }
 
     /// <summary>
@@ -114,18 +123,20 @@ global using global::System.Threading.Tasks;";
     /// <param name="scenarioName">The scenario name for the type.</param>
     /// <param name="valid">Whether the scenario is expected to be valid.</param>
     /// <returns>The fully qualified type name of the entity we have generated.</returns>
-#pragma warning disable IDE0060 // Remove unused parameter
 #pragma warning disable RCS1163 // Unused parameter.
     public async Task<Type> GenerateTypeFor(bool writeBenchmarks, int index, string filename, string schemaPath, string dataPath, string featureName, string scenarioName, bool valid)
 #pragma warning restore RCS1163 // Unused parameter.
-#pragma warning restore IDE0060 // Remove unused parameter
     {
         string baseDirectory = this.configuration[$"{this.settingsKey}:testBaseDirectory"]!;
         string path = Path.Combine(baseDirectory, filename) + schemaPath;
 
         (string rootType, ImmutableDictionary<JsonReference, TypeAndCode> generatedTypes) = await this.builder.BuildTypesFor(new JsonReference(path), $"{featureName}Feature.{scenarioName}", rebase: true).ConfigureAwait(false);
 
+#if NET8_0_OR_GREATER
         return CompileGeneratedType(this.assemblyLoadContext!, rootType, generatedTypes);
+#else
+        return CompileGeneratedType(rootType, generatedTypes);
+#endif
     }
 
     /// <summary>
@@ -159,15 +170,17 @@ global using global::System.Threading.Tasks;";
         return this.CreateInstance(type, document.RootElement.Clone());
     }
 
+#if NET8_0_OR_GREATER
     private static Type CompileGeneratedType(AssemblyLoadContext assemblyLoadContext, string rootType, ImmutableDictionary<JsonReference, TypeAndCode> generatedTypes)
     {
         bool isCorvusType = rootType.StartsWith("Corvus.");
 
-        IEnumerable<SyntaxTree> syntaxTrees = ParseSyntaxTrees(generatedTypes);
+        (IEnumerable<MetadataReference> references, IEnumerable<string?> defines) = BuildMetadataReferencesAndDefines();
+
+        IEnumerable<SyntaxTree> syntaxTrees = ParseSyntaxTrees(generatedTypes, defines);
 
         // We are happy with the defaults (debug etc.)
         var options = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary);
-        IEnumerable<MetadataReference> references = BuildMetadataReferences();
         var compilation = CSharpCompilation.Create($"Driver.GeneratedTypes_{Guid.NewGuid()}", syntaxTrees, references, options);
         using MemoryStream outputStream = new();
         EmitResult result = compilation.Emit(outputStream);
@@ -189,6 +202,39 @@ global using global::System.Threading.Tasks;";
 
         return generatedAssembly.ExportedTypes.Single(t => t.FullName == rootType);
     }
+#else
+    private static Type CompileGeneratedType(string rootType, ImmutableDictionary<JsonReference, TypeAndCode> generatedTypes)
+    {
+        bool isCorvusType = rootType.StartsWith("Corvus.");
+
+        (IEnumerable<MetadataReference> references, IEnumerable<string?> defines) = BuildMetadataReferencesAndDefines();
+
+        IEnumerable<SyntaxTree> syntaxTrees = ParseSyntaxTrees(generatedTypes, defines);
+
+        // We are happy with the defaults (debug etc.)
+        var options = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary);
+        var compilation = CSharpCompilation.Create($"Driver.GeneratedTypes_{Guid.NewGuid()}", syntaxTrees, references, options);
+        using MemoryStream outputStream = new();
+        EmitResult result = compilation.Emit(outputStream);
+
+        if (!result.Success)
+        {
+            throw new Exception("Unable to compile generated code\r\n" + BuildCompilationErrors(result));
+        }
+
+        outputStream.Flush();
+        outputStream.Position = 0;
+
+        var generatedAssembly = Assembly.Load(outputStream.ToArray());
+
+        if (isCorvusType)
+        {
+            return typeof(JsonAny).Assembly.ExportedTypes.Single(t => t.FullName == rootType);
+        }
+
+        return generatedAssembly.ExportedTypes.Single(t => t.FullName == rootType);
+    }
+#endif
 
     private static string BuildCompilationErrors(EmitResult result)
     {
@@ -201,16 +247,25 @@ global using global::System.Threading.Tasks;";
         return builder.ToString();
     }
 
-    private static IEnumerable<MetadataReference> BuildMetadataReferences()
+    private static (IEnumerable<MetadataReference> MetadataReferences, IEnumerable<string?> Defines) BuildMetadataReferencesAndDefines()
     {
-        return from l in DependencyContext.Default.CompileLibraries
+        DependencyContext? ctx = DependencyContext.Default ?? DependencyContext.Load(Assembly.GetExecutingAssembly());
+        if (ctx is null)
+        {
+            throw new InvalidOperationException("Unable to find compilation context.");
+        }
+
+        return (from l in ctx.CompileLibraries
                from r in l.ResolveReferencePaths()
-               select MetadataReference.CreateFromFile(r);
+               select MetadataReference.CreateFromFile(r),
+               ctx.CompilationOptions.Defines.AsEnumerable());
     }
 
-    private static IEnumerable<SyntaxTree> ParseSyntaxTrees(ImmutableDictionary<JsonReference, TypeAndCode> generatedTypes)
+    private static IEnumerable<SyntaxTree> ParseSyntaxTrees(ImmutableDictionary<JsonReference, TypeAndCode> generatedTypes, IEnumerable<string?> defines)
     {
-        CSharpParseOptions parseOptions = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Preview);
+        CSharpParseOptions parseOptions = CSharpParseOptions.Default
+            .WithLanguageVersion(LanguageVersion.Preview)
+            .WithPreprocessorSymbols(defines.Where(s => s is not null).Cast<string>());
         yield return CSharpSyntaxTree.ParseText(GlobalUsingStatements, options: parseOptions, path: "GlobalUsingStatements.cs");
 
         foreach (KeyValuePair<JsonReference, TypeAndCode> type in generatedTypes)
@@ -222,6 +277,7 @@ global using global::System.Threading.Tasks;";
         }
     }
 
+#if NET8_0_OR_GREATER
     private class TestAssemblyLoadContext : AssemblyLoadContext
     {
         public TestAssemblyLoadContext()
@@ -229,4 +285,5 @@ global using global::System.Threading.Tasks;";
         {
         }
     }
+#endif
 }

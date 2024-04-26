@@ -79,7 +79,11 @@ public struct JsonArrayEnumerator : IEnumerable, IEnumerator, IEnumerable<JsonAn
     {
         if ((this.backing & Backing.JsonElementEnumerator) != 0)
         {
+#if NET8_0_OR_GREATER
             return T.FromJson(this.jsonElementEnumerator.Current);
+#else
+            return JsonValueNetStandard20Extensions.FromJsonElement<T>(this.jsonElementEnumerator.Current);
+#endif
         }
 
         if ((this.backing & Backing.ListEnumerator) != 0)

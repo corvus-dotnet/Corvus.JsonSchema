@@ -310,60 +310,63 @@ public readonly partial struct Validation
                 return new(value);
             }
 
-            /// <summary>
-            /// Gets an instance of the JSON value from a boolean value.
-            /// </summary>
-            /// <typeparam name = "TValue">The type of the value.</typeparam>
-            /// <param name = "value">The value from which to instantiate the instance.</param>
-            /// <returns>An instance of this type, initialized from the value.</returns>
-            /// <remarks>This will be SimpleTypesArray.Undefined if the type is not compatible.</remarks>
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            static SimpleTypesArray IJsonValue<SimpleTypesArray>.FromBoolean<TValue>(in TValue value)
-            {
-                if (value.HasJsonElementBacking)
-                {
-                    return new(value.AsJsonElement);
-                }
+#if NET8_0_OR_GREATER
+    /// <summary>
+    /// Gets an instance of the JSON value from a boolean value.
+    /// </summary>
+    /// <typeparam name = "TValue">The type of the value.</typeparam>
+    /// <param name="value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>This will be SimpleTypesArray.Undefined if the type is not compatible.</remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    static SimpleTypesArray IJsonValue<SimpleTypesArray>.FromBoolean<TValue>(in TValue value)
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
+        }
 
-                return Undefined;
-            }
+        return Undefined;
+    }
+#endif
+#if NET8_0_OR_GREATER
+    /// <summary>
+    /// Gets an instance of the JSON value from a string value.
+    /// </summary>
+    /// <typeparam name="TValue">The type of the value.</typeparam>
+    /// <param name="value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>This will be SimpleTypesArray.Undefined if the type is not compatible.</remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    static SimpleTypesArray IJsonValue<SimpleTypesArray>.FromString<TValue>(in TValue value)
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
+        }
 
-            /// <summary>
-            /// Gets an instance of the JSON value from a string value.
-            /// </summary>
-            /// <typeparam name = "TValue">The type of the value.</typeparam>
-            /// <param name = "value">The value from which to instantiate the instance.</param>
-            /// <returns>An instance of this type, initialized from the value.</returns>
-            /// <remarks>This will be SimpleTypesArray.Undefined if the type is not compatible.</remarks>
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            static SimpleTypesArray IJsonValue<SimpleTypesArray>.FromString<TValue>(in TValue value)
-            {
-                if (value.HasJsonElementBacking)
-                {
-                    return new(value.AsJsonElement);
-                }
+        return Undefined;
+    }
+#endif
+#if NET8_0_OR_GREATER
+    /// <summary>
+    /// Gets an instance of the JSON value from a number value.
+    /// </summary>
+    /// <typeparam name="TValue">The type of the value.</typeparam>
+    /// <param name="value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>This will be SimpleTypesArray.Undefined if the type is not compatible.</remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    static SimpleTypesArray IJsonValue<SimpleTypesArray>.FromNumber<TValue>(in TValue value)
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
+        }
 
-                return Undefined;
-            }
-
-            /// <summary>
-            /// Gets an instance of the JSON value from a number value.
-            /// </summary>
-            /// <typeparam name = "TValue">The type of the value.</typeparam>
-            /// <param name = "value">The value from which to instantiate the instance.</param>
-            /// <returns>An instance of this type, initialized from the value.</returns>
-            /// <remarks>This will be SimpleTypesArray.Undefined if the type is not compatible.</remarks>
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            static SimpleTypesArray IJsonValue<SimpleTypesArray>.FromNumber<TValue>(in TValue value)
-            {
-                if (value.HasJsonElementBacking)
-                {
-                    return new(value.AsJsonElement);
-                }
-
-                return Undefined;
-            }
-
+        return Undefined;
+    }
+#endif
             /// <summary>
             /// Gets an instance of the JSON value from an array value.
             /// </summary>
@@ -388,24 +391,25 @@ public readonly partial struct Validation
                 return Undefined;
             }
 
-            /// <summary>
-            /// Gets an instance of the JSON value from an object value.
-            /// </summary>
-            /// <typeparam name = "TValue">The type of the value.</typeparam>
-            /// <param name = "value">The value from which to instantiate the instance.</param>
-            /// <returns>An instance of this type, initialized from the value.</returns>
-            /// <remarks>This will be SimpleTypesArray.Undefined if the type is not compatible.</remarks>
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            static SimpleTypesArray IJsonValue<SimpleTypesArray>.FromObject<TValue>(in TValue value)
-            {
-                if (value.HasJsonElementBacking)
-                {
-                    return new(value.AsJsonElement);
-                }
+#if NET8_0_OR_GREATER
+    /// <summary>
+    /// Gets an instance of the JSON value from an object value.
+    /// </summary>
+    /// <typeparam name="TValue">The type of the value.</typeparam>
+    /// <param name="value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>This will be SimpleTypesArray.Undefined if the type is not compatible.</remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    static SimpleTypesArray IJsonValue<SimpleTypesArray>.FromObject<TValue>(in TValue value)
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
+        }
 
-                return Undefined;
-            }
-
+        return Undefined;
+    }
+#endif
             /// <summary>
             /// Parses a JSON string into a SimpleTypesArray.
             /// </summary>
@@ -473,7 +477,11 @@ public readonly partial struct Validation
             /// <returns>The parsed value.</returns>
             static SimpleTypesArray ParseValue(ReadOnlySpan<char> buffer)
             {
-                return IJsonValue<SimpleTypesArray>.ParseValue(buffer);
+#if NET8_0_OR_GREATER
+        return IJsonValue<SimpleTypesArray>.ParseValue(buffer);
+#else
+                return JsonValueHelpers.ParseValue<SimpleTypesArray>(buffer);
+#endif
             }
 
             /// <summary>
@@ -483,7 +491,11 @@ public readonly partial struct Validation
             /// <returns>The parsed value.</returns>
             static SimpleTypesArray ParseValue(ReadOnlySpan<byte> buffer)
             {
-                return IJsonValue<SimpleTypesArray>.ParseValue(buffer);
+#if NET8_0_OR_GREATER
+        return IJsonValue<SimpleTypesArray>.ParseValue(buffer);
+#else
+                return JsonValueHelpers.ParseValue<SimpleTypesArray>(buffer);
+#endif
             }
 
             /// <summary>
@@ -493,7 +505,11 @@ public readonly partial struct Validation
             /// <returns>The parsed value.</returns>
             static SimpleTypesArray ParseValue(ref Utf8JsonReader reader)
             {
-                return IJsonValue<SimpleTypesArray>.ParseValue(ref reader);
+#if NET8_0_OR_GREATER
+        return IJsonValue<SimpleTypesArray>.ParseValue(ref reader);
+#else
+                return JsonValueHelpers.ParseValue<SimpleTypesArray>(ref reader);
+#endif
             }
 
             /// <summary>
@@ -505,22 +521,26 @@ public readonly partial struct Validation
             public TTarget As<TTarget>()
                 where TTarget : struct, IJsonValue<TTarget>
             {
-                if ((this.backing & Backing.JsonElement) != 0)
-                {
-                    return TTarget.FromJson(this.jsonElementBacking);
-                }
+#if NET8_0_OR_GREATER
+        if ((this.backing & Backing.JsonElement) != 0)
+        {
+            return TTarget.FromJson(this.jsonElementBacking);
+        }
 
-                if ((this.backing & Backing.Array) != 0)
-                {
-                    return TTarget.FromArray(this);
-                }
+        if ((this.backing & Backing.Array) != 0)
+        {
+            return TTarget.FromArray(this);
+        }
 
-                if ((this.backing & Backing.Null) != 0)
-                {
-                    return TTarget.Null;
-                }
+        if ((this.backing & Backing.Null) != 0)
+        {
+            return TTarget.Null;
+        }
 
-                return TTarget.Undefined;
+        return TTarget.Undefined;
+#else
+                return this.As<SimpleTypesArray, TTarget>();
+#endif
             }
 
             /// <inheritdoc/>

@@ -338,11 +338,12 @@ public readonly partial struct OtherNames
         return new(value);
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Gets an instance of the JSON value from a boolean value.
     /// </summary>
     /// <typeparam name = "TValue">The type of the value.</typeparam>
-    /// <param name = "value">The value from which to instantiate the instance.</param>
+    /// <param name="value">The value from which to instantiate the instance.</param>
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be OtherNames.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -355,7 +356,7 @@ public readonly partial struct OtherNames
 
         return Undefined;
     }
-
+#endif
     /// <summary>
     /// Gets an instance of the JSON value from a string value.
     /// </summary>
@@ -374,17 +375,22 @@ public readonly partial struct OtherNames
 
         if (value.ValueKind == JsonValueKind.String)
         {
+#if NET8_0_OR_GREATER
             return new((string)value);
+#else
+            return new((string)value.AsString);
+#endif
         }
 
         return Undefined;
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Gets an instance of the JSON value from a number value.
     /// </summary>
-    /// <typeparam name = "TValue">The type of the value.</typeparam>
-    /// <param name = "value">The value from which to instantiate the instance.</param>
+    /// <typeparam name="TValue">The type of the value.</typeparam>
+    /// <param name="value">The value from which to instantiate the instance.</param>
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be OtherNames.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -397,7 +403,7 @@ public readonly partial struct OtherNames
 
         return Undefined;
     }
-
+#endif
     /// <summary>
     /// Gets an instance of the JSON value from an array value.
     /// </summary>
@@ -422,11 +428,12 @@ public readonly partial struct OtherNames
         return Undefined;
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Gets an instance of the JSON value from an object value.
     /// </summary>
-    /// <typeparam name = "TValue">The type of the value.</typeparam>
-    /// <param name = "value">The value from which to instantiate the instance.</param>
+    /// <typeparam name="TValue">The type of the value.</typeparam>
+    /// <param name="value">The value from which to instantiate the instance.</param>
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be OtherNames.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -439,7 +446,7 @@ public readonly partial struct OtherNames
 
         return Undefined;
     }
-
+#endif
     /// <summary>
     /// Parses a JSON string into a OtherNames.
     /// </summary>
@@ -507,7 +514,11 @@ public readonly partial struct OtherNames
     /// <returns>The parsed value.</returns>
     static OtherNames ParseValue(ReadOnlySpan<char> buffer)
     {
+#if NET8_0_OR_GREATER
         return IJsonValue<OtherNames>.ParseValue(buffer);
+#else
+        return JsonValueHelpers.ParseValue<OtherNames>(buffer);
+#endif
     }
 
     /// <summary>
@@ -517,7 +528,11 @@ public readonly partial struct OtherNames
     /// <returns>The parsed value.</returns>
     static OtherNames ParseValue(ReadOnlySpan<byte> buffer)
     {
+#if NET8_0_OR_GREATER
         return IJsonValue<OtherNames>.ParseValue(buffer);
+#else
+        return JsonValueHelpers.ParseValue<OtherNames>(buffer);
+#endif
     }
 
     /// <summary>
@@ -527,7 +542,11 @@ public readonly partial struct OtherNames
     /// <returns>The parsed value.</returns>
     static OtherNames ParseValue(ref Utf8JsonReader reader)
     {
+#if NET8_0_OR_GREATER
         return IJsonValue<OtherNames>.ParseValue(ref reader);
+#else
+        return JsonValueHelpers.ParseValue<OtherNames>(ref reader);
+#endif
     }
 
     /// <summary>
@@ -539,6 +558,7 @@ public readonly partial struct OtherNames
     public TTarget As<TTarget>()
         where TTarget : struct, IJsonValue<TTarget>
     {
+#if NET8_0_OR_GREATER
         if ((this.backing & Backing.JsonElement) != 0)
         {
             return TTarget.FromJson(this.jsonElementBacking);
@@ -560,6 +580,9 @@ public readonly partial struct OtherNames
         }
 
         return TTarget.Undefined;
+#else
+        return this.As<OtherNames, TTarget>();
+#endif
     }
 
     /// <inheritdoc/>

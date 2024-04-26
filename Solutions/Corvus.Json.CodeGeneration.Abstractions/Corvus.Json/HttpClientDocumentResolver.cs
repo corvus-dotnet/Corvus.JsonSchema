@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Text.Json;
+using Corvus.Json.CodeGeneration;
 
 namespace Corvus.Json;
 
@@ -59,7 +60,7 @@ public class HttpClientDocumentResolver : IDocumentResolver
             }
         }
 
-        string uri = new(reference.Uri);
+        string uri = reference.Uri.ToString();
         if (this.documents.TryGetValue(uri, out JsonDocument? result))
         {
             return JsonPointerUtilities.ResolvePointer(result, reference.Fragment);
@@ -84,18 +85,8 @@ public class HttpClientDocumentResolver : IDocumentResolver
 
         static bool IsLocalHost(JsonReference reference)
         {
-            bool isLocalHost;
             JsonReferenceBuilder builder = reference.AsBuilder();
-            if (builder.Host.SequenceEqual(LocalHost.Span))
-            {
-                isLocalHost = true;
-            }
-            else
-            {
-                isLocalHost = false;
-            }
-
-            return isLocalHost;
+            return builder.Host.SequenceEqual(LocalHost.Span);
         }
     }
 

@@ -33,7 +33,7 @@ public readonly partial struct PersonNameElementArray
         if (level > ValidationLevel.Basic)
         {
             result = result.UsingStack();
-            result = result.PushSchemaLocation("D:/source/corvus-dotnet/Corvus.JsonSchema/Solutions/Sandbox/PersonModel/person-schema.json#/$defs/PersonNameElementArray");
+            result = result.PushSchemaLocation("person-schema.json#/$defs/PersonNameElementArray");
         }
 
         JsonValueKind valueKind = this.ValueKind;

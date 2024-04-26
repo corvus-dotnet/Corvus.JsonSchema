@@ -12,7 +12,14 @@ using Perfolizer.Mathematics.OutlierDetection;
 var config = ManualConfig.Create(DefaultConfig.Instance);
 config.AddJob(
     Job.Default
+        .AsBaseline()
         .WithRuntime(CoreRuntime.Core80)
+        .WithOutlierMode(OutlierMode.RemoveAll)
+        .WithStrategy(RunStrategy.Throughput));
+
+config.AddJob(
+    Job.Default
+        .WithRuntime(ClrRuntime.Net481)
         .WithOutlierMode(OutlierMode.RemoveAll)
         .WithStrategy(RunStrategy.Throughput));
 

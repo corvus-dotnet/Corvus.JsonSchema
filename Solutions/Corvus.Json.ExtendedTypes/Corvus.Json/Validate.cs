@@ -4,6 +4,7 @@
 
 using System.Globalization;
 using System.Net;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -574,6 +575,7 @@ public static partial class Validate
         {
             JsonNumber number = instance.AsNumber;
             double value = (double)number;
+#if NET8_0_OR_GREATER
             var i128 = (Int128)number;
             if (value != Math.Floor(value) || i128 > long.MaxValue || i128 < long.MinValue)
             {
@@ -590,6 +592,23 @@ public static partial class Validate
                     return validationContext.WithResult(isValid: false);
                 }
             }
+#else
+            if (value != Math.Floor(value) || (instance.HasJsonElementBacking && !instance.AsJsonElement.TryGetInt64(out long _)))
+            {
+                if (level >= ValidationLevel.Detailed)
+                {
+                    return validationContext.WithResult(isValid: false, $"Validation 6.1.1 type - should have been int64 'number' but was '{valueKind}' with value {value} and fractional part {value - Math.Floor(value)}.");
+                }
+                else if (level >= ValidationLevel.Basic)
+                {
+                    return validationContext.WithResult(isValid: false, "Validation 6.1.1 type - should have been int64 'number'.");
+                }
+                else
+                {
+                    return validationContext.WithResult(isValid: false);
+                }
+            }
+#endif
         }
 
         if (level == ValidationLevel.Verbose)
@@ -631,6 +650,7 @@ public static partial class Validate
         {
             JsonNumber number = instance.AsNumber;
             double value = (double)number;
+#if NET8_0_OR_GREATER
             var i128 = (Int128)number;
             if (value != Math.Floor(value) || i128 > ulong.MaxValue || i128 < ulong.MinValue)
             {
@@ -647,11 +667,28 @@ public static partial class Validate
                     return validationContext.WithResult(isValid: false);
                 }
             }
+#else
+            if (value != Math.Floor(value) || value < 0 || (instance.HasJsonElementBacking && !instance.AsJsonElement.TryGetUInt64(out ulong _)))
+            {
+                if (level >= ValidationLevel.Detailed)
+                {
+                    return validationContext.WithResult(isValid: false, $"Validation 6.1.1 type - should have been uint64 'number' but was '{valueKind}' with value {value} and fractional part {value - Math.Floor(value)}.");
+                }
+                else if (level >= ValidationLevel.Basic)
+                {
+                    return validationContext.WithResult(isValid: false, "Validation 6.1.1 type - should have been uint64 'number'.");
+                }
+                else
+                {
+                    return validationContext.WithResult(isValid: false);
+                }
+            }
+#endif
         }
 
         if (level == ValidationLevel.Verbose)
         {
-            return validationContext.WithResult(isValid: true, "Validation 6.1.1 type - was uint16 'number'.");
+            return validationContext.WithResult(isValid: true, "Validation 6.1.1 type - was uint64 'number'.");
         }
 
         return validationContext;
@@ -684,6 +721,7 @@ public static partial class Validate
                 return validationContext.WithResult(isValid: false);
             }
         }
+#if NET8_0_OR_GREATER
         else
         {
             try
@@ -707,6 +745,7 @@ public static partial class Validate
                 }
             }
         }
+#endif
 
         if (level == ValidationLevel.Verbose)
         {
@@ -743,6 +782,7 @@ public static partial class Validate
                 return validationContext.WithResult(isValid: false);
             }
         }
+#if NET8_0_OR_GREATER
         else
         {
             try
@@ -766,6 +806,24 @@ public static partial class Validate
                 }
             }
         }
+#else
+        double value = (double)instance.AsNumber;
+        if (value != Math.Floor(value) || value < 0)
+        {
+            if (level >= ValidationLevel.Detailed)
+            {
+                return validationContext.WithResult(isValid: false, $"Validation 6.1.1 type - should have been uint128 'number' but was '{valueKind}' with value {value} and fractional part {value - Math.Floor(value)}.");
+            }
+            else if (level >= ValidationLevel.Basic)
+            {
+                return validationContext.WithResult(isValid: false, "Validation 6.1.1 type - should have been uint128 'number'.");
+            }
+            else
+            {
+                return validationContext.WithResult(isValid: false);
+            }
+        }
+#endif
 
         if (level == ValidationLevel.Verbose)
         {
@@ -802,6 +860,7 @@ public static partial class Validate
                 return validationContext.WithResult(isValid: false);
             }
         }
+#if NET8_0_OR_GREATER
         else
         {
             try
@@ -825,6 +884,7 @@ public static partial class Validate
                 }
             }
         }
+#endif
 
         if (level == ValidationLevel.Verbose)
         {
@@ -1040,21 +1100,17 @@ public static partial class Validate
 
         static bool UriTemplateValidator(ReadOnlySpan<char> input, in ValidationContextWrapper context, out ValidationContext result)
         {
-            // Emitted if minLength or maxLength
-            int length = 0;
-            SpanRuneEnumerator enumerator = input.EnumerateRunes();
-            while (enumerator.MoveNext())
-            {
-                length++;
-            }
-
             result = context.Context;
 
             if (!UriTemplatePattern.IsMatch(input))
             {
                 if (context.Level >= ValidationLevel.Detailed)
                 {
+#if NET8_0_OR_GREATER
                     result = context.Context.WithResult(isValid: false, $"Validation 6.1.1 type - should have been 'string' with format 'uri-template', but was '{input}'.");
+#else
+                    result = context.Context.WithResult(isValid: false, $"Validation 6.1.1 type - should have been 'string' with format 'uri-template', but was '{input.ToString()}'.");
+#endif
                 }
                 else if (context.Level >= ValidationLevel.Basic)
                 {
@@ -1285,7 +1341,11 @@ public static partial class Validate
             bool isMatch;
             result = context.Context;
 
+#if NET8_0_OR_GREATER
             if (input.StartsWith("xn--"))
+#else
+            if (input.StartsWith("xn--".AsSpan()))
+#endif
             {
                 try
                 {
@@ -1307,7 +1367,7 @@ public static partial class Validate
             {
                 if (context.Level >= ValidationLevel.Detailed)
                 {
-                    result = context.Context.WithResult(isValid: false, $"Validation 6.1.1 type - should have been 'string' with format 'hostname', but was '{input}'.");
+                    result = context.Context.WithResult(isValid: false, $"Validation 6.1.1 type - should have been 'string' with format 'hostname', but was '{input.ToString()}'.");
                 }
                 else if (context.Level >= ValidationLevel.Basic)
                 {
@@ -1377,7 +1437,7 @@ public static partial class Validate
             {
                 if (context.Level >= ValidationLevel.Detailed)
                 {
-                    result = context.Context.WithResult(isValid: false, $"Validation 6.1.1 type - should have been 'string' with format 'uuid', but was '{input}'.");
+                    result = context.Context.WithResult(isValid: false, $"Validation 6.1.1 type - should have been 'string' with format 'uuid', but was '{input.ToString()}'.");
                 }
                 else if (context.Level >= ValidationLevel.Basic)
                 {
@@ -1447,7 +1507,11 @@ public static partial class Validate
             {
                 if (context.Level >= ValidationLevel.Detailed)
                 {
+#if NET8_0_OR_GREATER
                     result = context.Context.WithResult(isValid: false, $"Validation 6.1.1 type - should have been 'string' with format 'duration', but was '{input}'.");
+#else
+                    result = context.Context.WithResult(isValid: false, $"Validation 6.1.1 type - should have been 'string' with format 'duration', but was '{input.ToString()}'.");
+#endif
                 }
                 else if (context.Level >= ValidationLevel.Basic)
                 {
@@ -1517,7 +1581,11 @@ public static partial class Validate
             {
                 if (context.Level >= ValidationLevel.Detailed)
                 {
+#if NET8_0_OR_GREATER
                     result = context.Context.WithResult(isValid: false, $"Validation 6.1.1 type - should have been 'string' with format 'email', but was '{input}'.");
+#else
+                    result = context.Context.WithResult(isValid: false, $"Validation 6.1.1 type - should have been 'string' with format 'email', but was '{input.ToString()}'.");
+#endif
                 }
                 else if (context.Level >= ValidationLevel.Basic)
                 {
@@ -1587,7 +1655,11 @@ public static partial class Validate
             {
                 if (context.Level >= ValidationLevel.Detailed)
                 {
+#if NET8_0_OR_GREATER
                     result = context.Context.WithResult(isValid: false, $"Validation 6.1.1 type - should have been 'string' with format 'relative-json-pointer', but was '{input}'.");
+#else
+                    result = context.Context.WithResult(isValid: false, $"Validation 6.1.1 type - should have been 'string' with format 'relative-json-pointer', but was '{input.ToString()}'.");
+#endif
                 }
                 else if (context.Level >= ValidationLevel.Basic)
                 {
@@ -1657,7 +1729,11 @@ public static partial class Validate
             {
                 if (context.Level >= ValidationLevel.Detailed)
                 {
+#if NET8_0_OR_GREATER
                     result = context.Context.WithResult(isValid: false, $"Validation 6.1.1 type - should have been 'string' with format 'json-pointer', but was '{input}'.");
+#else
+                    result = context.Context.WithResult(isValid: false, $"Validation 6.1.1 type - should have been 'string' with format 'json-pointer', but was '{input.ToString()}'.");
+#endif
                 }
                 else if (context.Level >= ValidationLevel.Basic)
                 {
@@ -2816,7 +2892,6 @@ public static partial class Validate
         if (maxLength is not null || minLength is not null || pattern is not null)
         {
             value.AsString.TryGetValue(StringValidator, new StringValidationContextWrapper(result, level, minLength, maxLength, pattern), out result);
-
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
@@ -2827,30 +2902,24 @@ public static partial class Validate
 
         static bool StringValidator(ReadOnlySpan<char> input, in StringValidationContextWrapper context, out ValidationContext result)
         {
-            // Emitted if minLength or maxLength
-            int length = 0;
-            SpanRuneEnumerator enumerator = input.EnumerateRunes();
-            while (enumerator.MoveNext())
-            {
-                length++;
-            }
-
+            int? length = null;
             result = context.Context;
 
             if (context.MaxLength is int maxl)
             {
+                length ??= CountRunes(input);
                 if (length <= maxl)
                 {
                     if (context.Level == ValidationLevel.Verbose)
                     {
-                        result = result.WithResult(isValid: true, $"Validation 6.3.1 maxLength - {input} of {length} was less than or equal to {maxl}.");
+                        result = result.WithResult(isValid: true, $"Validation 6.3.1 maxLength - {input.ToString()} of {length} was less than or equal to {maxl}.");
                     }
                 }
                 else
                 {
                     if (context.Level >= ValidationLevel.Detailed)
                     {
-                        result = result.WithResult(isValid: false, $"Validation 6.3.1 maxLength - {input} of {length} was greater than {maxl}.");
+                        result = result.WithResult(isValid: false, $"Validation 6.3.1 maxLength - {input.ToString()} of {length} was greater than {maxl}.");
                     }
                     else if (context.Level >= ValidationLevel.Basic)
                     {
@@ -2866,18 +2935,19 @@ public static partial class Validate
 
             if (context.MinLength is int minl)
             {
+                length ??= CountRunes(input);
                 if (length >= minl)
                 {
                     if (context.Level == ValidationLevel.Verbose)
                     {
-                        result = result.WithResult(isValid: true, $"Validation 6.3.2 minLength - {input} of {length} was greater than or equal to {minl}.");
+                        result = result.WithResult(isValid: true, $"Validation 6.3.2 minLength - {input.ToString()} of {length} was greater than or equal to {minl}.");
                     }
                 }
                 else
                 {
                     if (context.Level >= ValidationLevel.Detailed)
                     {
-                        result = result.WithResult(isValid: false, $"Validation 6.3.2 minLength - {input} of {length} was less than {minl}.");
+                        result = result.WithResult(isValid: false, $"Validation 6.3.2 minLength - {input.ToString()} of {length} was less than {minl}.");
                     }
                     else if (context.Level >= ValidationLevel.Basic)
                     {
@@ -2897,14 +2967,14 @@ public static partial class Validate
                 {
                     if (context.Level == ValidationLevel.Verbose)
                     {
-                        result = result.WithResult(isValid: true, $"Validation 6.3.3 pattern - {input} matched {prex}.");
+                        result = result.WithResult(isValid: true, $"Validation 6.3.3 pattern - {input.ToString()} matched {prex}.");
                     }
                 }
                 else
                 {
                     if (context.Level >= ValidationLevel.Detailed)
                     {
-                        result = result.WithResult(isValid: false, $"Validation 6.3.3 pattern - {input} did not match {prex}.");
+                        result = result.WithResult(isValid: false, $"Validation 6.3.3 pattern - {input.ToString()} did not match {prex}.");
                     }
                     else if (context.Level >= ValidationLevel.Basic)
                     {
@@ -2918,6 +2988,23 @@ public static partial class Validate
             }
 
             return true;
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            static int CountRunes(ReadOnlySpan<char> str)
+            {
+#if NET8_0_OR_GREATER
+                int length = 0;
+                SpanRuneEnumerator enumerator = str.EnumerateRunes();
+                while (enumerator.MoveNext())
+                {
+                    length++;
+                }
+
+                return length;
+#else
+                return StringInfo.GetTextLengthInRunes(str);
+#endif
+            }
         }
     }
 
@@ -3260,7 +3347,11 @@ public static partial class Validate
         if (!iri.TryGetUri(out Uri? uri) ||
             uri.OriginalString.StartsWith("\\\\") ||
             (uri.IsAbsoluteUri && uri.Fragment.Contains('\\')) ||
+#if NET8_0_OR_GREATER
             (uri.OriginalString.StartsWith('#') && uri.OriginalString.Contains('\\')))
+#else
+            (uri.OriginalString.StartsWith("#") && uri.OriginalString.Contains('\\')))
+#endif
         {
             if (level >= ValidationLevel.Detailed)
             {
@@ -3428,7 +3519,11 @@ public static partial class Validate
         if (!uriReferenceInstance.TryGetUri(out Uri? uri) ||
             uri.OriginalString.StartsWith("\\\\") ||
             (uri.IsAbsoluteUri && uri.Fragment.Contains('\\')) ||
+#if NET8_0_OR_GREATER
             (uri.OriginalString.StartsWith('#') && uri.OriginalString.Contains('\\')))
+#else
+            (uri.OriginalString.StartsWith("#") && uri.OriginalString.Contains('\\')))
+#endif
         {
             if (level >= ValidationLevel.Detailed)
             {
@@ -3621,7 +3716,11 @@ public static partial class Validate
             {
                 if (context.Level >= ValidationLevel.Detailed)
                 {
+#if NET8_0_OR_GREATER
                     result = context.Context.WithResult(isValid: false, $"Validation 6.1.1 type - should have been 'string' with format 'ipv6', but was '{input}'.");
+#else
+                    result = context.Context.WithResult(isValid: false, $"Validation 6.1.1 type - should have been 'string' with format 'ipv6', but was '{input.ToString()}'.");
+#endif
                 }
                 else if (context.Level >= ValidationLevel.Basic)
                 {
@@ -3694,7 +3793,11 @@ public static partial class Validate
             {
                 if (context.Level >= ValidationLevel.Detailed)
                 {
+#if NET8_0_OR_GREATER
                     result = context.Context.WithResult(isValid: false, $"Validation 6.1.1 type - should have been 'string' with format 'ipv4', but was '{input}'.");
+#else
+                    result = context.Context.WithResult(isValid: false, $"Validation 6.1.1 type - should have been 'string' with format 'ipv4', but was '{input.ToString()}'.");
+#endif
                 }
                 else if (context.Level >= ValidationLevel.Basic)
                 {
@@ -3765,6 +3868,7 @@ public static partial class Validate
         return validationContext;
     }
 
+#if NET8_0_OR_GREATER
     [GeneratedRegex("^(?:(?:^|\\.)(?:2(?:5[0-5]|[0-4]\\d)|1?\\d?\\d)){4}$", RegexOptions.Compiled)]
     private static partial Regex CreateIpV4Pattern();
 
@@ -3800,8 +3904,70 @@ public static partial class Validate
 
     [GeneratedRegex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", RegexOptions.Compiled)]
     private static partial Regex CreateIdnEmailMatchPattern();
+#else
+    private static Regex CreateIpV4Pattern() => new("^(?:(?:^|\\.)(?:2(?:5[0-5]|[0-4]\\d)|1?\\d?\\d)){4}$", RegexOptions.Compiled);
 
+    private static Regex CreateZoneIdExpression() => new("%.*$", RegexOptions.Compiled);
+
+    private static Regex CreateEmailPattern() => new("^(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[ \\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\\[(((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|IPv6:(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])))\\])$", RegexOptions.Compiled);
+
+    private static Regex CreateDurationPattern() => new("^P(?!$)((\\d+(?:\\.\\d+)?Y)?(\\d+(?:\\.\\d+)?M)?|(\\d+(?:\\.\\d+)?W)?)?(\\d+(?:\\.\\d+)?D)?(T(?=\\d)(\\d+(?:\\.\\d+)?H)?(\\d+(?:\\.\\d+)?M)?(\\d+(?:\\.\\d+)?S)?)?$", RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.ECMAScript);
+
+    private static Regex CreateHostnamePattern() => new("^(?=.{1,255}$)((?!_)\\w)((((?!_)\\w)|\\b-){0,61}((?!_)\\w))?(\\.((?!_)\\w)((((?!_)\\w)|\\b-){0,61}((?!_)\\w))?)*\\.?$", RegexOptions.Compiled);
+
+    private static Regex CreateInvalidIdnHostNamePattern() => new("(^[\\p{Mn}\\p{Mc}\\p{Me}\\u302E\\u00b7])|.*\\u302E.*|.*[^l]\\u00b7.*|.*\\u00b7[^l].*|.*\\u00b7$|\\u0374$|\\u0375$|\\u0374[^\\p{IsGreekandCoptic}]|\\u0375[^\\p{IsGreekandCoptic}]|^\\u05F3|[^\\p{IsHebrew}]\\u05f3|^\\u05f4|[^\\p{IsHebrew}]\\u05f4|[\\u0660-\\u0669][\\u06F0-\\u06F9]|[\\u06F0-\\u06F9][\\u0660-\\u0669]|^\\u200D|[^\\uA953\\u094d\\u0acd\\u0c4d\\u0d3b\\u09cd\\u0a4d\\u0b4d\\u0bcd\\u0ccd\\u0d4d\\u1039\\u0d3c\\u0eba\\ua8f3\\ua8f4]\\u200D|^\\u30fb$|[^\\p{IsHiragana}\\p{IsKatakana}\\p{IsCJKUnifiedIdeographs}]\\u30fb|\\u30fb[^\\p{IsHiragana}\\p{IsKatakana}\\p{IsCJKUnifiedIdeographs}]|[\\u0640\\u07fa\\u3031\\u3032\\u3033\\u3034\\u3035\\u302e\\u302f\\u303b]|..--", RegexOptions.Compiled);
+
+    private static Regex CreateUriTemplatePattern() => new("^([^\\x00-\\x20\\x7f\"'%<>\\\\^`{|}]|%[0-9A-Fa-f]{2}|{[+#./;?&=,!@|]?((\\w|%[0-9A-Fa-f]{2})(\\.?(\\w|%[0-9A-Fa-f]{2}))*(:[1-9]\\d{0,3}|\\*)?)(,((\\w|%[0-9A-Fa-f]{2})(\\.?(\\w|%[0-9A-Fa-f]{2}))*(:[1-9]\\d{0,3}|\\*)?))*})*$", RegexOptions.Compiled);
+
+    private static Regex CreateUuidTemplatePattern() => new("[0-9a-fA-F]{8}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{12}", RegexOptions.Compiled);
+
+    private static Regex CreateJsonPointerPattern() => new("^((/(([^/~])|(~[01]))*))*$", RegexOptions.Compiled);
+
+    private static Regex CreateJsonRelativePointerPattern() => new("^(0|[1-9][0-9]*)(#|(/(/|[^/~]|(~[01]))*))?$", RegexOptions.Compiled);
+
+    private static Regex CreateIdnEmailReplacePattern() => new("(@)(.+)$", RegexOptions.Compiled);
+
+    private static Regex CreateIdnEmailMatchPattern() => new("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", RegexOptions.Compiled);
+#endif
+
+#if NET8_0_OR_GREATER
     private readonly record struct ValidationContextWrapper(in ValidationContext Context, ValidationLevel Level);
 
     private readonly record struct StringValidationContextWrapper(in ValidationContext Context, ValidationLevel Level, int? MinLength, int? MaxLength, Regex? Pattern);
+#else
+    private readonly struct ValidationContextWrapper
+    {
+        public ValidationContextWrapper(in ValidationContext context, ValidationLevel level)
+        {
+            this.Context = context;
+            this.Level = level;
+        }
+
+        public ValidationContext Context { get; }
+
+        public ValidationLevel Level { get; }
+    }
+
+    private readonly struct StringValidationContextWrapper
+    {
+        public StringValidationContextWrapper(in ValidationContext context, ValidationLevel level, int? minLength, int? maxLength, Regex? pattern)
+        {
+            this.Context = context;
+            this.Level = level;
+            this.MinLength = minLength;
+            this.MaxLength = maxLength;
+            this.Pattern = pattern;
+        }
+
+        public ValidationContext Context { get; }
+
+        public ValidationLevel Level { get; }
+
+        public int? MinLength { get; }
+
+        public int? MaxLength { get; }
+
+        public Regex? Pattern { get; }
+    }
+#endif
 }

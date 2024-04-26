@@ -60,7 +60,7 @@ public readonly partial struct Core : IJsonBoolean<Core>
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
     /// <exception cref = "InvalidOperationException">The value was not a string.</exception>
-    public static explicit operator bool (Core value)
+    public static implicit operator bool (Core value)
     {
         return value.GetBoolean() ?? throw new InvalidOperationException();
     }

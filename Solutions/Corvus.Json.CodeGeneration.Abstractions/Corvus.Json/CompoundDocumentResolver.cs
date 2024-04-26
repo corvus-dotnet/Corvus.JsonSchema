@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Text.Json;
+using Corvus.Json.CodeGeneration;
 
 namespace Corvus.Json;
 
@@ -36,7 +37,7 @@ public class CompoundDocumentResolver : IDocumentResolver
     public async Task<JsonElement?> TryResolve(JsonReference reference)
     {
         this.CheckDisposed();
-        string uri = new(reference.Uri);
+        string uri = reference.Uri.ToString();
 
         if (this.documents.TryGetValue(uri, out JsonDocument? result))
         {

@@ -374,7 +374,7 @@ public class TypeDeclaration
     internal void UpdateDynamicLocation(JsonReference dynamicScopeLocation)
     {
         JsonReferenceBuilder builder = this.LocatedSchema.Location.AsBuilder();
-        builder = new JsonReferenceBuilder(builder.Scheme, builder.Authority, builder.Path, "dynamicScope=" + Uri.EscapeDataString(dynamicScopeLocation.ToString()), builder.Fragment);
+        builder = new JsonReferenceBuilder(builder.Scheme, builder.Authority, builder.Path, ("dynamicScope=" + Uri.EscapeDataString(dynamicScopeLocation.ToString())).AsSpan(), builder.Fragment);
         this.LocatedSchema = this.LocatedSchema.WithLocation(builder.AsReference());
     }
 
@@ -385,7 +385,7 @@ public class TypeDeclaration
     internal void UpdateRecursiveLocation(JsonReference recursiveScopeLocation)
     {
         JsonReferenceBuilder builder = this.LocatedSchema.Location.AsBuilder();
-        builder = new JsonReferenceBuilder(builder.Scheme, builder.Authority, builder.Path, "dynamicScope=" + Uri.EscapeDataString(recursiveScopeLocation.ToString()), builder.Fragment);
+        builder = new JsonReferenceBuilder(builder.Scheme, builder.Authority, builder.Path, ("dynamicScope=" + Uri.EscapeDataString(recursiveScopeLocation.ToString())).AsSpan(), builder.Fragment);
         this.LocatedSchema = this.LocatedSchema.WithLocation(builder.AsReference());
         this.RecursiveScope = recursiveScopeLocation;
     }

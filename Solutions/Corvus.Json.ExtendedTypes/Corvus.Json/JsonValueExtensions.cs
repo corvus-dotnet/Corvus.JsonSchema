@@ -36,7 +36,11 @@ public static class JsonValueExtensions
 
         if (name.HasDotnetBacking)
         {
+#if NET8_0_OR_GREATER
             return jsonObject.TryGetProperty((string)name, out property);
+#else
+            return jsonObject.TryGetProperty((string)name.AsString, out property);
+#endif
         }
         else
         {
@@ -73,7 +77,11 @@ public static class JsonValueExtensions
     {
         if (value.HasJsonElementBacking)
         {
+#if NET8_0_OR_GREATER
             return TValue.FromJson(value.AsJsonElement.Clone());
+#else
+            return JsonValueNetStandard20Extensions.FromJsonElement<TValue>(value.AsJsonElement.Clone());
+#endif
         }
 
         return value;
@@ -93,6 +101,7 @@ public static class JsonValueExtensions
         value.WriteTo(writer);
         writer.Flush();
 
+#if NET8_0_OR_GREATER
         int length = Encoding.UTF8.GetMaxCharCount(abw.WrittenCount);
         char[]? pooledChars = null;
 
@@ -111,6 +120,18 @@ public static class JsonValueExtensions
         }
 
         return result;
+#else
+        int length = Encoding.UTF8.GetMaxCharCount(abw.WrittenCount);
+        char[] chars = ArrayPool<char>.Shared.Rent(length);
+
+        int count = Encoding.UTF8.GetChars(abw.WrittenArray, 0, abw.WrittenCount, chars, 0);
+
+        string result = new(chars, 0, count);
+
+        ArrayPool<char>.Shared.Return(chars, true);
+
+        return result;
+#endif
     }
 
     /// <summary>
@@ -232,13 +253,23 @@ public static class JsonValueExtensions
 
             return valueKind switch
             {
+#if NET8_0_OR_GREATER
                 JsonValueKind.Object => T.FromObject(new JsonObject(value.AsObject.AsPropertyBacking())),
                 JsonValueKind.Array => T.FromArray(new JsonArray(value.AsArray.AsImmutableList())),
-                JsonValueKind.Number => T.FromNumber(new JsonNumber((double)value.AsNumber)),
+                JsonValueKind.Number => T.FromNumber(new JsonNumber(value.AsNumber.AsBinaryJsonNumber)),
                 JsonValueKind.String => T.FromString(new JsonString((string)value.AsString)),
                 JsonValueKind.True => T.FromBoolean(new JsonBoolean(true)),
                 JsonValueKind.False => T.FromBoolean(new JsonBoolean(false)),
                 JsonValueKind.Null => T.Null,
+#else
+                JsonValueKind.Object => new JsonAny(value.AsObject.AsPropertyBacking()).As<T>(),
+                JsonValueKind.Array => new JsonAny(value.AsArray.AsImmutableList()).As<T>(),
+                JsonValueKind.Number => new JsonAny(value.AsNumber.AsBinaryJsonNumber).As<T>(),
+                JsonValueKind.String => new JsonAny((string)value.AsString).As<T>(),
+                JsonValueKind.True => new JsonAny(true).As<T>(),
+                JsonValueKind.False => new JsonAny(false).As<T>(),
+                JsonValueKind.Null => JsonAny.Null.As<T>(),
+#endif
                 _ => value,
             };
         }
@@ -257,7 +288,11 @@ public static class JsonValueExtensions
     {
         if (!value.HasJsonElementBacking)
         {
+#if NET8_0_OR_GREATER
             return T.FromJson(value.AsJsonElement);
+#else
+            return JsonValueNetStandard20Extensions.FromJsonElement<T>(value.AsJsonElement);
+#endif
         }
 
         return value;
@@ -282,7 +317,11 @@ public static class JsonValueExtensions
             return jsonValue.AsJsonElement.TryGetValue(parser, state, out result);
         }
 
+#if NET8_0_OR_GREATER
         return parser(((string)jsonValue).AsSpan(), state, out result);
+#else
+        return parser(((string)jsonValue.AsString).AsSpan(), state, out result);
+#endif
     }
 
     /// <summary>
@@ -328,6 +367,7 @@ public static class JsonValueExtensions
             return false;
         }
 
+#if NET8_0_OR_GREATER
         int maxByteCount = Encoding.UTF8.GetMaxByteCount(value.Length);
         byte[]? pooledBytes = null;
 
@@ -345,5 +385,17 @@ public static class JsonValueExtensions
         }
 
         return success;
+#else
+        int maxByteCount = Encoding.UTF8.GetMaxByteCount(value.Length);
+        byte[] bytes = ArrayPool<byte>.Shared.Rent(maxByteCount);
+
+        int written = Encoding.UTF8.GetBytes(value, 0, value.Length, bytes, 0);
+
+        bool success = parser(bytes.AsSpan(0, written), state, out result);
+
+        ArrayPool<byte>.Shared.Return(bytes);
+
+        return success;
+#endif
     }
 }

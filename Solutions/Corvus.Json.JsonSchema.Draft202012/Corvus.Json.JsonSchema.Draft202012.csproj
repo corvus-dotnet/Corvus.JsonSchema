@@ -2,7 +2,7 @@
 	<Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
 
 	<PropertyGroup>
-		<TargetFramework>net8.0</TargetFramework>
+		<TargetFrameworks>netstandard2.0;net8.0</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 	</PropertyGroup>
@@ -12,13 +12,19 @@
 		<Description>Object models representing JSON Schema documents (201909 and 202012 drafts)</Description>
 	</PropertyGroup>
 
+	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+		<PackageReference Include="System.Text.Json" Version="8.0.3" />
+		<PackageReference Include="System.Collections.Immutable" Version="8.0.0" />
+		<PackageReference Include="IndexRange" Version="1.0.3" />
+	</ItemGroup>
+
 	<ItemGroup>
 		<PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.9">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 		<PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
-		<PackageReference Include="Microsoft.Extensions.ObjectPool" Version="8.0.2" />
+		<PackageReference Include="Microsoft.Extensions.ObjectPool" Version="8.0.3" />
 		<PackageReference Include="NodaTime" Version="3.1.11" />
 	</ItemGroup>
 

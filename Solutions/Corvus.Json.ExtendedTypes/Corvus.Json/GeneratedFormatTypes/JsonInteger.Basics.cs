@@ -13,12 +13,14 @@ namespace Corvus.Json;
 /// Represents a JSON integer.
 /// </summary>
 public readonly partial struct JsonInteger
+#if NET8_0_OR_GREATER
  : IAdditionOperators<JsonInteger, JsonInteger, JsonInteger>,
    ISubtractionOperators<JsonInteger, JsonInteger, JsonInteger>,
    IMultiplyOperators<JsonInteger, JsonInteger, JsonInteger>,
    IDivisionOperators<JsonInteger, JsonInteger, JsonInteger>,
    IIncrementOperators<JsonInteger>,
    IDecrementOperators<JsonInteger>
+#endif
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonInteger"/> struct.
@@ -53,6 +55,7 @@ public readonly partial struct JsonInteger
         this.numberBacking = new(value);
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonInteger"/> struct.
     /// </summary>
@@ -63,6 +66,7 @@ public readonly partial struct JsonInteger
         this.backing = Backing.Number;
         this.numberBacking = new(value);
     }
+#endif
 
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonInteger"/> struct.
@@ -119,6 +123,7 @@ public readonly partial struct JsonInteger
         this.numberBacking = new(value);
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Initializes a new instance of the <see cref="JsonInteger"/> struct.
     /// </summary>
@@ -129,6 +134,7 @@ public readonly partial struct JsonInteger
         this.backing = Backing.Number;
         this.numberBacking = new(value);
     }
+#endif
 
     /// <summary>
     /// Conversion from JsonNumber.
@@ -297,6 +303,7 @@ public readonly partial struct JsonInteger
         throw new InvalidOperationException();
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion to Int128.
     /// </summary>
@@ -317,6 +324,7 @@ public readonly partial struct JsonInteger
 
         throw new InvalidOperationException();
     }
+#endif
 
     /// <summary>
     /// Conversion to SByte.
@@ -339,6 +347,7 @@ public readonly partial struct JsonInteger
         throw new InvalidOperationException();
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion to Half.
     /// </summary>
@@ -359,6 +368,7 @@ public readonly partial struct JsonInteger
 
         throw new InvalidOperationException();
     }
+#endif
 
     /// <summary>
     /// Conversion to Single.
@@ -444,6 +454,7 @@ public readonly partial struct JsonInteger
         throw new InvalidOperationException();
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion to UInt64.
     /// </summary>
@@ -464,6 +475,7 @@ public readonly partial struct JsonInteger
 
         throw new InvalidOperationException();
     }
+#endif
 
     /// <summary>
     /// Conversion from decimal.
@@ -492,6 +504,7 @@ public readonly partial struct JsonInteger
         return new(new BinaryJsonNumber(value));
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion from Half.
     /// </summary>
@@ -500,6 +513,8 @@ public readonly partial struct JsonInteger
     {
         return new(new BinaryJsonNumber(value));
     }
+
+#endif
 
     /// <summary>
     /// Conversion from byte.
@@ -573,6 +588,7 @@ public readonly partial struct JsonInteger
         return new(new BinaryJsonNumber(value));
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion from int128.
     /// </summary>
@@ -581,7 +597,9 @@ public readonly partial struct JsonInteger
     {
         return new(new BinaryJsonNumber(value));
     }
+#endif
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Conversion from uint128.
     /// </summary>
@@ -590,6 +608,7 @@ public readonly partial struct JsonInteger
     {
         return new(new BinaryJsonNumber(value));
     }
+#endif
 
     /// <summary>
     /// Adds two values together to compute their sum.

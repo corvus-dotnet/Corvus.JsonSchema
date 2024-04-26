@@ -71,7 +71,7 @@ public class JsonSchemaSteps
     /// Uses the reference fragment to provide the schema JsonElement as a scenario property <see cref="SchemaPath"/>.
     /// </summary>
     /// <param name="schema">The actual schema to generate.</param>
-    [Given(@"the schema content (.*)")]
+    [Given("the schema content (.*)")]
     public void GivenTheSchema(string schema)
     {
         this.scenarioContext.Set(schema, SchemaInstance);
@@ -155,7 +155,11 @@ public class JsonSchemaSteps
                 string inputDataPath = this.scenarioContext.Get<string>(InputDataPath);
                 type = await this.driver.GenerateTypeFor(
                     false,
+#if NET8_0_OR_GREATER
                     int.Parse(inputDataPath.AsSpan().Slice(12, 3)),
+#else
+                    int.Parse(inputDataPath.Substring(12, 3)),
+#endif
                     filename,
                     schemaPath,
                     inputDataPath,

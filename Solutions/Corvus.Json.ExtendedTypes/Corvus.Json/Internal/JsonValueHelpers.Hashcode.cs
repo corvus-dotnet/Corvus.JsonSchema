@@ -127,6 +127,7 @@ public static partial class JsonValueHelpers
     private static int GetHashCodeForString<T>(in T value)
     where T : struct, IJsonString<T>
     {
+#if NET8_0_OR_GREATER
         if (value.TryGetValue(ProcessHashCode, (object?)null, out int hashCode))
         {
             return hashCode;
@@ -140,6 +141,9 @@ public static partial class JsonValueHelpers
             value = string.GetHashCode(span);
             return true;
         }
+#else
+        return value.GetString().GetHashCode();
+#endif
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

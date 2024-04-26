@@ -6,12 +6,43 @@ using System.Collections.Immutable;
 using Corvus.Json.Patch.Model;
 
 namespace Corvus.Json.Patch;
+#if NET8_0_OR_GREATER
 /// <summary>
 /// Collates a patch operation on a <see cref="IJsonValue"/>.
 /// </summary>
-public readonly record struct PatchBuilder(JsonAny Value, JsonPatchDocument PatchOperations)
+public readonly record struct PatchBuilder(in JsonAny Value, in JsonPatchDocument PatchOperations)
 {
+#else
+/// <summary>
+/// Collates a patch operation on a <see cref="IJsonValue"/>.
+/// </summary>
+public readonly struct PatchBuilder
+{
+#endif
     private static readonly JsonObject EmptyObject = JsonObject.FromProperties(ImmutableList<JsonObjectProperty>.Empty);
+
+#if !NET8_0_OR_GREATER
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PatchBuilder"/> struct.
+    /// </summary>
+    /// <param name="value">The value.</param>
+    /// <param name="patchOperations">The operations to apply.</param>
+    public PatchBuilder(JsonAny value, JsonPatchDocument patchOperations)
+    {
+        this.Value = value;
+        this.PatchOperations = patchOperations;
+    }
+
+    /// <summary>
+    /// Gets the value.
+    /// </summary>
+    public JsonAny Value { get; }
+
+    /// <summary>
+    /// Gets the patch operations.
+    /// </summary>
+    public JsonPatchDocument PatchOperations { get; }
+#endif
 
     /// <summary>
     /// Adds or replaces the value found at the given location, building any missing intermediate structure as object properties.
@@ -19,11 +50,11 @@ public readonly record struct PatchBuilder(JsonAny Value, JsonPatchDocument Patc
     /// <param name="value">The value to add or replace at the <paramref name="path"/>.</param>
     /// <param name="path">The location at which to add or replace the <paramref name="value"/>.</param>
     /// <returns>An instance of a <see cref="PatchBuilder"/> with the updated value, and the operation added to the operation array.</returns>
-    public PatchBuilder DeepAddOrReplaceObjectProperties(JsonAny value, ReadOnlySpan<char> path)
+    public PatchBuilder DeepAddOrReplaceObjectProperties(in JsonAny value, ReadOnlySpan<char> path)
     {
         if (path.Length == 0)
         {
-            return this.Replace(value, new JsonPointer(path.ToString()));
+            return this.Replace(value, new JsonPointer(path));
         }
 
         bool goingDeep = false;
@@ -38,7 +69,11 @@ public readonly record struct PatchBuilder(JsonAny Value, JsonPatchDocument Patc
         ReadOnlySpan<char> currentPath = (path[^1] == '/') ? path[..^1] : path;
         PatchBuilder currentBuilder = this;
 
+#if NET8_0_OR_GREATER
         while ((nextSlash = currentPath.IndexOf("/", StringComparison.Ordinal)) >= 0)
+#else
+        while ((nextSlash = currentPath.IndexOf('/')) >= 0)
+#endif
         {
             currentIndex += nextSlash;
 
@@ -53,7 +88,7 @@ public readonly record struct PatchBuilder(JsonAny Value, JsonPatchDocument Patc
                 currentBuilder =
                     currentBuilder.Add(
                         EmptyObject,
-                        new JsonPointer(path[..currentIndex].ToString()));
+                        new JsonPointer(path[..currentIndex]));
                 currentPath = currentPath[(nextSlash + 1)..];
                 currentIndex++;
             }
@@ -65,11 +100,11 @@ public readonly record struct PatchBuilder(JsonAny Value, JsonPatchDocument Patc
         // If we are not going deep, we may be replacing the element at the path
         if (!goingDeep && this.Value.TryResolvePointer(path, out _))
         {
-            return currentBuilder.Replace(value, new JsonPointer(path.ToString()));
+            return currentBuilder.Replace(value, new JsonPointer(path));
         }
         else
         {
-            return currentBuilder.Add(value, new JsonPointer(path.ToString()));
+            return currentBuilder.Add(value, new JsonPointer(path));
         }
     }
 
@@ -80,7 +115,7 @@ public readonly record struct PatchBuilder(JsonAny Value, JsonPatchDocument Patc
     /// <param name="path">The path at which to add the value.</param>
     /// <returns>An instance of a <see cref="PatchBuilder"/> with the updated value, and the operation added to the operation array.</returns>
     /// <exception cref="JsonPatchException">Thrown if the value cannot be added at the given path.</exception>
-    public PatchBuilder Add(JsonAny value, JsonPointer path)
+    public PatchBuilder Add(in JsonAny value, in JsonPointer path)
     {
         var operation = JsonPatchDocument.AddEntity.Create(path, value);
         if (this.Value.TryApplyPatch(JsonPatchDocument.FromItems(operation), out JsonAny result))
@@ -98,7 +133,7 @@ public readonly record struct PatchBuilder(JsonAny Value, JsonPatchDocument Patc
     /// <param name="path">The path at which to add the copied entity.</param>
     /// <returns>An instance of a <see cref="PatchBuilder"/> with the updated value, and the operation added to the operation array.</returns>
     /// <exception cref="JsonPatchException">Thrown if the value cannot be copied from the source to the path.</exception>
-    public PatchBuilder Copy(JsonPointer from, JsonPointer path)
+    public PatchBuilder Copy(in JsonPointer from, in JsonPointer path)
     {
         var operation = JsonPatchDocument.Copy.Create(from, path);
         if (this.Value.TryApplyPatch(JsonPatchDocument.FromItems(operation), out JsonAny result))
@@ -116,7 +151,7 @@ public readonly record struct PatchBuilder(JsonAny Value, JsonPatchDocument Patc
     /// <param name="path">The path at which to add the copied entity.</param>
     /// <returns>An instance of a <see cref="PatchBuilder"/> with the updated value, and the operation added to the operation array.</returns>
     /// <exception cref="JsonPatchException">Thrown if the value cannot be moved from the source location to the path.</exception>
-    public PatchBuilder Move(JsonPointer from, JsonPointer path)
+    public PatchBuilder Move(in JsonPointer from, in JsonPointer path)
     {
         var operation = JsonPatchDocument.Move.Create(from, path);
         if (this.Value.TryApplyPatch(JsonPatchDocument.FromItems(operation), out JsonAny result))
@@ -133,7 +168,7 @@ public readonly record struct PatchBuilder(JsonAny Value, JsonPatchDocument Patc
     /// <param name="path">The path at which to remove the value.</param>
     /// <returns>An instance of a <see cref="PatchBuilder"/> with the updated value, and the operation added to the operation array.</returns>
     /// <exception cref="JsonPatchException">Thrown if the value cannot be removed at the given path.</exception>
-    public PatchBuilder Remove(JsonPointer path)
+    public PatchBuilder Remove(in JsonPointer path)
     {
         var operation = JsonPatchDocument.RemoveEntity.Create(path);
         if (this.Value.TryApplyPatch(JsonPatchDocument.FromItems(operation), out JsonAny result))
@@ -151,7 +186,7 @@ public readonly record struct PatchBuilder(JsonAny Value, JsonPatchDocument Patc
     /// <param name="path">The path at which to replace the existing value.</param>
     /// <returns>An instance of a <see cref="PatchBuilder"/> with the updated value, and the operation added to the operation array.</returns>
     /// <exception cref="JsonPatchException">Thrown if the value cannot be replaced at the given path.</exception>
-    public PatchBuilder Replace(JsonAny value, JsonPointer path)
+    public PatchBuilder Replace(in JsonAny value, in JsonPointer path)
     {
         var operation = JsonPatchDocument.ReplaceEntity.Create(path, value);
         if (this.Value.TryApplyPatch(JsonPatchDocument.FromItems(operation), out JsonAny result))
@@ -169,7 +204,7 @@ public readonly record struct PatchBuilder(JsonAny Value, JsonPatchDocument Patc
     /// <param name="path">The path at which to replace the existing value.</param>
     /// <returns>An instance of a <see cref="PatchBuilder"/> with the updated value, and the operation added to the operation array.</returns>
     /// <exception cref="JsonPatchException">Thrown if the value cannot be replaced at the given path.</exception>
-    public PatchBuilder Test(JsonAny value, JsonPointer path)
+    public PatchBuilder Test(in JsonAny value, in JsonPointer path)
     {
         var operation = JsonPatchDocument.Test.Create(path, value);
         if (this.Value.TryApplyPatch(JsonPatchDocument.FromItems(operation), out JsonAny result))

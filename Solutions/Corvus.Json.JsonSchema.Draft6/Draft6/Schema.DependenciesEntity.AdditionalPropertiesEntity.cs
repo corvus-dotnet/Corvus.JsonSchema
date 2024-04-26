@@ -388,42 +388,44 @@ public readonly partial struct Schema
                 return Undefined;
             }
 
-            /// <summary>
-            /// Gets an instance of the JSON value from a string value.
-            /// </summary>
-            /// <typeparam name = "TValue">The type of the value.</typeparam>
-            /// <param name = "value">The value from which to instantiate the instance.</param>
-            /// <returns>An instance of this type, initialized from the value.</returns>
-            /// <remarks>This will be AdditionalPropertiesEntity.Undefined if the type is not compatible.</remarks>
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            static AdditionalPropertiesEntity IJsonValue<AdditionalPropertiesEntity>.FromString<TValue>(in TValue value)
-            {
-                if (value.HasJsonElementBacking)
-                {
-                    return new(value.AsJsonElement);
-                }
+#if NET8_0_OR_GREATER
+    /// <summary>
+    /// Gets an instance of the JSON value from a string value.
+    /// </summary>
+    /// <typeparam name="TValue">The type of the value.</typeparam>
+    /// <param name="value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>This will be AdditionalPropertiesEntity.Undefined if the type is not compatible.</remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    static AdditionalPropertiesEntity IJsonValue<AdditionalPropertiesEntity>.FromString<TValue>(in TValue value)
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
+        }
 
-                return Undefined;
-            }
+        return Undefined;
+    }
+#endif
+#if NET8_0_OR_GREATER
+    /// <summary>
+    /// Gets an instance of the JSON value from a number value.
+    /// </summary>
+    /// <typeparam name="TValue">The type of the value.</typeparam>
+    /// <param name="value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>This will be AdditionalPropertiesEntity.Undefined if the type is not compatible.</remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    static AdditionalPropertiesEntity IJsonValue<AdditionalPropertiesEntity>.FromNumber<TValue>(in TValue value)
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
+        }
 
-            /// <summary>
-            /// Gets an instance of the JSON value from a number value.
-            /// </summary>
-            /// <typeparam name = "TValue">The type of the value.</typeparam>
-            /// <param name = "value">The value from which to instantiate the instance.</param>
-            /// <returns>An instance of this type, initialized from the value.</returns>
-            /// <remarks>This will be AdditionalPropertiesEntity.Undefined if the type is not compatible.</remarks>
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            static AdditionalPropertiesEntity IJsonValue<AdditionalPropertiesEntity>.FromNumber<TValue>(in TValue value)
-            {
-                if (value.HasJsonElementBacking)
-                {
-                    return new(value.AsJsonElement);
-                }
-
-                return Undefined;
-            }
-
+        return Undefined;
+    }
+#endif
             /// <summary>
             /// Gets an instance of the JSON value from an array value.
             /// </summary>
@@ -539,7 +541,11 @@ public readonly partial struct Schema
             /// <returns>The parsed value.</returns>
             static AdditionalPropertiesEntity ParseValue(ReadOnlySpan<char> buffer)
             {
-                return IJsonValue<AdditionalPropertiesEntity>.ParseValue(buffer);
+#if NET8_0_OR_GREATER
+        return IJsonValue<AdditionalPropertiesEntity>.ParseValue(buffer);
+#else
+                return JsonValueHelpers.ParseValue<AdditionalPropertiesEntity>(buffer);
+#endif
             }
 
             /// <summary>
@@ -549,7 +555,11 @@ public readonly partial struct Schema
             /// <returns>The parsed value.</returns>
             static AdditionalPropertiesEntity ParseValue(ReadOnlySpan<byte> buffer)
             {
-                return IJsonValue<AdditionalPropertiesEntity>.ParseValue(buffer);
+#if NET8_0_OR_GREATER
+        return IJsonValue<AdditionalPropertiesEntity>.ParseValue(buffer);
+#else
+                return JsonValueHelpers.ParseValue<AdditionalPropertiesEntity>(buffer);
+#endif
             }
 
             /// <summary>
@@ -559,7 +569,11 @@ public readonly partial struct Schema
             /// <returns>The parsed value.</returns>
             static AdditionalPropertiesEntity ParseValue(ref Utf8JsonReader reader)
             {
-                return IJsonValue<AdditionalPropertiesEntity>.ParseValue(ref reader);
+#if NET8_0_OR_GREATER
+        return IJsonValue<AdditionalPropertiesEntity>.ParseValue(ref reader);
+#else
+                return JsonValueHelpers.ParseValue<AdditionalPropertiesEntity>(ref reader);
+#endif
             }
 
             /// <summary>
@@ -571,32 +585,36 @@ public readonly partial struct Schema
             public TTarget As<TTarget>()
                 where TTarget : struct, IJsonValue<TTarget>
             {
-                if ((this.backing & Backing.JsonElement) != 0)
-                {
-                    return TTarget.FromJson(this.jsonElementBacking);
-                }
+#if NET8_0_OR_GREATER
+        if ((this.backing & Backing.JsonElement) != 0)
+        {
+            return TTarget.FromJson(this.jsonElementBacking);
+        }
 
-                if ((this.backing & Backing.Bool) != 0)
-                {
-                    return TTarget.FromBoolean(this);
-                }
+        if ((this.backing & Backing.Bool) != 0)
+        {
+            return TTarget.FromBoolean(this);
+        }
 
-                if ((this.backing & Backing.Array) != 0)
-                {
-                    return TTarget.FromArray(this);
-                }
+        if ((this.backing & Backing.Array) != 0)
+        {
+            return TTarget.FromArray(this);
+        }
 
-                if ((this.backing & Backing.Object) != 0)
-                {
-                    return TTarget.FromObject(this);
-                }
+        if ((this.backing & Backing.Object) != 0)
+        {
+            return TTarget.FromObject(this);
+        }
 
-                if ((this.backing & Backing.Null) != 0)
-                {
-                    return TTarget.Null;
-                }
+        if ((this.backing & Backing.Null) != 0)
+        {
+            return TTarget.Null;
+        }
 
-                return TTarget.Undefined;
+        return TTarget.Undefined;
+#else
+                return this.As<AdditionalPropertiesEntity, TTarget>();
+#endif
             }
 
             /// <inheritdoc/>

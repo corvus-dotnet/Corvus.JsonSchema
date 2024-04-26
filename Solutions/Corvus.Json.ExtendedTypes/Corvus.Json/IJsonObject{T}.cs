@@ -186,6 +186,7 @@ public interface IJsonObject<T> : IJsonValue<T>
     /// <returns>The isntance with the property removed.</returns>
     T RemoveProperty(ReadOnlySpan<byte> utf8Name);
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Creates an instance of the type from the given dictionary of properties.
     /// </summary>
@@ -206,6 +207,7 @@ public interface IJsonObject<T> : IJsonValue<T>
     /// <param name="source">The dictionary of properties.</param>
     /// <returns>An instance of the type initialized from the dictionary of properties.</returns>
     static abstract T FromProperties(params (JsonPropertyName Name, JsonAny Value)[] source);
+#endif
 
     /// <summary>
     /// Gets the object as an immutable dictionary of properties.

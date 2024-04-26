@@ -20,7 +20,18 @@ public readonly partial struct Validation
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
-    public readonly partial struct MinContainsEntity : IJsonNumber<MinContainsEntity>, IAdditionOperators<MinContainsEntity, MinContainsEntity, MinContainsEntity>, ISubtractionOperators<MinContainsEntity, MinContainsEntity, MinContainsEntity>, IMultiplyOperators<MinContainsEntity, MinContainsEntity, MinContainsEntity>, IDivisionOperators<MinContainsEntity, MinContainsEntity, MinContainsEntity>, IIncrementOperators<MinContainsEntity>, IDecrementOperators<MinContainsEntity>
+    public readonly partial struct MinContainsEntity 
+#if NET8_0_OR_GREATER
+: IJsonNumber<MinContainsEntity>,
+  IAdditionOperators<MinContainsEntity, MinContainsEntity, MinContainsEntity>,
+  ISubtractionOperators<MinContainsEntity, MinContainsEntity, MinContainsEntity>,
+  IMultiplyOperators<MinContainsEntity, MinContainsEntity, MinContainsEntity>,
+  IDivisionOperators<MinContainsEntity, MinContainsEntity, MinContainsEntity>,
+  IIncrementOperators<MinContainsEntity>,
+  IDecrementOperators<MinContainsEntity>
+#else
+    : IJsonNumber<MinContainsEntity>
+#endif
     {
         /// <summary>
         /// Initializes a new instance of the <see cref = "MinContainsEntity"/> struct.
@@ -181,27 +192,28 @@ public readonly partial struct Validation
             throw new InvalidOperationException();
         }
 
-        /// <summary>
-        /// Conversion to Int128.
-        /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-        /// <exception cref = "FormatException">The value was not formatted as an Int64.</exception>
-        public static explicit operator Int128(MinContainsEntity value)
+#if NET8_0_OR_GREATER
+    /// <summary>
+    /// Conversion to Int128.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+    /// <exception cref="FormatException">The value was not formatted as an Int64.</exception>
+    public static explicit operator Int128(MinContainsEntity value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
         {
-            if ((value.backing & Backing.JsonElement) != 0)
-            {
-                return value.jsonElementBacking.SafeGetInt128();
-            }
-
-            if ((value.backing & Backing.Number) != 0)
-            {
-                return value.numberBacking.CreateChecked<Int128>();
-            }
-
-            throw new InvalidOperationException();
+            return value.jsonElementBacking.SafeGetInt128();
         }
 
+        if ((value.backing & Backing.Number) != 0)
+        {
+            return value.numberBacking.CreateChecked<Int128>();
+        }
+
+        throw new InvalidOperationException();
+    }
+#endif
         /// <summary>
         /// Conversion to SByte.
         /// </summary>
@@ -223,27 +235,28 @@ public readonly partial struct Validation
             throw new InvalidOperationException();
         }
 
-        /// <summary>
-        /// Conversion to Half.
-        /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-        /// <exception cref = "FormatException">The value was not formatted as a Single.</exception>
-        public static explicit operator Half(MinContainsEntity value)
+#if NET8_0_OR_GREATER
+    /// <summary>
+    /// Conversion to Half.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+    /// <exception cref="FormatException">The value was not formatted as a Single.</exception>
+    public static explicit operator Half(MinContainsEntity value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
         {
-            if ((value.backing & Backing.JsonElement) != 0)
-            {
-                return value.jsonElementBacking.SafeGetHalf();
-            }
-
-            if ((value.backing & Backing.Number) != 0)
-            {
-                return value.numberBacking.CreateChecked<Half>();
-            }
-
-            throw new InvalidOperationException();
+            return value.jsonElementBacking.SafeGetHalf();
         }
 
+        if ((value.backing & Backing.Number) != 0)
+        {
+            return value.numberBacking.CreateChecked<Half>();
+        }
+
+        throw new InvalidOperationException();
+    }
+#endif
         /// <summary>
         /// Conversion to Single.
         /// </summary>
@@ -328,27 +341,28 @@ public readonly partial struct Validation
             throw new InvalidOperationException();
         }
 
-        /// <summary>
-        /// Conversion to UInt128.
-        /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-        /// <exception cref = "FormatException">The value was not formatted as an UInt64.</exception>
-        public static explicit operator UInt128(MinContainsEntity value)
+#if NET8_0_OR_GREATER
+    /// <summary>
+    /// Conversion to UInt128.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
+    /// <exception cref="FormatException">The value was not formatted as an UInt64.</exception>
+    public static explicit operator UInt128(MinContainsEntity value)
+    {
+        if ((value.backing & Backing.JsonElement) != 0)
         {
-            if ((value.backing & Backing.JsonElement) != 0)
-            {
-                return value.jsonElementBacking.SafeGetUInt128();
-            }
-
-            if ((value.backing & Backing.Number) != 0)
-            {
-                return value.numberBacking.CreateChecked<UInt128>();
-            }
-
-            throw new InvalidOperationException();
+            return value.jsonElementBacking.SafeGetUInt128();
         }
 
+        if ((value.backing & Backing.Number) != 0)
+        {
+            return value.numberBacking.CreateChecked<UInt128>();
+        }
+
+        throw new InvalidOperationException();
+    }
+#endif
         /// <summary>
         /// Conversion from decimal.
         /// </summary>
@@ -367,15 +381,16 @@ public readonly partial struct Validation
             return new(new BinaryJsonNumber(value));
         }
 
-        /// <summary>
-        /// Conversion from Half.
-        /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        public static explicit operator MinContainsEntity(Half value)
-        {
-            return new(new BinaryJsonNumber(value));
-        }
-
+#if NET8_0_OR_GREATER
+    /// <summary>
+    /// Conversion from Half.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static explicit operator MinContainsEntity(Half value)
+    {
+        return new(new BinaryJsonNumber(value));
+    }
+#endif
         /// <summary>
         /// Conversion from float.
         /// </summary>

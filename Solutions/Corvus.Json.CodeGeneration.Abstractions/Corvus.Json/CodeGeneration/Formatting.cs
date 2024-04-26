@@ -14,8 +14,8 @@ public static class Formatting
 {
     private static readonly ReadOnlyMemory<char> TypePrefix = "Type".AsMemory();
 
-    private static readonly ReadOnlyMemory<char>[] Keywords = new ReadOnlyMemory<char>[]
-    {
+    private static readonly ReadOnlyMemory<char>[] Keywords =
+    [
         "abstract".AsMemory(), "as".AsMemory(), "base".AsMemory(), "bool".AsMemory(),
         "break".AsMemory(), "byte".AsMemory(), "case".AsMemory(), "catch".AsMemory(),
         "char".AsMemory(), "checked".AsMemory(), "class".AsMemory(), "const".AsMemory(),
@@ -36,15 +36,15 @@ public static class Formatting
         "ulong".AsMemory(), "unchecked".AsMemory(), "unsafe".AsMemory(), "ushort".AsMemory(),
         "using".AsMemory(), "virtual".AsMemory(), "void".AsMemory(), "volatile".AsMemory(),
         "while".AsMemory(),
-    };
+    ];
 
     /// <summary>
-    /// Escapes a value for embeddeding into a quoted C# string.
+    /// Escapes a value for embedding into a quoted C# string.
     /// </summary>
     /// <param name="value">The value to escape.</param>
     /// <param name="quote">Whether to quote the string.</param>
     /// <returns>The escaped value. This can be inserted into a regular quoted C# string.</returns>
-    [return: NotNullIfNotNull("value")]
+    [return: NotNullIfNotNull(nameof(value))]
     public static string? FormatLiteralOrNull(string? value, bool quote)
     {
         return value is null ? null : SymbolDisplay.FormatLiteral(value, quote);
@@ -59,7 +59,7 @@ public static class Formatting
     {
         if (string.IsNullOrEmpty(name))
         {
-            return name;
+            return name.AsSpan();
         }
 
         // We could possibly do a better job here by using the "in place" access to the underlying
@@ -78,7 +78,7 @@ public static class Formatting
     {
         if (name.Length == 0)
         {
-            return name;
+            return name.AsSpan();
         }
 
         // We could possibly do a better job here by using the "in place" access to the underlying

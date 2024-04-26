@@ -64,10 +64,12 @@ public static class BuiltInTypes
     /// </summary>
     public static readonly (string Ns, string Type) ClrInt64TypeDeclaration = ("Corvus.Json", "JsonInt64");
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// A clr <see cref="Int128"/> type.
     /// </summary>
     public static readonly (string Ns, string Type) ClrInt128TypeDeclaration = ("Corvus.Json", "JsonInt128");
+#endif
 
     /// <summary>
     /// A clr <see cref="byte"/> type.
@@ -89,6 +91,7 @@ public static class BuiltInTypes
     /// </summary>
     public static readonly (string Ns, string Type) ClrUInt64TypeDeclaration = ("Corvus.Json", "JsonUInt64");
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// A clr <see cref="UInt128"/> type.
     /// </summary>
@@ -98,6 +101,7 @@ public static class BuiltInTypes
     /// A clr <see cref="Half"/> type.
     /// </summary>
     public static readonly (string Ns, string Type) ClrHalfTypeDeclaration = ("Corvus.Json", "JsonHalf");
+#endif
 
     /// <summary>
     /// A clr <see cref="float"/> type.
@@ -139,10 +143,12 @@ public static class BuiltInTypes
     /// </summary>
     public static readonly (string Ns, string Type) ClrUriReferenceTypeDeclaration = ("Corvus.Json", "JsonUriReference");
 
+#if NET8_0_OR_GREATER
     /// <summary>
-    /// A clr <see cref="Uri"/> type.
+    /// A clr <see cref="JsonUriTemplate"/> type.
     /// </summary>
     public static readonly (string Ns, string Type) ClrUriTemplateTypeDeclaration = ("Corvus.Json", "JsonUriTemplate");
+#endif
 
     /// <summary>
     /// A clr IRI type.
@@ -512,7 +518,9 @@ public static class BuiltInTypes
             "ipv6" => IpV6TypeDeclaration,
             "uuid" => ClrGuidTypeDeclaration,
             "uri" => ClrUriTypeDeclaration,
+#if NET8_0_OR_GREATER
             "uri-template" => ClrUriTemplateTypeDeclaration,
+#endif
             "uri-reference" => ClrUriReferenceTypeDeclaration,
             "iri" => ClrIriTypeDeclaration,
             "iri-reference" => ClrIriReferenceTypeDeclaration,
@@ -541,7 +549,9 @@ public static class BuiltInTypes
         {
             "double" => ClrDoubleTypeDeclaration,
             "decimal" => ClrDecimalTypeDeclaration,
+#if NET8_0_OR_GREATER
             "half" => ClrHalfTypeDeclaration,
+#endif
             "single" => ClrSingleTypeDeclaration,
             _ => null,
         };
@@ -555,13 +565,16 @@ public static class BuiltInTypes
             "int16" => ClrInt16TypeDeclaration,
             "int32" => ClrInt32TypeDeclaration,
             "int64" => ClrInt64TypeDeclaration,
+#if NET8_0_OR_GREATER
             "int128" => ClrInt128TypeDeclaration,
+#endif
             "sbyte" => ClrSByteTypeDeclaration,
             "uint16" => ClrUInt16TypeDeclaration,
             "uint32" => ClrUInt32TypeDeclaration,
             "uint64" => ClrUInt64TypeDeclaration,
+#if NET8_0_OR_GREATER
             "uint128" => ClrUInt128TypeDeclaration,
-
+#endif
             _ => null,
         };
     }

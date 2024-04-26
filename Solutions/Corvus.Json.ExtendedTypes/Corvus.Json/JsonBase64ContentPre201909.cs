@@ -28,7 +28,11 @@ public readonly partial struct JsonBase64ContentPre201909
         var abw = new ArrayBufferWriter<byte>();
         using var writer = new Utf8JsonWriter(abw);
         value.WriteTo(writer);
+#if NET8_0_OR_GREATER
         this.stringBacking = Convert.ToBase64String(abw.WrittenSpan);
+#else
+        this.stringBacking = Convert.ToBase64String(abw.WrittenArray, 0, abw.WrittenCount);
+#endif
         this.jsonElementBacking = default;
         this.backing = Backing.String;
     }
@@ -42,17 +46,26 @@ public readonly partial struct JsonBase64ContentPre201909
     {
         if ((this.backing & Backing.String) != 0)
         {
+#if NET8_0_OR_GREATER
             return this.stringBacking;
+#else
+            return this.stringBacking.AsSpan();
+#endif
         }
         else if (this.ValueKind == JsonValueKind.String)
         {
+#if NET8_0_OR_GREATER
+            return this.jsonElementBacking.GetString() ?? throw new InvalidOperationException();
+#else
             string? result = this.jsonElementBacking.GetString();
-            if (result is null)
+
+            if (result is string r)
             {
-                throw new InvalidOperationException();
+                return r.AsSpan();
             }
 
-            return result;
+            throw new InvalidOperationException();
+#endif
         }
 
         throw new InvalidOperationException();
@@ -90,13 +103,19 @@ public readonly partial struct JsonBase64ContentPre201909
     {
         if ((this.backing & Backing.String) != 0)
         {
+#if NET8_0_OR_GREATER
             Span<byte> result = new byte[this.stringBacking.Length];
-            if (!Convert.TryFromBase64String(this.stringBacking, result, out int bytesWritten))
+
+            if (!Convert.TryFromBase64String(this.stringBacking,  result, out int bytesWritten))
             {
                 throw new InvalidOperationException();
             }
 
             return result[..bytesWritten];
+#else
+            return Convert.FromBase64String(this.stringBacking).AsSpan();
+#endif
+
         }
 
         if (this.jsonElementBacking.ValueKind == JsonValueKind.String)
@@ -119,6 +138,7 @@ public readonly partial struct JsonBase64ContentPre201909
     {
         if ((this.backing & Backing.String) != 0)
         {
+#if NET8_0_OR_GREATER
             byte[]? rentedFromPool = null;
             Span<byte> decoded =
                 this.stringBacking.Length > JsonValueHelpers.MaxStackAlloc
@@ -146,6 +166,22 @@ public readonly partial struct JsonBase64ContentPre201909
                     ArrayPool<byte>.Shared.Return(rentedFromPool, true);
                 }
             }
+#else
+            try
+            {
+                byte[] decoded = Convert.FromBase64String(this.stringBacking);
+                var reader = new Utf8JsonReader(decoded.AsSpan());
+                if (JsonDocument.TryParseValue(ref reader, out result))
+                {
+                    return EncodedContentMediaTypeParseStatus.Success;
+                }
+            }
+            catch
+            {
+                result = default;
+                return EncodedContentMediaTypeParseStatus.UnableToParseToMediaType;
+            }
+#endif
         }
 
         if (this.jsonElementBacking.ValueKind == JsonValueKind.String)

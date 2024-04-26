@@ -60,7 +60,7 @@ public readonly partial struct Validation : IJsonBoolean<Validation>
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
     /// <exception cref = "InvalidOperationException">The value was not a string.</exception>
-    public static explicit operator bool (Validation value)
+    public static implicit operator bool (Validation value)
     {
         return value.GetBoolean() ?? throw new InvalidOperationException();
     }

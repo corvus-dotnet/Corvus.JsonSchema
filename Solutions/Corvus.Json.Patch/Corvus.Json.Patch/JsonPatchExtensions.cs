@@ -94,7 +94,7 @@ public static partial class JsonPatchExtensions
     /// <param name="value">The value to add.</param>
     /// <param name="result">The resulting entity.</param>
     /// <returns><see langword="true"/> if the value was added, otherwise <see langword="false"/>.</returns>
-    public static bool TryAdd<T>(this T node, string path, JsonAny value, out T result)
+    public static bool TryAdd<T>(this T node, string path, in JsonAny value, out T result)
         where T : struct, IJsonValue<T>
     {
         if (path.Length == 0)
@@ -119,7 +119,7 @@ public static partial class JsonPatchExtensions
     /// <param name="value">The value to replace.</param>
     /// <param name="result">The resulting entity.</param>
     /// <returns><see langword="true"/> if the value was replaced, otherwise <see langword="false"/>.</returns>
-    public static bool TryReplace<T>(this T node, string path, JsonAny value, out T result)
+    public static bool TryReplace<T>(this T node, string path, in JsonAny value, out T result)
         where T : struct, IJsonValue<T>
     {
         if (path.Length == 0)
@@ -153,7 +153,7 @@ public static partial class JsonPatchExtensions
             return true;
         }
 
-        if (!node.TryResolvePointer(sourcePath, out JsonAny source))
+        if (!node.TryResolvePointer(sourcePath.AsSpan(), out JsonAny source))
         {
             result = node;
             return false;
@@ -190,7 +190,7 @@ public static partial class JsonPatchExtensions
             return true;
         }
 
-        if (!node.TryResolvePointer(sourcePath, out JsonAny source))
+        if (!node.TryResolvePointer(sourcePath.AsSpan(), out JsonAny source))
         {
             result = node;
             return false;
@@ -309,7 +309,11 @@ public static partial class JsonPatchExtensions
             return false;
         }
 
+#if NET8_0_OR_GREATER
         return int.TryParse(pathSegment, out index);
+#else
+        return int.TryParse(pathSegment.ToString(), out index);
+#endif
     }
 
     private static bool TryApplyAdd(in JsonAny node, in JsonPatchDocument.PatchOperation patchOperation, out JsonAny result)
@@ -334,7 +338,7 @@ public static partial class JsonPatchExtensions
             return true;
         }
 
-        if (!node.TryResolvePointer(from, out JsonAny source))
+        if (!node.TryResolvePointer(from.AsSpan(), out JsonAny source))
         {
             result = node;
             return false;
@@ -364,7 +368,7 @@ public static partial class JsonPatchExtensions
             return true;
         }
 
-        if (!node.TryResolvePointer(from, out JsonAny source))
+        if (!node.TryResolvePointer(from.AsSpan(), out JsonAny source))
         {
             result = node;
             return false;
