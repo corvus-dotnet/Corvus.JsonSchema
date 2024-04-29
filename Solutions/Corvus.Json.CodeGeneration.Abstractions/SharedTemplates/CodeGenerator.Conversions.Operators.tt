@@ -109,7 +109,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
             (conversion.IsArray && IsImplicitArray))
         {
             // We have already emitted the conversions for this type.
-			continue;
+            continue;
         }
 
     } #>

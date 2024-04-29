@@ -87,7 +87,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     { #>
         return Corvus.Json.Validate.TypeByte(this, result, level);
 <#  }
-    else if (IsJsonSbyte)
+    else if (IsJsonSByte)
     { #>
         return Corvus.Json.Validate.TypeSByte(this, result, level);
 <#  }
