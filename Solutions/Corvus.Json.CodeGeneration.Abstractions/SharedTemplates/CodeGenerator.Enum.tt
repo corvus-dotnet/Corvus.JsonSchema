@@ -135,9 +135,9 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
             else if (enumValue.IsNull)
             { #>
             if (this.ValueKind == JsonValueKind.Null)
-			{
-				return matchItem<#= enumItemIndex #>(context);
-			}
+            {
+                return matchItem<#= enumItemIndex #>(context);
+            }
 <#          }
 
             ++enumItemIndex;
@@ -250,9 +250,9 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
             else if (enumValue.IsNull)
             { #>
             if (this.ValueKind == JsonValueKind.Null)
-			{
-				return matchItem<#= enumItemIndex #>();
-			}
+            {
+                return matchItem<#= enumItemIndex #>();
+            }
 <#          }
 
             ++enumItemIndex;

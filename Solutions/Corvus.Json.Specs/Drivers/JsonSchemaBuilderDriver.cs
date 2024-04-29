@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Collections.Immutable;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.Loader;
 using System.Text;
@@ -159,6 +160,42 @@ global using global::System.Threading.Tasks;";
 
     /// <summary>
     /// Create an instance of the given <see cref="IJsonValue"/> type from
+    /// the numeric data provided, by casting the instance from a value of the given type.
+    /// </summary>
+    /// <param name="instanceType">The type (which must be a <see cref="IJsonValue"/> and have a constructor with a single <see cref="JsonElement"/> parameter.</param>
+    /// <param name="numericType">The numeric type for which to parse the data.</param>
+    /// <param name="data">The numeric data from which to parse the value.</param>
+    /// <returns>An instance of a <see cref="IJsonValue"/> initialized from the data.</returns>
+    public IJsonValue CastToInstance(Type instanceType, string numericType, string data)
+    {
+        return numericType switch
+        {
+            "sbyte" => Cast(sbyte.Parse(data), instanceType),
+            "int16" => Cast(short.Parse(data), instanceType),
+            "int32" => Cast(int.Parse(data), instanceType),
+            "int64" => Cast(long.Parse(data), instanceType),
+#if NET8_0_OR_GREATER
+            "int128" => Cast(Int128.Parse(data), instanceType),
+#endif
+            "byte" => Cast(byte.Parse(data), instanceType),
+            "uint16" => Cast(ushort.Parse(data), instanceType),
+            "uint32" => Cast(uint.Parse(data), instanceType),
+            "uint64" => Cast(ulong.Parse(data), instanceType),
+#if NET8_0_OR_GREATER
+            "uint128" => Cast(UInt128.Parse(data), instanceType),
+#endif
+            "decimal" => Cast(decimal.Parse(data), instanceType),
+            "double" => Cast(double.Parse(data), instanceType),
+            "single" => Cast(float.Parse(data), instanceType),
+#if NET8_0_OR_GREATER
+            "half" => Cast(Half.Parse(data), instanceType),
+#endif
+            _ => throw new InvalidOperationException($"Unexpected type: {numericType}."),
+        };
+    }
+
+    /// <summary>
+    /// Create an instance of the given <see cref="IJsonValue"/> type from
     /// the json data provided.
     /// </summary>
     /// <param name="type">The type (which must be a <see cref="IJsonValue"/> and have a constructor with a single <see cref="JsonElement"/> parameter.</param>
@@ -256,8 +293,8 @@ global using global::System.Threading.Tasks;";
         }
 
         return (from l in ctx.CompileLibraries
-               from r in l.ResolveReferencePaths()
-               select MetadataReference.CreateFromFile(r),
+                from r in l.ResolveReferencePaths()
+                select MetadataReference.CreateFromFile(r),
                ctx.CompilationOptions.Defines.AsEnumerable());
     }
 
@@ -275,6 +312,20 @@ global using global::System.Threading.Tasks;";
                 yield return CSharpSyntaxTree.ParseText(codeAndFilename.Code, options: parseOptions, path: codeAndFilename.Filename);
             }
         }
+    }
+
+    private static IJsonValue Cast<TSource>(TSource s, Type targetType)
+    {
+        return CastFrom<TSource>(targetType)(s);
+    }
+
+    // Not efficient - it doesn't cache the from/to values, but fine for test.
+    private static Func<TSource, IJsonValue> CastFrom<TSource>(Type targetType)
+    {
+        ParameterExpression p = Expression.Parameter(typeof(TSource));
+        UnaryExpression c = Expression.ConvertChecked(p, targetType);
+        UnaryExpression toIJsonValue = Expression.ConvertChecked(c, typeof(IJsonValue));
+        return Expression.Lambda<Func<TSource, IJsonValue>>(toIJsonValue, p).Compile();
     }
 
 #if NET8_0_OR_GREATER

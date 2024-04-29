@@ -228,6 +228,7 @@ public static class JsonSchemaHelpers
             "format",
             "if",
             "items",
+            "maximum",
             "maxContains",
             "minContains",
             "maxItems",

@@ -27,11 +27,20 @@
 		<Compile Remove="Features/UriTemplates/*.cs" />
 		<Compile Remove="Features/**/numeric-format.feature.cs" />
 		<Compile Remove="Steps\UriTemplateSteps.cs" />
-	</ItemGroup>
+    <SpecFlowFeatureFiles Remove="Features/**/*-net80.feature" />
+    <Compile Remove="Features/**/*-net80.feature.cs" />
+  </ItemGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'net80'">
 		<SpecFlowFeatureFiles Remove="Features/**/numeric-format-netstandard20.feature" />
 		<Compile Remove="Features/**/numeric-format-netstandard20.feature.cs" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <SpecFlowObsoleteCodeBehindFiles Remove="Features\AdditionalSchema\Draft201909\derived-numeric-type.feature.cs" />
+	  <SpecFlowObsoleteCodeBehindFiles Remove="Features\AdditionalSchema\Draft202012\derived-numeric-type - Copy.feature.cs" />
+	  <SpecFlowObsoleteCodeBehindFiles Remove="Features\AdditionalSchema\Draft6\derived-numeric-type.feature.cs" />
+	  <SpecFlowObsoleteCodeBehindFiles Remove="Features\AdditionalSchema\Draft7\derived-numeric-type.feature.cs" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -68,6 +77,21 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Compile Update="Features\AdditionalSchema\Draft201909\derived-numeric-type.feature.cs">
+	    <DependentUpon>%(Filename)</DependentUpon>
+	  </Compile>
+	  <Compile Update="Features\AdditionalSchema\Draft202012\derived-numeric-type-net80.feature.cs">
+	    <DependentUpon>derived-numeric-type-net80.feature</DependentUpon>
+	  </Compile>
+	  <Compile Update="Features\AdditionalSchema\Draft6\derived-numeric-type.feature.cs">
+	    <DependentUpon>%(Filename)</DependentUpon>
+	  </Compile>
+	  <Compile Update="Features\AdditionalSchema\Draft7\derived-numeric-type.feature.cs">
+	    <DependentUpon>%(Filename)</DependentUpon>
+	  </Compile>
+	</ItemGroup>
+
+	<ItemGroup>
 		<None Update="appsettings.json">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
@@ -80,6 +104,25 @@
 
 	<ItemGroup>
 		<PackageReference Update="Roslynator.Analyzers" Version="4.6.2" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <SpecFlowFeatureFiles Update="Features\AdditionalSchema\Draft201909\derived-numeric-type.feature">
+	    <Visible>$(UsingMicrosoftNETSdk)</Visible>
+	    <CodeBehindFile>%(RelativeDir)%(Filename).feature$(DefaultLanguageSourceExtension)</CodeBehindFile>
+	  </SpecFlowFeatureFiles>
+	  <SpecFlowFeatureFiles Update="Features\AdditionalSchema\Draft202012\derived-numeric-type-net80.feature">
+	    <Visible>$(UsingMicrosoftNETSdk)</Visible>
+	    <CodeBehindFile>%(RelativeDir)%(Filename).feature$(DefaultLanguageSourceExtension)</CodeBehindFile>
+	  </SpecFlowFeatureFiles>
+	  <SpecFlowFeatureFiles Update="Features\AdditionalSchema\Draft6\derived-numeric-type.feature">
+	    <Visible>$(UsingMicrosoftNETSdk)</Visible>
+	    <CodeBehindFile>%(RelativeDir)%(Filename).feature$(DefaultLanguageSourceExtension)</CodeBehindFile>
+	  </SpecFlowFeatureFiles>
+	  <SpecFlowFeatureFiles Update="Features\AdditionalSchema\Draft7\derived-numeric-type.feature">
+	    <Visible>$(UsingMicrosoftNETSdk)</Visible>
+	    <CodeBehindFile>%(RelativeDir)%(Filename).feature$(DefaultLanguageSourceExtension)</CodeBehindFile>
+	  </SpecFlowFeatureFiles>
 	</ItemGroup>
 
 

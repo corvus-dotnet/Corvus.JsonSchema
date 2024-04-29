@@ -9,11 +9,11 @@
 
 Feature: <#= FeatureName #>
 <# foreach (var scenario in Feature.EnumerateArray()) {
-	if(scenario.IsDisabledScenario) { continue; }#>
+    if(scenario.IsDisabledScenario) { continue; }#>
 
 Scenario: <#= (string)scenario.Comment.AsOptional() ?? $"Undescribed scenario"#> [<#= System.Guid.NewGuid() #>]
-	Given the document <#= scenario.Doc #>
-	When I build the patch <#= scenario.Patch #>
-	Then<# if(scenario.IsScenarioWithError) {#> a patch exception should be thrown<# } else { #> the patch result should equal <#= GetExpected(scenario) #><# } #>
+    Given the document <#= scenario.Doc #>
+    When I build the patch <#= scenario.Patch #>
+    Then<# if(scenario.IsScenarioWithError) {#> a patch exception should be thrown<# } else { #> the patch result should equal <#= GetExpected(scenario) #><# } #>
 
 <# } #>

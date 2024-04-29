@@ -131,6 +131,7 @@ public static class JsonSchemaHelpers
             "items",
             "maxContains",
             "minContains",
+            "maximum",
             "maxItems",
             "maxLength",
             "maxProperties",
