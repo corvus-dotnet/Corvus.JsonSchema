@@ -538,7 +538,7 @@ public static class BuiltInTypes
             ("application/json", "base64") => pre201909 ? ClrBase64ContentTypeDeclarationPre201909 : ClrBase64ContentTypeDeclaration,
             (_, "base64") => pre201909 ? ClrBase64StringTypeDeclarationPre201909 : ClrBase64StringTypeDeclaration,
             ("application/json", null) => pre201909 ? ClrContentTypeDeclarationPre201909 : ClrContentTypeDeclaration,
-            (null, null) => ClrStringTypeDeclaration,
+            ////(null, null) => null,
             _ => null,
         };
     }

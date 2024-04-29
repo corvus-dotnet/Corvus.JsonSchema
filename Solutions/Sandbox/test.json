@@ -1,0 +1,11 @@
+{
+    "$ref": "#/$defs/base",
+    "maximum": 64,
+    "$defs": {
+        "base": {
+            "type": "number",
+            "format": "byte",
+            "exclusiveMinimum": 0
+        }
+    }
+}

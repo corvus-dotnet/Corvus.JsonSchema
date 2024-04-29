@@ -16,7 +16,7 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft7 {
     public partial class CodeGeneratorNumber : CodeGeneratorNumberBase {
         
         
-        #line 976 "CodeGenerator.Number.tt"
+        #line 996 "CodeGenerator.Number.tt"
 
     public bool ShouldGenerate
     {
@@ -1915,10 +1915,64 @@ namespace ");
             #line hidden
             
             #line 661 "CodeGenerator.Number.tt"
-            this.Write(@"(ulong value)
+            this.Write("(ulong value)\r\n    {\r\n        return new(new BinaryJsonNumber(value));\r\n    }\r\n\r\n" +
+                    "#if NET8_0_OR_GREATER\r\n    /// <summary>\r\n    /// Conversion from Int128.\r\n    /" +
+                    "// </summary>\r\n    /// <param name=\"value\">The value to convert.</param>\r\n    pu" +
+                    "blic static ");
+            
+            #line default
+            #line hidden
+            
+            #line 671 "CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( ConversionOperatorToInt128 ));
+            
+            #line default
+            #line hidden
+            
+            #line 671 "CodeGenerator.Number.tt"
+            this.Write(" operator ");
+            
+            #line default
+            #line hidden
+            
+            #line 671 "CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 671 "CodeGenerator.Number.tt"
+            this.Write("(Int128 value)\r\n    {\r\n        return new(new BinaryJsonNumber(value));\r\n    }\r\n\r" +
+                    "\n    /// <summary>\r\n    /// Conversion from UInt128.\r\n    /// </summary>\r\n    //" +
+                    "/ <param name=\"value\">The value to convert.</param>\r\n    public static ");
+            
+            #line default
+            #line hidden
+            
+            #line 680 "CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( ConversionOperatorToUInt128 ));
+            
+            #line default
+            #line hidden
+            
+            #line 680 "CodeGenerator.Number.tt"
+            this.Write(" operator ");
+            
+            #line default
+            #line hidden
+            
+            #line 680 "CodeGenerator.Number.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 680 "CodeGenerator.Number.tt"
+            this.Write(@"(UInt128 value)
     {
         return new(new BinaryJsonNumber(value));
     }
+#endif
 
     /// <summary>
     /// Less than operator.
@@ -1931,25 +1985,25 @@ namespace ");
             #line default
             #line hidden
             
-            #line 672 "CodeGenerator.Number.tt"
+            #line 692 "CodeGenerator.Number.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 672 "CodeGenerator.Number.tt"
+            #line 692 "CodeGenerator.Number.tt"
             this.Write(" left, in ");
             
             #line default
             #line hidden
             
-            #line 672 "CodeGenerator.Number.tt"
+            #line 692 "CodeGenerator.Number.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 672 "CodeGenerator.Number.tt"
+            #line 692 "CodeGenerator.Number.tt"
             this.Write(@" right)
     {
         return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && Compare(left, right) < 0;
@@ -1966,25 +2020,25 @@ namespace ");
             #line default
             #line hidden
             
-            #line 683 "CodeGenerator.Number.tt"
+            #line 703 "CodeGenerator.Number.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 683 "CodeGenerator.Number.tt"
+            #line 703 "CodeGenerator.Number.tt"
             this.Write(" left, in ");
             
             #line default
             #line hidden
             
-            #line 683 "CodeGenerator.Number.tt"
+            #line 703 "CodeGenerator.Number.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 683 "CodeGenerator.Number.tt"
+            #line 703 "CodeGenerator.Number.tt"
             this.Write(@" right)
     {
         return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && Compare(left, right) > 0;
@@ -2001,25 +2055,25 @@ namespace ");
             #line default
             #line hidden
             
-            #line 694 "CodeGenerator.Number.tt"
+            #line 714 "CodeGenerator.Number.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 694 "CodeGenerator.Number.tt"
+            #line 714 "CodeGenerator.Number.tt"
             this.Write(" left, in ");
             
             #line default
             #line hidden
             
-            #line 694 "CodeGenerator.Number.tt"
+            #line 714 "CodeGenerator.Number.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 694 "CodeGenerator.Number.tt"
+            #line 714 "CodeGenerator.Number.tt"
             this.Write(@" right)
     {
         return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && Compare(left, right) <= 0;
@@ -2036,25 +2090,25 @@ namespace ");
             #line default
             #line hidden
             
-            #line 705 "CodeGenerator.Number.tt"
+            #line 725 "CodeGenerator.Number.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 705 "CodeGenerator.Number.tt"
+            #line 725 "CodeGenerator.Number.tt"
             this.Write(" left, in ");
             
             #line default
             #line hidden
             
-            #line 705 "CodeGenerator.Number.tt"
+            #line 725 "CodeGenerator.Number.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 705 "CodeGenerator.Number.tt"
+            #line 725 "CodeGenerator.Number.tt"
             this.Write(@" right)
     {
         return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && Compare(left, right) >= 0;
@@ -2071,37 +2125,37 @@ namespace ");
             #line default
             #line hidden
             
-            #line 716 "CodeGenerator.Number.tt"
+            #line 736 "CodeGenerator.Number.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 716 "CodeGenerator.Number.tt"
+            #line 736 "CodeGenerator.Number.tt"
             this.Write(" operator +(");
             
             #line default
             #line hidden
             
-            #line 716 "CodeGenerator.Number.tt"
+            #line 736 "CodeGenerator.Number.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 716 "CodeGenerator.Number.tt"
+            #line 736 "CodeGenerator.Number.tt"
             this.Write(" left, ");
             
             #line default
             #line hidden
             
-            #line 716 "CodeGenerator.Number.tt"
+            #line 736 "CodeGenerator.Number.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 716 "CodeGenerator.Number.tt"
+            #line 736 "CodeGenerator.Number.tt"
             this.Write(@" right)
     {
         return new(left.AsBinaryJsonNumber + right.AsBinaryJsonNumber);
@@ -2118,37 +2172,37 @@ namespace ");
             #line default
             #line hidden
             
-            #line 727 "CodeGenerator.Number.tt"
+            #line 747 "CodeGenerator.Number.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 727 "CodeGenerator.Number.tt"
+            #line 747 "CodeGenerator.Number.tt"
             this.Write(" operator -(");
             
             #line default
             #line hidden
             
-            #line 727 "CodeGenerator.Number.tt"
+            #line 747 "CodeGenerator.Number.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 727 "CodeGenerator.Number.tt"
+            #line 747 "CodeGenerator.Number.tt"
             this.Write(" left, ");
             
             #line default
             #line hidden
             
-            #line 727 "CodeGenerator.Number.tt"
+            #line 747 "CodeGenerator.Number.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 727 "CodeGenerator.Number.tt"
+            #line 747 "CodeGenerator.Number.tt"
             this.Write(@" right)
     {
         return new(left.AsBinaryJsonNumber - right.AsBinaryJsonNumber);
@@ -2165,37 +2219,37 @@ namespace ");
             #line default
             #line hidden
             
-            #line 738 "CodeGenerator.Number.tt"
+            #line 758 "CodeGenerator.Number.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 738 "CodeGenerator.Number.tt"
+            #line 758 "CodeGenerator.Number.tt"
             this.Write(" operator *(");
             
             #line default
             #line hidden
             
-            #line 738 "CodeGenerator.Number.tt"
+            #line 758 "CodeGenerator.Number.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 738 "CodeGenerator.Number.tt"
+            #line 758 "CodeGenerator.Number.tt"
             this.Write(" left, ");
             
             #line default
             #line hidden
             
-            #line 738 "CodeGenerator.Number.tt"
+            #line 758 "CodeGenerator.Number.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 738 "CodeGenerator.Number.tt"
+            #line 758 "CodeGenerator.Number.tt"
             this.Write(@" right)
     {
         return new(left.AsBinaryJsonNumber * right.AsBinaryJsonNumber);
@@ -2212,37 +2266,37 @@ namespace ");
             #line default
             #line hidden
             
-            #line 749 "CodeGenerator.Number.tt"
+            #line 769 "CodeGenerator.Number.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 749 "CodeGenerator.Number.tt"
+            #line 769 "CodeGenerator.Number.tt"
             this.Write(" operator /(");
             
             #line default
             #line hidden
             
-            #line 749 "CodeGenerator.Number.tt"
+            #line 769 "CodeGenerator.Number.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 749 "CodeGenerator.Number.tt"
+            #line 769 "CodeGenerator.Number.tt"
             this.Write(" left, ");
             
             #line default
             #line hidden
             
-            #line 749 "CodeGenerator.Number.tt"
+            #line 769 "CodeGenerator.Number.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 749 "CodeGenerator.Number.tt"
+            #line 769 "CodeGenerator.Number.tt"
             this.Write(@" right)
     {
         return new(left.AsBinaryJsonNumber / right.AsBinaryJsonNumber);
@@ -2258,25 +2312,25 @@ namespace ");
             #line default
             #line hidden
             
-            #line 759 "CodeGenerator.Number.tt"
+            #line 779 "CodeGenerator.Number.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 759 "CodeGenerator.Number.tt"
+            #line 779 "CodeGenerator.Number.tt"
             this.Write(" operator ++(");
             
             #line default
             #line hidden
             
-            #line 759 "CodeGenerator.Number.tt"
+            #line 779 "CodeGenerator.Number.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 759 "CodeGenerator.Number.tt"
+            #line 779 "CodeGenerator.Number.tt"
             this.Write(@" value)
     {
         BinaryJsonNumber num = value.AsBinaryJsonNumber;
@@ -2293,25 +2347,25 @@ namespace ");
             #line default
             #line hidden
             
-            #line 770 "CodeGenerator.Number.tt"
+            #line 790 "CodeGenerator.Number.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 770 "CodeGenerator.Number.tt"
+            #line 790 "CodeGenerator.Number.tt"
             this.Write(" operator --(");
             
             #line default
             #line hidden
             
-            #line 770 "CodeGenerator.Number.tt"
+            #line 790 "CodeGenerator.Number.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 770 "CodeGenerator.Number.tt"
+            #line 790 "CodeGenerator.Number.tt"
             this.Write(@" value)
     {
         BinaryJsonNumber num = value.AsBinaryJsonNumber;
@@ -2329,25 +2383,25 @@ namespace ");
             #line default
             #line hidden
             
-            #line 782 "CodeGenerator.Number.tt"
+            #line 802 "CodeGenerator.Number.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 782 "CodeGenerator.Number.tt"
+            #line 802 "CodeGenerator.Number.tt"
             this.Write(" lhs, in ");
             
             #line default
             #line hidden
             
-            #line 782 "CodeGenerator.Number.tt"
+            #line 802 "CodeGenerator.Number.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 782 "CodeGenerator.Number.tt"
+            #line 802 "CodeGenerator.Number.tt"
             this.Write(" rhs)\r\n    {\r\n        if (lhs.ValueKind != rhs.ValueKind)\r\n        {\r\n           " +
                     " // We can\'t be equal if we are not the same underlying type\r\n            return" +
                     " lhs.IsNullOrUndefined() ? 1 : -1;\r\n        }\r\n\r\n        if (lhs.IsNull())\r\n    " +
@@ -2374,14 +2428,14 @@ namespace ");
             #line default
             #line hidden
             
-            #line 828 "CodeGenerator.Number.tt"
+            #line 848 "CodeGenerator.Number.tt"
  if(ConversionOperatorToByte == "implicit")
    { 
             
             #line default
             #line hidden
             
-            #line 830 "CodeGenerator.Number.tt"
+            #line 850 "CodeGenerator.Number.tt"
             this.Write("\r\n   /// <summary>\r\n   /// Gets the value as a byte.\r\n   /// </summary>\r\n   /// <" +
                     "returns>The value as a byte.</returns>\r\n    public byte AsByte() => (byte)this;\r" +
                     "\n");
@@ -2389,7 +2443,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 836 "CodeGenerator.Number.tt"
+            #line 856 "CodeGenerator.Number.tt"
  }
    if(ConversionOperatorToSByte == "implicit")
    { 
@@ -2397,7 +2451,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 839 "CodeGenerator.Number.tt"
+            #line 859 "CodeGenerator.Number.tt"
             this.Write("\r\n   /// <summary>\r\n   /// Gets the value as an sbyte.\r\n   /// </summary>\r\n   ///" +
                     " <returns>The value as an sbyte.</returns>\r\n    public sbyte AsSByte() => (sbyte" +
                     ")this;\r\n");
@@ -2405,7 +2459,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 845 "CodeGenerator.Number.tt"
+            #line 865 "CodeGenerator.Number.tt"
  }
    if(ConversionOperatorToInt16 == "implicit")
    { 
@@ -2413,7 +2467,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 848 "CodeGenerator.Number.tt"
+            #line 868 "CodeGenerator.Number.tt"
             this.Write("\r\n   /// <summary>\r\n   /// Gets the value as a short.\r\n   /// </summary>\r\n   /// " +
                     "<returns>The value as a short.</returns>\r\n    public short AsInt16() => (short)t" +
                     "his;\r\n");
@@ -2421,7 +2475,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 854 "CodeGenerator.Number.tt"
+            #line 874 "CodeGenerator.Number.tt"
  }
 
    if(ConversionOperatorToUInt16== "implicit")
@@ -2430,7 +2484,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 858 "CodeGenerator.Number.tt"
+            #line 878 "CodeGenerator.Number.tt"
             this.Write("\r\n   /// <summary>\r\n   /// Gets the value as a ushort.\r\n   /// </summary>\r\n   ///" +
                     " <returns>The value as a ushort.</returns>\r\n    public ushort AsUInt16() => (ush" +
                     "ort)this;\r\n");
@@ -2438,7 +2492,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 864 "CodeGenerator.Number.tt"
+            #line 884 "CodeGenerator.Number.tt"
  }
 
    if(ConversionOperatorToInt32 == "implicit")
@@ -2447,14 +2501,14 @@ namespace ");
             #line default
             #line hidden
             
-            #line 868 "CodeGenerator.Number.tt"
+            #line 888 "CodeGenerator.Number.tt"
             this.Write("\r\n   /// <summary>\r\n   /// Gets the value as a int.\r\n   /// </summary>\r\n   /// <r" +
                     "eturns>The value as an int.</returns>\r\n    public int AsInt32() => (int)this;\r\n");
             
             #line default
             #line hidden
             
-            #line 874 "CodeGenerator.Number.tt"
+            #line 894 "CodeGenerator.Number.tt"
  }
 
    if(ConversionOperatorToUInt32 == "implicit")
@@ -2463,7 +2517,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 878 "CodeGenerator.Number.tt"
+            #line 898 "CodeGenerator.Number.tt"
             this.Write("\r\n   /// <summary>\r\n   /// Gets the value as a uint.\r\n   /// </summary>\r\n   /// <" +
                     "returns>The value as a uint.</returns>\r\n    public uint AsUInt32() => (uint)this" +
                     ";\r\n");
@@ -2471,7 +2525,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 884 "CodeGenerator.Number.tt"
+            #line 904 "CodeGenerator.Number.tt"
  }
  
    if(ConversionOperatorToInt64 == "implicit")
@@ -2480,7 +2534,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 888 "CodeGenerator.Number.tt"
+            #line 908 "CodeGenerator.Number.tt"
             this.Write("\r\n   /// <summary>\r\n   /// Gets the value as a long.\r\n   /// </summary>\r\n   /// <" +
                     "returns>The value as a long.</returns>\r\n    public long AsInt64() => (long)this;" +
                     "\r\n");
@@ -2488,7 +2542,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 894 "CodeGenerator.Number.tt"
+            #line 914 "CodeGenerator.Number.tt"
  }
 
    if(ConversionOperatorToUInt64 == "implicit")
@@ -2497,7 +2551,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 898 "CodeGenerator.Number.tt"
+            #line 918 "CodeGenerator.Number.tt"
             this.Write("\r\n   /// <summary>\r\n   /// Gets the value as a ulong.\r\n   /// </summary>\r\n   /// " +
                     "<returns>The value as a ulong.</returns>\r\n    public ulong AsUInt64() => (ulong)" +
                     "this;\r\n");
@@ -2505,7 +2559,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 904 "CodeGenerator.Number.tt"
+            #line 924 "CodeGenerator.Number.tt"
  }
 
    if(ConversionOperatorToInt128 == "implicit")
@@ -2514,7 +2568,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 908 "CodeGenerator.Number.tt"
+            #line 928 "CodeGenerator.Number.tt"
             this.Write("\r\n#if NET8_0_OR_GREATER\r\n   /// <summary>\r\n   /// Gets the value as an Int128.\r\n " +
                     "  /// </summary>\r\n   /// <returns>The value as an Int128.</returns>\r\n    public " +
                     "Int128 AsInt128() => (Int128)this;\r\n#endif\r\n");
@@ -2522,7 +2576,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 916 "CodeGenerator.Number.tt"
+            #line 936 "CodeGenerator.Number.tt"
  }
 
    if(ConversionOperatorToUInt128 == "implicit")
@@ -2531,7 +2585,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 920 "CodeGenerator.Number.tt"
+            #line 940 "CodeGenerator.Number.tt"
             this.Write("\r\n#if NET8_0_OR_GREATER\r\n   /// <summary>\r\n   /// Gets the value as a UInt128.\r\n " +
                     "  /// </summary>\r\n   /// <returns>The value as a UInt128.</returns>\r\n    public " +
                     "UInt128 AsUInt128() => (UInt128)this;\r\n#endif\r\n");
@@ -2539,7 +2593,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 928 "CodeGenerator.Number.tt"
+            #line 948 "CodeGenerator.Number.tt"
  }
 
    if(ConversionOperatorToHalf == "implicit")
@@ -2548,7 +2602,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 932 "CodeGenerator.Number.tt"
+            #line 952 "CodeGenerator.Number.tt"
             this.Write("\r\n#if NET8_0_OR_GREATER\r\n   /// <summary>\r\n   /// Gets the value as a Half.\r\n   /" +
                     "// </summary>\r\n   /// <returns>The value as a Half.</returns>\r\n    public Half A" +
                     "sHalf() => (Half)this;\r\n#endif\r\n");
@@ -2556,7 +2610,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 940 "CodeGenerator.Number.tt"
+            #line 960 "CodeGenerator.Number.tt"
  }
 
    if(ConversionOperatorToSingle == "implicit")
@@ -2565,7 +2619,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 944 "CodeGenerator.Number.tt"
+            #line 964 "CodeGenerator.Number.tt"
             this.Write("\r\n   /// <summary>\r\n   /// Gets the value as a float.\r\n   /// </summary>\r\n   /// " +
                     "<returns>The value as a float.</returns>\r\n    public float AsSingle() => (float)" +
                     "this;\r\n");
@@ -2573,7 +2627,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 950 "CodeGenerator.Number.tt"
+            #line 970 "CodeGenerator.Number.tt"
  }
 
    if(ConversionOperatorToDouble == "implicit")
@@ -2582,7 +2636,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 954 "CodeGenerator.Number.tt"
+            #line 974 "CodeGenerator.Number.tt"
             this.Write("\r\n   /// <summary>\r\n   /// Gets the value as a double.\r\n   /// </summary>\r\n   ///" +
                     " <returns>The value as a double.</returns>\r\n    public double AsDouble() => (dou" +
                     "ble)this;\r\n");
@@ -2590,7 +2644,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 960 "CodeGenerator.Number.tt"
+            #line 980 "CodeGenerator.Number.tt"
  }
 
    if(ConversionOperatorToDecimal == "implicit")
@@ -2599,7 +2653,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 964 "CodeGenerator.Number.tt"
+            #line 984 "CodeGenerator.Number.tt"
             this.Write("\r\n   /// <summary>\r\n   /// Gets the value as a decimal.\r\n   /// </summary>\r\n   //" +
                     "/ <returns>The value as a decimal.</returns>\r\n    public decimal AsDecimal() => " +
                     "(decimal)this;\r\n");
@@ -2607,13 +2661,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 970 "CodeGenerator.Number.tt"
+            #line 990 "CodeGenerator.Number.tt"
  } 
             
             #line default
             #line hidden
             
-            #line 971 "CodeGenerator.Number.tt"
+            #line 991 "CodeGenerator.Number.tt"
             this.Write("\r\n    /// <inheritdoc/>\r\n    public BinaryJsonNumber AsBinaryJsonNumber => this.H" +
                     "asDotnetBacking ? this.numberBacking : BinaryJsonNumber.FromJson(this.jsonElemen" +
                     "tBacking);\r\n}\r\n");
@@ -2621,7 +2675,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 975 "CodeGenerator.Number.tt"
+            #line 995 "CodeGenerator.Number.tt"
  EndNesting(); 
             
             #line default

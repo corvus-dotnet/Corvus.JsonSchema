@@ -118,6 +118,31 @@ public class JsonSchemaSteps
         }
     }
 
+    [Given("a schema file with format (.*)")]
+    public void GivenASchemaFileWithFormat(string format, string schema)
+    {
+        this.scenarioContext.Set(schema.Replace("{{format}}", format), SchemaInstance);
+        string featureName = Formatting.ToPascalCaseWithReservedWords(this.featureContext.FeatureInfo.Title).ToString();
+
+        string scenarioName = BuildScenarioOutlineNameFromScenarioName(this.scenarioContext);
+
+        this.scenarioContext.Set($"{featureName}.{scenarioName}.{format}.json", InputJsonFileName);
+        this.scenarioContext.Set("#/", SchemaPath);
+
+        static string BuildScenarioOutlineNameFromScenarioName(ScenarioContext scenarioContext)
+        {
+            string scenarioName = scenarioContext.ScenarioInfo.Title;
+            int index = scenarioContext.ScenarioInfo.Title.IndexOf('(');
+            if (index >= 0)
+            {
+                // Slice back to the scenario outline name
+                scenarioName = scenarioName[..index];
+            }
+
+            return Formatting.ToPascalCaseWithReservedWords(scenarioName).ToString();
+        }
+    }
+
     /// <summary>
     ///  <see cref="JsonElement"/> as a scenario property called <see cref="InputData"/>.
     /// </summary>
@@ -127,6 +152,13 @@ public class JsonSchemaSteps
     {
         using var doc = JsonDocument.Parse(inputData);
         this.scenarioContext.Set(doc.RootElement.Clone(), InputData);
+    }
+
+    [Given(@"I create the instance by casting the ([^\s]*) (.*)")]
+    public void GivenICreateTheInstanceByCastingTheSbyte(string numericType, string numericValue)
+    {
+        IJsonValue value = this.driver.CastToInstance(this.scenarioContext.Get<Type>(SchemaType), numericType, numericValue);
+        this.scenarioContext.Set(value, SchemaInstance);
     }
 
     /// <summary>
