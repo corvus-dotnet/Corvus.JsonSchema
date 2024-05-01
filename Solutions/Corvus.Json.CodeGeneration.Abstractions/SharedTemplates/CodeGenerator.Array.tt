@@ -221,7 +221,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
         }
     }
     
-    if (IsTuple)
+    if (IsTuple && PrefixItems.Length > 1)
     { #>
 
     /// <summary>

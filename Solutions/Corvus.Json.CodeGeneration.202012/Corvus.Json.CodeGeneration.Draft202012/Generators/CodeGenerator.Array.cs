@@ -638,7 +638,7 @@ namespace ");
         }
     }
     
-    if (IsTuple)
+    if (IsTuple && PrefixItems.Length > 1)
     { 
             
             #line default
