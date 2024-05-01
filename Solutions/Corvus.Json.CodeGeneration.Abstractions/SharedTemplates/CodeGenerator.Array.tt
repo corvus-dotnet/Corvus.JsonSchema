@@ -219,7 +219,30 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
     }
 <#          prefixItemAccessorIndex++;
         }
-    } #>
+    }
+    
+    if (IsTuple)
+    { #>
+
+    /// <summary>
+    /// Conversion to tuple.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator (<# int prefixItemIndexA = 1; foreach(var prefixItem in PrefixItems) { #><#=  prefixItemIndexA++ > 1 ? ", " : "" #><#= prefixItem #><# } #>)(<#= TypeDeclaration.DotnetTypeName #> value)
+    {
+       return (<# int prefixItemIndexB = 1; foreach(var prefixItem in PrefixItems) { #><#=  prefixItemIndexB > 1 ? ", " : "" #>value.Item<#= prefixItemIndexB++ #><# }#>);
+    }
+
+    /// <summary>
+    /// Conversion from tuple.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator <#= TypeDeclaration.DotnetTypeName #>((<# int prefixItemIndexD = 1; foreach(var prefixItem in PrefixItems) { #><#=  prefixItemIndexD++ > 1 ? ", " : "" #><#= prefixItem #><# } #>) value)
+    {
+        return <#= TypeDeclaration.DotnetTypeName #>.Create(<# int prefixItemIndexC = 1; foreach(var prefixItem in PrefixItems) { #><#=  prefixItemIndexC > 1 ? ", " : "" #>value.Item<#= prefixItemIndexC++ #><# }#>);
+    }
+
+<#  } #>
 
     /// <summary>
     /// Conversion from immutable list.
