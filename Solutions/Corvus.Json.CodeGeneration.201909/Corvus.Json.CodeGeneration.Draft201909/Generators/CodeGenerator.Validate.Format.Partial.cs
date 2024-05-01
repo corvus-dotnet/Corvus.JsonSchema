@@ -1460,6 +1460,11 @@ public partial class CodeGeneratorValidateFormat
     /// <summary>
     /// Gets the array of dotnet type names when the items constraint is an array.
     /// </summary>
+    public ImmutableArray<string> PrefixItems => this.Items;
+
+    /// <summary>
+    /// Gets the array of dotnet type names when the items constraint is an array.
+    /// </summary>
     public ImmutableArray<string> Items
     {
         get
@@ -1486,6 +1491,17 @@ public partial class CodeGeneratorValidateFormat
         get
         {
             return (this.HasSingleItemsType || (this.TypeDeclaration.Schema().Items.IsUndefined() && this.TypeDeclaration.Schema().UnevaluatedItems.IsNotUndefined())) && this.SingleItemsDotnetTypeName != $"{BuiltInTypes.AnyTypeDeclaration.Ns}.{BuiltInTypes.AnyTypeDeclaration.Type}";
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether this array represents a tuple.
+    /// </summary>
+    public bool IsTuple
+    {
+        get
+        {
+            return this.TypeDeclaration.Schema().Items.IsSchemaArray && this.TypeDeclaration.Schema().AdditionalItems.ValueKind == JsonValueKind.False;
         }
     }
 
