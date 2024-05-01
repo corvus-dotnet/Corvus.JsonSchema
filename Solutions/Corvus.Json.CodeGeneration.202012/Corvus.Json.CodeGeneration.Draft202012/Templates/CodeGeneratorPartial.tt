@@ -1407,6 +1407,17 @@ public partial class <#= PartialClassName #>
     }
 
     /// <summary>
+    /// Gets a value indicating whether this array represents a tuple.
+    /// </summary>
+    public bool IsTuple
+    {
+        get
+        {
+            return this.TypeDeclaration.Schema().PrefixItems.IsNotUndefined() && this.TypeDeclaration.Schema().Items.IsUndefined() && this.TypeDeclaration.Schema().UnevaluatedItems.ValueKind == JsonValueKind.False;
+        }
+    }
+
+    /// <summary>
     /// Gets the dotnet type name for the items constraint when it is a single schema.
     /// </summary>
     public string SingleItemsDotnetTypeName

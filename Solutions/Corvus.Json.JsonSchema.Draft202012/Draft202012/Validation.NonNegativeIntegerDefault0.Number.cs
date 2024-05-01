@@ -472,6 +472,25 @@ public readonly partial struct Validation
             return new(new BinaryJsonNumber(value));
         }
 
+#if NET8_0_OR_GREATER
+    /// <summary>
+    /// Conversion from Int128.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static explicit operator NonNegativeIntegerDefault0(Int128 value)
+    {
+        return new(new BinaryJsonNumber(value));
+    }
+
+    /// <summary>
+    /// Conversion from UInt128.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static explicit operator NonNegativeIntegerDefault0(UInt128 value)
+    {
+        return new(new BinaryJsonNumber(value));
+    }
+#endif
         /// <summary>
         /// Less than operator.
         /// </summary>

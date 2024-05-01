@@ -472,6 +472,25 @@ public readonly partial struct Schema
             return new(new BinaryJsonNumber(value));
         }
 
+#if NET8_0_OR_GREATER
+    /// <summary>
+    /// Conversion from Int128.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static explicit operator NonNegativeInteger(Int128 value)
+    {
+        return new(new BinaryJsonNumber(value));
+    }
+
+    /// <summary>
+    /// Conversion from UInt128.
+    /// </summary>
+    /// <param name="value">The value to convert.</param>
+    public static explicit operator NonNegativeInteger(UInt128 value)
+    {
+        return new(new BinaryJsonNumber(value));
+    }
+#endif
         /// <summary>
         /// Less than operator.
         /// </summary>

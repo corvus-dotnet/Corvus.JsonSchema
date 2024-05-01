@@ -90,7 +90,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
 <#  } #>
     }
 
-<#  if (!CanEnumerateAsSpecificType)
+<#  if (!CanEnumerateAsSpecificType && !IsTuple)
     { #>
     /// <inheritdoc/>
     public JsonAny this[int index]
@@ -146,6 +146,8 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
         }
     }
 
+<#      if(CanEnumerateAsSpecificType)
+        {#>
     /// <summary>
     /// Gets the item at the given index.
     /// </summary>
@@ -177,6 +179,69 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
             throw new InvalidOperationException();
         }
     }
+<#      }
+    }
+
+    if (IsTuple)
+    { #>
+
+<#      int prefixItemAccessorIndex = 1;
+
+        foreach(var prefixItem in PrefixItems)
+        { #>
+
+    /// <summary>
+    /// Gets the tuple item as a <see cref="<#= prefixItem #>"/>.
+    /// </summary>
+    public <#= prefixItem #> Item<#= prefixItemAccessorIndex #>
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                return new <#= prefixItem #>(this.jsonElementBacking[<#= prefixItemAccessorIndex - 1#>]);
+            }
+
+            if ((this.backing & Backing.Array) != 0)
+            {
+                try
+                {
+                    return this.arrayBacking[<#= prefixItemAccessorIndex - 1#>].As<<#= prefixItem #>>();
+                }
+                catch (ArgumentOutOfRangeException ex)
+                {
+                    throw new IndexOutOfRangeException(ex.Message, ex);
+                }
+            }
+
+            throw new InvalidOperationException();
+        }
+    }
+<#          prefixItemAccessorIndex++;
+        }
+    }
+    
+    if (IsTuple && PrefixItems.Length > 1)
+    { #>
+
+    /// <summary>
+    /// Conversion to tuple.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator (<# int prefixItemIndexA = 1; foreach(var prefixItem in PrefixItems) { #><#=  prefixItemIndexA++ > 1 ? ", " : "" #><#= prefixItem #><# } #>)(<#= TypeDeclaration.DotnetTypeName #> value)
+    {
+       return (<# int prefixItemIndexB = 1; foreach(var prefixItem in PrefixItems) { #><#=  prefixItemIndexB > 1 ? ", " : "" #>value.Item<#= prefixItemIndexB++ #><# }#>);
+    }
+
+    /// <summary>
+    /// Conversion from tuple.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator <#= TypeDeclaration.DotnetTypeName #>((<# int prefixItemIndexD = 1; foreach(var prefixItem in PrefixItems) { #><#=  prefixItemIndexD++ > 1 ? ", " : "" #><#= prefixItem #><# } #>) value)
+    {
+        return <#= TypeDeclaration.DotnetTypeName #>.Create(<# int prefixItemIndexC = 1; foreach(var prefixItem in PrefixItems) { #><#=  prefixItemIndexC > 1 ? ", " : "" #>value.Item<#= prefixItemIndexC++ #><# }#>);
+    }
+
 <#  } #>
 
     /// <summary>
@@ -222,7 +287,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
         return new(items);
     }
 
-<#  if (!CanEnumerateAsSpecificType)
+<#  if (!CanEnumerateAsSpecificType && !IsTuple)
     { #>
     /// <summary>
     /// Initializes a new instance of the <see cref="<#= TypeDeclaration.DotnetTypeName #>"/> struct.
@@ -509,8 +574,8 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
         builder.Add(value3);
         return new(builder.ToImmutable());
     }
-<#  }  
-    else
+<#  }
+    else if (!IsTuple)
     {#>
     /// <summary>
     /// Initializes a new instance of the <see cref="<#= TypeDeclaration.DotnetTypeName #>"/> struct.
@@ -651,7 +716,77 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
 
         return new <#= TypeDeclaration.DotnetTypeName #>(builder.ToImmutable());
     }
-<#  }#>
+<#  }
+    else
+    { #>
+#if NET8_0_OR_GREATER
+    /// <summary>
+    /// Create an array from the given items.
+    /// </summary>
+    /// <param name = "items">The items from which to create the array.</param>
+    /// <returns>The new array created from the items.</returns>
+    /// <remarks>
+    /// This will serialize the items to create the underlying JsonArray. Note the
+    /// other overloads which avoid this serialization step.
+    /// </remarks>
+    static <#= TypeDeclaration.DotnetTypeName #> IJsonArray<<#= TypeDeclaration.DotnetTypeName #>>.FromRange(IEnumerable<JsonAny> items)
+    {
+        ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
+        foreach (JsonAny item in items)
+        {
+            builder.Add(item);
+        }
+
+        return new <#= TypeDeclaration.DotnetTypeName #>(builder.ToImmutable());
+    }
+
+    /// <summary>
+    /// Create an array from the given items.
+    /// </summary>
+    /// <param name = "items">The items from which to create the array.</param>
+    /// <returns>The new array created from the items.</returns>
+    /// <remarks>
+    /// This will serialize the items to create the underlying JsonArray. Note the
+    /// other overloads which avoid this serialization step.
+    /// </remarks>
+    static <#= TypeDeclaration.DotnetTypeName #> IJsonArray<<#= TypeDeclaration.DotnetTypeName #>>.FromRange<T>(IEnumerable<T> items)
+    {
+        ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
+        foreach (T item in items)
+        {
+            builder.Add(item.AsAny);
+        }
+
+        return new <#= TypeDeclaration.DotnetTypeName #>(builder.ToImmutable());
+    }
+#endif
+<#  }
+
+    if (IsTuple)
+    { #>
+
+    /// <summary>
+    /// Create a tuple from the given items.
+    /// </summary>
+<#      int prefixItemIndex = 1;
+
+        foreach(var prefixItem in PrefixItems)
+        { #>
+    /// <param name = "item<#= prefixItemIndex++ #>">An instance of a <see cref="<#= prefixItem #>" />.</param>
+<#      }#>
+    /// <returns>The new tuple created from the items.</returns>
+    public static <#= TypeDeclaration.DotnetTypeName #> Create(<# int prefixItemIndex2 = 1; foreach(var prefixItem in PrefixItems) { #><#=  prefixItemIndex2 > 1 ? ", " : "" #><#= prefixItem #> item<#=  prefixItemIndex2++ #><# }#>)
+    {
+        ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
+<#      int prefixItemIndex3 = 1;
+        foreach(var prefixItem in PrefixItems)
+        { #>
+        builder.Add(item<#= prefixItemIndex3++ #>.AsAny);
+<#      }#>
+
+        return new <#= TypeDeclaration.DotnetTypeName #>(builder.ToImmutable());
+    }
+<#  } #>
 
     /// <inheritdoc/>
     public ImmutableList<JsonAny> AsImmutableList()
@@ -726,7 +861,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
 
     /// <inheritdoc/>
 
-<#  if (CanEnumerateAsSpecificType)
+<#  if (CanEnumerateAsSpecificType || IsTuple)
     { #>
     JsonArrayEnumerator<TItem> IJsonArray<<#= TypeDeclaration.DotnetTypeName #>>.EnumerateArray<TItem>()
 <#  }

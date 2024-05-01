@@ -24,7 +24,7 @@ public readonly partial struct Test
 {
     private readonly Backing backing;
     private readonly JsonElement jsonElementBacking;
-    private readonly BinaryJsonNumber numberBacking;
+    private readonly ImmutableList<JsonAny> arrayBacking;
     /// <summary>
     /// Initializes a new instance of the <see cref = "Test"/> struct.
     /// </summary>
@@ -32,7 +32,7 @@ public readonly partial struct Test
     {
         this.jsonElementBacking = default;
         this.backing = Backing.JsonElement;
-        this.numberBacking = default;
+        this.arrayBacking = ImmutableList<JsonAny>.Empty;
     }
 
     /// <summary>
@@ -43,7 +43,7 @@ public readonly partial struct Test
     {
         this.jsonElementBacking = value;
         this.backing = Backing.JsonElement;
-        this.numberBacking = default;
+        this.arrayBacking = ImmutableList<JsonAny>.Empty;
     }
 
     /// <summary>
@@ -73,9 +73,9 @@ public readonly partial struct Test
                 return new(this.jsonElementBacking);
             }
 
-            if ((this.backing & Backing.Number) != 0)
+            if ((this.backing & Backing.Array) != 0)
             {
-                return new(this.numberBacking);
+                return new(this.arrayBacking);
             }
 
             if ((this.backing & Backing.Null) != 0)
@@ -97,9 +97,9 @@ public readonly partial struct Test
                 return this.jsonElementBacking;
             }
 
-            if ((this.backing & Backing.Number) != 0)
+            if ((this.backing & Backing.Array) != 0)
             {
-                return JsonValueHelpers.NumberToJsonElement(this.numberBacking);
+                return JsonValueHelpers.ArrayToJsonElement(this.arrayBacking);
             }
 
             if ((this.backing & Backing.Null) != 0)
@@ -140,18 +140,13 @@ public readonly partial struct Test
     }
 
     /// <inheritdoc/>
-    public JsonNumber AsNumber
+    JsonNumber IJsonValue.AsNumber
     {
         get
         {
             if ((this.backing & Backing.JsonElement) != 0)
             {
                 return new(this.jsonElementBacking);
-            }
-
-            if ((this.backing & Backing.Number) != 0)
-            {
-                return new(this.numberBacking);
             }
 
             throw new InvalidOperationException();
@@ -173,13 +168,18 @@ public readonly partial struct Test
     }
 
     /// <inheritdoc/>
-    JsonArray IJsonValue.AsArray
+    public JsonArray AsArray
     {
         get
         {
             if ((this.backing & Backing.JsonElement) != 0)
             {
                 return new(this.jsonElementBacking);
+            }
+
+            if ((this.backing & Backing.Array) != 0)
+            {
+                return new(this.arrayBacking);
             }
 
             throw new InvalidOperationException();
@@ -214,9 +214,9 @@ public readonly partial struct Test
                 return this.jsonElementBacking.ValueKind;
             }
 
-            if ((this.backing & Backing.Number) != 0)
+            if ((this.backing & Backing.Array) != 0)
             {
-                return JsonValueKind.Number;
+                return JsonValueKind.Array;
             }
 
             if ((this.backing & Backing.Null) != 0)
@@ -289,7 +289,7 @@ public readonly partial struct Test
         JsonValueKind valueKind = value.ValueKind;
         return valueKind switch
         {
-            JsonValueKind.Number => new(value.AsNumber.AsBinaryJsonNumber),
+            JsonValueKind.Array => new(value.AsArray.AsImmutableList()),
             JsonValueKind.Null => Null,
             _ => Undefined,
         };
@@ -344,40 +344,16 @@ public readonly partial struct Test
         return Undefined;
     }
 #endif
-    /// <summary>
-    /// Gets an instance of the JSON value from a number value.
-    /// </summary>
-    /// <typeparam name = "TValue">The type of the value.</typeparam>
-    /// <param name = "value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be Test.Undefined if the type is not compatible.</remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Test FromNumber<TValue>(in TValue value)
-        where TValue : struct, IJsonNumber<TValue>
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        if (value.ValueKind == JsonValueKind.Number)
-        {
-            return new(value.AsBinaryJsonNumber);
-        }
-
-        return Undefined;
-    }
-
 #if NET8_0_OR_GREATER
     /// <summary>
-    /// Gets an instance of the JSON value from an array value.
+    /// Gets an instance of the JSON value from a number value.
     /// </summary>
     /// <typeparam name="TValue">The type of the value.</typeparam>
     /// <param name="value">The value from which to instantiate the instance.</param>
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be Test.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static Test IJsonValue<Test>.FromArray<TValue>(in TValue value)
+    static Test IJsonValue<Test>.FromNumber<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -387,6 +363,30 @@ public readonly partial struct Test
         return Undefined;
     }
 #endif
+    /// <summary>
+    /// Gets an instance of the JSON value from an array value.
+    /// </summary>
+    /// <typeparam name = "TValue">The type of the value.</typeparam>
+    /// <param name = "value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>This will be Test.Undefined if the type is not compatible.</remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Test FromArray<TValue>(in TValue value)
+        where TValue : struct, IJsonArray<TValue>
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        if (value.ValueKind == JsonValueKind.Array)
+        {
+            return new(value.AsImmutableList());
+        }
+
+        return Undefined;
+    }
+
 #if NET8_0_OR_GREATER
     /// <summary>
     /// Gets an instance of the JSON value from an object value.
@@ -523,9 +523,9 @@ public readonly partial struct Test
             return TTarget.FromJson(this.jsonElementBacking);
         }
 
-        if ((this.backing & Backing.Number) != 0)
+        if ((this.backing & Backing.Array) != 0)
         {
-            return TTarget.FromNumber(this);
+            return TTarget.FromArray(this);
         }
 
         if ((this.backing & Backing.Null) != 0)
@@ -575,9 +575,9 @@ public readonly partial struct Test
             return;
         }
 
-        if ((this.backing & Backing.Number) != 0)
+        if ((this.backing & Backing.Array) != 0)
         {
-            this.numberBacking.WriteTo(writer);
+            JsonValueHelpers.WriteItems(this.arrayBacking, writer);
             return;
         }
 

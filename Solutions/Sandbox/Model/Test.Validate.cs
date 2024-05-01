@@ -16,7 +16,6 @@ namespace JsonSchemaSample.Api;
 /// </summary>
 public readonly partial struct Test
 {
-    private static readonly BinaryJsonNumber __Corvus_Maximum = new(64);
     /// <inheritdoc/>
     public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
     {
@@ -32,13 +31,15 @@ public readonly partial struct Test
             result = result.PushSchemaLocation("test.json");
         }
 
-        result = this.ValidateRef(result, level);
+        result = result.UsingEvaluatedItems();
+        JsonValueKind valueKind = this.ValueKind;
+        result = this.ValidateType(valueKind, result, level);
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
             return result;
         }
 
-        result = Corvus.Json.Validate.ValidateNumber(this, result, level, BinaryJsonNumber.None, __Corvus_Maximum, BinaryJsonNumber.None, BinaryJsonNumber.None, BinaryJsonNumber.None);
+        result = this.ValidateArray(valueKind, result, level);
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
             return result;

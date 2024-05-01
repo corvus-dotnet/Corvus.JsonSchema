@@ -1,11 +1,15 @@
 {
-    "$ref": "#/$defs/base",
-    "maximum": 64,
-    "$defs": {
-        "base": {
-            "type": "number",
-            "format": "byte",
-            "exclusiveMinimum": 0
+    "type": "array",
+    "prefixItems": [
+        {
+            "type": "integer",
+            "format": "int32"
+        },
+        { "type": "string" },
+        {
+            "type": "string",
+            "format": "date-time"
         }
-    }
+    ],
+    "unevaluatedItems": false
 }
