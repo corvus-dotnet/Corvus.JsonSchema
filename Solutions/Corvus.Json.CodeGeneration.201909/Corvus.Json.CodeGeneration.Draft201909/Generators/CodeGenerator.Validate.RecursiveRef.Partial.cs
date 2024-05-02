@@ -1,28 +1,28 @@
-// <copyright file="CodeGenerator.Conversions.Accessors.Partial.cs" company="Endjin Limited">
+// <copyright file="CodeGenerator.Validate.RecursiveRef.Partial.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Text.Json;
-using Corvus.Json.CodeGeneration.Draft202012;
-using Corvus.Json.JsonSchema.Draft202012;
+using Corvus.Json.CodeGeneration.Draft201909;
+using Corvus.Json.JsonSchema.Draft201909;
 
-namespace Corvus.Json.CodeGeneration.Generators.Draft202012;
+namespace Corvus.Json.CodeGeneration.Generators.Draft201909;
 
 /// <summary>
 /// Services for the code generation t4 templates.
 /// </summary>
-public partial class CodeGeneratorConversionsAccessors
+public partial class CodeGeneratorValidateRecursiveRef
 {
     private Dictionary<TypeDeclaration, Conversion>? conversions;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="CodeGeneratorConversionsAccessors"/> class.
+    /// Initializes a new instance of the <see cref="CodeGeneratorValidateRecursiveRef"/> class.
     /// </summary>
     /// <param name="jsonSchemaBuilder">The current <see cref="JsonSchemaBuilder"/>.</param>
     /// <param name="declarationToGenerate">The <see cref="TypeDeclaration"/> to generate in this file.</param>
-    public CodeGeneratorConversionsAccessors(JsonSchemaBuilder jsonSchemaBuilder, TypeDeclaration declarationToGenerate)
+    public CodeGeneratorValidateRecursiveRef(JsonSchemaBuilder jsonSchemaBuilder, TypeDeclaration declarationToGenerate)
     {
         this.Builder = jsonSchemaBuilder;
         this.TypeDeclaration = declarationToGenerate;
@@ -1025,13 +1025,13 @@ public partial class CodeGeneratorConversionsAccessors
     }
 
     /// <summary>
-    /// Gets a value indicating whether this has a dynamic reference.
+    /// Gets a value indicating whether this has a recursive reference.
     /// </summary>
-    public bool HasDynamicRef
+    public bool HasRecursiveRef
     {
         get
         {
-            return this.TypeDeclaration.Schema().DynamicRef.IsNotUndefined() && !this.TypeDeclaration.Schema().IsNakedDynamicReference();
+            return this.TypeDeclaration.Schema().RecursiveRef.IsNotUndefined() && !this.TypeDeclaration.Schema().IsNakedRecursiveReference();
         }
     }
 
@@ -1050,11 +1050,11 @@ public partial class CodeGeneratorConversionsAccessors
     /// <summary>
     /// Gets the dotnet type name for the non-naked reference.
     /// </summary>
-    public string DynamicRefDotnetTypeName
+    public string RecursiveRefDotnetTypeName
     {
         get
         {
-            TypeDeclaration td = this.Builder.GetTypeDeclarationForProperty(this.TypeDeclaration, "$dynamicRef");
+            TypeDeclaration td = this.Builder.GetTypeDeclarationForProperty(this.TypeDeclaration, "$recursiveRef");
             return td.FullyQualifiedDotnetTypeName ?? string.Empty;
         }
     }
@@ -1192,6 +1192,60 @@ public partial class CodeGeneratorConversionsAccessors
         get
         {
             return this.TypeDeclaration.Schema().Items.IsNotUndefined();
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether this object has explicit validation for additional items.
+    /// </summary>
+    public bool HasAdditionalItems
+    {
+        get
+        {
+            return this.HasMultipleItemsType && (this.TypeDeclaration.Schema().AdditionalItems.ValueKind == JsonValueKind.Object ||
+                 this.TypeDeclaration.Schema().AdditionalItems.ValueKind == JsonValueKind.True ||
+                 this.TypeDeclaration.Schema().AdditionalItems.ValueKind == JsonValueKind.False);
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether this object allows additional items.
+    /// </summary>
+    public bool AllowsAdditionalItems
+    {
+        get
+        {
+            return this.TypeDeclaration.Schema().AdditionalItems.IsUndefined() ||
+                this.TypeDeclaration.Schema().AdditionalItems.ValueKind == JsonValueKind.True ||
+                this.TypeDeclaration.Schema().AdditionalItems.ValueKind == JsonValueKind.Object;
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether this object has explicit validation for additional items.
+    /// </summary>
+    public bool HasAdditionalItemsSchema
+    {
+        get
+        {
+            return this.TypeDeclaration.Schema().AdditionalItems.ValueKind == JsonValueKind.Object;
+        }
+    }
+
+    /// <summary>
+    /// Gets the additional items dotnet type name.
+    /// </summary>
+    public string AdditionalItemsDotnetTypeName
+    {
+        get
+        {
+            if (this.TypeDeclaration.Schema().AdditionalItems.IsNotUndefined())
+            {
+                TypeDeclaration td = this.Builder.GetTypeDeclarationForProperty(this.TypeDeclaration, "additionalItems");
+                return td.FullyQualifiedDotnetTypeName ?? string.Empty;
+            }
+
+            return string.Empty;
         }
     }
 
@@ -1416,6 +1470,43 @@ public partial class CodeGeneratorConversionsAccessors
     }
 
     /// <summary>
+    /// Gets a value indicating whether the type has multiple items type constraints.
+    /// </summary>
+    public bool HasMultipleItemsType
+    {
+        get
+        {
+            return this.TypeDeclaration.Schema().Items.IsSchemaArray;
+        }
+    }
+
+    /// <summary>
+    /// Gets the array of dotnet type names when the items constraint is an array.
+    /// </summary>
+    public ImmutableArray<string> PrefixItems => this.Items;
+
+    /// <summary>
+    /// Gets the array of dotnet type names when the items constraint is an array.
+    /// </summary>
+    public ImmutableArray<string> Items
+    {
+        get
+        {
+            ImmutableArray<string>.Builder builder = ImmutableArray.CreateBuilder<string>();
+            if (this.TypeDeclaration.Schema().Items.IsSchemaArray)
+            {
+                for (int i = 0; i < this.TypeDeclaration.Schema().Items.GetArrayLength(); ++i)
+                {
+                    TypeDeclaration td = this.Builder.GetTypeDeclarationForPropertyArrayIndex(this.TypeDeclaration, "items", i);
+                    builder.Add(td.FullyQualifiedDotnetTypeName ?? string.Empty);
+                }
+            }
+
+            return builder.ToImmutable();
+        }
+    }
+
+    /// <summary>
     /// Gets a value indicating whether we can enumerate this type as a single items type.
     /// </summary>
     public bool CanEnumerateAsSpecificType
@@ -1433,7 +1524,7 @@ public partial class CodeGeneratorConversionsAccessors
     {
         get
         {
-            return this.TypeDeclaration.Schema().PrefixItems.IsNotUndefined() && this.TypeDeclaration.Schema().Items.IsUndefined() && this.TypeDeclaration.Schema().UnevaluatedItems.ValueKind == JsonValueKind.False;
+            return this.TypeDeclaration.Schema().Items.IsSchemaArray && this.TypeDeclaration.Schema().AdditionalItems.ValueKind == JsonValueKind.False;
         }
     }
 
@@ -1464,38 +1555,6 @@ public partial class CodeGeneratorConversionsAccessors
             }
 
             return $"{BuiltInTypes.AnyTypeDeclaration.Ns}.{BuiltInTypes.AnyTypeDeclaration.Type}";
-        }
-    }
-
-    /// <summary>
-    /// Gets a value indicating whether the type has multiple prefix items type constraints.
-    /// </summary>
-    public bool HasPrefixItems
-    {
-        get
-        {
-            return this.TypeDeclaration.Schema().PrefixItems.ValueKind == JsonValueKind.Array;
-        }
-    }
-
-    /// <summary>
-    /// Gets the array of dotnet type names when the prefixItems constraint is an array.
-    /// </summary>
-    public ImmutableArray<string> PrefixItems
-    {
-        get
-        {
-            ImmutableArray<string>.Builder builder = ImmutableArray.CreateBuilder<string>();
-            if (this.TypeDeclaration.Schema().PrefixItems.ValueKind == JsonValueKind.Array)
-            {
-                for (int i = 0; i < this.TypeDeclaration.Schema().PrefixItems.GetArrayLength(); ++i)
-                {
-                    TypeDeclaration td = this.Builder.GetTypeDeclarationForPropertyArrayIndex(this.TypeDeclaration, "prefixItems", i);
-                    builder.Add(td.FullyQualifiedDotnetTypeName ?? string.Empty);
-                }
-            }
-
-            return builder.ToImmutable();
         }
     }
 
@@ -2644,15 +2703,15 @@ public partial class CodeGeneratorConversionsAccessors
             return typeDeclaration.Schema().Format.GetString();
         }
 
-        if (typeDeclaration.Schema().Ref.IsNotUndefined() && !(typeDeclaration.Schema().IsNakedReference() || typeDeclaration.Schema().IsNakedRecursiveReference() || typeDeclaration.Schema().IsNakedDynamicReference()))
+        if (typeDeclaration.Schema().Ref.IsNotUndefined() && !(typeDeclaration.Schema().IsNakedReference() || typeDeclaration.Schema().IsNakedRecursiveReference()))
         {
             TypeDeclaration td = this.Builder.GetTypeDeclarationForProperty(typeDeclaration, "$ref");
             return this.GetImpliedFormat(td);
         }
 
-        if (typeDeclaration.Schema().DynamicRef.IsNotUndefined() && !(typeDeclaration.Schema().IsNakedReference() || typeDeclaration.Schema().IsNakedRecursiveReference() || typeDeclaration.Schema().IsNakedDynamicReference()))
+        if (typeDeclaration.Schema().RecursiveRef.IsNotUndefined() && !(typeDeclaration.Schema().IsNakedReference() || typeDeclaration.Schema().IsNakedRecursiveReference()))
         {
-            TypeDeclaration td = this.Builder.GetTypeDeclarationForProperty(typeDeclaration, "$dynamicRef");
+            TypeDeclaration td = this.Builder.GetTypeDeclarationForProperty(typeDeclaration, "$recursiveRef");
             return this.GetImpliedFormat(td);
         }
 
@@ -2741,20 +2800,9 @@ public partial class CodeGeneratorConversionsAccessors
             }
         }
 
-        if (typeDeclaration.Schema().Ref.IsNotUndefined() && !(typeDeclaration.Schema().IsNakedReference() || typeDeclaration.Schema().IsNakedRecursiveReference() || typeDeclaration.Schema().IsNakedDynamicReference()))
+        if (typeDeclaration.Schema().Ref.IsNotUndefined() && !(typeDeclaration.Schema().IsNakedReference() || typeDeclaration.Schema().IsNakedRecursiveReference()))
         {
             TypeDeclaration td = this.Builder.GetTypeDeclarationForProperty(typeDeclaration, "$ref");
-
-            if (!conversions.ContainsKey(td))
-            {
-                conversions.Add(td, new Conversion(td, parent is null));
-                this.AddConversionsFor(td, conversions, typeDeclaration);
-            }
-        }
-
-        if (typeDeclaration.Schema().DynamicRef.IsNotUndefined() && !(typeDeclaration.Schema().IsNakedReference() || typeDeclaration.Schema().IsNakedRecursiveReference() || typeDeclaration.Schema().IsNakedDynamicReference()))
-        {
-            TypeDeclaration td = this.Builder.GetTypeDeclarationForProperty(typeDeclaration, "$dynamicRef");
 
             if (!conversions.ContainsKey(td))
             {

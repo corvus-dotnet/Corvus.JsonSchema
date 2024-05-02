@@ -1,4 +1,4 @@
-// <copyright file="CodeGenerator.Conversions.Accessors.Partial.cs" company="Endjin Limited">
+// <copyright file="CodeGenerator.Validate.DynamicRef.Partial.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
@@ -13,16 +13,16 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft202012;
 /// <summary>
 /// Services for the code generation t4 templates.
 /// </summary>
-public partial class CodeGeneratorConversionsAccessors
+public partial class CodeGeneratorValidateDynamicRef
 {
     private Dictionary<TypeDeclaration, Conversion>? conversions;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="CodeGeneratorConversionsAccessors"/> class.
+    /// Initializes a new instance of the <see cref="CodeGeneratorValidateDynamicRef"/> class.
     /// </summary>
     /// <param name="jsonSchemaBuilder">The current <see cref="JsonSchemaBuilder"/>.</param>
     /// <param name="declarationToGenerate">The <see cref="TypeDeclaration"/> to generate in this file.</param>
-    public CodeGeneratorConversionsAccessors(JsonSchemaBuilder jsonSchemaBuilder, TypeDeclaration declarationToGenerate)
+    public CodeGeneratorValidateDynamicRef(JsonSchemaBuilder jsonSchemaBuilder, TypeDeclaration declarationToGenerate)
     {
         this.Builder = jsonSchemaBuilder;
         this.TypeDeclaration = declarationToGenerate;

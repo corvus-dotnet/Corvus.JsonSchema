@@ -83,6 +83,15 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
             return result;
         }
 <#  }
+    if (HasRecursiveRef)
+    { #>
+
+        result = this.ValidateRecursiveRef(result, level);
+        if (level == ValidationLevel.Flag && !result.IsValid)
+        {
+            return result;
+        }
+<#  }
     if ((HasExplicitType || HasFormat || HasMediaTypeOrEncoding) || (HasItems || HasContains || HasUniqueItems || HasMaxItems || HasMinItems || HasUnevaluatedItems || HasAdditionalItems) || (HasDependentRequired || HasLocalProperties || HasRequired || HasMaxProperties || HasMinProperties || HasDependentSchemas || HasPropertyNames || HasPatternProperties || ((AllowsAdditionalProperties && (HasAdditionalProperties || HasUnevaluatedProperties)))))
     { #>
 

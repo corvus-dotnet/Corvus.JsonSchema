@@ -1025,6 +1025,17 @@ public partial class CodeGeneratorValidateOneOf
     }
 
     /// <summary>
+    /// Gets a value indicating whether this has a dynamic reference.
+    /// </summary>
+    public bool HasDynamicRef
+    {
+        get
+        {
+            return this.TypeDeclaration.Schema().DynamicRef.IsNotUndefined() && !this.TypeDeclaration.Schema().IsNakedDynamicReference();
+        }
+    }
+
+    /// <summary>
     /// Gets the dotnet type name for the non-naked reference.
     /// </summary>
     public string RefDotnetTypeName
@@ -1032,6 +1043,18 @@ public partial class CodeGeneratorValidateOneOf
         get
         {
             TypeDeclaration td = this.Builder.GetTypeDeclarationForProperty(this.TypeDeclaration, "$ref");
+            return td.FullyQualifiedDotnetTypeName ?? string.Empty;
+        }
+    }
+
+    /// <summary>
+    /// Gets the dotnet type name for the non-naked reference.
+    /// </summary>
+    public string DynamicRefDotnetTypeName
+    {
+        get
+        {
+            TypeDeclaration td = this.Builder.GetTypeDeclarationForProperty(this.TypeDeclaration, "$dynamicRef");
             return td.FullyQualifiedDotnetTypeName ?? string.Empty;
         }
     }
