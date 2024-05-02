@@ -22,9 +22,13 @@ Scenario Outline: minimum validation
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # 2.6
         | #/000/tests/000/data | true  | above the minimum is valid                                                       |
+        # 1.1
         | #/000/tests/001/data | true  | boundary point is valid                                                          |
+        # 0.6
         | #/000/tests/002/data | false | below the minimum is invalid                                                     |
+        # x
         | #/000/tests/003/data | true  | ignores non-numbers                                                              |
 
 Scenario Outline: minimum validation with signed integer
@@ -44,10 +48,17 @@ Scenario Outline: minimum validation with signed integer
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # -1
         | #/001/tests/000/data | true  | negative above the minimum is valid                                              |
+        # 0
         | #/001/tests/001/data | true  | positive above the minimum is valid                                              |
+        # -2
         | #/001/tests/002/data | true  | boundary point is valid                                                          |
+        # -2.0
         | #/001/tests/003/data | true  | boundary point with float is valid                                               |
+        # -2.0001
         | #/001/tests/004/data | false | float below the minimum is invalid                                               |
+        # -3
         | #/001/tests/005/data | false | int below the minimum is invalid                                                 |
+        # x
         | #/001/tests/006/data | true  | ignores non-numbers                                                              |

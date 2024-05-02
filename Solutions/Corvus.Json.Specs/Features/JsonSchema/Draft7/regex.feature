@@ -19,11 +19,19 @@ Scenario Outline: validation of regular expressions
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # 12
         | #/000/tests/000/data | true  | all string formats ignore integers                                               |
+        # 13.7
         | #/000/tests/001/data | true  | all string formats ignore floats                                                 |
+        # {}
         | #/000/tests/002/data | true  | all string formats ignore objects                                                |
+        # []
         | #/000/tests/003/data | true  | all string formats ignore arrays                                                 |
+        # False
         | #/000/tests/004/data | true  | all string formats ignore booleans                                               |
+        # 
         | #/000/tests/005/data | true  | all string formats ignore nulls                                                  |
+        # ([abc])+\s+$
         | #/000/tests/006/data | true  | a valid regular expression                                                       |
+        # ^(abc]
         | #/000/tests/007/data | false | a regular expression with unclosed parens is invalid                             |

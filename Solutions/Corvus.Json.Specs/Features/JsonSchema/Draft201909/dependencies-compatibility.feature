@@ -22,12 +22,19 @@ Scenario Outline: single dependency
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # {}
         | #/000/tests/000/data | true  | neither                                                                          |
+        # {"foo": 1}
         | #/000/tests/001/data | true  | nondependant                                                                     |
+        # {"foo": 1, "bar": 2}
         | #/000/tests/002/data | true  | with dependency                                                                  |
+        # {"bar": 2}
         | #/000/tests/003/data | false | missing dependency                                                               |
+        # ["bar"]
         | #/000/tests/004/data | true  | ignores arrays                                                                   |
+        # foobar
         | #/000/tests/005/data | true  | ignores strings                                                                  |
+        # 12
         | #/000/tests/006/data | true  | ignores other non-objects                                                        |
 
 Scenario Outline: empty dependents
@@ -47,8 +54,11 @@ Scenario Outline: empty dependents
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # {}
         | #/001/tests/000/data | true  | empty object                                                                     |
+        # {"bar": 2}
         | #/001/tests/001/data | true  | object with one property                                                         |
+        # 1
         | #/001/tests/002/data | true  | non-object is valid                                                              |
 
 Scenario Outline: multiple dependents required
@@ -68,11 +78,17 @@ Scenario Outline: multiple dependents required
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # {}
         | #/002/tests/000/data | true  | neither                                                                          |
+        # {"foo": 1, "bar": 2}
         | #/002/tests/001/data | true  | nondependants                                                                    |
+        # {"foo": 1, "bar": 2, "quux": 3}
         | #/002/tests/002/data | true  | with dependencies                                                                |
+        # {"foo": 1, "quux": 2}
         | #/002/tests/003/data | false | missing dependency                                                               |
+        # {"bar": 1, "quux": 2}
         | #/002/tests/004/data | false | missing other dependency                                                         |
+        # {"quux": 1}
         | #/002/tests/005/data | false | missing both dependencies                                                        |
 
 Scenario Outline: dependencies with escaped characters
@@ -95,9 +111,13 @@ Scenario Outline: dependencies with escaped characters
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # { "foo\nbar": 1, "foo\rbar": 2 }
         | #/003/tests/000/data | true  | CRLF                                                                             |
+        # { "foo'bar": 1, "foo\"bar": 2 }
         | #/003/tests/001/data | true  | quoted quotes                                                                    |
+        # { "foo\nbar": 1, "foo": 2 }
         | #/003/tests/002/data | false | CRLF missing dependent                                                           |
+        # { "foo\"bar": 2 }
         | #/003/tests/003/data | false | quoted quotes missing dependent                                                  |
 
 Scenario Outline: single schema dependency
@@ -124,13 +144,21 @@ Scenario Outline: single schema dependency
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # {"foo": 1, "bar": 2}
         | #/004/tests/000/data | true  | valid                                                                            |
+        # {"foo": "quux"}
         | #/004/tests/001/data | true  | no dependency                                                                    |
+        # {"foo": "quux", "bar": 2}
         | #/004/tests/002/data | false | wrong type                                                                       |
+        # {"foo": 2, "bar": "quux"}
         | #/004/tests/003/data | false | wrong type other                                                                 |
+        # {"foo": "quux", "bar": "quux"}
         | #/004/tests/004/data | false | wrong type both                                                                  |
+        # ["bar"]
         | #/004/tests/005/data | true  | ignores arrays                                                                   |
+        # foobar
         | #/004/tests/006/data | true  | ignores strings                                                                  |
+        # 12
         | #/004/tests/007/data | true  | ignores other non-objects                                                        |
 
 Scenario Outline: boolean subschemas
@@ -153,9 +181,13 @@ Scenario Outline: boolean subschemas
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # {"foo": 1}
         | #/005/tests/000/data | true  | object with property having schema true is valid                                 |
+        # {"bar": 2}
         | #/005/tests/001/data | false | object with property having schema false is invalid                              |
+        # {"foo": 1, "bar": 2}
         | #/005/tests/002/data | false | object with both properties is invalid                                           |
+        # {}
         | #/005/tests/003/data | true  | empty object is valid                                                            |
 
 Scenario Outline: schema dependencies with escaped characters
@@ -178,7 +210,11 @@ Scenario Outline: schema dependencies with escaped characters
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # { "foo\tbar": 1, "a": 2, "b": 3, "c": 4 }
         | #/006/tests/000/data | true  | quoted tab                                                                       |
+        # { "foo'bar": {"foo\"bar": 1} }
         | #/006/tests/001/data | false | quoted quote                                                                     |
+        # { "foo\tbar": 1, "a": 2 }
         | #/006/tests/002/data | false | quoted tab invalid under dependent schema                                        |
+        # {"foo'bar": 1}
         | #/006/tests/003/data | false | quoted quote invalid under dependent schema                                      |

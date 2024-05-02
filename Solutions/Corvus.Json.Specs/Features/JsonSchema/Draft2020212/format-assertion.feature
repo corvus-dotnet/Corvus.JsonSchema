@@ -23,7 +23,9 @@ Scenario Outline: schema that uses custom metaschema with format-assertion: fals
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # 127.0.0.1
         | #/000/tests/000/data | true  | format-assertion: false: valid string                                            |
+        # not-an-ipv4
         | #/000/tests/001/data | false | format-assertion: false: invalid string                                          |
 
 Scenario Outline: schema that uses custom metaschema with format-assertion: true
@@ -44,5 +46,7 @@ Scenario Outline: schema that uses custom metaschema with format-assertion: true
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # 127.0.0.1
         | #/001/tests/000/data | true  | format-assertion: true: valid string                                             |
+        # not-an-ipv4
         | #/001/tests/001/data | false | format-assertion: true: invalid string                                           |

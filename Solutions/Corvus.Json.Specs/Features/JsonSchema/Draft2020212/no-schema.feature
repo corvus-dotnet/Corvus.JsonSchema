@@ -21,6 +21,9 @@ Scenario Outline: validation without $schema
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # foo
         | #/000/tests/000/data | true  | a 3-character string is valid                                                    |
+        # a
         | #/000/tests/001/data | false | a 1-character string is not valid                                                |
+        # 5
         | #/000/tests/002/data | true  | a non-string is valid                                                            |

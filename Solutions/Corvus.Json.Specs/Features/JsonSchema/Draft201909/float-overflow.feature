@@ -22,4 +22,5 @@ Scenario Outline: all integers are multiples of 0.5, if overflow is handled
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # 1e308
         | #/000/tests/000/data | true  | valid if optional overflow handling is implemented                               |

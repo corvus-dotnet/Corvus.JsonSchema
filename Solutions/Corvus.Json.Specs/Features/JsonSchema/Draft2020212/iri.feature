@@ -22,18 +22,33 @@ Scenario Outline: validation of IRIs
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # 12
         | #/000/tests/000/data | true  | all string formats ignore integers                                               |
+        # 13.7
         | #/000/tests/001/data | true  | all string formats ignore floats                                                 |
+        # {}
         | #/000/tests/002/data | true  | all string formats ignore objects                                                |
+        # []
         | #/000/tests/003/data | true  | all string formats ignore arrays                                                 |
+        # False
         | #/000/tests/004/data | true  | all string formats ignore booleans                                               |
+        # 
         | #/000/tests/005/data | true  | all string formats ignore nulls                                                  |
+        # http://ƒøø.ßår/?∂éœ=πîx#πîüx
         | #/000/tests/006/data | true  | a valid IRI with anchor tag                                                      |
+        # http://ƒøø.com/blah_(wîkïpédiå)_blah#ßité-1
         | #/000/tests/007/data | true  | a valid IRI with anchor tag and parentheses                                      |
+        # http://ƒøø.ßår/?q=Test%20URL-encoded%20stuff
         | #/000/tests/008/data | true  | a valid IRI with URL-encoded stuff                                               |
+        # http://-.~_!$&'()*+,;=:%40:80%2f::::::@example.com
         | #/000/tests/009/data | true  | a valid IRI with many special characters                                         |
+        # http://[2001:0db8:85a3:0000:0000:8a2e:0370:7334]
         | #/000/tests/010/data | true  | a valid IRI based on IPv6                                                        |
+        # http://2001:0db8:85a3:0000:0000:8a2e:0370:7334
         | #/000/tests/011/data | false | an invalid IRI based on IPv6                                                     |
+        # /abc
         | #/000/tests/012/data | false | an invalid relative IRI Reference                                                |
+        # \\WINDOWS\filëßåré
         | #/000/tests/013/data | false | an invalid IRI                                                                   |
+        # âππ
         | #/000/tests/014/data | false | an invalid IRI though valid IRI reference                                        |

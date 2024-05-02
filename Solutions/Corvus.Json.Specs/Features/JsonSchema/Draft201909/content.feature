@@ -22,8 +22,11 @@ Scenario Outline: validation of string-encoded content based on media type
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # {"foo": "bar"}
         | #/000/tests/000/data | true  | a valid JSON document                                                            |
+        # {:}
         | #/000/tests/001/data | true  | an invalid JSON document; validates true                                         |
+        # 100
         | #/000/tests/002/data | true  | ignores non-strings                                                              |
 
 Scenario Outline: validation of binary string-encoding
@@ -43,8 +46,11 @@ Scenario Outline: validation of binary string-encoding
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # eyJmb28iOiAiYmFyIn0K
         | #/001/tests/000/data | true  | a valid base64 string                                                            |
+        # eyJmb28iOi%iYmFyIn0K
         | #/001/tests/001/data | true  | an invalid base64 string (% is not a valid character); validates true            |
+        # 100
         | #/001/tests/002/data | true  | ignores non-strings                                                              |
 
 Scenario Outline: validation of binary-encoded media type documents
@@ -65,9 +71,13 @@ Scenario Outline: validation of binary-encoded media type documents
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # eyJmb28iOiAiYmFyIn0K
         | #/002/tests/000/data | true  | a valid base64-encoded JSON document                                             |
+        # ezp9Cg==
         | #/002/tests/001/data | true  | a validly-encoded invalid JSON document; validates true                          |
+        # {}
         | #/002/tests/002/data | true  | an invalid base64 string that is valid JSON; validates true                      |
+        # 100
         | #/002/tests/003/data | true  | ignores non-strings                                                              |
 
 Scenario Outline: validation of binary-encoded media type documents with schema
@@ -89,11 +99,19 @@ Scenario Outline: validation of binary-encoded media type documents with schema
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # eyJmb28iOiAiYmFyIn0K
         | #/003/tests/000/data | true  | a valid base64-encoded JSON document                                             |
+        # eyJib28iOiAyMCwgImZvbyI6ICJiYXoifQ==
         | #/003/tests/001/data | true  | another valid base64-encoded JSON document                                       |
+        # eyJib28iOiAyMH0=
         | #/003/tests/002/data | true  | an invalid base64-encoded JSON document; validates true                          |
+        # e30=
         | #/003/tests/003/data | true  | an empty object as a base64-encoded JSON document; validates true                |
+        # W10=
         | #/003/tests/004/data | true  | an empty array as a base64-encoded JSON document                                 |
+        # ezp9Cg==
         | #/003/tests/005/data | true  | a validly-encoded invalid JSON document; validates true                          |
+        # {}
         | #/003/tests/006/data | true  | an invalid base64 string that is valid JSON; validates true                      |
+        # 100
         | #/003/tests/007/data | true  | ignores non-strings                                                              |

@@ -19,13 +19,23 @@ Scenario Outline: format: uri-template
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # 12
         | #/000/tests/000/data | true  | all string formats ignore integers                                               |
+        # 13.7
         | #/000/tests/001/data | true  | all string formats ignore floats                                                 |
+        # {}
         | #/000/tests/002/data | true  | all string formats ignore objects                                                |
+        # []
         | #/000/tests/003/data | true  | all string formats ignore arrays                                                 |
+        # False
         | #/000/tests/004/data | true  | all string formats ignore booleans                                               |
+        # 
         | #/000/tests/005/data | true  | all string formats ignore nulls                                                  |
+        # http://example.com/dictionary/{term:1}/{term}
         | #/000/tests/006/data | true  | a valid uri-template                                                             |
+        # http://example.com/dictionary/{term:1}/{term
         | #/000/tests/007/data | false | an invalid uri-template                                                          |
+        # http://example.com/dictionary
         | #/000/tests/008/data | true  | a valid uri-template without variables                                           |
+        # dictionary/{term:1}/{term}
         | #/000/tests/009/data | true  | a valid relative uri-template                                                    |

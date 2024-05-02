@@ -22,11 +22,17 @@ Scenario Outline: propertyNames validation
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # { "f": {}, "foo": {} }
         | #/000/tests/000/data | true  | all property names valid                                                         |
+        # { "foo": {}, "foobar": {} }
         | #/000/tests/001/data | false | some property names invalid                                                      |
+        # {}
         | #/000/tests/002/data | true  | object without properties is valid                                               |
+        # [1, 2, 3, 4]
         | #/000/tests/003/data | true  | ignores arrays                                                                   |
+        # foobar
         | #/000/tests/004/data | true  | ignores strings                                                                  |
+        # 12
         | #/000/tests/005/data | true  | ignores other non-objects                                                        |
 
 Scenario Outline: propertyNames validation with pattern
@@ -46,8 +52,11 @@ Scenario Outline: propertyNames validation with pattern
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # { "a": {}, "aa": {}, "aaa": {} }
         | #/001/tests/000/data | true  | matching property names valid                                                    |
+        # { "aaA": {} }
         | #/001/tests/001/data | false | non-matching property name is invalid                                            |
+        # {}
         | #/001/tests/002/data | true  | object without properties is valid                                               |
 
 Scenario Outline: propertyNames with boolean schema true
@@ -67,7 +76,9 @@ Scenario Outline: propertyNames with boolean schema true
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # {"foo": 1}
         | #/002/tests/000/data | true  | object with any properties is valid                                              |
+        # {}
         | #/002/tests/001/data | true  | empty object is valid                                                            |
 
 Scenario Outline: propertyNames with boolean schema false
@@ -87,5 +98,7 @@ Scenario Outline: propertyNames with boolean schema false
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # {"foo": 1}
         | #/003/tests/000/data | false | object with any properties is invalid                                            |
+        # {}
         | #/003/tests/001/data | true  | empty object is valid                                                            |

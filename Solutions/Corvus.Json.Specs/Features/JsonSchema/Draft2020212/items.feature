@@ -22,9 +22,13 @@ Scenario Outline: a schema given for items
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # [ 1, 2, 3 ]
         | #/000/tests/000/data | true  | valid items                                                                      |
+        # [1, "x"]
         | #/000/tests/001/data | false | wrong type of items                                                              |
+        # {"foo" : "bar"}
         | #/000/tests/002/data | true  | ignores non-arrays                                                               |
+        # { "0": "invalid", "length": 1 }
         | #/000/tests/003/data | true  | JavaScript pseudo-array is valid                                                 |
 
 Scenario Outline: items with boolean schema (true)
@@ -44,7 +48,9 @@ Scenario Outline: items with boolean schema (true)
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # [ 1, "foo", true ]
         | #/001/tests/000/data | true  | any array is valid                                                               |
+        # []
         | #/001/tests/001/data | true  | empty array is valid                                                             |
 
 Scenario Outline: items with boolean schema (false)
@@ -64,7 +70,9 @@ Scenario Outline: items with boolean schema (false)
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # [ 1, "foo", true ]
         | #/002/tests/000/data | false | any non-empty array is invalid                                                   |
+        # []
         | #/002/tests/001/data | true  | empty array is valid                                                             |
 
 Scenario Outline: items and subitems
@@ -104,11 +112,17 @@ Scenario Outline: items and subitems
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # [ [ {"foo": null}, {"foo": null} ], [ {"foo": null}, {"foo": null} ], [ {"foo": null}, {"foo": null} ] ]
         | #/003/tests/000/data | true  | valid items                                                                      |
+        # [ [ {"foo": null}, {"foo": null} ], [ {"foo": null}, {"foo": null} ], [ {"foo": null}, {"foo": null} ], [ {"foo": null}, {"foo": null} ] ]
         | #/003/tests/001/data | false | too many items                                                                   |
+        # [ [ {"foo": null}, {"foo": null}, {"foo": null} ], [ {"foo": null}, {"foo": null} ], [ {"foo": null}, {"foo": null} ] ]
         | #/003/tests/002/data | false | too many sub-items                                                               |
+        # [ {"foo": null}, [ {"foo": null}, {"foo": null} ], [ {"foo": null}, {"foo": null} ] ]
         | #/003/tests/003/data | false | wrong item                                                                       |
+        # [ [ {}, {"foo": null} ], [ {"foo": null}, {"foo": null} ], [ {"foo": null}, {"foo": null} ] ]
         | #/003/tests/004/data | false | wrong sub-item                                                                   |
+        # [ [ {"foo": null} ], [ {"foo": null} ] ]
         | #/003/tests/005/data | true  | fewer items is valid                                                             |
 
 Scenario Outline: nested items
@@ -140,8 +154,11 @@ Scenario Outline: nested items
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # [[[[1]], [[2],[3]]], [[[4], [5], [6]]]]
         | #/004/tests/000/data | true  | valid nested array                                                               |
+        # [[[["1"]], [[2],[3]]], [[[4], [5], [6]]]]
         | #/004/tests/001/data | false | nested array with invalid type                                                   |
+        # [[[1], [2],[3]], [[4], [5], [6]]]
         | #/004/tests/002/data | false | not deep enough                                                                  |
 
 Scenario Outline: prefixItems with no additional items allowed
@@ -162,10 +179,15 @@ Scenario Outline: prefixItems with no additional items allowed
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # [ ]
         | #/005/tests/000/data | true  | empty array                                                                      |
+        # [ 1 ]
         | #/005/tests/001/data | true  | fewer number of items present (1)                                                |
+        # [ 1, 2 ]
         | #/005/tests/002/data | true  | fewer number of items present (2)                                                |
+        # [ 1, 2, 3 ]
         | #/005/tests/003/data | true  | equal number of items present                                                    |
+        # [ 1, 2, 3, 4 ]
         | #/005/tests/004/data | false | additional items are not permitted                                               |
 
 Scenario Outline: items does not look in applicators, valid case
@@ -188,7 +210,9 @@ Scenario Outline: items does not look in applicators, valid case
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # [ 3, 5 ]
         | #/006/tests/000/data | false | prefixItems in allOf does not constrain items, invalid case                      |
+        # [ 5, 5 ]
         | #/006/tests/001/data | true  | prefixItems in allOf does not constrain items, valid case                        |
 
 Scenario Outline: prefixItems validation adjusts the starting index for items
@@ -209,7 +233,9 @@ Scenario Outline: prefixItems validation adjusts the starting index for items
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # [ "x", 2, 3 ]
         | #/007/tests/000/data | true  | valid items                                                                      |
+        # [ "x", "y" ]
         | #/007/tests/001/data | false | wrong type of second item                                                        |
 
 Scenario Outline: items with heterogeneous array
@@ -230,7 +256,9 @@ Scenario Outline: items with heterogeneous array
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # [ "foo", "bar", 37 ]
         | #/008/tests/000/data | false | heterogeneous invalid instance                                                   |
+        # [ null ]
         | #/008/tests/001/data | true  | valid instance                                                                   |
 
 Scenario Outline: items with null instance elements
@@ -252,4 +280,5 @@ Scenario Outline: items with null instance elements
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # [ null ]
         | #/009/tests/000/data | true  | allows null elements                                                             |

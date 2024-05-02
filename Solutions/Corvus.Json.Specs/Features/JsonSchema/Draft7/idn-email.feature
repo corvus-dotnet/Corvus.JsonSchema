@@ -19,13 +19,23 @@ Scenario Outline: validation of an internationalized e-mail addresses
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # 12
         | #/000/tests/000/data | true  | all string formats ignore integers                                               |
+        # 13.7
         | #/000/tests/001/data | true  | all string formats ignore floats                                                 |
+        # {}
         | #/000/tests/002/data | true  | all string formats ignore objects                                                |
+        # []
         | #/000/tests/003/data | true  | all string formats ignore arrays                                                 |
+        # False
         | #/000/tests/004/data | true  | all string formats ignore booleans                                               |
+        # 
         | #/000/tests/005/data | true  | all string formats ignore nulls                                                  |
+        # 실례@실례.테스트
         | #/000/tests/006/data | true  | a valid idn e-mail (example@example.test in Hangul)                              |
+        # 2962
         | #/000/tests/007/data | false | an invalid idn e-mail address                                                    |
+        # joe.bloggs@example.com
         | #/000/tests/008/data | true  | a valid e-mail address                                                           |
+        # 2962
         | #/000/tests/009/data | false | an invalid e-mail address                                                        |

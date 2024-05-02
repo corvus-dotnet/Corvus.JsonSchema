@@ -25,7 +25,9 @@ Scenario Outline: reference of a root arbitrary keyword
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # {"bar": 3}
         | #/000/tests/000/data | true  | match                                                                            |
+        # {"bar": true}
         | #/000/tests/001/data | false | mismatch                                                                         |
 
 Scenario Outline: reference of an arbitrary keyword of a sub-schema
@@ -48,7 +50,9 @@ Scenario Outline: reference of an arbitrary keyword of a sub-schema
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # {"bar": 3}
         | #/001/tests/000/data | true  | match                                                                            |
+        # {"bar": true}
         | #/001/tests/001/data | false | mismatch                                                                         |
 
 Scenario Outline: reference internals of known non-applicator
@@ -72,5 +76,7 @@ Scenario Outline: reference internals of known non-applicator
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # a string
         | #/002/tests/000/data | true  | match                                                                            |
+        # 42
         | #/002/tests/001/data | false | mismatch                                                                         |

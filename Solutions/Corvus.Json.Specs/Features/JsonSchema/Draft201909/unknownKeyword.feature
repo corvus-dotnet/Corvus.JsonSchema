@@ -42,7 +42,7 @@ Scenario Outline: $id inside an unknown keyword is not a real identifier
             ]
         }
 */
-    Given the input JSON file "unknownKeyword.json"
+    Given the input JSON file "optional/unknownKeyword.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
     And I generate a type for the schema
@@ -52,6 +52,9 @@ Scenario Outline: $id inside an unknown keyword is not a real identifier
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # a string
         | #/000/tests/000/data | true  | type matches second anyOf, which has a real schema in it                         |
+        # 
         | #/000/tests/001/data | false | type matches non-schema in first anyOf                                           |
+        # 1
         | #/000/tests/002/data | false | type matches non-schema in third anyOf                                           |

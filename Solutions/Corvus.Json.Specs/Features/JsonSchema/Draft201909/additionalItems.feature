@@ -23,7 +23,9 @@ Scenario Outline: additionalItems as schema
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # [ null, 2, 3, 4 ]
         | #/000/tests/000/data | true  | additional items match schema                                                    |
+        # [ null, 2, 3, "foo" ]
         | #/000/tests/001/data | false | additional items do not match schema                                             |
 
 Scenario Outline: when items is schema, additionalItems does nothing
@@ -48,7 +50,9 @@ Scenario Outline: when items is schema, additionalItems does nothing
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # [1,2,3]
         | #/001/tests/000/data | true  | valid with a array of type integers                                              |
+        # [1,"2","3"]
         | #/001/tests/001/data | false | invalid with a array of mixed types                                              |
 
 Scenario Outline: when items is schema, boolean additionalItems does nothing
@@ -69,6 +73,7 @@ Scenario Outline: when items is schema, boolean additionalItems does nothing
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # [ 1, 2, 3, 4, 5 ]
         | #/002/tests/000/data | true  | all items match schema                                                           |
 
 Scenario Outline: array of items with no additionalItems permitted
@@ -89,10 +94,15 @@ Scenario Outline: array of items with no additionalItems permitted
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # [ ]
         | #/003/tests/000/data | true  | empty array                                                                      |
+        # [ 1 ]
         | #/003/tests/001/data | true  | fewer number of items present (1)                                                |
+        # [ 1, 2 ]
         | #/003/tests/002/data | true  | fewer number of items present (2)                                                |
+        # [ 1, 2, 3 ]
         | #/003/tests/003/data | true  | equal number of items present                                                    |
+        # [ 1, 2, 3, 4 ]
         | #/003/tests/004/data | false | additional items are not permitted                                               |
 
 Scenario Outline: additionalItems as false without items
@@ -112,7 +122,9 @@ Scenario Outline: additionalItems as false without items
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # [ 1, 2, 3, 4, 5 ]
         | #/004/tests/000/data | true  | items defaults to empty schema so everything is valid                            |
+        # {"foo" : "bar"}
         | #/004/tests/001/data | true  | ignores non-arrays                                                               |
 
 Scenario Outline: additionalItems are allowed by default
@@ -132,6 +144,7 @@ Scenario Outline: additionalItems are allowed by default
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # [1, "foo", false]
         | #/005/tests/000/data | true  | only the first item is validated                                                 |
 
 Scenario Outline: additionalItems does not look in applicators, valid case
@@ -154,6 +167,7 @@ Scenario Outline: additionalItems does not look in applicators, valid case
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # [ 1, null ]
         | #/006/tests/000/data | true  | items defined in allOf are not examined                                          |
 
 Scenario Outline: additionalItems does not look in applicators, invalid case
@@ -177,6 +191,7 @@ Scenario Outline: additionalItems does not look in applicators, invalid case
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # [ 1, "hello" ]
         | #/007/tests/000/data | false | items defined in allOf are not examined                                          |
 
 Scenario Outline: items validation adjusts the starting index for additionalItems
@@ -197,7 +212,9 @@ Scenario Outline: items validation adjusts the starting index for additionalItem
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # [ "x", 2, 3 ]
         | #/008/tests/000/data | true  | valid items                                                                      |
+        # [ "x", "y" ]
         | #/008/tests/001/data | false | wrong type of second item                                                        |
 
 Scenario Outline: additionalItems with heterogeneous array
@@ -218,7 +235,9 @@ Scenario Outline: additionalItems with heterogeneous array
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # [ "foo", "bar", 37 ]
         | #/009/tests/000/data | false | heterogeneous invalid instance                                                   |
+        # [ null ]
         | #/009/tests/001/data | true  | valid instance                                                                   |
 
 Scenario Outline: additionalItems with null instance elements
@@ -240,4 +259,5 @@ Scenario Outline: additionalItems with null instance elements
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # [ null ]
         | #/010/tests/000/data | true  | allows null elements                                                             |

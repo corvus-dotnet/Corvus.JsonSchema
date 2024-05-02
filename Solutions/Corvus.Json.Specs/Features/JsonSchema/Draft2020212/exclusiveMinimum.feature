@@ -22,7 +22,11 @@ Scenario Outline: exclusiveMinimum validation
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # 1.2
         | #/000/tests/000/data | true  | above the exclusiveMinimum is valid                                              |
+        # 1.1
         | #/000/tests/001/data | false | boundary point is invalid                                                        |
+        # 0.6
         | #/000/tests/002/data | false | below the exclusiveMinimum is invalid                                            |
+        # x
         | #/000/tests/003/data | true  | ignores non-numbers                                                              |

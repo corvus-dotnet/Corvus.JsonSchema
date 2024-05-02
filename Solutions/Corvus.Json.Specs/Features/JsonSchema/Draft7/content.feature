@@ -21,8 +21,11 @@ Scenario Outline: validation of string-encoded content based on media type
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # {"foo": "bar"}
         | #/000/tests/000/data | true  | a valid JSON document                                                            |
+        # {:}
         | #/000/tests/001/data | false | an invalid JSON document                                                         |
+        # 100
         | #/000/tests/002/data | true  | ignores non-strings                                                              |
 
 Scenario Outline: validation of binary string-encoding
@@ -41,8 +44,11 @@ Scenario Outline: validation of binary string-encoding
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # eyJmb28iOiAiYmFyIn0K
         | #/001/tests/000/data | true  | a valid base64 string                                                            |
+        # eyJmb28iOi%iYmFyIn0K
         | #/001/tests/001/data | false | an invalid base64 string (% is not a valid character)                            |
+        # 100
         | #/001/tests/002/data | true  | ignores non-strings                                                              |
 
 Scenario Outline: validation of binary-encoded media type documents
@@ -62,7 +68,11 @@ Scenario Outline: validation of binary-encoded media type documents
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # eyJmb28iOiAiYmFyIn0K
         | #/002/tests/000/data | true  | a valid base64-encoded JSON document                                             |
+        # ezp9Cg==
         | #/002/tests/001/data | false | a validly-encoded invalid JSON document                                          |
+        # {}
         | #/002/tests/002/data | false | an invalid base64 string that is valid JSON                                      |
+        # 100
         | #/002/tests/003/data | true  | ignores non-strings                                                              |
