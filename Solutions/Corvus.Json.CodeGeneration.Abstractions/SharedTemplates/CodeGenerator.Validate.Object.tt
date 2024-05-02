@@ -156,13 +156,14 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     if (HasDependentSchemas)
     { #>
             if (__TryGetCorvusDependentSchemaValidator(property, this.HasJsonElementBacking, out PropertyValidator<<#= TypeDeclaration.DotnetTypeName #>>? dependentSchemaValidator))
-            {
-                result = result.WithLocalProperty(propertyCount);
-                result = dependentSchemaValidator(this, result, level);
-                if (level == ValidationLevel.Flag && !result.IsValid)
+            {                
+                var dependentSchemaResult = dependentSchemaValidator(this, result.CreateChildContext(), level);
+                if (level == ValidationLevel.Flag && !dependentSchemaResult.IsValid)
                 {
-                    return result;
+                    return result.WithResult(isValid: false);
                 }
+
+                result = result.MergeChildContext(dependentSchemaResult, true);
             }
 <#  }
     if (HasPropertyNames || HasPatternProperties)

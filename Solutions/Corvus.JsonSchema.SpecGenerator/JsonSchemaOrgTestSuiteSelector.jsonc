@@ -243,12 +243,13 @@
       },
       "subdirectories": {
         "optional": {
-          "excludeFromThisDirectory": [
-            "cross-draft\\.json",
-            "bignum\\.json",
-            "ecmascript-regex\\.json",
-            "non-bmp-regex\\.json"
-          ],
+            "excludeFromThisDirectory": [
+                "cross-draft\\.json",
+                "bignum\\.json",
+                "ecmascript-regex\\.json",
+                "non-bmp-regex\\.json",
+                "dynamicRef\\.json"
+            ],
           "subdirectories": {
             "format": {
               "excludeFromThisDirectory": [

@@ -25,11 +25,17 @@ Scenario Outline: a schema given for prefixItems
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # [ 1, "foo" ]
         | #/000/tests/000/data | true  | correct types                                                                    |
+        # [ "foo", 1 ]
         | #/000/tests/001/data | false | wrong types                                                                      |
+        # [ 1 ]
         | #/000/tests/002/data | true  | incomplete array of items                                                        |
+        # [ 1, "foo", true ]
         | #/000/tests/003/data | true  | array with additional items                                                      |
+        # [ ]
         | #/000/tests/004/data | true  | empty array                                                                      |
+        # { "0": "invalid", "1": "valid", "length": 2 }
         | #/000/tests/005/data | true  | JavaScript pseudo-array is valid                                                 |
 
 Scenario Outline: prefixItems with boolean schemas
@@ -49,8 +55,11 @@ Scenario Outline: prefixItems with boolean schemas
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # [ 1 ]
         | #/001/tests/000/data | true  | array with one item is valid                                                     |
+        # [ 1, "foo" ]
         | #/001/tests/001/data | false | array with two items is invalid                                                  |
+        # []
         | #/001/tests/002/data | true  | empty array is valid                                                             |
 
 Scenario Outline: additional items are allowed by default
@@ -70,6 +79,7 @@ Scenario Outline: additional items are allowed by default
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # [1, "foo", false]
         | #/002/tests/000/data | true  | only the first item is validated                                                 |
 
 Scenario Outline: prefixItems with null instance elements
@@ -93,4 +103,5 @@ Scenario Outline: prefixItems with null instance elements
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # [ null ]
         | #/003/tests/000/data | true  | allows null elements                                                             |

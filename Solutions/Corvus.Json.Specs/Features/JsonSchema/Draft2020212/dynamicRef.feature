@@ -30,7 +30,9 @@ Scenario Outline: A $dynamicRef to a $dynamicAnchor in the same schema resource 
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # ["foo", "bar"]
         | #/000/tests/000/data | true  | An array of strings is valid                                                     |
+        # ["foo", 42]
         | #/000/tests/001/data | false | An array containing non-strings is invalid                                       |
 
 Scenario Outline: A $dynamicRef to an $anchor in the same schema resource behaves like a normal $ref to an $anchor
@@ -58,7 +60,9 @@ Scenario Outline: A $dynamicRef to an $anchor in the same schema resource behave
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # ["foo", "bar"]
         | #/001/tests/000/data | true  | An array of strings is valid                                                     |
+        # ["foo", 42]
         | #/001/tests/001/data | false | An array containing non-strings is invalid                                       |
 
 Scenario Outline: A $ref to a $dynamicAnchor in the same schema resource behaves like a normal $ref to an $anchor
@@ -86,7 +90,9 @@ Scenario Outline: A $ref to a $dynamicAnchor in the same schema resource behaves
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # ["foo", "bar"]
         | #/002/tests/000/data | true  | An array of strings is valid                                                     |
+        # ["foo", 42]
         | #/002/tests/001/data | false | An array containing non-strings is invalid                                       |
 
 Scenario Outline: A $dynamicRef resolves to the first $dynamicAnchor still in scope that is encountered when the schema is evaluated
@@ -124,7 +130,9 @@ Scenario Outline: A $dynamicRef resolves to the first $dynamicAnchor still in sc
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # ["foo", "bar"]
         | #/003/tests/000/data | true  | An array of strings is valid                                                     |
+        # ["foo", 42]
         | #/003/tests/001/data | false | An array containing non-strings is invalid                                       |
 
 Scenario Outline: A $dynamicRef without anchor in fragment behaves identical to $ref
@@ -163,7 +171,9 @@ Scenario Outline: A $dynamicRef without anchor in fragment behaves identical to 
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # ["foo", "bar"]
         | #/004/tests/000/data | false | An array of strings is invalid                                                   |
+        # [24, 42]
         | #/004/tests/001/data | true  | An array of numbers is valid                                                     |
 
 Scenario Outline: A $dynamicRef with intermediate scopes that don't include a matching $dynamicAnchor does not affect dynamic scope resolution
@@ -205,7 +215,9 @@ Scenario Outline: A $dynamicRef with intermediate scopes that don't include a ma
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # ["foo", "bar"]
         | #/005/tests/000/data | true  | An array of strings is valid                                                     |
+        # ["foo", 42]
         | #/005/tests/001/data | false | An array containing non-strings is invalid                                       |
 
 Scenario Outline: An $anchor with the same name as a $dynamicAnchor is not used for dynamic scope resolution
@@ -243,6 +255,7 @@ Scenario Outline: An $anchor with the same name as a $dynamicAnchor is not used 
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # ["foo", 42]
         | #/006/tests/000/data | true  | Any array is valid                                                               |
 
 Scenario Outline: A $dynamicRef without a matching $dynamicAnchor in the same schema resource behaves like a normal $ref to $anchor
@@ -280,6 +293,7 @@ Scenario Outline: A $dynamicRef without a matching $dynamicAnchor in the same sc
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # ["foo", 42]
         | #/007/tests/000/data | true  | Any array is valid                                                               |
 
 Scenario Outline: A $dynamicRef with a non-matching $dynamicAnchor in the same schema resource behaves like a normal $ref to $anchor
@@ -318,6 +332,7 @@ Scenario Outline: A $dynamicRef with a non-matching $dynamicAnchor in the same s
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # ["foo", 42]
         | #/008/tests/000/data | true  | Any array is valid                                                               |
 
 Scenario Outline: A $dynamicRef that initially resolves to a schema with a matching $dynamicAnchor resolves to the first $dynamicAnchor in the dynamic scope
@@ -360,7 +375,9 @@ Scenario Outline: A $dynamicRef that initially resolves to a schema with a match
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # { "foo": "pass", "bar": { "baz": { "foo": "pass" } } }
         | #/009/tests/000/data | true  | The recursive part is valid against the root                                     |
+        # { "foo": "pass", "bar": { "baz": { "foo": "fail" } } }
         | #/009/tests/001/data | false | The recursive part is not valid against the root                                 |
 
 Scenario Outline: A $dynamicRef that initially resolves to a schema without a matching $dynamicAnchor behaves like a normal $ref to $anchor
@@ -403,6 +420,7 @@ Scenario Outline: A $dynamicRef that initially resolves to a schema without a ma
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # { "foo": "pass", "bar": { "baz": { "foo": "fail" } } }
         | #/010/tests/000/data | true  | The recursive part doesn't need to validate against the root                     |
 
 Scenario Outline: multiple dynamic paths to the $dynamicRef keyword
@@ -467,9 +485,13 @@ Scenario Outline: multiple dynamic paths to the $dynamicRef keyword
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # { "kindOfList": "numbers", "list": [1.1] }
         | #/011/tests/000/data | true  | number list with number values                                                   |
+        # { "kindOfList": "numbers", "list": ["foo"] }
         | #/011/tests/001/data | false | number list with string values                                                   |
+        # { "kindOfList": "strings", "list": [1.1] }
         | #/011/tests/002/data | false | string list with number values                                                   |
+        # { "kindOfList": "strings", "list": ["foo"] }
         | #/011/tests/003/data | true  | string list with string values                                                   |
 
 Scenario Outline: after leaving a dynamic scope, it is not used by a $dynamicRef
@@ -523,8 +545,11 @@ Scenario Outline: after leaving a dynamic scope, it is not used by a $dynamicRef
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # a string
         | #/012/tests/000/data | false | string matches /$defs/thingy, but the $dynamicRef does not stop here             |
+        # 42
         | #/012/tests/001/data | false | first_scope is not in dynamic scope for the $dynamicRef                          |
+        # 
         | #/012/tests/002/data | true  | /then/$defs/thingy is the final stop for the $dynamicRef                         |
 
 Scenario Outline: strict-tree schema, guards against misspelled properties
@@ -548,7 +573,9 @@ Scenario Outline: strict-tree schema, guards against misspelled properties
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # { "children": [{ "daat": 1 }] }
         | #/013/tests/000/data | false | instance with misspelled field                                                   |
+        # { "children": [{ "data": 1 }] }
         | #/013/tests/001/data | true  | instance with correct field                                                      |
 
 Scenario Outline: tests for implementation dynamic anchor and reference link
@@ -579,8 +606,11 @@ Scenario Outline: tests for implementation dynamic anchor and reference link
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # { "a": true }
         | #/014/tests/000/data | false | incorrect parent schema                                                          |
+        # { "elements": [ { "b": 1 } ] }
         | #/014/tests/001/data | false | incorrect extended schema                                                        |
+        # { "elements": [ { "a": 1 } ] }
         | #/014/tests/002/data | true  | correct extended schema                                                          |
 
 Scenario Outline: $ref and $dynamicAnchor are independent of order - $defs first
@@ -617,8 +647,11 @@ Scenario Outline: $ref and $dynamicAnchor are independent of order - $defs first
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # { "a": true }
         | #/015/tests/000/data | false | incorrect parent schema                                                          |
+        # { "elements": [ { "b": 1 } ] }
         | #/015/tests/001/data | false | incorrect extended schema                                                        |
+        # { "elements": [ { "a": 1 } ] }
         | #/015/tests/002/data | true  | correct extended schema                                                          |
 
 Scenario Outline: $ref and $dynamicAnchor are independent of order - $ref first
@@ -655,8 +688,11 @@ Scenario Outline: $ref and $dynamicAnchor are independent of order - $ref first
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # { "a": true }
         | #/016/tests/000/data | false | incorrect parent schema                                                          |
+        # { "elements": [ { "b": 1 } ] }
         | #/016/tests/001/data | false | incorrect extended schema                                                        |
+        # { "elements": [ { "a": 1 } ] }
         | #/016/tests/002/data | true  | correct extended schema                                                          |
 
 Scenario Outline: $ref to $dynamicRef finds detached $dynamicAnchor
@@ -675,5 +711,98 @@ Scenario Outline: $ref to $dynamicRef finds detached $dynamicAnchor
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # 1
         | #/017/tests/000/data | true  | number is valid                                                                  |
+        # a
         | #/017/tests/001/data | false | non-number is invalid                                                            |
+
+Scenario Outline: $dynamicRef points to a boolean schema
+/* Schema: 
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "$defs": {
+                "true": true,
+                "false": false
+            },
+            "properties": {
+                "true": {
+                    "$dynamicRef": "#/$defs/true"
+                },
+                "false": {
+                    "$dynamicRef": "#/$defs/false"
+                }
+            }
+        }
+*/
+    Given the input JSON file "dynamicRef.json"
+    And the schema at "#/18/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        # { "true": 1 }
+        | #/018/tests/000/data | true  | follow $dynamicRef to a true schema                                              |
+        # { "false": 1 }
+        | #/018/tests/001/data | false | follow $dynamicRef to a false schema                                             |
+
+Scenario Outline: $dynamicRef skips over intermediate resources - direct reference
+/* Schema: 
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "$id": "https://test.json-schema.org/dynamic-ref-skips-intermediate-resource/main",
+            "type": "object",
+            "properties": {
+                "bar-item": {
+                    "$ref": "item"
+                }
+            },
+            "$defs": {
+                "bar": {
+                    "$id": "bar",
+                    "type": "array",
+                    "items": {
+                        "$ref": "item"
+                    },
+                    "$defs": {
+                        "item": {
+                            "$id": "item",
+                            "type": "object",
+                            "properties": {
+                                "content": {
+                                    "$dynamicRef": "#content"
+                                }
+                            },
+                            "$defs": {
+                                "defaultContent": {
+                                    "$dynamicAnchor": "content",
+                                    "type": "integer"
+                                }
+                            }
+                        },
+                        "content": {
+                            "$dynamicAnchor": "content",
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+*/
+    Given the input JSON file "dynamicRef.json"
+    And the schema at "#/19/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        # { "bar-item": { "content": 42 } }
+        | #/019/tests/000/data | true  | integer property passes                                                          |
+        # { "bar-item": { "content": "value" } }
+        | #/019/tests/001/data | false | string property fails                                                            |

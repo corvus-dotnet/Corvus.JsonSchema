@@ -1025,6 +1025,17 @@ public partial class CodeGeneratorValidateRef
     }
 
     /// <summary>
+    /// Gets a value indicating whether this has a recursive reference.
+    /// </summary>
+    public bool HasRecursiveRef
+    {
+        get
+        {
+            return this.TypeDeclaration.Schema().RecursiveRef.IsNotUndefined() && !this.TypeDeclaration.Schema().IsNakedRecursiveReference();
+        }
+    }
+
+    /// <summary>
     /// Gets the dotnet type name for the non-naked reference.
     /// </summary>
     public string RefDotnetTypeName
@@ -1032,6 +1043,18 @@ public partial class CodeGeneratorValidateRef
         get
         {
             TypeDeclaration td = this.Builder.GetTypeDeclarationForProperty(this.TypeDeclaration, "$ref");
+            return td.FullyQualifiedDotnetTypeName ?? string.Empty;
+        }
+    }
+
+    /// <summary>
+    /// Gets the dotnet type name for the non-naked reference.
+    /// </summary>
+    public string RecursiveRefDotnetTypeName
+    {
+        get
+        {
+            TypeDeclaration td = this.Builder.GetTypeDeclarationForProperty(this.TypeDeclaration, "$recursiveRef");
             return td.FullyQualifiedDotnetTypeName ?? string.Empty;
         }
     }

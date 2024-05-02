@@ -22,11 +22,17 @@ Scenario Outline: contains keyword validation
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # [3, 4, 5]
         | #/000/tests/000/data | true  | array with item matching schema (5) is valid                                     |
+        # [3, 4, 6]
         | #/000/tests/001/data | true  | array with item matching schema (6) is valid                                     |
+        # [3, 4, 5, 6]
         | #/000/tests/002/data | true  | array with two items matching schema (5, 6) is valid                             |
+        # [2, 3, 4]
         | #/000/tests/003/data | false | array without items matching schema is invalid                                   |
+        # []
         | #/000/tests/004/data | false | empty array is invalid                                                           |
+        # {}
         | #/000/tests/005/data | true  | not array is valid                                                               |
 
 Scenario Outline: contains keyword with const keyword
@@ -46,8 +52,11 @@ Scenario Outline: contains keyword with const keyword
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # [3, 4, 5]
         | #/001/tests/000/data | true  | array with item 5 is valid                                                       |
+        # [3, 4, 5, 5]
         | #/001/tests/001/data | true  | array with two items 5 is valid                                                  |
+        # [1, 2, 3, 4]
         | #/001/tests/002/data | false | array without item 5 is invalid                                                  |
 
 Scenario Outline: contains keyword with boolean schema true
@@ -67,7 +76,9 @@ Scenario Outline: contains keyword with boolean schema true
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # ["foo"]
         | #/002/tests/000/data | true  | any non-empty array is valid                                                     |
+        # []
         | #/002/tests/001/data | false | empty array is invalid                                                           |
 
 Scenario Outline: contains keyword with boolean schema false
@@ -87,8 +98,11 @@ Scenario Outline: contains keyword with boolean schema false
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # ["foo"]
         | #/003/tests/000/data | false | any non-empty array is invalid                                                   |
+        # []
         | #/003/tests/001/data | false | empty array is invalid                                                           |
+        # contains does not apply to strings
         | #/003/tests/002/data | true  | non-arrays are valid                                                             |
 
 Scenario Outline: items + contains
@@ -109,9 +123,13 @@ Scenario Outline: items + contains
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # [ 2, 4, 8 ]
         | #/004/tests/000/data | false | matches items, does not match contains                                           |
+        # [ 3, 6, 9 ]
         | #/004/tests/001/data | false | does not match items, matches contains                                           |
+        # [ 6, 12 ]
         | #/004/tests/002/data | true  | matches both items and contains                                                  |
+        # [ 1, 5 ]
         | #/004/tests/003/data | false | matches neither items nor contains                                               |
 
 Scenario Outline: contains with false if subschema
@@ -134,7 +152,9 @@ Scenario Outline: contains with false if subschema
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # ["foo"]
         | #/005/tests/000/data | true  | any non-empty array is valid                                                     |
+        # []
         | #/005/tests/001/data | false | empty array is invalid                                                           |
 
 Scenario Outline: contains with null instance elements
@@ -156,4 +176,5 @@ Scenario Outline: contains with null instance elements
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # [ null ]
         | #/006/tests/000/data | true  | allows null items                                                                |

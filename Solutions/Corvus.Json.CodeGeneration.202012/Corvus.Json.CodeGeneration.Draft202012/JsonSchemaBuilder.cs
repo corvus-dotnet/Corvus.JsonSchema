@@ -69,6 +69,7 @@ public class JsonSchemaBuilder : JsonSchemaBuilderBase
         var codeGeneratorValidateObject = new CodeGeneratorValidateObject(this, typeForGeneration.TypeDeclaration);
         var codeGeneratorValidateOneOf = new CodeGeneratorValidateOneOf(this, typeForGeneration.TypeDeclaration);
         var codeGeneratorValidateRef = new CodeGeneratorValidateRef(this, typeForGeneration.TypeDeclaration);
+        var codeGeneratorValidateDynamicRef = new CodeGeneratorValidateDynamicRef(this, typeForGeneration.TypeDeclaration);
         var codeGeneratorValidate = new CodeGeneratorValidate(this, typeForGeneration.TypeDeclaration);
         var codeGeneratorValidateType = new CodeGeneratorValidateType(this, typeForGeneration.TypeDeclaration);
 
@@ -227,6 +228,11 @@ public class JsonSchemaBuilder : JsonSchemaBuilderBase
         if (codeGeneratorValidateRef.ShouldGenerate)
         {
             files.Add(new(codeGeneratorValidateRef.TransformText(), $"{fileName}.Validate.Ref.cs"));
+        }
+
+        if (codeGeneratorValidateDynamicRef.ShouldGenerate)
+        {
+            files.Add(new(codeGeneratorValidateDynamicRef.TransformText(), $"{fileName}.Validate.DynamicRef.cs"));
         }
 
         if (codeGeneratorValidateType.ShouldGenerate)

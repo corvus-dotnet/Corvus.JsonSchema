@@ -4,6 +4,7 @@
 
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace Corvus.JsonSchema.SpecGenerator;
 
@@ -13,7 +14,7 @@ namespace Corvus.JsonSchema.SpecGenerator;
 /// <remarks>
 /// https://github.com/json-schema-org/JSON-Schema-Test-Suite/tree/master/tests/draft2020-12.
 /// </remarks>
-internal static class SpecWriter
+internal static partial class SpecWriter
 {
     /// <summary>
     /// Write the feature files for the json specs.
@@ -36,13 +37,19 @@ internal static class SpecWriter
 
         var builder = new StringBuilder();
 
-        WriteFeatureHeading(testSet.TestSetName, Path.GetFileNameWithoutExtension(testSet.InputFile), builder);
+        WriteFeatureHeading(testSet.TestSetName, Path.GetFileNameWithoutExtension(testSet.OutputFile), builder);
         HashSet<string> writtenScenarios = [];
         int index = 0;
         foreach (JsonElement scenarioDefinition in testDocument.RootElement.EnumerateArray())
         {
             WriteScenario(testSet, index, scenarioDefinition, builder, writtenScenarios);
             ++index;
+        }
+
+        string? outputDirectory = Path.GetDirectoryName(testSet.OutputFile);
+        if (outputDirectory is string od)
+        {
+            Directory.CreateDirectory(od);
         }
 
         File.WriteAllText(testSet.OutputFile, builder.ToString());
@@ -117,6 +124,15 @@ internal static class SpecWriter
 
     private static void WriteExample(int scenarioIndex, int testIndex, JsonElement test, StringBuilder builder, bool omit)
     {
+        // Write the example data as a comment
+        string data = test.GetProperty("data").ToString();
+
+        // Replace all consecutive whitespace with a single space
+        data = WhitespaceReplacer().Replace(data, " ");
+        builder.Append("        # ");
+        builder.AppendLine(data);
+
+        // Write the example
         string inputDataReference = $"#/{scenarioIndex:D3}/tests/{testIndex:D3}/data";
 
         string valid;
@@ -131,7 +147,9 @@ internal static class SpecWriter
 
         string description = test.GetProperty("description").GetString() ?? throw new Exception("Expected a 'description' property with a string value.");
         description = description.PadRight(80);
-
         builder.Append("        ").Append(omit ? '#' : '|').Append(' ').Append(inputDataReference).Append(" | ").Append(valid).Append(" | ").Append(description).AppendLine(" |");
     }
+
+    [GeneratedRegex("\\s+")]
+    private static partial Regex WhitespaceReplacer();
 }

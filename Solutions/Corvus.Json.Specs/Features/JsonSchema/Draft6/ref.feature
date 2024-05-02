@@ -24,9 +24,13 @@ Scenario Outline: root pointer ref
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # {"foo": false}
         | #/000/tests/000/data | true  | match                                                                            |
+        # {"foo": {"foo": false}}
         | #/000/tests/001/data | true  | recursive match                                                                  |
+        # {"bar": false}
         | #/000/tests/002/data | false | mismatch                                                                         |
+        # {"foo": {"bar": false}}
         | #/000/tests/003/data | false | recursive mismatch                                                               |
 
 Scenario Outline: relative pointer ref to object
@@ -48,7 +52,9 @@ Scenario Outline: relative pointer ref to object
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # {"bar": 3}
         | #/001/tests/000/data | true  | match                                                                            |
+        # {"bar": true}
         | #/001/tests/001/data | false | mismatch                                                                         |
 
 Scenario Outline: relative pointer ref to array
@@ -70,7 +76,9 @@ Scenario Outline: relative pointer ref to array
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # [1, 2]
         | #/002/tests/000/data | true  | match array                                                                      |
+        # [1, "foo"]
         | #/002/tests/001/data | false | mismatch array                                                                   |
 
 Scenario Outline: escaped pointer ref
@@ -98,11 +106,17 @@ Scenario Outline: escaped pointer ref
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # {"slash": "aoeu"}
         | #/003/tests/000/data | false | slash invalid                                                                    |
+        # {"tilde": "aoeu"}
         | #/003/tests/001/data | false | tilde invalid                                                                    |
+        # {"percent": "aoeu"}
         | #/003/tests/002/data | false | percent invalid                                                                  |
+        # {"slash": 123}
         | #/003/tests/003/data | true  | slash valid                                                                      |
+        # {"tilde": 123}
         | #/003/tests/004/data | true  | tilde valid                                                                      |
+        # {"percent": 123}
         | #/003/tests/005/data | true  | percent valid                                                                    |
 
 Scenario Outline: nested refs
@@ -126,7 +140,9 @@ Scenario Outline: nested refs
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # 5
         | #/004/tests/000/data | true  | nested ref valid                                                                 |
+        # a
         | #/004/tests/001/data | false | nested ref invalid                                                               |
 
 Scenario Outline: ref overrides any sibling keywords
@@ -155,8 +171,11 @@ Scenario Outline: ref overrides any sibling keywords
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # { "foo": [] }
         | #/005/tests/000/data | true  | ref valid                                                                        |
+        # { "foo": [ 1, 2, 3] }
         | #/005/tests/001/data | true  | ref valid, maxItems ignored                                                      |
+        # { "foo": "string" }
         | #/005/tests/002/data | false | ref invalid                                                                      |
 
 Scenario Outline: $ref prevents a sibling $id from changing the base uri
@@ -193,7 +212,9 @@ Scenario Outline: $ref prevents a sibling $id from changing the base uri
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # a
         | #/006/tests/000/data | false | $ref resolves to /definitions/base_foo, data does not validate                   |
+        # 1
         | #/006/tests/001/data | true  | $ref resolves to /definitions/base_foo, data validates                           |
 
 Scenario Outline: remote ref, containing refs itself
@@ -210,7 +231,9 @@ Scenario Outline: remote ref, containing refs itself
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # {"minLength": 1}
         | #/007/tests/000/data | true  | remote ref valid                                                                 |
+        # {"minLength": -1}
         | #/007/tests/001/data | false | remote ref invalid                                                               |
 
 Scenario Outline: property named $ref that is not a reference
@@ -231,7 +254,9 @@ Scenario Outline: property named $ref that is not a reference
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # {"$ref": "a"}
         | #/008/tests/000/data | true  | property named $ref valid                                                        |
+        # {"$ref": 2}
         | #/008/tests/001/data | false | property named $ref invalid                                                      |
 
 Scenario Outline: property named $ref, containing an actual $ref
@@ -257,7 +282,9 @@ Scenario Outline: property named $ref, containing an actual $ref
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # {"$ref": "a"}
         | #/009/tests/000/data | true  | property named $ref valid                                                        |
+        # {"$ref": 2}
         | #/009/tests/001/data | false | property named $ref invalid                                                      |
 
 Scenario Outline: $ref to boolean schema true
@@ -279,6 +306,7 @@ Scenario Outline: $ref to boolean schema true
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # foo
         | #/010/tests/000/data | true  | any value is valid                                                               |
 
 Scenario Outline: $ref to boolean schema false
@@ -300,6 +328,7 @@ Scenario Outline: $ref to boolean schema false
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # foo
         | #/011/tests/000/data | false | any value is invalid                                                             |
 
 Scenario Outline: Recursive references between schemas
@@ -340,7 +369,9 @@ Scenario Outline: Recursive references between schemas
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # { "meta": "root", "nodes": [ { "value": 1, "subtree": { "meta": "child", "nodes": [ {"value": 1.1}, {"value": 1.2} ] } }, { "value": 2, "subtree": { "meta": "child", "nodes": [ {"value": 2.1}, {"value": 2.2} ] } } ] }
         | #/012/tests/000/data | true  | valid tree                                                                       |
+        # { "meta": "root", "nodes": [ { "value": 1, "subtree": { "meta": "child", "nodes": [ {"value": "string is invalid"}, {"value": 1.2} ] } }, { "value": 2, "subtree": { "meta": "child", "nodes": [ {"value": 2.1}, {"value": 2.2} ] } } ] }
         | #/012/tests/001/data | false | invalid tree                                                                     |
 
 Scenario Outline: refs with quote
@@ -364,7 +395,9 @@ Scenario Outline: refs with quote
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # { "foo\"bar": 1 }
         | #/013/tests/000/data | true  | object with numbers is valid                                                     |
+        # { "foo\"bar": "1" }
         | #/013/tests/001/data | false | object with strings is invalid                                                   |
 
 Scenario Outline: Location-independent identifier
@@ -391,7 +424,9 @@ Scenario Outline: Location-independent identifier
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # 1
         | #/014/tests/000/data | true  | match                                                                            |
+        # a
         | #/014/tests/001/data | false | mismatch                                                                         |
 
 Scenario Outline: Reference an anchor with a non-relative URI
@@ -419,7 +454,9 @@ Scenario Outline: Reference an anchor with a non-relative URI
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # 1
         | #/015/tests/000/data | true  | match                                                                            |
+        # a
         | #/015/tests/001/data | false | mismatch                                                                         |
 
 Scenario Outline: Location-independent identifier with base URI change in subschema
@@ -452,7 +489,9 @@ Scenario Outline: Location-independent identifier with base URI change in subsch
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # 1
         | #/016/tests/000/data | true  | match                                                                            |
+        # a
         | #/016/tests/001/data | false | mismatch                                                                         |
 
 Scenario Outline: naive replacement of $ref with its destination is not correct
@@ -476,8 +515,11 @@ Scenario Outline: naive replacement of $ref with its destination is not correct
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # this is a string
         | #/017/tests/000/data | false | do not evaluate the $ref inside the enum, matching any string                    |
+        # { "type": "string" }
         | #/017/tests/001/data | false | do not evaluate the $ref inside the enum, definition exact match                 |
+        # { "$ref": "#/definitions/a_string" }
         | #/017/tests/002/data | true  | match the enum exactly                                                           |
 
 Scenario Outline: refs with relative uris and defs
@@ -510,8 +552,11 @@ Scenario Outline: refs with relative uris and defs
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # { "foo": { "bar": 1 }, "bar": "a" }
         | #/018/tests/000/data | false | invalid on inner field                                                           |
+        # { "foo": { "bar": "a" }, "bar": 1 }
         | #/018/tests/001/data | false | invalid on outer field                                                           |
+        # { "foo": { "bar": "a" }, "bar": "a" }
         | #/018/tests/002/data | true  | valid on both fields                                                             |
 
 Scenario Outline: relative refs with absolute uris and defs
@@ -544,8 +589,11 @@ Scenario Outline: relative refs with absolute uris and defs
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # { "foo": { "bar": 1 }, "bar": "a" }
         | #/019/tests/000/data | false | invalid on inner field                                                           |
+        # { "foo": { "bar": "a" }, "bar": 1 }
         | #/019/tests/001/data | false | invalid on outer field                                                           |
+        # { "foo": { "bar": "a" }, "bar": "a" }
         | #/019/tests/002/data | true  | valid on both fields                                                             |
 
 Scenario Outline: simple URN base URI with $ref via the URN
@@ -569,7 +617,9 @@ Scenario Outline: simple URN base URI with $ref via the URN
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # {"foo": 37}
         | #/020/tests/000/data | true  | valid under the URN IDed schema                                                  |
+        # {"foo": 12}
         | #/020/tests/001/data | false | invalid under the URN IDed schema                                                |
 
 Scenario Outline: simple URN base URI with JSON pointer
@@ -595,7 +645,9 @@ Scenario Outline: simple URN base URI with JSON pointer
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # {"foo": "bar"}
         | #/021/tests/000/data | true  | a string is valid                                                                |
+        # {"foo": 12}
         | #/021/tests/001/data | false | a non-string is invalid                                                          |
 
 Scenario Outline: URN base URI with NSS
@@ -621,7 +673,9 @@ Scenario Outline: URN base URI with NSS
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # {"foo": "bar"}
         | #/022/tests/000/data | true  | a string is valid                                                                |
+        # {"foo": 12}
         | #/022/tests/001/data | false | a non-string is invalid                                                          |
 
 Scenario Outline: URN base URI with r-component
@@ -647,7 +701,9 @@ Scenario Outline: URN base URI with r-component
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # {"foo": "bar"}
         | #/023/tests/000/data | true  | a string is valid                                                                |
+        # {"foo": 12}
         | #/023/tests/001/data | false | a non-string is invalid                                                          |
 
 Scenario Outline: URN base URI with q-component
@@ -673,7 +729,9 @@ Scenario Outline: URN base URI with q-component
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # {"foo": "bar"}
         | #/024/tests/000/data | true  | a string is valid                                                                |
+        # {"foo": 12}
         | #/024/tests/001/data | false | a non-string is invalid                                                          |
 
 Scenario Outline: URN base URI with URN and JSON pointer ref
@@ -698,7 +756,9 @@ Scenario Outline: URN base URI with URN and JSON pointer ref
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # {"foo": "bar"}
         | #/025/tests/000/data | true  | a string is valid                                                                |
+        # {"foo": 12}
         | #/025/tests/001/data | false | a non-string is invalid                                                          |
 
 Scenario Outline: URN base URI with URN and anchor ref
@@ -726,7 +786,9 @@ Scenario Outline: URN base URI with URN and anchor ref
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # {"foo": "bar"}
         | #/026/tests/000/data | true  | a string is valid                                                                |
+        # {"foo": 12}
         | #/026/tests/001/data | false | a non-string is invalid                                                          |
 
 Scenario Outline: ref with absolute-path-reference
@@ -758,7 +820,9 @@ Scenario Outline: ref with absolute-path-reference
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # foo
         | #/027/tests/000/data | true  | a string is valid                                                                |
+        # 12
         | #/027/tests/001/data | false | an integer is invalid                                                            |
 
 Scenario Outline: $id with file URI still resolves pointers - *nix
@@ -787,7 +851,9 @@ Scenario Outline: $id with file URI still resolves pointers - *nix
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # 1
         | #/028/tests/000/data | true  | number is valid                                                                  |
+        # a
         | #/028/tests/001/data | false | non-number is invalid                                                            |
 
 Scenario Outline: $id with file URI still resolves pointers - windows
@@ -816,7 +882,9 @@ Scenario Outline: $id with file URI still resolves pointers - windows
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # 1
         | #/029/tests/000/data | true  | number is valid                                                                  |
+        # a
         | #/029/tests/001/data | false | non-number is invalid                                                            |
 
 Scenario Outline: empty tokens in $ref json-pointer
@@ -846,5 +914,7 @@ Scenario Outline: empty tokens in $ref json-pointer
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # 1
         | #/030/tests/000/data | true  | number is valid                                                                  |
+        # a
         | #/030/tests/001/data | false | non-number is invalid                                                            |

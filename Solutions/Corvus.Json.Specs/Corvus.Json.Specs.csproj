@@ -125,5 +125,9 @@
 	  </SpecFlowFeatureFiles>
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Folder Include="Features\JsonSchema\" />
+	</ItemGroup>
+
 
 </Project>

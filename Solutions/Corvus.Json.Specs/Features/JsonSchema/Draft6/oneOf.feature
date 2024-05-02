@@ -28,9 +28,13 @@ Scenario Outline: oneOf
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # 1
         | #/000/tests/000/data | true  | first oneOf valid                                                                |
+        # 2.5
         | #/000/tests/001/data | true  | second oneOf valid                                                               |
+        # 3
         | #/000/tests/002/data | false | both oneOf valid                                                                 |
+        # 1.5
         | #/000/tests/003/data | false | neither oneOf valid                                                              |
 
 Scenario Outline: oneOf with base schema
@@ -57,8 +61,11 @@ Scenario Outline: oneOf with base schema
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # 3
         | #/001/tests/000/data | false | mismatch base schema                                                             |
+        # foobar
         | #/001/tests/001/data | true  | one oneOf valid                                                                  |
+        # foo
         | #/001/tests/002/data | false | both oneOf valid                                                                 |
 
 Scenario Outline: oneOf with boolean schemas, all true
@@ -75,6 +82,7 @@ Scenario Outline: oneOf with boolean schemas, all true
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # foo
         | #/002/tests/000/data | false | any value is invalid                                                             |
 
 Scenario Outline: oneOf with boolean schemas, one true
@@ -91,6 +99,7 @@ Scenario Outline: oneOf with boolean schemas, one true
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # foo
         | #/003/tests/000/data | true  | any value is valid                                                               |
 
 Scenario Outline: oneOf with boolean schemas, more than one true
@@ -107,6 +116,7 @@ Scenario Outline: oneOf with boolean schemas, more than one true
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # foo
         | #/004/tests/000/data | false | any value is invalid                                                             |
 
 Scenario Outline: oneOf with boolean schemas, all false
@@ -123,6 +133,7 @@ Scenario Outline: oneOf with boolean schemas, all false
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # foo
         | #/005/tests/000/data | false | any value is invalid                                                             |
 
 Scenario Outline: oneOf complex types
@@ -154,9 +165,13 @@ Scenario Outline: oneOf complex types
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # {"bar": 2}
         | #/006/tests/000/data | true  | first oneOf valid (complex)                                                      |
+        # {"foo": "baz"}
         | #/006/tests/001/data | true  | second oneOf valid (complex)                                                     |
+        # {"foo": "baz", "bar": 2}
         | #/006/tests/002/data | false | both oneOf valid (complex)                                                       |
+        # {"foo": 2, "bar": "quux"}
         | #/006/tests/003/data | false | neither oneOf valid (complex)                                                    |
 
 Scenario Outline: oneOf with empty schema
@@ -178,7 +193,9 @@ Scenario Outline: oneOf with empty schema
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # foo
         | #/007/tests/000/data | true  | one valid - valid                                                                |
+        # 123
         | #/007/tests/001/data | false | both valid - invalid                                                             |
 
 Scenario Outline: oneOf with required
@@ -201,9 +218,13 @@ Scenario Outline: oneOf with required
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # {"bar": 2}
         | #/008/tests/000/data | false | both invalid - invalid                                                           |
+        # {"foo": 1, "bar": 2}
         | #/008/tests/001/data | true  | first valid - valid                                                              |
+        # {"foo": 1, "baz": 3}
         | #/008/tests/002/data | true  | second valid - valid                                                             |
+        # {"foo": 1, "bar": 2, "baz" : 3}
         | #/008/tests/003/data | false | both valid - invalid                                                             |
 
 Scenario Outline: oneOf with missing optional property
@@ -236,9 +257,13 @@ Scenario Outline: oneOf with missing optional property
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # {"bar": 8}
         | #/009/tests/000/data | true  | first oneOf valid                                                                |
+        # {"foo": "foo"}
         | #/009/tests/001/data | true  | second oneOf valid                                                               |
+        # {"foo": "foo", "bar": 8}
         | #/009/tests/002/data | false | both oneOf valid                                                                 |
+        # {"baz": "quux"}
         | #/009/tests/003/data | false | neither oneOf valid                                                              |
 
 Scenario Outline: nested oneOf, to check validation semantics
@@ -265,5 +290,7 @@ Scenario Outline: nested oneOf, to check validation semantics
 
     Examples:
         | inputDataReference   | valid | description                                                                      |
+        # 
         | #/010/tests/000/data | true  | null is valid                                                                    |
+        # 123
         | #/010/tests/001/data | false | anything non-null is invalid                                                     |

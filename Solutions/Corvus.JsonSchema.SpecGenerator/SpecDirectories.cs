@@ -144,7 +144,7 @@ internal struct SpecDirectories
                         currentTestSet,
                         inputFile,
                         inputRelativePath,
-                        Path.Combine(outputDirectory, Path.ChangeExtension(Path.GetFileName(inputFile), ".feature")),
+                        Path.Combine(outputDirectory, Path.ChangeExtension(Path.GetFileName(inputRelativePath.Replace("/", "-")), ".feature")),
                         testToIgnoreIndicesAsSetByScenarioName);
                 }
             }
