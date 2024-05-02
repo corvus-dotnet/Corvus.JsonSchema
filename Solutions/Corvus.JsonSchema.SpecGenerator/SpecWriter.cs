@@ -37,13 +37,19 @@ internal static partial class SpecWriter
 
         var builder = new StringBuilder();
 
-        WriteFeatureHeading(testSet.TestSetName, Path.GetFileNameWithoutExtension(testSet.InputFile), builder);
+        WriteFeatureHeading(testSet.TestSetName, Path.GetFileNameWithoutExtension(testSet.OutputFile), builder);
         HashSet<string> writtenScenarios = [];
         int index = 0;
         foreach (JsonElement scenarioDefinition in testDocument.RootElement.EnumerateArray())
         {
             WriteScenario(testSet, index, scenarioDefinition, builder, writtenScenarios);
             ++index;
+        }
+
+        string? outputDirectory = Path.GetDirectoryName(testSet.OutputFile);
+        if (outputDirectory is string od)
+        {
+            Directory.CreateDirectory(od);
         }
 
         File.WriteAllText(testSet.OutputFile, builder.ToString());
