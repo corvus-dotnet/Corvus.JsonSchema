@@ -16,7 +16,7 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft6 {
     public partial class CodeGeneratorArrayRemove : CodeGeneratorArrayRemoveBase {
         
         
-        #line 73 "CodeGenerator.Array.Remove.tt"
+        #line 87 "CodeGenerator.Array.Remove.tt"
 
     public bool ShouldGenerate
     {
@@ -108,7 +108,7 @@ namespace ");
             #line hidden
             
             #line 32 "CodeGenerator.Array.Remove.tt"
-  if (IsTuple)
+  if (IsTuple || CanEnumerateAsSpecificType)
     { 
             
             #line default
@@ -177,59 +177,26 @@ namespace ");
             #line hidden
             
             #line 40 "CodeGenerator.Array.Remove.tt"
-            this.Write("    {\r\n        return new(this.GetImmutableListWithout(item1));\r\n    }\r\n\r\n    ///" +
-                    " <inheritdoc/>\r\n    [MethodImpl(MethodImplOptions.AggressiveInlining)]\r\n");
+            this.Write("    {\r\n        return new(this.GetImmutableListWithout(item1));\r\n    }\r\n\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 44 "CodeGenerator.Array.Remove.tt"
+  if (CanEnumerateAsSpecificType)
+    { 
             
             #line default
             #line hidden
             
             #line 46 "CodeGenerator.Array.Remove.tt"
-  if (IsTuple)
-    { 
-            
-            #line default
-            #line hidden
-            
-            #line 48 "CodeGenerator.Array.Remove.tt"
-            this.Write("    ");
-            
-            #line default
-            #line hidden
-            
-            #line 48 "CodeGenerator.Array.Remove.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
-            
-            #line default
-            #line hidden
-            
-            #line 48 "CodeGenerator.Array.Remove.tt"
-            this.Write(" IJsonArray<");
-            
-            #line default
-            #line hidden
-            
-            #line 48 "CodeGenerator.Array.Remove.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
-            
-            #line default
-            #line hidden
-            
-            #line 48 "CodeGenerator.Array.Remove.tt"
-            this.Write(">.RemoveAt(int index)\r\n");
-            
-            #line default
-            #line hidden
-            
-            #line 49 "CodeGenerator.Array.Remove.tt"
-  }
-    else
-    { 
-            
-            #line default
-            #line hidden
-            
-            #line 52 "CodeGenerator.Array.Remove.tt"
-            this.Write("    public ");
+            this.Write(@"    /// <summary>
+    /// Remove the specified item from the array.
+    /// </summary>
+    /// <param name=""item"">The item to remove.</param>
+    /// <returns>An instance of the array with the item removed.</returns>
+    /// <exception cref=""InvalidOperationException"">The value was not an array.</exception>
+    public ");
             
             #line default
             #line hidden
@@ -241,20 +208,32 @@ namespace ");
             #line hidden
             
             #line 52 "CodeGenerator.Array.Remove.tt"
-            this.Write(" RemoveAt(int index)\r\n");
+            this.Write(" Remove(in ");
             
             #line default
             #line hidden
             
-            #line 53 "CodeGenerator.Array.Remove.tt"
+            #line 52 "CodeGenerator.Array.Remove.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 52 "CodeGenerator.Array.Remove.tt"
+            this.Write(" item)\r\n    {\r\n        return new(this.GetImmutableListWithout(item.AsAny));\r\n   " +
+                    " }\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 56 "CodeGenerator.Array.Remove.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 54 "CodeGenerator.Array.Remove.tt"
-            this.Write("    {\r\n        return new(this.GetImmutableListWithoutRange(index, 1));\r\n    }\r\n\r" +
-                    "\n    /// <inheritdoc/>\r\n    [MethodImpl(MethodImplOptions.AggressiveInlining)]\r\n" +
+            #line 57 "CodeGenerator.Array.Remove.tt"
+            this.Write("\r\n    /// <inheritdoc/>\r\n    [MethodImpl(MethodImplOptions.AggressiveInlining)]\r\n" +
                     "");
             
             #line default
@@ -292,7 +271,7 @@ namespace ");
             #line hidden
             
             #line 62 "CodeGenerator.Array.Remove.tt"
-            this.Write(">.RemoveRange(int index, int count)\r\n");
+            this.Write(">.RemoveAt(int index)\r\n");
             
             #line default
             #line hidden
@@ -318,7 +297,7 @@ namespace ");
             #line hidden
             
             #line 66 "CodeGenerator.Array.Remove.tt"
-            this.Write(" RemoveRange(int index, int count)\r\n");
+            this.Write(" RemoveAt(int index)\r\n");
             
             #line default
             #line hidden
@@ -330,13 +309,90 @@ namespace ");
             #line hidden
             
             #line 68 "CodeGenerator.Array.Remove.tt"
+            this.Write("    {\r\n        return new(this.GetImmutableListWithoutRange(index, 1));\r\n    }\r\n\r" +
+                    "\n    /// <inheritdoc/>\r\n    [MethodImpl(MethodImplOptions.AggressiveInlining)]\r\n" +
+                    "");
+            
+            #line default
+            #line hidden
+            
+            #line 74 "CodeGenerator.Array.Remove.tt"
+  if (IsTuple)
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 76 "CodeGenerator.Array.Remove.tt"
+            this.Write("    ");
+            
+            #line default
+            #line hidden
+            
+            #line 76 "CodeGenerator.Array.Remove.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 76 "CodeGenerator.Array.Remove.tt"
+            this.Write(" IJsonArray<");
+            
+            #line default
+            #line hidden
+            
+            #line 76 "CodeGenerator.Array.Remove.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 76 "CodeGenerator.Array.Remove.tt"
+            this.Write(">.RemoveRange(int index, int count)\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 77 "CodeGenerator.Array.Remove.tt"
+  }
+    else
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 80 "CodeGenerator.Array.Remove.tt"
+            this.Write("    public ");
+            
+            #line default
+            #line hidden
+            
+            #line 80 "CodeGenerator.Array.Remove.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 80 "CodeGenerator.Array.Remove.tt"
+            this.Write(" RemoveRange(int index, int count)\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 81 "CodeGenerator.Array.Remove.tt"
+  } 
+            
+            #line default
+            #line hidden
+            
+            #line 82 "CodeGenerator.Array.Remove.tt"
             this.Write("    {\r\n        return new(this.GetImmutableListWithoutRange(index, count));\r\n    " +
                     "}\r\n}\r\n");
             
             #line default
             #line hidden
             
-            #line 72 "CodeGenerator.Array.Remove.tt"
+            #line 86 "CodeGenerator.Array.Remove.tt"
  EndNesting(); 
             
             #line default

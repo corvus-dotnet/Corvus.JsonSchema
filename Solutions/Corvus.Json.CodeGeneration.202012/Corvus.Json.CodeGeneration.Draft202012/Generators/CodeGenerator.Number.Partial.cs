@@ -1462,6 +1462,11 @@ public partial class CodeGeneratorNumber
                     return $"{BuiltInTypes.NotAnyTypeDeclaration.Ns}.{BuiltInTypes.NotAnyTypeDeclaration.Type}";
                 }
             }
+            else if (this.TypeDeclaration.Schema().UnevaluatedItems.IsNotUndefined())
+            {
+                TypeDeclaration itemsType = this.Builder.GetTypeDeclarationForProperty(this.TypeDeclaration, "unevaluatedItems");
+                return itemsType.FullyQualifiedDotnetTypeName ?? string.Empty;
+            }
 
             return $"{BuiltInTypes.AnyTypeDeclaration.Ns}.{BuiltInTypes.AnyTypeDeclaration.Type}";
         }
