@@ -16,7 +16,7 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft7 {
     public partial class CodeGeneratorString : CodeGeneratorStringBase {
         
         
-        #line 439 "CodeGenerator.String.tt"
+        #line 497 "CodeGenerator.String.tt"
 
     public bool ShouldGenerate
     {
@@ -106,63 +106,76 @@ namespace ");
             #line hidden
             
             #line 33 "CodeGenerator.String.tt"
-            this.Write(" : IJsonString<");
+            this.Write("\r\n#if NET8_0_OR_GREATER\r\n    : IJsonString<");
             
             #line default
             #line hidden
             
-            #line 33 "CodeGenerator.String.tt"
+            #line 35 "CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 33 "CodeGenerator.String.tt"
-            this.Write(">\r\n{\r\n    /// <summary>\r\n    /// Initializes a new instance of the <see cref=\"");
+            #line 35 "CodeGenerator.String.tt"
+            this.Write(">, ISpanFormattable\r\n#else\r\n    : IJsonString<");
             
             #line default
             #line hidden
             
-            #line 36 "CodeGenerator.String.tt"
+            #line 37 "CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 36 "CodeGenerator.String.tt"
+            #line 37 "CodeGenerator.String.tt"
+            this.Write(">\r\n#endif\r\n{\r\n    /// <summary>\r\n    /// Initializes a new instance of the <see c" +
+                    "ref=\"");
+            
+            #line default
+            #line hidden
+            
+            #line 41 "CodeGenerator.String.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 41 "CodeGenerator.String.tt"
             this.Write("\"/> struct.\r\n    /// </summary>\r\n    /// <param name=\"value\">The value from which" +
                     " to construct the instance.</param>\r\n    public ");
             
             #line default
             #line hidden
             
-            #line 39 "CodeGenerator.String.tt"
+            #line 44 "CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 39 "CodeGenerator.String.tt"
+            #line 44 "CodeGenerator.String.tt"
             this.Write("(string value)\r\n    {\r\n        this.jsonElementBacking = default;\r\n        this.b" +
                     "acking = Backing.String;\r\n\r\n        this.stringBacking = value;\r\n");
             
             #line default
             #line hidden
             
-            #line 45 "CodeGenerator.String.tt"
+            #line 50 "CodeGenerator.String.tt"
   if (IsImplicitBoolean && !(IsImplicitNumber || IsNotImplicitType))
     { 
             
             #line default
             #line hidden
             
-            #line 47 "CodeGenerator.String.tt"
+            #line 52 "CodeGenerator.String.tt"
             this.Write("        this.boolBacking = default;\r\n");
             
             #line default
             #line hidden
             
-            #line 48 "CodeGenerator.String.tt"
+            #line 53 "CodeGenerator.String.tt"
   }
     if(IsImplicitNumber || IsNotImplicitType)
     { 
@@ -170,13 +183,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 51 "CodeGenerator.String.tt"
+            #line 56 "CodeGenerator.String.tt"
             this.Write("        this.numberBacking = default;\r\n");
             
             #line default
             #line hidden
             
-            #line 52 "CodeGenerator.String.tt"
+            #line 57 "CodeGenerator.String.tt"
   }
     if(IsImplicitArray || IsNotImplicitType)
     { 
@@ -184,13 +197,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 55 "CodeGenerator.String.tt"
+            #line 60 "CodeGenerator.String.tt"
             this.Write("        this.arrayBacking = ImmutableList<JsonAny>.Empty;\r\n");
             
             #line default
             #line hidden
             
-            #line 56 "CodeGenerator.String.tt"
+            #line 61 "CodeGenerator.String.tt"
   }
     if(IsImplicitObject || IsNotImplicitType)
     { 
@@ -198,19 +211,19 @@ namespace ");
             #line default
             #line hidden
             
-            #line 59 "CodeGenerator.String.tt"
+            #line 64 "CodeGenerator.String.tt"
             this.Write("        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;\r\n");
             
             #line default
             #line hidden
             
-            #line 60 "CodeGenerator.String.tt"
+            #line 65 "CodeGenerator.String.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 61 "CodeGenerator.String.tt"
+            #line 66 "CodeGenerator.String.tt"
             this.Write("    }\r\n\r\n    /// <summary>\r\n    /// Conversion from string.\r\n    /// </summary>\r\n" +
                     "    /// <param name=\"value\">The value from which to convert.</param>\r\n    public" +
                     " static implicit operator ");
@@ -218,13 +231,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 67 "CodeGenerator.String.tt"
+            #line 72 "CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 67 "CodeGenerator.String.tt"
+            #line 72 "CodeGenerator.String.tt"
             this.Write("(string value)\r\n    {\r\n        return new(value);\r\n    }\r\n\r\n    /// <summary>\r\n  " +
                     "  /// Conversion from JsonString.\r\n    /// </summary>\r\n    /// <param name=\"valu" +
                     "e\">The value from which to convert.</param>\r\n    public static implicit operator" +
@@ -233,13 +246,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 76 "CodeGenerator.String.tt"
+            #line 81 "CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 76 "CodeGenerator.String.tt"
+            #line 81 "CodeGenerator.String.tt"
             this.Write(@"(JsonString value)
     {
         if (value.HasDotnetBacking && value.ValueKind == JsonValueKind.String)
@@ -260,13 +273,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 91 "CodeGenerator.String.tt"
+            #line 96 "CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 91 "CodeGenerator.String.tt"
+            #line 96 "CodeGenerator.String.tt"
             this.Write(@" value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
@@ -293,13 +306,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 112 "CodeGenerator.String.tt"
+            #line 117 "CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 112 "CodeGenerator.String.tt"
+            #line 117 "CodeGenerator.String.tt"
             this.Write(@".
     /// </summary>
     /// <typeparam name=""T1"">The type of the first value.</typeparam>
@@ -313,13 +326,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 120 "CodeGenerator.String.tt"
+            #line 125 "CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 120 "CodeGenerator.String.tt"
+            #line 125 "CodeGenerator.String.tt"
             this.Write(@" Concatenate<T1, T2>(Span<byte> buffer, in T1 firstValue, in T2 secondValue)
         where T1 : struct, IJsonValue<T1>
         where T2 : struct, IJsonValue<T2>
@@ -334,13 +347,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 129 "CodeGenerator.String.tt"
+            #line 134 "CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 129 "CodeGenerator.String.tt"
+            #line 134 "CodeGenerator.String.tt"
             this.Write(@".
     /// </summary>
     /// <typeparam name=""T1"">The type of the first value.</typeparam>
@@ -356,13 +369,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 139 "CodeGenerator.String.tt"
+            #line 144 "CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 139 "CodeGenerator.String.tt"
+            #line 144 "CodeGenerator.String.tt"
             this.Write(@" Concatenate<T1, T2, T3>(Span<byte> buffer, in T1 firstValue, in T2 secondValue, in T3 thirdValue)
         where T1 : struct, IJsonValue<T1>
         where T2 : struct, IJsonValue<T2>
@@ -378,13 +391,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 149 "CodeGenerator.String.tt"
+            #line 154 "CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 149 "CodeGenerator.String.tt"
+            #line 154 "CodeGenerator.String.tt"
             this.Write(@".
     /// </summary>
     /// <typeparam name=""T1"">The type of the first value.</typeparam>
@@ -402,13 +415,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 161 "CodeGenerator.String.tt"
+            #line 166 "CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 161 "CodeGenerator.String.tt"
+            #line 166 "CodeGenerator.String.tt"
             this.Write(@" Concatenate<T1, T2, T3, T4>(Span<byte> buffer, in T1 firstValue, in T2 secondValue, in T3 thirdValue, in T4 fourthValue)
         where T1 : struct, IJsonValue<T1>
         where T2 : struct, IJsonValue<T2>
@@ -425,13 +438,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 172 "CodeGenerator.String.tt"
+            #line 177 "CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 172 "CodeGenerator.String.tt"
+            #line 177 "CodeGenerator.String.tt"
             this.Write(@".
     /// </summary>
     /// <typeparam name=""T1"">The type of the first value.</typeparam>
@@ -451,13 +464,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 186 "CodeGenerator.String.tt"
+            #line 191 "CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 186 "CodeGenerator.String.tt"
+            #line 191 "CodeGenerator.String.tt"
             this.Write(@" Concatenate<T1, T2, T3, T4, T5>(Span<byte> buffer, in T1 firstValue, in T2 secondValue, in T3 thirdValue, in T4 fourthValue, in T5 fifthValue)
         where T1 : struct, IJsonValue<T1>
         where T2 : struct, IJsonValue<T2>
@@ -475,13 +488,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 198 "CodeGenerator.String.tt"
+            #line 203 "CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 198 "CodeGenerator.String.tt"
+            #line 203 "CodeGenerator.String.tt"
             this.Write(@".
     /// </summary>
     /// <typeparam name=""T1"">The type of the first value.</typeparam>
@@ -503,13 +516,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 214 "CodeGenerator.String.tt"
+            #line 219 "CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 214 "CodeGenerator.String.tt"
+            #line 219 "CodeGenerator.String.tt"
             this.Write(@" Concatenate<T1, T2, T3, T4, T5, T6>(Span<byte> buffer, in T1 firstValue, in T2 secondValue, in T3 thirdValue, in T4 fourthValue, in T5 fifthValue, in T6 sixthValue)
         where T1 : struct, IJsonValue<T1>
         where T2 : struct, IJsonValue<T2>
@@ -528,13 +541,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 227 "CodeGenerator.String.tt"
+            #line 232 "CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 227 "CodeGenerator.String.tt"
+            #line 232 "CodeGenerator.String.tt"
             this.Write(@".
     /// </summary>
     /// <typeparam name=""T1"">The type of the first value.</typeparam>
@@ -558,13 +571,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 245 "CodeGenerator.String.tt"
+            #line 250 "CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 245 "CodeGenerator.String.tt"
+            #line 250 "CodeGenerator.String.tt"
             this.Write(@" Concatenate<T1, T2, T3, T4, T5, T6, T7>(Span<byte> buffer, in T1 firstValue, in T2 secondValue, in T3 thirdValue, in T4 fourthValue, in T5 fifthValue, in T6 sixthValue, in T7 seventhValue)
         where T1 : struct, IJsonValue<T1>
         where T2 : struct, IJsonValue<T2>
@@ -584,13 +597,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 259 "CodeGenerator.String.tt"
+            #line 264 "CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 259 "CodeGenerator.String.tt"
+            #line 264 "CodeGenerator.String.tt"
             this.Write(@".
     /// </summary>
     /// <typeparam name=""T1"">The type of the first value.</typeparam>
@@ -616,13 +629,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 279 "CodeGenerator.String.tt"
+            #line 284 "CodeGenerator.String.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 279 "CodeGenerator.String.tt"
+            #line 284 "CodeGenerator.String.tt"
             this.Write(" Concatenate<T1, T2, T3, T4, T5, T6, T7, T8>(Span<byte> buffer, in T1 firstValue," +
                     " in T2 secondValue, in T3 thirdValue, in T4 fourthValue, in T5 fifthValue, in T6" +
                     " sixthValue, in T7 seventhValue, in T8 eighthValue)\r\n        where T1 : struct, " +
@@ -688,12 +701,34 @@ namespace ");
                     "    }\r\n\r\n        if ((this.backing & Backing.String) != 0)\r\n        {\r\n#if NET8_" +
                     "0_OR_GREATER\r\n            return chars.SequenceEqual(this.stringBacking);\r\n#else" +
                     "\r\n            return chars.SequenceEqual(this.stringBacking.AsSpan());\r\n#endif\r\n" +
-                    "        }\r\n\r\n        return false;\r\n    }\r\n}\r\n");
+                    "        }\r\n\r\n        return false;\r\n    }\r\n\r\n#if NET8_0_OR_GREATER\r\n    /// <inh" +
+                    "eritdoc/>\r\n    public bool TryFormat(Span<char> destination, out int charsWritte" +
+                    "n, ReadOnlySpan<char> format, IFormatProvider? provider)\r\n    {\r\n        if ((th" +
+                    "is.backing & Backing.String) != 0)\r\n        {\r\n            int length = Math.Min" +
+                    "(destination.Length, this.stringBacking.Length);\r\n            this.stringBacking" +
+                    ".AsSpan(0, length).CopyTo(destination);\r\n            charsWritten = length;\r\n   " +
+                    "         return true;\r\n        }\r\n\r\n        if ((this.backing & Backing.JsonElem" +
+                    "ent) != 0)\r\n        {\r\n            char[] buffer = ArrayPool<char>.Shared.Rent(d" +
+                    "estination.Length);\r\n            try\r\n            {\r\n                bool result" +
+                    " = this.jsonElementBacking.TryGetValue(FormatSpan, new Output(buffer, destinatio" +
+                    "n.Length), out charsWritten);\r\n                if (result)\r\n                {\r\n " +
+                    "                   buffer.AsSpan(0, charsWritten).CopyTo(destination);\r\n        " +
+                    "        }\r\n\r\n                return result;\r\n            }\r\n            finally\r" +
+                    "\n            {\r\n                ArrayPool<char>.Shared.Return(buffer);\r\n        " +
+                    "    }\r\n        }\r\n\r\n        charsWritten = 0;\r\n        return false;\r\n\r\n        " +
+                    "static bool FormatSpan(ReadOnlySpan<char> source, in Output output, out int char" +
+                    "sWritten)\r\n        {\r\n            int length = Math.Min(output.Length, source.Le" +
+                    "ngth);\r\n            source[..length].CopyTo(output.Destination);\r\n            ch" +
+                    "arsWritten = length;\r\n            return true;\r\n        }\r\n    }\r\n\r\n    /// <inh" +
+                    "eritdoc/>\r\n    public string ToString(string? format, IFormatProvider? formatPro" +
+                    "vider)\r\n    {\r\n        // There is no formatting for the string\r\n        return " +
+                    "this.ToString();\r\n    }\r\n\r\n    private readonly record struct Output(char[] Dest" +
+                    "ination, int Length);\r\n#endif\r\n}\r\n");
             
             #line default
             #line hidden
             
-            #line 438 "CodeGenerator.String.tt"
+            #line 496 "CodeGenerator.String.tt"
  EndNesting(); 
             
             #line default

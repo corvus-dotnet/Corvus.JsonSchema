@@ -18,9 +18,20 @@ public readonly partial struct Feature
 {
     /// <inheritdoc/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Feature Remove(in JsonAny item1)
+    Feature IJsonArray<Feature>.Remove(in JsonAny item1)
     {
         return new(this.GetImmutableListWithout(item1));
+    }
+
+    /// <summary>
+    /// Remove the specified item from the array.
+    /// </summary>
+    /// <param name = "item">The item to remove.</param>
+    /// <returns>An instance of the array with the item removed.</returns>
+    /// <exception cref = "InvalidOperationException">The value was not an array.</exception>
+    public Feature Remove(in Corvus.Json.Patch.SpecGenerator.Scenario item)
+    {
+        return new(this.GetImmutableListWithout(item.AsAny));
     }
 
     /// <inheritdoc/>
