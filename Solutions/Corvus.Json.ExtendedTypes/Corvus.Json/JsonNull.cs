@@ -188,6 +188,24 @@ public readonly partial struct JsonNull : IJsonValue<JsonNull>
     }
 
     /// <summary>
+    /// JsonAny conversion.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator JsonAny(in JsonNull value)
+    {
+        return value.AsAny;
+    }
+
+    /// <summary>
+    /// JsonAny conversion.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator JsonNull(in JsonAny value)
+    {
+        return JsonNull.FromAny(value);
+    }
+
+    /// <summary>
     /// Equality operator.
     /// </summary>
     /// <param name="left">The lhs.</param>

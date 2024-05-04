@@ -16,7 +16,7 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft6 {
     public partial class CodeGeneratorArrayAdd : CodeGeneratorArrayAddBase {
         
         
-        #line 198 "CodeGenerator.Array.Add.tt"
+        #line 297 "CodeGenerator.Array.Add.tt"
 
     public bool ShouldGenerate
     {
@@ -108,7 +108,7 @@ namespace ");
             #line hidden
             
             #line 32 "CodeGenerator.Array.Add.tt"
-  if (IsTuple)
+  if (IsTuple || CanEnumerateAsSpecificType)
     { 
             
             #line default
@@ -185,7 +185,7 @@ namespace ");
             #line hidden
             
             #line 47 "CodeGenerator.Array.Add.tt"
-  if (IsTuple)
+  if (IsTuple || CanEnumerateAsSpecificType)
     { 
             
             #line default
@@ -349,7 +349,7 @@ namespace ");
             #line hidden
             
             #line 82 "CodeGenerator.Array.Add.tt"
-  if (IsTuple)
+  if (IsTuple || CanEnumerateAsSpecificType)
     { 
             
             #line default
@@ -436,7 +436,7 @@ namespace ");
             #line hidden
             
             #line 102 "CodeGenerator.Array.Add.tt"
-  if (IsTuple)
+  if (IsTuple || CanEnumerateAsSpecificType)
     { 
             
             #line default
@@ -513,7 +513,7 @@ namespace ");
             #line hidden
             
             #line 117 "CodeGenerator.Array.Add.tt"
-  if (IsTuple)
+  if (IsTuple || CanEnumerateAsSpecificType)
     { 
             
             #line default
@@ -666,7 +666,7 @@ namespace ");
             #line hidden
             
             #line 144 "CodeGenerator.Array.Add.tt"
-  if (IsTuple)
+  if (IsTuple || CanEnumerateAsSpecificType)
     { 
             
             #line default
@@ -743,7 +743,7 @@ namespace ");
             #line hidden
             
             #line 158 "CodeGenerator.Array.Add.tt"
-  if (IsTuple)
+  if (IsTuple || CanEnumerateAsSpecificType)
     { 
             
             #line default
@@ -819,7 +819,7 @@ namespace ");
             #line hidden
             
             #line 171 "CodeGenerator.Array.Add.tt"
-  if (IsTuple)
+  if (IsTuple || CanEnumerateAsSpecificType)
     { 
             
             #line default
@@ -895,7 +895,7 @@ namespace ");
             #line hidden
             
             #line 184 "CodeGenerator.Array.Add.tt"
-  if (IsTuple)
+  if (IsTuple || CanEnumerateAsSpecificType)
     { 
             
             #line default
@@ -965,18 +965,334 @@ namespace ");
             
             #line 192 "CodeGenerator.Array.Add.tt"
             this.Write("    {\r\n        return new(this.GetImmutableListSetting(index, value.AsAny));\r\n   " +
-                    " }\r\n}\r\n");
+                    " }\r\n\r\n");
             
             #line default
             #line hidden
             
             #line 196 "CodeGenerator.Array.Add.tt"
+  if (CanEnumerateAsSpecificType && !IsTuple)
+    { 
+            
+            #line default
+            #line hidden
+            
+            #line 198 "CodeGenerator.Array.Add.tt"
+            this.Write(@"    /// <summary>
+    /// Add an item to the array.
+    /// </summary>
+    /// <param name=""item1"">The item to add.</param>
+    /// <returns>An instance of the array with the item added.</returns>
+    /// <exception cref=""InvalidOperationException"">The value was not an array.</exception>
+    public ");
+            
+            #line default
+            #line hidden
+            
+            #line 204 "CodeGenerator.Array.Add.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 204 "CodeGenerator.Array.Add.tt"
+            this.Write(" Add(in ");
+            
+            #line default
+            #line hidden
+            
+            #line 204 "CodeGenerator.Array.Add.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 204 "CodeGenerator.Array.Add.tt"
+            this.Write(@" item1)
+    {
+        ImmutableList<JsonAny>.Builder builder = this.GetImmutableListBuilder();
+        builder.Add(item1);
+        return new(builder.ToImmutable());
+    }
+
+    /// <summary>
+    /// Add a set of items to the array.
+    /// </summary>
+    /// <param name=""items"">The items to add.</param>
+    /// <returns>An instance of the array with the items added.</returns>
+    /// <exception cref=""InvalidOperationException"">The value was not an array.</exception>
+    public ");
+            
+            #line default
+            #line hidden
+            
+            #line 217 "CodeGenerator.Array.Add.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 217 "CodeGenerator.Array.Add.tt"
+            this.Write(" Add(params ");
+            
+            #line default
+            #line hidden
+            
+            #line 217 "CodeGenerator.Array.Add.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 217 "CodeGenerator.Array.Add.tt"
+            this.Write("[] items)\r\n    {\r\n        ImmutableList<JsonAny>.Builder builder = this.GetImmuta" +
+                    "bleListBuilder();\r\n\r\n        foreach (");
+            
+            #line default
+            #line hidden
+            
+            #line 221 "CodeGenerator.Array.Add.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 221 "CodeGenerator.Array.Add.tt"
+            this.Write(@" item in items)
+        {
+            builder.Add(item.AsAny);
+        }
+
+        return new(builder.ToImmutable());
+    }
+
+    /// <summary>
+    /// Add a set of items to the array.
+    /// </summary>
+    /// <param name=""items"">The items to add.</param>
+    /// <returns>An instance of the array with the items added.</returns>
+    /// <exception cref=""InvalidOperationException"">The value was not an array.</exception>
+    public ");
+            
+            #line default
+            #line hidden
+            
+            #line 235 "CodeGenerator.Array.Add.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 235 "CodeGenerator.Array.Add.tt"
+            this.Write(" AddRange(IEnumerable<");
+            
+            #line default
+            #line hidden
+            
+            #line 235 "CodeGenerator.Array.Add.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 235 "CodeGenerator.Array.Add.tt"
+            this.Write("> items)\r\n    {\r\n        ImmutableList<JsonAny>.Builder builder = this.GetImmutab" +
+                    "leListBuilder();\r\n        foreach (");
+            
+            #line default
+            #line hidden
+            
+            #line 238 "CodeGenerator.Array.Add.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 238 "CodeGenerator.Array.Add.tt"
+            this.Write(@" item in items)
+        {
+            builder.Add(item.AsAny);
+        }
+
+        return new(builder.ToImmutable());
+    }
+
+    /// <summary>
+    /// Insert an item into the array at the given index.
+    /// </summary>
+    /// <param name=""index"">The index at which to add the item.</param>
+    /// <param name=""item1"">The item to add.</param>
+    /// <returns>An instance of the array with the item added.</returns>
+    /// <exception cref=""InvalidOpeetrationException"">The value was not an array.</exception>
+    public ");
+            
+            #line default
+            #line hidden
+            
+            #line 253 "CodeGenerator.Array.Add.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 253 "CodeGenerator.Array.Add.tt"
+            this.Write(" Insert(int index, in ");
+            
+            #line default
+            #line hidden
+            
+            #line 253 "CodeGenerator.Array.Add.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 253 "CodeGenerator.Array.Add.tt"
+            this.Write(@" item1)
+    {
+        return new(this.GetImmutableListWith(index, item1));
+    }
+
+    /// <summary>
+    /// Insert items into the array at the given index.
+    /// </summary>
+    /// <param name=""index"">The index at which to add the items.</param>
+    /// <param name=""items"">The items to add.</param>
+    /// <returns>An instance of the array with the items added.</returns>
+    /// <exception cref=""InvalidOperationException"">The value was not an array.</exception>
+    /// <exception cref=""IndexOutOfRangeException"">The index was outside the bounds of the array.</exception>
+    public ");
+            
+            #line default
+            #line hidden
+            
+            #line 266 "CodeGenerator.Array.Add.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 266 "CodeGenerator.Array.Add.tt"
+            this.Write(" InsertRange(int index, IEnumerable<");
+            
+            #line default
+            #line hidden
+            
+            #line 266 "CodeGenerator.Array.Add.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 266 "CodeGenerator.Array.Add.tt"
+            this.Write(@"> items)
+    {
+        return new(this.GetImmutableListWith(index, items.Select(item => item.AsAny)));
+    }
+
+    /// <summary>
+    /// Replace the first instance of the given value with the new value, even if the items are identical.
+    /// </summary>
+    /// <param name=""oldValue"">The item to remove.</param>
+    /// <param name=""newValue"">The item to insert.</param>
+    /// <returns>An instance of the array with the item replaced.</returns>
+    /// <exception cref=""InvalidOperationException"">The value was not an array.</exception>
+    public ");
+            
+            #line default
+            #line hidden
+            
+            #line 278 "CodeGenerator.Array.Add.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 278 "CodeGenerator.Array.Add.tt"
+            this.Write(" Replace(in ");
+            
+            #line default
+            #line hidden
+            
+            #line 278 "CodeGenerator.Array.Add.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 278 "CodeGenerator.Array.Add.tt"
+            this.Write(" oldValue, in ");
+            
+            #line default
+            #line hidden
+            
+            #line 278 "CodeGenerator.Array.Add.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 278 "CodeGenerator.Array.Add.tt"
+            this.Write(@" newValue)
+    {
+        return new(this.GetImmutableListReplacing(oldValue.AsAny, newValue.AsAny));
+    }
+
+    /// <summary>
+    /// Set the item at the given index.
+    /// </summary>
+    /// <param name=""index"">The index at which to set the item.</param>
+    /// <param name=""value"">The value to set.</param>
+    /// <returns>An instance of the array with the item set to the given value.</returns>
+    public ");
+            
+            #line default
+            #line hidden
+            
+            #line 289 "CodeGenerator.Array.Add.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 289 "CodeGenerator.Array.Add.tt"
+            this.Write(" SetItem(int index, in ");
+            
+            #line default
+            #line hidden
+            
+            #line 289 "CodeGenerator.Array.Add.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 289 "CodeGenerator.Array.Add.tt"
+            this.Write(" value)\r\n    {\r\n        return new(this.GetImmutableListSetting(index, value.AsAn" +
+                    "y));\r\n    }\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 293 "CodeGenerator.Array.Add.tt"
+  } 
+            
+            #line default
+            #line hidden
+            
+            #line 294 "CodeGenerator.Array.Add.tt"
+            this.Write("}\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 295 "CodeGenerator.Array.Add.tt"
  EndNesting(); 
             
             #line default
             #line hidden
             
-            #line 197 "CodeGenerator.Array.Add.tt"
+            #line 296 "CodeGenerator.Array.Add.tt"
             this.Write("\r\n");
             
             #line default
