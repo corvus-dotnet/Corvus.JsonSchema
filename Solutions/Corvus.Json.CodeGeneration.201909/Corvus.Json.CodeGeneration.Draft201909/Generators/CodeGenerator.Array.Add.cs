@@ -1123,7 +1123,7 @@ namespace ");
     /// <param name=""index"">The index at which to add the item.</param>
     /// <param name=""item1"">The item to add.</param>
     /// <returns>An instance of the array with the item added.</returns>
-    /// <exception cref=""InvalidOpeetrationException"">The value was not an array.</exception>
+    /// <exception cref=""InvalidOperationException"">The value was not an array.</exception>
     public ");
             
             #line default
