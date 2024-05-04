@@ -118,6 +118,16 @@ public readonly partial struct Schema
         }
 
         /// <summary>
+        /// Create an array from the span of items.
+        /// </summary>
+        /// <param name = "items">The items from which to create the array.</param>
+        /// <returns>The array containing the items.</returns>
+        public static JsonAnyArray Create(ReadOnlySpan<JsonAny> items)
+        {
+            return new([..items]);
+        }
+
+        /// <summary>
         /// Initializes a new instance of the <see cref = "JsonAnyArray"/> struct.
         /// </summary>
         /// <param name = "value">The value from which to construct the instance.</param>

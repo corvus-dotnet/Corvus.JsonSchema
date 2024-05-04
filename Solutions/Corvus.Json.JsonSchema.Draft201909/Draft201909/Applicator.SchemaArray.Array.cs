@@ -150,6 +150,16 @@ public readonly partial struct Applicator
         }
 
         /// <summary>
+        /// Create an array from the span of items.
+        /// </summary>
+        /// <param name = "items">The items from which to create the array.</param>
+        /// <returns>The array containing the items.</returns>
+        public static SchemaArray Create(ReadOnlySpan<Corvus.Json.JsonSchema.Draft201909.Schema> items)
+        {
+            return new([..items]);
+        }
+
+        /// <summary>
         /// Initializes a new instance of the <see cref = "SchemaArray"/> struct.
         /// </summary>
         /// <param name = "value1">The first value from which to construct the instance.</param>

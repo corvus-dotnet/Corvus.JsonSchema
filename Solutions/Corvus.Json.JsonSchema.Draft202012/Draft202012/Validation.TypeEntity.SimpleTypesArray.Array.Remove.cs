@@ -22,9 +22,20 @@ public readonly partial struct Validation
         {
             /// <inheritdoc/>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public SimpleTypesArray Remove(in JsonAny item1)
+            SimpleTypesArray IJsonArray<SimpleTypesArray>.Remove(in JsonAny item1)
             {
                 return new(this.GetImmutableListWithout(item1));
+            }
+
+            /// <summary>
+            /// Remove the specified item from the array.
+            /// </summary>
+            /// <param name = "item">The item to remove.</param>
+            /// <returns>An instance of the array with the item removed.</returns>
+            /// <exception cref = "InvalidOperationException">The value was not an array.</exception>
+            public SimpleTypesArray Remove(in Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypes item)
+            {
+                return new(this.GetImmutableListWithout(item.AsAny));
             }
 
             /// <inheritdoc/>

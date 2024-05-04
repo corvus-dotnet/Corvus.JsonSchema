@@ -148,6 +148,16 @@ public readonly partial struct PersonArray : IJsonArray<PersonArray>
     }
 
     /// <summary>
+    /// Create an array from the span of items.
+    /// </summary>
+    /// <param name = "items">The items from which to create the array.</param>
+    /// <returns>The array containing the items.</returns>
+    public static PersonArray Create(ReadOnlySpan<Corvus.Json.Benchmarking.Models.Person> items)
+    {
+        return new([..items]);
+    }
+
+    /// <summary>
     /// Initializes a new instance of the <see cref = "PersonArray"/> struct.
     /// </summary>
     /// <param name = "value1">The first value from which to construct the instance.</param>

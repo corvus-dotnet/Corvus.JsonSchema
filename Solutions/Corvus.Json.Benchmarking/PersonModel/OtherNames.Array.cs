@@ -126,6 +126,16 @@ public readonly partial struct OtherNames : IJsonArray<OtherNames>
     }
 
     /// <summary>
+    /// Create an array from the span of items.
+    /// </summary>
+    /// <param name = "items">The items from which to create the array.</param>
+    /// <returns>The array containing the items.</returns>
+    public static OtherNames Create(ReadOnlySpan<JsonAny> items)
+    {
+        return new([..items]);
+    }
+
+    /// <summary>
     /// Initializes a new instance of the <see cref = "OtherNames"/> struct.
     /// </summary>
     /// <param name = "value">The value from which to construct the instance.</param>
