@@ -19,6 +19,7 @@
 #nullable enable
 
 using System.Buffers;
+using System.Collections;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
@@ -29,7 +30,26 @@ namespace <#= Namespace #>;
 
 <# BeginNesting(); #>
 <#= FormattedTypeDocumentation #>
+<#  if(CanEnumerateAsSpecificType && !IsTuple)
+    { #>
+#if NET8_0_OR_GREATER
+public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArray<<#= TypeDeclaration.DotnetTypeName #>>, IEnumerable<<#= SingleItemsDotnetTypeName #>>
+#else
 public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArray<<#= TypeDeclaration.DotnetTypeName #>>
+#endif
+<#  }
+    else if (!IsTuple)
+    { #>
+#if NET8_0_OR_GREATER
+public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArray<<#= TypeDeclaration.DotnetTypeName #>>, IEnumerable<JsonAny>
+#else
+public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArray<<#= TypeDeclaration.DotnetTypeName #>>
+#endif
+<#  }
+    else
+    { #>
+public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArray<<#= TypeDeclaration.DotnetTypeName #>>
+<#  } #>
 {
     /// <summary>
     /// Gets an empty array.
@@ -808,6 +828,39 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
     }
 <#  } #>
 
+<#  if (CanEnumerateAsSpecificType && !IsTuple)
+    { #>
+#if NET8_0_OR_GREATER
+    /// <inheritdoc />
+    IEnumerator<<#= SingleItemsDotnetTypeName #>> IEnumerable<<#= SingleItemsDotnetTypeName #>>.GetEnumerator()
+    {
+        return EnumerateArray();
+    }
+
+    /// <inheritdoc />
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return EnumerateArray();
+    }
+#endif
+
+<#  }
+    else if (!IsTuple)
+    { #>
+#if NET8_0_OR_GREATER
+    /// <inheritdoc />
+    IEnumerator<JsonAny> IEnumerable<JsonAny>.GetEnumerator()
+    {
+        return EnumerateArray();
+    }
+
+    /// <inheritdoc />
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return EnumerateArray();
+    }
+#endif
+<#  }#>
     /// <inheritdoc/>
     public ImmutableList<JsonAny> AsImmutableList()
     {

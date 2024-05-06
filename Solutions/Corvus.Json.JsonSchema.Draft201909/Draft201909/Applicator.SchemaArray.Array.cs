@@ -8,6 +8,7 @@
 //------------------------------------------------------------------------------
 #nullable enable
 using System.Buffers;
+using System.Collections;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
@@ -20,7 +21,12 @@ public readonly partial struct Applicator
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
+    
+#if NET8_0_OR_GREATER
+public readonly partial struct SchemaArray : IJsonArray<SchemaArray>, IEnumerable<Corvus.Json.JsonSchema.Draft201909.Schema>
+#else
     public readonly partial struct SchemaArray : IJsonArray<SchemaArray>
+#endif
     {
         /// <summary>
         /// Gets an empty array.
@@ -299,6 +305,17 @@ public readonly partial struct Applicator
             return new SchemaArray(builder.ToImmutable());
         }
 
+#if NET8_0_OR_GREATER
+    IEnumerator<Corvus.Json.JsonSchema.Draft201909.Schema> IEnumerable<Corvus.Json.JsonSchema.Draft201909.Schema>.GetEnumerator()
+    {
+        return EnumerateArray();
+    }
+
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return EnumerateArray();
+    }
+#endif
         /// <inheritdoc/>
         public ImmutableList<JsonAny> AsImmutableList()
         {

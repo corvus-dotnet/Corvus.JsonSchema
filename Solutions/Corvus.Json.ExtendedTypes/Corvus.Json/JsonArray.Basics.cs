@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Buffers;
+using System.Collections;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
@@ -13,7 +14,11 @@ namespace Corvus.Json;
 /// <summary>
 /// Represents a Json array.
 /// </summary>
+#if NET8_0_OR_GREATER
+public readonly partial struct JsonArray : IEnumerable<JsonAny>
+#else
 public readonly partial struct JsonArray
+#endif
 {
     /// <summary>
     /// Gets an empty array.
@@ -298,6 +303,20 @@ public readonly partial struct JsonArray
 
         return new JsonArray(builder.ToImmutable());
     }
+
+#if NET8_0_OR_GREATER
+    /// <inheritdoc/>
+    IEnumerator<JsonAny> IEnumerable<JsonAny>.GetEnumerator()
+    {
+        return this.EnumerateArray();
+    }
+
+    /// <inheritdoc/>
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return this.EnumerateArray();
+    }
+#endif
 
     /// <inheritdoc/>
     public int GetArrayLength()

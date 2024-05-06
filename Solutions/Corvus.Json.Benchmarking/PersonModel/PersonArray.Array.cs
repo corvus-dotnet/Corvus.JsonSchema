@@ -8,6 +8,7 @@
 //------------------------------------------------------------------------------
 #nullable enable
 using System.Buffers;
+using System.Collections;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
@@ -18,7 +19,12 @@ namespace Corvus.Json.Benchmarking.Models;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
+
+#if NET8_0_OR_GREATER
+public readonly partial struct PersonArray : IJsonArray<PersonArray>, IEnumerable<Corvus.Json.Benchmarking.Models.Person>
+#else
 public readonly partial struct PersonArray : IJsonArray<PersonArray>
+#endif
 {
     /// <summary>
     /// Gets an empty array.
@@ -297,6 +303,17 @@ public readonly partial struct PersonArray : IJsonArray<PersonArray>
         return new PersonArray(builder.ToImmutable());
     }
 
+#if NET8_0_OR_GREATER
+    IEnumerator<Corvus.Json.Benchmarking.Models.Person> IEnumerable<Corvus.Json.Benchmarking.Models.Person>.GetEnumerator()
+    {
+        return EnumerateArray();
+    }
+
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return EnumerateArray();
+    }
+#endif
     /// <inheritdoc/>
     public ImmutableList<JsonAny> AsImmutableList()
     {
