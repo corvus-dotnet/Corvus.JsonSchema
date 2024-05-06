@@ -304,11 +304,13 @@ public readonly partial struct Feature : IJsonArray<Feature>
     }
 
 #if NET8_0_OR_GREATER
+    /// <inheritdoc />
     IEnumerator<Corvus.Json.Patch.SpecGenerator.Scenario> IEnumerable<Corvus.Json.Patch.SpecGenerator.Scenario>.GetEnumerator()
     {
         return EnumerateArray();
     }
 
+    /// <inheritdoc />
     IEnumerator IEnumerable.GetEnumerator()
     {
         return EnumerateArray();

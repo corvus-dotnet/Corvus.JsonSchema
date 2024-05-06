@@ -27,7 +27,12 @@ namespace Corvus.Json.Benchmarking.Models;
 /// This may be either a single name represented as a string, or an array of strings, representing one or more other names.
 /// </para>
 /// </remarks>
+
+#if NET8_0_OR_GREATER
+public readonly partial struct OtherNames : IJsonArray<OtherNames>, IEnumerable<JsonAny>
+#else
 public readonly partial struct OtherNames : IJsonArray<OtherNames>
+#endif
 {
     /// <summary>
     /// Gets an empty array.
@@ -419,6 +424,19 @@ public readonly partial struct OtherNames : IJsonArray<OtherNames>
         return new(builder.ToImmutable());
     }
 
+#if NET8_0_OR_GREATER
+    /// <inheritdoc />
+    IEnumerator<JsonAny> IEnumerable<JsonAny>.GetEnumerator()
+    {
+        return EnumerateArray();
+    }
+
+    /// <inheritdoc />
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return EnumerateArray();
+    }
+#endif
     /// <inheritdoc/>
     public ImmutableList<JsonAny> AsImmutableList()
     {

@@ -304,11 +304,13 @@ public readonly partial struct JsonPatchDocument : IJsonArray<JsonPatchDocument>
     }
 
 #if NET8_0_OR_GREATER
+    /// <inheritdoc />
     IEnumerator<Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperation> IEnumerable<Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperation>.GetEnumerator()
     {
         return EnumerateArray();
     }
 
+    /// <inheritdoc />
     IEnumerator IEnumerable.GetEnumerator()
     {
         return EnumerateArray();

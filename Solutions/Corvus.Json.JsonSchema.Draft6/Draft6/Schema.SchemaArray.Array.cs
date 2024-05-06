@@ -306,11 +306,13 @@ public readonly partial struct SchemaArray : IJsonArray<SchemaArray>, IEnumerabl
         }
 
 #if NET8_0_OR_GREATER
+    /// <inheritdoc />
     IEnumerator<Corvus.Json.JsonSchema.Draft6.Schema> IEnumerable<Corvus.Json.JsonSchema.Draft6.Schema>.GetEnumerator()
     {
         return EnumerateArray();
     }
 
+    /// <inheritdoc />
     IEnumerator IEnumerable.GetEnumerator()
     {
         return EnumerateArray();

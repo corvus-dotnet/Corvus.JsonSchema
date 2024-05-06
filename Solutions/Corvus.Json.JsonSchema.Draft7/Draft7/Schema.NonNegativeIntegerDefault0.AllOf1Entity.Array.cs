@@ -23,7 +23,12 @@ public readonly partial struct Schema
         /// <summary>
         /// Generated from JSON Schema.
         /// </summary>
+        
+#if NET8_0_OR_GREATER
+public readonly partial struct AllOf1Entity : IJsonArray<AllOf1Entity>, IEnumerable<JsonAny>
+#else
         public readonly partial struct AllOf1Entity : IJsonArray<AllOf1Entity>
+#endif
         {
             /// <summary>
             /// Gets an empty array.
@@ -419,6 +424,19 @@ public readonly partial struct Schema
                 return new(builder.ToImmutable());
             }
 
+#if NET8_0_OR_GREATER
+    /// <inheritdoc />
+    IEnumerator<JsonAny> IEnumerable<JsonAny>.GetEnumerator()
+    {
+        return EnumerateArray();
+    }
+
+    /// <inheritdoc />
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return EnumerateArray();
+    }
+#endif
             /// <inheritdoc/>
             public ImmutableList<JsonAny> AsImmutableList()
             {
