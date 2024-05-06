@@ -1383,6 +1383,28 @@ public partial class CodeGeneratorValidateType
     }
 
     /// <summary>
+    /// Gets the dimension of the array. This will be zero if the type is not an array.
+    /// </summary>
+    public int ArrayDimension
+    {
+        get
+        {
+            return this.GetArrayDimension(this.TypeDeclaration);
+        }
+    }
+
+    /// <summary>
+    /// Gets the item type of the ultimate type of the item in a multi-dimensional array.
+    /// </summary>
+    public string MultiDimensionalArrayItemType
+    {
+        get
+        {
+            return this.GetMultiDimensionalArrayItemType(this.TypeDeclaration);
+        }
+    }
+
+    /// <summary>
     /// Gets the propertyNames schema dotnet type name.
     /// </summary>
     public string PropertyNamesDotnetTypeName
@@ -2403,6 +2425,42 @@ public partial class CodeGeneratorValidateType
         }
 
         throw new ArgumentNullException(nameof(value));
+    }
+
+    private int GetArrayDimension(TypeDeclaration typeDeclaration)
+    {
+        if (!typeDeclaration.Schema().IsArrayType())
+        {
+            return 0;
+        }
+
+        if (typeDeclaration.Schema().Items.IsNotUndefined())
+        {
+            if (typeDeclaration.Schema().Items.ValueKind == JsonValueKind.Object)
+            {
+                // This could be an array, so we will recurse
+                TypeDeclaration itemsType = this.Builder.GetTypeDeclarationForProperty(typeDeclaration, "items");
+                return 1 + this.GetArrayDimension(itemsType);
+            }
+        }
+
+        return 1;
+    }
+
+    private string GetMultiDimensionalArrayItemType(TypeDeclaration typeDeclaration)
+    {
+        if (!typeDeclaration.Schema().IsArrayType())
+        {
+            return typeDeclaration.FullyQualifiedDotnetTypeName!;
+        }
+
+        if (typeDeclaration.Schema().Items.IsNotUndefined())
+        {
+            TypeDeclaration itemsType = this.Builder.GetTypeDeclarationForProperty(typeDeclaration, "items");
+            return this.GetMultiDimensionalArrayItemType(itemsType);
+        }
+
+        return $"{BuiltInTypes.AnyTypeDeclaration.Ns}.{BuiltInTypes.AnyTypeDeclaration.Type}";
     }
 
     private bool MatchType(string typeToMatch)

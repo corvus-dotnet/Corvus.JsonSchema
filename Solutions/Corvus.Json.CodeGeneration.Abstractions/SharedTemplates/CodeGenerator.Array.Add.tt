@@ -193,6 +193,22 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
         return new(this.GetImmutableListSetting(index, value.AsAny));
     }
 
+<#  if (ArrayDimension > 1)
+    {#>
+    /// <summary>
+    /// Set the item at the given location in an array of dimension <#= ArrayDimension #>.
+    /// </summary>
+<#      for(int arrayDim = 1; arrayDim <= ArrayDimension; ++arrayDim)
+        { #>
+    /// <param name="index<#= arrayDim #>">The index for dimension <#= arrayDim #>.</param>
+<#      } #>
+    /// <returns>The array with the item at the given index set.</returns>
+    public <#= TypeDeclaration.DotnetTypeName #> SetItem(<# for(int arrayDim = 1; arrayDim <= ArrayDimension; ++arrayDim) {#><#=arrayDim > 1 ? ", " : ""#>int index<#=arrayDim#><# } #>, in <#= MultiDimensionalArrayItemType #> value)
+    {
+        return this.SetItem(index1, this[index1].SetItem(<# for(int arrayDim = 2; arrayDim <= ArrayDimension; ++arrayDim) {#><#=arrayDim > 2 ? ", " : ""#>index<#=arrayDim#><# } #>, value));
+    }
+
+<#  } #>
 <#  if (CanEnumerateAsSpecificType && !IsTuple)
     { #>
     /// <summary>
