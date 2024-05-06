@@ -8,6 +8,7 @@
 //------------------------------------------------------------------------------
 #nullable enable
 using System.Buffers;
+using System.Collections;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
@@ -119,6 +120,16 @@ public readonly partial struct Schema
         public static ItemsEntity From(ImmutableList<JsonAny> items)
         {
             return new(items);
+        }
+
+        /// <summary>
+        /// Create an array from the span of items.
+        /// </summary>
+        /// <param name = "items">The items from which to create the array.</param>
+        /// <returns>The array containing the items.</returns>
+        public static ItemsEntity Create(ReadOnlySpan<JsonAny> items)
+        {
+            return new([..items]);
         }
 
         /// <summary>

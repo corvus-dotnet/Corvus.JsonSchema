@@ -8,6 +8,7 @@
 //------------------------------------------------------------------------------
 #nullable enable
 using System.Buffers;
+using System.Collections;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
@@ -18,7 +19,12 @@ namespace Corvus.Json.Patch.SpecGenerator;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
+
+#if NET8_0_OR_GREATER
+public readonly partial struct Feature : IJsonArray<Feature>, IEnumerable<Corvus.Json.Patch.SpecGenerator.Scenario>
+#else
 public readonly partial struct Feature : IJsonArray<Feature>
+#endif
 {
     /// <summary>
     /// Gets an empty array.
@@ -145,6 +151,16 @@ public readonly partial struct Feature : IJsonArray<Feature>
     public static Feature From(ImmutableList<JsonAny> items)
     {
         return new(items);
+    }
+
+    /// <summary>
+    /// Create an array from the span of items.
+    /// </summary>
+    /// <param name = "items">The items from which to create the array.</param>
+    /// <returns>The array containing the items.</returns>
+    public static Feature Create(ReadOnlySpan<Corvus.Json.Patch.SpecGenerator.Scenario> items)
+    {
+        return new([..items]);
     }
 
     /// <summary>
@@ -287,6 +303,17 @@ public readonly partial struct Feature : IJsonArray<Feature>
         return new Feature(builder.ToImmutable());
     }
 
+#if NET8_0_OR_GREATER
+    IEnumerator<Corvus.Json.Patch.SpecGenerator.Scenario> IEnumerable<Corvus.Json.Patch.SpecGenerator.Scenario>.GetEnumerator()
+    {
+        return EnumerateArray();
+    }
+
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return EnumerateArray();
+    }
+#endif
     /// <inheritdoc/>
     public ImmutableList<JsonAny> AsImmutableList()
     {

@@ -19,6 +19,7 @@
 #nullable enable
 
 using System.Buffers;
+using System.Collections;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
@@ -29,7 +30,26 @@ namespace <#= Namespace #>;
 
 <# BeginNesting(); #>
 <#= FormattedTypeDocumentation #>
+<#  if(CanEnumerateAsSpecificType && !IsTuple)
+    { #>
+#if NET8_0_OR_GREATER
+public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArray<<#= TypeDeclaration.DotnetTypeName #>>, IEnumerable<<#= SingleItemsDotnetTypeName #>>
+#else
 public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArray<<#= TypeDeclaration.DotnetTypeName #>>
+#endif
+<#  }
+    else if (!IsTuple)
+    { #>
+#if NET8_0_OR_GREATER
+public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArray<<#= TypeDeclaration.DotnetTypeName #>>, IEnumerable<JsonAny>
+#else
+public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArray<<#= TypeDeclaration.DotnetTypeName #>>
+#endif
+<#  }
+    else
+    { #>
+public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArray<<#= TypeDeclaration.DotnetTypeName #>>
+<#  } #>
 {
     /// <summary>
     /// Gets an empty array.
@@ -289,6 +309,16 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
 
 <#  if (!CanEnumerateAsSpecificType && !IsTuple)
     { #>
+    /// <summary>
+    /// Create an array from the span of items.
+    /// </summary>
+    /// <param name="items">The items from which to create the array.</param>
+    /// <returns>The array containing the items.</returns>
+    public static <#= TypeDeclaration.DotnetTypeName #> Create(ReadOnlySpan<JsonAny> items)
+    {
+        return new([..items]);
+    }
+
     /// <summary>
     /// Initializes a new instance of the <see cref="<#= TypeDeclaration.DotnetTypeName #>"/> struct.
     /// </summary>
@@ -578,6 +608,16 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
     else if (!IsTuple)
     {#>
     /// <summary>
+    /// Create an array from the span of items.
+    /// </summary>
+    /// <param name="items">The items from which to create the array.</param>
+    /// <returns>The array containing the items.</returns>
+    public static <#= TypeDeclaration.DotnetTypeName #> Create(ReadOnlySpan<<#= SingleItemsDotnetTypeName #>> items)
+    {
+        return new([..items]);
+    }
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="<#= TypeDeclaration.DotnetTypeName #>"/> struct.
     /// </summary>
     /// <param name="value1">The first value from which to construct the instance.</param>
@@ -788,6 +828,39 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
     }
 <#  } #>
 
+<#  if (CanEnumerateAsSpecificType && !IsTuple)
+    { #>
+#if NET8_0_OR_GREATER
+    /// <inheritdoc />
+    IEnumerator<<#= SingleItemsDotnetTypeName #>> IEnumerable<<#= SingleItemsDotnetTypeName #>>.GetEnumerator()
+    {
+        return EnumerateArray();
+    }
+
+    /// <inheritdoc />
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return EnumerateArray();
+    }
+#endif
+
+<#  }
+    else if (!IsTuple)
+    { #>
+#if NET8_0_OR_GREATER
+    /// <inheritdoc />
+    IEnumerator<JsonAny> IEnumerable<JsonAny>.GetEnumerator()
+    {
+        return EnumerateArray();
+    }
+
+    /// <inheritdoc />
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return EnumerateArray();
+    }
+#endif
+<#  }#>
     /// <inheritdoc/>
     public ImmutableList<JsonAny> AsImmutableList()
     {

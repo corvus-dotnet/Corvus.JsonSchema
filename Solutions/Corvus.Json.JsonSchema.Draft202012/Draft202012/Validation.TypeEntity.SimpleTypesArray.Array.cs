@@ -8,6 +8,7 @@
 //------------------------------------------------------------------------------
 #nullable enable
 using System.Buffers;
+using System.Collections;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
@@ -22,7 +23,12 @@ public readonly partial struct Validation
         /// <summary>
         /// Generated from JSON Schema.
         /// </summary>
+        
+#if NET8_0_OR_GREATER
+public readonly partial struct SimpleTypesArray : IJsonArray<SimpleTypesArray>, IEnumerable<Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypes>
+#else
         public readonly partial struct SimpleTypesArray : IJsonArray<SimpleTypesArray>
+#endif
         {
             /// <summary>
             /// Gets an empty array.
@@ -149,6 +155,16 @@ public readonly partial struct Validation
             public static SimpleTypesArray From(ImmutableList<JsonAny> items)
             {
                 return new(items);
+            }
+
+            /// <summary>
+            /// Create an array from the span of items.
+            /// </summary>
+            /// <param name = "items">The items from which to create the array.</param>
+            /// <returns>The array containing the items.</returns>
+            public static SimpleTypesArray Create(ReadOnlySpan<Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypes> items)
+            {
+                return new([..items]);
             }
 
             /// <summary>
@@ -291,6 +307,17 @@ public readonly partial struct Validation
                 return new SimpleTypesArray(builder.ToImmutable());
             }
 
+#if NET8_0_OR_GREATER
+    IEnumerator<Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypes> IEnumerable<Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypes>.GetEnumerator()
+    {
+        return EnumerateArray();
+    }
+
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return EnumerateArray();
+    }
+#endif
             /// <inheritdoc/>
             public ImmutableList<JsonAny> AsImmutableList()
             {

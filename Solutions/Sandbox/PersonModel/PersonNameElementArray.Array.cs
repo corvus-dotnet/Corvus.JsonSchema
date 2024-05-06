@@ -8,6 +8,7 @@
 //------------------------------------------------------------------------------
 #nullable enable
 using System.Buffers;
+using System.Collections;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
@@ -23,7 +24,12 @@ namespace Corvus.Json.Benchmarking.Models;
 /// This is an array of strings, each of which is a component of a person's name.
 /// </para>
 /// </remarks>
+
+#if NET8_0_OR_GREATER
+public readonly partial struct PersonNameElementArray : IJsonArray<PersonNameElementArray>, IEnumerable<Corvus.Json.Benchmarking.Models.PersonNameElement>
+#else
 public readonly partial struct PersonNameElementArray : IJsonArray<PersonNameElementArray>
+#endif
 {
     /// <summary>
     /// Gets an empty array.
@@ -150,6 +156,16 @@ public readonly partial struct PersonNameElementArray : IJsonArray<PersonNameEle
     public static PersonNameElementArray From(ImmutableList<JsonAny> items)
     {
         return new(items);
+    }
+
+    /// <summary>
+    /// Create an array from the span of items.
+    /// </summary>
+    /// <param name = "items">The items from which to create the array.</param>
+    /// <returns>The array containing the items.</returns>
+    public static PersonNameElementArray Create(ReadOnlySpan<Corvus.Json.Benchmarking.Models.PersonNameElement> items)
+    {
+        return new([..items]);
     }
 
     /// <summary>
@@ -292,6 +308,17 @@ public readonly partial struct PersonNameElementArray : IJsonArray<PersonNameEle
         return new PersonNameElementArray(builder.ToImmutable());
     }
 
+#if NET8_0_OR_GREATER
+    IEnumerator<Corvus.Json.Benchmarking.Models.PersonNameElement> IEnumerable<Corvus.Json.Benchmarking.Models.PersonNameElement>.GetEnumerator()
+    {
+        return EnumerateArray();
+    }
+
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return EnumerateArray();
+    }
+#endif
     /// <inheritdoc/>
     public ImmutableList<JsonAny> AsImmutableList()
     {
