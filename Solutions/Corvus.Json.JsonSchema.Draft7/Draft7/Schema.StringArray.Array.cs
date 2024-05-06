@@ -306,11 +306,13 @@ public readonly partial struct StringArray : IJsonArray<StringArray>, IEnumerabl
         }
 
 #if NET8_0_OR_GREATER
+    /// <inheritdoc />
     IEnumerator<Corvus.Json.JsonString> IEnumerable<Corvus.Json.JsonString>.GetEnumerator()
     {
         return EnumerateArray();
     }
 
+    /// <inheritdoc />
     IEnumerator IEnumerable.GetEnumerator()
     {
         return EnumerateArray();

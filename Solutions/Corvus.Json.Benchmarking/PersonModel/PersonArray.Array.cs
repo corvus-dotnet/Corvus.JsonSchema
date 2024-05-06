@@ -304,11 +304,13 @@ public readonly partial struct PersonArray : IJsonArray<PersonArray>
     }
 
 #if NET8_0_OR_GREATER
+    /// <inheritdoc />
     IEnumerator<Corvus.Json.Benchmarking.Models.Person> IEnumerable<Corvus.Json.Benchmarking.Models.Person>.GetEnumerator()
     {
         return EnumerateArray();
     }
 
+    /// <inheritdoc />
     IEnumerator IEnumerable.GetEnumerator()
     {
         return EnumerateArray();
