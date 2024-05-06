@@ -240,7 +240,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
 <#          prefixItemAccessorIndex++;
         }
     }
-    
+
     if (IsTuple && PrefixItems.Length > 1)
     { #>
 
