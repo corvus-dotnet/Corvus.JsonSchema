@@ -25,6 +25,7 @@ public readonly partial struct Validation
         /// </summary>
         
 #if NET8_0_OR_GREATER
+[CollectionBuilder(typeof(SimpleTypesArray), "Create")]
 public readonly partial struct SimpleTypesArray : IJsonArray<SimpleTypesArray>, IEnumerable<Corvus.Json.JsonSchema.Draft201909.Validation.SimpleTypes>
 #else
         public readonly partial struct SimpleTypesArray : IJsonArray<SimpleTypesArray>

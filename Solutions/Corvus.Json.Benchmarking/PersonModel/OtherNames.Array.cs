@@ -29,6 +29,7 @@ namespace Corvus.Json.Benchmarking.Models;
 /// </remarks>
 
 #if NET8_0_OR_GREATER
+[CollectionBuilder(typeof(OtherNames), "Create")]
 public readonly partial struct OtherNames : IJsonArray<OtherNames>, IEnumerable<JsonAny>
 #else
 public readonly partial struct OtherNames : IJsonArray<OtherNames>

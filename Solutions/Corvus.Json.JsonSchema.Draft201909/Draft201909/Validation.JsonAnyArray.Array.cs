@@ -23,6 +23,7 @@ public readonly partial struct Validation
     /// </summary>
     
 #if NET8_0_OR_GREATER
+[CollectionBuilder(typeof(JsonAnyArray), "Create")]
 public readonly partial struct JsonAnyArray : IJsonArray<JsonAnyArray>, IEnumerable<JsonAny>
 #else
     public readonly partial struct JsonAnyArray : IJsonArray<JsonAnyArray>

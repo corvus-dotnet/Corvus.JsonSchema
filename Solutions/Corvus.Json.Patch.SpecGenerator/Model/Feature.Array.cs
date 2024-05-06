@@ -21,6 +21,7 @@ namespace Corvus.Json.Patch.SpecGenerator;
 /// </summary>
 
 #if NET8_0_OR_GREATER
+[CollectionBuilder(typeof(Feature), "Create")]
 public readonly partial struct Feature : IJsonArray<Feature>, IEnumerable<Corvus.Json.Patch.SpecGenerator.Scenario>
 #else
 public readonly partial struct Feature : IJsonArray<Feature>

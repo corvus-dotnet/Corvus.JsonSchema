@@ -21,6 +21,7 @@ namespace Corvus.Json.Benchmarking.Models;
 /// </summary>
 
 #if NET8_0_OR_GREATER
+[CollectionBuilder(typeof(PersonArray), "Create")]
 public readonly partial struct PersonArray : IJsonArray<PersonArray>, IEnumerable<Corvus.Json.Benchmarking.Models.Person>
 #else
 public readonly partial struct PersonArray : IJsonArray<PersonArray>
