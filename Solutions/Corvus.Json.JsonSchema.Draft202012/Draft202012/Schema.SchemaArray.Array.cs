@@ -23,6 +23,7 @@ public readonly partial struct Schema
     /// </summary>
     
 #if NET8_0_OR_GREATER
+[CollectionBuilder(typeof(SchemaArray), "Create")]
 public readonly partial struct SchemaArray : IJsonArray<SchemaArray>, IEnumerable<Corvus.Json.JsonSchema.Draft202012.Schema>
 #else
     public readonly partial struct SchemaArray : IJsonArray<SchemaArray>

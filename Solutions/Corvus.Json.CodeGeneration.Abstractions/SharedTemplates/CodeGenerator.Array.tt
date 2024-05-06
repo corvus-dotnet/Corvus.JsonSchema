@@ -33,6 +33,7 @@ namespace <#= Namespace #>;
 <#  if(CanEnumerateAsSpecificType && !IsTuple)
     { #>
 #if NET8_0_OR_GREATER
+[CollectionBuilder(typeof(<#= TypeDeclaration.DotnetTypeName #>), "Create")]
 public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArray<<#= TypeDeclaration.DotnetTypeName #>>, IEnumerable<<#= SingleItemsDotnetTypeName #>>
 #else
 public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArray<<#= TypeDeclaration.DotnetTypeName #>>
@@ -41,6 +42,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
     else if (!IsTuple)
     { #>
 #if NET8_0_OR_GREATER
+[CollectionBuilder(typeof(<#= TypeDeclaration.DotnetTypeName #>), "Create")]
 public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArray<<#= TypeDeclaration.DotnetTypeName #>>, IEnumerable<JsonAny>
 #else
 public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArray<<#= TypeDeclaration.DotnetTypeName #>>

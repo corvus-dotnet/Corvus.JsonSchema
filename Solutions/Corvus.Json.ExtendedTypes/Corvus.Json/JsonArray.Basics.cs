@@ -15,6 +15,7 @@ namespace Corvus.Json;
 /// Represents a Json array.
 /// </summary>
 #if NET8_0_OR_GREATER
+[CollectionBuilder(typeof(JsonArray), "Create")]
 public readonly partial struct JsonArray : IEnumerable<JsonAny>
 #else
 public readonly partial struct JsonArray

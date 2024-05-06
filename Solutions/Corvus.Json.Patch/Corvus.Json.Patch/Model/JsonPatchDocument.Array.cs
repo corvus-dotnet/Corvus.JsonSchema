@@ -21,6 +21,7 @@ namespace Corvus.Json.Patch.Model;
 /// </summary>
 
 #if NET8_0_OR_GREATER
+[CollectionBuilder(typeof(JsonPatchDocument), "Create")]
 public readonly partial struct JsonPatchDocument : IJsonArray<JsonPatchDocument>, IEnumerable<Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperation>
 #else
 public readonly partial struct JsonPatchDocument : IJsonArray<JsonPatchDocument>

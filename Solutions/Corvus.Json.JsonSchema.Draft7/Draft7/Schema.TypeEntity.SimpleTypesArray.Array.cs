@@ -25,6 +25,7 @@ public readonly partial struct Schema
         /// </summary>
         
 #if NET8_0_OR_GREATER
+[CollectionBuilder(typeof(SimpleTypesArray), "Create")]
 public readonly partial struct SimpleTypesArray : IJsonArray<SimpleTypesArray>, IEnumerable<Corvus.Json.JsonSchema.Draft7.Schema.SimpleTypes>
 #else
         public readonly partial struct SimpleTypesArray : IJsonArray<SimpleTypesArray>

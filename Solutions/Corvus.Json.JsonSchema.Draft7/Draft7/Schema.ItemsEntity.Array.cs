@@ -23,6 +23,7 @@ public readonly partial struct Schema
     /// </summary>
     
 #if NET8_0_OR_GREATER
+[CollectionBuilder(typeof(ItemsEntity), "Create")]
 public readonly partial struct ItemsEntity : IJsonArray<ItemsEntity>, IEnumerable<JsonAny>
 #else
     public readonly partial struct ItemsEntity : IJsonArray<ItemsEntity>
