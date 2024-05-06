@@ -23,7 +23,12 @@ public readonly partial struct Schema
         /// <summary>
         /// Generated from JSON Schema.
         /// </summary>
-        public readonly partial struct AllOf1Entity : IJsonString<AllOf1Entity>
+        public readonly partial struct AllOf1Entity 
+#if NET8_0_OR_GREATER
+    : IJsonString<AllOf1Entity>, ISpanFormattable
+#else
+        : IJsonString<AllOf1Entity>
+#endif
         {
             /// <summary>
             /// Initializes a new instance of the <see cref = "AllOf1Entity"/> struct.
@@ -384,6 +389,58 @@ public readonly partial struct Schema
 
                 return false;
             }
+#if NET8_0_OR_GREATER
+    /// <inheritdoc/>
+    public bool TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
+    {
+        if ((this.backing & Backing.String) != 0)
+        {
+            int length = Math.Min(destination.Length, this.stringBacking.Length);
+            this.stringBacking.AsSpan(0, length).CopyTo(destination);
+            charsWritten = length;
+            return true;
+        }
+
+        if ((this.backing & Backing.JsonElement) != 0)
+        {
+            char[] buffer = ArrayPool<char>.Shared.Rent(destination.Length);
+            try
+            {
+                bool result = this.jsonElementBacking.TryGetValue(FormatSpan, new Output(buffer, destination.Length), out charsWritten);
+                if (result)
+                {
+                    buffer.AsSpan(0, charsWritten).CopyTo(destination);
+                }
+
+                return result;
+            }
+            finally
+            {
+                ArrayPool<char>.Shared.Return(buffer);
+            }
+        }
+
+        charsWritten = 0;
+        return false;
+
+        static bool FormatSpan(ReadOnlySpan<char> source, in Output output, out int charsWritten)
+        {
+            int length = Math.Min(output.Length, source.Length);
+            source[..length].CopyTo(output.Destination);
+            charsWritten = length;
+            return true;
+        }
+    }
+
+    /// <inheritdoc/>
+    public string ToString(string? format, IFormatProvider? formatProvider)
+    {
+        // There is no formatting for the string
+        return this.ToString();
+    }
+
+    private readonly record struct Output(char[] Destination, int Length);
+#endif
         }
     }
 }
