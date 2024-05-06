@@ -309,11 +309,13 @@ public readonly partial struct PersonNameElementArray : IJsonArray<PersonNameEle
     }
 
 #if NET8_0_OR_GREATER
+    /// <inheritdoc />
     IEnumerator<Corvus.Json.Benchmarking.Models.PersonNameElement> IEnumerable<Corvus.Json.Benchmarking.Models.PersonNameElement>.GetEnumerator()
     {
         return EnumerateArray();
     }
 
+    /// <inheritdoc />
     IEnumerator IEnumerable.GetEnumerator()
     {
         return EnumerateArray();

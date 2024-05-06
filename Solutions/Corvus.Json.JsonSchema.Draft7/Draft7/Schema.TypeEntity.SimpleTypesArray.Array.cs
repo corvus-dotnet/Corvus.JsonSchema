@@ -308,11 +308,13 @@ public readonly partial struct SimpleTypesArray : IJsonArray<SimpleTypesArray>, 
             }
 
 #if NET8_0_OR_GREATER
+    /// <inheritdoc />
     IEnumerator<Corvus.Json.JsonSchema.Draft7.Schema.SimpleTypes> IEnumerable<Corvus.Json.JsonSchema.Draft7.Schema.SimpleTypes>.GetEnumerator()
     {
         return EnumerateArray();
     }
 
+    /// <inheritdoc />
     IEnumerator IEnumerable.GetEnumerator()
     {
         return EnumerateArray();

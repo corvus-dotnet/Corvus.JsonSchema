@@ -21,7 +21,12 @@ public readonly partial struct Applicator
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
+    
+#if NET8_0_OR_GREATER
+public readonly partial struct ItemsEntity : IJsonArray<ItemsEntity>, IEnumerable<JsonAny>
+#else
     public readonly partial struct ItemsEntity : IJsonArray<ItemsEntity>
+#endif
     {
         /// <summary>
         /// Gets an empty array.
@@ -415,6 +420,19 @@ public readonly partial struct Applicator
             return new(builder.ToImmutable());
         }
 
+#if NET8_0_OR_GREATER
+    /// <inheritdoc />
+    IEnumerator<JsonAny> IEnumerable<JsonAny>.GetEnumerator()
+    {
+        return EnumerateArray();
+    }
+
+    /// <inheritdoc />
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return EnumerateArray();
+    }
+#endif
         /// <inheritdoc/>
         public ImmutableList<JsonAny> AsImmutableList()
         {
