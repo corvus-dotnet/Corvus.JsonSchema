@@ -493,6 +493,39 @@ public static class BuiltInTypes
     }
 
     /// <summary>
+    /// Gets the CSharp primitive type for the given numeric format.
+    /// </summary>
+    /// <param name="format">The format for the numeric primitive.</param>
+    /// <returns>The CSharp primitive for the given format, or "double" if the format is not recognized.</returns>
+    public static string GetCSharpPrimitiveForNumeric(string? format)
+    {
+        return format switch
+        {
+            "double" => "double",
+            "decimal" => "decimal",
+#if NET8_0_OR_GREATER
+            "half" => "Half",
+#endif
+            "single" => "float",
+            "byte" => "byte",
+            "int16" => "short",
+            "int32" => "int",
+            "int64" => "long",
+#if NET8_0_OR_GREATER
+            "int128" => "Int128",
+#endif
+            "sbyte" => "sbyte",
+            "uint16" => "ushort",
+            "uint32" => "uint",
+            "uint64" => "ulong",
+#if NET8_0_OR_GREATER
+            "uint128" => "UInt128",
+#endif
+            _ => "double",
+        };
+    }
+
+    /// <summary>
     /// Gets a value indicating whether the format specified is for a string.
     /// </summary>
     /// <param name="format">The format to test.</param>

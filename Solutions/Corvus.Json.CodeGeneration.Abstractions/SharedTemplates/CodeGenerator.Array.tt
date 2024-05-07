@@ -112,6 +112,29 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
 <#  } #>
     }
 
+<#  if (CanEnumerateAsSpecificType && IsFixedSizeArray && IsNumericArray)
+    { #>
+    /// <summary>
+    /// Gets the rank of the array.
+    /// </summary>
+    public static int Rank => <#= ArrayRank #>;
+
+    /// <summary>
+    /// Gets the dimension of the array in this rank.
+    /// </summary>
+    public static int Dimension => <#= ArrayDimension #>;
+
+    /// <summary>
+    /// Gets the total size of a buffer required to represent the array.
+    /// </summary>
+    /// <remarks>
+    /// This calculates the array based on the dimension of each rank. It is generally
+    /// used to determine the size of the buffer required by
+    /// <see cref="TryGetValues(Span{double}, out int)"/>.
+    /// </remarks>
+    public static int ValueBufferSize => <#= ArrayValueBufferSize #>;
+<#  } #>
+
 <#  if (!CanEnumerateAsSpecificType && !IsTuple)
     { #>
     /// <inheritdoc/>
@@ -933,6 +956,73 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
 
         throw new InvalidOperationException();
     }
+
+<#  if (CanEnumerateAsSpecificType && IsFixedSizeArray && IsNumericArray)
+    { #>
+    /// <summary>
+    /// Fills the span with the numeric values in the array.
+    /// </summary>
+    /// <param name="items">The <see cref="Span{<#= PreferredNumericType #>}"/> to fill with the values in the array.</param>
+    /// <param name="written">The number of values written.</param>
+    /// <returns><see langword="true"/> if the array was written successfuly, otherwise <see langword="false" />.</returns>
+    /// <remarks>
+    /// You can determine the size of the array to fill by interrogating
+    /// <see cref="TotalSize"/>
+    /// </remarks>
+    public bool TryGetNumericValues(Span<<#= PreferredNumericType #>> items, out int written)
+    {
+        int index = 0;
+
+        if ((this.backing & Backing.Array) != 0)
+        {
+            if (items.Length < this.arrayBacking.Count)
+            {
+                written = 0;
+                return false;
+            }
+
+            foreach (var item in this.arrayBacking)
+            {
+                if (item.ValueKind != JsonValueKind.Number)
+                {
+                    written = 0;
+                    return false;
+                }
+
+                items[index++] = (<#= PreferredNumericType #>)item.AsNumber;
+            }
+            written = index;
+            return true;
+        }
+
+        if (this.jsonElementBacking.ValueKind != JsonValueKind.Array)
+        {
+            written = 0;
+            return false;
+        }
+
+        if (items.Length < this.jsonElementBacking.GetArrayLength())
+        {
+            written = 0;
+            return false;
+        }
+
+        foreach (JsonElement jsonElement in this.jsonElementBacking.EnumerateArray())
+        {
+            if (jsonElement.ValueKind != JsonValueKind.Number ||
+                !jsonElement.TryGetDouble(out <#= PreferredNumericType #> value))
+            {
+                written = 0;
+                return false;
+            }
+
+            items[index++] = value;
+        }
+
+        written = index;
+        return true;
+    }
+<#  } #>
 
     /// <inheritdoc/>
 

@@ -1611,24 +1611,55 @@ public partial class CodeGeneratorString
     }
 
     /// <summary>
-    /// Gets the dimension of the array. This will be zero if the type is not an array.
+    /// Gets the rank of the array. This will be zero if the type is not an array.
     /// </summary>
-    public int ArrayDimension
+    public int ArrayRank
     {
         get
         {
-            return this.GetArrayDimension(this.TypeDeclaration);
+            return this.GetArrayRank(this.TypeDeclaration);
         }
     }
 
     /// <summary>
+    /// Gets a value indicating whether the array is a fixed size array.
+    /// </summary>
+    public bool IsFixedSizeArray => this.GetIsFixedSizeArray(this.TypeDeclaration);
+
+    /// <summary>
+    /// Gets the dimension of the array, or -1 if the array does not have a fixed dimension.
+    /// </summary>
+    public int ArrayDimension => this.GetArrayDimension(this.TypeDeclaration);
+
+    /// <summary>
+    /// Gets the total buffer size of the array in all dimensions.
+    /// </summary>
+    public int ArrayValueBufferSize => this.GetArrayValueBufferSize(this.TypeDeclaration, 0);
+
+    /// <summary>
+    /// Gets a value indicating whether the array is a numeric array.
+    /// </summary>
+    public bool IsNumericArray => this.GetIsNumericArray(this.TypeDeclaration);
+
+    /// <summary>
     /// Gets the item type of the ultimate type of the item in a multi-dimensional array.
     /// </summary>
-    public string MultiDimensionalArrayItemType
+    public string LeafArrayItemType
     {
         get
         {
-            return this.GetMultiDimensionalArrayItemType(this.TypeDeclaration);
+            return this.GetLeafArrayItemType(this.TypeDeclaration);
+        }
+    }
+
+    /// <summary>
+    /// Gets the preferred CLR numeric type for the ultimate type of the item in a multi-dimensional array.
+    /// </summary>
+    public string PreferredNumericType
+    {
+        get
+        {
+            return this.GetPreferredNumericType(this.TypeDeclaration);
         }
     }
 
@@ -2760,7 +2791,7 @@ public partial class CodeGeneratorString
         throw new ArgumentNullException(nameof(value));
     }
 
-    private int GetArrayDimension(TypeDeclaration typeDeclaration)
+    private int GetArrayRank(TypeDeclaration typeDeclaration)
     {
         if (!typeDeclaration.Schema().IsArrayType())
         {
@@ -2773,14 +2804,40 @@ public partial class CodeGeneratorString
             {
                 // This could be an array, so we will recurse
                 TypeDeclaration itemsType = this.Builder.GetTypeDeclarationForProperty(typeDeclaration, "items");
-                return 1 + this.GetArrayDimension(itemsType);
+                return 1 + this.GetArrayRank(itemsType);
             }
         }
 
         return 1;
     }
 
-    private string GetMultiDimensionalArrayItemType(TypeDeclaration typeDeclaration)
+    private int GetArrayDimension(TypeDeclaration typeDeclaration)
+    {
+        return this.GetIsFixedSizeArray(typeDeclaration) ? (int)typeDeclaration.Schema().MinItems : -1;
+    }
+
+    private string GetPreferredNumericType(TypeDeclaration typeDeclaration)
+    {
+        if (!typeDeclaration.Schema().IsArrayType())
+        {
+            if (typeDeclaration.Schema().IsNumberType())
+            {
+                return BuiltInTypes.GetCSharpPrimitiveForNumeric(this.GetImpliedFormat(typeDeclaration));
+            }
+
+            throw new InvalidOperationException("The leaf type was not numeric.");
+        }
+
+        if (typeDeclaration.Schema().Items.IsNotUndefined())
+        {
+            TypeDeclaration itemsType = this.Builder.GetTypeDeclarationForProperty(typeDeclaration, "items");
+            return this.GetPreferredNumericType(itemsType);
+        }
+
+        throw new InvalidOperationException("The deepest array type did not specify its items type.");
+    }
+
+    private string GetLeafArrayItemType(TypeDeclaration typeDeclaration)
     {
         if (!typeDeclaration.Schema().IsArrayType())
         {
@@ -2790,10 +2847,77 @@ public partial class CodeGeneratorString
         if (typeDeclaration.Schema().Items.IsNotUndefined())
         {
             TypeDeclaration itemsType = this.Builder.GetTypeDeclarationForProperty(typeDeclaration, "items");
-            return this.GetMultiDimensionalArrayItemType(itemsType);
+            return this.GetLeafArrayItemType(itemsType);
         }
 
         return $"{BuiltInTypes.AnyTypeDeclaration.Ns}.{BuiltInTypes.AnyTypeDeclaration.Type}";
+    }
+
+    private bool GetIsFixedSizeArray(TypeDeclaration typeDeclaration)
+    {
+        if (!typeDeclaration.Schema().IsArrayType())
+        {
+            return false;
+        }
+
+        if (typeDeclaration.Schema().MinItems.IsUndefined() ||
+            typeDeclaration.Schema().MaxItems.IsUndefined() ||
+            typeDeclaration.Schema().MinItems != typeDeclaration.Schema().MaxItems)
+        {
+            return false;
+        }
+
+        if (typeDeclaration.Schema().Items.IsNotUndefined())
+        {
+            TypeDeclaration itemsType = this.Builder.GetTypeDeclarationForProperty(typeDeclaration, "items");
+            if (itemsType.Schema().IsArrayType())
+            {
+                return this.GetIsFixedSizeArray(itemsType);
+            }
+        }
+
+        return true;
+    }
+
+    private bool GetIsNumericArray(TypeDeclaration typeDeclaration)
+    {
+        if (!typeDeclaration.Schema().IsArrayType())
+        {
+            return typeDeclaration.Schema().IsExplicitNumberType();
+        }
+
+        if (typeDeclaration.Schema().Items.IsNotUndefined())
+        {
+            TypeDeclaration itemsType = this.Builder.GetTypeDeclarationForProperty(typeDeclaration, "items");
+            return this.GetIsNumericArray(itemsType);
+        }
+
+        return false;
+    }
+
+    private int GetArrayValueBufferSize(TypeDeclaration typeDeclaration, int accumulatedValue)
+    {
+        if (!typeDeclaration.Schema().IsArrayType())
+        {
+            return accumulatedValue;
+        }
+
+        if (accumulatedValue == 0)
+        {
+            accumulatedValue = this.GetArrayDimension(typeDeclaration);
+        }
+        else
+        {
+            accumulatedValue *= this.GetArrayDimension(typeDeclaration);
+        }
+
+        if (typeDeclaration.Schema().Items.IsNotUndefined())
+        {
+            TypeDeclaration itemsType = this.Builder.GetTypeDeclarationForProperty(typeDeclaration, "items");
+            accumulatedValue = this.GetArrayValueBufferSize(itemsType, accumulatedValue);
+        }
+
+        return accumulatedValue;
     }
 
     private bool MatchType(string typeToMatch)
