@@ -113,6 +113,10 @@ public static class JsonSchemaHelpers
     {
         return
         [
+            "Rank",
+            "Dimension",
+            "ValueBufferSize",
+            "TryGetNumericValues",
             "SchemaLocation",
             "Item",
             "Add",

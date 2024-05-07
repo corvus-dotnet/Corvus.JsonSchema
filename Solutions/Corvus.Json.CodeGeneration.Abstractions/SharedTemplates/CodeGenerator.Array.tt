@@ -130,7 +130,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
     /// <remarks>
     /// This calculates the array based on the dimension of each rank. It is generally
     /// used to determine the size of the buffer required by
-    /// <see cref="TryGetValues(Span{double}, out int)"/>.
+    /// <see cref="TryGetNumericValues(Span{double}, out int)"/>.
     /// </remarks>
     public static int ValueBufferSize => <#= ArrayValueBufferSize #>;
 <#  } #>
@@ -964,7 +964,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
     /// </summary>
     /// <param name="items">The <see cref="Span{<#= PreferredNumericType #>}"/> to fill with the values in the array.</param>
     /// <param name="written">The number of values written.</param>
-    /// <returns><see langword="true"/> if the array was written successfuly, otherwise <see langword="false" />.</returns>
+    /// <returns><see langword="true"/> if the array was written successfully, otherwise <see langword="false" />.</returns>
     /// <remarks>
     /// You can determine the size of the array to fill by interrogating
     /// <see cref="TotalSize"/>
@@ -975,7 +975,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
 
         if ((this.backing & Backing.Array) != 0)
         {
-            if (items.Length < this.arrayBacking.Count)
+            if (items.Length < <#= TypeDeclaration.DotnetTypeName #>.ValueBufferSize)
             {
                 written = 0;
                 return false;
@@ -983,6 +983,8 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
 
             foreach (var item in this.arrayBacking)
             {
+<#      if (ArrayRank == 1)
+        { #>
                 if (item.ValueKind != JsonValueKind.Number)
                 {
                     written = 0;
@@ -990,7 +992,22 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
                 }
 
                 items[index++] = (<#= PreferredNumericType #>)item.AsNumber;
+<#      }
+        else
+        { #>
+                <#= SingleItemsDotnetTypeName #> child = item.As<<#= SingleItemsDotnetTypeName #>>();
+
+                if (!child.TryGetNumericValues(items[index..], out int writtenChildren))
+                {
+                    written = 0;
+                    return false;
+                }
+
+                index += writtenChildren;
+
+<#      } #>
             }
+
             written = index;
             return true;
         }
@@ -1001,7 +1018,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
             return false;
         }
 
-        if (items.Length < this.jsonElementBacking.GetArrayLength())
+        if (items.Length < <#= TypeDeclaration.DotnetTypeName #>.ValueBufferSize)
         {
             written = 0;
             return false;
@@ -1009,14 +1026,86 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
 
         foreach (JsonElement jsonElement in this.jsonElementBacking.EnumerateArray())
         {
+<#      if (ArrayRank == 1)
+        { 
+            string preferredNumericType = PreferredNumericType; 
+#>
             if (jsonElement.ValueKind != JsonValueKind.Number ||
-                !jsonElement.TryGetDouble(out <#= PreferredNumericType #> value))
+<#          if (preferredNumericType == "double")
+            { #>
+                !jsonElement.TryGetDouble(out double value))
+<#          }
+            else if (preferredNumericType == "float")
+            { #>
+                !jsonElement.TryGetSingle(out float value))
+<#          }
+            else if (preferredNumericType == "decimal")
+            { #>
+                !jsonElement.TryGetDecimal(out decimal value))
+<#          }
+            else if (preferredNumericType == "Half")
+            { #>
+                !jsonElement.TryGetHalf(out Half value))
+<#          }
+            else if (preferredNumericType == "sbyte")
+            { #>
+                !jsonElement.TryGetSByte(out sbyte value))
+<#          }
+            else if (preferredNumericType == "short")
+            { #>
+                !jsonElement.TryGetUInt16(out short value))
+<#          }
+            else if (preferredNumericType == "int")
+            { #>
+                !jsonElement.TryGetInt32(out int value))
+<#          }
+            else if (preferredNumericType == "long")
+            { #>
+                !jsonElement.TryGetInt64(out long value))
+<#          }
+            else if (preferredNumericType == "Int128")
+            { #>
+                !jsonElement.TryGetInt128(out Int128 value))
+<#          }
+            else if (preferredNumericType == "byte")
+            { #>
+                !jsonElement.TryGetByte(out byte value))
+<#          }
+            else if (preferredNumericType == "ushort")
+            { #>
+                !jsonElement.TryGetUInt16(out ushort value))
+<#          }
+            else if (preferredNumericType == "uint")
+            { #>
+                !jsonElement.TryGetUInt32(out uint value))
+<#          }
+            else if (preferredNumericType == "ulong")
+            { #>
+                !jsonElement.TryGetUInt64(out ulong value))
+<#          }
+            else if (preferredNumericType == "UInt128")
+            { #>
+                !jsonElement.TryGetUInt128(out UInt128 value))
+<#          } #>
             {
                 written = 0;
                 return false;
             }
 
             items[index++] = value;
+<#      }
+        else
+        { #>
+            <#= SingleItemsDotnetTypeName #> child = <#= SingleItemsDotnetTypeName #>.FromJson(jsonElement);
+
+            if (!child.TryGetNumericValues(items[index..], out int writtenChildren))
+            {
+                written = 0;
+                return false;
+            }
+
+            index += writtenChildren;
+<#      } #>
         }
 
         written = index;

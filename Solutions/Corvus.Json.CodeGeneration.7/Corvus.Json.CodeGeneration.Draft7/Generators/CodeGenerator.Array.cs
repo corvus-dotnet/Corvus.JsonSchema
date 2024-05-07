@@ -16,7 +16,7 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft7 {
     public partial class CodeGeneratorArray : CodeGeneratorArrayBase {
         
         
-        #line 1268 "CodeGenerator.Array.tt"
+        #line 1357 "CodeGenerator.Array.tt"
 
     public bool ShouldGenerate
     {
@@ -573,7 +573,7 @@ namespace ");
     /// <remarks>
     /// This calculates the array based on the dimension of each rank. It is generally
     /// used to determine the size of the buffer required by
-    /// <see cref=""TryGetValues(Span{double}, out int)""/>.
+    /// <see cref=""TryGetNumericValues(Span{double}, out int)""/>.
     /// </remarks>
     public static int ValueBufferSize => ");
             
@@ -3012,7 +3012,7 @@ namespace ");
             #line 975 "CodeGenerator.Array.tt"
             this.Write(@"}""/> to fill with the values in the array.</param>
     /// <param name=""written"">The number of values written.</param>
-    /// <returns><see langword=""true""/> if the array was written successfuly, otherwise <see langword=""false"" />.</returns>
+    /// <returns><see langword=""true""/> if the array was written successfully, otherwise <see langword=""false"" />.</returns>
     /// <remarks>
     /// You can determine the size of the array to fill by interrogating
     /// <see cref=""TotalSize""/>
@@ -3029,40 +3029,103 @@ namespace ");
             #line hidden
             
             #line 982 "CodeGenerator.Array.tt"
-            this.Write(@"> items, out int written)
-    {
-        int index = 0;
-
-        if ((this.backing & Backing.Array) != 0)
-        {
-            if (items.Length < this.arrayBacking.Count)
-            {
-                written = 0;
-                return false;
-            }
-
-            foreach (var item in this.arrayBacking)
-            {
-                if (item.ValueKind != JsonValueKind.Number)
-                {
-                    written = 0;
-                    return false;
-                }
-
-                items[index++] = (");
+            this.Write("> items, out int written)\r\n    {\r\n        int index = 0;\r\n\r\n        if ((this.bac" +
+                    "king & Backing.Array) != 0)\r\n        {\r\n            if (items.Length < ");
             
             #line default
             #line hidden
             
-            #line 1002 "CodeGenerator.Array.tt"
+            #line 988 "CodeGenerator.Array.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 988 "CodeGenerator.Array.tt"
+            this.Write(".ValueBufferSize)\r\n            {\r\n                written = 0;\r\n                r" +
+                    "eturn false;\r\n            }\r\n\r\n            foreach (var item in this.arrayBackin" +
+                    "g)\r\n            {\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 996 "CodeGenerator.Array.tt"
+      if (ArrayRank == 1)
+        { 
+            
+            #line default
+            #line hidden
+            
+            #line 998 "CodeGenerator.Array.tt"
+            this.Write("                if (item.ValueKind != JsonValueKind.Number)\r\n                {\r\n " +
+                    "                   written = 0;\r\n                    return false;\r\n            " +
+                    "    }\r\n\r\n                items[index++] = (");
+            
+            #line default
+            #line hidden
+            
+            #line 1004 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( PreferredNumericType ));
             
             #line default
             #line hidden
             
-            #line 1002 "CodeGenerator.Array.tt"
-            this.Write(@")item.AsNumber;
-            }
+            #line 1004 "CodeGenerator.Array.tt"
+            this.Write(")item.AsNumber;\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 1005 "CodeGenerator.Array.tt"
+      }
+        else
+        { 
+            
+            #line default
+            #line hidden
+            
+            #line 1008 "CodeGenerator.Array.tt"
+            this.Write("                ");
+            
+            #line default
+            #line hidden
+            
+            #line 1008 "CodeGenerator.Array.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 1008 "CodeGenerator.Array.tt"
+            this.Write(" child = item.As<");
+            
+            #line default
+            #line hidden
+            
+            #line 1008 "CodeGenerator.Array.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 1008 "CodeGenerator.Array.tt"
+            this.Write(">();\r\n\r\n                if (!child.TryGetNumericValues(items[index..], out int wr" +
+                    "ittenChildren))\r\n                {\r\n                    written = 0;\r\n          " +
+                    "          return false;\r\n                }\r\n\r\n                index += writtenCh" +
+                    "ildren;\r\n\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 1018 "CodeGenerator.Array.tt"
+      } 
+            
+            #line default
+            #line hidden
+            
+            #line 1019 "CodeGenerator.Array.tt"
+            this.Write(@"            }
+
             written = index;
             return true;
         }
@@ -3073,72 +3136,339 @@ namespace ");
             return false;
         }
 
-        if (items.Length < this.jsonElementBacking.GetArrayLength())
-        {
-            written = 0;
-            return false;
-        }
-
-        foreach (JsonElement jsonElement in this.jsonElementBacking.EnumerateArray())
-        {
-            if (jsonElement.ValueKind != JsonValueKind.Number ||
-                !jsonElement.TryGetDouble(out ");
+        if (items.Length < ");
             
             #line default
             #line hidden
             
-            #line 1023 "CodeGenerator.Array.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( PreferredNumericType ));
+            #line 1031 "CodeGenerator.Array.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 1023 "CodeGenerator.Array.tt"
-            this.Write(" value))\r\n            {\r\n                written = 0;\r\n                return fal" +
-                    "se;\r\n            }\r\n\r\n            items[index++] = value;\r\n        }\r\n\r\n        " +
-                    "written = index;\r\n        return true;\r\n    }\r\n");
-            
-            #line default
-            #line hidden
-            
-            #line 1035 "CodeGenerator.Array.tt"
-  } 
-            
-            #line default
-            #line hidden
-            
-            #line 1036 "CodeGenerator.Array.tt"
-            this.Write("\r\n    /// <inheritdoc/>\r\n\r\n");
+            #line 1031 "CodeGenerator.Array.tt"
+            this.Write(".ValueBufferSize)\r\n        {\r\n            written = 0;\r\n            return false;" +
+                    "\r\n        }\r\n\r\n        foreach (JsonElement jsonElement in this.jsonElementBacki" +
+                    "ng.EnumerateArray())\r\n        {\r\n");
             
             #line default
             #line hidden
             
             #line 1039 "CodeGenerator.Array.tt"
+      if (ArrayRank == 1)
+        { 
+            string preferredNumericType = PreferredNumericType; 
+
+            
+            #line default
+            #line hidden
+            
+            #line 1043 "CodeGenerator.Array.tt"
+            this.Write("            if (jsonElement.ValueKind != JsonValueKind.Number ||\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 1044 "CodeGenerator.Array.tt"
+          if (preferredNumericType == "double")
+            { 
+            
+            #line default
+            #line hidden
+            
+            #line 1046 "CodeGenerator.Array.tt"
+            this.Write("                !jsonElement.TryGetDouble(out double value))\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 1047 "CodeGenerator.Array.tt"
+          }
+            else if (preferredNumericType == "float")
+            { 
+            
+            #line default
+            #line hidden
+            
+            #line 1050 "CodeGenerator.Array.tt"
+            this.Write("                !jsonElement.TryGetSingle(out float value))\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 1051 "CodeGenerator.Array.tt"
+          }
+            else if (preferredNumericType == "decimal")
+            { 
+            
+            #line default
+            #line hidden
+            
+            #line 1054 "CodeGenerator.Array.tt"
+            this.Write("                !jsonElement.TryGetDecimal(out decimal value))\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 1055 "CodeGenerator.Array.tt"
+          }
+            else if (preferredNumericType == "Half")
+            { 
+            
+            #line default
+            #line hidden
+            
+            #line 1058 "CodeGenerator.Array.tt"
+            this.Write("                !jsonElement.TryGetHalf(out Half value))\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 1059 "CodeGenerator.Array.tt"
+          }
+            else if (preferredNumericType == "sbyte")
+            { 
+            
+            #line default
+            #line hidden
+            
+            #line 1062 "CodeGenerator.Array.tt"
+            this.Write("                !jsonElement.TryGetSByte(out sbyte value))\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 1063 "CodeGenerator.Array.tt"
+          }
+            else if (preferredNumericType == "short")
+            { 
+            
+            #line default
+            #line hidden
+            
+            #line 1066 "CodeGenerator.Array.tt"
+            this.Write("                !jsonElement.TryGetUInt16(out short value))\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 1067 "CodeGenerator.Array.tt"
+          }
+            else if (preferredNumericType == "int")
+            { 
+            
+            #line default
+            #line hidden
+            
+            #line 1070 "CodeGenerator.Array.tt"
+            this.Write("                !jsonElement.TryGetInt32(out int value))\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 1071 "CodeGenerator.Array.tt"
+          }
+            else if (preferredNumericType == "long")
+            { 
+            
+            #line default
+            #line hidden
+            
+            #line 1074 "CodeGenerator.Array.tt"
+            this.Write("                !jsonElement.TryGetInt64(out long value))\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 1075 "CodeGenerator.Array.tt"
+          }
+            else if (preferredNumericType == "Int128")
+            { 
+            
+            #line default
+            #line hidden
+            
+            #line 1078 "CodeGenerator.Array.tt"
+            this.Write("                !jsonElement.TryGetInt128(out Int128 value))\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 1079 "CodeGenerator.Array.tt"
+          }
+            else if (preferredNumericType == "byte")
+            { 
+            
+            #line default
+            #line hidden
+            
+            #line 1082 "CodeGenerator.Array.tt"
+            this.Write("                !jsonElement.TryGetByte(out byte value))\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 1083 "CodeGenerator.Array.tt"
+          }
+            else if (preferredNumericType == "ushort")
+            { 
+            
+            #line default
+            #line hidden
+            
+            #line 1086 "CodeGenerator.Array.tt"
+            this.Write("                !jsonElement.TryGetUInt16(out ushort value))\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 1087 "CodeGenerator.Array.tt"
+          }
+            else if (preferredNumericType == "uint")
+            { 
+            
+            #line default
+            #line hidden
+            
+            #line 1090 "CodeGenerator.Array.tt"
+            this.Write("                !jsonElement.TryGetUInt32(out uint value))\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 1091 "CodeGenerator.Array.tt"
+          }
+            else if (preferredNumericType == "ulong")
+            { 
+            
+            #line default
+            #line hidden
+            
+            #line 1094 "CodeGenerator.Array.tt"
+            this.Write("                !jsonElement.TryGetUInt64(out ulong value))\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 1095 "CodeGenerator.Array.tt"
+          }
+            else if (preferredNumericType == "UInt128")
+            { 
+            
+            #line default
+            #line hidden
+            
+            #line 1098 "CodeGenerator.Array.tt"
+            this.Write("                !jsonElement.TryGetUInt128(out UInt128 value))\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 1099 "CodeGenerator.Array.tt"
+          } 
+            
+            #line default
+            #line hidden
+            
+            #line 1100 "CodeGenerator.Array.tt"
+            this.Write("            {\r\n                written = 0;\r\n                return false;\r\n     " +
+                    "       }\r\n\r\n            items[index++] = value;\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 1106 "CodeGenerator.Array.tt"
+      }
+        else
+        { 
+            
+            #line default
+            #line hidden
+            
+            #line 1109 "CodeGenerator.Array.tt"
+            this.Write("            ");
+            
+            #line default
+            #line hidden
+            
+            #line 1109 "CodeGenerator.Array.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 1109 "CodeGenerator.Array.tt"
+            this.Write(" child = ");
+            
+            #line default
+            #line hidden
+            
+            #line 1109 "CodeGenerator.Array.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 1109 "CodeGenerator.Array.tt"
+            this.Write(".FromJson(jsonElement);\r\n\r\n            if (!child.TryGetNumericValues(items[index" +
+                    "..], out int writtenChildren))\r\n            {\r\n                written = 0;\r\n   " +
+                    "             return false;\r\n            }\r\n\r\n            index += writtenChildre" +
+                    "n;\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 1118 "CodeGenerator.Array.tt"
+      } 
+            
+            #line default
+            #line hidden
+            
+            #line 1119 "CodeGenerator.Array.tt"
+            this.Write("        }\r\n\r\n        written = index;\r\n        return true;\r\n    }\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 1124 "CodeGenerator.Array.tt"
+  } 
+            
+            #line default
+            #line hidden
+            
+            #line 1125 "CodeGenerator.Array.tt"
+            this.Write("\r\n    /// <inheritdoc/>\r\n\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 1128 "CodeGenerator.Array.tt"
   if (CanEnumerateAsSpecificType || IsTuple)
     { 
             
             #line default
             #line hidden
             
-            #line 1041 "CodeGenerator.Array.tt"
+            #line 1130 "CodeGenerator.Array.tt"
             this.Write("    JsonArrayEnumerator<TItem> IJsonArray<");
             
             #line default
             #line hidden
             
-            #line 1041 "CodeGenerator.Array.tt"
+            #line 1130 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 1041 "CodeGenerator.Array.tt"
+            #line 1130 "CodeGenerator.Array.tt"
             this.Write(">.EnumerateArray<TItem>()\r\n");
             
             #line default
             #line hidden
             
-            #line 1042 "CodeGenerator.Array.tt"
+            #line 1131 "CodeGenerator.Array.tt"
   }
     else
     { 
@@ -3146,20 +3476,20 @@ namespace ");
             #line default
             #line hidden
             
-            #line 1045 "CodeGenerator.Array.tt"
+            #line 1134 "CodeGenerator.Array.tt"
             this.Write("    public JsonArrayEnumerator<TItem> EnumerateArray<TItem>()\r\n        where TIte" +
                     "m : struct, IJsonValue<TItem>\r\n");
             
             #line default
             #line hidden
             
-            #line 1047 "CodeGenerator.Array.tt"
+            #line 1136 "CodeGenerator.Array.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 1048 "CodeGenerator.Array.tt"
+            #line 1137 "CodeGenerator.Array.tt"
             this.Write("    {\r\n        if ((this.backing & Backing.JsonElement) != 0)\r\n        {\r\n       " +
                     "     return new JsonArrayEnumerator<TItem>(this.jsonElementBacking);\r\n        }\r" +
                     "\n\r\n        if ((this.backing & Backing.Array) != 0)\r\n        {\r\n            retu" +
@@ -3283,7 +3613,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 1267 "CodeGenerator.Array.tt"
+            #line 1356 "CodeGenerator.Array.tt"
  EndNesting(); 
             
             #line default

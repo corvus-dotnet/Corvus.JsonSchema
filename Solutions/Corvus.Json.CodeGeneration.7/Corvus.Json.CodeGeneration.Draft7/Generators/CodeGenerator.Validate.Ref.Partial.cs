@@ -2668,7 +2668,14 @@ public partial class CodeGeneratorValidateRef
             return accumulatedValue;
         }
 
-        accumulatedValue *= this.GetArrayDimension(typeDeclaration);
+        if (accumulatedValue == 0)
+        {
+            accumulatedValue = this.GetArrayDimension(typeDeclaration);
+        }
+        else
+        {
+            accumulatedValue *= this.GetArrayDimension(typeDeclaration);
+        }
 
         if (typeDeclaration.Schema().Items.IsNotUndefined())
         {
