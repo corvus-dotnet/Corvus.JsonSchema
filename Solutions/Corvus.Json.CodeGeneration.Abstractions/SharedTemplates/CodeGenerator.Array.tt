@@ -630,7 +630,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
         return new(builder.ToImmutable());
     }
 <#  }
-    else if (!IsTuple)
+    else if (!IsTuple && !(IsFixedSizeArray && IsNumericArray))
     {#>
     /// <summary>
     /// Create an array from the span of items.
@@ -746,10 +746,6 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
     /// </summary>
     /// <param name = "items">The items from which to create the array.</param>
     /// <returns>The new array created from the items.</returns>
-    /// <remarks>
-    /// This will serialize the items to create the underlying JsonArray. Note the
-    /// other overloads which avoid this serialization step.
-    /// </remarks>
     public static <#= TypeDeclaration.DotnetTypeName #> FromRange(IEnumerable<JsonAny> items)
     {
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
@@ -766,10 +762,6 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
     /// </summary>
     /// <param name = "items">The items from which to create the array.</param>
     /// <returns>The new array created from the items.</returns>
-    /// <remarks>
-    /// This will serialize the items to create the underlying JsonArray. Note the
-    /// other overloads which avoid this serialization step.
-    /// </remarks>
     public static <#= TypeDeclaration.DotnetTypeName #> FromRange<T>(IEnumerable<T> items)
         where T : struct, IJsonValue<T>
     {
@@ -783,7 +775,20 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
     }
 <#  }
     else
-    { #>
+    { 
+        if (IsFixedSizeArray && IsNumericArray)
+        {#>
+    /// <summary>
+    /// Create an array from the span of items.
+    /// </summary>
+    /// <param name="items">The items from which to create the array.</param>
+    /// <returns>The array containing the items.</returns>
+    public static <#= TypeDeclaration.DotnetTypeName #> Create(ReadOnlySpan<<#= SingleItemsDotnetTypeName #>> items)
+    {
+        return new([..items]);
+    }
+
+<#      } #>
 #if NET8_0_OR_GREATER
     /// <summary>
     /// Create an array from the given items.
@@ -826,6 +831,70 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
     }
 #endif
 <#  }
+
+    if (CanEnumerateAsSpecificType && IsFixedSizeArray && IsNumericArray)
+    { 
+        if (ArrayRank > 1)
+        {#>
+
+    /// <summary>
+    /// Creates an instance of the array of rank <#= ArrayRank #>, dimension <#= ArrayDimension #>, from the given values.
+    /// </summary>
+    /// <param name="values">The numeric values from which to create the array.</param>
+    /// <returns>An instance of the array populated from the given values.</returns>
+    /// <remarks>
+    /// The values should be of length <#= ArrayValueBufferSize #>.
+    /// </remarks>
+    public static <#= TypeDeclaration.DotnetTypeName #> FromValues(ReadOnlySpan<<#= PreferredNumericType #>> values)
+    {
+        if (values.Length != <#= ArrayValueBufferSize #>)
+        {
+            throw new ArgumentException(nameof(values));
+        }
+
+        ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
+
+        int index = 0;
+        while (index < values.Length)
+        {
+            <#= SingleItemsDotnetTypeName #> child = <#= SingleItemsDotnetTypeName #>.FromValues(values[index..(index + <#= ChildArrayValueBufferSize #>)]);
+            builder.Add(child);
+            index += child.GetArrayLength();
+        }
+
+        return new(builder.ToImmutable());
+    }
+<#      }
+        else
+        { #>
+
+    /// <summary>
+    /// Creates an instance of the array of rank 1, dimension 2 from the given values.
+    /// </summary>
+    /// <param name="values">The numeric values from which to create the array.</param>
+    /// <returns>An instance of the array populated from the given values.</returns>
+    /// <remarks>
+    /// The values should be of length <#= ArrayValueBufferSize #>.
+    /// </remarks>
+    public static <#= TypeDeclaration.DotnetTypeName #> FromValues(ReadOnlySpan<<#= PreferredNumericType #>> values)
+    {
+        if (values.Length != <#= ArrayValueBufferSize #>)
+        {
+            throw new ArgumentException(nameof(values));
+        }
+        
+        ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
+
+        int index = 0;
+        while (index < Dimension)
+        {
+            builder.Add((JsonAny)values[index++]);
+        }
+
+        return new(builder.ToImmutable());
+    }
+<#      }
+    }
 
     if (IsTuple)
     { #>

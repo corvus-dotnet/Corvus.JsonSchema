@@ -1409,6 +1409,11 @@ public partial class CodeGeneratorValidateRef
     public int ArrayValueBufferSize => this.GetArrayValueBufferSize(this.TypeDeclaration, 0);
 
     /// <summary>
+    /// Gets the buffer size required by the child rank.
+    /// </summary>
+    public int ChildArrayValueBufferSize => this.GetChildArrayValueBufferSize(this.TypeDeclaration);
+
+    /// <summary>
     /// Gets a value indicating whether the array is a numeric array.
     /// </summary>
     public bool IsNumericArray => this.GetIsNumericArray(this.TypeDeclaration);
@@ -2585,6 +2590,22 @@ public partial class CodeGeneratorValidateRef
         }
 
         return accumulatedValue;
+    }
+
+    private int GetChildArrayValueBufferSize(TypeDeclaration typeDeclaration)
+    {
+        if (!typeDeclaration.Schema().IsArrayType())
+        {
+            return 0;
+        }
+
+        if (typeDeclaration.Schema().Items.IsNotUndefined())
+        {
+            TypeDeclaration itemsType = this.Builder.GetTypeDeclarationForProperty(typeDeclaration, "items");
+            return this.GetArrayValueBufferSize(itemsType, 0);
+        }
+
+        return 0;
     }
 
     private bool MatchType(string typeToMatch)
