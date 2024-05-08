@@ -5,7 +5,11 @@
 using System.Collections.Immutable;
 using System.Linq.Expressions;
 using System.Reflection;
+#if NET8_0_OR_GREATER
 using System.Runtime.Loader;
+using System.Security.Cryptography.X509Certificates;
+
+#endif
 using System.Text;
 using System.Text.Json;
 using Corvus.Json;
@@ -33,6 +37,10 @@ global using global::System.Linq;
 global using global::System.Net.Http;
 global using global::System.Threading;
 global using global::System.Threading.Tasks;";
+
+    private static readonly MethodInfo AsSpanMethod = GetAsSpanMethod();
+
+    private static readonly MethodInfo SequenceEqualMethod = GetSequenceEqualMethod();
 
     private readonly IConfiguration configuration;
     private readonly IJsonSchemaBuilder builder;
@@ -195,6 +203,88 @@ global using global::System.Threading.Tasks;";
     }
 
     /// <summary>
+    /// Create an instance of a numeric array type from an array of values.
+    /// </summary>
+    /// <typeparam name="TItems">The type of the items in the array.</typeparam>
+    /// <param name="instanceType">The numeric array instance type.</param>
+    /// <param name="values">The values from which to create the numeric array.</param>
+    /// <returns>An instance of the requested type, as an <see cref="IJsonValue"/>.</returns>
+    /// <exception cref="InvalidOperationException">The Create(ReadOnlySpan{TItems}) method was not found on the instance type..</exception>
+    public IJsonValue CreateInstanceOfNumericArrayFromValues<TItems>(Type instanceType, TItems[] values)
+    {
+        ParameterExpression p = Expression.Parameter(typeof(TItems[]));
+        MethodInfo? createMethod = instanceType.GetMethod("FromValues", BindingFlags.Static | BindingFlags.Public, null, [typeof(ReadOnlySpan<TItems>)], null);
+        MethodInfo asSpanMethod = AsSpanMethod.MakeGenericMethod(typeof(TItems));
+
+        if (createMethod is MethodInfo mInfo)
+        {
+            UnaryExpression arrayToReadOnlySpan =
+                Expression.ConvertChecked(
+                    Expression.Call(null, asSpanMethod, p), typeof(ReadOnlySpan<TItems>));
+
+            MethodCallExpression callTargetTypeCreateWithTheReadOnlySpanOfValues = Expression.Call(null, mInfo, arrayToReadOnlySpan);
+            UnaryExpression convertResultToIJsonValue = Expression.ConvertChecked(callTargetTypeCreateWithTheReadOnlySpanOfValues, typeof(IJsonValue));
+            Func<TItems[], IJsonValue> func = Expression.Lambda<Func<TItems[], IJsonValue>>(convertResultToIJsonValue, p).Compile();
+            return func(values);
+        }
+
+        throw new InvalidOperationException($"Unable to find FromValues(ReadOnlySpan<{typeof(TItems)}>) on {instanceType.Name}");
+    }
+
+    /// <summary>
+    /// Compare an instance of a numeric array type with an array of values.
+    /// </summary>
+    /// <typeparam name="TItems">The type of the items in the array.</typeparam>
+    /// <param name="instanceType">The numeric array instance type.</param>
+    /// <param name="instance">The actual instance of the given type.</param>
+    /// <param name="values">The values with which to compare the numeric array.</param>
+    /// <returns><see langword="true"/> if the values are equals.</returns>
+    /// <exception cref="InvalidOperationException">The Create(ReadOnlySpan{TItems}) method was not found on the instance type..</exception>
+    public bool CompareInstanceOfNumericArrayWithValues<TItems>(Type instanceType, IJsonValue instance, TItems[] values)
+    {
+        ParameterExpression p1 = Expression.Parameter(typeof(IJsonValue));
+        ParameterExpression p2 = Expression.Parameter(typeof((TItems[], TItems[], int)));
+        MethodInfo? tryGetNumericValuesMethod = instanceType.GetMethod("TryGetNumericValues", BindingFlags.Instance | BindingFlags.Public, null, [typeof(Span<TItems>), typeof(int).MakeByRefType()], null);
+        MethodInfo asSpanMethod = AsSpanMethod.MakeGenericMethod(typeof(TItems));
+        MethodInfo sequenceEqualMethod = SequenceEqualMethod.MakeGenericMethod(typeof(TItems));
+
+        if (tryGetNumericValuesMethod is MethodInfo mInfo)
+        {
+            UnaryExpression castInstanceToInstanceType =
+                Expression.ConvertChecked(Expression.Constant(instance), instanceType);
+
+            NewArrayExpression constructTargetArray = Expression.NewArrayBounds(typeof(TItems), Expression.Property(null, instanceType, "ValueBufferSize"));
+
+            BinaryExpression assignTargetArray = Expression.Assign(Expression.PropertyOrField(p2, "Item2"), constructTargetArray);
+
+            MethodCallExpression outputSpan = Expression.Call(null, asSpanMethod, Expression.PropertyOrField(p2, "Item2"));
+
+            MethodCallExpression expectedSpan = Expression.Call(null, asSpanMethod, Expression.PropertyOrField(p2, "Item1"));
+
+            MethodCallExpression callTryGetNumericValues =
+                Expression.Call(castInstanceToInstanceType, mInfo, outputSpan, Expression.PropertyOrField(p2, "Item3"));
+
+            MethodCallExpression sequenceEqualExpression =
+                Expression.Call(
+                    null,
+                    sequenceEqualMethod,
+                    Expression.ConvertChecked(expectedSpan, typeof(ReadOnlySpan<TItems>)),
+                    Expression.ConvertChecked(outputSpan, typeof(ReadOnlySpan<TItems>)));
+
+            BlockExpression block =
+                Expression.Block(
+                    assignTargetArray,
+                    callTryGetNumericValues,
+                    sequenceEqualExpression);
+
+            Func<IJsonValue, (TItems[], TItems[], int), bool> func = Expression.Lambda<Func<IJsonValue, (TItems[], TItems[], int), bool>>(block, p1, p2).Compile();
+            return func(instance, (values, Array.Empty<TItems>(), 0));
+        }
+
+        throw new InvalidOperationException($"Unable to find TryGetNumericValues(ReadOnlySpan<{typeof(TItems)}>) on {instanceType.Name}");
+    }
+
+    /// <summary>
     /// Create an instance of the given <see cref="IJsonValue"/> type from
     /// the json data provided.
     /// </summary>
@@ -326,6 +416,46 @@ global using global::System.Threading.Tasks;";
         UnaryExpression c = Expression.ConvertChecked(p, targetType);
         UnaryExpression toIJsonValue = Expression.ConvertChecked(c, typeof(IJsonValue));
         return Expression.Lambda<Func<TSource, IJsonValue>>(toIJsonValue, p).Compile();
+    }
+
+    private static MethodInfo GetAsSpanMethod()
+    {
+        var items = typeof(MemoryExtensions)
+                    .GetMethods(BindingFlags.Static | BindingFlags.Public)
+                    .Where(m => m.Name == "AsSpan")
+                    .Select(
+                        m => new
+                        {
+                            Method = m,
+                            Params = m.GetParameters(),
+                            Args = m.GetGenericArguments(),
+                        })
+                    .Where(x => x.Params.Length == 1 && x.Args.Length == 1 && x.Params[0].ParameterType == x.Args[0].MakeArrayType());
+
+        return items
+                    .Select(x => x.Method)
+                    .First();
+    }
+
+    private static MethodInfo GetSequenceEqualMethod()
+    {
+        var items = typeof(MemoryExtensions)
+                    .GetMethods(BindingFlags.Static | BindingFlags.Public)
+                    .Where(m => m.Name == "SequenceEqual")
+                    .Select(
+                        m => new
+                        {
+                            Method = m,
+                            Params = m.GetParameters(),
+                            Args = m.GetGenericArguments(),
+                        })
+                    .Where(x => x.Params.Length == 2 && x.Args.Length == 1);
+
+        return items
+            .Where(x => x.Params[0].ParameterType == typeof(ReadOnlySpan<>).MakeGenericType(x.Args[0])
+                                && x.Params[1].ParameterType == typeof(ReadOnlySpan<>).MakeGenericType(x.Args[0]))
+            .Select(x => x.Method)
+            .First();
     }
 
 #if NET8_0_OR_GREATER

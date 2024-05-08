@@ -273,10 +273,6 @@ public readonly partial struct PersonNameElementArray : IJsonArray<PersonNameEle
     /// </summary>
     /// <param name = "items">The items from which to create the array.</param>
     /// <returns>The new array created from the items.</returns>
-    /// <remarks>
-    /// This will serialize the items to create the underlying JsonArray. Note the
-    /// other overloads which avoid this serialization step.
-    /// </remarks>
     public static PersonNameElementArray FromRange(IEnumerable<JsonAny> items)
     {
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
@@ -293,10 +289,6 @@ public readonly partial struct PersonNameElementArray : IJsonArray<PersonNameEle
     /// </summary>
     /// <param name = "items">The items from which to create the array.</param>
     /// <returns>The new array created from the items.</returns>
-    /// <remarks>
-    /// This will serialize the items to create the underlying JsonArray. Note the
-    /// other overloads which avoid this serialization step.
-    /// </remarks>
     public static PersonNameElementArray FromRange<T>(IEnumerable<T> items)
         where T : struct, IJsonValue<T>
     {

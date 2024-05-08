@@ -971,7 +971,7 @@ namespace ");
             #line hidden
             
             #line 196 "CodeGenerator.Array.Add.tt"
-  if (ArrayDimension > 1)
+  if (ArrayRank > 1)
     {
             
             #line default
@@ -985,7 +985,7 @@ namespace ");
             #line hidden
             
             #line 199 "CodeGenerator.Array.Add.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( ArrayDimension ));
+            this.Write(this.ToStringHelper.ToStringWithCulture( ArrayRank ));
             
             #line default
             #line hidden
@@ -997,7 +997,7 @@ namespace ");
             #line hidden
             
             #line 201 "CodeGenerator.Array.Add.tt"
-      for(int arrayDim = 1; arrayDim <= ArrayDimension; ++arrayDim)
+      for(int arrayDim = 1; arrayDim <= ArrayRank; ++arrayDim)
         { 
             
             #line default
@@ -1059,7 +1059,7 @@ namespace ");
             #line hidden
             
             #line 206 "CodeGenerator.Array.Add.tt"
- for(int arrayDim = 1; arrayDim <= ArrayDimension; ++arrayDim) {
+ for(int arrayDim = 1; arrayDim <= ArrayRank; ++arrayDim) {
             
             #line default
             #line hidden
@@ -1095,7 +1095,7 @@ namespace ");
             #line hidden
             
             #line 208 "CodeGenerator.Array.Add.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( MultiDimensionalArrayItemType ));
+            this.Write(this.ToStringHelper.ToStringWithCulture( LeafArrayItemType ));
             
             #line default
             #line hidden
@@ -1107,7 +1107,7 @@ namespace ");
             #line hidden
             
             #line 210 "CodeGenerator.Array.Add.tt"
- for(int arrayDim = 2; arrayDim <= ArrayDimension; ++arrayDim) {
+ for(int arrayDim = 2; arrayDim <= ArrayRank; ++arrayDim) {
             
             #line default
             #line hidden
