@@ -38,9 +38,12 @@
 
 	<ItemGroup>
 	  <SpecFlowObsoleteCodeBehindFiles Remove="Features\AdditionalSchema\Draft201909\derived-numeric-type.feature.cs" />
+	  <SpecFlowObsoleteCodeBehindFiles Remove="Features\AdditionalSchema\Draft201909\fixed-size-numeric-arays.feature.cs" />
 	  <SpecFlowObsoleteCodeBehindFiles Remove="Features\AdditionalSchema\Draft202012\derived-numeric-type - Copy.feature.cs" />
 	  <SpecFlowObsoleteCodeBehindFiles Remove="Features\AdditionalSchema\Draft6\derived-numeric-type.feature.cs" />
+	  <SpecFlowObsoleteCodeBehindFiles Remove="Features\AdditionalSchema\Draft6\fixed-size-numeric-arrays.feature.cs" />
 	  <SpecFlowObsoleteCodeBehindFiles Remove="Features\AdditionalSchema\Draft7\derived-numeric-type.feature.cs" />
+	  <SpecFlowObsoleteCodeBehindFiles Remove="Features\AdditionalSchema\Draft7\fixed-size-numeric-arrays.feature.cs" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -80,13 +83,22 @@
 	  <Compile Update="Features\AdditionalSchema\Draft201909\derived-numeric-type.feature.cs">
 	    <DependentUpon>%(Filename)</DependentUpon>
 	  </Compile>
+	  <Compile Update="Features\AdditionalSchema\Draft201909\fixed-size-numeric-arrays.feature.cs">
+	    <DependentUpon>fixed-size-numeric-arrays.feature</DependentUpon>
+	  </Compile>
 	  <Compile Update="Features\AdditionalSchema\Draft202012\derived-numeric-type-net80.feature.cs">
 	    <DependentUpon>derived-numeric-type-net80.feature</DependentUpon>
 	  </Compile>
 	  <Compile Update="Features\AdditionalSchema\Draft6\derived-numeric-type.feature.cs">
 	    <DependentUpon>%(Filename)</DependentUpon>
 	  </Compile>
+	  <Compile Update="Features\AdditionalSchema\Draft6\fixed-size-numeric-arrays.feature.cs">
+	    <DependentUpon>%(Filename)</DependentUpon>
+	  </Compile>
 	  <Compile Update="Features\AdditionalSchema\Draft7\derived-numeric-type.feature.cs">
+	    <DependentUpon>%(Filename)</DependentUpon>
+	  </Compile>
+	  <Compile Update="Features\AdditionalSchema\Draft7\fixed-size-numeric-arrays.feature.cs">
 	    <DependentUpon>%(Filename)</DependentUpon>
 	  </Compile>
 	</ItemGroup>
@@ -111,6 +123,10 @@
 	    <Visible>$(UsingMicrosoftNETSdk)</Visible>
 	    <CodeBehindFile>%(RelativeDir)%(Filename).feature$(DefaultLanguageSourceExtension)</CodeBehindFile>
 	  </SpecFlowFeatureFiles>
+	  <SpecFlowFeatureFiles Update="Features\AdditionalSchema\Draft201909\fixed-size-numeric-arrays.feature">
+	    <Visible>$(UsingMicrosoftNETSdk)</Visible>
+	    <CodeBehindFile>%(RelativeDir)%(Filename).feature$(DefaultLanguageSourceExtension)</CodeBehindFile>
+	  </SpecFlowFeatureFiles>
 	  <SpecFlowFeatureFiles Update="Features\AdditionalSchema\Draft202012\derived-numeric-type-net80.feature">
 	    <Visible>$(UsingMicrosoftNETSdk)</Visible>
 	    <CodeBehindFile>%(RelativeDir)%(Filename).feature$(DefaultLanguageSourceExtension)</CodeBehindFile>
@@ -119,7 +135,15 @@
 	    <Visible>$(UsingMicrosoftNETSdk)</Visible>
 	    <CodeBehindFile>%(RelativeDir)%(Filename).feature$(DefaultLanguageSourceExtension)</CodeBehindFile>
 	  </SpecFlowFeatureFiles>
+	  <SpecFlowFeatureFiles Update="Features\AdditionalSchema\Draft6\fixed-size-numeric-arrays.feature">
+	    <Visible>$(UsingMicrosoftNETSdk)</Visible>
+	    <CodeBehindFile>%(RelativeDir)%(Filename).feature$(DefaultLanguageSourceExtension)</CodeBehindFile>
+	  </SpecFlowFeatureFiles>
 	  <SpecFlowFeatureFiles Update="Features\AdditionalSchema\Draft7\derived-numeric-type.feature">
+	    <Visible>$(UsingMicrosoftNETSdk)</Visible>
+	    <CodeBehindFile>%(RelativeDir)%(Filename).feature$(DefaultLanguageSourceExtension)</CodeBehindFile>
+	  </SpecFlowFeatureFiles>
+	  <SpecFlowFeatureFiles Update="Features\AdditionalSchema\Draft7\fixed-size-numeric-arrays.feature">
 	    <Visible>$(UsingMicrosoftNETSdk)</Visible>
 	    <CodeBehindFile>%(RelativeDir)%(Filename).feature$(DefaultLanguageSourceExtension)</CodeBehindFile>
 	  </SpecFlowFeatureFiles>

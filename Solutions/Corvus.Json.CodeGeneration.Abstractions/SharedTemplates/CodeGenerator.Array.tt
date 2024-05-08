@@ -857,9 +857,9 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
         int index = 0;
         while (index < values.Length)
         {
-            <#= SingleItemsDotnetTypeName #> child = <#= SingleItemsDotnetTypeName #>.FromValues(values[index..(index + <#= ChildArrayValueBufferSize #>)]);
+            <#= SingleItemsDotnetTypeName #> child = <#= SingleItemsDotnetTypeName #>.FromValues(values.Slice(index, <#= ChildArrayValueBufferSize #>));
             builder.Add(child);
-            index += child.GetArrayLength();
+            index += <#= ChildArrayValueBufferSize #>;
         }
 
         return new(builder.ToImmutable());
@@ -1122,7 +1122,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
 <#          }
             else if (preferredNumericType == "short")
             { #>
-                !jsonElement.TryGetUInt16(out short value))
+                !jsonElement.TryGetInt16(out short value))
 <#          }
             else if (preferredNumericType == "int")
             { #>

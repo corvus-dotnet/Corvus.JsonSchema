@@ -27,6 +27,7 @@ public class JsonSchemaSteps
     private const string SchemaType = "SchemaType";
     private const string SchemaInstance = "SchemaInstance";
     private const string SchemaValidationResult = "SchemaValidationResult";
+    private const string CreateException = "CreateException";
     private readonly FeatureContext featureContext;
     private readonly ScenarioContext scenarioContext;
     private readonly JsonSchemaBuilderDriver driver;
@@ -161,6 +162,334 @@ public class JsonSchemaSteps
         this.scenarioContext.Set(value, SchemaInstance);
     }
 
+    [When(@"I create the instance using FromValues with format '([^']*)' and input data '([^']*)'")]
+    public void WhenICreateTheInstanceUsingFromValuesWithFormatAndInputData(string format, string inputDataString)
+    {
+        try
+        {
+            IJsonValue instance = format switch
+            {
+                "single" => CreateSingleInstance(inputDataString),
+                "double" => CreateDoubleInstance(inputDataString),
+                "decimal" => CreateDecimalInstance(inputDataString),
+                "sbyte" => CreateSByteInstance(inputDataString),
+                "int16" => CreateInt16Instance(inputDataString),
+                "int32" => CreateInt32Instance(inputDataString),
+                "int64" => CreateInt64Instance(inputDataString),
+                "byte" => CreateByteInstance(inputDataString),
+                "uint16" => CreateUInt16Instance(inputDataString),
+                "uint32" => CreateUInt32Instance(inputDataString),
+                "uint64" => CreateUInt64Instance(inputDataString),
+#if NET8_0_OR_GREATER
+                "half" => CreateHalfInstance(inputDataString),
+                "int128" => CreateInt128Instance(inputDataString),
+                "uint128" => CreateUInt128Instance(inputDataString),
+#endif
+                _ => throw new InvalidOperationException($"Unsupported format: {format}"),
+            };
+
+            this.scenarioContext.Set(instance, SchemaInstance);
+        }
+        catch (Exception ex)
+        {
+            this.scenarioContext.Set(ex, CreateException);
+        }
+
+#if NET8_0_OR_GREATER
+        IJsonValue CreateUInt128Instance(string inputDataString)
+        {
+            UInt128[] itemArray = BuildUInt128Array(inputDataString);
+
+            return this.driver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
+        }
+#endif
+
+        IJsonValue CreateUInt64Instance(string inputDataString)
+        {
+            ulong[] itemArray = BuildUInt64Array(inputDataString);
+
+            return this.driver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
+        }
+
+        IJsonValue CreateUInt32Instance(string inputDataString)
+        {
+            uint[] itemArray = BuildUInt32Array(inputDataString);
+
+            return this.driver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
+        }
+
+        IJsonValue CreateUInt16Instance(string inputDataString)
+        {
+            ushort[] itemArray = BuildUInt16Array(inputDataString);
+
+            return this.driver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
+        }
+
+        IJsonValue CreateByteInstance(string inputDataString)
+        {
+            byte[] itemArray = BuildByteArray(inputDataString);
+
+            return this.driver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
+        }
+
+#if NET8_0_OR_GREATER
+        IJsonValue CreateInt128Instance(string inputDataString)
+        {
+            Int128[] itemArray = BuildInt128Array(inputDataString);
+
+            return this.driver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
+        }
+#endif
+
+        IJsonValue CreateInt64Instance(string inputDataString)
+        {
+            long[] itemArray = BuildInt64Array(inputDataString);
+
+            return this.driver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
+        }
+
+        IJsonValue CreateInt32Instance(string inputDataString)
+        {
+            int[] itemArray = BuildInt32Array(inputDataString);
+
+            return this.driver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
+        }
+
+        IJsonValue CreateInt16Instance(string inputDataString)
+        {
+            short[] itemArray = BuildInt16Array(inputDataString);
+
+            return this.driver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
+        }
+
+        IJsonValue CreateSByteInstance(string inputDataString)
+        {
+            sbyte[] itemArray = BuildSByteArray(inputDataString);
+
+            return this.driver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
+        }
+
+        IJsonValue CreateDecimalInstance(string inputDataString)
+        {
+            decimal[] itemArray = BuildDecimalArray(inputDataString);
+
+            return this.driver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
+        }
+
+        IJsonValue CreateDoubleInstance(string inputDataString)
+        {
+            double[] itemArray = BuildDoubleArray(inputDataString);
+
+            return this.driver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
+        }
+
+        IJsonValue CreateSingleInstance(string inputDataString)
+        {
+            float[] itemArray = BuildSingleArray(inputDataString);
+
+            return this.driver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
+        }
+
+#if NET8_0_OR_GREATER
+        IJsonValue CreateHalfInstance(string inputDataString)
+        {
+            Half[] itemArray = BuildHalfArray(inputDataString);
+
+            return this.driver.CreateInstanceOfNumericArrayFromValues(this.scenarioContext.Get<Type>(SchemaType), itemArray);
+        }
+#endif
+    }
+
+    [Then(@"the result will not throw an exception")]
+    public void ThenTheResultWillNotThrowAnException()
+    {
+        Assert.IsFalse(this.scenarioContext.ContainsKey(CreateException));
+    }
+
+    [Then(@"the result will throw an exception")]
+    public void ThenTheResultWillThrowAnException()
+    {
+        Assert.IsTrue(this.scenarioContext.ContainsKey(CreateException));
+    }
+
+    [Then(@"if an exception was not thrown then TryGetValues with format '([^']*)' will equal the input data '([^']*)'")]
+    public void ThenIfAnExceptionWasNotThrownThenTryGetValuesWithFormatWillEqualTheInputData(string format, string inputDataString)
+    {
+        if (this.scenarioContext.ContainsKey(CreateException))
+        {
+            Assert.Pass();
+        }
+
+        bool isTrue = format switch
+        {
+            "single" => CompareSingleValues(inputDataString),
+            "double" => CompareDoubleValues(inputDataString),
+            "decimal" => CompareDecimalValues(inputDataString),
+            "sbyte" => CompareSByteValues(inputDataString),
+            "int16" => CompareInt16Values(inputDataString),
+            "int32" => CompareInt32Values(inputDataString),
+            "int64" => CompareInt64Values(inputDataString),
+            "byte" => CompareByteValues(inputDataString),
+            "uint16" => CompareUInt16Values(inputDataString),
+            "uint32" => CompareUInt32Values(inputDataString),
+            "uint64" => CompareUInt64Values(inputDataString),
+#if NET8_0_OR_GREATER
+            "half" => CompareHalfValues(inputDataString),
+            "int128" => CompareInt128Values(inputDataString),
+            "uint128" => CompareUInt128Values(inputDataString),
+#endif
+            _ => throw new InvalidOperationException($"Unsupported format: {format}"),
+        };
+
+        Assert.IsTrue(isTrue);
+
+#if NET8_0_OR_GREATER
+        bool CompareUInt128Values(string inputDataString)
+        {
+            UInt128[] itemArray = BuildUInt128Array(inputDataString);
+
+            return this.driver.CompareInstanceOfNumericArrayWithValues(
+                this.scenarioContext.Get<Type>(SchemaType),
+                this.scenarioContext.Get<IJsonValue>(SchemaInstance),
+                itemArray);
+        }
+#endif
+
+        bool CompareUInt64Values(string inputDataString)
+        {
+            ulong[] itemArray = BuildUInt64Array(inputDataString);
+
+            return this.driver.CompareInstanceOfNumericArrayWithValues(
+                this.scenarioContext.Get<Type>(SchemaType),
+                this.scenarioContext.Get<IJsonValue>(SchemaInstance),
+                itemArray);
+        }
+
+        bool CompareUInt32Values(string inputDataString)
+        {
+            uint[] itemArray = BuildUInt32Array(inputDataString);
+
+            return this.driver.CompareInstanceOfNumericArrayWithValues(
+                this.scenarioContext.Get<Type>(SchemaType),
+                this.scenarioContext.Get<IJsonValue>(SchemaInstance),
+                itemArray);
+        }
+
+        bool CompareUInt16Values(string inputDataString)
+        {
+            ushort[] itemArray = BuildUInt16Array(inputDataString);
+
+            return this.driver.CompareInstanceOfNumericArrayWithValues(
+                this.scenarioContext.Get<Type>(SchemaType),
+                this.scenarioContext.Get<IJsonValue>(SchemaInstance),
+                itemArray);
+        }
+
+        bool CompareByteValues(string inputDataString)
+        {
+            byte[] itemArray = BuildByteArray(inputDataString);
+
+            return this.driver.CompareInstanceOfNumericArrayWithValues(
+                this.scenarioContext.Get<Type>(SchemaType),
+                this.scenarioContext.Get<IJsonValue>(SchemaInstance),
+                itemArray);
+        }
+
+#if NET8_0_OR_GREATER
+        bool CompareInt128Values(string inputDataString)
+        {
+            Int128[] itemArray = BuildInt128Array(inputDataString);
+
+            return this.driver.CompareInstanceOfNumericArrayWithValues(
+                this.scenarioContext.Get<Type>(SchemaType),
+                this.scenarioContext.Get<IJsonValue>(SchemaInstance),
+                itemArray);
+        }
+#endif
+
+        bool CompareInt64Values(string inputDataString)
+        {
+            long[] itemArray = BuildInt64Array(inputDataString);
+
+            return this.driver.CompareInstanceOfNumericArrayWithValues(
+                this.scenarioContext.Get<Type>(SchemaType),
+                this.scenarioContext.Get<IJsonValue>(SchemaInstance),
+                itemArray);
+        }
+
+        bool CompareInt32Values(string inputDataString)
+        {
+            int[] itemArray = BuildInt32Array(inputDataString);
+
+            return this.driver.CompareInstanceOfNumericArrayWithValues(
+                this.scenarioContext.Get<Type>(SchemaType),
+                this.scenarioContext.Get<IJsonValue>(SchemaInstance),
+                itemArray);
+        }
+
+        bool CompareInt16Values(string inputDataString)
+        {
+            short[] itemArray = BuildInt16Array(inputDataString);
+
+            return this.driver.CompareInstanceOfNumericArrayWithValues(
+                this.scenarioContext.Get<Type>(SchemaType),
+                this.scenarioContext.Get<IJsonValue>(SchemaInstance),
+                itemArray);
+        }
+
+        bool CompareSByteValues(string inputDataString)
+        {
+            sbyte[] itemArray = BuildSByteArray(inputDataString);
+
+            return this.driver.CompareInstanceOfNumericArrayWithValues(
+                this.scenarioContext.Get<Type>(SchemaType),
+                this.scenarioContext.Get<IJsonValue>(SchemaInstance),
+                itemArray);
+        }
+
+        bool CompareDecimalValues(string inputDataString)
+        {
+            decimal[] itemArray = BuildDecimalArray(inputDataString);
+
+            return this.driver.CompareInstanceOfNumericArrayWithValues(
+                this.scenarioContext.Get<Type>(SchemaType),
+                this.scenarioContext.Get<IJsonValue>(SchemaInstance),
+                itemArray);
+        }
+
+        bool CompareDoubleValues(string inputDataString)
+        {
+            double[] itemArray = BuildDoubleArray(inputDataString);
+
+            return this.driver.CompareInstanceOfNumericArrayWithValues(
+                this.scenarioContext.Get<Type>(SchemaType),
+                this.scenarioContext.Get<IJsonValue>(SchemaInstance),
+                itemArray);
+        }
+
+        bool CompareSingleValues(string inputDataString)
+        {
+            float[] itemArray = BuildSingleArray(inputDataString);
+
+            return this.driver.CompareInstanceOfNumericArrayWithValues(
+                this.scenarioContext.Get<Type>(SchemaType),
+                this.scenarioContext.Get<IJsonValue>(SchemaInstance),
+                itemArray);
+        }
+
+#if NET8_0_OR_GREATER
+        bool CompareHalfValues(string inputDataString)
+        {
+            Half[] itemArray = BuildHalfArray(inputDataString);
+
+            return this.driver.CompareInstanceOfNumericArrayWithValues(
+                this.scenarioContext.Get<Type>(SchemaType),
+                this.scenarioContext.Get<IJsonValue>(SchemaInstance),
+                itemArray);
+        }
+#endif
+    }
+
     /// <summary>
     /// Generates the code for the schema in the scenario property <see cref="SchemaPath"/>, compiles it, and loads the assembly. The fully qualified type name is stored in a scenario property called <see cref="SchemaType"/>.
     /// </summary>
@@ -246,4 +575,188 @@ public class JsonSchemaSteps
         ValidationContext actual = this.scenarioContext.Get<ValidationContext>(SchemaValidationResult);
         Assert.AreEqual(expectedValidity, actual.IsValid);
     }
+
+    private static ulong[] BuildUInt64Array(string inputDataString)
+    {
+        string[] items = inputDataString.Split(',');
+        ulong[] itemArray = new ulong[items.Length];
+        int index = 0;
+        foreach (string item in items)
+        {
+            itemArray[index++] = ulong.Parse(item);
+        }
+
+        return itemArray;
+    }
+
+    private static uint[] BuildUInt32Array(string inputDataString)
+    {
+        string[] items = inputDataString.Split(',');
+        uint[] itemArray = new uint[items.Length];
+        int index = 0;
+        foreach (string item in items)
+        {
+            itemArray[index++] = uint.Parse(item);
+        }
+
+        return itemArray;
+    }
+
+    private static ushort[] BuildUInt16Array(string inputDataString)
+    {
+        string[] items = inputDataString.Split(',');
+        ushort[] itemArray = new ushort[items.Length];
+        int index = 0;
+        foreach (string item in items)
+        {
+            itemArray[index++] = ushort.Parse(item);
+        }
+
+        return itemArray;
+    }
+
+    private static byte[] BuildByteArray(string inputDataString)
+    {
+        string[] items = inputDataString.Split(',');
+        byte[] itemArray = new byte[items.Length];
+        int index = 0;
+        foreach (string item in items)
+        {
+            itemArray[index++] = byte.Parse(item);
+        }
+
+        return itemArray;
+    }
+
+    private static long[] BuildInt64Array(string inputDataString)
+    {
+        string[] items = inputDataString.Split(',');
+        long[] itemArray = new long[items.Length];
+        int index = 0;
+        foreach (string item in items)
+        {
+            itemArray[index++] = long.Parse(item);
+        }
+
+        return itemArray;
+    }
+
+    private static int[] BuildInt32Array(string inputDataString)
+    {
+        string[] items = inputDataString.Split(',');
+        int[] itemArray = new int[items.Length];
+        int index = 0;
+        foreach (string item in items)
+        {
+            itemArray[index++] = int.Parse(item);
+        }
+
+        return itemArray;
+    }
+
+    private static short[] BuildInt16Array(string inputDataString)
+    {
+        string[] items = inputDataString.Split(',');
+        short[] itemArray = new short[items.Length];
+        int index = 0;
+        foreach (string item in items)
+        {
+            itemArray[index++] = short.Parse(item);
+        }
+
+        return itemArray;
+    }
+
+    private static sbyte[] BuildSByteArray(string inputDataString)
+    {
+        string[] items = inputDataString.Split(',');
+        sbyte[] itemArray = new sbyte[items.Length];
+        int index = 0;
+        foreach (string item in items)
+        {
+            itemArray[index++] = sbyte.Parse(item);
+        }
+
+        return itemArray;
+    }
+
+    private static decimal[] BuildDecimalArray(string inputDataString)
+    {
+        string[] items = inputDataString.Split(',');
+        decimal[] itemArray = new decimal[items.Length];
+        int index = 0;
+        foreach (string item in items)
+        {
+            itemArray[index++] = decimal.Parse(item);
+        }
+
+        return itemArray;
+    }
+
+    private static double[] BuildDoubleArray(string inputDataString)
+    {
+        string[] items = inputDataString.Split(',');
+        double[] itemArray = new double[items.Length];
+        int index = 0;
+        foreach (string item in items)
+        {
+            itemArray[index++] = double.Parse(item);
+        }
+
+        return itemArray;
+    }
+
+    private static float[] BuildSingleArray(string inputDataString)
+    {
+        string[] items = inputDataString.Split(',');
+        float[] itemArray = new float[items.Length];
+        int index = 0;
+        foreach (string item in items)
+        {
+            itemArray[index++] = float.Parse(item);
+        }
+
+        return itemArray;
+    }
+
+#if NET8_0_OR_GREATER
+    private static Half[] BuildHalfArray(string inputDataString)
+    {
+        string[] items = inputDataString.Split(',');
+        var itemArray = new Half[items.Length];
+        int index = 0;
+        foreach (string item in items)
+        {
+            itemArray[index++] = Half.Parse(item);
+        }
+
+        return itemArray;
+    }
+
+    private static Int128[] BuildInt128Array(string inputDataString)
+    {
+        string[] items = inputDataString.Split(',');
+        var itemArray = new Int128[items.Length];
+        int index = 0;
+        foreach (string item in items)
+        {
+            itemArray[index++] = Int128.Parse(item);
+        }
+
+        return itemArray;
+    }
+
+    private static UInt128[] BuildUInt128Array(string inputDataString)
+    {
+        string[] items = inputDataString.Split(',');
+        var itemArray = new UInt128[items.Length];
+        int index = 0;
+        foreach (string item in items)
+        {
+            itemArray[index++] = UInt128.Parse(item);
+        }
+
+        return itemArray;
+    }
+#endif
 }

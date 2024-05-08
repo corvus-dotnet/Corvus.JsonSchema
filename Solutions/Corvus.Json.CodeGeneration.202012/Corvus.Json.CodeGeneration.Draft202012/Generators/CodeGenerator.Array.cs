@@ -2724,7 +2724,7 @@ namespace ");
             #line hidden
             
             #line 868 "CodeGenerator.Array.tt"
-            this.Write(".FromValues(values[index..(index + ");
+            this.Write(".FromValues(values.Slice(index, ");
             
             #line default
             #line hidden
@@ -2736,8 +2736,19 @@ namespace ");
             #line hidden
             
             #line 868 "CodeGenerator.Array.tt"
-            this.Write(")]);\r\n            builder.Add(child);\r\n            index += child.GetArrayLength(" +
-                    ");\r\n        }\r\n\r\n        return new(builder.ToImmutable());\r\n    }\r\n");
+            this.Write("));\r\n            builder.Add(child);\r\n            index += ");
+            
+            #line default
+            #line hidden
+            
+            #line 870 "CodeGenerator.Array.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( ChildArrayValueBufferSize ));
+            
+            #line default
+            #line hidden
+            
+            #line 870 "CodeGenerator.Array.tt"
+            this.Write(";\r\n        }\r\n\r\n        return new(builder.ToImmutable());\r\n    }\r\n");
             
             #line default
             #line hidden
@@ -3507,7 +3518,7 @@ namespace ");
             #line hidden
             
             #line 1135 "CodeGenerator.Array.tt"
-            this.Write("                !jsonElement.TryGetUInt16(out short value))\r\n");
+            this.Write("                !jsonElement.TryGetInt16(out short value))\r\n");
             
             #line default
             #line hidden
