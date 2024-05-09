@@ -41,7 +41,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     /// Conversion to <see cref="<#= conversion.FullyQualifiedDotnetTypeName #>" />.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
-    public static explicit operator <#= conversion.FullyQualifiedDotnetTypeName #>(<#= TypeDeclaration.DotnetTypeName #> value)
+    public static <#= conversion.IsImplicit ? "implicit" : "explicit" #> operator <#= conversion.FullyQualifiedDotnetTypeName #>(<#= TypeDeclaration.DotnetTypeName #> value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -118,7 +118,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
     /// Conversion from <see cref="<#= conversion.FullyQualifiedDotnetTypeName #>" />.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>
-    public static implicit operator <#= TypeDeclaration.DotnetTypeName #>(<#= conversion.FullyQualifiedDotnetTypeName #> value)
+    public static <#= conversion.IsImplicitDowncast ? "implicit" : "explicit" #> operator <#= TypeDeclaration.DotnetTypeName #>(<#= conversion.FullyQualifiedDotnetTypeName #> value)
     {
         if (value.HasJsonElementBacking)
         {

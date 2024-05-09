@@ -134,7 +134,19 @@ namespace ");
             
             #line 41 "CodeGenerator.Conversions.Operators.tt"
             this.Write("\" />.\r\n    /// </summary>\r\n    /// <param name=\"value\">The value from which to co" +
-                    "nvert.</param>\r\n    public static explicit operator ");
+                    "nvert.</param>\r\n    public static ");
+            
+            #line default
+            #line hidden
+            
+            #line 44 "CodeGenerator.Conversions.Operators.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( conversion.IsImplicit ? "implicit" : "explicit" ));
+            
+            #line default
+            #line hidden
+            
+            #line 44 "CodeGenerator.Conversions.Operators.tt"
+            this.Write(" operator ");
             
             #line default
             #line hidden
@@ -335,7 +347,19 @@ namespace ");
             
             #line 118 "CodeGenerator.Conversions.Operators.tt"
             this.Write("\" />.\r\n    /// </summary>\r\n    /// <param name=\"value\">The value from which to co" +
-                    "nvert.</param>\r\n    public static implicit operator ");
+                    "nvert.</param>\r\n    public static ");
+            
+            #line default
+            #line hidden
+            
+            #line 121 "CodeGenerator.Conversions.Operators.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( conversion.IsImplicitDowncast ? "implicit" : "explicit" ));
+            
+            #line default
+            #line hidden
+            
+            #line 121 "CodeGenerator.Conversions.Operators.tt"
+            this.Write(" operator ");
             
             #line default
             #line hidden

@@ -38,12 +38,6 @@ public readonly partial struct JsonPatchDocument
                 result = result.PushSchemaLocation("json-patch.json#/$defs/PatchOperation");
             }
 
-            result = this.ValidateAllOf(result, level);
-            if (level == ValidationLevel.Flag && !result.IsValid)
-            {
-                return result;
-            }
-
             result = this.ValidateOneOf(result, level);
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
