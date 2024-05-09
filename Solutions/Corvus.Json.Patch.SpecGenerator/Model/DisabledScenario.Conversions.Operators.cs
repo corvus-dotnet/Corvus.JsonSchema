@@ -22,7 +22,7 @@ public readonly partial struct DisabledScenario
     /// Conversion to <see cref = "Corvus.Json.Patch.SpecGenerator.ScenarioCommon"/>.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
-    public static explicit operator Corvus.Json.Patch.SpecGenerator.ScenarioCommon(DisabledScenario value)
+    public static implicit operator Corvus.Json.Patch.SpecGenerator.ScenarioCommon(DisabledScenario value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -41,7 +41,7 @@ public readonly partial struct DisabledScenario
     /// Conversion from <see cref = "Corvus.Json.Patch.SpecGenerator.ScenarioCommon"/>.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator DisabledScenario(Corvus.Json.Patch.SpecGenerator.ScenarioCommon value)
+    public static explicit operator DisabledScenario(Corvus.Json.Patch.SpecGenerator.ScenarioCommon value)
     {
         if (value.HasJsonElementBacking)
         {

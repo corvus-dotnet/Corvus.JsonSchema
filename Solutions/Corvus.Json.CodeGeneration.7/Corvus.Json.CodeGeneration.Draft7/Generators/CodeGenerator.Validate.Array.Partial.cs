@@ -2741,7 +2741,7 @@ public partial class CodeGeneratorValidateArray
 
                 if (!conversions.ContainsKey(td))
                 {
-                    conversions.Add(td, new Conversion(td, parent is null));
+                    conversions.Add(td, new Conversion(td, parent is null, true));
                     this.AddConversionsFor(td, conversions, typeDeclaration);
                 }
             }
@@ -2763,13 +2763,15 @@ public partial class CodeGeneratorValidateArray
 
         if (typeDeclaration.Schema().OneOf.IsNotUndefined())
         {
+            bool allowsImplicitDowncast = typeDeclaration.Schema().IsNakedOneOf();
+
             for (int i = 0; i < typeDeclaration.Schema().OneOf.GetArrayLength(); ++i)
             {
                 TypeDeclaration td = this.Builder.GetTypeDeclarationForPropertyArrayIndex(typeDeclaration, "oneOf", i);
 
                 if (!conversions.ContainsKey(td))
                 {
-                    conversions.Add(td, new Conversion(td, parent is null));
+                    conversions.Add(td, new Conversion(td, parent is null, isImplicitDowncast: allowsImplicitDowncast));
                     this.AddConversionsFor(td, conversions, typeDeclaration);
                 }
             }
@@ -2781,7 +2783,7 @@ public partial class CodeGeneratorValidateArray
 
             if (!conversions.ContainsKey(td))
             {
-                conversions.Add(td, new Conversion(td, parent is null));
+                conversions.Add(td, new Conversion(td, parent is null, true));
                 this.AddConversionsFor(td, conversions, typeDeclaration);
             }
         }
@@ -2943,10 +2945,14 @@ public partial class CodeGeneratorValidateArray
         /// </summary>
         /// <param name="typeDeclaration">The type declaration for the conversion.</param>
         /// <param name="isDirect">If this is a direct conversion, not via a type hierarchy.</param>
-        public Conversion(TypeDeclaration typeDeclaration, bool isDirect)
+        /// <param name="isImplicit">If this is an implicit conversion.</param>
+        /// <param name="isImplicitDowncast">If this is an implicit downcast.</param>
+        public Conversion(TypeDeclaration typeDeclaration, bool isDirect, bool isImplicit = false, bool isImplicitDowncast = false)
         {
             this.typeDeclaration = typeDeclaration;
             this.IsDirect = isDirect;
+            this.IsImplicit = isImplicit;
+            this.IsImplicitDowncast = isImplicitDowncast;
         }
 
         /// <summary>
@@ -2998,6 +3004,16 @@ public partial class CodeGeneratorValidateArray
         /// Gets a value indicating whether this is a direct conversion, rather than coming through a type hierarchy.
         /// </summary>
         public bool IsDirect { get; }
+
+        /// <summary>
+        /// Gets a value indicating whether this is an implicit conversion.
+        /// </summary>
+        public bool IsImplicit { get; }
+
+        /// <summary>
+        /// Gets a value indicating whether this is an implicit downcast.
+        /// </summary>
+        public bool IsImplicitDowncast { get; }
     }
 
     /// <summary>
