@@ -2440,6 +2440,12 @@ public partial class CodeGeneratorPatternProperties
             return this.GetImpliedFormat(td);
         }
 
+        if (typeDeclaration.Schema().AllOf.IsNotUndefined() && typeDeclaration.Schema().AllOf.GetArrayLength() == 1)
+        {
+            TypeDeclaration td = this.Builder.GetTypeDeclarationForPropertyArrayIndex(typeDeclaration, "allOf", 0);
+            return this.GetImpliedFormat(td);
+        }
+
         return string.Empty;
     }
 
