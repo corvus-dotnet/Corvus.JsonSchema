@@ -151,7 +151,10 @@ public readonly partial struct Core
         }
 
         /// <summary>
+        /// Enumerate the object.
         /// </summary>
+        /// <returns>An enumerator for the object.</returns>
+        /// <exception cref = "InvalidOperationException">The value is not an object.</exception>
         public JsonObjectEnumerator<Corvus.Json.JsonSchema.Draft202012.Schema> EnumerateObject()
         {
             if ((this.backing & Backing.JsonElement) != 0)

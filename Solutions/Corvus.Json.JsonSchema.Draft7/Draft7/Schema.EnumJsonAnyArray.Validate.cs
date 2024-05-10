@@ -16,7 +16,7 @@ public readonly partial struct Schema
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
-    public readonly partial struct JsonAnyArray
+    public readonly partial struct EnumJsonAnyArray
     {
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
@@ -30,7 +30,7 @@ public readonly partial struct Schema
             if (level > ValidationLevel.Basic)
             {
                 result = result.UsingStack();
-                result = result.PushSchemaLocation("http://json-schema.org/draft-07/schema#/properties/examples");
+                result = result.PushSchemaLocation("http://json-schema.org/draft-07/schema#/properties/enum");
             }
 
             JsonValueKind valueKind = this.ValueKind;

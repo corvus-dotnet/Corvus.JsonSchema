@@ -21,16 +21,16 @@ public readonly partial struct Schema
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
-    [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<JsonAnyArray>))]
-    public readonly partial struct JsonAnyArray
+    [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<EnumJsonAnyArray>))]
+    public readonly partial struct EnumJsonAnyArray
     {
         private readonly Backing backing;
         private readonly JsonElement jsonElementBacking;
         private readonly ImmutableList<JsonAny> arrayBacking;
         /// <summary>
-        /// Initializes a new instance of the <see cref = "JsonAnyArray"/> struct.
+        /// Initializes a new instance of the <see cref = "EnumJsonAnyArray"/> struct.
         /// </summary>
-        public JsonAnyArray()
+        public EnumJsonAnyArray()
         {
             this.jsonElementBacking = default;
             this.backing = Backing.JsonElement;
@@ -38,10 +38,10 @@ public readonly partial struct Schema
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref = "JsonAnyArray"/> struct.
+        /// Initializes a new instance of the <see cref = "EnumJsonAnyArray"/> struct.
         /// </summary>
         /// <param name = "value">The value from which to construct the instance.</param>
-        public JsonAnyArray(in JsonElement value)
+        public EnumJsonAnyArray(in JsonElement value)
         {
             this.jsonElementBacking = value;
             this.backing = Backing.JsonElement;
@@ -51,19 +51,19 @@ public readonly partial struct Schema
         /// <summary>
         /// Gets the schema location from which this type was generated.
         /// </summary>
-        public static string SchemaLocation { get; } = "http://json-schema.org/draft-07/schema#/properties/examples";
+        public static string SchemaLocation { get; } = "http://json-schema.org/draft-07/schema#/properties/enum";
         /// <summary>
         /// Gets a Null instance.
         /// </summary>
-        public static JsonAnyArray Null { get; } = new(JsonValueHelpers.NullElement);
+        public static EnumJsonAnyArray Null { get; } = new(JsonValueHelpers.NullElement);
         /// <summary>
         /// Gets an Undefined instance.
         /// </summary>
-        public static JsonAnyArray Undefined { get; }
+        public static EnumJsonAnyArray Undefined { get; }
         /// <summary>
         /// Gets the default instance of the type.
         /// </summary>
-        public static JsonAnyArray DefaultInstance { get; }
+        public static EnumJsonAnyArray DefaultInstance { get; }
 
         /// <inheritdoc/>
         public JsonAny AsAny
@@ -235,9 +235,9 @@ public readonly partial struct Schema
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
         /// <exception cref = "InvalidOperationException">The value was not compatible with this type.</exception>
-        public static implicit operator JsonAnyArray(in JsonAny value)
+        public static implicit operator EnumJsonAnyArray(in JsonAny value)
         {
-            return value.As<JsonAnyArray>();
+            return value.As<EnumJsonAnyArray>();
         }
 
         /// <summary>
@@ -245,7 +245,7 @@ public readonly partial struct Schema
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
         /// <exception cref = "InvalidOperationException">The value was not compatible with this type.</exception>
-        public static implicit operator JsonAny(in JsonAnyArray value)
+        public static implicit operator JsonAny(in EnumJsonAnyArray value)
         {
             return value.AsAny;
         }
@@ -256,7 +256,7 @@ public readonly partial struct Schema
         /// <param name = "left">The lhs.</param>
         /// <param name = "right">The rhs.</param>
         /// <returns><c>True</c> if the values are equal.</returns>
-        public static bool operator ==(in JsonAnyArray left, in JsonAnyArray right)
+        public static bool operator ==(in EnumJsonAnyArray left, in EnumJsonAnyArray right)
         {
             return left.Equals(right);
         }
@@ -267,7 +267,7 @@ public readonly partial struct Schema
         /// <param name = "left">The lhs.</param>
         /// <param name = "right">The rhs.</param>
         /// <returns><c>True</c> if the values are equal.</returns>
-        public static bool operator !=(in JsonAnyArray left, in JsonAnyArray right)
+        public static bool operator !=(in EnumJsonAnyArray left, in EnumJsonAnyArray right)
         {
             return !left.Equals(right);
         }
@@ -281,7 +281,7 @@ public readonly partial struct Schema
         /// value cannot be constructed from the given instance (e.g. because they have an incompatible dotnet backing type.
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static JsonAnyArray FromAny(in JsonAny value)
+        public static EnumJsonAnyArray FromAny(in JsonAny value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -303,7 +303,7 @@ public readonly partial struct Schema
         /// <param name = "value">The <see cref = "JsonElement"/> value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the <see cref = "JsonElement"/>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static JsonAnyArray FromJson(in JsonElement value)
+        public static EnumJsonAnyArray FromJson(in JsonElement value)
         {
             return new(value);
         }
@@ -315,9 +315,9 @@ public readonly partial struct Schema
     /// <typeparam name = "TValue">The type of the value.</typeparam>
     /// <param name="value">The value from which to instantiate the instance.</param>
     /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be JsonAnyArray.Undefined if the type is not compatible.</remarks>
+    /// <remarks>This will be EnumJsonAnyArray.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static JsonAnyArray IJsonValue<JsonAnyArray>.FromBoolean<TValue>(in TValue value)
+    static EnumJsonAnyArray IJsonValue<EnumJsonAnyArray>.FromBoolean<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -334,9 +334,9 @@ public readonly partial struct Schema
     /// <typeparam name="TValue">The type of the value.</typeparam>
     /// <param name="value">The value from which to instantiate the instance.</param>
     /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be JsonAnyArray.Undefined if the type is not compatible.</remarks>
+    /// <remarks>This will be EnumJsonAnyArray.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static JsonAnyArray IJsonValue<JsonAnyArray>.FromString<TValue>(in TValue value)
+    static EnumJsonAnyArray IJsonValue<EnumJsonAnyArray>.FromString<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -353,9 +353,9 @@ public readonly partial struct Schema
     /// <typeparam name="TValue">The type of the value.</typeparam>
     /// <param name="value">The value from which to instantiate the instance.</param>
     /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be JsonAnyArray.Undefined if the type is not compatible.</remarks>
+    /// <remarks>This will be EnumJsonAnyArray.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static JsonAnyArray IJsonValue<JsonAnyArray>.FromNumber<TValue>(in TValue value)
+    static EnumJsonAnyArray IJsonValue<EnumJsonAnyArray>.FromNumber<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -371,9 +371,9 @@ public readonly partial struct Schema
         /// <typeparam name = "TValue">The type of the value.</typeparam>
         /// <param name = "value">The value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the value.</returns>
-        /// <remarks>This will be JsonAnyArray.Undefined if the type is not compatible.</remarks>
+        /// <remarks>This will be EnumJsonAnyArray.Undefined if the type is not compatible.</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static JsonAnyArray FromArray<TValue>(in TValue value)
+        public static EnumJsonAnyArray FromArray<TValue>(in TValue value)
             where TValue : struct, IJsonArray<TValue>
         {
             if (value.HasJsonElementBacking)
@@ -396,9 +396,9 @@ public readonly partial struct Schema
     /// <typeparam name="TValue">The type of the value.</typeparam>
     /// <param name="value">The value from which to instantiate the instance.</param>
     /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be JsonAnyArray.Undefined if the type is not compatible.</remarks>
+    /// <remarks>This will be EnumJsonAnyArray.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static JsonAnyArray IJsonValue<JsonAnyArray>.FromObject<TValue>(in TValue value)
+    static EnumJsonAnyArray IJsonValue<EnumJsonAnyArray>.FromObject<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -409,63 +409,63 @@ public readonly partial struct Schema
     }
 #endif
         /// <summary>
-        /// Parses a JSON string into a JsonAnyArray.
+        /// Parses a JSON string into a EnumJsonAnyArray.
         /// </summary>
         /// <param name = "json">The json string to parse.</param>
         /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "JsonAnyArray"/> instance built from the JSON string.</returns>
-        public static JsonAnyArray Parse(string json, JsonDocumentOptions options = default)
+        /// <returns>A <see cref = "EnumJsonAnyArray"/> instance built from the JSON string.</returns>
+        public static EnumJsonAnyArray Parse(string json, JsonDocumentOptions options = default)
         {
             using var jsonDocument = JsonDocument.Parse(json, options);
-            return new JsonAnyArray(jsonDocument.RootElement.Clone());
+            return new EnumJsonAnyArray(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses a JSON string into a JsonAnyArray.
+        /// Parses a JSON string into a EnumJsonAnyArray.
         /// </summary>
         /// <param name = "utf8Json">The json string to parse.</param>
         /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "JsonAnyArray"/> instance built from the JSON string.</returns>
-        public static JsonAnyArray Parse(Stream utf8Json, JsonDocumentOptions options = default)
+        /// <returns>A <see cref = "EnumJsonAnyArray"/> instance built from the JSON string.</returns>
+        public static EnumJsonAnyArray Parse(Stream utf8Json, JsonDocumentOptions options = default)
         {
             using var jsonDocument = JsonDocument.Parse(utf8Json, options);
-            return new JsonAnyArray(jsonDocument.RootElement.Clone());
+            return new EnumJsonAnyArray(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses a JSON string into a JsonAnyArray.
+        /// Parses a JSON string into a EnumJsonAnyArray.
         /// </summary>
         /// <param name = "utf8Json">The json string to parse.</param>
         /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "JsonAnyArray"/> instance built from the JSON string.</returns>
-        public static JsonAnyArray Parse(ReadOnlyMemory<byte> utf8Json, JsonDocumentOptions options = default)
+        /// <returns>A <see cref = "EnumJsonAnyArray"/> instance built from the JSON string.</returns>
+        public static EnumJsonAnyArray Parse(ReadOnlyMemory<byte> utf8Json, JsonDocumentOptions options = default)
         {
             using var jsonDocument = JsonDocument.Parse(utf8Json, options);
-            return new JsonAnyArray(jsonDocument.RootElement.Clone());
+            return new EnumJsonAnyArray(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses a JSON string into a JsonAnyArray.
+        /// Parses a JSON string into a EnumJsonAnyArray.
         /// </summary>
         /// <param name = "json">The json string to parse.</param>
         /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "JsonAnyArray"/> instance built from the JSON string.</returns>
-        public static JsonAnyArray Parse(ReadOnlyMemory<char> json, JsonDocumentOptions options = default)
+        /// <returns>A <see cref = "EnumJsonAnyArray"/> instance built from the JSON string.</returns>
+        public static EnumJsonAnyArray Parse(ReadOnlyMemory<char> json, JsonDocumentOptions options = default)
         {
             using var jsonDocument = JsonDocument.Parse(json, options);
-            return new JsonAnyArray(jsonDocument.RootElement.Clone());
+            return new EnumJsonAnyArray(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses a JSON string into a JsonAnyArray.
+        /// Parses a JSON string into a EnumJsonAnyArray.
         /// </summary>
         /// <param name = "utf8Json">The json string to parse.</param>
         /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "JsonAnyArray"/> instance built from the JSON string.</returns>
-        public static JsonAnyArray Parse(ReadOnlySequence<byte> utf8Json, JsonDocumentOptions options = default)
+        /// <returns>A <see cref = "EnumJsonAnyArray"/> instance built from the JSON string.</returns>
+        public static EnumJsonAnyArray Parse(ReadOnlySequence<byte> utf8Json, JsonDocumentOptions options = default)
         {
             using var jsonDocument = JsonDocument.Parse(utf8Json, options);
-            return new JsonAnyArray(jsonDocument.RootElement.Clone());
+            return new EnumJsonAnyArray(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
@@ -473,12 +473,12 @@ public readonly partial struct Schema
         /// </summary>
         /// <param name = "buffer">The buffer from which to parse the value.</param>
         /// <returns>The parsed value.</returns>
-        static JsonAnyArray ParseValue(ReadOnlySpan<char> buffer)
+        static EnumJsonAnyArray ParseValue(ReadOnlySpan<char> buffer)
         {
 #if NET8_0_OR_GREATER
-        return IJsonValue<JsonAnyArray>.ParseValue(buffer);
+        return IJsonValue<EnumJsonAnyArray>.ParseValue(buffer);
 #else
-            return JsonValueHelpers.ParseValue<JsonAnyArray>(buffer);
+            return JsonValueHelpers.ParseValue<EnumJsonAnyArray>(buffer);
 #endif
         }
 
@@ -487,12 +487,12 @@ public readonly partial struct Schema
         /// </summary>
         /// <param name = "buffer">The buffer from which to parse the value.</param>
         /// <returns>The parsed value.</returns>
-        static JsonAnyArray ParseValue(ReadOnlySpan<byte> buffer)
+        static EnumJsonAnyArray ParseValue(ReadOnlySpan<byte> buffer)
         {
 #if NET8_0_OR_GREATER
-        return IJsonValue<JsonAnyArray>.ParseValue(buffer);
+        return IJsonValue<EnumJsonAnyArray>.ParseValue(buffer);
 #else
-            return JsonValueHelpers.ParseValue<JsonAnyArray>(buffer);
+            return JsonValueHelpers.ParseValue<EnumJsonAnyArray>(buffer);
 #endif
         }
 
@@ -501,12 +501,12 @@ public readonly partial struct Schema
         /// </summary>
         /// <param name = "reader">The reader from which to parse the value.</param>
         /// <returns>The parsed value.</returns>
-        static JsonAnyArray ParseValue(ref Utf8JsonReader reader)
+        static EnumJsonAnyArray ParseValue(ref Utf8JsonReader reader)
         {
 #if NET8_0_OR_GREATER
-        return IJsonValue<JsonAnyArray>.ParseValue(ref reader);
+        return IJsonValue<EnumJsonAnyArray>.ParseValue(ref reader);
 #else
-            return JsonValueHelpers.ParseValue<JsonAnyArray>(ref reader);
+            return JsonValueHelpers.ParseValue<EnumJsonAnyArray>(ref reader);
 #endif
         }
 
@@ -537,7 +537,7 @@ public readonly partial struct Schema
 
         return TTarget.Undefined;
 #else
-            return this.As<JsonAnyArray, TTarget>();
+            return this.As<EnumJsonAnyArray, TTarget>();
 #endif
         }
 
@@ -559,7 +559,7 @@ public readonly partial struct Schema
         /// </summary>
         /// <param name = "other">The other item with which to compare.</param>
         /// <returns><see langword="true"/> if the values were equal.</returns>
-        public bool Equals(in JsonAnyArray other)
+        public bool Equals(in EnumJsonAnyArray other)
         {
             return JsonValueHelpers.CompareValues(this, other);
         }

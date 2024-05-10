@@ -23,7 +23,7 @@ public interface IJsonObject<T> : IJsonValue<T>
     JsonAny this[in JsonPropertyName name] { get; }
 
     /// <summary>
-    /// Enumerate the array.
+    /// Enumerate the object.
     /// </summary>
     /// <returns>An enumerator for the object.</returns>
     /// <exception cref="InvalidOperationException">The value is not an object.</exception>

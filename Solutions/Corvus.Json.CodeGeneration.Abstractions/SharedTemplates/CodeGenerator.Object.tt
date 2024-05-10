@@ -243,7 +243,10 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonObje
     { #>
 
     /// <summary>
+    /// Enumerate the object.
     /// </summary>
+    /// <returns>An enumerator for the object.</returns>
+    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
     public JsonObjectEnumerator<<#= SinglePropertyDotnetTypeName #>> EnumerateObject()
     {
         if ((this.backing & Backing.JsonElement) != 0)

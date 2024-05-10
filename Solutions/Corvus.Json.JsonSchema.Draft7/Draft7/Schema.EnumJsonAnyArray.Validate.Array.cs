@@ -16,7 +16,7 @@ public readonly partial struct Schema
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
-    public readonly partial struct JsonAnyArray
+    public readonly partial struct EnumJsonAnyArray
     {
         private ValidationContext ValidateArray(JsonValueKind valueKind, in ValidationContext validationContext, ValidationLevel level)
         {
@@ -33,6 +33,32 @@ public readonly partial struct Schema
                 if (level > ValidationLevel.Basic)
                 {
                     result = result.PushDocumentArrayIndex(arrayLength);
+                }
+
+                using var innerEnumerator = this.EnumerateArray();
+                int innerIndex = -1;
+                while (innerIndex < arrayLength && innerEnumerator.MoveNext())
+                {
+                    innerIndex++;
+                }
+
+                while (innerEnumerator.MoveNext())
+                {
+                    if (innerEnumerator.Current.Equals(arrayEnumerator.Current))
+                    {
+                        if (level >= ValidationLevel.Detailed)
+                        {
+                            result = result.WithResult(isValid: false, $"6.4.3. uniqueItems - duplicate items were found at indices {arrayLength} and {innerIndex}.");
+                        }
+                        else if (level >= ValidationLevel.Basic)
+                        {
+                            result = result.WithResult(isValid: false, "6.4.3. uniqueItems - duplicate items were found.");
+                        }
+                        else
+                        {
+                            return result.WithResult(isValid: false);
+                        }
+                    }
                 }
 
                 if (level > ValidationLevel.Basic)
@@ -58,6 +84,22 @@ public readonly partial struct Schema
                 }
 
                 arrayLength++;
+            }
+
+            if (arrayLength < 1)
+            {
+                if (level >= ValidationLevel.Detailed)
+                {
+                    result = result.WithResult(isValid: false, $"6.4.2. minItems - {arrayLength} is less than the minimum number of items 1.");
+                }
+                else if (level >= ValidationLevel.Basic)
+                {
+                    result = result.WithResult(isValid: false, "6.4.2. minItems - item count is less than the minimum number of items 1.");
+                }
+                else
+                {
+                    return result.WithResult(isValid: false);
+                }
             }
 
             return result;
