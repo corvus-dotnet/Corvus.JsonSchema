@@ -161,6 +161,8 @@ $CovenantVersion = "0.19.0"
 
 $CreateGitHubRelease = $true
 $PublishNuGetPackagesAsGitHubReleaseArtefacts = $true
+# Interim local bugfix for symbol packages not being published
+$NugetPackagesToPublishGlobSuffix = '.$(($script:GitVersion).SemVer).*nupkg'
 
 
 # Synopsis: Build, Test and Package
