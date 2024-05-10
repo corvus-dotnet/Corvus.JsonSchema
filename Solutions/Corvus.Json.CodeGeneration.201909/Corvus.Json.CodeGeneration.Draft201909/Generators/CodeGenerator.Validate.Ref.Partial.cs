@@ -1470,6 +1470,17 @@ public partial class CodeGeneratorValidateRef
     }
 
     /// <summary>
+    /// Gets a value indicating whether the type has a single property type constraint.
+    /// </summary>
+    public bool HasSinglePropertyType
+    {
+        get
+        {
+            return !this.HasProperties && this.HasAdditionalProperties;
+        }
+    }
+
+    /// <summary>
     /// Gets a value indicating whether the type has multiple items type constraints.
     /// </summary>
     public bool HasMultipleItemsType
@@ -1518,6 +1529,17 @@ public partial class CodeGeneratorValidateRef
     }
 
     /// <summary>
+    /// Gets a value indicating whether we can enumerate this object as a single items type.
+    /// </summary>
+    public bool CanEnumerateObjectAsSpecificType
+    {
+        get
+        {
+            return this.HasSinglePropertyType && this.SinglePropertyDotnetTypeName != $"{BuiltInTypes.AnyTypeDeclaration.Ns}.{BuiltInTypes.AnyTypeDeclaration.Type}";
+        }
+    }
+
+    /// <summary>
     /// Gets a value indicating whether this array represents a tuple.
     /// </summary>
     public bool IsTuple
@@ -1525,6 +1547,36 @@ public partial class CodeGeneratorValidateRef
         get
         {
             return this.TypeDeclaration.Schema().Items.IsSchemaArray && this.TypeDeclaration.Schema().AdditionalItems.ValueKind == JsonValueKind.False;
+        }
+    }
+
+    /// <summary>
+    /// Gets the dotnet type name for the additional properties dotnet type name.
+    /// </summary>
+    public string SinglePropertyDotnetTypeName
+    {
+        get
+        {
+            if (this.TypeDeclaration.Schema().Properties.IsUndefined())
+            {
+                if (this.TypeDeclaration.Schema().AdditionalProperties.ValueKind == JsonValueKind.Object)
+                {
+                    TypeDeclaration itemsType = this.Builder.GetTypeDeclarationForProperty(this.TypeDeclaration, "additionalProperties");
+                    return itemsType.FullyQualifiedDotnetTypeName ?? string.Empty;
+                }
+
+                if (this.TypeDeclaration.Schema().AdditionalProperties.ValueKind == JsonValueKind.True)
+                {
+                    return $"{BuiltInTypes.AnyTypeDeclaration.Ns}.{BuiltInTypes.AnyTypeDeclaration.Type}";
+                }
+
+                if (this.TypeDeclaration.Schema().AdditionalProperties.ValueKind == JsonValueKind.False)
+                {
+                    return $"{BuiltInTypes.NotAnyTypeDeclaration.Ns}.{BuiltInTypes.NotAnyTypeDeclaration.Type}";
+                }
+            }
+
+            return $"{BuiltInTypes.AnyTypeDeclaration.Ns}.{BuiltInTypes.AnyTypeDeclaration.Type}";
         }
     }
 

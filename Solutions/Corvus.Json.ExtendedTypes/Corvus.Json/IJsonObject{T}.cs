@@ -162,28 +162,28 @@ public interface IJsonObject<T> : IJsonValue<T>
     /// Removes the given property value.
     /// </summary>
     /// <param name="name">The name of the property.</param>
-    /// <returns>The isntance with the property removed.</returns>
+    /// <returns>The instance with the property removed.</returns>
     T RemoveProperty(in JsonPropertyName name);
 
     /// <summary>
     /// Removes the given property value.
     /// </summary>
     /// <param name="name">The name of the property.</param>
-    /// <returns>The isntance with the property removed.</returns>
+    /// <returns>The instance with the property removed.</returns>
     T RemoveProperty(string name);
 
     /// <summary>
     /// Removes the given property value.
     /// </summary>
     /// <param name="name">The name of the property.</param>
-    /// <returns>The isntance with the property removed.</returns>
+    /// <returns>The instance with the property removed.</returns>
     T RemoveProperty(ReadOnlySpan<char> name);
 
     /// <summary>
     /// Removes the given property value.
     /// </summary>
     /// <param name="utf8Name">The utf8-encoded name of the property.</param>
-    /// <returns>The isntance with the property removed.</returns>
+    /// <returns>The instance with the property removed.</returns>
     T RemoveProperty(ReadOnlySpan<byte> utf8Name);
 
 #if NET8_0_OR_GREATER
