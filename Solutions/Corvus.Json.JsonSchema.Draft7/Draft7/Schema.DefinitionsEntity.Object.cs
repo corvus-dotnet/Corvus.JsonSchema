@@ -7,7 +7,10 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 #nullable enable
+using System.Collections;
+using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
@@ -19,7 +22,7 @@ public readonly partial struct Schema
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
-    public readonly partial struct DefinitionsEntity : IJsonObject<DefinitionsEntity>
+    public readonly partial struct DefinitionsEntity : IJsonObject<DefinitionsEntity>, IReadOnlyDictionary<JsonPropertyName, Corvus.Json.JsonSchema.Draft7.Schema>
     {
         /// <summary>
         /// Initializes a new instance of the <see cref = "DefinitionsEntity"/> struct.
@@ -79,6 +82,57 @@ public readonly partial struct Schema
                 }
 
                 throw new IndexOutOfRangeException();
+            }
+        }
+
+        /// <inheritdoc/>
+        Corvus.Json.JsonSchema.Draft7.Schema IReadOnlyDictionary<JsonPropertyName, Corvus.Json.JsonSchema.Draft7.Schema>.this[JsonPropertyName key] => this[key];
+        /// <inheritdoc/>
+        IEnumerable<JsonPropertyName> IReadOnlyDictionary<JsonPropertyName, Corvus.Json.JsonSchema.Draft7.Schema>.Keys
+        {
+            get
+            {
+                foreach (var property in this.EnumerateObject())
+                {
+                    yield return property.Name;
+                }
+            }
+        }
+
+        /// <inheritdoc/>
+        IEnumerable<Corvus.Json.JsonSchema.Draft7.Schema> IReadOnlyDictionary<JsonPropertyName, Corvus.Json.JsonSchema.Draft7.Schema>.Values
+        {
+            get
+            {
+                foreach (var property in this.EnumerateObject())
+                {
+                    yield return property.Value;
+                }
+            }
+        }
+
+        /// <inheritdoc/>
+        int IReadOnlyCollection<KeyValuePair<JsonPropertyName, Corvus.Json.JsonSchema.Draft7.Schema>>.Count
+        {
+            get
+            {
+                if (this.HasJsonElementBacking)
+                {
+                    int count = 0;
+                    foreach (var _ in this.jsonElementBacking.EnumerateObject())
+                    {
+                        count++;
+                    }
+
+                    return count;
+                }
+
+                if (this.HasDotnetBacking)
+                {
+                    return this.objectBacking.Count;
+                }
+
+                throw new InvalidOperationException();
             }
         }
 
@@ -710,6 +764,40 @@ public readonly partial struct Schema
         public DefinitionsEntity RemoveProperty(ReadOnlySpan<byte> utf8Name)
         {
             return new(this.GetPropertyBackingWithout(utf8Name));
+        }
+
+        /// <inheritdoc/>
+        bool IReadOnlyDictionary<JsonPropertyName, Corvus.Json.JsonSchema.Draft7.Schema>.ContainsKey(JsonPropertyName key)
+        {
+            return this.HasProperty(key);
+        }
+
+        /// <inheritdoc/>
+        bool IReadOnlyDictionary<JsonPropertyName, Corvus.Json.JsonSchema.Draft7.Schema>.TryGetValue(JsonPropertyName key, [MaybeNullWhen(false)] out Corvus.Json.JsonSchema.Draft7.Schema value)
+        {
+            return this.TryGetProperty(key, out value);
+        }
+
+        /// <inheritdoc/>
+        IEnumerator<KeyValuePair<JsonPropertyName, Corvus.Json.JsonSchema.Draft7.Schema>> IEnumerable<KeyValuePair<JsonPropertyName, Corvus.Json.JsonSchema.Draft7.Schema>>.GetEnumerator()
+        {
+            if (this.HasJsonElementBacking)
+            {
+                return new ReadOnlyDictionaryJsonObjectEnumerator<Corvus.Json.JsonSchema.Draft7.Schema>(this.jsonElementBacking);
+            }
+
+            if (this.HasDotnetBacking)
+            {
+                return new ReadOnlyDictionaryJsonObjectEnumerator<Corvus.Json.JsonSchema.Draft7.Schema>(this.objectBacking);
+            }
+
+            throw new InvalidOperationException();
+        }
+
+        /// <inheritdoc/>
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return this.EnumerateObject();
         }
 
         /// <summary>

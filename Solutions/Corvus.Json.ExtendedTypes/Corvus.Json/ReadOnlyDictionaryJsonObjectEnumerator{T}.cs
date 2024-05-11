@@ -1,4 +1,4 @@
-﻿// <copyright file="JsonObjectEnumerator{T}.cs" company="Endjin Limited">
+﻿// <copyright file="ReadOnlyDictionaryJsonObjectEnumerator{T}.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
@@ -9,10 +9,10 @@ using System.Text.Json;
 namespace Corvus.Json;
 
 /// <summary>
-/// An enumerator for a JSON object.
+/// An enumerator for a JSON object as a KeyValuePair (for <see cref="IReadOnlyDictionary{TKey, TValue}"/> implementations).
 /// </summary>
 /// <typeparam name="T">The type of the properties in the object.</typeparam>
-public struct JsonObjectEnumerator<T> : IEnumerable, IEnumerator, IEnumerable<JsonObjectProperty<T>>, IEnumerator<JsonObjectProperty<T>>, IDisposable
+public struct ReadOnlyDictionaryJsonObjectEnumerator<T> : IEnumerable, IEnumerator, IEnumerable<KeyValuePair<JsonPropertyName, T>>, IEnumerator<KeyValuePair<JsonPropertyName, T>>, IDisposable
     where T : struct, IJsonValue<T>
 {
     private readonly Backing backing;
@@ -20,10 +20,10 @@ public struct JsonObjectEnumerator<T> : IEnumerable, IEnumerator, IEnumerable<Js
     private ImmutableList<JsonObjectProperty>.Enumerator propertyBackingEnumerator;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="JsonObjectEnumerator{T}"/> struct.
+    /// Initializes a new instance of the <see cref="ReadOnlyDictionaryJsonObjectEnumerator{T}"/> struct.
     /// </summary>
     /// <param name="jsonElement">The Json Element to enumerate.</param>
-    public JsonObjectEnumerator(JsonElement jsonElement)
+    public ReadOnlyDictionaryJsonObjectEnumerator(JsonElement jsonElement)
     {
         this.backing = Backing.JsonElementEnumerator;
         this.jsonElementEnumerator = jsonElement.EnumerateObject();
@@ -31,10 +31,10 @@ public struct JsonObjectEnumerator<T> : IEnumerable, IEnumerator, IEnumerable<Js
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="JsonObjectEnumerator{T}"/> struct.
+    /// Initializes a new instance of the <see cref="ReadOnlyDictionaryJsonObjectEnumerator{T}"/> struct.
     /// </summary>
     /// <param name="dictionary">The property dictionary to enumerate.</param>
-    public JsonObjectEnumerator(ImmutableList<JsonObjectProperty> dictionary)
+    public ReadOnlyDictionaryJsonObjectEnumerator(ImmutableList<JsonObjectProperty> dictionary)
     {
         this.backing = Backing.PropertyBackingEnumerator;
         this.jsonElementEnumerator = default;
@@ -50,18 +50,19 @@ public struct JsonObjectEnumerator<T> : IEnumerable, IEnumerator, IEnumerable<Js
     }
 
     /// <inheritdoc/>
-    public JsonObjectProperty<T> Current
+    public KeyValuePair<JsonPropertyName, T> Current
     {
         get
         {
             if ((this.backing & Backing.JsonElementEnumerator) != 0)
             {
-                return new JsonObjectProperty<T>(this.jsonElementEnumerator.Current);
+                JsonObjectProperty<T> property = new(this.jsonElementEnumerator.Current);
+                return new KeyValuePair<JsonPropertyName, T>(property.Name, property.Value);
             }
 
             if ((this.backing & Backing.PropertyBackingEnumerator) != 0)
             {
-                return (JsonObjectProperty<T>)this.propertyBackingEnumerator.Current;
+                return new KeyValuePair<JsonPropertyName, T>(this.propertyBackingEnumerator.Current.Name, this.propertyBackingEnumerator.Current.ValueAs<T>());
             }
 
             return default;
@@ -89,9 +90,9 @@ public struct JsonObjectEnumerator<T> : IEnumerable, IEnumerator, IEnumerable<Js
     /// Gets a new enumerator instance.
     /// </summary>
     /// <returns>A new enumerator instance.</returns>
-    public readonly JsonObjectEnumerator<T> GetEnumerator()
+    public readonly ReadOnlyDictionaryJsonObjectEnumerator<T> GetEnumerator()
     {
-        JsonObjectEnumerator<T> result = this;
+        ReadOnlyDictionaryJsonObjectEnumerator<T> result = this;
         result.Reset();
         return result;
     }
@@ -103,7 +104,7 @@ public struct JsonObjectEnumerator<T> : IEnumerable, IEnumerator, IEnumerable<Js
     }
 
     /// <inheritdoc/>
-    readonly IEnumerator<JsonObjectProperty<T>> IEnumerable<JsonObjectProperty<T>>.GetEnumerator()
+    readonly IEnumerator<KeyValuePair<JsonPropertyName, T>> IEnumerable<KeyValuePair<JsonPropertyName, T>>.GetEnumerator()
     {
         return this.GetEnumerator();
     }

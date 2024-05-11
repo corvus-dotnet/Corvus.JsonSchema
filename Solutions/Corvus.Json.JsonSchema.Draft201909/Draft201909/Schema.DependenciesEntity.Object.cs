@@ -7,7 +7,10 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 #nullable enable
+using System.Collections;
+using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
@@ -19,7 +22,7 @@ public readonly partial struct Schema
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
-    public readonly partial struct DependenciesEntity : IJsonObject<DependenciesEntity>
+    public readonly partial struct DependenciesEntity : IJsonObject<DependenciesEntity>, IReadOnlyDictionary<JsonPropertyName, Corvus.Json.JsonSchema.Draft201909.Schema.DependenciesEntity.AdditionalPropertiesEntity>
     {
         /// <summary>
         /// Initializes a new instance of the <see cref = "DependenciesEntity"/> struct.
@@ -79,6 +82,57 @@ public readonly partial struct Schema
                 }
 
                 throw new IndexOutOfRangeException();
+            }
+        }
+
+        /// <inheritdoc/>
+        Corvus.Json.JsonSchema.Draft201909.Schema.DependenciesEntity.AdditionalPropertiesEntity IReadOnlyDictionary<JsonPropertyName, Corvus.Json.JsonSchema.Draft201909.Schema.DependenciesEntity.AdditionalPropertiesEntity>.this[JsonPropertyName key] => this[key];
+        /// <inheritdoc/>
+        IEnumerable<JsonPropertyName> IReadOnlyDictionary<JsonPropertyName, Corvus.Json.JsonSchema.Draft201909.Schema.DependenciesEntity.AdditionalPropertiesEntity>.Keys
+        {
+            get
+            {
+                foreach (var property in this.EnumerateObject())
+                {
+                    yield return property.Name;
+                }
+            }
+        }
+
+        /// <inheritdoc/>
+        IEnumerable<Corvus.Json.JsonSchema.Draft201909.Schema.DependenciesEntity.AdditionalPropertiesEntity> IReadOnlyDictionary<JsonPropertyName, Corvus.Json.JsonSchema.Draft201909.Schema.DependenciesEntity.AdditionalPropertiesEntity>.Values
+        {
+            get
+            {
+                foreach (var property in this.EnumerateObject())
+                {
+                    yield return property.Value;
+                }
+            }
+        }
+
+        /// <inheritdoc/>
+        int IReadOnlyCollection<KeyValuePair<JsonPropertyName, Corvus.Json.JsonSchema.Draft201909.Schema.DependenciesEntity.AdditionalPropertiesEntity>>.Count
+        {
+            get
+            {
+                if (this.HasJsonElementBacking)
+                {
+                    int count = 0;
+                    foreach (var _ in this.jsonElementBacking.EnumerateObject())
+                    {
+                        count++;
+                    }
+
+                    return count;
+                }
+
+                if (this.HasDotnetBacking)
+                {
+                    return this.objectBacking.Count;
+                }
+
+                throw new InvalidOperationException();
             }
         }
 
@@ -710,6 +764,40 @@ public readonly partial struct Schema
         public DependenciesEntity RemoveProperty(ReadOnlySpan<byte> utf8Name)
         {
             return new(this.GetPropertyBackingWithout(utf8Name));
+        }
+
+        /// <inheritdoc/>
+        bool IReadOnlyDictionary<JsonPropertyName, Corvus.Json.JsonSchema.Draft201909.Schema.DependenciesEntity.AdditionalPropertiesEntity>.ContainsKey(JsonPropertyName key)
+        {
+            return this.HasProperty(key);
+        }
+
+        /// <inheritdoc/>
+        bool IReadOnlyDictionary<JsonPropertyName, Corvus.Json.JsonSchema.Draft201909.Schema.DependenciesEntity.AdditionalPropertiesEntity>.TryGetValue(JsonPropertyName key, [MaybeNullWhen(false)] out Corvus.Json.JsonSchema.Draft201909.Schema.DependenciesEntity.AdditionalPropertiesEntity value)
+        {
+            return this.TryGetProperty(key, out value);
+        }
+
+        /// <inheritdoc/>
+        IEnumerator<KeyValuePair<JsonPropertyName, Corvus.Json.JsonSchema.Draft201909.Schema.DependenciesEntity.AdditionalPropertiesEntity>> IEnumerable<KeyValuePair<JsonPropertyName, Corvus.Json.JsonSchema.Draft201909.Schema.DependenciesEntity.AdditionalPropertiesEntity>>.GetEnumerator()
+        {
+            if (this.HasJsonElementBacking)
+            {
+                return new ReadOnlyDictionaryJsonObjectEnumerator<Corvus.Json.JsonSchema.Draft201909.Schema.DependenciesEntity.AdditionalPropertiesEntity>(this.jsonElementBacking);
+            }
+
+            if (this.HasDotnetBacking)
+            {
+                return new ReadOnlyDictionaryJsonObjectEnumerator<Corvus.Json.JsonSchema.Draft201909.Schema.DependenciesEntity.AdditionalPropertiesEntity>(this.objectBacking);
+            }
+
+            throw new InvalidOperationException();
+        }
+
+        /// <inheritdoc/>
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return this.EnumerateObject();
         }
 
         /// <summary>

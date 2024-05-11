@@ -18,7 +18,16 @@
 
 #nullable enable
 
+<#  if (CanEnumerateObjectAsSpecificType)
+    { #>
+using System.Collections;
+using System.Collections.Generic;
+<#  } #>
 using System.Collections.Immutable;
+<#  if (CanEnumerateObjectAsSpecificType)
+    { #>
+using System.Diagnostics.CodeAnalysis;
+<#  } #>
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
@@ -28,7 +37,14 @@ namespace <#= Namespace #>;
 
 <# BeginNesting(); #>
 <#= FormattedTypeDocumentation #>
+<#  if (CanEnumerateObjectAsSpecificType)
+    { #>
+public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonObject<<#= TypeDeclaration.DotnetTypeName #>>, IReadOnlyDictionary<JsonPropertyName, <#= SinglePropertyDotnetTypeName #>>
+<#  }
+    else
+    { #>
 public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonObject<<#= TypeDeclaration.DotnetTypeName #>>
+<#  } #>
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="<#= TypeDeclaration.DotnetTypeName #>"/> struct.
@@ -125,6 +141,59 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonObje
             }
 
             throw new IndexOutOfRangeException();
+        }
+    }
+
+    /// <inheritdoc/>
+    <#= SinglePropertyDotnetTypeName #> IReadOnlyDictionary<JsonPropertyName, <#= SinglePropertyDotnetTypeName #>>.this[JsonPropertyName key] => this[key];
+
+
+    /// <inheritdoc/>
+    IEnumerable<JsonPropertyName> IReadOnlyDictionary<JsonPropertyName, <#= SinglePropertyDotnetTypeName #>>.Keys
+    {
+        get
+        {
+            foreach(var property in this.EnumerateObject())
+            {
+                yield return property.Name;
+            }
+        }
+    }
+
+    /// <inheritdoc/>
+    IEnumerable<<#= SinglePropertyDotnetTypeName #>> IReadOnlyDictionary<JsonPropertyName, <#= SinglePropertyDotnetTypeName #>>.Values 
+    { 
+        get
+        {
+            foreach (var property in this.EnumerateObject())
+            {
+                yield return property.Value;
+            }
+        }
+    }
+
+    /// <inheritdoc/>
+    int IReadOnlyCollection<KeyValuePair<JsonPropertyName, <#= SinglePropertyDotnetTypeName #>>>.Count
+    {
+        get
+        {
+            if (this.HasJsonElementBacking)
+            {
+                int count = 0;
+                foreach (var _ in this.jsonElementBacking.EnumerateObject())
+                {
+                    count++;
+                }
+
+                return count;
+            }
+
+            if (this.HasDotnetBacking)
+            {
+                return this.objectBacking.Count;
+            }
+
+            throw new InvalidOperationException();
         }
     }
 <# } #>
@@ -876,6 +945,43 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonObje
         return new(this.GetPropertyBackingWithout(utf8Name));
     }
 
+<#  if (CanEnumerateObjectAsSpecificType)
+    { #>
+    /// <inheritdoc/>
+    bool IReadOnlyDictionary<JsonPropertyName, <#= SinglePropertyDotnetTypeName #>>.ContainsKey(JsonPropertyName key)
+    {
+        return this.HasProperty(key);
+    }
+
+    /// <inheritdoc/>
+    bool IReadOnlyDictionary<JsonPropertyName, <#= SinglePropertyDotnetTypeName #>>.TryGetValue(JsonPropertyName key, [MaybeNullWhen(false)] out <#= SinglePropertyDotnetTypeName #> value)
+    {
+        return this.TryGetProperty(key, out value);
+    }
+
+    /// <inheritdoc/>
+    IEnumerator<KeyValuePair<JsonPropertyName, <#= SinglePropertyDotnetTypeName #>>> IEnumerable<KeyValuePair<JsonPropertyName, <#= SinglePropertyDotnetTypeName #>>>.GetEnumerator()
+    {
+        if (this.HasJsonElementBacking)
+        {
+            return new ReadOnlyDictionaryJsonObjectEnumerator<<#= SinglePropertyDotnetTypeName #>>(this.jsonElementBacking);
+        }
+
+        if (this.HasDotnetBacking)
+        {
+            return new ReadOnlyDictionaryJsonObjectEnumerator<<#= SinglePropertyDotnetTypeName #>>(this.objectBacking);
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    /// <inheritdoc/>
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return this.EnumerateObject();
+    }
+
+<#  } #>
     /// <summary>
     /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object.
     /// </summary>
