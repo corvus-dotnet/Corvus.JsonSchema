@@ -1,0 +1,22 @@
+{
+    "oneOf": [
+        { "$ref": "#/$defs/Foo" },
+        { "$ref": "#/$defs/Bar" },
+        { "$ref": "#/$defs/Baz" }
+    ],
+
+    "$defs": {
+        "Foo": {
+            "title": "The foo item.",
+            "const": 1
+        },
+        "Bar": {
+            "title": "The bar item.",
+            "const": 4
+        },
+        "Baz": {
+            "title": "The baz item.",
+            "const": 8
+        }
+    }
+}

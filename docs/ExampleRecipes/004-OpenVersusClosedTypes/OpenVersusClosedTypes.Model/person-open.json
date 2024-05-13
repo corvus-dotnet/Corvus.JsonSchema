@@ -1,0 +1,28 @@
+﻿{
+    "title": "The person schema https://schema.org/Person",
+    "type": "object",
+    "required": [ "familyName", "givenName", "birthDate" ],
+    "properties": {
+        "familyName": { "$ref": "#/$defs/constrainedString" },
+        "givenName": { "$ref": "#/$defs/constrainedString" },
+        "otherNames": { "$ref": "#/$defs/constrainedString" },
+        "birthDate": {
+            "type": "string",
+            "format": "date"
+        },
+        "height": {
+            "type": "number",
+            "format": "double",
+            "exclusiveMinimum": 0.0,
+            "maximum": 3.0
+        }
+    },
+
+    "$defs": {
+        "constrainedString": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+        }
+    }
+}

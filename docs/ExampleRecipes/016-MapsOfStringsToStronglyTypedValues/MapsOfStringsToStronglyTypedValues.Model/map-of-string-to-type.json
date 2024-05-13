@@ -1,0 +1,4 @@
+﻿{
+    "type": "object",
+    "unevaluatedProperties": { "$ref": "./person-closed.json" }
+}
