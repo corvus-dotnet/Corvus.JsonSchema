@@ -24,9 +24,9 @@ public readonly partial struct Validation
     
 #if NET8_0_OR_GREATER
 [CollectionBuilder(typeof(TypeEntity), "Create")]
-public readonly partial struct TypeEntity : IJsonArray<TypeEntity>, IEnumerable<JsonAny>
+public readonly partial struct TypeEntity : IJsonArray<TypeEntity>, IReadOnlyCollection<JsonAny>
 #else
-    public readonly partial struct TypeEntity : IJsonArray<TypeEntity>
+    public readonly partial struct TypeEntity : IJsonArray<TypeEntity>, IReadOnlyCollection<JsonAny>
 #endif
     {
         /// <summary>
@@ -419,19 +419,21 @@ public readonly partial struct TypeEntity : IJsonArray<TypeEntity>, IEnumerable<
             return new(builder.ToImmutable());
         }
 
-#if NET8_0_OR_GREATER
-    /// <inheritdoc />
-    IEnumerator<JsonAny> IEnumerable<JsonAny>.GetEnumerator()
-    {
-        return EnumerateArray();
-    }
+        /// <inheritdoc/>
+        IEnumerator<JsonAny> IEnumerable<JsonAny>.GetEnumerator()
+        {
+            return EnumerateArray();
+        }
 
-    /// <inheritdoc />
-    IEnumerator IEnumerable.GetEnumerator()
-    {
-        return EnumerateArray();
-    }
-#endif
+        /// <inheritdoc/>
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return EnumerateArray();
+        }
+
+        /// <inheritdoc/>
+        int IReadOnlyCollection<JsonAny>.Count => this.GetArrayLength();
+
         /// <inheritdoc/>
         public ImmutableList<JsonAny> AsImmutableList()
         {

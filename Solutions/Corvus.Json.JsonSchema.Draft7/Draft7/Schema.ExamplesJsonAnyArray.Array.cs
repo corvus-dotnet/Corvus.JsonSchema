@@ -24,9 +24,9 @@ public readonly partial struct Schema
     
 #if NET8_0_OR_GREATER
 [CollectionBuilder(typeof(ExamplesJsonAnyArray), "Create")]
-public readonly partial struct ExamplesJsonAnyArray : IJsonArray<ExamplesJsonAnyArray>, IEnumerable<JsonAny>
+public readonly partial struct ExamplesJsonAnyArray : IJsonArray<ExamplesJsonAnyArray>, IReadOnlyCollection<JsonAny>
 #else
-    public readonly partial struct ExamplesJsonAnyArray : IJsonArray<ExamplesJsonAnyArray>
+    public readonly partial struct ExamplesJsonAnyArray : IJsonArray<ExamplesJsonAnyArray>, IReadOnlyCollection<JsonAny>
 #endif
     {
         /// <summary>
@@ -417,19 +417,21 @@ public readonly partial struct ExamplesJsonAnyArray : IJsonArray<ExamplesJsonAny
             return new(builder.ToImmutable());
         }
 
-#if NET8_0_OR_GREATER
-    /// <inheritdoc />
-    IEnumerator<JsonAny> IEnumerable<JsonAny>.GetEnumerator()
-    {
-        return EnumerateArray();
-    }
+        /// <inheritdoc/>
+        IEnumerator<JsonAny> IEnumerable<JsonAny>.GetEnumerator()
+        {
+            return EnumerateArray();
+        }
 
-    /// <inheritdoc />
-    IEnumerator IEnumerable.GetEnumerator()
-    {
-        return EnumerateArray();
-    }
-#endif
+        /// <inheritdoc/>
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return EnumerateArray();
+        }
+
+        /// <inheritdoc/>
+        int IReadOnlyCollection<JsonAny>.Count => this.GetArrayLength();
+
         /// <inheritdoc/>
         public ImmutableList<JsonAny> AsImmutableList()
         {

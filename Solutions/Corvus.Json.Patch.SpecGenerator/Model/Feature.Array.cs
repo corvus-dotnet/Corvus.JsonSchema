@@ -22,9 +22,9 @@ namespace Corvus.Json.Patch.SpecGenerator;
 
 #if NET8_0_OR_GREATER
 [CollectionBuilder(typeof(Feature), "Create")]
-public readonly partial struct Feature : IJsonArray<Feature>, IEnumerable<Corvus.Json.Patch.SpecGenerator.Scenario>
+public readonly partial struct Feature : IJsonArray<Feature>, IReadOnlyCollection<Corvus.Json.Patch.SpecGenerator.Scenario>
 #else
-public readonly partial struct Feature : IJsonArray<Feature>
+public readonly partial struct Feature : IJsonArray<Feature>, IReadOnlyCollection<Corvus.Json.Patch.SpecGenerator.Scenario>
 #endif
 {
     /// <summary>
@@ -296,19 +296,21 @@ public readonly partial struct Feature : IJsonArray<Feature>
         return new Feature(builder.ToImmutable());
     }
 
-#if NET8_0_OR_GREATER
-    /// <inheritdoc />
+    /// <inheritdoc/>
     IEnumerator<Corvus.Json.Patch.SpecGenerator.Scenario> IEnumerable<Corvus.Json.Patch.SpecGenerator.Scenario>.GetEnumerator()
     {
         return EnumerateArray();
     }
 
-    /// <inheritdoc />
+    /// <inheritdoc/>
     IEnumerator IEnumerable.GetEnumerator()
     {
         return EnumerateArray();
     }
-#endif
+
+    /// <inheritdoc/>
+    int IReadOnlyCollection<Corvus.Json.Patch.SpecGenerator.Scenario>.Count => this.GetArrayLength();
+
     /// <inheritdoc/>
     public ImmutableList<JsonAny> AsImmutableList()
     {

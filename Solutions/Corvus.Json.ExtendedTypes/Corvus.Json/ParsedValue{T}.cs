@@ -17,9 +17,9 @@ namespace Corvus.Json;
 public readonly struct ParsedValue<T> : IDisposable
     where T : struct, IJsonValue<T>
 {
-    private readonly JsonDocument jsonDocument;
+    private readonly JsonDocument? jsonDocument;
 
-    private ParsedValue(JsonDocument jsonDocument, T value)
+    private ParsedValue(JsonDocument? jsonDocument, T value)
     {
         this.jsonDocument = jsonDocument;
         this.Instance = value;
@@ -29,6 +29,15 @@ public readonly struct ParsedValue<T> : IDisposable
     /// Gets the instance of the parsed value.
     /// </summary>
     public T Instance { get; }
+
+    /// <summary>
+    /// Converts an instance of a value to a parsed value.
+    /// </summary>
+    /// <param name="value">The value to convert to a parsed value.</param>
+    public static implicit operator ParsedValue<T>(T value)
+    {
+        return new(null, value);
+    }
 
     /// <summary>
     /// Parse a JSON document into a value.
