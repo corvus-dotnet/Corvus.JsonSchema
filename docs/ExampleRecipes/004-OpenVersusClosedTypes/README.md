@@ -1,0 +1,1 @@
+Sample code for [json-schema-patterns-004-dotnet-open-versus-closed-types](https://endjin.com/blog/2024/05/json-schema-patterns-004-dotnet-open-versus-closed-types).

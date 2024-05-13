@@ -1,0 +1,1 @@
+Sample code for [json-schema-patterns-002-dotnet-data-object-validation](https://endjin.com/blog/2024/05/json-schema-patterns-002-dotnet-data-object-validation).
