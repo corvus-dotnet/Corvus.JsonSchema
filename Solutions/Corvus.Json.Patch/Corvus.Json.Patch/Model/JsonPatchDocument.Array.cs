@@ -22,9 +22,9 @@ namespace Corvus.Json.Patch.Model;
 
 #if NET8_0_OR_GREATER
 [CollectionBuilder(typeof(JsonPatchDocument), "Create")]
-public readonly partial struct JsonPatchDocument : IJsonArray<JsonPatchDocument>, IEnumerable<Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperation>
+public readonly partial struct JsonPatchDocument : IJsonArray<JsonPatchDocument>, IReadOnlyCollection<Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperation>
 #else
-public readonly partial struct JsonPatchDocument : IJsonArray<JsonPatchDocument>
+public readonly partial struct JsonPatchDocument : IJsonArray<JsonPatchDocument>, IReadOnlyCollection<Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperation>
 #endif
 {
     /// <summary>
@@ -296,19 +296,21 @@ public readonly partial struct JsonPatchDocument : IJsonArray<JsonPatchDocument>
         return new JsonPatchDocument(builder.ToImmutable());
     }
 
-#if NET8_0_OR_GREATER
-    /// <inheritdoc />
+    /// <inheritdoc/>
     IEnumerator<Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperation> IEnumerable<Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperation>.GetEnumerator()
     {
         return EnumerateArray();
     }
 
-    /// <inheritdoc />
+    /// <inheritdoc/>
     IEnumerator IEnumerable.GetEnumerator()
     {
         return EnumerateArray();
     }
-#endif
+
+    /// <inheritdoc/>
+    int IReadOnlyCollection<Corvus.Json.Patch.Model.JsonPatchDocument.PatchOperation>.Count => this.GetArrayLength();
+
     /// <inheritdoc/>
     public ImmutableList<JsonAny> AsImmutableList()
     {

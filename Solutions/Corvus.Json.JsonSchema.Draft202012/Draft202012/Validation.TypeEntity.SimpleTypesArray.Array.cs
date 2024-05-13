@@ -26,9 +26,9 @@ public readonly partial struct Validation
         
 #if NET8_0_OR_GREATER
 [CollectionBuilder(typeof(SimpleTypesArray), "Create")]
-public readonly partial struct SimpleTypesArray : IJsonArray<SimpleTypesArray>, IEnumerable<Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypes>
+public readonly partial struct SimpleTypesArray : IJsonArray<SimpleTypesArray>, IReadOnlyCollection<Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypes>
 #else
-        public readonly partial struct SimpleTypesArray : IJsonArray<SimpleTypesArray>
+        public readonly partial struct SimpleTypesArray : IJsonArray<SimpleTypesArray>, IReadOnlyCollection<Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypes>
 #endif
         {
             /// <summary>
@@ -300,19 +300,21 @@ public readonly partial struct SimpleTypesArray : IJsonArray<SimpleTypesArray>, 
                 return new SimpleTypesArray(builder.ToImmutable());
             }
 
-#if NET8_0_OR_GREATER
-    /// <inheritdoc />
-    IEnumerator<Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypes> IEnumerable<Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypes>.GetEnumerator()
-    {
-        return EnumerateArray();
-    }
+            /// <inheritdoc/>
+            IEnumerator<Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypes> IEnumerable<Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypes>.GetEnumerator()
+            {
+                return EnumerateArray();
+            }
 
-    /// <inheritdoc />
-    IEnumerator IEnumerable.GetEnumerator()
-    {
-        return EnumerateArray();
-    }
-#endif
+            /// <inheritdoc/>
+            IEnumerator IEnumerable.GetEnumerator()
+            {
+                return EnumerateArray();
+            }
+
+            /// <inheritdoc/>
+            int IReadOnlyCollection<Corvus.Json.JsonSchema.Draft202012.Validation.SimpleTypes>.Count => this.GetArrayLength();
+
             /// <inheritdoc/>
             public ImmutableList<JsonAny> AsImmutableList()
             {

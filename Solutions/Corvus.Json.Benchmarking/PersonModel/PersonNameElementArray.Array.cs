@@ -27,9 +27,9 @@ namespace Corvus.Json.Benchmarking.Models;
 
 #if NET8_0_OR_GREATER
 [CollectionBuilder(typeof(PersonNameElementArray), "Create")]
-public readonly partial struct PersonNameElementArray : IJsonArray<PersonNameElementArray>, IEnumerable<Corvus.Json.Benchmarking.Models.PersonNameElement>
+public readonly partial struct PersonNameElementArray : IJsonArray<PersonNameElementArray>, IReadOnlyCollection<Corvus.Json.Benchmarking.Models.PersonNameElement>
 #else
-public readonly partial struct PersonNameElementArray : IJsonArray<PersonNameElementArray>
+public readonly partial struct PersonNameElementArray : IJsonArray<PersonNameElementArray>, IReadOnlyCollection<Corvus.Json.Benchmarking.Models.PersonNameElement>
 #endif
 {
     /// <summary>
@@ -301,19 +301,21 @@ public readonly partial struct PersonNameElementArray : IJsonArray<PersonNameEle
         return new PersonNameElementArray(builder.ToImmutable());
     }
 
-#if NET8_0_OR_GREATER
-    /// <inheritdoc />
+    /// <inheritdoc/>
     IEnumerator<Corvus.Json.Benchmarking.Models.PersonNameElement> IEnumerable<Corvus.Json.Benchmarking.Models.PersonNameElement>.GetEnumerator()
     {
         return EnumerateArray();
     }
 
-    /// <inheritdoc />
+    /// <inheritdoc/>
     IEnumerator IEnumerable.GetEnumerator()
     {
         return EnumerateArray();
     }
-#endif
+
+    /// <inheritdoc/>
+    int IReadOnlyCollection<Corvus.Json.Benchmarking.Models.PersonNameElement>.Count => this.GetArrayLength();
+
     /// <inheritdoc/>
     public ImmutableList<JsonAny> AsImmutableList()
     {
