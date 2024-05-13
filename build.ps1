@@ -71,7 +71,7 @@ param (
     [string] $BuildModulePath,
 
     [Parameter()]
-    [version] $BuildModuleVersion = "1.5.5",
+    [version] $BuildModuleVersion = "1.5.6",
 
     [Parameter()]
     [version] $InvokeBuildModuleVersion = "5.10.3"
@@ -161,8 +161,6 @@ $CovenantVersion = "0.19.0"
 
 $CreateGitHubRelease = $true
 $PublishNuGetPackagesAsGitHubReleaseArtefacts = $true
-# Interim local bugfix for symbol packages not being published
-# $NugetPackagesToPublishGlobSuffix = '.$(($script:GitVersion).SemVer).*nupkg'
 
 
 # Synopsis: Build, Test and Package
@@ -271,56 +269,6 @@ task RunTests -If {!$SkipTest -and $SolutionToBuild} {
         # Generate test report file
         if (!$SkipTestReport) {
             _GenerateCodeCoverageMarkdownReport
-        }
-    }
-}
-
-task PublishSolutionPackages -If {!$SkipSolutionPackages -and $SolutionToBuild -and $NugetPackageNamesToPublishGlob} Version,EnsurePackagesDir,{
-
-    # Force the wildcard expression to be evaluated now that GitVersion has been run
-    $evaluatedNugetPackagesToPublishGlob = Invoke-Expression "`"$($NugetPackageNamesToPublishGlob)$($NugetPackagesToPublishGlobSuffix)`""
-    Write-Build White "EvaluatedNugetPackagesToPublishGlob: $evaluatedNugetPackagesToPublishGlob"
-    Push-Location "$here/_packages"
-    $nugetPackagesToPublish = Get-ChildItem -Path . -Filter $evaluatedNugetPackagesToPublishGlob | Select-Object -ExpandProperty Name
-    Write-Build White "NugetPackagesToPublish: `n`t$($nugetPackagesToPublish -join "`n`t")"
-
-    # Derive the NuGet API key to use - this also makes it easier to mask later on
-    # NOTE: Where NuGet auth has been setup beforehand (e.g. via a SOURCE), an API key still needs to be specified but it can be any value
-    $nugetApiKey = $env:NUGET_API_KEY ? $env:NUGET_API_KEY : "no-key"
-
-    # Setup the 'dotnet nuget push' command-line parameters that will be the same for each package
-    $nugetPushArgs = @(
-        "-s"
-        $NugetPublishSource
-        "-ss"
-        $NugetPublishSymbolSource
-        "--api-key"
-        $nugetApiKey
-    )
-
-    if ($NugetPublishSkipDuplicates) {
-        $nugetPushArgs += @(
-            "--skip-duplicate"
-        )
-    }
-
-    # Remove the existing log, since we append to it for each project being packaged via a NuSpec file
-    Get-Item $DotNetPackageNuSpecLogFile -ErrorAction Ignore | Remove-Item -Force
-
-    try {
-        foreach ($nugetPackage in $nugetPackagesToPublish) {
-
-            Write-Build Green "Publishing package: $nugetPackage"
-            # Ensure any NuGet API key is masked in the debug logging
-            Write-Verbose ("dotnet nuget push $nugetPackage $nugetPushArgs".Replace($nugetApiKey, "*****")) -Verbose:$true
-            exec {
-                & dotnet nuget push $nugetPackage $nugetPushArgs
-            }
-        }
-    }
-    finally {
-        if ((Test-Path $DotNetPackageNuSpecLogFile) -and $IsAzureDevOps) {
-            Write-Host "##vso[artifact.upload artifactname=logs]$((Resolve-Path $DotNetPackageNuSpecLogFile).Path)"
         }
     }
 }
