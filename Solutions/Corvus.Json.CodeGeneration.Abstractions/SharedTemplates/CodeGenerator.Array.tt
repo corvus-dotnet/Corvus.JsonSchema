@@ -34,7 +34,7 @@ namespace <#= Namespace #>;
     { #>
 #if NET8_0_OR_GREATER
 [CollectionBuilder(typeof(<#= TypeDeclaration.DotnetTypeName #>), "Create")]
-public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArray<<#= TypeDeclaration.DotnetTypeName #>>, IEnumerable<<#= SingleItemsDotnetTypeName #>>
+public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArray<<#= TypeDeclaration.DotnetTypeName #>>, IReadOnlyCollection<<#= SingleItemsDotnetTypeName #>>
 #else
 public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArray<<#= TypeDeclaration.DotnetTypeName #>>
 #endif
@@ -43,7 +43,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
     { #>
 #if NET8_0_OR_GREATER
 [CollectionBuilder(typeof(<#= TypeDeclaration.DotnetTypeName #>), "Create")]
-public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArray<<#= TypeDeclaration.DotnetTypeName #>>, IEnumerable<JsonAny>
+public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArray<<#= TypeDeclaration.DotnetTypeName #>>, IReadOnlyCollection<JsonAny>
 #else
 public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArray<<#= TypeDeclaration.DotnetTypeName #>>
 #endif
@@ -191,8 +191,9 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
         }
     }
 
-<#      if(CanEnumerateAsSpecificType)
-        {#>
+    /// <inheritdoc />
+    int IReadOnlyCollection<<#= SingleItemsDotnetTypeName #>>.Count => this.GetArrayLength();
+
     /// <summary>
     /// Gets the item at the given index.
     /// </summary>
@@ -224,8 +225,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #> : IJsonArra
             throw new InvalidOperationException();
         }
     }
-<#      }
-    }
+<#  }
 
     if (IsTuple)
     { #>

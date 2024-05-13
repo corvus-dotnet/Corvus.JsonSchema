@@ -143,7 +143,7 @@ namespace ");
             #line hidden
             
             #line 37 "CodeGenerator.Array.tt"
-            this.Write(">, IEnumerable<");
+            this.Write(">, IReadOnlyCollection<");
             
             #line default
             #line hidden
@@ -229,7 +229,7 @@ namespace ");
             #line hidden
             
             #line 46 "CodeGenerator.Array.tt"
-            this.Write(">, IEnumerable<JsonAny>\r\n#else\r\npublic readonly partial struct ");
+            this.Write(">, IReadOnlyCollection<JsonAny>\r\n#else\r\npublic readonly partial struct ");
             
             #line default
             #line hidden
@@ -688,20 +688,22 @@ namespace ");
         }
     }
 
-");
+    /// <inheritdoc />
+    int IReadOnlyCollection<");
             
             #line default
             #line hidden
             
-            #line 194 "CodeGenerator.Array.tt"
-      if(CanEnumerateAsSpecificType)
-        {
+            #line 195 "CodeGenerator.Array.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 196 "CodeGenerator.Array.tt"
-            this.Write(@"    /// <summary>
+            #line 195 "CodeGenerator.Array.tt"
+            this.Write(@">.Count => this.GetArrayLength();
+
+    /// <summary>
     /// Gets the item at the given index.
     /// </summary>
     /// <param name=""index"">The index at which to retrieve the item.</param>
@@ -713,26 +715,26 @@ namespace ");
             #line default
             #line hidden
             
-            #line 203 "CodeGenerator.Array.tt"
+            #line 204 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 203 "CodeGenerator.Array.tt"
+            #line 204 "CodeGenerator.Array.tt"
             this.Write(" this[int index]\r\n    {\r\n        get\r\n        {\r\n            if ((this.backing & " +
                     "Backing.JsonElement) != 0)\r\n            {\r\n                return new ");
             
             #line default
             #line hidden
             
-            #line 209 "CodeGenerator.Array.tt"
+            #line 210 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 209 "CodeGenerator.Array.tt"
+            #line 210 "CodeGenerator.Array.tt"
             this.Write("(this.jsonElementBacking[index]);\r\n            }\r\n\r\n            if ((this.backing" +
                     " & Backing.Array) != 0)\r\n            {\r\n                try\r\n                {\r\n" +
                     "                    return this.arrayBacking[index].As<");
@@ -740,13 +742,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 216 "CodeGenerator.Array.tt"
+            #line 217 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 216 "CodeGenerator.Array.tt"
+            #line 217 "CodeGenerator.Array.tt"
             this.Write(@">();
                 }
                 catch (ArgumentOutOfRangeException ex)
@@ -763,9 +765,8 @@ namespace ");
             #line default
             #line hidden
             
-            #line 227 "CodeGenerator.Array.tt"
-      }
-    }
+            #line 228 "CodeGenerator.Array.tt"
+  }
 
     if (IsTuple)
     { 
