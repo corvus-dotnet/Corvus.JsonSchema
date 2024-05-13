@@ -24,9 +24,9 @@ public readonly partial struct Schema
     
 #if NET8_0_OR_GREATER
 [CollectionBuilder(typeof(SchemaArray), "Create")]
-public readonly partial struct SchemaArray : IJsonArray<SchemaArray>, IEnumerable<Corvus.Json.JsonSchema.Draft6.Schema>
+public readonly partial struct SchemaArray : IJsonArray<SchemaArray>, IReadOnlyCollection<Corvus.Json.JsonSchema.Draft6.Schema>
 #else
-    public readonly partial struct SchemaArray : IJsonArray<SchemaArray>
+    public readonly partial struct SchemaArray : IJsonArray<SchemaArray>, IReadOnlyCollection<Corvus.Json.JsonSchema.Draft6.Schema>
 #endif
     {
         /// <summary>
@@ -298,19 +298,21 @@ public readonly partial struct SchemaArray : IJsonArray<SchemaArray>, IEnumerabl
             return new SchemaArray(builder.ToImmutable());
         }
 
-#if NET8_0_OR_GREATER
-    /// <inheritdoc />
-    IEnumerator<Corvus.Json.JsonSchema.Draft6.Schema> IEnumerable<Corvus.Json.JsonSchema.Draft6.Schema>.GetEnumerator()
-    {
-        return EnumerateArray();
-    }
+        /// <inheritdoc/>
+        IEnumerator<Corvus.Json.JsonSchema.Draft6.Schema> IEnumerable<Corvus.Json.JsonSchema.Draft6.Schema>.GetEnumerator()
+        {
+            return EnumerateArray();
+        }
 
-    /// <inheritdoc />
-    IEnumerator IEnumerable.GetEnumerator()
-    {
-        return EnumerateArray();
-    }
-#endif
+        /// <inheritdoc/>
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return EnumerateArray();
+        }
+
+        /// <inheritdoc/>
+        int IReadOnlyCollection<Corvus.Json.JsonSchema.Draft6.Schema>.Count => this.GetArrayLength();
+
         /// <inheritdoc/>
         public ImmutableList<JsonAny> AsImmutableList()
         {

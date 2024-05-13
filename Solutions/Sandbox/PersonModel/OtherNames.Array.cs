@@ -30,9 +30,9 @@ namespace Corvus.Json.Benchmarking.Models;
 
 #if NET8_0_OR_GREATER
 [CollectionBuilder(typeof(OtherNames), "Create")]
-public readonly partial struct OtherNames : IJsonArray<OtherNames>, IEnumerable<JsonAny>
+public readonly partial struct OtherNames : IJsonArray<OtherNames>, IReadOnlyCollection<JsonAny>
 #else
-public readonly partial struct OtherNames : IJsonArray<OtherNames>
+public readonly partial struct OtherNames : IJsonArray<OtherNames>, IReadOnlyCollection<JsonAny>
 #endif
 {
     /// <summary>
@@ -425,19 +425,21 @@ public readonly partial struct OtherNames : IJsonArray<OtherNames>
         return new(builder.ToImmutable());
     }
 
-#if NET8_0_OR_GREATER
-    /// <inheritdoc />
+    /// <inheritdoc/>
     IEnumerator<JsonAny> IEnumerable<JsonAny>.GetEnumerator()
     {
         return EnumerateArray();
     }
 
-    /// <inheritdoc />
+    /// <inheritdoc/>
     IEnumerator IEnumerable.GetEnumerator()
     {
         return EnumerateArray();
     }
-#endif
+
+    /// <inheritdoc/>
+    int IReadOnlyCollection<JsonAny>.Count => this.GetArrayLength();
+
     /// <inheritdoc/>
     public ImmutableList<JsonAny> AsImmutableList()
     {

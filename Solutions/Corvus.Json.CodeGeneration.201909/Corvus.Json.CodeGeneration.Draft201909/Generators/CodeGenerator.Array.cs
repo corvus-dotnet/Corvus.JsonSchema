@@ -16,7 +16,7 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft201909 {
     public partial class CodeGeneratorArray : CodeGeneratorArrayBase {
         
         
-        #line 1426 "CodeGenerator.Array.tt"
+        #line 1425 "CodeGenerator.Array.tt"
 
     public bool ShouldGenerate
     {
@@ -179,6 +179,18 @@ namespace ");
             #line hidden
             
             #line 39 "CodeGenerator.Array.tt"
+            this.Write(">, IReadOnlyCollection<");
+            
+            #line default
+            #line hidden
+            
+            #line 39 "CodeGenerator.Array.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 39 "CodeGenerator.Array.tt"
             this.Write(">\r\n#endif\r\n");
             
             #line default
@@ -253,7 +265,7 @@ namespace ");
             #line hidden
             
             #line 48 "CodeGenerator.Array.tt"
-            this.Write(">\r\n#endif\r\n");
+            this.Write(">, IReadOnlyCollection<JsonAny>\r\n#endif\r\n");
             
             #line default
             #line hidden
@@ -688,21 +700,6 @@ namespace ");
         }
     }
 
-    /// <inheritdoc />
-    int IReadOnlyCollection<");
-            
-            #line default
-            #line hidden
-            
-            #line 195 "CodeGenerator.Array.tt"
-            this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
-            
-            #line default
-            #line hidden
-            
-            #line 195 "CodeGenerator.Array.tt"
-            this.Write(@">.Count => this.GetArrayLength();
-
     /// <summary>
     /// Gets the item at the given index.
     /// </summary>
@@ -715,26 +712,26 @@ namespace ");
             #line default
             #line hidden
             
-            #line 204 "CodeGenerator.Array.tt"
+            #line 201 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 204 "CodeGenerator.Array.tt"
+            #line 201 "CodeGenerator.Array.tt"
             this.Write(" this[int index]\r\n    {\r\n        get\r\n        {\r\n            if ((this.backing & " +
                     "Backing.JsonElement) != 0)\r\n            {\r\n                return new ");
             
             #line default
             #line hidden
             
-            #line 210 "CodeGenerator.Array.tt"
+            #line 207 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 210 "CodeGenerator.Array.tt"
+            #line 207 "CodeGenerator.Array.tt"
             this.Write("(this.jsonElementBacking[index]);\r\n            }\r\n\r\n            if ((this.backing" +
                     " & Backing.Array) != 0)\r\n            {\r\n                try\r\n                {\r\n" +
                     "                    return this.arrayBacking[index].As<");
@@ -742,13 +739,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 217 "CodeGenerator.Array.tt"
+            #line 214 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 217 "CodeGenerator.Array.tt"
+            #line 214 "CodeGenerator.Array.tt"
             this.Write(@">();
                 }
                 catch (ArgumentOutOfRangeException ex)
@@ -765,7 +762,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 228 "CodeGenerator.Array.tt"
+            #line 225 "CodeGenerator.Array.tt"
   }
 
     if (IsTuple)
@@ -774,13 +771,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 232 "CodeGenerator.Array.tt"
+            #line 229 "CodeGenerator.Array.tt"
             this.Write("\r\n");
             
             #line default
             #line hidden
             
-            #line 233 "CodeGenerator.Array.tt"
+            #line 230 "CodeGenerator.Array.tt"
       int prefixItemAccessorIndex = 1;
 
         foreach(var prefixItem in PrefixItems)
@@ -789,68 +786,68 @@ namespace ");
             #line default
             #line hidden
             
-            #line 237 "CodeGenerator.Array.tt"
+            #line 234 "CodeGenerator.Array.tt"
             this.Write("\r\n    /// <summary>\r\n    /// Gets the tuple item as a <see cref=\"");
             
             #line default
             #line hidden
             
-            #line 239 "CodeGenerator.Array.tt"
+            #line 236 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( prefixItem ));
             
             #line default
             #line hidden
             
-            #line 239 "CodeGenerator.Array.tt"
+            #line 236 "CodeGenerator.Array.tt"
             this.Write("\"/>.\r\n    /// </summary>\r\n    public ");
             
             #line default
             #line hidden
             
-            #line 241 "CodeGenerator.Array.tt"
+            #line 238 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( prefixItem ));
             
             #line default
             #line hidden
             
-            #line 241 "CodeGenerator.Array.tt"
+            #line 238 "CodeGenerator.Array.tt"
             this.Write(" Item");
             
             #line default
             #line hidden
             
-            #line 241 "CodeGenerator.Array.tt"
+            #line 238 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( prefixItemAccessorIndex ));
             
             #line default
             #line hidden
             
-            #line 241 "CodeGenerator.Array.tt"
+            #line 238 "CodeGenerator.Array.tt"
             this.Write("\r\n    {\r\n        get\r\n        {\r\n            if ((this.backing & Backing.JsonElem" +
                     "ent) != 0)\r\n            {\r\n                return new ");
             
             #line default
             #line hidden
             
-            #line 247 "CodeGenerator.Array.tt"
+            #line 244 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( prefixItem ));
             
             #line default
             #line hidden
             
-            #line 247 "CodeGenerator.Array.tt"
+            #line 244 "CodeGenerator.Array.tt"
             this.Write("(this.jsonElementBacking[");
             
             #line default
             #line hidden
             
-            #line 247 "CodeGenerator.Array.tt"
+            #line 244 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( prefixItemAccessorIndex - 1));
             
             #line default
             #line hidden
             
-            #line 247 "CodeGenerator.Array.tt"
+            #line 244 "CodeGenerator.Array.tt"
             this.Write("]);\r\n            }\r\n\r\n            if ((this.backing & Backing.Array) != 0)\r\n     " +
                     "       {\r\n                try\r\n                {\r\n                    return thi" +
                     "s.arrayBacking[");
@@ -858,25 +855,25 @@ namespace ");
             #line default
             #line hidden
             
-            #line 254 "CodeGenerator.Array.tt"
+            #line 251 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( prefixItemAccessorIndex - 1));
             
             #line default
             #line hidden
             
-            #line 254 "CodeGenerator.Array.tt"
+            #line 251 "CodeGenerator.Array.tt"
             this.Write("].As<");
             
             #line default
             #line hidden
             
-            #line 254 "CodeGenerator.Array.tt"
+            #line 251 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( prefixItem ));
             
             #line default
             #line hidden
             
-            #line 254 "CodeGenerator.Array.tt"
+            #line 251 "CodeGenerator.Array.tt"
             this.Write(@">();
                 }
                 catch (ArgumentOutOfRangeException ex)
@@ -893,7 +890,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 265 "CodeGenerator.Array.tt"
+            #line 262 "CodeGenerator.Array.tt"
           prefixItemAccessorIndex++;
         }
     }
@@ -904,7 +901,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 271 "CodeGenerator.Array.tt"
+            #line 268 "CodeGenerator.Array.tt"
             this.Write("\r\n    /// <summary>\r\n    /// Conversion to tuple.\r\n    /// </summary>\r\n    /// <p" +
                     "aram name=\"value\">The value from which to convert.</param>\r\n    public static im" +
                     "plicit operator (");
@@ -912,79 +909,79 @@ namespace ");
             #line default
             #line hidden
             
-            #line 276 "CodeGenerator.Array.tt"
+            #line 273 "CodeGenerator.Array.tt"
  int prefixItemIndexA = 1; foreach(var prefixItem in PrefixItems) { 
             
             #line default
             #line hidden
             
-            #line 277 "CodeGenerator.Array.tt"
+            #line 274 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(  prefixItemIndexA++ > 1 ? ", " : "" ));
             
             #line default
             #line hidden
             
-            #line 277 "CodeGenerator.Array.tt"
+            #line 274 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( prefixItem ));
             
             #line default
             #line hidden
             
-            #line 277 "CodeGenerator.Array.tt"
+            #line 274 "CodeGenerator.Array.tt"
  } 
             
             #line default
             #line hidden
             
-            #line 278 "CodeGenerator.Array.tt"
+            #line 275 "CodeGenerator.Array.tt"
             this.Write(")(");
             
             #line default
             #line hidden
             
-            #line 278 "CodeGenerator.Array.tt"
+            #line 275 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 278 "CodeGenerator.Array.tt"
+            #line 275 "CodeGenerator.Array.tt"
             this.Write(" value)\r\n    {\r\n       return (");
             
             #line default
             #line hidden
             
-            #line 280 "CodeGenerator.Array.tt"
+            #line 277 "CodeGenerator.Array.tt"
  int prefixItemIndexB = 1; foreach(var prefixItem in PrefixItems) { 
             
             #line default
             #line hidden
             
-            #line 281 "CodeGenerator.Array.tt"
+            #line 278 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(  prefixItemIndexB > 1 ? ", " : "" ));
             
             #line default
             #line hidden
             
-            #line 281 "CodeGenerator.Array.tt"
+            #line 278 "CodeGenerator.Array.tt"
             this.Write("value.Item");
             
             #line default
             #line hidden
             
-            #line 281 "CodeGenerator.Array.tt"
+            #line 278 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( prefixItemIndexB++ ));
             
             #line default
             #line hidden
             
-            #line 281 "CodeGenerator.Array.tt"
+            #line 278 "CodeGenerator.Array.tt"
  }
             
             #line default
             #line hidden
             
-            #line 282 "CodeGenerator.Array.tt"
+            #line 279 "CodeGenerator.Array.tt"
             this.Write(");\r\n    }\r\n\r\n    /// <summary>\r\n    /// Conversion from tuple.\r\n    /// </summary" +
                     ">\r\n    /// <param name=\"value\">The value from which to convert.</param>\r\n    pub" +
                     "lic static implicit operator ");
@@ -992,103 +989,103 @@ namespace ");
             #line default
             #line hidden
             
-            #line 289 "CodeGenerator.Array.tt"
+            #line 286 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 289 "CodeGenerator.Array.tt"
+            #line 286 "CodeGenerator.Array.tt"
             this.Write("((");
             
             #line default
             #line hidden
             
-            #line 289 "CodeGenerator.Array.tt"
+            #line 286 "CodeGenerator.Array.tt"
  int prefixItemIndexD = 1; foreach(var prefixItem in PrefixItems) { 
             
             #line default
             #line hidden
             
-            #line 290 "CodeGenerator.Array.tt"
+            #line 287 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(  prefixItemIndexD++ > 1 ? ", " : "" ));
             
             #line default
             #line hidden
             
-            #line 290 "CodeGenerator.Array.tt"
+            #line 287 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( prefixItem ));
             
             #line default
             #line hidden
             
-            #line 290 "CodeGenerator.Array.tt"
+            #line 287 "CodeGenerator.Array.tt"
  } 
             
             #line default
             #line hidden
             
-            #line 291 "CodeGenerator.Array.tt"
+            #line 288 "CodeGenerator.Array.tt"
             this.Write(") value)\r\n    {\r\n        return ");
             
             #line default
             #line hidden
             
-            #line 293 "CodeGenerator.Array.tt"
+            #line 290 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 293 "CodeGenerator.Array.tt"
+            #line 290 "CodeGenerator.Array.tt"
             this.Write(".Create(");
             
             #line default
             #line hidden
             
-            #line 293 "CodeGenerator.Array.tt"
+            #line 290 "CodeGenerator.Array.tt"
  int prefixItemIndexC = 1; foreach(var prefixItem in PrefixItems) { 
             
             #line default
             #line hidden
             
-            #line 294 "CodeGenerator.Array.tt"
+            #line 291 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(  prefixItemIndexC > 1 ? ", " : "" ));
             
             #line default
             #line hidden
             
-            #line 294 "CodeGenerator.Array.tt"
+            #line 291 "CodeGenerator.Array.tt"
             this.Write("value.Item");
             
             #line default
             #line hidden
             
-            #line 294 "CodeGenerator.Array.tt"
+            #line 291 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( prefixItemIndexC++ ));
             
             #line default
             #line hidden
             
-            #line 294 "CodeGenerator.Array.tt"
+            #line 291 "CodeGenerator.Array.tt"
  }
             
             #line default
             #line hidden
             
-            #line 295 "CodeGenerator.Array.tt"
+            #line 292 "CodeGenerator.Array.tt"
             this.Write(");\r\n    }\r\n\r\n");
             
             #line default
             #line hidden
             
-            #line 298 "CodeGenerator.Array.tt"
+            #line 295 "CodeGenerator.Array.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 299 "CodeGenerator.Array.tt"
+            #line 296 "CodeGenerator.Array.tt"
             this.Write("\r\n    /// <summary>\r\n    /// Conversion from immutable list.\r\n    /// </summary>\r" +
                     "\n    /// <param name=\"value\">The value from which to convert.</param>\r\n    publi" +
                     "c static implicit operator ImmutableList<JsonAny>(");
@@ -1096,13 +1093,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 304 "CodeGenerator.Array.tt"
+            #line 301 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 304 "CodeGenerator.Array.tt"
+            #line 301 "CodeGenerator.Array.tt"
             this.Write(" value)\r\n    {\r\n        return value.GetImmutableList();\r\n    }\r\n\r\n    /// <summa" +
                     "ry>s\r\n    /// Conversion to immutable list.\r\n    /// </summary>\r\n    /// <param " +
                     "name=\"value\">The value from which to convert.</param>\r\n    public static implici" +
@@ -1111,13 +1108,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 313 "CodeGenerator.Array.tt"
+            #line 310 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 313 "CodeGenerator.Array.tt"
+            #line 310 "CodeGenerator.Array.tt"
             this.Write(@"(ImmutableList<JsonAny> value)
     {
         return new(value);
@@ -1132,13 +1129,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 322 "CodeGenerator.Array.tt"
+            #line 319 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 322 "CodeGenerator.Array.tt"
+            #line 319 "CodeGenerator.Array.tt"
             this.Write(@"(JsonArray value)
     {
         if (value.HasDotnetBacking && value.ValueKind == JsonValueKind.Array)
@@ -1155,13 +1152,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 333 "CodeGenerator.Array.tt"
+            #line 330 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 333 "CodeGenerator.Array.tt"
+            #line 330 "CodeGenerator.Array.tt"
             this.Write(@"""/> struct.
     /// </summary>
     /// <param name=""items"">The list of items from which to construct the array.</param>
@@ -1172,27 +1169,27 @@ namespace ");
             #line default
             #line hidden
             
-            #line 338 "CodeGenerator.Array.tt"
+            #line 335 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 338 "CodeGenerator.Array.tt"
+            #line 335 "CodeGenerator.Array.tt"
             this.Write(" From(ImmutableList<JsonAny> items)\r\n    {\r\n        return new(items);\r\n    }\r\n\r\n" +
                     "");
             
             #line default
             #line hidden
             
-            #line 343 "CodeGenerator.Array.tt"
+            #line 340 "CodeGenerator.Array.tt"
   if (!CanEnumerateAsSpecificType && !IsTuple)
     { 
             
             #line default
             #line hidden
             
-            #line 345 "CodeGenerator.Array.tt"
+            #line 342 "CodeGenerator.Array.tt"
             this.Write("    /// <summary>\r\n    /// Create an array from the span of items.\r\n    /// </sum" +
                     "mary>\r\n    /// <param name=\"items\">The items from which to create the array.</pa" +
                     "ram>\r\n    /// <returns>The array containing the items.</returns>\r\n    public sta" +
@@ -1201,26 +1198,26 @@ namespace ");
             #line default
             #line hidden
             
-            #line 350 "CodeGenerator.Array.tt"
+            #line 347 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 350 "CodeGenerator.Array.tt"
+            #line 347 "CodeGenerator.Array.tt"
             this.Write(" Create(ReadOnlySpan<JsonAny> items)\r\n    {\r\n        return new([..items]);\r\n    " +
                     "}\r\n\r\n    /// <summary>\r\n    /// Initializes a new instance of the <see cref=\"");
             
             #line default
             #line hidden
             
-            #line 356 "CodeGenerator.Array.tt"
+            #line 353 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 356 "CodeGenerator.Array.tt"
+            #line 353 "CodeGenerator.Array.tt"
             this.Write("\"/> struct.\r\n    /// </summary>\r\n    /// <param name=\"value\">The value from which" +
                     " to construct the instance.</param>\r\n    /// <returns>A JsonAny instantiated fro" +
                     "m the given items.</returns>\r\n    public static ");
@@ -1228,13 +1225,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 360 "CodeGenerator.Array.tt"
+            #line 357 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 360 "CodeGenerator.Array.tt"
+            #line 357 "CodeGenerator.Array.tt"
             this.Write(" FromItems(params JsonAny[] value)\r\n    {\r\n        return new(value.ToImmutableLi" +
                     "st());\r\n    }\r\n\r\n    /// <summary>\r\n    /// Initializes a new instance of the <s" +
                     "ee cref=\"");
@@ -1242,13 +1239,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 366 "CodeGenerator.Array.tt"
+            #line 363 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 366 "CodeGenerator.Array.tt"
+            #line 363 "CodeGenerator.Array.tt"
             this.Write("\"/> struct.\r\n    /// </summary>\r\n    /// <typeparam name=\"TItem\">The type of the " +
                     "items in the list.</typeparam>\r\n    /// <param name=\"value\">The value from which" +
                     " to construct the instance.</param>\r\n    /// <returns>A ");
@@ -1256,25 +1253,25 @@ namespace ");
             #line default
             #line hidden
             
-            #line 370 "CodeGenerator.Array.tt"
+            #line 367 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 370 "CodeGenerator.Array.tt"
+            #line 367 "CodeGenerator.Array.tt"
             this.Write(" instantiated from the given items.</returns>\r\n    public static ");
             
             #line default
             #line hidden
             
-            #line 371 "CodeGenerator.Array.tt"
+            #line 368 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 371 "CodeGenerator.Array.tt"
+            #line 368 "CodeGenerator.Array.tt"
             this.Write(@" FromItems<TItem>(params TItem[] value)
         where TItem : struct, IJsonValue<TItem>
     {
@@ -1293,13 +1290,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 384 "CodeGenerator.Array.tt"
+            #line 381 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 384 "CodeGenerator.Array.tt"
+            #line 381 "CodeGenerator.Array.tt"
             this.Write("\"/> struct.\r\n    /// </summary>\r\n    /// <typeparam name=\"TItem1\">The type of the" +
                     " items in the list.</typeparam>\r\n    /// <param name=\"value1\">The first value fr" +
                     "om which to construct the instance.</param>\r\n    /// <returns>A ");
@@ -1307,25 +1304,25 @@ namespace ");
             #line default
             #line hidden
             
-            #line 388 "CodeGenerator.Array.tt"
+            #line 385 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 388 "CodeGenerator.Array.tt"
+            #line 385 "CodeGenerator.Array.tt"
             this.Write(" instantiated from the given items.</returns>\r\n    public static ");
             
             #line default
             #line hidden
             
-            #line 389 "CodeGenerator.Array.tt"
+            #line 386 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 389 "CodeGenerator.Array.tt"
+            #line 386 "CodeGenerator.Array.tt"
             this.Write(@" FromItems<TItem1>(in TItem1 value1)
         where TItem1 : struct, IJsonValue<TItem1>
     {
@@ -1340,13 +1337,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 398 "CodeGenerator.Array.tt"
+            #line 395 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 398 "CodeGenerator.Array.tt"
+            #line 395 "CodeGenerator.Array.tt"
             this.Write(@"""/> struct.
     /// </summary>
     /// <typeparam name=""TItem1"">The type of the first item in the list.</typeparam>
@@ -1358,25 +1355,25 @@ namespace ");
             #line default
             #line hidden
             
-            #line 404 "CodeGenerator.Array.tt"
+            #line 401 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 404 "CodeGenerator.Array.tt"
+            #line 401 "CodeGenerator.Array.tt"
             this.Write(" instantiated from the given items.</returns>\r\n    public static ");
             
             #line default
             #line hidden
             
-            #line 405 "CodeGenerator.Array.tt"
+            #line 402 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 405 "CodeGenerator.Array.tt"
+            #line 402 "CodeGenerator.Array.tt"
             this.Write(@" FromItems<TItem1, TItem2>(in TItem1 value1, in TItem2 value2)
         where TItem1 : struct, IJsonValue<TItem1>
         where TItem2 : struct, IJsonValue<TItem2>
@@ -1393,13 +1390,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 416 "CodeGenerator.Array.tt"
+            #line 413 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 416 "CodeGenerator.Array.tt"
+            #line 413 "CodeGenerator.Array.tt"
             this.Write(@"""/> struct.
     /// </summary>
     /// <typeparam name=""TItem1"">The type of the first item in the list.</typeparam>
@@ -1413,25 +1410,25 @@ namespace ");
             #line default
             #line hidden
             
-            #line 424 "CodeGenerator.Array.tt"
+            #line 421 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 424 "CodeGenerator.Array.tt"
+            #line 421 "CodeGenerator.Array.tt"
             this.Write(" instantiated from the given items.</returns>\r\n    public static ");
             
             #line default
             #line hidden
             
-            #line 425 "CodeGenerator.Array.tt"
+            #line 422 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 425 "CodeGenerator.Array.tt"
+            #line 422 "CodeGenerator.Array.tt"
             this.Write(@" FromItems<TItem1, TItem2, TItem3>(in TItem1 value1, in TItem2 value2, in TItem3 value3)
         where TItem1 : struct, IJsonValue<TItem1>
         where TItem2 : struct, IJsonValue<TItem2>
@@ -1459,13 +1456,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 447 "CodeGenerator.Array.tt"
+            #line 444 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 447 "CodeGenerator.Array.tt"
+            #line 444 "CodeGenerator.Array.tt"
             this.Write(@" From<T>(IEnumerable<T> items)
     {
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
@@ -1483,13 +1480,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 459 "CodeGenerator.Array.tt"
+            #line 456 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 459 "CodeGenerator.Array.tt"
+            #line 456 "CodeGenerator.Array.tt"
             this.Write(@"(builder.ToImmutable());
     }
 
@@ -1507,13 +1504,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 471 "CodeGenerator.Array.tt"
+            #line 468 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 471 "CodeGenerator.Array.tt"
+            #line 468 "CodeGenerator.Array.tt"
             this.Write(" FromRange(IEnumerable<JsonAny> items)\r\n    {\r\n        ImmutableList<JsonAny>.Bui" +
                     "lder builder = ImmutableList.CreateBuilder<JsonAny>();\r\n        foreach (JsonAny" +
                     " item in items)\r\n        {\r\n            builder.Add(item);\r\n        }\r\n\r\n       " +
@@ -1522,13 +1519,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 479 "CodeGenerator.Array.tt"
+            #line 476 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 479 "CodeGenerator.Array.tt"
+            #line 476 "CodeGenerator.Array.tt"
             this.Write(@"(builder.ToImmutable());
     }
 
@@ -1546,13 +1543,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 491 "CodeGenerator.Array.tt"
+            #line 488 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 491 "CodeGenerator.Array.tt"
+            #line 488 "CodeGenerator.Array.tt"
             this.Write(@" FromRange<T>(IEnumerable<T> items)
         where T : struct, IJsonValue<T>
     {
@@ -1567,13 +1564,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 500 "CodeGenerator.Array.tt"
+            #line 497 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 500 "CodeGenerator.Array.tt"
+            #line 497 "CodeGenerator.Array.tt"
             this.Write(@"(builder.ToImmutable());
     }
 
@@ -1587,13 +1584,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 508 "CodeGenerator.Array.tt"
+            #line 505 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 508 "CodeGenerator.Array.tt"
+            #line 505 "CodeGenerator.Array.tt"
             this.Write(@" FromRange(IEnumerable<string> items)
     {
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
@@ -1607,13 +1604,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 516 "CodeGenerator.Array.tt"
+            #line 513 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 516 "CodeGenerator.Array.tt"
+            #line 513 "CodeGenerator.Array.tt"
             this.Write(@"(builder.ToImmutable());
     }
 
@@ -1627,13 +1624,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 524 "CodeGenerator.Array.tt"
+            #line 521 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 524 "CodeGenerator.Array.tt"
+            #line 521 "CodeGenerator.Array.tt"
             this.Write(@" FromRange(IEnumerable<double> items)
     {
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
@@ -1647,13 +1644,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 532 "CodeGenerator.Array.tt"
+            #line 529 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 532 "CodeGenerator.Array.tt"
+            #line 529 "CodeGenerator.Array.tt"
             this.Write(@"(builder.ToImmutable());
     }
 
@@ -1667,13 +1664,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 540 "CodeGenerator.Array.tt"
+            #line 537 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 540 "CodeGenerator.Array.tt"
+            #line 537 "CodeGenerator.Array.tt"
             this.Write(@" FromRange(IEnumerable<float> items)
     {
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
@@ -1687,13 +1684,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 548 "CodeGenerator.Array.tt"
+            #line 545 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 548 "CodeGenerator.Array.tt"
+            #line 545 "CodeGenerator.Array.tt"
             this.Write(@"(builder.ToImmutable());
     }
 
@@ -1707,13 +1704,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 556 "CodeGenerator.Array.tt"
+            #line 553 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 556 "CodeGenerator.Array.tt"
+            #line 553 "CodeGenerator.Array.tt"
             this.Write(" FromRange(IEnumerable<int> items)\r\n    {\r\n        ImmutableList<JsonAny>.Builder" +
                     " builder = ImmutableList.CreateBuilder<JsonAny>();\r\n        foreach (int item in" +
                     " items)\r\n        {\r\n            builder.Add((JsonAny)item);\r\n        }\r\n\r\n      " +
@@ -1722,13 +1719,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 564 "CodeGenerator.Array.tt"
+            #line 561 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 564 "CodeGenerator.Array.tt"
+            #line 561 "CodeGenerator.Array.tt"
             this.Write(@"(builder.ToImmutable());
     }
 
@@ -1742,13 +1739,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 572 "CodeGenerator.Array.tt"
+            #line 569 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 572 "CodeGenerator.Array.tt"
+            #line 569 "CodeGenerator.Array.tt"
             this.Write(@" FromRange(IEnumerable<long> items)
     {
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
@@ -1762,13 +1759,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 580 "CodeGenerator.Array.tt"
+            #line 577 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 580 "CodeGenerator.Array.tt"
+            #line 577 "CodeGenerator.Array.tt"
             this.Write(@"(builder.ToImmutable());
     }
 
@@ -1782,13 +1779,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 588 "CodeGenerator.Array.tt"
+            #line 585 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 588 "CodeGenerator.Array.tt"
+            #line 585 "CodeGenerator.Array.tt"
             this.Write(@" FromRange(IEnumerable<bool> items)
     {
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
@@ -1802,51 +1799,51 @@ namespace ");
             #line default
             #line hidden
             
-            #line 596 "CodeGenerator.Array.tt"
+            #line 593 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 596 "CodeGenerator.Array.tt"
+            #line 593 "CodeGenerator.Array.tt"
             this.Write("(builder.ToImmutable());\r\n    }\r\n\r\n    /// <summary>\r\n    /// Initializes a new i" +
                     "nstance of the <see cref=\"");
             
             #line default
             #line hidden
             
-            #line 600 "CodeGenerator.Array.tt"
+            #line 597 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 600 "CodeGenerator.Array.tt"
+            #line 597 "CodeGenerator.Array.tt"
             this.Write("\"/> struct.\r\n    /// </summary>\r\n    /// <param name=\"value1\">The first value fro" +
                     "m which to construct the instance.</param>\r\n    /// <returns>A ");
             
             #line default
             #line hidden
             
-            #line 603 "CodeGenerator.Array.tt"
+            #line 600 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 603 "CodeGenerator.Array.tt"
+            #line 600 "CodeGenerator.Array.tt"
             this.Write(" instantiated from the given items.</returns>\r\n    public static ");
             
             #line default
             #line hidden
             
-            #line 604 "CodeGenerator.Array.tt"
+            #line 601 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 604 "CodeGenerator.Array.tt"
+            #line 601 "CodeGenerator.Array.tt"
             this.Write(@" FromItems(in JsonAny value1)
     {
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
@@ -1860,13 +1857,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 612 "CodeGenerator.Array.tt"
+            #line 609 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 612 "CodeGenerator.Array.tt"
+            #line 609 "CodeGenerator.Array.tt"
             this.Write("\"/> struct.\r\n    /// </summary>\r\n    /// <param name=\"value1\">The first value fro" +
                     "m which to construct the instance.</param>\r\n    /// <param name=\"value2\">The sec" +
                     "ond value from which to construct the instance.</param>\r\n    /// <returns>A ");
@@ -1874,25 +1871,25 @@ namespace ");
             #line default
             #line hidden
             
-            #line 616 "CodeGenerator.Array.tt"
+            #line 613 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 616 "CodeGenerator.Array.tt"
+            #line 613 "CodeGenerator.Array.tt"
             this.Write(" instantiated from the given items.</returns>\r\n    public static ");
             
             #line default
             #line hidden
             
-            #line 617 "CodeGenerator.Array.tt"
+            #line 614 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 617 "CodeGenerator.Array.tt"
+            #line 614 "CodeGenerator.Array.tt"
             this.Write(@" FromItems(in JsonAny value1, in JsonAny value2)
     {
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
@@ -1907,13 +1904,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 626 "CodeGenerator.Array.tt"
+            #line 623 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 626 "CodeGenerator.Array.tt"
+            #line 623 "CodeGenerator.Array.tt"
             this.Write(@"""/> struct.
     /// </summary>
     /// <param name=""value1"">The first value from which to construct the instance.</param>
@@ -1924,25 +1921,25 @@ namespace ");
             #line default
             #line hidden
             
-            #line 631 "CodeGenerator.Array.tt"
+            #line 628 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 631 "CodeGenerator.Array.tt"
+            #line 628 "CodeGenerator.Array.tt"
             this.Write(" instantiated from the given items.</returns>\r\n    public static ");
             
             #line default
             #line hidden
             
-            #line 632 "CodeGenerator.Array.tt"
+            #line 629 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 632 "CodeGenerator.Array.tt"
+            #line 629 "CodeGenerator.Array.tt"
             this.Write(@" FromItems(in JsonAny value1, in JsonAny value2, in JsonAny value3)
     {
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
@@ -1956,7 +1953,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 640 "CodeGenerator.Array.tt"
+            #line 637 "CodeGenerator.Array.tt"
   }
     else if (!IsTuple && !(IsFixedSizeArray && IsNumericArray))
     {
@@ -1964,7 +1961,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 643 "CodeGenerator.Array.tt"
+            #line 640 "CodeGenerator.Array.tt"
             this.Write("    /// <summary>\r\n    /// Create an array from the span of items.\r\n    /// </sum" +
                     "mary>\r\n    /// <param name=\"items\">The items from which to create the array.</pa" +
                     "ram>\r\n    /// <returns>The array containing the items.</returns>\r\n    public sta" +
@@ -1973,75 +1970,75 @@ namespace ");
             #line default
             #line hidden
             
-            #line 648 "CodeGenerator.Array.tt"
+            #line 645 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 648 "CodeGenerator.Array.tt"
+            #line 645 "CodeGenerator.Array.tt"
             this.Write(" Create(ReadOnlySpan<");
             
             #line default
             #line hidden
             
-            #line 648 "CodeGenerator.Array.tt"
+            #line 645 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 648 "CodeGenerator.Array.tt"
+            #line 645 "CodeGenerator.Array.tt"
             this.Write("> items)\r\n    {\r\n        return new([..items]);\r\n    }\r\n\r\n    /// <summary>\r\n    " +
                     "/// Initializes a new instance of the <see cref=\"");
             
             #line default
             #line hidden
             
-            #line 654 "CodeGenerator.Array.tt"
+            #line 651 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 654 "CodeGenerator.Array.tt"
+            #line 651 "CodeGenerator.Array.tt"
             this.Write("\"/> struct.\r\n    /// </summary>\r\n    /// <param name=\"value1\">The first value fro" +
                     "m which to construct the instance.</param>\r\n    /// <returns>A ");
             
             #line default
             #line hidden
             
-            #line 657 "CodeGenerator.Array.tt"
+            #line 654 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 657 "CodeGenerator.Array.tt"
+            #line 654 "CodeGenerator.Array.tt"
             this.Write(" instantiated from the given items.</returns>\r\n    public static ");
             
             #line default
             #line hidden
             
-            #line 658 "CodeGenerator.Array.tt"
+            #line 655 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 658 "CodeGenerator.Array.tt"
+            #line 655 "CodeGenerator.Array.tt"
             this.Write(" FromItems(in ");
             
             #line default
             #line hidden
             
-            #line 658 "CodeGenerator.Array.tt"
+            #line 655 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 658 "CodeGenerator.Array.tt"
+            #line 655 "CodeGenerator.Array.tt"
             this.Write(@" value1)
     {
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
@@ -2055,13 +2052,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 666 "CodeGenerator.Array.tt"
+            #line 663 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 666 "CodeGenerator.Array.tt"
+            #line 663 "CodeGenerator.Array.tt"
             this.Write("\"/> struct.\r\n    /// </summary>\r\n    /// <param name=\"value1\">The first value fro" +
                     "m which to construct the instance.</param>\r\n    /// <param name=\"value2\">The sec" +
                     "ond value from which to construct the instance.</param>\r\n    /// <returns>A ");
@@ -2069,49 +2066,49 @@ namespace ");
             #line default
             #line hidden
             
-            #line 670 "CodeGenerator.Array.tt"
+            #line 667 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 670 "CodeGenerator.Array.tt"
+            #line 667 "CodeGenerator.Array.tt"
             this.Write(" instantiated from the given items.</returns>\r\n    public static ");
             
             #line default
             #line hidden
             
-            #line 671 "CodeGenerator.Array.tt"
+            #line 668 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 671 "CodeGenerator.Array.tt"
+            #line 668 "CodeGenerator.Array.tt"
             this.Write(" FromItems(in ");
             
             #line default
             #line hidden
             
-            #line 671 "CodeGenerator.Array.tt"
+            #line 668 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 671 "CodeGenerator.Array.tt"
+            #line 668 "CodeGenerator.Array.tt"
             this.Write(" value1, in ");
             
             #line default
             #line hidden
             
-            #line 671 "CodeGenerator.Array.tt"
+            #line 668 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 671 "CodeGenerator.Array.tt"
+            #line 668 "CodeGenerator.Array.tt"
             this.Write(@" value2)
     {
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
@@ -2126,13 +2123,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 680 "CodeGenerator.Array.tt"
+            #line 677 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 680 "CodeGenerator.Array.tt"
+            #line 677 "CodeGenerator.Array.tt"
             this.Write(@"""/> struct.
     /// </summary>
     /// <param name=""value1"">The first value from which to construct the instance.</param>
@@ -2143,61 +2140,61 @@ namespace ");
             #line default
             #line hidden
             
-            #line 685 "CodeGenerator.Array.tt"
+            #line 682 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 685 "CodeGenerator.Array.tt"
+            #line 682 "CodeGenerator.Array.tt"
             this.Write(" instantiated from the given items.</returns>\r\n    public static ");
             
             #line default
             #line hidden
             
-            #line 686 "CodeGenerator.Array.tt"
+            #line 683 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 686 "CodeGenerator.Array.tt"
+            #line 683 "CodeGenerator.Array.tt"
             this.Write(" FromItems(in ");
             
             #line default
             #line hidden
             
-            #line 686 "CodeGenerator.Array.tt"
+            #line 683 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 686 "CodeGenerator.Array.tt"
+            #line 683 "CodeGenerator.Array.tt"
             this.Write(" value1, in ");
             
             #line default
             #line hidden
             
-            #line 686 "CodeGenerator.Array.tt"
+            #line 683 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 686 "CodeGenerator.Array.tt"
+            #line 683 "CodeGenerator.Array.tt"
             this.Write(" value2, in ");
             
             #line default
             #line hidden
             
-            #line 686 "CodeGenerator.Array.tt"
+            #line 683 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 686 "CodeGenerator.Array.tt"
+            #line 683 "CodeGenerator.Array.tt"
             this.Write(@" value3)
     {
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
@@ -2213,13 +2210,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 696 "CodeGenerator.Array.tt"
+            #line 693 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 696 "CodeGenerator.Array.tt"
+            #line 693 "CodeGenerator.Array.tt"
             this.Write("\"/> struct.\r\n    /// </summary>\r\n    /// <param name=\"value\">The value from which" +
                     " to construct the instance.</param>\r\n    /// <returns>A JsonAny instantiated fro" +
                     "m the given items.</returns>\r\n    public static ");
@@ -2227,38 +2224,38 @@ namespace ");
             #line default
             #line hidden
             
-            #line 700 "CodeGenerator.Array.tt"
+            #line 697 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 700 "CodeGenerator.Array.tt"
+            #line 697 "CodeGenerator.Array.tt"
             this.Write(" FromItems(params ");
             
             #line default
             #line hidden
             
-            #line 700 "CodeGenerator.Array.tt"
+            #line 697 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 700 "CodeGenerator.Array.tt"
+            #line 697 "CodeGenerator.Array.tt"
             this.Write("[] value)\r\n    {\r\n        ImmutableList<JsonAny>.Builder builder = ImmutableList." +
                     "CreateBuilder<JsonAny>();\r\n        foreach (");
             
             #line default
             #line hidden
             
-            #line 703 "CodeGenerator.Array.tt"
+            #line 700 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 703 "CodeGenerator.Array.tt"
+            #line 700 "CodeGenerator.Array.tt"
             this.Write(" item in value)\r\n        {\r\n            builder.Add(item.AsAny);\r\n        }\r\n\r\n  " +
                     "      return new(builder.ToImmutable());\r\n    }\r\n\r\n    /// <summary>\r\n    /// In" +
                     "itializes a new instance of the <see cref=\"");
@@ -2266,13 +2263,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 712 "CodeGenerator.Array.tt"
+            #line 709 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 712 "CodeGenerator.Array.tt"
+            #line 709 "CodeGenerator.Array.tt"
             this.Write("\"/> struct.\r\n    /// </summary>\r\n    /// <param name=\"value\">The value from which" +
                     " to construct the instance.</param>\r\n    /// <returns>A JsonAny instantiated fro" +
                     "m the given items.</returns>\r\n    public static ");
@@ -2280,38 +2277,38 @@ namespace ");
             #line default
             #line hidden
             
-            #line 716 "CodeGenerator.Array.tt"
+            #line 713 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 716 "CodeGenerator.Array.tt"
+            #line 713 "CodeGenerator.Array.tt"
             this.Write(" FromRange(IEnumerable<");
             
             #line default
             #line hidden
             
-            #line 716 "CodeGenerator.Array.tt"
+            #line 713 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 716 "CodeGenerator.Array.tt"
+            #line 713 "CodeGenerator.Array.tt"
             this.Write("> value)\r\n    {\r\n        ImmutableList<JsonAny>.Builder builder = ImmutableList.C" +
                     "reateBuilder<JsonAny>();\r\n        foreach (");
             
             #line default
             #line hidden
             
-            #line 719 "CodeGenerator.Array.tt"
+            #line 716 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 719 "CodeGenerator.Array.tt"
+            #line 716 "CodeGenerator.Array.tt"
             this.Write(@" item in value)
         {
             builder.Add(item.AsAny);
@@ -2335,13 +2332,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 737 "CodeGenerator.Array.tt"
+            #line 734 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 737 "CodeGenerator.Array.tt"
+            #line 734 "CodeGenerator.Array.tt"
             this.Write(@" From<T>(IEnumerable<T> items)
     {
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
@@ -2359,13 +2356,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 749 "CodeGenerator.Array.tt"
+            #line 746 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 749 "CodeGenerator.Array.tt"
+            #line 746 "CodeGenerator.Array.tt"
             this.Write(@"(builder.ToImmutable());
     }
 
@@ -2379,13 +2376,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 757 "CodeGenerator.Array.tt"
+            #line 754 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 757 "CodeGenerator.Array.tt"
+            #line 754 "CodeGenerator.Array.tt"
             this.Write(" FromRange(IEnumerable<JsonAny> items)\r\n    {\r\n        ImmutableList<JsonAny>.Bui" +
                     "lder builder = ImmutableList.CreateBuilder<JsonAny>();\r\n        foreach (JsonAny" +
                     " item in items)\r\n        {\r\n            builder.Add(item);\r\n        }\r\n\r\n       " +
@@ -2394,13 +2391,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 765 "CodeGenerator.Array.tt"
+            #line 762 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 765 "CodeGenerator.Array.tt"
+            #line 762 "CodeGenerator.Array.tt"
             this.Write(@"(builder.ToImmutable());
     }
 
@@ -2414,13 +2411,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 773 "CodeGenerator.Array.tt"
+            #line 770 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 773 "CodeGenerator.Array.tt"
+            #line 770 "CodeGenerator.Array.tt"
             this.Write(@" FromRange<T>(IEnumerable<T> items)
         where T : struct, IJsonValue<T>
     {
@@ -2435,19 +2432,19 @@ namespace ");
             #line default
             #line hidden
             
-            #line 782 "CodeGenerator.Array.tt"
+            #line 779 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 782 "CodeGenerator.Array.tt"
+            #line 779 "CodeGenerator.Array.tt"
             this.Write("(builder.ToImmutable());\r\n    }\r\n");
             
             #line default
             #line hidden
             
-            #line 784 "CodeGenerator.Array.tt"
+            #line 781 "CodeGenerator.Array.tt"
   }
     else
     { 
@@ -2457,7 +2454,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 789 "CodeGenerator.Array.tt"
+            #line 786 "CodeGenerator.Array.tt"
             this.Write("    /// <summary>\r\n    /// Create an array from the span of items.\r\n    /// </sum" +
                     "mary>\r\n    /// <param name=\"items\">The items from which to create the array.</pa" +
                     "ram>\r\n    /// <returns>The array containing the items.</returns>\r\n    public sta" +
@@ -2466,37 +2463,37 @@ namespace ");
             #line default
             #line hidden
             
-            #line 794 "CodeGenerator.Array.tt"
+            #line 791 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 794 "CodeGenerator.Array.tt"
+            #line 791 "CodeGenerator.Array.tt"
             this.Write(" Create(ReadOnlySpan<");
             
             #line default
             #line hidden
             
-            #line 794 "CodeGenerator.Array.tt"
+            #line 791 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 794 "CodeGenerator.Array.tt"
+            #line 791 "CodeGenerator.Array.tt"
             this.Write("> items)\r\n    {\r\n        return new([..items]);\r\n    }\r\n\r\n");
             
             #line default
             #line hidden
             
-            #line 799 "CodeGenerator.Array.tt"
+            #line 796 "CodeGenerator.Array.tt"
       } 
             
             #line default
             #line hidden
             
-            #line 800 "CodeGenerator.Array.tt"
+            #line 797 "CodeGenerator.Array.tt"
             this.Write(@"#if NET8_0_OR_GREATER
     /// <summary>
     /// Create an array from the given items.
@@ -2512,25 +2509,25 @@ namespace ");
             #line default
             #line hidden
             
-            #line 810 "CodeGenerator.Array.tt"
+            #line 807 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 810 "CodeGenerator.Array.tt"
+            #line 807 "CodeGenerator.Array.tt"
             this.Write(" IJsonArray<");
             
             #line default
             #line hidden
             
-            #line 810 "CodeGenerator.Array.tt"
+            #line 807 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 810 "CodeGenerator.Array.tt"
+            #line 807 "CodeGenerator.Array.tt"
             this.Write(">.FromRange(IEnumerable<JsonAny> items)\r\n    {\r\n        ImmutableList<JsonAny>.Bu" +
                     "ilder builder = ImmutableList.CreateBuilder<JsonAny>();\r\n        foreach (JsonAn" +
                     "y item in items)\r\n        {\r\n            builder.Add(item);\r\n        }\r\n\r\n      " +
@@ -2539,13 +2536,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 818 "CodeGenerator.Array.tt"
+            #line 815 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 818 "CodeGenerator.Array.tt"
+            #line 815 "CodeGenerator.Array.tt"
             this.Write(@"(builder.ToImmutable());
     }
 
@@ -2563,25 +2560,25 @@ namespace ");
             #line default
             #line hidden
             
-            #line 830 "CodeGenerator.Array.tt"
+            #line 827 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 830 "CodeGenerator.Array.tt"
+            #line 827 "CodeGenerator.Array.tt"
             this.Write(" IJsonArray<");
             
             #line default
             #line hidden
             
-            #line 830 "CodeGenerator.Array.tt"
+            #line 827 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 830 "CodeGenerator.Array.tt"
+            #line 827 "CodeGenerator.Array.tt"
             this.Write(">.FromRange<T>(IEnumerable<T> items)\r\n    {\r\n        ImmutableList<JsonAny>.Build" +
                     "er builder = ImmutableList.CreateBuilder<JsonAny>();\r\n        foreach (T item in" +
                     " items)\r\n        {\r\n            builder.Add(item.AsAny);\r\n        }\r\n\r\n        r" +
@@ -2590,19 +2587,19 @@ namespace ");
             #line default
             #line hidden
             
-            #line 838 "CodeGenerator.Array.tt"
+            #line 835 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 838 "CodeGenerator.Array.tt"
+            #line 835 "CodeGenerator.Array.tt"
             this.Write("(builder.ToImmutable());\r\n    }\r\n#endif\r\n");
             
             #line default
             #line hidden
             
-            #line 841 "CodeGenerator.Array.tt"
+            #line 838 "CodeGenerator.Array.tt"
   }
 
     if (CanEnumerateAsSpecificType && IsFixedSizeArray && IsNumericArray)
@@ -2613,31 +2610,31 @@ namespace ");
             #line default
             #line hidden
             
-            #line 847 "CodeGenerator.Array.tt"
+            #line 844 "CodeGenerator.Array.tt"
             this.Write("\r\n    /// <summary>\r\n    /// Creates an instance of the array of rank ");
             
             #line default
             #line hidden
             
-            #line 849 "CodeGenerator.Array.tt"
+            #line 846 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( ArrayRank ));
             
             #line default
             #line hidden
             
-            #line 849 "CodeGenerator.Array.tt"
+            #line 846 "CodeGenerator.Array.tt"
             this.Write(", dimension ");
             
             #line default
             #line hidden
             
-            #line 849 "CodeGenerator.Array.tt"
+            #line 846 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( ArrayDimension ));
             
             #line default
             #line hidden
             
-            #line 849 "CodeGenerator.Array.tt"
+            #line 846 "CodeGenerator.Array.tt"
             this.Write(@", from the given values.
     /// </summary>
     /// <param name=""values"">The numeric values from which to create the array.</param>
@@ -2648,49 +2645,49 @@ namespace ");
             #line default
             #line hidden
             
-            #line 854 "CodeGenerator.Array.tt"
+            #line 851 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( ArrayValueBufferSize ));
             
             #line default
             #line hidden
             
-            #line 854 "CodeGenerator.Array.tt"
+            #line 851 "CodeGenerator.Array.tt"
             this.Write(".\r\n    /// </remarks>\r\n    public static ");
             
             #line default
             #line hidden
             
-            #line 856 "CodeGenerator.Array.tt"
+            #line 853 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 856 "CodeGenerator.Array.tt"
+            #line 853 "CodeGenerator.Array.tt"
             this.Write(" FromValues(ReadOnlySpan<");
             
             #line default
             #line hidden
             
-            #line 856 "CodeGenerator.Array.tt"
+            #line 853 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( PreferredNumericType ));
             
             #line default
             #line hidden
             
-            #line 856 "CodeGenerator.Array.tt"
+            #line 853 "CodeGenerator.Array.tt"
             this.Write("> values)\r\n    {\r\n        if (values.Length != ");
             
             #line default
             #line hidden
             
-            #line 858 "CodeGenerator.Array.tt"
+            #line 855 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( ArrayValueBufferSize ));
             
             #line default
             #line hidden
             
-            #line 858 "CodeGenerator.Array.tt"
+            #line 855 "CodeGenerator.Array.tt"
             this.Write(@")
         {
             throw new ArgumentException(nameof(values));
@@ -2706,55 +2703,55 @@ namespace ");
             #line default
             #line hidden
             
-            #line 868 "CodeGenerator.Array.tt"
+            #line 865 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 868 "CodeGenerator.Array.tt"
+            #line 865 "CodeGenerator.Array.tt"
             this.Write(" child = ");
             
             #line default
             #line hidden
             
-            #line 868 "CodeGenerator.Array.tt"
+            #line 865 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 868 "CodeGenerator.Array.tt"
+            #line 865 "CodeGenerator.Array.tt"
             this.Write(".FromValues(values.Slice(index, ");
             
             #line default
             #line hidden
             
-            #line 868 "CodeGenerator.Array.tt"
+            #line 865 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( ChildArrayValueBufferSize ));
             
             #line default
             #line hidden
             
-            #line 868 "CodeGenerator.Array.tt"
+            #line 865 "CodeGenerator.Array.tt"
             this.Write("));\r\n            builder.Add(child);\r\n            index += ");
             
             #line default
             #line hidden
             
-            #line 870 "CodeGenerator.Array.tt"
+            #line 867 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( ChildArrayValueBufferSize ));
             
             #line default
             #line hidden
             
-            #line 870 "CodeGenerator.Array.tt"
+            #line 867 "CodeGenerator.Array.tt"
             this.Write(";\r\n        }\r\n\r\n        return new(builder.ToImmutable());\r\n    }\r\n");
             
             #line default
             #line hidden
             
-            #line 875 "CodeGenerator.Array.tt"
+            #line 872 "CodeGenerator.Array.tt"
       }
         else
         { 
@@ -2762,7 +2759,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 878 "CodeGenerator.Array.tt"
+            #line 875 "CodeGenerator.Array.tt"
             this.Write(@"
     /// <summary>
     /// Creates an instance of the array of rank 1, dimension 2 from the given values.
@@ -2775,49 +2772,49 @@ namespace ");
             #line default
             #line hidden
             
-            #line 885 "CodeGenerator.Array.tt"
+            #line 882 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( ArrayValueBufferSize ));
             
             #line default
             #line hidden
             
-            #line 885 "CodeGenerator.Array.tt"
+            #line 882 "CodeGenerator.Array.tt"
             this.Write(".\r\n    /// </remarks>\r\n    public static ");
             
             #line default
             #line hidden
             
-            #line 887 "CodeGenerator.Array.tt"
+            #line 884 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 887 "CodeGenerator.Array.tt"
+            #line 884 "CodeGenerator.Array.tt"
             this.Write(" FromValues(ReadOnlySpan<");
             
             #line default
             #line hidden
             
-            #line 887 "CodeGenerator.Array.tt"
+            #line 884 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( PreferredNumericType ));
             
             #line default
             #line hidden
             
-            #line 887 "CodeGenerator.Array.tt"
+            #line 884 "CodeGenerator.Array.tt"
             this.Write("> values)\r\n    {\r\n        if (values.Length != ");
             
             #line default
             #line hidden
             
-            #line 889 "CodeGenerator.Array.tt"
+            #line 886 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( ArrayValueBufferSize ));
             
             #line default
             #line hidden
             
-            #line 889 "CodeGenerator.Array.tt"
+            #line 886 "CodeGenerator.Array.tt"
             this.Write(@")
         {
             throw new ArgumentException(nameof(values));
@@ -2838,7 +2835,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 904 "CodeGenerator.Array.tt"
+            #line 901 "CodeGenerator.Array.tt"
       }
     }
 
@@ -2848,14 +2845,14 @@ namespace ");
             #line default
             #line hidden
             
-            #line 909 "CodeGenerator.Array.tt"
+            #line 906 "CodeGenerator.Array.tt"
             this.Write("\r\n    /// <summary>\r\n    /// Create a tuple from the given items.\r\n    /// </summ" +
                     "ary>\r\n");
             
             #line default
             #line hidden
             
-            #line 913 "CodeGenerator.Array.tt"
+            #line 910 "CodeGenerator.Array.tt"
       int prefixItemIndex = 1;
 
         foreach(var prefixItem in PrefixItems)
@@ -2864,105 +2861,105 @@ namespace ");
             #line default
             #line hidden
             
-            #line 917 "CodeGenerator.Array.tt"
+            #line 914 "CodeGenerator.Array.tt"
             this.Write("    /// <param name = \"item");
             
             #line default
             #line hidden
             
-            #line 917 "CodeGenerator.Array.tt"
+            #line 914 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( prefixItemIndex++ ));
             
             #line default
             #line hidden
             
-            #line 917 "CodeGenerator.Array.tt"
+            #line 914 "CodeGenerator.Array.tt"
             this.Write("\">An instance of a <see cref=\"");
             
             #line default
             #line hidden
             
-            #line 917 "CodeGenerator.Array.tt"
+            #line 914 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( prefixItem ));
             
             #line default
             #line hidden
             
-            #line 917 "CodeGenerator.Array.tt"
+            #line 914 "CodeGenerator.Array.tt"
             this.Write("\" />.</param>\r\n");
             
             #line default
             #line hidden
             
-            #line 918 "CodeGenerator.Array.tt"
+            #line 915 "CodeGenerator.Array.tt"
       }
             
             #line default
             #line hidden
             
-            #line 919 "CodeGenerator.Array.tt"
+            #line 916 "CodeGenerator.Array.tt"
             this.Write("    /// <returns>The new tuple created from the items.</returns>\r\n    public stat" +
                     "ic ");
             
             #line default
             #line hidden
             
-            #line 920 "CodeGenerator.Array.tt"
+            #line 917 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 920 "CodeGenerator.Array.tt"
+            #line 917 "CodeGenerator.Array.tt"
             this.Write(" Create(");
             
             #line default
             #line hidden
             
-            #line 920 "CodeGenerator.Array.tt"
+            #line 917 "CodeGenerator.Array.tt"
  int prefixItemIndex2 = 1; foreach(var prefixItem in PrefixItems) { 
             
             #line default
             #line hidden
             
-            #line 921 "CodeGenerator.Array.tt"
+            #line 918 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(  prefixItemIndex2 > 1 ? ", " : "" ));
             
             #line default
             #line hidden
             
-            #line 921 "CodeGenerator.Array.tt"
+            #line 918 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( prefixItem ));
             
             #line default
             #line hidden
             
-            #line 921 "CodeGenerator.Array.tt"
+            #line 918 "CodeGenerator.Array.tt"
             this.Write(" item");
             
             #line default
             #line hidden
             
-            #line 921 "CodeGenerator.Array.tt"
+            #line 918 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture(  prefixItemIndex2++ ));
             
             #line default
             #line hidden
             
-            #line 921 "CodeGenerator.Array.tt"
+            #line 918 "CodeGenerator.Array.tt"
  }
             
             #line default
             #line hidden
             
-            #line 922 "CodeGenerator.Array.tt"
+            #line 919 "CodeGenerator.Array.tt"
             this.Write(")\r\n    {\r\n        ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBu" +
                     "ilder<JsonAny>();\r\n");
             
             #line default
             #line hidden
             
-            #line 925 "CodeGenerator.Array.tt"
+            #line 922 "CodeGenerator.Array.tt"
       int prefixItemIndex3 = 1;
         foreach(var prefixItem in PrefixItems)
         { 
@@ -2970,100 +2967,112 @@ namespace ");
             #line default
             #line hidden
             
-            #line 928 "CodeGenerator.Array.tt"
+            #line 925 "CodeGenerator.Array.tt"
             this.Write("        builder.Add(item");
             
             #line default
             #line hidden
             
-            #line 928 "CodeGenerator.Array.tt"
+            #line 925 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( prefixItemIndex3++ ));
             
             #line default
             #line hidden
             
-            #line 928 "CodeGenerator.Array.tt"
+            #line 925 "CodeGenerator.Array.tt"
             this.Write(".AsAny);\r\n");
             
             #line default
             #line hidden
             
-            #line 929 "CodeGenerator.Array.tt"
+            #line 926 "CodeGenerator.Array.tt"
       }
             
             #line default
             #line hidden
             
-            #line 930 "CodeGenerator.Array.tt"
+            #line 927 "CodeGenerator.Array.tt"
             this.Write("\r\n        return new ");
             
             #line default
             #line hidden
             
-            #line 931 "CodeGenerator.Array.tt"
+            #line 928 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 931 "CodeGenerator.Array.tt"
+            #line 928 "CodeGenerator.Array.tt"
             this.Write("(builder.ToImmutable());\r\n    }\r\n");
             
             #line default
             #line hidden
             
-            #line 933 "CodeGenerator.Array.tt"
+            #line 930 "CodeGenerator.Array.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 934 "CodeGenerator.Array.tt"
+            #line 931 "CodeGenerator.Array.tt"
             this.Write("\r\n");
             
             #line default
             #line hidden
             
-            #line 935 "CodeGenerator.Array.tt"
+            #line 932 "CodeGenerator.Array.tt"
   if (CanEnumerateAsSpecificType && !IsTuple)
     { 
             
             #line default
             #line hidden
             
-            #line 937 "CodeGenerator.Array.tt"
-            this.Write("#if NET8_0_OR_GREATER\r\n    /// <inheritdoc />\r\n    IEnumerator<");
+            #line 934 "CodeGenerator.Array.tt"
+            this.Write("    /// <inheritdoc />\r\n    IEnumerator<");
             
             #line default
             #line hidden
             
-            #line 939 "CodeGenerator.Array.tt"
+            #line 935 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 939 "CodeGenerator.Array.tt"
+            #line 935 "CodeGenerator.Array.tt"
             this.Write("> IEnumerable<");
             
             #line default
             #line hidden
             
-            #line 939 "CodeGenerator.Array.tt"
+            #line 935 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 939 "CodeGenerator.Array.tt"
+            #line 935 "CodeGenerator.Array.tt"
             this.Write(">.GetEnumerator()\r\n    {\r\n        return EnumerateArray();\r\n    }\r\n\r\n    /// <inh" +
                     "eritdoc />\r\n    IEnumerator IEnumerable.GetEnumerator()\r\n    {\r\n        return E" +
-                    "numerateArray();\r\n    }\r\n#endif\r\n\r\n");
+                    "numerateArray();\r\n    }\r\n\r\n    /// <inheritdoc />\r\n    int IReadOnlyCollection<");
             
             #line default
             #line hidden
             
-            #line 951 "CodeGenerator.Array.tt"
+            #line 947 "CodeGenerator.Array.tt"
+            this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
+            
+            #line default
+            #line hidden
+            
+            #line 947 "CodeGenerator.Array.tt"
+            this.Write(">.Count => this.GetArrayLength();\r\n\r\n");
+            
+            #line default
+            #line hidden
+            
+            #line 949 "CodeGenerator.Array.tt"
   }
     else if (!IsTuple)
     { 
@@ -3071,9 +3080,8 @@ namespace ");
             #line default
             #line hidden
             
-            #line 954 "CodeGenerator.Array.tt"
-            this.Write(@"#if NET8_0_OR_GREATER
-    /// <inheritdoc />
+            #line 952 "CodeGenerator.Array.tt"
+            this.Write(@"    /// <inheritdoc />
     IEnumerator<JsonAny> IEnumerable<JsonAny>.GetEnumerator()
     {
         return EnumerateArray();
@@ -3084,7 +3092,10 @@ namespace ");
     {
         return EnumerateArray();
     }
-#endif
+
+    /// <inheritdoc />
+    int IReadOnlyCollection<JsonAny>.Count => this.GetArrayLength();
+
 ");
             
             #line default
@@ -3109,7 +3120,6 @@ namespace ");
         return this.GetImmutableListBuilder();
     }
 
-
     /// <inheritdoc/>
     public int GetArrayLength()
     {
@@ -3131,96 +3141,96 @@ namespace ");
             #line default
             #line hidden
             
-            #line 997 "CodeGenerator.Array.tt"
+            #line 996 "CodeGenerator.Array.tt"
   if (CanEnumerateAsSpecificType)
     { 
             
             #line default
             #line hidden
             
-            #line 999 "CodeGenerator.Array.tt"
+            #line 998 "CodeGenerator.Array.tt"
             this.Write("    /// <inheritdoc/>\r\n    public JsonArrayEnumerator<");
             
             #line default
             #line hidden
             
-            #line 1000 "CodeGenerator.Array.tt"
+            #line 999 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 1000 "CodeGenerator.Array.tt"
+            #line 999 "CodeGenerator.Array.tt"
             this.Write("> EnumerateArray()\r\n    {\r\n        if ((this.backing & Backing.JsonElement) != 0)" +
                     "\r\n        {\r\n            return new JsonArrayEnumerator<");
             
             #line default
             #line hidden
             
-            #line 1004 "CodeGenerator.Array.tt"
+            #line 1003 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 1004 "CodeGenerator.Array.tt"
+            #line 1003 "CodeGenerator.Array.tt"
             this.Write(">(this.jsonElementBacking);\r\n        }\r\n\r\n        if ((this.backing & Backing.Arr" +
                     "ay) != 0)\r\n        {\r\n            return new JsonArrayEnumerator<");
             
             #line default
             #line hidden
             
-            #line 1009 "CodeGenerator.Array.tt"
+            #line 1008 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 1009 "CodeGenerator.Array.tt"
+            #line 1008 "CodeGenerator.Array.tt"
             this.Write(">(this.arrayBacking);\r\n        }\r\n\r\n        throw new InvalidOperationException()" +
                     ";\r\n    }\r\n");
             
             #line default
             #line hidden
             
-            #line 1014 "CodeGenerator.Array.tt"
+            #line 1013 "CodeGenerator.Array.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 1015 "CodeGenerator.Array.tt"
+            #line 1014 "CodeGenerator.Array.tt"
             this.Write("\r\n    /// <inheritdoc/>\r\n");
             
             #line default
             #line hidden
             
-            #line 1017 "CodeGenerator.Array.tt"
+            #line 1016 "CodeGenerator.Array.tt"
   if (CanEnumerateAsSpecificType)
     { 
             
             #line default
             #line hidden
             
-            #line 1019 "CodeGenerator.Array.tt"
+            #line 1018 "CodeGenerator.Array.tt"
             this.Write("    JsonArrayEnumerator IJsonArray<");
             
             #line default
             #line hidden
             
-            #line 1019 "CodeGenerator.Array.tt"
+            #line 1018 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 1019 "CodeGenerator.Array.tt"
+            #line 1018 "CodeGenerator.Array.tt"
             this.Write(">.EnumerateArray()\r\n");
             
             #line default
             #line hidden
             
-            #line 1020 "CodeGenerator.Array.tt"
+            #line 1019 "CodeGenerator.Array.tt"
   }
     else
     { 
@@ -3228,19 +3238,19 @@ namespace ");
             #line default
             #line hidden
             
-            #line 1023 "CodeGenerator.Array.tt"
+            #line 1022 "CodeGenerator.Array.tt"
             this.Write("    public JsonArrayEnumerator EnumerateArray()\r\n");
             
             #line default
             #line hidden
             
-            #line 1024 "CodeGenerator.Array.tt"
+            #line 1023 "CodeGenerator.Array.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 1025 "CodeGenerator.Array.tt"
+            #line 1024 "CodeGenerator.Array.tt"
             this.Write(@"    {
         if ((this.backing & Backing.JsonElement) != 0)
         {
@@ -3260,27 +3270,27 @@ namespace ");
             #line default
             #line hidden
             
-            #line 1039 "CodeGenerator.Array.tt"
+            #line 1038 "CodeGenerator.Array.tt"
   if (CanEnumerateAsSpecificType && IsFixedSizeArray && IsNumericArray)
     { 
             
             #line default
             #line hidden
             
-            #line 1041 "CodeGenerator.Array.tt"
+            #line 1040 "CodeGenerator.Array.tt"
             this.Write("    /// <summary>\r\n    /// Fills the span with the numeric values in the array.\r\n" +
                     "    /// </summary>\r\n    /// <param name=\"items\">The <see cref=\"Span{");
             
             #line default
             #line hidden
             
-            #line 1044 "CodeGenerator.Array.tt"
+            #line 1043 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( PreferredNumericType ));
             
             #line default
             #line hidden
             
-            #line 1044 "CodeGenerator.Array.tt"
+            #line 1043 "CodeGenerator.Array.tt"
             this.Write(@"}""/> to fill with the values in the array.</param>
     /// <param name=""written"">The number of values written.</param>
     /// <returns><see langword=""true""/> if the array was written successfully, otherwise <see langword=""false"" />.</returns>
@@ -3293,26 +3303,26 @@ namespace ");
             #line default
             #line hidden
             
-            #line 1051 "CodeGenerator.Array.tt"
+            #line 1050 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( PreferredNumericType ));
             
             #line default
             #line hidden
             
-            #line 1051 "CodeGenerator.Array.tt"
+            #line 1050 "CodeGenerator.Array.tt"
             this.Write("> items, out int written)\r\n    {\r\n        int index = 0;\r\n\r\n        if ((this.bac" +
                     "king & Backing.Array) != 0)\r\n        {\r\n            if (items.Length < ");
             
             #line default
             #line hidden
             
-            #line 1057 "CodeGenerator.Array.tt"
+            #line 1056 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 1057 "CodeGenerator.Array.tt"
+            #line 1056 "CodeGenerator.Array.tt"
             this.Write(".ValueBufferSize)\r\n            {\r\n                written = 0;\r\n                r" +
                     "eturn false;\r\n            }\r\n\r\n            foreach (var item in this.arrayBackin" +
                     "g)\r\n            {\r\n");
@@ -3320,14 +3330,14 @@ namespace ");
             #line default
             #line hidden
             
-            #line 1065 "CodeGenerator.Array.tt"
+            #line 1064 "CodeGenerator.Array.tt"
       if (ArrayRank == 1)
         { 
             
             #line default
             #line hidden
             
-            #line 1067 "CodeGenerator.Array.tt"
+            #line 1066 "CodeGenerator.Array.tt"
             this.Write("                if (item.ValueKind != JsonValueKind.Number)\r\n                {\r\n " +
                     "                   written = 0;\r\n                    return false;\r\n            " +
                     "    }\r\n\r\n                items[index++] = (");
@@ -3335,19 +3345,19 @@ namespace ");
             #line default
             #line hidden
             
-            #line 1073 "CodeGenerator.Array.tt"
+            #line 1072 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( PreferredNumericType ));
             
             #line default
             #line hidden
             
-            #line 1073 "CodeGenerator.Array.tt"
+            #line 1072 "CodeGenerator.Array.tt"
             this.Write(")item.AsNumber;\r\n");
             
             #line default
             #line hidden
             
-            #line 1074 "CodeGenerator.Array.tt"
+            #line 1073 "CodeGenerator.Array.tt"
       }
         else
         { 
@@ -3355,31 +3365,31 @@ namespace ");
             #line default
             #line hidden
             
-            #line 1077 "CodeGenerator.Array.tt"
+            #line 1076 "CodeGenerator.Array.tt"
             this.Write("                ");
             
             #line default
             #line hidden
             
-            #line 1077 "CodeGenerator.Array.tt"
+            #line 1076 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 1077 "CodeGenerator.Array.tt"
+            #line 1076 "CodeGenerator.Array.tt"
             this.Write(" child = item.As<");
             
             #line default
             #line hidden
             
-            #line 1077 "CodeGenerator.Array.tt"
+            #line 1076 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 1077 "CodeGenerator.Array.tt"
+            #line 1076 "CodeGenerator.Array.tt"
             this.Write(">();\r\n\r\n                if (!child.TryGetNumericValues(items[index..], out int wr" +
                     "ittenChildren))\r\n                {\r\n                    written = 0;\r\n          " +
                     "          return false;\r\n                }\r\n\r\n                index += writtenCh" +
@@ -3388,13 +3398,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 1087 "CodeGenerator.Array.tt"
+            #line 1086 "CodeGenerator.Array.tt"
       } 
             
             #line default
             #line hidden
             
-            #line 1088 "CodeGenerator.Array.tt"
+            #line 1087 "CodeGenerator.Array.tt"
             this.Write(@"            }
 
             written = index;
@@ -3412,13 +3422,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 1100 "CodeGenerator.Array.tt"
+            #line 1099 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 1100 "CodeGenerator.Array.tt"
+            #line 1099 "CodeGenerator.Array.tt"
             this.Write(".ValueBufferSize)\r\n        {\r\n            written = 0;\r\n            return false;" +
                     "\r\n        }\r\n\r\n        foreach (JsonElement jsonElement in this.jsonElementBacki" +
                     "ng.EnumerateArray())\r\n        {\r\n");
@@ -3426,7 +3436,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 1108 "CodeGenerator.Array.tt"
+            #line 1107 "CodeGenerator.Array.tt"
       if (ArrayRank == 1)
         { 
             string preferredNumericType = PreferredNumericType; 
@@ -3435,26 +3445,26 @@ namespace ");
             #line default
             #line hidden
             
-            #line 1112 "CodeGenerator.Array.tt"
+            #line 1111 "CodeGenerator.Array.tt"
             this.Write("            if (jsonElement.ValueKind != JsonValueKind.Number ||\r\n");
             
             #line default
             #line hidden
             
-            #line 1113 "CodeGenerator.Array.tt"
+            #line 1112 "CodeGenerator.Array.tt"
           if (preferredNumericType == "double")
             { 
             
             #line default
             #line hidden
             
-            #line 1115 "CodeGenerator.Array.tt"
+            #line 1114 "CodeGenerator.Array.tt"
             this.Write("                !jsonElement.TryGetDouble(out double value))\r\n");
             
             #line default
             #line hidden
             
-            #line 1116 "CodeGenerator.Array.tt"
+            #line 1115 "CodeGenerator.Array.tt"
           }
             else if (preferredNumericType == "float")
             { 
@@ -3462,13 +3472,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 1119 "CodeGenerator.Array.tt"
+            #line 1118 "CodeGenerator.Array.tt"
             this.Write("                !jsonElement.TryGetSingle(out float value))\r\n");
             
             #line default
             #line hidden
             
-            #line 1120 "CodeGenerator.Array.tt"
+            #line 1119 "CodeGenerator.Array.tt"
           }
             else if (preferredNumericType == "decimal")
             { 
@@ -3476,13 +3486,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 1123 "CodeGenerator.Array.tt"
+            #line 1122 "CodeGenerator.Array.tt"
             this.Write("                !jsonElement.TryGetDecimal(out decimal value))\r\n");
             
             #line default
             #line hidden
             
-            #line 1124 "CodeGenerator.Array.tt"
+            #line 1123 "CodeGenerator.Array.tt"
           }
             else if (preferredNumericType == "Half")
             { 
@@ -3490,13 +3500,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 1127 "CodeGenerator.Array.tt"
+            #line 1126 "CodeGenerator.Array.tt"
             this.Write("                !jsonElement.TryGetHalf(out Half value))\r\n");
             
             #line default
             #line hidden
             
-            #line 1128 "CodeGenerator.Array.tt"
+            #line 1127 "CodeGenerator.Array.tt"
           }
             else if (preferredNumericType == "sbyte")
             { 
@@ -3504,13 +3514,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 1131 "CodeGenerator.Array.tt"
+            #line 1130 "CodeGenerator.Array.tt"
             this.Write("                !jsonElement.TryGetSByte(out sbyte value))\r\n");
             
             #line default
             #line hidden
             
-            #line 1132 "CodeGenerator.Array.tt"
+            #line 1131 "CodeGenerator.Array.tt"
           }
             else if (preferredNumericType == "short")
             { 
@@ -3518,13 +3528,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 1135 "CodeGenerator.Array.tt"
+            #line 1134 "CodeGenerator.Array.tt"
             this.Write("                !jsonElement.TryGetInt16(out short value))\r\n");
             
             #line default
             #line hidden
             
-            #line 1136 "CodeGenerator.Array.tt"
+            #line 1135 "CodeGenerator.Array.tt"
           }
             else if (preferredNumericType == "int")
             { 
@@ -3532,13 +3542,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 1139 "CodeGenerator.Array.tt"
+            #line 1138 "CodeGenerator.Array.tt"
             this.Write("                !jsonElement.TryGetInt32(out int value))\r\n");
             
             #line default
             #line hidden
             
-            #line 1140 "CodeGenerator.Array.tt"
+            #line 1139 "CodeGenerator.Array.tt"
           }
             else if (preferredNumericType == "long")
             { 
@@ -3546,13 +3556,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 1143 "CodeGenerator.Array.tt"
+            #line 1142 "CodeGenerator.Array.tt"
             this.Write("                !jsonElement.TryGetInt64(out long value))\r\n");
             
             #line default
             #line hidden
             
-            #line 1144 "CodeGenerator.Array.tt"
+            #line 1143 "CodeGenerator.Array.tt"
           }
             else if (preferredNumericType == "Int128")
             { 
@@ -3560,13 +3570,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 1147 "CodeGenerator.Array.tt"
+            #line 1146 "CodeGenerator.Array.tt"
             this.Write("                !jsonElement.TryGetInt128(out Int128 value))\r\n");
             
             #line default
             #line hidden
             
-            #line 1148 "CodeGenerator.Array.tt"
+            #line 1147 "CodeGenerator.Array.tt"
           }
             else if (preferredNumericType == "byte")
             { 
@@ -3574,13 +3584,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 1151 "CodeGenerator.Array.tt"
+            #line 1150 "CodeGenerator.Array.tt"
             this.Write("                !jsonElement.TryGetByte(out byte value))\r\n");
             
             #line default
             #line hidden
             
-            #line 1152 "CodeGenerator.Array.tt"
+            #line 1151 "CodeGenerator.Array.tt"
           }
             else if (preferredNumericType == "ushort")
             { 
@@ -3588,13 +3598,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 1155 "CodeGenerator.Array.tt"
+            #line 1154 "CodeGenerator.Array.tt"
             this.Write("                !jsonElement.TryGetUInt16(out ushort value))\r\n");
             
             #line default
             #line hidden
             
-            #line 1156 "CodeGenerator.Array.tt"
+            #line 1155 "CodeGenerator.Array.tt"
           }
             else if (preferredNumericType == "uint")
             { 
@@ -3602,13 +3612,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 1159 "CodeGenerator.Array.tt"
+            #line 1158 "CodeGenerator.Array.tt"
             this.Write("                !jsonElement.TryGetUInt32(out uint value))\r\n");
             
             #line default
             #line hidden
             
-            #line 1160 "CodeGenerator.Array.tt"
+            #line 1159 "CodeGenerator.Array.tt"
           }
             else if (preferredNumericType == "ulong")
             { 
@@ -3616,13 +3626,13 @@ namespace ");
             #line default
             #line hidden
             
-            #line 1163 "CodeGenerator.Array.tt"
+            #line 1162 "CodeGenerator.Array.tt"
             this.Write("                !jsonElement.TryGetUInt64(out ulong value))\r\n");
             
             #line default
             #line hidden
             
-            #line 1164 "CodeGenerator.Array.tt"
+            #line 1163 "CodeGenerator.Array.tt"
           }
             else if (preferredNumericType == "UInt128")
             { 
@@ -3630,26 +3640,26 @@ namespace ");
             #line default
             #line hidden
             
-            #line 1167 "CodeGenerator.Array.tt"
+            #line 1166 "CodeGenerator.Array.tt"
             this.Write("                !jsonElement.TryGetUInt128(out UInt128 value))\r\n");
             
             #line default
             #line hidden
             
-            #line 1168 "CodeGenerator.Array.tt"
+            #line 1167 "CodeGenerator.Array.tt"
           } 
             
             #line default
             #line hidden
             
-            #line 1169 "CodeGenerator.Array.tt"
+            #line 1168 "CodeGenerator.Array.tt"
             this.Write("            {\r\n                written = 0;\r\n                return false;\r\n     " +
                     "       }\r\n\r\n            items[index++] = value;\r\n");
             
             #line default
             #line hidden
             
-            #line 1175 "CodeGenerator.Array.tt"
+            #line 1174 "CodeGenerator.Array.tt"
       }
         else
         { 
@@ -3657,31 +3667,31 @@ namespace ");
             #line default
             #line hidden
             
-            #line 1178 "CodeGenerator.Array.tt"
+            #line 1177 "CodeGenerator.Array.tt"
             this.Write("            ");
             
             #line default
             #line hidden
             
-            #line 1178 "CodeGenerator.Array.tt"
+            #line 1177 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 1178 "CodeGenerator.Array.tt"
+            #line 1177 "CodeGenerator.Array.tt"
             this.Write(" child = ");
             
             #line default
             #line hidden
             
-            #line 1178 "CodeGenerator.Array.tt"
+            #line 1177 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( SingleItemsDotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 1178 "CodeGenerator.Array.tt"
+            #line 1177 "CodeGenerator.Array.tt"
             this.Write(".FromJson(jsonElement);\r\n\r\n            if (!child.TryGetNumericValues(items[index" +
                     "..], out int writtenChildren))\r\n            {\r\n                written = 0;\r\n   " +
                     "             return false;\r\n            }\r\n\r\n            index += writtenChildre" +
@@ -3690,56 +3700,56 @@ namespace ");
             #line default
             #line hidden
             
-            #line 1187 "CodeGenerator.Array.tt"
+            #line 1186 "CodeGenerator.Array.tt"
       } 
             
             #line default
             #line hidden
             
-            #line 1188 "CodeGenerator.Array.tt"
+            #line 1187 "CodeGenerator.Array.tt"
             this.Write("        }\r\n\r\n        written = index;\r\n        return true;\r\n    }\r\n");
             
             #line default
             #line hidden
             
-            #line 1193 "CodeGenerator.Array.tt"
+            #line 1192 "CodeGenerator.Array.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 1194 "CodeGenerator.Array.tt"
+            #line 1193 "CodeGenerator.Array.tt"
             this.Write("\r\n    /// <inheritdoc/>\r\n\r\n");
             
             #line default
             #line hidden
             
-            #line 1197 "CodeGenerator.Array.tt"
+            #line 1196 "CodeGenerator.Array.tt"
   if (CanEnumerateAsSpecificType || IsTuple)
     { 
             
             #line default
             #line hidden
             
-            #line 1199 "CodeGenerator.Array.tt"
+            #line 1198 "CodeGenerator.Array.tt"
             this.Write("    JsonArrayEnumerator<TItem> IJsonArray<");
             
             #line default
             #line hidden
             
-            #line 1199 "CodeGenerator.Array.tt"
+            #line 1198 "CodeGenerator.Array.tt"
             this.Write(this.ToStringHelper.ToStringWithCulture( TypeDeclaration.DotnetTypeName ));
             
             #line default
             #line hidden
             
-            #line 1199 "CodeGenerator.Array.tt"
+            #line 1198 "CodeGenerator.Array.tt"
             this.Write(">.EnumerateArray<TItem>()\r\n");
             
             #line default
             #line hidden
             
-            #line 1200 "CodeGenerator.Array.tt"
+            #line 1199 "CodeGenerator.Array.tt"
   }
     else
     { 
@@ -3747,20 +3757,20 @@ namespace ");
             #line default
             #line hidden
             
-            #line 1203 "CodeGenerator.Array.tt"
+            #line 1202 "CodeGenerator.Array.tt"
             this.Write("    public JsonArrayEnumerator<TItem> EnumerateArray<TItem>()\r\n        where TIte" +
                     "m : struct, IJsonValue<TItem>\r\n");
             
             #line default
             #line hidden
             
-            #line 1205 "CodeGenerator.Array.tt"
+            #line 1204 "CodeGenerator.Array.tt"
   } 
             
             #line default
             #line hidden
             
-            #line 1206 "CodeGenerator.Array.tt"
+            #line 1205 "CodeGenerator.Array.tt"
             this.Write("    {\r\n        if ((this.backing & Backing.JsonElement) != 0)\r\n        {\r\n       " +
                     "     return new JsonArrayEnumerator<TItem>(this.jsonElementBacking);\r\n        }\r" +
                     "\n\r\n        if ((this.backing & Backing.Array) != 0)\r\n        {\r\n            retu" +
@@ -3884,7 +3894,7 @@ namespace ");
             #line default
             #line hidden
             
-            #line 1425 "CodeGenerator.Array.tt"
+            #line 1424 "CodeGenerator.Array.tt"
  EndNesting(); 
             
             #line default
