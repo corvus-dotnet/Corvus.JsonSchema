@@ -1,0 +1,10 @@
+{
+  "title": "A tall person",
+  "$ref": "./person-closed.json",
+  "properties": {
+    "height": {
+      "$ref": "./person-closed.json#/properties/height",
+      "minimum": 2.0
+    }
+  }
+}

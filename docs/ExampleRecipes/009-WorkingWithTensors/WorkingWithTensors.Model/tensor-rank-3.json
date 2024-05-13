@@ -1,0 +1,24 @@
+{
+    "title": "A 4x4x4 tensor of JsonDouble",
+    "type": "array",
+    "items": { "$ref": "#/$defs/SecondRank" },
+    "minItems": 4,
+    "maxItems": 4,
+    "$defs": {
+        "SecondRank": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/ThirdRank" },
+            "minItems": 4,
+            "maxItems": 4
+        },
+        "ThirdRank": {
+            "type": "array",
+            "minItems": 4,
+            "maxItems": 4,
+            "items": {
+                "type": "number",
+                "format": "double"
+            }
+        }
+    }
+}
