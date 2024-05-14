@@ -391,6 +391,25 @@ public class TypeDeclaration
     }
 
     /// <summary>
+    /// Try to get the <c>$corvusTypeName</c> for the type.
+    /// </summary>
+    /// <param name="typeName">The type name.</param>
+    /// <returns><see langword="true"/> if the type had an explicit type name specified by the <c>$corvusTypeName</c> keyword.</returns>
+    internal bool TryGetCorvusTypeName([NotNullWhen(true)] out string? typeName)
+    {
+        if (this.LocatedSchema.Schema.ValueKind == JsonValueKind.Object &&
+            this.LocatedSchema.Schema.AsObject.TryGetProperty("$corvusTypeName", out JsonAny value) &&
+            value.ValueKind == JsonValueKind.String &&
+            value.AsString.TryGetString(out typeName))
+        {
+            return true;
+        }
+
+        typeName = null;
+        return false;
+    }
+
+    /// <summary>
     /// Sets the recursive scope.
     /// </summary>
     /// <param name="recursiveScope">The recursive scope.</param>

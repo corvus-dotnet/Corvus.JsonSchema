@@ -245,7 +245,18 @@ public partial class JsonSchemaTypeBuilder
 
         ReadOnlySpan<char> typename;
 
-        if (typeDeclaration.Parent is null || this.IsDirectlyInDefinitions(reference))
+        if (typeDeclaration.TryGetCorvusTypeName(out string? title))
+        {
+            typename = Formatting.ToPascalCaseWithReservedWords(title);
+
+            if (!this.CollidesWithGeneratedName(typeDeclaration, typename))
+            {
+                typeDeclaration.SetDotnetTypeName(typename.ToString());
+                typeDeclaration.SetNamespace(rootNamespace);
+                return;
+            }
+        }
+        else if (typeDeclaration.Parent is null || this.IsDirectlyInDefinitions(reference))
         {
             if (reference.HasFragment)
             {
