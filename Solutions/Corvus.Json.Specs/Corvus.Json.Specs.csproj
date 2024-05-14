@@ -86,6 +86,7 @@
 
 	<ItemGroup>
 	  <Folder Include="Features\JsonSchema\" />
+	  <Folder Include="Features\ExplicitTypeName\" />
 	  <Folder Include="Features\SyncGenerator\" />
 	</ItemGroup>
 

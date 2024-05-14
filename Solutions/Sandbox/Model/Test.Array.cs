@@ -8,6 +8,7 @@
 //------------------------------------------------------------------------------
 #nullable enable
 using System.Buffers;
+using System.Collections;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
@@ -73,22 +74,54 @@ public readonly partial struct Test : IJsonArray<Test>
     }
 
     /// <summary>
-    /// Gets the tuple item as a <see cref = "Corvus.Json.JsonInt32"/>.
+    /// Gets the item at the given index.
     /// </summary>
-    public Corvus.Json.JsonInt32 Item1
+    /// <param name = "index">The index at which to retrieve the item.</param>
+    /// <returns>The item at the given index.</returns>
+    /// <exception cref = "IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
+    /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
+    public Corvus.Json.JsonNotAny this[int index]
     {
         get
         {
             if ((this.backing & Backing.JsonElement) != 0)
             {
-                return new Corvus.Json.JsonInt32(this.jsonElementBacking[0]);
+                return new Corvus.Json.JsonNotAny(this.jsonElementBacking[index]);
             }
 
             if ((this.backing & Backing.Array) != 0)
             {
                 try
                 {
-                    return this.arrayBacking[0].As<Corvus.Json.JsonInt32>();
+                    return this.arrayBacking[index].As<Corvus.Json.JsonNotAny>();
+                }
+                catch (ArgumentOutOfRangeException ex)
+                {
+                    throw new IndexOutOfRangeException(ex.Message, ex);
+                }
+            }
+
+            throw new InvalidOperationException();
+        }
+    }
+
+    /// <summary>
+    /// Gets the tuple item as a <see cref = "JsonSchemaSample.Api.Test.PositiveInt32"/>.
+    /// </summary>
+    public JsonSchemaSample.Api.Test.PositiveInt32 Item1
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                return new JsonSchemaSample.Api.Test.PositiveInt32(this.jsonElementBacking[0]);
+            }
+
+            if ((this.backing & Backing.Array) != 0)
+            {
+                try
+                {
+                    return this.arrayBacking[0].As<JsonSchemaSample.Api.Test.PositiveInt32>();
                 }
                 catch (ArgumentOutOfRangeException ex)
                 {
@@ -160,7 +193,7 @@ public readonly partial struct Test : IJsonArray<Test>
     /// Conversion to tuple.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator (Corvus.Json.JsonInt32, Corvus.Json.JsonString, Corvus.Json.JsonDateTime)(Test value)
+    public static implicit operator (JsonSchemaSample.Api.Test.PositiveInt32, Corvus.Json.JsonString, Corvus.Json.JsonDateTime)(Test value)
     {
         return (value.Item1, value.Item2, value.Item3);
     }
@@ -169,7 +202,7 @@ public readonly partial struct Test : IJsonArray<Test>
     /// Conversion from tuple.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator Test((Corvus.Json.JsonInt32, Corvus.Json.JsonString, Corvus.Json.JsonDateTime) value)
+    public static implicit operator Test((JsonSchemaSample.Api.Test.PositiveInt32, Corvus.Json.JsonString, Corvus.Json.JsonDateTime) value)
     {
         return Test.Create(value.Item1, value.Item2, value.Item3);
     }
@@ -261,11 +294,11 @@ public readonly partial struct Test : IJsonArray<Test>
     /// <summary>
     /// Create a tuple from the given items.
     /// </summary>
-    /// <param name = "item1">An instance of a <see cref = "Corvus.Json.JsonInt32"/>.</param>
+    /// <param name = "item1">An instance of a <see cref = "JsonSchemaSample.Api.Test.PositiveInt32"/>.</param>
     /// <param name = "item2">An instance of a <see cref = "Corvus.Json.JsonString"/>.</param>
     /// <param name = "item3">An instance of a <see cref = "Corvus.Json.JsonDateTime"/>.</param>
     /// <returns>The new tuple created from the items.</returns>
-    public static Test Create(Corvus.Json.JsonInt32 item1, Corvus.Json.JsonString item2, Corvus.Json.JsonDateTime item3)
+    public static Test Create(JsonSchemaSample.Api.Test.PositiveInt32 item1, Corvus.Json.JsonString item2, Corvus.Json.JsonDateTime item3)
     {
         ImmutableList<JsonAny>.Builder builder = ImmutableList.CreateBuilder<JsonAny>();
         builder.Add(item1.AsAny);
@@ -303,7 +336,23 @@ public readonly partial struct Test : IJsonArray<Test>
     }
 
     /// <inheritdoc/>
-    public JsonArrayEnumerator EnumerateArray()
+    public JsonArrayEnumerator<Corvus.Json.JsonNotAny> EnumerateArray()
+    {
+        if ((this.backing & Backing.JsonElement) != 0)
+        {
+            return new JsonArrayEnumerator<Corvus.Json.JsonNotAny>(this.jsonElementBacking);
+        }
+
+        if ((this.backing & Backing.Array) != 0)
+        {
+            return new JsonArrayEnumerator<Corvus.Json.JsonNotAny>(this.arrayBacking);
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    /// <inheritdoc/>
+    JsonArrayEnumerator IJsonArray<Test>.EnumerateArray()
     {
         if ((this.backing & Backing.JsonElement) != 0)
         {

@@ -232,7 +232,7 @@ public partial class JsonSchemaTypeBuilder
     /// </summary>
     /// <param name="typeDeclaration">The type declaration for which to set the type and namespace.</param>
     /// <param name="rootNamespace">The namespace to use for this type if it has no parent.</param>
-    /// <param name="fallbackBaseName">The base type name to fall back on if we can't derive one from our location and type infomration.</param>
+    /// <param name="fallbackBaseName">The base type name to fall back on if we can't derive one from our location and type information.</param>
     private void SetDotnetTypeNameAndNamespace(TypeDeclaration typeDeclaration, string rootNamespace, string fallbackBaseName)
     {
         var reference = JsonReferenceBuilder.From(typeDeclaration.LocatedSchema.Location);
@@ -245,7 +245,18 @@ public partial class JsonSchemaTypeBuilder
 
         ReadOnlySpan<char> typename;
 
-        if (typeDeclaration.Parent is null || this.IsDirectlyInDefinitions(reference))
+        if (typeDeclaration.TryGetCorvusTypeName(out string? title))
+        {
+            typename = Formatting.ToPascalCaseWithReservedWords(title);
+
+            if (!this.CollidesWithGeneratedName(typeDeclaration, typename))
+            {
+                typeDeclaration.SetDotnetTypeName(typename.ToString());
+                typeDeclaration.SetNamespace(rootNamespace);
+                return;
+            }
+        }
+        else if (typeDeclaration.Parent is null || this.IsDirectlyInDefinitions(reference))
         {
             if (reference.HasFragment)
             {

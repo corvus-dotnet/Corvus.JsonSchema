@@ -371,6 +371,7 @@ Additional changes include:
 
     - Pattern matching methods for anyOf, oneOf and enum types.
     - Implicit cast to bool for boolean types
+    - Specify an explicit type name hint for a schema with the $corvusTypeName keyword
     
 ## V2.0 Updates
 

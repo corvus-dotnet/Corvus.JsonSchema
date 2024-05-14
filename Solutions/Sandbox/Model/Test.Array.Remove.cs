@@ -23,6 +23,17 @@ public readonly partial struct Test
         return new(this.GetImmutableListWithout(item1));
     }
 
+    /// <summary>
+    /// Remove the specified item from the array.
+    /// </summary>
+    /// <param name = "item">The item to remove.</param>
+    /// <returns>An instance of the array with the item removed.</returns>
+    /// <exception cref = "InvalidOperationException">The value was not an array.</exception>
+    public Test Remove(in Corvus.Json.JsonNotAny item)
+    {
+        return new(this.GetImmutableListWithout(item.AsAny));
+    }
+
     /// <inheritdoc/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     Test IJsonArray<Test>.RemoveAt(int index)
