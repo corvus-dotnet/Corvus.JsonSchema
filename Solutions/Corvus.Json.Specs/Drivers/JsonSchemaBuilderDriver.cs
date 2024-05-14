@@ -7,8 +7,6 @@ using System.Linq.Expressions;
 using System.Reflection;
 #if NET8_0_OR_GREATER
 using System.Runtime.Loader;
-using System.Security.Cryptography.X509Certificates;
-
 #endif
 using System.Text;
 using System.Text.Json;
@@ -47,7 +45,7 @@ global using global::System.Threading.Tasks;";
     private readonly string settingsKey;
     private readonly FileSystemDocumentResolver documentResolver = new();
 #if NET8_0_OR_GREATER
-    private TestAssemblyLoadContext? assemblyLoadContext = new();
+    private readonly TestAssemblyLoadContext? assemblyLoadContext = new();
 #endif
 
     /// <summary>
@@ -63,91 +61,6 @@ global using global::System.Threading.Tasks;";
         this.settingsKey = settingsKey;
     }
 
-    public void Dispose()
-    {
-        this.documentResolver.Dispose();
-
-#if NET8_0_OR_GREATER
-        ////if (this.assemblyLoadContext is not null)
-        ////{
-        ////    this.assemblyLoadContext.Unload();
-        ////    this.assemblyLoadContext = null;
-        ////    GC.Collect();
-        ////    GC.WaitForPendingFinalizers();
-        ////    GC.SuppressFinalize(this);
-        ////}
-#endif
-    }
-
-    /// <summary>
-    /// Get the <see cref="JsonElement"/> at the given reference location.
-    /// </summary>
-    /// <param name="filename">The name of the file containing the element.</param>
-    /// <param name="referenceFragment">The local reference to the element in the file.</param>
-    /// <returns>The element, found in the specified document.</returns>
-    public Task<JsonElement?> GetElementFromLocalFile(string filename, string referenceFragment)
-    {
-        string baseDirectory = this.configuration[$"{this.settingsKey}:testBaseDirectory"]!;
-        string path = Path.Combine(baseDirectory, filename);
-        return this.documentResolver.TryResolve(new JsonReference(path, referenceFragment));
-    }
-
-    /// <summary>
-    /// Generate the schema for the given type.
-    /// </summary>
-    /// <param name="schema">The schema.</param>
-    /// <param name="virtualFileName">The virtual file name for the schema.</param>
-    /// <param name="featureName">The unique name of the feature.</param>
-    /// <param name="scenarioName">The unique name of the scenario.</param>
-    /// <returns>A <see cref="Task{Type}"/> which, when complete, returns the <see cref="Type"/> generated for the schema.</returns>
-    public async Task<Type> GenerateTypeFor(string schema, string virtualFileName, string featureName, string scenarioName)
-    {
-        string baseDirectory = this.configuration[$"{this.settingsKey}:testBaseDirectory"]!;
-        string path = Path.Combine(baseDirectory, virtualFileName);
-
-        if (SchemaReferenceNormalization.TryNormalizeSchemaReference(path, out string? result))
-        {
-            path = result;
-        }
-
-        this.builder.AddDocument(path, JsonDocument.Parse(schema));
-
-        (string rootType, ImmutableDictionary<JsonReference, TypeAndCode> generatedTypes) = await this.builder.BuildTypesFor(new JsonReference(path), $"{featureName}Feature.{scenarioName}", rebase: true).ConfigureAwait(false);
-#if NET8_0_OR_GREATER
-        return CompileGeneratedType(this.assemblyLoadContext!, rootType, generatedTypes);
-#else
-        return CompileGeneratedType(rootType, generatedTypes);
-#endif
-    }
-
-    /// <summary>
-    /// Generates a type for the given root Schema element.
-    /// </summary>
-    /// <param name="writeBenchmarks">If <c>true</c>, write benchmark files.</param>
-    /// <param name="index">The index of the scenario example.</param>
-    /// <param name="filename">The filename containing the Schema.</param>
-    /// <param name="schemaPath">The path to the Schema in the file.</param>
-    /// <param name="dataPath">The path to the data in the file.</param>
-    /// <param name="featureName">The feature name for the type.</param>
-    /// <param name="scenarioName">The scenario name for the type.</param>
-    /// <param name="valid">Whether the scenario is expected to be valid.</param>
-    /// <returns>The fully qualified type name of the entity we have generated.</returns>
-#pragma warning disable RCS1163 // Unused parameter.
-    public async Task<Type> GenerateTypeFor(bool writeBenchmarks, int index, string filename, string schemaPath, string dataPath, string featureName, string scenarioName, bool valid)
-#pragma warning restore RCS1163 // Unused parameter.
-    {
-        string baseDirectory = this.configuration[$"{this.settingsKey}:testBaseDirectory"]!;
-        string path = Path.Combine(baseDirectory, filename) + schemaPath;
-
-        (string rootType, ImmutableDictionary<JsonReference, TypeAndCode> generatedTypes) = await this.builder.BuildTypesFor(new JsonReference(path), $"{featureName}Feature.{scenarioName}", rebase: true).ConfigureAwait(false);
-
-#if NET8_0_OR_GREATER
-        return CompileGeneratedType(this.assemblyLoadContext!, rootType, generatedTypes);
-#else
-        return CompileGeneratedType(rootType, generatedTypes);
-#endif
-    }
-
     /// <summary>
     /// Create an instance of the given <see cref="IJsonValue"/> type from
     /// the json data provided.
@@ -155,7 +68,7 @@ global using global::System.Threading.Tasks;";
     /// <param name="type">The type (which must be a <see cref="IJsonValue"/> and have a constructor with a single <see cref="JsonElement"/> parameter.</param>
     /// <param name="data">The JSON data from which to initialize the value.</param>
     /// <returns>An instance of a <see cref="IJsonValue"/> initialized from the data.</returns>
-    public IJsonValue CreateInstance(Type type, JsonElement data)
+    public static IJsonValue CreateInstance(Type type, JsonElement data)
     {
         ConstructorInfo? constructor =
             type
@@ -174,7 +87,7 @@ global using global::System.Threading.Tasks;";
     /// <param name="numericType">The numeric type for which to parse the data.</param>
     /// <param name="data">The numeric data from which to parse the value.</param>
     /// <returns>An instance of a <see cref="IJsonValue"/> initialized from the data.</returns>
-    public IJsonValue CastToInstance(Type instanceType, string numericType, string data)
+    public static IJsonValue CastToInstance(Type instanceType, string numericType, string data)
     {
         return numericType switch
         {
@@ -210,7 +123,7 @@ global using global::System.Threading.Tasks;";
     /// <param name="values">The values from which to create the numeric array.</param>
     /// <returns>An instance of the requested type, as an <see cref="IJsonValue"/>.</returns>
     /// <exception cref="InvalidOperationException">The Create(ReadOnlySpan{TItems}) method was not found on the instance type..</exception>
-    public IJsonValue CreateInstanceOfNumericArrayFromValues<TItems>(Type instanceType, TItems[] values)
+    public static IJsonValue CreateInstanceOfNumericArrayFromValues<TItems>(Type instanceType, TItems[] values)
     {
         ParameterExpression p = Expression.Parameter(typeof(TItems[]));
         MethodInfo? createMethod = instanceType.GetMethod("FromValues", BindingFlags.Static | BindingFlags.Public, null, [typeof(ReadOnlySpan<TItems>)], null);
@@ -240,7 +153,7 @@ global using global::System.Threading.Tasks;";
     /// <param name="values">The values with which to compare the numeric array.</param>
     /// <returns><see langword="true"/> if the values are equals.</returns>
     /// <exception cref="InvalidOperationException">The Create(ReadOnlySpan{TItems}) method was not found on the instance type..</exception>
-    public bool CompareInstanceOfNumericArrayWithValues<TItems>(Type instanceType, IJsonValue instance, TItems[] values)
+    public static bool CompareInstanceOfNumericArrayWithValues<TItems>(Type instanceType, IJsonValue instance, TItems[] values)
     {
         ParameterExpression p1 = Expression.Parameter(typeof(IJsonValue));
         ParameterExpression p2 = Expression.Parameter(typeof((TItems[], TItems[], int)));
@@ -291,10 +204,136 @@ global using global::System.Threading.Tasks;";
     /// <param name="type">The type (which must be a <see cref="IJsonValue"/> and have a constructor with a single <see cref="JsonElement"/> parameter.</param>
     /// <param name="data">The JSON data from which to initialize the value.</param>
     /// <returns>An instance of a <see cref="IJsonValue"/> initialized from the data.</returns>
-    public IJsonValue CreateInstance(Type type, string data)
+    public static IJsonValue CreateInstance(Type type, string data)
     {
         using var document = JsonDocument.Parse(data);
+
+/* Unmerged change from project 'Corvus.Json.Specs (net481)'
+Before:
         return this.CreateInstance(type, document.RootElement.Clone());
+After:
+        return JsonSchemaBuilderDriver.CreateInstance(type, document.RootElement.Clone());
+*/
+        return CreateInstance(type, document.RootElement.Clone());
+    }
+
+    public void Dispose()
+    {
+        this.documentResolver.Dispose();
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// Get the <see cref="JsonElement"/> at the given reference location.
+    /// </summary>
+    /// <param name="filename">The name of the file containing the element.</param>
+    /// <param name="referenceFragment">The local reference to the element in the file.</param>
+    /// <returns>The element, found in the specified document.</returns>
+    public ValueTask<JsonElement?> GetElementFromLocalFile(string filename, string referenceFragment)
+    {
+        string baseDirectory = this.configuration[$"{this.settingsKey}:testBaseDirectory"]!;
+        string path = Path.Combine(baseDirectory, filename);
+        return this.documentResolver.TryResolve(new JsonReference(path, referenceFragment));
+    }
+
+    /// <summary>
+    /// Generate the schema for the given type.
+    /// </summary>
+    /// <param name="schema">The schema.</param>
+    /// <param name="virtualFileName">The virtual file name for the schema.</param>
+    /// <param name="featureName">The unique name of the feature.</param>
+    /// <param name="scenarioName">The unique name of the scenario.</param>
+    /// <returns>A <see cref="ValueTask{Type}"/> which, when complete, returns the <see cref="Type"/> generated for the schema.</returns>
+    public async ValueTask<Type> GenerateTypeForVirtualFile(string schema, string virtualFileName, string featureName, string scenarioName)
+    {
+        string baseDirectory = this.configuration[$"{this.settingsKey}:testBaseDirectory"]!;
+        string path = Path.Combine(baseDirectory, virtualFileName);
+
+        if (SchemaReferenceNormalization.TryNormalizeSchemaReference(path, out string? result))
+        {
+            path = result;
+        }
+
+        this.builder.AddDocument(path, JsonDocument.Parse(schema));
+
+        (string rootType, ImmutableDictionary<JsonReference, TypeAndCode> generatedTypes) = await this.builder.BuildTypesFor(new JsonReference(path), $"{featureName}Feature.{scenarioName}", rebase: true).ConfigureAwait(false);
+#if NET8_0_OR_GREATER
+        return CompileGeneratedType(this.assemblyLoadContext!, rootType, generatedTypes);
+#else
+        return CompileGeneratedType(rootType, generatedTypes);
+#endif
+    }
+
+    /// <summary>
+    /// Generates a type for the given root Schema element.
+    /// </summary>
+    /// <param name="filename">The filename containing the Schema.</param>
+    /// <param name="schemaPath">The path to the Schema in the file.</param>
+    /// <param name="featureName">The feature name for the type.</param>
+    /// <param name="scenarioName">The scenario name for the type.</param>
+    /// <returns>The fully qualified type name of the entity we have generated.</returns>
+    public async ValueTask<Type> GenerateTypeForJsonSchemaTestSuite(string filename, string schemaPath, string featureName, string scenarioName)
+    {
+        string baseDirectory = this.configuration[$"{this.settingsKey}:testBaseDirectory"]!;
+        string path = Path.Combine(baseDirectory, filename) + schemaPath;
+
+        (string rootType, ImmutableDictionary<JsonReference, TypeAndCode> generatedTypes) = await this.builder.BuildTypesFor(new JsonReference(path), $"{featureName}Feature.{scenarioName}", rebase: true).ConfigureAwait(false);
+
+#if NET8_0_OR_GREATER
+        return CompileGeneratedType(this.assemblyLoadContext!, rootType, generatedTypes);
+#else
+        return CompileGeneratedType(rootType, generatedTypes);
+#endif
+    }
+
+    /// <summary>
+    /// Generate the schema for the given type.
+    /// </summary>
+    /// <param name="schema">The schema.</param>
+    /// <param name="virtualFileName">The virtual file name for the schema.</param>
+    /// <param name="featureName">The unique name of the feature.</param>
+    /// <param name="scenarioName">The unique name of the scenario.</param>
+    /// <returns>A <see cref="ValueTask{Type}"/> which, when complete, returns the <see cref="Type"/> generated for the schema.</returns>
+    public Type SynchronouslyGenerateTypeForVirtualFile(string schema, string virtualFileName, string featureName, string scenarioName)
+    {
+        string baseDirectory = this.configuration[$"{this.settingsKey}:testBaseDirectory"]!;
+        string path = Path.Combine(baseDirectory, virtualFileName);
+
+        if (SchemaReferenceNormalization.TryNormalizeSchemaReference(path, out string? result))
+        {
+            path = result;
+        }
+
+        this.builder.AddDocument(path, JsonDocument.Parse(schema));
+
+        (string rootType, ImmutableDictionary<JsonReference, TypeAndCode> generatedTypes) = this.builder.SafeBuildTypesFor(new JsonReference(path), $"{featureName}Feature.{scenarioName}", rebase: true);
+#if NET8_0_OR_GREATER
+        return CompileGeneratedType(this.assemblyLoadContext!, rootType, generatedTypes);
+#else
+        return CompileGeneratedType(rootType, generatedTypes);
+#endif
+    }
+
+    /// <summary>
+    /// Generates a type for the given root Schema element.
+    /// </summary>
+    /// <param name="filename">The filename containing the Schema.</param>
+    /// <param name="schemaPath">The path to the Schema in the file.</param>
+    /// <param name="featureName">The feature name for the type.</param>
+    /// <param name="scenarioName">The scenario name for the type.</param>
+    /// <returns>The fully qualified type name of the entity we have generated.</returns>
+    public Type SynchronouslyGenerateTypeForJsonSchemaTestSuite(string filename, string schemaPath, string featureName, string scenarioName)
+    {
+        string baseDirectory = this.configuration[$"{this.settingsKey}:testBaseDirectory"]!;
+        string path = Path.Combine(baseDirectory, filename) + schemaPath;
+
+        (string rootType, ImmutableDictionary<JsonReference, TypeAndCode> generatedTypes) = this.builder.SafeBuildTypesFor(new JsonReference(path), $"{featureName}Feature.{scenarioName}", rebase: true);
+
+#if NET8_0_OR_GREATER
+        return CompileGeneratedType(this.assemblyLoadContext!, rootType, generatedTypes);
+#else
+        return CompileGeneratedType(rootType, generatedTypes);
+#endif
     }
 
 #if NET8_0_OR_GREATER
@@ -377,12 +416,9 @@ global using global::System.Threading.Tasks;";
     private static (IEnumerable<MetadataReference> MetadataReferences, IEnumerable<string?> Defines) BuildMetadataReferencesAndDefines()
     {
         DependencyContext? ctx = DependencyContext.Default ?? DependencyContext.Load(Assembly.GetExecutingAssembly());
-        if (ctx is null)
-        {
-            throw new InvalidOperationException("Unable to find compilation context.");
-        }
-
-        return (from l in ctx.CompileLibraries
+        return ctx is null
+            ? throw new InvalidOperationException("Unable to find compilation context.")
+            : ((IEnumerable<MetadataReference> MetadataReferences, IEnumerable<string?> Defines))(from l in ctx.CompileLibraries
                 from r in l.ResolveReferencePaths()
                 select MetadataReference.CreateFromFile(r),
                ctx.CompilationOptions.Defines.AsEnumerable());

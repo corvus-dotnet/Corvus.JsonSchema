@@ -39,7 +39,7 @@ public abstract class JsonSchemaBuilderBase : IJsonSchemaBuilder
     }
 
     /// <inheritdoc/>
-    public async Task<(string RootTypeName, ImmutableDictionary<JsonReference, TypeAndCode> GeneratedTypes)> BuildTypesFor(JsonReference reference, string rootNamespace, bool rebase = false, ImmutableDictionary<string, string>? baseUriToNamespaceMap = null, string? rootTypeName = null)
+    public async ValueTask<(string RootTypeName, ImmutableDictionary<JsonReference, TypeAndCode> GeneratedTypes)> BuildTypesFor(JsonReference reference, string rootNamespace, bool rebase = false, ImmutableDictionary<string, string>? baseUriToNamespaceMap = null, string? rootTypeName = null)
     {
         TypeDeclaration rootTypeDeclaration = await this.typeBuilder.AddTypeDeclarationsFor(reference, rootNamespace, rebase, baseUriToNamespaceMap, rootTypeName) ?? throw new InvalidOperationException($"Unable to find the root type declaration at {reference}");
         rootTypeName = rootTypeDeclaration.FullyQualifiedDotnetTypeName!;
@@ -48,6 +48,21 @@ public abstract class JsonSchemaBuilderBase : IJsonSchemaBuilder
         return (
             rootTypeName,
             typesToGenerate.Select(t => (t.LocatedSchema.Location, t)).Select(this.GenerateFilesForType).ToImmutableDictionary(i => i.Location, i => i.TypeAndCode));
+    }
+
+    /// <inheritdoc/>
+    public (string RootTypeName, ImmutableDictionary<JsonReference, TypeAndCode> GeneratedTypes) SafeBuildTypesFor(JsonReference reference, string rootNamespace, bool rebase = false, ImmutableDictionary<string, string>? baseUriToNamespaceMap = null, string? rootTypeName = null)
+    {
+        ValueTask<(string RootTypeName, ImmutableDictionary<JsonReference, TypeAndCode> GeneratedTypes)> result =
+            this.BuildTypesFor(reference, rootNamespace, rebase, baseUriToNamespaceMap, rootTypeName);
+
+        // Ensure that the result is completed synchronously.
+        if (!result.IsCompleted)
+        {
+            throw new InvalidOperationException("The task could not be completed.");
+        }
+
+        return result.Result;
     }
 
     /// <summary>

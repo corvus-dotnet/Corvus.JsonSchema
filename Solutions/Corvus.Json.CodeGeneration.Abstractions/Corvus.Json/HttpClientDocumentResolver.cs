@@ -48,7 +48,7 @@ public class HttpClientDocumentResolver : IDocumentResolver
     }
 
     /// <inheritdoc/>
-    public async Task<JsonElement?> TryResolve(JsonReference reference)
+    public async ValueTask<JsonElement?> TryResolve(JsonReference reference)
     {
         this.CheckDisposed();
 
@@ -68,7 +68,11 @@ public class HttpClientDocumentResolver : IDocumentResolver
 
         try
         {
+#if NET8_0_OR_GREATER
+            await using Stream stream = await this.httpClient.GetStreamAsync(uri).ConfigureAwait(false);
+#else
             using Stream stream = await this.httpClient.GetStreamAsync(uri).ConfigureAwait(false);
+#endif
             result = await JsonDocument.ParseAsync(stream).ConfigureAwait(false);
             this.documents.Add(uri, result);
             if (JsonPointerUtilities.TryResolvePointer(result, reference.Fragment, out JsonElement? element))
@@ -101,7 +105,7 @@ public class HttpClientDocumentResolver : IDocumentResolver
     /// <inheritdoc/>
     public void Dispose()
     {
-        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        // Do not change this code. Put clean-up code in 'Dispose(bool disposing)' method
         this.Dispose(disposing: true);
         GC.SuppressFinalize(this);
     }
@@ -135,9 +139,13 @@ public class HttpClientDocumentResolver : IDocumentResolver
 
     private void CheckDisposed()
     {
+#if NET8_0_OR_GREATER
+        ObjectDisposedException.ThrowIf(this.disposedValue, this);
+#else
         if (this.disposedValue)
         {
             throw new ObjectDisposedException(nameof(CompoundDocumentResolver));
         }
+#endif
     }
 }
