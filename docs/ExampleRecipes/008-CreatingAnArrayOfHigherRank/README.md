@@ -1,1 +1,1 @@
-Sample code for [json-schema-patterns-008-dotnet-creating-an-array-of-higher-rank](https://endjin.com/blog/2024/05/json-schema-patterns-008-dotnet-creating-an-array-of-higher-rank).
+Sample code for [/json-schema-patterns-dotnet-creating-array-of-higher-rank](https://endjin.com/blog/2024/05//json-schema-patterns-dotnet-creating-array-of-higher-rank).
