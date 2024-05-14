@@ -85,6 +85,7 @@ if (!result.IsValid)
     foreach (ValidationResult error in result.Results)
     {
         Console.WriteLine(error);
+    }
 }
 ```
 ## Getting started
