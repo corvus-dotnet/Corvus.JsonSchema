@@ -1,1 +1,1 @@
-Sample code for [json-schema-patterns-005-dotnet-extending-a-base-type](https://endjin.com/blog/2024/05/json-schema-patterns-005-dotnet-extending-a-base-type).
+Sample code for [json-schema-patterns-dotnet-extending-base-type](https://endjin.com/blog/2024/05/json-schema-patterns-dotnet-extending-base-type).
