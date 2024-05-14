@@ -402,7 +402,10 @@ public class TypeDeclaration
             value.ValueKind == JsonValueKind.String &&
             value.AsString.TryGetString(out typeName))
         {
-            return true;
+            if (typeName.Length > 1)
+            {
+                return true;
+            }
         }
 
         typeName = null;
