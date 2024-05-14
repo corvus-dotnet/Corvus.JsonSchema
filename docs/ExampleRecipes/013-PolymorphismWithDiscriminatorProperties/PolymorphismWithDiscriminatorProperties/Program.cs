@@ -23,12 +23,12 @@ Console.WriteLine(PatchOperation.CopyOperation.OpEntity.ConstInstance);
 string ProcessJsonPatch(PatchOperation op)
 {
     return op.Match(
-        (in PatchOperation.AddOperation add) => $"Add: {add.Path} to {add.Value}",
-        (in PatchOperation.RemoveOperation add) => $"Remove: {add.Path}",
-        (in PatchOperation.ReplaceOperation add) => $"Replace: {add.Path} with {add.Value}",
-        (in PatchOperation.MoveOperation add) => $"Move: {add.FromValue} to {add.Path}",
-        (in PatchOperation.CopyOperation add) => $"Copy: {add.FromValue} to {add.Path}",
-        (in PatchOperation.TestOperation add) => $"Add: {add.Value} at {add.Path}",
+        (in PatchOperation.AddOperation op) => $"Add: {op.Path} to {op.Value}",
+        (in PatchOperation.RemoveOperation op) => $"Remove: {op.Path}",
+        (in PatchOperation.ReplaceOperation op) => $"Replace: {op.Path} with {op.Value}",
+        (in PatchOperation.MoveOperation op) => $"Move: {op.FromValue} to {op.Path}",
+        (in PatchOperation.CopyOperation op) => $"Copy: {op.FromValue} to {op.Path}",
+        (in PatchOperation.TestOperation op) => $"Test: {op.Value} at {op.Path}",
         (in PatchOperation op) => throw new InvalidOperationException($"Unknown JSON patch operation: {op}"));
 
 }
