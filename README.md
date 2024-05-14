@@ -247,14 +247,15 @@ generatejsonschematypes --rootNamespace JsonSchemaSample.Api --rootPath #/$defs/
 Compile this code in a project with a reference to the `Corvus.Json.ExtendedTypes` nuget package, and you can then work with the Dotnet type model, and JSON Schema validation e.g.
 
 ```csharp
-string jsonText = @"{
-    ""name"": {
-      ""familyName"": ""Oldroyd"",
-      ""givenName"": ""Michael"",
-      ""otherNames"": [""Francis"", ""James""]
-    },
-    ""dateOfBirth"": ""1944-07-14""
-}";
+string jsonText =
+    """{
+           "name": {
+               "familyName": "Oldroyd",
+               "givenName"": "Michael",
+               "otherNames": ["Francis", "James"]
+           },
+           "dateOfBirth"": "1944-07-14"
+       }""";
 
 var person = Person.Parse(jsonText);
 Console.WriteLine(person.Name.FamilyName);
@@ -406,9 +407,9 @@ In particular I would point you at
 [JsonEverything](https://github.com/gregsdennis/json-everything) by [@gregsdennis](https://github.com/gregsdennis)
 
 - JSON Schema, drafts 6 and higher ([Specification](https://json-schema.org))
-- JSON Path ([RFC in progress](https://github.com/ietf-wg-jsonpath/draft-ietf-jsonpath-jsonpath)) (.Net Standard 2.1)
+- JSON Path ([RFC in progress](https://github.com/ietf-wg-jsonpath/draft-ietf-jsonpath-jsonpath)) (.NET Standard 2.1)
 - JSON Patch ([RFC 6902](https://tools.ietf.org/html/rfc6902))
-- JsonLogic ([Website](https://jsonlogic.com)) (.Net Standard 2.1)
+- JsonLogic ([Website](https://jsonlogic.com)) (.NET Standard 2.1)
 - JSON Pointer ([RFC 6901](https://tools.ietf.org/html/rfc6901))
 - Relative JSON Pointer ([Specification](https://tools.ietf.org/id/draft-handrews-relative-json-pointer-00.html))
 - Json.More.Net (Useful System.Text.Json extensions)
