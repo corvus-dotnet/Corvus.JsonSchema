@@ -5,7 +5,7 @@ Feature: synchronous code generation draft2020-12
     As a developer
     I want to support synchronous code generation with pre-loaded files in draft2020-12
 
-Scenario Outline: type derived by reference supports implicit conversions
+Scenario Outline: synchronous type generation
 	Given a schema file
 		"""
 		{
