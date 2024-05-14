@@ -252,10 +252,10 @@ string jsonText =
     """{
            "name": {
                "familyName": "Oldroyd",
-               "givenName"": "Michael",
+               "givenName": "Michael",
                "otherNames": ["Francis", "James"]
            },
-           "dateOfBirth"": "1944-07-14"
+           "dateOfBirth": "1944-07-14"
        }""";
 
 var person = Person.Parse(jsonText);
