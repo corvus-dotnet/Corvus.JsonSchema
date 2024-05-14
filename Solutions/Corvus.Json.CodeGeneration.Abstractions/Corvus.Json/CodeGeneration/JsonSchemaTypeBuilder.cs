@@ -46,13 +46,13 @@ public partial class JsonSchemaTypeBuilder
     /// If <see langword="true"/>, then references in this document should be taken as if the fragment was the root of a document. This will effectively generate a custom $id for the root scope.</param>
     /// <param name="baseUriToNamespaceMap">An optional map of base URIs in the document to namespaces in which to generate the types.</param>
     /// <param name="rootTypeName">An optional explicit type name for the root element.</param>
-    /// <returns>A <see cref="Task"/> which, when complete, provides the requested type declaration.</returns>
+    /// <returns>A <see cref="ValueTask"/> which, when complete, provides the requested type declaration.</returns>
     /// <remarks>
     /// <para>This method may be called multiple times to build up a set of related types, perhaps from multiple fragments of a single document, or a family of related documents.</para>
     /// <para>Any re-used schema will (if possible) be reduced to the same type, to build a single coherent type system.</para>
     /// <para>Once you have finished adding types, call <see cref="TypeDeclaration.GetTypesToGenerate()"/> to retrieve the set of types that need to be built for each root type you wish to build.</para>
     /// </remarks>
-    public async Task<TypeDeclaration?> AddTypeDeclarationsFor(JsonReference documentPath, string rootNamespace, bool rebaseAsRoot = false, ImmutableDictionary<string, string>? baseUriToNamespaceMap = null, string? rootTypeName = null)
+    public async ValueTask<TypeDeclaration?> AddTypeDeclarationsFor(JsonReference documentPath, string rootNamespace, bool rebaseAsRoot = false, ImmutableDictionary<string, string>? baseUriToNamespaceMap = null, string? rootTypeName = null)
     {
         // First we do a document "load" - this enables us to build the map of the schema, anchors etc.
         (JsonReference scope, JsonReference baseReference) = await this.schemaRegistry.RegisterDocumentSchema(documentPath, rebaseAsRoot).ConfigureAwait(false);
@@ -90,8 +90,8 @@ public partial class JsonSchemaTypeBuilder
     /// </summary>
     /// <param name="reference">The reference to the document.</param>
     /// <param name="rebaseToRootPath">Whether we are rebasing the element to a root path.</param>
-    /// <returns>A <see cref="Task{ValidationSemantics}"/> that, when complete, provides the validation semantics for the reference.</returns>
-    public async Task<ValidationSemantics> GetValidationSemantics(JsonReference reference, bool rebaseToRootPath)
+    /// <returns>A <see cref="ValueTask{ValidationSemantics}"/> that, when complete, provides the validation semantics for the reference.</returns>
+    public async ValueTask<ValidationSemantics> GetValidationSemantics(JsonReference reference, bool rebaseToRootPath)
     {
         if (!rebaseToRootPath)
         {
@@ -224,13 +224,13 @@ public partial class JsonSchemaTypeBuilder
         }
     }
 
-    private async Task<TypeDeclaration> BuildTypeDeclarationFor(LocatedSchema baseSchema)
+    private async ValueTask<TypeDeclaration> BuildTypeDeclarationFor(LocatedSchema baseSchema)
     {
         WalkContext context = new(this, baseSchema);
         return await this.BuildTypeDeclarationFor(context).ConfigureAwait(false);
     }
 
-    private async Task<TypeDeclaration> BuildTypeDeclarationFor(WalkContext context)
+    private async ValueTask<TypeDeclaration> BuildTypeDeclarationFor(WalkContext context)
     {
         if (!this.schemaRegistry.TryGetValue(context.SubschemaLocation, out LocatedSchema? schema))
         {
