@@ -548,6 +548,6 @@ public static class SchemaExtensionsDraft4
     {
         // If we have a reference, we are always naked.
         return
-            false;
+            true;
     }
 }
