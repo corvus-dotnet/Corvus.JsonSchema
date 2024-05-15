@@ -1,7 +1,7 @@
 # Corvus.JsonSchema
 Build-time code generation for [Json Schema](https://json-schema.org/) validation, and serialization.
 
-It supports serialization of *every feature of JSON schema* from draft7 to draft2020-12. (i.e. it doesn't give up on complex structure and lapse back to 'anonymous JSON objects' like most dotnet tooling.)
+It supports serialization of *every feature of JSON schema* from draft4 to draft2020-12, including the OpenApi3.0 variant of draft4. (i.e. it doesn't give up on complex structure and lapse back to 'anonymous JSON objects' like most dotnet tooling.)
 
 ## Supported platforms
 
@@ -119,7 +119,7 @@ Arguments:
 Options:
   --rootNamespace <rootNamespace>            The default root namespace for generated types
   --rootPath <rootPath>                      The path in the document for the root type.
-  --useSchema <Draft201909|Draft202012>      The schema variant to use. [default: Draft201909]
+  --useSchema <Draft201909|Draft202012|Draft4|Draft6|Draft7|OpenApi30>      The schema variant to use. [default: Draft201909]
   --outputMapFile <outputMapFile>            The name to use for a map file which includes details of the files that
                                              were written.
   --outputPath <outputPath>                  The output directory. It defaults to the same folder as the schema file.
