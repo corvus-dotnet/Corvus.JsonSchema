@@ -31,7 +31,7 @@ public readonly partial struct Schema
             if (level > ValidationLevel.Basic)
             {
                 result = result.UsingStack();
-                result = result.PushSchemaLocation("schema.json#/definitions/Schema/properties/minItems");
+                result = result.PushSchemaLocation("https://raw.githubusercontent.com/OAI/OpenAPI-Specification/main/schemas/v3.0/schema.json#/definitions/Schema/properties/minItems");
             }
 
             JsonValueKind valueKind = this.ValueKind;

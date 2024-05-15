@@ -41,7 +41,7 @@ public static class JsonSchemaHelpers
     }
 
     /// <summary>
-    /// Creates the draft7 items keyword.
+    /// Creates the draft4 items keyword.
     /// </summary>
     /// <returns>The items keyword.</returns>
     private static string CreateDraft4ItemsKeyword()
@@ -50,7 +50,7 @@ public static class JsonSchemaHelpers
     }
 
     /// <summary>
-    /// Creates the list of draft7 anchor keywords.
+    /// Creates the list of draft4 anchor keywords.
     /// </summary>
     /// <returns>An array of keywords that represent anchors in draft 2020-12.</returns>
     private static ImmutableArray<AnchorKeyword> CreateDraft4AnchorKeywords()
@@ -61,7 +61,7 @@ public static class JsonSchemaHelpers
     }
 
     /// <summary>
-    /// Gets the draft7 <c>$id</c> keyword.
+    /// Gets the draft4 <c>$id</c> keyword.
     /// </summary>
     /// <returns>Return <c>"$id"</c>.</returns>
     private static string CreateDraft4IdKeyword()
@@ -79,7 +79,7 @@ public static class JsonSchemaHelpers
     }
 
     /// <summary>
-    /// Gets the draft7 <c>$defs</c> keyword.
+    /// Gets the draft4 <c>$defs</c> keyword.
     /// </summary>
     /// <returns>Return <c>"$defs"</c>.</returns>
     private static ImmutableHashSet<string> CreateDraft4DefsKeywords()
@@ -99,7 +99,7 @@ public static class JsonSchemaHelpers
     /// </returns>
     private static ImmutableHashSet<string> CreateDraft4IrreducibleKeywords()
     {
-        // $ref always reduces in draft7.
+        // $ref always reduces in draft4.
         return
         [
         ];
@@ -224,7 +224,7 @@ public static class JsonSchemaHelpers
     }
 
     /// <summary>
-    /// Creates the draft2019-09 keywords that are resolvable to a schema.
+    /// Creates the draft4 keywords that are resolvable to a schema.
     /// </summary>
     /// <returns>An array of <see cref="RefResolvableKeyword"/> instances.</returns>
     private static ImmutableArray<RefResolvableKeyword> CreateDraft4RefResolvableKeywords()
@@ -252,7 +252,7 @@ public static class JsonSchemaHelpers
     }
 
     /// <summary>
-    /// Creates the draft7 reference keywords.
+    /// Creates the draft4 reference keywords.
     /// </summary>
     /// <returns>An array of <see cref="RefKeyword"/> instances.</returns>
     private static ImmutableArray<RefKeyword> CreateDraft4RefKeywords()
@@ -264,12 +264,12 @@ public static class JsonSchemaHelpers
     }
 
     /// <summary>
-    /// Creates the predicate that validates a schema against draft 7 metaschema.
+    /// Creates the predicate that validates a schema against draft 4 metaschema.
     /// </summary>
-    /// <returns><see langword="true"/> if the schema is a valid draft 7 schema.</returns>
+    /// <returns><see langword="true"/> if the schema is a valid draft 4 schema.</returns>
     private static Predicate<JsonAny> CreateDraft4ValidateSchema()
     {
-        return static s => s.As<JsonSchema.Draft4.Schema>().IsValid();
+        return static s => s.As<JsonSchema.Draft4.Schema>().IsValid() || s.ValueKind == JsonValueKind.True || s.ValueKind == JsonValueKind.False || (s.ValueKind == JsonValueKind.Object && s.AsObject.HasProperty("$ref"));
     }
 
     /// <summary>

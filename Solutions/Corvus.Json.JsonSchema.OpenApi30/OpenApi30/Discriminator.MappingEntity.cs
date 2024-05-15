@@ -51,7 +51,7 @@ public readonly partial struct Discriminator
         /// <summary>
         /// Gets the schema location from which this type was generated.
         /// </summary>
-        public static string SchemaLocation { get; } = "schema.json#/definitions/Discriminator/properties/mapping";
+        public static string SchemaLocation { get; } = "https://raw.githubusercontent.com/OAI/OpenAPI-Specification/main/schemas/v3.0/schema.json#/definitions/Discriminator/properties/mapping";
         /// <summary>
         /// Gets a Null instance.
         /// </summary>

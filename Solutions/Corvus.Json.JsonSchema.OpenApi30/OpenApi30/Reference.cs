@@ -49,7 +49,7 @@ public readonly partial struct Reference
     /// <summary>
     /// Gets the schema location from which this type was generated.
     /// </summary>
-    public static string SchemaLocation { get; } = "schema.json#/definitions/Reference";
+    public static string SchemaLocation { get; } = "https://raw.githubusercontent.com/OAI/OpenAPI-Specification/main/schemas/v3.0/schema.json#/definitions/Reference";
     /// <summary>
     /// Gets a Null instance.
     /// </summary>

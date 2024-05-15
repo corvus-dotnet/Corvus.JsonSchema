@@ -28,10 +28,9 @@ public readonly partial struct ExternalDocumentation
         if (level > ValidationLevel.Basic)
         {
             result = result.UsingStack();
-            result = result.PushSchemaLocation("schema.json#/definitions/ExternalDocumentation");
+            result = result.PushSchemaLocation("https://raw.githubusercontent.com/OAI/OpenAPI-Specification/main/schemas/v3.0/schema.json#/definitions/ExternalDocumentation");
         }
 
-        result = result.UsingEvaluatedProperties();
         JsonValueKind valueKind = this.ValueKind;
         result = this.ValidateType(valueKind, result, level);
         if (level == ValidationLevel.Flag && !result.IsValid)

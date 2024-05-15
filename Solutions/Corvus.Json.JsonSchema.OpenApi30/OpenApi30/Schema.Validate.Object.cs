@@ -66,22 +66,6 @@ public readonly partial struct Schema
                 }
             }
 
-            if (!result.HasEvaluatedLocalProperty(propertyCount))
-            {
-                if (level >= ValidationLevel.Detailed)
-                {
-                    result = result.WithResult(isValid: false, $"9.3.2.3. additionalProperties - additional property \"{property.Name}\" is not permitted.");
-                }
-                else if (level >= ValidationLevel.Basic)
-                {
-                    result = result.WithResult(isValid: false, "9.3.2.3. additionalProperties - additional properties are not permitted.");
-                }
-                else
-                {
-                    return result.WithResult(isValid: false);
-                }
-            }
-
             propertyCount++;
         }
 

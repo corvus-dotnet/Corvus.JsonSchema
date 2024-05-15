@@ -54,7 +54,7 @@ public readonly partial struct Schema
         /// <summary>
         /// Gets the schema location from which this type was generated.
         /// </summary>
-        public static string SchemaLocation { get; } = "schema.json#/definitions/Schema/properties/additionalProperties";
+        public static string SchemaLocation { get; } = "https://raw.githubusercontent.com/OAI/OpenAPI-Specification/main/schemas/v3.0/schema.json#/definitions/Schema/properties/additionalProperties";
         /// <summary>
         /// Gets a Null instance.
         /// </summary>

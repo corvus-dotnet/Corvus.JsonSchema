@@ -51,7 +51,7 @@ public readonly partial struct XMl
         /// <summary>
         /// Gets the schema location from which this type was generated.
         /// </summary>
-        public static string SchemaLocation { get; } = "schema.json#/definitions/XML/properties/wrapped";
+        public static string SchemaLocation { get; } = "https://raw.githubusercontent.com/OAI/OpenAPI-Specification/main/schemas/v3.0/schema.json#/definitions/XML/properties/wrapped";
         /// <summary>
         /// Gets a Null instance.
         /// </summary>

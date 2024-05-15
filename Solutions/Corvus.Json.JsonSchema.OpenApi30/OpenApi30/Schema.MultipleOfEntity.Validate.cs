@@ -18,6 +18,7 @@ public readonly partial struct Schema
     /// </summary>
     public readonly partial struct MultipleOfEntity
     {
+        private static readonly BinaryJsonNumber __Corvus_Minimum = new(0);
         private static readonly BinaryJsonNumber __Corvus_ExclusiveMinimum = new(0);
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
@@ -31,7 +32,7 @@ public readonly partial struct Schema
             if (level > ValidationLevel.Basic)
             {
                 result = result.UsingStack();
-                result = result.PushSchemaLocation("schema.json#/definitions/Schema/properties/multipleOf");
+                result = result.PushSchemaLocation("https://raw.githubusercontent.com/OAI/OpenAPI-Specification/main/schemas/v3.0/schema.json#/definitions/Schema/properties/multipleOf");
             }
 
             JsonValueKind valueKind = this.ValueKind;
@@ -41,7 +42,7 @@ public readonly partial struct Schema
                 return result;
             }
 
-            result = Corvus.Json.Validate.ValidateNumber(this, result, level, BinaryJsonNumber.None, BinaryJsonNumber.None, BinaryJsonNumber.None, BinaryJsonNumber.None, __Corvus_ExclusiveMinimum);
+            result = Corvus.Json.Validate.ValidateNumber(this, result, level, BinaryJsonNumber.None, BinaryJsonNumber.None, BinaryJsonNumber.None, __Corvus_Minimum, __Corvus_ExclusiveMinimum);
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;

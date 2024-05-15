@@ -49,7 +49,7 @@ public readonly partial struct ExternalDocumentation
     /// <summary>
     /// Gets the schema location from which this type was generated.
     /// </summary>
-    public static string SchemaLocation { get; } = "schema.json#/definitions/ExternalDocumentation";
+    public static string SchemaLocation { get; } = "https://raw.githubusercontent.com/OAI/OpenAPI-Specification/main/schemas/v3.0/schema.json#/definitions/ExternalDocumentation";
     /// <summary>
     /// Gets a Null instance.
     /// </summary>
