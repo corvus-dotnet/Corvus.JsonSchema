@@ -67,6 +67,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{2CE21CBD-4
 		..\README.md = ..\README.md
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Corvus.Json.JsonSchema.OpenApi30", "Corvus.Json.JsonSchema.OpenApi30\Corvus.Json.JsonSchema.OpenApi30.csproj", "{0DCAAEF5-28AB-4512-BCDE-0B80906469B4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -145,6 +147,10 @@ Global
 		{C9C00BD6-0C15-45C2-B976-BF6111635BDF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C9C00BD6-0C15-45C2-B976-BF6111635BDF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C9C00BD6-0C15-45C2-B976-BF6111635BDF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0DCAAEF5-28AB-4512-BCDE-0B80906469B4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0DCAAEF5-28AB-4512-BCDE-0B80906469B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0DCAAEF5-28AB-4512-BCDE-0B80906469B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0DCAAEF5-28AB-4512-BCDE-0B80906469B4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -167,6 +173,7 @@ Global
 		{16DC75F0-A4B0-44A7-B0E5-BFA3B9F9AA59} = {3D0E15DD-5C66-4C2E-BAD1-F10A3B7B4A31}
 		{C9C00BD6-0C15-45C2-B976-BF6111635BDF} = {3D0E15DD-5C66-4C2E-BAD1-F10A3B7B4A31}
 		{88A5B434-451F-4C83-852B-A140CA97C93C} = {D9BD60AE-2972-4608-8E0D-16929D42A0D9}
+		{0DCAAEF5-28AB-4512-BCDE-0B80906469B4} = {3D0E15DD-5C66-4C2E-BAD1-F10A3B7B4A31}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {D744631F-1DD6-4290-BF2D-67925BA2341D}
