@@ -600,6 +600,14 @@
           "Microsoft.CodeAnalysis.CSharp": "[4.9.2, )"
         }
       },
+      "corvus.json.codegeneration.openapi30": {
+        "type": "Project",
+        "dependencies": {
+          "Corvus.Json.CodeGeneration.Abstractions": "[1.0.0, )",
+          "Corvus.Json.JsonSchema.OpenApi30": "[1.0.0, )",
+          "System.CodeDom": "[8.0.0, )"
+        }
+      },
       "corvus.json.extendedtypes": {
         "type": "Project",
         "dependencies": {
@@ -653,6 +661,15 @@
         }
       },
       "corvus.json.jsonschema.draft7": {
+        "type": "Project",
+        "dependencies": {
+          "Corvus.Json.ExtendedTypes": "[1.0.0, )",
+          "Microsoft.Extensions.Http": "[8.0.0, )",
+          "Microsoft.Extensions.ObjectPool": "[8.0.3, )",
+          "NodaTime": "[3.1.11, )"
+        }
+      },
+      "corvus.json.jsonschema.openapi30": {
         "type": "Project",
         "dependencies": {
           "Corvus.Json.ExtendedTypes": "[1.0.0, )",
@@ -2031,6 +2048,14 @@
           "Microsoft.CodeAnalysis.CSharp": "[4.9.2, )"
         }
       },
+      "corvus.json.codegeneration.openapi30": {
+        "type": "Project",
+        "dependencies": {
+          "Corvus.Json.CodeGeneration.Abstractions": "[1.0.0, )",
+          "Corvus.Json.JsonSchema.OpenApi30": "[1.0.0, )",
+          "System.CodeDom": "[8.0.0, )"
+        }
+      },
       "corvus.json.extendedtypes": {
         "type": "Project",
         "dependencies": {
@@ -2078,6 +2103,15 @@
         }
       },
       "corvus.json.jsonschema.draft7": {
+        "type": "Project",
+        "dependencies": {
+          "Corvus.Json.ExtendedTypes": "[1.0.0, )",
+          "Microsoft.Extensions.Http": "[8.0.0, )",
+          "Microsoft.Extensions.ObjectPool": "[8.0.3, )",
+          "NodaTime": "[3.1.11, )"
+        }
+      },
+      "corvus.json.jsonschema.openapi30": {
         "type": "Project",
         "dependencies": {
           "Corvus.Json.ExtendedTypes": "[1.0.0, )",

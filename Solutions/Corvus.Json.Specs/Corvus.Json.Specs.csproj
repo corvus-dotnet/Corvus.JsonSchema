@@ -36,6 +36,7 @@
 		<Compile Remove="Features/**/numeric-format-netstandard20.feature.cs" />
 	</ItemGroup>
 
+
 	<ItemGroup>
 		<PackageReference Include="Corvus.Testing.SpecFlow.NUnit" Version="3.0.2" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
@@ -67,6 +68,8 @@
 
 		<ProjectReference Include="..\Corvus.Json.CodeGeneration.7\Corvus.Json.CodeGeneration.7.csproj" />
 
+		<ProjectReference Include="..\Corvus.Json.CodeGeneration.OpenApi30\Corvus.Json.CodeGeneration.OpenApi30.csproj" />
+
 		<ProjectReference Include="..\Corvus.Json.Patch\Corvus.Json.Patch.csproj" />
 
 	</ItemGroup>
@@ -87,10 +90,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="Features\JsonSchema\" />
 	  <Folder Include="Features\ExplicitTypeName\" />
 	  <Folder Include="Features\SyncGenerator\" />
 	</ItemGroup>
-
 
 </Project>

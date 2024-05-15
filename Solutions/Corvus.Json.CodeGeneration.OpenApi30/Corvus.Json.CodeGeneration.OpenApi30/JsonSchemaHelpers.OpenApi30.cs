@@ -261,8 +261,8 @@ public static class JsonSchemaHelpers
     /// <returns><see langword="true"/> if the schema is a valid draft 7 schema.</returns>
     private static Predicate<JsonAny> CreateOpenApi30ValidateSchema()
     {
-        // We claim to be valid if our base document is an OpenApi document.
-        return static s => s.As<JsonSchema.OpenApi30.OpenApiDocument>().IsValid() || s.As<JsonSchema.OpenApi30.OpenApiDocument.Schema>().IsValid() || s.As<JsonSchema.OpenApi30.OpenApiDocument.Reference>().IsValid();
+        // We always claim to be valid.
+        return static _ => true;
     }
 
     /// <summary>
@@ -309,6 +309,15 @@ public static class JsonSchemaHelpers
             else if (schema.IsEmpty())
             {
                 return BuiltInTypes.AnyTypeDeclaration;
+            }
+            else if (schema.IsExplicitNullType())
+            {
+                return BuiltInTypes.GetTypeNameFor(
+                    schema.Type.GetString() ?? "null",
+                    schema.Format.GetString(),
+                    schema.GetContentEncoding().GetString(),
+                    schema.GetContentMediaType().GetString(),
+                    (validateAs & ValidationSemantics.Draft201909) != 0);
             }
 
             return BuiltInTypes.GetTypeNameFor(

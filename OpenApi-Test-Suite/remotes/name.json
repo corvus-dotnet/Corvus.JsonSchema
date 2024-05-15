@@ -1,0 +1,15 @@
+{
+    "definitions": {
+        "orNull": {
+            "anyOf": [
+                {
+                    "nullable": true
+                },
+                {
+                    "$ref": "#"
+                }
+            ]
+        }
+    },
+    "type": "string"
+}

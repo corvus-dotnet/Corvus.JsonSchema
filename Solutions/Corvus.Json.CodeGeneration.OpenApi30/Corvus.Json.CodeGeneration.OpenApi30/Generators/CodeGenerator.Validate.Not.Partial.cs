@@ -803,7 +803,7 @@ public partial class CodeGeneratorValidateNot
 
             TypeDeclaration typeDeclaration = this.Builder.GetTypeDeclarationForProperty(this.TypeDeclaration, "additionalProperties");
             return typeDeclaration.Schema().IsUndefined() ||
-                typeDeclaration.Schema().ValueKind == JsonValueKind.True ||
+                typeDeclaration.LocatedSchema.Schema.ValueKind == JsonValueKind.True ||
                 typeDeclaration.Schema().ValueKind == JsonValueKind.Object;
         }
     }
@@ -822,8 +822,8 @@ public partial class CodeGeneratorValidateNot
 
             TypeDeclaration typeDeclaration = this.Builder.GetTypeDeclarationForProperty(this.TypeDeclaration, "additionalProperties");
             return typeDeclaration.Schema().ValueKind == JsonValueKind.Object ||
-                typeDeclaration.Schema().ValueKind == JsonValueKind.True ||
-                typeDeclaration.Schema().ValueKind == JsonValueKind.False;
+                typeDeclaration.LocatedSchema.Schema.ValueKind == JsonValueKind.True ||
+                typeDeclaration.LocatedSchema.Schema.ValueKind == JsonValueKind.False;
         }
     }
 
