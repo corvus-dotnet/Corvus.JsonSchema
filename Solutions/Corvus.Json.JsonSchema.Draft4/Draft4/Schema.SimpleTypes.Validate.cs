@@ -30,7 +30,7 @@ public readonly partial struct Schema
             if (level > ValidationLevel.Basic)
             {
                 result = result.UsingStack();
-                result = result.PushSchemaLocation("http://json-schema.org/draft-06/schema#/definitions/simpleTypes");
+                result = result.PushSchemaLocation("http://json-schema.org/draft-04/schema#/definitions/simpleTypes");
             }
 
             result = Corvus.Json.Validate.ValidateEnum(this, result, level, EnumValues.Item0, EnumValues.Item1, EnumValues.Item2, EnumValues.Item3, EnumValues.Item4, EnumValues.Item5, EnumValues.Item6);

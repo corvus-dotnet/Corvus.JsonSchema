@@ -32,7 +32,7 @@ public readonly partial struct Schema
                 if (level > ValidationLevel.Basic)
                 {
                     result = result.UsingStack();
-                    result = result.PushSchemaLocation("http://json-schema.org/draft-06/schema#/properties/dependencies/additionalProperties");
+                    result = result.PushSchemaLocation("http://json-schema.org/draft-04/schema#/properties/dependencies/additionalProperties");
                 }
 
                 result = this.ValidateAnyOf(result, level);

@@ -12,8 +12,13 @@ using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.Draft4;
 /// <summary>
-/// Core schema meta-schema
+/// Generated from JSON Schema.
 /// </summary>
+/// <remarks>
+/// <para>
+/// Core schema meta-schema
+/// </para>
+/// </remarks>
 public readonly partial struct Schema
 {
     private ValidationContext ValidateType(JsonValueKind valueKind, in ValidationContext validationContext, ValidationLevel level)
@@ -31,18 +36,7 @@ public readonly partial struct Schema
             isValid = true;
         }
 
-        ValidationContext localResultBoolean = Corvus.Json.Validate.TypeBoolean(valueKind, result.CreateChildContext(), level);
-        if (level == ValidationLevel.Flag && localResultBoolean.IsValid)
-        {
-            return validationContext;
-        }
-
-        if (localResultBoolean.IsValid)
-        {
-            isValid = true;
-        }
-
-        result = result.MergeResults(isValid, level, localResultObject, localResultBoolean);
+        result = result.MergeResults(isValid, level, localResultObject);
         return result;
     }
 }

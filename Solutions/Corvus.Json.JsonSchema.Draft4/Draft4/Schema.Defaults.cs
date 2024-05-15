@@ -14,8 +14,13 @@ using Corvus.Json.Internal;
 
 namespace Corvus.Json.JsonSchema.Draft4;
 /// <summary>
-/// Core schema meta-schema
+/// Generated from JSON Schema.
 /// </summary>
+/// <remarks>
+/// <para>
+/// Core schema meta-schema
+/// </para>
+/// </remarks>
 public readonly partial struct Schema
 {
     private static readonly ImmutableList<JsonObjectProperty> __CorvusDefaults = BuildDefaults();
@@ -70,16 +75,15 @@ public readonly partial struct Schema
     private static ImmutableList<JsonObjectProperty> BuildDefaults()
     {
         ImmutableList<JsonObjectProperty>.Builder builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
-        builder.Add(JsonPropertyNames.AdditionalItems, Corvus.Json.JsonSchema.Draft4.Schema.DefaultInstance);
-        builder.Add(JsonPropertyNames.AdditionalProperties, Corvus.Json.JsonSchema.Draft4.Schema.DefaultInstance);
-        builder.Add(JsonPropertyNames.Contains, Corvus.Json.JsonSchema.Draft4.Schema.DefaultInstance);
+        builder.Add(JsonPropertyNames.AdditionalItems, Corvus.Json.JsonSchema.Draft4.Schema.AdditionalItemsEntity.DefaultInstance);
+        builder.Add(JsonPropertyNames.AdditionalProperties, Corvus.Json.JsonSchema.Draft4.Schema.AdditionalPropertiesEntity.DefaultInstance);
         builder.Add(JsonPropertyNames.Definitions, Corvus.Json.JsonSchema.Draft4.Schema.DefinitionsEntity.DefaultInstance);
+        builder.Add(JsonPropertyNames.ExclusiveMaximum, Corvus.Json.JsonSchema.Draft4.Schema.ExclusiveMaximumEntity.DefaultInstance);
+        builder.Add(JsonPropertyNames.ExclusiveMinimum, Corvus.Json.JsonSchema.Draft4.Schema.ExclusiveMinimumEntity.DefaultInstance);
         builder.Add(JsonPropertyNames.Items, Corvus.Json.JsonSchema.Draft4.Schema.ItemsEntity.DefaultInstance);
         builder.Add(JsonPropertyNames.Not, Corvus.Json.JsonSchema.Draft4.Schema.DefaultInstance);
         builder.Add(JsonPropertyNames.PatternProperties, Corvus.Json.JsonSchema.Draft4.Schema.PatternPropertiesEntity.DefaultInstance);
         builder.Add(JsonPropertyNames.Properties, Corvus.Json.JsonSchema.Draft4.Schema.PropertiesEntity.DefaultInstance);
-        builder.Add(JsonPropertyNames.PropertyNames, Corvus.Json.JsonSchema.Draft4.Schema.DefaultInstance);
-        builder.Add(JsonPropertyNames.Required, Corvus.Json.JsonSchema.Draft4.Schema.StringArray.DefaultInstance);
         builder.Add(JsonPropertyNames.UniqueItems, Corvus.Json.JsonSchema.Draft4.Schema.UniqueItemsEntity.DefaultInstance);
         return builder.ToImmutable();
     }

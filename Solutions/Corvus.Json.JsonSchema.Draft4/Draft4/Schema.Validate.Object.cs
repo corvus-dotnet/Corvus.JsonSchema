@@ -16,8 +16,13 @@ using Corvus.Json.Internal;
 
 namespace Corvus.Json.JsonSchema.Draft4;
 /// <summary>
-/// Core schema meta-schema
+/// Generated from JSON Schema.
 /// </summary>
+/// <remarks>
+/// <para>
+/// Core schema meta-schema
+/// </para>
+/// </remarks>
 public readonly partial struct Schema
 {
     private ValidationContext ValidateObject(JsonValueKind valueKind, in ValidationContext validationContext, ValidationLevel level)
@@ -29,6 +34,63 @@ public readonly partial struct Schema
         }
 
         int propertyCount = 0;
+        foreach (var dependentRequired in __CorvusDependentRequired)
+        {
+            if (this.HasJsonElementBacking)
+            {
+                if (this.HasProperty(dependentRequired.Utf8Name.Span))
+                {
+                    foreach (ReadOnlyMemory<byte> dependency in dependentRequired.Utf8Dependency)
+                    {
+                        ReadOnlySpan<byte> dSpan = dependency.Span;
+                        if (!this.HasProperty(dSpan) && !this.HasDefault(dSpan))
+                        {
+                            if (level >= ValidationLevel.Detailed)
+                            {
+#if NET8_0_OR_GREATER
+                                result = result.WithResult(isValid: false, $"6.5.4. dependentRequired - dependent property \"{Encoding.UTF8.GetString(dSpan)}\" not found.");
+#else
+                                result = result.WithResult(isValid: false, $"6.5.4. dependentRequired - dependent property \"{Encoding.UTF8.GetString(dSpan.ToArray())}\" not found.");
+#endif
+                            }
+                            else if (level >= ValidationLevel.Basic)
+                            {
+                                result = result.WithResult(isValid: false, "6.5.4. dependentRequired - dependent property not found.");
+                            }
+                            else
+                            {
+                                return result.WithResult(isValid: false);
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                if (this.HasProperty(dependentRequired.Name))
+                {
+                    foreach (string dependency in dependentRequired.Dependency)
+                    {
+                        if (!this.HasProperty(dependency) && !this.HasDefault(dependency))
+                        {
+                            if (level >= ValidationLevel.Detailed)
+                            {
+                                result = result.WithResult(isValid: false, $"6.5.4. dependentRequired - dependent property \"{dependency}\" not found.");
+                            }
+                            else if (level >= ValidationLevel.Basic)
+                            {
+                                result = result.WithResult(isValid: false, "6.5.4. dependentRequired - dependent property not found.");
+                            }
+                            else
+                            {
+                                return result.WithResult(isValid: false);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         foreach (JsonObjectProperty property in this.EnumerateObject())
         {
             if (__TryGetCorvusLocalPropertiesValidator(property, this.HasJsonElementBacking, out ObjectPropertyValidator? propertyValidator))

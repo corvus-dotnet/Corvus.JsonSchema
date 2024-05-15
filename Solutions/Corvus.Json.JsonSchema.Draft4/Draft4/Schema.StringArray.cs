@@ -51,7 +51,7 @@ public readonly partial struct Schema
         /// <summary>
         /// Gets the schema location from which this type was generated.
         /// </summary>
-        public static string SchemaLocation { get; } = "http://json-schema.org/draft-06/schema#/definitions/stringArray";
+        public static string SchemaLocation { get; } = "http://json-schema.org/draft-04/schema#/definitions/stringArray";
         /// <summary>
         /// Gets a Null instance.
         /// </summary>
@@ -63,7 +63,7 @@ public readonly partial struct Schema
         /// <summary>
         /// Gets the default instance of the type.
         /// </summary>
-        public static StringArray DefaultInstance { get; } = StringArray.ParseValue("[]"u8);
+        public static StringArray DefaultInstance { get; }
 
         /// <inheritdoc/>
         public JsonAny AsAny

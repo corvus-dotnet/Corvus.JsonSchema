@@ -17,14 +17,18 @@ using Corvus.Json.Internal;
 
 namespace Corvus.Json.JsonSchema.Draft4;
 /// <summary>
-/// Core schema meta-schema
+/// Generated from JSON Schema.
 /// </summary>
+/// <remarks>
+/// <para>
+/// Core schema meta-schema
+/// </para>
+/// </remarks>
 [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<Schema>))]
 public readonly partial struct Schema
 {
     private readonly Backing backing;
     private readonly JsonElement jsonElementBacking;
-    private readonly bool boolBacking;
     private readonly ImmutableList<JsonObjectProperty> objectBacking;
     /// <summary>
     /// Initializes a new instance of the <see cref = "Schema"/> struct.
@@ -33,7 +37,6 @@ public readonly partial struct Schema
     {
         this.jsonElementBacking = default;
         this.backing = Backing.JsonElement;
-        this.boolBacking = default;
         this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
     }
 
@@ -45,14 +48,13 @@ public readonly partial struct Schema
     {
         this.jsonElementBacking = value;
         this.backing = Backing.JsonElement;
-        this.boolBacking = default;
         this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
     }
 
     /// <summary>
     /// Gets the schema location from which this type was generated.
     /// </summary>
-    public static string SchemaLocation { get; } = "https://json-schema.org/draft-06/schema";
+    public static string SchemaLocation { get; } = "https://json-schema.org/draft-04/schema";
     /// <summary>
     /// Gets a Null instance.
     /// </summary>
@@ -74,11 +76,6 @@ public readonly partial struct Schema
             if ((this.backing & Backing.JsonElement) != 0)
             {
                 return new(this.jsonElementBacking);
-            }
-
-            if ((this.backing & Backing.Bool) != 0)
-            {
-                return new(this.boolBacking);
             }
 
             if ((this.backing & Backing.Object) != 0)
@@ -103,11 +100,6 @@ public readonly partial struct Schema
             if ((this.backing & Backing.JsonElement) != 0)
             {
                 return this.jsonElementBacking;
-            }
-
-            if ((this.backing & Backing.Bool) != 0)
-            {
-                return JsonValueHelpers.BoolToJsonElement(this.boolBacking);
             }
 
             if ((this.backing & Backing.Object) != 0)
@@ -139,18 +131,13 @@ public readonly partial struct Schema
     }
 
     /// <inheritdoc/>
-    public JsonBoolean AsBoolean
+    JsonBoolean IJsonValue.AsBoolean
     {
         get
         {
             if ((this.backing & Backing.JsonElement) != 0)
             {
                 return new(this.jsonElementBacking);
-            }
-
-            if ((this.backing & Backing.Bool) != 0)
-            {
-                return new(this.boolBacking);
             }
 
             throw new InvalidOperationException();
@@ -232,11 +219,6 @@ public readonly partial struct Schema
                 return this.jsonElementBacking.ValueKind;
             }
 
-            if ((this.backing & Backing.Bool) != 0)
-            {
-                return this.boolBacking ? JsonValueKind.True : JsonValueKind.False;
-            }
-
             if ((this.backing & Backing.Object) != 0)
             {
                 return JsonValueKind.Object;
@@ -312,8 +294,6 @@ public readonly partial struct Schema
         JsonValueKind valueKind = value.ValueKind;
         return valueKind switch
         {
-            JsonValueKind.True => new(true),
-            JsonValueKind.False => new(false),
             JsonValueKind.Object => new(value.AsObject.AsPropertyBacking()),
             JsonValueKind.Null => Null,
             _ => Undefined,
@@ -331,35 +311,25 @@ public readonly partial struct Schema
         return new(value);
     }
 
+#if NET8_0_OR_GREATER
     /// <summary>
     /// Gets an instance of the JSON value from a boolean value.
     /// </summary>
     /// <typeparam name = "TValue">The type of the value.</typeparam>
-    /// <param name = "value">The value from which to instantiate the instance.</param>
+    /// <param name="value">The value from which to instantiate the instance.</param>
     /// <returns>An instance of this type, initialized from the value.</returns>
     /// <remarks>This will be Schema.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Schema FromBoolean<TValue>(in TValue value)
-        where TValue : struct, IJsonBoolean<TValue>
+    static Schema IJsonValue<Schema>.FromBoolean<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
             return new(value.AsJsonElement);
         }
 
-        if (value.ValueKind == JsonValueKind.True)
-        {
-            return new(true);
-        }
-
-        if (value.ValueKind == JsonValueKind.False)
-        {
-            return new(false);
-        }
-
         return Undefined;
     }
-
+#endif
 #if NET8_0_OR_GREATER
     /// <summary>
     /// Gets an instance of the JSON value from a string value.
@@ -558,11 +528,6 @@ public readonly partial struct Schema
             return TTarget.FromJson(this.jsonElementBacking);
         }
 
-        if ((this.backing & Backing.Bool) != 0)
-        {
-            return TTarget.FromBoolean(this);
-        }
-
         if ((this.backing & Backing.Object) != 0)
         {
             return TTarget.FromObject(this);
@@ -612,12 +577,6 @@ public readonly partial struct Schema
                 this.jsonElementBacking.WriteTo(writer);
             }
 
-            return;
-        }
-
-        if ((this.backing & Backing.Bool) != 0)
-        {
-            writer.WriteBooleanValue(this.boolBacking);
             return;
         }
 

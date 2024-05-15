@@ -36,11 +36,6 @@ public readonly partial struct Schema
                 return new(value.objectBacking);
             }
 
-            if ((value.backing & Backing.Bool) != 0)
-            {
-                return new(value.boolBacking);
-            }
-
             return Corvus.Json.JsonSchema.Draft4.Schema.Undefined;
         }
 
@@ -58,8 +53,6 @@ public readonly partial struct Schema
             return value.ValueKind switch
             {
                 JsonValueKind.Object => new(value.AsPropertyBacking()),
-                JsonValueKind.True => new(true),
-                JsonValueKind.False => new(false),
                 _ => Undefined
             };
         }

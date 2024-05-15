@@ -43,7 +43,6 @@ public readonly partial struct AdditionalPropertiesEntity : IJsonArray<Additiona
             {
                 this.jsonElementBacking = default;
                 this.backing = Backing.Array;
-                this.boolBacking = default;
                 this.arrayBacking = value;
                 this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
             }
@@ -56,7 +55,6 @@ public readonly partial struct AdditionalPropertiesEntity : IJsonArray<Additiona
             {
                 this.jsonElementBacking = default;
                 this.backing = Backing.Array;
-                this.boolBacking = default;
                 this.arrayBacking = value.ToImmutableList();
                 this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
             }

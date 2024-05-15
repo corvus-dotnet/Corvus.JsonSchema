@@ -15,8 +15,13 @@ using Corvus.Json.Internal;
 
 namespace Corvus.Json.JsonSchema.Draft4;
 /// <summary>
-/// Core schema meta-schema
+/// Generated from JSON Schema.
 /// </summary>
+/// <remarks>
+/// <para>
+/// Core schema meta-schema
+/// </para>
+/// </remarks>
 public readonly partial struct Schema : IJsonObject<Schema>
 {
     /// <summary>
@@ -27,7 +32,6 @@ public readonly partial struct Schema : IJsonObject<Schema>
     {
         this.jsonElementBacking = default;
         this.backing = Backing.Object;
-        this.boolBacking = default;
         this.objectBacking = value;
     }
 

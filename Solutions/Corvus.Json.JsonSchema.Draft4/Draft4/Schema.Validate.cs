@@ -12,8 +12,13 @@ using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.Draft4;
 /// <summary>
-/// Core schema meta-schema
+/// Generated from JSON Schema.
 /// </summary>
+/// <remarks>
+/// <para>
+/// Core schema meta-schema
+/// </para>
+/// </remarks>
 public readonly partial struct Schema
 {
     /// <inheritdoc/>
@@ -28,7 +33,7 @@ public readonly partial struct Schema
         if (level > ValidationLevel.Basic)
         {
             result = result.UsingStack();
-            result = result.PushSchemaLocation("https://json-schema.org/draft-06/schema");
+            result = result.PushSchemaLocation("https://json-schema.org/draft-04/schema");
         }
 
         JsonValueKind valueKind = this.ValueKind;

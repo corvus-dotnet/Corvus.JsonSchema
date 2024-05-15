@@ -30,7 +30,7 @@ public readonly partial struct Schema
             if (level > ValidationLevel.Basic)
             {
                 result = result.UsingStack();
-                result = result.PushSchemaLocation("http://json-schema.org/draft-06/schema#/definitions/stringArray");
+                result = result.PushSchemaLocation("http://json-schema.org/draft-04/schema#/definitions/stringArray");
             }
 
             JsonValueKind valueKind = this.ValueKind;

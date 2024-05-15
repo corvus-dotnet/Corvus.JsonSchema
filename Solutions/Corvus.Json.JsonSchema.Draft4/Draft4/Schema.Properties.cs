@@ -16,8 +16,13 @@ using Corvus.Json.Internal;
 
 namespace Corvus.Json.JsonSchema.Draft4;
 /// <summary>
-/// Core schema meta-schema
+/// Generated from JSON Schema.
 /// </summary>
+/// <remarks>
+/// <para>
+/// Core schema meta-schema
+/// </para>
+/// </remarks>
 public readonly partial struct Schema
 {
     /// <summary>
@@ -61,24 +66,6 @@ public readonly partial struct Schema
         /// JSON property name for <see cref = "AnyOf"/>.
         /// </summary>
         public const string AnyOf = "anyOf";
-        /// <summary>
-        /// JSON property name for <see cref = "Const"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> ConstUtf8 => "const"u8;
-
-        /// <summary>
-        /// JSON property name for <see cref = "Const"/>.
-        /// </summary>
-        public const string Const = "const";
-        /// <summary>
-        /// JSON property name for <see cref = "Contains"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> ContainsUtf8 => "contains"u8;
-
-        /// <summary>
-        /// JSON property name for <see cref = "Contains"/>.
-        /// </summary>
-        public const string Contains = "contains";
         /// <summary>
         /// JSON property name for <see cref = "Default"/>.
         /// </summary>
@@ -125,15 +112,6 @@ public readonly partial struct Schema
         /// </summary>
         public const string Enum = "enum";
         /// <summary>
-        /// JSON property name for <see cref = "Examples"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> ExamplesUtf8 => "examples"u8;
-
-        /// <summary>
-        /// JSON property name for <see cref = "Examples"/>.
-        /// </summary>
-        public const string Examples = "examples";
-        /// <summary>
         /// JSON property name for <see cref = "ExclusiveMaximum"/>.
         /// </summary>
         public static ReadOnlySpan<byte> ExclusiveMaximumUtf8 => "exclusiveMaximum"u8;
@@ -163,12 +141,12 @@ public readonly partial struct Schema
         /// <summary>
         /// JSON property name for <see cref = "Id"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> IdUtf8 => "$id"u8;
+        public static ReadOnlySpan<byte> IdUtf8 => "id"u8;
 
         /// <summary>
         /// JSON property name for <see cref = "Id"/>.
         /// </summary>
-        public const string Id = "$id";
+        public const string Id = "id";
         /// <summary>
         /// JSON property name for <see cref = "Items"/>.
         /// </summary>
@@ -305,24 +283,6 @@ public readonly partial struct Schema
         /// </summary>
         public const string Properties = "properties";
         /// <summary>
-        /// JSON property name for <see cref = "PropertyNames"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> PropertyNamesUtf8 => "propertyNames"u8;
-
-        /// <summary>
-        /// JSON property name for <see cref = "PropertyNames"/>.
-        /// </summary>
-        public const string PropertyNames = "propertyNames";
-        /// <summary>
-        /// JSON property name for <see cref = "Ref"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> RefUtf8 => "$ref"u8;
-
-        /// <summary>
-        /// JSON property name for <see cref = "Ref"/>.
-        /// </summary>
-        public const string Ref = "$ref";
-        /// <summary>
         /// JSON property name for <see cref = "Required"/>.
         /// </summary>
         public static ReadOnlySpan<byte> RequiredUtf8 => "required"u8;
@@ -372,12 +332,7 @@ public readonly partial struct Schema
     /// <summary>
     /// Gets the (optional) <c>additionalItems</c> property.
     /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Core schema meta-schema
-    /// </para>
-    /// </remarks>
-    public Corvus.Json.JsonSchema.Draft4.Schema AdditionalItems
+    public Corvus.Json.JsonSchema.Draft4.Schema.AdditionalItemsEntity AdditionalItems
     {
         get
         {
@@ -390,7 +345,7 @@ public readonly partial struct Schema
 
                 if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.AdditionalItemsUtf8, out JsonElement result))
                 {
-                    return new Corvus.Json.JsonSchema.Draft4.Schema(result);
+                    return new Corvus.Json.JsonSchema.Draft4.Schema.AdditionalItemsEntity(result);
                 }
             }
 
@@ -398,7 +353,7 @@ public readonly partial struct Schema
             {
                 if (this.objectBacking.TryGetValue(JsonPropertyNames.AdditionalItems, out JsonAny result))
                 {
-                    return result.As<Corvus.Json.JsonSchema.Draft4.Schema>();
+                    return result.As<Corvus.Json.JsonSchema.Draft4.Schema.AdditionalItemsEntity>();
                 }
             }
 
@@ -409,12 +364,7 @@ public readonly partial struct Schema
     /// <summary>
     /// Gets the (optional) <c>additionalProperties</c> property.
     /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Core schema meta-schema
-    /// </para>
-    /// </remarks>
-    public Corvus.Json.JsonSchema.Draft4.Schema AdditionalProperties
+    public Corvus.Json.JsonSchema.Draft4.Schema.AdditionalPropertiesEntity AdditionalProperties
     {
         get
         {
@@ -427,7 +377,7 @@ public readonly partial struct Schema
 
                 if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.AdditionalPropertiesUtf8, out JsonElement result))
                 {
-                    return new Corvus.Json.JsonSchema.Draft4.Schema(result);
+                    return new Corvus.Json.JsonSchema.Draft4.Schema.AdditionalPropertiesEntity(result);
                 }
             }
 
@@ -435,7 +385,7 @@ public readonly partial struct Schema
             {
                 if (this.objectBacking.TryGetValue(JsonPropertyNames.AdditionalProperties, out JsonAny result))
                 {
-                    return result.As<Corvus.Json.JsonSchema.Draft4.Schema>();
+                    return result.As<Corvus.Json.JsonSchema.Draft4.Schema.AdditionalPropertiesEntity>();
                 }
             }
 
@@ -500,75 +450,6 @@ public readonly partial struct Schema
                 if (this.objectBacking.TryGetValue(JsonPropertyNames.AnyOf, out JsonAny result))
                 {
                     return result.As<Corvus.Json.JsonSchema.Draft4.Schema.SchemaArray>();
-                }
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the (optional) <c>const</c> property.
-    /// </summary>
-    public Corvus.Json.JsonAny Const
-    {
-        get
-        {
-            if ((this.backing & Backing.JsonElement) != 0)
-            {
-                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
-                {
-                    return default;
-                }
-
-                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.ConstUtf8, out JsonElement result))
-                {
-                    return new Corvus.Json.JsonAny(result);
-                }
-            }
-
-            if ((this.backing & Backing.Object) != 0)
-            {
-                if (this.objectBacking.TryGetValue(JsonPropertyNames.Const, out JsonAny result))
-                {
-                    return result.As<Corvus.Json.JsonAny>();
-                }
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the (optional) <c>contains</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Core schema meta-schema
-    /// </para>
-    /// </remarks>
-    public Corvus.Json.JsonSchema.Draft4.Schema Contains
-    {
-        get
-        {
-            if ((this.backing & Backing.JsonElement) != 0)
-            {
-                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
-                {
-                    return default;
-                }
-
-                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.ContainsUtf8, out JsonElement result))
-                {
-                    return new Corvus.Json.JsonSchema.Draft4.Schema(result);
-                }
-            }
-
-            if ((this.backing & Backing.Object) != 0)
-            {
-                if (this.objectBacking.TryGetValue(JsonPropertyNames.Contains, out JsonAny result))
-                {
-                    return result.As<Corvus.Json.JsonSchema.Draft4.Schema>();
                 }
             }
 
@@ -737,41 +618,9 @@ public readonly partial struct Schema
     }
 
     /// <summary>
-    /// Gets the (optional) <c>examples</c> property.
-    /// </summary>
-    public Corvus.Json.JsonSchema.Draft4.Schema.JsonAnyArray Examples
-    {
-        get
-        {
-            if ((this.backing & Backing.JsonElement) != 0)
-            {
-                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
-                {
-                    return default;
-                }
-
-                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.ExamplesUtf8, out JsonElement result))
-                {
-                    return new Corvus.Json.JsonSchema.Draft4.Schema.JsonAnyArray(result);
-                }
-            }
-
-            if ((this.backing & Backing.Object) != 0)
-            {
-                if (this.objectBacking.TryGetValue(JsonPropertyNames.Examples, out JsonAny result))
-                {
-                    return result.As<Corvus.Json.JsonSchema.Draft4.Schema.JsonAnyArray>();
-                }
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
     /// Gets the (optional) <c>exclusiveMaximum</c> property.
     /// </summary>
-    public Corvus.Json.JsonBoolean ExclusiveMaximum
+    public Corvus.Json.JsonSchema.Draft4.Schema.ExclusiveMaximumEntity ExclusiveMaximum
     {
         get
         {
@@ -784,7 +633,7 @@ public readonly partial struct Schema
 
                 if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.ExclusiveMaximumUtf8, out JsonElement result))
                 {
-                    return new Corvus.Json.JsonBoolean(result);
+                    return new Corvus.Json.JsonSchema.Draft4.Schema.ExclusiveMaximumEntity(result);
                 }
             }
 
@@ -792,7 +641,7 @@ public readonly partial struct Schema
             {
                 if (this.objectBacking.TryGetValue(JsonPropertyNames.ExclusiveMaximum, out JsonAny result))
                 {
-                    return result.As<Corvus.Json.JsonBoolean>();
+                    return result.As<Corvus.Json.JsonSchema.Draft4.Schema.ExclusiveMaximumEntity>();
                 }
             }
 
@@ -803,7 +652,7 @@ public readonly partial struct Schema
     /// <summary>
     /// Gets the (optional) <c>exclusiveMinimum</c> property.
     /// </summary>
-    public Corvus.Json.JsonBoolean ExclusiveMinimum
+    public Corvus.Json.JsonSchema.Draft4.Schema.ExclusiveMinimumEntity ExclusiveMinimum
     {
         get
         {
@@ -816,7 +665,7 @@ public readonly partial struct Schema
 
                 if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.ExclusiveMinimumUtf8, out JsonElement result))
                 {
-                    return new Corvus.Json.JsonBoolean(result);
+                    return new Corvus.Json.JsonSchema.Draft4.Schema.ExclusiveMinimumEntity(result);
                 }
             }
 
@@ -824,7 +673,7 @@ public readonly partial struct Schema
             {
                 if (this.objectBacking.TryGetValue(JsonPropertyNames.ExclusiveMinimum, out JsonAny result))
                 {
-                    return result.As<Corvus.Json.JsonBoolean>();
+                    return result.As<Corvus.Json.JsonSchema.Draft4.Schema.ExclusiveMinimumEntity>();
                 }
             }
 
@@ -865,9 +714,9 @@ public readonly partial struct Schema
     }
 
     /// <summary>
-    /// Gets the (optional) <c>$id</c> property.
+    /// Gets the (optional) <c>id</c> property.
     /// </summary>
-    public Corvus.Json.JsonUriReference Id
+    public Corvus.Json.JsonString Id
     {
         get
         {
@@ -880,7 +729,7 @@ public readonly partial struct Schema
 
                 if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.IdUtf8, out JsonElement result))
                 {
-                    return new Corvus.Json.JsonUriReference(result);
+                    return new Corvus.Json.JsonString(result);
                 }
             }
 
@@ -888,7 +737,7 @@ public readonly partial struct Schema
             {
                 if (this.objectBacking.TryGetValue(JsonPropertyNames.Id, out JsonAny result))
                 {
-                    return result.As<Corvus.Json.JsonUriReference>();
+                    return result.As<Corvus.Json.JsonString>();
                 }
             }
 
@@ -963,7 +812,7 @@ public readonly partial struct Schema
     /// <summary>
     /// Gets the (optional) <c>maxItems</c> property.
     /// </summary>
-    public Corvus.Json.JsonSchema.Draft4.Schema.NonNegativeInteger MaxItems
+    public Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger MaxItems
     {
         get
         {
@@ -976,7 +825,7 @@ public readonly partial struct Schema
 
                 if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.MaxItemsUtf8, out JsonElement result))
                 {
-                    return new Corvus.Json.JsonSchema.Draft4.Schema.NonNegativeInteger(result);
+                    return new Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger(result);
                 }
             }
 
@@ -984,7 +833,7 @@ public readonly partial struct Schema
             {
                 if (this.objectBacking.TryGetValue(JsonPropertyNames.MaxItems, out JsonAny result))
                 {
-                    return result.As<Corvus.Json.JsonSchema.Draft4.Schema.NonNegativeInteger>();
+                    return result.As<Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger>();
                 }
             }
 
@@ -995,7 +844,7 @@ public readonly partial struct Schema
     /// <summary>
     /// Gets the (optional) <c>maxLength</c> property.
     /// </summary>
-    public Corvus.Json.JsonSchema.Draft4.Schema.NonNegativeInteger MaxLength
+    public Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger MaxLength
     {
         get
         {
@@ -1008,7 +857,7 @@ public readonly partial struct Schema
 
                 if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.MaxLengthUtf8, out JsonElement result))
                 {
-                    return new Corvus.Json.JsonSchema.Draft4.Schema.NonNegativeInteger(result);
+                    return new Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger(result);
                 }
             }
 
@@ -1016,7 +865,7 @@ public readonly partial struct Schema
             {
                 if (this.objectBacking.TryGetValue(JsonPropertyNames.MaxLength, out JsonAny result))
                 {
-                    return result.As<Corvus.Json.JsonSchema.Draft4.Schema.NonNegativeInteger>();
+                    return result.As<Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger>();
                 }
             }
 
@@ -1027,7 +876,7 @@ public readonly partial struct Schema
     /// <summary>
     /// Gets the (optional) <c>maxProperties</c> property.
     /// </summary>
-    public Corvus.Json.JsonSchema.Draft4.Schema.NonNegativeInteger MaxProperties
+    public Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger MaxProperties
     {
         get
         {
@@ -1040,7 +889,7 @@ public readonly partial struct Schema
 
                 if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.MaxPropertiesUtf8, out JsonElement result))
                 {
-                    return new Corvus.Json.JsonSchema.Draft4.Schema.NonNegativeInteger(result);
+                    return new Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger(result);
                 }
             }
 
@@ -1048,7 +897,7 @@ public readonly partial struct Schema
             {
                 if (this.objectBacking.TryGetValue(JsonPropertyNames.MaxProperties, out JsonAny result))
                 {
-                    return result.As<Corvus.Json.JsonSchema.Draft4.Schema.NonNegativeInteger>();
+                    return result.As<Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger>();
                 }
             }
 
@@ -1091,7 +940,7 @@ public readonly partial struct Schema
     /// <summary>
     /// Gets the (optional) <c>minItems</c> property.
     /// </summary>
-    public Corvus.Json.JsonSchema.Draft4.Schema.NonNegativeIntegerDefault0 MinItems
+    public Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0 MinItems
     {
         get
         {
@@ -1104,7 +953,7 @@ public readonly partial struct Schema
 
                 if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.MinItemsUtf8, out JsonElement result))
                 {
-                    return new Corvus.Json.JsonSchema.Draft4.Schema.NonNegativeIntegerDefault0(result);
+                    return new Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0(result);
                 }
             }
 
@@ -1112,7 +961,7 @@ public readonly partial struct Schema
             {
                 if (this.objectBacking.TryGetValue(JsonPropertyNames.MinItems, out JsonAny result))
                 {
-                    return result.As<Corvus.Json.JsonSchema.Draft4.Schema.NonNegativeIntegerDefault0>();
+                    return result.As<Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0>();
                 }
             }
 
@@ -1123,7 +972,7 @@ public readonly partial struct Schema
     /// <summary>
     /// Gets the (optional) <c>minLength</c> property.
     /// </summary>
-    public Corvus.Json.JsonSchema.Draft4.Schema.NonNegativeIntegerDefault0 MinLength
+    public Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0 MinLength
     {
         get
         {
@@ -1136,7 +985,7 @@ public readonly partial struct Schema
 
                 if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.MinLengthUtf8, out JsonElement result))
                 {
-                    return new Corvus.Json.JsonSchema.Draft4.Schema.NonNegativeIntegerDefault0(result);
+                    return new Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0(result);
                 }
             }
 
@@ -1144,7 +993,7 @@ public readonly partial struct Schema
             {
                 if (this.objectBacking.TryGetValue(JsonPropertyNames.MinLength, out JsonAny result))
                 {
-                    return result.As<Corvus.Json.JsonSchema.Draft4.Schema.NonNegativeIntegerDefault0>();
+                    return result.As<Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0>();
                 }
             }
 
@@ -1155,7 +1004,7 @@ public readonly partial struct Schema
     /// <summary>
     /// Gets the (optional) <c>minProperties</c> property.
     /// </summary>
-    public Corvus.Json.JsonSchema.Draft4.Schema.NonNegativeIntegerDefault0 MinProperties
+    public Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0 MinProperties
     {
         get
         {
@@ -1168,7 +1017,7 @@ public readonly partial struct Schema
 
                 if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.MinPropertiesUtf8, out JsonElement result))
                 {
-                    return new Corvus.Json.JsonSchema.Draft4.Schema.NonNegativeIntegerDefault0(result);
+                    return new Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0(result);
                 }
             }
 
@@ -1176,7 +1025,7 @@ public readonly partial struct Schema
             {
                 if (this.objectBacking.TryGetValue(JsonPropertyNames.MinProperties, out JsonAny result))
                 {
-                    return result.As<Corvus.Json.JsonSchema.Draft4.Schema.NonNegativeIntegerDefault0>();
+                    return result.As<Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0>();
                 }
             }
 
@@ -1382,75 +1231,6 @@ public readonly partial struct Schema
     }
 
     /// <summary>
-    /// Gets the (optional) <c>propertyNames</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Core schema meta-schema
-    /// </para>
-    /// </remarks>
-    public Corvus.Json.JsonSchema.Draft4.Schema PropertyNames
-    {
-        get
-        {
-            if ((this.backing & Backing.JsonElement) != 0)
-            {
-                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
-                {
-                    return default;
-                }
-
-                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.PropertyNamesUtf8, out JsonElement result))
-                {
-                    return new Corvus.Json.JsonSchema.Draft4.Schema(result);
-                }
-            }
-
-            if ((this.backing & Backing.Object) != 0)
-            {
-                if (this.objectBacking.TryGetValue(JsonPropertyNames.PropertyNames, out JsonAny result))
-                {
-                    return result.As<Corvus.Json.JsonSchema.Draft4.Schema>();
-                }
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the (optional) <c>$ref</c> property.
-    /// </summary>
-    public Corvus.Json.JsonUriReference Ref
-    {
-        get
-        {
-            if ((this.backing & Backing.JsonElement) != 0)
-            {
-                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
-                {
-                    return default;
-                }
-
-                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.RefUtf8, out JsonElement result))
-                {
-                    return new Corvus.Json.JsonUriReference(result);
-                }
-            }
-
-            if ((this.backing & Backing.Object) != 0)
-            {
-                if (this.objectBacking.TryGetValue(JsonPropertyNames.Ref, out JsonAny result))
-                {
-                    return result.As<Corvus.Json.JsonUriReference>();
-                }
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
     /// Gets the (optional) <c>required</c> property.
     /// </summary>
     public Corvus.Json.JsonSchema.Draft4.Schema.StringArray Required
@@ -1485,7 +1265,7 @@ public readonly partial struct Schema
     /// <summary>
     /// Gets the (optional) <c>$schema</c> property.
     /// </summary>
-    public Corvus.Json.JsonUri SchemaValue
+    public Corvus.Json.JsonString SchemaValue
     {
         get
         {
@@ -1498,7 +1278,7 @@ public readonly partial struct Schema
 
                 if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.SchemaValueUtf8, out JsonElement result))
                 {
-                    return new Corvus.Json.JsonUri(result);
+                    return new Corvus.Json.JsonString(result);
                 }
             }
 
@@ -1506,7 +1286,7 @@ public readonly partial struct Schema
             {
                 if (this.objectBacking.TryGetValue(JsonPropertyNames.SchemaValue, out JsonAny result))
                 {
-                    return result.As<Corvus.Json.JsonUri>();
+                    return result.As<Corvus.Json.JsonString>();
                 }
             }
 
@@ -1613,15 +1393,15 @@ public readonly partial struct Schema
     /// <summary>
     /// Creates an instance of a <see cref = "Schema"/>.
     /// </summary>
-    public static Schema Create(Corvus.Json.JsonSchema.Draft4.Schema? additionalItems = null, Corvus.Json.JsonSchema.Draft4.Schema? additionalProperties = null, Corvus.Json.JsonSchema.Draft4.Schema.SchemaArray? allOf = null, Corvus.Json.JsonSchema.Draft4.Schema.SchemaArray? anyOf = null, Corvus.Json.JsonAny? @const = null, Corvus.Json.JsonSchema.Draft4.Schema? contains = null, Corvus.Json.JsonAny? @default = null, Corvus.Json.JsonSchema.Draft4.Schema.DefinitionsEntity? definitions = null, Corvus.Json.JsonSchema.Draft4.Schema.DependenciesEntity? dependencies = null, Corvus.Json.JsonString? description = null, Corvus.Json.JsonSchema.Draft4.Schema.EnumArray? @enum = null, Corvus.Json.JsonSchema.Draft4.Schema.JsonAnyArray? examples = null, Corvus.Json.JsonNumber? exclusiveMaximum = null, Corvus.Json.JsonNumber? exclusiveMinimum = null, Corvus.Json.JsonString? format = null, Corvus.Json.JsonUriReference? id = null, Corvus.Json.JsonSchema.Draft4.Schema.ItemsEntity? items = null, Corvus.Json.JsonNumber? maximum = null, Corvus.Json.JsonSchema.Draft4.Schema.NonNegativeInteger? maxItems = null, Corvus.Json.JsonSchema.Draft4.Schema.NonNegativeInteger? maxLength = null, Corvus.Json.JsonSchema.Draft4.Schema.NonNegativeInteger? maxProperties = null, Corvus.Json.JsonNumber? minimum = null, Corvus.Json.JsonSchema.Draft4.Schema.NonNegativeIntegerDefault0? minItems = null, Corvus.Json.JsonSchema.Draft4.Schema.NonNegativeIntegerDefault0? minLength = null, Corvus.Json.JsonSchema.Draft4.Schema.NonNegativeIntegerDefault0? minProperties = null, Corvus.Json.JsonSchema.Draft4.Schema.MultipleOfEntity? multipleOf = null, Corvus.Json.JsonSchema.Draft4.Schema? not = null, Corvus.Json.JsonSchema.Draft4.Schema.SchemaArray? oneOf = null, Corvus.Json.JsonRegex? pattern = null, Corvus.Json.JsonSchema.Draft4.Schema.PatternPropertiesEntity? patternProperties = null, Corvus.Json.JsonSchema.Draft4.Schema.PropertiesEntity? properties = null, Corvus.Json.JsonSchema.Draft4.Schema? propertyNames = null, Corvus.Json.JsonUriReference? @ref = null, Corvus.Json.JsonSchema.Draft4.Schema.StringArray? required = null, Corvus.Json.JsonUri? schemaValue = null, Corvus.Json.JsonString? title = null, Corvus.Json.JsonSchema.Draft4.Schema.TypeEntity? type = null, Corvus.Json.JsonSchema.Draft4.Schema.UniqueItemsEntity? uniqueItems = null)
+    public static Schema Create(Corvus.Json.JsonSchema.Draft4.Schema.AdditionalItemsEntity? additionalItems = null, Corvus.Json.JsonSchema.Draft4.Schema.AdditionalPropertiesEntity? additionalProperties = null, Corvus.Json.JsonSchema.Draft4.Schema.SchemaArray? allOf = null, Corvus.Json.JsonSchema.Draft4.Schema.SchemaArray? anyOf = null, Corvus.Json.JsonAny? @default = null, Corvus.Json.JsonSchema.Draft4.Schema.DefinitionsEntity? definitions = null, Corvus.Json.JsonSchema.Draft4.Schema.DependenciesEntity? dependencies = null, Corvus.Json.JsonString? description = null, Corvus.Json.JsonSchema.Draft4.Schema.EnumArray? @enum = null, Corvus.Json.JsonSchema.Draft4.Schema.ExclusiveMaximumEntity? exclusiveMaximum = null, Corvus.Json.JsonSchema.Draft4.Schema.ExclusiveMinimumEntity? exclusiveMinimum = null, Corvus.Json.JsonString? format = null, Corvus.Json.JsonString? id = null, Corvus.Json.JsonSchema.Draft4.Schema.ItemsEntity? items = null, Corvus.Json.JsonNumber? maximum = null, Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger? maxItems = null, Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger? maxLength = null, Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger? maxProperties = null, Corvus.Json.JsonNumber? minimum = null, Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0? minItems = null, Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0? minLength = null, Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0? minProperties = null, Corvus.Json.JsonSchema.Draft4.Schema.MultipleOfEntity? multipleOf = null, Corvus.Json.JsonSchema.Draft4.Schema? not = null, Corvus.Json.JsonSchema.Draft4.Schema.SchemaArray? oneOf = null, Corvus.Json.JsonRegex? pattern = null, Corvus.Json.JsonSchema.Draft4.Schema.PatternPropertiesEntity? patternProperties = null, Corvus.Json.JsonSchema.Draft4.Schema.PropertiesEntity? properties = null, Corvus.Json.JsonSchema.Draft4.Schema.StringArray? required = null, Corvus.Json.JsonString? schemaValue = null, Corvus.Json.JsonString? title = null, Corvus.Json.JsonSchema.Draft4.Schema.TypeEntity? type = null, Corvus.Json.JsonSchema.Draft4.Schema.UniqueItemsEntity? uniqueItems = null)
     {
         var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
-        if (additionalItems is Corvus.Json.JsonSchema.Draft4.Schema additionalItems__)
+        if (additionalItems is Corvus.Json.JsonSchema.Draft4.Schema.AdditionalItemsEntity additionalItems__)
         {
             builder.Add(JsonPropertyNames.AdditionalItems, additionalItems__.AsAny);
         }
 
-        if (additionalProperties is Corvus.Json.JsonSchema.Draft4.Schema additionalProperties__)
+        if (additionalProperties is Corvus.Json.JsonSchema.Draft4.Schema.AdditionalPropertiesEntity additionalProperties__)
         {
             builder.Add(JsonPropertyNames.AdditionalProperties, additionalProperties__.AsAny);
         }
@@ -1634,16 +1414,6 @@ public readonly partial struct Schema
         if (anyOf is Corvus.Json.JsonSchema.Draft4.Schema.SchemaArray anyOf__)
         {
             builder.Add(JsonPropertyNames.AnyOf, anyOf__.AsAny);
-        }
-
-        if (@const is Corvus.Json.JsonAny @const__)
-        {
-            builder.Add(JsonPropertyNames.Const, @const__.AsAny);
-        }
-
-        if (contains is Corvus.Json.JsonSchema.Draft4.Schema contains__)
-        {
-            builder.Add(JsonPropertyNames.Contains, contains__.AsAny);
         }
 
         if (@default is Corvus.Json.JsonAny @default__)
@@ -1671,17 +1441,12 @@ public readonly partial struct Schema
             builder.Add(JsonPropertyNames.Enum, @enum__.AsAny);
         }
 
-        if (examples is Corvus.Json.JsonSchema.Draft4.Schema.JsonAnyArray examples__)
-        {
-            builder.Add(JsonPropertyNames.Examples, examples__.AsAny);
-        }
-
-        if (exclusiveMaximum is Corvus.Json.JsonNumber exclusiveMaximum__)
+        if (exclusiveMaximum is Corvus.Json.JsonSchema.Draft4.Schema.ExclusiveMaximumEntity exclusiveMaximum__)
         {
             builder.Add(JsonPropertyNames.ExclusiveMaximum, exclusiveMaximum__.AsAny);
         }
 
-        if (exclusiveMinimum is Corvus.Json.JsonNumber exclusiveMinimum__)
+        if (exclusiveMinimum is Corvus.Json.JsonSchema.Draft4.Schema.ExclusiveMinimumEntity exclusiveMinimum__)
         {
             builder.Add(JsonPropertyNames.ExclusiveMinimum, exclusiveMinimum__.AsAny);
         }
@@ -1691,7 +1456,7 @@ public readonly partial struct Schema
             builder.Add(JsonPropertyNames.Format, format__.AsAny);
         }
 
-        if (id is Corvus.Json.JsonUriReference id__)
+        if (id is Corvus.Json.JsonString id__)
         {
             builder.Add(JsonPropertyNames.Id, id__.AsAny);
         }
@@ -1706,17 +1471,17 @@ public readonly partial struct Schema
             builder.Add(JsonPropertyNames.Maximum, maximum__.AsAny);
         }
 
-        if (maxItems is Corvus.Json.JsonSchema.Draft4.Schema.NonNegativeInteger maxItems__)
+        if (maxItems is Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger maxItems__)
         {
             builder.Add(JsonPropertyNames.MaxItems, maxItems__.AsAny);
         }
 
-        if (maxLength is Corvus.Json.JsonSchema.Draft4.Schema.NonNegativeInteger maxLength__)
+        if (maxLength is Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger maxLength__)
         {
             builder.Add(JsonPropertyNames.MaxLength, maxLength__.AsAny);
         }
 
-        if (maxProperties is Corvus.Json.JsonSchema.Draft4.Schema.NonNegativeInteger maxProperties__)
+        if (maxProperties is Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger maxProperties__)
         {
             builder.Add(JsonPropertyNames.MaxProperties, maxProperties__.AsAny);
         }
@@ -1726,17 +1491,17 @@ public readonly partial struct Schema
             builder.Add(JsonPropertyNames.Minimum, minimum__.AsAny);
         }
 
-        if (minItems is Corvus.Json.JsonSchema.Draft4.Schema.NonNegativeIntegerDefault0 minItems__)
+        if (minItems is Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0 minItems__)
         {
             builder.Add(JsonPropertyNames.MinItems, minItems__.AsAny);
         }
 
-        if (minLength is Corvus.Json.JsonSchema.Draft4.Schema.NonNegativeIntegerDefault0 minLength__)
+        if (minLength is Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0 minLength__)
         {
             builder.Add(JsonPropertyNames.MinLength, minLength__.AsAny);
         }
 
-        if (minProperties is Corvus.Json.JsonSchema.Draft4.Schema.NonNegativeIntegerDefault0 minProperties__)
+        if (minProperties is Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0 minProperties__)
         {
             builder.Add(JsonPropertyNames.MinProperties, minProperties__.AsAny);
         }
@@ -1771,22 +1536,12 @@ public readonly partial struct Schema
             builder.Add(JsonPropertyNames.Properties, properties__.AsAny);
         }
 
-        if (propertyNames is Corvus.Json.JsonSchema.Draft4.Schema propertyNames__)
-        {
-            builder.Add(JsonPropertyNames.PropertyNames, propertyNames__.AsAny);
-        }
-
-        if (@ref is Corvus.Json.JsonUriReference @ref__)
-        {
-            builder.Add(JsonPropertyNames.Ref, @ref__.AsAny);
-        }
-
         if (required is Corvus.Json.JsonSchema.Draft4.Schema.StringArray required__)
         {
             builder.Add(JsonPropertyNames.Required, required__.AsAny);
         }
 
-        if (schemaValue is Corvus.Json.JsonUri schemaValue__)
+        if (schemaValue is Corvus.Json.JsonString schemaValue__)
         {
             builder.Add(JsonPropertyNames.SchemaValue, schemaValue__.AsAny);
         }
@@ -1814,7 +1569,7 @@ public readonly partial struct Schema
     /// </summary>
     /// <param name = "value">The value to set.</param>
     /// <returns>The entity with the updated property.</returns>
-    public Schema WithAdditionalItems(in Corvus.Json.JsonSchema.Draft4.Schema value)
+    public Schema WithAdditionalItems(in Corvus.Json.JsonSchema.Draft4.Schema.AdditionalItemsEntity value)
     {
         return this.SetProperty(JsonPropertyNames.AdditionalItems, value);
     }
@@ -1824,7 +1579,7 @@ public readonly partial struct Schema
     /// </summary>
     /// <param name = "value">The value to set.</param>
     /// <returns>The entity with the updated property.</returns>
-    public Schema WithAdditionalProperties(in Corvus.Json.JsonSchema.Draft4.Schema value)
+    public Schema WithAdditionalProperties(in Corvus.Json.JsonSchema.Draft4.Schema.AdditionalPropertiesEntity value)
     {
         return this.SetProperty(JsonPropertyNames.AdditionalProperties, value);
     }
@@ -1847,26 +1602,6 @@ public readonly partial struct Schema
     public Schema WithAnyOf(in Corvus.Json.JsonSchema.Draft4.Schema.SchemaArray value)
     {
         return this.SetProperty(JsonPropertyNames.AnyOf, value);
-    }
-
-    /// <summary>
-    /// Sets const.
-    /// </summary>
-    /// <param name = "value">The value to set.</param>
-    /// <returns>The entity with the updated property.</returns>
-    public Schema WithConst(in Corvus.Json.JsonAny value)
-    {
-        return this.SetProperty(JsonPropertyNames.Const, value);
-    }
-
-    /// <summary>
-    /// Sets contains.
-    /// </summary>
-    /// <param name = "value">The value to set.</param>
-    /// <returns>The entity with the updated property.</returns>
-    public Schema WithContains(in Corvus.Json.JsonSchema.Draft4.Schema value)
-    {
-        return this.SetProperty(JsonPropertyNames.Contains, value);
     }
 
     /// <summary>
@@ -1920,21 +1655,11 @@ public readonly partial struct Schema
     }
 
     /// <summary>
-    /// Sets examples.
-    /// </summary>
-    /// <param name = "value">The value to set.</param>
-    /// <returns>The entity with the updated property.</returns>
-    public Schema WithExamples(in Corvus.Json.JsonSchema.Draft4.Schema.JsonAnyArray value)
-    {
-        return this.SetProperty(JsonPropertyNames.Examples, value);
-    }
-
-    /// <summary>
     /// Sets exclusiveMaximum.
     /// </summary>
     /// <param name = "value">The value to set.</param>
     /// <returns>The entity with the updated property.</returns>
-    public Schema WithExclusiveMaximum(in Corvus.Json.JsonNumber value)
+    public Schema WithExclusiveMaximum(in Corvus.Json.JsonSchema.Draft4.Schema.ExclusiveMaximumEntity value)
     {
         return this.SetProperty(JsonPropertyNames.ExclusiveMaximum, value);
     }
@@ -1944,7 +1669,7 @@ public readonly partial struct Schema
     /// </summary>
     /// <param name = "value">The value to set.</param>
     /// <returns>The entity with the updated property.</returns>
-    public Schema WithExclusiveMinimum(in Corvus.Json.JsonNumber value)
+    public Schema WithExclusiveMinimum(in Corvus.Json.JsonSchema.Draft4.Schema.ExclusiveMinimumEntity value)
     {
         return this.SetProperty(JsonPropertyNames.ExclusiveMinimum, value);
     }
@@ -1960,11 +1685,11 @@ public readonly partial struct Schema
     }
 
     /// <summary>
-    /// Sets $id.
+    /// Sets id.
     /// </summary>
     /// <param name = "value">The value to set.</param>
     /// <returns>The entity with the updated property.</returns>
-    public Schema WithId(in Corvus.Json.JsonUriReference value)
+    public Schema WithId(in Corvus.Json.JsonString value)
     {
         return this.SetProperty(JsonPropertyNames.Id, value);
     }
@@ -1994,7 +1719,7 @@ public readonly partial struct Schema
     /// </summary>
     /// <param name = "value">The value to set.</param>
     /// <returns>The entity with the updated property.</returns>
-    public Schema WithMaxItems(in Corvus.Json.JsonSchema.Draft4.Schema.NonNegativeInteger value)
+    public Schema WithMaxItems(in Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger value)
     {
         return this.SetProperty(JsonPropertyNames.MaxItems, value);
     }
@@ -2004,7 +1729,7 @@ public readonly partial struct Schema
     /// </summary>
     /// <param name = "value">The value to set.</param>
     /// <returns>The entity with the updated property.</returns>
-    public Schema WithMaxLength(in Corvus.Json.JsonSchema.Draft4.Schema.NonNegativeInteger value)
+    public Schema WithMaxLength(in Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger value)
     {
         return this.SetProperty(JsonPropertyNames.MaxLength, value);
     }
@@ -2014,7 +1739,7 @@ public readonly partial struct Schema
     /// </summary>
     /// <param name = "value">The value to set.</param>
     /// <returns>The entity with the updated property.</returns>
-    public Schema WithMaxProperties(in Corvus.Json.JsonSchema.Draft4.Schema.NonNegativeInteger value)
+    public Schema WithMaxProperties(in Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger value)
     {
         return this.SetProperty(JsonPropertyNames.MaxProperties, value);
     }
@@ -2034,7 +1759,7 @@ public readonly partial struct Schema
     /// </summary>
     /// <param name = "value">The value to set.</param>
     /// <returns>The entity with the updated property.</returns>
-    public Schema WithMinItems(in Corvus.Json.JsonSchema.Draft4.Schema.NonNegativeIntegerDefault0 value)
+    public Schema WithMinItems(in Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0 value)
     {
         return this.SetProperty(JsonPropertyNames.MinItems, value);
     }
@@ -2044,7 +1769,7 @@ public readonly partial struct Schema
     /// </summary>
     /// <param name = "value">The value to set.</param>
     /// <returns>The entity with the updated property.</returns>
-    public Schema WithMinLength(in Corvus.Json.JsonSchema.Draft4.Schema.NonNegativeIntegerDefault0 value)
+    public Schema WithMinLength(in Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0 value)
     {
         return this.SetProperty(JsonPropertyNames.MinLength, value);
     }
@@ -2054,7 +1779,7 @@ public readonly partial struct Schema
     /// </summary>
     /// <param name = "value">The value to set.</param>
     /// <returns>The entity with the updated property.</returns>
-    public Schema WithMinProperties(in Corvus.Json.JsonSchema.Draft4.Schema.NonNegativeIntegerDefault0 value)
+    public Schema WithMinProperties(in Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0 value)
     {
         return this.SetProperty(JsonPropertyNames.MinProperties, value);
     }
@@ -2120,26 +1845,6 @@ public readonly partial struct Schema
     }
 
     /// <summary>
-    /// Sets propertyNames.
-    /// </summary>
-    /// <param name = "value">The value to set.</param>
-    /// <returns>The entity with the updated property.</returns>
-    public Schema WithPropertyNames(in Corvus.Json.JsonSchema.Draft4.Schema value)
-    {
-        return this.SetProperty(JsonPropertyNames.PropertyNames, value);
-    }
-
-    /// <summary>
-    /// Sets $ref.
-    /// </summary>
-    /// <param name = "value">The value to set.</param>
-    /// <returns>The entity with the updated property.</returns>
-    public Schema WithRef(in Corvus.Json.JsonUriReference value)
-    {
-        return this.SetProperty(JsonPropertyNames.Ref, value);
-    }
-
-    /// <summary>
     /// Sets required.
     /// </summary>
     /// <param name = "value">The value to set.</param>
@@ -2154,7 +1859,7 @@ public readonly partial struct Schema
     /// </summary>
     /// <param name = "value">The value to set.</param>
     /// <returns>The entity with the updated property.</returns>
-    public Schema WithSchemaValue(in Corvus.Json.JsonUri value)
+    public Schema WithSchemaValue(in Corvus.Json.JsonString value)
     {
         return this.SetProperty(JsonPropertyNames.SchemaValue, value);
     }
@@ -2191,17 +1896,12 @@ public readonly partial struct Schema
 
     private static ValidationContext __CorvusValidateId(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        return property.ValueAs<Corvus.Json.JsonUriReference>().Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonString>().Validate(validationContext, level);
     }
 
     private static ValidationContext __CorvusValidateSchemaValue(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        return property.ValueAs<Corvus.Json.JsonUri>().Validate(validationContext, level);
-    }
-
-    private static ValidationContext __CorvusValidateRef(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
-    {
-        return property.ValueAs<Corvus.Json.JsonUriReference>().Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonString>().Validate(validationContext, level);
     }
 
     private static ValidationContext __CorvusValidateTitle(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
@@ -2219,11 +1919,6 @@ public readonly partial struct Schema
         return property.ValueAs<Corvus.Json.JsonAny>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateExamples(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
-    {
-        return property.ValueAs<Corvus.Json.JsonSchema.Draft4.Schema.JsonAnyArray>().Validate(validationContext, level);
-    }
-
     private static ValidationContext __CorvusValidateMultipleOf(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
         return property.ValueAs<Corvus.Json.JsonSchema.Draft4.Schema.MultipleOfEntity>().Validate(validationContext, level);
@@ -2236,7 +1931,7 @@ public readonly partial struct Schema
 
     private static ValidationContext __CorvusValidateExclusiveMaximum(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        return property.ValueAs<Corvus.Json.JsonBoolean>().Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft4.Schema.ExclusiveMaximumEntity>().Validate(validationContext, level);
     }
 
     private static ValidationContext __CorvusValidateMinimum(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
@@ -2246,17 +1941,17 @@ public readonly partial struct Schema
 
     private static ValidationContext __CorvusValidateExclusiveMinimum(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        return property.ValueAs<Corvus.Json.JsonBoolean>().Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft4.Schema.ExclusiveMinimumEntity>().Validate(validationContext, level);
     }
 
     private static ValidationContext __CorvusValidateMaxLength(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        return property.ValueAs<Corvus.Json.JsonSchema.Draft4.Schema.NonNegativeInteger>().Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger>().Validate(validationContext, level);
     }
 
     private static ValidationContext __CorvusValidateMinLength(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        return property.ValueAs<Corvus.Json.JsonSchema.Draft4.Schema.NonNegativeIntegerDefault0>().Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0>().Validate(validationContext, level);
     }
 
     private static ValidationContext __CorvusValidatePattern(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
@@ -2266,7 +1961,7 @@ public readonly partial struct Schema
 
     private static ValidationContext __CorvusValidateAdditionalItems(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        return property.ValueAs<Corvus.Json.JsonSchema.Draft4.Schema>().Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft4.Schema.AdditionalItemsEntity>().Validate(validationContext, level);
     }
 
     private static ValidationContext __CorvusValidateItems(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
@@ -2276,12 +1971,12 @@ public readonly partial struct Schema
 
     private static ValidationContext __CorvusValidateMaxItems(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        return property.ValueAs<Corvus.Json.JsonSchema.Draft4.Schema.NonNegativeInteger>().Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger>().Validate(validationContext, level);
     }
 
     private static ValidationContext __CorvusValidateMinItems(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        return property.ValueAs<Corvus.Json.JsonSchema.Draft4.Schema.NonNegativeIntegerDefault0>().Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0>().Validate(validationContext, level);
     }
 
     private static ValidationContext __CorvusValidateUniqueItems(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
@@ -2289,19 +1984,14 @@ public readonly partial struct Schema
         return property.ValueAs<Corvus.Json.JsonSchema.Draft4.Schema.UniqueItemsEntity>().Validate(validationContext, level);
     }
 
-    private static ValidationContext __CorvusValidateContains(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
-    {
-        return property.ValueAs<Corvus.Json.JsonSchema.Draft4.Schema>().Validate(validationContext, level);
-    }
-
     private static ValidationContext __CorvusValidateMaxProperties(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        return property.ValueAs<Corvus.Json.JsonSchema.Draft4.Schema.NonNegativeInteger>().Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger>().Validate(validationContext, level);
     }
 
     private static ValidationContext __CorvusValidateMinProperties(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        return property.ValueAs<Corvus.Json.JsonSchema.Draft4.Schema.NonNegativeIntegerDefault0>().Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0>().Validate(validationContext, level);
     }
 
     private static ValidationContext __CorvusValidateRequired(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
@@ -2311,7 +2001,7 @@ public readonly partial struct Schema
 
     private static ValidationContext __CorvusValidateAdditionalProperties(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
-        return property.ValueAs<Corvus.Json.JsonSchema.Draft4.Schema>().Validate(validationContext, level);
+        return property.ValueAs<Corvus.Json.JsonSchema.Draft4.Schema.AdditionalPropertiesEntity>().Validate(validationContext, level);
     }
 
     private static ValidationContext __CorvusValidateDefinitions(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
@@ -2332,16 +2022,6 @@ public readonly partial struct Schema
     private static ValidationContext __CorvusValidateDependencies(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
     {
         return property.ValueAs<Corvus.Json.JsonSchema.Draft4.Schema.DependenciesEntity>().Validate(validationContext, level);
-    }
-
-    private static ValidationContext __CorvusValidatePropertyNames(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
-    {
-        return property.ValueAs<Corvus.Json.JsonSchema.Draft4.Schema>().Validate(validationContext, level);
-    }
-
-    private static ValidationContext __CorvusValidateConst(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
-    {
-        return property.ValueAs<Corvus.Json.JsonAny>().Validate(validationContext, level);
     }
 
     private static ValidationContext __CorvusValidateEnum(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
@@ -2400,11 +2080,6 @@ public readonly partial struct Schema
                 propertyValidator = __CorvusValidateSchemaValue;
                 return true;
             }
-            else if (property.NameEquals(JsonPropertyNames.RefUtf8))
-            {
-                propertyValidator = __CorvusValidateRef;
-                return true;
-            }
             else if (property.NameEquals(JsonPropertyNames.TitleUtf8))
             {
                 propertyValidator = __CorvusValidateTitle;
@@ -2418,11 +2093,6 @@ public readonly partial struct Schema
             else if (property.NameEquals(JsonPropertyNames.DefaultUtf8))
             {
                 propertyValidator = __CorvusValidateDefault;
-                return true;
-            }
-            else if (property.NameEquals(JsonPropertyNames.ExamplesUtf8))
-            {
-                propertyValidator = __CorvusValidateExamples;
                 return true;
             }
             else if (property.NameEquals(JsonPropertyNames.MultipleOfUtf8))
@@ -2490,11 +2160,6 @@ public readonly partial struct Schema
                 propertyValidator = __CorvusValidateUniqueItems;
                 return true;
             }
-            else if (property.NameEquals(JsonPropertyNames.ContainsUtf8))
-            {
-                propertyValidator = __CorvusValidateContains;
-                return true;
-            }
             else if (property.NameEquals(JsonPropertyNames.MaxPropertiesUtf8))
             {
                 propertyValidator = __CorvusValidateMaxProperties;
@@ -2533,16 +2198,6 @@ public readonly partial struct Schema
             else if (property.NameEquals(JsonPropertyNames.DependenciesUtf8))
             {
                 propertyValidator = __CorvusValidateDependencies;
-                return true;
-            }
-            else if (property.NameEquals(JsonPropertyNames.PropertyNamesUtf8))
-            {
-                propertyValidator = __CorvusValidatePropertyNames;
-                return true;
-            }
-            else if (property.NameEquals(JsonPropertyNames.ConstUtf8))
-            {
-                propertyValidator = __CorvusValidateConst;
                 return true;
             }
             else if (property.NameEquals(JsonPropertyNames.EnumUtf8))
@@ -2593,11 +2248,6 @@ public readonly partial struct Schema
                 propertyValidator = __CorvusValidateSchemaValue;
                 return true;
             }
-            else if (property.NameEquals(JsonPropertyNames.Ref))
-            {
-                propertyValidator = __CorvusValidateRef;
-                return true;
-            }
             else if (property.NameEquals(JsonPropertyNames.Title))
             {
                 propertyValidator = __CorvusValidateTitle;
@@ -2611,11 +2261,6 @@ public readonly partial struct Schema
             else if (property.NameEquals(JsonPropertyNames.Default))
             {
                 propertyValidator = __CorvusValidateDefault;
-                return true;
-            }
-            else if (property.NameEquals(JsonPropertyNames.Examples))
-            {
-                propertyValidator = __CorvusValidateExamples;
                 return true;
             }
             else if (property.NameEquals(JsonPropertyNames.MultipleOf))
@@ -2683,11 +2328,6 @@ public readonly partial struct Schema
                 propertyValidator = __CorvusValidateUniqueItems;
                 return true;
             }
-            else if (property.NameEquals(JsonPropertyNames.Contains))
-            {
-                propertyValidator = __CorvusValidateContains;
-                return true;
-            }
             else if (property.NameEquals(JsonPropertyNames.MaxProperties))
             {
                 propertyValidator = __CorvusValidateMaxProperties;
@@ -2726,16 +2366,6 @@ public readonly partial struct Schema
             else if (property.NameEquals(JsonPropertyNames.Dependencies))
             {
                 propertyValidator = __CorvusValidateDependencies;
-                return true;
-            }
-            else if (property.NameEquals(JsonPropertyNames.PropertyNames))
-            {
-                propertyValidator = __CorvusValidatePropertyNames;
-                return true;
-            }
-            else if (property.NameEquals(JsonPropertyNames.Const))
-            {
-                propertyValidator = __CorvusValidateConst;
                 return true;
             }
             else if (property.NameEquals(JsonPropertyNames.Enum))

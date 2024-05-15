@@ -34,4 +34,8 @@
     <PackageReference Update="Roslynator.Analyzers" Version="4.11.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Draft4\" />
+  </ItemGroup>
+
 </Project>

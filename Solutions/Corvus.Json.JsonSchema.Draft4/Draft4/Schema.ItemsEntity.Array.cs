@@ -41,7 +41,6 @@ public readonly partial struct ItemsEntity : IJsonArray<ItemsEntity>, IReadOnlyC
         {
             this.jsonElementBacking = default;
             this.backing = Backing.Array;
-            this.boolBacking = default;
             this.arrayBacking = value;
             this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
         }
@@ -54,7 +53,6 @@ public readonly partial struct ItemsEntity : IJsonArray<ItemsEntity>, IReadOnlyC
         {
             this.jsonElementBacking = default;
             this.backing = Backing.Array;
-            this.boolBacking = default;
             this.arrayBacking = value.ToImmutableList();
             this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
         }

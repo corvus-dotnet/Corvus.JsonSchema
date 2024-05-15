@@ -26,7 +26,6 @@ public readonly partial struct Schema
     {
         private readonly Backing backing;
         private readonly JsonElement jsonElementBacking;
-        private readonly bool boolBacking;
         private readonly ImmutableList<JsonAny> arrayBacking;
         private readonly ImmutableList<JsonObjectProperty> objectBacking;
         /// <summary>
@@ -36,7 +35,6 @@ public readonly partial struct Schema
         {
             this.jsonElementBacking = default;
             this.backing = Backing.JsonElement;
-            this.boolBacking = default;
             this.arrayBacking = ImmutableList<JsonAny>.Empty;
             this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
         }
@@ -49,7 +47,6 @@ public readonly partial struct Schema
         {
             this.jsonElementBacking = value;
             this.backing = Backing.JsonElement;
-            this.boolBacking = default;
             this.arrayBacking = ImmutableList<JsonAny>.Empty;
             this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
         }
@@ -57,7 +54,7 @@ public readonly partial struct Schema
         /// <summary>
         /// Gets the schema location from which this type was generated.
         /// </summary>
-        public static string SchemaLocation { get; } = "http://json-schema.org/draft-06/schema#/properties/items";
+        public static string SchemaLocation { get; } = "http://json-schema.org/draft-04/schema#/properties/items";
         /// <summary>
         /// Gets a Null instance.
         /// </summary>
@@ -79,11 +76,6 @@ public readonly partial struct Schema
                 if ((this.backing & Backing.JsonElement) != 0)
                 {
                     return new(this.jsonElementBacking);
-                }
-
-                if ((this.backing & Backing.Bool) != 0)
-                {
-                    return new(this.boolBacking);
                 }
 
                 if ((this.backing & Backing.Array) != 0)
@@ -113,11 +105,6 @@ public readonly partial struct Schema
                 if ((this.backing & Backing.JsonElement) != 0)
                 {
                     return this.jsonElementBacking;
-                }
-
-                if ((this.backing & Backing.Bool) != 0)
-                {
-                    return JsonValueHelpers.BoolToJsonElement(this.boolBacking);
                 }
 
                 if ((this.backing & Backing.Array) != 0)
@@ -154,18 +141,13 @@ public readonly partial struct Schema
         }
 
         /// <inheritdoc/>
-        public JsonBoolean AsBoolean
+        JsonBoolean IJsonValue.AsBoolean
         {
             get
             {
                 if ((this.backing & Backing.JsonElement) != 0)
                 {
                     return new(this.jsonElementBacking);
-                }
-
-                if ((this.backing & Backing.Bool) != 0)
-                {
-                    return new(this.boolBacking);
                 }
 
                 throw new InvalidOperationException();
@@ -252,11 +234,6 @@ public readonly partial struct Schema
                     return this.jsonElementBacking.ValueKind;
                 }
 
-                if ((this.backing & Backing.Bool) != 0)
-                {
-                    return this.boolBacking ? JsonValueKind.True : JsonValueKind.False;
-                }
-
                 if ((this.backing & Backing.Array) != 0)
                 {
                     return JsonValueKind.Array;
@@ -337,8 +314,6 @@ public readonly partial struct Schema
             JsonValueKind valueKind = value.ValueKind;
             return valueKind switch
             {
-                JsonValueKind.True => new(true),
-                JsonValueKind.False => new(false),
                 JsonValueKind.Array => new(value.AsArray.AsImmutableList()),
                 JsonValueKind.Object => new(value.AsObject.AsPropertyBacking()),
                 JsonValueKind.Null => Null,
@@ -357,35 +332,25 @@ public readonly partial struct Schema
             return new(value);
         }
 
-        /// <summary>
-        /// Gets an instance of the JSON value from a boolean value.
-        /// </summary>
-        /// <typeparam name = "TValue">The type of the value.</typeparam>
-        /// <param name = "value">The value from which to instantiate the instance.</param>
-        /// <returns>An instance of this type, initialized from the value.</returns>
-        /// <remarks>This will be ItemsEntity.Undefined if the type is not compatible.</remarks>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ItemsEntity FromBoolean<TValue>(in TValue value)
-            where TValue : struct, IJsonBoolean<TValue>
+#if NET8_0_OR_GREATER
+    /// <summary>
+    /// Gets an instance of the JSON value from a boolean value.
+    /// </summary>
+    /// <typeparam name = "TValue">The type of the value.</typeparam>
+    /// <param name="value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>This will be ItemsEntity.Undefined if the type is not compatible.</remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    static ItemsEntity IJsonValue<ItemsEntity>.FromBoolean<TValue>(in TValue value)
+    {
+        if (value.HasJsonElementBacking)
         {
-            if (value.HasJsonElementBacking)
-            {
-                return new(value.AsJsonElement);
-            }
-
-            if (value.ValueKind == JsonValueKind.True)
-            {
-                return new(true);
-            }
-
-            if (value.ValueKind == JsonValueKind.False)
-            {
-                return new(false);
-            }
-
-            return Undefined;
+            return new(value.AsJsonElement);
         }
 
+        return Undefined;
+    }
+#endif
 #if NET8_0_OR_GREATER
     /// <summary>
     /// Gets an instance of the JSON value from a string value.
@@ -589,11 +554,6 @@ public readonly partial struct Schema
             return TTarget.FromJson(this.jsonElementBacking);
         }
 
-        if ((this.backing & Backing.Bool) != 0)
-        {
-            return TTarget.FromBoolean(this);
-        }
-
         if ((this.backing & Backing.Array) != 0)
         {
             return TTarget.FromArray(this);
@@ -654,12 +614,6 @@ public readonly partial struct Schema
             if ((this.backing & Backing.Array) != 0)
             {
                 JsonValueHelpers.WriteItems(this.arrayBacking, writer);
-                return;
-            }
-
-            if ((this.backing & Backing.Bool) != 0)
-            {
-                writer.WriteBooleanValue(this.boolBacking);
                 return;
             }
 

@@ -86,6 +86,22 @@ public readonly partial struct Schema
                 arrayLength++;
             }
 
+            if (arrayLength < 1)
+            {
+                if (level >= ValidationLevel.Detailed)
+                {
+                    result = result.WithResult(isValid: false, $"6.4.2. minItems - {arrayLength} is less than the minimum number of items 1.");
+                }
+                else if (level >= ValidationLevel.Basic)
+                {
+                    result = result.WithResult(isValid: false, "6.4.2. minItems - item count is less than the minimum number of items 1.");
+                }
+                else
+                {
+                    return result.WithResult(isValid: false);
+                }
+            }
+
             return result;
         }
     }
