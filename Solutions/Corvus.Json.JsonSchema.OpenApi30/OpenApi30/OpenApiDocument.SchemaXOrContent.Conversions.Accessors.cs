@@ -56,35 +56,35 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf1Entity"/>.
+        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.SomePropertiesAreNotAllowedIfContentIsPresent"/>.
         /// </summary>
-        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf1Entity AsOneOf1Entity
+        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.SomePropertiesAreNotAllowedIfContentIsPresent AsSomePropertiesAreNotAllowedIfContentIsPresent
         {
             get
             {
-                return (Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf1Entity)this;
+                return (Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.SomePropertiesAreNotAllowedIfContentIsPresent)this;
             }
         }
 
         /// <summary>
-        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf1Entity"/>.
+        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.SomePropertiesAreNotAllowedIfContentIsPresent"/>.
         /// </summary>
-        public bool IsOneOf1Entity
+        public bool IsSomePropertiesAreNotAllowedIfContentIsPresent
         {
             get
             {
-                return ((Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf1Entity)this).IsValid();
+                return ((Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.SomePropertiesAreNotAllowedIfContentIsPresent)this).IsValid();
             }
         }
 
         /// <summary>
-        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf1Entity"/>.
+        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.SomePropertiesAreNotAllowedIfContentIsPresent"/>.
         /// </summary>
         /// <param name = "result">The result of the conversion.</param>
         /// <returns><c>True</c> if the conversion was valid.</returns>
-        public bool TryGetAsOneOf1Entity(out Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf1Entity result)
+        public bool TryGetAsSomePropertiesAreNotAllowedIfContentIsPresent(out Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.SomePropertiesAreNotAllowedIfContentIsPresent result)
         {
-            result = (Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf1Entity)this;
+            result = (Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.SomePropertiesAreNotAllowedIfContentIsPresent)this;
             return result.IsValid();
         }
     }

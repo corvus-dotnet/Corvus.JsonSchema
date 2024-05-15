@@ -198,10 +198,10 @@ public readonly partial struct OpenApiDocument
                 }
 
                 /// <summary>
-                /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf1Entity"/>.
+                /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.SomePropertiesAreNotAllowedIfContentIsPresent"/>.
                 /// </summary>
                 /// <param name = "value">The value from which to convert.</param>
-                public static explicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf1Entity(AZaZ09Entity value)
+                public static explicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.SomePropertiesAreNotAllowedIfContentIsPresent(AZaZ09Entity value)
                 {
                     if ((value.backing & Backing.JsonElement) != 0)
                     {
@@ -213,14 +213,14 @@ public readonly partial struct OpenApiDocument
                         return new(value.objectBacking);
                     }
 
-                    return Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf1Entity.Undefined;
+                    return Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.SomePropertiesAreNotAllowedIfContentIsPresent.Undefined;
                 }
 
                 /// <summary>
-                /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf1Entity"/>.
+                /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.SomePropertiesAreNotAllowedIfContentIsPresent"/>.
                 /// </summary>
                 /// <param name = "value">The value from which to convert.</param>
-                public static explicit operator AZaZ09Entity(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf1Entity value)
+                public static explicit operator AZaZ09Entity(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.SomePropertiesAreNotAllowedIfContentIsPresent value)
                 {
                     if (value.HasJsonElementBacking)
                     {
@@ -235,24 +235,24 @@ public readonly partial struct OpenApiDocument
                 }
 
                 /// <summary>
-                /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf1Entity.AllOf0Entity"/>.
+                /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf0Entity"/>.
                 /// </summary>
                 /// <param name = "value">The value from which to convert.</param>
-                public static implicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf1Entity.AllOf0Entity(AZaZ09Entity value)
+                public static implicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf0Entity(AZaZ09Entity value)
                 {
                     if ((value.backing & Backing.JsonElement) != 0)
                     {
                         return new(value.AsJsonElement);
                     }
 
-                    return Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf1Entity.AllOf0Entity.Undefined;
+                    return Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf0Entity.Undefined;
                 }
 
                 /// <summary>
-                /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf1Entity.AllOf0Entity"/>.
+                /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf0Entity"/>.
                 /// </summary>
                 /// <param name = "value">The value from which to convert.</param>
-                public static explicit operator AZaZ09Entity(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf1Entity.AllOf0Entity value)
+                public static explicit operator AZaZ09Entity(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf0Entity value)
                 {
                     if (value.HasJsonElementBacking)
                     {
@@ -266,24 +266,24 @@ public readonly partial struct OpenApiDocument
                 }
 
                 /// <summary>
-                /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf1Entity.AllOf1Entity"/>.
+                /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf1Entity"/>.
                 /// </summary>
                 /// <param name = "value">The value from which to convert.</param>
-                public static implicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf1Entity.AllOf1Entity(AZaZ09Entity value)
+                public static implicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf1Entity(AZaZ09Entity value)
                 {
                     if ((value.backing & Backing.JsonElement) != 0)
                     {
                         return new(value.AsJsonElement);
                     }
 
-                    return Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf1Entity.AllOf1Entity.Undefined;
+                    return Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf1Entity.Undefined;
                 }
 
                 /// <summary>
-                /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf1Entity.AllOf1Entity"/>.
+                /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf1Entity"/>.
                 /// </summary>
                 /// <param name = "value">The value from which to convert.</param>
-                public static explicit operator AZaZ09Entity(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf1Entity.AllOf1Entity value)
+                public static explicit operator AZaZ09Entity(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf1Entity value)
                 {
                     if (value.HasJsonElementBacking)
                     {
@@ -297,24 +297,24 @@ public readonly partial struct OpenApiDocument
                 }
 
                 /// <summary>
-                /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf1Entity.AllOf2Entity"/>.
+                /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf2Entity"/>.
                 /// </summary>
                 /// <param name = "value">The value from which to convert.</param>
-                public static implicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf1Entity.AllOf2Entity(AZaZ09Entity value)
+                public static implicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf2Entity(AZaZ09Entity value)
                 {
                     if ((value.backing & Backing.JsonElement) != 0)
                     {
                         return new(value.AsJsonElement);
                     }
 
-                    return Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf1Entity.AllOf2Entity.Undefined;
+                    return Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf2Entity.Undefined;
                 }
 
                 /// <summary>
-                /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf1Entity.AllOf2Entity"/>.
+                /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf2Entity"/>.
                 /// </summary>
                 /// <param name = "value">The value from which to convert.</param>
-                public static explicit operator AZaZ09Entity(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf1Entity.AllOf2Entity value)
+                public static explicit operator AZaZ09Entity(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf2Entity value)
                 {
                     if (value.HasJsonElementBacking)
                     {
@@ -328,24 +328,24 @@ public readonly partial struct OpenApiDocument
                 }
 
                 /// <summary>
-                /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf1Entity.AllOf3Entity"/>.
+                /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf3Entity"/>.
                 /// </summary>
                 /// <param name = "value">The value from which to convert.</param>
-                public static implicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf1Entity.AllOf3Entity(AZaZ09Entity value)
+                public static implicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf3Entity(AZaZ09Entity value)
                 {
                     if ((value.backing & Backing.JsonElement) != 0)
                     {
                         return new(value.AsJsonElement);
                     }
 
-                    return Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf1Entity.AllOf3Entity.Undefined;
+                    return Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf3Entity.Undefined;
                 }
 
                 /// <summary>
-                /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf1Entity.AllOf3Entity"/>.
+                /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf3Entity"/>.
                 /// </summary>
                 /// <param name = "value">The value from which to convert.</param>
-                public static explicit operator AZaZ09Entity(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf1Entity.AllOf3Entity value)
+                public static explicit operator AZaZ09Entity(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf3Entity value)
                 {
                     if (value.HasJsonElementBacking)
                     {
@@ -359,24 +359,24 @@ public readonly partial struct OpenApiDocument
                 }
 
                 /// <summary>
-                /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf1Entity.AllOf4Entity"/>.
+                /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf4Entity"/>.
                 /// </summary>
                 /// <param name = "value">The value from which to convert.</param>
-                public static implicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf1Entity.AllOf4Entity(AZaZ09Entity value)
+                public static implicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf4Entity(AZaZ09Entity value)
                 {
                     if ((value.backing & Backing.JsonElement) != 0)
                     {
                         return new(value.AsJsonElement);
                     }
 
-                    return Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf1Entity.AllOf4Entity.Undefined;
+                    return Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf4Entity.Undefined;
                 }
 
                 /// <summary>
-                /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf1Entity.AllOf4Entity"/>.
+                /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf4Entity"/>.
                 /// </summary>
                 /// <param name = "value">The value from which to convert.</param>
-                public static explicit operator AZaZ09Entity(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf1Entity.AllOf4Entity value)
+                public static explicit operator AZaZ09Entity(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.SomePropertiesAreNotAllowedIfContentIsPresent.AllOf4Entity value)
                 {
                     if (value.HasJsonElementBacking)
                     {

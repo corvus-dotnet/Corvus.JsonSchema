@@ -38,7 +38,7 @@ public readonly partial struct OpenApiDocument
                 childContext0 = childContext0.PushValidationLocationArrayIndex(0);
             }
 
-            ValidationContext oneOfResult0 = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf0Entity>().Validate(childContext0.CreateChildContext(), level);
+            ValidationContext oneOfResult0 = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath>().Validate(childContext0.CreateChildContext(), level);
             if (oneOfResult0.IsValid)
             {
                 result = result.MergeChildContext(oneOfResult0, level >= ValidationLevel.Verbose);
@@ -63,7 +63,7 @@ public readonly partial struct OpenApiDocument
                 childContext1 = childContext1.PushValidationLocationArrayIndex(1);
             }
 
-            ValidationContext oneOfResult1 = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf1Entity>().Validate(childContext1.CreateChildContext(), level);
+            ValidationContext oneOfResult1 = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInQuery>().Validate(childContext1.CreateChildContext(), level);
             if (oneOfResult1.IsValid)
             {
                 result = result.MergeChildContext(oneOfResult1, level >= ValidationLevel.Verbose);
@@ -88,7 +88,7 @@ public readonly partial struct OpenApiDocument
                 childContext2 = childContext2.PushValidationLocationArrayIndex(2);
             }
 
-            ValidationContext oneOfResult2 = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf2Entity>().Validate(childContext2.CreateChildContext(), level);
+            ValidationContext oneOfResult2 = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInHeader>().Validate(childContext2.CreateChildContext(), level);
             if (oneOfResult2.IsValid)
             {
                 result = result.MergeChildContext(oneOfResult2, level >= ValidationLevel.Verbose);
@@ -113,7 +113,7 @@ public readonly partial struct OpenApiDocument
                 childContext3 = childContext3.PushValidationLocationArrayIndex(3);
             }
 
-            ValidationContext oneOfResult3 = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf3Entity>().Validate(childContext3.CreateChildContext(), level);
+            ValidationContext oneOfResult3 = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie>().Validate(childContext3.CreateChildContext(), level);
             if (oneOfResult3.IsValid)
             {
                 result = result.MergeChildContext(oneOfResult3, level >= ValidationLevel.Verbose);

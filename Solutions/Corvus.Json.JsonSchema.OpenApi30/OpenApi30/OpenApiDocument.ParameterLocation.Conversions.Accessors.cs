@@ -23,134 +23,134 @@ public readonly partial struct OpenApiDocument
     public readonly partial struct ParameterLocation
     {
         /// <summary>
-        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf0Entity"/>.
+        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath"/>.
         /// </summary>
-        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf0Entity AsOneOf0Entity
+        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath AsParameterInPath
         {
             get
             {
-                return (Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf0Entity)this;
+                return (Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath)this;
             }
         }
 
         /// <summary>
-        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf0Entity"/>.
+        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath"/>.
         /// </summary>
-        public bool IsOneOf0Entity
+        public bool IsParameterInPath
         {
             get
             {
-                return ((Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf0Entity)this).IsValid();
+                return ((Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath)this).IsValid();
             }
         }
 
         /// <summary>
-        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf0Entity"/>.
+        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath"/>.
         /// </summary>
         /// <param name = "result">The result of the conversion.</param>
         /// <returns><c>True</c> if the conversion was valid.</returns>
-        public bool TryGetAsOneOf0Entity(out Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf0Entity result)
+        public bool TryGetAsParameterInPath(out Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath result)
         {
-            result = (Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf0Entity)this;
+            result = (Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath)this;
             return result.IsValid();
         }
 
         /// <summary>
-        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf1Entity"/>.
+        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInQuery"/>.
         /// </summary>
-        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf1Entity AsOneOf1Entity
+        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInQuery AsParameterInQuery
         {
             get
             {
-                return (Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf1Entity)this;
+                return (Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInQuery)this;
             }
         }
 
         /// <summary>
-        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf1Entity"/>.
+        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInQuery"/>.
         /// </summary>
-        public bool IsOneOf1Entity
+        public bool IsParameterInQuery
         {
             get
             {
-                return ((Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf1Entity)this).IsValid();
+                return ((Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInQuery)this).IsValid();
             }
         }
 
         /// <summary>
-        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf1Entity"/>.
+        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInQuery"/>.
         /// </summary>
         /// <param name = "result">The result of the conversion.</param>
         /// <returns><c>True</c> if the conversion was valid.</returns>
-        public bool TryGetAsOneOf1Entity(out Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf1Entity result)
+        public bool TryGetAsParameterInQuery(out Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInQuery result)
         {
-            result = (Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf1Entity)this;
+            result = (Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInQuery)this;
             return result.IsValid();
         }
 
         /// <summary>
-        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf2Entity"/>.
+        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInHeader"/>.
         /// </summary>
-        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf2Entity AsOneOf2Entity
+        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInHeader AsParameterInHeader
         {
             get
             {
-                return (Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf2Entity)this;
+                return (Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInHeader)this;
             }
         }
 
         /// <summary>
-        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf2Entity"/>.
+        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInHeader"/>.
         /// </summary>
-        public bool IsOneOf2Entity
+        public bool IsParameterInHeader
         {
             get
             {
-                return ((Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf2Entity)this).IsValid();
+                return ((Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInHeader)this).IsValid();
             }
         }
 
         /// <summary>
-        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf2Entity"/>.
+        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInHeader"/>.
         /// </summary>
         /// <param name = "result">The result of the conversion.</param>
         /// <returns><c>True</c> if the conversion was valid.</returns>
-        public bool TryGetAsOneOf2Entity(out Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf2Entity result)
+        public bool TryGetAsParameterInHeader(out Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInHeader result)
         {
-            result = (Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf2Entity)this;
+            result = (Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInHeader)this;
             return result.IsValid();
         }
 
         /// <summary>
-        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf3Entity"/>.
+        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie"/>.
         /// </summary>
-        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf3Entity AsOneOf3Entity
+        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie AsParameterInCookie
         {
             get
             {
-                return (Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf3Entity)this;
+                return (Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie)this;
             }
         }
 
         /// <summary>
-        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf3Entity"/>.
+        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie"/>.
         /// </summary>
-        public bool IsOneOf3Entity
+        public bool IsParameterInCookie
         {
             get
             {
-                return ((Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf3Entity)this).IsValid();
+                return ((Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie)this).IsValid();
             }
         }
 
         /// <summary>
-        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf3Entity"/>.
+        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie"/>.
         /// </summary>
         /// <param name = "result">The result of the conversion.</param>
         /// <returns><c>True</c> if the conversion was valid.</returns>
-        public bool TryGetAsOneOf3Entity(out Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf3Entity result)
+        public bool TryGetAsParameterInCookie(out Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie result)
         {
-            result = (Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf3Entity)this;
+            result = (Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie)this;
             return result.IsValid();
         }
     }

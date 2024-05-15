@@ -26,10 +26,10 @@ public readonly partial struct OpenApiDocument
     public readonly partial struct ParameterLocation
     {
         /// <summary>
-        /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf0Entity"/>.
+        /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static explicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf0Entity(ParameterLocation value)
+        public static explicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath(ParameterLocation value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -41,14 +41,14 @@ public readonly partial struct OpenApiDocument
                 return new(value.objectBacking);
             }
 
-            return Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf0Entity.Undefined;
+            return Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath.Undefined;
         }
 
         /// <summary>
-        /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf0Entity"/>.
+        /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static explicit operator ParameterLocation(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf0Entity value)
+        public static explicit operator ParameterLocation(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -63,10 +63,10 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf1Entity"/>.
+        /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInQuery"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static explicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf1Entity(ParameterLocation value)
+        public static explicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInQuery(ParameterLocation value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -78,14 +78,14 @@ public readonly partial struct OpenApiDocument
                 return new(value.objectBacking);
             }
 
-            return Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf1Entity.Undefined;
+            return Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInQuery.Undefined;
         }
 
         /// <summary>
-        /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf1Entity"/>.
+        /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInQuery"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static explicit operator ParameterLocation(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf1Entity value)
+        public static explicit operator ParameterLocation(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInQuery value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -100,10 +100,10 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf2Entity"/>.
+        /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInHeader"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static explicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf2Entity(ParameterLocation value)
+        public static explicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInHeader(ParameterLocation value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -115,14 +115,14 @@ public readonly partial struct OpenApiDocument
                 return new(value.objectBacking);
             }
 
-            return Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf2Entity.Undefined;
+            return Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInHeader.Undefined;
         }
 
         /// <summary>
-        /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf2Entity"/>.
+        /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInHeader"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static explicit operator ParameterLocation(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf2Entity value)
+        public static explicit operator ParameterLocation(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInHeader value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -137,10 +137,10 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf3Entity"/>.
+        /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static explicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf3Entity(ParameterLocation value)
+        public static explicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie(ParameterLocation value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -152,14 +152,14 @@ public readonly partial struct OpenApiDocument
                 return new(value.objectBacking);
             }
 
-            return Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf3Entity.Undefined;
+            return Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie.Undefined;
         }
 
         /// <summary>
-        /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf3Entity"/>.
+        /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static explicit operator ParameterLocation(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf3Entity value)
+        public static explicit operator ParameterLocation(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie value)
         {
             if (value.HasJsonElementBacking)
             {

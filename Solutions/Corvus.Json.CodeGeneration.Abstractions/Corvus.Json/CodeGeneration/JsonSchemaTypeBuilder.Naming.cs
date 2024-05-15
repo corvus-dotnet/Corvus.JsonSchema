@@ -330,7 +330,35 @@ public partial class JsonSchemaTypeBuilder
         }
         else
         {
-            if (reference.HasFragment)
+            if (typeDeclaration.LocatedSchema.Schema.ValueKind == JsonValueKind.Object &&
+                typeDeclaration.LocatedSchema.Schema.AsObject.TryGetProperty("title", out JsonAny titleValue) &&
+                titleValue.ValueKind == JsonValueKind.String &&
+                titleValue.AsString.TryGetString(out string? titleValueString) &&
+                titleValueString.Length > 0 && titleValueString.Length < 64)
+            {
+                typename = Formatting.ToPascalCaseWithReservedWords(titleValueString);
+                if (!this.CollidesWithGeneratedName(typeDeclaration, typename))
+                {
+                    typeDeclaration.SetDotnetTypeName(typename.ToString());
+                    typeDeclaration.SetNamespace(rootNamespace);
+                    return;
+                }
+            }
+            else if (typeDeclaration.LocatedSchema.Schema.ValueKind == JsonValueKind.Object &&
+                typeDeclaration.LocatedSchema.Schema.AsObject.TryGetProperty("description", out JsonAny description) &&
+                description.ValueKind == JsonValueKind.String &&
+                description.AsString.TryGetString(out string? descriptionString) &&
+                descriptionString.Length > 0 && descriptionString.Length < 64)
+            {
+                typename = Formatting.ToPascalCaseWithReservedWords(descriptionString);
+                if (!this.CollidesWithGeneratedName(typeDeclaration, typename))
+                {
+                    typeDeclaration.SetDotnetTypeName(typename.ToString());
+                    typeDeclaration.SetNamespace(rootNamespace);
+                    return;
+                }
+            }
+            else if (reference.HasFragment)
             {
                 int lastSlash = reference.Fragment.LastIndexOf('/');
                 if (char.IsDigit(reference.Fragment[lastSlash + 1]) && lastSlash > 0)

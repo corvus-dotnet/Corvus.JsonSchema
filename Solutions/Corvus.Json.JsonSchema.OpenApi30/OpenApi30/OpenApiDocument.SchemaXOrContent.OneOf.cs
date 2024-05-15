@@ -31,9 +31,9 @@ public readonly partial struct OpenApiDocument
         /// </summary>
         /// <param name = "context">The context to pass to the match function.</param>
         /// <param name = "match0">The function to call if the value matches the <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf0Entity"/> type.</param>
-        /// <param name = "match1">The function to call if the value matches the <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf1Entity"/> type.</param>
+        /// <param name = "match1">The function to call if the value matches the <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.SomePropertiesAreNotAllowedIfContentIsPresent"/> type.</param>
         /// <param name = "defaultMatch">The fallback match.</param>
-        public TOut Match<TIn, TOut>(in TIn context, Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf0Entity, TIn, TOut> match0, Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf1Entity, TIn, TOut> match1, Matcher<SchemaXOrContent, TIn, TOut> defaultMatch)
+        public TOut Match<TIn, TOut>(in TIn context, Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf0Entity, TIn, TOut> match0, Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.SomePropertiesAreNotAllowedIfContentIsPresent, TIn, TOut> match1, Matcher<SchemaXOrContent, TIn, TOut> defaultMatch)
         {
             var oneOf0 = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf0Entity>();
             if (oneOf0.IsValid())
@@ -41,7 +41,7 @@ public readonly partial struct OpenApiDocument
                 return match0(oneOf0, context);
             }
 
-            var oneOf1 = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf1Entity>();
+            var oneOf1 = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.SomePropertiesAreNotAllowedIfContentIsPresent>();
             if (oneOf1.IsValid())
             {
                 return match1(oneOf1, context);
@@ -54,9 +54,9 @@ public readonly partial struct OpenApiDocument
         /// Matches the value against each of the any of values, and returns the result of calling the provided match function for the first match found.
         /// </summary>
         /// <param name = "match0">The function to call if the value matches the <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf0Entity"/> type.</param>
-        /// <param name = "match1">The function to call if the value matches the <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf1Entity"/> type.</param>
+        /// <param name = "match1">The function to call if the value matches the <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.SomePropertiesAreNotAllowedIfContentIsPresent"/> type.</param>
         /// <param name = "defaultMatch">The fallback match.</param>
-        public TOut Match<TOut>(Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf0Entity, TOut> match0, Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf1Entity, TOut> match1, Matcher<SchemaXOrContent, TOut> defaultMatch)
+        public TOut Match<TOut>(Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf0Entity, TOut> match0, Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.SomePropertiesAreNotAllowedIfContentIsPresent, TOut> match1, Matcher<SchemaXOrContent, TOut> defaultMatch)
         {
             var oneOf0 = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf0Entity>();
             if (oneOf0.IsValid())
@@ -64,7 +64,7 @@ public readonly partial struct OpenApiDocument
                 return match0(oneOf0);
             }
 
-            var oneOf1 = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf1Entity>();
+            var oneOf1 = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.SomePropertiesAreNotAllowedIfContentIsPresent>();
             if (oneOf1.IsValid())
             {
                 return match1(oneOf1);

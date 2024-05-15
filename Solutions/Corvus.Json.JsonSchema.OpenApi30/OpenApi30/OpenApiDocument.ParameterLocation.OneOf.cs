@@ -30,32 +30,32 @@ public readonly partial struct OpenApiDocument
         /// Matches the value against each of the any of values, and returns the result of calling the provided match function for the first match found.
         /// </summary>
         /// <param name = "context">The context to pass to the match function.</param>
-        /// <param name = "match0">The function to call if the value matches the <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf0Entity"/> type.</param>
-        /// <param name = "match1">The function to call if the value matches the <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf1Entity"/> type.</param>
-        /// <param name = "match2">The function to call if the value matches the <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf2Entity"/> type.</param>
-        /// <param name = "match3">The function to call if the value matches the <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf3Entity"/> type.</param>
+        /// <param name = "match0">The function to call if the value matches the <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath"/> type.</param>
+        /// <param name = "match1">The function to call if the value matches the <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInQuery"/> type.</param>
+        /// <param name = "match2">The function to call if the value matches the <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInHeader"/> type.</param>
+        /// <param name = "match3">The function to call if the value matches the <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie"/> type.</param>
         /// <param name = "defaultMatch">The fallback match.</param>
-        public TOut Match<TIn, TOut>(in TIn context, Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf0Entity, TIn, TOut> match0, Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf1Entity, TIn, TOut> match1, Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf2Entity, TIn, TOut> match2, Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf3Entity, TIn, TOut> match3, Matcher<ParameterLocation, TIn, TOut> defaultMatch)
+        public TOut Match<TIn, TOut>(in TIn context, Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath, TIn, TOut> match0, Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInQuery, TIn, TOut> match1, Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInHeader, TIn, TOut> match2, Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie, TIn, TOut> match3, Matcher<ParameterLocation, TIn, TOut> defaultMatch)
         {
-            var oneOf0 = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf0Entity>();
+            var oneOf0 = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath>();
             if (oneOf0.IsValid())
             {
                 return match0(oneOf0, context);
             }
 
-            var oneOf1 = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf1Entity>();
+            var oneOf1 = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInQuery>();
             if (oneOf1.IsValid())
             {
                 return match1(oneOf1, context);
             }
 
-            var oneOf2 = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf2Entity>();
+            var oneOf2 = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInHeader>();
             if (oneOf2.IsValid())
             {
                 return match2(oneOf2, context);
             }
 
-            var oneOf3 = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf3Entity>();
+            var oneOf3 = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie>();
             if (oneOf3.IsValid())
             {
                 return match3(oneOf3, context);
@@ -67,32 +67,32 @@ public readonly partial struct OpenApiDocument
         /// <summary>
         /// Matches the value against each of the any of values, and returns the result of calling the provided match function for the first match found.
         /// </summary>
-        /// <param name = "match0">The function to call if the value matches the <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf0Entity"/> type.</param>
-        /// <param name = "match1">The function to call if the value matches the <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf1Entity"/> type.</param>
-        /// <param name = "match2">The function to call if the value matches the <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf2Entity"/> type.</param>
-        /// <param name = "match3">The function to call if the value matches the <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf3Entity"/> type.</param>
+        /// <param name = "match0">The function to call if the value matches the <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath"/> type.</param>
+        /// <param name = "match1">The function to call if the value matches the <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInQuery"/> type.</param>
+        /// <param name = "match2">The function to call if the value matches the <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInHeader"/> type.</param>
+        /// <param name = "match3">The function to call if the value matches the <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie"/> type.</param>
         /// <param name = "defaultMatch">The fallback match.</param>
-        public TOut Match<TOut>(Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf0Entity, TOut> match0, Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf1Entity, TOut> match1, Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf2Entity, TOut> match2, Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf3Entity, TOut> match3, Matcher<ParameterLocation, TOut> defaultMatch)
+        public TOut Match<TOut>(Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath, TOut> match0, Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInQuery, TOut> match1, Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInHeader, TOut> match2, Matcher<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie, TOut> match3, Matcher<ParameterLocation, TOut> defaultMatch)
         {
-            var oneOf0 = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf0Entity>();
+            var oneOf0 = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInPath>();
             if (oneOf0.IsValid())
             {
                 return match0(oneOf0);
             }
 
-            var oneOf1 = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf1Entity>();
+            var oneOf1 = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInQuery>();
             if (oneOf1.IsValid())
             {
                 return match1(oneOf1);
             }
 
-            var oneOf2 = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf2Entity>();
+            var oneOf2 = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInHeader>();
             if (oneOf2.IsValid())
             {
                 return match2(oneOf2);
             }
 
-            var oneOf3 = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.OneOf3Entity>();
+            var oneOf3 = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ParameterLocation.ParameterInCookie>();
             if (oneOf3.IsValid())
             {
                 return match3(oneOf3);

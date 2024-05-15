@@ -95,10 +95,10 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.OneOf0Entity"/>.
+        /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.Bearer"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static explicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.OneOf0Entity(SecurityScheme value)
+        public static explicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.Bearer(SecurityScheme value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -110,14 +110,14 @@ public readonly partial struct OpenApiDocument
                 return new(value.objectBacking);
             }
 
-            return Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.OneOf0Entity.Undefined;
+            return Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.Bearer.Undefined;
         }
 
         /// <summary>
-        /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.OneOf0Entity"/>.
+        /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.Bearer"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static explicit operator SecurityScheme(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.OneOf0Entity value)
+        public static explicit operator SecurityScheme(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.Bearer value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -132,10 +132,10 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.OneOf1Entity"/>.
+        /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.NonBearer"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static explicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.OneOf1Entity(SecurityScheme value)
+        public static explicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.NonBearer(SecurityScheme value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -147,14 +147,14 @@ public readonly partial struct OpenApiDocument
                 return new(value.objectBacking);
             }
 
-            return Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.OneOf1Entity.Undefined;
+            return Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.NonBearer.Undefined;
         }
 
         /// <summary>
-        /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.OneOf1Entity"/>.
+        /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.NonBearer"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static explicit operator SecurityScheme(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.OneOf1Entity value)
+        public static explicit operator SecurityScheme(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.NonBearer value)
         {
             if (value.HasJsonElementBacking)
             {

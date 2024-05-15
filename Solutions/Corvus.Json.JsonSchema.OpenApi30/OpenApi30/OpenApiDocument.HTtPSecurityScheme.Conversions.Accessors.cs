@@ -18,68 +18,68 @@ public readonly partial struct OpenApiDocument
     public readonly partial struct HTtPSecurityScheme
     {
         /// <summary>
-        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.OneOf0Entity"/>.
+        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.Bearer"/>.
         /// </summary>
-        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.OneOf0Entity AsOneOf0Entity
+        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.Bearer AsBearer
         {
             get
             {
-                return (Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.OneOf0Entity)this;
+                return (Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.Bearer)this;
             }
         }
 
         /// <summary>
-        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.OneOf0Entity"/>.
+        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.Bearer"/>.
         /// </summary>
-        public bool IsOneOf0Entity
+        public bool IsBearer
         {
             get
             {
-                return ((Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.OneOf0Entity)this).IsValid();
+                return ((Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.Bearer)this).IsValid();
             }
         }
 
         /// <summary>
-        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.OneOf0Entity"/>.
+        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.Bearer"/>.
         /// </summary>
         /// <param name = "result">The result of the conversion.</param>
         /// <returns><c>True</c> if the conversion was valid.</returns>
-        public bool TryGetAsOneOf0Entity(out Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.OneOf0Entity result)
+        public bool TryGetAsBearer(out Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.Bearer result)
         {
-            result = (Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.OneOf0Entity)this;
+            result = (Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.Bearer)this;
             return result.IsValid();
         }
 
         /// <summary>
-        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.OneOf1Entity"/>.
+        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.NonBearer"/>.
         /// </summary>
-        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.OneOf1Entity AsOneOf1Entity
+        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.NonBearer AsNonBearer
         {
             get
             {
-                return (Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.OneOf1Entity)this;
+                return (Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.NonBearer)this;
             }
         }
 
         /// <summary>
-        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.OneOf1Entity"/>.
+        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.NonBearer"/>.
         /// </summary>
-        public bool IsOneOf1Entity
+        public bool IsNonBearer
         {
             get
             {
-                return ((Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.OneOf1Entity)this).IsValid();
+                return ((Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.NonBearer)this).IsValid();
             }
         }
 
         /// <summary>
-        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.OneOf1Entity"/>.
+        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.NonBearer"/>.
         /// </summary>
         /// <param name = "result">The result of the conversion.</param>
         /// <returns><c>True</c> if the conversion was valid.</returns>
-        public bool TryGetAsOneOf1Entity(out Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.OneOf1Entity result)
+        public bool TryGetAsNonBearer(out Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.NonBearer result)
         {
-            result = (Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.OneOf1Entity)this;
+            result = (Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.NonBearer)this;
             return result.IsValid();
         }
     }
