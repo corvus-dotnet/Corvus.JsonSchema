@@ -4,7 +4,7 @@
 .\Corvus.Json.CodeGenerator\bin\Debug\net8.0\Corvus.Json.JsonSchema.TypeGeneratorTool.exe --rootNamespace Corvus.Json.JsonSchema.Draft201909 --outputPath .\Corvus.Json.JsonSchema.Draft201909\Draft201909\ https://json-schema.org/draft/2019-09/schema
 .\Corvus.Json.CodeGenerator\bin\Debug\net8.0\Corvus.Json.JsonSchema.TypeGeneratorTool.exe --rootNamespace Corvus.Json.JsonSchema.Draft202012 --outputPath .\Corvus.Json.JsonSchema.Draft202012\Draft202012\ https://json-schema.org/draft/2020-12/schema
 
-.\Corvus.Json.CodeGenerator\bin\Debug\net8.0\Corvus.Json.JsonSchema.TypeGeneratorTool.exe --rootNamespace Corvus.Json.JsonSchema.OpenApi30 --outputPath .\Corvus.Json.JsonSchema.OpenApi30\OpenApi30\ --rootPath "#/definitions/Schema" https://raw.githubusercontent.com/OAI/OpenAPI-Specification/main/schemas/v3.0/schema.json
+.\Corvus.Json.CodeGenerator\bin\Debug\net8.0\Corvus.Json.JsonSchema.TypeGeneratorTool.exe --rootNamespace Corvus.Json.JsonSchema.OpenApi30 --outputPath .\Corvus.Json.JsonSchema.OpenApi30\OpenApi30\ --outputRootTypeName OpenApiDocument https://raw.githubusercontent.com/OAI/OpenAPI-Specification/main/schemas/v3.0/schema.json
 
 .\Corvus.Json.CodeGenerator\bin\Debug\net8.0\Corvus.Json.JsonSchema.TypeGeneratorTool.exe --rootNamespace Corvus.Json.Patch.Model --outputPath .\Corvus.Json.Patch\Corvus.Json.Patch\Model\ .\Corvus.Json.Patch\Corvus.Json.Patch\Model\json-patch.json
 

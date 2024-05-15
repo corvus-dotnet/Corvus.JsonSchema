@@ -18,9 +18,9 @@ public static class SchemaExtensionsOpenApi30
     /// </summary>
     /// <param name="typeDeclaration">The type declaration for which to get the schema.</param>
     /// <returns>The schema as a draft-6 instance.</returns>
-    public static Schema Schema(this TypeDeclaration typeDeclaration)
+    public static OpenApiDocument.Schema Schema(this TypeDeclaration typeDeclaration)
     {
-        return typeDeclaration.LocatedSchema.Schema.As<Schema>();
+        return typeDeclaration.LocatedSchema.Schema.As<OpenApiDocument.Schema>();
     }
 
     /// <summary>
@@ -31,7 +31,7 @@ public static class SchemaExtensionsOpenApi30
     public static string FormatTypeDocumentation(this TypeDeclaration typeDeclaration)
     {
         StringBuilder documentation = new();
-        Schema schema = typeDeclaration.Schema();
+        OpenApiDocument.Schema schema = typeDeclaration.Schema();
         documentation.AppendLine("/// <summary>");
 
         if (schema.Title.IsNotNullOrUndefined())
@@ -119,7 +119,7 @@ public static class SchemaExtensionsOpenApi30
     /// </summary>
     /// <param name="schema">The schema to test.</param>
     /// <returns><c>True</c> if all the known items are empty, but there are additional properties on the JsonElement.</returns>
-    public static bool EmptyButWithUnknownExtensions(this Schema schema)
+    public static bool EmptyButWithUnknownExtensions(this OpenApiDocument.Schema schema)
     {
         return schema.ValueKind == JsonValueKind.Object && IsEmpty(schema) && schema.EnumerateObject().MoveNext();
     }
@@ -129,10 +129,10 @@ public static class SchemaExtensionsOpenApi30
     /// </summary>
     /// <param name="schema">The schema to test.</param>
     /// <returns><c>True</c> if the schema has a single type value, or no type value but a format value.</returns>
-    public static bool IsExplicitArrayType(this Schema schema)
+    public static bool IsExplicitArrayType(this OpenApiDocument.Schema schema)
     {
         return
-            schema.Type.IsNotUndefined() && schema.Type.Equals(JsonSchema.OpenApi30.Schema.TypeEntity.EnumValues.Array);
+            schema.Type.IsNotUndefined() && schema.Type.Equals(JsonSchema.OpenApi30.OpenApiDocument.Schema.TypeEntity.EnumValues.Array);
     }
 
     /// <summary>
@@ -140,7 +140,7 @@ public static class SchemaExtensionsOpenApi30
     /// </summary>
     /// <param name="schema">The schema for which to get the value.</param>
     /// <returns>The value, which may be undefined.</returns>
-    public static JsonString GetContentMediaType(this Schema schema)
+    public static JsonString GetContentMediaType(this OpenApiDocument.Schema schema)
     {
         if (schema.TryGetProperty("media", out JsonAny media) && media.ValueKind == JsonValueKind.Object)
         {
@@ -158,7 +158,7 @@ public static class SchemaExtensionsOpenApi30
     /// </summary>
     /// <param name="schema">The schema for which to get the value.</param>
     /// <returns>The value, which may be undefined.</returns>
-    public static JsonString GetContentEncoding(this Schema schema)
+    public static JsonString GetContentEncoding(this OpenApiDocument.Schema schema)
     {
         if (schema.TryGetProperty("media", out JsonAny media) && media.ValueKind == JsonValueKind.Object)
         {
@@ -176,10 +176,10 @@ public static class SchemaExtensionsOpenApi30
     /// </summary>
     /// <param name="schema">The schema to test.</param>
     /// <returns><c>True</c> if the schema has a single type value, or no type value but a format value.</returns>
-    public static bool IsExplicitObjectType(this Schema schema)
+    public static bool IsExplicitObjectType(this OpenApiDocument.Schema schema)
     {
         return
-            schema.Type.IsNotUndefined() && schema.Type.Equals(JsonSchema.OpenApi30.Schema.TypeEntity.EnumValues.Object);
+            schema.Type.IsNotUndefined() && schema.Type.Equals(JsonSchema.OpenApi30.OpenApiDocument.Schema.TypeEntity.EnumValues.Object);
     }
 
     /// <summary>
@@ -187,10 +187,10 @@ public static class SchemaExtensionsOpenApi30
     /// </summary>
     /// <param name="schema">The schema to test.</param>
     /// <returns><c>True</c> if the schema has a single type value, or no type value but a format value.</returns>
-    public static bool IsExplicitNumberType(this Schema schema)
+    public static bool IsExplicitNumberType(this OpenApiDocument.Schema schema)
     {
         return
-            schema.Type.IsNotUndefined() && (schema.Type.Equals(JsonSchema.OpenApi30.Schema.TypeEntity.EnumValues.Number) || schema.Type.Equals(JsonSchema.OpenApi30.Schema.TypeEntity.EnumValues.Integer));
+            schema.Type.IsNotUndefined() && (schema.Type.Equals(JsonSchema.OpenApi30.OpenApiDocument.Schema.TypeEntity.EnumValues.Number) || schema.Type.Equals(JsonSchema.OpenApi30.OpenApiDocument.Schema.TypeEntity.EnumValues.Integer));
     }
 
     /// <summary>
@@ -198,10 +198,10 @@ public static class SchemaExtensionsOpenApi30
     /// </summary>
     /// <param name="schema">The schema to test.</param>
     /// <returns><c>True</c> if the schema has a single type value.</returns>
-    public static bool IsExplicitBooleanType(this Schema schema)
+    public static bool IsExplicitBooleanType(this OpenApiDocument.Schema schema)
     {
         return
-            schema.Type.IsNotUndefined() && schema.Type.Equals(JsonSchema.OpenApi30.Schema.TypeEntity.EnumValues.Boolean);
+            schema.Type.IsNotUndefined() && schema.Type.Equals(JsonSchema.OpenApi30.OpenApiDocument.Schema.TypeEntity.EnumValues.Boolean);
     }
 
     /// <summary>
@@ -209,7 +209,7 @@ public static class SchemaExtensionsOpenApi30
     /// </summary>
     /// <param name="schema">The schema to test.</param>
     /// <returns><c>True</c> if the schema has a single type value.</returns>
-    public static bool IsExplicitNullType(this Schema schema)
+    public static bool IsExplicitNullType(this OpenApiDocument.Schema schema)
     {
         return
             schema.Nullable.ValueKind == JsonValueKind.True;
@@ -220,10 +220,10 @@ public static class SchemaExtensionsOpenApi30
     /// </summary>
     /// <param name="schema">The schema to test.</param>
     /// <returns><c>True</c> if the schema has a single type value, or no type value but a format value.</returns>
-    public static bool IsExplicitStringType(this Schema schema)
+    public static bool IsExplicitStringType(this OpenApiDocument.Schema schema)
     {
         return
-            schema.Type.IsNotUndefined() && schema.Type.Equals(JsonSchema.OpenApi30.Schema.TypeEntity.EnumValues.String);
+            schema.Type.IsNotUndefined() && schema.Type.Equals(JsonSchema.OpenApi30.OpenApiDocument.Schema.TypeEntity.EnumValues.String);
     }
 
     /// <summary>
@@ -231,7 +231,7 @@ public static class SchemaExtensionsOpenApi30
     /// </summary>
     /// <param name="schema">The schema to test.</param>
     /// <returns><c>True</c> if the schema has a single type value, or no type value but a format value.</returns>
-    public static bool IsObjectType(this Schema schema)
+    public static bool IsObjectType(this OpenApiDocument.Schema schema)
     {
         return
             schema.IsExplicitObjectType() || schema.Properties.IsNotUndefined() || schema.Required.IsNotUndefined() || schema.AdditionalProperties.IsNotUndefined() || schema.MaxProperties.IsNotUndefined() || schema.MinProperties.IsNotUndefined() || schema.HasObjectEnum();
@@ -242,7 +242,7 @@ public static class SchemaExtensionsOpenApi30
     /// </summary>
     /// <param name="schema">The schema to test.</param>
     /// <returns><c>True</c> if the schema has a single type value, or no type value but a format value.</returns>
-    public static bool IsArrayType(this Schema schema)
+    public static bool IsArrayType(this OpenApiDocument.Schema schema)
     {
         return
             schema.IsExplicitArrayType() || schema.Items.IsNotUndefined() || schema.MaxItems.IsNotUndefined() || schema.MinItems.IsNotUndefined() || schema.UniqueItems.IsNotUndefined() || schema.HasArrayEnum();
@@ -253,7 +253,7 @@ public static class SchemaExtensionsOpenApi30
     /// </summary>
     /// <param name="schema">The schema to test.</param>
     /// <returns><c>True</c> if the schema has a single type value, or no type value but a format value.</returns>
-    public static bool IsNumberType(this Schema schema)
+    public static bool IsNumberType(this OpenApiDocument.Schema schema)
     {
         return
             schema.IsExplicitNumberType() || schema.Minimum.IsNotUndefined() || schema.Maximum.IsNotUndefined() || schema.ExclusiveMaximum.IsNotUndefined() || schema.ExclusiveMinimum.IsNotUndefined() || schema.MultipleOf.IsNotUndefined() || schema.HasNumberEnum();
@@ -264,7 +264,7 @@ public static class SchemaExtensionsOpenApi30
     /// </summary>
     /// <param name="schema">The schema to test.</param>
     /// <returns><c>True</c> if the schema has a single type value, or no type value but a format value.</returns>
-    public static bool IsBooleanType(this Schema schema)
+    public static bool IsBooleanType(this OpenApiDocument.Schema schema)
     {
         return
             schema.IsExplicitBooleanType() || schema.HasBooleanEnum();
@@ -275,7 +275,7 @@ public static class SchemaExtensionsOpenApi30
     /// </summary>
     /// <param name="schema">The schema to test.</param>
     /// <returns><c>True</c> if the schema has a single type value, or no type value but a format value.</returns>
-    public static bool IsNullType(this Schema schema)
+    public static bool IsNullType(this OpenApiDocument.Schema schema)
     {
         return
             schema.IsExplicitNullType() || schema.HasNullEnum();
@@ -286,7 +286,7 @@ public static class SchemaExtensionsOpenApi30
     /// </summary>
     /// <param name="schema">The schema to test.</param>
     /// <returns><c>True</c> if the schema has a single type value, or no type value but a format value.</returns>
-    public static bool IsStringType(this Schema schema)
+    public static bool IsStringType(this OpenApiDocument.Schema schema)
     {
         return
             schema.IsExplicitStringType() || schema.MinLength.IsNotUndefined() || schema.MaxLength.IsNotUndefined() || schema.Pattern.IsNotUndefined() || schema.HasStringEnum();
@@ -297,11 +297,11 @@ public static class SchemaExtensionsOpenApi30
     /// </summary>
     /// <param name="schema">The schema to test.</param>
     /// <returns><c>True</c> if the schema has a single type value, or no type value but a format value.</returns>
-    public static bool IsJsonInteger(this Schema schema)
+    public static bool IsJsonInteger(this OpenApiDocument.Schema schema)
     {
         return
             schema.Type.IsNotUndefined() && (
-                schema.Type.Equals(JsonSchema.OpenApi30.Schema.TypeEntity.EnumValues.Integer) ||
+                schema.Type.Equals(JsonSchema.OpenApi30.OpenApiDocument.Schema.TypeEntity.EnumValues.Integer) ||
                 (schema.Format.IsNullOrUndefined() && schema.Format == "integer"));
     }
 
@@ -310,7 +310,7 @@ public static class SchemaExtensionsOpenApi30
     /// </summary>
     /// <param name="schema">The schema to validate.</param>
     /// <returns>True if the schema has at least one enum value of the correct type.</returns>
-    public static bool HasObjectEnum(this Schema schema)
+    public static bool HasObjectEnum(this OpenApiDocument.Schema schema)
     {
         return schema.Enum.ValueKind == JsonValueKind.Array &&
             schema.Enum.EnumerateArray().Any(e => e.ValueKind == JsonValueKind.Object);
@@ -321,7 +321,7 @@ public static class SchemaExtensionsOpenApi30
     /// </summary>
     /// <param name="schema">The schema to validate.</param>
     /// <returns>True if the schema has at least one enum value of the correct type.</returns>
-    public static bool HasArrayEnum(this Schema schema)
+    public static bool HasArrayEnum(this OpenApiDocument.Schema schema)
     {
         return schema.Enum.ValueKind == JsonValueKind.Array &&
             schema.Enum.EnumerateArray().Any(e => e.ValueKind == JsonValueKind.Array);
@@ -332,7 +332,7 @@ public static class SchemaExtensionsOpenApi30
     /// </summary>
     /// <param name="schema">The schema to validate.</param>
     /// <returns>True if the schema has at least one enum value of the correct type.</returns>
-    public static bool HasNumberEnum(this Schema schema)
+    public static bool HasNumberEnum(this OpenApiDocument.Schema schema)
     {
         return schema.Enum.ValueKind == JsonValueKind.Array &&
             schema.Enum.EnumerateArray().Any(e => e.ValueKind == JsonValueKind.Number);
@@ -343,7 +343,7 @@ public static class SchemaExtensionsOpenApi30
     /// </summary>
     /// <param name="schema">The schema to validate.</param>
     /// <returns>True if the schema has at least one enum value of the correct type.</returns>
-    public static bool HasNullEnum(this Schema schema)
+    public static bool HasNullEnum(this OpenApiDocument.Schema schema)
     {
         return schema.Enum.ValueKind == JsonValueKind.Array &&
             schema.Enum.EnumerateArray().Any(e => e.ValueKind == JsonValueKind.Null);
@@ -354,7 +354,7 @@ public static class SchemaExtensionsOpenApi30
     /// </summary>
     /// <param name="schema">The schema to validate.</param>
     /// <returns>True if the schema has at least one enum value of the correct type.</returns>
-    public static bool HasStringEnum(this Schema schema)
+    public static bool HasStringEnum(this OpenApiDocument.Schema schema)
     {
         return schema.Enum.ValueKind == JsonValueKind.Array &&
             schema.Enum.EnumerateArray().Any(e => e.ValueKind == JsonValueKind.String);
@@ -365,7 +365,7 @@ public static class SchemaExtensionsOpenApi30
     /// </summary>
     /// <param name="schema">The schema to validate.</param>
     /// <returns>True if the schema has at least one enum value of the correct type.</returns>
-    public static bool HasBooleanEnum(this Schema schema)
+    public static bool HasBooleanEnum(this OpenApiDocument.Schema schema)
     {
         return schema.Enum.ValueKind == JsonValueKind.Array &&
             schema.Enum.EnumerateArray().Any(e => e.ValueKind == JsonValueKind.True || e.ValueKind == JsonValueKind.False);
@@ -376,7 +376,7 @@ public static class SchemaExtensionsOpenApi30
     /// </summary>
     /// <param name="schema">The schema to test.</param>
     /// <returns><c>True</c> if the schema has a single type value, or no type value but a format value.</returns>
-    public static bool IsSimpleType(this Schema schema)
+    public static bool IsSimpleType(this OpenApiDocument.Schema schema)
     {
         return schema.Type.IsNotUndefined();
     }
@@ -386,7 +386,7 @@ public static class SchemaExtensionsOpenApi30
     /// </summary>
     /// <param name="schema">The schema to test.</param>
     /// <returns><c>True</c> if all the non-extension items are empty.</returns>
-    public static bool IsBuiltInType(this Schema schema)
+    public static bool IsBuiltInType(this OpenApiDocument.Schema schema)
     {
         return
             schema.ValueKind == JsonValueKind.True ||
@@ -424,7 +424,7 @@ public static class SchemaExtensionsOpenApi30
     /// </summary>
     /// <param name="schema">The schema to test.</param>
     /// <returns><c>True</c> if the schema has a single type value, or no type value and no format value.</returns>
-    public static bool IsBuiltInPrimitiveType(this Schema schema)
+    public static bool IsBuiltInPrimitiveType(this OpenApiDocument.Schema schema)
     {
         return schema.IsBuiltInType() && schema.Format.IsUndefined();
     }
@@ -434,7 +434,7 @@ public static class SchemaExtensionsOpenApi30
     /// </summary>
     /// <param name="schema">The schema to test.</param>
     /// <returns><c>True</c> if all the non-extension items are empty.</returns>
-    public static bool IsEmpty(this Schema schema)
+    public static bool IsEmpty(this OpenApiDocument.Schema schema)
     {
         return
             schema.Nullable.IsUndefined() &&
@@ -474,7 +474,7 @@ public static class SchemaExtensionsOpenApi30
     /// </summary>
     /// <param name="schema">The schema to test.</param>
     /// <returns><c>True</c> if all the non-extension items are empty.</returns>
-    public static bool IsNakedNullType(this Schema schema)
+    public static bool IsNakedNullType(this OpenApiDocument.Schema schema)
     {
         return
             schema.Nullable.ValueKind == JsonValueKind.True &&
@@ -514,7 +514,7 @@ public static class SchemaExtensionsOpenApi30
     /// </summary>
     /// <param name="schema">The schema to test.</param>
     /// <returns><c>True</c> if the schema has a oneOf and no other substantive properties.</returns>
-    public static bool IsNakedOneOf(this Schema schema)
+    public static bool IsNakedOneOf(this OpenApiDocument.Schema schema)
     {
         return
             schema.OneOf.IsNotUndefined() &&

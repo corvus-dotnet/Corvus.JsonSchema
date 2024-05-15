@@ -261,7 +261,8 @@ public static class JsonSchemaHelpers
     /// <returns><see langword="true"/> if the schema is a valid draft 7 schema.</returns>
     private static Predicate<JsonAny> CreateOpenApi30ValidateSchema()
     {
-        return static s => s.As<JsonSchema.OpenApi30.Schema>().IsValid() || s.As<JsonSchema.OpenApi30.Reference>().IsValid();
+        // We claim to be valid if our base document is an OpenApi document.
+        return static s => s.As<JsonSchema.OpenApi30.OpenApiDocument>().IsValid() || s.As<JsonSchema.OpenApi30.OpenApiDocument.Schema>().IsValid() || s.As<JsonSchema.OpenApi30.OpenApiDocument.Reference>().IsValid();
     }
 
     /// <summary>
@@ -270,7 +271,7 @@ public static class JsonSchemaHelpers
     /// <returns><see langword="true"/> if the schema is an explicit array type.</returns>
     private static Predicate<JsonAny> CreateOpenApi30IsExplicitArrayType()
     {
-        return static s => s.As<JsonSchema.OpenApi30.Schema>().IsExplicitArrayType();
+        return static s => s.As<JsonSchema.OpenApi30.OpenApiDocument.Schema>().IsExplicitArrayType();
     }
 
     /// <summary>
@@ -279,7 +280,7 @@ public static class JsonSchemaHelpers
     /// <returns><see langword="true"/> if the schema is a simple type.</returns>
     private static Predicate<JsonAny> CreateOpenApi30IsSimpleType()
     {
-        return static s => s.As<JsonSchema.OpenApi30.Schema>().IsSimpleType();
+        return static s => s.As<JsonSchema.OpenApi30.OpenApiDocument.Schema>().IsSimpleType();
     }
 
     /// <summary>
@@ -290,7 +291,7 @@ public static class JsonSchemaHelpers
     {
         return static (schemaAny, validateAs) =>
         {
-            JsonSchema.OpenApi30.Schema schema = schemaAny.As<JsonSchema.OpenApi30.Schema>();
+            JsonSchema.OpenApi30.OpenApiDocument.Schema schema = schemaAny.As<JsonSchema.OpenApi30.OpenApiDocument.Schema>();
 
             if (!schema.IsBuiltInType())
             {
@@ -334,7 +335,7 @@ public static class JsonSchemaHelpers
 
             typesVisited.Add(source);
 
-            JsonSchema.OpenApi30.Schema schema = source.LocatedSchema.Schema.As<JsonSchema.OpenApi30.Schema>();
+            JsonSchema.OpenApi30.OpenApiDocument.Schema schema = source.LocatedSchema.Schema.As<JsonSchema.OpenApi30.OpenApiDocument.Schema>();
 
             // First we add the 'required' properties as JsonAny; they will be overridden if we have explicit implementations
             // elsewhere
@@ -386,7 +387,7 @@ public static class JsonSchemaHelpers
         };
     }
 
-    private static string? FormatDocumentation(Schema schema)
+    private static string? FormatDocumentation(OpenApiDocument.Schema schema)
     {
         StringBuilder documentation = new();
         if (schema.Title.IsNotNullOrUndefined())

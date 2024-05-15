@@ -9,6 +9,8 @@ cd ..\..\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.Draft20190
 start cmd.exe /C BuildTemplates.cmd
 cd ..\..\Corvus.Json.CodeGeneration.202012\Corvus.Json.CodeGeneration.Draft202012
 start cmd.exe /C BuildTemplates.cmd
+cd ..\..\Corvus.Json.CodeGeneration.OpenApi30\Corvus.Json.CodeGeneration.OpenApi30
+start cmd.exe /C BuildTemplates.cmd
 cd ..\..\Corvus.Json.ExtendedTypes\Corvus.Json
 start cmd.exe /C BuildTemplates.cmd
 cd ..\..

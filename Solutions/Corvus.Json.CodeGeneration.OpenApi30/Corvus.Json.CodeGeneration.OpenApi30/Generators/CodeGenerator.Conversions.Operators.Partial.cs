@@ -2017,7 +2017,7 @@ public partial class CodeGeneratorConversionsOperators
         {
             HashSet<string> result = new();
             int i = 0;
-            foreach (Schema item in typeDeclaration.Schema().OneOf.EnumerateArray())
+            foreach (OpenApiDocument.Schema item in typeDeclaration.Schema().OneOf.EnumerateArray())
             {
                 TypeDeclaration td = this.Builder.GetTypeDeclarationForPropertyArrayIndex(typeDeclaration, "oneOf", i++);
 
