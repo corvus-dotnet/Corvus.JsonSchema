@@ -85,6 +85,7 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
                     SchemaVariant.Draft7 => new CodeGeneration.Draft7.JsonSchemaBuilder(typeBuilder),
                     SchemaVariant.Draft202012 => new CodeGeneration.Draft202012.JsonSchemaBuilder(typeBuilder),
                     SchemaVariant.Draft201909 => new CodeGeneration.Draft201909.JsonSchemaBuilder(typeBuilder),
+                    SchemaVariant.OpenApi30 => new CodeGeneration.OpenApi30.JsonSchemaBuilder(typeBuilder),
                     _ => new CodeGeneration.Draft202012.JsonSchemaBuilder(typeBuilder)
                 };
 
@@ -185,6 +186,11 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         if ((validationSemantics & ValidationSemantics.Draft202012) != 0)
         {
             return SchemaVariant.Draft202012;
+        }
+
+        if ((validationSemantics & ValidationSemantics.OpenApi30) != 0)
+        {
+            return SchemaVariant.OpenApi30;
         }
 
         return SchemaVariant.NotSpecified;

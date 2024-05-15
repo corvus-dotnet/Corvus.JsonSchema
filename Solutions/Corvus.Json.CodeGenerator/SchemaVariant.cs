@@ -1,7 +1,7 @@
 ﻿namespace Corvus.Json.SchemaGenerator;
 
 /// <summary>
-/// The various schema types that are avaiable.
+/// The various schema types that are available.
 /// </summary>
 public enum SchemaVariant
 {
@@ -9,5 +9,6 @@ public enum SchemaVariant
     Draft6,
     Draft7,
     Draft201909,
-    Draft202012
+    Draft202012,
+    OpenApi30,
 }
