@@ -46,7 +46,7 @@ public static class SchemaExtensionsDraft4
 
         documentation.AppendLine("/// </summary>");
 
-        if (schema.Description.IsNotNullOrUndefined() || schema.Examples.IsNotNullOrUndefined())
+        if (schema.Description.IsNotNullOrUndefined())
         {
             documentation.AppendLine("/// <remarks>");
 
@@ -68,32 +68,6 @@ public static class SchemaExtensionsDraft4
                         documentation.AppendLine("/// </para>");
                     }
                 }
-            }
-
-            if (schema.Examples.IsNotNullOrUndefined())
-            {
-                documentation.AppendLine("/// <para>");
-                documentation.AppendLine("/// Examples:");
-                foreach (JsonAny example in schema.Examples.EnumerateArray())
-                {
-                    documentation.AppendLine("/// <example>");
-                    documentation.AppendLine("/// <code>");
-#if NET8_0_OR_GREATER
-                    string[] lines = example.ToString().Split("\\n");
-#else
-                    string[] lines = example.ToString().Split(["\\n"], StringSplitOptions.None);
-#endif
-                    foreach (string line in lines)
-                    {
-                        documentation.Append("/// ");
-                        documentation.AppendLine(Formatting.FormatLiteralOrNull(line, false));
-                    }
-
-                    documentation.AppendLine("/// </code>");
-                    documentation.AppendLine("/// </example>");
-                }
-
-                documentation.AppendLine("/// </para>");
             }
 
             documentation.AppendLine("/// </remarks>");
@@ -222,7 +196,7 @@ public static class SchemaExtensionsDraft4
     public static bool IsObjectType(this Schema draft6Schema)
     {
         return
-            draft6Schema.IsExplicitObjectType() || (draft6Schema.Type.IsSimpleTypesArray && draft6Schema.Type.AsSimpleTypesArray.EnumerateArray().Any(type => type.Equals(JsonSchema.Draft4.Schema.SimpleTypes.EnumValues.Object))) || draft6Schema.Properties.IsNotUndefined() || draft6Schema.Required.IsNotUndefined() || draft6Schema.AdditionalProperties.IsNotUndefined() || draft6Schema.MaxProperties.IsNotUndefined() || draft6Schema.MinProperties.IsNotUndefined() || draft6Schema.PatternProperties.IsNotUndefined() || draft6Schema.PropertyNames.IsNotUndefined() || draft6Schema.Dependencies.IsNotUndefined() || draft6Schema.HasObjectEnum() || draft6Schema.HasObjectConst();
+            draft6Schema.IsExplicitObjectType() || (draft6Schema.Type.IsSimpleTypesArray && draft6Schema.Type.AsSimpleTypesArray.EnumerateArray().Any(type => type.Equals(JsonSchema.Draft4.Schema.SimpleTypes.EnumValues.Object))) || draft6Schema.Properties.IsNotUndefined() || draft6Schema.Required.IsNotUndefined() || draft6Schema.AdditionalProperties.IsNotUndefined() || draft6Schema.MaxProperties.IsNotUndefined() || draft6Schema.MinProperties.IsNotUndefined() || draft6Schema.PatternProperties.IsNotUndefined() || draft6Schema.Dependencies.IsNotUndefined() || draft6Schema.HasObjectEnum() || draft6Schema.HasObjectConst();
     }
 
     /// <summary>
@@ -233,7 +207,7 @@ public static class SchemaExtensionsDraft4
     public static bool IsArrayType(this Schema draft6Schema)
     {
         return
-            draft6Schema.IsExplicitArrayType() || (draft6Schema.Type.IsSimpleTypesArray && draft6Schema.Type.AsSimpleTypesArray.EnumerateArray().Any(type => type.Equals(JsonSchema.Draft4.Schema.SimpleTypes.EnumValues.Array))) || draft6Schema.AdditionalItems.IsNotUndefined() || draft6Schema.Contains.IsNotUndefined() || draft6Schema.Items.IsNotUndefined() || draft6Schema.MaxItems.IsNotUndefined() || draft6Schema.MinItems.IsNotUndefined() || draft6Schema.UniqueItems.IsNotUndefined() || draft6Schema.HasArrayEnum() || draft6Schema.HasArrayConst();
+            draft6Schema.IsExplicitArrayType() || (draft6Schema.Type.IsSimpleTypesArray && draft6Schema.Type.AsSimpleTypesArray.EnumerateArray().Any(type => type.Equals(JsonSchema.Draft4.Schema.SimpleTypes.EnumValues.Array))) || draft6Schema.AdditionalItems.IsNotUndefined() || draft6Schema.Items.IsNotUndefined() || draft6Schema.MaxItems.IsNotUndefined() || draft6Schema.MinItems.IsNotUndefined() || draft6Schema.UniqueItems.IsNotUndefined() || draft6Schema.HasArrayEnum() || draft6Schema.HasArrayConst();
     }
 
     /// <summary>
@@ -366,7 +340,7 @@ public static class SchemaExtensionsDraft4
     /// <returns>True if the schema has a const value of the correct type.</returns>
     public static bool HasObjectConst(this Schema draft6Schema)
     {
-        return draft6Schema.Const.ValueKind == JsonValueKind.Object;
+        return false;
     }
 
     /// <summary>
@@ -376,7 +350,7 @@ public static class SchemaExtensionsDraft4
     /// <returns>True if the schema has a const value of the correct type.</returns>
     public static bool HasArrayConst(this Schema draft6Schema)
     {
-        return draft6Schema.Const.ValueKind == JsonValueKind.Array;
+        return false;
     }
 
     /// <summary>
@@ -386,7 +360,7 @@ public static class SchemaExtensionsDraft4
     /// <returns>True if the schema has a const value of the correct type.</returns>
     public static bool HasStringConst(this Schema draft6Schema)
     {
-        return draft6Schema.Const.ValueKind == JsonValueKind.String;
+        return false;
     }
 
     /// <summary>
@@ -396,7 +370,7 @@ public static class SchemaExtensionsDraft4
     /// <returns>True if the schema has a const value of the correct type.</returns>
     public static bool HasNumberConst(this Schema draft6Schema)
     {
-        return draft6Schema.Const.ValueKind == JsonValueKind.Number;
+        return false;
     }
 
     /// <summary>
@@ -406,7 +380,7 @@ public static class SchemaExtensionsDraft4
     /// <returns>True if the schema has a const value of the correct type.</returns>
     public static bool HasNullConst(this Schema draft6Schema)
     {
-        return draft6Schema.Const.ValueKind == JsonValueKind.Null;
+        return false;
     }
 
     /// <summary>
@@ -416,7 +390,7 @@ public static class SchemaExtensionsDraft4
     /// <returns>True if the schema has a const value of the correct type.</returns>
     public static bool HasBooleanConst(this Schema draft6Schema)
     {
-        return draft6Schema.Const.ValueKind == JsonValueKind.True || draft6Schema.Const.ValueKind == JsonValueKind.False;
+        return false;
     }
 
     /// <summary>
@@ -445,8 +419,6 @@ public static class SchemaExtensionsDraft4
             draft6Schema.AdditionalProperties.IsUndefined() &&
             draft6Schema.AllOf.IsUndefined() &&
             draft6Schema.AnyOf.IsUndefined() &&
-            draft6Schema.Const.IsUndefined() &&
-            draft6Schema.Contains.IsUndefined() &&
             draft6Schema.Default.IsUndefined() &&
             draft6Schema.Dependencies.IsUndefined() &&
             draft6Schema.Enum.IsUndefined() &&
@@ -467,8 +439,6 @@ public static class SchemaExtensionsDraft4
             draft6Schema.Pattern.IsUndefined() &&
             draft6Schema.PatternProperties.IsUndefined() &&
             draft6Schema.Properties.IsUndefined() &&
-            draft6Schema.PropertyNames.IsUndefined() &&
-            draft6Schema.Ref.IsUndefined() &&
             draft6Schema.Required.IsUndefined() &&
             draft6Schema.UniqueItems.IsUndefined());
     }
@@ -495,15 +465,12 @@ public static class SchemaExtensionsDraft4
             draft6Schema.AdditionalProperties.IsUndefined() &&
             draft6Schema.AllOf.IsUndefined() &&
             draft6Schema.AnyOf.IsUndefined() &&
-            draft6Schema.Const.IsUndefined() &&
-            draft6Schema.Contains.IsUndefined() &&
             draft6Schema.GetContentEncoding().IsUndefined() &&
             draft6Schema.GetContentMediaType().IsUndefined() &&
             draft6Schema.Default.IsUndefined() &&
             draft6Schema.Definitions.IsUndefined() &&
             draft6Schema.Dependencies.IsUndefined() &&
             draft6Schema.Description.IsUndefined() &&
-            draft6Schema.Examples.IsUndefined() &&
             draft6Schema.Enum.IsUndefined() &&
             draft6Schema.ExclusiveMaximum.IsUndefined() &&
             draft6Schema.ExclusiveMinimum.IsUndefined() &&
@@ -523,8 +490,6 @@ public static class SchemaExtensionsDraft4
             draft6Schema.Pattern.IsUndefined() &&
             draft6Schema.PatternProperties.IsUndefined() &&
             draft6Schema.Properties.IsUndefined() &&
-            draft6Schema.PropertyNames.IsUndefined() &&
-            draft6Schema.Ref.IsUndefined() &&
             draft6Schema.Required.IsUndefined() &&
             draft6Schema.Title.IsUndefined() &&
             draft6Schema.Type.IsUndefined() &&
@@ -544,15 +509,12 @@ public static class SchemaExtensionsDraft4
             draft6Schema.AdditionalProperties.IsUndefined() &&
             draft6Schema.AllOf.IsUndefined() &&
             draft6Schema.AnyOf.IsUndefined() &&
-            draft6Schema.Const.IsUndefined() &&
-            draft6Schema.Contains.IsUndefined() &&
             draft6Schema.GetContentEncoding().IsUndefined() &&
             draft6Schema.GetContentMediaType().IsUndefined() &&
             draft6Schema.Default.IsUndefined() &&
             draft6Schema.Definitions.IsUndefined() &&
             draft6Schema.Dependencies.IsUndefined() &&
             draft6Schema.Description.IsUndefined() &&
-            draft6Schema.Examples.IsUndefined() &&
             draft6Schema.Enum.IsUndefined() &&
             draft6Schema.ExclusiveMaximum.IsUndefined() &&
             draft6Schema.ExclusiveMinimum.IsUndefined() &&
@@ -571,8 +533,6 @@ public static class SchemaExtensionsDraft4
             draft6Schema.Pattern.IsUndefined() &&
             draft6Schema.PatternProperties.IsUndefined() &&
             draft6Schema.Properties.IsUndefined() &&
-            draft6Schema.PropertyNames.IsUndefined() &&
-            draft6Schema.Ref.IsUndefined() &&
             draft6Schema.Required.IsUndefined() &&
             draft6Schema.Title.IsUndefined() &&
             draft6Schema.Type.IsUndefined() &&
@@ -588,6 +548,6 @@ public static class SchemaExtensionsDraft4
     {
         // If we have a reference, we are always naked.
         return
-            draft6Schema.Ref.IsNotUndefined();
+            false;
     }
 }

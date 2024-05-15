@@ -433,32 +433,6 @@ public static class JsonSchemaHelpers
             }
         }
 
-        if (schema.Examples.IsNotNullOrUndefined())
-        {
-            documentation.AppendLine("/// <para>");
-            documentation.AppendLine("/// Examples:");
-            foreach (JsonAny example in schema.Examples.EnumerateArray())
-            {
-                documentation.AppendLine("/// <example>");
-                documentation.AppendLine("/// <code>");
-#if NET8_0_OR_GREATER
-                string[] lines = example.ToString().Split("\\n");
-#else
-                string[] lines = example.ToString().Split(["\\n"], StringSplitOptions.None);
-#endif
-                foreach (string line in lines)
-                {
-                    documentation.Append("/// ");
-                    documentation.AppendLine(Formatting.FormatLiteralOrNull(line, false));
-                }
-
-                documentation.AppendLine("/// </code>");
-                documentation.AppendLine("/// </example>");
-            }
-
-            documentation.AppendLine("/// </para>");
-        }
-
         if (documentation.Length > 0)
         {
             return documentation.ToString();

@@ -314,8 +314,6 @@ public readonly partial struct Schema
             JsonValueKind valueKind = value.ValueKind;
             return valueKind switch
             {
-                JsonValueKind.True => new(true),
-                JsonValueKind.False => new(false),
                 JsonValueKind.Object => new(value.AsObject.AsPropertyBacking()),
                 JsonValueKind.Null => Null,
                 _ => Undefined,
@@ -333,35 +331,6 @@ public readonly partial struct Schema
             return new(value);
         }
 
-        /// <summary>
-        /// Gets an instance of the JSON value from a boolean value.
-        /// </summary>
-        /// <typeparam name = "TValue">The type of the value.</typeparam>
-        /// <param name = "value">The value from which to instantiate the instance.</param>
-        /// <returns>An instance of this type, initialized from the value.</returns>
-        /// <remarks>This will be AdditionalPropertiesEntity.Undefined if the type is not compatible.</remarks>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static AdditionalPropertiesEntity FromBoolean<TValue>(in TValue value)
-            where TValue : struct, IJsonBoolean<TValue>
-        {
-            if (value.HasJsonElementBacking)
-            {
-                return new(value.AsJsonElement);
-            }
-
-            if (value.ValueKind == JsonValueKind.True)
-            {
-                return new(true);
-            }
-
-            if (value.ValueKind == JsonValueKind.False)
-            {
-                return new(false);
-            }
-
-            return Undefined;
-        }
-
 #if NET8_0_OR_GREATER
     /// <summary>
     /// Gets an instance of the JSON value from a string value.
@@ -372,6 +341,25 @@ public readonly partial struct Schema
     /// <remarks>This will be AdditionalPropertiesEntity.Undefined if the type is not compatible.</remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static AdditionalPropertiesEntity IJsonValue<AdditionalPropertiesEntity>.FromString<TValue>(in TValue value)
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        return Undefined;
+    }
+#endif
+#if NET8_0_OR_GREATER
+    /// <summary>
+    /// Gets an instance of the JSON value from a boolean value.
+    /// </summary>
+    /// <typeparam name = "TValue">The type of the value.</typeparam>
+    /// <param name = "value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the value.</returns>
+    /// <remarks>This will be AdditionalPropertiesEntity.Undefined if the type is not compatible.</remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    static AdditionalPropertiesEntity IJsonValue<AdditionalPropertiesEntity>.FromBoolean<TValue>(in TValue value)
     {
         if (value.HasJsonElementBacking)
         {
@@ -558,11 +546,6 @@ public readonly partial struct Schema
         if ((this.backing & Backing.JsonElement) != 0)
         {
             return TTarget.FromJson(this.jsonElementBacking);
-        }
-
-        if ((this.backing & Backing.Bool) != 0)
-        {
-            return TTarget.FromBoolean(this);
         }
 
         if ((this.backing & Backing.Object) != 0)

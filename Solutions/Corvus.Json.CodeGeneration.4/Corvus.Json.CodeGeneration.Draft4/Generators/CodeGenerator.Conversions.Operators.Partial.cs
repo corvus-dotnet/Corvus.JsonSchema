@@ -1150,7 +1150,7 @@ public partial class CodeGeneratorConversionsOperators
     {
         get
         {
-            return this.TypeDeclaration.Schema().Contains.IsNotUndefined();
+            return false;
         }
     }
 
@@ -1161,12 +1161,6 @@ public partial class CodeGeneratorConversionsOperators
     {
         get
         {
-            if (this.TypeDeclaration.Schema().Contains.IsNotUndefined())
-            {
-                TypeDeclaration typeDeclaration = this.Builder.GetTypeDeclarationForProperty(this.TypeDeclaration, "contains");
-                return typeDeclaration.FullyQualifiedDotnetTypeName!;
-            }
-
             return string.Empty;
         }
     }
