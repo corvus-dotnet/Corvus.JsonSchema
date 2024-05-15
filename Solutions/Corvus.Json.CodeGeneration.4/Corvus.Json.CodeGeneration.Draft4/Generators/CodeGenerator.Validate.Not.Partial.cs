@@ -790,7 +790,7 @@ public partial class CodeGeneratorValidateNot
     {
         get
         {
-            if (this.TypeDeclaration.Schema().ExclusiveMaximum.ValueKind == JsonValueKind.True)
+            if (this.TypeDeclaration.Schema().ExclusiveMaximum.ValueKind == JsonValueKind.True && this.TypeDeclaration.Schema().Maximum.IsNotUndefined())
             {
                 if (this.TypeDeclaration.Schema().Maximum.AsJsonElement.TryGetDouble(out double _))
                 {
@@ -834,15 +834,15 @@ public partial class CodeGeneratorValidateNot
     {
         get
         {
-            if (this.TypeDeclaration.Schema().ExclusiveMinimum.IsNotUndefined())
+            if (this.TypeDeclaration.Schema().ExclusiveMinimum.ValueKind == JsonValueKind.True && this.TypeDeclaration.Schema().Minimum.IsNotUndefined())
             {
-                if (this.TypeDeclaration.Schema().ExclusiveMinimum.AsJsonElement.TryGetDouble(out double _))
+                if (this.TypeDeclaration.Schema().Minimum.AsJsonElement.TryGetDouble(out double _))
                 {
-                    return this.TypeDeclaration.Schema().ExclusiveMinimum.AsJsonElement.GetRawText();
+                    return this.TypeDeclaration.Schema().Minimum.AsJsonElement.GetRawText();
                 }
 
                 // Fall back to a decimal
-                return $"{this.TypeDeclaration.Schema().ExclusiveMinimum.AsJsonElement.GetRawText()}M";
+                return $"{this.TypeDeclaration.Schema().Minimum.AsJsonElement.GetRawText()}M";
             }
 
             return string.Empty;
