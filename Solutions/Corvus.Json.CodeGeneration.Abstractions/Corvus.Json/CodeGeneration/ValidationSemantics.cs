@@ -38,10 +38,15 @@ public enum ValidationSemantics
     /// <summary>
     /// OpenAPI 3.0 semantics.
     /// </summary>
-    OpenApi30 = 0b1000,
+    OpenApi30 = 0b0001_0000,
+
+    /// <summary>
+    /// Draft 4 semantics.
+    /// </summary>
+    Draft4 = 0b0010_0000,
 
     /// <summary>
     /// Semantics prior to draft 2019-09 (i.e. draft6 or draft7).
     /// </summary>
-    Pre201909 = Draft6 | Draft7 | OpenApi30,
+    Pre201909 = Draft4 | Draft6 | Draft7 | OpenApi30,
 }

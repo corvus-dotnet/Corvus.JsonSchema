@@ -820,7 +820,7 @@ public partial class CodeGeneratorOneOf
                 }
 
                 // Fall back to a decimal
-                return $"{this.TypeDeclaration.Schema().MultipleOf.AsJsonElement.GetRawText()}M";
+                return $"{this.TypeDeclaration.Schema().ExclusiveMaximum.AsJsonElement.GetRawText()}M";
             }
 
             return string.Empty;

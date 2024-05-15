@@ -107,6 +107,11 @@ public partial class JsonSchemaTypeBuilder
                 string? schemaValue = value.GetString();
                 if (schemaValue is string sv)
                 {
+                    if (sv == "http://json-schema.org/draft-04/schema" || sv == "http://json-schema.org/draft-04/schema#")
+                    {
+                        return ValidationSemantics.Draft4;
+                    }
+
                     if (sv == "http://json-schema.org/draft-06/schema" || sv == "http://json-schema.org/draft-06/schema#")
                     {
                         return ValidationSemantics.Draft6;

@@ -1,5 +1,6 @@
 # JSON Schema
 
+.\Corvus.Json.CodeGenerator\bin\Debug\net8.0\Corvus.Json.JsonSchema.TypeGeneratorTool.exe --rootNamespace Corvus.Json.JsonSchema.Draft4 --outputPath .\Corvus.Json.JsonSchema.Draft4\Draft4\ https://json-schema.org/draft-04/schema
 .\Corvus.Json.CodeGenerator\bin\Debug\net8.0\Corvus.Json.JsonSchema.TypeGeneratorTool.exe --rootNamespace Corvus.Json.JsonSchema.Draft6 --outputPath .\Corvus.Json.JsonSchema.Draft6\Draft6\ https://json-schema.org/draft-06/schema
 .\Corvus.Json.CodeGenerator\bin\Debug\net8.0\Corvus.Json.JsonSchema.TypeGeneratorTool.exe --rootNamespace Corvus.Json.JsonSchema.Draft7 --outputPath .\Corvus.Json.JsonSchema.Draft7\Draft7\ https://json-schema.org/draft-07/schema
 .\Corvus.Json.CodeGenerator\bin\Debug\net8.0\Corvus.Json.JsonSchema.TypeGeneratorTool.exe --rootNamespace Corvus.Json.JsonSchema.Draft201909 --outputPath .\Corvus.Json.JsonSchema.Draft201909\Draft201909\ https://json-schema.org/draft/2019-09/schema
@@ -7,7 +8,7 @@
 
 # OpenAPI
 
-.\Corvus.Json.CodeGenerator\bin\Debug\net8.0\Corvus.Json.JsonSchema.TypeGeneratorTool.exe --rootNamespace Corvus.Json.JsonSchema.OpenApi30 --outputPath .\Corvus.Json.JsonSchema.OpenApi30\OpenApi30\ --useSchema Draft6 --rootPath "#/definitions/Schema" https://github.com/OAI/OpenAPI-Specification/blob/main/schemas/v3.0/schema.json
+.\Corvus.Json.CodeGenerator\bin\Debug\net8.0\Corvus.Json.JsonSchema.TypeGeneratorTool.exe --rootNamespace Corvus.Json.JsonSchema.OpenApi30 --outputPath .\Corvus.Json.JsonSchema.OpenApi30\OpenApi30\ --rootPath "#/definitions/Schema" https://github.com/OAI/OpenAPI-Specification/blob/main/schemas/v3.0/schema.json
 
 # JSON Patch
 
