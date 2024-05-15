@@ -41,7 +41,7 @@ public static class JsonSchemaHelpers
     }
 
     /// <summary>
-    /// Creates the draft7 items keyword.
+    /// Creates the openApi3.0 items keyword.
     /// </summary>
     /// <returns>The items keyword.</returns>
     private static string CreateOpenApi30ItemsKeyword()
@@ -50,7 +50,7 @@ public static class JsonSchemaHelpers
     }
 
     /// <summary>
-    /// Creates the list of draft7 anchor keywords.
+    /// Creates the list of openApi3.0 anchor keywords.
     /// </summary>
     /// <returns>An array of keywords that represent anchors in draft 2020-12.</returns>
     private static ImmutableArray<AnchorKeyword> CreateOpenApi30AnchorKeywords()
@@ -61,7 +61,7 @@ public static class JsonSchemaHelpers
     }
 
     /// <summary>
-    /// Gets the draft7 <c>$id</c> keyword.
+    /// Gets the openApi3.0 <c>$id</c> keyword.
     /// </summary>
     /// <returns>Return <c>"$id"</c>.</returns>
     private static string CreateOpenApi30IdKeyword()
@@ -79,7 +79,7 @@ public static class JsonSchemaHelpers
     }
 
     /// <summary>
-    /// Gets the draft7 <c>$defs</c> keyword.
+    /// Gets the openApi3.0 <c>$defs</c> keyword.
     /// </summary>
     /// <returns>Return <c>"$defs"</c>.</returns>
     private static ImmutableHashSet<string> CreateOpenApi30DefsKeywords()
@@ -99,7 +99,7 @@ public static class JsonSchemaHelpers
     /// </returns>
     private static ImmutableHashSet<string> CreateOpenApi30IrreducibleKeywords()
     {
-        // $ref always reduces in draft7.
+        // $ref always reduces in openApi 3.0.
         return
         [
         ];
@@ -224,7 +224,7 @@ public static class JsonSchemaHelpers
     }
 
     /// <summary>
-    /// Creates the draft2019-09 keywords that are resolvable to a schema.
+    /// Creates the openApi3.0 keywords that are resolvable to a schema.
     /// </summary>
     /// <returns>An array of <see cref="RefResolvableKeyword"/> instances.</returns>
     private static ImmutableArray<RefResolvableKeyword> CreateOpenApi30RefResolvableKeywords()
@@ -244,7 +244,7 @@ public static class JsonSchemaHelpers
     }
 
     /// <summary>
-    /// Creates the draft7 reference keywords.
+    /// Creates the openApi3.0 reference keywords.
     /// </summary>
     /// <returns>An array of <see cref="RefKeyword"/> instances.</returns>
     private static ImmutableArray<RefKeyword> CreateOpenApi30RefKeywords()
@@ -261,7 +261,7 @@ public static class JsonSchemaHelpers
     /// <returns><see langword="true"/> if the schema is a valid draft 7 schema.</returns>
     private static Predicate<JsonAny> CreateOpenApi30ValidateSchema()
     {
-        return static s => s.As<JsonSchema.OpenApi30.Schema>().IsValid();
+        return static s => s.As<JsonSchema.OpenApi30.Schema>().IsValid() || s.As<JsonSchema.OpenApi30.Reference>().IsValid();
     }
 
     /// <summary>
