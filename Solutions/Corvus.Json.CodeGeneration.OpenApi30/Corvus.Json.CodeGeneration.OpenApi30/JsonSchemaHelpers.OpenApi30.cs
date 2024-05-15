@@ -22,7 +22,7 @@ public static class JsonSchemaHelpers
     public static JsonSchemaTypeBuilder UseOpenApi30(this JsonSchemaTypeBuilder builder)
     {
         JsonSchemaConfiguration configuration = builder.JsonSchemaConfiguration;
-        configuration.ValidatingAs = ValidationSemantics.Draft6;
+        configuration.ValidatingAs = ValidationSemantics.OpenApi30;
         configuration.AnchorKeywords = CreateOpenApi30AnchorKeywords();
         configuration.IdKeyword = CreateOpenApi30IdKeyword();
         configuration.ItemsKeyword = CreateOpenApi30ItemsKeyword();
