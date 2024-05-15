@@ -962,7 +962,7 @@ public partial class CodeGeneratorValidateOneOf
     {
         get
         {
-            return this.TypeDeclaration.Schema().Ref.IsNotUndefined() && !this.TypeDeclaration.Schema().IsNakedReference();
+            return false;
         }
     }
 
@@ -1007,7 +1007,7 @@ public partial class CodeGeneratorValidateOneOf
     {
         get
         {
-            return this.TypeDeclaration.Schema().PropertyNames.IsNotUndefined();
+            return false;
         }
     }
 
@@ -2462,12 +2462,6 @@ public partial class CodeGeneratorValidateOneOf
             return format is string f ? [f] : [];
         }
 
-        if (typeDeclaration.Schema().Ref.IsNotUndefined() && !typeDeclaration.Schema().IsNakedReference())
-        {
-            TypeDeclaration td = this.Builder.GetTypeDeclarationForProperty(typeDeclaration, "$ref");
-            return this.GetImpliedFormats(td);
-        }
-
         if (typeDeclaration.Schema().AllOf.IsNotUndefined() && typeDeclaration.Schema().AllOf.GetArrayLength() == 1)
         {
             TypeDeclaration td = this.Builder.GetTypeDeclarationForPropertyArrayIndex(typeDeclaration, "allOf", 0);
@@ -2720,17 +2714,6 @@ public partial class CodeGeneratorValidateOneOf
                     conversions.Add(td, new Conversion(td, parent is null, isImplicitDowncast: allowsImplicitDowncast));
                     this.AddConversionsFor(td, conversions, typeDeclaration);
                 }
-            }
-        }
-
-        if (typeDeclaration.Schema().Ref.IsNotUndefined() && !typeDeclaration.Schema().IsNakedReference())
-        {
-            TypeDeclaration td = this.Builder.GetTypeDeclarationForProperty(typeDeclaration, "$ref");
-
-            if (!conversions.ContainsKey(td))
-            {
-                conversions.Add(td, new Conversion(td, parent is null, true));
-                this.AddConversionsFor(td, conversions, typeDeclaration);
             }
         }
     }

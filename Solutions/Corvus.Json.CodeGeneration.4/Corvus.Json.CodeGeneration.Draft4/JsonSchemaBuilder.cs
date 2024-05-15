@@ -31,7 +31,6 @@ public class JsonSchemaBuilder : JsonSchemaBuilderBase
         var codeGeneratorArrayRemove = new CodeGeneratorArrayRemove(this, typeForGeneration.TypeDeclaration);
         var codeGeneratorArray = new CodeGeneratorArray(this, typeForGeneration.TypeDeclaration);
         var codeGeneratorBoolean = new CodeGeneratorBoolean(this, typeForGeneration.TypeDeclaration);
-        var codeGeneratorConst = new CodeGeneratorConst(this, typeForGeneration.TypeDeclaration);
         var codeGeneratorConversionsAccessors = new CodeGeneratorConversionsAccessors(this, typeForGeneration.TypeDeclaration);
         var codeGeneratorConversionsOperators = new CodeGeneratorConversionsOperators(this, typeForGeneration.TypeDeclaration);
         var codeGeneratorDefaults = new CodeGeneratorDefaults(this, typeForGeneration.TypeDeclaration);
@@ -52,7 +51,6 @@ public class JsonSchemaBuilder : JsonSchemaBuilderBase
         var codeGeneratorValidateNot = new CodeGeneratorValidateNot(this, typeForGeneration.TypeDeclaration);
         var codeGeneratorValidateObject = new CodeGeneratorValidateObject(this, typeForGeneration.TypeDeclaration);
         var codeGeneratorValidateOneOf = new CodeGeneratorValidateOneOf(this, typeForGeneration.TypeDeclaration);
-        var codeGeneratorValidateRef = new CodeGeneratorValidateRef(this, typeForGeneration.TypeDeclaration);
         var codeGeneratorValidate = new CodeGeneratorValidate(this, typeForGeneration.TypeDeclaration);
         var codeGeneratorValidateType = new CodeGeneratorValidateType(this, typeForGeneration.TypeDeclaration);
 
@@ -91,11 +89,6 @@ public class JsonSchemaBuilder : JsonSchemaBuilderBase
         if (codeGeneratorBoolean.ShouldGenerate)
         {
             files.Add(new(codeGeneratorBoolean.TransformText(), $"{fileName}.Boolean.cs"));
-        }
-
-        if (codeGeneratorConst.ShouldGenerate)
-        {
-            files.Add(new(codeGeneratorConst.TransformText(), $"{fileName}.Const.cs"));
         }
 
         if (codeGeneratorConversionsAccessors.ShouldGenerate)
@@ -196,11 +189,6 @@ public class JsonSchemaBuilder : JsonSchemaBuilderBase
         if (codeGeneratorValidateOneOf.ShouldGenerate)
         {
             files.Add(new(codeGeneratorValidateOneOf.TransformText(), $"{fileName}.Validate.OneOf.cs"));
-        }
-
-        if (codeGeneratorValidateRef.ShouldGenerate)
-        {
-            files.Add(new(codeGeneratorValidateRef.TransformText(), $"{fileName}.Validate.Ref.cs"));
         }
 
         if (codeGeneratorValidateType.ShouldGenerate)
