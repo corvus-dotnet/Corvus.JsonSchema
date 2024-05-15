@@ -242,7 +242,7 @@ public partial class CodeGeneratorPatternProperties
     {
         get
         {
-            return this.TypeDeclaration.Schema().Const.ValueKind == JsonValueKind.String;
+            return false;
         }
     }
 
@@ -253,7 +253,7 @@ public partial class CodeGeneratorPatternProperties
     {
         get
         {
-            return this.TypeDeclaration.Schema().Const.ValueKind == JsonValueKind.True || this.TypeDeclaration.Schema().Const.ValueKind == JsonValueKind.False;
+            return false;
         }
     }
 
@@ -264,7 +264,7 @@ public partial class CodeGeneratorPatternProperties
     {
         get
         {
-            return this.TypeDeclaration.Schema().Const.ValueKind == JsonValueKind.Number;
+            return false;
         }
     }
 
@@ -275,7 +275,7 @@ public partial class CodeGeneratorPatternProperties
     {
         get
         {
-            return this.TypeDeclaration.Schema().Const.ValueKind == JsonValueKind.Object;
+            return false;
         }
     }
 
@@ -286,7 +286,7 @@ public partial class CodeGeneratorPatternProperties
     {
         get
         {
-            return this.TypeDeclaration.Schema().Const.ValueKind == JsonValueKind.Array;
+            return false;
         }
     }
 
@@ -297,7 +297,7 @@ public partial class CodeGeneratorPatternProperties
     {
         get
         {
-            return this.TypeDeclaration.Schema().Const.ValueKind == JsonValueKind.Null;
+            return false;
         }
     }
 
@@ -308,11 +308,6 @@ public partial class CodeGeneratorPatternProperties
     {
         get
         {
-            if (this.HasConstString)
-            {
-                return GetRawTextAsQuotedString(this.TypeDeclaration.Schema().Const);
-            }
-
             return string.Empty;
         }
     }
@@ -324,11 +319,6 @@ public partial class CodeGeneratorPatternProperties
     {
         get
         {
-            if (this.HasConstBoolean)
-            {
-                return GetRawTextAsQuotedString(this.TypeDeclaration.Schema().Const);
-            }
-
             return string.Empty;
         }
     }
@@ -340,11 +330,6 @@ public partial class CodeGeneratorPatternProperties
     {
         get
         {
-            if (this.HasConstNumber)
-            {
-                return GetRawTextAsQuotedString(this.TypeDeclaration.Schema().Const);
-            }
-
             return string.Empty;
         }
     }
@@ -356,11 +341,6 @@ public partial class CodeGeneratorPatternProperties
     {
         get
         {
-            if (this.HasConstObject)
-            {
-                return GetRawTextAsQuotedString(this.TypeDeclaration.Schema().Const);
-            }
-
             return string.Empty;
         }
     }
@@ -372,11 +352,6 @@ public partial class CodeGeneratorPatternProperties
     {
         get
         {
-            if (this.HasConstArray)
-            {
-                return GetRawTextAsQuotedString(this.TypeDeclaration.Schema().Const);
-            }
-
             return string.Empty;
         }
     }
@@ -627,7 +602,7 @@ public partial class CodeGeneratorPatternProperties
     {
         get
         {
-            return this.TypeDeclaration.Schema().Const.IsNotUndefined();
+            return false;
         }
     }
 
@@ -2413,7 +2388,7 @@ public partial class CodeGeneratorPatternProperties
     /// <returns><c>True</c> if the type declaration represents a const value.</returns>
     public static bool IsConst(TypeDeclaration typeDeclaration)
     {
-        return typeDeclaration.Schema().Const.IsNotUndefined();
+        return false;
     }
 
     /// <summary>
