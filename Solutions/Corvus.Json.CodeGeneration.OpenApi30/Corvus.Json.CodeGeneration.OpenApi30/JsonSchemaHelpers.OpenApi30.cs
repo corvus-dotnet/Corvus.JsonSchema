@@ -256,9 +256,9 @@ public static class JsonSchemaHelpers
     }
 
     /// <summary>
-    /// Creates the predicate that validates a schema against draft 7 metaschema.
+    /// Creates the predicate that validates a schema against openApi30 metaschema.
     /// </summary>
-    /// <returns><see langword="true"/> if the schema is a valid draft 7 schema.</returns>
+    /// <returns><see langword="true"/> if the schema is a valid openApi30 schema.</returns>
     private static Predicate<JsonAny> CreateOpenApi30ValidateSchema()
     {
         // We always claim to be valid.
