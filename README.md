@@ -383,11 +383,14 @@ Benchmark suites for various components.
 
 The big change with v3.0 is support for older (supported) versions of .NET, including the .NET Framework, through netstandard2.0.
 
+As of v3.0.23 we also support draft4 and OpenAPI3.0 schema.
+
 Additional changes include:
 
     - Pattern matching methods for anyOf, oneOf and enum types.
     - Implicit cast to bool for boolean types
     - Specify an explicit type name hint for a schema with the $corvusTypeName keyword
+    - Improved heuristic for type naming based on `title` and `documentation` as fallbacks if no better name can be dervied.
     
 ## V2.0 Updates
 
