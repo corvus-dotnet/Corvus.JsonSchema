@@ -1,0 +1,42 @@
+{
+    // This defines selectors that build test suites based on the files in the
+    // draft2019-09 and draft2020-12 folders of the JSON Schema spec suite.
+
+    "includeInThisDirectory": [],
+    "subdirectories": {
+        "openApi30": {
+            "testSet": "openApi30",
+            "outputFolder": "OpenApi30",
+            "excludeFromThisDirectory": [
+            ],
+            "subdirectories": {
+                "optional": {
+                    "excludeFromThisDirectory": [
+                        "bignum\\.json",
+                        "ecmascript-regex\\.json",
+                        "non-bmp-regex\\.json",
+                        "zeroTerminatedFloats\\.json"
+                    ],
+                    "subdirectories": {
+                        "format": {
+                            "excludeFromThisDirectory": [
+                            ],
+                            "testExclusions": {
+                                "optional/format/date-time.json": {
+                                    "validation of date-time strings": {
+                                        // Leap seconds
+                                        "testsToIgnoreIndices": [
+                                            10,
+                                            11
+                                        ]
+                                    }
+                                }
+                            }
+
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

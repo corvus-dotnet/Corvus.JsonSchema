@@ -17,6 +17,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <None Update="OpenApiTestSuiteSelector.jsonc">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
 	  <None Update="JsonSchemaOrgTestSuiteSelector.jsonc">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </None>
