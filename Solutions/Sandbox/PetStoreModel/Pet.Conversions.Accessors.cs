@@ -49,35 +49,35 @@ public readonly partial struct Pet
     }
 
     /// <summary>
-    /// Gets the value as a <see cref = "JsonSchemaSample.Api.Pet.AllOf1Entity"/>.
+    /// Gets the value as a <see cref = "JsonSchemaSample.Api.Pet.RequiredId"/>.
     /// </summary>
-    public JsonSchemaSample.Api.Pet.AllOf1Entity AsAllOf1Entity
+    public JsonSchemaSample.Api.Pet.RequiredId AsRequiredId
     {
         get
         {
-            return (JsonSchemaSample.Api.Pet.AllOf1Entity)this;
+            return (JsonSchemaSample.Api.Pet.RequiredId)this;
         }
     }
 
     /// <summary>
-    /// Gets a value indicating whether this is a valid <see cref = "JsonSchemaSample.Api.Pet.AllOf1Entity"/>.
+    /// Gets a value indicating whether this is a valid <see cref = "JsonSchemaSample.Api.Pet.RequiredId"/>.
     /// </summary>
-    public bool IsAllOf1Entity
+    public bool IsRequiredId
     {
         get
         {
-            return ((JsonSchemaSample.Api.Pet.AllOf1Entity)this).IsValid();
+            return ((JsonSchemaSample.Api.Pet.RequiredId)this).IsValid();
         }
     }
 
     /// <summary>
-    /// Gets the value as a <see cref = "JsonSchemaSample.Api.Pet.AllOf1Entity"/>.
+    /// Gets the value as a <see cref = "JsonSchemaSample.Api.Pet.RequiredId"/>.
     /// </summary>
     /// <param name = "result">The result of the conversion.</param>
     /// <returns><c>True</c> if the conversion was valid.</returns>
-    public bool TryGetAsAllOf1Entity(out JsonSchemaSample.Api.Pet.AllOf1Entity result)
+    public bool TryGetAsRequiredId(out JsonSchemaSample.Api.Pet.RequiredId result)
     {
-        result = (JsonSchemaSample.Api.Pet.AllOf1Entity)this;
+        result = (JsonSchemaSample.Api.Pet.RequiredId)this;
         return result.IsValid();
     }
 }

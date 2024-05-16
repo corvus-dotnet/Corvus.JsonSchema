@@ -31,7 +31,7 @@ public readonly partial struct OpenApiDocument
                 result = result.PushValidationLocationProperty("not");
             }
 
-            ValidationContext notResult = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXOrExamples.NotEntity>().Validate(validationContext.CreateChildContext(), level);
+            ValidationContext notResult = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXOrExamples.RequiredExampleAndExamples>().Validate(validationContext.CreateChildContext(), level);
             if (notResult.IsValid)
             {
                 if (level >= ValidationLevel.Detailed)

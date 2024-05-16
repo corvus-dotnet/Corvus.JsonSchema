@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Text.Json;
 using Corvus.Json.JsonSchema.Draft7;
@@ -34,10 +35,106 @@ public static class JsonSchemaHelpers
         configuration.RefResolvableKeywords = CreateDraft7RefResolvableKeywords();
         configuration.ValidateSchema = CreateDraft7ValidateSchema();
         configuration.GetBuiltInTypeName = CreateDraft7GetBuiltInTypeNameFunction();
+        configuration.ProposeName = ProposeName;
         configuration.IsExplicitArrayType = CreateDraft7IsExplicitArrayType();
         configuration.IsSimpleType = CreateDraft7IsSimpleType();
         configuration.FindAndBuildPropertiesAdapter = CreateDraft7FindAndBuildPropertiesAdapter();
         return builder;
+    }
+
+    private static bool ProposeName(TypeDeclaration typeDeclaration, JsonReferenceBuilder reference, [NotNullWhen(true)] out string? name)
+    {
+        if (typeDeclaration.LocatedSchema.Schema.ValueKind == JsonValueKind.Object &&
+            typeDeclaration.Schema().Title.IsNotUndefined() &&
+            typeDeclaration.Schema().Title.TryGetString(out string? titleValueString) &&
+            titleValueString.Length > 0 && titleValueString.Length < 64)
+        {
+            name = titleValueString;
+            return true;
+        }
+        else if (typeDeclaration.LocatedSchema.Schema.ValueKind == JsonValueKind.Object &&
+            typeDeclaration.Schema().Description.IsNotUndefined() &&
+            typeDeclaration.Schema().Description.TryGetString(out string? descriptionString) &&
+            descriptionString.Length > 0 && descriptionString.Length < 64)
+        {
+            name = descriptionString;
+            return true;
+        }
+        else if (typeDeclaration.LocatedSchema.Schema.ValueKind == JsonValueKind.Object &&
+            typeDeclaration.Schema().IsObjectType() &&
+            typeDeclaration.Schema().Required.IsNotUndefined() &&
+            typeDeclaration.Schema().Required.GetArrayLength() < 3)
+        {
+            StringBuilder s = new();
+            foreach (JsonString required in typeDeclaration.Schema().Required.EnumerateArray())
+            {
+                if (s.Length == 0)
+                {
+                    s.Append("Required ");
+                }
+                else
+                {
+                    s.Append(" and ");
+                }
+
+#if NET8_0_OR_GREATER
+                s.Append(Formatting.ToPascalCaseWithReservedWords((string)required));
+#else
+                s.Append(Formatting.ToPascalCaseWithReservedWords((string)required).ToString());
+#endif
+            }
+
+            name = s.ToString();
+            return true;
+        }
+        else if (typeDeclaration.LocatedSchema.Schema.ValueKind == JsonValueKind.Object &&
+            typeDeclaration.Schema().IsObjectType() &&
+            typeDeclaration.Schema().Properties.IsNotUndefined())
+        {
+            var constProperties = typeDeclaration.Schema().Properties.Where(
+                p => p.Value.Const.ValueKind == JsonValueKind.String ||
+                     p.Value.Const.ValueKind == JsonValueKind.Null ||
+                     p.Value.Const.ValueKind == JsonValueKind.Number ||
+                     p.Value.Const.ValueKind == JsonValueKind.True ||
+                     p.Value.Const.ValueKind == JsonValueKind.False).ToList();
+
+            if (constProperties.Count > 0 && constProperties.Count < 3)
+            {
+                StringBuilder s = new();
+                foreach (KeyValuePair<JsonPropertyName, Schema> constProperty in constProperties)
+                {
+                    if (s.Length == 0)
+                    {
+                        s.Append("With ");
+                    }
+                    else
+                    {
+                        s.Append(" and ");
+                    }
+
+#if NET8_0_OR_GREATER
+                    s.Append(Formatting.ToPascalCaseWithReservedWords((string)constProperty.Key));
+                    s.Append(Formatting.ToPascalCaseWithReservedWords(
+                        constProperty.Value.Const.ValueKind == JsonValueKind.String ?
+                            (string)constProperty.Value.Const.AsString :
+                            constProperty.Value.Const.ToString()));
+#else
+                    s.Append(Formatting.ToPascalCaseWithReservedWords((string)constProperty.Key).ToString());
+                    s.Append(Formatting.ToPascalCaseWithReservedWords(
+                        constProperty.Value.Const.ValueKind == JsonValueKind.String ?
+                            (string)constProperty.Value.Const.AsString :
+                            constProperty.Value.Const.ToString()).ToString());
+
+#endif
+                }
+
+                name = s.ToString();
+                return true;
+            }
+        }
+
+        name = null;
+        return false;
     }
 
     /// <summary>

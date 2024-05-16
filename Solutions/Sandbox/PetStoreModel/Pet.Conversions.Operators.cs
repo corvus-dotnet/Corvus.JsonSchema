@@ -56,10 +56,10 @@ public readonly partial struct Pet
     }
 
     /// <summary>
-    /// Conversion to <see cref = "JsonSchemaSample.Api.Pet.AllOf1Entity"/>.
+    /// Conversion to <see cref = "JsonSchemaSample.Api.Pet.RequiredId"/>.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator JsonSchemaSample.Api.Pet.AllOf1Entity(Pet value)
+    public static implicit operator JsonSchemaSample.Api.Pet.RequiredId(Pet value)
     {
         if ((value.backing & Backing.JsonElement) != 0)
         {
@@ -71,14 +71,14 @@ public readonly partial struct Pet
             return new(value.objectBacking);
         }
 
-        return JsonSchemaSample.Api.Pet.AllOf1Entity.Undefined;
+        return JsonSchemaSample.Api.Pet.RequiredId.Undefined;
     }
 
     /// <summary>
-    /// Conversion from <see cref = "JsonSchemaSample.Api.Pet.AllOf1Entity"/>.
+    /// Conversion from <see cref = "JsonSchemaSample.Api.Pet.RequiredId"/>.
     /// </summary>
     /// <param name = "value">The value from which to convert.</param>
-    public static explicit operator Pet(JsonSchemaSample.Api.Pet.AllOf1Entity value)
+    public static explicit operator Pet(JsonSchemaSample.Api.Pet.RequiredId value)
     {
         if (value.HasJsonElementBacking)
         {

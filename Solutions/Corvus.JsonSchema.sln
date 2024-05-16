@@ -67,15 +67,17 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{2CE21CBD-4
 		..\README.md = ..\README.md
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Corvus.Json.JsonSchema.OpenApi30", "Corvus.Json.JsonSchema.OpenApi30\Corvus.Json.JsonSchema.OpenApi30.csproj", "{0DCAAEF5-28AB-4512-BCDE-0B80906469B4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Corvus.Json.JsonSchema.OpenApi30", "Corvus.Json.JsonSchema.OpenApi30\Corvus.Json.JsonSchema.OpenApi30.csproj", "{0DCAAEF5-28AB-4512-BCDE-0B80906469B4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Corvus.Json.CodeGeneration.OpenApi30", "Corvus.Json.CodeGeneration.OpenApi30\Corvus.Json.CodeGeneration.OpenApi30.csproj", "{42816A57-2CBB-4CE9-A772-C7E9444A65CF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Corvus.Json.CodeGeneration.OpenApi30", "Corvus.Json.CodeGeneration.OpenApi30\Corvus.Json.CodeGeneration.OpenApi30.csproj", "{42816A57-2CBB-4CE9-A772-C7E9444A65CF}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Engines", "Engines", "{61768B8B-B9E7-4B3D-BD95-BE8358CDDDB0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Corvus.Json.CodeGeneration.4", "Corvus.Json.CodeGeneration.4\Corvus.Json.CodeGeneration.4.csproj", "{EBAE759E-856E-465C-BDAE-B0B7CD340BC3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Corvus.Json.CodeGeneration.4", "Corvus.Json.CodeGeneration.4\Corvus.Json.CodeGeneration.4.csproj", "{EBAE759E-856E-465C-BDAE-B0B7CD340BC3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Corvus.Json.JsonSchema.Draft4", "Corvus.Json.JsonSchema.Draft4\Corvus.Json.JsonSchema.Draft4.csproj", "{6326E721-2DFE-45C2-A30F-98D3AA5C202A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Corvus.Json.JsonSchema.Draft4", "Corvus.Json.JsonSchema.Draft4\Corvus.Json.JsonSchema.Draft4.csproj", "{6326E721-2DFE-45C2-A30F-98D3AA5C202A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Corvus.Json.JsonSchema.OpenApi31", "Corvus.Json.JsonSchema.OpenApi31\Corvus.Json.JsonSchema.OpenApi31.csproj", "{F6FD6F8C-1CC7-43B2-9B6F-FDA696BBB840}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -171,6 +173,10 @@ Global
 		{6326E721-2DFE-45C2-A30F-98D3AA5C202A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6326E721-2DFE-45C2-A30F-98D3AA5C202A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6326E721-2DFE-45C2-A30F-98D3AA5C202A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F6FD6F8C-1CC7-43B2-9B6F-FDA696BBB840}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F6FD6F8C-1CC7-43B2-9B6F-FDA696BBB840}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F6FD6F8C-1CC7-43B2-9B6F-FDA696BBB840}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F6FD6F8C-1CC7-43B2-9B6F-FDA696BBB840}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -198,6 +204,7 @@ Global
 		{61768B8B-B9E7-4B3D-BD95-BE8358CDDDB0} = {95D2B90C-DBBA-4AF7-BAE8-4E933E050E75}
 		{EBAE759E-856E-465C-BDAE-B0B7CD340BC3} = {61768B8B-B9E7-4B3D-BD95-BE8358CDDDB0}
 		{6326E721-2DFE-45C2-A30F-98D3AA5C202A} = {3D0E15DD-5C66-4C2E-BAD1-F10A3B7B4A31}
+		{F6FD6F8C-1CC7-43B2-9B6F-FDA696BBB840} = {3D0E15DD-5C66-4C2E-BAD1-F10A3B7B4A31}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {D744631F-1DD6-4290-BF2D-67925BA2341D}

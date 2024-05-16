@@ -83,10 +83,10 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf0Entity"/>.
+        /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.RequiredSchema"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static explicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf0Entity(Parameter value)
+        public static explicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.RequiredSchema(Parameter value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -98,14 +98,14 @@ public readonly partial struct OpenApiDocument
                 return new(value.objectBacking);
             }
 
-            return Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf0Entity.Undefined;
+            return Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.RequiredSchema.Undefined;
         }
 
         /// <summary>
-        /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf0Entity"/>.
+        /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.RequiredSchema"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static explicit operator Parameter(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf0Entity value)
+        public static explicit operator Parameter(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.RequiredSchema value)
         {
             if (value.HasJsonElementBacking)
             {

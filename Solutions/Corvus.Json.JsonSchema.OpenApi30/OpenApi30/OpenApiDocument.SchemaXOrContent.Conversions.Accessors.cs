@@ -23,35 +23,35 @@ public readonly partial struct OpenApiDocument
     public readonly partial struct SchemaXOrContent
     {
         /// <summary>
-        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf0Entity"/>.
+        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.RequiredSchema"/>.
         /// </summary>
-        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf0Entity AsOneOf0Entity
+        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.RequiredSchema AsRequiredSchema
         {
             get
             {
-                return (Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf0Entity)this;
+                return (Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.RequiredSchema)this;
             }
         }
 
         /// <summary>
-        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf0Entity"/>.
+        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.RequiredSchema"/>.
         /// </summary>
-        public bool IsOneOf0Entity
+        public bool IsRequiredSchema
         {
             get
             {
-                return ((Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf0Entity)this).IsValid();
+                return ((Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.RequiredSchema)this).IsValid();
             }
         }
 
         /// <summary>
-        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf0Entity"/>.
+        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.RequiredSchema"/>.
         /// </summary>
         /// <param name = "result">The result of the conversion.</param>
         /// <returns><c>True</c> if the conversion was valid.</returns>
-        public bool TryGetAsOneOf0Entity(out Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf0Entity result)
+        public bool TryGetAsRequiredSchema(out Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.RequiredSchema result)
         {
-            result = (Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.OneOf0Entity)this;
+            result = (Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent.RequiredSchema)this;
             return result.IsValid();
         }
 
