@@ -51,35 +51,35 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm"/>.
+        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.EncodingEntity.ExplodeDefaultEntity"/>.
         /// </summary>
-        public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm AsStylesForForm
+        public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.EncodingEntity.ExplodeDefaultEntity AsExplodeDefaultEntity
         {
             get
             {
-                return (Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm)this;
+                return (Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.EncodingEntity.ExplodeDefaultEntity)this;
             }
         }
 
         /// <summary>
-        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm"/>.
+        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.EncodingEntity.ExplodeDefaultEntity"/>.
         /// </summary>
-        public bool IsStylesForForm
+        public bool IsExplodeDefaultEntity
         {
             get
             {
-                return ((Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm)this).IsValid();
+                return ((Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.EncodingEntity.ExplodeDefaultEntity)this).IsValid();
             }
         }
 
         /// <summary>
-        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm"/>.
+        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.EncodingEntity.ExplodeDefaultEntity"/>.
         /// </summary>
         /// <param name = "result">The result of the conversion.</param>
         /// <returns><c>True</c> if the conversion was valid.</returns>
-        public bool TryGetAsStylesForForm(out Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm result)
+        public bool TryGetAsExplodeDefaultEntity(out Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.EncodingEntity.ExplodeDefaultEntity result)
         {
-            result = (Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm)this;
+            result = (Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.EncodingEntity.ExplodeDefaultEntity)this;
             return result.IsValid();
         }
     }

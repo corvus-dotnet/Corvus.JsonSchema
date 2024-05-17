@@ -47,12 +47,6 @@ public readonly partial struct OpenApiDocument
                 return result;
             }
 
-            result = this.ValidateIfThenElse(result, level);
-            if (level == ValidationLevel.Flag && !result.IsValid)
-            {
-                return result;
-            }
-
             result = this.ValidateObject(valueKind, result, level);
             if (level == ValidationLevel.Flag && !result.IsValid)
             {

@@ -33,7 +33,7 @@ public readonly partial struct OpenApiDocument
         if (level > ValidationLevel.Basic)
         {
             result = result.UsingStack();
-            result = result.PushSchemaLocation("https://raw.githubusercontent.com/OAI/OpenAPI-Specification/main/schemas/v3.1/schema.json");
+            result = result.PushSchemaLocation("https://spec.openapis.org/oas/3.1/schema/2022-10-07");
         }
 
         result = result.UsingEvaluatedProperties();

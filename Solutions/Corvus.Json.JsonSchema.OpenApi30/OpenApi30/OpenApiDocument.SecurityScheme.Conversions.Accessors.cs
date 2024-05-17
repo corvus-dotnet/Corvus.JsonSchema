@@ -18,68 +18,68 @@ public readonly partial struct OpenApiDocument
     public readonly partial struct SecurityScheme
     {
         /// <summary>
-        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.APiKeySecurityScheme"/>.
+        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme"/>.
         /// </summary>
-        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.APiKeySecurityScheme AsAPiKeySecurityScheme
+        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme AsApiKeySecurityScheme
         {
             get
             {
-                return (Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.APiKeySecurityScheme)this;
+                return (Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme)this;
             }
         }
 
         /// <summary>
-        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.APiKeySecurityScheme"/>.
+        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme"/>.
         /// </summary>
-        public bool IsAPiKeySecurityScheme
+        public bool IsApiKeySecurityScheme
         {
             get
             {
-                return ((Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.APiKeySecurityScheme)this).IsValid();
+                return ((Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme)this).IsValid();
             }
         }
 
         /// <summary>
-        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.APiKeySecurityScheme"/>.
+        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme"/>.
         /// </summary>
         /// <param name = "result">The result of the conversion.</param>
         /// <returns><c>True</c> if the conversion was valid.</returns>
-        public bool TryGetAsAPiKeySecurityScheme(out Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.APiKeySecurityScheme result)
+        public bool TryGetAsApiKeySecurityScheme(out Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme result)
         {
-            result = (Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.APiKeySecurityScheme)this;
+            result = (Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme)this;
             return result.IsValid();
         }
 
         /// <summary>
-        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme"/>.
+        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme"/>.
         /// </summary>
-        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme AsHTtPSecurityScheme
+        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme AsHttpSecurityScheme
         {
             get
             {
-                return (Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme)this;
+                return (Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme)this;
             }
         }
 
         /// <summary>
-        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme"/>.
+        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme"/>.
         /// </summary>
-        public bool IsHTtPSecurityScheme
+        public bool IsHttpSecurityScheme
         {
             get
             {
-                return ((Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme)this).IsValid();
+                return ((Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme)this).IsValid();
             }
         }
 
         /// <summary>
-        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme"/>.
+        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme"/>.
         /// </summary>
         /// <param name = "result">The result of the conversion.</param>
         /// <returns><c>True</c> if the conversion was valid.</returns>
-        public bool TryGetAsHTtPSecurityScheme(out Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme result)
+        public bool TryGetAsHttpSecurityScheme(out Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme result)
         {
-            result = (Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme)this;
+            result = (Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme)this;
             return result.IsValid();
         }
 

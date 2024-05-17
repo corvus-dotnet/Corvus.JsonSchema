@@ -51,35 +51,35 @@ public readonly partial struct Schema
         }
 
         /// <summary>
-        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.Draft6.Schema.NonNegativeIntegerDefault0.AllOf1Entity"/>.
+        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.Draft6.Schema.NonNegativeIntegerDefault0.DefaultValue0"/>.
         /// </summary>
-        public Corvus.Json.JsonSchema.Draft6.Schema.NonNegativeIntegerDefault0.AllOf1Entity AsAllOf1Entity
+        public Corvus.Json.JsonSchema.Draft6.Schema.NonNegativeIntegerDefault0.DefaultValue0 AsDefaultValue0
         {
             get
             {
-                return (Corvus.Json.JsonSchema.Draft6.Schema.NonNegativeIntegerDefault0.AllOf1Entity)this;
+                return (Corvus.Json.JsonSchema.Draft6.Schema.NonNegativeIntegerDefault0.DefaultValue0)this;
             }
         }
 
         /// <summary>
-        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.JsonSchema.Draft6.Schema.NonNegativeIntegerDefault0.AllOf1Entity"/>.
+        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.JsonSchema.Draft6.Schema.NonNegativeIntegerDefault0.DefaultValue0"/>.
         /// </summary>
-        public bool IsAllOf1Entity
+        public bool IsDefaultValue0
         {
             get
             {
-                return ((Corvus.Json.JsonSchema.Draft6.Schema.NonNegativeIntegerDefault0.AllOf1Entity)this).IsValid();
+                return ((Corvus.Json.JsonSchema.Draft6.Schema.NonNegativeIntegerDefault0.DefaultValue0)this).IsValid();
             }
         }
 
         /// <summary>
-        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.Draft6.Schema.NonNegativeIntegerDefault0.AllOf1Entity"/>.
+        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.Draft6.Schema.NonNegativeIntegerDefault0.DefaultValue0"/>.
         /// </summary>
         /// <param name = "result">The result of the conversion.</param>
         /// <returns><c>True</c> if the conversion was valid.</returns>
-        public bool TryGetAsAllOf1Entity(out Corvus.Json.JsonSchema.Draft6.Schema.NonNegativeIntegerDefault0.AllOf1Entity result)
+        public bool TryGetAsDefaultValue0(out Corvus.Json.JsonSchema.Draft6.Schema.NonNegativeIntegerDefault0.DefaultValue0 result)
         {
-            result = (Corvus.Json.JsonSchema.Draft6.Schema.NonNegativeIntegerDefault0.AllOf1Entity)this;
+            result = (Corvus.Json.JsonSchema.Draft6.Schema.NonNegativeIntegerDefault0.DefaultValue0)this;
             return result.IsValid();
         }
     }

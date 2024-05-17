@@ -62,6 +62,13 @@ public static class JsonSchemaHelpers
             return true;
         }
         else if (typeDeclaration.LocatedSchema.Schema.ValueKind == JsonValueKind.Object &&
+            typeDeclaration.Schema().Default.IsNotUndefined() &&
+            typeDeclaration.Schema().EnumerateObject().Count() == 1)
+        {
+            name = $"DefaultValue{(typeDeclaration.Schema().Default.ValueKind == JsonValueKind.String ? (string)typeDeclaration.Schema().Default.AsString : typeDeclaration.Schema().Default.ToString())}";
+            return true;
+        }
+        else if (typeDeclaration.LocatedSchema.Schema.ValueKind == JsonValueKind.Object &&
             typeDeclaration.Schema().IsObjectType() &&
             typeDeclaration.Schema().Required.IsNotUndefined() &&
             typeDeclaration.Schema().Required.GetArrayLength() < 3)

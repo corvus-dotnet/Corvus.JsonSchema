@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using Microsoft.CodeAnalysis;
@@ -12,6 +13,7 @@ namespace Corvus.Json.CodeGeneration;
 /// <summary>
 /// A type declaration for a Json Schema.
 /// </summary>
+[DebuggerDisplay("{DotnetTypeName} Location={LocatedSchema.Location}")]
 public class TypeDeclaration
 {
     private readonly JsonSchemaTypeBuilder typeBuilder;

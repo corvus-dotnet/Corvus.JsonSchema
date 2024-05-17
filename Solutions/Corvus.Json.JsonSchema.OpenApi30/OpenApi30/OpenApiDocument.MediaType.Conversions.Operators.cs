@@ -21,24 +21,24 @@ public readonly partial struct OpenApiDocument
     public readonly partial struct MediaType
     {
         /// <summary>
-        /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXOrExamples"/>.
+        /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXOrExamples(MediaType value)
+        public static implicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples(MediaType value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
                 return new(value.AsJsonElement);
             }
 
-            return Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXOrExamples.Undefined;
+            return Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples.Undefined;
         }
 
         /// <summary>
-        /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXOrExamples"/>.
+        /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static explicit operator MediaType(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXOrExamples value)
+        public static explicit operator MediaType(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples value)
         {
             if (value.HasJsonElementBacking)
             {

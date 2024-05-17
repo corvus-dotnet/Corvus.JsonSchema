@@ -17,11 +17,26 @@ public partial class JsonSchemaTypeBuilder
     {
         if (type.Parent is TypeDeclaration parent)
         {
+            // Capture the reference outside the loop so we can work through it.
+            JsonReference reference = type.LocatedSchema.Location.MoveToParentFragment();
+
             for (int index = 1; parent.DotnetTypeName == type.DotnetTypeName || parent.Children.Any(c => c != type && c.DotnetTypeName == type.DotnetTypeName); index++)
             {
                 string trimmedString = type.DotnetTypeName!.Trim('0', '1', '2', '3', '4', '5', '6', '7', '8', '9');
 
-                if (parent.DotnetTypeName != trimmedString)
+                while (reference.HasFragment && reference.Fragment.EndsWith("properties".AsSpan()))
+                {
+                    reference = reference.MoveToParentFragment();
+                }
+
+                int slashIndex = 0;
+
+                if (reference.HasFragment && (slashIndex = reference.Fragment.LastIndexOf('/')) >= 0 && slashIndex < reference.Fragment.Length - 1)
+                {
+                    string previousNode = reference.Fragment[(slashIndex + 1)..].ToString();
+                    type.SetDotnetTypeName($"{Formatting.ToPascalCaseWithReservedWords(previousNode).ToString()}{trimmedString}");
+                }
+                else if (parent.DotnetTypeName != trimmedString)
                 {
                     type.SetDotnetTypeName($"{parent.DotnetTypeName}{trimmedString}");
                     index--;
@@ -451,7 +466,7 @@ public partial class JsonSchemaTypeBuilder
             else
             {
                 int lastDot = reference.Path.LastIndexOf('.');
-                if (lastDot > 0)
+                if (lastDot > 0 && lastSlash < lastDot)
                 {
                     typename = Formatting.ToPascalCaseWithReservedWords(reference.Path[(lastSlash + 1)..lastDot].ToString());
                 }

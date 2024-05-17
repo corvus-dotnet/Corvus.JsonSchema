@@ -29,11 +29,11 @@ public readonly partial struct OpenApiDocument
             /// <param name = "context">The context to pass to the match function.</param>
             /// <param name = "matchApiKey">The function to call if the value matches the JSON value "\"apiKey\"".</param>
             /// <param name = "matchHttp">The function to call if the value matches the JSON value "\"http\"".</param>
-            /// <param name = "matchMutualTLs">The function to call if the value matches the JSON value "\"mutualTLS\"".</param>
+            /// <param name = "matchMutualTls">The function to call if the value matches the JSON value "\"mutualTLS\"".</param>
             /// <param name = "matchOauth2">The function to call if the value matches the JSON value "\"oauth2\"".</param>
             /// <param name = "matchOpenIdConnect">The function to call if the value matches the JSON value "\"openIdConnect\"".</param>
             /// <param name = "defaultMatch">The fallback match.</param>
-            public TOut Match<TIn, TOut>(in TIn context, Func<TIn, TOut> matchApiKey, Func<TIn, TOut> matchHttp, Func<TIn, TOut> matchMutualTLs, Func<TIn, TOut> matchOauth2, Func<TIn, TOut> matchOpenIdConnect, Func<TIn, TOut> defaultMatch)
+            public TOut Match<TIn, TOut>(in TIn context, Func<TIn, TOut> matchApiKey, Func<TIn, TOut> matchHttp, Func<TIn, TOut> matchMutualTls, Func<TIn, TOut> matchOauth2, Func<TIn, TOut> matchOpenIdConnect, Func<TIn, TOut> defaultMatch)
             {
                 if (this.ValueKind == JsonValueKind.String)
                 {
@@ -49,9 +49,9 @@ public readonly partial struct OpenApiDocument
                             return matchHttp(context);
                         }
 
-                        if (this.jsonElementBacking.ValueEquals(EnumValues.MutualTLsUtf8))
+                        if (this.jsonElementBacking.ValueEquals(EnumValues.MutualTlsUtf8))
                         {
-                            return matchMutualTLs(context);
+                            return matchMutualTls(context);
                         }
 
                         if (this.jsonElementBacking.ValueEquals(EnumValues.Oauth2Utf8))
@@ -73,7 +73,7 @@ public readonly partial struct OpenApiDocument
                             case "http":
                                 return matchHttp(context);
                             case "mutualTLS":
-                                return matchMutualTLs(context);
+                                return matchMutualTls(context);
                             case "oauth2":
                                 return matchOauth2(context);
                             case "openIdConnect":
@@ -92,11 +92,11 @@ public readonly partial struct OpenApiDocument
             /// </summary>
             /// <param name = "matchApiKey">The function to call if the value matches the JSON value "\"apiKey\"".</param>
             /// <param name = "matchHttp">The function to call if the value matches the JSON value "\"http\"".</param>
-            /// <param name = "matchMutualTLs">The function to call if the value matches the JSON value "\"mutualTLS\"".</param>
+            /// <param name = "matchMutualTls">The function to call if the value matches the JSON value "\"mutualTLS\"".</param>
             /// <param name = "matchOauth2">The function to call if the value matches the JSON value "\"oauth2\"".</param>
             /// <param name = "matchOpenIdConnect">The function to call if the value matches the JSON value "\"openIdConnect\"".</param>
             /// <param name = "defaultMatch">The fallback match.</param>
-            public TOut Match<TOut>(Func<TOut> matchApiKey, Func<TOut> matchHttp, Func<TOut> matchMutualTLs, Func<TOut> matchOauth2, Func<TOut> matchOpenIdConnect, Func<TOut> defaultMatch)
+            public TOut Match<TOut>(Func<TOut> matchApiKey, Func<TOut> matchHttp, Func<TOut> matchMutualTls, Func<TOut> matchOauth2, Func<TOut> matchOpenIdConnect, Func<TOut> defaultMatch)
             {
                 if (this.ValueKind == JsonValueKind.String)
                 {
@@ -112,9 +112,9 @@ public readonly partial struct OpenApiDocument
                             return matchHttp();
                         }
 
-                        if (this.jsonElementBacking.ValueEquals(EnumValues.MutualTLsUtf8))
+                        if (this.jsonElementBacking.ValueEquals(EnumValues.MutualTlsUtf8))
                         {
-                            return matchMutualTLs();
+                            return matchMutualTls();
                         }
 
                         if (this.jsonElementBacking.ValueEquals(EnumValues.Oauth2Utf8))
@@ -136,7 +136,7 @@ public readonly partial struct OpenApiDocument
                             case "http":
                                 return matchHttp();
                             case "mutualTLS":
-                                return matchMutualTLs();
+                                return matchMutualTls();
                             case "oauth2":
                                 return matchOauth2();
                             case "openIdConnect":
@@ -176,11 +176,11 @@ public readonly partial struct OpenApiDocument
                 /// <summary>
                 /// Gets "mutualTLS" as a JSON value.
                 /// </summary>
-                public static readonly TypeEntity MutualTLs = TypeEntity.Parse("\"mutualTLS\"");
+                public static readonly TypeEntity MutualTls = TypeEntity.Parse("\"mutualTLS\"");
                 /// <summary>
                 /// Gets "mutualTLS" as a UTF8 string.
                 /// </summary>
-                public static ReadOnlySpan<byte> MutualTLsUtf8 => "mutualTLS"u8;
+                public static ReadOnlySpan<byte> MutualTlsUtf8 => "mutualTLS"u8;
 
                 /// <summary>
                 /// Gets "oauth2" as a JSON value.

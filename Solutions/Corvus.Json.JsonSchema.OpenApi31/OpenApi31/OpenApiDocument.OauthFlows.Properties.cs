@@ -164,7 +164,7 @@ public readonly partial struct OpenApiDocument
         /// <summary>
         /// Gets the (optional) <c>password</c> property.
         /// </summary>
-        public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows.OauthFlowsRequiredTokenUrlAndScopes Password
+        public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows.DefsRequiredTokenUrlAndScopes Password
         {
             get
             {
@@ -177,7 +177,7 @@ public readonly partial struct OpenApiDocument
 
                     if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.PasswordUtf8, out JsonElement result))
                     {
-                        return new Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows.OauthFlowsRequiredTokenUrlAndScopes(result);
+                        return new Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows.DefsRequiredTokenUrlAndScopes(result);
                     }
                 }
 
@@ -185,7 +185,7 @@ public readonly partial struct OpenApiDocument
                 {
                     if (this.objectBacking.TryGetValue(JsonPropertyNames.Password, out JsonAny result))
                     {
-                        return result.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows.OauthFlowsRequiredTokenUrlAndScopes>();
+                        return result.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows.DefsRequiredTokenUrlAndScopes>();
                     }
                 }
 
@@ -196,7 +196,7 @@ public readonly partial struct OpenApiDocument
         /// <summary>
         /// Creates an instance of a <see cref = "OauthFlows"/>.
         /// </summary>
-        public static OauthFlows Create(Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows.AuthorizationCodeEntity? authorizationCode = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows.RequiredTokenUrlAndScopes? clientCredentials = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows.RequiredAuthorizationUrlAndScopes? @implicit = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows.OauthFlowsRequiredTokenUrlAndScopes? password = null)
+        public static OauthFlows Create(Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows.AuthorizationCodeEntity? authorizationCode = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows.RequiredTokenUrlAndScopes? clientCredentials = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows.RequiredAuthorizationUrlAndScopes? @implicit = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows.DefsRequiredTokenUrlAndScopes? password = null)
         {
             var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
             if (authorizationCode is Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows.AuthorizationCodeEntity authorizationCode__)
@@ -214,7 +214,7 @@ public readonly partial struct OpenApiDocument
                 builder.Add(JsonPropertyNames.Implicit, @implicit__.AsAny);
             }
 
-            if (password is Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows.OauthFlowsRequiredTokenUrlAndScopes password__)
+            if (password is Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows.DefsRequiredTokenUrlAndScopes password__)
             {
                 builder.Add(JsonPropertyNames.Password, password__.AsAny);
             }
@@ -257,7 +257,7 @@ public readonly partial struct OpenApiDocument
         /// </summary>
         /// <param name = "value">The value to set.</param>
         /// <returns>The entity with the updated property.</returns>
-        public OauthFlows WithPassword(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows.OauthFlowsRequiredTokenUrlAndScopes value)
+        public OauthFlows WithPassword(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows.DefsRequiredTokenUrlAndScopes value)
         {
             return this.SetProperty(JsonPropertyNames.Password, value);
         }
@@ -269,7 +269,7 @@ public readonly partial struct OpenApiDocument
 
         private static ValidationContext __CorvusValidatePassword(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
         {
-            return property.ValueAs<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows.OauthFlowsRequiredTokenUrlAndScopes>().Validate(validationContext, level);
+            return property.ValueAs<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OauthFlows.DefsRequiredTokenUrlAndScopes>().Validate(validationContext, level);
         }
 
         private static ValidationContext __CorvusValidateClientCredentials(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)

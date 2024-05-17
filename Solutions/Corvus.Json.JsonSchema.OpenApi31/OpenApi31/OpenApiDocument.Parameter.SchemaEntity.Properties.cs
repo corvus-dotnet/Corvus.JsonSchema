@@ -66,6 +66,15 @@ public readonly partial struct OpenApiDocument
                 /// </summary>
                 public const string Explode = "explode";
                 /// <summary>
+                /// JSON property name for <see cref = "Name"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> NameUtf8 => "name"u8;
+
+                /// <summary>
+                /// JSON property name for <see cref = "Name"/>.
+                /// </summary>
+                public const string Name = "name";
+                /// <summary>
                 /// JSON property name for <see cref = "Required"/>.
                 /// </summary>
                 public static ReadOnlySpan<byte> RequiredUtf8 => "required"u8;
@@ -214,6 +223,38 @@ public readonly partial struct OpenApiDocument
             }
 
             /// <summary>
+            /// Gets the (optional) <c>name</c> property.
+            /// </summary>
+            public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity.RequiredRequired.NameEntity Name
+            {
+                get
+                {
+                    if ((this.backing & Backing.JsonElement) != 0)
+                    {
+                        if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                        {
+                            return default;
+                        }
+
+                        if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.NameUtf8, out JsonElement result))
+                        {
+                            return new Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity.RequiredRequired.NameEntity(result);
+                        }
+                    }
+
+                    if ((this.backing & Backing.Object) != 0)
+                    {
+                        if (this.objectBacking.TryGetValue(JsonPropertyNames.Name, out JsonAny result))
+                        {
+                            return result.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity.RequiredRequired.NameEntity>();
+                        }
+                    }
+
+                    return default;
+                }
+            }
+
+            /// <summary>
             /// Gets the (optional) <c>required</c> property.
             /// </summary>
             public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity.RequiredRequired.RequiredEntity Required
@@ -280,7 +321,7 @@ public readonly partial struct OpenApiDocument
             /// <summary>
             /// Creates an instance of a <see cref = "SchemaEntity"/>.
             /// </summary>
-            public static SchemaEntity Create(Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.AllowReservedEntity? allowReserved = null, Corvus.Json.JsonAny? example = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Examples.ExamplesEntity? examples = null, Corvus.Json.JsonBoolean? explode = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity.RequiredRequired.RequiredEntity? required = null, Corvus.Json.JsonString? style = null)
+            public static SchemaEntity Create(Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.AllowReservedEntity? allowReserved = null, Corvus.Json.JsonAny? example = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Examples.ExamplesEntity? examples = null, Corvus.Json.JsonBoolean? explode = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity.RequiredRequired.NameEntity? name = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity.RequiredRequired.RequiredEntity? required = null, Corvus.Json.JsonString? style = null)
             {
                 var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
                 if (allowReserved is Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity.AllowReservedEntity allowReserved__)
@@ -301,6 +342,11 @@ public readonly partial struct OpenApiDocument
                 if (explode is Corvus.Json.JsonBoolean explode__)
                 {
                     builder.Add(JsonPropertyNames.Explode, explode__.AsAny);
+                }
+
+                if (name is Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity.RequiredRequired.NameEntity name__)
+                {
+                    builder.Add(JsonPropertyNames.Name, name__.AsAny);
                 }
 
                 if (required is Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity.RequiredRequired.RequiredEntity required__)
@@ -354,6 +400,16 @@ public readonly partial struct OpenApiDocument
             public SchemaEntity WithExplode(in Corvus.Json.JsonBoolean value)
             {
                 return this.SetProperty(JsonPropertyNames.Explode, value);
+            }
+
+            /// <summary>
+            /// Sets name.
+            /// </summary>
+            /// <param name = "value">The value to set.</param>
+            /// <returns>The entity with the updated property.</returns>
+            public SchemaEntity WithName(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity.RequiredRequired.NameEntity value)
+            {
+                return this.SetProperty(JsonPropertyNames.Name, value);
             }
 
             /// <summary>

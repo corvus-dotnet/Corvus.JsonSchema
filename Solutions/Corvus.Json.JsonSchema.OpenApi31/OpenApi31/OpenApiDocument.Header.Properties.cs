@@ -113,7 +113,7 @@ public readonly partial struct OpenApiDocument
         /// <summary>
         /// Gets the (optional) <c>content</c> property.
         /// </summary>
-        public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OpenApiDocumentContentEntity Content
+        public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.ContentEntity Content
         {
             get
             {
@@ -126,7 +126,7 @@ public readonly partial struct OpenApiDocument
 
                     if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.ContentUtf8, out JsonElement result))
                     {
-                        return new Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OpenApiDocumentContentEntity(result);
+                        return new Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.ContentEntity(result);
                     }
                 }
 
@@ -134,7 +134,7 @@ public readonly partial struct OpenApiDocument
                 {
                     if (this.objectBacking.TryGetValue(JsonPropertyNames.Content, out JsonAny result))
                     {
-                        return result.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OpenApiDocumentContentEntity>();
+                        return result.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.ContentEntity>();
                     }
                 }
 
@@ -401,10 +401,10 @@ public readonly partial struct OpenApiDocument
         /// <summary>
         /// Creates an instance of a <see cref = "Header"/>.
         /// </summary>
-        public static Header Create(Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OpenApiDocumentContentEntity? content = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.DeprecatedEntity? deprecated = null, Corvus.Json.JsonString? description = null, Corvus.Json.JsonAny? example = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Examples.ExamplesEntity? examples = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.WithStyleSimple.ExplodeEntity? explode = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredEntity? required = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Schema? schema = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.WithStyleSimple.StyleEntity? style = null)
+        public static Header Create(Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.ContentEntity? content = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.DeprecatedEntity? deprecated = null, Corvus.Json.JsonString? description = null, Corvus.Json.JsonAny? example = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Examples.ExamplesEntity? examples = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.WithStyleSimple.ExplodeEntity? explode = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredEntity? required = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Schema? schema = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.WithStyleSimple.StyleEntity? style = null)
         {
             var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
-            if (content is Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OpenApiDocumentContentEntity content__)
+            if (content is Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.ContentEntity content__)
             {
                 builder.Add(JsonPropertyNames.Content, content__.AsAny);
             }
@@ -457,7 +457,7 @@ public readonly partial struct OpenApiDocument
         /// </summary>
         /// <param name = "value">The value to set.</param>
         /// <returns>The entity with the updated property.</returns>
-        public Header WithContent(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OpenApiDocumentContentEntity value)
+        public Header WithContent(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.ContentEntity value)
         {
             return this.SetProperty(JsonPropertyNames.Content, value);
         }
@@ -554,7 +554,7 @@ public readonly partial struct OpenApiDocument
 
         private static ValidationContext __CorvusValidateContent(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
         {
-            return property.ValueAs<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OpenApiDocumentContentEntity>().Validate(validationContext, level);
+            return property.ValueAs<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.ContentEntity>().Validate(validationContext, level);
         }
 
         /// <summary>

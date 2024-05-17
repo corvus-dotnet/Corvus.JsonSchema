@@ -54,6 +54,17 @@ public readonly partial struct OpenApiDocument
                     }
                 }
 
+                if (!result.HasEvaluatedLocalOrAppliedProperty(propertyCount))
+                {
+                    result = property.ValueAs<Corvus.Json.JsonNotAny>().Validate(result, level);
+                    if (level == ValidationLevel.Flag && !result.IsValid)
+                    {
+                        return result;
+                    }
+
+                    result = result.WithLocalProperty(propertyCount);
+                }
+
                 propertyCount++;
             }
 

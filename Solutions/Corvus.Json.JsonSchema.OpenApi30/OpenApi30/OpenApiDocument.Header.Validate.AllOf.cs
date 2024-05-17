@@ -36,7 +36,7 @@ public readonly partial struct OpenApiDocument
                 childContext0 = childContext0.PushValidationLocationArrayIndex(0);
             }
 
-            ValidationContext allOfResult0 = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXOrExamples>().Validate(childContext0.CreateChildContext(), level);
+            ValidationContext allOfResult0 = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples>().Validate(childContext0.CreateChildContext(), level);
             if (!allOfResult0.IsValid)
             {
                 if (level >= ValidationLevel.Detailed)
@@ -64,7 +64,7 @@ public readonly partial struct OpenApiDocument
                 childContext1 = childContext1.PushValidationLocationArrayIndex(1);
             }
 
-            ValidationContext allOfResult1 = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXOrContent>().Validate(childContext1.CreateChildContext(), level);
+            ValidationContext allOfResult1 = this.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.SchemaXorContent>().Validate(childContext1.CreateChildContext(), level);
             if (!allOfResult1.IsValid)
             {
                 if (level >= ValidationLevel.Detailed)

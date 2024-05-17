@@ -58,10 +58,10 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm"/>.
+        /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.EncodingEntity.ExplodeDefaultEntity"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm(EncodingEntity value)
+        public static implicit operator Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.EncodingEntity.ExplodeDefaultEntity(EncodingEntity value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -73,14 +73,14 @@ public readonly partial struct OpenApiDocument
                 return new(value.objectBacking);
             }
 
-            return Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm.Undefined;
+            return Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.EncodingEntity.ExplodeDefaultEntity.Undefined;
         }
 
         /// <summary>
-        /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm"/>.
+        /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.EncodingEntity.ExplodeDefaultEntity"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static explicit operator EncodingEntity(Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm value)
+        public static explicit operator EncodingEntity(Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.EncodingEntity.ExplodeDefaultEntity value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -95,10 +95,10 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm.ThenEntity"/>.
+        /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.EncodingEntity.ExplodeDefaultEntity.ThenEntity"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static explicit operator Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm.ThenEntity(EncodingEntity value)
+        public static explicit operator Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.EncodingEntity.ExplodeDefaultEntity.ThenEntity(EncodingEntity value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -110,14 +110,14 @@ public readonly partial struct OpenApiDocument
                 return new(value.objectBacking);
             }
 
-            return Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm.ThenEntity.Undefined;
+            return Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.EncodingEntity.ExplodeDefaultEntity.ThenEntity.Undefined;
         }
 
         /// <summary>
-        /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm.ThenEntity"/>.
+        /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.EncodingEntity.ExplodeDefaultEntity.ThenEntity"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static explicit operator EncodingEntity(Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm.ThenEntity value)
+        public static explicit operator EncodingEntity(Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.EncodingEntity.ExplodeDefaultEntity.ThenEntity value)
         {
             if (value.HasJsonElementBacking)
             {
@@ -132,10 +132,10 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm.ElseEntity"/>.
+        /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.EncodingEntity.ExplodeDefaultEntity.ElseEntity"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static explicit operator Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm.ElseEntity(EncodingEntity value)
+        public static explicit operator Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.EncodingEntity.ExplodeDefaultEntity.ElseEntity(EncodingEntity value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -147,14 +147,14 @@ public readonly partial struct OpenApiDocument
                 return new(value.objectBacking);
             }
 
-            return Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm.ElseEntity.Undefined;
+            return Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.EncodingEntity.ExplodeDefaultEntity.ElseEntity.Undefined;
         }
 
         /// <summary>
-        /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm.ElseEntity"/>.
+        /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.EncodingEntity.ExplodeDefaultEntity.ElseEntity"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static explicit operator EncodingEntity(Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.StylesForForm.ElseEntity value)
+        public static explicit operator EncodingEntity(Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.EncodingEntity.ExplodeDefaultEntity.ElseEntity value)
         {
             if (value.HasJsonElementBacking)
             {

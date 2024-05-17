@@ -33,6 +33,7 @@ public readonly partial struct OpenApiDocument
                 result = result.PushSchemaLocation("https://spec.openapis.org/oas/3.1/schema/2022-10-07#/$defs/reference");
             }
 
+            result = result.UsingEvaluatedProperties();
             JsonValueKind valueKind = this.ValueKind;
             result = this.ValidateType(valueKind, result, level);
             if (level == ValidationLevel.Flag && !result.IsValid)

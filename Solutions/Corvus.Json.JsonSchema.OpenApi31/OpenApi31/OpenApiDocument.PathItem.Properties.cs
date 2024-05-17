@@ -300,7 +300,7 @@ public readonly partial struct OpenApiDocument
         /// <summary>
         /// Gets the (optional) <c>parameters</c> property.
         /// </summary>
-        public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReferenceArray Parameters
+        public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.PathItem.ParameterOrReferenceArray Parameters
         {
             get
             {
@@ -313,7 +313,7 @@ public readonly partial struct OpenApiDocument
 
                     if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.ParametersUtf8, out JsonElement result))
                     {
-                        return new Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReferenceArray(result);
+                        return new Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.PathItem.ParameterOrReferenceArray(result);
                     }
                 }
 
@@ -321,7 +321,7 @@ public readonly partial struct OpenApiDocument
                 {
                     if (this.objectBacking.TryGetValue(JsonPropertyNames.Parameters, out JsonAny result))
                     {
-                        return result.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReferenceArray>();
+                        return result.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.PathItem.ParameterOrReferenceArray>();
                     }
                 }
 
@@ -524,7 +524,7 @@ public readonly partial struct OpenApiDocument
         /// <summary>
         /// Creates an instance of a <see cref = "PathItem"/>.
         /// </summary>
-        public static PathItem Create(Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation? delete = null, Corvus.Json.JsonString? description = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation? get = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation? head = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation? options = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReferenceArray? parameters = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation? patch = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation? post = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation? put = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.PathItem.ServerArray? servers = null, Corvus.Json.JsonString? summary = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation? trace = null)
+        public static PathItem Create(Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation? delete = null, Corvus.Json.JsonString? description = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation? get = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation? head = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation? options = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.PathItem.ParameterOrReferenceArray? parameters = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation? patch = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation? post = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation? put = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.PathItem.ServerArray? servers = null, Corvus.Json.JsonString? summary = null, Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation? trace = null)
         {
             var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
             if (delete is Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Operation delete__)
@@ -552,7 +552,7 @@ public readonly partial struct OpenApiDocument
                 builder.Add(JsonPropertyNames.Options, options__.AsAny);
             }
 
-            if (parameters is Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReferenceArray parameters__)
+            if (parameters is Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.PathItem.ParameterOrReferenceArray parameters__)
             {
                 builder.Add(JsonPropertyNames.Parameters, parameters__.AsAny);
             }
@@ -645,7 +645,7 @@ public readonly partial struct OpenApiDocument
         /// </summary>
         /// <param name = "value">The value to set.</param>
         /// <returns>The entity with the updated property.</returns>
-        public PathItem WithParameters(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReferenceArray value)
+        public PathItem WithParameters(in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.PathItem.ParameterOrReferenceArray value)
         {
             return this.SetProperty(JsonPropertyNames.Parameters, value);
         }
@@ -727,7 +727,7 @@ public readonly partial struct OpenApiDocument
 
         private static ValidationContext __CorvusValidateParameters(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
         {
-            return property.ValueAs<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ParameterOrReferenceArray>().Validate(validationContext, level);
+            return property.ValueAs<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.PathItem.ParameterOrReferenceArray>().Validate(validationContext, level);
         }
 
         private static ValidationContext __CorvusValidateGet(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
