@@ -6,4 +6,4 @@ Scenario Outline: Formatting strings
 Examples:
 	| input               | format | output              |
 	| aadB2cConfiguration | Pascal | AadB2cConfiguration |
-	| aadB2CConfiguration | Pascal | AadB2Cconfiguration |
+	| aadB2CConfiguration | Pascal | AadB2cConfiguration |
