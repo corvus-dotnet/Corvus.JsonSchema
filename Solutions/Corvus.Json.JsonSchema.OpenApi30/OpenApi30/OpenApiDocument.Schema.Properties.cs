@@ -1435,7 +1435,7 @@ public readonly partial struct OpenApiDocument
         /// <summary>
         /// Gets the (optional) <c>xml</c> property.
         /// </summary>
-        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.XMl Xml
+        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Xml Xml
         {
             get
             {
@@ -1448,7 +1448,7 @@ public readonly partial struct OpenApiDocument
 
                     if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.XmlUtf8, out JsonElement result))
                     {
-                        return new Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.XMl(result);
+                        return new Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Xml(result);
                     }
                 }
 
@@ -1456,7 +1456,7 @@ public readonly partial struct OpenApiDocument
                 {
                     if (this.objectBacking.TryGetValue(JsonPropertyNames.Xml, out JsonAny result))
                     {
-                        return result.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.XMl>();
+                        return result.As<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Xml>();
                     }
                 }
 
@@ -1467,7 +1467,7 @@ public readonly partial struct OpenApiDocument
         /// <summary>
         /// Creates an instance of a <see cref = "Schema"/>.
         /// </summary>
-        public static Schema Create(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.AdditionalPropertiesEntity? additionalProperties = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.AllOfEntityArray? allOf = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.AnyOfEntityArray? anyOf = null, Corvus.Json.JsonAny? @default = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.DeprecatedEntity? deprecated = null, Corvus.Json.JsonString? description = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Discriminator? discriminator = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.JsonAnyArray? @enum = null, Corvus.Json.JsonAny? example = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.ExclusiveMaximumEntity? exclusiveMaximum = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.ExclusiveMinimumEntity? exclusiveMinimum = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExternalDocumentation? externalDocs = null, Corvus.Json.JsonString? format = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.ItemsEntity? items = null, Corvus.Json.JsonNumber? maximum = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MaxItemsEntity? maxItems = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MaxLengthEntity? maxLength = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MaxPropertiesEntity? maxProperties = null, Corvus.Json.JsonNumber? minimum = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MinItemsEntity? minItems = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MinLengthEntity? minLength = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MinPropertiesEntity? minProperties = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MultipleOfEntity? multipleOf = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.NotEntity? not = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.NullableEntity? nullable = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.OneOfEntityArray? oneOf = null, Corvus.Json.JsonRegex? pattern = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.PropertiesEntity? properties = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.ReadOnlyEntity? readOnly = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.JsonStringArray? required = null, Corvus.Json.JsonString? title = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.TypeEntity? type = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.UniqueItemsEntity? uniqueItems = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.WriteOnlyEntity? writeOnly = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.XMl? xml = null)
+        public static Schema Create(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.AdditionalPropertiesEntity? additionalProperties = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.AllOfEntityArray? allOf = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.AnyOfEntityArray? anyOf = null, Corvus.Json.JsonAny? @default = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.DeprecatedEntity? deprecated = null, Corvus.Json.JsonString? description = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Discriminator? discriminator = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.JsonAnyArray? @enum = null, Corvus.Json.JsonAny? example = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.ExclusiveMaximumEntity? exclusiveMaximum = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.ExclusiveMinimumEntity? exclusiveMinimum = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExternalDocumentation? externalDocs = null, Corvus.Json.JsonString? format = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.ItemsEntity? items = null, Corvus.Json.JsonNumber? maximum = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MaxItemsEntity? maxItems = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MaxLengthEntity? maxLength = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MaxPropertiesEntity? maxProperties = null, Corvus.Json.JsonNumber? minimum = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MinItemsEntity? minItems = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MinLengthEntity? minLength = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MinPropertiesEntity? minProperties = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.MultipleOfEntity? multipleOf = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.NotEntity? not = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.NullableEntity? nullable = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.OneOfEntityArray? oneOf = null, Corvus.Json.JsonRegex? pattern = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.PropertiesEntity? properties = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.ReadOnlyEntity? readOnly = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.JsonStringArray? required = null, Corvus.Json.JsonString? title = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.TypeEntity? type = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.UniqueItemsEntity? uniqueItems = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.WriteOnlyEntity? writeOnly = null, Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Xml? xml = null)
         {
             var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
             if (additionalProperties is Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Schema.AdditionalPropertiesEntity additionalProperties__)
@@ -1640,7 +1640,7 @@ public readonly partial struct OpenApiDocument
                 builder.Add(JsonPropertyNames.WriteOnly, writeOnly__.AsAny);
             }
 
-            if (xml is Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.XMl xml__)
+            if (xml is Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Xml xml__)
             {
                 builder.Add(JsonPropertyNames.Xml, xml__.AsAny);
             }
@@ -1993,7 +1993,7 @@ public readonly partial struct OpenApiDocument
         /// </summary>
         /// <param name = "value">The value to set.</param>
         /// <returns>The entity with the updated property.</returns>
-        public Schema WithXml(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.XMl value)
+        public Schema WithXml(in Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Xml value)
         {
             return this.SetProperty(JsonPropertyNames.Xml, value);
         }
@@ -2170,7 +2170,7 @@ public readonly partial struct OpenApiDocument
 
         private static ValidationContext __CorvusValidateXml(in JsonObjectProperty property, in ValidationContext validationContext, ValidationLevel level)
         {
-            return property.ValueAs<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.XMl>().Validate(validationContext, level);
+            return property.ValueAs<Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.Xml>().Validate(validationContext, level);
         }
 
         /// <summary>

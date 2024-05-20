@@ -18,35 +18,35 @@ public readonly partial struct OpenApiDocument
     public readonly partial struct MediaType
     {
         /// <summary>
-        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXOrExamples"/>.
+        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples"/>.
         /// </summary>
-        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXOrExamples AsExampleXOrExamples
+        public Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples AsExampleXorExamples
         {
             get
             {
-                return (Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXOrExamples)this;
+                return (Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples)this;
             }
         }
 
         /// <summary>
-        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXOrExamples"/>.
+        /// Gets a value indicating whether this is a valid <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples"/>.
         /// </summary>
-        public bool IsExampleXOrExamples
+        public bool IsExampleXorExamples
         {
             get
             {
-                return ((Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXOrExamples)this).IsValid();
+                return ((Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples)this).IsValid();
             }
         }
 
         /// <summary>
-        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXOrExamples"/>.
+        /// Gets the value as a <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples"/>.
         /// </summary>
         /// <param name = "result">The result of the conversion.</param>
         /// <returns><c>True</c> if the conversion was valid.</returns>
-        public bool TryGetAsExampleXOrExamples(out Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXOrExamples result)
+        public bool TryGetAsExampleXorExamples(out Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples result)
         {
-            result = (Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXOrExamples)this;
+            result = (Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ExampleXorExamples)this;
             return result.IsValid();
         }
     }

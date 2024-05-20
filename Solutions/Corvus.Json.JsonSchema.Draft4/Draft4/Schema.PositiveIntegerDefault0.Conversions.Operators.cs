@@ -58,24 +58,24 @@ public readonly partial struct Schema
         }
 
         /// <summary>
-        /// Conversion to <see cref = "Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0.AllOf1Entity"/>.
+        /// Conversion to <see cref = "Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0.DefaultValue0"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static implicit operator Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0.AllOf1Entity(PositiveIntegerDefault0 value)
+        public static implicit operator Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0.DefaultValue0(PositiveIntegerDefault0 value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
                 return new(value.AsJsonElement);
             }
 
-            return Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0.AllOf1Entity.Undefined;
+            return Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0.DefaultValue0.Undefined;
         }
 
         /// <summary>
-        /// Conversion from <see cref = "Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0.AllOf1Entity"/>.
+        /// Conversion from <see cref = "Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0.DefaultValue0"/>.
         /// </summary>
         /// <param name = "value">The value from which to convert.</param>
-        public static explicit operator PositiveIntegerDefault0(Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0.AllOf1Entity value)
+        public static explicit operator PositiveIntegerDefault0(Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0.DefaultValue0 value)
         {
             if (value.HasJsonElementBacking)
             {

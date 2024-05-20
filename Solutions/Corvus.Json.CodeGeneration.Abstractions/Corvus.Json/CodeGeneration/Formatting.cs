@@ -138,8 +138,7 @@ public static class Formatting
         int setIndex = 0;
         bool capitalizeNext = capitalizeFirst;
         bool lowercaseNext = lowerCaseFirst;
-        int uppercasedCount = 0;
-
+        bool lastUppercase = false;
         for (int readIndex = 0; readIndex < chars.Length; readIndex++)
         {
             if (char.IsLetter(chars[readIndex]))
@@ -147,30 +146,34 @@ public static class Formatting
                 if (capitalizeNext)
                 {
                     chars[setIndex] = char.ToUpperInvariant(chars[readIndex]);
-                    uppercasedCount++;
+                    lastUppercase = true;
                 }
                 else if (lowercaseNext)
                 {
                     chars[setIndex] = char.ToLowerInvariant(chars[readIndex]);
-                    uppercasedCount = 0;
                     lowercaseNext = false;
+                    lastUppercase = false;
                 }
                 else
                 {
                     if (char.ToUpperInvariant(chars[readIndex]) == chars[readIndex])
                     {
-                        uppercasedCount++;
-                        if (uppercasedCount > 2)
+                        if (lastUppercase &&
+                            (readIndex == chars.Length - 1 || // We are at the end of the string
+                            !char.IsLetter(chars[readIndex + 1]) || // The next character *isn't* a letter or the next character is also uppercase
+                            chars[readIndex + 1] == char.ToUpperInvariant(chars[readIndex + 1])))
                         {
+                            lastUppercase = true;
                             chars[setIndex] = char.ToLowerInvariant(chars[readIndex]);
-                            uppercasedCount = 0;
                             setIndex++;
                             continue;
                         }
+
+                        lastUppercase = true;
                     }
                     else
                     {
-                        uppercasedCount = 0;
+                        lastUppercase = false;
                     }
 
                     chars[setIndex] = chars[readIndex];

@@ -62,7 +62,7 @@ public readonly partial struct Pet
             childContext1 = childContext1.PushValidationLocationArrayIndex(1);
         }
 
-        ValidationContext allOfResult1 = this.As<JsonSchemaSample.Api.Pet.AllOf1Entity>().Validate(childContext1.CreateChildContext(), level);
+        ValidationContext allOfResult1 = this.As<JsonSchemaSample.Api.Pet.RequiredId>().Validate(childContext1.CreateChildContext(), level);
         if (!allOfResult1.IsValid)
         {
             if (level >= ValidationLevel.Detailed)

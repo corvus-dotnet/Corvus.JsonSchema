@@ -126,6 +126,17 @@ public static class SchemaExtensionsDraft202012
     }
 
     /// <summary>
+    /// Determines if this is an explicit map type.
+    /// </summary>
+    /// <param name="draft201909Schema">The schema to test.</param>
+    /// <returns><c>True</c> if the schema has a single type value of type object, and an additionalItems schema object.</returns>
+    public static bool IsExplicitMapType(this Schema draft201909Schema)
+    {
+        return
+            draft201909Schema.IsExplicitObjectType() && draft201909Schema.AdditionalProperties.ValueKind == JsonValueKind.Object && draft201909Schema.Properties.IsUndefined();
+    }
+
+    /// <summary>
     /// Determines if this is an explicit object type.
     /// </summary>
     /// <param name="draft202012Schema">The schema to test.</param>

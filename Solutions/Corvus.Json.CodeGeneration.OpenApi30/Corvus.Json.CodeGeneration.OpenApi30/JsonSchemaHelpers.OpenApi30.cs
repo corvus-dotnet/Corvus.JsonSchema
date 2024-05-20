@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Text.Json;
 using Corvus.Json.JsonSchema.OpenApi30;
@@ -32,12 +33,111 @@ public static class JsonSchemaHelpers
         configuration.DefinitionKeywords = CreateOpenApi30DefsKeywords();
         configuration.RefKeywords = CreateOpenApi30RefKeywords();
         configuration.RefResolvableKeywords = CreateOpenApi30RefResolvableKeywords();
+        configuration.ProposeName = ProposeName;
         configuration.ValidateSchema = CreateOpenApi30ValidateSchema();
         configuration.GetBuiltInTypeName = CreateOpenApi30GetBuiltInTypeNameFunction();
         configuration.IsExplicitArrayType = CreateOpenApi30IsExplicitArrayType();
         configuration.IsSimpleType = CreateOpenApi30IsSimpleType();
         configuration.FindAndBuildPropertiesAdapter = CreateOpenApi30FindAndBuildPropertiesAdapter();
         return builder;
+    }
+
+    private static bool ProposeName(TypeDeclaration typeDeclaration, JsonReferenceBuilder reference, [NotNullWhen(true)] out string? name)
+    {
+        if (typeDeclaration.LocatedSchema.Schema.ValueKind == JsonValueKind.Object &&
+            typeDeclaration.Schema().Title.IsNotUndefined() &&
+            typeDeclaration.Schema().Title.TryGetString(out string? titleValueString) &&
+            titleValueString.Length > 0 && titleValueString.Length < 64)
+        {
+            name = titleValueString;
+            return true;
+        }
+        else if (typeDeclaration.LocatedSchema.Schema.ValueKind == JsonValueKind.Object &&
+            typeDeclaration.Schema().Description.IsNotUndefined() &&
+            typeDeclaration.Schema().Description.TryGetString(out string? descriptionString) &&
+            descriptionString.Length > 0 && descriptionString.Length < 64)
+        {
+            name = descriptionString;
+            return true;
+        }
+        else if (typeDeclaration.LocatedSchema.Schema.ValueKind == JsonValueKind.Object &&
+            typeDeclaration.Schema().Default.IsNotUndefined() &&
+            typeDeclaration.Schema().EnumerateObject().Count() == 1)
+        {
+            name = $"DefaultValue{(typeDeclaration.Schema().Default.ValueKind == JsonValueKind.String ? (string)typeDeclaration.Schema().Default.AsString : typeDeclaration.Schema().Default.ToString())}";
+            return true;
+        }
+        else if (typeDeclaration.LocatedSchema.Schema.ValueKind == JsonValueKind.Object &&
+            typeDeclaration.Schema().IsObjectType() &&
+            typeDeclaration.Schema().Required.IsNotUndefined() &&
+            typeDeclaration.Schema().Required.GetArrayLength() < 3)
+        {
+            StringBuilder s = new();
+            foreach (JsonString required in typeDeclaration.Schema().Required.EnumerateArray())
+            {
+                if (s.Length == 0)
+                {
+                    s.Append("Required ");
+                }
+                else
+                {
+                    s.Append(" and ");
+                }
+
+#if NET8_0_OR_GREATER
+                s.Append(Formatting.ToPascalCaseWithReservedWords((string)required));
+#else
+                s.Append(Formatting.ToPascalCaseWithReservedWords((string)required).ToString());
+#endif
+            }
+
+            name = s.ToString();
+            return true;
+        }
+        else if (typeDeclaration.LocatedSchema.Schema.ValueKind == JsonValueKind.Object &&
+            typeDeclaration.Schema().IsObjectType() &&
+            typeDeclaration.Schema().Properties.IsNotUndefined())
+        {
+            var enumProperties = typeDeclaration.Schema().Properties.Where(
+                p => p.Value.AsSchema.Enum.IsNullOrUndefined() &&
+                     p.Value.AsSchema.Enum.GetArrayLength() == 1).ToList();
+
+            if (enumProperties.Count > 0 && enumProperties.Count < 3)
+            {
+                StringBuilder s = new();
+                foreach (KeyValuePair<JsonPropertyName, OpenApiDocument.Schema.PropertiesEntity.AdditionalPropertiesEntity> enumProperty in enumProperties)
+                {
+                    if (s.Length == 0)
+                    {
+                        s.Append("With ");
+                    }
+                    else
+                    {
+                        s.Append(" and ");
+                    }
+
+#if NET8_0_OR_GREATER
+                    s.Append(Formatting.ToPascalCaseWithReservedWords((string)enumProperty.Key));
+                    s.Append(Formatting.ToPascalCaseWithReservedWords(
+                        enumProperty.Value.AsSchema.Enum[0].ValueKind == JsonValueKind.String ?
+                            (string)enumProperty.Value.AsSchema.Enum[0].AsString :
+                            enumProperty.Value.AsSchema.Enum[0].ToString()));
+#else
+                    s.Append(Formatting.ToPascalCaseWithReservedWords((string)enumProperty.Key).ToString());
+                    s.Append(Formatting.ToPascalCaseWithReservedWords(
+                        enumProperty.Value.AsSchema.Enum[0].ValueKind == JsonValueKind.String ?
+                            (string)enumProperty.Value.AsSchema.Enum[0].AsString :
+                            enumProperty.Value.AsSchema.Enum[0].ToString()).ToString());
+#endif
+                }
+
+                name = s.ToString();
+                return true;
+            }
+        }
+
+        name = null;
+        return false;
     }
 
     /// <summary>

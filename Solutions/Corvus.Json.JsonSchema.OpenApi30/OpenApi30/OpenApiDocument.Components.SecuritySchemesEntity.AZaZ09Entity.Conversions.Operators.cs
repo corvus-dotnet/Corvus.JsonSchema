@@ -93,10 +93,10 @@ public readonly partial struct OpenApiDocument
                 }
 
                 /// <summary>
-                /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.APiKeySecurityScheme"/>.
+                /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme"/>.
                 /// </summary>
                 /// <param name = "value">The value from which to convert.</param>
-                public static explicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.APiKeySecurityScheme(AZaZ09Entity value)
+                public static explicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme(AZaZ09Entity value)
                 {
                     if ((value.backing & Backing.JsonElement) != 0)
                     {
@@ -108,14 +108,14 @@ public readonly partial struct OpenApiDocument
                         return new(value.objectBacking);
                     }
 
-                    return Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.APiKeySecurityScheme.Undefined;
+                    return Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme.Undefined;
                 }
 
                 /// <summary>
-                /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.APiKeySecurityScheme"/>.
+                /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme"/>.
                 /// </summary>
                 /// <param name = "value">The value from which to convert.</param>
-                public static implicit operator AZaZ09Entity(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.APiKeySecurityScheme value)
+                public static implicit operator AZaZ09Entity(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.ApiKeySecurityScheme value)
                 {
                     if (value.HasJsonElementBacking)
                     {
@@ -130,10 +130,10 @@ public readonly partial struct OpenApiDocument
                 }
 
                 /// <summary>
-                /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme"/>.
+                /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme"/>.
                 /// </summary>
                 /// <param name = "value">The value from which to convert.</param>
-                public static explicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme(AZaZ09Entity value)
+                public static explicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme(AZaZ09Entity value)
                 {
                     if ((value.backing & Backing.JsonElement) != 0)
                     {
@@ -145,14 +145,14 @@ public readonly partial struct OpenApiDocument
                         return new(value.objectBacking);
                     }
 
-                    return Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.Undefined;
+                    return Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.Undefined;
                 }
 
                 /// <summary>
-                /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme"/>.
+                /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme"/>.
                 /// </summary>
                 /// <param name = "value">The value from which to convert.</param>
-                public static implicit operator AZaZ09Entity(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme value)
+                public static implicit operator AZaZ09Entity(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme value)
                 {
                     if (value.HasJsonElementBacking)
                     {
@@ -167,10 +167,10 @@ public readonly partial struct OpenApiDocument
                 }
 
                 /// <summary>
-                /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.Bearer"/>.
+                /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.Bearer"/>.
                 /// </summary>
                 /// <param name = "value">The value from which to convert.</param>
-                public static explicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.Bearer(AZaZ09Entity value)
+                public static explicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.Bearer(AZaZ09Entity value)
                 {
                     if ((value.backing & Backing.JsonElement) != 0)
                     {
@@ -182,14 +182,14 @@ public readonly partial struct OpenApiDocument
                         return new(value.objectBacking);
                     }
 
-                    return Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.Bearer.Undefined;
+                    return Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.Bearer.Undefined;
                 }
 
                 /// <summary>
-                /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.Bearer"/>.
+                /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.Bearer"/>.
                 /// </summary>
                 /// <param name = "value">The value from which to convert.</param>
-                public static explicit operator AZaZ09Entity(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.Bearer value)
+                public static explicit operator AZaZ09Entity(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.Bearer value)
                 {
                     if (value.HasJsonElementBacking)
                     {
@@ -204,10 +204,10 @@ public readonly partial struct OpenApiDocument
                 }
 
                 /// <summary>
-                /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.NonBearer"/>.
+                /// Conversion to <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.NonBearer"/>.
                 /// </summary>
                 /// <param name = "value">The value from which to convert.</param>
-                public static explicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.NonBearer(AZaZ09Entity value)
+                public static explicit operator Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.NonBearer(AZaZ09Entity value)
                 {
                     if ((value.backing & Backing.JsonElement) != 0)
                     {
@@ -219,14 +219,14 @@ public readonly partial struct OpenApiDocument
                         return new(value.objectBacking);
                     }
 
-                    return Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.NonBearer.Undefined;
+                    return Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.NonBearer.Undefined;
                 }
 
                 /// <summary>
-                /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.NonBearer"/>.
+                /// Conversion from <see cref = "Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.NonBearer"/>.
                 /// </summary>
                 /// <param name = "value">The value from which to convert.</param>
-                public static explicit operator AZaZ09Entity(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HTtPSecurityScheme.NonBearer value)
+                public static explicit operator AZaZ09Entity(Corvus.Json.JsonSchema.OpenApi30.OpenApiDocument.HttpSecurityScheme.NonBearer value)
                 {
                     if (value.HasJsonElementBacking)
                     {
