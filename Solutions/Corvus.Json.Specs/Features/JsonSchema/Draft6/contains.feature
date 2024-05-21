@@ -14,6 +14,7 @@ Scenario Outline: contains keyword validation
     Given the input JSON file "contains.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -43,6 +44,7 @@ Scenario Outline: contains keyword with const keyword
     Given the input JSON file "contains.json"
     And the schema at "#/1/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -64,6 +66,7 @@ Scenario Outline: contains keyword with boolean schema true
     Given the input JSON file "contains.json"
     And the schema at "#/2/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -83,6 +86,7 @@ Scenario Outline: contains keyword with boolean schema false
     Given the input JSON file "contains.json"
     And the schema at "#/3/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -107,6 +111,7 @@ Scenario Outline: items + contains
     Given the input JSON file "contains.json"
     And the schema at "#/4/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -134,6 +139,7 @@ Scenario Outline: contains with null instance elements
     Given the input JSON file "contains.json"
     And the schema at "#/5/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance

@@ -15,6 +15,7 @@ Scenario Outline: by int
     Given the input JSON file "multipleOf.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -39,6 +40,7 @@ Scenario Outline: by number
     Given the input JSON file "multipleOf.json"
     And the schema at "#/1/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -63,6 +65,7 @@ Scenario Outline: by small number
     Given the input JSON file "multipleOf.json"
     And the schema at "#/2/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -85,6 +88,7 @@ Scenario Outline: float division  equals  inf
     Given the input JSON file "multipleOf.json"
     And the schema at "#/3/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -105,6 +109,7 @@ Scenario Outline: small multiple of large integer
     Given the input JSON file "multipleOf.json"
     And the schema at "#/4/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance

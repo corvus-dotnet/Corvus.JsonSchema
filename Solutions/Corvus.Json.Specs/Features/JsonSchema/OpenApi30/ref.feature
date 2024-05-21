@@ -17,6 +17,7 @@ Scenario Outline: root pointer ref
     Given the input JSON file "ref.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -45,6 +46,7 @@ Scenario Outline: relative pointer ref to object
     Given the input JSON file "ref.json"
     And the schema at "#/1/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -70,6 +72,7 @@ Scenario Outline: relative pointer ref to array
     Given the input JSON file "ref.json"
     And the schema at "#/2/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -100,6 +103,7 @@ Scenario Outline: escaped pointer ref
     Given the input JSON file "ref.json"
     And the schema at "#/3/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -134,6 +138,7 @@ Scenario Outline: nested refs
     Given the input JSON file "ref.json"
     And the schema at "#/4/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -165,6 +170,7 @@ Scenario Outline: ref overrides any sibling keywords
     Given the input JSON file "ref.json"
     And the schema at "#/5/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -186,6 +192,7 @@ Scenario Outline: remote ref, containing refs itself
     Given the input JSON file "ref.json"
     And the schema at "#/6/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -209,6 +216,7 @@ Scenario Outline: property named $ref that is not a reference
     Given the input JSON file "ref.json"
     And the schema at "#/7/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -237,6 +245,7 @@ Scenario Outline: property named $ref, containing an actual $ref
     Given the input JSON file "ref.json"
     And the schema at "#/8/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -263,6 +272,7 @@ Scenario Outline: refs with quote
     Given the input JSON file "ref.json"
     And the schema at "#/9/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -289,6 +299,7 @@ Scenario Outline: naive replacement of $ref with its destination is not correct
     Given the input JSON file "ref.json"
     And the schema at "#/10/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -321,6 +332,7 @@ Scenario Outline: empty tokens in $ref json-pointer
     Given the input JSON file "ref.json"
     And the schema at "#/11/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance

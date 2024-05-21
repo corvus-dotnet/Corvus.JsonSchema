@@ -22,10 +22,21 @@ public partial class CodeGeneratorDefaults
     /// </summary>
     /// <param name="jsonSchemaBuilder">The current <see cref="JsonSchemaBuilder"/>.</param>
     /// <param name="declarationToGenerate">The <see cref="TypeDeclaration"/> to generate in this file.</param>
-    public CodeGeneratorDefaults(JsonSchemaBuilder jsonSchemaBuilder, TypeDeclaration declarationToGenerate)
+    /// <param name="validateFormat">If true, the format keyword will be validated.</param>
+    public CodeGeneratorDefaults(JsonSchemaBuilder jsonSchemaBuilder, TypeDeclaration declarationToGenerate, bool validateFormat = true)
     {
         this.Builder = jsonSchemaBuilder;
         this.TypeDeclaration = declarationToGenerate;
+        this.ValidateFormat = validateFormat;
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether or not to validate the format keyword.
+    /// </summary>
+    public bool ValidateFormat
+    {
+        get;
+        private set;
     }
 
     /// <summary>
@@ -798,7 +809,7 @@ public partial class CodeGeneratorDefaults
                 }
 
                 // Fall back to a decimal
-                return $"{this.TypeDeclaration.Schema().MultipleOf.AsJsonElement.GetRawText()}M";
+                return $"{this.TypeDeclaration.Schema().ExclusiveMaximum.AsJsonElement.GetRawText()}M";
             }
 
             return string.Empty;

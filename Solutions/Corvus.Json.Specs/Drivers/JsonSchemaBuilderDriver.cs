@@ -243,8 +243,9 @@ After:
     /// <param name="virtualFileName">The virtual file name for the schema.</param>
     /// <param name="featureName">The unique name of the feature.</param>
     /// <param name="scenarioName">The unique name of the scenario.</param>
+    /// <param name="validateFormat">If true, the format keyword will be validated.</param>
     /// <returns>A <see cref="ValueTask{Type}"/> which, when complete, returns the <see cref="Type"/> generated for the schema.</returns>
-    public async ValueTask<Type> GenerateTypeForVirtualFile(string schema, string virtualFileName, string featureName, string scenarioName)
+    public async ValueTask<Type> GenerateTypeForVirtualFile(string schema, string virtualFileName, string featureName, string scenarioName, bool validateFormat)
     {
         string baseDirectory = this.configuration[$"{this.settingsKey}:testBaseDirectory"]!;
         string path = Path.Combine(baseDirectory, virtualFileName);
@@ -256,7 +257,7 @@ After:
 
         this.builder.AddDocument(path, JsonDocument.Parse(schema));
 
-        (string rootType, ImmutableDictionary<JsonReference, TypeAndCode> generatedTypes) = await this.builder.BuildTypesFor(new JsonReference(path), $"{featureName}Feature.{scenarioName}", rebase: true).ConfigureAwait(false);
+        (string rootType, ImmutableDictionary<JsonReference, TypeAndCode> generatedTypes) = await this.builder.BuildTypesFor(new JsonReference(path), $"{featureName}Feature.{scenarioName}", rebase: true, validateFormat: validateFormat).ConfigureAwait(false);
 #if NET8_0_OR_GREATER
         return CompileGeneratedType(this.assemblyLoadContext!, rootType, generatedTypes);
 #else
@@ -271,13 +272,14 @@ After:
     /// <param name="schemaPath">The path to the Schema in the file.</param>
     /// <param name="featureName">The feature name for the type.</param>
     /// <param name="scenarioName">The scenario name for the type.</param>
+    /// <param name="validateFormat">If true, the format keyword will be validated.</param>
     /// <returns>The fully qualified type name of the entity we have generated.</returns>
-    public async ValueTask<Type> GenerateTypeForJsonSchemaTestSuite(string filename, string schemaPath, string featureName, string scenarioName)
+    public async ValueTask<Type> GenerateTypeForJsonSchemaTestSuite(string filename, string schemaPath, string featureName, string scenarioName, bool validateFormat)
     {
         string baseDirectory = this.configuration[$"{this.settingsKey}:testBaseDirectory"]!;
         string path = Path.Combine(baseDirectory, filename) + schemaPath;
 
-        (string rootType, ImmutableDictionary<JsonReference, TypeAndCode> generatedTypes) = await this.builder.BuildTypesFor(new JsonReference(path), $"{featureName}Feature.{scenarioName}", rebase: true).ConfigureAwait(false);
+        (string rootType, ImmutableDictionary<JsonReference, TypeAndCode> generatedTypes) = await this.builder.BuildTypesFor(new JsonReference(path), $"{featureName}Feature.{scenarioName}", rebase: true, validateFormat: validateFormat).ConfigureAwait(false);
 
 #if NET8_0_OR_GREATER
         return CompileGeneratedType(this.assemblyLoadContext!, rootType, generatedTypes);
@@ -293,8 +295,9 @@ After:
     /// <param name="virtualFileName">The virtual file name for the schema.</param>
     /// <param name="featureName">The unique name of the feature.</param>
     /// <param name="scenarioName">The unique name of the scenario.</param>
+    /// <param name="validateFormat">If true, the format keyword will be validated.</param>
     /// <returns>A <see cref="ValueTask{Type}"/> which, when complete, returns the <see cref="Type"/> generated for the schema.</returns>
-    public Type SynchronouslyGenerateTypeForVirtualFile(string schema, string virtualFileName, string featureName, string scenarioName)
+    public Type SynchronouslyGenerateTypeForVirtualFile(string schema, string virtualFileName, string featureName, string scenarioName, bool validateFormat)
     {
         string baseDirectory = this.configuration[$"{this.settingsKey}:testBaseDirectory"]!;
         string path = Path.Combine(baseDirectory, virtualFileName);
@@ -306,7 +309,7 @@ After:
 
         this.builder.AddDocument(path, JsonDocument.Parse(schema));
 
-        (string rootType, ImmutableDictionary<JsonReference, TypeAndCode> generatedTypes) = this.builder.SafeBuildTypesFor(new JsonReference(path), $"{featureName}Feature.{scenarioName}", rebase: true);
+        (string rootType, ImmutableDictionary<JsonReference, TypeAndCode> generatedTypes) = this.builder.SafeBuildTypesFor(new JsonReference(path), $"{featureName}Feature.{scenarioName}", rebase: true, validateFormat: true);
 #if NET8_0_OR_GREATER
         return CompileGeneratedType(this.assemblyLoadContext!, rootType, generatedTypes);
 #else
@@ -321,13 +324,14 @@ After:
     /// <param name="schemaPath">The path to the Schema in the file.</param>
     /// <param name="featureName">The feature name for the type.</param>
     /// <param name="scenarioName">The scenario name for the type.</param>
+    /// <param name="validateFormat">If true, the format keyword will be validated.</param>
     /// <returns>The fully qualified type name of the entity we have generated.</returns>
-    public Type SynchronouslyGenerateTypeForJsonSchemaTestSuite(string filename, string schemaPath, string featureName, string scenarioName)
+    public Type SynchronouslyGenerateTypeForJsonSchemaTestSuite(string filename, string schemaPath, string featureName, string scenarioName, bool validateFormat)
     {
         string baseDirectory = this.configuration[$"{this.settingsKey}:testBaseDirectory"]!;
         string path = Path.Combine(baseDirectory, filename) + schemaPath;
 
-        (string rootType, ImmutableDictionary<JsonReference, TypeAndCode> generatedTypes) = this.builder.SafeBuildTypesFor(new JsonReference(path), $"{featureName}Feature.{scenarioName}", rebase: true);
+        (string rootType, ImmutableDictionary<JsonReference, TypeAndCode> generatedTypes) = this.builder.SafeBuildTypesFor(new JsonReference(path), $"{featureName}Feature.{scenarioName}", rebase: true, validateFormat: validateFormat);
 
 #if NET8_0_OR_GREATER
         return CompileGeneratedType(this.assemblyLoadContext!, rootType, generatedTypes);

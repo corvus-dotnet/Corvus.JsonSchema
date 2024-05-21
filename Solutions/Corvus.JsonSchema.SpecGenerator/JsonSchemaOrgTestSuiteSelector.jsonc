@@ -6,6 +6,7 @@
     "subdirectories": {
 
         "draft4": {
+            "assertFormat": true,
             "testSet": "draft4",
             "outputFolder": "Draft4",
             "excludeFromThisDirectory": [
@@ -41,6 +42,7 @@
         },
 
         "draft6": {
+            "assertFormat": true,
             "testSet": "draft6",
             "outputFolder": "Draft6",
             "excludeFromThisDirectory": [
@@ -75,6 +77,7 @@
         },
 
         "draft7": {
+            "assertFormat": true,
             "testSet": "draft7",
             "outputFolder": "Draft7",
             "excludeFromThisDirectory": [
@@ -122,6 +125,7 @@
         },
 
         "draft2019-09": {
+            "assertFormat": true,
             "testSet": "draft2019-09",
             "outputFolder": "Draft201909",
             "excludeFromThisDirectory": [
@@ -178,105 +182,6 @@
                 // We don't support custom metaschema (yet!)
                 "vocabulary\\.json"
             ],
-            "testExclusions": {
-                "format.json": {
-                    "email format": {
-                        "testsToIgnoreIndices": [
-                            6
-                        ]
-                    },
-                    "idn-email format": {
-                        "testsToIgnoreIndices": [
-                            6
-                        ]
-                    },
-                    "regex format": {
-                        "testsToIgnoreIndices": [
-                            6
-                        ]
-                    },
-                    "ipv4 format": {
-                        "testsToIgnoreIndices": [
-                            6
-                        ]
-                    },
-                    "ipv6 format": {
-                        "testsToIgnoreIndices": [
-                            6
-                        ]
-                    },
-                    "idn-hostname format": {
-                        "testsToIgnoreIndices": [
-                            6
-                        ]
-                    },
-                    "hostname format": {
-                        "testsToIgnoreIndices": [
-                            6
-                        ]
-                    },
-                    "date format": {
-                        "testsToIgnoreIndices": [
-                            6
-                        ]
-                    },
-                    "date-time format": {
-                        "testsToIgnoreIndices": [
-                            6
-                        ]
-                    },
-                    "time format": {
-                        "testsToIgnoreIndices": [
-                            6
-                        ]
-                    },
-                    "json-pointer format": {
-                        "testsToIgnoreIndices": [
-                            6
-                        ]
-                    },
-                    "relative-json-pointer format": {
-                        "testsToIgnoreIndices": [
-                            6
-                        ]
-                    },
-                    "iri format": {
-                        "testsToIgnoreIndices": [
-                            6
-                        ]
-                    },
-                    "iri-reference format": {
-                        "testsToIgnoreIndices": [
-                            6
-                        ]
-                    },
-                    "uri format": {
-                        "testsToIgnoreIndices": [
-                            6
-                        ]
-                    },
-                    "uri-reference format": {
-                        "testsToIgnoreIndices": [
-                            6
-                        ]
-                    },
-                    "uri-template format": {
-                        "testsToIgnoreIndices": [
-                            6
-                        ]
-                    },
-                    "uuid format": {
-                        "testsToIgnoreIndices": [
-                            6
-                        ]
-                    },
-                    "duration format": {
-                        "testsToIgnoreIndices": [
-                            6
-                        ]
-                    }
-                }
-            },
             "subdirectories": {
                 "optional": {
                     "excludeFromThisDirectory": [
@@ -284,10 +189,12 @@
                         "bignum\\.json",
                         "ecmascript-regex\\.json",
                         "non-bmp-regex\\.json",
-                        "dynamicRef\\.json"
+                        "dynamicRef\\.json",
+                        "format-assertion\\.json"
                     ],
                     "subdirectories": {
                         "format": {
+                            "assertFormat":  true,
                             "excludeFromThisDirectory": [
                             ],
                             "testExclusions": {

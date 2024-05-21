@@ -27,6 +27,7 @@ public class JsonSchemaSteps
     private const string SchemaType = "SchemaType";
     private const string SchemaInstance = "SchemaInstance";
     private const string SchemaValidationResult = "SchemaValidationResult";
+    private const string ValidateFormatKey = "ValidateFormat";
     private const string CreateException = "CreateException";
     private readonly FeatureContext featureContext;
     private readonly ScenarioContext scenarioContext;
@@ -76,6 +77,15 @@ public class JsonSchemaSteps
     public void GivenTheSchema(string schema)
     {
         this.scenarioContext.Set(schema, SchemaInstance);
+    }
+
+    /// <summary>
+    /// Determines whether we will assert formatting or not.
+    /// </summary>
+    [Given(@"I assert format")]
+    public void GivenIAssertFormat()
+    {
+        this.scenarioContext.Set(true, ValidateFormatKey);
     }
 
     /// <summary>
@@ -583,13 +593,16 @@ After:
         }
         else
         {
+            this.scenarioContext.TryGetValue(ValidateFormatKey, out bool validateFormat);
+
             if (this.scenarioContext.ContainsKey(InputDataPath))
             {
                 type = await this.driver.GenerateTypeForJsonSchemaTestSuite(
                     filename,
                     schemaPath,
                     featureName,
-                    scenarioName).ConfigureAwait(false);
+                    scenarioName,
+                    validateFormat).ConfigureAwait(false);
             }
             else
             {
@@ -598,7 +611,8 @@ After:
                     schema,
                     filename,
                     featureName,
-                    scenarioName).ConfigureAwait(false);
+                    scenarioName,
+                    validateFormat).ConfigureAwait(false);
             }
 
             this.featureContext.Set(type, key);
@@ -627,13 +641,16 @@ After:
         }
         else
         {
+            this.scenarioContext.TryGetValue(ValidateFormatKey, out bool validateFormat);
+
             if (this.scenarioContext.ContainsKey(InputDataPath))
             {
                 type = this.driver.SynchronouslyGenerateTypeForJsonSchemaTestSuite(
                     filename,
                     schemaPath,
                     featureName,
-                    scenarioName);
+                    scenarioName,
+                    validateFormat);
             }
             else
             {
@@ -642,7 +659,8 @@ After:
                     schema,
                     filename,
                     featureName,
-                    scenarioName);
+                    scenarioName,
+                    validateFormat);
             }
 
             this.featureContext.Set(type, key);

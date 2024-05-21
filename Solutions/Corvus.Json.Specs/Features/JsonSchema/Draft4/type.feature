@@ -12,6 +12,7 @@ Scenario Outline: integer type matches integers
     Given the input JSON file "type.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -43,6 +44,7 @@ Scenario Outline: number type matches numbers
     Given the input JSON file "type.json"
     And the schema at "#/1/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -76,6 +78,7 @@ Scenario Outline: string type matches strings
     Given the input JSON file "type.json"
     And the schema at "#/2/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -109,6 +112,7 @@ Scenario Outline: object type matches objects
     Given the input JSON file "type.json"
     And the schema at "#/3/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -138,6 +142,7 @@ Scenario Outline: array type matches arrays
     Given the input JSON file "type.json"
     And the schema at "#/4/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -167,6 +172,7 @@ Scenario Outline: boolean type matches booleans
     Given the input JSON file "type.json"
     And the schema at "#/5/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -202,6 +208,7 @@ Scenario Outline: null type matches only the null object
     Given the input JSON file "type.json"
     And the schema at "#/6/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -237,6 +244,7 @@ Scenario Outline: multiple types can be specified in an array
     Given the input JSON file "type.json"
     And the schema at "#/7/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -268,6 +276,7 @@ Scenario Outline: type as array with one item
     Given the input JSON file "type.json"
     And the schema at "#/8/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -289,6 +298,7 @@ Scenario Outline: type: array or object
     Given the input JSON file "type.json"
     And the schema at "#/9/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -316,6 +326,7 @@ Scenario Outline: type: array, object or null
     Given the input JSON file "type.json"
     And the schema at "#/10/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance

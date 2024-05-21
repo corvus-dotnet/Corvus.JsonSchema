@@ -312,7 +312,7 @@ namespace ");
             
             #line 96 "CodeGenerator.Validate.tt"
       }
-        if (HasFormat)
+        if (HasFormat && ValidateFormat)
         { 
             
             #line default

@@ -17,6 +17,7 @@ Scenario Outline: patternProperties validates properties matching a regex
     Given the input JSON file "patternProperties.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -52,6 +53,7 @@ Scenario Outline: multiple simultaneous patternProperties are validated
     Given the input JSON file "patternProperties.json"
     And the schema at "#/1/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -85,6 +87,7 @@ Scenario Outline: regexes are not anchored by default and are case sensitive
     Given the input JSON file "patternProperties.json"
     And the schema at "#/2/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -114,6 +117,7 @@ Scenario Outline: patternProperties with boolean schemas
     Given the input JSON file "patternProperties.json"
     And the schema at "#/3/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -144,6 +148,7 @@ Scenario Outline: patternProperties with null valued instance properties
     Given the input JSON file "patternProperties.json"
     And the schema at "#/4/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance

@@ -15,6 +15,7 @@ Scenario Outline: single dependency
     Given the input JSON file "optional/dependencies-compatibility.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -47,6 +48,7 @@ Scenario Outline: empty dependents
     Given the input JSON file "optional/dependencies-compatibility.json"
     And the schema at "#/1/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -71,6 +73,7 @@ Scenario Outline: multiple dependents required
     Given the input JSON file "optional/dependencies-compatibility.json"
     And the schema at "#/2/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -104,6 +107,7 @@ Scenario Outline: dependencies with escaped characters
     Given the input JSON file "optional/dependencies-compatibility.json"
     And the schema at "#/3/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -137,6 +141,7 @@ Scenario Outline: single schema dependency
     Given the input JSON file "optional/dependencies-compatibility.json"
     And the schema at "#/4/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -174,6 +179,7 @@ Scenario Outline: boolean subschemas
     Given the input JSON file "optional/dependencies-compatibility.json"
     And the schema at "#/5/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -203,6 +209,7 @@ Scenario Outline: schema dependencies with escaped characters
     Given the input JSON file "optional/dependencies-compatibility.json"
     And the schema at "#/6/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance

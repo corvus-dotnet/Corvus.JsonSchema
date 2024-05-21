@@ -5,6 +5,7 @@
     "includeInThisDirectory": [],
     "subdirectories": {
         "openApi30": {
+            "assertFormat": true,
             "testSet": "openApi30",
             "outputFolder": "OpenApi30",
             "excludeFromThisDirectory": [

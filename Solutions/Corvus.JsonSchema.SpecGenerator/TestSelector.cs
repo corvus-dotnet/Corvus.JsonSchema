@@ -64,6 +64,11 @@ public class TestSelector
     public string? OutputFolder { get; set; }
 
     /// <summary>
+    /// Gets or sets a value indicating whether to assert format in this folder.
+    /// </summary>
+    public bool? AssertFormat { get; set; }
+
+    /// <summary>
     /// Details for a test exclusion.
     /// </summary>
     /// <param name="TestsToIgnoreIndices">

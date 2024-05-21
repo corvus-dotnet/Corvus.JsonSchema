@@ -12,6 +12,7 @@ Scenario Outline: maxProperties validation
     Given the input JSON file "maxProperties.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -39,6 +40,7 @@ Scenario Outline: maxProperties  equals  0 means the object is empty
     Given the input JSON file "maxProperties.json"
     And the schema at "#/1/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance

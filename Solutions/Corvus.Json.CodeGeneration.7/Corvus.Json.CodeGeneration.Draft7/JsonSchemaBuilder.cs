@@ -22,7 +22,7 @@ public class JsonSchemaBuilder : JsonSchemaBuilderBase
     }
 
     /// <inheritdoc/>
-    protected override (JsonReference Location, TypeAndCode TypeAndCode) GenerateFilesForType((JsonReference Location, TypeDeclaration TypeDeclaration) typeForGeneration)
+    protected override (JsonReference Location, TypeAndCode TypeAndCode) GenerateFilesForType((JsonReference Location, TypeDeclaration TypeDeclaration) typeForGeneration, bool validateFormat)
     {
         var codeGenerator = new CodeGenerator(this, typeForGeneration.TypeDeclaration);
         var codeGeneratorOneOf = new CodeGeneratorOneOf(this, typeForGeneration.TypeDeclaration);
@@ -48,14 +48,14 @@ public class JsonSchemaBuilder : JsonSchemaBuilderBase
         var codeGeneratorValidateAllOf = new CodeGeneratorValidateAllOf(this, typeForGeneration.TypeDeclaration);
         var codeGeneratorValidateAnyOf = new CodeGeneratorValidateAnyOf(this, typeForGeneration.TypeDeclaration);
         var codeGeneratorValidateArray = new CodeGeneratorValidateArray(this, typeForGeneration.TypeDeclaration);
-        var codeGeneratorValidateFormat = new CodeGeneratorValidateFormat(this, typeForGeneration.TypeDeclaration);
+        var codeGeneratorValidateFormat = new CodeGeneratorValidateFormat(this, typeForGeneration.TypeDeclaration, validateFormat);
         var codeGeneratorValidateIfThenElse = new CodeGeneratorValidateIfThenElse(this, typeForGeneration.TypeDeclaration);
         var codeGeneratorValidateMediaTypeAndEncoding = new CodeGeneratorValidateMediaTypeAndEncoding(this, typeForGeneration.TypeDeclaration);
         var codeGeneratorValidateNot = new CodeGeneratorValidateNot(this, typeForGeneration.TypeDeclaration);
         var codeGeneratorValidateObject = new CodeGeneratorValidateObject(this, typeForGeneration.TypeDeclaration);
         var codeGeneratorValidateOneOf = new CodeGeneratorValidateOneOf(this, typeForGeneration.TypeDeclaration);
         var codeGeneratorValidateRef = new CodeGeneratorValidateRef(this, typeForGeneration.TypeDeclaration);
-        var codeGeneratorValidate = new CodeGeneratorValidate(this, typeForGeneration.TypeDeclaration);
+        var codeGeneratorValidate = new CodeGeneratorValidate(this, typeForGeneration.TypeDeclaration, validateFormat);
         var codeGeneratorValidateType = new CodeGeneratorValidateType(this, typeForGeneration.TypeDeclaration);
 
         string dotnetTypeName = typeForGeneration.TypeDeclaration.DotnetTypeName!;
