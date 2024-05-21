@@ -15,6 +15,7 @@ Scenario Outline: const validation
     Given the input JSON file "const.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -39,6 +40,7 @@ Scenario Outline: const with object
     Given the input JSON file "const.json"
     And the schema at "#/1/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -65,6 +67,7 @@ Scenario Outline: const with array
     Given the input JSON file "const.json"
     And the schema at "#/2/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -89,6 +92,7 @@ Scenario Outline: const with null
     Given the input JSON file "const.json"
     And the schema at "#/3/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -111,6 +115,7 @@ Scenario Outline: const with false does not match 0
     Given the input JSON file "const.json"
     And the schema at "#/4/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -135,6 +140,7 @@ Scenario Outline: const with true does not match 1
     Given the input JSON file "const.json"
     And the schema at "#/5/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -159,6 +165,7 @@ Scenario Outline: const with array[false] does not match array[0]
     Given the input JSON file "const.json"
     And the schema at "#/6/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -183,6 +190,7 @@ Scenario Outline: const with array[true] does not match array[1]
     Given the input JSON file "const.json"
     And the schema at "#/7/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -207,6 +215,7 @@ Scenario Outline: const with {"a": false} does not match {"a": 0}
     Given the input JSON file "const.json"
     And the schema at "#/8/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -231,6 +240,7 @@ Scenario Outline: const with {"a": true} does not match {"a": 1}
     Given the input JSON file "const.json"
     And the schema at "#/9/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -255,6 +265,7 @@ Scenario Outline: const with 0 does not match other zero-like types
     Given the input JSON file "const.json"
     And the schema at "#/10/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -285,6 +296,7 @@ Scenario Outline: const with 1 does not match true
     Given the input JSON file "const.json"
     And the schema at "#/11/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -309,6 +321,7 @@ Scenario Outline: const with -2.0 matches integer and float types
     Given the input JSON file "const.json"
     And the schema at "#/12/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -337,6 +350,7 @@ Scenario Outline: float and integers are equal up to 64-bit representation limit
     Given the input JSON file "const.json"
     And the schema at "#/13/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -363,6 +377,7 @@ Scenario Outline: nul characters in strings
     Given the input JSON file "const.json"
     And the schema at "#/14/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance

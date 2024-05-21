@@ -17,6 +17,7 @@ Scenario Outline: object properties validation
     Given the input JSON file "properties.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -51,6 +52,7 @@ Scenario Outline: properties, patternProperties, additionalProperties interactio
     Given the input JSON file "properties.json"
     And the schema at "#/1/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -91,6 +93,7 @@ Scenario Outline: properties with escaped characters
     Given the input JSON file "properties.json"
     And the schema at "#/2/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -114,6 +117,7 @@ Scenario Outline: properties with null valued instance properties
     Given the input JSON file "properties.json"
     And the schema at "#/3/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -139,6 +143,7 @@ Scenario Outline: properties whose names are Javascript object property names
     Given the input JSON file "properties.json"
     And the schema at "#/4/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance

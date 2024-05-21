@@ -20,6 +20,7 @@ Scenario Outline: type derived by reference supports implicit conversions
 		    }
 		}
 		"""
+	And I assert format
 	And I generate a type for the schema
 	And I create the instance by casting the <format> <inputData>
 	When I validate the instance
@@ -75,6 +76,7 @@ Scenario Outline: type derived by single allOf supports implicit conversions
 		    }
 		}
 		"""
+	And I assert format
 	And I generate a type for the schema
 	And I create the instance by casting the <format> <inputData>
 	When I validate the instance

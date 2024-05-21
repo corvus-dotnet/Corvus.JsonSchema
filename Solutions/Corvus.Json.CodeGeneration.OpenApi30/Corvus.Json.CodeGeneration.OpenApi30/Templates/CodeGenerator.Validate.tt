@@ -94,7 +94,7 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
             return result;
         }
 <#      }
-        if (HasFormat)
+        if (HasFormat && ValidateFormat)
         { #>
 
         result = this.ValidateFormat(valueKind, result, level);

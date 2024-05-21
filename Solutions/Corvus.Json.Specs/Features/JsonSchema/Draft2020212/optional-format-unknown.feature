@@ -15,6 +15,7 @@ Scenario Outline: unknown format
     Given the input JSON file "optional/format/unknown.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance

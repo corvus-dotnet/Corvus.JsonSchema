@@ -22,7 +22,7 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft6 {
     {
         get
         {
-            return HasFormat;
+            return HasFormat && ValidateFormat;
         }
     }
 
@@ -35,10 +35,10 @@ namespace Corvus.Json.CodeGeneration.Generators.Draft6 {
             
             #line 4 "CodeGenerator.Validate.Format.tt"
 
-    // This is only emitted if HasFormat is true
-    if(!HasFormat)
+    // This is only emitted if (HasFormat && ValidateFormat) is true
+    if(!ShouldGenerate)
     {
-        throw new InvalidOperationException("CodeGenerator.Validate.Format should not be emitted if HasFormat is false.");
+        throw new InvalidOperationException("CodeGenerator.Validate.Format should not be emitted if (HasFormat && ValidateFormat) is false.");
     } 
             
             #line default

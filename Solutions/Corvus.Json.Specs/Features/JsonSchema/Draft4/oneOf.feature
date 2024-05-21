@@ -21,6 +21,7 @@ Scenario Outline: oneOf
     Given the input JSON file "oneOf.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -54,6 +55,7 @@ Scenario Outline: oneOf with base schema
     Given the input JSON file "oneOf.json"
     And the schema at "#/1/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -90,6 +92,7 @@ Scenario Outline: oneOf complex types
     Given the input JSON file "oneOf.json"
     And the schema at "#/2/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -118,6 +121,7 @@ Scenario Outline: oneOf with empty schema
     Given the input JSON file "oneOf.json"
     And the schema at "#/3/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -143,6 +147,7 @@ Scenario Outline: oneOf with required
     Given the input JSON file "oneOf.json"
     And the schema at "#/4/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -182,6 +187,7 @@ Scenario Outline: oneOf with missing optional property
     Given the input JSON file "oneOf.json"
     And the schema at "#/5/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -215,6 +221,7 @@ Scenario Outline: nested oneOf, to check validation semantics
     Given the input JSON file "oneOf.json"
     And the schema at "#/6/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance

@@ -14,6 +14,7 @@ Scenario Outline: dependencies
     Given the input JSON file "dependencies.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -45,6 +46,7 @@ Scenario Outline: dependencies with empty array
     Given the input JSON file "dependencies.json"
     And the schema at "#/1/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -68,6 +70,7 @@ Scenario Outline: multiple dependencies
     Given the input JSON file "dependencies.json"
     And the schema at "#/2/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -104,6 +107,7 @@ Scenario Outline: multiple dependencies subschema
     Given the input JSON file "dependencies.json"
     And the schema at "#/3/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -134,6 +138,7 @@ Scenario Outline: dependencies with boolean subschemas
     Given the input JSON file "dependencies.json"
     And the schema at "#/4/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -166,6 +171,7 @@ Scenario Outline: dependencies with escaped characters
     Given the input JSON file "dependencies.json"
     And the schema at "#/5/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -207,6 +213,7 @@ Scenario Outline: dependent subschema incompatible with root
     Given the input JSON file "dependencies.json"
     And the schema at "#/6/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance

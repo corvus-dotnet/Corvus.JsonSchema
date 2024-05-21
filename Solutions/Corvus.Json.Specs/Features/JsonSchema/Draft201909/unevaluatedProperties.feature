@@ -16,6 +16,7 @@ Scenario Outline: unevaluatedProperties true
     Given the input JSON file "unevaluatedProperties.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -42,6 +43,7 @@ Scenario Outline: unevaluatedProperties schema
     Given the input JSON file "unevaluatedProperties.json"
     And the schema at "#/1/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -67,6 +69,7 @@ Scenario Outline: unevaluatedProperties false
     Given the input JSON file "unevaluatedProperties.json"
     And the schema at "#/2/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -93,6 +96,7 @@ Scenario Outline: unevaluatedProperties with adjacent properties
     Given the input JSON file "unevaluatedProperties.json"
     And the schema at "#/3/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -119,6 +123,7 @@ Scenario Outline: unevaluatedProperties with adjacent patternProperties
     Given the input JSON file "unevaluatedProperties.json"
     And the schema at "#/4/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -146,6 +151,7 @@ Scenario Outline: unevaluatedProperties with adjacent additionalProperties
     Given the input JSON file "unevaluatedProperties.json"
     And the schema at "#/5/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -179,6 +185,7 @@ Scenario Outline: unevaluatedProperties with nested properties
     Given the input JSON file "unevaluatedProperties.json"
     And the schema at "#/6/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -212,6 +219,7 @@ Scenario Outline: unevaluatedProperties with nested patternProperties
     Given the input JSON file "unevaluatedProperties.json"
     And the schema at "#/7/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -243,6 +251,7 @@ Scenario Outline: unevaluatedProperties with nested additionalProperties
     Given the input JSON file "unevaluatedProperties.json"
     And the schema at "#/8/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -277,6 +286,7 @@ Scenario Outline: unevaluatedProperties with nested unevaluatedProperties
     Given the input JSON file "unevaluatedProperties.json"
     And the schema at "#/9/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -323,6 +333,7 @@ Scenario Outline: unevaluatedProperties with anyOf
     Given the input JSON file "unevaluatedProperties.json"
     And the schema at "#/10/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -367,6 +378,7 @@ Scenario Outline: unevaluatedProperties with oneOf
     Given the input JSON file "unevaluatedProperties.json"
     And the schema at "#/11/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -401,6 +413,7 @@ Scenario Outline: unevaluatedProperties with not
     Given the input JSON file "unevaluatedProperties.json"
     And the schema at "#/12/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -440,6 +453,7 @@ Scenario Outline: unevaluatedProperties with if/then/else
     Given the input JSON file "unevaluatedProperties.json"
     And the schema at "#/13/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -479,6 +493,7 @@ Scenario Outline: unevaluatedProperties with if/then/else, then not defined
     Given the input JSON file "unevaluatedProperties.json"
     And the schema at "#/14/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -518,6 +533,7 @@ Scenario Outline: unevaluatedProperties with if/then/else, else not defined
     Given the input JSON file "unevaluatedProperties.json"
     And the schema at "#/15/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -556,6 +572,7 @@ Scenario Outline: unevaluatedProperties with dependentSchemas
     Given the input JSON file "unevaluatedProperties.json"
     And the schema at "#/16/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -583,6 +600,7 @@ Scenario Outline: unevaluatedProperties with boolean schemas
     Given the input JSON file "unevaluatedProperties.json"
     And the schema at "#/17/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -617,6 +635,7 @@ Scenario Outline: unevaluatedProperties with $ref
     Given the input JSON file "unevaluatedProperties.json"
     And the schema at "#/18/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -651,6 +670,7 @@ Scenario Outline: unevaluatedProperties before $ref
     Given the input JSON file "unevaluatedProperties.json"
     And the schema at "#/19/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -698,6 +718,7 @@ Scenario Outline: unevaluatedProperties with $recursiveRef
     Given the input JSON file "unevaluatedProperties.json"
     And the schema at "#/20/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -729,6 +750,7 @@ Scenario Outline: unevaluatedProperties can't see inside cousins
     Given the input JSON file "unevaluatedProperties.json"
     And the schema at "#/21/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -758,6 +780,7 @@ Scenario Outline: unevaluatedProperties can't see inside cousins (reverse order)
     Given the input JSON file "unevaluatedProperties.json"
     And the schema at "#/22/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -787,6 +810,7 @@ Scenario Outline: nested unevaluatedProperties, outer false, inner true, propert
     Given the input JSON file "unevaluatedProperties.json"
     And the schema at "#/23/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -818,6 +842,7 @@ Scenario Outline: nested unevaluatedProperties, outer false, inner true, propert
     Given the input JSON file "unevaluatedProperties.json"
     And the schema at "#/24/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -849,6 +874,7 @@ Scenario Outline: nested unevaluatedProperties, outer true, inner false, propert
     Given the input JSON file "unevaluatedProperties.json"
     And the schema at "#/25/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -880,6 +906,7 @@ Scenario Outline: nested unevaluatedProperties, outer true, inner false, propert
     Given the input JSON file "unevaluatedProperties.json"
     And the schema at "#/26/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -913,6 +940,7 @@ Scenario Outline: cousin unevaluatedProperties, true and false, true with proper
     Given the input JSON file "unevaluatedProperties.json"
     And the schema at "#/27/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -946,6 +974,7 @@ Scenario Outline: cousin unevaluatedProperties, true and false, false with prope
     Given the input JSON file "unevaluatedProperties.json"
     And the schema at "#/28/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -992,6 +1021,7 @@ Scenario Outline: property is evaluated in an uncle schema to unevaluatedPropert
     Given the input JSON file "unevaluatedProperties.json"
     And the schema at "#/29/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -1029,6 +1059,7 @@ Scenario Outline: in-place applicator siblings, allOf has unevaluated
     Given the input JSON file "unevaluatedProperties.json"
     And the schema at "#/30/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -1068,6 +1099,7 @@ Scenario Outline: in-place applicator siblings, anyOf has unevaluated
     Given the input JSON file "unevaluatedProperties.json"
     And the schema at "#/31/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -1096,6 +1128,7 @@ Scenario Outline: unevaluatedProperties + single cyclic ref
     Given the input JSON file "unevaluatedProperties.json"
     And the schema at "#/32/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -1150,6 +1183,7 @@ Scenario Outline: unevaluatedProperties + ref inside allOf / oneOf
     Given the input JSON file "unevaluatedProperties.json"
     And the schema at "#/33/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -1204,6 +1238,7 @@ Scenario Outline: dynamic evalation inside nested refs
     Given the input JSON file "unevaluatedProperties.json"
     And the schema at "#/34/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -1264,6 +1299,7 @@ Scenario Outline: non-object instances are valid
     Given the input JSON file "unevaluatedProperties.json"
     And the schema at "#/35/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -1296,6 +1332,7 @@ Scenario Outline: unevaluatedProperties with null valued instance properties
     Given the input JSON file "unevaluatedProperties.json"
     And the schema at "#/36/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -1319,6 +1356,7 @@ Scenario Outline: unevaluatedProperties not affected by propertyNames
     Given the input JSON file "unevaluatedProperties.json"
     And the schema at "#/37/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -1348,6 +1386,7 @@ Scenario Outline: unevaluatedProperties can see annotations from if without then
     Given the input JSON file "unevaluatedProperties.json"
     And the schema at "#/38/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -1379,6 +1418,7 @@ Scenario Outline: dependentSchemas with unevaluatedProperties
     Given the input JSON file "unevaluatedProperties.json"
     And the schema at "#/39/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance

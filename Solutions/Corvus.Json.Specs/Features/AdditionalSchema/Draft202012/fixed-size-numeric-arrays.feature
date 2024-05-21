@@ -33,6 +33,7 @@ Scenario Outline: fixed size array can be converted to and from spans of primiti
 			}
 		}
 		"""
+	And I assert format
 	And I generate a type for the schema
 	When I create the instance using FromValues with format '<format>' and input data '<inputData>'
 	Then the result <willWillNot> throw an exception

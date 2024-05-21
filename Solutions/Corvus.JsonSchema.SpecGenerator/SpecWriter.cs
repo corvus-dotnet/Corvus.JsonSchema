@@ -79,6 +79,12 @@ internal static partial class SpecWriter
         builder.Append("    Given the input JSON file \"").Append(testSet.InputFileSpecFolderRelativePath).AppendLine("\"");
         builder.Append("    And the schema at \"").Append(inputSchemaReference).AppendLine("\"");
         builder.AppendLine("    And the input data at \"<inputDataReference>\"");
+
+        if (testSet.AssertFormat)
+        {
+            builder.AppendLine("    And I assert format");
+        }
+
         builder.AppendLine("    And I generate a type for the schema");
         builder.AppendLine("    And I construct an instance of the schema type from the data");
         builder.AppendLine("    When I validate the instance");

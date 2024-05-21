@@ -12,6 +12,7 @@ Scenario Outline: remote ref
     Given the input JSON file "refRemote.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -31,6 +32,7 @@ Scenario Outline: fragment within remote ref
     Given the input JSON file "refRemote.json"
     And the schema at "#/1/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -52,6 +54,7 @@ Scenario Outline: ref within remote ref
     Given the input JSON file "refRemote.json"
     And the schema at "#/2/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -77,6 +80,7 @@ Scenario Outline: base URI change
     Given the input JSON file "refRemote.json"
     And the schema at "#/3/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -109,6 +113,7 @@ Scenario Outline: base URI change - change folder
     Given the input JSON file "refRemote.json"
     And the schema at "#/4/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -145,6 +150,7 @@ Scenario Outline: base URI change - change folder in subschema
     Given the input JSON file "refRemote.json"
     And the schema at "#/5/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -170,6 +176,7 @@ Scenario Outline: root ref in remote ref
     Given the input JSON file "refRemote.json"
     And the schema at "#/6/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -193,6 +200,7 @@ Scenario Outline: Location-independent identifier in remote ref
     Given the input JSON file "refRemote.json"
     And the schema at "#/7/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance

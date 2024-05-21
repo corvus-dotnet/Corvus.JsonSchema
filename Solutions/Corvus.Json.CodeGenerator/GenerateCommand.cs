@@ -50,6 +50,11 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         [DefaultValue(false)]
         public bool RebaseToRootPath { get; init; }
 
+        [CommandOption("--assertFormat")]
+        [Description("If --assertFormat is specified, assert format specifications.")]
+        [DefaultValue(true)]
+        public bool AssertFormat { get; init; }
+
         [Description("The path to the schema file to process.")]
         [CommandArgument(0, "<schemaFile>")]
         [NotNull] // <> => NotNull
@@ -62,10 +67,10 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         ArgumentNullException.ThrowIfNullOrEmpty(settings.SchemaFile); // We will never see this exception if the framework is doing its job; it should have blown up inside the CLI command handling
         ArgumentNullException.ThrowIfNullOrEmpty(settings.RootNamespace); // We will never see this exception if the framework is doing its job; it should have blown up inside the CLI command handling
 
-        return GenerateTypes(settings.SchemaFile, settings.RootNamespace, settings.RootPath, settings.RebaseToRootPath, settings.OutputPath, settings.OutputMapFile, settings.OutputRootTypeName, settings.UseSchema);
+        return GenerateTypes(settings.SchemaFile, settings.RootNamespace, settings.RootPath, settings.RebaseToRootPath, settings.OutputPath, settings.OutputMapFile, settings.OutputRootTypeName, settings.UseSchema, settings.AssertFormat);
     }
 
-    private static async Task<int> GenerateTypes(string schemaFile, string rootNamespace, string? rootPath, bool rebaseToRootPath, string? outputPath, string? outputMapFile, string? rootTypeName, SchemaVariant schemaVariant)
+    private static async Task<int> GenerateTypes(string schemaFile, string rootNamespace, string? rootPath, bool rebaseToRootPath, string? outputPath, string? outputMapFile, string? rootTypeName, SchemaVariant schemaVariant, bool assertFormat)
     {
         try
         {
@@ -90,7 +95,7 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
                     _ => new CodeGeneration.Draft202012.JsonSchemaBuilder(typeBuilder)
                 };
 
-            (string RootType, ImmutableDictionary<JsonReference, TypeAndCode> GeneratedTypes) = await builder.BuildTypesFor(reference, rootNamespace ?? string.Empty, rebaseToRootPath, rootTypeName: rootTypeName).ConfigureAwait(false);
+            (string RootType, ImmutableDictionary<JsonReference, TypeAndCode> GeneratedTypes) = await builder.BuildTypesFor(reference, rootNamespace ?? string.Empty, rebaseToRootPath, rootTypeName: rootTypeName, validateFormat: assertFormat).ConfigureAwait(false);
 
             if (!string.IsNullOrEmpty(outputPath))
             {

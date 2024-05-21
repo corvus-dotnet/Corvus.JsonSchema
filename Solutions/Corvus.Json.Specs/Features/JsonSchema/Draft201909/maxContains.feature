@@ -15,6 +15,7 @@ Scenario Outline: maxContains without contains is ignored
     Given the input JSON file "maxContains.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -38,6 +39,7 @@ Scenario Outline: maxContains with contains
     Given the input JSON file "maxContains.json"
     And the schema at "#/1/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -67,6 +69,7 @@ Scenario Outline: maxContains with contains, value with a decimal
     Given the input JSON file "maxContains.json"
     And the schema at "#/2/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -91,6 +94,7 @@ Scenario Outline: minContains  less than  maxContains
     Given the input JSON file "maxContains.json"
     And the schema at "#/3/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance

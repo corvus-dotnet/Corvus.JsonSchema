@@ -15,6 +15,7 @@ Scenario Outline: additionalItems as schema
     Given the input JSON file "additionalItems.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -37,6 +38,7 @@ Scenario Outline: when items is schema, additionalItems does nothing
     Given the input JSON file "additionalItems.json"
     And the schema at "#/1/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -57,6 +59,7 @@ Scenario Outline: array of items with no additionalItems permitted
     Given the input JSON file "additionalItems.json"
     And the schema at "#/2/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -82,6 +85,7 @@ Scenario Outline: additionalItems as false without items
     Given the input JSON file "additionalItems.json"
     And the schema at "#/3/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -101,6 +105,7 @@ Scenario Outline: additionalItems are allowed by default
     Given the input JSON file "additionalItems.json"
     And the schema at "#/4/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -123,6 +128,7 @@ Scenario Outline: additionalItems does not look in applicators, valid case
     Given the input JSON file "additionalItems.json"
     And the schema at "#/5/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -146,6 +152,7 @@ Scenario Outline: additionalItems does not look in applicators, invalid case
     Given the input JSON file "additionalItems.json"
     And the schema at "#/6/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -166,6 +173,7 @@ Scenario Outline: items validation adjusts the starting index for additionalItem
     Given the input JSON file "additionalItems.json"
     And the schema at "#/7/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -188,6 +196,7 @@ Scenario Outline: additionalItems with heterogeneous array
     Given the input JSON file "additionalItems.json"
     And the schema at "#/8/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -211,6 +220,7 @@ Scenario Outline: additionalItems with null instance elements
     Given the input JSON file "additionalItems.json"
     And the schema at "#/9/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance

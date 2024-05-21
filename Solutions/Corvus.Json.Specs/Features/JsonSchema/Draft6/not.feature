@@ -14,6 +14,7 @@ Scenario Outline: not
     Given the input JSON file "not.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -35,6 +36,7 @@ Scenario Outline: not multiple types
     Given the input JSON file "not.json"
     And the schema at "#/1/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -65,6 +67,7 @@ Scenario Outline: not more complex schema
     Given the input JSON file "not.json"
     And the schema at "#/2/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -92,6 +95,7 @@ Scenario Outline: forbidden property
     Given the input JSON file "not.json"
     And the schema at "#/3/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -111,6 +115,7 @@ Scenario Outline: forbid everything with empty schema
     Given the input JSON file "not.json"
     And the schema at "#/4/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -144,6 +149,7 @@ Scenario Outline: forbid everything with boolean schema true
     Given the input JSON file "not.json"
     And the schema at "#/5/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -177,6 +183,7 @@ Scenario Outline: allow everything with boolean schema false
     Given the input JSON file "not.json"
     And the schema at "#/6/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -210,6 +217,7 @@ Scenario Outline: double negation
     Given the input JSON file "not.json"
     And the schema at "#/7/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance

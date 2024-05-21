@@ -15,6 +15,7 @@ Scenario Outline: unevaluatedItems true
     Given the input JSON file "unevaluatedItems.json"
     And the schema at "#/0/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -37,6 +38,7 @@ Scenario Outline: unevaluatedItems false
     Given the input JSON file "unevaluatedItems.json"
     And the schema at "#/1/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -59,6 +61,7 @@ Scenario Outline: unevaluatedItems as schema
     Given the input JSON file "unevaluatedItems.json"
     And the schema at "#/2/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -84,6 +87,7 @@ Scenario Outline: unevaluatedItems with uniform items
     Given the input JSON file "unevaluatedItems.json"
     And the schema at "#/3/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -107,6 +111,7 @@ Scenario Outline: unevaluatedItems with tuple
     Given the input JSON file "unevaluatedItems.json"
     And the schema at "#/4/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -133,6 +138,7 @@ Scenario Outline: unevaluatedItems with items and additionalItems
     Given the input JSON file "unevaluatedItems.json"
     And the schema at "#/5/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -154,6 +160,7 @@ Scenario Outline: unevaluatedItems with ignored additionalItems
     Given the input JSON file "unevaluatedItems.json"
     And the schema at "#/6/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -177,6 +184,7 @@ Scenario Outline: unevaluatedItems with ignored applicator additionalItems
     Given the input JSON file "unevaluatedItems.json"
     And the schema at "#/7/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -210,6 +218,7 @@ Scenario Outline: unevaluatedItems with nested tuple
     Given the input JSON file "unevaluatedItems.json"
     And the schema at "#/8/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -236,6 +245,7 @@ Scenario Outline: unevaluatedItems with nested items
     Given the input JSON file "unevaluatedItems.json"
     And the schema at "#/9/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -268,6 +278,7 @@ Scenario Outline: unevaluatedItems with nested items and additionalItems
     Given the input JSON file "unevaluatedItems.json"
     And the schema at "#/10/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -298,6 +309,7 @@ Scenario Outline: unevaluatedItems with nested unevaluatedItems
     Given the input JSON file "unevaluatedItems.json"
     And the schema at "#/11/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -338,6 +350,7 @@ Scenario Outline: unevaluatedItems with anyOf
     Given the input JSON file "unevaluatedItems.json"
     And the schema at "#/12/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -381,6 +394,7 @@ Scenario Outline: unevaluatedItems with oneOf
     Given the input JSON file "unevaluatedItems.json"
     And the schema at "#/13/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -414,6 +428,7 @@ Scenario Outline: unevaluatedItems with not
     Given the input JSON file "unevaluatedItems.json"
     And the schema at "#/14/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -456,6 +471,7 @@ Scenario Outline: unevaluatedItems with if/then/else
     Given the input JSON file "unevaluatedItems.json"
     And the schema at "#/15/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -483,6 +499,7 @@ Scenario Outline: unevaluatedItems with boolean schemas
     Given the input JSON file "unevaluatedItems.json"
     And the schema at "#/16/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -517,6 +534,7 @@ Scenario Outline: unevaluatedItems with $ref
     Given the input JSON file "unevaluatedItems.json"
     And the schema at "#/17/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -551,6 +569,7 @@ Scenario Outline: unevaluatedItems before $ref
     Given the input JSON file "unevaluatedItems.json"
     And the schema at "#/18/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -599,6 +618,7 @@ Scenario Outline: unevaluatedItems with $recursiveRef
     Given the input JSON file "unevaluatedItems.json"
     And the schema at "#/19/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -626,6 +646,7 @@ Scenario Outline: unevaluatedItems can't see inside cousins
     Given the input JSON file "unevaluatedItems.json"
     And the schema at "#/20/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -665,6 +686,7 @@ Scenario Outline: item is evaluated in an uncle schema to unevaluatedItems
     Given the input JSON file "unevaluatedItems.json"
     And the schema at "#/21/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -687,6 +709,7 @@ Scenario Outline: non-array instances are valid
     Given the input JSON file "unevaluatedItems.json"
     And the schema at "#/22/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -719,6 +742,7 @@ Scenario Outline: unevaluatedItems with null instance elements
     Given the input JSON file "unevaluatedItems.json"
     And the schema at "#/23/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance
@@ -742,6 +766,7 @@ Scenario Outline: unevaluatedItems can see annotations from if without then and 
     Given the input JSON file "unevaluatedItems.json"
     And the schema at "#/24/schema"
     And the input data at "<inputDataReference>"
+    And I assert format
     And I generate a type for the schema
     And I construct an instance of the schema type from the data
     When I validate the instance

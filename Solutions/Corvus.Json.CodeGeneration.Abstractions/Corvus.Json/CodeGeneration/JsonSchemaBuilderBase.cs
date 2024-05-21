@@ -39,7 +39,7 @@ public abstract class JsonSchemaBuilderBase : IJsonSchemaBuilder
     }
 
     /// <inheritdoc/>
-    public async ValueTask<(string RootTypeName, ImmutableDictionary<JsonReference, TypeAndCode> GeneratedTypes)> BuildTypesFor(JsonReference reference, string rootNamespace, bool rebase = false, ImmutableDictionary<string, string>? baseUriToNamespaceMap = null, string? rootTypeName = null)
+    public async ValueTask<(string RootTypeName, ImmutableDictionary<JsonReference, TypeAndCode> GeneratedTypes)> BuildTypesFor(JsonReference reference, string rootNamespace, bool rebase = false, ImmutableDictionary<string, string>? baseUriToNamespaceMap = null, string? rootTypeName = null, bool validateFormat = true)
     {
         TypeDeclaration rootTypeDeclaration = await this.typeBuilder.AddTypeDeclarationsFor(reference, rootNamespace, rebase, baseUriToNamespaceMap, rootTypeName) ?? throw new InvalidOperationException($"Unable to find the root type declaration at {reference}");
         rootTypeName = rootTypeDeclaration.FullyQualifiedDotnetTypeName!;
@@ -47,14 +47,14 @@ public abstract class JsonSchemaBuilderBase : IJsonSchemaBuilder
 
         return (
             rootTypeName,
-            typesToGenerate.Select(t => (t.LocatedSchema.Location, t)).Select(this.GenerateFilesForType).ToImmutableDictionary(i => i.Location, i => i.TypeAndCode));
+            typesToGenerate.Select(t => (t.LocatedSchema.Location, t)).Select(typeForGeneration => this.GenerateFilesForType(typeForGeneration, validateFormat)).ToImmutableDictionary(i => i.Location, i => i.TypeAndCode));
     }
 
     /// <inheritdoc/>
-    public (string RootTypeName, ImmutableDictionary<JsonReference, TypeAndCode> GeneratedTypes) SafeBuildTypesFor(JsonReference reference, string rootNamespace, bool rebase = false, ImmutableDictionary<string, string>? baseUriToNamespaceMap = null, string? rootTypeName = null)
+    public (string RootTypeName, ImmutableDictionary<JsonReference, TypeAndCode> GeneratedTypes) SafeBuildTypesFor(JsonReference reference, string rootNamespace, bool rebase = false, ImmutableDictionary<string, string>? baseUriToNamespaceMap = null, string? rootTypeName = null, bool validateFormat = true)
     {
         ValueTask<(string RootTypeName, ImmutableDictionary<JsonReference, TypeAndCode> GeneratedTypes)> result =
-            this.BuildTypesFor(reference, rootNamespace, rebase, baseUriToNamespaceMap, rootTypeName);
+            this.BuildTypesFor(reference, rootNamespace, rebase, baseUriToNamespaceMap, rootTypeName, validateFormat);
 
         // Ensure that the result is completed synchronously.
         if (!result.IsCompleted)
@@ -137,6 +137,7 @@ public abstract class JsonSchemaBuilderBase : IJsonSchemaBuilder
     /// Generate the files for the given type.
     /// </summary>
     /// <param name="typeForGeneration">The type for which to generate the code.</param>
+    /// <param name="validateFormat">If true, the format keyword will be validated.</param>
     /// <returns>The code generated for the type.</returns>
-    protected abstract (JsonReference Location, TypeAndCode TypeAndCode) GenerateFilesForType((JsonReference Location, TypeDeclaration TypeDeclaration) typeForGeneration);
+    protected abstract (JsonReference Location, TypeAndCode TypeAndCode) GenerateFilesForType((JsonReference Location, TypeDeclaration TypeDeclaration) typeForGeneration, bool validateFormat);
 }
