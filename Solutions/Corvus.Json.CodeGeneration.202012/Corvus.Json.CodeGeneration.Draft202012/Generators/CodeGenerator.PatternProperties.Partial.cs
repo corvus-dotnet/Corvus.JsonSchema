@@ -687,7 +687,7 @@ public partial class CodeGeneratorPatternProperties
             {
                 foreach (JsonAny value in this.TypeDeclaration.Schema().Enum.EnumerateArray())
                 {
-                    builder.Add(new EnumValue(value));
+                    builder.Add(new EnumValue(value, builder));
                 }
             }
 
@@ -3313,7 +3313,8 @@ public partial class CodeGeneratorPatternProperties
         /// Initializes a new instance of the <see cref="EnumValue"/> struct.
         /// </summary>
         /// <param name="value">The instance of the enum value.</param>
-        public EnumValue(JsonAny value)
+        /// <param name="existingItems">Existing enum values.</param>
+        public EnumValue(JsonAny value, IEnumerable<EnumValue> existingItems)
         {
             this.IsString = value.ValueKind == JsonValueKind.String;
             this.IsBoolean = value.ValueKind == JsonValueKind.True || value.ValueKind == JsonValueKind.False;
@@ -3323,7 +3324,23 @@ public partial class CodeGeneratorPatternProperties
             this.IsNull = value.IsNull();
             this.SerializedValue = GetRawTextAsQuotedString(value);
             this.RawStringValue = value.ValueKind == JsonValueKind.String ? GetRawStringValueAsQuotedString(value) : null;
-            this.AsPropertyName = Formatting.ToPascalCaseWithReservedWords(this.SerializedValue.Trim('"')).ToString();
+            string baseName = Formatting.ToPascalCaseWithReservedWords(this.SerializedValue.Trim('"')).ToString();
+
+            if (string.IsNullOrEmpty(baseName))
+            {
+                baseName = "EmptyString";
+            }
+
+            string name = baseName;
+
+            int index = 0;
+            while (existingItems.Any(e => e.AsPropertyName == name))
+            {
+                index++;
+                name = $"{baseName}{index}";
+            }
+
+            this.AsPropertyName = name;
         }
 
         /// <summary>
@@ -3369,6 +3386,6 @@ public partial class CodeGeneratorPatternProperties
         /// <summary>
         /// Gets the serialized value as a property name.
         /// </summary>
-        public object AsPropertyName { get; }
+        public string AsPropertyName { get; }
     }
 }

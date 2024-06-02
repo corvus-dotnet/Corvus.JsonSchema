@@ -36,7 +36,6 @@
 		<Compile Remove="Features/**/numeric-format-netstandard20.feature.cs" />
 	</ItemGroup>
 
-
 	<ItemGroup>
 		<PackageReference Include="Corvus.Testing.SpecFlow.NUnit" Version="3.0.2" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
@@ -87,11 +86,6 @@
 
 	<ItemGroup>
 		<PackageReference Update="Roslynator.Analyzers" Version="4.6.2" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Folder Include="Features\ExplicitTypeName\" />
-	  <Folder Include="Features\SyncGenerator\" />
 	</ItemGroup>
 
 </Project>
