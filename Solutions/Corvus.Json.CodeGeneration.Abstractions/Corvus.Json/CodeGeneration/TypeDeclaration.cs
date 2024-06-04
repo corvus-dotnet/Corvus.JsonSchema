@@ -446,11 +446,13 @@ public class TypeDeclaration
     {
         PropertyDeclaration? original = this.Properties[index];
 
-        // Merge whether this is a required property with the parent
+        // Merge whether this is a required / deprecated property with the parent
         PropertyDeclaration propertyToAdd =
-            propertyDeclaration.WithRequired(
+            propertyDeclaration
+            .WithRequired(
                 propertyDeclaration.IsRequired || original.IsRequired)
-            .WithXmlDocumentationRemarks(propertyDeclaration.XmlDocumentationRemarks ?? original.XmlDocumentationRemarks);
+            .WithXmlDocumentationRemarks(propertyDeclaration.XmlDocumentationRemarks ?? original.XmlDocumentationRemarks)
+            .WithDeprecated(propertyDeclaration.IsDeprecated || original.IsDeprecated);
 
         this.Properties = this.Properties.SetItem(index, propertyToAdd);
     }
