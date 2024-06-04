@@ -59,6 +59,12 @@ public readonly partial struct <#= TypeDeclaration.DotnetTypeName #>
         { #>
     /// <remarks>
     <#= property.XmlDocumentationRemarks #>/// </remarks>
+<#      }
+
+        if (property.IsDeprecated)
+        { #>
+    [Obsolete("This property is defined as deprecated in the JSON schema")]
+
 <#      } #>
     public <#= property.Type.FullyQualifiedDotnetTypeName #> <#= property.DotnetPropertyName #>
     {

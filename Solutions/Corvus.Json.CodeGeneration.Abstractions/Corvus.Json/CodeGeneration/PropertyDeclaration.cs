@@ -19,7 +19,8 @@ public class PropertyDeclaration
     /// <param name="hasDefaultValue">Determines whether this property has a default value.</param>
     /// <param name="defaultValue">Gets the raw string value for the default value, or null if there is no default value.</param>
     /// <param name="xmlDocumentationRemarks">Gets the formatted documentation for the property.</param>
-    public PropertyDeclaration(TypeDeclaration type, string jsonPropertyName, bool isRequired, bool isInLocalScope, bool hasDefaultValue, string? defaultValue, string? xmlDocumentationRemarks)
+    /// <param name="isDeprecated">Determines whether this property is deprecated.</param>
+    public PropertyDeclaration(TypeDeclaration type, string jsonPropertyName, bool isRequired, bool isInLocalScope, bool hasDefaultValue, string? defaultValue, string? xmlDocumentationRemarks, bool isDeprecated)
     {
         this.Type = type;
         this.JsonPropertyName = jsonPropertyName;
@@ -28,6 +29,7 @@ public class PropertyDeclaration
         this.DefaultValue = defaultValue;
         this.HasDefaultValue = hasDefaultValue;
         this.XmlDocumentationRemarks = xmlDocumentationRemarks;
+        this.IsDeprecated = isDeprecated;
     }
 
     /// <summary>
@@ -78,6 +80,11 @@ public class PropertyDeclaration
     public string? DefaultValue { get; }
 
     /// <summary>
+    /// Gets a value indicating whether this property is deprecated.
+    /// </summary>
+    public bool IsDeprecated { get; }
+
+    /// <summary>
     /// Gets a value indicating whether this property has formatted XML documentation remarks.
     /// </summary>
     public bool HasXmlDocumentationRemarks => !string.IsNullOrWhiteSpace(this.XmlDocumentationRemarks);
@@ -97,7 +104,17 @@ public class PropertyDeclaration
     /// <returns>The new instance with isRequired set.</returns>
     public PropertyDeclaration WithRequired(bool isRequired)
     {
-        return new PropertyDeclaration(this.Type, this.JsonPropertyName, isRequired, this.IsDefinedInLocalScope, this.HasDefaultValue, this.DefaultValue, this.XmlDocumentationRemarks);
+        return new PropertyDeclaration(this.Type, this.JsonPropertyName, isRequired, this.IsDefinedInLocalScope, this.HasDefaultValue, this.DefaultValue, this.XmlDocumentationRemarks, this.IsDeprecated);
+    }
+
+    /// <summary>
+    /// Construct a copy with the specified <see cref="IsDeprecated"/> value.
+    /// </summary>
+    /// <param name="isDeprecated">Whether the property is deprecated.</param>
+    /// <returns>The new instance with isRequired set.</returns>
+    public PropertyDeclaration WithDeprecated(bool isDeprecated)
+    {
+        return new PropertyDeclaration(this.Type, this.JsonPropertyName, this.IsRequired, this.IsDefinedInLocalScope, this.HasDefaultValue, this.DefaultValue, this.XmlDocumentationRemarks, isDeprecated);
     }
 
     /// <summary>
@@ -107,6 +124,6 @@ public class PropertyDeclaration
     /// <returns>The new instance with isRequired set.</returns>
     public PropertyDeclaration WithXmlDocumentationRemarks(string? xmlDocumentationRemarks)
     {
-        return new PropertyDeclaration(this.Type, this.JsonPropertyName, this.IsRequired, this.IsDefinedInLocalScope, this.HasDefaultValue, this.DefaultValue, xmlDocumentationRemarks);
+        return new PropertyDeclaration(this.Type, this.JsonPropertyName, this.IsRequired, this.IsDefinedInLocalScope, this.HasDefaultValue, this.DefaultValue, xmlDocumentationRemarks, this.IsDeprecated);
     }
 }
