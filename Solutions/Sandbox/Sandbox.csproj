@@ -10,7 +10,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="JsonPatch.Net" Version="3.0.0" />
+		<PackageReference Include="JsonPatch.Net" Version="3.1.0" />
 	</ItemGroup>
 	
 	<ItemGroup>
