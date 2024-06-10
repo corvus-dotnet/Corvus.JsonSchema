@@ -20,7 +20,7 @@
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="JsonSchema.Net" Version="6.0.7" />
+		<PackageReference Include="JsonSchema.Net" Version="7.0.4" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
 		<PackageReference Include="JsonPatch.Net" Version="3.0.0" />
 	</ItemGroup>
