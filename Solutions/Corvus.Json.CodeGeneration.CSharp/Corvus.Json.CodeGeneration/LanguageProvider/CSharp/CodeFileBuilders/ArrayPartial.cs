@@ -54,7 +54,6 @@ public sealed class ArrayPartial : ICodeFileBuilder
                             ])
                             .AppendEmptyArrayInstanceStaticProperty(typeDeclaration)
                             .AppendPublicValueConstructor(typeDeclaration, "ImmutableList<JsonAny>", CoreTypes.Array)
-                            .AppendPublicValueConstructor(typeDeclaration, "IEnumerable<JsonAny>", CoreTypes.Array)
                             .AppendArrayRankStaticProperty(typeDeclaration)
                             .AppendArrayDimensionStaticProperty(typeDeclaration)
                             .AppendArrayValueBufferSizeStaticProperty(typeDeclaration)

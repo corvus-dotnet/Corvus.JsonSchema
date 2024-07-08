@@ -2,8 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System;
-using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Text.Json;
 using Microsoft.CodeAnalysis.CSharp;
@@ -154,7 +152,7 @@ internal static class CodeGeneratorExtensions
             .AppendBackingField("Backing", "backing")
             .AppendBackingField("JsonElement", "jsonElementBacking")
             .AppendBackingField("string", "stringBacking", impliedCoreTypes, CoreTypes.String)
-            .AppendBackingField("bool", "booleanBacking", impliedCoreTypes, CoreTypes.Boolean)
+            .AppendBackingField("bool", "boolBacking", impliedCoreTypes, CoreTypes.Boolean)
             .AppendBackingField("BinaryJsonNumber", "numberBacking", impliedCoreTypes, CoreTypes.Number | CoreTypes.Integer)
             .AppendBackingField("ImmutableList<JsonAny>", "arrayBacking", impliedCoreTypes, CoreTypes.Array)
             .AppendBackingField("ImmutableList<JsonObjectProperty>", "objectBacking", impliedCoreTypes, CoreTypes.Object);
@@ -1294,7 +1292,7 @@ internal static class CodeGeneratorExtensions
                         forCoreTypes: CoreTypes.String)
                     .AppendConditionalConstructFromBacking(
                         "Backing.Bool",
-                        "booleanBacking",
+                        "boolBacking",
                         impliedCoreTypes: typeDeclaration.ImpliedCoreTypes(),
                         forCoreTypes: CoreTypes.Boolean)
                     .AppendConditionalConstructFromBacking(
@@ -1358,7 +1356,7 @@ internal static class CodeGeneratorExtensions
                     .AppendConditionalWrappedBackingValueLineIndent(
                         "Backing.Bool",
                         "return JsonValueHelpers.BoolToJsonElement(",
-                        "booleanBacking",
+                        "boolBacking",
                         ");",
                         impliedCoreTypes: typeDeclaration.ImpliedCoreTypes(),
                         forCoreTypes: CoreTypes.Boolean)
@@ -1472,7 +1470,7 @@ internal static class CodeGeneratorExtensions
                     .AppendConditionalWrappedBackingValueLineIndent(
                         "Backing.Bool",
                         "return new(",
-                        "booleanBacking",
+                        "boolBacking",
                         ");",
                         impliedCoreTypes: typeDeclaration.ImpliedCoreTypes(),
                         forCoreTypes: CoreTypes.Boolean)
@@ -1699,7 +1697,7 @@ internal static class CodeGeneratorExtensions
                     .AppendConditionalWrappedBackingValueLineIndent(
                         "Backing.Bool",
                         "return ",
-                        "booleanBacking",
+                        "boolBacking",
                         " ? JsonValueKind.True : JsonValueKind.False;",
                         impliedCoreTypes: typeDeclaration.ImpliedCoreTypes(),
                         forCoreTypes: CoreTypes.Boolean)
@@ -1762,7 +1760,7 @@ internal static class CodeGeneratorExtensions
                 .AppendBackingFieldAssignment("jsonElementBacking", "default")
                 .AppendBackingFieldAssignment("backing", "Backing.JsonElement")
                 .AppendBackingFieldAssignment("stringBacking", "string.Empty", impliedCoreTypes, CoreTypes.String)
-                .AppendBackingFieldAssignment("booleanBacking", "default", impliedCoreTypes, CoreTypes.Boolean)
+                .AppendBackingFieldAssignment("boolBacking", "default", impliedCoreTypes, CoreTypes.Boolean)
                 .AppendBackingFieldAssignment("numberBacking", "default", impliedCoreTypes, CoreTypes.Number | CoreTypes.Integer)
                 .AppendBackingFieldAssignment("arrayBacking", "ImmutableList<JsonAny>.Empty", impliedCoreTypes, CoreTypes.Array)
                 .AppendBackingFieldAssignment("objectBacking", "ImmutableList<JsonObjectProperty>.Empty", impliedCoreTypes, CoreTypes.Object)
@@ -1796,7 +1794,7 @@ internal static class CodeGeneratorExtensions
                 .AppendBackingFieldAssignment("jsonElementBacking", "value")
                 .AppendBackingFieldAssignment("backing", "Backing.JsonElement")
                 .AppendBackingFieldAssignment("stringBacking", "string.Empty", impliedCoreTypes, CoreTypes.String)
-                .AppendBackingFieldAssignment("booleanBacking", "default", impliedCoreTypes, CoreTypes.Boolean)
+                .AppendBackingFieldAssignment("boolBacking", "default", impliedCoreTypes, CoreTypes.Boolean)
                 .AppendBackingFieldAssignment("numberBacking", "default", impliedCoreTypes, CoreTypes.Number | CoreTypes.Integer)
                 .AppendBackingFieldAssignment("arrayBacking", "ImmutableList<JsonAny>.Empty", impliedCoreTypes, CoreTypes.Array)
                 .AppendBackingFieldAssignment("objectBacking", "ImmutableList<JsonObjectProperty>.Empty", impliedCoreTypes, CoreTypes.Object)
@@ -2099,7 +2097,7 @@ internal static class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendFromSerializedItemsMethod(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
-        if (typeDeclaration.IsFixedSizeArray() || typeDeclaration.IsTuple())
+        if (typeDeclaration.IsFixedSizeArray() || typeDeclaration.IsTuple() || typeDeclaration.ArrayItemsType() is not null)
         {
             return generator;
         }
@@ -2144,6 +2142,40 @@ internal static class CodeGeneratorExtensions
             .AppendLineIndent("}");
 
         return generator;
+    }
+
+    /// <summary>
+    /// Appends an implicit conversion to bool for a boolean-backed type.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <param name="typeDeclaration">The type declaration to which to convert.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendImplicitConversionToBoolean(
+        this CodeGenerator generator,
+        TypeDeclaration typeDeclaration)
+    {
+        string backing = generator.GetFieldNameInScope("backing");
+        string boolBacking = generator.GetFieldNameInScope("boolBacking");
+        string jsonElementBacking = generator.GetFieldNameInScope("jsonElementBacking");
+        return generator
+            .AppendSeparatorLine()
+            .AppendBlockIndent(
+                """
+                /// <summary>
+                /// Conversion to <see langword="bool"/>.
+                /// </summary>
+                /// <param name="value">The value from which to convert.</param>
+                /// <exception cref="InvalidOperationException">The value was not a boolean.</exception>
+                """)
+            .AppendIndent("public static implicit operator bool(")
+            .Append(typeDeclaration.DotnetTypeName())
+            .AppendLine(" value)")
+            .AppendBlockIndent(
+                $$"""
+                {
+                    return value.GetBoolean() ?? throw new InvalidOperationException();
+                }
+                """);
     }
 
     /// <summary>
@@ -2645,7 +2677,7 @@ internal static class CodeGeneratorExtensions
                 .AppendConditionalWrappedBackingValueLineIndent(
                     "Backing.Bool",
                     "writer.WriteBooleanValue(",
-                    "booleanBacking",
+                    "boolBacking",
                     ");",
                     impliedCoreTypes: typeDeclaration.ImpliedCoreTypes(),
                     forCoreTypes: CoreTypes.Boolean,
@@ -2968,6 +3000,41 @@ internal static class CodeGeneratorExtensions
     }
 
     /// <summary>
+    /// Appends the <c>TryGetBoolean()</c> method.
+    /// </summary>
+    /// <param name="generator">The generator.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendTryGetBoolean(this CodeGenerator generator)
+    {
+        return generator
+            .ReserveName("TryGetBoolean")
+            .AppendSeparatorLine()
+            .AppendBlockIndent(
+            """
+            /// <summary>
+            /// Try to retrieve the value as a boolean.
+            /// </summary>
+            /// <param name="result"><see langword="true"/> if the value was true, otherwise <see langword="false"/>.</param>
+            /// <returns><see langword="true"/> if the value was representable as a boolean, otherwise <see langword="false"/>.</returns>
+            public bool TryGetBoolean([NotNullWhen(true)] out bool result)
+            {
+                switch (this.ValueKind)
+                {
+                    case JsonValueKind.True:
+                        result = true;
+                        return true;
+                    case JsonValueKind.False:
+                        result = false;
+                        return true;
+                    default:
+                        result = default;
+                        return false;
+                }
+            }
+            """);
+    }
+
+    /// <summary>
     /// Appends the <c>TryGetString()</c> method.
     /// </summary>
     /// <param name="generator">The generator.</param>
@@ -3003,6 +3070,34 @@ internal static class CodeGeneratorExtensions
                     return false;
                 }
                 """);
+    }
+
+    /// <summary>
+    /// Appends the <c>GetBoolean()</c> method.
+    /// </summary>
+    /// <param name="generator">The generator.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendGetBoolean(this CodeGenerator generator)
+    {
+        return generator
+            .ReserveName("GetBoolean")
+            .AppendSeparatorLine()
+            .AppendBlockIndent(
+            """
+            /// <summary>
+            /// Get the value as a boolean.
+            /// </summary>
+            /// <returns>The value of the boolean, or <see langword="null"/> if the value was not representable as a boolean.</returns>
+            public bool? GetBoolean()
+            {
+                if (this.TryGetBoolean(out bool result))
+                {
+                    return result;
+                }
+
+                return null;
+            }
+            """);
     }
 
     /// <summary>
@@ -3421,11 +3516,11 @@ internal static class CodeGeneratorExtensions
             .PushIndent()
                 .AppendBackingFieldAssignment("backing", GetBacking(valueCoreType))
                 .AppendBackingFieldAssignment("jsonElementBacking", "default")
-                .AppendBackingFieldAssignment("stringBacking", GetValue(impliedCoreTypes, CoreTypes.String, "string.Empty"), impliedCoreTypes, CoreTypes.String)
-                .AppendBackingFieldAssignment("booleanBacking", "default", impliedCoreTypes, CoreTypes.Boolean)
-                .AppendBackingFieldAssignment("numberBacking", "default", impliedCoreTypes, CoreTypes.Number | CoreTypes.Integer)
-                .AppendBackingFieldAssignment("arrayBacking", "ImmutableList<JsonAny>.Empty", impliedCoreTypes, CoreTypes.Array)
-                .AppendBackingFieldAssignment("objectBacking", "ImmutableList<JsonObjectProperty>.Empty", impliedCoreTypes, CoreTypes.Object)
+                .AppendBackingFieldAssignment("stringBacking", GetValue(valueCoreType, CoreTypes.String, "string.Empty"), impliedCoreTypes, CoreTypes.String)
+                .AppendBackingFieldAssignment("boolBacking", GetValue(valueCoreType, CoreTypes.Boolean, "default"), impliedCoreTypes, CoreTypes.Boolean)
+                .AppendBackingFieldAssignment("numberBacking", GetValue(valueCoreType, CoreTypes.Number | CoreTypes.Integer, "default"), impliedCoreTypes, CoreTypes.Number | CoreTypes.Integer)
+                .AppendBackingFieldAssignment("arrayBacking", GetValue(valueCoreType, CoreTypes.Array, "ImmutableList<JsonAny>.Empty"), impliedCoreTypes, CoreTypes.Array)
+                .AppendBackingFieldAssignment("objectBacking", GetValue(valueCoreType, CoreTypes.Object, "ImmutableList<JsonObjectProperty>.Empty"), impliedCoreTypes, CoreTypes.Object)
             .PopIndent()
             .AppendLineIndent("}");
 
