@@ -35,9 +35,7 @@ public sealed class ArrayPartial : ICodeFileBuilder
                         new("System.Buffers", FrameworkType.Net80OrGreater),
                         "System.Collections",
                         "System.Collections.Immutable",
-                        "System.Diagnostics.CodeAnalysis",
                         "System.Runtime.CompilerServices",
-                        "System.Text",
                         "System.Text.Json",
                         "Corvus.Json",
                         "Corvus.Json.Internal")

@@ -357,9 +357,9 @@ internal static class CodeGeneratorExtensions
                     .ReserveName($"Item{i + 1}")
                     .AppendSeparatorLine()
                     .AppendLineIndent("/// <summary>")
-                    .AppendIndent("/// Gets the tuple item as a <see cref=\"")
-                    .Append(tupleItem.FullyQualifiedDotnetTypeName())
-                    .AppendLine("\"/>.")
+                    .AppendIndent("/// Gets the tuple item as a ")
+                    .AppendTypeAsSeeCref(tupleItem.FullyQualifiedDotnetTypeName())
+                    .AppendLine(".")
                     .AppendLineIndent("/// </summary>")
                     .AppendIndent("public ")
                     .Append(tupleItem.FullyQualifiedDotnetTypeName())
@@ -461,7 +461,6 @@ internal static class CodeGeneratorExtensions
             .AppendAddParamsArrayItemsType(typeDeclaration)
             .AppendAddRangeEnumerableArrayItemsType(typeDeclaration)
             .AppendInsertItemArrayItemsType(typeDeclaration)
-            .AppendInsertRangeEnumerableArrayItemsType(typeDeclaration)
             .AppendInsertRangeEnumerableArrayItemsType(typeDeclaration)
             .AppendReplaceArrayItemsType(typeDeclaration)
             .AppendSetItemArrayItemsType(typeDeclaration);
@@ -946,7 +945,7 @@ internal static class CodeGeneratorExtensions
         if (hasStrongType)
         {
             generator
-                .AppendIndent("JsonArrayEnumerator ")
+                .AppendIndent("JsonArrayEnumerator<TItem> ")
                 .Append("IJsonArray<")
                 .Append(typeDeclaration.DotnetTypeName())
                 .AppendLine(">.EnumerateArray<TItem>()");
@@ -1751,9 +1750,9 @@ internal static class CodeGeneratorExtensions
         return generator
             .AppendSeparatorLine()
             .AppendLineIndent("/// <summary>")
-            .AppendIndent("/// Initializes a new instance of the <see cref=\"")
-            .Append(typeDeclaration.DotnetTypeName())
-            .AppendLine("\"/> struct.")
+            .AppendIndent("/// Initializes a new instance of the ")
+            .AppendTypeAsSeeCref(typeDeclaration.DotnetTypeName())
+            .AppendLine(" struct.")
             .AppendLineIndent("/// </summary>")
             .AppendIndent("public ")
             .Append(typeDeclaration.DotnetTypeName())
@@ -1784,9 +1783,9 @@ internal static class CodeGeneratorExtensions
         return generator
             .AppendSeparatorLine()
             .AppendLineIndent("/// <summary>")
-            .AppendIndent("/// Initializes a new instance of the <see cref=\"")
-            .Append(typeDeclaration.DotnetTypeName())
-            .AppendLine("\"/> struct.")
+            .AppendIndent("/// Initializes a new instance of the ")
+            .AppendTypeAsSeeCref(typeDeclaration.DotnetTypeName())
+            .AppendLine(" struct.")
             .AppendLineIndent("/// </summary>")
             .AppendLineIndent("/// <param name=\"value\">The value from which to construct the instance.</param>")
             .AppendIndent("public ")
@@ -1822,7 +1821,7 @@ internal static class CodeGeneratorExtensions
             .AppendSeparatorLine()
             .AppendLineIndent("/// <summary>")
             .AppendIndent("/// Conversion from ")
-            .Append(sourceType)
+            .AppendTypeAsSeeCref(sourceType)
             .AppendLine(".")
             .AppendLineIndent("/// </summary>")
             .AppendLineIndent("/// <param name=\"value\">The value from which to convert.</param>")
@@ -1879,9 +1878,9 @@ internal static class CodeGeneratorExtensions
             .AppendSeparatorLine()
             .ReserveNameIfNotReserved("From")
             .AppendLineIndent("/// <summary>")
-            .AppendIndent("/// Initializes a new instance of the <see cref=\"<")
-            .Append(typeDeclaration.DotnetTypeName())
-            .AppendLine("\"/> struct.")
+            .AppendIndent("/// Initializes a new instance of the ")
+            .AppendTypeAsSeeCref(typeDeclaration.DotnetTypeName())
+            .AppendLine(" struct.")
             .AppendLineIndent("/// </summary>")
             .AppendLineIndent("/// <param name=\"items\">The list of items from which to construct the array.</param>")
             .AppendLineIndent("/// <returns>An instance of the array constructed from the list.</returns>")
@@ -1921,9 +1920,9 @@ internal static class CodeGeneratorExtensions
             .ReserveNameIfNotReserved("Create")
             .AppendSeparatorLine()
             .AppendLineIndent("/// <summary>")
-            .AppendIndent("/// Create an new instance of the <see cref=\"<")
-            .Append(typeDeclaration.DotnetTypeName())
-            .AppendLine("\"/> struct from a span of items.")
+            .AppendIndent("/// Create an new instance of the ")
+            .AppendTypeAsSeeCref(typeDeclaration.DotnetTypeName())
+            .AppendLine("\" struct from a span of items.")
             .AppendLineIndent("/// </summary>")
             .AppendLineIndent("/// <param name=\"items\">The span of items from which to construct the array.</param>")
             .AppendLineIndent("/// <returns>An instance of the array constructed from the span.</returns>")
@@ -1963,9 +1962,9 @@ internal static class CodeGeneratorExtensions
             .ReserveNameIfNotReserved("FromItems")
             .AppendSeparatorLine()
             .AppendLineIndent("/// <summary>")
-            .AppendIndent("/// Initializes a new instance of the <see cref=\"<")
-            .Append(typeDeclaration.DotnetTypeName())
-            .AppendLine("\"/> struct.")
+            .AppendIndent("/// Initializes a new instance of the ")
+            .AppendTypeAsSeeCref(typeDeclaration.DotnetTypeName())
+            .AppendLine(" struct.")
             .AppendLineIndent("/// </summary>")
             .AppendLineIndent("/// <param name=\"items\">The value from which to construct the instance.</param>")
             .AppendLineIndent("/// <returns>An instance of the array constructed from the value.</returns>")
@@ -1985,9 +1984,9 @@ internal static class CodeGeneratorExtensions
             generator
                 .AppendSeparatorLine()
                 .AppendLineIndent("/// <summary>")
-                .AppendIndent("/// Initializes a new instance of the <see cref=\"<")
-                .Append(typeDeclaration.DotnetTypeName())
-                .AppendLine("\"/> struct.")
+                .AppendIndent("/// Initializes a new instance of the ")
+                .AppendTypeAsSeeCref(typeDeclaration.DotnetTypeName())
+                .AppendLine(" struct.")
                 .AppendLineIndent("/// </summary>")
                 .AppendLineIndent("/// <typeparam name=\"TItem\">The type of the items in the list.</typeparam>")
                 .AppendLineIndent("/// <param name=\"items\">The value from which to construct the instance.</param>")
@@ -2248,6 +2247,39 @@ internal static class CodeGeneratorExtensions
     }
 
     /// <summary>
+    /// Append <c>&lt;see cref="[typeName]"/&gt;</c>.
+    /// </summary>
+    /// <param name="generator">The generator.</param>
+    /// <param name="typeName">The type name to which to append the reference.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendTypeAsSeeCref(
+        this CodeGenerator generator,
+        string typeName)
+    {
+        generator
+            .Append("<see cref=\"");
+
+        foreach (char c in typeName)
+        {
+            if (c == '<')
+            {
+                generator.Append('{');
+            }
+            else if (c == '>')
+            {
+                generator.Append('}');
+            }
+            else
+            {
+                generator.Append(c);
+            }
+        }
+
+        return generator
+            .Append("\"/>");
+    }
+
+    /// <summary>
     /// Appends an implicit conversion from the
     /// dotnet type of the <paramref name="typeDeclaration"/> to the <paramref name="targetType"/>.
     /// </summary>
@@ -2267,7 +2299,7 @@ internal static class CodeGeneratorExtensions
             .AppendSeparatorLine()
             .AppendLineIndent("/// <summary>")
             .AppendIndent("/// Conversion to ")
-            .Append(targetType)
+            .AppendTypeAsSeeCref(targetType)
             .AppendLine(".")
             .AppendLineIndent("/// </summary>")
             .AppendLineIndent("/// <param name=\"value\">The value from which to convert.</param>")
@@ -3375,9 +3407,9 @@ internal static class CodeGeneratorExtensions
         return generator
             .AppendSeparatorLine()
             .AppendLineIndent("/// <summary>")
-            .AppendIndent("/// Initializes a new instance of the <see cref=\"")
-            .Append(typeDeclaration.DotnetTypeName())
-            .AppendLine("\"/> struct.")
+            .AppendIndent("/// Initializes a new instance of the ")
+            .AppendTypeAsSeeCref(typeDeclaration.DotnetTypeName())
+            .AppendLine(" struct.")
             .AppendLineIndent("/// </summary>")
             .AppendLineIndent("/// <param name=\"value\">The value from which to construct the instance.</param>")
             .AppendIndent("public ")
@@ -4472,7 +4504,7 @@ internal static class CodeGeneratorExtensions
         {
             generator
                 .AppendIndent(itemsTypeName)
-                .Append(" IJsonValue<")
+                .Append(" IJsonArray<")
                 .Append(typeDeclaration.DotnetTypeName())
                 .Append(">.");
         }
@@ -4970,12 +5002,12 @@ internal static class CodeGeneratorExtensions
                 .AppendSeparatorLine()
                 .ReserveNameIfNotReserved("FromRange")
                 .AppendLineIndent("/// <summary>")
-                .AppendIndent("/// Initializes a new instance of the <see cref=\"<")
-                .Append(typeDeclaration.DotnetTypeName())
-                .AppendLine("\"/> struct.")
+                .AppendIndent("/// Initializes a new instance of the ")
+                .AppendTypeAsSeeCref(typeDeclaration.DotnetTypeName())
+                .AppendLine(" struct.")
                 .AppendLineIndent("/// </summary>")
-                .AppendLineIndent("/// <param name= value\">The value from which to construct the instance.</param>")
-                .AppendLineIndent("/// <returns>An instance of the array constructed from the values.</returns>")
+                .AppendLineIndent("/// <param name=\"items\">The items from which to construct the instance.</param>")
+                .AppendLineIndent("/// <returns>An instance of the array constructed from the items.</returns>")
                 .AppendIndent("public static ")
                 .Append(typeDeclaration.DotnetTypeName())
                 .Append(" FromRange(IEnumerable<")
@@ -4992,13 +5024,13 @@ internal static class CodeGeneratorExtensions
                 generator
                     .AppendSeparatorLine()
                     .AppendLineIndent("/// <summary>")
-                    .AppendIndent("/// Initializes a new instance of the <see cref=\"<")
-                    .Append(typeDeclaration.DotnetTypeName())
-                    .AppendLine("\"/> struct.")
+                    .AppendIndent("/// Initializes a new instance of the ")
+                    .AppendTypeAsSeeCref(typeDeclaration.DotnetTypeName())
+                    .AppendLine(" struct.")
                     .AppendLineIndent("/// </summary>")
                     .AppendLineIndent("/// <typeparam name=\"TItem\">The type of the items to add.</typeparam>")
-                    .AppendLineIndent("/// <param name=\"value\">The value from which to construct the instance.</param>")
-                    .AppendLineIndent("/// <returns>An instance of the array constructed from the values.</returns>")
+                    .AppendLineIndent("/// <param name=\"items\">The items from which to construct the instance.</param>")
+                    .AppendLineIndent("/// <returns>An instance of the array constructed from the items.</returns>")
                     .AppendIndent("public static ")
                     .Append(typeDeclaration.DotnetTypeName())
                     .AppendLine(" FromRange<TItem>(IEnumerable<TItem> items)")
@@ -5030,12 +5062,12 @@ internal static class CodeGeneratorExtensions
                    .AppendSeparatorLine()
                    .AppendLine("#if NET8_0_OR_GREATER")
                    .AppendLineIndent("/// <summary>")
-                   .AppendIndent("/// Initializes a new instance of the <see cref=\"<")
-                   .Append(typeDeclaration.DotnetTypeName())
-                   .AppendLine("\"/> struct.")
+                   .AppendIndent("/// Initializes a new instance of the ")
+                   .AppendTypeAsSeeCref(typeDeclaration.DotnetTypeName())
+                   .AppendLine(" struct.")
                    .AppendLineIndent("/// </summary>")
-                   .AppendLineIndent("/// <param name=\"value\">The value from which to construct the instance.</param>")
-                   .AppendLineIndent("/// <returns>An instance of the array constructed from the values.</returns>")
+                   .AppendLineIndent("/// <param name=\"items\">The items from which to construct the instance.</param>")
+                   .AppendLineIndent("/// <returns>An instance of the array constructed from the items .</returns>")
                    .AppendIndent("static ")
                    .Append(typeDeclaration.DotnetTypeName())
                    .Append(" IJsonArray<")
@@ -5048,13 +5080,13 @@ internal static class CodeGeneratorExtensions
                    .AppendLineIndent("}")
                    .AppendSeparatorLine()
                    .AppendLineIndent("/// <summary>")
-                   .AppendIndent("/// Initializes a new instance of the <see cref=\"<")
-                   .Append(typeDeclaration.DotnetTypeName())
-                   .AppendLine("\"/> struct.")
+                   .AppendIndent("/// Initializes a new instance of the ")
+                   .AppendTypeAsSeeCref(typeDeclaration.DotnetTypeName())
+                   .AppendLine(" struct.")
                    .AppendLineIndent("/// </summary>")
                    .AppendLineIndent("/// <typeparam name=\"T\">The type of the items to add.</typeparam>")
-                   .AppendLineIndent("/// <param name=\"value\">The value from which to construct the instance.</param>")
-                   .AppendLineIndent("/// <returns>An instance of the array constructed from the values.</returns>")
+                   .AppendLineIndent("/// <param name=\"items\">The items from which to construct the instance.</param>")
+                   .AppendLineIndent("/// <returns>An instance of the array constructed from the items.</returns>")
                    .AppendIndent("static ")
                    .Append(typeDeclaration.DotnetTypeName())
                    .Append(" IJsonArray<")
@@ -5062,7 +5094,7 @@ internal static class CodeGeneratorExtensions
                    .AppendLine(">.FromRange<T>(IEnumerable<T> items)")
                    .AppendLineIndent("{")
                    .PushIndent()
-                       .AppendLineIndent("return new([..items]);")
+                       .AppendLineIndent("return new([..items.Select(item => item.AsAny)]);")
                    .PopIndent()
                    .AppendLineIndent("}")
                    .AppendLine("#endif");
@@ -5074,9 +5106,9 @@ internal static class CodeGeneratorExtensions
         generator
             .AppendSeparatorLine()
             .AppendLineIndent("/// <summary>")
-            .AppendIndent("/// Initializes a new instance of the <see cref=\"<")
-            .Append(typeDeclaration.DotnetTypeName())
-            .AppendLine("\"/> struct.")
+            .AppendIndent("/// Initializes a new instance of the ")
+            .AppendTypeAsSeeCref(typeDeclaration.DotnetTypeName())
+            .AppendLine(" struct.")
             .AppendLineIndent("/// </summary>");
 
         for (int i = 1; i <= itemCount; ++i)
@@ -5108,9 +5140,9 @@ internal static class CodeGeneratorExtensions
         generator
             .AppendSeparatorLine()
             .AppendLineIndent("/// <summary>")
-            .AppendIndent("/// Initializes a new instance of the <see cref=\"<")
-            .Append(typeDeclaration.DotnetTypeName())
-            .AppendLine("\"/> struct.")
+            .AppendIndent("/// Initializes a new instance of the ")
+            .AppendTypeAsSeeCref(typeDeclaration.DotnetTypeName())
+            .AppendLine(" struct.")
             .AppendLineIndent("/// </summary>");
 
         for (int i = 1; i <= itemCount; ++i)
@@ -5401,7 +5433,7 @@ internal static class CodeGeneratorExtensions
                 .AppendLine("> items)")
                 .AppendLineIndent("{")
                 .PushIndent()
-                    .AppendLineIndent("return new(__CorvusArrayHelpers.GetImmutableListWith(this, index, items));")
+                    .AppendLineIndent("return new(__CorvusArrayHelpers.GetImmutableListWith(this, index, items.Select(item => item.AsAny)));")
                 .PopIndent()
                 .AppendLineIndent("}");
         }
@@ -5494,7 +5526,7 @@ internal static class CodeGeneratorExtensions
                     .AppendLineIndent("ImmutableList<JsonAny>.Builder builder = __CorvusArrayHelpers.GetImmutableListBuilder(this);")
                     .AppendIndent("foreach (")
                     .Append(arrayItemsType.ReducedType.FullyQualifiedDotnetTypeName())
-                    .AppendLine(" item in items")
+                    .AppendLine(" item in items)")
                     .AppendLineIndent("{")
                     .PushIndent()
                         .AppendLineIndent("builder.Add(item.AsAny);")
@@ -5601,7 +5633,7 @@ internal static class CodeGeneratorExtensions
                     .AppendLineIndent("ImmutableList<JsonAny>.Builder builder = __CorvusArrayHelpers.GetImmutableListBuilder(this);")
                     .AppendIndent("foreach (")
                     .Append(arrayItemsType.ReducedType.FullyQualifiedDotnetTypeName())
-                    .AppendLine(" item in items")
+                    .AppendLine(" item in items)")
                     .AppendLineIndent("{")
                     .PushIndent()
                         .AppendLineIndent("builder.Add(item.AsAny);")
@@ -5813,7 +5845,7 @@ internal static class CodeGeneratorExtensions
                 .Append(typeDeclaration.DotnetTypeName())
                 .Append(" Replace(in ")
                 .Append(arrayItemsType.ReducedType.FullyQualifiedDotnetTypeName())
-                .Append("oldValue, in ")
+                .Append(" oldValue, in ")
                 .Append(arrayItemsType.ReducedType.FullyQualifiedDotnetTypeName())
                 .AppendLine(" newValue)")
                 .AppendLineIndent("{")
