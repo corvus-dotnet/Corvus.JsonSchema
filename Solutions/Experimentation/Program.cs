@@ -82,7 +82,7 @@ TypeDeclaration draft202012MetaSchema =
 // And then generate code for each of the root types in which we are interested, using the language providers concerned
 IReadOnlyCollection<GeneratedCodeFile> generatedCode =
     typeBuilder.GenerateCodeUsing(
-        CSharpLanguageProvider.Default,
+        CSharpLanguageProvider.DefaultWithOptions(new("Corvus.Json.JsonSchema.Draft202012")),
         typeDeclaration1,
         typeDeclaration2,
         draft202012MetaSchema);
