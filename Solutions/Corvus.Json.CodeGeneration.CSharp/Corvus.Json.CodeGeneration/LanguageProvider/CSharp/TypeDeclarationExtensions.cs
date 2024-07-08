@@ -1,0 +1,268 @@
+﻿// <copyright file="TypeDeclarationExtensions.cs" company="Endjin Limited">
+// Copyright (c) Endjin Limited. All rights reserved.
+// </copyright>
+
+using System.Diagnostics.CodeAnalysis;
+
+namespace Corvus.Json.CodeGeneration.CSharp;
+
+/// <summary>
+/// Extension methods for <see cref="TypeDeclaration"/>.
+/// </summary>
+internal static class TypeDeclarationExtensions
+{
+    private const string DotnetNamespaceKey = "CSharp_DotnetNamespace";
+    private const string DotnetTypeNameKey = "CSharp_DotnetTypeName";
+    private const string ParentKey = "CSharp_LanguageProvider_Parent";
+    private const string ChildrenKey = "CSharp_LanguageProvider_Children";
+    private const string DoNotGenerateKey = "CSharp_LanguageProvider_DoNotGenerate";
+    private const string FullyQualifiedDotnetTypeNameKey = "CSharp_LanguageProvider_FullyQualifiedDotnetTypeName";
+    private const string PreferredDotnetNumericTypeNameKey = "CSharp_LanguageProvider_PreferredDotnetNumericTypeName";
+
+    /// <summary>
+    /// Gets the preferred .NET numeric type (e.g. int, double, long etc) for the type declaration.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration.</param>
+    /// <returns>The preferred .NET numeric type name for the type declaration, or <see langword="null"/> if
+    /// this was not a numeric type.</returns>
+    public static string? PreferredDotnetNumericTypeName(this TypeDeclaration typeDeclaration)
+    {
+        if (!typeDeclaration.TryGetMetadata(PreferredDotnetNumericTypeNameKey, out string? numericTypeName))
+        {
+            numericTypeName = GetNumericTypeName(typeDeclaration);
+            typeDeclaration.SetMetadata(PreferredDotnetNumericTypeNameKey, numericTypeName);
+        }
+
+        return numericTypeName;
+
+        static string? GetNumericTypeName(TypeDeclaration typeDeclaration)
+        {
+            if (typeDeclaration.ArrayItemsType() is ArrayItemsTypeDeclaration arrayItemsType)
+            {
+                return arrayItemsType.ReducedType.PreferredDotnetNumericTypeName();
+            }
+
+            if ((typeDeclaration.ImpliedCoreTypes() & (CoreTypes.Number | CoreTypes.Integer)) != 0 &&
+                (typeDeclaration.ImpliedCoreTypes() & ~(CoreTypes.Number | CoreTypes.Integer)) == 0)
+            {
+                string? candidateFormat = typeDeclaration.Format();
+
+                return candidateFormat switch
+                {
+                    "double" => "double",
+                    "decimal" => "decimal",
+                    "half" => "Half",
+                    "single" => "float",
+                    "byte" => "byte",
+                    "int16" => "short",
+                    "int32" => "int",
+                    "int64" => "long",
+                    "int128" => "Int128",
+                    "sbyte" => "sbyte",
+                    "uint16" => "ushort",
+                    "uint32" => "uint",
+                    "uint64" => "ulong",
+                    "uint128" => "UInt128",
+                    _ => "double",
+                };
+            }
+
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Gets the fully qualified .NET type name.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration.</param>
+    /// <returns>The fully qualified .NET type name.</returns>
+    public static string FullyQualifiedDotnetTypeName(this TypeDeclaration typeDeclaration)
+    {
+        if (!typeDeclaration.TryGetMetadata(FullyQualifiedDotnetTypeNameKey, out string? fqdntn))
+        {
+            TypeDeclaration? parent = typeDeclaration.Parent();
+            fqdntn = parent is null
+                ? $"{typeDeclaration.DotnetNamespace()}.{typeDeclaration.DotnetTypeName()}"
+                : $"{parent.FullyQualifiedDotnetTypeName()}.{typeDeclaration.DotnetTypeName()}";
+
+            typeDeclaration.SetMetadata(FullyQualifiedDotnetTypeNameKey, fqdntn);
+        }
+
+        return fqdntn ?? throw new InvalidOperationException("The dotnet type name metadata is not available.");
+    }
+
+    /// <summary>
+    /// Gets the .NET namespace.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration.</param>
+    /// <returns>The .NET namespace.</returns>
+    public static string DotnetNamespace(this TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.TryGetMetadata(DotnetNamespaceKey, out string? ns) && ns is not null)
+        {
+            return ns;
+        }
+
+        throw new InvalidOperationException("The dotnet namespace metadata is not available.");
+    }
+
+    /// <summary>
+    /// Gets the .NET namespace.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration.</param>
+    /// <returns>The .NET namespace.</returns>
+    public static TypeDeclaration? Parent(this TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.TryGetMetadata(ParentKey, out TypeDeclaration? parent) && parent is not null)
+        {
+            return parent;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Sets the parent type declaration for a child.
+    /// </summary>
+    /// <param name="child">The child.</param>
+    /// <param name="parent">The parent.</param>
+    public static void SetParent(this TypeDeclaration child, TypeDeclaration? parent)
+    {
+        if (parent is TypeDeclaration p)
+        {
+            if (!p.TryGetMetadata(ChildrenKey, out HashSet<TypeDeclaration>? children))
+            {
+                children = [];
+                p.SetMetadata(ChildrenKey, children);
+            }
+
+            children!.Add(child);
+        }
+        else
+        {
+            TypeDeclaration? currentParent = child.Parent();
+
+            // Remove the child from the current parent
+            if (currentParent is not null)
+            {
+                if (currentParent.TryGetMetadata(ChildrenKey, out HashSet<TypeDeclaration>? children) &&
+                    children is not null)
+                {
+                    children.Remove(child);
+                }
+            }
+        }
+
+        child.SetMetadata(ParentKey, parent);
+    }
+
+    /// <summary>
+    /// Gets the children of a type declaration.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration for which to get the children.</param>
+    /// <returns>The children of the type declaration.</returns>
+    /// <remarks>
+    /// Note that the children are the raw type declarations, not the fully reduced type declarations.
+    /// </remarks>
+    public static IReadOnlyCollection<TypeDeclaration> Children(this TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.TryGetMetadata(ChildrenKey, out HashSet<TypeDeclaration>? children) &&
+            children is not null)
+        {
+            return children;
+        }
+
+        return [];
+    }
+
+    /// <summary>
+    /// Gets a value indicating that this type declaration should not
+    /// be generated.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration to test.</param>
+    /// <returns><see langword="true"/> if the type should not be generated.</returns>
+    public static bool DoNotGenerate(this TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.TryGetMetadata(DoNotGenerateKey, out bool? doNotGenerate) &&
+            doNotGenerate is bool value)
+        {
+            return value;
+        }
+
+        // If we have not set do not generate at all, we should be generated.
+        return false;
+    }
+
+    /// <summary>
+    /// Sets a value indicating that this type declaration should not
+    /// be generated.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration to test.</param>
+    /// <returns>A reference to the type declaration after the operation has completed.</returns>
+    public static TypeDeclaration SetDoNotGenerate(this TypeDeclaration typeDeclaration)
+    {
+        typeDeclaration.SetMetadata(DoNotGenerateKey, true);
+        typeDeclaration.SetParent(null);
+        return typeDeclaration;
+    }
+
+    /// <summary>
+    /// Gets the .NET type name.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration.</param>
+    /// <returns>The .NET type name.</returns>
+    public static string DotnetTypeName(this TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.TryGetMetadata(DotnetTypeNameKey, out string? name) && name is not null)
+        {
+            return name;
+        }
+
+        throw new InvalidOperationException("The dotnet type name metadata is not available.");
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether the .NET type name has been set for the type declaration..
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration.</param>
+    /// <returns><see langword="true"/> if the type name has been set.</returns>
+    public static bool HasDotnetTypeName(this TypeDeclaration typeDeclaration)
+    {
+        return typeDeclaration.TryGetMetadata(DotnetTypeNameKey, out string? name) && name is not null;
+    }
+
+    /// <summary>
+    /// Tries to gets the .NET type name for the type declaration..
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration.</param>
+    /// <param name="name">The dotnet type name.</param>
+    /// <returns><see langword="true"/> if the type name has been set.</returns>
+    public static bool TryGetDotnetTypeName(this TypeDeclaration typeDeclaration, [NotNullWhen(true)] out string? name)
+    {
+        return typeDeclaration.TryGetMetadata(DotnetTypeNameKey, out name) && name is not null;
+    }
+
+    /// <summary>
+    /// Sets the .NET namespace.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration.</param>
+    /// <param name="ns">The namespace.</param>
+    /// <returns>A reference to the type declaration after the operation has completed.</returns>
+    public static TypeDeclaration SetDotnetNamespace(this TypeDeclaration typeDeclaration, string ns)
+    {
+        typeDeclaration.SetMetadata(DotnetNamespaceKey, ns);
+        return typeDeclaration;
+    }
+
+    /// <summary>
+    /// Sets the .NET type name.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration.</param>
+    /// <param name="typeName">The type name.</param>
+    /// <returns>A reference to the type declaration after the operation has completed.</returns>
+    public static TypeDeclaration SetDotnetTypeName(this TypeDeclaration typeDeclaration, string typeName)
+    {
+        typeDeclaration.SetMetadata(DotnetTypeNameKey, typeName);
+        return typeDeclaration;
+    }
+}

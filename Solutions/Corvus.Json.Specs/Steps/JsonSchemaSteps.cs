@@ -4,7 +4,7 @@
 
 using System.Text.Json;
 using Corvus.Json;
-using Corvus.Json.CodeGeneration;
+using Corvus.Json.CodeGeneration.CSharp;
 using Drivers;
 
 using Microsoft.Extensions.Configuration;
@@ -82,7 +82,7 @@ public class JsonSchemaSteps
     /// <summary>
     /// Determines whether we will assert formatting or not.
     /// </summary>
-    [Given(@"I assert format")]
+    [Given("I assert format")]
     public void GivenIAssertFormat()
     {
         this.scenarioContext.Set(true, ValidateFormatKey);
@@ -108,7 +108,7 @@ public class JsonSchemaSteps
     public void GivenASchemaFileWithContent(string schema)
     {
         this.scenarioContext.Set(schema, SchemaInstance);
-        string featureName = Formatting.ToPascalCaseWithReservedWords(this.featureContext.FeatureInfo.Title).ToString();
+        string featureName = ToPascalCaseWithReservedWords(this.featureContext.FeatureInfo.Title);
 
         string scenarioName = BuildScenarioOutlineNameFromScenarioName(this.scenarioContext);
 
@@ -125,7 +125,7 @@ public class JsonSchemaSteps
                 scenarioName = scenarioName[..index];
             }
 
-            return Formatting.ToPascalCaseWithReservedWords(scenarioName).ToString();
+            return ToPascalCaseWithReservedWords(scenarioName);
         }
     }
 
@@ -133,7 +133,7 @@ public class JsonSchemaSteps
     public void GivenASchemaFileWithFormat(string format, string schema)
     {
         this.scenarioContext.Set(schema.Replace("{{format}}", format), SchemaInstance);
-        string featureName = Formatting.ToPascalCaseWithReservedWords(this.featureContext.FeatureInfo.Title).ToString();
+        string featureName = ToPascalCaseWithReservedWords(this.featureContext.FeatureInfo.Title);
 
         string scenarioName = BuildScenarioOutlineNameFromScenarioName(this.scenarioContext);
 
@@ -150,7 +150,7 @@ public class JsonSchemaSteps
                 scenarioName = scenarioName[..index];
             }
 
-            return Formatting.ToPascalCaseWithReservedWords(scenarioName).ToString();
+            return ToPascalCaseWithReservedWords(scenarioName);
         }
     }
 
@@ -579,8 +579,8 @@ After:
     [Given("I generate a type for the schema")]
     public async Task GivenIGenerateATypeForTheSchema()
     {
-        string featureName = Formatting.ToPascalCaseWithReservedWords(this.featureContext.FeatureInfo.Title).ToString();
-        string scenarioName = Formatting.ToPascalCaseWithReservedWords(this.scenarioContext.ScenarioInfo.Title).ToString();
+        string featureName = ToPascalCaseWithReservedWords(this.featureContext.FeatureInfo.Title);
+        string scenarioName = ToPascalCaseWithReservedWords(this.scenarioContext.ScenarioInfo.Title);
         string filename = this.scenarioContext.Get<string>(InputJsonFileName);
         string schemaPath = this.scenarioContext.Get<string>(SchemaPath);
         string key = filename + schemaPath;
@@ -627,8 +627,8 @@ After:
     [Given("I synchronously generate a type for the schema")]
     public void GivenISynchronouslyGenerateATypeForTheSchema()
     {
-        string featureName = Formatting.ToPascalCaseWithReservedWords(this.featureContext.FeatureInfo.Title).ToString();
-        string scenarioName = Formatting.ToPascalCaseWithReservedWords(this.scenarioContext.ScenarioInfo.Title).ToString();
+        string featureName = ToPascalCaseWithReservedWords(this.featureContext.FeatureInfo.Title);
+        string scenarioName = ToPascalCaseWithReservedWords(this.scenarioContext.ScenarioInfo.Title);
         string filename = this.scenarioContext.Get<string>(InputJsonFileName);
         string schemaPath = this.scenarioContext.Get<string>(SchemaPath);
         string key = filename + schemaPath;
@@ -699,6 +699,15 @@ After:
     {
         ValidationContext actual = this.scenarioContext.Get<ValidationContext>(SchemaValidationResult);
         Assert.AreEqual(expectedValidity, actual.IsValid);
+    }
+
+    private static string ToPascalCaseWithReservedWords(string input)
+    {
+        Span<char> value = stackalloc char[Formatting.GetBufferLength(input.Length, "Entity".AsSpan())];
+        input.AsSpan().CopyTo(value);
+        int written = Formatting.ToPascalCase(value[..input.Length]);
+        written = Formatting.FixReservedWords(value, written, "Entity".AsSpan());
+        return value[..written].ToString();
     }
 
     private static ulong[] BuildUInt64Array(string inputDataString)
