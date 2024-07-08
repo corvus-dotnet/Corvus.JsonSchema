@@ -456,7 +456,15 @@ internal static class CodeGeneratorExtensions
             .AppendInsertRangeEnumerableTItem(typeDeclaration, isTupleOrHasArrayItemsType)
             .AppendInsertRangeEnumerableJsonAny(typeDeclaration, isTupleOrHasArrayItemsType)
             .AppendReplaceJsonAny(typeDeclaration, isTupleOrHasArrayItemsType)
-            .AppendSetItemJsonAny(typeDeclaration, isTupleOrHasArrayItemsType);
+            .AppendSetItemJsonAny(typeDeclaration, isTupleOrHasArrayItemsType)
+            .AppendAddItemArrayItemsType(typeDeclaration)
+            .AppendAddParamsArrayItemsType(typeDeclaration)
+            .AppendAddRangeEnumerableArrayItemsType(typeDeclaration)
+            .AppendInsertItemArrayItemsType(typeDeclaration)
+            .AppendInsertRangeEnumerableArrayItemsType(typeDeclaration)
+            .AppendInsertRangeEnumerableArrayItemsType(typeDeclaration)
+            .AppendReplaceArrayItemsType(typeDeclaration)
+            .AppendSetItemArrayItemsType(typeDeclaration);
     }
 
     /// <summary>
@@ -475,7 +483,8 @@ internal static class CodeGeneratorExtensions
             .ReserveNameIfNotReserved("RemoveRange")
             .AppendRemoveJsonAny(typeDeclaration, isTupleOrHasArrayItemsType)
             .AppendRemoveAt(typeDeclaration, isTupleOrHasArrayItemsType)
-            .AppendRemoveRange(typeDeclaration, isTupleOrHasArrayItemsType);
+            .AppendRemoveRange(typeDeclaration, isTupleOrHasArrayItemsType)
+            .AppendRemoveArrayItemsType(typeDeclaration);
     }
 
     /// <summary>
@@ -5326,6 +5335,28 @@ internal static class CodeGeneratorExtensions
             .AppendLineIndent("}");
     }
 
+    private static CodeGenerator AppendInsertItemArrayItemsType(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.ArrayItemsType() is ArrayItemsTypeDeclaration arrayItemsType)
+        {
+            generator
+                .AppendSeparatorLine()
+                .AppendLineIndent("/// <inheritdoc/>")
+                .AppendIndent("public ")
+                .Append(typeDeclaration.DotnetTypeName())
+                .Append(" Insert(int index, in ")
+                .Append(arrayItemsType.ReducedType.FullyQualifiedDotnetTypeName())
+                .AppendLine(" item1)")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendLineIndent("return new(__CorvusArrayHelpers.GetImmutableListWith(this, index, item1));")
+                .PopIndent()
+                .AppendLineIndent("}");
+        }
+
+        return generator;
+    }
+
     private static CodeGenerator AppendInsertRangeEnumerableJsonAny(this CodeGenerator generator, TypeDeclaration typeDeclaration, bool isTupleOrHasArrayItemsType)
     {
         generator.AppendSeparatorLine();
@@ -5354,6 +5385,28 @@ internal static class CodeGeneratorExtensions
                 .AppendLineIndent("return new(__CorvusArrayHelpers.GetImmutableListWith(this, index, items));")
             .PopIndent()
             .AppendLineIndent("}");
+    }
+
+    private static CodeGenerator AppendInsertRangeEnumerableArrayItemsType(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.ArrayItemsType() is ArrayItemsTypeDeclaration arrayItemsType)
+        {
+            generator
+                .AppendSeparatorLine()
+                .AppendLineIndent("/// <inheritdoc/>")
+                .AppendIndent("public ")
+                .Append(typeDeclaration.DotnetTypeName())
+                .Append(" InsertRange(int index, IEnumerable<")
+                .Append(arrayItemsType.ReducedType.FullyQualifiedDotnetTypeName())
+                .AppendLine("> items)")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendLineIndent("return new(__CorvusArrayHelpers.GetImmutableListWith(this, index, items));")
+                .PopIndent()
+                .AppendLineIndent("}");
+        }
+
+        return generator;
     }
 
     private static CodeGenerator AppendInsertRangeEnumerableTItem(this CodeGenerator generator, TypeDeclaration typeDeclaration, bool isTupleOrHasArrayItemsType)
@@ -5422,6 +5475,38 @@ internal static class CodeGeneratorExtensions
                 """)
             .PopIndent()
             .AppendLineIndent("}");
+    }
+
+    private static CodeGenerator AppendAddRangeEnumerableArrayItemsType(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.ArrayItemsType() is ArrayItemsTypeDeclaration arrayItemsType)
+        {
+            generator
+                .AppendSeparatorLine()
+                .AppendLineIndent("/// <inheritdoc/>")
+                .AppendIndent("public ")
+                .Append(typeDeclaration.DotnetTypeName())
+                .Append(" AddRange(IEnumerable<")
+                .Append(arrayItemsType.ReducedType.FullyQualifiedDotnetTypeName())
+                .AppendLine("> items)")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendLineIndent("ImmutableList<JsonAny>.Builder builder = __CorvusArrayHelpers.GetImmutableListBuilder(this);")
+                    .AppendIndent("foreach (")
+                    .Append(arrayItemsType.ReducedType.FullyQualifiedDotnetTypeName())
+                    .AppendLine(" item in items")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent("builder.Add(item.AsAny);")
+                    .PopIndent()
+                    .AppendLineIndent("}")
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("return new(builder.ToImmutable());")
+                .PopIndent()
+                .AppendLineIndent("}");
+        }
+
+        return generator;
     }
 
     private static CodeGenerator AppendAddRangeEnumerableTItem(this CodeGenerator generator, TypeDeclaration typeDeclaration, bool isTupleOrHasArrayItemsType)
@@ -5497,6 +5582,38 @@ internal static class CodeGeneratorExtensions
                 """)
             .PopIndent()
             .AppendLineIndent("}");
+    }
+
+    private static CodeGenerator AppendAddParamsArrayItemsType(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.ArrayItemsType() is ArrayItemsTypeDeclaration arrayItemsType)
+        {
+            generator
+                .AppendSeparatorLine()
+                .AppendLineIndent("/// <inheritdoc/>")
+                .AppendIndent("public ")
+                .Append(typeDeclaration.DotnetTypeName())
+                .Append(" Add(params ")
+                .Append(arrayItemsType.ReducedType.FullyQualifiedDotnetTypeName())
+                .AppendLine("[] items)")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendLineIndent("ImmutableList<JsonAny>.Builder builder = __CorvusArrayHelpers.GetImmutableListBuilder(this);")
+                    .AppendIndent("foreach (")
+                    .Append(arrayItemsType.ReducedType.FullyQualifiedDotnetTypeName())
+                    .AppendLine(" item in items")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent("builder.Add(item.AsAny);")
+                    .PopIndent()
+                    .AppendLineIndent("}")
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("return new(builder.ToImmutable());")
+                .PopIndent()
+                .AppendLineIndent("}");
+        }
+
+        return generator;
     }
 
     private static CodeGenerator AppendAddRangeTArray(this CodeGenerator generator, TypeDeclaration typeDeclaration, bool isTupleOrHasArrayItemsType)
@@ -5576,6 +5693,33 @@ internal static class CodeGeneratorExtensions
             .AppendLineIndent("}");
     }
 
+    private static CodeGenerator AppendAddItemArrayItemsType(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.ArrayItemsType() is ArrayItemsTypeDeclaration arrayItemsType)
+        {
+            generator
+                .AppendSeparatorLine()
+                .AppendLineIndent("/// <inheritdoc/>")
+                .AppendIndent("public ")
+                .Append(typeDeclaration.DotnetTypeName())
+                .Append(" Add(in ")
+                .Append(arrayItemsType.ReducedType.FullyQualifiedDotnetTypeName())
+                .AppendLine(" item1)")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendBlockIndent(
+                    """
+                    ImmutableList<JsonAny>.Builder builder = __CorvusArrayHelpers.GetImmutableListBuilder(this);
+                    builder.Add(item1.AsAny);
+                    return new(builder.ToImmutable());
+                    """)
+                .PopIndent()
+                .AppendLineIndent("}");
+        }
+
+        return generator;
+    }
+
     private static CodeGenerator AppendRemoveJsonAny(this CodeGenerator generator, TypeDeclaration typeDeclaration, bool isTupleOrHasArrayItemsType)
     {
         generator.AppendSeparatorLine();
@@ -5606,6 +5750,28 @@ internal static class CodeGeneratorExtensions
             .AppendLineIndent("}");
     }
 
+    private static CodeGenerator AppendRemoveArrayItemsType(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.ArrayItemsType() is ArrayItemsTypeDeclaration arrayItemsType)
+        {
+            generator
+                .AppendSeparatorLine()
+                .AppendLineIndent("/// <inheritdoc/>")
+                .AppendIndent("public ")
+                .Append(typeDeclaration.DotnetTypeName())
+                .Append(" Remove(in ")
+                .Append(arrayItemsType.ReducedType.FullyQualifiedDotnetTypeName())
+                .AppendLine(" oldValue)")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendLineIndent("return new(__CorvusArrayHelpers.GetImmutableListWithout(this, oldValue));")
+                .PopIndent()
+                .AppendLineIndent("}");
+        }
+
+        return generator;
+    }
+
     private static CodeGenerator AppendReplaceJsonAny(this CodeGenerator generator, TypeDeclaration typeDeclaration, bool isTupleOrHasArrayItemsType)
     {
         generator.AppendSeparatorLine();
@@ -5634,6 +5800,30 @@ internal static class CodeGeneratorExtensions
                 .AppendLineIndent("return new(__CorvusArrayHelpers.GetImmutableListReplacing(this, oldValue, newValue));")
             .PopIndent()
             .AppendLineIndent("}");
+    }
+
+    private static CodeGenerator AppendReplaceArrayItemsType(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.ArrayItemsType() is ArrayItemsTypeDeclaration arrayItemsType)
+        {
+            generator
+                .AppendSeparatorLine()
+                .AppendLineIndent("/// <inheritdoc/>")
+                .AppendIndent("public ")
+                .Append(typeDeclaration.DotnetTypeName())
+                .Append(" Replace(in ")
+                .Append(arrayItemsType.ReducedType.FullyQualifiedDotnetTypeName())
+                .Append("oldValue, in ")
+                .Append(arrayItemsType.ReducedType.FullyQualifiedDotnetTypeName())
+                .AppendLine(" newValue)")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendLineIndent("return new(__CorvusArrayHelpers.GetImmutableListReplacing(this, oldValue, newValue));")
+                .PopIndent()
+                .AppendLineIndent("}");
+        }
+
+        return generator;
     }
 
     private static CodeGenerator AppendRemoveAt(this CodeGenerator generator, TypeDeclaration typeDeclaration, bool isTupleOrHasArrayItemsType)
@@ -5724,5 +5914,27 @@ internal static class CodeGeneratorExtensions
                 .AppendLineIndent("return new(__CorvusArrayHelpers.GetImmutableListSetting(this, index, value));")
             .PopIndent()
             .AppendLineIndent("}");
+    }
+
+    private static CodeGenerator AppendSetItemArrayItemsType(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.ArrayItemsType() is ArrayItemsTypeDeclaration arrayItemsType)
+        {
+            generator
+                .AppendSeparatorLine()
+                .AppendLineIndent("/// <inheritdoc/>")
+                .AppendIndent("public ")
+                .Append(typeDeclaration.DotnetTypeName())
+                .Append(" SetItem(int index, in ")
+                .Append(arrayItemsType.ReducedType.FullyQualifiedDotnetTypeName())
+                .AppendLine(" value)")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendLineIndent("return new(__CorvusArrayHelpers.GetImmutableListSetting(this, index, value));")
+                .PopIndent()
+                .AppendLineIndent("}");
+        }
+
+        return generator;
     }
 }
