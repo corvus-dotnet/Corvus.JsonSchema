@@ -32,7 +32,7 @@ internal static class CodeGeneratorExtensions
         {
             generator.Append("using ");
             action(generator);
-            generator.Append(";");
+            generator.AppendLine(";");
         }
     }
 
@@ -3712,6 +3712,7 @@ internal static class CodeGeneratorExtensions
         {
             TypeDeclaration parent = parentTypes.Pop();
             generator
+                .AppendSeparatorLine()
                 .AppendDocumentation(parent)
                 .BeginPublicReadonlyPartialStructDeclaration(
                     parent.DotnetTypeName());
@@ -3842,7 +3843,59 @@ internal static class CodeGeneratorExtensions
         return generator
                 .Append(genericTypeName)
                 .Append('<')
-                .Append(typeDeclaration.DotnetTypeName())
+                .Append(typeDeclaration.FullyQualifiedDotnetTypeName())
+                .Append('>');
+    }
+
+    /// <summary>
+    /// Format a type name of the form
+    /// <c>{genericTypeName}&lt;{typeDeclaration1.FullyQualifiedDotnetTypeName()}, {typeDeclaration2.FullyQualifiedDotnetTypeName()}}&gt;</c>.
+    /// </summary>
+    /// <param name="generator">The generator to which to append the numeric string.</param>
+    /// <param name="genericTypeName">The name of the genertic type.</param>
+    /// <param name="typeDeclaration1">The first type declaration from which to form the name.</param>
+    /// <param name="typeDeclaration2">The second type declaration from which to form the name.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator GenericTypeOf(
+        this CodeGenerator generator,
+        string genericTypeName,
+        TypeDeclaration typeDeclaration1,
+        TypeDeclaration typeDeclaration2)
+    {
+        return generator
+                .Append(genericTypeName)
+                .Append('<')
+                .Append(typeDeclaration1.FullyQualifiedDotnetTypeName())
+                .Append(", ")
+                .Append(typeDeclaration2.FullyQualifiedDotnetTypeName())
+                .Append('>');
+    }
+
+    /// <summary>
+    /// Format a type name of the form
+    /// <c>{genericTypeName}&lt;{typeDeclaration1.FullyQualifiedDotnetTypeName()}, {typeDeclaration2.FullyQualifiedDotnetTypeName()}, {typeDeclaration3.FullyQualifiedDotnetTypeName()}&gt;</c>.
+    /// </summary>
+    /// <param name="generator">The generator to which to append the numeric string.</param>
+    /// <param name="genericTypeName">The name of the genertic type.</param>
+    /// <param name="typeDeclaration1">The 1st type declaration from which to form the name.</param>
+    /// <param name="typeDeclaration2">The 2nd type declaration from which to form the name.</param>
+    /// <param name="typeDeclaration3">The 3rd type declaration from which to form the name.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator GenericTypeOf(
+        this CodeGenerator generator,
+        string genericTypeName,
+        TypeDeclaration typeDeclaration1,
+        TypeDeclaration typeDeclaration2,
+        TypeDeclaration typeDeclaration3)
+    {
+        return generator
+                .Append(genericTypeName)
+                .Append('<')
+                .Append(typeDeclaration1.FullyQualifiedDotnetTypeName())
+                .Append(", ")
+                .Append(typeDeclaration2.FullyQualifiedDotnetTypeName())
+                .Append(", ")
+                .Append(typeDeclaration3.FullyQualifiedDotnetTypeName())
                 .Append('>');
     }
 

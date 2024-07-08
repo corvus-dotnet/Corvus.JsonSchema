@@ -193,7 +193,8 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
             ValidatePartial.Instance,
             ArrayPartial.Instance,
             BooleanPartial.Instance,
-            StringPartial.Instance);
+            StringPartial.Instance,
+            NumberPartial.Instance);
 
         languageProvider.RegisterValidationHandlers(
             TypeValidationHandler.Instance);
