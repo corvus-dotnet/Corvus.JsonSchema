@@ -14,6 +14,7 @@ using var testDoc = JsonDocument.Parse(
         "type": "object",
         "required": ["foo"],
         "properties": {
+            "greeting": {"$ref": "#/$defs/HelloWorld"},
             "content": {"type": "string", "contentEncoding": "base64" },
             "foo": { "type": "string" },
             "baz": {"type": "number", "format": "int64" },
@@ -24,6 +25,7 @@ using var testDoc = JsonDocument.Parse(
             "anonymousArray": {"type": "array"}
         },
         "$defs": {
+            "HelloWorld": {"const": "Hello, World!" },
             "SomeTuple": {"type": "array", "prefixItems": [{"type": "string"}, {"type": "number"}], "items": false },
             "Tensor": {"type": "array", "items": {"$ref": "#/$defs/Rank2"}, "minItems": 10, "maxItems": 10},
             "Rank2": {"type": "array", "items": {"$ref": "#/$defs/Rank3"}, "minItems": 5, "maxItems": 5},

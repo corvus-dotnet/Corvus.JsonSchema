@@ -96,8 +96,7 @@ public readonly struct ConditionalCodeSpecification
             {
                 if (lastFrameworkType != FrameworkType.All)
                 {
-                    generator.AppendLine();
-                    generator.Append("#endif");
+                    generator.AppendLine("#endif");
                     i = 0;
                 }
 
@@ -105,20 +104,13 @@ public readonly struct ConditionalCodeSpecification
                 {
                     generator.AppendSeparatorLine();
                     generator.Append("#if ");
-                    generator.Append(GetCondition(spec.condition));
+                    generator.AppendLine(GetCondition(spec.condition));
                 }
             }
-
-            generator.AppendLine();
 
             appendCallback(generator, spec.Append, i++);
 
             lastFrameworkType = spec.condition;
-        }
-
-        if (i > 0)
-        {
-            generator.AppendLine();
         }
 
         static string GetCondition(FrameworkType condition)

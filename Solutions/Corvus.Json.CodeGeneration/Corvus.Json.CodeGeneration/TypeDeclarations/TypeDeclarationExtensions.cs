@@ -3,7 +3,6 @@
 // </copyright>
 
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json.CodeGeneration.Keywords;
 
@@ -72,6 +71,42 @@ public static class TypeDeclarationExtensions
 
             return new(baseType, currentPathModifier);
         }
+    }
+
+    /// <summary>
+    /// Gets the single constant value on the type.
+    /// </summary>
+    /// <param name="that">The type declaration for which to get the single constant value.</param>
+    /// <returns>The single constant value for the type.</returns>
+    public static JsonElement SingleConstantValue(this TypeDeclaration that)
+    {
+        if (!that.TryGetMetadata(nameof(SingleConstantValue), out JsonElement constantValue))
+        {
+            // First set to null to avoid recursion issues
+            that.SetMetadata(nameof(SingleConstantValue), default(JsonElement));
+            SetSingleConstantValue(that);
+            that.TryGetMetadata(nameof(SingleConstantValue), out constantValue);
+        }
+
+        return constantValue;
+    }
+
+    /// <summary>
+    /// Gets the single constant value on the type.
+    /// </summary>
+    /// <param name="that">The type declaration for which to get the single constant value.</param>
+    /// <returns>The single constant value for the type.</returns>
+    public static JsonElement ExplicitSingleConstantValue(this TypeDeclaration that)
+    {
+        if (!that.TryGetMetadata(nameof(ExplicitSingleConstantValue), out JsonElement constantValue))
+        {
+            // First set to null to avoid recursion issues
+            that.SetMetadata(nameof(ExplicitSingleConstantValue), default(JsonElement));
+            SetSingleConstantValue(that);
+            that.TryGetMetadata(nameof(ExplicitSingleConstantValue), out constantValue);
+        }
+
+        return constantValue;
     }
 
     /// <summary>
@@ -638,49 +673,6 @@ public static class TypeDeclarationExtensions
     }
 
     /// <summary>
-    /// Gets the single constant value for an instance.
-    /// </summary>
-    /// <param name="that">The type declaration.</param>
-    /// <returns>The single constant value for the instance, or <see langword="default"/> if there is
-    /// no single constant value.</returns>
-    public static JsonElement SingleConstantValue(this TypeDeclaration that)
-    {
-        if (!that.BuildComplete)
-        {
-            throw new InvalidOperationException("You cannot use DefaultValue during the type build process.");
-        }
-
-        if (!that.TryGetMetadata(nameof(SingleConstantValue), out JsonElement? singleConstantValue))
-        {
-            singleConstantValue = GetSingleConstantValue(that);
-            that.SetMetadata(nameof(SingleConstantValue), singleConstantValue);
-        }
-
-        return singleConstantValue!.Value;
-
-        static JsonElement GetSingleConstantValue(
-            TypeDeclaration typeDeclaration)
-        {
-            if (typeDeclaration.HasSiblingHidingKeyword())
-            {
-                return default;
-            }
-
-            foreach (
-                ISingleConstantValidationKeyword keyword in
-                typeDeclaration.LocatedSchema.Vocabulary.Keywords.OfType<ISingleConstantValidationKeyword>())
-            {
-                if (keyword.TryGetConstantValue(typeDeclaration, out JsonElement defaultValue))
-                {
-                    return defaultValue;
-                }
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
     /// Gets the default value for an instance.
     /// </summary>
     /// <param name="that">The type declaration.</param>
@@ -1209,6 +1201,79 @@ public static class TypeDeclarationExtensions
         }
     }
 
+    private static void SetSingleConstantValue(TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.HasSiblingHidingKeyword())
+        {
+            typeDeclaration.SetMetadata(nameof(SingleConstantValue), default(string?));
+            return;
+        }
+
+        JsonElement foundElement = default;
+
+        foreach (ISingleConstantValidationKeyword keyword in typeDeclaration.LocatedSchema.Vocabulary.Keywords.OfType<ISingleConstantValidationKeyword>())
+        {
+            if (keyword.TryGetConstantValue(typeDeclaration, out JsonElement value) &&
+                value.ValueKind != JsonValueKind.Undefined)
+            {
+                if (foundElement.ValueKind == JsonValueKind.Undefined)
+                {
+                    // We don't have an existing constant value,
+                    foundElement = value;
+                }
+                else if (JsonAny.FromJson(foundElement).Equals(JsonAny.FromJson(value)))
+                {
+                    // The new constant is the same as the old value
+                    // (typically because a composing type explicitly restates the
+                    // constant from one of the composed types)
+                    continue;
+                }
+                else
+                {
+                    // We have more than keyword that explicitly provides a single constant value
+                    // (which is an odd situation...we will not attempt to make sense of it)
+                    break;
+                }
+            }
+        }
+
+        typeDeclaration.SetMetadata(nameof(ExplicitSingleConstantValue), foundElement);
+
+        // Now go through all the allOf union types and see if we can find one
+        foreach (IAllOfSubschemaValidationKeyword keyword in typeDeclaration.LocatedSchema.Vocabulary.Keywords.OfType<IAllOfSubschemaValidationKeyword>())
+        {
+            foreach (TypeDeclaration t in keyword.GetSubschemaTypeDeclarations(typeDeclaration))
+            {
+                if (t.SingleConstantValue() is JsonElement constantValue &&
+                    constantValue.ValueKind != JsonValueKind.Undefined)
+                {
+                    if (foundElement.ValueKind == JsonValueKind.Undefined)
+                    {
+                        // We don't have an existing declaration, or
+                        // we are overriding an implicit declaration with
+                        // an explicit declaration
+                        foundElement = constantValue;
+                    }
+                    else if (JsonAny.FromJson(foundElement).Equals(JsonAny.FromJson(constantValue)))
+                    {
+                        // The new type is the same as the old type
+                        // (typically because a composing type explicitly restates the
+                        // type from one of the composed types)
+                        continue;
+                    }
+                    else
+                    {
+                        // We have more than keyword that explicitly provides a format
+                        // (which is an odd situation...we will not attempt to make sense of it)
+                        break;
+                    }
+                }
+            }
+        }
+
+        typeDeclaration.SetMetadata(nameof(SingleConstantValue), foundElement);
+    }
+
     private static void SetFormat(TypeDeclaration typeDeclaration)
     {
         if (typeDeclaration.HasSiblingHidingKeyword())
@@ -1230,7 +1295,7 @@ public static class TypeDeclarationExtensions
                     // We don't have an existing format,
                     foundFormat = format;
                 }
-                else if (format.Equals(format, StringComparison.Ordinal))
+                else if (foundFormat.Equals(format, StringComparison.Ordinal))
                 {
                     // The new format is the same as the old format
                     // (typically because a composing type explicitly restates the
