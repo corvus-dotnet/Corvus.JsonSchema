@@ -2,9 +2,12 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.CodeDom.Compiler;
 using System.Collections.Immutable;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Reflection.Emit;
+
 #if NET8_0_OR_GREATER
 using System.Runtime.Loader;
 #endif
@@ -12,11 +15,13 @@ using System.Text;
 using System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.CodeGeneration;
+using Corvus.Json.CodeGeneration.CSharp;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Emit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyModel;
+using TechTalk.SpecFlow.Bindings;
 
 namespace Drivers;
 
@@ -41,7 +46,8 @@ global using global::System.Threading.Tasks;";
     private static readonly MethodInfo SequenceEqualMethod = GetSequenceEqualMethod();
 
     private readonly IConfiguration configuration;
-    private readonly IJsonSchemaBuilder builder;
+    private readonly JsonSchemaTypeBuilder builder;
+    private readonly IVocabulary defaultVocabulary;
     private readonly string settingsKey;
     private readonly FileSystemDocumentResolver documentResolver = new();
 #if NET8_0_OR_GREATER
@@ -52,12 +58,14 @@ global using global::System.Threading.Tasks;";
     /// Initializes a new instance of the <see cref="JsonSchemaBuilderDriver"/> class.
     /// </summary>
     /// <param name="configuration">The configuration.</param>
-    /// <param name="builder">The <see cref="IJsonSchemaBuilder"/> instance to drive.</param>
+    /// <param name="builder">The <see cref="JsonSchemaTypeBuilder"/> instance to drive.</param>
+    /// <param name="defaultVocabulary">The default vocabulary for the driver.</param>
     /// <param name="settingsKey">The settings key for the driver.</param>
-    public JsonSchemaBuilderDriver(IConfiguration configuration, IJsonSchemaBuilder builder, string settingsKey)
+    public JsonSchemaBuilderDriver(IConfiguration configuration, JsonSchemaTypeBuilder builder, IVocabulary defaultVocabulary, string settingsKey)
     {
         this.configuration = configuration;
         this.builder = builder;
+        this.defaultVocabulary = defaultVocabulary;
         this.settingsKey = settingsKey;
     }
 
@@ -208,12 +216,12 @@ global using global::System.Threading.Tasks;";
     {
         using var document = JsonDocument.Parse(data);
 
-/* Unmerged change from project 'Corvus.Json.Specs (net481)'
-Before:
-        return this.CreateInstance(type, document.RootElement.Clone());
-After:
-        return JsonSchemaBuilderDriver.CreateInstance(type, document.RootElement.Clone());
-*/
+        /* Unmerged change from project 'Corvus.Json.Specs (net481)'
+        Before:
+                return this.CreateInstance(type, document.RootElement.Clone());
+        After:
+                return JsonSchemaBuilderDriver.CreateInstance(type, document.RootElement.Clone());
+        */
         return CreateInstance(type, document.RootElement.Clone());
     }
 
@@ -257,11 +265,23 @@ After:
 
         this.builder.AddDocument(path, JsonDocument.Parse(schema));
 
-        (string rootType, ImmutableDictionary<JsonReference, TypeAndCode> generatedTypes) = await this.builder.BuildTypesFor(new JsonReference(path), $"{featureName}Feature.{scenarioName}", rebase: true, validateFormat: validateFormat).ConfigureAwait(false);
+        IVocabulary defaultVocabulary = Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary;
+
+        TypeDeclaration rootType = await this.builder.AddTypeDeclarationsAsync(new(path), defaultVocabulary, true);
+
+        var options = new CSharpLanguageProvider.Options(
+            $"{featureName}Feature.{scenarioName}");
+
+        var languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
+        IReadOnlyCollection<GeneratedCodeFile> generatedCode =
+            this.builder.GenerateCodeUsing(
+            languageProvider,
+            rootType);
+
 #if NET8_0_OR_GREATER
-        return CompileGeneratedType(this.assemblyLoadContext!, rootType, generatedTypes);
+        return CompileGeneratedType(this.assemblyLoadContext!, CSharpLanguageProvider.GetFullyQualifiedDotnetTypeName(rootType), generatedCode);
 #else
-        return CompileGeneratedType(rootType, generatedTypes);
+        return CompileGeneratedType(CSharpLanguageProvider.GetFullyQualifiedDotnetTypeName(rootType), generatedCode);
 #endif
     }
 
@@ -279,12 +299,23 @@ After:
         string baseDirectory = this.configuration[$"{this.settingsKey}:testBaseDirectory"]!;
         string path = Path.Combine(baseDirectory, filename) + schemaPath;
 
-        (string rootType, ImmutableDictionary<JsonReference, TypeAndCode> generatedTypes) = await this.builder.BuildTypesFor(new JsonReference(path), $"{featureName}Feature.{scenarioName}", rebase: true, validateFormat: validateFormat).ConfigureAwait(false);
+        IVocabulary defaultVocabulary = Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary;
+
+        TypeDeclaration rootType = await this.builder.AddTypeDeclarationsAsync(new(path), defaultVocabulary, true);
+
+        var options = new CSharpLanguageProvider.Options(
+            $"{featureName}Feature.{scenarioName}");
+
+        var languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
+        IReadOnlyCollection<GeneratedCodeFile> generatedCode =
+            this.builder.GenerateCodeUsing(
+            languageProvider,
+            rootType);
 
 #if NET8_0_OR_GREATER
-        return CompileGeneratedType(this.assemblyLoadContext!, rootType, generatedTypes);
+        return CompileGeneratedType(this.assemblyLoadContext!, CSharpLanguageProvider.GetFullyQualifiedDotnetTypeName(rootType), generatedCode);
 #else
-        return CompileGeneratedType(rootType, generatedTypes);
+        return CompileGeneratedType(CSharpLanguageProvider.GetFullyQualifiedDotnetTypeName(rootType), generatedCode);
 #endif
     }
 
@@ -309,11 +340,24 @@ After:
 
         this.builder.AddDocument(path, JsonDocument.Parse(schema));
 
-        (string rootType, ImmutableDictionary<JsonReference, TypeAndCode> generatedTypes) = this.builder.SafeBuildTypesFor(new JsonReference(path), $"{featureName}Feature.{scenarioName}", rebase: true, validateFormat: true);
+        IVocabulary defaultVocabulary = Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary;
+
+        TypeDeclaration rootType = this.builder.AddTypeDeclarations(new(path), defaultVocabulary, true);
+
+        var options = new CSharpLanguageProvider.Options(
+            $"{featureName}Feature.{scenarioName}");
+
+        var languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
+
+        IReadOnlyCollection<GeneratedCodeFile> generatedCode =
+            this.builder.GenerateCodeUsing(
+            languageProvider,
+            rootType);
+
 #if NET8_0_OR_GREATER
-        return CompileGeneratedType(this.assemblyLoadContext!, rootType, generatedTypes);
+        return CompileGeneratedType(this.assemblyLoadContext!, CSharpLanguageProvider.GetFullyQualifiedDotnetTypeName(rootType), generatedCode);
 #else
-        return CompileGeneratedType(rootType, generatedTypes);
+        return CompileGeneratedType(CSharpLanguageProvider.GetFullyQualifiedDotnetTypeName(rootType), generatedCode);
 #endif
     }
 
@@ -331,19 +375,29 @@ After:
         string baseDirectory = this.configuration[$"{this.settingsKey}:testBaseDirectory"]!;
         string path = Path.Combine(baseDirectory, filename) + schemaPath;
 
-        (string rootType, ImmutableDictionary<JsonReference, TypeAndCode> generatedTypes) = this.builder.SafeBuildTypesFor(new JsonReference(path), $"{featureName}Feature.{scenarioName}", rebase: true, validateFormat: validateFormat);
+        TypeDeclaration rootType = this.builder.AddTypeDeclarations(new(path), this.defaultVocabulary, true);
+
+        var options = new CSharpLanguageProvider.Options(
+            $"{featureName}Feature.{scenarioName}");
+
+        var languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
+
+        IReadOnlyCollection<GeneratedCodeFile> generatedCode =
+            this.builder.GenerateCodeUsing(
+            languageProvider,
+            rootType);
 
 #if NET8_0_OR_GREATER
-        return CompileGeneratedType(this.assemblyLoadContext!, rootType, generatedTypes);
+        return CompileGeneratedType(this.assemblyLoadContext!, CSharpLanguageProvider.GetFullyQualifiedDotnetTypeName(rootType), generatedCode);
 #else
-        return CompileGeneratedType(rootType, generatedTypes);
+        return CompileGeneratedType(CSharpLanguageProvider.GetFullyQualifiedDotnetTypeName(rootType), generatedCode);
 #endif
     }
 
 #if NET8_0_OR_GREATER
-    private static Type CompileGeneratedType(AssemblyLoadContext assemblyLoadContext, string rootType, ImmutableDictionary<JsonReference, TypeAndCode> generatedTypes)
+    private static Type CompileGeneratedType(AssemblyLoadContext assemblyLoadContext, string rootTypeName, IReadOnlyCollection<GeneratedCodeFile> generatedTypes)
     {
-        bool isCorvusType = rootType.StartsWith("Corvus.");
+        bool isCorvusType = rootTypeName.StartsWith("Corvus.");
 
         (IEnumerable<MetadataReference> references, IEnumerable<string?> defines) = BuildMetadataReferencesAndDefines();
 
@@ -367,15 +421,15 @@ After:
 
         if (isCorvusType)
         {
-            return AssemblyLoadContext.Default.Assemblies.Single(a => a.GetName().Name == "Corvus.Json.ExtendedTypes").ExportedTypes.Single(t => t.FullName == rootType);
+            return AssemblyLoadContext.Default.Assemblies.Single(a => a.GetName().Name == "Corvus.Json.ExtendedTypes").ExportedTypes.Single(t => t.FullName == rootTypeName);
         }
 
-        return generatedAssembly.ExportedTypes.Single(t => t.FullName == rootType);
+        return generatedAssembly.ExportedTypes.Single(t => t.FullName == rootTypeName);
     }
 #else
-    private static Type CompileGeneratedType(string rootType, ImmutableDictionary<JsonReference, TypeAndCode> generatedTypes)
+    private static Type CompileGeneratedType(string rootTypeName, IReadOnlyCollection<GeneratedCodeFile> generatedTypes)
     {
-        bool isCorvusType = rootType.StartsWith("Corvus.");
+        bool isCorvusType = rootTypeName.StartsWith("Corvus.");
 
         (IEnumerable<MetadataReference> references, IEnumerable<string?> defines) = BuildMetadataReferencesAndDefines();
 
@@ -399,10 +453,10 @@ After:
 
         if (isCorvusType)
         {
-            return typeof(JsonAny).Assembly.ExportedTypes.Single(t => t.FullName == rootType);
+            return typeof(JsonAny).Assembly.ExportedTypes.Single(t => t.FullName == rootTypeName);
         }
 
-        return generatedAssembly.ExportedTypes.Single(t => t.FullName == rootType);
+        return generatedAssembly.ExportedTypes.Single(t => t.FullName == rootTypeName);
     }
 #endif
 
@@ -423,24 +477,21 @@ After:
         return ctx is null
             ? throw new InvalidOperationException("Unable to find compilation context.")
             : ((IEnumerable<MetadataReference> MetadataReferences, IEnumerable<string?> Defines))(from l in ctx.CompileLibraries
-                from r in l.ResolveReferencePaths()
-                select MetadataReference.CreateFromFile(r),
+                                                                                                  from r in l.ResolveReferencePaths()
+                                                                                                  select MetadataReference.CreateFromFile(r),
                ctx.CompilationOptions.Defines.AsEnumerable());
     }
 
-    private static IEnumerable<SyntaxTree> ParseSyntaxTrees(ImmutableDictionary<JsonReference, TypeAndCode> generatedTypes, IEnumerable<string?> defines)
+    private static IEnumerable<SyntaxTree> ParseSyntaxTrees(IReadOnlyCollection<GeneratedCodeFile> generatedTypes, IEnumerable<string?> defines)
     {
         CSharpParseOptions parseOptions = CSharpParseOptions.Default
             .WithLanguageVersion(LanguageVersion.Preview)
             .WithPreprocessorSymbols(defines.Where(s => s is not null).Cast<string>());
         yield return CSharpSyntaxTree.ParseText(GlobalUsingStatements, options: parseOptions, path: "GlobalUsingStatements.cs");
 
-        foreach (KeyValuePair<JsonReference, TypeAndCode> type in generatedTypes)
+        foreach (GeneratedCodeFile type in generatedTypes)
         {
-            foreach (CodeAndFilename codeAndFilename in type.Value.Code)
-            {
-                yield return CSharpSyntaxTree.ParseText(codeAndFilename.Code, options: parseOptions, path: codeAndFilename.Filename);
-            }
+            yield return CSharpSyntaxTree.ParseText(type.FileContent, options: parseOptions, path: type.FileName);
         }
     }
 

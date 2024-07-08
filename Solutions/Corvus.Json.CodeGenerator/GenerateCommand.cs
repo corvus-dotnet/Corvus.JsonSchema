@@ -6,6 +6,8 @@ using System.Text.Json;
 using Microsoft.CodeAnalysis.CSharp;
 using Spectre.Console.Cli;
 using Microsoft.CodeAnalysis;
+using Corvus.Json.CodeGeneration.CSharp;
+using Spectre.Console;
 
 namespace Corvus.Json.SchemaGenerator;
 
@@ -74,61 +76,75 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
     {
         try
         {
-            var typeBuilder = new JsonSchemaTypeBuilder(new CompoundDocumentResolver(new FileSystemDocumentResolver(), new HttpClientDocumentResolver(new HttpClient())));
+            IDocumentResolver documentResolver = new CompoundDocumentResolver(new FileSystemDocumentResolver(), new HttpClientDocumentResolver(new HttpClient()));
+
+            VocabularyRegistry vocabularyRegistry = new();
+
+            // Add support for the vocabularies we are interested in.
+            CodeGeneration.Draft202012.VocabularyAnalyser.RegisterAnalyser(documentResolver, vocabularyRegistry);
+
+            // This will be our fallback vocabulary
+            IVocabulary defaultVocabulary = GetFallbackVocabulary(schemaVariant);
+
+            JsonSchemaTypeBuilder typeBuilder = new(documentResolver, vocabularyRegistry);
+
             JsonReference reference = new(schemaFile, rootPath ?? string.Empty);
-            SchemaVariant sv = ValidationSemanticsToSchemaVariant(await typeBuilder.GetValidationSemantics(reference, rebaseToRootPath).ConfigureAwait(false));
 
-            if (sv == SchemaVariant.NotSpecified)
+            Progress progress = AnsiConsole.Progress();
+
+            await progress.StartAsync(async context =>
             {
-                sv = schemaVariant;
-            }
+                ProgressTask currentTask = context.AddTask($"Building type declaration for {reference}", true);
+                TypeDeclaration rootType = await typeBuilder.AddTypeDeclarationsAsync(reference, defaultVocabulary, rebaseToRootPath).ConfigureAwait(false);
+                currentTask.StopTask();
 
-            IJsonSchemaBuilder builder =
-                sv switch
+                var options = new CSharpLanguageProvider.Options(
+                    rootNamespace,
+                    namedTypes: rootTypeName is string rtn ? [new CSharpLanguageProvider.NamedType(rootType.LocatedSchema.Location, rtn)] : null);
+
+                currentTask = context.AddTask($"Generating code for {reference}", true);
+                var languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
+                IReadOnlyCollection<GeneratedCodeFile> generatedCode =
+                    typeBuilder.GenerateCodeUsing(
+                        languageProvider,
+                        rootType);
+                currentTask.StopTask();
+
+                if (!string.IsNullOrEmpty(outputPath))
                 {
-                    SchemaVariant.Draft4 => new CodeGeneration.Draft4.JsonSchemaBuilder(typeBuilder),
-                    SchemaVariant.Draft6 => new CodeGeneration.Draft6.JsonSchemaBuilder(typeBuilder),
-                    SchemaVariant.Draft7 => new CodeGeneration.Draft7.JsonSchemaBuilder(typeBuilder),
-                    SchemaVariant.Draft202012 => new CodeGeneration.Draft202012.JsonSchemaBuilder(typeBuilder),
-                    SchemaVariant.Draft201909 => new CodeGeneration.Draft201909.JsonSchemaBuilder(typeBuilder),
-                    SchemaVariant.OpenApi30 => new CodeGeneration.OpenApi30.JsonSchemaBuilder(typeBuilder),
-                    _ => new CodeGeneration.Draft202012.JsonSchemaBuilder(typeBuilder)
-                };
-
-            (string RootType, ImmutableDictionary<JsonReference, TypeAndCode> GeneratedTypes) = await builder.BuildTypesFor(reference, rootNamespace ?? string.Empty, rebaseToRootPath, rootTypeName: rootTypeName, validateFormat: assertFormat).ConfigureAwait(false);
-
-            if (!string.IsNullOrEmpty(outputPath))
-            {
-                Directory.CreateDirectory(outputPath);
-            }
-            else
-            {
-                outputPath = Path.GetDirectoryName(schemaFile)!;
-            }
-
-            string? mapFile = string.IsNullOrEmpty(outputMapFile) ? outputMapFile : Path.Combine(outputPath, outputMapFile);
-            if (!string.IsNullOrEmpty(mapFile))
-            {
-                File.Delete(mapFile);
-                File.AppendAllText(mapFile, "[");
-            }
-
-            bool first = true;
-
-            foreach (KeyValuePair<JsonReference, TypeAndCode> generatedType in GeneratedTypes)
-            {
-                Console.WriteLine($"Generating: {generatedType.Value.DotnetTypeName}");
-                foreach (CodeAndFilename typeAndCode in generatedType.Value.Code)
+                    Directory.CreateDirectory(outputPath);
+                }
+                else
                 {
+                    outputPath = Path.GetDirectoryName(schemaFile)!;
+                }
+
+                string? mapFile = string.IsNullOrEmpty(outputMapFile) ? outputMapFile : Path.Combine(outputPath, outputMapFile);
+                if (!string.IsNullOrEmpty(mapFile))
+                {
+                    File.Delete(mapFile);
+                    File.AppendAllText(mapFile, "[");
+                }
+
+                bool first = true;
+
+                currentTask = context.AddTask("Generating files", true, generatedCode.Count);
+
+                int currentCount = 0;
+                foreach (GeneratedCodeFile generatedCodeFile in generatedCode)
+                {
+                    currentCount++;
+                    currentTask.Description = $"Generating {generatedCodeFile.TypeDeclaration.RelativeSchemaLocation}: {generatedCodeFile.FileName}";
+                    currentTask.Increment(1);
                     try
                     {
                         string source =
-                            SyntaxFactory.ParseCompilationUnit(typeAndCode.Code)
+                            SyntaxFactory.ParseCompilationUnit(generatedCodeFile.FileContent)
                              .NormalizeWhitespace()
                              .GetText()
                              .ToString();
 
-                        string outputFile = Path.Combine(outputPath, typeAndCode.Filename);
+                        string outputFile = Path.Combine(outputPath, generatedCodeFile.FileName);
                         File.WriteAllText(outputFile, source);
 
                         if (!string.IsNullOrEmpty(mapFile))
@@ -141,21 +157,20 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
                             {
                                 File.AppendAllText(mapFile, ", ");
                             }
-                            File.AppendAllText(mapFile, $"{{\"key\": \"{JsonEncodedText.Encode(generatedType.Key)}\", \"class\": \"{JsonEncodedText.Encode(generatedType.Value.DotnetTypeName)}\", \"path\": \"{JsonEncodedText.Encode(outputFile)}\"}}\r\n");
+                            File.AppendAllText(mapFile, $"{{\"key\": \"{JsonEncodedText.Encode(generatedCodeFile.TypeDeclaration.LocatedSchema.Location)}\", \"class\": \"{JsonEncodedText.Encode(CSharpLanguageProvider.GetFullyQualifiedDotnetTypeName(generatedCodeFile))}\", \"path\": \"{JsonEncodedText.Encode(outputFile)}\"}}\r\n");
                         }
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
-                        Console.Error.WriteLine($"Unable to parse generated type: {generatedType.Value.DotnetTypeName} from location {generatedType.Key}");
-                        return -1;
+                        throw new InvalidOperationException($"Unable to parse generated type: {CSharpLanguageProvider.GetFullyQualifiedDotnetTypeName(generatedCodeFile)} from location {generatedCodeFile.TypeDeclaration.LocatedSchema.Location}", ex);
                     }
                 }
-            }
 
-            if (!string.IsNullOrEmpty(mapFile))
-            {
-                File.AppendAllText(mapFile, "]");
-            }
+                if (!string.IsNullOrEmpty(mapFile))
+                {
+                    await File.AppendAllTextAsync(mapFile, "]");
+                }
+            });
 
         }
         catch (Exception ex)
@@ -167,44 +182,12 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
         return 0;
     }
 
-    private static SchemaVariant ValidationSemanticsToSchemaVariant(ValidationSemantics validationSemantics)
+    private static IVocabulary GetFallbackVocabulary(SchemaVariant schemaVariant)
     {
-        if (validationSemantics == ValidationSemantics.Unknown)
+        return schemaVariant switch
         {
-            return SchemaVariant.NotSpecified;
-        }
-
-        if ((validationSemantics & ValidationSemantics.Draft4) != 0)
-        {
-            return SchemaVariant.Draft4;
-        }
-
-        if ((validationSemantics & ValidationSemantics.Draft6) != 0)
-        {
-            return SchemaVariant.Draft6;
-        }
-
-        if ((validationSemantics & ValidationSemantics.Draft7) != 0)
-        {
-            return SchemaVariant.Draft7;
-        }
-
-        if ((validationSemantics & ValidationSemantics.Draft201909) != 0)
-        {
-            return SchemaVariant.Draft201909;
-        }
-
-        if ((validationSemantics & ValidationSemantics.Draft202012) != 0)
-        {
-            return SchemaVariant.Draft202012;
-        }
-
-        if ((validationSemantics & ValidationSemantics.OpenApi30) != 0)
-        {
-            return SchemaVariant.OpenApi30;
-        }
-
-        return SchemaVariant.NotSpecified;
+            // At the moment we only support this one!
+            _ => CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary,
+        };
     }
-
 }

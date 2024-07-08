@@ -2,7 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System;
 using System.Buffers;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -17,9 +16,11 @@ namespace Corvus.Json;
 public readonly struct JsonReference
 #if NET8_0_OR_GREATER
     : IEquatable<JsonReference>,
+    IComparable<JsonReference>,
     ISpanFormattable
 #else
-    : IEquatable<JsonReference>
+    : IEquatable<JsonReference>,
+    IComparable<JsonReference>
 #endif
 {
     /// <summary>
@@ -213,6 +214,12 @@ public readonly struct JsonReference
         return null;
     }
 
+    /// <inheritdoc/>
+    public int CompareTo(JsonReference other)
+    {
+        return this.reference.Span.CompareTo(other.reference.Span, StringComparison.Ordinal);
+    }
+
     /// <summary>
     /// Get the value as decoded string.
     /// </summary>
@@ -237,6 +244,57 @@ public readonly struct JsonReference
 #else
         return new JsonReference(this.Uri, fragment.AsSpan());
 #endif
+    }
+
+    /// <summary>
+    /// Append the fragment.
+    /// </summary>
+    /// <param name="other">The item whose fragment is to be appended.</param>
+    /// <returns>The JSON reference with the compound fragment.</returns>
+    public JsonReference AppendFragment(JsonReference other)
+    {
+        ReadOnlySpan<char> otherFragment = other.Fragment;
+
+        if (otherFragment.Length == 0)
+        {
+            return this;
+        }
+
+        otherFragment = otherFragment[1..];
+
+        int? h1 = FindHash(this.reference.Span);
+        bool hasHash = h1 is int;
+
+        int requiredLength = this.reference.Length + otherFragment.Length;
+
+        if (!hasHash)
+        {
+            requiredLength++;
+        }
+
+        bool hasTrailingSlash = this.reference.Span[^1] != '/';
+        if (!hasTrailingSlash)
+        {
+            requiredLength++;
+        }
+
+        Memory<char> updatedValue = new char[requiredLength];
+        this.reference.CopyTo(updatedValue);
+        int writeIndex = this.reference.Length;
+
+        if (!hasHash)
+        {
+            updatedValue.Span[writeIndex] = '#';
+            writeIndex++;
+        }
+        else if (!hasTrailingSlash)
+        {
+            updatedValue.Span[writeIndex] = '/';
+            writeIndex++;
+        }
+
+        otherFragment.CopyTo(updatedValue[writeIndex..].Span);
+        return new(updatedValue);
     }
 
     /// <summary>
