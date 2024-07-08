@@ -2,6 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Diagnostics;
+
 namespace Corvus.Json;
 
 /// <summary>
@@ -105,6 +107,12 @@ public readonly ref struct JsonReferenceBuilder
     public static JsonReferenceBuilder From(string reference)
     {
         return new JsonReference(reference).AsBuilder();
+    }
+
+    /// <inheritdoc/>
+    public override string ToString()
+    {
+        return this.AsReference().ToString();
     }
 
     /// <summary>

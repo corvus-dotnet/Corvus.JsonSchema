@@ -176,6 +176,13 @@ public class JsonSchemaTypeBuilder(
     {
         HashSet<TypeDeclaration> visitedTypes = [];
 
+        // Set the names for the well-known types we pre-define.
+        // Note that any well-known types used by the language provider itself
+        // will be set if needed; but these are assumed to be set *even if they aren't needed directly*
+        // This is because language providers will often use these types directly in their code generation.
+        SetNamesBeforeSubschema(WellKnownTypeDeclarations.JsonAny, visitedTypes);
+        SetNamesBeforeSubschema(WellKnownTypeDeclarations.JsonNotAny, visitedTypes);
+
         foreach (TypeDeclaration type in rootTypeDeclarations)
         {
             SetNamesBeforeSubschema(type, visitedTypes);
