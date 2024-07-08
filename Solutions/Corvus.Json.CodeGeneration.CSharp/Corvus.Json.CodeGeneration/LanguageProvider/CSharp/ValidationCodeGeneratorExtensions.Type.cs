@@ -224,7 +224,7 @@ public static partial class ValidationCodeGeneratorExtensions
                     .AppendSeparatorLine()
                     .AppendBlockIndent(
                     """
-                    result = result.MergeResults(
+                    return result.MergeResults(
                         isValid,
                     """)
                     .PushIndent()

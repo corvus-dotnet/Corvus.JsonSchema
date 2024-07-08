@@ -185,7 +185,6 @@ public readonly struct ConditionalCodeSpecification
             {
                 ConditionalCodeSpecification spec = all[i];
                 appendCallback(generator, spec.Append, i);
-                i++;
             }
 
             generator.AppendLine();

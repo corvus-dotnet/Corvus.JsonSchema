@@ -432,7 +432,7 @@ internal static class CodeGeneratorExtensions
     }
 
     /// <summary>
-    /// Append array Add and Remove methods.
+    /// Append array Add methods.
     /// </summary>
     /// <param name="generator">The code generator.</param>
     /// <param name="typeDeclaration">The type declaration for which to emit the methods.</param>
@@ -447,6 +447,7 @@ internal static class CodeGeneratorExtensions
             .ReserveNameIfNotReserved("AddRange")
             .ReserveNameIfNotReserved("InsertRange")
             .AppendAddItemJsonAny(typeDeclaration, isTupleOrHasArrayItemsType)
+            .AppendAddParamsJsonAny(typeDeclaration, isTupleOrHasArrayItemsType)
             .AppendAddRangeTArray(typeDeclaration, isTupleOrHasArrayItemsType)
             .AppendAddRangeEnumerableTItem(typeDeclaration, isTupleOrHasArrayItemsType)
             .AppendAddRangeEnumerableJsonAny(typeDeclaration, isTupleOrHasArrayItemsType)
@@ -456,6 +457,25 @@ internal static class CodeGeneratorExtensions
             .AppendInsertRangeEnumerableJsonAny(typeDeclaration, isTupleOrHasArrayItemsType)
             .AppendReplaceJsonAny(typeDeclaration, isTupleOrHasArrayItemsType)
             .AppendSetItemJsonAny(typeDeclaration, isTupleOrHasArrayItemsType);
+    }
+
+    /// <summary>
+    /// Append array Remove methods.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to emit the methods.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendArrayRemoveMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        bool isTupleOrHasArrayItemsType = typeDeclaration.IsTuple() || typeDeclaration.ArrayItemsType() is not null;
+
+        return generator
+            .ReserveNameIfNotReserved("Remove")
+            .ReserveNameIfNotReserved("RemoveAt")
+            .ReserveNameIfNotReserved("RemoveRange")
+            .AppendRemoveJsonAny(typeDeclaration, isTupleOrHasArrayItemsType)
+            .AppendRemoveAt(typeDeclaration, isTupleOrHasArrayItemsType)
+            .AppendRemoveRange(typeDeclaration, isTupleOrHasArrayItemsType);
     }
 
     /// <summary>
@@ -645,7 +665,7 @@ internal static class CodeGeneratorExtensions
                 """)
                 .AppendIndent("public static ImmutableList<JsonAny> GetImmutableListWith<TEnumerable>(in ")
                 .Append(typeDeclaration.DotnetTypeName())
-                .AppendLine(" arrayInstance, int index, TEnumerable values")
+                .AppendLine(" arrayInstance, int index, TEnumerable values)")
                 .PushIndent()
                     .AppendLineIndent("where TEnumerable : IEnumerable<JsonAny>")
                 .PopIndent()
@@ -872,7 +892,7 @@ internal static class CodeGeneratorExtensions
                 .AppendLineIndent("{")
                 .PushIndent()
                     .AppendConditionalWrappedBackingValueLineIndent("Backing.JsonElement", "return new(", "jsonElementBacking", ");")
-                    .AppendConditionalWrappedBackingValueLineIndent("Backing.Array", "return new(", "arrayBacking", ".);")
+                    .AppendConditionalWrappedBackingValueLineIndent("Backing.Array", "return new(", "arrayBacking", ");")
                     .AppendSeparatorLine()
                     .AppendLineIndent("throw new InvalidOperationException();")
                 .PopIndent()
@@ -903,7 +923,40 @@ internal static class CodeGeneratorExtensions
             .AppendLineIndent("{")
             .PushIndent()
                 .AppendConditionalWrappedBackingValueLineIndent("Backing.JsonElement", "return new(", "jsonElementBacking", ");")
-                .AppendConditionalWrappedBackingValueLineIndent("Backing.Array", "return new(", "arrayBacking", ".);")
+                .AppendConditionalWrappedBackingValueLineIndent("Backing.Array", "return new(", "arrayBacking", ");")
+                .AppendSeparatorLine()
+                .AppendLineIndent("throw new InvalidOperationException();")
+            .PopIndent()
+            .AppendLineIndent("}");
+
+        generator
+            .ReserveNameIfNotReserved("EnumerateArray")
+            .AppendSeparatorLine()
+            .AppendLineIndent("/// <inheritdoc/>");
+
+        if (hasStrongType)
+        {
+            generator
+                .AppendIndent("JsonArrayEnumerator ")
+                .Append("IJsonArray<")
+                .Append(typeDeclaration.DotnetTypeName())
+                .AppendLine(">.EnumerateArray<TItem>()");
+        }
+        else
+        {
+            generator
+                .AppendIndent("public JsonArrayEnumerator<TItem> ")
+                .AppendLine("EnumerateArray<TItem>()")
+                .PushIndent()
+                    .AppendLineIndent("where TItem : struct, IJsonValue<TItem>")
+                .PopIndent();
+        }
+
+        generator
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendConditionalWrappedBackingValueLineIndent("Backing.JsonElement", "return new(", "jsonElementBacking", ");")
+                .AppendConditionalWrappedBackingValueLineIndent("Backing.Array", "return new(", "arrayBacking", ");")
                 .AppendSeparatorLine()
                 .AppendLineIndent("throw new InvalidOperationException();")
             .PopIndent()
@@ -1914,7 +1967,7 @@ internal static class CodeGeneratorExtensions
             .AppendLine("[] items)")
             .AppendLineIndent("{")
             .PushIndent()
-                .AppendReturnNewArrayTypeBuiltFromValue()
+                .AppendReturnNewArrayTypeBuiltFromValue("items")
             .PopIndent()
             .AppendLineIndent("}");
 
@@ -1938,7 +1991,7 @@ internal static class CodeGeneratorExtensions
                 .PopIndent()
                 .AppendLineIndent("{")
                 .PushIndent()
-                    .AppendReturnNewArrayTypeBuiltFromValue()
+                    .AppendReturnNewArrayTypeBuiltFromValue("items.Select(item => item.AsAny)")
                 .PopIndent()
                 .AppendLineIndent("}")
                 .AppendGenericFromItemsFactoryMethods(typeDeclaration);
@@ -4427,7 +4480,7 @@ internal static class CodeGeneratorExtensions
                     "jsonElementBacking")
                 .AppendSeparatorLine()
                 .AppendConditionalBackingValueCallbackIndent(
-                    "Backing.JsonArray",
+                    "Backing.Array",
                     "arrayBacking",
                     (g, fieldName) => AppendArrayItem(g, fieldName, itemsTypeName))
                 .AppendSeparatorLine()
@@ -4934,18 +4987,18 @@ internal static class CodeGeneratorExtensions
                     .Append(typeDeclaration.DotnetTypeName())
                     .AppendLine("\"/> struct.")
                     .AppendLineIndent("/// </summary>")
-                    .AppendLineIndent("/// <typeparam name=\"T\">The type of the items to add.</typeparam>")
+                    .AppendLineIndent("/// <typeparam name=\"TItem\">The type of the items to add.</typeparam>")
                     .AppendLineIndent("/// <param name=\"value\">The value from which to construct the instance.</param>")
                     .AppendLineIndent("/// <returns>An instance of the array constructed from the values.</returns>")
                     .AppendIndent("public static ")
                     .Append(typeDeclaration.DotnetTypeName())
-                    .AppendLine(" FromRange<T>(IEnumerable<T> items)")
+                    .AppendLine(" FromRange<TItem>(IEnumerable<TItem> items)")
                     .PushIndent()
-                        .AppendLineIndent("where T : struct, IJsonArray<T>")
+                        .AppendLineIndent("where TItem : struct, IJsonValue<TItem>")
                     .PopIndent()
                     .AppendLineIndent("{")
                     .PushIndent()
-                        .AppendLineIndent("return new([..items]);")
+                        .AppendLineIndent("return new([..items.Select(item => item.AsAny)]);")
                     .PopIndent()
                     .AppendLineIndent("}");
             }
@@ -5036,7 +5089,7 @@ internal static class CodeGeneratorExtensions
             .AppendLine(")")
             .AppendLineIndent("{")
             .PushIndent()
-                .AppendReturnNewArrayTypeBuiltFromItems(itemCount)
+                .AppendReturnNewArrayTypeBuiltFromItems(itemCount, isJsonAny: false)
             .PopIndent()
             .AppendLineIndent("}");
     }
@@ -5096,12 +5149,12 @@ internal static class CodeGeneratorExtensions
             .PopIndent()
             .AppendLineIndent("{")
             .PushIndent()
-                .AppendReturnNewArrayTypeBuiltFromItems(itemCount)
+                .AppendReturnNewArrayTypeBuiltFromItems(itemCount, isJsonAny: false)
             .PopIndent()
             .AppendLineIndent("}");
     }
 
-    private static CodeGenerator AppendReturnNewArrayTypeBuiltFromItems(this CodeGenerator generator, int itemCount)
+    private static CodeGenerator AppendReturnNewArrayTypeBuiltFromItems(this CodeGenerator generator, int itemCount, bool isJsonAny)
     {
         generator
             .AppendSeparatorLine()
@@ -5117,6 +5170,12 @@ internal static class CodeGeneratorExtensions
             generator
                 .Append("item")
                 .Append(i);
+
+            if (!isJsonAny)
+            {
+                generator
+                    .Append(".AsAny");
+            }
         }
 
         return generator
@@ -5159,10 +5218,12 @@ internal static class CodeGeneratorExtensions
             .AppendLineIndent("}");
     }
 
-    private static CodeGenerator AppendReturnNewArrayTypeBuiltFromValue(this CodeGenerator generator)
+    private static CodeGenerator AppendReturnNewArrayTypeBuiltFromValue(this CodeGenerator generator, string valueName)
     {
         return generator
-            .AppendLineIndent("return new([..value]);");
+            .AppendIndent("return new([..")
+            .Append(valueName)
+            .AppendLine("]);");
     }
 
     private static string[] NormalizeAndSplitBlockIntoLines(string block, bool removeBlankLines = false)
@@ -5252,8 +5313,7 @@ internal static class CodeGeneratorExtensions
         {
             generator
                 .AppendLineIndent("/// <inheritdoc/>")
-                .AppendIndent(typeDeclaration.DotnetTypeName())
-                .Append("public ")
+                .AppendIndent("public ")
                 .Append(typeDeclaration.DotnetTypeName())
                 .AppendLine(" Insert(int index, in JsonAny item1)");
         }
@@ -5283,8 +5343,7 @@ internal static class CodeGeneratorExtensions
         {
             generator
                 .AppendLineIndent("/// <inheritdoc/>")
-                .AppendIndent(typeDeclaration.DotnetTypeName())
-                .Append("public ")
+                .AppendIndent("public ")
                 .Append(typeDeclaration.DotnetTypeName())
                 .AppendLine(" InsertRange(int index, IEnumerable<JsonAny> items)");
         }
@@ -5314,8 +5373,7 @@ internal static class CodeGeneratorExtensions
         {
             generator
                 .AppendLineIndent("/// <inheritdoc/>")
-                .AppendIndent(typeDeclaration.DotnetTypeName())
-                .Append("public ")
+                .AppendIndent("public ")
                 .Append(typeDeclaration.DotnetTypeName())
                 .AppendLine(" InsertRange<TItem>(int index, IEnumerable<TItem> items)")
                 .PushIndent()
@@ -5348,8 +5406,7 @@ internal static class CodeGeneratorExtensions
         {
             generator
                 .AppendLineIndent("/// <inheritdoc/>")
-                .AppendIndent(typeDeclaration.DotnetTypeName())
-                .Append("public ")
+                .AppendIndent("public ")
                 .Append(typeDeclaration.DotnetTypeName())
                 .AppendLine(" AddRange(IEnumerable<JsonAny> items)");
         }
@@ -5384,8 +5441,7 @@ internal static class CodeGeneratorExtensions
         {
             generator
                 .AppendLineIndent("/// <inheritdoc/>")
-                .AppendIndent(typeDeclaration.DotnetTypeName())
-                .Append("public ")
+                .AppendIndent("public ")
                 .Append(typeDeclaration.DotnetTypeName())
                 .AppendLine(" AddRange<TItem>(IEnumerable<TItem> items)")
                 .PushIndent()
@@ -5405,6 +5461,39 @@ internal static class CodeGeneratorExtensions
                 }
 
                 return new(builder.ToImmutable());
+                """)
+            .PopIndent()
+            .AppendLineIndent("}");
+    }
+
+    private static CodeGenerator AppendAddParamsJsonAny(this CodeGenerator generator, TypeDeclaration typeDeclaration, bool isTupleOrHasArrayItemsType)
+    {
+        generator.AppendSeparatorLine();
+
+        if (isTupleOrHasArrayItemsType)
+        {
+            generator
+                .AppendLineIndent("/// <inheritdoc/>")
+                .AppendIndent(typeDeclaration.DotnetTypeName())
+                .Append(" IJsonArray<")
+                .Append(typeDeclaration.DotnetTypeName())
+                .AppendLine(">.Add(params JsonAny[] items)");
+        }
+        else
+        {
+            generator
+                .AppendLineIndent("/// <inheritdoc/>")
+                .AppendIndent("public ")
+                .Append(typeDeclaration.DotnetTypeName())
+                .AppendLine(" Add(params JsonAny[] items)");
+        }
+
+        return generator
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendBlockIndent(
+                """
+                return new([..items]);
                 """)
             .PopIndent()
             .AppendLineIndent("}");
@@ -5469,8 +5558,7 @@ internal static class CodeGeneratorExtensions
         {
             generator
                 .AppendLineIndent("/// <inheritdoc/>")
-                .AppendIndent(typeDeclaration.DotnetTypeName())
-                .Append("public ")
+                .AppendIndent("public ")
                 .Append(typeDeclaration.DotnetTypeName())
                 .AppendLine(" Add(in JsonAny item1)");
         }
@@ -5484,6 +5572,36 @@ internal static class CodeGeneratorExtensions
                 builder.Add(item1);
                 return new(builder.ToImmutable());
                 """)
+            .PopIndent()
+            .AppendLineIndent("}");
+    }
+
+    private static CodeGenerator AppendRemoveJsonAny(this CodeGenerator generator, TypeDeclaration typeDeclaration, bool isTupleOrHasArrayItemsType)
+    {
+        generator.AppendSeparatorLine();
+
+        if (isTupleOrHasArrayItemsType)
+        {
+            generator
+                .AppendLineIndent("/// <inheritdoc/>")
+                .AppendIndent(typeDeclaration.DotnetTypeName())
+                .Append(" IJsonArray<")
+                .Append(typeDeclaration.DotnetTypeName())
+                .AppendLine(">.Remove(in JsonAny oldValue)");
+        }
+        else
+        {
+            generator
+                .AppendLineIndent("/// <inheritdoc/>")
+                .AppendIndent("public ")
+                .Append(typeDeclaration.DotnetTypeName())
+                .AppendLine(" Remove(in JsonAny oldValue)");
+        }
+
+        return generator
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendLineIndent("return new(__CorvusArrayHelpers.GetImmutableListWithout(this, oldValue));")
             .PopIndent()
             .AppendLineIndent("}");
     }
@@ -5505,8 +5623,7 @@ internal static class CodeGeneratorExtensions
         {
             generator
                 .AppendLineIndent("/// <inheritdoc/>")
-                .AppendIndent(typeDeclaration.DotnetTypeName())
-                .Append("public ")
+                .AppendIndent("public ")
                 .Append(typeDeclaration.DotnetTypeName())
                 .AppendLine(" Replace(in JsonAny oldValue, in JsonAny newValue)");
         }
@@ -5514,7 +5631,67 @@ internal static class CodeGeneratorExtensions
         return generator
             .AppendLineIndent("{")
             .PushIndent()
-                .AppendLineIndent("return new(__CorvusArrayHelpers.GetImmutableListReplacing(this, oldValue, newValue))")
+                .AppendLineIndent("return new(__CorvusArrayHelpers.GetImmutableListReplacing(this, oldValue, newValue));")
+            .PopIndent()
+            .AppendLineIndent("}");
+    }
+
+    private static CodeGenerator AppendRemoveAt(this CodeGenerator generator, TypeDeclaration typeDeclaration, bool isTupleOrHasArrayItemsType)
+    {
+        generator.AppendSeparatorLine();
+
+        if (isTupleOrHasArrayItemsType)
+        {
+            generator
+                .AppendLineIndent("/// <inheritdoc/>")
+                .AppendIndent(typeDeclaration.DotnetTypeName())
+                .Append(" IJsonArray<")
+                .Append(typeDeclaration.DotnetTypeName())
+                .AppendLine(">.RemoveAt(int index)");
+        }
+        else
+        {
+            generator
+                .AppendLineIndent("/// <inheritdoc/>")
+                .AppendIndent("public ")
+                .Append(typeDeclaration.DotnetTypeName())
+                .AppendLine(" RemoveAt(int index)");
+        }
+
+        return generator
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendLineIndent("return new(__CorvusArrayHelpers.GetImmutableListWithoutRange(this, index, 1));")
+            .PopIndent()
+            .AppendLineIndent("}");
+    }
+
+    private static CodeGenerator AppendRemoveRange(this CodeGenerator generator, TypeDeclaration typeDeclaration, bool isTupleOrHasArrayItemsType)
+    {
+        generator.AppendSeparatorLine();
+
+        if (isTupleOrHasArrayItemsType)
+        {
+            generator
+                .AppendLineIndent("/// <inheritdoc/>")
+                .AppendIndent(typeDeclaration.DotnetTypeName())
+                .Append(" IJsonArray<")
+                .Append(typeDeclaration.DotnetTypeName())
+                .AppendLine(">.RemoveRange(int index, int count)");
+        }
+        else
+        {
+            generator
+                .AppendLineIndent("/// <inheritdoc/>")
+                .AppendIndent("public ")
+                .Append(typeDeclaration.DotnetTypeName())
+                .AppendLine(" RemoveRange(int index, int count)");
+        }
+
+        return generator
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendLineIndent("return new(__CorvusArrayHelpers.GetImmutableListWithoutRange(this, index, count));")
             .PopIndent()
             .AppendLineIndent("}");
     }
@@ -5536,8 +5713,7 @@ internal static class CodeGeneratorExtensions
         {
             generator
                 .AppendLineIndent("/// <inheritdoc/>")
-                .AppendIndent(typeDeclaration.DotnetTypeName())
-                .Append("public ")
+                .AppendIndent("public ")
                 .Append(typeDeclaration.DotnetTypeName())
                 .AppendLine(" SetItem(int index, in JsonAny value)");
         }
@@ -5545,7 +5721,7 @@ internal static class CodeGeneratorExtensions
         return generator
             .AppendLineIndent("{")
             .PushIndent()
-                .AppendLineIndent("return new(__CorvusArrayHelpers.GetImmutableListSetting(this, index, value))")
+                .AppendLineIndent("return new(__CorvusArrayHelpers.GetImmutableListSetting(this, index, value));")
             .PopIndent()
             .AppendLineIndent("}");
     }

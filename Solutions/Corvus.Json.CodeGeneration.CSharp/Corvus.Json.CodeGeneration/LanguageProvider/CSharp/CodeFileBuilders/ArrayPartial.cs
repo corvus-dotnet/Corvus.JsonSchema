@@ -33,6 +33,8 @@ public sealed class ArrayPartial : ICodeFileBuilder
                     .AppendLine()
                     .AppendUsings(
                         new("System.Buffers", FrameworkType.Net80OrGreater),
+                        "System.Collections",
+                        "System.Collections.Immutable",
                         "System.Diagnostics.CodeAnalysis",
                         "System.Runtime.CompilerServices",
                         "System.Text",
@@ -62,7 +64,7 @@ public sealed class ArrayPartial : ICodeFileBuilder
                             .AppendTupleItemProperties(typeDeclaration)
                             .AppendTupleConversions(typeDeclaration)
                             .AppendImplicitConversionFromTypeUsingConstructor(typeDeclaration, "ImmutableList<JsonAny>")
-                            .AppendImplicitConversionToType(typeDeclaration, "ImmutableList<JsonAny>", "__CorvusArrayHelpers.AsImmutableList(value)")
+                            .AppendImplicitConversionToType(typeDeclaration, "ImmutableList<JsonAny>", "__CorvusArrayHelpers.GetImmutableList(value)")
                             .AppendImplicitConversionFromJsonValueTypeUsingConstructor(typeDeclaration, "JsonArray", JsonValueKind.Array, "value.AsImmutableList()")
                             .AppendFromImmutableListOfJsonAnyFactoryMethod(typeDeclaration)
                             .AppendCreateFromSpanFactoryMethod(typeDeclaration)
@@ -76,8 +78,8 @@ public sealed class ArrayPartial : ICodeFileBuilder
                             .AppendGetArrayLengthMethod()
                             .AppendEnumerateArrayMethods(typeDeclaration)
                             .AppendArrayAddMethods(typeDeclaration)
+                            .AppendArrayRemoveMethods(typeDeclaration)
                             .AppendCorvusArrayHelpers(typeDeclaration)
-
                         .EndClassOrStructDeclaration()
                     .EndTypeDeclarationNesting(typeDeclaration)
                     .EndNamespace()
