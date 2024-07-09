@@ -14,6 +14,7 @@ using var testDoc = JsonDocument.Parse(
         "type": "object",
         "required": ["foo"],
         "properties": {
+            "someIri" : {"type": "string", "format": "iri", "pattern": "https://(.*)" },
             "greeting": {"$ref": "#/$defs/HelloWorld"},
             "content": {"type": "string", "contentEncoding": "base64" },
             "foo": { "type": "string" },

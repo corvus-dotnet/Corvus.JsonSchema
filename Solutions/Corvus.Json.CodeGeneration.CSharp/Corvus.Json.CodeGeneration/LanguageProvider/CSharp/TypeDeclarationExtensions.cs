@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Corvus.Json.CodeGeneration.CSharp;
@@ -63,8 +64,42 @@ internal static class TypeDeclarationExtensions
                     "uint32" => "uint",
                     "uint64" => "ulong",
                     "uint128" => "UInt128",
-                    _ => "double",
+                    _ => (typeDeclaration.ImpliedCoreTypes() & CoreTypes.Integer) != 0 ? "long" : "double",
                 };
+            }
+
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Gets the preferred .NET string format type (e.g. JsonUuid, JsonIri etc) for the type declaration.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration.</param>
+    /// <returns>The preferred .NET numeric type name for the type declaration, or <see langword="null"/> if
+    /// this was not a numeric type.</returns>
+    public static string? PreferredDotnetStringFormatTypeName(this TypeDeclaration typeDeclaration)
+    {
+        if (!typeDeclaration.TryGetMetadata(nameof(PreferredDotnetStringFormatTypeName), out string? numericTypeName))
+        {
+            numericTypeName = GetStringTypeName(typeDeclaration);
+            typeDeclaration.SetMetadata(nameof(PreferredDotnetStringFormatTypeName), numericTypeName);
+        }
+
+        return numericTypeName;
+
+        static string? GetStringTypeName(TypeDeclaration typeDeclaration)
+        {
+            if (typeDeclaration.ArrayItemsType() is ArrayItemsTypeDeclaration arrayItemsType)
+            {
+                return arrayItemsType.ReducedType.PreferredDotnetNumericTypeName();
+            }
+
+            if ((typeDeclaration.ImpliedCoreTypes() & CoreTypes.String) != 0)
+            {
+                string? candidateFormat = typeDeclaration.Format();
+
+                return WellKnownStringFormatHelpers.GetDotnetTypeNameFor(candidateFormat);
             }
 
             return null;

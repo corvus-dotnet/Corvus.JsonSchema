@@ -58,6 +58,38 @@ public readonly struct ConditionalCodeSpecification
     }
 
     /// <summary>
+    /// Append conditional code for the given framework type.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <param name="conditionalCode">A function which appends the code in the conditional block.</param>
+    /// <param name="frameworkType">The framework type for which to append the conditional.</param>
+    /// <returns>A reference to the code generator after the operation has completed.</returns>
+    public static CodeGenerator AppendConditional(
+        CodeGenerator generator,
+        Action<CodeGenerator> conditionalCode,
+        FrameworkType frameworkType)
+    {
+        if (frameworkType == FrameworkType.NotEmitted)
+        {
+            return generator;
+        }
+
+        if (frameworkType == FrameworkType.All)
+        {
+            conditionalCode(generator);
+            return generator;
+        }
+
+        generator
+            .Append("#if ")
+            .AppendLine(GetCondition(frameworkType));
+
+        conditionalCode(generator);
+
+        return generator.AppendLine("#endif");
+    }
+
+    /// <summary>
     /// Append conditionals to the generator, preserving their ordering.
     /// </summary>
     /// <param name="generator">The generator to which to append the set of conditionals.</param>
@@ -111,17 +143,6 @@ public readonly struct ConditionalCodeSpecification
             appendCallback(generator, spec.Append, i++);
 
             lastFrameworkType = spec.condition;
-        }
-
-        static string GetCondition(FrameworkType condition)
-        {
-            return condition switch
-            {
-                FrameworkType.Net80OrGreater => "NET8_0_OR_GREATER",
-                FrameworkType.Net80 => "NET8_0",
-                FrameworkType.PreNet80 => "!NET8_0_OR_GREATER",
-                _ => throw new InvalidOperationException($"Unsupported framework type: {condition}"),
-            };
         }
     }
 
@@ -315,5 +336,16 @@ public readonly struct ConditionalCodeSpecification
                     throw new NotSupportedException($"Unsupported framework type: {spec.condition}");
             }
         }
+    }
+
+    private static string GetCondition(FrameworkType condition)
+    {
+        return condition switch
+        {
+            FrameworkType.Net80OrGreater => "NET8_0_OR_GREATER",
+            FrameworkType.Net80 => "NET8_0",
+            FrameworkType.PreNet80 => "!NET8_0_OR_GREATER",
+            _ => throw new InvalidOperationException($"Unsupported framework type: {condition}"),
+        };
     }
 }

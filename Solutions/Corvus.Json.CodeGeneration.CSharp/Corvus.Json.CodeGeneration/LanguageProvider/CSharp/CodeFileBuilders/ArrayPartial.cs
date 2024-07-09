@@ -63,6 +63,7 @@ public sealed class ArrayPartial : ICodeFileBuilder
                             .AppendImplicitConversionFromTypeUsingConstructor(typeDeclaration, "ImmutableList<JsonAny>")
                             .AppendImplicitConversionToType(typeDeclaration, "ImmutableList<JsonAny>", "__CorvusArrayHelpers.GetImmutableList(value)")
                             .AppendImplicitConversionFromJsonValueTypeUsingConstructor(typeDeclaration, "JsonArray", JsonValueKind.Array, "value.AsImmutableList()")
+                            .AppendImplicitConversionToJsonValueType(typeDeclaration, "JsonArray", CoreTypes.Array, "value.AsArray")
                             .AppendFromImmutableListOfJsonAnyFactoryMethod(typeDeclaration)
                             .AppendCreateFromSpanFactoryMethod(typeDeclaration)
                             .AppendFromItemsFactoryMethods(typeDeclaration)
