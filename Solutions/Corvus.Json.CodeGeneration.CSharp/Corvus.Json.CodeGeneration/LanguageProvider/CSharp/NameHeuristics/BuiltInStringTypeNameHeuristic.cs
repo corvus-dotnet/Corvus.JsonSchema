@@ -72,69 +72,7 @@ public sealed class BuiltInStringTypeNameHeuristic : IBuiltInTypeNameHeuristic
 
             if (candidateFormat is string format)
             {
-                switch (format)
-                {
-                    case "date":
-                        typeDeclaration.SetDotnetTypeName("JsonDate");
-                        break;
-                    case "date-time":
-                        typeDeclaration.SetDotnetTypeName("JsonDateTime");
-                        break;
-                    case "time":
-                        typeDeclaration.SetDotnetTypeName("JsonTime");
-                        break;
-                    case "duration":
-                        typeDeclaration.SetDotnetTypeName("JsonDuration");
-                        break;
-                    case "email":
-                        typeDeclaration.SetDotnetTypeName("JsonEmail");
-                        break;
-                    case "idn-email":
-                        typeDeclaration.SetDotnetTypeName("JsonIdnEmail");
-                        break;
-                    case "hostname":
-                        typeDeclaration.SetDotnetTypeName("JsonHostname");
-                        break;
-                    case "idn-hostname":
-                        typeDeclaration.SetDotnetTypeName("JsonIdnHostname");
-                        break;
-                    case "ipv4":
-                        typeDeclaration.SetDotnetTypeName("JsonIpV4");
-                        break;
-                    case "ipv6":
-                        typeDeclaration.SetDotnetTypeName("JsonIpV6");
-                        break;
-                    case "uuid":
-                        typeDeclaration.SetDotnetTypeName("JsonUuid");
-                        break;
-                    case "uri":
-                        typeDeclaration.SetDotnetTypeName("JsonUri");
-                        break;
-                    case "uri-template":
-                        typeDeclaration.SetDotnetTypeName("JsonUriTemplate");
-                        break;
-                    case "uri-reference":
-                        typeDeclaration.SetDotnetTypeName("JsonUriReference");
-                        break;
-                    case "iri":
-                        typeDeclaration.SetDotnetTypeName("JsonIri");
-                        break;
-                    case "iri-reference":
-                        typeDeclaration.SetDotnetTypeName("JsonIriReference");
-                        break;
-                    case "json-pointer":
-                        typeDeclaration.SetDotnetTypeName("JsonPointer");
-                        break;
-                    case "relative-json-pointer":
-                        typeDeclaration.SetDotnetTypeName("JsonRelativePointer");
-                        break;
-                    case "regex":
-                        typeDeclaration.SetDotnetTypeName("JsonRegex");
-                        break;
-                    default:
-                        typeDeclaration.SetDotnetTypeName("JsonString");
-                        break;
-                }
+                typeDeclaration.SetDotnetNamespace(WellKnownStringFormatHelpers.GetDotnetTypeNameFor(format) ?? "JsonString");
             }
             else if (
                 candidateContentMediaType is string contentMediaType &&

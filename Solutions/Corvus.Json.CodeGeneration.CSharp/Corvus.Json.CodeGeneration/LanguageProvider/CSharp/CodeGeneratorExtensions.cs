@@ -2154,9 +2154,6 @@ internal static class CodeGeneratorExtensions
         this CodeGenerator generator,
         TypeDeclaration typeDeclaration)
     {
-        string backing = generator.GetFieldNameInScope("backing");
-        string boolBacking = generator.GetFieldNameInScope("boolBacking");
-        string jsonElementBacking = generator.GetFieldNameInScope("jsonElementBacking");
         return generator
             .AppendSeparatorLine()
             .AppendBlockIndent(
@@ -2171,7 +2168,7 @@ internal static class CodeGeneratorExtensions
             .Append(typeDeclaration.DotnetTypeName())
             .AppendLine(" value)")
             .AppendBlockIndent(
-                $$"""
+                """
                 {
                     return value.GetBoolean() ?? throw new InvalidOperationException();
                 }
@@ -2228,6 +2225,25 @@ internal static class CodeGeneratorExtensions
     }
 
     /// <summary>
+    /// Append an implicit conversion to the well-known string format type
+    /// if appropriate.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <param name="typeDeclaration">The type declaration to which to convert.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendImplicitConversionToStringFormat(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (WellKnownStringFormatHelpers.GetDotnetTypeNameFor(typeDeclaration.Format()) is string formatType)
+        {
+            return generator
+                .AppendImplicitConversionFromJsonValueTypeUsingAs(typeDeclaration, formatType)
+                .AppendImplicitConversionToJsonValueTypeUsingAs(typeDeclaration, formatType);
+        }
+
+        return generator;
+    }
+
+    /// <summary>
     /// Appends an implicit conversion from <paramref name="sourceType"/> to the
     /// dotnet type of the <paramref name="typeDeclaration"/>.
     /// </summary>
@@ -2274,6 +2290,129 @@ internal static class CodeGeneratorExtensions
                 .AppendLineIndent("}")
                 .AppendSeparatorLine()
                 .AppendLineIndent("return new(value.AsJsonElement);")
+            .PopIndent()
+            .AppendLineIndent("}");
+    }
+
+    /// <summary>
+    /// Appends conversions to and from the <paramref name="numericType"/>.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <param name="typeDeclaration">The type declaration from which to convert.</param>
+    /// <param name="numericType">The name of the numeric type for conversion.</param>
+    /// <param name="numericValueAccessorMethodName">The name of the method that converts from a <see cref="JsonElement"/>
+    /// value to the <paramref name="numericType"/>.</param>
+    /// <param name="frameworkType">The framework type for which to emit the code.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendConversionsForNumber(
+        this CodeGenerator generator,
+        TypeDeclaration typeDeclaration,
+        string numericType,
+        string numericValueAccessorMethodName,
+        FrameworkType frameworkType = FrameworkType.All)
+    {
+        generator.AppendSeparatorLine();
+
+        return ConditionalCodeSpecification.AppendConditional(generator, AppendConversions, frameworkType);
+
+        void AppendConversions(CodeGenerator generator)
+        {
+            string operatorKind = typeDeclaration.PreferredDotnetNumericTypeName() == numericType ? "implicit" : "explicit";
+            generator
+                .AppendSeparatorLine()
+                .AppendIndent("public static ")
+                .Append(operatorKind)
+                .Append(" operator ")
+                .Append(numericType)
+                .Append('(')
+                .Append(typeDeclaration.DotnetTypeName())
+                .AppendLine(" value)")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendConditionalBackingValueCallbackIndent(
+                        "Backing.JsonElement",
+                        "jsonElementBacking",
+                        (g, f) =>
+                        {
+                            g.AppendIndent("return value.")
+                             .Append(f)
+                             .Append('.')
+                             .Append(numericValueAccessorMethodName)
+                             .AppendLine("();");
+                        })
+                    .AppendConditionalBackingValueCallbackIndent(
+                        "Backing.Number",
+                        "numberBacking",
+                        (g, f) =>
+                        {
+                            g.AppendIndent("return value.")
+                             .Append(f)
+                             .Append(".CreateChecked<")
+                             .Append(numericType)
+                             .AppendLine(">();");
+                        })
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("throw new InvalidOperationException();")
+                .PopIndent()
+                .AppendLineIndent("}")
+                .AppendSeparatorLine()
+                .AppendIndent("public static ")
+                .Append(operatorKind)
+                .Append(" operator ")
+                .Append(typeDeclaration.DotnetTypeName())
+                .Append('(')
+                .Append(numericType)
+                .AppendLine(" value)")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendLineIndent("return new(new BinaryJsonNumber(value));")
+                .PopIndent()
+                .AppendLineIndent("}");
+        }
+    }
+
+    /// <summary>
+    /// Appends an implicit conversion to <paramref name="targetType"/> from the
+    /// dotnet type of the <paramref name="typeDeclaration"/>.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <param name="typeDeclaration">The type declaration from which to convert.</param>
+    /// <param name="targetType">The name of the target type to which to convert.</param>
+    /// <param name="forCoreTypes">The core types for which the conversion applies.</param>
+    /// <param name="dotnetTypeConversion">The code that converts the value to the target type.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendImplicitConversionToJsonValueType(
+        this CodeGenerator generator,
+        TypeDeclaration typeDeclaration,
+        string targetType,
+        CoreTypes forCoreTypes,
+        string dotnetTypeConversion)
+    {
+        if ((typeDeclaration.ImpliedCoreTypes() & forCoreTypes) == 0)
+        {
+            return generator;
+        }
+
+        return generator
+            .AppendSeparatorLine()
+            .AppendLineIndent("/// <summary>")
+            .AppendIndent("/// Conversion to ")
+            .Append(targetType)
+            .AppendLine(".")
+            .AppendLineIndent("/// </summary>")
+            .AppendLineIndent("/// <param name=\"value\">The value from which to convert.</param>")
+            .AppendIndent("public static implicit operator ")
+            .Append(targetType)
+            .Append('(')
+            .Append(typeDeclaration.DotnetTypeName())
+            .AppendLine(" value)")
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendLineIndent("return ")
+                .PushIndent()
+                    .AppendBlockIndent(dotnetTypeConversion, omitLastLineEnd: true)
+                .PopIndent()
+                .AppendLine(";")
             .PopIndent()
             .AppendLineIndent("}");
     }
@@ -2381,6 +2520,41 @@ internal static class CodeGeneratorExtensions
             .PushIndent()
                 .AppendIndent("return value.As<")
                 .Append(typeDeclaration.DotnetTypeName())
+                .AppendLine(">();")
+            .PopIndent()
+            .AppendLineIndent("}");
+    }
+
+    /// <summary>
+    /// Appends an implicit conversion from <paramref name="sourceType"/> to the
+    /// dotnet type of the <paramref name="typeDeclaration"/>.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <param name="typeDeclaration">The type declaration to which to convert.</param>
+    /// <param name="sourceType">The name of the source type from which to convert.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendImplicitConversionToJsonValueTypeUsingAs(
+        this CodeGenerator generator,
+        TypeDeclaration typeDeclaration,
+        string sourceType)
+    {
+        return generator
+            .AppendSeparatorLine()
+            .AppendLineIndent("/// <summary>")
+            .AppendIndent("/// Conversion to ")
+            .Append(sourceType)
+            .AppendLine(".")
+            .AppendLineIndent("/// </summary>")
+            .AppendLineIndent("/// <param name=\"value\">The value from which to convert.</param>")
+            .AppendIndent("public static implicit operator ")
+            .Append(sourceType)
+            .Append('(')
+            .Append(typeDeclaration.DotnetTypeName())
+            .AppendLine(" value)")
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendIndent("return value.As<")
+                .Append(sourceType)
                 .AppendLine(">();")
             .PopIndent()
             .AppendLineIndent("}");
@@ -3481,6 +3655,86 @@ internal static class CodeGeneratorExtensions
         return generator
             .Append("JsonValueKind.")
             .Append(valueKind.ToString());
+    }
+
+    /// <summary>
+    /// Append the public numeric constructor appropriate for the type declaration.
+    /// </summary>
+    /// <param name="generator">The generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to append the numeric constructor.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    /// <exception cref="InvalidOperationException">This method was called for a non-numeric type declaration.</exception>
+    public static CodeGenerator AppendPublicNumericConstructor(
+        this CodeGenerator generator,
+        TypeDeclaration typeDeclaration)
+    {
+        string preferredNumericTypeName =
+            typeDeclaration.PreferredDotnetNumericTypeName()
+            ?? throw new InvalidOperationException("There must be a preferred numeric type name for a numeric type");
+
+        bool isNet80OrGreaterType = IsNet8OrGreaterNumericType(preferredNumericTypeName);
+        if (isNet80OrGreaterType)
+        {
+            generator
+                .AppendLine("#if NET8_0_OR_GREATER");
+        }
+
+        generator
+            .AppendPublicNumericConstructor(typeDeclaration, preferredNumericTypeName);
+
+        if (isNet80OrGreaterType)
+        {
+            generator
+                .AppendLine("#else")
+                .AppendPublicNumericConstructor(
+                    typeDeclaration,
+                    (typeDeclaration.ImpliedCoreTypes() & CoreTypes.Integer) != 0 ? "long" : "double")
+                .AppendLine("#endif");
+        }
+
+        return generator;
+    }
+
+    /// <summary>
+    /// Determines if a .NET type is a NET8_0_OR_GREATER type.
+    /// </summary>
+    /// <param name="preferredNumericTypeName">The type name.</param>
+    /// <returns><see langword="true"/> if the type is for .NET 8.0 or greater.</returns>
+    public static bool IsNet8OrGreaterNumericType(string preferredNumericTypeName)
+    {
+        return preferredNumericTypeName switch
+        {
+            "Half" => true,
+            "UInt128" => true,
+            "Int128" => true,
+            _ => false,
+        };
+    }
+
+    /// <summary>
+    /// Append the specific public numeric constructor.
+    /// </summary>
+    /// <param name="generator">The generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to append the numeric constructor.</param>
+    /// <param name="numericTypeName">The name of the .NET numeric type.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendPublicNumericConstructor(
+        this CodeGenerator generator,
+        TypeDeclaration typeDeclaration,
+        string numericTypeName)
+    {
+        return generator
+            .AppendSeparatorLine()
+            .AppendIndent("public ")
+            .Append(typeDeclaration.DotnetTypeName())
+            .Append('(')
+            .Append(numericTypeName)
+            .AppendLine(" value)")
+            .PushIndent()
+                .AppendLineIndent(": this(new BinaryJsonNumber(value))")
+            .PopIndent()
+            .AppendLineIndent("{")
+            .AppendLineIndent("}");
     }
 
     /// <summary>

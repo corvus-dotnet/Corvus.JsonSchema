@@ -50,6 +50,7 @@ public sealed class BooleanPartial : ICodeFileBuilder
                                 .AppendPublicValueConstructor(typeDeclaration, "bool", CoreTypes.Boolean)
                                 .AppendImplicitConversionFromTypeUsingConstructor(typeDeclaration, "bool")
                                 .AppendImplicitConversionFromJsonValueTypeUsingConstructor(typeDeclaration, "JsonBoolean", [JsonValueKind.False, JsonValueKind.True], "(bool)value")
+                                .AppendImplicitConversionToJsonValueType(typeDeclaration, "JsonBoolean", CoreTypes.Boolean, "value.AsBoolean")
                                 .AppendImplicitConversionToBoolean(typeDeclaration)
                                 .AppendTryGetBoolean()
                                 .AppendGetBoolean()
