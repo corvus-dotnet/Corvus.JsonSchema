@@ -10,7 +10,7 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 /// <summary>
 /// The id keyword.
 /// </summary>
-public sealed class IdKeyword : IScopeKeyword
+public sealed class IdKeyword : IScopeKeyword, INonStructuralKeyword
 {
     private IdKeyword()
     {

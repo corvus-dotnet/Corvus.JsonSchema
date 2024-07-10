@@ -35,10 +35,16 @@ public sealed class BuiltInNumberTypeNameHeuristic : IBuiltInTypeNameHeuristic
             string? candidateFormat = null;
 
             // We are a simple string type
-            foreach (IValidationKeyword keyword in typeDeclaration.ValidationKeywords())
+            foreach (IValidationKeyword keyword in typeDeclaration.Keywords())
             {
                 if (keyword is ICoreTypeValidationKeyword)
                 {
+                    continue;
+                }
+
+                if (keyword is INonStructuralKeyword)
+                {
+                    // Don't worry if it is a non-structural keyword.
                     continue;
                 }
 
@@ -48,7 +54,7 @@ public sealed class BuiltInNumberTypeNameHeuristic : IBuiltInTypeNameHeuristic
                     continue;
                 }
 
-                // This is "some other" validation keyword, so we can't continue.
+                // This is "some other" structural keyword, so we can't continue.
                 return false;
             }
 

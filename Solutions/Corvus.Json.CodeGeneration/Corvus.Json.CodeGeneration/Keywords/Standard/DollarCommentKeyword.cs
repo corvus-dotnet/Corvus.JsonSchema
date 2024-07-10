@@ -9,7 +9,7 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 /// <summary>
 /// The $comment keyword.
 /// </summary>
-public sealed class DollarCommentKeyword : IKeyword
+public sealed class DollarCommentKeyword : INonStructuralKeyword
 {
     private DollarCommentKeyword()
     {

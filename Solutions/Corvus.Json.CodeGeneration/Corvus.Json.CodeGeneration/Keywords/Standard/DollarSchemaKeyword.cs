@@ -9,7 +9,7 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 /// <summary>
 /// The $schema keyword.
 /// </summary>
-public sealed class DollarSchemaKeyword : IKeyword
+public sealed class DollarSchemaKeyword : INonStructuralKeyword
 {
     private DollarSchemaKeyword()
     {

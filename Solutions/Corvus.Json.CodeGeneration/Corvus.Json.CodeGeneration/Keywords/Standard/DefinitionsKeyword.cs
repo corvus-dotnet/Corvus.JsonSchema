@@ -9,7 +9,7 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 /// <summary>
 /// The definitions keyword.
 /// </summary>
-public sealed class DefinitionsKeyword : IDefinitionsKeyword
+public sealed class DefinitionsKeyword : IDefinitionsKeyword, INonStructuralKeyword
 {
     private DefinitionsKeyword()
     {
