@@ -27,9 +27,10 @@ public static class TypeDeclarationExtensions
         if (!that.TryGetMetadata(nameof(HasSiblingHidingKeyword), out bool hasSiblingHidingKeyword))
         {
             hasSiblingHidingKeyword =
-                that.LocatedSchema.Vocabulary.Keywords
+                that.Keywords()
                     .OfType<IHidesSiblingsKeyword>()
-                    .Any(k => that.HasKeyword(k));
+                    .Any();
+
             that.SetMetadata(nameof(HasSiblingHidingKeyword), hasSiblingHidingKeyword);
         }
 
@@ -57,7 +58,7 @@ public static class TypeDeclarationExtensions
         {
             if (baseType.CanReduce())
             {
-                foreach (IReferenceKeyword refKeyword in baseType.LocatedSchema.Vocabulary.Keywords.OfType<IReferenceKeyword>())
+                foreach (IReferenceKeyword refKeyword in baseType.Keywords().OfType<IReferenceKeyword>())
                 {
                     if (refKeyword.GetSubschemaTypeDeclarations(baseType).FirstOrDefault() is TypeDeclaration referencedTypeDeclaration)
                     {
@@ -387,7 +388,7 @@ public static class TypeDeclarationExtensions
             int maximumValue = 0;
 
             foreach (IArrayLengthConstantValidationKeyword keyword in
-                        typeDeclaration.LocatedSchema.Vocabulary.Keywords.OfType<IArrayLengthConstantValidationKeyword>())
+                        typeDeclaration.Keywords().OfType<IArrayLengthConstantValidationKeyword>())
             {
                 if (keyword.TryGetValue(typeDeclaration, out int value) &&
                     keyword.TryGetOperator(typeDeclaration, out Operator op))
@@ -564,7 +565,7 @@ public static class TypeDeclarationExtensions
         {
             JsonReference reference = typeDeclaration.LocatedSchema.Location;
 
-            foreach (IKeyword keyword in typeDeclaration.LocatedSchema.Vocabulary.Keywords.OfType<IDefinitionsKeyword>())
+            foreach (IKeyword keyword in typeDeclaration.Keywords().OfType<IDefinitionsKeyword>())
             {
                 if (reference.HasFragment && reference.Fragment.Length > 1 && reference.Fragment.LastIndexOf('/') == keyword.Keyword.Length + 2 && reference.Fragment[2..].StartsWith(keyword.Keyword.AsSpan()))
                 {
@@ -604,7 +605,10 @@ public static class TypeDeclarationExtensions
                 return false;
             }
 
-            return typeDeclaration.LocatedSchema.Vocabulary.Keywords.OfType<IArrayValidationKeyword>().Any(k => k.RequiresItemsEvaluationTracking(typeDeclaration));
+            return
+                typeDeclaration.Keywords()
+                    .OfType<IArrayValidationKeyword>()
+                    .Any(k => k.RequiresItemsEvaluationTracking(typeDeclaration));
         }
     }
 
@@ -636,7 +640,10 @@ public static class TypeDeclarationExtensions
                 return false;
             }
 
-            return typeDeclaration.LocatedSchema.Vocabulary.Keywords.OfType<IObjectValidationKeyword>().Any(k => k.RequiresPropertyEvaluationTracking(typeDeclaration));
+            return
+                typeDeclaration.Keywords()
+                    .OfType<IObjectValidationKeyword>()
+                    .Any(k => k.RequiresPropertyEvaluationTracking(typeDeclaration));
         }
     }
 
@@ -668,7 +675,10 @@ public static class TypeDeclarationExtensions
                 return false;
             }
 
-            return typeDeclaration.LocatedSchema.Vocabulary.Keywords.OfType<IValueKindValidationKeyword>().Any(k => typeDeclaration.HasKeyword(k));
+            return
+                typeDeclaration.Keywords()
+                    .OfType<IValueKindValidationKeyword>()
+                    .Any();
         }
     }
 
@@ -703,7 +713,7 @@ public static class TypeDeclarationExtensions
 
             foreach (
                 IDefaultValueProviderKeyword keyword in
-                typeDeclaration.LocatedSchema.Vocabulary.Keywords.OfType<IDefaultValueProviderKeyword>())
+                typeDeclaration.Keywords().OfType<IDefaultValueProviderKeyword>())
             {
                 if (keyword.TryGetDefaultValue(typeDeclaration, out JsonElement defaultValue))
                 {
@@ -712,6 +722,44 @@ public static class TypeDeclarationExtensions
             }
 
             return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets the <see cref="IKeyword" /> keywords for the type declaration.
+    /// </summary>
+    /// <param name="that">The type declaration.</param>
+    /// <returns>The collection of validation keywords.</returns>
+    public static IReadOnlyCollection<IKeyword> Keywords(this TypeDeclaration that)
+    {
+        if (!that.TryGetMetadata(nameof(Keywords), out IReadOnlyCollection<IKeyword>? keywords))
+        {
+            if (!TryGetKeywords(that, out keywords))
+            {
+                keywords = [];
+            }
+
+            that.SetMetadata(nameof(Keywords), keywords);
+        }
+
+        return keywords ?? [];
+
+        static bool TryGetKeywords(
+            TypeDeclaration typeDeclaration,
+            [NotNullWhen(true)] out IReadOnlyCollection<IKeyword>? keywords)
+        {
+            var allKeywords =
+                typeDeclaration.LocatedSchema.Vocabulary.Keywords
+                    .Where(k => typeDeclaration.HasKeyword(k)).ToList();
+
+            if (allKeywords.Count > 0)
+            {
+                keywords = allKeywords;
+                return true;
+            }
+
+            keywords = null;
+            return false;
         }
     }
 
@@ -729,7 +777,7 @@ public static class TypeDeclarationExtensions
 
         if (!that.TryGetMetadata(nameof(ValidationKeywords), out IReadOnlyCollection<IValidationKeyword>? validationKeywords))
         {
-            if (!TryGetValidationKeywords(that, out validationKeywords))
+            if (!TryGetKeywords(that, out validationKeywords))
             {
                 validationKeywords = [];
             }
@@ -738,31 +786,6 @@ public static class TypeDeclarationExtensions
         }
 
         return validationKeywords ?? [];
-
-        static bool TryGetValidationKeywords(
-            TypeDeclaration typeDeclaration,
-            [NotNullWhen(true)] out IReadOnlyCollection<IValidationKeyword>? validationKeywords)
-        {
-            if (typeDeclaration.HasSiblingHidingKeyword())
-            {
-                validationKeywords = null;
-                return false;
-            }
-
-            var keywords =
-                typeDeclaration.LocatedSchema.Vocabulary.Keywords
-                    .OfType<IValidationKeyword>()
-                    .Where(k => typeDeclaration.HasKeyword(k)).ToList();
-
-            if (keywords.Count > 0)
-            {
-                validationKeywords = keywords;
-                return true;
-            }
-
-            validationKeywords = null;
-            return false;
-        }
     }
 
     /// <summary>
@@ -779,7 +802,7 @@ public static class TypeDeclarationExtensions
 
         if (!that.TryGetMetadata(nameof(DefinitionsKeywords), out IReadOnlyCollection<IDefinitionsKeyword>? definitionKeywords))
         {
-            if (!TryGetDefinitionsKeywords(that, out definitionKeywords))
+            if (!TryGetKeywords(that, out definitionKeywords))
             {
                 definitionKeywords = [];
             }
@@ -788,31 +811,6 @@ public static class TypeDeclarationExtensions
         }
 
         return definitionKeywords ?? [];
-
-        static bool TryGetDefinitionsKeywords(
-            TypeDeclaration typeDeclaration,
-            [NotNullWhen(true)] out IReadOnlyCollection<IDefinitionsKeyword>? definitionsKeywords)
-        {
-            if (typeDeclaration.HasSiblingHidingKeyword())
-            {
-                definitionsKeywords = null;
-                return false;
-            }
-
-            var keywords =
-                typeDeclaration.LocatedSchema.Vocabulary.Keywords
-                    .OfType<IDefinitionsKeyword>()
-                    .Where(k => typeDeclaration.HasKeyword(k)).ToList();
-
-            if (keywords.Count > 0)
-            {
-                definitionsKeywords = keywords;
-                return true;
-            }
-
-            definitionsKeywords = null;
-            return false;
-        }
     }
 
     /// <summary>
@@ -829,7 +827,7 @@ public static class TypeDeclarationExtensions
 
         if (!that.TryGetMetadata(nameof(TypeNameProviderKeywords), out IReadOnlyCollection<ITypeNameProviderKeyword>? typeNameProviderKeywords))
         {
-            if (!TryGetTypeNameProviderKeywords(that, out typeNameProviderKeywords))
+            if (!TryGetKeywords(that, out typeNameProviderKeywords))
             {
                 typeNameProviderKeywords = [];
             }
@@ -838,31 +836,6 @@ public static class TypeDeclarationExtensions
         }
 
         return typeNameProviderKeywords ?? [];
-
-        static bool TryGetTypeNameProviderKeywords(
-            TypeDeclaration typeDeclaration,
-            [NotNullWhen(true)] out IReadOnlyCollection<ITypeNameProviderKeyword>? typeNameProviderKeywords)
-        {
-            if (typeDeclaration.HasSiblingHidingKeyword())
-            {
-                typeNameProviderKeywords = null;
-                return false;
-            }
-
-            var keywords =
-                typeDeclaration.LocatedSchema.Vocabulary.Keywords
-                    .OfType<ITypeNameProviderKeyword>()
-                    .Where(k => typeDeclaration.HasKeyword(k)).ToList();
-
-            if (keywords.Count > 0)
-            {
-                typeNameProviderKeywords = keywords;
-                return true;
-            }
-
-            typeNameProviderKeywords = null;
-            return false;
-        }
     }
 
     /// <summary>
@@ -1129,7 +1102,7 @@ public static class TypeDeclarationExtensions
 
             Dictionary<IValidationConstantProviderKeyword, JsonElement[]> constants = [];
 
-            foreach (IValidationConstantProviderKeyword keyword in typeDeclaration.LocatedSchema.Vocabulary.Keywords.OfType<IValidationConstantProviderKeyword>())
+            foreach (IValidationConstantProviderKeyword keyword in typeDeclaration.Keywords().OfType<IValidationConstantProviderKeyword>())
             {
                 if (keyword.TryGetValidationConstants(typeDeclaration, out JsonElement[]? keywordConstants))
                 {
@@ -1182,7 +1155,7 @@ public static class TypeDeclarationExtensions
 
             Dictionary<IValidationRegexProviderKeyword, IReadOnlyList<string>> constants = [];
 
-            foreach (IValidationRegexProviderKeyword keyword in typeDeclaration.LocatedSchema.Vocabulary.Keywords.OfType<IValidationRegexProviderKeyword>())
+            foreach (IValidationRegexProviderKeyword keyword in typeDeclaration.Keywords().OfType<IValidationRegexProviderKeyword>())
             {
                 if (keyword.TryGetValidationRegularExpressions(typeDeclaration, out IReadOnlyList<string>? keywordConstants))
                 {
@@ -1201,6 +1174,25 @@ public static class TypeDeclarationExtensions
         }
     }
 
+    private static bool TryGetKeywords<T>(
+        TypeDeclaration typeDeclaration,
+        [NotNullWhen(true)] out IReadOnlyCollection<T>? keywords)
+        where T : notnull, IKeyword
+    {
+        var allKeywords =
+            typeDeclaration.Keywords()
+                .OfType<T>().ToList();
+
+        if (allKeywords.Count > 0)
+        {
+            keywords = allKeywords;
+            return true;
+        }
+
+        keywords = null;
+        return false;
+    }
+
     private static void SetSingleConstantValue(TypeDeclaration typeDeclaration)
     {
         if (typeDeclaration.HasSiblingHidingKeyword())
@@ -1211,7 +1203,7 @@ public static class TypeDeclarationExtensions
 
         JsonElement foundElement = default;
 
-        foreach (ISingleConstantValidationKeyword keyword in typeDeclaration.LocatedSchema.Vocabulary.Keywords.OfType<ISingleConstantValidationKeyword>())
+        foreach (ISingleConstantValidationKeyword keyword in typeDeclaration.Keywords().OfType<ISingleConstantValidationKeyword>())
         {
             if (keyword.TryGetConstantValue(typeDeclaration, out JsonElement value) &&
                 value.ValueKind != JsonValueKind.Undefined)
@@ -1240,7 +1232,7 @@ public static class TypeDeclarationExtensions
         typeDeclaration.SetMetadata(nameof(ExplicitSingleConstantValue), foundElement);
 
         // Now go through all the allOf union types and see if we can find one
-        foreach (IAllOfSubschemaValidationKeyword keyword in typeDeclaration.LocatedSchema.Vocabulary.Keywords.OfType<IAllOfSubschemaValidationKeyword>())
+        foreach (IAllOfSubschemaValidationKeyword keyword in typeDeclaration.Keywords().OfType<IAllOfSubschemaValidationKeyword>())
         {
             foreach (TypeDeclaration t in keyword.GetSubschemaTypeDeclarations(typeDeclaration))
             {
@@ -1285,7 +1277,7 @@ public static class TypeDeclarationExtensions
 
         string? foundFormat = null;
 
-        foreach (IFormatProviderKeyword keyword in typeDeclaration.LocatedSchema.Vocabulary.Keywords.OfType<IFormatProviderKeyword>())
+        foreach (IFormatProviderKeyword keyword in typeDeclaration.Keywords().OfType<IFormatProviderKeyword>())
         {
             if (keyword.TryGetFormat(typeDeclaration, out string? value) &&
                 value is string format)
@@ -1314,7 +1306,7 @@ public static class TypeDeclarationExtensions
         typeDeclaration.SetMetadata(nameof(ExplicitFormat), foundFormat);
 
         // Now go through all the allOf union types and see if we can find one
-        foreach (IAllOfSubschemaValidationKeyword keyword in typeDeclaration.LocatedSchema.Vocabulary.Keywords.OfType<IAllOfSubschemaValidationKeyword>())
+        foreach (IAllOfSubschemaValidationKeyword keyword in typeDeclaration.Keywords().OfType<IAllOfSubschemaValidationKeyword>())
         {
             foreach (TypeDeclaration t in keyword.GetSubschemaTypeDeclarations(typeDeclaration))
             {
@@ -1448,7 +1440,7 @@ public static class TypeDeclarationExtensions
 
             ArrayItemsTypeDeclaration? declaration = null;
 
-            foreach (T keyword in typeDeclaration.LocatedSchema.Vocabulary.Keywords.OfType<T>())
+            foreach (T keyword in typeDeclaration.Keywords().OfType<T>())
             {
                 if (keywordAccessor(keyword, typeDeclaration, out ArrayItemsTypeDeclaration? value) &&
                     value is ArrayItemsTypeDeclaration itemsType)
@@ -1476,7 +1468,7 @@ public static class TypeDeclarationExtensions
             }
 
             // Now go through all the allOf union types and see if we can find one
-            foreach (IAllOfSubschemaValidationKeyword keyword in typeDeclaration.LocatedSchema.Vocabulary.Keywords.OfType<IAllOfSubschemaValidationKeyword>())
+            foreach (IAllOfSubschemaValidationKeyword keyword in typeDeclaration.Keywords().OfType<IAllOfSubschemaValidationKeyword>())
             {
                 foreach (TypeDeclaration t in keyword.GetSubschemaTypeDeclarations(typeDeclaration))
                 {
@@ -1524,7 +1516,7 @@ public static class TypeDeclarationExtensions
 
             TupleTypeDeclaration? declaration = null;
 
-            foreach (ITupleTypeProviderKeyword keyword in typeDeclaration.LocatedSchema.Vocabulary.Keywords.OfType<ITupleTypeProviderKeyword>())
+            foreach (ITupleTypeProviderKeyword keyword in typeDeclaration.Keywords().OfType<ITupleTypeProviderKeyword>())
             {
                 if (keyword.TryGetTupleType(typeDeclaration, out TupleTypeDeclaration? value) &&
                     value is TupleTypeDeclaration itemsType)
@@ -1552,7 +1544,7 @@ public static class TypeDeclarationExtensions
             }
 
             // Now go through all the allOf union types and see if we can find one
-            foreach (IAllOfSubschemaValidationKeyword keyword in typeDeclaration.LocatedSchema.Vocabulary.Keywords.OfType<IAllOfSubschemaValidationKeyword>())
+            foreach (IAllOfSubschemaValidationKeyword keyword in typeDeclaration.Keywords().OfType<IAllOfSubschemaValidationKeyword>())
             {
                 foreach (TypeDeclaration t in keyword.GetSubschemaTypeDeclarations(typeDeclaration))
                 {

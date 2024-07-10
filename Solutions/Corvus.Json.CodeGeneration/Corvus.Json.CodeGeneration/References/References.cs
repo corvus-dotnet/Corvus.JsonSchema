@@ -243,7 +243,12 @@ public static class References
 
         visitedTypes.Add(type);
 
-        var dynamicRefKeywords = type.LocatedSchema.Vocabulary.Keywords.OfType<IDynamicReferenceKeyword>().ToDictionary(k => (string)new JsonReference("#").AppendUnencodedPropertyNameToFragment(k.Keyword), v => v);
+        var dynamicRefKeywords =
+            type.Keywords()
+                .OfType<IDynamicReferenceKeyword>()
+                .ToDictionary(
+                    k => (string)new JsonReference("#").AppendUnencodedPropertyNameToFragment(k.Keyword),
+                    v => v);
 
         foreach (KeyValuePair<string, TypeDeclaration> prop in type.SubschemaTypeDeclarations)
         {
@@ -285,7 +290,12 @@ public static class References
 
         visitedTypes.Add(type);
 
-        var recursiveRefKeywords = type.LocatedSchema.Vocabulary.Keywords.OfType<IRecursiveReferenceKeyword>().ToDictionary(k => (string)new JsonReference("#").AppendUnencodedPropertyNameToFragment(k.Keyword), v => v);
+        var recursiveRefKeywords =
+            type.Keywords()
+                .OfType<IRecursiveReferenceKeyword>()
+                .ToDictionary(
+                    k => (string)new JsonReference("#").AppendUnencodedPropertyNameToFragment(k.Keyword),
+                    v => v);
 
         foreach (KeyValuePair<string, TypeDeclaration> prop in type.SubschemaTypeDeclarations)
         {

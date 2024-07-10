@@ -55,8 +55,9 @@ public static class Subschemas
     /// <returns>A <see cref="ValueTask"/> which completes when the subschema types are built.</returns>
     public static async ValueTask BuildSubschemaTypes(TypeBuilderContext typeBuilderContext, TypeDeclaration typeDeclaration)
     {
-        IKeyword? hidesSiblingsKeyword = typeDeclaration.LocatedSchema.Vocabulary.Keywords
-            .FirstOrDefault(k => k is IHidesSiblingsKeyword && typeDeclaration.HasKeyword(k));
+        IKeyword? hidesSiblingsKeyword =
+            typeDeclaration.Keywords()
+                .FirstOrDefault(k => k is IHidesSiblingsKeyword && typeDeclaration.HasKeyword(k));
 
         if (hidesSiblingsKeyword is ISubschemaTypeBuilderKeyword k)
         {
@@ -67,7 +68,7 @@ public static class Subschemas
         }
 
         // Otherwise we are going to work through all the keywords.
-        foreach (ISubschemaTypeBuilderKeyword keyword in typeDeclaration.LocatedSchema.Vocabulary.Keywords.OfType<ISubschemaTypeBuilderKeyword>())
+        foreach (ISubschemaTypeBuilderKeyword keyword in typeDeclaration.Keywords().OfType<ISubschemaTypeBuilderKeyword>())
         {
             await BuildSubschemaTypes(typeBuilderContext, typeDeclaration, keyword).ConfigureAwait(false);
         }

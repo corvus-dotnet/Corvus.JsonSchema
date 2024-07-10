@@ -25,7 +25,7 @@ public static class Composition
     public static CoreTypes UnionImpliesCoreTypeForTypeDeclaration(TypeDeclaration typeDeclaration, in CoreTypes currentCoreTypes)
     {
         CoreTypes result = currentCoreTypes;
-        foreach (IKeyword keyword in typeDeclaration.LocatedSchema.Vocabulary.Keywords)
+        foreach (IKeyword keyword in typeDeclaration.Keywords())
         {
             result |= keyword.ImpliesCoreTypes(typeDeclaration);
         }

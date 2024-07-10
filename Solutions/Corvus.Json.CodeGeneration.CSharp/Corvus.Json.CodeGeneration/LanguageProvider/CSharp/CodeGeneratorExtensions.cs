@@ -4,6 +4,7 @@
 
 using System.Diagnostics;
 using System.Text.Json;
+using Corvus.Json.CodeGeneration.LanguageProvider.CSharp;
 using Microsoft.CodeAnalysis.CSharp;
 
 namespace Corvus.Json.CodeGeneration.CSharp;
@@ -2295,6 +2296,106 @@ internal static class CodeGeneratorExtensions
     }
 
     /// <summary>
+    /// Appends the <c>As[NumericType]()</c> method.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to append the <c>As[NumericType]()</c> method.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendAsDotnetNumericValue(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.PreferredDotnetNumericTypeName() is string numericTypeName)
+        {
+            string dotnetTypeSuffix = WellKnownNumericFormatHelpers.GetDotnetTypeNameForCSharpLangwordOrTypeName(numericTypeName);
+            generator
+                .AppendSeparatorLine()
+                .AppendLineIndent("/// <summary>")
+                .AppendIndent("/// Gets the value as a ")
+                .Append(numericTypeName)
+                .AppendLine(".")
+                .AppendLineIndent("/// </summary>")
+                .AppendIndent("public ")
+                .Append(numericTypeName)
+                .Append(" As")
+                .Append(dotnetTypeSuffix)
+                .Append("() => (")
+                .Append(numericTypeName)
+                .AppendLine(")this;");
+        }
+
+        return generator;
+    }
+
+    /// <summary>
+    /// Appends the <c>AsBinaryJsonNumber()</c> method.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator ApendAsBinaryJsonNumber(this CodeGenerator generator)
+    {
+        return generator
+            .AppendSeparatorLine()
+            .AppendLineIndent("/// <summary>")
+            .AppendLineIndent("/// Gets the value as a <see cref=\"BinaryJsonNumber\"/>.")
+            .AppendLineIndent("/// </summary>")
+            .AppendLineIndent("public BinaryJsonNumber AsBinaryJsonNumber()")
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendConditionalWrappedBackingValueLineIndent("Backing.Number", "return ", "numberBacking", ";")
+                .AppendConditionalWrappedBackingValueLineIndent("Backing.JsonElement", "return BinaryJsonNumber.FromJson(", "jsonElementBacking", ");")
+                .AppendSeparatorLine()
+                .AppendLineIndent("throw new InvalidOperationException()")
+            .PopIndent()
+            .AppendLineIndent("}");
+    }
+
+    /// <summary>
+    /// Appends numeric operators.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to append numeric operators.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendNumericOperators(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        return generator
+            .AppendNumericComparison(typeDeclaration, "<", "Less than operator.", "<see langword=\"true\"/> if the left is less than the right, otherwise <see langword=\"false\"/>.")
+            .AppendNumericComparison(typeDeclaration, "<=", "Less than or equals operator.", "<see langword=\"true\"/> if the left is less than or equal to the right, otherwise <see langword=\"false\"/>.")
+            .AppendNumericComparison(typeDeclaration, ">", "Greater than operator.", "<see langword=\"true\"/> if the left is greater than the right, otherwise <see langword=\"false\"/>.")
+            .AppendNumericComparison(typeDeclaration, ">=", "Greater than or equals operator.", "<see langword=\"true\"/> if the left is greater than or equal to the right, otherwise <see langword=\"false\"/>.")
+            .AppendNumericBinaryOperator(typeDeclaration, "+", "Adds two numbers to produce their sum.")
+            .AppendNumericBinaryOperator(typeDeclaration, "-", "Subtracts two numbers to produce their difference.")
+            .AppendNumericBinaryOperator(typeDeclaration, "*", "Multiplies two numbers.")
+            .AppendNumericBinaryOperator(typeDeclaration, "/", "Divides two numbers.")
+            .AppendNumericUnaryOperator(typeDeclaration, "++", "Increments the number.")
+            .AppendNumericUnaryOperator(typeDeclaration, "--", "Decrements the number.")
+            .AppendNumericCompare(typeDeclaration);
+    }
+
+    /// <summary>
+    /// Appends conversions to and from the .NET numeric types.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <param name="typeDeclaration">The type declaration from which to convert.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendNumericConversions(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        return generator
+            .AppendNumericConversionsForDotnetType(typeDeclaration, "byte", "SafeGetByte")
+            .AppendNumericConversionsForDotnetType(typeDeclaration, "decimal", "SafeGetDecimal")
+            .AppendNumericConversionsForDotnetType(typeDeclaration, "double", "SafeGetDouble")
+            .AppendNumericConversionsForDotnetType(typeDeclaration, "short", "SafeGetInt16")
+            .AppendNumericConversionsForDotnetType(typeDeclaration, "int", "SafeGetInt32")
+            .AppendNumericConversionsForDotnetType(typeDeclaration, "long", "SafeGetInt64")
+            .AppendNumericConversionsForDotnetType(typeDeclaration, "Int128", "SafeGetInt128", FrameworkType.Net80OrGreater)
+            .AppendNumericConversionsForDotnetType(typeDeclaration, "sbyte", "SafeGetSByte")
+            .AppendNumericConversionsForDotnetType(typeDeclaration, "Half", "SafeGetHalf", FrameworkType.Net80OrGreater)
+            .AppendNumericConversionsForDotnetType(typeDeclaration, "float", "SafeGetSingle")
+            .AppendNumericConversionsForDotnetType(typeDeclaration, "ushort", "SafeGetUInt16")
+            .AppendNumericConversionsForDotnetType(typeDeclaration, "uint", "SafeGetUInt32")
+            .AppendNumericConversionsForDotnetType(typeDeclaration, "ulong", "SafeGetUInt64")
+            .AppendNumericConversionsForDotnetType(typeDeclaration, "UInt128", "SafeGetUInt128", FrameworkType.Net80OrGreater);
+    }
+
+    /// <summary>
     /// Appends conversions to and from the <paramref name="numericType"/>.
     /// </summary>
     /// <param name="generator">The code generator.</param>
@@ -2304,7 +2405,7 @@ internal static class CodeGeneratorExtensions
     /// value to the <paramref name="numericType"/>.</param>
     /// <param name="frameworkType">The framework type for which to emit the code.</param>
     /// <returns>A reference to the generator having completed the operation.</returns>
-    public static CodeGenerator AppendConversionsForNumber(
+    public static CodeGenerator AppendNumericConversionsForDotnetType(
         this CodeGenerator generator,
         TypeDeclaration typeDeclaration,
         string numericType,
@@ -6370,5 +6471,192 @@ internal static class CodeGeneratorExtensions
         }
 
         return generator;
+    }
+
+    private static CodeGenerator AppendNumericCompare(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        string backingName = generator.GetFieldNameInScope("backing");
+        string numberBacking = generator.GetFieldNameInScope("numberBacking");
+        string jsonElementBacking = generator.GetFieldNameInScope("jsonElementBacking");
+
+        return generator
+            .ReserveNameIfNotReserved("Compare")
+            .AppendSeparatorLine()
+            .AppendLineIndent("/// <summary>")
+            .AppendLineIndent("/// Compare two numbers.")
+            .AppendLineIndent("/// </summary>")
+            .AppendLineIndent("/// <param name=\"lhs\">The left hand side of the comparison.</param>")
+            .AppendLineIndent("/// <param name=\"rhs\">The right hand side of the comparison.</param>")
+            .AppendLineIndent("/// <returns>")
+            .AppendLineIndent("/// 0 if the numbers are equal, -1 if <paramref name=\"left\"/> is less than <paramref name=\"right\"/>,")
+            .AppendLineIndent("/// and 1 if <paramref name=\"left\"/> is greater than <paramref name=\"right\"/>.</returns>")
+            .AppendIndent("public static int Compare(in ")
+            .Append(typeDeclaration.DotnetTypeName())
+            .Append("lhs, in ")
+            .Append(typeDeclaration.DotnetTypeName())
+            .AppendLine(" rhs)")
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendBlockIndent(
+                """
+                if (lhs.ValueKind != rhs.ValueKind)
+                {
+                    // We can't be equal if we are not the same underlying type
+                    return lhs.IsNullOrUndefined() ? 1 : -1;
+                }
+
+                if (lhs.IsNull())
+                {
+                    // Nulls are always equal
+                    return 0;
+                }
+                """)
+
+                .AppendSeparatorLine()
+                .AppendIndent("if (lhs.")
+                .Append(backingName)
+                .Append(" == Backing.Number && rhs.")
+                .Append(backingName)
+                .AppendLine(" == Backing.Number)")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendIndent("return BinaryJsonNumber.Compare(lhs.")
+                    .Append(numberBacking)
+                    .Append(", rhs.")
+                    .Append(numberBacking)
+                    .AppendLine(");")
+                .PopIndent()
+                .AppendLineIndent("}")
+
+                .AppendSeparatorLine()
+                .AppendIndent("if (lhs.")
+                .Append(backingName)
+                .Append(" == Backing.Number && rhs.")
+                .Append(backingName)
+                .AppendLine(" == Backing.JsonElement)")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendIndent("return BinaryJsonNumber.Compare(lhs.")
+                    .Append(numberBacking)
+                    .Append(", rhs.")
+                    .Append(jsonElementBacking)
+                    .AppendLine(");")
+                .PopIndent()
+                .AppendLineIndent("}")
+
+                .AppendSeparatorLine()
+                .AppendIndent("if (lhs.")
+                .Append(backingName)
+                .Append(" == Backing.JsonElement && rhs.")
+                .Append(backingName)
+                .AppendLine(" == Backing.Number)")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendIndent("return BinaryJsonNumber.Compare(lhs.")
+                    .Append(jsonElementBacking)
+                    .Append(", rhs.")
+                    .Append(numberBacking)
+                    .AppendLine(");")
+                .PopIndent()
+                .AppendLineIndent("}")
+
+                .AppendSeparatorLine()
+                .AppendIndent("if (lhs.")
+                .Append(backingName)
+                .Append(" == Backing.JsonElement && rhs.")
+                .Append(backingName)
+                .Append(" == Backing.JsonElement && rhs.")
+                .Append(jsonElementBacking)
+                .AppendLine(".ValueKind == JsonValueKind.Number)")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendIndent("return JsonValueHelpers.NumericCompare(lhs.")
+                    .Append(jsonElementBacking)
+                    .Append(", rhs.")
+                    .Append(jsonElementBacking)
+                    .AppendLine(");")
+                .PopIndent()
+                .AppendLineIndent("}")
+
+                .AppendSeparatorLine()
+                .AppendLineIndent("throw new InvalidOperationException();")
+
+            .PopIndent()
+            .AppendLineIndent("}");
+    }
+
+    private static CodeGenerator AppendNumericUnaryOperator(this CodeGenerator generator, TypeDeclaration typeDeclaration, string op, string summary)
+    {
+        return generator
+            .AppendSeparatorLine()
+            .AppendLineIndent("/// <summary>")
+            .AppendBlockIndentWithPrefix(summary, "/// ")
+            .AppendLineIndent("/// </summary>")
+            .AppendLineIndent("/// <param name=\"value\">The value on which to operate.</param>")
+            .AppendLineIndent("/// <returns>The result of the operation.</returns>")
+            .AppendIndent("public static bool operator ")
+            .Append("(in ")
+            .Append(typeDeclaration.DotnetTypeName())
+            .AppendLine(" value)")
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendIndent("return new(value.AsBinaryJsonNumber")
+                .Append(op)
+                .AppendLine(");")
+            .PopIndent()
+            .AppendLineIndent("}");
+    }
+
+    private static CodeGenerator AppendNumericBinaryOperator(this CodeGenerator generator, TypeDeclaration typeDeclaration, string op, string summary)
+    {
+        return generator
+            .AppendSeparatorLine()
+            .AppendLineIndent("/// <summary>")
+            .AppendBlockIndentWithPrefix(summary, "/// ")
+            .AppendLineIndent("/// </summary>")
+            .AppendLineIndent("/// <param name=\"left\">The left hand side of the binary operator.</param>")
+            .AppendLineIndent("/// <param name=\"right\">The right hand side of the binary operator.</param>")
+            .AppendLineIndent("/// <returns>The result of the operation.</returns>")
+            .AppendIndent("public static bool operator ")
+            .Append("(in ")
+            .Append(typeDeclaration.DotnetTypeName())
+            .Append("left, in ")
+            .Append(typeDeclaration.DotnetTypeName())
+            .AppendLine(" right)")
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendIndent("return new(left.AsBinaryJsonNumber ")
+                .Append(op)
+                .AppendLine(" right.AsBinaryJsonNumber);")
+            .PopIndent()
+            .AppendLineIndent("}");
+    }
+
+    private static CodeGenerator AppendNumericComparison(this CodeGenerator generator, TypeDeclaration typeDeclaration, string op, string summary, string returns)
+    {
+        return generator
+            .AppendSeparatorLine()
+            .AppendLineIndent("/// <summary>")
+            .AppendBlockIndentWithPrefix(summary, "/// ")
+            .AppendLineIndent("/// </summary>")
+            .AppendLineIndent("/// <param name=\"left\">The LHS of the comparison.</param>")
+            .AppendLineIndent("/// <param name=\"right\">The RHS of the comparison.</param>")
+            .AppendLineIndent("/// <returns>")
+            .AppendBlockIndentWithPrefix(returns, "/// ")
+            .AppendLineIndent("/// </returns>")
+            .AppendIndent("public static bool operator ")
+            .Append(op)
+            .Append("(in ")
+            .Append(typeDeclaration.DotnetTypeName())
+            .Append("left, in ")
+            .Append(typeDeclaration.DotnetTypeName())
+            .AppendLine(" right)")
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendIndent("return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && Compare(left, right) ")
+                .Append(op)
+                .AppendLine(" 0;")
+            .PopIndent()
+            .AppendLineIndent("}");
     }
 }

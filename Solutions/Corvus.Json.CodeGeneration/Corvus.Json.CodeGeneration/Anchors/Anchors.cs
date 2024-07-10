@@ -71,7 +71,7 @@ public static class Anchors
     /// <returns>The result of processing the scope.</returns>
     public static ApplyScopeResult ApplyScopeToExistingType(TypeBuilderContext typeBuilderContext, TypeDeclaration typeDeclaration, TypeDeclaration existingTypeDeclaration)
     {
-        foreach (IAnchorKeyword keyword in existingTypeDeclaration.LocatedSchema.Vocabulary.Keywords.OfType<IAnchorKeyword>())
+        foreach (IAnchorKeyword keyword in existingTypeDeclaration.Keywords().OfType<IAnchorKeyword>())
         {
             if (keyword.TryApplyScopeToExistingType(typeBuilderContext, typeDeclaration, existingTypeDeclaration, out ApplyScopeResult result))
             {
@@ -89,7 +89,7 @@ public static class Anchors
     /// <param name="typeDeclaration">The type declaration to which to apply the scope.</param>
     public static void ApplyScopeToNewType(TypeBuilderContext typeBuilderContext, TypeDeclaration typeDeclaration)
     {
-        foreach (IAnchorKeyword keyword in typeDeclaration.LocatedSchema.Vocabulary.Keywords.OfType<IAnchorKeyword>())
+        foreach (IAnchorKeyword keyword in typeDeclaration.Keywords().OfType<IAnchorKeyword>())
         {
             if (keyword.TryApplyScopeToNewType(typeBuilderContext, typeDeclaration))
             {
