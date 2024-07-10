@@ -63,12 +63,75 @@ public sealed class SubschemaNameHeuristic : INameHeuristicBeforeSubschema
                     written = Formatting.ToPascalCase(typeNameBuffer[..written]);
                 }
 
-                written = Formatting.ApplyStandardSuffix(typeDeclaration, typeNameBuffer, typeNameBuffer[..written]);
+                if (CollidesWithParent(typeDeclaration, typeNameBuffer[..written]) ||
+                    MatchesExistingPropertyNameInParent(typeDeclaration, typeNameBuffer[..written]))
+                {
+                    written = Formatting.ApplyStandardSuffix(typeDeclaration, typeNameBuffer, typeNameBuffer[..written]);
+                }
+
+                int index = 1;
+                int writtenBefore = written;
+
+                while (MatchesExistingTypeInParent(typeDeclaration, typeNameBuffer[..written]) ||
+                       MatchesExistingPropertyNameInParent(typeDeclaration, typeNameBuffer[..written]))
+                {
+                    written = writtenBefore + Formatting.ApplySuffix(index, typeNameBuffer[..writtenBefore]);
+                    index++;
+                }
+
                 return true;
             }
         }
 
         written = 0;
+        return false;
+    }
+
+    private static bool MatchesExistingPropertyNameInParent(TypeDeclaration typeDeclaration, ReadOnlySpan<char> corvusTypeNameBuffer)
+    {
+        TypeDeclaration? parent = typeDeclaration.Parent();
+
+        if (parent is null)
+        {
+            return false;
+        }
+
+        foreach (PropertyDeclaration propertyDeclaration in parent.PropertyDeclarations)
+        {
+            if (propertyDeclaration.DotnetPropertyName().AsSpan().Equals(corvusTypeNameBuffer, StringComparison.Ordinal))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool CollidesWithParent(TypeDeclaration typeDeclaration, ReadOnlySpan<char> corvusTypeNameBuffer)
+    {
+        return
+            typeDeclaration.Parent() is TypeDeclaration parent &&
+            corvusTypeNameBuffer.Equals(parent.DotnetTypeName().AsSpan(), StringComparison.Ordinal);
+    }
+
+    private static bool MatchesExistingTypeInParent(TypeDeclaration typeDeclaration, ReadOnlySpan<char> corvusTypeNameBuffer)
+    {
+        TypeDeclaration? parent = typeDeclaration.Parent();
+
+        if (parent is null)
+        {
+            return false;
+        }
+
+        foreach (TypeDeclaration child in parent.Children())
+        {
+            if (child.TryGetDotnetTypeName(out string? name) &&
+                 corvusTypeNameBuffer.Equals(name.AsSpan(), StringComparison.Ordinal))
+            {
+                return true;
+            }
+        }
+
         return false;
     }
 }

@@ -1,24 +1,22 @@
-﻿// <copyright file="BuiltInIntegerTypeNameHeuristic.cs" company="Endjin Limited">
+﻿// <copyright file="BuiltInNumberTypeNameHeuristic.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
-
-using Corvus.Json.CodeGeneration.LanguageProvider.CSharp;
 
 namespace Corvus.Json.CodeGeneration.CSharp;
 
 /// <summary>
 /// A name heuristic based on a built-in number type.
 /// </summary>
-public sealed class BuiltInIntegerTypeNameHeuristic : IBuiltInTypeNameHeuristic
+public sealed class BuiltInNumberTypeNameHeuristic : IBuiltInTypeNameHeuristic
 {
-    private BuiltInIntegerTypeNameHeuristic()
+    private BuiltInNumberTypeNameHeuristic()
     {
     }
 
     /// <summary>
-    /// Gets a singleton instance of the <see cref="BuiltInIntegerTypeNameHeuristic"/>.
+    /// Gets a singleton instance of the <see cref="BuiltInNumberTypeNameHeuristic"/>.
     /// </summary>
-    public static BuiltInIntegerTypeNameHeuristic Instance { get; } = new();
+    public static BuiltInNumberTypeNameHeuristic Instance { get; } = new();
 
     /// <inheritdoc/>
     public bool IsOptional => false;
@@ -31,7 +29,7 @@ public sealed class BuiltInIntegerTypeNameHeuristic : IBuiltInTypeNameHeuristic
     {
         written = 0;
 
-        if ((typeDeclaration.AllowedCoreTypes() & CoreTypes.Integer) != 0 &&
+        if ((typeDeclaration.AllowedCoreTypes() & CoreTypes.Number) != 0 &&
             typeDeclaration.AllowedCoreTypes().CountTypes() == 1)
         {
             string? candidateFormat = null;
@@ -59,12 +57,12 @@ public sealed class BuiltInIntegerTypeNameHeuristic : IBuiltInTypeNameHeuristic
             if (candidateFormat is string format)
             {
                 typeDeclaration.SetDotnetTypeName(
-                    WellKnownNumericFormatHelpers.GetIntegerDotnetTypeNameFor(format));
+                    WellKnownNumericFormatHelpers.GetDotnetTypeNameFor(format));
             }
             else
             {
-                // This is a simple integer
-                typeDeclaration.SetDotnetTypeName("JsonInteger");
+                // This is a simple number
+                typeDeclaration.SetDotnetTypeName("JsonNumber");
             }
 
             return true;

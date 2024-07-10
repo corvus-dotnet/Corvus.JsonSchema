@@ -2,6 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System;
+
 namespace Corvus.Json.CodeGeneration.CSharp;
 
 /// <summary>
@@ -61,6 +63,44 @@ public static class Formatting
         Span<char> corvusTypeNameBuffer = typeNameBuffer[..corvusTypeName.Length];
         int writtenLength = Formatting.ToPascalCase(corvusTypeNameBuffer);
         return Formatting.FixReservedWords(typeNameBuffer, writtenLength, TypePrefix);
+    }
+
+    /// <summary>
+    /// Apply a numeric suffix to the buffer.
+    /// </summary>
+    /// <param name="value">The numeric suffix.</param>
+    /// <param name="buffer">The buffer into which to format the numeric suffix.</param>
+    /// <returns>The number of characters written.</returns>
+    /// <exception cref="ArgumentException">There was not enough space in the buffer.</exception>
+    public static int ApplySuffix(int value, Span<char> buffer)
+    {
+#if NET8_0_OR_GREATER
+        value.TryFormat(buffer, out int written);
+        return written;
+#else
+        if (value < 0)
+        {
+            throw new ArgumentException("Value must be positive.", nameof(value));
+        }
+
+        // Calculate the length of the integer
+        int length = value == 0 ? 1 : (int)Math.Floor(Math.Log10(value) + 1);
+        if (buffer.Length < length)
+        {
+            throw new ArgumentException("Destination array is too small.");
+        }
+
+        int index = length;
+
+        do
+        {
+            buffer[--index] = (char)('0' + (value % 10));
+            value /= 10;
+        }
+        while (value > 0);
+
+        return length; // Return the number of characters written
+#endif
     }
 
     /// <summary>

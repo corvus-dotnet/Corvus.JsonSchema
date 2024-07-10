@@ -136,7 +136,7 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
     }
 
     /// <inheritdoc/>
-    public void SetNameBeforeSubschema(TypeDeclaration typeDeclaration, string fallbackName)
+    public void SetNamesBeforeSubschema(TypeDeclaration typeDeclaration, string fallbackName)
     {
         // We've already set the dotnet type name.
         if (typeDeclaration.HasDotnetTypeName())
@@ -166,7 +166,7 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
     }
 
     /// <inheritdoc/>
-    public void SetNameAfterSubschema(TypeDeclaration typeDeclaration)
+    public void SetNamesAfterSubschema(TypeDeclaration typeDeclaration)
     {
         JsonReferenceBuilder reference = GetReferenceWithoutQuery(typeDeclaration);
 

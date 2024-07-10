@@ -63,15 +63,15 @@ public interface ILanguageProvider
     bool ShouldGenerate(TypeDeclaration type);
 
     /// <summary>
-    /// Set the name for the type declaration, before its subschema names have been set.
+    /// Set the name for the type declaration, and any outstanding properties, after its subschema names have been set.
     /// </summary>
     /// <param name="typeDeclaration">The type declaration for which to set the name.</param>
     /// <param name="fallbackName">The name to use as a fallback for the type declaration.</param>
-    void SetNameBeforeSubschema(TypeDeclaration typeDeclaration, string fallbackName);
+    void SetNamesBeforeSubschema(TypeDeclaration typeDeclaration, string fallbackName);
 
     /// <summary>
-    /// Set the name for the type declaration, after its subschema names have been set.
+    /// Set the name for the type declaration, and any outstanding properties, after its subschema names have been set.
     /// </summary>
     /// <param name="typeDeclaration">The type declaration for which to set the name.</param>
-    void SetNameAfterSubschema(TypeDeclaration typeDeclaration);
+    void SetNamesAfterSubschema(TypeDeclaration typeDeclaration);
 }

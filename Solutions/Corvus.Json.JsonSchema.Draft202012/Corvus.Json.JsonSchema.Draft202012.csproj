@@ -13,7 +13,7 @@
 	</PropertyGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
-		<PackageReference Include="System.Text.Json" Version="8.0.3" />
+		<PackageReference Include="System.Text.Json" Version="8.0.4" />
 		<PackageReference Include="System.Collections.Immutable" Version="8.0.0" />
 		<PackageReference Include="IndexRange" Version="1.0.3" />
 	</ItemGroup>
@@ -24,7 +24,7 @@
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 		<PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
-		<PackageReference Include="Microsoft.Extensions.ObjectPool" Version="8.0.3" />
+		<PackageReference Include="Microsoft.Extensions.ObjectPool" Version="8.0.7" />
 		<PackageReference Include="NodaTime" Version="3.1.11" />
 	</ItemGroup>
 
@@ -37,7 +37,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Update="Roslynator.Analyzers" Version="4.11.0" />
+		<PackageReference Update="Roslynator.Analyzers" Version="4.12.4" />
 	</ItemGroup>
 
 </Project>

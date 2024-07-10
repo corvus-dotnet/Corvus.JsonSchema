@@ -210,7 +210,7 @@ public class JsonSchemaTypeBuilder(
             if (!typeDeclaration.CanReduce())
             {
                 // Set the name for this type
-                languageProvider.SetNameBeforeSubschema(typeDeclaration, "Entity");
+                languageProvider.SetNamesBeforeSubschema(typeDeclaration, "Entity");
             }
 
             // Then set the names for the subschema it requires.
@@ -235,7 +235,7 @@ public class JsonSchemaTypeBuilder(
             if (!typeDeclaration.CanReduce())
             {
                 // Set the name for this type
-                languageProvider.SetNameAfterSubschema(typeDeclaration);
+                languageProvider.SetNamesAfterSubschema(typeDeclaration);
             }
 
             // Then set the names for the subschema it requires.
