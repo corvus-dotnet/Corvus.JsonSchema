@@ -31,7 +31,7 @@ public static class PropertyProvider
         // We don't need to check for keyword hiding here; this will be dealt with in the CollectProperties() implementations
         // Typically, this is achieved by using the subschema to determine the properties to add. The subschema will not have
         // been added for hidden siblings.
-        foreach (IPropertyProviderKeyword? propertyProviderKeyword in source.LocatedSchema.Vocabulary.Keywords.OfType<IPropertyProviderKeyword>().OrderBy(k => k.PropertyProviderPriority))
+        foreach (IPropertyProviderKeyword? propertyProviderKeyword in source.Keywords().OfType<IPropertyProviderKeyword>().OrderBy(k => k.PropertyProviderPriority))
         {
             propertyProviderKeyword.CollectProperties(source, target, childContext, treatRequiredAsOptional);
         }

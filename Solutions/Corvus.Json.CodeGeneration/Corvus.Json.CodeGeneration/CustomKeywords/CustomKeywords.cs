@@ -145,7 +145,7 @@ public static class CustomKeywords
     private static void Apply<T>(TypeBuilderContext typeBuilderContext, TypeDeclaration typeDeclaration)
         where T : notnull, ITypeBuilderCustomKeyword
     {
-        foreach (T keyword in typeDeclaration.LocatedSchema.Vocabulary.Keywords.OfType<T>())
+        foreach (T keyword in typeDeclaration.Keywords().OfType<T>())
         {
             keyword.Apply(typeBuilderContext, typeDeclaration);
         }

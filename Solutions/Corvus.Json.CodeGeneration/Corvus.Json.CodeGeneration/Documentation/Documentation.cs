@@ -24,7 +24,7 @@ public static class Documentation
     /// </remarks>
     public static bool TryGetShortDocumentation(TypeDeclaration typeDeclaration, [NotNullWhen(true)] out string? shortDocumentation)
     {
-        foreach (IShortDocumentationProviderKeyword keyword in typeDeclaration.LocatedSchema.Vocabulary.Keywords.OfType<IShortDocumentationProviderKeyword>().OrderBy(k => k.Keyword))
+        foreach (IShortDocumentationProviderKeyword keyword in typeDeclaration.Keywords().OfType<IShortDocumentationProviderKeyword>().OrderBy(k => k.Keyword))
         {
             if (keyword.TryGetShortDocumentation(typeDeclaration, out shortDocumentation))
             {
@@ -50,7 +50,7 @@ public static class Documentation
     public static bool TryGetLongDocumentation(TypeDeclaration typeDeclaration, [NotNullWhen(true)] out string? longDocumentation)
     {
         StringBuilder builder = new();
-        foreach (ILongDocumentationProviderKeyword keyword in typeDeclaration.LocatedSchema.Vocabulary.Keywords.OfType<ILongDocumentationProviderKeyword>().OrderBy(k => k.Keyword))
+        foreach (ILongDocumentationProviderKeyword keyword in typeDeclaration.Keywords().OfType<ILongDocumentationProviderKeyword>().OrderBy(k => k.Keyword))
         {
             if (keyword.TryGetLongDocumentation(typeDeclaration, out string? docs))
             {
@@ -83,7 +83,7 @@ public static class Documentation
     {
         List<string> result = [];
 
-        foreach (IExamplesProviderKeyword keyword in typeDeclaration.LocatedSchema.Vocabulary.Keywords.OfType<IExamplesProviderKeyword>().OrderBy(k => k.Keyword))
+        foreach (IExamplesProviderKeyword keyword in typeDeclaration.Keywords().OfType<IExamplesProviderKeyword>().OrderBy(k => k.Keyword))
         {
             if (keyword.TryGetExamples(typeDeclaration, out string[]? docs))
             {
