@@ -61,6 +61,11 @@ public sealed class TypeDeclaration(LocatedSchema locatedSchema)
     public IEnumerable<PropertyDeclaration> PropertyDeclarations => this.properties.Values.OrderBy(p => p.JsonPropertyName);
 
     /// <summary>
+    /// Gets a value indicating whether the type has any property declarations.
+    /// </summary>
+    public bool HasPropertyDeclarations => this.properties.Count > 0;
+
+    /// <summary>
     /// Gets or sets a value indicating whether the basic build process is complete.
     /// </summary>
     public bool BuildComplete { get; set; }

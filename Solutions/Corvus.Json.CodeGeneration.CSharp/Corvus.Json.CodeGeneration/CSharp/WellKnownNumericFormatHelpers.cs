@@ -2,7 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-namespace Corvus.Json.CodeGeneration.LanguageProvider.CSharp;
+namespace Corvus.Json.CodeGeneration.CSharp;
 
 /// <summary>
 /// Helpers for well-known numeric formats.

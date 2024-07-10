@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 
 namespace Corvus.Json.CodeGeneration.Keywords;
@@ -10,7 +11,9 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 /// The additionalProperties keyword.
 /// </summary>
 public sealed class AdditionalPropertiesKeyword
-    : ILocalSubschemaRegistrationKeyword, ISubschemaTypeBuilderKeyword, IObjectValidationKeyword
+    : ILocalSubschemaRegistrationKeyword,
+      ISubschemaTypeBuilderKeyword,
+      ILocalEvaluatedPropertyValidationKeyword
 {
     private const string KeywordPath = "#/additionalProperties";
     private static readonly JsonReference KeywordPathReference = new(KeywordPath);
@@ -49,6 +52,21 @@ public sealed class AdditionalPropertiesKeyword
         {
             await Subschemas.BuildSubschemaTypesForSchemaProperty(typeBuilderContext, typeDeclaration, KeywordPathReference).ConfigureAwait(false);
         }
+    }
+
+    /// <inheritdoc />
+    public bool TryGetObjectPropertyType(
+        TypeDeclaration typeDeclaration,
+        [MaybeNullWhen(false)] out ObjectPropertyTypeDeclaration? objectPropertiesType)
+    {
+        if (typeDeclaration.SubschemaTypeDeclarations.TryGetValue(KeywordPath, out TypeDeclaration? value))
+        {
+            objectPropertiesType = new(value, isExplicit: true);
+            return true;
+        }
+
+        objectPropertiesType = null;
+        return false;
     }
 
     /// <inheritdoc />

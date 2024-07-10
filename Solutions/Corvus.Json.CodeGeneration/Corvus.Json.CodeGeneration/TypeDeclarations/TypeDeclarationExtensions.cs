@@ -13,8 +13,11 @@ namespace Corvus.Json.CodeGeneration;
 /// </summary>
 public static class TypeDeclarationExtensions
 {
-    private delegate bool KeywordAccessor<T>(T keyword, TypeDeclaration typeDeclaration, out ArrayItemsTypeDeclaration? value)
+    private delegate bool ArrayItemKeywordAccessor<T>(T keyword, TypeDeclaration typeDeclaration, out ArrayItemsTypeDeclaration? value)
         where T : IArrayItemsTypeProviderKeyword;
+
+    private delegate bool ObjectPropertyKeywordAccessor<T>(T keyword, TypeDeclaration typeDeclaration, out ObjectPropertyTypeDeclaration? value)
+    where T : IObjectPropertyTypeProviderKeyword;
 
     /// <summary>
     /// Gets a value indicating whether this type declaration
@@ -188,6 +191,22 @@ public static class TypeDeclarationExtensions
 
             return null;
         }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether the type declaration is a map object.
+    /// </summary>
+    /// <param name="that">The type declaration to test.</param>
+    /// <returns><see langword="true"/> if the type is a map object, otherwise false.</returns>
+    public static bool IsMapObject(this TypeDeclaration that)
+    {
+        if (!that.TryGetMetadata(nameof(IsMapObject), out bool? result))
+        {
+            result = that.ObjectPropertyType() is not null;
+            that.SetMetadata(nameof(IsMapObject), result);
+        }
+
+        return result ?? false;
     }
 
     /// <summary>
@@ -455,6 +474,57 @@ public static class TypeDeclarationExtensions
         {
             BuildArrayTypes(that);
             that.TryGetMetadata(nameof(ArrayItemsType), out itemsType);
+        }
+
+        return itemsType;
+    }
+
+    /// <summary>
+    /// Gets the type of properties in a strongly-typed object, or <see langword="null"/> if the type is not
+    /// a strongly-typed object.
+    /// </summary>
+    /// <param name="that">The type declaration for which to get the object property type.</param>
+    /// <returns>The <see cref="ObjectPropertyTypeDeclaration"/> for the strongly typed object properties.</returns>
+    public static ObjectPropertyTypeDeclaration? ObjectPropertyType(this TypeDeclaration that)
+    {
+        if (!that.TryGetMetadata(nameof(ObjectPropertyType), out ObjectPropertyTypeDeclaration? itemsType))
+        {
+            BuildObjectTypes(that);
+            that.TryGetMetadata(nameof(ObjectPropertyType), out itemsType);
+        }
+
+        return itemsType;
+    }
+
+    /// <summary>
+    /// Gets the type of additional properties (evaluated in the local scope) in a strongly-typed object, or <see langword="null"/>
+    /// if no such type is defined.
+    /// </summary>
+    /// <param name="that">The type declaration for which to get the object property type.</param>
+    /// <returns>The <see cref="ObjectPropertyTypeDeclaration"/> for the strongly typed object properties.</returns>
+    public static ObjectPropertyTypeDeclaration? LocalEvaluatedPropertyType(this TypeDeclaration that)
+    {
+        if (!that.TryGetMetadata(nameof(LocalEvaluatedPropertyType), out ObjectPropertyTypeDeclaration? itemsType))
+        {
+            BuildObjectTypes(that);
+            that.TryGetMetadata(nameof(LocalEvaluatedPropertyType), out itemsType);
+        }
+
+        return itemsType;
+    }
+
+    /// <summary>
+    /// Gets the type of additional properties (evaluated in the local-and-applied scope) in a strongly-typed object, or <see langword="null"/>
+    /// if no such type is defined.
+    /// </summary>
+    /// <param name="that">The type declaration for which to get the object property type.</param>
+    /// <returns>The <see cref="ObjectPropertyTypeDeclaration"/> for the strongly typed object properties.</returns>
+    public static ObjectPropertyTypeDeclaration? LocalAndAppliedEvaluatedPropertyType(this TypeDeclaration that)
+    {
+        if (!that.TryGetMetadata(nameof(LocalAndAppliedEvaluatedPropertyType), out ObjectPropertyTypeDeclaration? itemsType))
+        {
+            BuildObjectTypes(that);
+            that.TryGetMetadata(nameof(LocalAndAppliedEvaluatedPropertyType), out itemsType);
         }
 
         return itemsType;
@@ -1424,7 +1494,7 @@ public static class TypeDeclarationExtensions
 
         static ArrayItemsTypeDeclaration? GetItemsType<T>(
             TypeDeclaration typeDeclaration,
-            KeywordAccessor<T> keywordAccessor,
+            ArrayItemKeywordAccessor<T> keywordAccessor,
             Func<TypeDeclaration, ArrayItemsTypeDeclaration?> childAccessor)
             where T : IArrayItemsTypeProviderKeyword
         {
@@ -1570,11 +1640,148 @@ public static class TypeDeclarationExtensions
                         }
                         else
                         {
-                            // We have two implicit items-defnining keywords, that are maybe compatible
-                            // One day, we could do analysis to analytically produce a
-                            // lowest-common-denominator type for these cases.
-                            // TODO: we should consider logging
-                            return null;
+                            // We ignore the case where we are trying to pick up a second
+                            // non-explicit case. We could get more sophisticated in future.
+                            continue;
+                        }
+                    }
+                }
+            }
+
+            return declaration;
+        }
+    }
+
+    private static void BuildObjectTypes(TypeDeclaration typeDeclaration)
+    {
+        ObjectPropertyTypeDeclaration? propertyType =
+            GetPropertyType(
+                typeDeclaration,
+                static (IObjectPropertyTypeProviderKeyword k, TypeDeclaration t, out ObjectPropertyTypeDeclaration? v)
+                    => k.TryGetObjectPropertyType(t, out v),
+                static t => t.ObjectPropertyType());
+
+        ObjectPropertyTypeDeclaration? localEvaluatedPropertyType =
+            GetPropertyType(
+                typeDeclaration,
+                static (ILocalEvaluatedPropertyValidationKeyword k, TypeDeclaration t, out ObjectPropertyTypeDeclaration? v) =>
+                    k.TryGetObjectPropertyType(t, out v),
+                static t => t.LocalEvaluatedPropertyType(),
+                withComposition: false);
+
+        ObjectPropertyTypeDeclaration? localAndAppliedEvaluatedPropertyType =
+            GetPropertyType(
+                typeDeclaration,
+                static (ILocalAndAppliedEvaluatedPropertyValidationKeyword k, TypeDeclaration t, out ObjectPropertyTypeDeclaration? v) =>
+                    k.TryGetObjectPropertyType(t, out v),
+                static t => t.LocalAndAppliedEvaluatedPropertyType(),
+                withComposition: false);
+
+        if (typeDeclaration.HasPropertyDeclarations)
+        {
+            typeDeclaration.SetMetadata(nameof(ObjectPropertyType), default(ObjectPropertyTypeDeclaration?));
+        }
+        else
+        {
+            typeDeclaration.SetMetadata(nameof(ObjectPropertyType), propertyType);
+        }
+
+        if (localEvaluatedPropertyType is ObjectPropertyTypeDeclaration nti && nti.IsExplicit)
+        {
+            typeDeclaration.SetMetadata(nameof(LocalEvaluatedPropertyType), nti);
+        }
+        else
+        {
+            typeDeclaration.SetMetadata(nameof(LocalEvaluatedPropertyType), default(ObjectPropertyTypeDeclaration?));
+        }
+
+        if (localAndAppliedEvaluatedPropertyType is ObjectPropertyTypeDeclaration ui && ui.IsExplicit)
+        {
+            typeDeclaration.SetMetadata(nameof(LocalAndAppliedEvaluatedPropertyType), ui);
+        }
+        else
+        {
+            typeDeclaration.SetMetadata(nameof(LocalAndAppliedEvaluatedPropertyType), default(ObjectPropertyTypeDeclaration?));
+        }
+
+        static ObjectPropertyTypeDeclaration? GetPropertyType<T>(
+            TypeDeclaration typeDeclaration,
+            ObjectPropertyKeywordAccessor<T> keywordAccessor,
+            Func<TypeDeclaration, ObjectPropertyTypeDeclaration?> childAccessor,
+            bool withComposition = true)
+            where T : IObjectPropertyTypeProviderKeyword
+        {
+            if (typeDeclaration.HasSiblingHidingKeyword())
+            {
+                return null;
+            }
+
+            if (typeDeclaration.ImpliedCoreTypes().CountTypes() != 1)
+            {
+                return null;
+            }
+
+            ObjectPropertyTypeDeclaration? declaration = null;
+
+            foreach (T keyword in typeDeclaration.Keywords().OfType<T>())
+            {
+                if (keywordAccessor(keyword, typeDeclaration, out ObjectPropertyTypeDeclaration? value) &&
+                    value is ObjectPropertyTypeDeclaration itemsType)
+                {
+                    if (declaration is null ||
+                            (itemsType.IsExplicit && !declaration.IsExplicit))
+                    {
+                        // We don't have an existing declaration,
+                        declaration = itemsType;
+                    }
+                    else if (declaration.ReducedType == itemsType.ReducedType)
+                    {
+                        // The new type is the same as the old type
+                        // (typically because a composing type explicitly restates the
+                        // type from one of the composed types)
+                        continue;
+                    }
+                    else
+                    {
+                        // We have more than one keyword that explicitly provides an array
+                        // type.
+                        return null;
+                    }
+                }
+            }
+
+            if (!withComposition)
+            {
+                return declaration;
+            }
+
+            // Now go through all the allOf union types and see if we can find one
+            foreach (IAllOfSubschemaValidationKeyword keyword in typeDeclaration.Keywords().OfType<IAllOfSubschemaValidationKeyword>())
+            {
+                foreach (TypeDeclaration t in keyword.GetSubschemaTypeDeclarations(typeDeclaration))
+                {
+                    if (childAccessor(t) is ObjectPropertyTypeDeclaration referencedObjectPropertyTypeDeclaration)
+                    {
+                        if (declaration is null)
+                        {
+                            // We don't have an existing declaration, or
+                            // we are overriding an implicit declaration with
+                            // an explicit declaration
+                            declaration = new(referencedObjectPropertyTypeDeclaration.UnreducedType, false);
+                        }
+                        else if (declaration.ReducedType == referencedObjectPropertyTypeDeclaration.ReducedType)
+                        {
+                            // The new type is the same as the old type
+                            // (typically because a composing type explicitly restates the
+                            // type from one of the composed types)
+                            continue;
+                        }
+                        else
+                        {
+                            // We have more than keyword that explicitly provides an array
+                            // type in the subschema; however we will just ignore that and carry on
+                            // so we pick up any explicit type already defined
+                            continue;
                         }
                     }
                 }

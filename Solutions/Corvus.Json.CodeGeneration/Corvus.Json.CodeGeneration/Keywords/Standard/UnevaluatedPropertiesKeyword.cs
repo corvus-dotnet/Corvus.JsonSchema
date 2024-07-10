@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 
 namespace Corvus.Json.CodeGeneration.Keywords;
@@ -13,8 +14,8 @@ public sealed class UnevaluatedPropertiesKeyword
     :   ISubschemaTypeBuilderKeyword,
         ILocalSubschemaRegistrationKeyword,
         ISubschemaProviderKeyword,
-        IObjectValidationKeyword
-    {
+        ILocalAndAppliedEvaluatedPropertyValidationKeyword
+{
     private const string KeywordPath = "#/unevaluatedProperties";
     private static readonly JsonReference KeywordPathReference = new(KeywordPath);
 
@@ -56,6 +57,21 @@ public sealed class UnevaluatedPropertiesKeyword
 
     /// <inheritdoc />
     public bool CanReduce(in JsonElement schemaValue) => Reduction.CanReduceNonReducingKeyword(schemaValue, this.KeywordUtf8);
+
+    /// <inheritdoc />
+    public bool TryGetObjectPropertyType(
+        TypeDeclaration typeDeclaration,
+        [MaybeNullWhen(false)] out ObjectPropertyTypeDeclaration? objectPropertiesType)
+    {
+        if (typeDeclaration.SubschemaTypeDeclarations.TryGetValue(KeywordPath, out TypeDeclaration? value))
+        {
+            objectPropertiesType = new(value, isExplicit: true);
+            return true;
+        }
+
+        objectPropertiesType = null;
+        return false;
+    }
 
     /// <inheritdoc/>
     public IReadOnlyCollection<TypeDeclaration> GetSubschemaTypeDeclarations(TypeDeclaration typeDeclaration)
