@@ -9,7 +9,7 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 /// <summary>
 /// The readOnly keyword.
 /// </summary>
-public sealed class ReadOnlyKeyword : IKeyword
+public sealed class ReadOnlyKeyword : INonStructuralKeyword
 {
     private ReadOnlyKeyword()
     {

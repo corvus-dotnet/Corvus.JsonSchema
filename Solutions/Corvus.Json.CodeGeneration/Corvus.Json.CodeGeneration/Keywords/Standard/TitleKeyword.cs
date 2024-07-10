@@ -10,7 +10,7 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 /// <summary>
 /// The title keyword.
 /// </summary>
-public sealed class TitleKeyword : IShortDocumentationProviderKeyword
+public sealed class TitleKeyword : IShortDocumentationProviderKeyword, INonStructuralKeyword
 {
     private TitleKeyword()
     {

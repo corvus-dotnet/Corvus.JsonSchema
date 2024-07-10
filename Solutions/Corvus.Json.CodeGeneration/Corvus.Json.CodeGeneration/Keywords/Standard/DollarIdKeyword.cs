@@ -10,7 +10,7 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 /// <summary>
 /// The $id keyword.
 /// </summary>
-public sealed class DollarIdKeyword : IScopeKeyword
+public sealed class DollarIdKeyword : IScopeKeyword, INonStructuralKeyword
 {
     private DollarIdKeyword()
     {

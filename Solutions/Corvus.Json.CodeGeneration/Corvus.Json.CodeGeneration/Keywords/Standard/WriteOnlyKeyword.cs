@@ -9,7 +9,7 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 /// <summary>
 /// The writeOnly keyword.
 /// </summary>
-public sealed class WriteOnlyKeyword : IKeyword
+public sealed class WriteOnlyKeyword : INonStructuralKeyword
 {
     private WriteOnlyKeyword()
     {

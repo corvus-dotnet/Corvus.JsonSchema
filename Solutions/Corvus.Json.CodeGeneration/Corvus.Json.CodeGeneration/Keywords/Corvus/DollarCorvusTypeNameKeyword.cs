@@ -9,7 +9,7 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 /// <summary>
 /// The $corvusTypeName keyword.
 /// </summary>
-public sealed class DollarCorvusTypeNameKeyword : ITypeNameProviderKeyword
+public sealed class DollarCorvusTypeNameKeyword : ITypeNameProviderKeyword, INonStructuralKeyword
 {
     private DollarCorvusTypeNameKeyword()
     {

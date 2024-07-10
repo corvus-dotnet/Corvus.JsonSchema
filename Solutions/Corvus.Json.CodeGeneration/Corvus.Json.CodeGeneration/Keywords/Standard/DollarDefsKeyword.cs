@@ -9,7 +9,7 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 /// <summary>
 /// The $defs keyword.
 /// </summary>
-public sealed class DollarDefsKeyword : IDefinitionsKeyword
+public sealed class DollarDefsKeyword : IDefinitionsKeyword, INonStructuralKeyword
 {
     private DollarDefsKeyword()
     {

@@ -10,7 +10,7 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 /// <summary>
 /// The examples keyword.
 /// </summary>
-public sealed class ExamplesKeyword : IExamplesProviderKeyword
+public sealed class ExamplesKeyword : IExamplesProviderKeyword, INonStructuralKeyword
 {
     private ExamplesKeyword()
     {
