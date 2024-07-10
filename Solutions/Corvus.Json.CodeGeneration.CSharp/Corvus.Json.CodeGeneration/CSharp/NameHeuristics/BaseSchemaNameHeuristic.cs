@@ -36,8 +36,8 @@ public sealed class BaseSchemaNameHeuristic : INameHeuristicBeforeSubschema
             }
 
             ReadOnlySpan<char> name = typeNameBuffer[..written];
-            bool collidesWithParent = CollidesWithParent(typeDeclaration, name);
-            if (!collidesWithParent && MatchesExistingTypeInParent(typeDeclaration, name))
+            bool collidesWithParent = typeDeclaration.CollidesWithParent(name);
+            if (!collidesWithParent && typeDeclaration.MatchesExistingTypeInParent(name))
             {
                 if (reference.HasPath && reference.HasFragment)
                 {
@@ -58,38 +58,20 @@ public sealed class BaseSchemaNameHeuristic : INameHeuristicBeforeSubschema
                 written = Formatting.ApplyStandardSuffix(typeDeclaration, typeNameBuffer, typeNameBuffer[..written]);
             }
 
+            int index = 1;
+            int writtenBefore = written;
+
+            while (typeDeclaration.MatchesExistingTypeInParent(typeNameBuffer[..written]) ||
+                   typeDeclaration.MatchesExistingPropertyNameInParent(typeNameBuffer[..written]))
+            {
+                written = writtenBefore + Formatting.ApplySuffix(index, typeNameBuffer[..writtenBefore]);
+                index++;
+            }
+
             return true;
         }
 
         written = 0;
-        return false;
-    }
-
-    private static bool CollidesWithParent(TypeDeclaration typeDeclaration, ReadOnlySpan<char> corvusTypeNameBuffer)
-    {
-        return
-            typeDeclaration.Parent() is TypeDeclaration parent &&
-            corvusTypeNameBuffer.Equals(parent.DotnetTypeName().AsSpan(), StringComparison.Ordinal);
-    }
-
-    private static bool MatchesExistingTypeInParent(TypeDeclaration typeDeclaration, ReadOnlySpan<char> corvusTypeNameBuffer)
-    {
-        TypeDeclaration? parent = typeDeclaration.Parent();
-
-        if (parent is null)
-        {
-            return false;
-        }
-
-        foreach (TypeDeclaration child in parent.Children())
-        {
-            if (child.TryGetDotnetTypeName(out string? name) &&
-                 corvusTypeNameBuffer.Equals(name.AsSpan(), StringComparison.Ordinal))
-            {
-                return true;
-            }
-        }
-
         return false;
     }
 

@@ -20,6 +20,72 @@ internal static class TypeDeclarationExtensions
     private const string PreferredDotnetNumericTypeNameKey = "CSharp_LanguageProvider_PreferredDotnetNumericTypeName";
 
     /// <summary>
+    /// Determines if the given name collides with the parent name.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration to test.</param>
+    /// <param name="name">The name to test.</param>
+    /// <returns><see langword="true"/> if the names collide.</returns>
+    public static bool CollidesWithParent(this TypeDeclaration typeDeclaration, ReadOnlySpan<char> name)
+    {
+        return
+            typeDeclaration.Parent() is TypeDeclaration parent &&
+            name.Equals(parent.DotnetTypeName().AsSpan(), StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Determines if the given name collides with another child in the parent.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration to test.</param>
+    /// <param name="name">The name to test.</param>
+    /// <returns><see langword="true"/> if the names collide.</returns>
+    public static bool MatchesExistingTypeInParent(this TypeDeclaration typeDeclaration, ReadOnlySpan<char> name)
+    {
+        TypeDeclaration? parent = typeDeclaration.Parent();
+
+        if (parent is null)
+        {
+            return false;
+        }
+
+        foreach (TypeDeclaration child in parent.Children())
+        {
+            if (child.TryGetDotnetTypeName(out string? childName) &&
+                 name.Equals(childName.AsSpan(), StringComparison.Ordinal))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Determines if the given name collides with a property name in the parent.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration to test.</param>
+    /// <param name="name">The name to test.</param>
+    /// <returns><see langword="true"/> if the names collide.</returns>
+    public static bool MatchesExistingPropertyNameInParent(this TypeDeclaration typeDeclaration, ReadOnlySpan<char> name)
+    {
+        TypeDeclaration? parent = typeDeclaration.Parent();
+
+        if (parent is null)
+        {
+            return false;
+        }
+
+        foreach (PropertyDeclaration propertyDeclaration in parent.PropertyDeclarations)
+        {
+            if (propertyDeclaration.DotnetPropertyName().AsSpan().Equals(name, StringComparison.Ordinal))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
     /// Gets the preferred .NET numeric type (e.g. int, double, long etc) for the type declaration.
     /// </summary>
     /// <param name="typeDeclaration">The type declaration.</param>
