@@ -192,6 +192,7 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
             CorePartial.Instance,
             ValidatePartial.Instance,
             ArrayPartial.Instance,
+            ObjectPartial.Instance,
             BooleanPartial.Instance,
             StringPartial.Instance,
             NumberPartial.Instance);
