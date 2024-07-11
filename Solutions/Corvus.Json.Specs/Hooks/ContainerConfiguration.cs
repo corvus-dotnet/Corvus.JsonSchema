@@ -5,7 +5,6 @@
 #if !NET8_0_OR_GREATER
 using System.Net.Http;
 #endif
-using System.CodeDom.Compiler;
 using Corvus.Json;
 using Corvus.Json.CodeGeneration;
 using Drivers;
@@ -38,6 +37,7 @@ public static class ContainerConfiguration
             VocabularyRegistry registry = new();
             //// TODO: register the other analysers
             Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.RegisterAnalyser(sp.GetRequiredService<IDocumentResolver>(), registry);
+            Corvus.Json.CodeGeneration.Draft201909.VocabularyAnalyser.RegisterAnalyser(sp.GetRequiredService<IDocumentResolver>(), registry);
             return registry;
         });
 
@@ -51,7 +51,7 @@ public static class ContainerConfiguration
 
             if (scenarioContext.ScenarioInfo.ScenarioAndFeatureTags.Any(t => t == "draft2019-09"))
             {
-                ////return new JsonSchemaBuilderDriver(sp.GetRequiredService<IConfiguration>(), sp.GetRequiredService<JsonSchemaTypeBuilder>(), Corvus.Json.CodeGeneration.Draft201909.VocabularyAnalyser.DefaultVocabulary, "jsonSchemaBuilder202012DriverSettings");
+                return new JsonSchemaBuilderDriver(sp.GetRequiredService<IConfiguration>(), sp.GetRequiredService<JsonSchemaTypeBuilder>(), Corvus.Json.CodeGeneration.Draft201909.VocabularyAnalyser.DefaultVocabulary, "jsonSchemaBuilder202012DriverSettings");
             }
 
             if (scenarioContext.ScenarioInfo.ScenarioAndFeatureTags.Any(t => t == "draft7"))
