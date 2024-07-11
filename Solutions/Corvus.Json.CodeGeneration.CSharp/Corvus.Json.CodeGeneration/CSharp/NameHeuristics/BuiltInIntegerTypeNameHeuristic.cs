@@ -35,7 +35,7 @@ public sealed class BuiltInIntegerTypeNameHeuristic : IBuiltInTypeNameHeuristic
             string? candidateFormat = null;
 
             // We are a simple string type
-            foreach (IValidationKeyword keyword in typeDeclaration.Keywords())
+            foreach (IKeyword keyword in typeDeclaration.Keywords())
             {
                 if (keyword is ICoreTypeValidationKeyword)
                 {
