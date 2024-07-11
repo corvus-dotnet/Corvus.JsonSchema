@@ -46,7 +46,7 @@ internal static partial class CodeGeneratorExtensions
     /// </summary>
     /// <param name="generator">The code generator.</param>
     /// <returns>A reference to the generator having completed the operation.</returns>
-    public static CodeGenerator ApendAsBinaryJsonNumber(this CodeGenerator generator)
+    public static CodeGenerator AppendAsBinaryJsonNumber(this CodeGenerator generator)
     {
         return generator
             .AppendSeparatorLine()

@@ -46,7 +46,6 @@ public sealed class ObjectPartial : ICodeFileBuilder
                     .AppendLine()
                     .BeginTypeDeclarationNesting(typeDeclaration)
                         .AppendDocumentation(typeDeclaration)
-                        .AppendDotnet80OrGreaterCollectionBuilderAttribute(typeDeclaration)
                         .BeginPublicReadonlyPartialStructDeclaration(
                             typeDeclaration.DotnetTypeName(),
                             interfaces:
@@ -59,13 +58,14 @@ public sealed class ObjectPartial : ICodeFileBuilder
                             .AppendImplicitConversionToType(typeDeclaration, "ImmutableList<JsonObject>", "__CorvusObjectHelpers.GetImmutableList(value)")
                             .AppendImplicitConversionFromJsonValueTypeUsingConstructor(typeDeclaration, "JsonObject", JsonValueKind.Object, "value.AsPropertyBacking()")
                             .AppendImplicitConversionToJsonValueType(typeDeclaration, "JsonObject", CoreTypes.Object, "value.AsObject")
-                            ////.AppendDictionaryMethods(typeDeclaration)
-                            ////.AppendAsPropertyBackingMethods()
-                            ////.AppendHasPropertiesMethod()
-                            ////.AppendGetPropertyMethods()
-                            ////.AppendSetPropertyMethods()
-                            ////.AppendRemovePropertyMethods()
-                            ////.AppendEnumerateObjectMethods(typeDeclaration)
+                            .AppendObjectIndexerProperties(typeDeclaration)
+                            .AppendReadOnlyDictionaryProperties(typeDeclaration)
+                            .AppendFromPropertiesFactoryMethods(typeDeclaration)
+                            .AppendAsPropertyBackingMethod()
+                            .AppendEnumerateObjectMethods(typeDeclaration)
+                            .AppendHasPropertiesMethod(typeDeclaration)
+                            .AppendHasPropertyMethods(typeDeclaration)
+                            .AppendTryGetPropertyMethods(typeDeclaration)
                         .EndClassOrStructDeclaration()
                     .EndTypeDeclarationNesting(typeDeclaration)
                     .EndNamespace()
@@ -89,7 +89,6 @@ public sealed class ObjectPartial : ICodeFileBuilder
         static ConditionalCodeSpecification ReadOnlyDictionaryType(TypeDeclaration typeDeclaration)
         {
             return
-                typeDeclaration.IsMapObject() &&
                 typeDeclaration.ObjectPropertyType() is ObjectPropertyTypeDeclaration objectPropertyType
                 ? new(g =>
                     {
