@@ -9,6 +9,11 @@ namespace Corvus.Json.CodeGeneration.CSharp;
 /// </summary>
 public class BinaryIfValidationHandler : KeywordValidationHandlerBase
 {
+    /// <summary>
+    /// Gets a singleton instance of the <see cref="BinaryIfValidationHandler"/>.
+    /// </summary>
+    public static BinaryIfValidationHandler Instance { get; } = new();
+
     /// <inheritdoc/>
     public override uint ValidationHandlerPriority => ValidationPriorities.Composition;
 

@@ -9,6 +9,11 @@ namespace Corvus.Json.CodeGeneration.CSharp;
 /// </summary>
 public class FormatValidationHandler : KeywordValidationHandlerBase
 {
+    /// <summary>
+    /// Gets a singleton instance of the <see cref="FormatValidationHandler"/>.
+    /// </summary>
+    public static FormatValidationHandler Instance { get; } = new();
+
     /// <inheritdoc/>
     public override uint ValidationHandlerPriority => ValidationPriorities.Default;
 

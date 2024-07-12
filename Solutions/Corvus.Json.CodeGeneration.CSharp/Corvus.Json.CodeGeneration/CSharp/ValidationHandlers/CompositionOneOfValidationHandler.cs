@@ -9,6 +9,11 @@ namespace Corvus.Json.CodeGeneration.CSharp;
 /// </summary>
 public class CompositionOneOfValidationHandler : KeywordValidationHandlerBase
 {
+    /// <summary>
+    /// Gets a singleton instance of the <see cref="CompositionOneOfValidationHandler"/>.
+    /// </summary>
+    public static CompositionOneOfValidationHandler Instance { get; } = new();
+
     /// <inheritdoc/>
     public override uint ValidationHandlerPriority => ValidationPriorities.Composition;
 

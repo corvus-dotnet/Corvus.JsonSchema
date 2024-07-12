@@ -9,6 +9,11 @@ namespace Corvus.Json.CodeGeneration.CSharp;
 /// </summary>
 public class TernaryIfValidationHandler : KeywordValidationHandlerBase
 {
+    /// <summary>
+    /// Gets a singleton instance of the <see cref="TernaryIfValidationHandler"/>.
+    /// </summary>
+    public static TernaryIfValidationHandler Instance { get; } = new();
+
     /// <inheritdoc/>
     public override uint ValidationHandlerPriority => ValidationPriorities.Composition;
 
