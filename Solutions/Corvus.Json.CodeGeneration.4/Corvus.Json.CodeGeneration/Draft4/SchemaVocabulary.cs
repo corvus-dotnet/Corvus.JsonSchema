@@ -5,22 +5,20 @@
 using System.Text.Json;
 using Corvus.Json.CodeGeneration.Keywords;
 
-namespace Corvus.Json.CodeGeneration.Draft6;
+namespace Corvus.Json.CodeGeneration.Draft4;
 
 /// <summary>
-/// The draft 6 schema vocabulary.
+/// The draft 4 schema vocabulary.
 /// </summary>
 internal sealed class SchemaVocabulary : IVocabulary
 {
     private static readonly IKeyword[] KeywordsBacking =
     [
-        DollarIdKeyword.Instance,
+        IdKeyword.Instance,
         DollarSchemaKeyword.Instance,
-        DollarRefKeyword.Instance,
         TitleKeyword.Instance,
         DescriptionKeyword.Instance,
         DefaultKeyword.Instance,
-        ExamplesKeyword.Instance,
         MultipleOfKeyword.Instance,
         MaximumKeyword.Instance,
         ExclusiveMaximumKeyword.Instance,
@@ -34,7 +32,6 @@ internal sealed class SchemaVocabulary : IVocabulary
         MaxItemsKeyword.Instance,
         MinItemsKeyword.Instance,
         UniqueItemsKeyword.Instance,
-        ContainsKeyword.Instance,
         MaxPropertiesKeyword.Instance,
         MinPropertiesKeyword.Instance,
         RequiredKeyword.Instance,
@@ -43,8 +40,6 @@ internal sealed class SchemaVocabulary : IVocabulary
         PropertiesKeyword.Instance,
         PatternPropertiesKeyword.Instance,
         DependenciesKeyword.Instance,
-        PropertyNamesKeyword.Instance,
-        ConstKeyword.Instance,
         EnumKeyword.Instance,
         TypeKeyword.Instance,
         FormatWithAssertionKeyword.Instance,
@@ -55,15 +50,15 @@ internal sealed class SchemaVocabulary : IVocabulary
     ];
 
     /// <summary>
-    /// Gets the singleton instance of the Draft 6 default vocabulary.
+    /// Gets the singleton instance of the Draft 4 default vocabulary.
     /// </summary>
     public static SchemaVocabulary DefaultInstance { get; } = new SchemaVocabulary();
 
     /// <inheritdoc/>
-    public string Uri => "http://json-schema.org/draft-06/schema#";
+    public string Uri => "http://json-schema.org/draft-04/schema#";
 
     /// <inheritdoc/>
-    public ReadOnlySpan<byte> UriUtf8 => "http://json-schema.org/draft-06/schema#"u8;
+    public ReadOnlySpan<byte> UriUtf8 => "http://json-schema.org/draft-04/schema#"u8;
 
     /// <inheritdoc/>
     public IEnumerable<IKeyword> Keywords => KeywordsBacking;
