@@ -238,18 +238,6 @@ internal static partial class CodeGeneratorExtensions
                 .AppendBlockIndent(
                 """
                 {
-                    return new(source.Select(s => new JsonObjectProperty(s.Name, s.Value)).ToImmutableList());
-                }
-                """)
-
-                .AppendSeparatorLine()
-                .AppendLineIndent("/// <inheritdoc/>")
-                .AppendIndent("public static ")
-                .Append(typeDeclaration.DotnetTypeName())
-                .AppendLine(" FromProperties(params (JsonPropertyName Name, JsonAny Value)[] source)")
-                .AppendBlockIndent(
-                """
-                {
                     return new(source.Select(s => new JsonObjectProperty(s.Name, s.Value.AsAny)).ToImmutableList());
                 }
                 """);
@@ -280,9 +268,8 @@ internal static partial class CodeGeneratorExtensions
     /// Append the <c>HasProperties()</c> method.
     /// </summary>
     /// <param name="generator">The code generator.</param>
-    /// <param name="typeDeclaration">The type declaration for which to emit the method.</param>
     /// <returns>A reference to the generator having completed the operation.</returns>
-    public static CodeGenerator AppendHasPropertiesMethod(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    public static CodeGenerator AppendHasPropertiesMethod(this CodeGenerator generator)
     {
         return generator
             .ReserveNameIfNotReserved("HasProperties")
@@ -291,7 +278,7 @@ internal static partial class CodeGeneratorExtensions
             .AppendLineIndent("public bool HasProperties()")
             .AppendLineIndent("{")
             .PushIndent()
-                .AppendConditionalWrappedBackingValueLineIndent("Backing.Object", "return ", "objectBacking", ".Count > 0")
+                .AppendConditionalWrappedBackingValueLineIndent("Backing.Object", "return ", "objectBacking", ".Count > 0;")
                 .AppendConditionalBackingValueCallbackIndent("Backing.JsonElement", "jsonElementBacking", TestEnumerable)
                 .AppendSeparatorLine()
                 .AppendLineIndent("throw new InvalidOperationException();")
@@ -312,13 +299,12 @@ internal static partial class CodeGeneratorExtensions
     /// Append the <c>HasProperty()</c> methods.
     /// </summary>
     /// <param name="generator">The code generator.</param>
-    /// <param name="typeDeclaration">The type declaration for which to emit the methods.</param>
     /// <returns>A reference to the generator having completed the operation.</returns>
-    public static CodeGenerator AppendHasPropertyMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    public static CodeGenerator AppendHasPropertyMethods(this CodeGenerator generator)
     {
         return generator
-            .ReserveNameIfNotReserved("HasProperties")
-            .AppendHasPropertyMethod("in JsonPropertyName")
+            .ReserveNameIfNotReserved("HasProperty")
+            .AppendHasPropertyForJsonPropertyNameMethod()
             .AppendHasPropertyMethod("string")
             .AppendHasPropertyMethod("ReadOnlySpan<char>")
             .AppendHasPropertyMethod("ReadOnlySpan<byte>");
@@ -334,11 +320,11 @@ internal static partial class CodeGeneratorExtensions
     {
         return generator
             .ReserveNameIfNotReserved("TryGetProperty")
-            .AppendTryGetPropertyMethod(typeDeclaration, "in JsonPropertyName")
+            .AppendTryGetPropertyForJsonPropertyNameMethod(typeDeclaration)
             .AppendTryGetPropertyMethod(typeDeclaration, "string")
             .AppendTryGetPropertyMethod(typeDeclaration, "ReadOnlySpan<char>")
             .AppendTryGetPropertyMethod(typeDeclaration, "ReadOnlySpan<byte>")
-            .AppendGenericTryGetPropertyMethod(typeDeclaration, "in JsonPropertyName")
+            .AppendGenericTryGetPropertyForJsonPropertyNameMethod(typeDeclaration)
             .AppendGenericTryGetPropertyMethod(typeDeclaration, "string")
             .AppendGenericTryGetPropertyMethod(typeDeclaration, "ReadOnlySpan<char>")
             .AppendGenericTryGetPropertyMethod(typeDeclaration, "ReadOnlySpan<byte>");
@@ -358,6 +344,152 @@ internal static partial class CodeGeneratorExtensions
         }
 
         return generator;
+    }
+
+    private static CodeGenerator AppendTryGetPropertyForJsonPropertyNameMethod(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.ObjectPropertyType() is ObjectPropertyTypeDeclaration propertyType)
+        {
+            generator
+                .AppendTryGetPropertyForJsonPropertyNameMethod(typeDeclaration, isExplicit: true)
+                .AppendTryGetPropertyForJsonPropertyNameMethod(typeDeclaration, isExplicit: false, propertyType.ReducedType.FullyQualifiedDotnetTypeName());
+        }
+        else
+        {
+            generator.AppendTryGetPropertyForJsonPropertyNameMethod(typeDeclaration, isExplicit: false);
+        }
+
+        return generator;
+    }
+
+    private static CodeGenerator AppendTryGetPropertyForJsonPropertyNameMethod(this CodeGenerator generator, TypeDeclaration typeDeclaration, bool isExplicit, string? propertyTypeName = null, bool isGenericPropertyNameType = false)
+    {
+        generator
+            .AppendSeparatorLine();
+
+        if (isExplicit)
+        {
+            generator
+                .AppendLineIndent("/// <inheritdoc />")
+                .AppendIndent("bool IJsonObject<")
+                .Append(typeDeclaration.DotnetTypeName())
+                .Append(">.");
+        }
+        else
+        {
+            if (!isGenericPropertyNameType)
+            {
+                generator
+                    .AppendBlockIndent(
+                    """
+                    /// <summary>
+                    /// Get a property.
+                    /// </summary>
+                    /// <param name="name">The name of the property.</param>
+                    /// <param name="value">The value of the property.</param>
+                    /// <returns><c>True</c> if the property was present.</returns>
+                    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+                    """);
+            }
+            else
+            {
+                generator
+                    .AppendLineIndent("/// <inheritdoc />");
+            }
+
+            generator
+                .AppendIndent("public bool ");
+        }
+
+        generator
+            .Append("TryGetProperty");
+
+        if (isGenericPropertyNameType)
+        {
+            generator
+                .Append('<')
+                .Append(propertyTypeName)
+                .Append('>');
+        }
+
+        generator
+            .Append("(in JsonPropertyName name, out ");
+
+        if (propertyTypeName is string pn)
+        {
+            generator
+                .Append(pn);
+        }
+        else
+        {
+            generator
+                .Append("JsonAny");
+        }
+
+        generator
+            .AppendLine(" value)");
+
+        if (isGenericPropertyNameType && !isExplicit)
+        {
+            generator
+                .PushIndent()
+                    .AppendIndent("where ")
+                    .Append(propertyTypeName)
+                    .Append(" : struct, IJsonValue<")
+                    .Append(propertyTypeName)
+                    .AppendLine(">")
+                .PopIndent();
+        }
+
+        generator
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendConditionalBackingValueCallbackIndent("Backing.JsonElement", "jsonElementBacking", (g, f) => TryGetPropertyFromJsonElement(g, f, propertyTypeName, isGenericPropertyNameType))
+                .AppendConditionalBackingValueCallbackIndent("Backing.Object", "objectBacking", (g, f) => TryGetPropertyFromImmutableDictionary(g, f, propertyTypeName, isGenericPropertyNameType))
+                .AppendSeparatorLine()
+                .AppendLineIndent("throw new InvalidOperationException();")
+            .PopIndent()
+            .AppendLineIndent("}");
+
+        return generator;
+
+        static void TryGetPropertyFromJsonElement(CodeGenerator generator, string fieldName, string? propertyTypeName, bool isGenericPropertyNameType)
+        {
+            generator
+                .AppendIndent("if (name.TryGetProperty(this.")
+                .Append(fieldName)
+                .AppendLine(", out JsonElement element))")
+                .AppendLineIndent("{")
+                .PushIndent();
+
+            if (isGenericPropertyNameType)
+            {
+                generator
+                    .AppendLine("#if NET8_0_OR_GREATER")
+                    .AppendIndent("value = ")
+                    .Append(propertyTypeName)
+                    .AppendLine(".FromJson(element);")
+                    .AppendLine("#else")
+                    .AppendIndent("value = JsonValueNetStandard20Extensions.FromJsonElement<")
+                    .Append(propertyTypeName)
+                    .AppendLine(">(element);")
+                    .AppendLine("#endif")
+                    .AppendSeparatorLine();
+            }
+            else
+            {
+                generator
+                    .AppendLineIndent("value = new(element);");
+            }
+
+            generator
+                .AppendLineIndent("return true;")
+                .PopIndent()
+                .AppendLineIndent("}")
+                .AppendSeparatorLine()
+                .AppendLineIndent("value = default;")
+                .AppendLineIndent("return false;");
+        }
     }
 
     private static CodeGenerator AppendTryGetPropertyMethod(this CodeGenerator generator, TypeDeclaration typeDeclaration, string propertyNameType, bool isExplicit, string? propertyTypeName = null, bool isGenericPropertyNameType = false)
@@ -445,7 +577,7 @@ internal static partial class CodeGeneratorExtensions
             .AppendLineIndent("{")
             .PushIndent()
                 .AppendConditionalBackingValueCallbackIndent("Backing.JsonElement", "jsonElementBacking", (g, f) => TryGetPropertyFromJsonElement(g, f, propertyTypeName, isGenericPropertyNameType))
-                .AppendConditionalBackingValueCallbackIndent("Backing.Object", "objectBacking", (g, f) => TryGetPropertyFromJsonAny(g, f, propertyTypeName, isGenericPropertyNameType))
+                .AppendConditionalBackingValueCallbackIndent("Backing.Object", "objectBacking", (g, f) => TryGetPropertyFromImmutableDictionary(g, f, propertyTypeName, isGenericPropertyNameType))
                 .AppendSeparatorLine()
                 .AppendLineIndent("throw new InvalidOperationException();")
             .PopIndent()
@@ -490,53 +622,53 @@ internal static partial class CodeGeneratorExtensions
                 .AppendLineIndent("value = default;")
                 .AppendLineIndent("return false;");
         }
+    }
 
-        static void TryGetPropertyFromJsonAny(CodeGenerator generator, string fieldName, string? propertyTypeName, bool isGenericPropertyNameType)
+    private static void TryGetPropertyFromImmutableDictionary(CodeGenerator generator, string fieldName, string? propertyTypeName, bool isGenericPropertyNameType)
+    {
+        generator
+            .AppendIndent("if (this.")
+            .Append(fieldName)
+            .AppendLine(".TryGetValue(name, out JsonAny result))")
+            .AppendLineIndent("{")
+            .PushIndent();
+
+        if (isGenericPropertyNameType)
         {
             generator
-                .AppendIndent("if (this.")
-                .Append(fieldName)
-                .AppendLine(".TryGetProperty(name, out JsonAny result))")
-                .AppendLineIndent("{")
-                .PushIndent();
-
-            if (isGenericPropertyNameType)
+                .AppendLine("#if NET8_0_OR_GREATER")
+                    .AppendIndent("value = ")
+                    .Append(propertyTypeName)
+                    .AppendLine(".FromAny(result);")
+                .AppendLine("#else")
+                    .AppendIndent("value = result.As<")
+                    .Append(propertyTypeName)
+                    .AppendLine(">();")
+                .AppendLine("#endif");
+        }
+        else
+        {
+            if (propertyTypeName is string ptn)
             {
                 generator
-                    .AppendLine("#if NET8_0_OR_GREATER")
-                        .AppendIndent("value = ")
-                        .Append(propertyTypeName)
-                        .AppendLine(".FromAny(result);")
-                    .AppendLine("#else")
-                        .AppendIndent("value = result.As<")
-                        .Append(propertyTypeName)
-                        .AppendLine(">();")
-                    .AppendLine("#endif");
+                    .AppendIndent("value = ")
+                    .Append(ptn)
+                    .AppendLine(".FromAny(result);");
             }
             else
             {
-                if (propertyTypeName is string ptn)
-                {
-                    generator
-                        .AppendIndent("value = ")
-                        .Append(ptn)
-                        .AppendLine(".FromAny(result);");
-                }
-                else
-                {
-                    generator
-                        .AppendLineIndent("value = new(result);");
-                }
+                generator
+                    .AppendLineIndent("value = result;");
             }
-
-            generator
-                .AppendLineIndent("return true;")
-                .PopIndent()
-                .AppendLineIndent("}")
-                .AppendSeparatorLine()
-                .AppendLineIndent("value = default;")
-                .AppendLineIndent("return false;");
         }
+
+        generator
+            .AppendLineIndent("return true;")
+            .PopIndent()
+            .AppendLineIndent("}")
+            .AppendSeparatorLine()
+            .AppendLineIndent("value = default;")
+            .AppendLineIndent("return false;");
     }
 
     private static CodeGenerator AppendGenericTryGetPropertyMethod(this CodeGenerator generator, TypeDeclaration typeDeclaration, string propertyNameType)
@@ -554,6 +686,21 @@ internal static partial class CodeGeneratorExtensions
         return generator;
     }
 
+    private static CodeGenerator AppendGenericTryGetPropertyForJsonPropertyNameMethod(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.ObjectPropertyType() is not null)
+        {
+            generator
+                .AppendTryGetPropertyForJsonPropertyNameMethod(typeDeclaration, isExplicit: true, "TValue", isGenericPropertyNameType: true);
+        }
+        else
+        {
+            generator.AppendTryGetPropertyForJsonPropertyNameMethod(typeDeclaration, isExplicit: false, "TValue", isGenericPropertyNameType: true);
+        }
+
+        return generator;
+    }
+
     private static CodeGenerator AppendHasPropertyMethod(this CodeGenerator generator, string propertyNameType)
     {
         return generator
@@ -565,7 +712,23 @@ internal static partial class CodeGeneratorExtensions
             .AppendLineIndent("{")
             .PushIndent()
                 .AppendConditionalWrappedBackingValueLineIndent("Backing.Object", "return ", "objectBacking", ".ContainsKey(name);")
-                .AppendConditionalWrappedBackingValueLineIndent("Backing.JsonElement", "return", "jsonElementBacking", ".TryGetProperty(name, out _);")
+                .AppendConditionalWrappedBackingValueLineIndent("Backing.JsonElement", "return ", "jsonElementBacking", ".TryGetProperty(name, out _);")
+                .AppendSeparatorLine()
+                .AppendLineIndent("throw new InvalidOperationException();")
+            .PopIndent()
+            .AppendLineIndent("}");
+    }
+
+    private static CodeGenerator AppendHasPropertyForJsonPropertyNameMethod(this CodeGenerator generator)
+    {
+        return generator
+            .AppendSeparatorLine()
+            .AppendLineIndent("/// <inheritdoc />")
+            .AppendLineIndent("public bool HasProperty(in JsonPropertyName name)")
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendConditionalWrappedBackingValueLineIndent("Backing.Object", "return ", "objectBacking", ".ContainsKey(name);")
+                .AppendConditionalWrappedBackingValueLineIndent("Backing.JsonElement", "return name.TryGetProperty(", "jsonElementBacking", ", out JsonElement _);")
                 .AppendSeparatorLine()
                 .AppendLineIndent("throw new InvalidOperationException();")
             .PopIndent()
@@ -657,7 +820,7 @@ internal static partial class CodeGeneratorExtensions
         }
 
         return generator
-            .AppendLine("this[JsonPropertyName name]")
+            .AppendLine("this[in JsonPropertyName name]")
             .AppendLineIndent("{")
             .PushIndent()
             .AppendLineIndent("get")

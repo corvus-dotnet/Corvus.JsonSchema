@@ -63,8 +63,8 @@ public sealed class ObjectPartial : ICodeFileBuilder
                             .AppendFromPropertiesFactoryMethods(typeDeclaration)
                             .AppendAsPropertyBackingMethod()
                             .AppendEnumerateObjectMethods(typeDeclaration)
-                            .AppendHasPropertiesMethod(typeDeclaration)
-                            .AppendHasPropertyMethods(typeDeclaration)
+                            .AppendHasPropertiesMethod()
+                            .AppendHasPropertyMethods()
                             .AppendTryGetPropertyMethods(typeDeclaration)
                         .EndClassOrStructDeclaration()
                     .EndTypeDeclarationNesting(typeDeclaration)
@@ -77,8 +77,8 @@ public sealed class ObjectPartial : ICodeFileBuilder
         static FrameworkType EmitIfIsMapObject(TypeDeclaration typeDeclaration)
         {
            return typeDeclaration.IsMapObject()
-                ? FrameworkType.NotEmitted
-                : FrameworkType.All;
+                ? FrameworkType.All
+                : FrameworkType.NotEmitted;
         }
 
         static ConditionalCodeSpecification JsonObjectType(TypeDeclaration typeDeclaration)
