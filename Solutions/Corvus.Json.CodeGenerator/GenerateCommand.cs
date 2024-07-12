@@ -83,6 +83,7 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
             // Add support for the vocabularies we are interested in.
             CodeGeneration.Draft202012.VocabularyAnalyser.RegisterAnalyser(documentResolver, vocabularyRegistry);
             CodeGeneration.Draft201909.VocabularyAnalyser.RegisterAnalyser(documentResolver, vocabularyRegistry);
+            CodeGeneration.Draft7.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
 
             // This will be our fallback vocabulary
             IVocabulary defaultVocabulary = GetFallbackVocabulary(schemaVariant);
