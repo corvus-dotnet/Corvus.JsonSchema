@@ -40,6 +40,7 @@ public static class ContainerConfiguration
             Corvus.Json.CodeGeneration.Draft7.VocabularyAnalyser.RegisterAnalyser(registry);
             Corvus.Json.CodeGeneration.Draft6.VocabularyAnalyser.RegisterAnalyser(registry);
             Corvus.Json.CodeGeneration.Draft4.VocabularyAnalyser.RegisterAnalyser(registry);
+            Corvus.Json.CodeGeneration.OpenApi30.VocabularyAnalyser.RegisterAnalyser(registry);
             return registry;
         });
 
@@ -73,7 +74,7 @@ public static class ContainerConfiguration
 
             if (scenarioContext.ScenarioInfo.ScenarioAndFeatureTags.Any(t => t == "openApi30"))
             {
-                ////return new JsonSchemaBuilderDriver(sp.GetRequiredService<IConfiguration>(), sp.GetRequiredService<JsonSchemaTypeBuilder>(), Corvus.Json.CodeGeneration.OpenApi30.VocabularyAnalyser.DefaultVocabulary, "jsonSchemaBuilderOpenApi30DriverSettings");
+                return new JsonSchemaBuilderDriver(sp.GetRequiredService<IConfiguration>(), sp.GetRequiredService<JsonSchemaTypeBuilder>(), Corvus.Json.CodeGeneration.OpenApi30.VocabularyAnalyser.DefaultVocabulary, "jsonSchemaBuilderOpenApi30DriverSettings");
             }
 
             // Default to 202012

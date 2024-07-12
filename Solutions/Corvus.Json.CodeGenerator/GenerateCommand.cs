@@ -1,5 +1,4 @@
-﻿using System.Collections.Immutable;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using Corvus.Json.CodeGeneration;
 using System.Text.Json;
@@ -86,6 +85,7 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
             CodeGeneration.Draft7.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
             CodeGeneration.Draft6.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
             CodeGeneration.Draft4.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
+            CodeGeneration.OpenApi30.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
 
             // This will be our fallback vocabulary
             IVocabulary defaultVocabulary = GetFallbackVocabulary(schemaVariant);
@@ -190,7 +190,13 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
     {
         return schemaVariant switch
         {
-            // At the moment we only support this one!
+            SchemaVariant.OpenApi30 => CodeGeneration.OpenApi30.VocabularyAnalyser.DefaultVocabulary,
+            SchemaVariant.Draft4 => CodeGeneration.Draft4.VocabularyAnalyser.DefaultVocabulary,
+            SchemaVariant.Draft6 => CodeGeneration.Draft6.VocabularyAnalyser.DefaultVocabulary,
+            SchemaVariant.Draft7 => CodeGeneration.Draft7.VocabularyAnalyser.DefaultVocabulary,
+            SchemaVariant.Draft201909 => CodeGeneration.Draft201909.VocabularyAnalyser.DefaultVocabulary,
+            SchemaVariant.Draft202012 => CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary,
+
             _ => CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary,
         };
     }
