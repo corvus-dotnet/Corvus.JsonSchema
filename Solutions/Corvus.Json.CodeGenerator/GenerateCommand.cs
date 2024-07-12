@@ -134,10 +134,8 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
 
                 currentTask = context.AddTask("Generating files", true, generatedCode.Count);
 
-                int currentCount = 0;
                 foreach (GeneratedCodeFile generatedCodeFile in generatedCode)
                 {
-                    currentCount++;
                     currentTask.Description = $"Generating {generatedCodeFile.TypeDeclaration.RelativeSchemaLocation}: {generatedCodeFile.FileName}";
                     currentTask.Increment(1);
                     try

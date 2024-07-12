@@ -198,6 +198,17 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
             NumberPartial.Instance);
 
         languageProvider.RegisterValidationHandlers(
+            ArrayValidationHandler.Instance,
+            BinaryIfValidationHandler.Instance,
+            CompositionAllOfValidationHandler.Instance,
+            CompositionAnyOfValidationHandler.Instance,
+            CompositionNotValidationHandler.Instance,
+            CompositionOneOfValidationHandler.Instance,
+            FormatValidationHandler.Instance,
+            NumberValidationHandler.Instance,
+            ObjectValidationHandler.Instance,
+            StringValidationHandler.Instance,
+            TernaryIfValidationHandler.Instance,
             TypeValidationHandler.Instance);
 
         languageProvider.RegisterNameHeuristics(
