@@ -17,7 +17,7 @@
 
   <PropertyGroup>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-    <Description>A support library for generating code from .NET types representing data types found in JSON Schema.</Description>
+    <Description>Defines the vocabulary for the OpenAPI 3.0 dialect.</Description>
   </PropertyGroup>
 
   <ItemGroup>
