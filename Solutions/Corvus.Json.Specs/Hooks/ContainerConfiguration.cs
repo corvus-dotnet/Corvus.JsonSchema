@@ -35,9 +35,9 @@ public static class ContainerConfiguration
         services.AddTransient(sp =>
         {
             VocabularyRegistry registry = new();
-            //// TODO: register the other analysers
             Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.RegisterAnalyser(sp.GetRequiredService<IDocumentResolver>(), registry);
             Corvus.Json.CodeGeneration.Draft201909.VocabularyAnalyser.RegisterAnalyser(sp.GetRequiredService<IDocumentResolver>(), registry);
+            Corvus.Json.CodeGeneration.Draft7.VocabularyAnalyser.RegisterAnalyser(registry);
             return registry;
         });
 
@@ -56,17 +56,17 @@ public static class ContainerConfiguration
 
             if (scenarioContext.ScenarioInfo.ScenarioAndFeatureTags.Any(t => t == "draft7"))
             {
-                ////return new JsonSchemaBuilderDriver(sp.GetRequiredService<IConfiguration>(), sp.GetRequiredService<JsonSchemaTypeBuilder>(), Corvus.Json.CodeGeneration.Draft7.VocabularyAnalyser.DefaultVocabulary, "jsonSchemaBuilderDraft7DriverSettings");
+                return new JsonSchemaBuilderDriver(sp.GetRequiredService<IConfiguration>(), sp.GetRequiredService<JsonSchemaTypeBuilder>(), Corvus.Json.CodeGeneration.Draft7.VocabularyAnalyser.DefaultVocabulary, "jsonSchemaBuilder7DriverSettings");
             }
 
             if (scenarioContext.ScenarioInfo.ScenarioAndFeatureTags.Any(t => t == "draft6"))
             {
-                ////return new JsonSchemaBuilderDriver(sp.GetRequiredService<IConfiguration>(), sp.GetRequiredService<JsonSchemaTypeBuilder>(), Corvus.Json.CodeGeneration.Draft6.VocabularyAnalyser.DefaultVocabulary, "jsonSchemaBuilderDraft6DriverSettings");
+                ////return new JsonSchemaBuilderDriver(sp.GetRequiredService<IConfiguration>(), sp.GetRequiredService<JsonSchemaTypeBuilder>(), Corvus.Json.CodeGeneration.Draft6.VocabularyAnalyser.DefaultVocabulary, "jsonSchemaBuilder6DriverSettings");
             }
 
             if (scenarioContext.ScenarioInfo.ScenarioAndFeatureTags.Any(t => t == "draft4"))
             {
-                ////return new JsonSchemaBuilderDriver(sp.GetRequiredService<IConfiguration>(), sp.GetRequiredService<JsonSchemaTypeBuilder>(), Corvus.Json.CodeGeneration.Draft4.VocabularyAnalyser.DefaultVocabulary, "jsonSchemaBuilderDraft4DriverSettings");
+                ////return new JsonSchemaBuilderDriver(sp.GetRequiredService<IConfiguration>(), sp.GetRequiredService<JsonSchemaTypeBuilder>(), Corvus.Json.CodeGeneration.Draft4.VocabularyAnalyser.DefaultVocabulary, "jsonSchemaBuilder4DriverSettings");
             }
 
             if (scenarioContext.ScenarioInfo.ScenarioAndFeatureTags.Any(t => t == "openApi30"))
