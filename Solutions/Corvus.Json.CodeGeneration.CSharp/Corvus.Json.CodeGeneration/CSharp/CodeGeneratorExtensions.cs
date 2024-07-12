@@ -979,7 +979,7 @@ internal static partial class CodeGeneratorExtensions
             .AppendLine(" value)")
             .AppendLineIndent("{")
             .PushIndent()
-                .AppendLineIndent("return ")
+                .AppendLineIndent("return")
                 .PushIndent()
                     .AppendBlockIndent(dotnetTypeConversion, omitLastLineEnd: true)
                 .PopIndent()
@@ -1892,8 +1892,15 @@ internal static partial class CodeGeneratorExtensions
     {
         string name = parameter.GetName(generator, isDeclaration: true);
 
+        if (!string.IsNullOrEmpty(parameter.Modifiers))
+        {
+            generator
+                .AppendIndent(parameter.Modifiers)
+                .Append(' ');
+        }
+
         return generator
-            .AppendIndent(parameter.TypeAndModifiers)
+            .AppendIndent(parameter.Type)
             .Append(' ')
             .Append(name);
     }
@@ -1910,8 +1917,15 @@ internal static partial class CodeGeneratorExtensions
     {
         string name = parameter.GetName(generator, isDeclaration: true);
 
+        if (!string.IsNullOrEmpty(parameter.Modifiers))
+        {
+            generator
+                .Append(parameter.Modifiers)
+                .Append(' ');
+        }
+
         return generator
-            .Append(parameter.TypeAndModifiers)
+            .Append(parameter.Type)
             .Append(' ')
             .Append(name);
     }

@@ -15,12 +15,14 @@ public readonly struct MethodParameter
     /// <summary>
     /// Initializes a new instance of the <see cref="MethodParameter"/> struct.
     /// </summary>
-    /// <param name="typeAndModifiers">The parameter type and modifiers.</param>
+    /// <param name="modifiers">The parameter modifiers.</param>
+    /// <param name="type">The parameter type.</param>
     /// <param name="parameterName">The specific (reserved) parameter name.</param>
     /// <param name="defaultValue">The (optional) default value for the parameter.</param>
-    public MethodParameter(string typeAndModifiers, string parameterName, string? defaultValue = null)
+    public MethodParameter(string modifiers, string type, string parameterName, string? defaultValue = null)
     {
-        this.TypeAndModifiers = typeAndModifiers;
+        this.Modifiers = modifiers;
+        this.Type = type;
         this.specificParameterName = parameterName;
         this.DefaultValue = defaultValue;
     }
@@ -28,20 +30,27 @@ public readonly struct MethodParameter
     /// <summary>
     /// Initializes a new instance of the <see cref="MethodParameter"/> struct.
     /// </summary>
-    /// <param name="typeAndModifiers">The parameter type and modifiers.</param>
+    /// <param name="modifiers">The parameter modifiers.</param>
+    /// <param name="type">The parameter type and modifiers.</param>
     /// <param name="parameterName">The specific (reserved) parameter name.</param>
     /// <param name="defaultValue">The (optional) default value for the parameter.</param>
-    public MethodParameter(string typeAndModifiers, MemberName parameterName, string? defaultValue = null)
+    public MethodParameter(string modifiers, string type, MemberName parameterName, string? defaultValue = null)
     {
-        this.TypeAndModifiers = typeAndModifiers;
+        this.Modifiers = modifiers;
+        this.Type = type;
         this.parameterMemberName = parameterName;
         this.DefaultValue = defaultValue;
     }
 
     /// <summary>
+    /// Gets the explicit modifiers.
+    /// </summary>
+    public string Modifiers { get; }
+
+    /// <summary>
     /// Gets the type and modifiers for the parameter.
     /// </summary>
-    public string TypeAndModifiers { get; }
+    public string Type { get; }
 
     /// <summary>
     /// Gets the (optional) default value for the parameter.
@@ -57,25 +66,25 @@ public readonly struct MethodParameter
     /// Implicit conversion from type, modifiers and parameter name.
     /// </summary>
     /// <param name="tuple">The tuple from which to convert.</param>
-    public static implicit operator MethodParameter((string TypeAndModifiers, string ParameterName) tuple) => new(tuple.TypeAndModifiers, tuple.ParameterName);
+    public static implicit operator MethodParameter((string TypeAndModifiers, string ParameterName) tuple) => new(string.Empty, tuple.TypeAndModifiers, tuple.ParameterName);
 
     /// <summary>
     /// Implicit conversion from type, modifiers, parameter name and default value.
     /// </summary>
     /// <param name="tuple">The tuple from which to convert.</param>
-    public static implicit operator MethodParameter((string TypeAndModifiers, string ParameterName, string DefaultValue) tuple) => new(tuple.TypeAndModifiers, tuple.ParameterName, tuple.DefaultValue);
+    public static implicit operator MethodParameter((string TypeAndModifiers, string ParameterName, string DefaultValue) tuple) => new(string.Empty, tuple.TypeAndModifiers, tuple.ParameterName, tuple.DefaultValue);
 
     /// <summary>
     /// Implicit conversion from type, modifiers and parameter name.
     /// </summary>
     /// <param name="tuple">The tuple from which to convert.</param>
-    public static implicit operator MethodParameter((string TypeAndModifiers, MemberName ParameterName) tuple) => new(tuple.TypeAndModifiers, tuple.ParameterName);
+    public static implicit operator MethodParameter((string TypeAndModifiers, MemberName ParameterName) tuple) => new(string.Empty, tuple.TypeAndModifiers, tuple.ParameterName);
 
     /// <summary>
     /// Implicit conversion from type, modifiers, parameter name and default value.
     /// </summary>
     /// <param name="tuple">The tuple from which to convert.</param>
-    public static implicit operator MethodParameter((string TypeAndModifiers, MemberName ParameterName, string DefaultValue) tuple) => new(tuple.TypeAndModifiers, tuple.ParameterName, tuple.DefaultValue);
+    public static implicit operator MethodParameter((string TypeAndModifiers, MemberName ParameterName, string DefaultValue) tuple) => new(string.Empty, tuple.TypeAndModifiers, tuple.ParameterName, tuple.DefaultValue);
 
     /// <summary>
     /// Get the name for the parameter, reserving it in the scope

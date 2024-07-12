@@ -34,6 +34,7 @@ public static partial class ValidationCodeGeneratorExtensions
                 "public static",
                 "ValidationContext",
                 methodName,
+                new("in", typeDeclaration.DotnetTypeName(), "value"),
                 ("JsonValueKind", "valueKind"),
                 ("in ValidationContext", "validationContext"),
                 ("ValidationLevel", "level", "ValidationLevel.Flag"))
@@ -159,7 +160,7 @@ public static partial class ValidationCodeGeneratorExtensions
                     .ReserveName("localResultInteger")
                     .AppendBlockIndent(
                     """
-                    ValidationContext localResultInteger = Corvus.Json.Validate.TypeInteger(valueKind, result.CreateChildContext(), level);
+                    ValidationContext localResultInteger = Corvus.Json.Validate.TypeInteger(value, result.CreateChildContext(), level);
                     if (level == ValidationLevel.Flag && localResultInteger.IsValid)
                     {
                         return validationContext;
