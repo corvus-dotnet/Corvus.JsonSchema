@@ -59,7 +59,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{2CE21CBD-4
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Corvus.Json.JsonSchema.OpenApi30", "Corvus.Json.JsonSchema.OpenApi30\Corvus.Json.JsonSchema.OpenApi30.csproj", "{0DCAAEF5-28AB-4512-BCDE-0B80906469B4}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Engines", "Engines", "{61768B8B-B9E7-4B3D-BD95-BE8358CDDDB0}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Vocabularies", "Vocabularies", "{61768B8B-B9E7-4B3D-BD95-BE8358CDDDB0}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Corvus.Json.JsonSchema.Draft4", "Corvus.Json.JsonSchema.Draft4\Corvus.Json.JsonSchema.Draft4.csproj", "{6326E721-2DFE-45C2-A30F-98D3AA5C202A}"
 EndProject
