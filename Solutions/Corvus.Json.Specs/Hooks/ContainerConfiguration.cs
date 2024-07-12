@@ -51,27 +51,27 @@ public static class ContainerConfiguration
 
             if (scenarioContext.ScenarioInfo.ScenarioAndFeatureTags.Any(t => t == "draft2019-09"))
             {
-                return new JsonSchemaBuilderDriver(sp.GetRequiredService<IConfiguration>(), sp.GetRequiredService<JsonSchemaTypeBuilder>(), Corvus.Json.CodeGeneration.Draft201909.VocabularyAnalyser.DefaultVocabulary, "jsonSchemaBuilder202012DriverSettings");
+                return new JsonSchemaBuilderDriver(sp.GetRequiredService<IConfiguration>(), sp.GetRequiredService<JsonSchemaTypeBuilder>(), Corvus.Json.CodeGeneration.Draft201909.VocabularyAnalyser.DefaultVocabulary, "jsonSchemaBuilder201909DriverSettings");
             }
 
             if (scenarioContext.ScenarioInfo.ScenarioAndFeatureTags.Any(t => t == "draft7"))
             {
-                ////return new JsonSchemaBuilderDriver(sp.GetRequiredService<IConfiguration>(), sp.GetRequiredService<JsonSchemaTypeBuilder>(), Corvus.Json.CodeGeneration.Draft7.VocabularyAnalyser.DefaultVocabulary, "jsonSchemaBuilder202012DriverSettings");
+                ////return new JsonSchemaBuilderDriver(sp.GetRequiredService<IConfiguration>(), sp.GetRequiredService<JsonSchemaTypeBuilder>(), Corvus.Json.CodeGeneration.Draft7.VocabularyAnalyser.DefaultVocabulary, "jsonSchemaBuilderDraft7DriverSettings");
             }
 
             if (scenarioContext.ScenarioInfo.ScenarioAndFeatureTags.Any(t => t == "draft6"))
             {
-                ////return new JsonSchemaBuilderDriver(sp.GetRequiredService<IConfiguration>(), sp.GetRequiredService<JsonSchemaTypeBuilder>(), Corvus.Json.CodeGeneration.Draft6.VocabularyAnalyser.DefaultVocabulary, "jsonSchemaBuilder202012DriverSettings");
+                ////return new JsonSchemaBuilderDriver(sp.GetRequiredService<IConfiguration>(), sp.GetRequiredService<JsonSchemaTypeBuilder>(), Corvus.Json.CodeGeneration.Draft6.VocabularyAnalyser.DefaultVocabulary, "jsonSchemaBuilderDraft6DriverSettings");
             }
 
             if (scenarioContext.ScenarioInfo.ScenarioAndFeatureTags.Any(t => t == "draft4"))
             {
-                ////return new JsonSchemaBuilderDriver(sp.GetRequiredService<IConfiguration>(), sp.GetRequiredService<JsonSchemaTypeBuilder>(), Corvus.Json.CodeGeneration.Draft4.VocabularyAnalyser.DefaultVocabulary, "jsonSchemaBuilder202012DriverSettings");
+                ////return new JsonSchemaBuilderDriver(sp.GetRequiredService<IConfiguration>(), sp.GetRequiredService<JsonSchemaTypeBuilder>(), Corvus.Json.CodeGeneration.Draft4.VocabularyAnalyser.DefaultVocabulary, "jsonSchemaBuilderDraft4DriverSettings");
             }
 
             if (scenarioContext.ScenarioInfo.ScenarioAndFeatureTags.Any(t => t == "openApi30"))
             {
-                ////return new JsonSchemaBuilderDriver(sp.GetRequiredService<IConfiguration>(), sp.GetRequiredService<JsonSchemaTypeBuilder>(), Corvus.Json.CodeGeneration.OpenApi30.VocabularyAnalyser.DefaultVocabulary, "jsonSchemaBuilder202012DriverSettings");
+                ////return new JsonSchemaBuilderDriver(sp.GetRequiredService<IConfiguration>(), sp.GetRequiredService<JsonSchemaTypeBuilder>(), Corvus.Json.CodeGeneration.OpenApi30.VocabularyAnalyser.DefaultVocabulary, "jsonSchemaBuilderOpenApi30DriverSettings");
             }
 
             // Default to 202012

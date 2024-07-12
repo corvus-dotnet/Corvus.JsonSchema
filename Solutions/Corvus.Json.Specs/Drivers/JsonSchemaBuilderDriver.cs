@@ -2,11 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.CodeDom.Compiler;
-using System.Collections.Immutable;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Reflection.Emit;
 
 #if NET8_0_OR_GREATER
 using System.Runtime.Loader;
@@ -21,7 +18,6 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Emit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyModel;
-using TechTalk.SpecFlow.Bindings;
 
 namespace Drivers;
 

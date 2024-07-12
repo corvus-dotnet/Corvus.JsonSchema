@@ -50,34 +50,12 @@ public class JsonSchemaRegistry(IDocumentResolver documentResolver, VocabularyRe
             throw new InvalidOperationException($"Unable to resolve the document at {basePath}");
         }
 
-        // Analyse the vocabulary for the document
-        IVocabulary vocabulary = await vocabularyRegistry.AnalyseSchema(documentRoot).ConfigureAwait(false) ?? ambientVocabulary;
-
         if (jsonSchemaPath.HasFragment)
         {
-            if (rebaseAsRoot)
-            {
-                // Switch the root to be an absolute URI
-                JsonElement newBase = JsonPointerUtilities.ResolvePointer(documentRoot, jsonSchemaPath.Fragment);
-                jsonSchemaPath = DefaultAbsoluteLocation.Apply(new JsonReference($"{Guid.NewGuid()}/Schema"));
-
-                // And add the document back to the document resolver against that root URI
-                JsonReference docref = await AddSchemaForUpdatedPathAndElement(jsonSchemaPath, newBase, vocabulary).ConfigureAwait(false);
-                return (docref, basePath);
-            }
-            else
-            {
-                // This is not a root path, so we need to construct a JSON document that references the root path instead.
-                // This will not actually be constructed, as it will be resolved to the reference type instead.
-                // It allows us to indirect through this reference as if it were a "root" type.
-                jsonSchemaPath = DefaultAbsoluteLocation.Apply(new JsonReference($"{Guid.NewGuid()}/Schema"));
-                JsonDocument referenceSchema = vocabulary.BuildReferenceSchemaInstance(jsonSchemaPath)
-                    ?? throw new InvalidOperationException("The vocabulary does not support referencing");
-                JsonReference docref = await AddSchemaForUpdatedPathAndDocument(jsonSchemaPath, referenceSchema, vocabulary).ConfigureAwait(false);
-                return (docref, basePath);
-            }
+            return await HandleEmbeddedBaseSchema(vocabularyRegistry, jsonSchemaPath, ambientVocabulary, rebaseAsRoot, basePath, documentRoot).ConfigureAwait(false);
         }
 
+        IVocabulary vocabulary = await vocabularyRegistry.AnalyseSchema(documentRoot).ConfigureAwait(false) ?? ambientVocabulary;
         if (!vocabulary.ValidateSchemaInstance(documentRoot))
         {
             // This is not a valid schema overall, so this must be an island in the schema
@@ -126,6 +104,33 @@ public class JsonSchemaRegistry(IDocumentResolver documentResolver, VocabularyRe
         static JsonDocument GetDocumentFrom(JsonElement documentRoot)
         {
             return JsonDocument.Parse(documentRoot.GetRawText());
+        }
+
+        async ValueTask<(JsonReference RootUri, JsonReference BaseReference)> HandleEmbeddedBaseSchema(VocabularyRegistry vocabularyRegistry, JsonReference jsonSchemaPath, IVocabulary ambientVocabulary, bool rebaseAsRoot, JsonReference basePath, JsonElement documentRoot)
+        {
+            JsonElement newBase = JsonPointerUtilities.ResolvePointer(documentRoot, jsonSchemaPath.Fragment);
+            IVocabulary referencedVocab = await vocabularyRegistry.AnalyseSchema(newBase).ConfigureAwait(false) ?? ambientVocabulary;
+
+            if (rebaseAsRoot)
+            {
+                // Switch the root to be an absolute URI
+                jsonSchemaPath = DefaultAbsoluteLocation.Apply(new JsonReference($"{Guid.NewGuid()}/Schema"));
+
+                // And add the document back to the document resolver against that root URI
+                JsonReference docref = await AddSchemaForUpdatedPathAndElement(jsonSchemaPath, newBase, referencedVocab).ConfigureAwait(false);
+                return (docref, basePath);
+            }
+            else
+            {
+                // This is not a root path, so we need to construct a JSON document that references the root path instead.
+                // This will not actually be constructed, as it will be resolved to the reference type instead.
+                // It allows us to indirect through this reference as if it were a "root" type.
+                jsonSchemaPath = DefaultAbsoluteLocation.Apply(new JsonReference($"{Guid.NewGuid()}/Schema"));
+                JsonDocument referenceSchema = referencedVocab.BuildReferenceSchemaInstance(jsonSchemaPath)
+                    ?? throw new InvalidOperationException("The vocabulary does not support referencing");
+                JsonReference docref = await AddSchemaForUpdatedPathAndDocument(jsonSchemaPath, referenceSchema, referencedVocab).ConfigureAwait(false);
+                return (docref, basePath);
+            }
         }
     }
 
