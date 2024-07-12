@@ -46,7 +46,7 @@ public sealed class TypeValidationHandler : KeywordValidationHandlerBase
             .AppendValidationMethodCall(
                 generator.ValidationClassName(),
                 generator.ValidationHandlerMethodName(this),
-                [generator.ValueKindIdentifierName(), generator.ResultIdentifierName(), generator.LevelIdentifierName()]);
+                ["this", generator.ValueKindIdentifierName(), generator.ResultIdentifierName(), generator.LevelIdentifierName()]);
     }
 
     /// <inheritdoc/>

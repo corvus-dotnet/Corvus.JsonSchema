@@ -42,7 +42,7 @@ internal static partial class CodeGeneratorExtensions
     }
 
     /// <summary>
-    /// Appends the <c>AsBinaryJsonNumber()</c> method.
+    /// Appends the <c>AsBinaryJsonNumber</c> property.
     /// </summary>
     /// <param name="generator">The code generator.</param>
     /// <returns>A reference to the generator having completed the operation.</returns>
@@ -53,13 +53,18 @@ internal static partial class CodeGeneratorExtensions
             .AppendLineIndent("/// <summary>")
             .AppendLineIndent("/// Gets the value as a <see cref=\"BinaryJsonNumber\"/>.")
             .AppendLineIndent("/// </summary>")
-            .AppendLineIndent("public BinaryJsonNumber AsBinaryJsonNumber()")
+            .AppendLineIndent("public BinaryJsonNumber AsBinaryJsonNumber")
             .AppendLineIndent("{")
             .PushIndent()
-                .AppendConditionalWrappedBackingValueLineIndent("Backing.Number", "return ", "numberBacking", ";")
-                .AppendConditionalWrappedBackingValueLineIndent("Backing.JsonElement", "return BinaryJsonNumber.FromJson(", "jsonElementBacking", ");")
-                .AppendSeparatorLine()
-                .AppendLineIndent("throw new InvalidOperationException()")
+                .AppendLineIndent("get")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendConditionalWrappedBackingValueLineIndent("Backing.Number", "return ", "numberBacking", ";")
+                    .AppendConditionalWrappedBackingValueLineIndent("Backing.JsonElement", "return BinaryJsonNumber.FromJson(", "jsonElementBacking", ");")
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("throw new InvalidOperationException();")
+                .PopIndent()
+                .AppendLineIndent("}")
             .PopIndent()
             .AppendLineIndent("}");
     }
@@ -156,7 +161,8 @@ internal static partial class CodeGeneratorExtensions
                              .Append('.')
                              .Append(numericValueAccessorMethodName)
                              .AppendLine("();");
-                        })
+                        },
+                        identifier: "value")
                     .AppendConditionalBackingValueCallbackIndent(
                         "Backing.Number",
                         "numberBacking",
@@ -167,7 +173,8 @@ internal static partial class CodeGeneratorExtensions
                              .Append(".CreateChecked<")
                              .Append(numericType)
                              .AppendLine(">();");
-                        })
+                        },
+                        identifier: "value")
                     .AppendSeparatorLine()
                     .AppendLineIndent("throw new InvalidOperationException();")
                 .PopIndent()
@@ -287,7 +294,7 @@ internal static partial class CodeGeneratorExtensions
             .AppendLineIndent("/// and 1 if <paramref name=\"left\"/> is greater than <paramref name=\"right\"/>.</returns>")
             .AppendIndent("public static int Compare(in ")
             .Append(typeDeclaration.DotnetTypeName())
-            .Append("lhs, in ")
+            .Append(" lhs, in ")
             .Append(typeDeclaration.DotnetTypeName())
             .AppendLine(" rhs)")
             .AppendLineIndent("{")
@@ -389,13 +396,17 @@ internal static partial class CodeGeneratorExtensions
             .AppendLineIndent("/// </summary>")
             .AppendLineIndent("/// <param name=\"value\">The value on which to operate.</param>")
             .AppendLineIndent("/// <returns>The result of the operation.</returns>")
-            .AppendIndent("public static bool operator ")
-            .Append("(in ")
+            .AppendIndent("public static ")
+            .Append(typeDeclaration.DotnetTypeName())
+            .Append(" operator ")
+            .Append(op)
+            .Append("(")
             .Append(typeDeclaration.DotnetTypeName())
             .AppendLine(" value)")
             .AppendLineIndent("{")
             .PushIndent()
-                .AppendIndent("return new(value.AsBinaryJsonNumber")
+                .AppendIndent("BinaryJsonNumber num = value.AsBinaryJsonNumber;")
+                .AppendIndent("return new(num")
                 .Append(op)
                 .AppendLine(");")
             .PopIndent()
@@ -412,10 +423,13 @@ internal static partial class CodeGeneratorExtensions
             .AppendLineIndent("/// <param name=\"left\">The left hand side of the binary operator.</param>")
             .AppendLineIndent("/// <param name=\"right\">The right hand side of the binary operator.</param>")
             .AppendLineIndent("/// <returns>The result of the operation.</returns>")
-            .AppendIndent("public static bool operator ")
-            .Append("(in ")
+            .AppendIndent("public static ")
             .Append(typeDeclaration.DotnetTypeName())
-            .Append("left, in ")
+            .Append(" operator ")
+            .Append(op)
+            .Append("(")
+            .Append(typeDeclaration.DotnetTypeName())
+            .Append(" left, ")
             .Append(typeDeclaration.DotnetTypeName())
             .AppendLine(" right)")
             .AppendLineIndent("{")
@@ -441,9 +455,9 @@ internal static partial class CodeGeneratorExtensions
             .AppendLineIndent("/// </returns>")
             .AppendIndent("public static bool operator ")
             .Append(op)
-            .Append("(in ")
+            .Append("(")
             .Append(typeDeclaration.DotnetTypeName())
-            .Append("left, in ")
+            .Append(" left, ")
             .Append(typeDeclaration.DotnetTypeName())
             .AppendLine(" right)")
             .AppendLineIndent("{")

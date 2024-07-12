@@ -108,8 +108,7 @@ internal static class TypeDeclarationExtensions
                 return arrayItemsType.ReducedType.PreferredDotnetNumericTypeName();
             }
 
-            if ((typeDeclaration.ImpliedCoreTypes() & (CoreTypes.Number | CoreTypes.Integer)) != 0 &&
-                (typeDeclaration.ImpliedCoreTypes() & ~(CoreTypes.Number | CoreTypes.Integer)) == 0)
+            if ((typeDeclaration.ImpliedCoreTypes() & (CoreTypes.Number | CoreTypes.Integer)) != 0)
             {
                 string? candidateFormat = typeDeclaration.Format();
 

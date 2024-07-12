@@ -33,6 +33,7 @@ public sealed class NumberPartial : ICodeFileBuilder
                     .AppendLine()
                     .AppendUsings(
                         "System.Diagnostics.CodeAnalysis",
+                        new("System.Numerics", FrameworkType.Net80OrGreater),
                         "System.Text.Json",
                         "Corvus.Json",
                         "Corvus.Json.Internal")
@@ -56,13 +57,13 @@ public sealed class NumberPartial : ICodeFileBuilder
                             //// We do not need to speciy CoreTypes.Integer as this simply determines the backing field to set.
                             .AppendPublicValueConstructor(typeDeclaration, "BinaryJsonNumber", CoreTypes.Number)
                             .AppendPublicNumericConstructor(typeDeclaration)
-                            .AppendImplicitConversionFromJsonValueTypeUsingConstructor(typeDeclaration, "JsonNumber", JsonValueKind.Number, "(BinaryJsonNumber)value")
+                            .AppendImplicitConversionFromJsonValueTypeUsingConstructor(typeDeclaration, "JsonNumber", JsonValueKind.Number, "value.AsBinaryJsonNumber")
                             .AppendImplicitConversionToJsonValueType(typeDeclaration, "JsonNumber", CoreTypes.Number, "value.AsNumber")
                             .AppendImplicitConversionToJsonValueType(typeDeclaration, "JsonInteger", CoreTypes.Integer, "value.As<JsonInteger>()")
                             .AppendNumericConversions(typeDeclaration)
                             .AppendNumericOperators(typeDeclaration)
-                            .AppendAsDotnetNumericValue(typeDeclaration)
                             .AppendAsBinaryJsonNumber()
+                            .AppendAsDotnetNumericValue(typeDeclaration)
                         .EndClassOrStructDeclaration()
                     .EndTypeDeclarationNesting(typeDeclaration)
                     .EndNamespace()
