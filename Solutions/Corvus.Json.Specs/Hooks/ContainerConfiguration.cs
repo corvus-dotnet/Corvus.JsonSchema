@@ -38,6 +38,7 @@ public static class ContainerConfiguration
             Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.RegisterAnalyser(sp.GetRequiredService<IDocumentResolver>(), registry);
             Corvus.Json.CodeGeneration.Draft201909.VocabularyAnalyser.RegisterAnalyser(sp.GetRequiredService<IDocumentResolver>(), registry);
             Corvus.Json.CodeGeneration.Draft7.VocabularyAnalyser.RegisterAnalyser(registry);
+            Corvus.Json.CodeGeneration.Draft6.VocabularyAnalyser.RegisterAnalyser(registry);
             return registry;
         });
 
@@ -61,7 +62,7 @@ public static class ContainerConfiguration
 
             if (scenarioContext.ScenarioInfo.ScenarioAndFeatureTags.Any(t => t == "draft6"))
             {
-                ////return new JsonSchemaBuilderDriver(sp.GetRequiredService<IConfiguration>(), sp.GetRequiredService<JsonSchemaTypeBuilder>(), Corvus.Json.CodeGeneration.Draft6.VocabularyAnalyser.DefaultVocabulary, "jsonSchemaBuilder6DriverSettings");
+                return new JsonSchemaBuilderDriver(sp.GetRequiredService<IConfiguration>(), sp.GetRequiredService<JsonSchemaTypeBuilder>(), Corvus.Json.CodeGeneration.Draft6.VocabularyAnalyser.DefaultVocabulary, "jsonSchemaBuilder6DriverSettings");
             }
 
             if (scenarioContext.ScenarioInfo.ScenarioAndFeatureTags.Any(t => t == "draft4"))

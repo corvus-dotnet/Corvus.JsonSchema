@@ -5,10 +5,10 @@
 using System.Text.Json;
 using Corvus.Json.CodeGeneration.Keywords;
 
-namespace Corvus.Json.CodeGeneration.Draft7;
+namespace Corvus.Json.CodeGeneration.Draft6;
 
 /// <summary>
-/// A vocabulary analyser for Draft 7.
+/// A vocabulary analyser for Draft 6.
 /// </summary>
 public sealed class VocabularyAnalyser : IVocabularyAnalyser
 {
