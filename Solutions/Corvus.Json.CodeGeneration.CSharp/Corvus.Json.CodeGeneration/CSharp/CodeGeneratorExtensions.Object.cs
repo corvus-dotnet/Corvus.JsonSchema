@@ -2,6 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Xml.Linq;
+
 namespace Corvus.Json.CodeGeneration.CSharp;
 
 /// <summary>
@@ -24,7 +26,7 @@ internal static partial class CodeGeneratorExtensions
             /// <inheritdoc/>
             public ImmutableList<JsonObjectProperty> AsPropertyBacking()
             {
-                return __CorvusObjectHelpers.GetPropertyBacking();
+                return __CorvusObjectHelpers.GetPropertyBacking(this);
             }
             """);
     }
@@ -330,6 +332,234 @@ internal static partial class CodeGeneratorExtensions
             .AppendGenericTryGetPropertyMethod(typeDeclaration, "ReadOnlySpan<byte>");
     }
 
+    /// <summary>
+    /// Append the <c>RemoveProperty()</c> methods.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to emit the methods.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendRemovePropertyMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        return generator
+            .ReserveNameIfNotReserved("RemoveProperty")
+            .AppendRemovePropertyMethod(typeDeclaration, "in JsonPropertyName")
+            .AppendRemovePropertyMethod(typeDeclaration, "string")
+            .AppendRemovePropertyMethod(typeDeclaration, "ReadOnlySpan<char>")
+            .AppendRemovePropertyMethod(typeDeclaration, "ReadOnlySpan<byte>");
+    }
+
+    /// <summary>
+    /// Append the <c>SetProperty()</c> methods.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to emit the methods.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendSetPropertyMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        generator
+            .ReserveNameIfNotReserved("SetProperty");
+
+        if (typeDeclaration.ObjectPropertyType() is ObjectPropertyTypeDeclaration propertyType)
+        {
+            generator
+                .AppendSetPropertyMethod(typeDeclaration, "TValue", isGeneric: true, isExplicit: true)
+                .AppendSetPropertyMethod(typeDeclaration, propertyType.ReducedType.FullyQualifiedDotnetTypeName());
+        }
+        else
+        {
+            generator
+                .AppendSetPropertyMethod(typeDeclaration, "TValue", isGeneric: true, isExplicit: false);
+        }
+
+        return generator;
+    }
+
+    /// <summary>
+    /// Append the <c>__CorvusObjectHelpers</c> class.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to emit the helper class.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendCorvusObjectHelpers(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        return generator
+            .ReserveNameIfNotReserved("__CorvusObjectHelpers")
+            .AppendSeparatorLine()
+            .AppendLineIndent("private static class __CorvusObjectHelpers")
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendBlockIndent(
+                """
+                /// <summary>
+                /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object.
+                /// </summary>
+                /// <returns>An immutable list of <see cref="JsonAny"/> built from the object.</returns>
+                /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+                """)
+                .AppendIndent("public static ImmutableList<JsonObjectProperty> GetPropertyBacking(in ")
+                .Append(typeDeclaration.DotnetTypeName())
+                .AppendLine(" that)")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendConditionalWrappedBackingValueLineIndent("Backing.Object", "return ", "objectBacking", ";", identifier: "that")
+                    .AppendConditionalWrappedBackingValueLineIndent(
+                        "Backing.JsonElement",
+                        "return PropertyBackingBuilders.GetPropertyBackingBuilder(",
+                        "jsonElementBacking",
+                        ").ToImmutable();",
+                        identifier: "that")
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("throw new InvalidOperationException();")
+                .PopIndent()
+                .AppendLineIndent("}")
+                .AppendGetPropertyBackingWithout(typeDeclaration.DotnetTypeName(), "in JsonPropertyName")
+                .AppendGetPropertyBackingWithout(typeDeclaration.DotnetTypeName(), "ReadOnlySpan<char>")
+                .AppendGetPropertyBackingWithout(typeDeclaration.DotnetTypeName(), "ReadOnlySpan<byte>")
+                .AppendGetPropertyBackingWithout(typeDeclaration.DotnetTypeName(), "string")
+                .AppendGetPropertyBackingWith(typeDeclaration.DotnetTypeName(), "in JsonPropertyName")
+            .PopIndent()
+            .AppendLineIndent("}");
+    }
+
+    private static CodeGenerator AppendGetPropertyBackingWithout(this CodeGenerator generator, string dotnetTypeName, string parameterNameAndModifiers)
+    {
+        return generator
+            .AppendSeparatorLine()
+            .AppendBlockIndent(
+            """
+            /// <summary>
+            /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
+            /// </summary>
+            /// <returns>An immutable dictionary builder of <see cref="JsonPropertyName"/> to <see cref="JsonAny"/>, built from the existing object, without the given property.</returns>
+            /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+            """)
+            .AppendIndent("public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in ")
+            .Append(dotnetTypeName)
+            .Append(" that, ")
+            .Append(parameterNameAndModifiers)
+            .AppendLine(" name)")
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendConditionalWrappedBackingValueLineIndent("Backing.Object", "return ", "objectBacking", ".Remove(name);", identifier: "that")
+                .AppendConditionalWrappedBackingValueLineIndent(
+                    "Backing.JsonElement",
+                    "return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(",
+                    "jsonElementBacking",
+                    ", name).ToImmutable();",
+                    identifier: "that")
+                .AppendSeparatorLine()
+                .AppendLineIndent("throw new InvalidOperationException();")
+            .PopIndent()
+            .AppendLineIndent("}");
+    }
+
+    private static CodeGenerator AppendGetPropertyBackingWith(this CodeGenerator generator, string dotnetTypeName, string parameterNameAndModifiers)
+    {
+        return generator
+            .AppendSeparatorLine()
+            .AppendBlockIndent(
+            """
+            /// <summary>
+            /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
+            /// </summary>
+            /// <returns>An immutable dictionary builder of <see cref="JsonPropertyName"/> to <see cref="JsonAny"/>, built from the existing object, with the given property.</returns>
+            /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+            """)
+            .AppendIndent("public static ImmutableList<JsonObjectProperty> GetPropertyBackingWith(in ")
+            .Append(dotnetTypeName)
+            .Append(" that, ")
+            .Append(parameterNameAndModifiers)
+            .AppendLine(" name, in JsonAny value)")
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendConditionalWrappedBackingValueLineIndent("Backing.Object", "return ", "objectBacking", ".SetItem(name, value);", identifier: "that")
+                .AppendConditionalWrappedBackingValueLineIndent(
+                    "Backing.JsonElement",
+                    "return PropertyBackingBuilders.GetPropertyBackingBuilderReplacing(",
+                    "jsonElementBacking",
+                    ", name, value).ToImmutable();",
+                    identifier: "that")
+                .AppendSeparatorLine()
+                .AppendLineIndent("throw new InvalidOperationException();")
+            .PopIndent()
+            .AppendLineIndent("}");
+    }
+
+    private static CodeGenerator AppendSetPropertyMethod(this CodeGenerator generator, TypeDeclaration typeDeclaration, string propertyTypeName, bool isGeneric = false, bool isExplicit = false)
+    {
+        if (isGeneric)
+        {
+            generator.AppendLineIndent("/// <inheritdoc");
+        }
+        else
+        {
+            generator
+                .AppendBlockIndent(
+                """
+                /// <summary>
+                /// Sets the given property value.
+                /// </summary>
+                /// <param name="name">The name of the property.</param>
+                /// <param name="value">The value of the property.</param>
+                /// <returns>The instance with the property set.</returns>
+                """);
+        }
+
+        if (!isExplicit)
+        {
+            generator
+                .Append("public ");
+        }
+
+        generator
+            .AppendIndent(typeDeclaration.DotnetTypeName());
+
+        if (isExplicit)
+        {
+            generator
+                .Append(" IJsonObject<")
+                .Append(typeDeclaration.DotnetTypeName())
+                .Append(">.");
+        }
+        else
+        {
+            generator
+                .Append(' ');
+        }
+
+        generator
+            .Append("SetProperty");
+
+        if (isGeneric)
+        {
+            generator
+                .Append('<')
+                .Append(propertyTypeName)
+                .Append('>');
+        }
+
+        generator
+            .Append("(in JsonPropertyName name, ")
+            .Append(propertyTypeName)
+            .AppendLine(" value)");
+
+        if (isGeneric && !isExplicit)
+        {
+            generator
+                .PushIndent()
+                .AppendIndent("where ")
+                .Append(propertyTypeName)
+                .AppendLine(" : struct, IJsonValue");
+        }
+
+        return generator
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendLineIndent("return new(__CorvusObjectHelpers.GetPropertyBackingWith(this, name, value.AsAny));")
+            .PopIndent()
+            .AppendLineIndent("}");
+    }
+
     private static CodeGenerator AppendTryGetPropertyMethod(this CodeGenerator generator, TypeDeclaration typeDeclaration, string propertyNameType)
     {
         if (typeDeclaration.ObjectPropertyType() is ObjectPropertyTypeDeclaration propertyType)
@@ -360,6 +590,23 @@ internal static partial class CodeGeneratorExtensions
         }
 
         return generator;
+    }
+
+    private static CodeGenerator AppendRemovePropertyMethod(this CodeGenerator generator, TypeDeclaration typeDeclaration, string parameterTypeAndModifier)
+    {
+        return generator
+            .AppendSeparatorLine()
+            .AppendLineIndent("/// <inheritdoc/")
+            .AppendIndent("public ")
+            .Append(typeDeclaration.DotnetTypeName())
+            .Append(" RemoveProperty(")
+            .Append(parameterTypeAndModifier)
+            .AppendLine(" name)")
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendLineIndent("return new(__CorvusObjectHelpers.GetPropertyBackingWithout(this, name));")
+            .PopIndent()
+            .AppendLineIndent("}");
     }
 
     private static CodeGenerator AppendTryGetPropertyForJsonPropertyNameMethod(this CodeGenerator generator, TypeDeclaration typeDeclaration, bool isExplicit, string? propertyTypeName = null, bool isGenericPropertyNameType = false)
