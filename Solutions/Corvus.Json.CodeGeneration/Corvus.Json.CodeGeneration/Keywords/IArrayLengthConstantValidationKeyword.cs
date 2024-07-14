@@ -9,16 +9,8 @@ namespace Corvus.Json.CodeGeneration;
 /// <summary>
 /// Validates array lengths against a constant.
 /// </summary>
-public interface IArrayLengthConstantValidationKeyword : IValidationConstantProviderKeyword
+public interface IArrayLengthConstantValidationKeyword : IIntegerConstantValidationKeyword
 {
-    /// <summary>
-    /// Gets the operator to use for the comparison.
-    /// </summary>
-    /// <param name="typeDeclaration">The type declaration to test.</param>
-    /// <param name="op">The resulting operator.</param>
-    /// <returns><see langword="true"/> if the operator was retrieved.</returns>
-    bool TryGetOperator(TypeDeclaration typeDeclaration, [NotNullWhen(true)] out Operator op);
-
     /// <summary>
     /// Gets the value for comparison.
     /// </summary>

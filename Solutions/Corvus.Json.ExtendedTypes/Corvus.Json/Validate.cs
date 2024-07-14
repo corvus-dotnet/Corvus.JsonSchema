@@ -2988,10 +2988,17 @@ public static partial class Validate
             }
 
             return true;
+        }
+    }
 
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            static int CountRunes(ReadOnlySpan<char> str)
-            {
+    /// <summary>
+    /// Count the runes in a <see cref="ReadOnlySpan{Char}"/>.
+    /// </summary>
+    /// <param name="str">The string in which to count the runes.</param>
+    /// <returns>The rune count for the string.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int CountRunes(ReadOnlySpan<char> str)
+    {
 #if NET8_0_OR_GREATER
                 int length = 0;
                 SpanRuneEnumerator enumerator = str.EnumerateRunes();
@@ -3002,10 +3009,8 @@ public static partial class Validate
 
                 return length;
 #else
-                return StringInfo.GetTextLengthInRunes(str);
+        return StringInfo.GetTextLengthInRunes(str);
 #endif
-            }
-        }
     }
 
     /// <summary>
@@ -3931,20 +3936,39 @@ public static partial class Validate
 #endif
 
 #if NET8_0_OR_GREATER
-    private readonly record struct ValidationContextWrapper(in ValidationContext Context, ValidationLevel Level);
+    /// <summary>
+    /// A wrapper for the <see cref="ValidationContext"/> and <see cref="ValidationLevel"/>.
+    /// </summary>
+    /// <param name="Context">The validation context.</param>
+    /// <param name="Level">The validation level.</param>
+    public readonly record struct ValidationContextWrapper(in ValidationContext Context, ValidationLevel Level);
 
     private readonly record struct StringValidationContextWrapper(in ValidationContext Context, ValidationLevel Level, int? MinLength, int? MaxLength, Regex? Pattern);
 #else
-    private readonly struct ValidationContextWrapper
+    /// <summary>
+    /// A wrapper for the <see cref="ValidationContext"/> and <see cref="ValidationLevel"/>.
+    /// </summary>
+    public readonly struct ValidationContextWrapper
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ValidationContextWrapper"/> struct.
+        /// </summary>
+        /// <param name="context">The validation context.</param>
+        /// <param name="level">The validation level.</param>
         public ValidationContextWrapper(in ValidationContext context, ValidationLevel level)
         {
             this.Context = context;
             this.Level = level;
         }
 
+        /// <summary>
+        /// Gets the validation context.
+        /// </summary>
         public ValidationContext Context { get; }
 
+        /// <summary>
+        /// Gets the validation level.
+        /// </summary>
         public ValidationLevel Level { get; }
     }
 
