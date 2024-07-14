@@ -112,6 +112,22 @@ public static partial class ValidationCodeGeneratorExtensions
         return generator;
     }
 
+    private static CodeGenerator AppendIntegerValidationConstantField(this CodeGenerator generator, IKeyword keyword, int? index, in JsonElement value)
+    {
+        Debug.Assert(value.ValueKind == JsonValueKind.Number, "The value must be a number.");
+
+        string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString());
+
+        generator
+            .AppendIndent("public static readonly long ")
+            .Append(memberName)
+            .Append(" = ")
+            .AppendIntegerLiteral(value)
+            .AppendLine(";");
+
+        return generator;
+    }
+
     private static CodeGenerator AppendStringValidationConstantField(this CodeGenerator generator, IKeyword keyword, int? index, in JsonElement value)
     {
         Debug.Assert(value.ValueKind == JsonValueKind.String, "The value must be a string.");
@@ -276,7 +292,15 @@ public static partial class ValidationCodeGeneratorExtensions
                             break;
 
                         case JsonValueKind.Number:
-                            generator.AppendNumberValidationConstantField(constant.Key, i, value);
+                            if (constant.Key is IIntegerConstantValidationKeyword)
+                            {
+                                generator.AppendIntegerValidationConstantField(constant.Key, i, value);
+                            }
+                            else
+                            {
+                                generator.AppendNumberValidationConstantField(constant.Key, i, value);
+                            }
+
                             break;
 
                         case JsonValueKind.Object:

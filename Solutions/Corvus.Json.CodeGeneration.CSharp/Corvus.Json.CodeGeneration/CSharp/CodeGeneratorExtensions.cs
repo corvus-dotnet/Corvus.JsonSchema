@@ -14,6 +14,176 @@ namespace Corvus.Json.CodeGeneration.CSharp;
 internal static partial class CodeGeneratorExtensions
 {
     /// <summary>
+    /// Appends the relevant operator.
+    /// </summary>
+    /// <param name="generator">The generator to which to append the operator.</param>
+    /// <param name="op">The operator to append.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendOperator(this CodeGenerator generator, Operator op)
+    {
+        switch (op)
+        {
+            case Operator.Equals:
+                return generator.Append("==");
+            case Operator.NotEquals:
+                return generator.Append("!=");
+            case Operator.LessThan:
+                return generator.Append("<");
+            case Operator.LessThanOrEquals:
+                return generator.Append("<=");
+            case Operator.GreaterThan:
+                return generator.Append(">");
+            case Operator.GreaterThanOrEquals:
+                return generator.Append(">=");
+            default:
+                Debug.Fail($"Unexpected operator {op}");
+                return generator;
+        }
+    }
+
+    /// <summary>
+    /// Appends the text for the relevant operator.
+    /// </summary>
+    /// <param name="generator">The generator to which to append the operator.</param>
+    /// <param name="op">The operator to append.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendTextForOperator(this CodeGenerator generator, Operator op)
+    {
+        switch (op)
+        {
+            case Operator.Equals:
+                return generator.Append("equals");
+            case Operator.NotEquals:
+                return generator.Append("does not equal");
+            case Operator.LessThan:
+                return generator.Append("is less than");
+            case Operator.LessThanOrEquals:
+                return generator.Append("is less than or equal to");
+            case Operator.GreaterThan:
+                return generator.Append("is greater than");
+            case Operator.GreaterThanOrEquals:
+                return generator.Append("is greater than or equal to");
+            default:
+                Debug.Fail($"Unexpected operator {op}");
+                return generator;
+        }
+    }
+
+    /// <summary>
+    /// Appends the text for the inverse of the relevant operator.
+    /// </summary>
+    /// <param name="generator">The generator to which to append the text.</param>
+    /// <param name="op">The operator for which to append the text.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    /// <remarks>
+    /// This is commonly used for failure cases.
+    /// </remarks>
+    public static CodeGenerator AppendTextForInverseOperator(this CodeGenerator generator, Operator op)
+    {
+        switch (op)
+        {
+            case Operator.Equals:
+                return generator.Append("does not equal");
+            case Operator.NotEquals:
+                return generator.Append("equals");
+            case Operator.LessThan:
+                return generator.Append("is greater than or equal to");
+            case Operator.LessThanOrEquals:
+                return generator.Append("is greater than");
+            case Operator.GreaterThan:
+                return generator.Append("is less than or equal to");
+            case Operator.GreaterThanOrEquals:
+                return generator.Append("is less than");
+            default:
+                Debug.Fail($"Unexpected operator {op}");
+                return generator;
+        }
+    }
+
+    /// <summary>
+    /// Append the validation result for a keyword.
+    /// </summary>
+    /// <param name="generator">The generator to which to append the ignored keyword validation code.</param>
+    /// <param name="isValid">Whether the result should be valid.</param>
+    /// <param name="keyword">The keyword that has been ignored.</param>
+    /// <param name="validationContextIdentifier">The identifier for the validation context to update.</param>
+    /// <param name="reasonText">The reason for ignoring the keyword.</param>
+    /// <param name="useInterpolatedString">If <see langword="true"/>, then the message string will be an interpolated string.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendKeywordValidationResult(
+        this CodeGenerator generator,
+        bool isValid,
+        IKeyword keyword,
+        string validationContextIdentifier,
+        string reasonText,
+        bool useInterpolatedString = false)
+    {
+        generator
+            .AppendIndent(validationContextIdentifier)
+            .Append(" = ")
+            .Append(validationContextIdentifier)
+            .Append(".WithResult(isValid: ")
+            .Append(isValid ? "true" : "false")
+            .Append(", ");
+
+        if (useInterpolatedString)
+        {
+            generator
+                .Append('$');
+        }
+
+        return generator
+            .Append("\"Validation ")
+            .Append(keyword.Keyword)
+            .Append(" - ")
+            .Append(SymbolDisplay.FormatLiteral(reasonText, false))
+            .AppendLine("\");");
+    }
+
+    /// <summary>
+    /// Append the validation result for a keyword.
+    /// </summary>
+    /// <param name="generator">The generator to which to append the keyword validation code.</param>
+    /// <param name="isValid">Whether the result should be valid.</param>
+    /// <param name="keyword">The keyword that has been ignored.</param>
+    /// <param name="validationContextIdentifier">The identifier for the validation context to update.</param>
+    /// <param name="appendReasonText">An function which will append the validation reason to the (optionally interpolated) string for the keyword.</param>
+    /// <param name="useInterpolatedString">If <see langword="true"/>, then the message string will be an interpolated string.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendKeywordValidationResult(
+        this CodeGenerator generator,
+        bool isValid,
+        IKeyword keyword,
+        string validationContextIdentifier,
+        Action<CodeGenerator> appendReasonText,
+        bool useInterpolatedString = false)
+    {
+        generator
+            .AppendIndent(validationContextIdentifier)
+            .Append(" = ")
+            .Append(validationContextIdentifier)
+            .Append(".WithResult(isValid: ")
+            .Append(isValid ? "true" : "false")
+            .Append(", ");
+
+        if (useInterpolatedString)
+        {
+            generator
+                .Append('$');
+        }
+
+        generator
+            .Append("\"Validation ")
+            .Append(keyword.Keyword)
+            .Append(" - ");
+
+        appendReasonText(generator);
+
+        return generator
+            .AppendLine("\");");
+    }
+
+    /// <summary>
     /// Append using statements for the given namespaces.
     /// </summary>
     /// <param name="generator">The generator to which to append usings.</param>
@@ -1896,11 +2066,16 @@ internal static partial class CodeGeneratorExtensions
         {
             generator
                 .AppendIndent(parameter.Modifiers)
-                .Append(' ');
+                .Append(' ')
+                .Append(parameter.Type);
+        }
+        else
+        {
+            generator
+                .AppendIndent(parameter.Type);
         }
 
         return generator
-            .AppendIndent(parameter.Type)
             .Append(' ')
             .Append(name);
     }
@@ -2012,6 +2187,32 @@ internal static partial class CodeGeneratorExtensions
         {
             // Fall back to a decimal if we can't process the value with a double.
             generator.Append("M");
+        }
+
+        return generator;
+    }
+
+    /// <summary>
+    /// Append an integer string.
+    /// </summary>
+    /// <param name="generator">The generator to which to append the numeric string.</param>
+    /// <param name="value">The numeric value to append.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendIntegerLiteral(this CodeGenerator generator, in JsonElement value)
+    {
+        Debug.Assert(value.ValueKind == JsonValueKind.Number, "The value must be a number.");
+
+        if (value.TryGetInt64(out long result))
+        {
+            generator.Append(result);
+        }
+        else if (value.TryGetDouble(out double resultD))
+        {
+            double roundedResult = Math.Round(resultD);
+            if (roundedResult == resultD)
+            {
+                generator.Append((long)roundedResult);
+            }
         }
 
         return generator;
