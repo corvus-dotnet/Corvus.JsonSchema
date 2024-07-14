@@ -40,7 +40,11 @@ public sealed class CorePartial : ICodeFileBuilder
                 .BeginTypeDeclarationNesting(typeDeclaration)
                     .AppendDocumentation(typeDeclaration)
                     .AppendJsonConverterAttribute(typeDeclaration)
-                    .BeginPublicReadonlyPartialStructDeclaration(typeDeclaration.DotnetTypeName())
+                    .BeginPublicReadonlyPartialStructDeclaration(
+                        typeDeclaration.DotnetTypeName(),
+                        interfaces: [
+                            JsonNullType(typeDeclaration)
+                            ])
                         .AppendBackingFields(typeDeclaration.ImpliedCoreTypes())
                         .AppendPublicDefaultConstructor(typeDeclaration)
                         .AppendPublicJsonElementConstructor(typeDeclaration)
@@ -90,5 +94,13 @@ public sealed class CorePartial : ICodeFileBuilder
     private static bool RequiresImmutableCollections(TypeDeclaration typeDeclaration)
     {
         return (typeDeclaration.ImpliedCoreTypes() & (CoreTypes.Array | CoreTypes.Object)) != 0;
+    }
+
+    private static ConditionalCodeSpecification JsonNullType(TypeDeclaration typeDeclaration)
+    {
+        bool isNull = (typeDeclaration.ImpliedCoreTypes() & CoreTypes.Null) != 0 && typeDeclaration.ImpliedCoreTypes().CountTypes() == 1;
+        return new(
+            g => g.GenericTypeOf("IJsonValue", typeDeclaration),
+            isNull ? FrameworkType.All : FrameworkType.NotEmitted);
     }
 }
