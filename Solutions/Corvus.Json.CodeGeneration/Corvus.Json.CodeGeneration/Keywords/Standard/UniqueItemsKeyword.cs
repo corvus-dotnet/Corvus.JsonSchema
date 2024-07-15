@@ -9,7 +9,7 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 /// <summary>
 /// The uniqueItems keyword.
 /// </summary>
-public sealed class UniqueItemsKeyword : IArrayValidationKeyword
+public sealed class UniqueItemsKeyword : IUniqueItemsArrayValidationKeyword
 {
     private const string KeywordPath = "#/uniqueItems";
     private static readonly JsonReference KeywordPathReference = new(KeywordPath);
@@ -43,4 +43,16 @@ public sealed class UniqueItemsKeyword : IArrayValidationKeyword
 
     /// <inheritdoc/>
     public bool RequiresItemsEvaluationTracking(TypeDeclaration typeDeclaration) => false;
+
+    /// <inheritdoc/>
+    public bool RequiresArrayEnumeration(TypeDeclaration typeDeclaration) => this.RequiresUniqueItems(typeDeclaration);
+
+    /// <inheritdoc/>
+    public bool RequiresArrayLength(TypeDeclaration typeDeclaration) => false;
+
+    /// <inheritdoc/>
+    public bool RequiresUniqueItems(TypeDeclaration typeDeclaration)
+    {
+        return typeDeclaration.TryGetKeyword(this, out JsonElement value) && value.ValueKind == JsonValueKind.True;
+    }
 }

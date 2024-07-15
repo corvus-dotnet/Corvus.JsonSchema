@@ -30,7 +30,7 @@ public class StringValidationHandler : KeywordValidationHandlerBase
     /// <summary>
     /// Gets a singleton instance of the <see cref="StringValidationHandler"/>.
     /// </summary>
-    public static StringValidationHandler Instance { get; } = new();
+    public static StringValidationHandler Instance { get; } = CreateDefault();
 
     /// <inheritdoc/>
     public override uint ValidationHandlerPriority => ValidationPriorities.Default;
@@ -65,4 +65,13 @@ public class StringValidationHandler : KeywordValidationHandlerBase
 
     /// <inheritdoc/>
     public override bool HandlesKeyword(IKeyword keyword) => keyword is IStringValidationKeyword;
+
+    private static StringValidationHandler CreateDefault()
+    {
+        var result = new StringValidationHandler();
+        result
+            .RegisterChildHandlers(
+                StringLengthValidationHandler.Instance);
+        return result;
+    }
 }

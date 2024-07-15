@@ -69,6 +69,12 @@ public sealed class PrefixItemsKeyword
     public bool RequiresItemsEvaluationTracking(TypeDeclaration typeDeclaration) => false;
 
     /// <inheritdoc/>
+    public bool RequiresArrayLength(TypeDeclaration typeDeclaration) => false;
+
+    /// <inheritdoc/>
+    public bool RequiresArrayEnumeration(TypeDeclaration typeDeclaration) => typeDeclaration.HasKeyword(this);
+
+    /// <inheritdoc/>
     public IReadOnlyCollection<TypeDeclaration> GetSubschemaTypeDeclarations(TypeDeclaration typeDeclaration)
     {
         return typeDeclaration.SubschemaTypeDeclarations.Where(t => t.Key.StartsWith(KeywordPath)).Select(t => t.Value).ToList();

@@ -206,6 +206,8 @@ internal static partial class CodeGeneratorExtensions
                                 "Backing.Array",
                                 "arrayBacking",
                                 (g, f) => AppendArrayTupleAccessor(g, f, i, tupleItem.FullyQualifiedDotnetTypeName()))
+                            .AppendSeparatorLine()
+                            .AppendLineIndent("return default;")
                         .PopIndent()
                         .AppendLineIndent("}")
                     .PopIndent()
@@ -222,7 +224,7 @@ internal static partial class CodeGeneratorExtensions
                 .Append(fieldName)
                 .Append("[")
                 .Append(index)
-                .AppendLine(")]);");
+                .AppendLine("]);");
         }
 
         static void AppendArrayTupleAccessor(CodeGenerator generator, string fieldName, int index, string itemsTypeName)

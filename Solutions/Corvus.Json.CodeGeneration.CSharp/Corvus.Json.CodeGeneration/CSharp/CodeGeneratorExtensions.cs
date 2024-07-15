@@ -2935,6 +2935,33 @@ internal static partial class CodeGeneratorExtensions
     }
 
     /// <summary>
+    /// Gets a unique name for a variable.
+    /// </summary>
+    /// <param name="generator">The generator from which to get the name.</param>
+    /// <param name="baseName">The base name.</param>
+    /// <param name="childScope">The (optional) child scope from the root scope.</param>
+    /// <param name="rootScope">The (optional) root scope overriding the current scope.</param>
+    /// <param name="prefix">The (optional) prefix for the name.</param>
+    /// <param name="suffix">The (optional) suffix for the name.</param>
+    /// <returns>A unique name in the scope.</returns>
+    public static string GetUniqueVariableNameInScope(
+        this CodeGenerator generator,
+        string baseName,
+        string? childScope = null,
+        string? rootScope = null,
+        string? prefix = null,
+        string? suffix = null)
+    {
+        return generator.GetUniqueMemberName(
+            new CSharpMemberName(
+                generator.GetChildScope(childScope, rootScope),
+                baseName,
+                Casing.CamelCase,
+                prefix,
+                suffix));
+    }
+
+    /// <summary>
     /// Gets the name for a type.
     /// </summary>
     /// <param name="generator">The generator from which to get the name.</param>

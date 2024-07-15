@@ -15,4 +15,18 @@ public interface IArrayValidationKeyword : IValueKindValidationKeyword
     /// <param name="typeDeclaration">The type declaration to test.</param>
     /// <returns><see langword="true"/> if the keyword requires items evaluations to be tracked.</returns>
     bool RequiresItemsEvaluationTracking(TypeDeclaration typeDeclaration);
+
+    /// <summary>
+    /// Gets a value indicating whether the keyword requires the array length.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration to test.</param>
+    /// <returns><see langword="true"/> if the keyword requires the array length.</returns>
+    bool RequiresArrayLength(TypeDeclaration typeDeclaration);
+
+    /// <summary>
+    /// Gets a value indicating whether the keyword requires array enumeration.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration to test.</param>
+    /// <returns><see langword="true"/> if the keyword requires array enumeration.</returns>
+    bool RequiresArrayEnumeration(TypeDeclaration typeDeclaration);
 }

@@ -1,4 +1,4 @@
-﻿// <copyright file="StringLengthValidationHandler.cs" company="Endjin Limited">
+﻿// <copyright file="ArrayLengthValidationHandler.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
@@ -7,12 +7,12 @@ namespace Corvus.Json.CodeGeneration.CSharp;
 /// <summary>
 /// A string length validation handler.
 /// </summary>
-public class StringLengthValidationHandler : IChildValidationHandler
+public class ArrayLengthValidationHandler : IChildArrayItemValidationHandler
 {
     /// <summary>
-    /// Gets the singleton instance of the <see cref="StringLengthValidationHandler"/>.
+    /// Gets the singleton instance of the <see cref="ArrayLengthValidationHandler"/>.
     /// </summary>
-    public static StringLengthValidationHandler Instance { get; } = new();
+    public static ArrayLengthValidationHandler Instance { get; } = new();
 
     /// <inheritdoc/>
     public uint ValidationHandlerPriority { get; } = ValidationPriorities.Default;
@@ -24,9 +24,15 @@ public class StringLengthValidationHandler : IChildValidationHandler
     }
 
     /// <inheritdoc/>
+    public CodeGenerator AppendArrayItemValidationCode(CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        return generator;
+    }
+
+    /// <inheritdoc/>
     public CodeGenerator AppendValidationCode(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
-        foreach (IStringLengthConstantValidationKeyword keyword in typeDeclaration.Keywords().OfType<IStringLengthConstantValidationKeyword>())
+        foreach (IArrayLengthConstantValidationKeyword keyword in typeDeclaration.Keywords().OfType<IArrayLengthConstantValidationKeyword>())
         {
             if (!keyword.TryGetOperator(typeDeclaration, out Operator op) || op == Operator.None)
             {
@@ -45,7 +51,7 @@ public class StringLengthValidationHandler : IChildValidationHandler
                 .AppendLine(")")
                 .AppendLineIndent("{")
                 .PushIndent()
-                    .AppendLineIndent("if (context.Level == ValidationLevel.Verbose)")
+                    .AppendLineIndent("if (level == ValidationLevel.Verbose)")
                     .AppendLineIndent("{")
                     .PushIndent()
                         .AppendKeywordValidationResult(isValid: true, keyword, "result", g => GetValidMessage(g, op, memberName), useInterpolatedString: true)
@@ -56,13 +62,13 @@ public class StringLengthValidationHandler : IChildValidationHandler
                 .AppendLineIndent("else")
                 .AppendLineIndent("{")
                 .PushIndent()
-                    .AppendLineIndent("if (context.Level >= ValidationLevel.Detailed)")
+                    .AppendLineIndent("if (level >= ValidationLevel.Detailed)")
                     .AppendLineIndent("{")
                     .PushIndent()
                         .AppendKeywordValidationResult(isValid: false, keyword, "result", g => GetInvalidMessage(g, op, memberName), useInterpolatedString: true)
                     .PopIndent()
                     .AppendLineIndent("}")
-                    .AppendLineIndent("else if (context.Level >= ValidationLevel.Basic)")
+                    .AppendLineIndent("else if (level >= ValidationLevel.Basic)")
                     .AppendLineIndent("{")
                     .PushIndent()
                         .AppendKeywordValidationResult(isValid: false, keyword, "result", g => GetSimplifiedInvalidMessage(g, op), useInterpolatedString: false)
@@ -71,8 +77,7 @@ public class StringLengthValidationHandler : IChildValidationHandler
                     .AppendLineIndent("else")
                     .AppendLineIndent("{")
                     .PushIndent()
-                        .AppendLineIndent("result = context.Context.WithResult(isValid: false);")
-                        .AppendLineIndent("return true;")
+                        .AppendLineIndent("return result.WithResult(isValid: false);")
                     .PopIndent()
                     .AppendLineIndent("}")
                 .PopIndent()
@@ -84,7 +89,7 @@ public class StringLengthValidationHandler : IChildValidationHandler
         static void GetValidMessage(CodeGenerator generator, Operator op, string memberName)
         {
             generator
-                .Append("{input.ToString()} of {length} ")
+                .Append("array of length {length} ")
                 .AppendTextForOperator(op)
                 .Append(" {")
                 .Append(memberName)
@@ -94,7 +99,7 @@ public class StringLengthValidationHandler : IChildValidationHandler
         static void GetInvalidMessage(CodeGenerator generator, Operator op, string memberName)
         {
             generator
-                .Append("{input.ToString()} of {length} ")
+                .Append("array of length {length} ")
                 .AppendTextForInverseOperator(op)
                 .Append(" {")
                 .Append(memberName)

@@ -43,6 +43,12 @@ public sealed class MinContainsKeyword : IArrayContainsCountConstantValidationKe
     public bool RequiresItemsEvaluationTracking(TypeDeclaration typeDeclaration) => false;
 
     /// <inheritdoc/>
+    public bool RequiresArrayLength(TypeDeclaration typeDeclaration) => false;
+
+    /// <inheritdoc/>
+    public bool RequiresArrayEnumeration(TypeDeclaration typeDeclaration) => typeDeclaration.HasKeyword(this);
+
+    /// <inheritdoc/>
     public bool TryGetOperator(TypeDeclaration typeDeclaration, [NotNullWhen(true)] out Operator op)
     {
         if (typeDeclaration.HasKeyword(this))

@@ -84,7 +84,13 @@ public sealed class AdditionalItemsKeyword
     }
 
     /// <inheritdoc/>
-    public bool RequiresItemsEvaluationTracking(TypeDeclaration typeDeclaration) => false;
+    public bool RequiresItemsEvaluationTracking(TypeDeclaration typeDeclaration) => typeDeclaration.HasKeyword(this);
+
+    /// <inheritdoc/>
+    public bool RequiresArrayLength(TypeDeclaration typeDeclaration) => false;
+
+    /// <inheritdoc/>
+    public bool RequiresArrayEnumeration(TypeDeclaration typeDeclaration) => typeDeclaration.HasKeyword(this);
 
     private bool HasKeyword(TypeDeclaration typeDeclaration)
     {
