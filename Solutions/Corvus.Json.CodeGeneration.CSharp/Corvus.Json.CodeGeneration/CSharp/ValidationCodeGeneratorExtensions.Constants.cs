@@ -244,23 +244,21 @@ public static partial class ValidationCodeGeneratorExtensions
     {
         string memberName = generator.GetMethodNameInScope(keyword.Keyword, prefix: "Create", suffix: index?.ToString());
 
-        generator
-            .AppendLine("#if NET8_0_OR_GREATER")
-                .AppendIndent("[GeneratedRegex(")
-                .Append(SymbolDisplay.FormatLiteral(value, true))
-                .AppendLine(")]")
-                .AppendIndent("private static partial Regex ")
-                .Append(memberName)
-                .AppendLine("();")
-            .AppendLine("#else")
+        return generator
+            ////.AppendLine("#if NET8_0_OR_GREATER")
+            ////    .AppendIndent("[GeneratedRegex(")
+            ////    .Append(SymbolDisplay.FormatLiteral(value, true))
+            ////    .AppendLine(")]")
+            ////    .AppendIndent("private static partial Regex ")
+            ////    .Append(memberName)
+            ////    .AppendLine("();")
+            ////.AppendLine("#else")
                 .AppendIndent("private static Regex ")
                 .Append(memberName)
                 .Append("() => new(")
                 .AppendQuotedStringLiteral(value)
-                .AppendLine(", RegexOptions.Compiled);")
-            .AppendLine("#endif");
-
-        return generator;
+                .AppendLine(", RegexOptions.Compiled);");
+            ////.AppendLine("#endif");
     }
 
     private static CodeGenerator AppendValidationConstantFields(CodeGenerator generator, IReadOnlyDictionary<IValidationConstantProviderKeyword, JsonElement[]> constants)
