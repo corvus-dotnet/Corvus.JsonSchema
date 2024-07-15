@@ -18,7 +18,6 @@
 	</PropertyGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
-		<PackageReference Include="Corvus.UriTemplates" Version="1.2.4" />
 		<Compile Remove="Corvus.Json\Internal\RuneNetStandard20.cs" />
 		<Compile Remove="Corvus.Json\Internal\JsonValueNetStandard20Extensions.cs" />
 		<Compile Remove="Corvus.Json\Internal\JsonValueHelpers.NetStandard20.cs" />
@@ -41,14 +40,11 @@
 		<Compile Remove="Corvus.Json\JsonInt128.cs" />
 		<Compile Remove="Corvus.Json\JsonUInt128.cs" />
 		<Compile Remove="Corvus.Json\JsonHalf.cs" />
-		<Compile Remove="Corvus.Json\UriTemplates\JsonTemplateParameterProvider.cs" />
-		<Compile Remove="Corvus.Json\UriTemplates\JsonUriTemplateResolver.cs" />
-		<Compile Remove="Corvus.Json\UriTemplates\UriExtensions.cs" />
-		<Compile Remove="Corvus.Json\UriTemplates\UriTemplate.cs" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="CommunityToolkit.HighPerformance" Version="8.2.2" />
+    <PackageReference Include="Corvus.UriTemplates" Version="2.0.0" />
+    <PackageReference Include="CommunityToolkit.HighPerformance" Version="8.2.2" />
 		<PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.12">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
