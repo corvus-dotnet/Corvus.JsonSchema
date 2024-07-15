@@ -4,7 +4,6 @@
 
 using System.Collections.Frozen;
 using System.Diagnostics.CodeAnalysis;
-using Corvus.Json.CodeGeneration.CSharp.ValidationHandlers.StringChildHandlers;
 
 namespace Corvus.Json.CodeGeneration.CSharp;
 
@@ -208,8 +207,7 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
             FormatValidationHandler.Instance,
             NumberValidationHandler.Instance,
             ObjectValidationHandler.Instance,
-            StringValidationHandler.Instance
-                .RegisterChildHandlers(StringLengthValidationHandler.Instance),
+            StringValidationHandler.Instance,
             TernaryIfValidationHandler.Instance,
             TypeValidationHandler.Instance);
 

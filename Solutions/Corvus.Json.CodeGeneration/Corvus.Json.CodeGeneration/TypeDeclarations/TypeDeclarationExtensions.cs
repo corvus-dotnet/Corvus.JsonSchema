@@ -648,10 +648,10 @@ public static class TypeDeclarationExtensions
     }
 
     /// <summary>
-    /// Gets a value indicating whether the type declaration requires property evaluation tracking.
+    /// Gets a value indicating whether the type declaration requires items evaluation tracking.
     /// </summary>
     /// <param name="that">The type declaration.</param>
-    /// <returns><see langword="true"/> if the type requires property evaluation tracking.</returns>
+    /// <returns><see langword="true"/> if the type requires items evaluation tracking.</returns>
     public static bool RequiresItemsEvaluationTracking(this TypeDeclaration that)
     {
         if (!that.BuildComplete)
@@ -679,6 +679,76 @@ public static class TypeDeclarationExtensions
                 typeDeclaration.Keywords()
                     .OfType<IArrayValidationKeyword>()
                     .Any(k => k.RequiresItemsEvaluationTracking(typeDeclaration));
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether the type declaration requires array length tracking.
+    /// </summary>
+    /// <param name="that">The type declaration.</param>
+    /// <returns><see langword="true"/> if the type requires the array length.</returns>
+    public static bool RequiresArrayLength(this TypeDeclaration that)
+    {
+        if (!that.BuildComplete)
+        {
+            throw new InvalidOperationException("You cannot use RequiresArrayLength during the type build process.");
+        }
+
+        if (!that.TryGetMetadata(nameof(RequiresArrayLength), out bool requiresTracking))
+        {
+            requiresTracking = RequiresArrayLength(that);
+            that.SetMetadata(nameof(RequiresArrayLength), requiresTracking);
+        }
+
+        return requiresTracking;
+
+        static bool RequiresArrayLength(
+            TypeDeclaration typeDeclaration)
+        {
+            if (typeDeclaration.HasSiblingHidingKeyword())
+            {
+                return false;
+            }
+
+            return
+                typeDeclaration.Keywords()
+                    .OfType<IArrayValidationKeyword>()
+                    .Any(k => k.RequiresArrayLength(typeDeclaration));
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether the type declaration requires array enumeration.
+    /// </summary>
+    /// <param name="that">The type declaration.</param>
+    /// <returns><see langword="true"/> if the type requires the array length.</returns>
+    public static bool RequiresArrayEnumeration(this TypeDeclaration that)
+    {
+        if (!that.BuildComplete)
+        {
+            throw new InvalidOperationException("You cannot use RequiresArrayEnumeration during the type build process.");
+        }
+
+        if (!that.TryGetMetadata(nameof(RequiresArrayEnumeration), out bool requiresTracking))
+        {
+            requiresTracking = RequiresArrayEnumeration(that);
+            that.SetMetadata(nameof(RequiresArrayEnumeration), requiresTracking);
+        }
+
+        return requiresTracking;
+
+        static bool RequiresArrayEnumeration(
+            TypeDeclaration typeDeclaration)
+        {
+            if (typeDeclaration.HasSiblingHidingKeyword())
+            {
+                return false;
+            }
+
+            return
+                typeDeclaration.Keywords()
+                    .OfType<IArrayValidationKeyword>()
+                    .Any(k => k.RequiresArrayEnumeration(typeDeclaration));
         }
     }
 

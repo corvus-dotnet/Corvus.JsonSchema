@@ -10,7 +10,7 @@ namespace Corvus.Json.CodeGeneration;
 /// </summary>
 public sealed class ChildValidationHandlerRegistry
 {
-    private readonly HashSet<IChildValidationHandler> registeredHandlers = [];
+    private readonly List<IChildValidationHandler> registeredHandlers = [];
 
     /// <summary>
     /// Gets the registered validation handlers.
@@ -23,9 +23,17 @@ public sealed class ChildValidationHandlerRegistry
     /// <param name="handlers">The handlers to register.</param>
     public void RegisterValidationHandlers(params IChildValidationHandler[] handlers)
     {
-        foreach (IChildValidationHandler handler in handlers)
-        {
-            this.registeredHandlers.Add(handler);
-        }
+        this.registeredHandlers.AddRange(handlers);
+
+        this.registeredHandlers.Sort(
+            (l, r) =>
+            {
+                if (l.ValidationHandlerPriority == r.ValidationHandlerPriority)
+                {
+                    return l.GetType().Name.CompareTo(r.GetType().Name);
+                }
+
+                return l.ValidationHandlerPriority.CompareTo(r.ValidationHandlerPriority);
+            });
     }
 }

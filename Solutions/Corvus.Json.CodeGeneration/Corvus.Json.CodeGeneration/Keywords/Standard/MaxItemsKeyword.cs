@@ -40,6 +40,15 @@ public sealed class MaxItemsKeyword : IArrayLengthConstantValidationKeyword
             : CoreTypes.None;
 
     /// <inheritdoc/>
+    public bool RequiresArrayLength(TypeDeclaration typeDeclaration) => typeDeclaration.HasKeyword(this);
+
+    /// <inheritdoc/>
+    public bool RequiresItemsEvaluationTracking(TypeDeclaration typeDeclaration) => false;
+
+    /// <inheritdoc/>
+    public bool RequiresArrayEnumeration(TypeDeclaration typeDeclaration) => false;
+
+    /// <inheritdoc/>
     public bool TryGetOperator(TypeDeclaration typeDeclaration, [NotNullWhen(true)] out Operator op)
     {
         if (typeDeclaration.HasKeyword(this))

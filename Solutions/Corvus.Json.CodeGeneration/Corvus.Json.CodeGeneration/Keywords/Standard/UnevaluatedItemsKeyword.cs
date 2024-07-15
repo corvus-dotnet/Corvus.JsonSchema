@@ -80,6 +80,12 @@ public sealed class UnevaluatedItemsKeyword
     public bool RequiresItemsEvaluationTracking(TypeDeclaration typeDeclaration) => typeDeclaration.HasKeyword(this);
 
     /// <inheritdoc/>
+    public bool RequiresArrayLength(TypeDeclaration typeDeclaration) => false;
+
+    /// <inheritdoc/>
+    public bool RequiresArrayEnumeration(TypeDeclaration typeDeclaration) => typeDeclaration.HasKeyword(this);
+
+    /// <inheritdoc/>
     public bool TryGetArrayItemsType(TypeDeclaration typeDeclaration, [MaybeNullWhen(false)] out ArrayItemsTypeDeclaration? arrayItemsType)
     {
         if (typeDeclaration.SubschemaTypeDeclarations.TryGetValue(KeywordPath, out TypeDeclaration? value))

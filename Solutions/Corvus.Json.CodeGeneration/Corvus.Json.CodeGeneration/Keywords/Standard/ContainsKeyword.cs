@@ -62,4 +62,10 @@ public sealed class ContainsKeyword
 
     /// <inheritdoc/>
     public bool RequiresItemsEvaluationTracking(TypeDeclaration typeDeclaration) => false;
+
+    /// <inheritdoc/>
+    public bool RequiresArrayLength(TypeDeclaration typeDeclaration) => false;
+
+    /// <inheritdoc/>
+    public bool RequiresArrayEnumeration(TypeDeclaration typeDeclaration) => typeDeclaration.HasKeyword(this);
 }

@@ -90,6 +90,12 @@ public sealed class ItemsWithSchemaOrArrayOfSchemaKeyword
     public bool RequiresItemsEvaluationTracking(TypeDeclaration typeDeclaration) => false;
 
     /// <inheritdoc/>
+    public bool RequiresArrayLength(TypeDeclaration typeDeclaration) => false;
+
+    /// <inheritdoc/>
+    public bool RequiresArrayEnumeration(TypeDeclaration typeDeclaration) => typeDeclaration.HasKeyword(this);
+
+    /// <inheritdoc/>
     public bool TryGetTupleType(TypeDeclaration typeDeclaration, [MaybeNullWhen(false)] out TupleTypeDeclaration? tupleType)
     {
         if (typeDeclaration.TryGetKeyword(this, out JsonElement value))

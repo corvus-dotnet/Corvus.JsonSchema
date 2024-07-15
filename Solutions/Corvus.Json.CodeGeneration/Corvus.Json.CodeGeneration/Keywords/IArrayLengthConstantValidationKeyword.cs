@@ -9,7 +9,7 @@ namespace Corvus.Json.CodeGeneration;
 /// <summary>
 /// Validates array lengths against a constant.
 /// </summary>
-public interface IArrayLengthConstantValidationKeyword : IIntegerConstantValidationKeyword
+public interface IArrayLengthConstantValidationKeyword : IArrayValidationKeyword, IIntegerConstantValidationKeyword
 {
     /// <summary>
     /// Gets the value for comparison.

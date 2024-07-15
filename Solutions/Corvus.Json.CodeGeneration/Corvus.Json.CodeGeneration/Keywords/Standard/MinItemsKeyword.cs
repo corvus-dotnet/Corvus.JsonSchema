@@ -81,4 +81,13 @@ public sealed class MinItemsKeyword : IArrayLengthConstantValidationKeyword
         value = default;
         return false;
     }
+
+    /// <inheritdoc/>
+    public bool RequiresArrayLength(TypeDeclaration typeDeclaration) => typeDeclaration.HasKeyword(this);
+
+    /// <inheritdoc/>
+    public bool RequiresItemsEvaluationTracking(TypeDeclaration typeDeclaration) => false;
+
+    /// <inheritdoc/>
+    public bool RequiresArrayEnumeration(TypeDeclaration typeDeclaration) => false;
 }
