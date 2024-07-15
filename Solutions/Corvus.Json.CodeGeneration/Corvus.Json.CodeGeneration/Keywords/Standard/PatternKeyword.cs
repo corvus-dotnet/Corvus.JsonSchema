@@ -10,7 +10,7 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 /// <summary>
 /// The pattern keyword.
 /// </summary>
-public sealed class PatternKeyword : IValidationRegexProviderKeyword, IStringValidationKeyword
+public sealed class PatternKeyword : IStringRegexValidationProviderKeyword
 {
     private PatternKeyword()
     {

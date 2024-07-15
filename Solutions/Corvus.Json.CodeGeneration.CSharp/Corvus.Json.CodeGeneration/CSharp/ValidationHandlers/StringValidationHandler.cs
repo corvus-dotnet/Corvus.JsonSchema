@@ -71,6 +71,7 @@ public class StringValidationHandler : KeywordValidationHandlerBase
         var result = new StringValidationHandler();
         result
             .RegisterChildHandlers(
+                StringRegexValidationHandler.Instance,
                 StringLengthValidationHandler.Instance);
         return result;
     }

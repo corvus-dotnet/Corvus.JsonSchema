@@ -1,7 +1,6 @@
 ﻿// <copyright file="JsonUriTemplate.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
-#if NET8_0_OR_GREATER
 using System.Collections.Immutable;
 using System.Text.Json;
 using Corvus.Json.Internal;
@@ -45,4 +44,3 @@ public readonly partial struct JsonUriTemplate : IJsonString<JsonUriTemplate>
         return false;
     }
 }
-#endif

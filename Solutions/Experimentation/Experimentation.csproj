@@ -78,4 +78,8 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="test-gen\" />
+  </ItemGroup>
+
 </Project>

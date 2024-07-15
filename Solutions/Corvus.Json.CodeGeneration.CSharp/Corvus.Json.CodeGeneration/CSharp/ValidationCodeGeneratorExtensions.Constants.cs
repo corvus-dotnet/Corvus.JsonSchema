@@ -253,7 +253,7 @@ public static partial class ValidationCodeGeneratorExtensions
                 .Append(memberName)
                 .AppendLine("();")
             .AppendLine("#else")
-                .AppendIndent("private static readonly Regex ")
+                .AppendIndent("private static Regex ")
                 .Append(memberName)
                 .Append("() => new(")
                 .AppendQuotedStringLiteral(value)

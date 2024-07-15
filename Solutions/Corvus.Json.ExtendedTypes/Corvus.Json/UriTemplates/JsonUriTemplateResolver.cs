@@ -5,6 +5,7 @@
 using System.Buffers;
 using System.Runtime.CompilerServices;
 using Corvus.UriTemplates;
+using Corvus.UriTemplates.Internal;
 
 namespace Corvus.Json.UriTemplates;
 
@@ -61,11 +62,11 @@ public static class JsonUriTemplateResolver
     /// <param name="parameters">The parameters to apply to the template.</param>
     /// <returns><see langword="true"/> if the URI matched the template, and the parameters were resolved successfully.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool TryResolveResult<T>(ReadOnlySpan<char> template, IBufferWriter<char> output, bool resolvePartially, in T parameters)
+    public static bool TryResolveResult<T>(ReadOnlySpan<char> template, ref ValueStringBuilder output, bool resolvePartially, in T parameters)
         where T : struct, IJsonObject<T>
     {
         object? nullState = default;
-        return UriTemplateResolver<JsonTemplateParameterProvider<T>, T>.TryResolveResult(JsonTemplateParameterProvider<T>.Instance, template, output, resolvePartially, parameters, null, ref nullState);
+        return UriTemplateResolver<JsonTemplateParameterProvider<T>, T>.TryResolveResult(JsonTemplateParameterProvider<T>.Instance, template, ref output, resolvePartially, parameters, null, ref nullState);
     }
 
     /// <summary>

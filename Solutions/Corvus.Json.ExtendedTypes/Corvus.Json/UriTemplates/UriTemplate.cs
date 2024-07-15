@@ -8,6 +8,7 @@ using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using Corvus.UriTemplates;
+using Corvus.UriTemplates.Internal;
 
 namespace Corvus.Json.UriTemplates;
 
@@ -195,11 +196,7 @@ public readonly struct UriTemplate
         foreach (JsonObjectProperty property in parameters.EnumerateObject())
         {
             string name = property.Name.GetString();
-            if (builder.ContainsKey(name))
-            {
-                builder.Remove(name);
-            }
-
+            builder.Remove(name);
             builder.Add(name, property.Value);
         }
 
@@ -217,11 +214,7 @@ public readonly struct UriTemplate
         builder.AddRange(this.parameters);
         foreach ((string name, JsonAny value) in parameters)
         {
-            if (builder.ContainsKey(name))
-            {
-                builder.Remove(name);
-            }
-
+            builder.Remove(name);
             builder.Add(name, value);
         }
 
@@ -350,13 +343,13 @@ public readonly struct UriTemplate
     /// <returns>The resolved template.</returns>
     public string Resolve()
     {
-        ArrayBufferWriter<char> output = new();
+        ValueStringBuilder output = default;
         var properties = this.parameters.ToImmutableDictionary(k => new JsonPropertyName(k.Key), v => v.Value);
-        if (!JsonUriTemplateResolver.TryResolveResult(this.template.AsSpan(), output, this.resolvePartially, JsonObject.FromProperties(properties)))
+        if (!JsonUriTemplateResolver.TryResolveResult(this.template.AsSpan(), ref output, this.resolvePartially, JsonObject.FromProperties(properties)))
         {
             throw new ArgumentException("Malformed template.");
         }
 
-        return output.WrittenSpan.ToString();
+        return output.ToString();
     }
 }
