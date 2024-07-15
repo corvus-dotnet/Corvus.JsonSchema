@@ -54,6 +54,7 @@ public class ArrayValidationHandler : KeywordValidationHandlerBase
         result
             .RegisterChildHandlers(
                 ArrayLengthValidationHandler.Instance,
+                ContainsValidationHandler.Instance,
                 UniqueItemsValidationHandler.Instance);
         return result;
     }

@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 
 namespace Corvus.Json.CodeGeneration.Keywords;
@@ -10,7 +11,7 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 /// The contains keyword.
 /// </summary>
 public sealed class ContainsKeyword
-    : ISubschemaTypeBuilderKeyword, ILocalSubschemaRegistrationKeyword, IArrayValidationKeyword
+    : ISubschemaTypeBuilderKeyword, ILocalSubschemaRegistrationKeyword, IArrayContainsValidationKeyword
 {
     private const string KeywordPath = "#/contains";
     private static readonly JsonReference KeywordPathReference = new(KeywordPath);
@@ -68,4 +69,17 @@ public sealed class ContainsKeyword
 
     /// <inheritdoc/>
     public bool RequiresArrayEnumeration(TypeDeclaration typeDeclaration) => typeDeclaration.HasKeyword(this);
+
+    /// <inheritdoc/>
+    public bool TryGetContainsItemType(TypeDeclaration typeDeclaration, [NotNullWhen(true)] out ArrayItemsTypeDeclaration? itemsTypeDeclaration)
+    {
+        if (typeDeclaration.SubschemaTypeDeclarations.TryGetValue(KeywordPath, out TypeDeclaration? value))
+        {
+            itemsTypeDeclaration = new(value, true);
+            return true;
+        }
+
+        itemsTypeDeclaration = null;
+        return false;
+    }
 }
