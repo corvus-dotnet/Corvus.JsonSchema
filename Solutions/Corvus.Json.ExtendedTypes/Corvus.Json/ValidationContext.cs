@@ -323,6 +323,21 @@ public readonly struct ValidationContext
     }
 
     /// <summary>
+    /// Pushes the reduced path modifier onto the location stack for the context.
+    /// </summary>
+    /// <param name="reducedPathModifier">The reduced path modifier to push.</param>
+    /// <returns>The context updated with the given location.</returns>
+    public ValidationContext PushValidationLocationReducedPathModifier(JsonReference reducedPathModifier)
+    {
+        if ((this.usingFeatures & UsingFeatures.Stack) == 0)
+        {
+            return this;
+        }
+
+        return new ValidationContext(this.IsValid, this.localEvaluatedItemIndex, this.localEvaluatedProperties, this.appliedEvaluatedItemIndex, this.appliedEvaluatedProperties, this.locationStack.Push((this.locationStack.Peek().ValidationLocation.AppendFragment(reducedPathModifier), this.locationStack.Peek().SchemaLocation, this.locationStack.Peek().DocumentLocation)), this.Results, this.usingFeatures);
+    }
+
+    /// <summary>
     /// Pushes a location onto the location stack for the context.
     /// </summary>
     /// <param name="arrayIndex">The array index to push.</param>
