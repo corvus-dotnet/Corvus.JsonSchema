@@ -90,7 +90,6 @@ public sealed class UnevaluatedItemsKeyword
     {
         if (typeDeclaration.SubschemaTypeDeclarations.TryGetValue(KeywordPath, out TypeDeclaration? value))
         {
-            // UnevaluatedItems is not an explicit definition of the array type - it is a fallback
             arrayItemsType = new(value, false, this);
             return true;
         }

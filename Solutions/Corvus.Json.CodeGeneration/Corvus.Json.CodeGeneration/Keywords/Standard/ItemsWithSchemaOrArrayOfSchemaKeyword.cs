@@ -78,7 +78,7 @@ public sealed class ItemsWithSchemaOrArrayOfSchemaKeyword
         // then we are a single array items type.
         if (typeDeclaration.SubschemaTypeDeclarations.TryGetValue(KeywordPath, out TypeDeclaration? itemsType))
         {
-            arrayItemsType = new(itemsType, isExplicit: true, this);
+            arrayItemsType = new(itemsType, isExplicit: false, this);
             return true;
         }
 
@@ -110,6 +110,21 @@ public sealed class ItemsWithSchemaOrArrayOfSchemaKeyword
         }
 
         tupleType = null;
+        return false;
+    }
+
+    /// <inheritdoc/>
+    public bool TryGetNonTupleArrayItemsType(TypeDeclaration typeDeclaration, [MaybeNullWhen(false)] out ArrayItemsTypeDeclaration? arrayItemsType)
+    {
+        // If we have a single array items type subschema that matches our keyword
+        // then we are a single array items type.
+        if (typeDeclaration.SubschemaTypeDeclarations.TryGetValue(KeywordPath, out TypeDeclaration? itemsType))
+        {
+            arrayItemsType = new(itemsType, isExplicit: true, this);
+            return true;
+        }
+
+        arrayItemsType = null;
         return false;
     }
 
