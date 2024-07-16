@@ -1579,14 +1579,14 @@ public static class TypeDeclarationExtensions
             GetItemsType(
                 typeDeclaration,
                 static (INonTupleArrayItemsTypeProviderKeyword k, TypeDeclaration t, out ArrayItemsTypeDeclaration? v) =>
-                    k.TryGetArrayItemsType(t, out v),
+                    k.TryGetNonTupleArrayItemsType(t, out v),
                 static t => t.NonTupleItemsType());
 
         ArrayItemsTypeDeclaration? unevaluatedItems =
             GetItemsType(
                 typeDeclaration,
                 static (IUnevaluatedArrayItemsTypeProviderKeyword k, TypeDeclaration t, out ArrayItemsTypeDeclaration? v) =>
-                    k.TryGetArrayItemsType(t, out v),
+                    k.TryGetUnevaluatedArrayItemsType(t, out v),
                 static t => t.ExplicitUnevaluatedItemsType());
 
         bool isTuple = tupleType is not null && DeniesNonTupleItems(nonTupleItems);

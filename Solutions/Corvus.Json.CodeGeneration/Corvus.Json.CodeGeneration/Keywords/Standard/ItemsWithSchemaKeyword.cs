@@ -71,6 +71,19 @@ public sealed class ItemsWithSchemaKeyword
     {
         if (typeDeclaration.SubschemaTypeDeclarations.TryGetValue(KeywordPath, out TypeDeclaration? itemsType))
         {
+            arrayItemsType = new(itemsType, isExplicit: false, this);
+            return true;
+        }
+
+        arrayItemsType = null;
+        return false;
+    }
+
+    /// <inheritdoc />
+    public bool TryGetNonTupleArrayItemsType(TypeDeclaration typeDeclaration, [MaybeNullWhen(false)] out ArrayItemsTypeDeclaration? arrayItemsType)
+    {
+        if (typeDeclaration.SubschemaTypeDeclarations.TryGetValue(KeywordPath, out TypeDeclaration? itemsType))
+        {
             arrayItemsType = new(itemsType, isExplicit: true, this);
             return true;
         }
