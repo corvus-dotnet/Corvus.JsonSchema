@@ -9,7 +9,7 @@ namespace Corvus.Json.CodeGeneration;
 /// <summary>
 /// A keyword that can provide a single array type for a type declaration.
 /// </summary>
-public interface IUnevaluatedArrayItemsTypeProviderKeyword : INonTupleArrayItemsTypeProviderKeyword
+public interface IUnevaluatedArrayItemsTypeProviderKeyword : IArrayItemsTypeProviderKeyword
 {
     /// <summary>
     /// Try to get the unevaluated <see cref="ArrayItemsTypeDeclaration"/> for the type declaration.

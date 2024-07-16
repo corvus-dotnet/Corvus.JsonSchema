@@ -4,8 +4,9 @@
 
 #if !NET8_0_OR_GREATER
 using System.Buffers;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 #endif
+
+using Microsoft.CodeAnalysis.CSharp;
 
 namespace Corvus.Json.CodeGeneration.CSharp;
 
@@ -76,6 +77,117 @@ public static partial class ValidationCodeGeneratorExtensions
             .Append(' ')
             .Append(variableName)
             .AppendLine(" = value.EnumerateArray();");
+    }
+
+    /// <summary>
+    /// Appends items validation code for an <see cref="ArrayItemsTypeDeclaration"/>.
+    /// </summary>
+    /// <param name="generator">The code generator to which to append the enumeration.</param>
+    /// <param name="arrayItems">The <see cref="ArrayItemsTypeDeclaration"/> for which to emit validation code.</param>
+    /// <param name="enumeratorIsCorrectType">Indicates whether the enumerator automatically reutrns the correct type for validation.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendValidateNonTupleItemsType(this CodeGenerator generator, ArrayItemsTypeDeclaration arrayItems, bool enumeratorIsCorrectType)
+    {
+        generator
+            .AppendLineIndent("if (level > ValidationLevel.Basic)")
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendLineIndent(
+                    "result = result.PushValidationLocationReducedPathModifier(new(",
+                    SymbolDisplay.FormatLiteral(arrayItems.Keyword.GetPathModifier(arrayItems), true),
+                    "));")
+            .PopIndent()
+            .AppendLineIndent("}")
+            .AppendSeparatorLine();
+
+        if (enumeratorIsCorrectType)
+        {
+            generator
+                .AppendLineIndent(
+                    "result = arrayEnumerator.Current.Validate(result, level);");
+        }
+        else
+        {
+            generator
+                .AppendLineIndent(
+                    "result = arrayEnumerator.Current.As<",
+                    arrayItems.ReducedType.FullyQualifiedDotnetTypeName(),
+                    ">().Validate(result, level);");
+        }
+
+        return generator
+            .AppendBlockIndent(
+            """
+            if (level == ValidationLevel.Flag && !result.IsValid)
+            {
+                return result;
+            }
+
+            if (level > ValidationLevel.Basic)
+            {
+                result = result.PopLocation();
+            }
+
+            result = result.WithLocalItemIndex(length);
+            """);
+    }
+
+    /// <summary>
+    /// Appends items validation code for an unevaluated <see cref="ArrayItemsTypeDeclaration"/>.
+    /// </summary>
+    /// <param name="generator">The code generator to which to append the enumeration.</param>
+    /// <param name="arrayItems">The <see cref="ArrayItemsTypeDeclaration"/> for which to emit validation code.</param>
+    /// <param name="enumeratorIsCorrectType">Indicates whether the enumerator automatically reutrns the correct type for validation.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendValidateUnevaluatedItemsType(this CodeGenerator generator, ArrayItemsTypeDeclaration arrayItems, bool enumeratorIsCorrectType)
+    {
+        generator
+            .AppendLineIndent("if (!result.HasEvaluatedLocalOrAppliedItemIndex(length))")
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendLineIndent("if (level > ValidationLevel.Basic)")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendLineIndent(
+                        "result = result.PushValidationLocationReducedPathModifier(new(",
+                        SymbolDisplay.FormatLiteral(arrayItems.Keyword.GetPathModifier(arrayItems), true),
+                        "));")
+                .PopIndent()
+                .AppendLineIndent("}")
+                .AppendSeparatorLine();
+
+        if (enumeratorIsCorrectType)
+        {
+            generator
+                .AppendLineIndent(
+                    "result = arrayEnumerator.Current.Validate(result, level);");
+        }
+        else
+        {
+            generator
+                .AppendLineIndent(
+                    "result = arrayEnumerator.Current.As<",
+                    arrayItems.ReducedType.FullyQualifiedDotnetTypeName(),
+                    ">().Validate(result, level);");
+        }
+
+        return generator
+            .AppendBlockIndent(
+            """
+                if (level == ValidationLevel.Flag && !result.IsValid)
+                {
+                    return result;
+                }
+
+                if (level > ValidationLevel.Basic)
+                {
+                    result = result.PopLocation();
+                }
+
+                result = result.WithLocalItemIndex(length);
+                """)
+        .PopIndent()
+        .AppendLineIndent("}");
     }
 
     private static CodeGenerator AppendArrayValidation(
@@ -158,7 +270,15 @@ public static partial class ValidationCodeGeneratorExtensions
 
             generator
                     .AppendSeparatorLine()
-                    .AppendLineIndent("length++;")
+                    .AppendBlockIndent(
+                    """
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+
+                    length++;
+                    """)
                 .PopIndent()
                 .AppendLineIndent("}");
         }

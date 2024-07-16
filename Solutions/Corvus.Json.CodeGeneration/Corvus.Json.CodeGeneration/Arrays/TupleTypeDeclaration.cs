@@ -10,7 +10,8 @@ namespace Corvus.Json.CodeGeneration;
 /// <param name="itemsTypes">The types of the items in the array.</param>
 /// <param name="isExplicit"><see langword="true"/> if the tuple type is explicitly
 /// defined on the type declaration.</param>
-public sealed class TupleTypeDeclaration(TypeDeclaration[] itemsTypes, bool isExplicit)
+/// <param name="keyword">The keyword that provided the tuple type declaration.</param>
+public sealed class TupleTypeDeclaration(TypeDeclaration[] itemsTypes, bool isExplicit, ITupleTypeProviderKeyword keyword)
 {
     /// <summary>
     /// Gets a value indicating whether the array items type
@@ -18,6 +19,11 @@ public sealed class TupleTypeDeclaration(TypeDeclaration[] itemsTypes, bool isEx
     /// type declaration.
     /// </summary>
     public bool IsExplicit { get; } = isExplicit;
+
+    /// <summary>
+    /// Gets the keyword that provided the tuple type declaration.
+    /// </summary>
+    public ITupleTypeProviderKeyword Keyword { get; } = keyword;
 
     /// <summary>
     /// Gets the type of the items in the array.

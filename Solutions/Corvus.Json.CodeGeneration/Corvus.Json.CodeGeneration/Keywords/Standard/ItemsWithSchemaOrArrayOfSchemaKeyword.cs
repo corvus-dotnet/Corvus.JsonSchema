@@ -78,7 +78,7 @@ public sealed class ItemsWithSchemaOrArrayOfSchemaKeyword
         // then we are a single array items type.
         if (typeDeclaration.SubschemaTypeDeclarations.TryGetValue(KeywordPath, out TypeDeclaration? itemsType))
         {
-            arrayItemsType = new(itemsType, isExplicit: true);
+            arrayItemsType = new(itemsType, isExplicit: true, this);
             return true;
         }
 
@@ -105,11 +105,23 @@ public sealed class ItemsWithSchemaOrArrayOfSchemaKeyword
                     .Where(t => t.Key.StartsWith(KeywordPath))
                     .Select(kvp => kvp.Value).ToArray();
 
-            tupleType = new(tupleTypes, true);
+            tupleType = new(tupleTypes, true, this);
             return true;
         }
 
         tupleType = null;
         return false;
+    }
+
+    /// <inheritdoc/>
+    public string GetPathModifier(ReducedTypeDeclaration item, int tupleIndex)
+    {
+        return KeywordPathReference.AppendArrayIndexToFragment(tupleIndex).AppendFragment(item.ReducedPathModifier);
+    }
+
+    /// <inheritdoc/>
+    public string GetPathModifier(ArrayItemsTypeDeclaration item)
+    {
+        return KeywordPathReference.AppendFragment(item.ReducedPathModifier);
     }
 }

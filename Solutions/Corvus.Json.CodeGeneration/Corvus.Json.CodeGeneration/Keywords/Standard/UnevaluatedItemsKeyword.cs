@@ -91,7 +91,7 @@ public sealed class UnevaluatedItemsKeyword
         if (typeDeclaration.SubschemaTypeDeclarations.TryGetValue(KeywordPath, out TypeDeclaration? value))
         {
             // UnevaluatedItems is not an explicit definition of the array type - it is a fallback
-            arrayItemsType = new(value, false);
+            arrayItemsType = new(value, false, this);
             return true;
         }
 
@@ -105,11 +105,17 @@ public sealed class UnevaluatedItemsKeyword
         if (typeDeclaration.SubschemaTypeDeclarations.TryGetValue(KeywordPath, out TypeDeclaration? value))
         {
             // UnevaluatedItems *is* an explicit definition of the unevaluated items type.
-            unevaluatedArrayItemsType = new(value, true);
+            unevaluatedArrayItemsType = new(value, true, this);
             return true;
         }
 
         unevaluatedArrayItemsType = null;
         return false;
+    }
+
+    /// <inheritdoc/>
+    public string GetPathModifier(ArrayItemsTypeDeclaration item)
+    {
+        return KeywordPathReference.AppendFragment(item.ReducedPathModifier);
     }
 }

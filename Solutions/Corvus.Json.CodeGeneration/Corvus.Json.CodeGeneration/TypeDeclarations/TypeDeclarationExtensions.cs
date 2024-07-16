@@ -1619,7 +1619,7 @@ public static class TypeDeclarationExtensions
                             // We don't have an existing declaration, or
                             // we are overriding an implicit declaration with
                             // an explicit declaration
-                            declaration = new(referencedArrayItemsTypeDeclaration.UnreducedType, false);
+                            declaration = new(referencedArrayItemsTypeDeclaration.UnreducedType, false, referencedArrayItemsTypeDeclaration.Keyword);
                         }
                         else if (declaration.ReducedType == referencedArrayItemsTypeDeclaration.ReducedType)
                         {
@@ -1695,7 +1695,7 @@ public static class TypeDeclarationExtensions
                             // We don't have an existing declaration, or
                             // we are overriding an implicit declaration with
                             // an explicit declaration
-                            declaration = new(referencedTupleTypeDeclaration.UnreducedTypes, false);
+                            declaration = new(referencedTupleTypeDeclaration.UnreducedTypes, false, referencedTupleTypeDeclaration.Keyword);
                         }
                         else if (declaration.IsExplicit)
                         {

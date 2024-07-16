@@ -9,7 +9,7 @@ namespace Corvus.Json.CodeGeneration;
 /// <summary>
 /// Validates that an array contains a particular number of a keyword.
 /// </summary>
-public interface IArrayContainsValidationKeyword : IArrayValidationKeyword
+public interface IArrayContainsValidationKeyword : IArrayValidationKeyword, IArrayItemKeyword
 {
     /// <summary>
     /// Try to get the items type for the contains validation.

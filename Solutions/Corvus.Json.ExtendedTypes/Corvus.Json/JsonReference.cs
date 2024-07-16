@@ -255,7 +255,7 @@ public readonly struct JsonReference
     {
         ReadOnlySpan<char> otherFragment = other.Fragment;
 
-        if (otherFragment.Length == 0)
+        if (otherFragment.Length < 2)
         {
             return this;
         }
