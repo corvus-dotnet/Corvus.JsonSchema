@@ -75,11 +75,17 @@ public sealed class ContainsKeyword
     {
         if (typeDeclaration.SubschemaTypeDeclarations.TryGetValue(KeywordPath, out TypeDeclaration? value))
         {
-            itemsTypeDeclaration = new(value, true);
+            itemsTypeDeclaration = new(value, true, this);
             return true;
         }
 
         itemsTypeDeclaration = null;
         return false;
+    }
+
+    /// <inheritdoc/>
+    public string GetPathModifier(ArrayItemsTypeDeclaration item)
+    {
+        return KeywordPathReference.AppendFragment(item.ReducedPathModifier);
     }
 }

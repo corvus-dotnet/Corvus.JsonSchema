@@ -75,7 +75,7 @@ public sealed class AdditionalItemsKeyword
     {
         if (typeDeclaration.SubschemaTypeDeclarations.TryGetValue(KeywordPath, out TypeDeclaration? itemsType))
         {
-            arrayItemsType = new(itemsType, isExplicit: true);
+            arrayItemsType = new(itemsType, isExplicit: true, this);
             return true;
         }
 
@@ -91,6 +91,12 @@ public sealed class AdditionalItemsKeyword
 
     /// <inheritdoc/>
     public bool RequiresArrayEnumeration(TypeDeclaration typeDeclaration) => typeDeclaration.HasKeyword(this);
+
+    /// <inheritdoc/>
+    public string GetPathModifier(ArrayItemsTypeDeclaration item)
+    {
+        return KeywordPathReference.AppendFragment(item.ReducedPathModifier);
+    }
 
     private bool HasKeyword(TypeDeclaration typeDeclaration)
     {

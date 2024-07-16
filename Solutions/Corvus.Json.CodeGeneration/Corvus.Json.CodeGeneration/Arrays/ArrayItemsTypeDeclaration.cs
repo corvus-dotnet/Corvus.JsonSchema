@@ -2,6 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using Corvus.Json.CodeGeneration.Keywords;
+
 namespace Corvus.Json.CodeGeneration;
 
 /// <summary>
@@ -9,8 +11,9 @@ namespace Corvus.Json.CodeGeneration;
 /// </summary>
 /// <param name="itemsType">The type of the items in the array.</param>
 /// <param name="isExplicit"><see langword="true"/> if the array items type is explicitly
+/// <param name="keyword">The keyword that provided the array items type declaration.</param>
 /// defined on the type declaration.</param>
-public sealed class ArrayItemsTypeDeclaration(TypeDeclaration itemsType, bool isExplicit)
+public sealed class ArrayItemsTypeDeclaration(TypeDeclaration itemsType, bool isExplicit, IArrayItemKeyword keyword)
 {
     /// <summary>
     /// Gets a value indicating whether the array items type
@@ -18,6 +21,11 @@ public sealed class ArrayItemsTypeDeclaration(TypeDeclaration itemsType, bool is
     /// type declaration.
     /// </summary>
     public bool IsExplicit { get; } = isExplicit;
+
+    /// <summary>
+    /// Gets the keyword that provided the array items type declaration.
+    /// </summary>
+    public IArrayItemKeyword Keyword { get; } = keyword;
 
     /// <summary>
     /// Gets the unreduced type of the items in the array.

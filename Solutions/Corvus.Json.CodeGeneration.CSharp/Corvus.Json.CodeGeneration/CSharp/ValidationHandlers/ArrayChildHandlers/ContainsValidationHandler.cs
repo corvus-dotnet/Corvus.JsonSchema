@@ -3,7 +3,6 @@
 // </copyright>
 
 using System.Diagnostics;
-using Microsoft.CodeAnalysis.CSharp;
 
 namespace Corvus.Json.CodeGeneration.CSharp;
 
@@ -92,20 +91,11 @@ public class ContainsValidationHandler : IChildArrayItemValidationHandler
             {
                 if (keyword.TryGetContainsItemType(typeDeclaration, out ArrayItemsTypeDeclaration? containsType))
                 {
+                    // We don't need to push the reduced path modifier, because
+                    // the contains result does not get applied back to the parent.
                     generator
                         .AppendSeparatorLine()
-                        .AppendLineIndent("ValidationContext containsResult = result.CreateChildContext();");
-
-                    if (containsType.ReducedPathModifier.Fragment.Length > 1)
-                    {
-                        // We don't need to pop the reduced path modifier, because we are not reusing the contains result.
-                        generator
-                            .AppendIndent("containsResult = containsResult.PushValidationLocationReducedPathModifier(new(")
-                            .Append(SymbolDisplay.FormatLiteral(containsType.ReducedPathModifier, true))
-                            .AppendLine("));");
-                    }
-
-                    generator
+                        .AppendLineIndent("ValidationContext containsResult = result.CreateChildContext();")
                         .AppendIndent("containsResult = arrayEnumerator.Current.As<")
                         .Append(containsType.ReducedType.FullyQualifiedDotnetTypeName())
                         .AppendLine(">().Validate(containsResult, level);")

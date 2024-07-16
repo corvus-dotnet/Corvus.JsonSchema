@@ -12,6 +12,14 @@ namespace Corvus.Json.CodeGeneration;
 public interface ITupleTypeProviderKeyword : IKeyword
 {
     /// <summary>
+    /// Gets the reduced path modifier for the item at a tuple index.
+    /// </summary>
+    /// <param name="item">The tuple type declaration.</param>
+    /// <param name="i">The index of the item.</param>
+    /// <returns>The path modifier for this item from this keyword.</returns>
+    string GetPathModifier(ReducedTypeDeclaration item, int i);
+
+    /// <summary>
     /// Try to get the <see cref="TupleTypeDeclaration"/> for the type declaration.
     /// </summary>
     /// <param name="typeDeclaration">The type declaration.</param>

@@ -43,7 +43,7 @@ public sealed class CorePartial : ICodeFileBuilder
                     .BeginPublicReadonlyPartialStructDeclaration(
                         typeDeclaration.DotnetTypeName(),
                         interfaces: [
-                            JsonNullType(typeDeclaration)
+                            JsonAnyType(typeDeclaration)
                             ])
                         .AppendBackingFields(typeDeclaration.ImpliedCoreTypes())
                         .AppendPublicDefaultConstructor(typeDeclaration)
@@ -96,11 +96,12 @@ public sealed class CorePartial : ICodeFileBuilder
         return (typeDeclaration.ImpliedCoreTypes() & (CoreTypes.Array | CoreTypes.Object)) != 0;
     }
 
-    private static ConditionalCodeSpecification JsonNullType(TypeDeclaration typeDeclaration)
+    private static ConditionalCodeSpecification JsonAnyType(TypeDeclaration typeDeclaration)
     {
         bool isNull = (typeDeclaration.ImpliedCoreTypes() & CoreTypes.Null) != 0 && typeDeclaration.ImpliedCoreTypes().CountTypes() == 1;
+        bool isAny = typeDeclaration.ImpliedCoreTypes().CountTypes() == 0;
         return new(
             g => g.GenericTypeOf("IJsonValue", typeDeclaration),
-            isNull ? FrameworkType.All : FrameworkType.NotEmitted);
+            isNull || isAny ? FrameworkType.All : FrameworkType.NotEmitted);
     }
 }

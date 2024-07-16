@@ -644,6 +644,39 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     }
 
     /// <summary>
+    /// Append multiple segments as an indented line.
+    /// </summary>
+    /// <param name="segments">The segements to append.</param>
+    /// <returns>A reference to this instance after the operation has completed.</returns>
+    public CodeGenerator AppendLineIndent(params Segment[] segments)
+    {
+        for (int i = 0; i < segments.Length; ++i)
+        {
+            if (i == 0)
+            {
+                if (i == segments.Length - 1)
+                {
+                    segments[i].AppendLineIndent(this);
+                }
+                else
+                {
+                    segments[i].AppendIndent(this);
+                }
+            }
+            else if (i == segments.Length - 1)
+            {
+                segments[i].AppendLine(this);
+            }
+            else
+            {
+                segments[i].Append(this);
+            }
+        }
+
+        return this;
+    }
+
+    /// <summary>
     /// Copy the builder to an output array.
     /// </summary>
     /// <param name="sourceIndex">The start index for the copy.</param>
@@ -1877,6 +1910,92 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
         }
 
         return string.Join(".", scope.Select(s => s.Name));
+    }
+
+    /// <summary>
+    /// A segment to append.
+    /// </summary>
+    public readonly struct Segment
+    {
+        private readonly string? segment;
+        private readonly Action<CodeGenerator>? segmentFunc;
+
+        private Segment(string segment)
+        {
+            this.segment = segment;
+            this.segmentFunc = null;
+        }
+
+        private Segment(Action<CodeGenerator> segmentFunc)
+        {
+            this.segment = null;
+            this.segmentFunc = segmentFunc;
+        }
+
+        /// <summary>
+        /// Conversion from <see langword="string"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Segment(string value) => new(value);
+
+        /// <summary>
+        /// Conversion from <see cref="Action{CodeGenerator}"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Segment(Action<CodeGenerator> value) => new(value);
+
+        /// <summary>
+        /// Append the segment to the generator.
+        /// </summary>
+        /// <param name="generator">The generator to which to append the segment.</param>
+        /// <returns>A reference to the generator after the operation has completed.</returns>
+        internal CodeGenerator Append(CodeGenerator generator)
+        {
+            if (this.segment is string s)
+            {
+                generator.Append(s);
+            }
+            else if (this.segmentFunc is Action<CodeGenerator> f)
+            {
+                f(generator);
+            }
+
+            return generator;
+        }
+
+        /// <summary>
+        /// Append the segment to the generator with line end.
+        /// </summary>
+        /// <param name="generator">The generator to which to append the segment.</param>
+        /// <returns>A reference to the generator after the operation has completed.</returns>
+        internal CodeGenerator AppendLine(CodeGenerator generator)
+        {
+            this.Append(generator);
+            return generator.AppendLine();
+        }
+
+        /// <summary>
+        /// Append the segment to the generator with indent.
+        /// </summary>
+        /// <param name="generator">The generator to which to append the segment.</param>
+        /// <returns>A reference to the generator after the operation has completed.</returns>
+        internal CodeGenerator AppendIndent(CodeGenerator generator)
+        {
+            generator.WriteIndent();
+            return this.Append(generator);
+        }
+
+        /// <summary>
+        /// Append the segment to the generator with indent and line end.
+        /// </summary>
+        /// <param name="generator">The generator to which to append the segment.</param>
+        /// <returns>A reference to the generator after the operation has completed.</returns>
+        internal CodeGenerator AppendLineIndent(CodeGenerator generator)
+        {
+            generator.WriteIndent();
+            this.Append(generator);
+            return generator.AppendLine();
+        }
     }
 
     private readonly struct ScopeValue(string name, int type)
