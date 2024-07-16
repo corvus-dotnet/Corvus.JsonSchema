@@ -16,11 +16,13 @@ namespace Corvus.Json.CodeGeneration;
 /// Determines whether the property is defined on the local schema,
 /// or composed from a subschema.
 /// </param>
+/// <param name="keyword">The keyword that provided the property.</param>
 public sealed class PropertyDeclaration(
     string jsonPropertyName,
     TypeDeclaration propertyType,
     RequiredOrOptional requiredOrOptional,
-    LocalOrComposed localOrComposed)
+    LocalOrComposed localOrComposed,
+    IObjectPropertyValidationKeyword? keyword)
 {
     private readonly Dictionary<string, object?> metadata = [];
 
@@ -30,9 +32,14 @@ public sealed class PropertyDeclaration(
     public string JsonPropertyName { get; } = jsonPropertyName;
 
     /// <summary>
-    /// Gets the property type declaration.
+    /// Gets the fully reduced property type declaration.
     /// </summary>
-    public ReducedTypeDeclaration PropertyType { get; } = propertyType.ReducedTypeDeclaration();
+    public TypeDeclaration ReducedPropertyType { get; } = propertyType.ReducedTypeDeclaration().ReducedType;
+
+    /// <summary>
+    /// Gets the full keyword path modifier for the property declaration.
+    /// </summary>
+    public string? KeywordPathModifier => this.Keyword?.GetPathModifier(this);
 
     /// <summary>
     /// Gets the unreduced type of the property.
@@ -48,6 +55,11 @@ public sealed class PropertyDeclaration(
     /// Gets a value indicating whether the property is defined on the local schema, or composed from a subschema.
     /// </summary>
     public LocalOrComposed LocalOrComposed { get; } = localOrComposed;
+
+    /// <summary>
+    /// Gets the keyword that provided the property, if it is a validation property.
+    /// </summary>
+    public IObjectPropertyValidationKeyword? Keyword { get; } = keyword;
 
     /// <summary>
     /// Sets a metadata value for the property declaration.

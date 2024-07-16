@@ -2,8 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using Corvus.Json.CodeGeneration.Keywords;
-
 namespace Corvus.Json.CodeGeneration;
 
 /// <summary>

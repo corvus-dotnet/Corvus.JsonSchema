@@ -14,7 +14,7 @@ public sealed class PropertiesKeyword
         ILocalSubschemaRegistrationKeyword,
         ISubschemaProviderKeyword,
         IPropertyProviderKeyword,
-        IObjectValidationKeyword
+        IObjectPropertyValidationKeyword
 {
     private const string KeywordPath = "#/properties";
     private static readonly JsonReference KeywordPathReference = new(KeywordPath);
@@ -79,7 +79,8 @@ public sealed class PropertiesKeyword
                             propertyName,
                             propertyTypeDeclaration,
                             RequiredOrOptional.Optional, // We always say optional; required will have been set by a "requiring" keyword
-                            source == target ? LocalOrComposed.Local : LocalOrComposed.Composed));
+                            source == target ? LocalOrComposed.Local : LocalOrComposed.Composed,
+                            this));
                 }
                 else
                 {
@@ -106,4 +107,10 @@ public sealed class PropertiesKeyword
 
     /// <inheritdoc/>
     public bool RequiresPropertyEvaluationTracking(TypeDeclaration typeDeclaration) => false;
+
+    /// <inheritdoc/>
+    public string GetPathModifier(PropertyDeclaration property)
+    {
+        return KeywordPathReference.AppendUnencodedPropertyNameToFragment(property.JsonPropertyName).AppendFragment(property.UnreducedPropertyType.ReducedTypeDeclaration().ReducedPathModifier);
+    }
 }

@@ -50,7 +50,8 @@ public sealed class RequiredKeyword : IPropertyProviderKeyword, IObjectValidatio
                         Uri.UnescapeDataString(propertyName),
                         WellKnownTypeDeclarations.JsonAny,
                         treatRequiredAsOptional ? RequiredOrOptional.Optional : RequiredOrOptional.Required,
-                        source == target ? LocalOrComposed.Local : LocalOrComposed.Composed));
+                        source == target ? LocalOrComposed.Local : LocalOrComposed.Composed,
+                        null));
             }
         }
     }

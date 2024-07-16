@@ -51,9 +51,21 @@ public sealed class AnyOfKeyword
         }
     }
 
+    /// <inheritdoc/>
+    public IReadOnlyCollection<TypeDeclaration> GetSubschemaTypeDeclarations(TypeDeclaration typeDeclaration)
+    {
+        return typeDeclaration.SubschemaTypeDeclarations.Where(t => t.Key.StartsWith(KeywordPath)).Select(t => t.Value).ToList();
+    }
+
     /// <inheritdoc />
     public bool CanReduce(in JsonElement schemaValue) => Reduction.CanReduceNonReducingKeyword(schemaValue, this.KeywordUtf8);
 
     /// <inheritdoc />
     public CoreTypes ImpliesCoreTypes(TypeDeclaration typeDeclaration) => CoreTypes.None;
+
+    /// <inheritdoc/>
+    public string GetPathModifier(ReducedTypeDeclaration subschema, int index)
+    {
+        return KeywordPathReference.AppendArrayIndexToFragment(index).AppendFragment(subschema.ReducedPathModifier);
+    }
 }

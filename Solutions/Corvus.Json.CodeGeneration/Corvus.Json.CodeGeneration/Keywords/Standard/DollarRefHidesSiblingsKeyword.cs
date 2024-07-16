@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Diagnostics;
 using System.Text.Json;
 
 namespace Corvus.Json.CodeGeneration.Keywords;
@@ -74,6 +75,13 @@ public sealed class DollarRefHidesSiblingsKeyword : IReferenceKeyword, IHidesSib
         }
 
         return [];
+    }
+
+    /// <inheritdoc/>
+    public string GetPathModifier(ReducedTypeDeclaration subschema, int index)
+    {
+        Debug.Assert(index == 0, "The index must be 0 for a $ref keyword.");
+        return KeywordPathReference.AppendFragment(subschema.ReducedPathModifier);
     }
 
     private static TypeDeclaration SubschemaTypeDeclaration(TypeDeclaration source) =>

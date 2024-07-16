@@ -13,6 +13,9 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 /// </summary>
 public sealed class EnumKeyword : IAnyOfConstantValidationKeyword
 {
+    private const string KeywordPath = "#/enum";
+    private static readonly JsonReference KeywordPathReference = new(KeywordPath);
+
     private EnumKeyword()
     {
     }
@@ -59,6 +62,12 @@ public sealed class EnumKeyword : IAnyOfConstantValidationKeyword
 
         constants = null;
         return false;
+    }
+
+    /// <inheritdoc/>
+    public string GetPathModifier(int index)
+    {
+        return KeywordPathReference.AppendArrayIndexToFragment(index);
     }
 
     private static JsonValueKind[] GetValueKindsFromArray(JsonElement value)

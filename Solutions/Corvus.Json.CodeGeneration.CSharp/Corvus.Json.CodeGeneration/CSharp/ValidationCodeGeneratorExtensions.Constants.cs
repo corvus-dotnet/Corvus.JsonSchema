@@ -244,21 +244,23 @@ public static partial class ValidationCodeGeneratorExtensions
     {
         string memberName = generator.GetMethodNameInScope(keyword.Keyword, prefix: "Create", suffix: index?.ToString());
 
+        // TODO: Figure out how to get the SourceGenerator to run when generating code
+        // in the specs. This commented out code works fine in "real life".
         return generator
-            ////.AppendLine("#if NET8_0_OR_GREATER")
-            ////    .AppendIndent("[GeneratedRegex(")
-            ////    .Append(SymbolDisplay.FormatLiteral(value, true))
-            ////    .AppendLine(")]")
-            ////    .AppendIndent("private static partial Regex ")
-            ////    .Append(memberName)
-            ////    .AppendLine("();")
-            ////.AppendLine("#else")
+                .AppendLine("#if NET8_0_OR_GREATER && !SPECFLOW_BUILD")
+                    .AppendIndent("[GeneratedRegex(")
+                    .Append(SymbolDisplay.FormatLiteral(value, true))
+                    .AppendLine(")]")
+                    .AppendIndent("private static partial Regex ")
+                    .Append(memberName)
+                    .AppendLine("();")
+                .AppendLine("#else")
                 .AppendIndent("private static Regex ")
                 .Append(memberName)
                 .Append("() => new(")
                 .AppendQuotedStringLiteral(value)
-                .AppendLine(", RegexOptions.Compiled);");
-            ////.AppendLine("#endif");
+                .AppendLine(", RegexOptions.Compiled);")
+                .AppendLine("#endif");
     }
 
     private static CodeGenerator AppendValidationConstantFields(CodeGenerator generator, IReadOnlyDictionary<IValidationConstantProviderKeyword, JsonElement[]> constants)

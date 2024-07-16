@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Collections.Frozen;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using Corvus.Json.CodeGeneration.Keywords;
@@ -74,6 +75,90 @@ public static class TypeDeclarationExtensions
             }
 
             return new(baseType, currentPathModifier);
+        }
+    }
+
+    /// <summary>
+    /// Gets the AllOf composition types for the type declaration, grouped by the providing keyword.
+    /// </summary>
+    /// <param name="that">The type declaration for which to get the AllOf composition types.</param>
+    /// <returns>A map of the keyword to the ordered collection of composition types.</returns>
+    public static IReadOnlyDictionary<IAllOfSubschemaValidationKeyword, IReadOnlyCollection<TypeDeclaration>>? AllOfCompositionTypes(this TypeDeclaration that)
+    {
+        if (!that.TryGetMetadata(nameof(AllOfCompositionTypes), out IReadOnlyDictionary<IAllOfSubschemaValidationKeyword, IReadOnlyCollection<TypeDeclaration>>? compositionTypes))
+        {
+            compositionTypes = BuildAllOfCompositionTypes(that);
+            that.SetMetadata(nameof(AllOfCompositionTypes), compositionTypes);
+        }
+
+        return compositionTypes;
+
+        static IReadOnlyDictionary<IAllOfSubschemaValidationKeyword, IReadOnlyCollection<TypeDeclaration>> BuildAllOfCompositionTypes(TypeDeclaration that)
+        {
+            Dictionary<IAllOfSubschemaValidationKeyword, IReadOnlyCollection<TypeDeclaration>> result = [];
+
+            foreach (IAllOfSubschemaValidationKeyword keyword in that.Keywords().OfType<IAllOfSubschemaValidationKeyword>())
+            {
+                result[keyword] = keyword.GetSubschemaTypeDeclarations(that);
+            }
+
+            return result.ToFrozenDictionary();
+        }
+    }
+
+    /// <summary>
+    /// Gets the AnyOf composition types for the type declaration, grouped by the providing keyword.
+    /// </summary>
+    /// <param name="that">The type declaration for which to get the AnyOf composition types.</param>
+    /// <returns>A map of the keyword to the ordered collection of composition types.</returns>
+    public static IReadOnlyDictionary<IAnyOfSubschemaValidationKeyword, IReadOnlyCollection<TypeDeclaration>>? AnyOfCompositionTypes(this TypeDeclaration that)
+    {
+        if (!that.TryGetMetadata(nameof(AnyOfCompositionTypes), out IReadOnlyDictionary<IAnyOfSubschemaValidationKeyword, IReadOnlyCollection<TypeDeclaration>>? compositionTypes))
+        {
+            compositionTypes = BuildAnyOfCompositionTypes(that);
+            that.SetMetadata(nameof(AnyOfCompositionTypes), compositionTypes);
+        }
+
+        return compositionTypes;
+
+        static IReadOnlyDictionary<IAnyOfSubschemaValidationKeyword, IReadOnlyCollection<TypeDeclaration>> BuildAnyOfCompositionTypes(TypeDeclaration that)
+        {
+            Dictionary<IAnyOfSubschemaValidationKeyword, IReadOnlyCollection<TypeDeclaration>> result = [];
+
+            foreach (IAnyOfSubschemaValidationKeyword keyword in that.Keywords().OfType<IAnyOfSubschemaValidationKeyword>())
+            {
+                result[keyword] = keyword.GetSubschemaTypeDeclarations(that);
+            }
+
+            return result.ToFrozenDictionary();
+        }
+    }
+
+    /// <summary>
+    /// Gets the OneOf composition types for the type declaration, grouped by the providing keyword.
+    /// </summary>
+    /// <param name="that">The type declaration for which to get the OneOf composition types.</param>
+    /// <returns>A map of the keyword to the ordered collection of composition types.</returns>
+    public static IReadOnlyDictionary<IOneOfSubschemaValidationKeyword, IReadOnlyCollection<TypeDeclaration>>? OneOfCompositionTypes(this TypeDeclaration that)
+    {
+        if (!that.TryGetMetadata(nameof(OneOfCompositionTypes), out IReadOnlyDictionary<IOneOfSubschemaValidationKeyword, IReadOnlyCollection<TypeDeclaration>>? compositionTypes))
+        {
+            compositionTypes = BuildOneOfCompositionTypes(that);
+            that.SetMetadata(nameof(OneOfCompositionTypes), compositionTypes);
+        }
+
+        return compositionTypes;
+
+        static IReadOnlyDictionary<IOneOfSubschemaValidationKeyword, IReadOnlyCollection<TypeDeclaration>> BuildOneOfCompositionTypes(TypeDeclaration that)
+        {
+            Dictionary<IOneOfSubschemaValidationKeyword, IReadOnlyCollection<TypeDeclaration>> result = [];
+
+            foreach (IOneOfSubschemaValidationKeyword keyword in that.Keywords().OfType<IOneOfSubschemaValidationKeyword>())
+            {
+                result[keyword] = keyword.GetSubschemaTypeDeclarations(that);
+            }
+
+            return result.ToFrozenDictionary();
         }
     }
 
@@ -1252,7 +1337,7 @@ public static class TypeDeclarationExtensions
 
             if (constants.Count > 0)
             {
-                validationConstants = constants;
+                validationConstants = constants.ToFrozenDictionary();
                 return true;
             }
 
@@ -1305,7 +1390,7 @@ public static class TypeDeclarationExtensions
 
             if (constants.Count > 0)
             {
-                validationRegularExpressions = constants;
+                validationRegularExpressions = constants.ToFrozenDictionary();
                 return true;
             }
 

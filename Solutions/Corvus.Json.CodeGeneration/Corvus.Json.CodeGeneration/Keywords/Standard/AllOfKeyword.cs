@@ -91,4 +91,10 @@ public sealed class AllOfKeyword
                 KeywordPath,
                 CoreTypes.None)
             : CoreTypes.None;
+
+    /// <inheritdoc/>
+    public string GetPathModifier(ReducedTypeDeclaration subschema, int index)
+    {
+        return KeywordPathReference.AppendArrayIndexToFragment(index).AppendFragment(subschema.ReducedPathModifier);
+    }
 }
