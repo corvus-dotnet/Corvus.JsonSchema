@@ -39,7 +39,7 @@ public sealed class ConstPropertyNameHeuristic : INameHeuristicBeforeSubschema
                     typeDeclaration.PropertyDeclarations
                         .Where(p =>
                             p.LocalOrComposed == LocalOrComposed.Local &&
-                            p.PropertyType.ReducedType.SingleConstantValue().ValueKind != System.Text.Json.JsonValueKind.Undefined))
+                            p.ReducedPropertyType.SingleConstantValue().ValueKind != System.Text.Json.JsonValueKind.Undefined))
         {
             if (count > 3)
             {
@@ -62,7 +62,7 @@ public sealed class ConstPropertyNameHeuristic : INameHeuristicBeforeSubschema
 
             written += Formatting.FormatTypeNameComponent(typeDeclaration, property.JsonPropertyName.AsSpan(), typeNameBuffer[written..]);
 
-            JsonElement constValue = property.PropertyType.ReducedType.SingleConstantValue();
+            JsonElement constValue = property.ReducedPropertyType.SingleConstantValue();
 
             ReadOnlySpan<char> constSpan =
                 constValue.ValueKind == JsonValueKind.String

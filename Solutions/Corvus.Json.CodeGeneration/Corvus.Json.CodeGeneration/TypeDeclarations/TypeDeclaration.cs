@@ -134,7 +134,8 @@ public sealed class TypeDeclaration(LocatedSchema locatedSchema)
                     propertyDeclaration.JsonPropertyName,
                     propertyDeclaration.UnreducedPropertyType,
                     MergeRequiredOrOptional(propertyDeclaration, existingProperty),
-                    propertyDeclaration.LocalOrComposed);
+                    propertyDeclaration.LocalOrComposed,
+                    propertyDeclaration.Keyword ?? existingProperty.Keyword);
         }
         else
         {

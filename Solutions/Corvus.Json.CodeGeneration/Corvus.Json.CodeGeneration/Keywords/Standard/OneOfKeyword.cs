@@ -62,4 +62,10 @@ public sealed class OneOfKeyword
     {
         return typeDeclaration.SubschemaTypeDeclarations.Where(t => t.Key.StartsWith(KeywordPath)).Select(t => t.Value).ToList();
     }
+
+    /// <inheritdoc/>
+    public string GetPathModifier(ReducedTypeDeclaration subschema, int index)
+    {
+        return KeywordPathReference.AppendArrayIndexToFragment(index).AppendFragment(subschema.ReducedPathModifier);
+    }
 }

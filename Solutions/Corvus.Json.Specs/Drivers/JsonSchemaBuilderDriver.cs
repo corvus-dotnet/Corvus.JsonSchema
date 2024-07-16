@@ -475,7 +475,7 @@ global using global::System.Threading.Tasks;";
             : ((IEnumerable<MetadataReference> MetadataReferences, IEnumerable<string?> Defines))(from l in ctx.CompileLibraries
                                                                                                   from r in l.ResolveReferencePaths()
                                                                                                   select MetadataReference.CreateFromFile(r),
-               ctx.CompilationOptions.Defines.AsEnumerable());
+               ctx.CompilationOptions.Defines.AsEnumerable().Union(["SPECFLOW_BUILD"]));
     }
 
     private static IEnumerable<SyntaxTree> ParseSyntaxTrees(IReadOnlyCollection<GeneratedCodeFile> generatedTypes, IEnumerable<string?> defines)
