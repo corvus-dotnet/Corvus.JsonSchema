@@ -64,7 +64,7 @@ public sealed class BaseSchemaNameHeuristic : INameHeuristicBeforeSubschema
             while (typeDeclaration.MatchesExistingTypeInParent(typeNameBuffer[..written]) ||
                    typeDeclaration.MatchesExistingPropertyNameInParent(typeNameBuffer[..written]))
             {
-                written = writtenBefore + Formatting.ApplySuffix(index, typeNameBuffer[..writtenBefore]);
+                written = writtenBefore + Formatting.ApplySuffix(index, typeNameBuffer[writtenBefore..]);
                 index++;
             }
 

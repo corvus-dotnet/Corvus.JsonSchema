@@ -43,8 +43,11 @@ public static partial class ValidationCodeGeneratorExtensions
                 .AppendBlockIndent(
                 """
                 ValidationContext result = validationContext;
+                ValidationContext childContextBase = result;
                 """)
             .AppendCompositionAllOfValidation(typeDeclaration, children)
+            .AppendSeparatorLine()
+            .AppendLineIndent("return result;")
             .EndMethodDeclaration();
     }
 
@@ -53,6 +56,11 @@ public static partial class ValidationCodeGeneratorExtensions
         TypeDeclaration typeDeclaration,
         IReadOnlyCollection<IChildValidationHandler> children)
     {
+        foreach (IChildValidationHandler child in children)
+        {
+            child.AppendValidationCode(generator, typeDeclaration);
+        }
+
         return generator;
     }
 }
