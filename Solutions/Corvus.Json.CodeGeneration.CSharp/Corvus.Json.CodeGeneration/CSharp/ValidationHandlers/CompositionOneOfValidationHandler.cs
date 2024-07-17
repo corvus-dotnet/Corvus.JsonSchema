@@ -20,7 +20,9 @@ public class CompositionOneOfValidationHandler : KeywordValidationHandlerBase
     /// <inheritdoc/>
     public override CodeGenerator AppendValidationSetup(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
-        return generator;
+        return generator
+            .PrependChildValidationSetup(typeDeclaration, this.ChildHandlers, this.ValidationHandlerPriority)
+            .AppendChildValidationSetup(typeDeclaration, this.ChildHandlers, this.ValidationHandlerPriority);
     }
 
     /// <inheritdoc/>
@@ -34,7 +36,12 @@ public class CompositionOneOfValidationHandler : KeywordValidationHandlerBase
         CodeGenerator generator,
         TypeDeclaration typeDeclaration)
     {
-        return generator;
+        // This occurs in the parent context, so we need to add the validation class name to the scope.
+        return generator
+            .AppendValidationMethodCall(
+                generator.ValidationClassName(),
+                generator.ValidationHandlerMethodName(this),
+                ["this", generator.ValueKindIdentifierName(), generator.ResultIdentifierName(), generator.LevelIdentifierName()]);
     }
 
     /// <inheritdoc/>

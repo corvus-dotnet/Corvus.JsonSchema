@@ -85,6 +85,7 @@ public sealed class CorePartial : ICodeFileBuilder
                         .AppendEqualsOverloads(typeDeclaration)
                         .AppendWriteToMethod(typeDeclaration)
                         .AppendGetHashCodeAndToStringMethods()
+                        .AppendValidateMethodForNoValidation(typeDeclaration)
                     .EndClassOrStructDeclaration()
                 .EndTypeDeclarationNesting(typeDeclaration)
                 .EndNamespace()

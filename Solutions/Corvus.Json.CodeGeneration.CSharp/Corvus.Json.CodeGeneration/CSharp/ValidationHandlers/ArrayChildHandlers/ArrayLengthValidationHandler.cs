@@ -5,7 +5,7 @@
 namespace Corvus.Json.CodeGeneration.CSharp;
 
 /// <summary>
-/// A string length validation handler.
+/// An array length validation handler.
 /// </summary>
 public class ArrayLengthValidationHandler : IChildArrayItemValidationHandler
 {

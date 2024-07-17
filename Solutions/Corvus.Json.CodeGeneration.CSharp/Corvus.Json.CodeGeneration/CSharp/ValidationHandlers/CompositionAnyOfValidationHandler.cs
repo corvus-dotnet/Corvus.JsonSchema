@@ -20,7 +20,9 @@ public class CompositionAnyOfValidationHandler : KeywordValidationHandlerBase
     /// <inheritdoc/>
     public override CodeGenerator AppendValidationSetup(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
-        return generator;
+        return generator
+            .PrependChildValidationSetup(typeDeclaration, this.ChildHandlers, this.ValidationHandlerPriority)
+            .AppendChildValidationSetup(typeDeclaration, this.ChildHandlers, this.ValidationHandlerPriority);
     }
 
     /// <inheritdoc/>

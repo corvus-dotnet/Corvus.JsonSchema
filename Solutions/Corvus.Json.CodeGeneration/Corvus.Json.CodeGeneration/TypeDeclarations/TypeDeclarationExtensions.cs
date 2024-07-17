@@ -720,7 +720,7 @@ public static class TypeDeclarationExtensions
         {
             JsonReference reference = typeDeclaration.LocatedSchema.Location;
 
-            foreach (IKeyword keyword in typeDeclaration.Keywords().OfType<IDefinitionsKeyword>())
+            foreach (IKeyword keyword in typeDeclaration.LocatedSchema.Vocabulary.Keywords.OfType<IDefinitionsKeyword>())
             {
                 if (reference.HasFragment && reference.Fragment.Length > 1 && reference.Fragment.LastIndexOf('/') == keyword.Keyword.Length + 2 && reference.Fragment[2..].StartsWith(keyword.Keyword.AsSpan()))
                 {

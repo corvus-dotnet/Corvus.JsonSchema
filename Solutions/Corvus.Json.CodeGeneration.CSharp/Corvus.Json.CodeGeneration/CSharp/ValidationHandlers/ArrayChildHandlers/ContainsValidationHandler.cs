@@ -7,7 +7,7 @@ using System.Diagnostics;
 namespace Corvus.Json.CodeGeneration.CSharp;
 
 /// <summary>
-/// A string length validation handler.
+/// A validation handler for a contains count.
 /// </summary>
 public class ContainsValidationHandler : IChildArrayItemValidationHandler
 {

@@ -45,7 +45,7 @@ public sealed class SubschemaNameHeuristic : INameHeuristicBeforeSubschema
                     written = name.Length;
                     written = Formatting.ToPascalCase(typeNameBuffer[..written]);
                 }
-                else if ((parent.AllowedCoreTypes() & CoreTypes.Array) != 0 && lastSlash > 0)
+                else if ((parent.AllowedCoreTypes() & CoreTypes.Array) != 0 && lastSlash > 0 && !typeDeclaration.IsInDefinitionsContainer())
                 {
                     // If this is an inline definition in an array, we will we build it from the keyword name.
                     int previousSlash = reference.Fragment[..(lastSlash - 1)].LastIndexOf('/');
@@ -75,7 +75,7 @@ public sealed class SubschemaNameHeuristic : INameHeuristicBeforeSubschema
                 while (typeDeclaration.MatchesExistingTypeInParent(typeNameBuffer[..written]) ||
                        typeDeclaration.MatchesExistingPropertyNameInParent(typeNameBuffer[..written]))
                 {
-                    written = writtenBefore + Formatting.ApplySuffix(index, typeNameBuffer[..writtenBefore]);
+                    written = writtenBefore + Formatting.ApplySuffix(index, typeNameBuffer[writtenBefore..]);
                     index++;
                 }
 

@@ -5,7 +5,7 @@
 namespace Corvus.Json.CodeGeneration.CSharp;
 
 /// <summary>
-/// A string length validation handler.
+/// A validation handler for array items, when there is no explicit tuple type.
 /// </summary>
 public class ArrayItemsValidationHandler : IChildArrayItemValidationHandler
 {
