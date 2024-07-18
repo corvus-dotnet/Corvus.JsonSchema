@@ -409,7 +409,7 @@ public static partial class ValidationCodeGeneratorExtensions
                 .AppendSeparatorLine()
                 .AppendBlockIndent(
                     """
-                    if (level != ValidationLevel.Flag)
+                    if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
                     }

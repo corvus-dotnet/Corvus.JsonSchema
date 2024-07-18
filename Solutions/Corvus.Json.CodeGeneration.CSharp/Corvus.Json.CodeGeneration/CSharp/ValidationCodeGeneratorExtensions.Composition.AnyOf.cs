@@ -33,13 +33,9 @@ public static partial class ValidationCodeGeneratorExtensions
                 new("in", typeDeclaration.DotnetTypeName(), "value"),
                 ("in ValidationContext", "validationContext"),
                 ("ValidationLevel", "level", "ValidationLevel.Flag"))
-                .ReserveName("result")
-                .ReserveName("isValid")
-                .AppendBlockIndent(
-                """
-                ValidationContext result = validationContext;
-                ValidationContext childContextBase = result;
-                """)
+            .ReserveName("result")
+            .ReserveName("isValid")
+            .AppendLineIndent("ValidationContext result = validationContext;")
             .AppendCompositionAnyOfValidation(typeDeclaration, children)
             .AppendSeparatorLine()
             .AppendLineIndent("return result;")

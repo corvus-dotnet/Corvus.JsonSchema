@@ -38,6 +38,28 @@ public class OneOfSubschemaValidationHandler : IChildArrayItemValidationHandler
         {
             foreach (IOneOfSubschemaValidationKeyword keyword in subschemaDictionary.Keys)
             {
+                string localMethodName = generator.GetUniqueMethodNameInScope(keyword.Keyword, prefix: "Validate");
+
+                generator
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("result = ", localMethodName, "(value, result, level);")
+                    .AppendLineIndent("if (!result.IsValid && level == ValidationLevel.Flag)")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent("return result;")
+                    .PopIndent()
+                    .AppendLineIndent("}")
+                    .AppendSeparatorLine()
+                    .AppendLineIndent(
+                        "static ValidationContext ",
+                        localMethodName,
+                        "(in ",
+                        typeDeclaration.DotnetTypeName(),
+                        " value, in ValidationContext validationContext, ValidationLevel level)")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                    .AppendLineIndent("ValidationContext result = validationContext;");
+
                 IReadOnlyCollection<TypeDeclaration> subschemaTypes = subschemaDictionary[keyword];
                 int i = 0;
 
@@ -53,7 +75,7 @@ public class OneOfSubschemaValidationHandler : IChildArrayItemValidationHandler
                     string resultName = generator.GetUniqueVariableNameInScope("Result", prefix: keyword.Keyword, suffix: i.ToString());
                     generator
                         .AppendSeparatorLine()
-                        .AppendLineIndent("ValidationContext ", contextName, " = childContextBase;")
+                        .AppendLineIndent("ValidationContext ", contextName, " = validationContext.CreateChildContext();")
                         .AppendLineIndent("if (level > ValidationLevel.Basic)")
                         .AppendLineIndent("{")
                         .PushIndent()
@@ -74,7 +96,7 @@ public class OneOfSubschemaValidationHandler : IChildArrayItemValidationHandler
                             reducedType.ReducedType.FullyQualifiedDotnetTypeName(),
                             ">().Validate(",
                             contextName,
-                            ".CreateChildContext(), level);")
+                            ", level);")
                         .AppendSeparatorLine()
                         .AppendLineIndent("if (", resultName, ".IsValid)")
                         .AppendLineIndent("{")
@@ -101,67 +123,71 @@ public class OneOfSubschemaValidationHandler : IChildArrayItemValidationHandler
                 }
 
                 generator
-                    .AppendSeparatorLine()
-                    .AppendLineIndent("if (level >= ValidationLevel.Basic)")
-                    .AppendLineIndent("{")
-                    .PushIndent()
-                        .AppendLineIndent(
-                            "result.PushValidationLocationProperty(",
-                            SymbolDisplay.FormatLiteral(keyword.Keyword, true),
-                            ");")
-                    .PopIndent()
-                    .AppendLineIndent("}")
-                    .AppendSeparatorLine()
-                    .AppendLineIndent("if (", foundValidName, " == 1)")
-                    .AppendLineIndent("{")
-                    .PushIndent()
-                        .AppendLineIndent("if (level >= ValidationLevel.Verbose)")
-                        .AppendLineIndent("{")
-                        .PushIndent()
-                            .AppendKeywordValidationResult(isValid: true, keyword, "result", "validated against the schema.")
-                        .PopIndent()
-                        .AppendLineIndent("}")
-                    .PopIndent()
-                    .AppendLineIndent("}")
-                    .AppendLineIndent("else if (", foundValidName, " > 1)")
-                    .AppendLineIndent("{")
-                    .PushIndent()
+                        .AppendSeparatorLine()
                         .AppendLineIndent("if (level >= ValidationLevel.Basic)")
                         .AppendLineIndent("{")
                         .PushIndent()
-                            .AppendKeywordValidationResult(isValid: false, keyword, "result", "validated against more than 1 of the schema.")
+                            .AppendLineIndent(
+                                "result.PushValidationLocationProperty(",
+                                SymbolDisplay.FormatLiteral(keyword.Keyword, true),
+                                ");")
+                        .PopIndent()
+                        .AppendLineIndent("}")
+                        .AppendSeparatorLine()
+                        .AppendLineIndent("if (", foundValidName, " == 1)")
+                        .AppendLineIndent("{")
+                        .PushIndent()
+                            .AppendLineIndent("if (level >= ValidationLevel.Verbose)")
+                            .AppendLineIndent("{")
+                            .PushIndent()
+                                .AppendKeywordValidationResult(isValid: true, keyword, "result", "validated against the schema.")
+                            .PopIndent()
+                            .AppendLineIndent("}")
+                        .PopIndent()
+                        .AppendLineIndent("}")
+                        .AppendLineIndent("else if (", foundValidName, " > 1)")
+                        .AppendLineIndent("{")
+                        .PushIndent()
+                            .AppendLineIndent("if (level >= ValidationLevel.Basic)")
+                            .AppendLineIndent("{")
+                            .PushIndent()
+                                .AppendKeywordValidationResult(isValid: false, keyword, "result", "validated against more than 1 of the schema.")
+                            .PopIndent()
+                            .AppendLineIndent("}")
+                            .AppendLineIndent("else")
+                            .AppendLineIndent("{")
+                            .PushIndent()
+                                .AppendLineIndent("result = result.WithResult(isValid: false);")
+                            .PopIndent()
+                            .AppendLineIndent("}")
                         .PopIndent()
                         .AppendLineIndent("}")
                         .AppendLineIndent("else")
                         .AppendLineIndent("{")
                         .PushIndent()
-                            .AppendLineIndent("result = result.WithResult(isValid: false);")
+                            .AppendLineIndent("if (level >= ValidationLevel.Basic)")
+                            .AppendLineIndent("{")
+                            .PushIndent()
+                                .AppendKeywordValidationResult(isValid: false, keyword, "result", "did not validate against any of the schema.")
+                            .PopIndent()
+                            .AppendLineIndent("}")
+                            .AppendLineIndent("else")
+                            .AppendLineIndent("{")
+                            .PushIndent()
+                                .AppendLineIndent("result = result.WithResult(isValid: false);")
+                            .PopIndent()
+                            .AppendLineIndent("}")
                         .PopIndent()
                         .AppendLineIndent("}")
-                    .PopIndent()
-                    .AppendLineIndent("}")
-                    .AppendLineIndent("else")
-                    .AppendLineIndent("{")
-                    .PushIndent()
+                        .AppendSeparatorLine()
                         .AppendLineIndent("if (level >= ValidationLevel.Basic)")
                         .AppendLineIndent("{")
                         .PushIndent()
-                            .AppendKeywordValidationResult(isValid: false, keyword, "result", "did not validate against any of the schema.")
+                            .AppendLineIndent("result.PopLocation();")
                         .PopIndent()
                         .AppendLineIndent("}")
-                        .AppendLineIndent("else")
-                        .AppendLineIndent("{")
-                        .PushIndent()
-                            .AppendLineIndent("result = result.WithResult(isValid: false);")
-                        .PopIndent()
-                        .AppendLineIndent("}")
-                    .PopIndent()
-                    .AppendLineIndent("}")
-                    .AppendSeparatorLine()
-                    .AppendLineIndent("if (level >= ValidationLevel.Basic)")
-                    .AppendLineIndent("{")
-                    .PushIndent()
-                        .AppendLineIndent("result.PopLocation();")
+                        .AppendSeparatorLine()
+                        .AppendLineIndent("return result;")
                     .PopIndent()
                     .AppendLineIndent("}");
             }
