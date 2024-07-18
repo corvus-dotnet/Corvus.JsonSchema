@@ -2,11 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-#if !NET8_0_OR_GREATER
-using System.Buffers;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-#endif
-
 namespace Corvus.Json.CodeGeneration.CSharp;
 
 /// <summary>
@@ -15,11 +10,11 @@ namespace Corvus.Json.CodeGeneration.CSharp;
 public static partial class ValidationCodeGeneratorExtensions
 {
     /// <summary>
-    /// Append a validation method for all-of composite types.
+    /// Append a validation method for any-of composite types.
     /// </summary>
     /// <param name="generator">The code generator.</param>
     /// <param name="methodName">The name of the validation method.</param>
-    /// <param name="typeDeclaration">The type declaration which requires string validation.</param>
+    /// <param name="typeDeclaration">The type declaration which requires anyOf validation.</param>
     /// <param name="children">The child handlers for the <see cref="IKeywordValidationHandler"/>.</param>
     /// <returns>A reference to the generator having completed the operation.</returns>
     /// <param name="parentHandlerPriority">The parent validation handler priority.</param>

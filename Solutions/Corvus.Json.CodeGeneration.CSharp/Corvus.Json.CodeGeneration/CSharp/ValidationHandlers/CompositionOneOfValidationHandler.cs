@@ -12,7 +12,7 @@ public class CompositionOneOfValidationHandler : KeywordValidationHandlerBase
     /// <summary>
     /// Gets a singleton instance of the <see cref="CompositionOneOfValidationHandler"/>.
     /// </summary>
-    public static CompositionOneOfValidationHandler Instance { get; } = new();
+    public static CompositionOneOfValidationHandler Instance { get; } = CreateDefault();
 
     /// <inheritdoc/>
     public override uint ValidationHandlerPriority => ValidationPriorities.Composition;
@@ -28,7 +28,8 @@ public class CompositionOneOfValidationHandler : KeywordValidationHandlerBase
     /// <inheritdoc/>
     public override CodeGenerator AppendValidationMethod(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
-        return generator;
+        return generator
+            .AppendCompositionOneOfValidation(generator.ValidationHandlerMethodName(this), typeDeclaration, this.ChildHandlers, this.ValidationHandlerPriority);
     }
 
     /// <inheritdoc/>
@@ -41,9 +42,19 @@ public class CompositionOneOfValidationHandler : KeywordValidationHandlerBase
             .AppendValidationMethodCall(
                 generator.ValidationClassName(),
                 generator.ValidationHandlerMethodName(this),
-                ["this", generator.ValueKindIdentifierName(), generator.ResultIdentifierName(), generator.LevelIdentifierName()]);
+                ["this", generator.ResultIdentifierName(), generator.LevelIdentifierName()]);
     }
 
     /// <inheritdoc/>
     public override bool HandlesKeyword(IKeyword keyword) => keyword is IOneOfValidationKeyword;
+
+    private static CompositionOneOfValidationHandler CreateDefault()
+    {
+        var result = new CompositionOneOfValidationHandler();
+        result
+            .RegisterChildHandlers(
+                OneOfSubschemaValidationHandler.Instance);
+
+        return result;
+    }
 }
