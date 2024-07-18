@@ -10,7 +10,7 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 /// <summary>
 /// The exclusiveMaximum keyword.
 /// </summary>
-public sealed class ExclusiveMaximumKeyword : INumericConstantValidationKeyword
+public sealed class ExclusiveMaximumKeyword : INumberConstantValidationKeyword
 {
     private ExclusiveMaximumKeyword()
     {

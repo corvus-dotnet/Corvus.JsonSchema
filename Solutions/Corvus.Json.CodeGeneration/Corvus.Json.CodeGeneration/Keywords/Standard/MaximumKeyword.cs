@@ -10,7 +10,7 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 /// <summary>
 /// The maximum keyword.
 /// </summary>
-public sealed class MaximumKeyword : INumericConstantValidationKeyword
+public sealed class MaximumKeyword : INumberConstantValidationKeyword
 {
     private MaximumKeyword()
     {
@@ -44,7 +44,15 @@ public sealed class MaximumKeyword : INumericConstantValidationKeyword
     {
         if (typeDeclaration.HasKeyword(this))
         {
-            op = Operator.LessThanOrEquals;
+            if (typeDeclaration.HasExclusiveMaximumModifier())
+            {
+                op = Operator.LessThan;
+            }
+            else
+            {
+                op = Operator.LessThanOrEquals;
+            }
+
             return true;
         }
 

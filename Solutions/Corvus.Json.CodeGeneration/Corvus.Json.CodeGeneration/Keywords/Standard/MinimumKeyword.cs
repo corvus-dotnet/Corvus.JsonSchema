@@ -10,7 +10,7 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 /// <summary>
 /// The minimum keyword.
 /// </summary>
-public sealed class MinimumKeyword : INumericConstantValidationKeyword
+public sealed class MinimumKeyword : INumberConstantValidationKeyword
 {
     private MinimumKeyword()
     {
@@ -44,7 +44,15 @@ public sealed class MinimumKeyword : INumericConstantValidationKeyword
     {
         if (typeDeclaration.HasKeyword(this))
         {
-            op = Operator.GreaterThanOrEquals;
+            if (typeDeclaration.HasExclusiveMinimumModifier())
+            {
+                op = Operator.GreaterThan;
+            }
+            else
+            {
+                op = Operator.GreaterThanOrEquals;
+            }
+
             return true;
         }
 

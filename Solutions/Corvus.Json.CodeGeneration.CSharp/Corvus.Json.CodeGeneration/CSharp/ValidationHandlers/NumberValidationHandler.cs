@@ -12,7 +12,7 @@ public class NumberValidationHandler : KeywordValidationHandlerBase
     /// <summary>
     /// Gets a singleton instance of the <see cref="NumberValidationHandler"/>.
     /// </summary>
-    public static NumberValidationHandler Instance { get; } = new();
+    public static NumberValidationHandler Instance { get; } = CreateDefault();
 
     /// <inheritdoc/>
     public override uint ValidationHandlerPriority => ValidationPriorities.Default;
@@ -20,13 +20,16 @@ public class NumberValidationHandler : KeywordValidationHandlerBase
     /// <inheritdoc/>
     public override CodeGenerator AppendValidationSetup(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
-        return generator;
+        return generator
+            .PrependChildValidationSetup(typeDeclaration, this.ChildHandlers, this.ValidationHandlerPriority)
+            .AppendChildValidationSetup(typeDeclaration, this.ChildHandlers, this.ValidationHandlerPriority);
     }
 
     /// <inheritdoc/>
     public override CodeGenerator AppendValidationMethod(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
-        return generator;
+        return generator
+            .AppendNumberValidation(generator.ValidationHandlerMethodName(this), typeDeclaration, this.ChildHandlers, this.ValidationHandlerPriority);
     }
 
     /// <inheritdoc/>
@@ -34,9 +37,23 @@ public class NumberValidationHandler : KeywordValidationHandlerBase
         CodeGenerator generator,
         TypeDeclaration typeDeclaration)
     {
-        return generator;
+        // This occurs in the parent context, so we need to add the validation class name to the scope.
+        return generator
+            .AppendValidationMethodCall(
+                generator.ValidationClassName(),
+                generator.ValidationHandlerMethodName(this),
+                ["this", generator.ValueKindIdentifierName(), generator.ResultIdentifierName(), generator.LevelIdentifierName()]);
     }
 
     /// <inheritdoc/>
     public override bool HandlesKeyword(IKeyword keyword) => keyword is INumberValidationKeyword;
+
+    private static NumberValidationHandler CreateDefault()
+    {
+        var result = new NumberValidationHandler();
+        result
+            .RegisterChildHandlers(
+                NumberRangeValidationHandler.Instance);
+        return result;
+    }
 }

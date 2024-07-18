@@ -30,6 +30,12 @@ public sealed class ExclusiveMinimumBooleanKeyword : IExclusiveMinimumBooleanKey
     public bool CanReduce(in JsonElement schemaValue) => Reduction.CanReduceNonReducingKeyword(schemaValue, this.KeywordUtf8);
 
     /// <inheritdoc />
+    public bool HasModifier(TypeDeclaration typeDeclaration)
+    {
+        return typeDeclaration.TryGetKeyword(this, out JsonElement value) && value.ValueKind == JsonValueKind.True;
+    }
+
+    /// <inheritdoc />
     public CoreTypes ImpliesCoreTypes(TypeDeclaration typeDeclaration) =>
         typeDeclaration.HasKeyword(this)
             ? CoreTypes.Number

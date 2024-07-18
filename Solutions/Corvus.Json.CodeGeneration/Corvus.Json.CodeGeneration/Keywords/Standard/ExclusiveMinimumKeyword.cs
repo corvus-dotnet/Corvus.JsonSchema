@@ -10,7 +10,7 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 /// <summary>
 /// The exclusiveMinimum keyword.
 /// </summary>
-public sealed class ExclusiveMinimumKeyword : INumericConstantValidationKeyword
+public sealed class ExclusiveMinimumKeyword : INumberConstantValidationKeyword
 {
     private ExclusiveMinimumKeyword()
     {

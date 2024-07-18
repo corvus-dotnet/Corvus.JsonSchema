@@ -63,6 +63,8 @@ internal static partial class CodeGeneratorExtensions
                 return generator.Append("is greater than");
             case Operator.GreaterThanOrEquals:
                 return generator.Append("is greater than or equal to");
+            case Operator.MultipleOf:
+                return generator.Append("is a multiple of");
             default:
                 Debug.Fail($"Unexpected operator {op}");
                 return generator;
@@ -94,6 +96,8 @@ internal static partial class CodeGeneratorExtensions
                 return generator.Append("is less than or equal to");
             case Operator.GreaterThanOrEquals:
                 return generator.Append("is less than");
+            case Operator.MultipleOf:
+                return generator.Append("is not a multiple of");
             default:
                 Debug.Fail($"Unexpected operator {op}");
                 return generator;

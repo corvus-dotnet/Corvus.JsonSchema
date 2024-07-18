@@ -4,6 +4,7 @@
 
 #if !NET8_0_OR_GREATER
 using System.Buffers;
+using System.ComponentModel.DataAnnotations;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 #endif
 
@@ -41,10 +42,6 @@ public static partial class ValidationCodeGeneratorExtensions
                 ("ValidationLevel", "level", "ValidationLevel.Flag"))
                 .ReserveName("result")
                 .ReserveName("isValid")
-                .AppendBlockIndent(
-                """
-                ValidationContext result = validationContext;
-                """)
             .AppendStringValidation(typeDeclaration, children)
             .EndMethodDeclaration();
     }
@@ -77,38 +74,55 @@ public static partial class ValidationCodeGeneratorExtensions
             .AppendSeparatorLine()
             .AppendLineIndent("return validationContext;")
             .PopIndent()
-            .AppendLineIndent("}")
-            .AppendSeparatorLine()
-            .AppendLineIndent("value.AsString.TryGetValue(StringValidator, new Corvus.Json.Validate.ValidationContextWrapper(result, level), out result);")
-            .AppendLineIndent("return result;")
-            .AppendLine()
-            .AppendLineIndent("static bool StringValidator(ReadOnlySpan<char> input, in Corvus.Json.Validate.ValidationContextWrapper context, out ValidationContext result)")
-            .AppendLineIndent("{")
-            .PushIndent();
+            .AppendLineIndent("}");
 
-        bool requiresStringLength =
-            typeDeclaration.Keywords()
-                .OfType<IStringValidationKeyword>()
-                .Any(k => k.RequiresStringLength(typeDeclaration));
+        bool requiresValueValidation = typeDeclaration.RequiresStringValueValidation();
 
-        if (requiresStringLength)
+        if (requiresValueValidation)
         {
             generator
-                .AppendLineIndent("int length = Corvus.Json.Validate.CountRunes(input);");
+                .AppendSeparatorLine()
+                .AppendLineIndent("ValidationContext result = validationContext;")
+                .AppendLineIndent("value.AsString.TryGetValue(StringValidator, new Corvus.Json.Validate.ValidationContextWrapper(result, level), out result);");
         }
 
         generator
-            .AppendLineIndent("result = context.Context;");
+            .AppendLineIndent("return result;");
 
-        foreach (IChildValidationHandler child in children)
+        if (requiresValueValidation)
         {
-            child.AppendValidationCode(generator, typeDeclaration);
+            generator
+                .AppendLine()
+                .AppendLineIndent("static bool StringValidator(ReadOnlySpan<char> input, in Corvus.Json.Validate.ValidationContextWrapper context, out ValidationContext result)")
+                .AppendLineIndent("{")
+                .PushIndent();
+
+            bool requiresStringLength =
+                typeDeclaration.Keywords()
+                    .OfType<IStringValidationKeyword>()
+                    .Any(k => k.RequiresStringLength(typeDeclaration));
+
+            if (requiresStringLength)
+            {
+                generator
+                    .AppendLineIndent("int length = Corvus.Json.Validate.CountRunes(input);");
+            }
+
+            generator
+                .AppendLineIndent("result = context.Context;");
+
+            foreach (IChildValidationHandler child in children)
+            {
+                child.AppendValidationCode(generator, typeDeclaration);
+            }
+
+            return generator
+                .AppendSeparatorLine()
+                .AppendLineIndent("return true;")
+                .PopIndent()
+                .AppendLineIndent("}");
         }
 
-        return generator
-            .AppendSeparatorLine()
-            .AppendLineIndent("return true;")
-            .PopIndent()
-            .AppendLineIndent("}");
+        return generator;
     }
 }
