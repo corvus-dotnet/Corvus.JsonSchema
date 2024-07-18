@@ -1,21 +1,20 @@
-﻿// <copyright file="AnyOfSubschemaValidationHandler.cs" company="Endjin Limited">
+﻿// <copyright file="OneOfSubschemaValidationHandler.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
 using Microsoft.CodeAnalysis.CSharp;
-using static Microsoft.CodeAnalysis.CSharp.SyntaxTokenParser;
 
 namespace Corvus.Json.CodeGeneration.CSharp;
 
 /// <summary>
-/// An any-of subschema validation handler.
+/// A oneOf subschema validation handler.
 /// </summary>
-public class AnyOfSubschemaValidationHandler : IChildArrayItemValidationHandler
+public class OneOfSubschemaValidationHandler : IChildArrayItemValidationHandler
 {
     /// <summary>
-    /// Gets the singleton instance of the <see cref="AnyOfSubschemaValidationHandler"/>.
+    /// Gets the singleton instance of the <see cref="OneOfSubschemaValidationHandler"/>.
     /// </summary>
-    public static AnyOfSubschemaValidationHandler Instance { get; } = new();
+    public static OneOfSubschemaValidationHandler Instance { get; } = new();
 
     /// <inheritdoc/>
     public uint ValidationHandlerPriority { get; } = ValidationPriorities.Default;
@@ -35,16 +34,16 @@ public class AnyOfSubschemaValidationHandler : IChildArrayItemValidationHandler
     /// <inheritdoc/>
     public CodeGenerator AppendValidationCode(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
-        if (typeDeclaration.AnyOfCompositionTypes() is IReadOnlyDictionary<IAnyOfSubschemaValidationKeyword, IReadOnlyCollection<TypeDeclaration>> subschemaDictionary)
+        if (typeDeclaration.OneOfCompositionTypes() is IReadOnlyDictionary<IOneOfSubschemaValidationKeyword, IReadOnlyCollection<TypeDeclaration>> subschemaDictionary)
         {
-            foreach (IAnyOfSubschemaValidationKeyword keyword in subschemaDictionary.Keys)
+            foreach (IOneOfSubschemaValidationKeyword keyword in subschemaDictionary.Keys)
             {
                 IReadOnlyCollection<TypeDeclaration> subschemaTypes = subschemaDictionary[keyword];
                 int i = 0;
 
                 string foundValidName = generator.GetUniqueVariableNameInScope("FoundValid", prefix: keyword.Keyword);
                 generator
-                    .AppendLineIndent("bool ", foundValidName, " = false;");
+                    .AppendLineIndent("int ", foundValidName, " = 0;");
 
                 foreach (TypeDeclaration subschemaType in subschemaTypes)
                 {
@@ -83,32 +82,8 @@ public class AnyOfSubschemaValidationHandler : IChildArrayItemValidationHandler
                         .AppendLineIndent(
                             "result = result.MergeChildContext(",
                             resultName,
-                            ", level >= ValidationLevel.Verbose);");
-
-                    if (!typeDeclaration.RequiresItemsEvaluationTracking() &&
-                        !typeDeclaration.RequiresPropertyEvaluationTracking())
-                    {
-                        generator
-                            .AppendLineIndent("if (level == ValidationLevel.Flag)")
-                            .AppendLineIndent("{")
-                            .PushIndent()
-                                .AppendLineIndent("return result;")
-                            .PopIndent()
-                            .AppendLineIndent("}")
-                            .AppendLineIndent("else")
-                            .AppendLineIndent("{")
-                            .PushIndent()
-                                .AppendLineIndent(foundValidName, " = true;")
-                            .PopIndent()
-                            .AppendLineIndent("}");
-                    }
-                    else
-                    {
-                        generator
-                            .AppendLineIndent(foundValidName, " = true;");
-                    }
-
-                    generator
+                            ", level >= ValidationLevel.Verbose);")
+                        .AppendLineIndent(foundValidName, "++;")
                         .PopIndent()
                         .AppendLineIndent("}")
                         .AppendLineIndent("else")
@@ -137,7 +112,7 @@ public class AnyOfSubschemaValidationHandler : IChildArrayItemValidationHandler
                     .PopIndent()
                     .AppendLineIndent("}")
                     .AppendSeparatorLine()
-                    .AppendLineIndent("if (", foundValidName, ")")
+                    .AppendLineIndent("if (", foundValidName, " == 1)")
                     .AppendLineIndent("{")
                     .PushIndent()
                         .AppendLineIndent("if (level >= ValidationLevel.Verbose)")
@@ -148,13 +123,30 @@ public class AnyOfSubschemaValidationHandler : IChildArrayItemValidationHandler
                         .AppendLineIndent("}")
                     .PopIndent()
                     .AppendLineIndent("}")
+                    .AppendLineIndent("else if (", foundValidName, " > 1)")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent("if (level >= ValidationLevel.Basic)")
+                        .AppendLineIndent("{")
+                        .PushIndent()
+                            .AppendKeywordValidationResult(isValid: false, keyword, "result", "validated against more than 1 of the schema.")
+                        .PopIndent()
+                        .AppendLineIndent("}")
+                        .AppendLineIndent("else")
+                        .AppendLineIndent("{")
+                        .PushIndent()
+                            .AppendLineIndent("result = result.WithResult(isValid: false);")
+                        .PopIndent()
+                        .AppendLineIndent("}")
+                    .PopIndent()
+                    .AppendLineIndent("}")
                     .AppendLineIndent("else")
                     .AppendLineIndent("{")
                     .PushIndent()
                         .AppendLineIndent("if (level >= ValidationLevel.Basic)")
                         .AppendLineIndent("{")
                         .PushIndent()
-                            .AppendKeywordValidationResult(isValid: false, keyword, "result", "did not validate against the schema.")
+                            .AppendKeywordValidationResult(isValid: false, keyword, "result", "did not validate against any of the schema.")
                         .PopIndent()
                         .AppendLineIndent("}")
                         .AppendLineIndent("else")
