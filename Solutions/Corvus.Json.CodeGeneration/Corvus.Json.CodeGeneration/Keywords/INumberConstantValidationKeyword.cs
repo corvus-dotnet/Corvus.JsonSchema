@@ -1,4 +1,4 @@
-﻿// <copyright file="INumericConstantValidationKeyword.cs" company="Endjin Limited">
+﻿// <copyright file="INumberConstantValidationKeyword.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
@@ -9,7 +9,9 @@ namespace Corvus.Json.CodeGeneration;
 /// <summary>
 /// Validates numeric values against a constant.
 /// </summary>
-public interface INumericConstantValidationKeyword : IValidationConstantProviderKeyword
+public interface INumberConstantValidationKeyword
+    : IValidationConstantProviderKeyword,
+      INumberValueValidationKeyword
 {
     /// <summary>
     /// Gets the operator to use for the comparison.

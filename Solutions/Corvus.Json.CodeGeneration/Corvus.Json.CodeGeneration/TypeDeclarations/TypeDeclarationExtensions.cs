@@ -42,6 +42,70 @@ public static class TypeDeclarationExtensions
     }
 
     /// <summary>
+    /// Gets a value indicating whether the type has an exclusive maximum modifier.
+    /// </summary>
+    /// <param name="that">The type declaration to test.</param>
+    /// <returns><see langword="true"/> if the type declaration has an exclusve maximum modifier.</returns>
+    public static bool HasExclusiveMaximumModifier(this TypeDeclaration that)
+    {
+        if (!that.TryGetMetadata(nameof(HasExclusiveMaximumModifier), out bool? result))
+        {
+            result = that.Keywords().OfType<IExclusiveMaximumBooleanKeyword>().Any(k => k.HasModifier(that));
+            that.SetMetadata(nameof(HasExclusiveMaximumModifier), result);
+        }
+
+        return result ?? false;
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether the type has an exclusive minimum modifier.
+    /// </summary>
+    /// <param name="that">The type declaration to test.</param>
+    /// <returns><see langword="true"/> if the type declaration has an exclusve minimum modifier.</returns>
+    public static bool HasExclusiveMinimumModifier(this TypeDeclaration that)
+    {
+        if (!that.TryGetMetadata(nameof(HasExclusiveMinimumModifier), out bool? result))
+        {
+            result = that.Keywords().OfType<IExclusiveMinimumBooleanKeyword>().Any(k => k.HasModifier(that));
+            that.SetMetadata(nameof(HasExclusiveMinimumModifier), result);
+        }
+
+        return result ?? false;
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether the type requires string value validation.
+    /// </summary>
+    /// <param name="that">The type declaration to test.</param>
+    /// <returns><see langword="true"/> if the type declaration requires string value validation.</returns>
+    public static bool RequiresStringValueValidation(this TypeDeclaration that)
+    {
+        if (!that.TryGetMetadata(nameof(RequiresStringValueValidation), out bool? result))
+        {
+            result = that.Keywords().OfType<IStringValueValidationKeyword>().Any();
+            that.SetMetadata(nameof(RequiresStringValueValidation), result);
+        }
+
+        return result ?? false;
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether the type requires number value validation.
+    /// </summary>
+    /// <param name="that">The type declaration to test.</param>
+    /// <returns><see langword="true"/> if the type declaration requires number value validation.</returns>
+    public static bool RequiresNumberValueValidation(this TypeDeclaration that)
+    {
+        if (!that.TryGetMetadata(nameof(RequiresNumberValueValidation), out bool? result))
+        {
+            result = that.Keywords().OfType<INumberValueValidationKeyword>().Any();
+            that.SetMetadata(nameof(RequiresNumberValueValidation), result);
+        }
+
+        return result ?? false;
+    }
+
+    /// <summary>
     /// Gets the reduced type declaration for the type.
     /// </summary>
     /// <param name="that">The type declaration to reduce.</param>

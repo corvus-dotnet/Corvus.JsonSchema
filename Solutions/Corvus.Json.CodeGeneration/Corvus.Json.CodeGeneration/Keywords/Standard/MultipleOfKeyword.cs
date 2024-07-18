@@ -10,7 +10,7 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 /// <summary>
 /// The multipleOf keyword.
 /// </summary>
-public sealed class MultipleOfKeyword : INumericConstantValidationKeyword
+public sealed class MultipleOfKeyword : INumberConstantValidationKeyword
 {
     private MultipleOfKeyword()
     {
