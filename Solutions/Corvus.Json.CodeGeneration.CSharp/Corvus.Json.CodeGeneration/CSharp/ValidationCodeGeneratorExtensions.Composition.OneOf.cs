@@ -40,11 +40,7 @@ public static partial class ValidationCodeGeneratorExtensions
                 ("ValidationLevel", "level", "ValidationLevel.Flag"))
                 .ReserveName("result")
                 .ReserveName("isValid")
-                .AppendBlockIndent(
-                """
-                ValidationContext result = validationContext;
-                ValidationContext childContextBase = result;
-                """)
+                .AppendLineIndent("ValidationContext result = validationContext;")
             .AppendCompositionOneOfValidation(typeDeclaration, children)
             .AppendSeparatorLine()
             .AppendLineIndent("return result;")
