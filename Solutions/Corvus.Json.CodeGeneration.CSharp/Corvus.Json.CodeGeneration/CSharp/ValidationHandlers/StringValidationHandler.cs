@@ -47,7 +47,7 @@ public class StringValidationHandler : KeywordValidationHandlerBase
     public override CodeGenerator AppendValidationMethod(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
         return generator
-            .AppendStringValidation(generator.ValidationHandlerMethodName(this), typeDeclaration, this.ChildHandlers, this.ValidationHandlerPriority);
+            .AppendStringValidation(generator.ValidationHandlerMethodName(this), typeDeclaration, this.ChildHandlers);
     }
 
     /// <inheritdoc/>

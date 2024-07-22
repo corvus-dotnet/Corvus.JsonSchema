@@ -18,6 +18,34 @@ internal static class TypeDeclarationExtensions
     private const string DoNotGenerateKey = "CSharp_LanguageProvider_DoNotGenerate";
     private const string FullyQualifiedDotnetTypeNameKey = "CSharp_LanguageProvider_FullyQualifiedDotnetTypeName";
     private const string PreferredDotnetNumericTypeNameKey = "CSharp_LanguageProvider_PreferredDotnetNumericTypeName";
+    private const string AlwaysAssertFormatKey = "CSharp_LanguageProvider_AlwaysAssertFormat";
+
+    /// <summary>
+    /// Sets the relevant metadata from the <see cref="CSharpLanguageProvider.Options"/>.
+    /// </summary>
+    /// <param name="typeDeclaration">The typedeclaration on which to set the options.</param>
+    /// <param name="options">The <see cref="CSharpLanguageProvider.Options"/> to set.</param>
+    public static void SetCSharpOptions(this TypeDeclaration typeDeclaration, CSharpLanguageProvider.Options options)
+    {
+        typeDeclaration.SetMetadata(AlwaysAssertFormatKey, options.AlwaysAssertFormat);
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether to always assert format, regardless of
+    /// the vocabulary.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration to test.</param>
+    /// <returns><see langword="true"/> if format is always to be asserted.</returns>
+    public static bool AlwaysAssertFormat(this TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.TryGetMetadata(AlwaysAssertFormatKey, out bool? alwaysAssertFormat) &&
+            alwaysAssertFormat is bool value)
+        {
+            return value;
+        }
+
+        return false;
+    }
 
     /// <summary>
     /// Determines if the given name collides with the parent name.
@@ -170,11 +198,9 @@ internal static class TypeDeclarationExtensions
                 return arrayItemsType.ReducedType.PreferredDotnetNumericTypeName();
             }
 
-            if ((typeDeclaration.ImpliedCoreTypes() & CoreTypes.String) != 0)
+            if ((typeDeclaration.ImpliedCoreTypes() & CoreTypes.String) != 0 && typeDeclaration.Format() is string candidateFormat)
             {
-                string? candidateFormat = typeDeclaration.Format();
-
-                return WellKnownStringFormatHelpers.GetDotnetTypeNameFor(candidateFormat);
+                return FormatProviderRegistry.Instance.StringTypeFormatProviders.GetDotnetTypeNameFor(candidateFormat);
             }
 
             return null;

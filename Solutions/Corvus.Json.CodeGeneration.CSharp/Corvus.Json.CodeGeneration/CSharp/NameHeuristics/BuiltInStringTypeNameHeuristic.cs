@@ -78,7 +78,7 @@ public sealed class BuiltInStringTypeNameHeuristic : IBuiltInTypeNameHeuristic
 
             if (candidateFormat is string format)
             {
-                typeDeclaration.SetDotnetNamespace(WellKnownStringFormatHelpers.GetDotnetTypeNameFor(format) ?? "JsonString");
+                typeDeclaration.SetDotnetTypeName(FormatProviderRegistry.Instance.StringTypeFormatProviders.GetDotnetTypeNameFor(format) ?? "JsonString");
             }
             else if (
                 candidateContentMediaType is string contentMediaType &&

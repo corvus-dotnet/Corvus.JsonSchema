@@ -15,9 +15,8 @@ internal static partial class CodeGeneratorExtensions
     /// Append the Equals() method overload for a <see cref="BinaryJsonNumber"/>.
     /// </summary>
     /// <param name="generator">The code generator.</param>
-    /// <param name="typeDeclaration">The type declaration for which to produce the method.</param>
     /// <returns>A reference to the generator having completed the operation.</returns>
-    public static CodeGenerator AppendEqualsBinaryJsonNumber(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    public static CodeGenerator AppendEqualsBinaryJsonNumber(this CodeGenerator generator)
     {
         return generator
             .ReserveNameIfNotReserved("Equals")
@@ -62,7 +61,7 @@ internal static partial class CodeGeneratorExtensions
     {
         if (typeDeclaration.PreferredDotnetNumericTypeName() is string numericTypeName)
         {
-            string dotnetTypeSuffix = WellKnownNumericFormatHelpers.GetDotnetTypeNameForCSharpLangwordOrTypeName(numericTypeName);
+            string dotnetTypeSuffix = FormatProviderRegistry.Instance.NumberTypeFormatProviders.GetDotnetTypeNameForCSharpNumericLangwordOrTypeName(numericTypeName) ?? numericTypeName;
             generator
                 .AppendSeparatorLine()
                 .AppendLineIndent("/// <summary>")
