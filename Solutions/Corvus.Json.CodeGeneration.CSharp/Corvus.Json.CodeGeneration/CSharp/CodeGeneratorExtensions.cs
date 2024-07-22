@@ -255,6 +255,38 @@ internal static partial class CodeGeneratorExtensions
     }
 
     /// <summary>
+    /// Append the start of a public readonly property declaration.
+    /// </summary>
+    /// <param name="generator">The generator to which to append the property.</param>
+    /// <param name="propertyType">The type of the property.</param>
+    /// <param name="propertyName">The name of the property.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator BeginPublicReadOnlyPropertyDeclaration(this CodeGenerator generator, string propertyType, string propertyName)
+    {
+        return generator
+            .AppendLineIndent("public ", propertyType, " ", propertyName)
+            .AppendLineIndent("{")
+            .PushIndent()
+            .AppendLineIndent("get")
+            .AppendLineIndent("{")
+            .PushIndent();
+    }
+
+    /// <summary>
+    /// Append the start of a public readonly property declaration.
+    /// </summary>
+    /// <param name="generator">The generator to which to append the property.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator EndReadOnlyPropertyDeclaration(this CodeGenerator generator)
+    {
+        return generator
+            .PopIndent()
+            .AppendLineIndent("}")
+            .PopIndent()
+            .AppendLineIndent("}");
+    }
+
+    /// <summary>
     /// Begin a method declaration for an explicit name which will be reserved in the scope.
     /// </summary>
     /// <param name="generator">The generator to which to append the method.</param>

@@ -38,6 +38,8 @@ public static class Formatting
         "ulong", "unchecked", "unsafe", "ushort",
         "using", "virtual", "void", "volatile",
         "while",
+        "Equals", "Finalize", "GetHashCode", "GetType",
+        "MemberwiseClone", "ReferenceEquals", "ToString"
     ];
 
     private static ReadOnlySpan<char> TypePrefix => "Type".AsSpan();
@@ -45,6 +47,8 @@ public static class Formatting
     private static ReadOnlySpan<char> ArraySuffix => "Array".AsSpan();
 
     private static ReadOnlySpan<char> EntitySuffix => "Entity".AsSpan();
+
+    private static ReadOnlySpan<char> PropertySuffix => "Property".AsSpan();
 
     /// <summary>
     /// Format a name for a type declaration.
@@ -226,9 +230,8 @@ public static class Formatting
         {
             if (k.AsSpan().SequenceEqual(v))
             {
-                v.CopyTo(buffer[1..]);
-                buffer[0] = '@';
-                return length + 1;
+                PropertySuffix.CopyTo(buffer[length..]);
+                return length + PropertySuffix.Length;
             }
         }
 

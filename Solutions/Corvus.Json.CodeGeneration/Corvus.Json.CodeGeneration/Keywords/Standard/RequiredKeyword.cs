@@ -47,11 +47,12 @@ public sealed class RequiredKeyword : IPropertyProviderKeyword, IObjectValidatio
                 string propertyName = property.GetString() ?? throw new InvalidOperationException("The required properties must be strings.");
                 target.AddOrUpdatePropertyDeclaration(
                     new PropertyDeclaration(
+                        target,
                         Uri.UnescapeDataString(propertyName),
                         WellKnownTypeDeclarations.JsonAny,
                         treatRequiredAsOptional ? RequiredOrOptional.Optional : RequiredOrOptional.Required,
                         source == target ? LocalOrComposed.Local : LocalOrComposed.Composed,
-                        null));
+                        this));
             }
         }
     }
@@ -67,4 +68,10 @@ public sealed class RequiredKeyword : IPropertyProviderKeyword, IObjectValidatio
 
     /// <inheritdoc/>
     public bool RequiresPropertyEvaluationTracking(TypeDeclaration typeDeclaration) => false;
+
+    /// <inheritdoc/>
+    public bool RequiresPropertyNameAsString(TypeDeclaration typeDeclaration) => typeDeclaration.HasKeyword(this);
+
+    /// <inheritdoc/>
+    public bool RequiresObjectEnumeration(TypeDeclaration typeDeclaration) => typeDeclaration.HasKeyword(this);
 }

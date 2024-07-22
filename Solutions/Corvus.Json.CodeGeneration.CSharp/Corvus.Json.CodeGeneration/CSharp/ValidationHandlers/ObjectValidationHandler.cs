@@ -12,7 +12,7 @@ public class ObjectValidationHandler : KeywordValidationHandlerBase
     /// <summary>
     /// Gets a singleton instance of the <see cref="ObjectValidationHandler"/>.
     /// </summary>
-    public static ObjectValidationHandler Instance { get; } = new();
+    public static ObjectValidationHandler Instance { get; } = CreateDefault();
 
     /// <inheritdoc/>
     public override uint ValidationHandlerPriority => ValidationPriorities.AfterComposition;
@@ -20,13 +20,17 @@ public class ObjectValidationHandler : KeywordValidationHandlerBase
     /// <inheritdoc/>
     public override CodeGenerator AppendValidationSetup(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
-        return generator;
+        return generator
+            .PrependChildValidationSetup(typeDeclaration, this.ChildHandlers, this.ValidationHandlerPriority)
+            .PushJsonPropertyNamesClassNameAndScope()
+            .AppendChildValidationSetup(typeDeclaration, this.ChildHandlers, this.ValidationHandlerPriority);
     }
 
     /// <inheritdoc/>
     public override CodeGenerator AppendValidationMethod(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
-        return generator;
+        return generator
+            .AppendObjectValidation(generator.ValidationHandlerMethodName(this), typeDeclaration, this.ChildHandlers, this.ValidationHandlerPriority);
     }
 
     /// <inheritdoc/>
@@ -34,9 +38,23 @@ public class ObjectValidationHandler : KeywordValidationHandlerBase
         CodeGenerator generator,
         TypeDeclaration typeDeclaration)
     {
-        return generator;
+        // This occurs in the parent context, so we need to add the validation class name to the scope.
+        return generator
+            .AppendValidationMethodCall(
+                generator.ValidationClassName(),
+                generator.ValidationHandlerMethodName(this),
+                ["this", generator.ValueKindIdentifierName(), generator.ResultIdentifierName(), generator.LevelIdentifierName()]);
     }
 
     /// <inheritdoc/>
     public override bool HandlesKeyword(IKeyword keyword) => keyword is IObjectValidationKeyword;
+
+    private static ObjectValidationHandler CreateDefault()
+    {
+        var result = new ObjectValidationHandler();
+        result
+            .RegisterChildHandlers(
+                RequiredValidationHandler.Instance);
+        return result;
+    }
 }

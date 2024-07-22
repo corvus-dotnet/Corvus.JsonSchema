@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 
 namespace Corvus.Json.CodeGeneration.Keywords;
@@ -9,7 +10,7 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 /// <summary>
 /// The deprecated keyword.
 /// </summary>
-public sealed class DeprecatedKeyword : IKeyword
+public sealed class DeprecatedKeyword : IDeprecatedKeyword
 {
     private DeprecatedKeyword()
     {
@@ -31,4 +32,12 @@ public sealed class DeprecatedKeyword : IKeyword
 
     /// <inheritdoc />
     public bool CanReduce(in JsonElement schemaValue) => true;
+
+    /// <inheritdoc />
+    public bool IsDeprecated(TypeDeclaration typeDeclaration, [MaybeNullWhen(false)] out string? message)
+    {
+        // This keyword doesn't support an explicit deprecation message.
+        message = null;
+        return typeDeclaration.TryGetKeyword(this, out JsonElement value) && value.ValueKind == JsonValueKind.True;
+    }
 }

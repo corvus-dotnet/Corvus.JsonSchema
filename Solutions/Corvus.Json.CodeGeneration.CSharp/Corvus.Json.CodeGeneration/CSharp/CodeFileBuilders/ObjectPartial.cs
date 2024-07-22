@@ -60,6 +60,8 @@ public sealed class ObjectPartial : ICodeFileBuilder
                             .AppendImplicitConversionToJsonValueType(typeDeclaration, "JsonObject", CoreTypes.Object, "value.AsObject")
                             .AppendObjectIndexerProperties(typeDeclaration)
                             .AppendReadOnlyDictionaryProperties(typeDeclaration)
+                            .PushJsonPropertyNamesClassNameAndScope()
+                            .AppendPropertyAccessors(typeDeclaration)
                             .AppendFromPropertiesFactoryMethods(typeDeclaration)
                             .AppendAsPropertyBackingMethod()
                             .AppendEnumerateObjectMethods(typeDeclaration)
@@ -68,6 +70,7 @@ public sealed class ObjectPartial : ICodeFileBuilder
                             .AppendTryGetPropertyMethods(typeDeclaration)
                             .AppendSetPropertyMethods(typeDeclaration)
                             .AppendRemovePropertyMethods(typeDeclaration)
+                            .AppendJsonPropertyNamesClass(typeDeclaration)
                             .AppendCorvusObjectHelpers(typeDeclaration)
                         .EndClassOrStructDeclaration()
                     .EndTypeDeclarationNesting(typeDeclaration)
@@ -79,9 +82,9 @@ public sealed class ObjectPartial : ICodeFileBuilder
 
         static FrameworkType EmitIfIsMapObject(TypeDeclaration typeDeclaration)
         {
-           return typeDeclaration.IsMapObject()
-                ? FrameworkType.All
-                : FrameworkType.NotEmitted;
+            return typeDeclaration.IsMapObject()
+                 ? FrameworkType.All
+                 : FrameworkType.NotEmitted;
         }
 
         static ConditionalCodeSpecification JsonObjectType(TypeDeclaration typeDeclaration)
@@ -92,7 +95,7 @@ public sealed class ObjectPartial : ICodeFileBuilder
         static ConditionalCodeSpecification ReadOnlyDictionaryType(TypeDeclaration typeDeclaration)
         {
             return
-                typeDeclaration.ObjectPropertyType() is ObjectPropertyTypeDeclaration objectPropertyType
+                typeDeclaration.FallbackObjectPropertyType() is FallbackObjectPropertyType objectPropertyType
                 ? new(g =>
                     {
                         g

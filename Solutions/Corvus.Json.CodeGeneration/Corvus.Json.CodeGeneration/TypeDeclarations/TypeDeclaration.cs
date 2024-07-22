@@ -131,11 +131,23 @@ public sealed class TypeDeclaration(LocatedSchema locatedSchema)
             // Merge whether this is a required property with the parent
             this.properties[propertyDeclaration.JsonPropertyName] =
                 new(
+                    this,
                     propertyDeclaration.JsonPropertyName,
                     propertyDeclaration.UnreducedPropertyType,
                     MergeRequiredOrOptional(propertyDeclaration, existingProperty),
                     propertyDeclaration.LocalOrComposed,
                     propertyDeclaration.Keyword ?? existingProperty.Keyword);
+        }
+        else if (propertyDeclaration.Owner != this)
+        {
+            this.properties[propertyDeclaration.JsonPropertyName] =
+                new(
+                    this,
+                    propertyDeclaration.JsonPropertyName,
+                    propertyDeclaration.UnreducedPropertyType,
+                    propertyDeclaration.RequiredOrOptional,
+                    LocalOrComposed.Composed,
+                    propertyDeclaration.Keyword);
         }
         else
         {

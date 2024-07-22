@@ -17,8 +17,8 @@ public static class TypeDeclarationExtensions
     private delegate bool ArrayItemKeywordAccessor<T>(T keyword, TypeDeclaration typeDeclaration, out ArrayItemsTypeDeclaration? value)
         where T : IArrayItemsTypeProviderKeyword;
 
-    private delegate bool ObjectPropertyKeywordAccessor<T>(T keyword, TypeDeclaration typeDeclaration, out ObjectPropertyTypeDeclaration? value)
-    where T : IObjectPropertyTypeProviderKeyword;
+    private delegate bool ObjectPropertyKeywordAccessor<T>(T keyword, TypeDeclaration typeDeclaration, out FallbackObjectPropertyType? value)
+    where T : IFallbackObjectPropertyTypeProviderKeyword;
 
     /// <summary>
     /// Gets a value indicating whether this type declaration
@@ -39,6 +39,39 @@ public static class TypeDeclarationExtensions
         }
 
         return hasSiblingHidingKeyword;
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether the type is deprecated.
+    /// </summary>
+    /// <param name="that">The type declaration to test.</param>
+    /// <param name="message">A deprecation message, or <see langword="null"/> if no message is provided.</param>
+    /// <returns>True if the type is deprecated.</returns>
+    public static bool IsDeprecated(this TypeDeclaration that, [MaybeNullWhen(false)] out string? message)
+    {
+        if (!that.TryGetMetadata(nameof(IsDeprecated), out (bool, string?) result))
+        {
+            bool found = false;
+            foreach (IDeprecatedKeyword keyword in that.Keywords().OfType<IDeprecatedKeyword>())
+            {
+                if (keyword.IsDeprecated(that, out string? m))
+                {
+                    result = (true, m);
+                    that.SetMetadata(nameof(IsDeprecated), result);
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found)
+            {
+                result = (false, default);
+                that.SetMetadata(nameof(IsDeprecated), result);
+            }
+        }
+
+        message = result.Item2;
+        return result.Item1;
     }
 
     /// <summary>
@@ -84,6 +117,54 @@ public static class TypeDeclarationExtensions
         {
             result = that.Keywords().OfType<IStringValueValidationKeyword>().Any();
             that.SetMetadata(nameof(RequiresStringValueValidation), result);
+        }
+
+        return result ?? false;
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether the type requires the string length in string validation.
+    /// </summary>
+    /// <param name="that">The type declaration to test.</param>
+    /// <returns><see langword="true"/> if the type declaration requires the string length in string validation.</returns>
+    public static bool RequiresStringLength(this TypeDeclaration that)
+    {
+        if (!that.TryGetMetadata(nameof(RequiresStringLength), out bool? result))
+        {
+            result = that.Keywords().OfType<IStringValidationKeyword>().Any(k => k.RequiresStringLength(that));
+            that.SetMetadata(nameof(RequiresStringLength), result);
+        }
+
+        return result ?? false;
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether the type requires the property count in object validation.
+    /// </summary>
+    /// <param name="that">The type declaration to test.</param>
+    /// <returns><see langword="true"/> if the type declaration requires the property count in object validation.</returns>
+    public static bool RequiresPropertyCount(this TypeDeclaration that)
+    {
+        if (!that.TryGetMetadata(nameof(RequiresPropertyCount), out bool? result))
+        {
+            result = that.Keywords().OfType<IObjectValidationKeyword>().Any(k => k.RequiresPropertyCount(that));
+            that.SetMetadata(nameof(RequiresPropertyCount), result);
+        }
+
+        return result ?? false;
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether the type requires the property name as a string in object validation.
+    /// </summary>
+    /// <param name="that">The type declaration to test.</param>
+    /// <returns><see langword="true"/> if the type declaration requires the property name as a string in object validation.</returns>
+    public static bool RequiresPropertyNameAsString(this TypeDeclaration that)
+    {
+        if (!that.TryGetMetadata(nameof(RequiresPropertyNameAsString), out bool? result))
+        {
+            result = that.Keywords().OfType<IObjectValidationKeyword>().Any(k => k.RequiresPropertyNameAsString(that));
+            that.SetMetadata(nameof(RequiresPropertyNameAsString), result);
         }
 
         return result ?? false;
@@ -351,7 +432,7 @@ public static class TypeDeclarationExtensions
     {
         if (!that.TryGetMetadata(nameof(IsMapObject), out bool? result))
         {
-            result = that.ObjectPropertyType() is not null;
+            result = that.FallbackObjectPropertyType() is not null;
             that.SetMetadata(nameof(IsMapObject), result);
         }
 
@@ -633,13 +714,34 @@ public static class TypeDeclarationExtensions
     /// a strongly-typed object.
     /// </summary>
     /// <param name="that">The type declaration for which to get the object property type.</param>
-    /// <returns>The <see cref="ObjectPropertyTypeDeclaration"/> for the strongly typed object properties.</returns>
-    public static ObjectPropertyTypeDeclaration? ObjectPropertyType(this TypeDeclaration that)
+    /// <returns>The <see cref="CodeGeneration.FallbackObjectPropertyType"/> for the strongly typed object properties.</returns>
+    public static FallbackObjectPropertyType? FallbackObjectPropertyType(this TypeDeclaration that)
     {
-        if (!that.TryGetMetadata(nameof(ObjectPropertyType), out ObjectPropertyTypeDeclaration? itemsType))
+        if (!that.TryGetMetadata(nameof(FallbackObjectPropertyType), out FallbackObjectPropertyType? itemsType))
         {
             BuildObjectTypes(that);
-            that.TryGetMetadata(nameof(ObjectPropertyType), out itemsType);
+            that.TryGetMetadata(nameof(FallbackObjectPropertyType), out itemsType);
+        }
+
+        return itemsType;
+    }
+
+    /// <summary>
+    /// Gets the collection of explicitly required properties in an object, or <see langword="null"/> if the type is not
+    /// a strongly-typed object.
+    /// </summary>
+    /// <param name="that">The type declaration for which to get the object property type.</param>
+    /// <returns>The <see cref="CodeGeneration.FallbackObjectPropertyType"/> for the strongly typed object properties.</returns>
+    public static IReadOnlyCollection<PropertyDeclaration>? ExplicitRequiredProperties(this TypeDeclaration that)
+    {
+        if (!that.TryGetMetadata(nameof(ExplicitRequiredProperties), out IReadOnlyCollection<PropertyDeclaration>? itemsType))
+        {
+            itemsType =
+                that.PropertyDeclarations.Where(
+                    p => p.LocalOrComposed == LocalOrComposed.Local &&
+                    p.RequiredOrOptional == RequiredOrOptional.Required).ToList();
+
+            that.SetMetadata(nameof(ExplicitRequiredProperties), itemsType);
         }
 
         return itemsType;
@@ -650,10 +752,10 @@ public static class TypeDeclarationExtensions
     /// if no such type is defined.
     /// </summary>
     /// <param name="that">The type declaration for which to get the object property type.</param>
-    /// <returns>The <see cref="ObjectPropertyTypeDeclaration"/> for the strongly typed object properties.</returns>
-    public static ObjectPropertyTypeDeclaration? LocalEvaluatedPropertyType(this TypeDeclaration that)
+    /// <returns>The <see cref="CodeGeneration.FallbackObjectPropertyType"/> for the strongly typed object properties.</returns>
+    public static FallbackObjectPropertyType? LocalEvaluatedPropertyType(this TypeDeclaration that)
     {
-        if (!that.TryGetMetadata(nameof(LocalEvaluatedPropertyType), out ObjectPropertyTypeDeclaration? itemsType))
+        if (!that.TryGetMetadata(nameof(LocalEvaluatedPropertyType), out FallbackObjectPropertyType? itemsType))
         {
             BuildObjectTypes(that);
             that.TryGetMetadata(nameof(LocalEvaluatedPropertyType), out itemsType);
@@ -667,10 +769,10 @@ public static class TypeDeclarationExtensions
     /// if no such type is defined.
     /// </summary>
     /// <param name="that">The type declaration for which to get the object property type.</param>
-    /// <returns>The <see cref="ObjectPropertyTypeDeclaration"/> for the strongly typed object properties.</returns>
-    public static ObjectPropertyTypeDeclaration? LocalAndAppliedEvaluatedPropertyType(this TypeDeclaration that)
+    /// <returns>The <see cref="CodeGeneration.FallbackObjectPropertyType"/> for the strongly typed object properties.</returns>
+    public static FallbackObjectPropertyType? LocalAndAppliedEvaluatedPropertyType(this TypeDeclaration that)
     {
-        if (!that.TryGetMetadata(nameof(LocalAndAppliedEvaluatedPropertyType), out ObjectPropertyTypeDeclaration? itemsType))
+        if (!that.TryGetMetadata(nameof(LocalAndAppliedEvaluatedPropertyType), out FallbackObjectPropertyType? itemsType))
         {
             BuildObjectTypes(that);
             that.TryGetMetadata(nameof(LocalAndAppliedEvaluatedPropertyType), out itemsType);
@@ -870,7 +972,7 @@ public static class TypeDeclarationExtensions
     /// Gets a value indicating whether the type declaration requires array enumeration.
     /// </summary>
     /// <param name="that">The type declaration.</param>
-    /// <returns><see langword="true"/> if the type requires the array length.</returns>
+    /// <returns><see langword="true"/> if the type requires the array enumeration.</returns>
     public static bool RequiresArrayEnumeration(this TypeDeclaration that)
     {
         if (!that.BuildComplete)
@@ -878,13 +980,13 @@ public static class TypeDeclarationExtensions
             throw new InvalidOperationException("You cannot use RequiresArrayEnumeration during the type build process.");
         }
 
-        if (!that.TryGetMetadata(nameof(RequiresArrayEnumeration), out bool requiresTracking))
+        if (!that.TryGetMetadata(nameof(RequiresArrayEnumeration), out bool requiresEnumeration))
         {
-            requiresTracking = RequiresArrayEnumeration(that);
-            that.SetMetadata(nameof(RequiresArrayEnumeration), requiresTracking);
+            requiresEnumeration = RequiresArrayEnumeration(that);
+            that.SetMetadata(nameof(RequiresArrayEnumeration), requiresEnumeration);
         }
 
-        return requiresTracking;
+        return requiresEnumeration;
 
         static bool RequiresArrayEnumeration(
             TypeDeclaration typeDeclaration)
@@ -898,6 +1000,41 @@ public static class TypeDeclarationExtensions
                 typeDeclaration.Keywords()
                     .OfType<IArrayValidationKeyword>()
                     .Any(k => k.RequiresArrayEnumeration(typeDeclaration));
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether the type declaration requires object enumeration.
+    /// </summary>
+    /// <param name="that">The type declaration.</param>
+    /// <returns><see langword="true"/> if the type requires the array enumeration.</returns>
+    public static bool RequiresObjectEnumeration(this TypeDeclaration that)
+    {
+        if (!that.BuildComplete)
+        {
+            throw new InvalidOperationException("You cannot use RequiresObjectEnumeration during the type build process.");
+        }
+
+        if (!that.TryGetMetadata(nameof(RequiresObjectEnumeration), out bool requiresEnumeration))
+        {
+            requiresEnumeration = RequiresObjectEnumeration(that);
+            that.SetMetadata(nameof(RequiresObjectEnumeration), requiresEnumeration);
+        }
+
+        return requiresEnumeration;
+
+        static bool RequiresObjectEnumeration(
+            TypeDeclaration typeDeclaration)
+        {
+            if (typeDeclaration.HasSiblingHidingKeyword())
+            {
+                return false;
+            }
+
+            return
+                typeDeclaration.Keywords()
+                    .OfType<IObjectValidationKeyword>()
+                    .Any(k => k.RequiresObjectEnumeration(typeDeclaration));
         }
     }
 
@@ -969,6 +1106,16 @@ public static class TypeDeclarationExtensions
                     .OfType<IValueKindValidationKeyword>()
                     .Any();
         }
+    }
+
+    /// <summary>
+    /// Indicates whether the type declaration has a default value.
+    /// </summary>
+    /// <param name="that">The type declaration to test.</param>
+    /// <returns><see langword="true"/> if the type has a default value.</returns>
+    public static bool HasDefaultValue(this TypeDeclaration that)
+    {
+        return that.DefaultValue().ValueKind != JsonValueKind.Undefined;
     }
 
     /// <summary>
@@ -1873,62 +2020,62 @@ public static class TypeDeclarationExtensions
 
     private static void BuildObjectTypes(TypeDeclaration typeDeclaration)
     {
-        ObjectPropertyTypeDeclaration? propertyType =
+        FallbackObjectPropertyType? propertyType =
             GetPropertyType(
                 typeDeclaration,
-                static (IObjectPropertyTypeProviderKeyword k, TypeDeclaration t, out ObjectPropertyTypeDeclaration? v)
-                    => k.TryGetObjectPropertyType(t, out v),
-                static t => t.ObjectPropertyType());
+                static (IFallbackObjectPropertyTypeProviderKeyword k, TypeDeclaration t, out FallbackObjectPropertyType? v)
+                    => k.TryGetFallbackObjectPropertyType(t, out v),
+                static t => t.FallbackObjectPropertyType());
 
-        ObjectPropertyTypeDeclaration? localEvaluatedPropertyType =
+        FallbackObjectPropertyType? localEvaluatedPropertyType =
             GetPropertyType(
                 typeDeclaration,
-                static (ILocalEvaluatedPropertyValidationKeyword k, TypeDeclaration t, out ObjectPropertyTypeDeclaration? v) =>
-                    k.TryGetObjectPropertyType(t, out v),
+                static (ILocalEvaluatedPropertyValidationKeyword k, TypeDeclaration t, out FallbackObjectPropertyType? v) =>
+                    k.TryGetFallbackObjectPropertyType(t, out v),
                 static t => t.LocalEvaluatedPropertyType(),
                 withComposition: false);
 
-        ObjectPropertyTypeDeclaration? localAndAppliedEvaluatedPropertyType =
+        FallbackObjectPropertyType? localAndAppliedEvaluatedPropertyType =
             GetPropertyType(
                 typeDeclaration,
-                static (ILocalAndAppliedEvaluatedPropertyValidationKeyword k, TypeDeclaration t, out ObjectPropertyTypeDeclaration? v) =>
-                    k.TryGetObjectPropertyType(t, out v),
+                static (ILocalAndAppliedEvaluatedPropertyValidationKeyword k, TypeDeclaration t, out FallbackObjectPropertyType? v) =>
+                    k.TryGetFallbackObjectPropertyType(t, out v),
                 static t => t.LocalAndAppliedEvaluatedPropertyType(),
                 withComposition: false);
 
         if (typeDeclaration.HasPropertyDeclarations)
         {
-            typeDeclaration.SetMetadata(nameof(ObjectPropertyType), default(ObjectPropertyTypeDeclaration?));
+            typeDeclaration.SetMetadata(nameof(FallbackObjectPropertyType), default(FallbackObjectPropertyType?));
         }
         else
         {
-            typeDeclaration.SetMetadata(nameof(ObjectPropertyType), propertyType);
+            typeDeclaration.SetMetadata(nameof(FallbackObjectPropertyType), propertyType);
         }
 
-        if (localEvaluatedPropertyType is ObjectPropertyTypeDeclaration nti && nti.IsExplicit)
+        if (localEvaluatedPropertyType is FallbackObjectPropertyType nti && nti.IsExplicit)
         {
             typeDeclaration.SetMetadata(nameof(LocalEvaluatedPropertyType), nti);
         }
         else
         {
-            typeDeclaration.SetMetadata(nameof(LocalEvaluatedPropertyType), default(ObjectPropertyTypeDeclaration?));
+            typeDeclaration.SetMetadata(nameof(LocalEvaluatedPropertyType), default(FallbackObjectPropertyType?));
         }
 
-        if (localAndAppliedEvaluatedPropertyType is ObjectPropertyTypeDeclaration ui && ui.IsExplicit)
+        if (localAndAppliedEvaluatedPropertyType is FallbackObjectPropertyType ui && ui.IsExplicit)
         {
             typeDeclaration.SetMetadata(nameof(LocalAndAppliedEvaluatedPropertyType), ui);
         }
         else
         {
-            typeDeclaration.SetMetadata(nameof(LocalAndAppliedEvaluatedPropertyType), default(ObjectPropertyTypeDeclaration?));
+            typeDeclaration.SetMetadata(nameof(LocalAndAppliedEvaluatedPropertyType), default(FallbackObjectPropertyType?));
         }
 
-        static ObjectPropertyTypeDeclaration? GetPropertyType<T>(
+        static FallbackObjectPropertyType? GetPropertyType<T>(
             TypeDeclaration typeDeclaration,
             ObjectPropertyKeywordAccessor<T> keywordAccessor,
-            Func<TypeDeclaration, ObjectPropertyTypeDeclaration?> childAccessor,
+            Func<TypeDeclaration, FallbackObjectPropertyType?> childAccessor,
             bool withComposition = true)
-            where T : IObjectPropertyTypeProviderKeyword
+            where T : IFallbackObjectPropertyTypeProviderKeyword
         {
             if (typeDeclaration.HasSiblingHidingKeyword())
             {
@@ -1940,12 +2087,12 @@ public static class TypeDeclarationExtensions
                 return null;
             }
 
-            ObjectPropertyTypeDeclaration? declaration = null;
+            FallbackObjectPropertyType? declaration = null;
 
             foreach (T keyword in typeDeclaration.Keywords().OfType<T>())
             {
-                if (keywordAccessor(keyword, typeDeclaration, out ObjectPropertyTypeDeclaration? value) &&
-                    value is ObjectPropertyTypeDeclaration itemsType)
+                if (keywordAccessor(keyword, typeDeclaration, out FallbackObjectPropertyType? value) &&
+                    value is FallbackObjectPropertyType itemsType)
                 {
                     if (declaration is null ||
                             (itemsType.IsExplicit && !declaration.IsExplicit))
@@ -1979,14 +2126,14 @@ public static class TypeDeclarationExtensions
             {
                 foreach (TypeDeclaration t in keyword.GetSubschemaTypeDeclarations(typeDeclaration))
                 {
-                    if (childAccessor(t) is ObjectPropertyTypeDeclaration referencedObjectPropertyTypeDeclaration)
+                    if (childAccessor(t) is FallbackObjectPropertyType referencedObjectPropertyTypeDeclaration)
                     {
                         if (declaration is null)
                         {
                             // We don't have an existing declaration, or
                             // we are overriding an implicit declaration with
                             // an explicit declaration
-                            declaration = new(referencedObjectPropertyTypeDeclaration.UnreducedType, false);
+                            declaration = new(referencedObjectPropertyTypeDeclaration.UnreducedType, referencedObjectPropertyTypeDeclaration.Keyword, false);
                         }
                         else if (declaration.ReducedType == referencedObjectPropertyTypeDeclaration.ReducedType)
                         {

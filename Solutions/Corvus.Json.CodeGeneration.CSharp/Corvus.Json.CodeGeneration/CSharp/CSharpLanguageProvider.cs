@@ -190,12 +190,12 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
 
         languageProvider.RegisterCodeFileBuilders(
             CorePartial.Instance,
-            ValidatePartial.Instance,
             ArrayPartial.Instance,
             ObjectPartial.Instance,
             BooleanPartial.Instance,
             StringPartial.Instance,
-            NumberPartial.Instance);
+            NumberPartial.Instance,
+            ValidatePartial.Instance);
 
         languageProvider.RegisterValidationHandlers(
             ArrayValidationHandler.Instance,

@@ -3,6 +3,7 @@
 // </copyright>
 
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Corvus.Json.CodeGeneration.CSharp;
 
@@ -12,7 +13,9 @@ namespace Corvus.Json.CodeGeneration.CSharp;
 public static partial class ValidationCodeGeneratorExtensions
 {
     private const string ValidationClassNameKey = "CSharp_Validation_ValidationClassNameKey";
+    private const string JsonPropertyNamesClassNameKey = "CSharp_Validation_JsonPropertyNamesClassNameKey";
     private const string ValidationClassBaseName = "CorvusValidation";
+    private const string JsonPropertyNamesClassBaseName = "JsonPropertyNames";
     private const string ResultIdentifierNameKey = "CSharp_Validation_Result_IdentifierName";
     private const string LevelIdentifierNameKey = "CSharp_Validation_Level_IdentifierName";
     private const string ValueKindIdentifierNameKey = "CSharp_Validation_ValueKind_IdentifierName";
@@ -101,6 +104,38 @@ public static partial class ValidationCodeGeneratorExtensions
     }
 
     /// <summary>
+    /// Gets the JSON Property Names class name.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <returns>The validation class name.</returns>
+    public static string JsonPropertyNamesClassName(this CodeGenerator generator)
+    {
+        if (generator.TryPeekMetadata(JsonPropertyNamesClassNameKey, out (string, string)? value) &&
+            value is (string className, string _))
+        {
+            return className;
+        }
+
+        throw new InvalidOperationException("The JSON property names class name has not been created.");
+    }
+
+    /// <summary>
+    /// Gets the validation class scope.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <returns>The fully-qualified validation class scope.</returns>
+    public static string JsonPropertyNamesClassScope(this CodeGenerator generator)
+    {
+        if (generator.TryPeekMetadata(JsonPropertyNamesClassNameKey, out (string, string)? value) &&
+            value is (string _, string scope))
+        {
+            return scope;
+        }
+
+        throw new InvalidOperationException("The JSON property class scope  has not been created.");
+    }
+
+    /// <summary>
     /// Gets the validation handler method name for the given keyword.
     /// </summary>
     /// <param name="generator">The code generator.</param>
@@ -116,17 +151,6 @@ public static partial class ValidationCodeGeneratorExtensions
         }
 
         throw new InvalidOperationException($"The method name has not been created for the keyword {handler.GetType().Name}");
-    }
-
-    /// <summary>
-    /// Get the name for a method on the validation class, in the generator scope.
-    /// </summary>
-    /// <param name="generator">The code generator.</param>
-    /// <param name="baseName">The base name for the method.</param>
-    /// <returns>The method name.</returns>
-    public static string GetValidationClassMethodName(this CodeGenerator generator, string baseName)
-    {
-        return generator.GetMethodNameInScope(baseName, rootScope: generator.ValidationClassScope());
     }
 
     /// <summary>
@@ -313,6 +337,37 @@ public static partial class ValidationCodeGeneratorExtensions
     {
         return generator
             .PopMetadata(ValidationClassNameKey);
+    }
+
+    /// <summary>
+    /// Make the json property names class name available.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    /// <remarks>
+    /// This is safe to call multiple times.
+    /// </remarks>
+    public static CodeGenerator PushJsonPropertyNamesClassNameAndScope(this CodeGenerator generator)
+    {
+        if (generator.TryPeekMetadata(JsonPropertyNamesClassNameKey, out (string, string) _))
+        {
+            return generator;
+        }
+
+        string jsonPropertyNamesClass = generator.GetTypeNameInScope(JsonPropertyNamesClassBaseName);
+        return generator
+            .PushMetadata(JsonPropertyNamesClassNameKey, (jsonPropertyNamesClass, generator.GetChildScope(jsonPropertyNamesClass, null)));
+    }
+
+    /// <summary>
+    /// Remove the scoped validation class name.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator PopJsonPropertyNamesClassNameAndScope(this CodeGenerator generator)
+    {
+        return generator
+            .PopMetadata(JsonPropertyNamesClassNameKey);
     }
 
     /// <summary>

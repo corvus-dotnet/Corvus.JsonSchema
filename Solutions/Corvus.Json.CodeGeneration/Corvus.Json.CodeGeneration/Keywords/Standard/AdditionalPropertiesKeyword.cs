@@ -55,13 +55,13 @@ public sealed class AdditionalPropertiesKeyword
     }
 
     /// <inheritdoc />
-    public bool TryGetObjectPropertyType(
+    public bool TryGetFallbackObjectPropertyType(
         TypeDeclaration typeDeclaration,
-        [MaybeNullWhen(false)] out ObjectPropertyTypeDeclaration? objectPropertiesType)
+        [MaybeNullWhen(false)] out FallbackObjectPropertyType? objectPropertiesType)
     {
         if (typeDeclaration.SubschemaTypeDeclarations.TryGetValue(KeywordPath, out TypeDeclaration? value))
         {
-            objectPropertiesType = new(value, isExplicit: true);
+            objectPropertiesType = new(value, this, isExplicit: true);
             return true;
         }
 
@@ -86,4 +86,10 @@ public sealed class AdditionalPropertiesKeyword
     {
         return typeDeclaration.HasKeyword(this);
     }
+
+    /// <inheritdoc/>
+    public bool RequiresPropertyNameAsString(TypeDeclaration typeDeclaration) => false;
+
+    /// <inheritdoc/>
+    public bool RequiresObjectEnumeration(TypeDeclaration typeDeclaration) => typeDeclaration.HasKeyword(this);
 }
