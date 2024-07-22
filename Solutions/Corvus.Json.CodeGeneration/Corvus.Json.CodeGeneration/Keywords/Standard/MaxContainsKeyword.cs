@@ -50,7 +50,7 @@ public sealed class MaxContainsKeyword : IArrayContainsCountConstantValidationKe
     {
         if (typeDeclaration.HasKeyword(this))
         {
-            op = Operator.GreaterThanOrEquals;
+            op = Operator.LessThanOrEquals;
             return true;
         }
 
