@@ -19,10 +19,10 @@ public class FormattingSteps
     [When(@"I format the input string ""([^""]*)"" with Pascal casing")]
     public void WhenIFormatTheInputStringWithPascalCasing(string input)
     {
-        Span<char> value = stackalloc char[Formatting.GetBufferLength(input.Length, "Entity".AsSpan())];
+        Span<char> value = stackalloc char[Formatting.GetBufferLength(input.Length, "Entity".AsSpan(), ReadOnlySpan<char>.Empty)];
         input.AsSpan().CopyTo(value);
         int written = Formatting.ToPascalCase(value[..input.Length]);
-        written = Formatting.FixReservedWords(value, written, "Entity".AsSpan());
+        written = Formatting.FixReservedWords(value, written, "Entity".AsSpan(), ReadOnlySpan<char>.Empty);
         this.formatted = value[..written].ToString();
     }
 

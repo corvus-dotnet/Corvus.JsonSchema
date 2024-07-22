@@ -287,6 +287,35 @@ internal static partial class CodeGeneratorExtensions
     }
 
     /// <summary>
+    /// Begin a local method declaration for an explicit name which will be reserved in the scope.
+    /// </summary>
+    /// <param name="generator">The generator to which to append the local method.</param>
+    /// <param name="visibilityAndModifiers">The visibility and modifiers for the method.</param>
+    /// <param name="returnType">The return type of the method.</param>
+    /// <param name="methodName">The method name, which will have been reserved in the scope.</param>
+    /// <param name="parameters">The parameter list.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator BeginLocalMethodDeclaration(
+        this CodeGenerator generator,
+        string visibilityAndModifiers,
+        string returnType,
+        string methodName,
+        params MethodParameter[] parameters)
+    {
+        return generator
+            .AppendSeparatorLine()
+            .AppendIndent(visibilityAndModifiers)
+            .Append(' ')
+            .Append(returnType)
+            .Append(' ')
+            .Append(methodName)
+            .PushMemberScope(methodName, ScopeType.Method) // Then move to the method scope before appending parameters
+            .AppendParameterList(parameters)
+            .AppendLineIndent("{")
+            .PushIndent();
+    }
+
+    /// <summary>
     /// Begin a method declaration for an explicit name which will be reserved in the scope.
     /// </summary>
     /// <param name="generator">The generator to which to append the method.</param>
@@ -2264,7 +2293,22 @@ internal static partial class CodeGeneratorExtensions
     {
         Debug.Assert(value.ValueKind == JsonValueKind.String, "The value must be a string.");
 
-        generator.Append(SymbolDisplay.FormatLiteral(value.GetString()!, true));
+        generator.Append(SymbolDisplay.FormatLiteral(value.GetRawText(), true));
+
+        return generator;
+    }
+
+    /// <summary>
+    /// Append a quoted string value.
+    /// </summary>
+    /// <param name="generator">The generator to which to append the numeric string.</param>
+    /// <param name="value">The numeric value to append.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendSerializedBooleanLiteral(this CodeGenerator generator, in JsonElement value)
+    {
+        Debug.Assert(value.ValueKind == JsonValueKind.True || value.ValueKind == JsonValueKind.False, "The value must be a boolean.");
+
+        generator.Append(SymbolDisplay.FormatLiteral(value.GetRawText(), true));
 
         return generator;
     }

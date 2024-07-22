@@ -66,7 +66,7 @@ public static class Formatting
 
         Span<char> corvusTypeNameBuffer = typeNameBuffer[..corvusTypeName.Length];
         int writtenLength = Formatting.ToPascalCase(corvusTypeNameBuffer);
-        return Formatting.FixReservedWords(typeNameBuffer, writtenLength, TypePrefix);
+        return Formatting.FixReservedWords(typeNameBuffer, writtenLength, TypePrefix, ReadOnlySpan<char>.Empty);
     }
 
     /// <summary>
@@ -130,7 +130,7 @@ public static class Formatting
         }
         else
         {
-            Formatting.FixReservedWords(typeNameBuffer, candidate.Length, TypePrefix);
+            Formatting.FixReservedWords(typeNameBuffer, candidate.Length, TypePrefix, ReadOnlySpan<char>.Empty);
         }
 
         return candidate.Length;
@@ -164,10 +164,11 @@ public static class Formatting
     /// </summary>
     /// <param name="stringLength">The length of string which requires formatting.</param>
     /// <param name="leadingDigitPrefix">The prefix to apply to a name with leading digits.</param>
+    /// <param name="collisionSuffix">The suffix to apply to a name if there is a collision.</param>
     /// <returns>The required buffer length.</returns>
-    public static int GetBufferLength(int stringLength, ReadOnlySpan<char> leadingDigitPrefix)
+    public static int GetBufferLength(int stringLength, ReadOnlySpan<char> leadingDigitPrefix, ReadOnlySpan<char> collisionSuffix)
     {
-        return stringLength + leadingDigitPrefix.Length;
+        return stringLength + leadingDigitPrefix.Length + collisionSuffix.Length;
     }
 
     /// <summary>
@@ -212,12 +213,13 @@ public static class Formatting
     /// <param name="buffer">The buffer containing the chars to fix.</param>
     /// <param name="length">The length of the string in the buffer.</param>
     /// <param name="leadingDigitPrefix">The prefix to prepend in the leading character was a digit.</param>
+    /// <param name="collisionSuffix">The suffix to append if there was a collision.</param>
     /// <returns>The number of characters in the resulting string.</returns>
     /// <remarks>
-    /// Call <see cref="GetBufferLength(int, ReadOnlySpan{char})"/> to get the
+    /// Call <see cref="GetBufferLength(int, ReadOnlySpan{char}, ReadOnlySpan{char})"/> to get the
     /// required buffer length for the string.
     /// </remarks>
-    public static int FixReservedWords(Span<char> buffer, int length, ReadOnlySpan<char> leadingDigitPrefix)
+    public static int FixReservedWords(Span<char> buffer, int length, ReadOnlySpan<char> leadingDigitPrefix, ReadOnlySpan<char> collisionSuffix)
     {
         if (length == 0)
         {
@@ -230,8 +232,8 @@ public static class Formatting
         {
             if (k.AsSpan().SequenceEqual(v))
             {
-                PropertySuffix.CopyTo(buffer[length..]);
-                return length + PropertySuffix.Length;
+                collisionSuffix.CopyTo(buffer[length..]);
+                return length + collisionSuffix.Length;
             }
         }
 

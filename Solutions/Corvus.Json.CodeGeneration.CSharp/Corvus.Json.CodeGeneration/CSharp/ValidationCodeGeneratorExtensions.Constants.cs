@@ -135,11 +135,11 @@ public static partial class ValidationCodeGeneratorExtensions
         string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword, suffix: index?.ToString());
 
         generator
-            .AppendIndent("public static readonly string ")
+            .AppendIndent("public static readonly JsonString ")
             .Append(memberName)
-            .Append(" = ")
+            .Append(" = JsonString.ParseValue(")
             .AppendQuotedStringLiteral(value)
-            .AppendLine(";");
+            .AppendLine(");");
 
         return generator;
     }
@@ -153,8 +153,7 @@ public static partial class ValidationCodeGeneratorExtensions
         generator
             .AppendIndent("public static readonly JsonNull ")
             .Append(memberName)
-            .Append(" = JsonNull.Null;")
-            .AppendLine(";");
+            .AppendLine(" = JsonNull.Null;");
 
         return generator;
     }
@@ -168,8 +167,8 @@ public static partial class ValidationCodeGeneratorExtensions
         generator
             .AppendIndent("public static readonly JsonBoolean ")
             .Append(memberName)
-            .Append(" = new(")
-            .Append(value.GetBoolean())
+            .Append(" = JsonBoolean.ParseValue(")
+            .AppendSerializedBooleanLiteral(value)
             .AppendLine(");");
 
         return generator;

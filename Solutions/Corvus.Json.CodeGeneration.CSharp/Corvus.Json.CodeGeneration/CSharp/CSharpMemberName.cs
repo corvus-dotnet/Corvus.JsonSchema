@@ -28,7 +28,7 @@ public class CSharpMemberName(
 
         ReadOnlySpan<char> leadingDigitPrefix = this.Casing == Casing.PascalCase ? PascalPrefix : CamelPrefix;
 
-        int bufferLength = Formatting.GetBufferLength(baseName.Length + prefix.Length + suffix.Length, leadingDigitPrefix);
+        int bufferLength = Formatting.GetBufferLength(baseName.Length + prefix.Length + suffix.Length, leadingDigitPrefix, ReadOnlySpan<char>.Empty);
 
         Span<char> buffer = stackalloc char[bufferLength];
 
@@ -85,7 +85,7 @@ public class CSharpMemberName(
                 totalLength += Formatting.ToPascalCase(buffer[(prefix.Length + baseName.Length)..]);
             }
 
-            totalLength = Formatting.FixReservedWords(buffer, totalLength, leadingDigitPrefix);
+            totalLength = Formatting.FixReservedWords(buffer, totalLength, leadingDigitPrefix, ReadOnlySpan<char>.Empty);
         }
 
         return buffer[..totalLength].ToString();
