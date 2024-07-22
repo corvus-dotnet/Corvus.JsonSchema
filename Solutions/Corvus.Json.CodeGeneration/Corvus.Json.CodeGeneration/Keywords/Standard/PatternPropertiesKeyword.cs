@@ -98,4 +98,10 @@ public sealed class PatternPropertiesKeyword
     {
         return typeDeclaration.SubschemaTypeDeclarations.Where(t => t.Key.StartsWith(KeywordPath)).Select(t => t.Value).ToList();
     }
+
+    /// <inheritdoc/>
+    public bool RequiresPropertyNameAsString(TypeDeclaration typeDeclaration) => typeDeclaration.HasKeyword(this);
+
+    /// <inheritdoc/>
+    public bool RequiresObjectEnumeration(TypeDeclaration typeDeclaration) => typeDeclaration.HasKeyword(this);
 }

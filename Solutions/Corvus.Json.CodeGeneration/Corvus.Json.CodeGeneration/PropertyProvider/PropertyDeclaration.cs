@@ -9,6 +9,7 @@ namespace Corvus.Json.CodeGeneration;
 /// <summary>
 /// Represents a property defined on a type.
 /// </summary>
+/// <param name="owner">The type that owns the property.</param>
 /// <param name="jsonPropertyName">The JSON property name.</param>
 /// <param name="propertyType">The JSON property type.</param>
 /// <param name="requiredOrOptional">Determines whether the property is required or optional.</param>
@@ -18,13 +19,19 @@ namespace Corvus.Json.CodeGeneration;
 /// </param>
 /// <param name="keyword">The keyword that provided the property.</param>
 public sealed class PropertyDeclaration(
+    TypeDeclaration owner,
     string jsonPropertyName,
     TypeDeclaration propertyType,
     RequiredOrOptional requiredOrOptional,
     LocalOrComposed localOrComposed,
-    IObjectPropertyValidationKeyword? keyword)
+    IObjectValidationKeyword? keyword)
 {
     private readonly Dictionary<string, object?> metadata = [];
+
+    /// <summary>
+    /// Gets the type that owns the property.
+    /// </summary>
+    public TypeDeclaration Owner { get; } = owner;
 
     /// <summary>
     /// Gets the JSON property name.
@@ -39,7 +46,7 @@ public sealed class PropertyDeclaration(
     /// <summary>
     /// Gets the full keyword path modifier for the property declaration.
     /// </summary>
-    public string? KeywordPathModifier => this.Keyword?.GetPathModifier(this);
+    public string KeywordPathModifier => (this.Keyword as IObjectPropertyValidationKeyword)?.GetPathModifier(this) ?? string.Empty;
 
     /// <summary>
     /// Gets the unreduced type of the property.
@@ -59,7 +66,7 @@ public sealed class PropertyDeclaration(
     /// <summary>
     /// Gets the keyword that provided the property, if it is a validation property.
     /// </summary>
-    public IObjectPropertyValidationKeyword? Keyword { get; } = keyword;
+    public IObjectValidationKeyword? Keyword { get; } = keyword;
 
     /// <summary>
     /// Sets a metadata value for the property declaration.

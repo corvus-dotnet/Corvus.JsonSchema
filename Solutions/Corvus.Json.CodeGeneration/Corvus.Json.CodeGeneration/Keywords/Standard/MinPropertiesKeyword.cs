@@ -70,4 +70,10 @@ public sealed class MinPropertiesKeyword : IPropertyCountConstantValidationKeywo
         constants = null;
         return false;
     }
+
+    /// <inheritdoc/>
+    public bool RequiresPropertyNameAsString(TypeDeclaration typeDeclaration) => false;
+
+    /// <inheritdoc/>
+    public bool RequiresObjectEnumeration(TypeDeclaration typeDeclaration) => false;
 }

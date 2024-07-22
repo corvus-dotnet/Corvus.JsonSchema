@@ -2,6 +2,9 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System;
+using System.Diagnostics.CodeAnalysis;
+
 namespace Corvus.Json.CodeGeneration.CSharp;
 
 /// <summary>
@@ -23,10 +26,46 @@ internal static class PropertyDeclarationExtensions
             that.JsonPropertyName.AsSpan().CopyTo(buffer);
             int written = Formatting.ToPascalCase(buffer[..that.JsonPropertyName.Length]);
             written = Formatting.FixReservedWords(buffer, written, "V".AsSpan());
-            name = buffer[..written].ToString();
+
+            Span<char> appendBuffer = buffer[written..];
+            ReadOnlySpan<char> currentName = buffer[..written];
+
+            int index = 1;
+
+            while (HasMatchingProperty(that, currentName, out string? match))
+            {
+                int writtenSuffix = Formatting.ApplySuffix(index++, appendBuffer);
+                currentName = buffer[..(written + writtenSuffix)];
+            }
+
+            name = currentName.ToString();
+
             that.SetMetadata(nameof(DotnetPropertyName), name);
         }
 
         return name ?? throw new InvalidOperationException("Null names are not permitted.");
+
+        static bool HasMatchingProperty(PropertyDeclaration property, ReadOnlySpan<char> buffer, [NotNullWhen(true)] out string? match)
+        {
+            foreach (PropertyDeclaration sibling in property.Owner.PropertyDeclarations)
+            {
+                if (property == sibling)
+                {
+                    continue;
+                }
+
+                if (sibling.TryGetMetadata(nameof(DotnetPropertyName), out string? siblingName))
+                {
+                    if (siblingName is string sn && sn.AsSpan().Equals(buffer, StringComparison.Ordinal))
+                    {
+                        match = siblingName;
+                        return true;
+                    }
+                }
+            }
+
+            match = null;
+            return false;
+        }
     }
 }

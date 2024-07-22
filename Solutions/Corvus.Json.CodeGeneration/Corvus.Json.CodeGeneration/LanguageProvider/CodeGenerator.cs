@@ -677,6 +677,50 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     }
 
     /// <summary>
+    /// Append multiple segments with an initial indent.
+    /// </summary>
+    /// <param name="segments">The segements to append.</param>
+    /// <returns>A reference to this instance after the operation has completed.</returns>
+    public CodeGenerator AppendIndent(params Segment[] segments)
+    {
+        for (int i = 0; i < segments.Length; ++i)
+        {
+            if (i == 0)
+            {
+                segments[i].AppendIndent(this);
+            }
+            else
+            {
+                segments[i].Append(this);
+            }
+        }
+
+        return this;
+    }
+
+    /// <summary>
+    /// Append multiple segments with an initial indent.
+    /// </summary>
+    /// <param name="segments">The segements to append.</param>
+    /// <returns>A reference to this instance after the operation has completed.</returns>
+    public CodeGenerator AppendLine(params Segment[] segments)
+    {
+        for (int i = 0; i < segments.Length; ++i)
+        {
+            if (i == segments.Length - 1)
+            {
+                segments[i].AppendLine(this);
+            }
+            else
+            {
+                segments[i].Append(this);
+            }
+        }
+
+        return this;
+    }
+
+    /// <summary>
     /// Copy the builder to an output array.
     /// </summary>
     /// <param name="sourceIndex">The start index for the copy.</param>

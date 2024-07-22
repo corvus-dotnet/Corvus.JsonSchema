@@ -13,4 +13,4 @@ namespace Corvus.Json.CodeGeneration;
 /// </remarks>
 public interface ILocalAndAppliedEvaluatedPropertyValidationKeyword
     : IObjectValidationKeyword,
-      IObjectPropertyTypeProviderKeyword;
+      IFallbackObjectPropertyTypeProviderKeyword;

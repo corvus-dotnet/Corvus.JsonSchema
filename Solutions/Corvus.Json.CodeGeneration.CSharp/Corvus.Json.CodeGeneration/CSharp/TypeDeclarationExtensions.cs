@@ -60,6 +60,17 @@ internal static class TypeDeclarationExtensions
     }
 
     /// <summary>
+    /// Gets a value which determines if this type is the JsonAny
+    /// type.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration to test.</param>
+    /// <returns><see langword="true"/> if the type declaration is the <see cref="WellKnownTypeDeclarations.JsonAny"/> type.</returns>
+    public static bool IsJsonAnyType(this TypeDeclaration typeDeclaration)
+    {
+        return typeDeclaration.LocatedSchema.Location == WellKnownTypeDeclarations.JsonAny.LocatedSchema.Location;
+    }
+
+    /// <summary>
     /// Determines if the given name collides with a property name in the parent.
     /// </summary>
     /// <param name="typeDeclaration">The type declaration to test.</param>

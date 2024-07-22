@@ -52,6 +52,7 @@ public sealed class DependentRequiredKeyword : IPropertyProviderKeyword, IObject
                 // Add the dependentRequired property itself
                 target.AddOrUpdatePropertyDeclaration(
                     new PropertyDeclaration(
+                        target,
                         Uri.UnescapeDataString(property.Name),
                         WellKnownTypeDeclarations.JsonAny,
                         RequiredOrOptional.Optional,
@@ -63,6 +64,7 @@ public sealed class DependentRequiredKeyword : IPropertyProviderKeyword, IObject
                     string propertyName = property.Value.GetString() ?? throw new InvalidOperationException("The dependentRequired properties must be strings.");
                     target.AddOrUpdatePropertyDeclaration(
                         new PropertyDeclaration(
+                            target,
                             Uri.UnescapeDataString(propertyName),
                             WellKnownTypeDeclarations.JsonAny,
                             RequiredOrOptional.Optional,
@@ -84,4 +86,10 @@ public sealed class DependentRequiredKeyword : IPropertyProviderKeyword, IObject
 
     /// <inheritdoc/>
     public bool RequiresPropertyEvaluationTracking(TypeDeclaration typeDeclaration) => false;
+
+    /// <inheritdoc/>
+    public bool RequiresPropertyNameAsString(TypeDeclaration typeDeclaration) => typeDeclaration.HasKeyword(this);
+
+    /// <inheritdoc/>
+    public bool RequiresObjectEnumeration(TypeDeclaration typeDeclaration) => false;
 }

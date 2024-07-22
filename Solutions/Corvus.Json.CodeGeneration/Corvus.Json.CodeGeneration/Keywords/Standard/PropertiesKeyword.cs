@@ -76,6 +76,7 @@ public sealed class PropertiesKeyword
                 {
                     target.AddOrUpdatePropertyDeclaration(
                         new(
+                            target,
                             propertyName,
                             propertyTypeDeclaration,
                             RequiredOrOptional.Optional, // We always say optional; required will have been set by a "requiring" keyword
@@ -113,4 +114,10 @@ public sealed class PropertiesKeyword
     {
         return KeywordPathReference.AppendUnencodedPropertyNameToFragment(property.JsonPropertyName).AppendFragment(property.UnreducedPropertyType.ReducedTypeDeclaration().ReducedPathModifier);
     }
+
+    /// <inheritdoc/>
+    public bool RequiresPropertyNameAsString(TypeDeclaration typeDeclaration) => false;
+
+    /// <inheritdoc/>
+    public bool RequiresObjectEnumeration(TypeDeclaration typeDeclaration) => typeDeclaration.HasKeyword(this);
 }

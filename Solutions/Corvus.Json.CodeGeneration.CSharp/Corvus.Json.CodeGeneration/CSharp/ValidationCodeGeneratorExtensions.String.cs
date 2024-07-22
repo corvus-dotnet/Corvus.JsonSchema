@@ -97,12 +97,7 @@ public static partial class ValidationCodeGeneratorExtensions
                 .AppendLineIndent("{")
                 .PushIndent();
 
-            bool requiresStringLength =
-                typeDeclaration.Keywords()
-                    .OfType<IStringValidationKeyword>()
-                    .Any(k => k.RequiresStringLength(typeDeclaration));
-
-            if (requiresStringLength)
+            if (typeDeclaration.RequiresStringLength())
             {
                 generator
                     .AppendLineIndent("int length = Corvus.Json.Validate.CountRunes(input);");
