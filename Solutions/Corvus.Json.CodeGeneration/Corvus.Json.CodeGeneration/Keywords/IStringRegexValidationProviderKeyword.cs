@@ -12,6 +12,6 @@ namespace Corvus.Json.CodeGeneration;
 /// to minimize overhead when implementing validators. They may be
 /// cached, or provided as static values as appropriate.
 /// </remarks>
-public interface IStringRegexValidationProviderKeyword : IStringValidationKeyword, IValidationRegexProviderKeyword
+public interface IStringRegexValidationProviderKeyword : IStringValueValidationKeyword, IValidationRegexProviderKeyword
 {
 }
