@@ -217,6 +217,9 @@ public static class TypeDeclarationExtensions
                         return new(declaration.ReducedType, updatedPathModifier);
                     }
                 }
+
+                // If we were able to reduce, but there were no reference keywords, that means we reduced to JsonAny
+                return new(WellKnownTypeDeclarations.JsonAny, currentPathModifier);
             }
 
             return new(baseType, currentPathModifier);
