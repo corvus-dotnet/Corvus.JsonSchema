@@ -25,9 +25,75 @@ public class ContainsValidationHandler : IChildArrayItemValidationHandler
     public CodeGenerator AppendValidationCode(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
         IArrayContainsValidationKeyword? keywordOrDefault = typeDeclaration.Keywords().OfType<IArrayContainsValidationKeyword>().FirstOrDefault();
-        if (keywordOrDefault is IArrayContainsValidationKeyword keyword)
+        if (keywordOrDefault is IArrayContainsValidationKeyword containsKeyword)
         {
-            if (generator.TryPeekMetadata(ContainsCountKey, out string? containsCountName))
+            if (!generator.TryPeekMetadata(ContainsCountKey, out string? containsCountName) || containsCountName is null)
+            {
+                Debug.Fail("Expected to find a contains count variable name.");
+            }
+
+            bool foundMinimumRangeValidation = false;
+
+            foreach (IArrayContainsCountConstantValidationKeyword keyword in typeDeclaration.Keywords().OfType<IArrayContainsCountConstantValidationKeyword>())
+            {
+                if (!keyword.TryGetOperator(typeDeclaration, out Operator op) || op == Operator.None)
+                {
+                    continue;
+                }
+
+                if (op == Operator.GreaterThan || op == Operator.GreaterThanOrEquals)
+                {
+                    foundMinimumRangeValidation = true;
+                }
+
+                // Gets the field name for the validation constant.
+                string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword);
+
+                generator
+                    .AppendSeparatorLine()
+                    .AppendIndent("if (")
+                    .Append(containsCountName)
+                    .Append(' ')
+                    .AppendOperator(op)
+                    .Append(' ')
+                    .Append(memberName)
+                    .AppendLine(")")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent("if (level == ValidationLevel.Verbose)")
+                        .AppendLineIndent("{")
+                        .PushIndent()
+                            .AppendKeywordValidationResult(isValid: true, keyword, "result", g => GetValidMessage(g, op, containsCountName, memberName), useInterpolatedString: true)
+                        .PopIndent()
+                        .AppendLineIndent("}")
+                    .PopIndent()
+                    .AppendLineIndent("}")
+                    .AppendLineIndent("else")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent("if (level >= ValidationLevel.Detailed)")
+                        .AppendLineIndent("{")
+                        .PushIndent()
+                            .AppendKeywordValidationResult(isValid: false, keyword, "result", g => GetInvalidMessage(g, op, containsCountName, memberName), useInterpolatedString: true)
+                        .PopIndent()
+                        .AppendLineIndent("}")
+                        .AppendLineIndent("else if (level >= ValidationLevel.Basic)")
+                        .AppendLineIndent("{")
+                        .PushIndent()
+                            .AppendKeywordValidationResult(isValid: false, keyword, "result", g => GetSimplifiedInvalidMessage(g, op), useInterpolatedString: false)
+                        .PopIndent()
+                        .AppendLineIndent("}")
+                        .AppendLineIndent("else")
+                        .AppendLineIndent("{")
+                        .PushIndent()
+                            .AppendLineIndent("return result.WithResult(isValid: false);")
+                        .PopIndent()
+                        .AppendLineIndent("}")
+                    .PopIndent()
+                    .AppendLineIndent("}");
+            }
+
+            if (!foundMinimumRangeValidation)
             {
                 generator
                     .AppendSeparatorLine()
@@ -41,7 +107,7 @@ public class ContainsValidationHandler : IChildArrayItemValidationHandler
                         .PushIndent()
                             .AppendKeywordValidationResult(
                                 isValid: false,
-                                keyword,
+                                containsKeyword,
                                 "result",
                                 "no items found matching the required schema.")
                         .PopIndent()
@@ -55,13 +121,40 @@ public class ContainsValidationHandler : IChildArrayItemValidationHandler
                     .PopIndent()
                     .AppendLineIndent("}");
             }
-            else
-            {
-                Debug.Fail($"{ContainsCountKey} was not available.");
-            }
         }
 
         return generator;
+
+        static void GetValidMessage(CodeGenerator generator, Operator op, string containsCountName, string memberName)
+        {
+            generator
+                .Append("count of {")
+                .Append(containsCountName)
+                .Append("} was ")
+                .AppendTextForOperator(op)
+                .Append(" {")
+                .Append(memberName)
+                .Append("}");
+        }
+
+        static void GetInvalidMessage(CodeGenerator generator, Operator op, string containsCountName, string memberName)
+        {
+            generator
+                .Append("count of {")
+                .Append(containsCountName)
+                .Append("} was ")
+                .AppendTextForInverseOperator(op)
+                .Append(" {")
+                .Append(memberName)
+                .Append("}");
+        }
+
+        static void GetSimplifiedInvalidMessage(CodeGenerator generator, Operator op)
+        {
+            generator
+                .AppendTextForInverseOperator(op)
+                .Append(" the required count.");
+        }
     }
 
     /// <inheritdoc/>
