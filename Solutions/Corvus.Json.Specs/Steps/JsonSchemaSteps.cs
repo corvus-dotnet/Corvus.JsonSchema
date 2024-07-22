@@ -703,10 +703,10 @@ After:
 
     private static string ToPascalCaseWithReservedWords(string input)
     {
-        Span<char> value = stackalloc char[Formatting.GetBufferLength(input.Length, "Entity".AsSpan())];
+        Span<char> value = stackalloc char[Formatting.GetBufferLength(input.Length, "Entity".AsSpan(), ReadOnlySpan<char>.Empty)];
         input.AsSpan().CopyTo(value);
         int written = Formatting.ToPascalCase(value[..input.Length]);
-        written = Formatting.FixReservedWords(value, written, "Entity".AsSpan());
+        written = Formatting.FixReservedWords(value, written, "Entity".AsSpan(), ReadOnlySpan<char>.Empty);
         return value[..written].ToString();
     }
 

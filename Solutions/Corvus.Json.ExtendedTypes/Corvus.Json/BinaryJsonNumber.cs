@@ -1604,11 +1604,6 @@ public readonly struct BinaryJsonNumber :
             throw new NotSupportedException();
         }
 
-        if (jsonNumber.ValueKind != JsonValueKind.Number)
-        {
-            throw new FormatException();
-        }
-
         if (binaryNumber.numericKind == Kind.Decimal)
         {
             if (jsonNumber.TryGetDecimal(out decimal jsonNumberDecimal))

@@ -12,6 +12,47 @@ namespace Corvus.Json.CodeGeneration.CSharp;
 internal static partial class CodeGeneratorExtensions
 {
     /// <summary>
+    /// Append the Equals() method overload for a <see cref="BinaryJsonNumber"/>.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to produce the method.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendEqualsBinaryJsonNumber(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        return generator
+            .ReserveNameIfNotReserved("Equals")
+            .AppendSeparatorLine()
+            .AppendBlockIndent(
+                """
+                /// <summary>
+                /// Equality comparison.
+                /// </summary>
+                /// <param name="other">The <see cref="BinaryJsonNumber"/> with which to compare.</param>
+                /// <returns><see langword="true"/> if the values were equal.</returns>
+                """)
+            .AppendIndent("public bool Equals(in BinaryJsonNumber other)")
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendConditionalBackingValueCallbackIndent("Backing.JsonElement", "jsonElementBacking", AppendJsonElementComparison)
+                .AppendSeparatorLine()
+                .AppendConditionalWrappedBackingValueLineIndent("Backing.Number", "return BinaryJsonNumber.Equals(other, ", "numberBacking", ");")
+                .AppendSeparatorLine()
+                .AppendLineIndent("return false;")
+            .PopIndent()
+            .AppendLineIndent("}");
+
+        static void AppendJsonElementComparison(CodeGenerator generator, string fieldName)
+        {
+            generator
+                .Append("return this.")
+                .Append(fieldName)
+                .Append(".ValueKind == JsonValueKind.Number && other.Equals(this.")
+                .Append(fieldName)
+                .Append(");");
+        }
+    }
+
+    /// <summary>
     /// Appends the <c>As[NumericType]()</c> method.
     /// </summary>
     /// <param name="generator">The code generator.</param>

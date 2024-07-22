@@ -64,6 +64,7 @@ public sealed class NumberPartial : ICodeFileBuilder
                             .AppendNumericOperators(typeDeclaration)
                             .AppendAsBinaryJsonNumber()
                             .AppendAsDotnetNumericValue(typeDeclaration)
+                            .AppendEqualsBinaryJsonNumber(typeDeclaration)
                         .EndClassOrStructDeclaration()
                     .EndTypeDeclarationNesting(typeDeclaration)
                     .EndNamespace()

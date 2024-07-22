@@ -204,6 +204,7 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
             CompositionAnyOfValidationHandler.Instance,
             CompositionNotValidationHandler.Instance,
             CompositionOneOfValidationHandler.Instance,
+            ConstValidationHandler.Instance,
             FormatValidationHandler.Instance,
             NumberValidationHandler.Instance,
             ObjectValidationHandler.Instance,

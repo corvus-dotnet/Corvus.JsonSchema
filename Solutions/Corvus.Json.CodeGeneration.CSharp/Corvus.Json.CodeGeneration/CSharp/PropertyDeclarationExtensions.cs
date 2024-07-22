@@ -25,7 +25,7 @@ internal static class PropertyDeclarationExtensions
             Span<char> buffer = stackalloc char[Formatting.MaxIdentifierLength];
             that.JsonPropertyName.AsSpan().CopyTo(buffer);
             int written = Formatting.ToPascalCase(buffer[..that.JsonPropertyName.Length]);
-            written = Formatting.FixReservedWords(buffer, written, "V".AsSpan());
+            written = Formatting.FixReservedWords(buffer, written, "V".AsSpan(), "Property".AsSpan());
 
             Span<char> appendBuffer = buffer[written..];
             ReadOnlySpan<char> currentName = buffer[..written];
