@@ -63,7 +63,7 @@ public sealed class BuiltInIntegerTypeNameHeuristic : IBuiltInTypeNameHeuristic
             if (candidateFormat is string format)
             {
                 typeDeclaration.SetDotnetTypeName(
-                    WellKnownNumericFormatHelpers.GetIntegerDotnetTypeNameFor(format));
+                    FormatProviderRegistry.Instance.NumberTypeFormatProviders.GetIntegerDotnetTypeNameFor(format) ?? "JsonInteger");
             }
             else
             {

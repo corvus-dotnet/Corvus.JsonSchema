@@ -3,7 +3,6 @@
 // </copyright>
 
 using Microsoft.CodeAnalysis.CSharp;
-using static Microsoft.CodeAnalysis.CSharp.SyntaxTokenParser;
 
 namespace Corvus.Json.CodeGeneration.CSharp;
 

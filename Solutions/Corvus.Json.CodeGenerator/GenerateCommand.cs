@@ -104,7 +104,8 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
 
                 var options = new CSharpLanguageProvider.Options(
                     rootNamespace,
-                    namedTypes: rootTypeName is string rtn ? [new CSharpLanguageProvider.NamedType(rootType.LocatedSchema.Location, rtn)] : null);
+                    namedTypes: rootTypeName is string rtn ? [new CSharpLanguageProvider.NamedType(rootType.LocatedSchema.Location, rtn)] : null,
+                    alwaysAssertFormat: assertFormat);
 
                 currentTask = context.AddTask($"Generating code for {reference}", true);
                 var languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);

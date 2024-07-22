@@ -365,6 +365,24 @@ public static class TypeDeclarationExtensions
     }
 
     /// <summary>
+    /// Gets a value indicating whether the format is an assertion.
+    /// </summary>
+    /// <param name="that">The type declaration for which to get the explicit format.</param>
+    /// <returns><see langoward="true"/> if the format should be asserted.</returns>
+    public static bool IsFormatAssertion(this TypeDeclaration that)
+    {
+        if (!that.TryGetMetadata(nameof(IsFormatAssertion), out bool? assertion))
+        {
+            // First set to false to avoid recursion issues
+            that.SetMetadata(nameof(IsFormatAssertion), false);
+            SetFormat(that);
+            that.TryGetMetadata(nameof(IsFormatAssertion), out assertion);
+        }
+
+        return assertion ?? false;
+    }
+
+    /// <summary>
     /// Gets the format for the type.
     /// </summary>
     /// <param name="that">The type declaration for which to get the format.</param>
@@ -1715,6 +1733,7 @@ public static class TypeDeclarationExtensions
         }
 
         string? foundFormat = null;
+        bool isAssertion = false;
 
         foreach (IFormatProviderKeyword keyword in typeDeclaration.Keywords().OfType<IFormatProviderKeyword>())
         {
@@ -1725,6 +1744,7 @@ public static class TypeDeclarationExtensions
                 {
                     // We don't have an existing format,
                     foundFormat = format;
+                    isAssertion = keyword is IFormatValidationKeyword;
                 }
                 else if (foundFormat.Equals(format, StringComparison.Ordinal))
                 {
@@ -1743,6 +1763,7 @@ public static class TypeDeclarationExtensions
         }
 
         typeDeclaration.SetMetadata(nameof(ExplicitFormat), foundFormat);
+        typeDeclaration.SetMetadata(nameof(IsFormatAssertion), isAssertion);
 
         // Now go through all the allOf union types and see if we can find one
         foreach (IAllOfSubschemaValidationKeyword keyword in typeDeclaration.Keywords().OfType<IAllOfSubschemaValidationKeyword>())

@@ -266,7 +266,8 @@ global using global::System.Threading.Tasks;";
         TypeDeclaration rootType = await this.builder.AddTypeDeclarationsAsync(new(path), defaultVocabulary, true);
 
         var options = new CSharpLanguageProvider.Options(
-            $"{featureName}Feature.{scenarioName}");
+            $"{featureName}Feature.{scenarioName}",
+            alwaysAssertFormat: validateFormat);
 
         var languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
         IReadOnlyCollection<GeneratedCodeFile> generatedCode =
@@ -300,7 +301,8 @@ global using global::System.Threading.Tasks;";
         TypeDeclaration rootType = await this.builder.AddTypeDeclarationsAsync(new(path), defaultVocabulary, true);
 
         var options = new CSharpLanguageProvider.Options(
-            $"{featureName}Feature.{scenarioName}");
+            $"{featureName}Feature.{scenarioName}",
+            alwaysAssertFormat: validateFormat);
 
         var languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
         IReadOnlyCollection<GeneratedCodeFile> generatedCode =
@@ -341,7 +343,8 @@ global using global::System.Threading.Tasks;";
         TypeDeclaration rootType = this.builder.AddTypeDeclarations(new(path), defaultVocabulary, true);
 
         var options = new CSharpLanguageProvider.Options(
-            $"{featureName}Feature.{scenarioName}");
+            $"{featureName}Feature.{scenarioName}",
+            alwaysAssertFormat: validateFormat);
 
         var languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
 
@@ -374,7 +377,8 @@ global using global::System.Threading.Tasks;";
         TypeDeclaration rootType = this.builder.AddTypeDeclarations(new(path), this.defaultVocabulary, true);
 
         var options = new CSharpLanguageProvider.Options(
-            $"{featureName}Feature.{scenarioName}");
+            $"{featureName}Feature.{scenarioName}",
+            alwaysAssertFormat: validateFormat);
 
         var languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
 

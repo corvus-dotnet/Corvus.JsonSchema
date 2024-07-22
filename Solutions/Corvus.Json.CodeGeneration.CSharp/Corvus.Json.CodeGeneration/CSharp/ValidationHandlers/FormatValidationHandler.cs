@@ -20,13 +20,16 @@ public class FormatValidationHandler : KeywordValidationHandlerBase
     /// <inheritdoc/>
     public override CodeGenerator AppendValidationSetup(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
-        return generator;
+        return generator
+            .PrependChildValidationSetup(typeDeclaration, this.ChildHandlers, this.ValidationHandlerPriority)
+            .AppendChildValidationSetup(typeDeclaration, this.ChildHandlers, this.ValidationHandlerPriority);
     }
 
     /// <inheritdoc/>
     public override CodeGenerator AppendValidationMethod(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
-        return generator;
+        return generator
+            .AppendFormatValidation(generator.ValidationHandlerMethodName(this), typeDeclaration, this.ChildHandlers);
     }
 
     /// <inheritdoc/>
@@ -34,7 +37,12 @@ public class FormatValidationHandler : KeywordValidationHandlerBase
         CodeGenerator generator,
         TypeDeclaration typeDeclaration)
     {
-        return generator;
+        // This occurs in the parent context, so we need to add the validation class name to the scope.
+        return generator
+            .AppendValidationMethodCall(
+                generator.ValidationClassName(),
+                generator.ValidationHandlerMethodName(this),
+                ["this", generator.ValueKindIdentifierName(), generator.ResultIdentifierName(), generator.LevelIdentifierName()]);
     }
 
     /// <inheritdoc/>

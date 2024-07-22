@@ -109,6 +109,8 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
 
         foreach (TypeDeclaration typeDeclaration in typeDeclarations)
         {
+            typeDeclaration.SetCSharpOptions(this.options);
+
             if (generator.TryBeginTypeDeclaration(typeDeclaration))
             {
                 foreach (ICodeFileBuilder codeFileBuilder in this.codeFileBuilderRegistry.RegisteredBuilders)
@@ -350,7 +352,8 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
     /// <param name="namedTypes">Specifically named types.</param>
     /// <param name="namespaces">Specific namespaces for a given base URI.</param>
     /// <param name="useTypeNameKeywordHeuristics">Indicates whether to use newer type name heuristics based on keyword inspection.</param>
-    public class Options(string defaultNamespace, NamedType[]? namedTypes = null, Namespace[]? namespaces = null, bool useTypeNameKeywordHeuristics = true)
+    /// <param name="alwaysAssertFormat">If true, then Format will always be treated as a validation assertion keyword, regardless of the vocabulary.</param>
+    public class Options(string defaultNamespace, NamedType[]? namedTypes = null, Namespace[]? namespaces = null, bool useTypeNameKeywordHeuristics = true, bool alwaysAssertFormat = true)
     {
         private readonly FrozenDictionary<string, string> namedTypeMap = namedTypes?.ToFrozenDictionary(kvp => kvp.Reference, kvp => kvp.DotnetTypeName) ?? FrozenDictionary<string, string>.Empty;
         private readonly FrozenDictionary<string, string> namespaceMap = namespaces?.ToFrozenDictionary(kvp => kvp.BaseUri, kvp => kvp.DotnetNamespace) ?? FrozenDictionary<string, string>.Empty;
@@ -358,7 +361,7 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
         /// <summary>
         /// Gets the default options.
         /// </summary>
-        public static Options Default { get; } = new("GeneratedCode", [], [], useTypeNameKeywordHeuristics: true);
+        public static Options Default { get; } = new("GeneratedCode", [], [], useTypeNameKeywordHeuristics: true, alwaysAssertFormat: true);
 
         /// <summary>
         /// Gets the root namespace for code generation.
@@ -369,6 +372,11 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
         /// Gets a value indicating whether to use newer type naming heuristics.
         /// </summary>
         internal bool UseOptionalNameHeuristics { get; } = useTypeNameKeywordHeuristics;
+
+        /// <summary>
+        /// Gets a value indicating whether to always assert the format validation, regardless of the vocabularyy.
+        /// </summary>
+        internal bool AlwaysAssertFormat { get; } = alwaysAssertFormat;
 
         /// <summary>
         /// Gets the namespace for the base URI.

@@ -1,20 +1,23 @@
-﻿// <copyright file="WellKnownStringFormatHelpers.cs" company="Endjin Limited">
+﻿// <copyright file="WellKnownStringFormatProvider.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
+
+using System.Text.Json;
 
 namespace Corvus.Json.CodeGeneration.CSharp;
 
 /// <summary>
 /// Helpers for well-known string formats.
 /// </summary>
-public static class WellKnownStringFormatHelpers
+public class WellKnownStringFormatProvider : IStringFormatProvider
 {
     /// <summary>
-    /// Gets the .NET type name for the given candidate string format (e.g. JsonUuid, JsonIri etc).
+    /// Gets the singleton instance of the <see cref="WellKnownStringFormatProvider"/>.
     /// </summary>
-    /// <param name="format">The candidate string format.</param>
-    /// <returns>The corresponding .NET type name, or <see langword="null"/> if the format is not explicitly supported.</returns>
-    public static string? GetDotnetTypeNameFor(string? format)
+    public static WellKnownStringFormatProvider Instance { get; } = new();
+
+    /// <inheritdoc/>
+    public string? GetDotnetTypeNameFor(string format)
     {
         return format switch
         {
@@ -39,5 +42,16 @@ public static class WellKnownStringFormatHelpers
             "regex" => "JsonRegex",
             _ => null,
         };
+    }
+
+    /// <inheritdoc/>
+    public JsonValueKind? GetExpectedValueKind(string format)
+    {
+        if (this.GetDotnetTypeNameFor(format) is not null)
+        {
+            return JsonValueKind.Number;
+        }
+
+        return null;
     }
 }

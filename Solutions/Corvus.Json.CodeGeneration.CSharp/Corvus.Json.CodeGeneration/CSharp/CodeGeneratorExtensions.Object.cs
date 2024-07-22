@@ -2,8 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Runtime.InteropServices;
-using System.Xml.Linq;
 using Microsoft.CodeAnalysis.CSharp;
 
 namespace Corvus.Json.CodeGeneration.CSharp;
@@ -771,7 +769,8 @@ internal static partial class CodeGeneratorExtensions
                 .PushIndent()
                 .AppendIndent("where ")
                 .Append(propertyTypeName)
-                .AppendLine(" : struct, IJsonValue");
+                .AppendLine(" : struct, IJsonValue")
+                .PopIndent();
         }
 
         return generator
