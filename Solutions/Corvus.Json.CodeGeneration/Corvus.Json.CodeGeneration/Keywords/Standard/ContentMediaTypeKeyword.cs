@@ -11,7 +11,7 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 /// The contentMediaType keyword.
 /// </summary>
 public sealed class ContentMediaTypeKeyword
-    : IContentMediaTypeProviderKeyword, IStringValidationKeyword
+    : IContentMediaTypeValidationKeyword
 {
     private ContentMediaTypeKeyword()
     {
@@ -56,5 +56,34 @@ public sealed class ContentMediaTypeKeyword
     }
 
     /// <inheritdoc/>
-    public bool RequiresStringLength(TypeDeclaration typeDeclaration) => false;
+    public bool TryGetFormat(TypeDeclaration typeDeclaration, [NotNullWhen(true)] out string? format)
+    {
+        if (this.TryGetContentMediaType(typeDeclaration, out string? contentMediaType))
+        {
+            if (contentMediaType == "application/json")
+            {
+                if (typeDeclaration.ExplicitContentEncoding() is string contentEncoding)
+                {
+                    if (contentEncoding == "base64")
+                    {
+                        format = "corvus-base64-content";
+                        return true;
+                    }
+                    else
+                    {
+                        format = null;
+                        return false;
+                    }
+                }
+                else
+                {
+                    format = "corvus-json-content";
+                    return true;
+                }
+            }
+        }
+
+        format = null;
+        return false;
+    }
 }

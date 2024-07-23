@@ -56,76 +56,46 @@ public static partial class ValidationCodeGeneratorExtensions
 
         if (FormatProviderRegistry.Instance.FormatProviders.GetExpectedValueKind(explicitFormat) is not JsonValueKind expectedValueKind)
         {
-            return generator;
+            return AppendUnkownFormat(generator, typeDeclaration, explicitFormat);
         }
 
-        if (!typeDeclaration.AlwaysAssertFormat())
-        {
-            var nonAssertedKeywords = typeDeclaration.Keywords().OfType<IFormatProviderKeyword>().Where(k => k is not IFormatValidationKeyword).ToList();
-            if (nonAssertedKeywords.Count > 0)
-            {
-                generator
-                    .AppendLineIndent("if (level == ValidationLevel.Verbose)")
-                    .AppendLineIndent("{")
-                    .PushIndent()
-                        .AppendLineIndent("ValidationContext ignoredResult = validationContext;");
+        AppendValueKindCheck(generator, typeDeclaration, explicitFormat, expectedValueKind);
 
-                foreach (IFormatProviderKeyword keyword in nonAssertedKeywords)
-                {
-                    generator
-                        .AppendKeywordValidationResult(isValid: true, keyword, "ignoredResult", g => AppendIgnoredFormat(g, explicitFormat), useInterpolatedString: true);
-                }
-
-                generator
-                        .AppendSeparatorLine()
-                        .AppendLineIndent("return ignoredResult;")
-                    .PopIndent()
-                    .AppendLineIndent("}");
-            }
-        }
+        IReadOnlyCollection<IFormatProviderKeyword> keywords =
+            typeDeclaration.AlwaysAssertFormat()
+                ? typeDeclaration.Keywords().OfType<IFormatProviderKeyword>().ToList()
+                : typeDeclaration.Keywords().OfType<IFormatValidationKeyword>().ToList();
 
         generator
-            .AppendLineIndent("if (valueKind != JsonValueKind.", expectedValueKind.ToString(), ")")
-            .AppendLineIndent("{")
-            .PushIndent()
+            .AppendSeparatorLine();
+
+        if (typeDeclaration.IsFormatAssertion() || typeDeclaration.AlwaysAssertFormat())
+        {
+            FormatProviderRegistry.Instance.FormatProviders.AppendFormatAssertion(generator, explicitFormat, "value", "validationContext");
+        }
+        else
+        {
+            generator
                 .AppendLineIndent("if (level == ValidationLevel.Verbose)")
                 .AppendLineIndent("{")
                 .PushIndent()
-                    .AppendLineIndent("ValidationContext ignoredResult = validationContext;");
+                .AppendLineIndent("ValidationContext result = validationContext;");
 
-        IEnumerable<IFormatProviderKeyword> keywords =
-            typeDeclaration.AlwaysAssertFormat()
-                ? typeDeclaration.Keywords().OfType<IFormatProviderKeyword>()
-                : typeDeclaration.Keywords().OfType<IFormatValidationKeyword>();
+            foreach (IFormatProviderKeyword keyword in keywords)
+            {
+                generator
+                    .AppendKeywordValidationResult(isValid: true, keyword, "result", g => AppendIgnoredFormat(g, explicitFormat), useInterpolatedString: true);
+            }
 
-        foreach (IFormatProviderKeyword keyword in keywords)
-        {
             generator
-                .AppendKeywordValidationResult(isValid: true, keyword, "ignoredResult", g => AppendIgnoredValueKind(g, explicitFormat, expectedValueKind), useInterpolatedString: true);
-        }
-
-        generator
-                .AppendSeparatorLine()
-                .AppendLineIndent("return ignoredResult;")
+                 .AppendLineIndent("return result;")
                 .PopIndent()
                 .AppendLineIndent("}")
-            .AppendSeparatorLine()
-            .AppendLineIndent("return validationContext;")
-            .PopIndent()
-            .AppendLineIndent("}")
-            .AppendSeparatorLine();
-
-        generator
-            .AppendLineIndent("ValidationContext result = validationContext;");
-
-        // TODO - do the asssertion here
-        foreach (IChildValidationHandler child in children)
-        {
-            child.AppendValidationCode(generator, typeDeclaration);
+                .AppendSeparatorLine()
+                .AppendLineIndent("return validationContext;");
         }
 
-        return generator
-            .AppendLineIndent("return result;");
+        return generator;
 
         static void AppendIgnoredFormat(CodeGenerator generator, string format)
         {
@@ -133,6 +103,14 @@ public static partial class ValidationCodeGeneratorExtensions
                 .Append("ignored '")
                 .Append(format)
                 .Append("' because the keyword is not asserted.");
+        }
+
+        static void AppendUnknownFormat(CodeGenerator generator, string format)
+        {
+            generator
+                .Append("ignored '")
+                .Append(format)
+                .Append("' because the format is not recognized.");
         }
 
         static void AppendIgnoredValueKind(CodeGenerator generator, string format, JsonValueKind expectedValueKind)
@@ -143,6 +121,59 @@ public static partial class ValidationCodeGeneratorExtensions
                 .Append("' because the value '{{valueKind}}' is not '")
                 .Append(expectedValueKind)
                 .Append("'.");
+        }
+
+        static CodeGenerator AppendUnkownFormat(CodeGenerator generator, TypeDeclaration typeDeclaration, string explicitFormat)
+        {
+            generator
+                .AppendLineIndent("if (level == ValidationLevel.Verbose)")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendLineIndent("ValidationContext unknownResult = validationContext;");
+
+            IEnumerable<IFormatProviderKeyword> unknownKeywords = typeDeclaration.Keywords().OfType<IFormatProviderKeyword>();
+
+            foreach (IFormatProviderKeyword keyword in unknownKeywords)
+            {
+                generator
+                    .AppendKeywordValidationResult(isValid: true, keyword, "unknownResult", g => AppendUnknownFormat(g, explicitFormat));
+            }
+
+            return generator
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("return unknownResult;")
+                .PopIndent()
+                .AppendLineIndent("}")
+                .AppendSeparatorLine()
+                .AppendLineIndent("return validationContext;");
+        }
+
+        static CodeGenerator AppendValueKindCheck(CodeGenerator generator, TypeDeclaration typeDeclaration, string explicitFormat, JsonValueKind expectedValueKind)
+        {
+            generator
+                .AppendLineIndent("if (valueKind != JsonValueKind.", expectedValueKind.ToString(), ")")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendLineIndent("if (level == ValidationLevel.Verbose)")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent("ValidationContext ignoredResult = validationContext;");
+
+            foreach (IFormatProviderKeyword keyword in typeDeclaration.Keywords().OfType<IFormatProviderKeyword>())
+            {
+                generator
+                    .AppendKeywordValidationResult(isValid: true, keyword, "ignoredResult", g => AppendIgnoredValueKind(g, explicitFormat, expectedValueKind), useInterpolatedString: true);
+            }
+
+            return generator
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("return ignoredResult;")
+                    .PopIndent()
+                    .AppendLineIndent("}")
+                .AppendSeparatorLine()
+                .AppendLineIndent("return validationContext;")
+                .PopIndent()
+                .AppendLineIndent("}");
         }
     }
 }

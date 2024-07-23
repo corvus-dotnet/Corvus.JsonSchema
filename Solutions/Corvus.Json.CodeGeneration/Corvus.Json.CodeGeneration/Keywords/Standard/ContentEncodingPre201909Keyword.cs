@@ -1,4 +1,4 @@
-﻿// <copyright file="ContentEncodingKeyword.cs" company="Endjin Limited">
+﻿// <copyright file="ContentEncodingPre201909Keyword.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
@@ -10,17 +10,17 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 /// <summary>
 /// The contentEncoding keyword.
 /// </summary>
-public sealed class ContentEncodingKeyword
+public sealed class ContentEncodingPre201909Keyword
     : IContentEncodingValidationKeyword
 {
-    private ContentEncodingKeyword()
+    private ContentEncodingPre201909Keyword()
     {
     }
 
     /// <summary>
     /// Gets an instance of the <see cref="ContentEncodingKeyword"/> keyword.
     /// </summary>
-    public static ContentEncodingKeyword Instance { get; } = new ContentEncodingKeyword();
+    public static ContentEncodingPre201909Keyword Instance { get; } = new ContentEncodingPre201909Keyword();
 
     /// <inheritdoc />
     public string Keyword => "contentEncoding";
@@ -29,7 +29,7 @@ public sealed class ContentEncodingKeyword
     public ReadOnlySpan<byte> KeywordUtf8 => "contentEncoding"u8;
 
     /// <inheritdoc/>
-    public ContentEncodingSemantics ContentSemantics => ContentEncodingSemantics.Draft102909AndLater;
+    public ContentEncodingSemantics ContentSemantics => ContentEncodingSemantics.PreDraft201909;
 
     /// <inheritdoc/>
     public uint ValidationPriority => ValidationPriorities.Default;
@@ -64,7 +64,7 @@ public sealed class ContentEncodingKeyword
             && contentEncoding == "base64" &&
             typeDeclaration.ExplicitContentMediaType() is null)
         {
-            format = "corvus-base64-string";
+            format = "corvus-base64-string-pre201909";
             return true;
         }
 

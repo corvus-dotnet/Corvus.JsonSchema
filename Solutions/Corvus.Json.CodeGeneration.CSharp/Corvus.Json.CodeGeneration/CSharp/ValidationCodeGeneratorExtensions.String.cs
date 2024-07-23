@@ -79,16 +79,9 @@ public static partial class ValidationCodeGeneratorExtensions
             generator
                 .AppendSeparatorLine()
                 .AppendLineIndent("ValidationContext result = validationContext;")
-                .AppendLineIndent("value.AsString.TryGetValue(StringValidator, new Corvus.Json.Validate.ValidationContextWrapper(result, level), out result);");
-        }
-
-        generator
-            .AppendSeparatorLine()
-            .AppendLineIndent("return result;");
-
-        if (requiresValueValidation)
-        {
-            generator
+                .AppendLineIndent("value.AsString.TryGetValue(StringValidator, new Corvus.Json.Validate.ValidationContextWrapper(result, level), out result);")
+                .AppendSeparatorLine()
+                .AppendLineIndent("return result;")
                 .AppendLine()
                 .AppendLineIndent("static bool StringValidator(ReadOnlySpan<char> input, in Corvus.Json.Validate.ValidationContextWrapper context, out ValidationContext result)")
                 .AppendLineIndent("{")
@@ -113,6 +106,12 @@ public static partial class ValidationCodeGeneratorExtensions
                 .AppendLineIndent("return true;")
                 .PopIndent()
                 .AppendLineIndent("}");
+        }
+        else
+        {
+            generator
+                .AppendSeparatorLine()
+                .AppendLineIndent("return validationContext;");
         }
 
         return generator;

@@ -1,4 +1,4 @@
-﻿// <copyright file="IContentMediaTypeProviderKeyword.cs" company="Endjin Limited">
+﻿// <copyright file="IContentMediaTypeValidationKeyword.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
@@ -9,7 +9,8 @@ namespace Corvus.Json.CodeGeneration;
 /// <summary>
 /// A keyword which provides a content encoding for a type declaration.
 /// </summary>
-public interface IContentMediaTypeProviderKeyword : IKeyword
+public interface IContentMediaTypeValidationKeyword
+    : IKeyword, IFormatValidationKeyword
 {
     /// <summary>
     /// Try to get the content encoding for the type declaration.

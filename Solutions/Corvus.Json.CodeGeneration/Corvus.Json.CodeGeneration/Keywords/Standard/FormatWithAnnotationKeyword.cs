@@ -10,7 +10,7 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 /// <summary>
 /// The format keyword.
 /// </summary>
-public sealed class FormatWithAnnotationKeyword : IFormatProviderKeyword
+public sealed class FormatWithAnnotationKeyword : IFormatProviderKeyword, IValueKindValidationKeyword
 {
     private FormatWithAnnotationKeyword()
     {
@@ -26,6 +26,9 @@ public sealed class FormatWithAnnotationKeyword : IFormatProviderKeyword
 
     /// <inheritdoc />
     public ReadOnlySpan<byte> KeywordUtf8 => "format"u8;
+
+    /// <inheritdoc/>
+    public uint ValidationPriority => ValidationPriorities.Default;
 
     /// <inheritdoc />
     public bool CanReduce(in JsonElement schemaValue) => Reduction.CanReduceNonReducingKeyword(schemaValue, this.KeywordUtf8);

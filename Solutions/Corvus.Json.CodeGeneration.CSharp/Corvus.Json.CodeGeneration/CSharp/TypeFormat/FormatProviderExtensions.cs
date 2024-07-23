@@ -119,4 +119,28 @@ public static class FormatProviderExtensions
 
         return null;
     }
+
+    /// <summary>
+    /// Append a format assertion to the generator.
+    /// </summary>
+    /// <typeparam name="T">The type of the format provider.</typeparam>
+    /// <param name="providers">The providers to test.</param>
+    /// <param name="generator">The generator to which to append the format assertion.</param>
+    /// <param name="format">The format to assert.</param>
+    /// <param name="valueIdentifier">The identifier for the value to test.</param>
+    /// <param name="validationContextIdentifier">The identifier for the validation context to update.</param>
+    /// <returns><see langword="true"/> if the assertion was appended successfully.</returns>
+    public static bool AppendFormatAssertion<T>(this IEnumerable<T> providers, CodeGenerator generator, string format, string valueIdentifier, string validationContextIdentifier)
+        where T : notnull, IFormatProvider
+    {
+        foreach (T provider in providers)
+        {
+            if (provider.AppendFormatAssertion(generator, format, valueIdentifier, validationContextIdentifier))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }
