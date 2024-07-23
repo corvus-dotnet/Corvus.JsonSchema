@@ -39,7 +39,8 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendReadOnlyDictionaryProperties(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
-        if (typeDeclaration.FallbackObjectPropertyType() is FallbackObjectPropertyType propertyType)
+        if (typeDeclaration.FallbackObjectPropertyType() is FallbackObjectPropertyType propertyType
+             && !propertyType.ReducedType.IsJsonAnyType())
         {
             string propertyTypeName = propertyType.ReducedType.FullyQualifiedDotnetTypeName();
 
@@ -59,6 +60,62 @@ internal static partial class CodeGeneratorExtensions
         }
 
         return generator;
+    }
+
+    /// <summary>
+    /// Append the dictionary enumerable methods.
+    /// </summary>
+    /// <param name="generator">The generator to which to append the methods.</param>
+    /// <param name="typeDeclaration">The type declaration for which to append dictionary enumerable methods.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendReadOnlyDictionaryMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.FallbackObjectPropertyType() is FallbackObjectPropertyType propertyType
+             && !propertyType.ReducedType.IsJsonAnyType())
+        {
+            string propertyTypeName = propertyType.ReducedType.FullyQualifiedDotnetTypeName();
+
+            return generator
+                .ReserveNameIfNotReserved("GetEnumerator")
+                .AppendSeparatorLine()
+                .AppendLineIndent("/// <inheritdoc/>")
+                .AppendIndent("IEnumerator<KeyValuePair<JsonPropertyName, ")
+                .Append(propertyTypeName)
+                .Append(">> IEnumerable<KeyValuePair<JsonPropertyName, ")
+                .Append(propertyTypeName)
+                .AppendLine(">>.GetEnumerator()")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendConditionalBackingValueCallbackIndent("Backing.JsonElement", "jsonElementBacking", (g, f) => AppendCreateEnumerator(g, f, propertyTypeName))
+                    .AppendConditionalBackingValueCallbackIndent("Backing.Object", "objectBacking", (g, f) => AppendCreateEnumerator(g, f, propertyTypeName))
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("throw new InvalidOperationException();")
+                .PopIndent()
+                .AppendLineIndent("}")
+                .AppendSeparatorLine()
+                .AppendLineIndent("/// <inheritdoc/>")
+                .AppendLineIndent("IEnumerator IEnumerable.GetEnumerator() => this.EnumerateObject();")
+                .AppendSeparatorLine()
+                .AppendLineIndent(
+                    "bool IReadOnlyDictionary<JsonPropertyName, ",
+                    propertyTypeName,
+                    ">.ContainsKey(JsonPropertyName key) => this.HasProperty(key);")
+                .AppendSeparatorLine()
+                .AppendLineIndent(
+                    "bool IReadOnlyDictionary<JsonPropertyName, ",
+                    propertyTypeName,
+                    ">.TryGetValue(JsonPropertyName key, out ",
+                    propertyTypeName,
+                    " result) => this.TryGetProperty(key, out result);");
+        }
+
+        return generator;
+
+        static void AppendCreateEnumerator(CodeGenerator generator, string fieldName, string propertyTypeName)
+        {
+            generator
+                .AppendLineIndent("return new ReadOnlyDictionaryJsonObjectEnumerator<", propertyTypeName, ">(this.", fieldName, ");");
+        }
     }
 
     /// <summary>
@@ -207,12 +264,13 @@ internal static partial class CodeGeneratorExtensions
         generator
             .AppendSeparatorLine();
 
-        if (typeDeclaration.FallbackObjectPropertyType() is FallbackObjectPropertyType propertyType)
+        if (typeDeclaration.FallbackObjectPropertyType() is FallbackObjectPropertyType propertyType
+            && !propertyType.ReducedType.IsJsonAnyType())
         {
             generator
                 .AppendLineIndent(
                     "/// <inheritdoc/>")
-                .AppendObjectIndexer(typeDeclaration, WellKnownTypeDeclarations.JsonAny.FullyQualifiedDotnetTypeName(), isExplicit: true)
+                .AppendObjectIndexer(typeDeclaration, propertyType.ReducedType.DotnetTypeName(), isExplicit: true)
                 .AppendSeparatorLine()
                 .AppendBlockIndent(
                 """
@@ -247,7 +305,7 @@ internal static partial class CodeGeneratorExtensions
         generator
             .ReserveNameIfNotReserved("EnumerateObject");
 
-        if (typeDeclaration.FallbackObjectPropertyType() is FallbackObjectPropertyType propertyType)
+        if (typeDeclaration.FallbackObjectPropertyType() is FallbackObjectPropertyType propertyType && !propertyType.ReducedType.IsJsonAnyType())
         {
             string propertyTypeName = propertyType.ReducedType.FullyQualifiedDotnetTypeName();
 
@@ -275,7 +333,7 @@ internal static partial class CodeGeneratorExtensions
         generator
             .ReserveNameIfNotReserved("FromProperties");
 
-        if (typeDeclaration.FallbackObjectPropertyType() is FallbackObjectPropertyType propertyType)
+        if (typeDeclaration.FallbackObjectPropertyType() is FallbackObjectPropertyType propertyType && !propertyType.ReducedType.IsJsonAnyType())
         {
             string propertyTypeName = propertyType.ReducedType.FullyQualifiedDotnetTypeName();
 
@@ -285,7 +343,7 @@ internal static partial class CodeGeneratorExtensions
                 .AppendLineIndent("/// <inheritdoc/>")
                 .AppendIndent("static ")
                 .Append(typeDeclaration.DotnetTypeName())
-                .Append("IJsonObject<")
+                .Append(" IJsonObject<")
                 .Append(typeDeclaration.DotnetTypeName())
                 .AppendLine(">.FromProperties(IDictionary<JsonPropertyName, JsonAny> source)")
                 .AppendBlockIndent(
@@ -299,7 +357,7 @@ internal static partial class CodeGeneratorExtensions
                 .AppendLineIndent("/// <inheritdoc/>")
                 .AppendIndent("static ")
                 .Append(typeDeclaration.DotnetTypeName())
-                .Append("IJsonObject<")
+                .Append(" IJsonObject<")
                 .Append(typeDeclaration.DotnetTypeName())
                 .AppendLine(">.FromProperties(params (JsonPropertyName Name, JsonAny Value)[] source)")
                 .AppendBlockIndent(
@@ -494,7 +552,7 @@ internal static partial class CodeGeneratorExtensions
         generator
             .ReserveNameIfNotReserved("SetProperty");
 
-        if (typeDeclaration.FallbackObjectPropertyType() is FallbackObjectPropertyType propertyType)
+        if (typeDeclaration.FallbackObjectPropertyType() is FallbackObjectPropertyType propertyType && !propertyType.ReducedType.IsJsonAnyType())
         {
             generator
                 .AppendSetPropertyMethod(typeDeclaration, "TValue", isGeneric: true, isExplicit: true)
@@ -783,7 +841,7 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendTryGetPropertyMethod(this CodeGenerator generator, TypeDeclaration typeDeclaration, string propertyNameType)
     {
-        if (typeDeclaration.FallbackObjectPropertyType() is FallbackObjectPropertyType propertyType)
+        if (typeDeclaration.FallbackObjectPropertyType() is FallbackObjectPropertyType propertyType && !propertyType.ReducedType.IsJsonAnyType())
         {
             generator
                 .AppendTryGetPropertyMethod(typeDeclaration, propertyNameType, isExplicit: true)
@@ -799,7 +857,7 @@ internal static partial class CodeGeneratorExtensions
 
     private static CodeGenerator AppendTryGetPropertyForJsonPropertyNameMethod(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
-        if (typeDeclaration.FallbackObjectPropertyType() is FallbackObjectPropertyType propertyType)
+        if (typeDeclaration.FallbackObjectPropertyType() is FallbackObjectPropertyType propertyType && !propertyType.ReducedType.IsJsonAnyType())
         {
             generator
                 .AppendTryGetPropertyForJsonPropertyNameMethod(typeDeclaration, isExplicit: true)
@@ -1281,7 +1339,7 @@ internal static partial class CodeGeneratorExtensions
         else
         {
             generator
-                .AppendIndent(propertyTypeName)
+                .AppendIndent("JsonAny")
                 .Append(" IJsonObject<")
                 .Append(typeDeclaration.DotnetTypeName())
                 .Append(">.");
@@ -1379,9 +1437,9 @@ internal static partial class CodeGeneratorExtensions
     private static CodeGenerator AppendReadOnlyDictionaryCount(this CodeGenerator generator, string propertyTypeName)
     {
         return generator
-            .AppendIndent("int IReadOnlyDictionary<JsonPropertyName, ")
+            .AppendIndent("int IReadOnlyCollection<KeyValuePair<JsonPropertyName, ")
             .Append(propertyTypeName)
-            .AppendLine(">.Count")
+            .AppendLine(">>.Count")
             .AppendLineIndent("{")
             .PushIndent()
                 .AppendLineIndent("get")
@@ -1390,7 +1448,7 @@ internal static partial class CodeGeneratorExtensions
                     .AppendConditionalBackingValueCallbackIndent("Backing.JsonElement", "jsonElementBacking", CountProperties)
                     .AppendConditionalWrappedBackingValueLineIndent("Backing.Object", "return ", "objectBacking", ".Count;")
                     .AppendSeparatorLine()
-                    .AppendLineIndent("throw new InvalidOperationException()")
+                    .AppendLineIndent("throw new InvalidOperationException();")
                 .PopIndent()
                 .AppendLineIndent("}")
             .PopIndent()

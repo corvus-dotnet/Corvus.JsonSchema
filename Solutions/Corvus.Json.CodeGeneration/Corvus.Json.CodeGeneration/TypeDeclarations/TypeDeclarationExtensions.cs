@@ -819,17 +819,37 @@ public static class TypeDeclarationExtensions
     /// <returns>The <see cref="CodeGeneration.FallbackObjectPropertyType"/> for the strongly typed object properties.</returns>
     public static IReadOnlyCollection<PropertyDeclaration>? ExplicitRequiredProperties(this TypeDeclaration that)
     {
-        if (!that.TryGetMetadata(nameof(ExplicitRequiredProperties), out IReadOnlyCollection<PropertyDeclaration>? itemsType))
+        if (!that.TryGetMetadata(nameof(ExplicitRequiredProperties), out IReadOnlyCollection<PropertyDeclaration>? propertyTypes))
         {
-            itemsType =
+            propertyTypes =
                 that.PropertyDeclarations.Where(
                     p => p.LocalOrComposed == LocalOrComposed.Local &&
                     p.RequiredOrOptional == RequiredOrOptional.Required).ToList();
 
-            that.SetMetadata(nameof(ExplicitRequiredProperties), itemsType);
+            that.SetMetadata(nameof(ExplicitRequiredProperties), propertyTypes);
         }
 
-        return itemsType;
+        return propertyTypes;
+    }
+
+    /// <summary>
+    /// Gets the collection of explicitly required properties in an object, or <see langword="null"/> if the type is not
+    /// a strongly-typed object.
+    /// </summary>
+    /// <param name="that">The type declaration for which to get the object property type.</param>
+    /// <returns>The <see cref="CodeGeneration.FallbackObjectPropertyType"/> for the strongly typed object properties.</returns>
+    public static IReadOnlyCollection<PropertyDeclaration>? ExplicitProperties(this TypeDeclaration that)
+    {
+        if (!that.TryGetMetadata(nameof(ExplicitProperties), out IReadOnlyCollection<PropertyDeclaration>? propertyTypes))
+        {
+            propertyTypes =
+                that.PropertyDeclarations.Where(
+                    p => p.LocalOrComposed == LocalOrComposed.Local).ToList();
+
+            that.SetMetadata(nameof(ExplicitProperties), propertyTypes);
+        }
+
+        return propertyTypes;
     }
 
     /// <summary>

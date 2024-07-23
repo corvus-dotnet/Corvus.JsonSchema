@@ -7,4 +7,4 @@ namespace Corvus.Json.CodeGeneration;
 /// <summary>
 /// Validates string lengths against a constant.
 /// </summary>
-public interface IStringLengthConstantValidationKeyword : IStringValidationKeyword, IIntegerConstantValidationKeyword;
+public interface IStringLengthConstantValidationKeyword : IStringValueValidationKeyword, IIntegerConstantValidationKeyword;

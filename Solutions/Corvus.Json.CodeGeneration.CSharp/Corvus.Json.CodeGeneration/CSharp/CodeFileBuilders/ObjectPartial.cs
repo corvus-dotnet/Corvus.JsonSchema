@@ -34,7 +34,6 @@ public sealed class ObjectPartial : ICodeFileBuilder
                     .AppendUsings(
                         new("System.Buffers", FrameworkType.Net80OrGreater),
                         new("System.Collections", EmitIfIsMapObject(typeDeclaration)),
-                        new("System.Collections.Generic", EmitIfIsMapObject(typeDeclaration)),
                         "System.Collections.Immutable",
                         new("System.Diagnostics.CodeAnalysis", EmitIfIsMapObject(typeDeclaration)),
                         "System.Runtime.CompilerServices",
@@ -65,6 +64,7 @@ public sealed class ObjectPartial : ICodeFileBuilder
                             .AppendFromPropertiesFactoryMethods(typeDeclaration)
                             .AppendAsPropertyBackingMethod()
                             .AppendEnumerateObjectMethods(typeDeclaration)
+                            .AppendReadOnlyDictionaryMethods(typeDeclaration)
                             .AppendHasPropertiesMethod()
                             .AppendHasPropertyMethods()
                             .AppendTryGetPropertyMethods(typeDeclaration)
@@ -95,7 +95,8 @@ public sealed class ObjectPartial : ICodeFileBuilder
         static ConditionalCodeSpecification ReadOnlyDictionaryType(TypeDeclaration typeDeclaration)
         {
             return
-                typeDeclaration.FallbackObjectPropertyType() is FallbackObjectPropertyType objectPropertyType
+                typeDeclaration.FallbackObjectPropertyType() is FallbackObjectPropertyType objectPropertyType &&
+                !objectPropertyType.ReducedType.IsJsonAnyType()
                 ? new(g =>
                     {
                         g

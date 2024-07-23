@@ -58,7 +58,7 @@ public static partial class ValidationCodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendEnumeratorType(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
-        if (typeDeclaration.FallbackObjectPropertyType() is FallbackObjectPropertyType propertyType)
+        if (typeDeclaration.FallbackObjectPropertyType() is FallbackObjectPropertyType propertyType && !propertyType.ReducedType.IsJsonAnyType())
         {
             generator
                 .GenericTypeOf("JsonObjectEnumerator", propertyType.ReducedType);
@@ -80,10 +80,10 @@ public static partial class ValidationCodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendJsonObjectPropertyType(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
-        if (typeDeclaration.FallbackObjectPropertyType() is FallbackObjectPropertyType propertyType)
+        if (typeDeclaration.FallbackObjectPropertyType() is FallbackObjectPropertyType propertyType && !propertyType.ReducedType.IsJsonAnyType())
         {
             generator
-                .GenericTypeOf("JsonObjecProperty", propertyType.ReducedType);
+                .GenericTypeOf("JsonObjectProperty", propertyType.ReducedType);
         }
         else
         {
@@ -109,117 +109,6 @@ public static partial class ValidationCodeGeneratorExtensions
             .Append(' ')
             .Append(variableName)
             .AppendLine(" = value.EnumerateObject();");
-    }
-
-    /// <summary>
-    /// Appends validation code for an <see cref="PropertyDeclaration"/>.
-    /// </summary>
-    /// <param name="generator">The code generator to which to append the validation code.</param>
-    /// <param name="objectProperty">The <see cref="PropertyDeclaration"/> for which to emit validation code.</param>
-    /// <param name="enumeratorIsCorrectType">Indicates whether the enumerator automatically reutrns the correct type for validation.</param>
-    /// <returns>A reference to the generator having completed the operation.</returns>
-    public static CodeGenerator AppendValidateLocalEvaluatedProperty(this CodeGenerator generator, FallbackObjectPropertyType objectProperty, bool enumeratorIsCorrectType)
-    {
-        generator
-            .AppendLineIndent("if (level > ValidationLevel.Basic)")
-            .AppendLineIndent("{")
-            .PushIndent()
-                .AppendLineIndent(
-                    "result = result.PushValidationLocationReducedPathModifier(new(",
-                    SymbolDisplay.FormatLiteral(objectProperty.ReducedPathModifier, true),
-                    "));")
-            .PopIndent()
-            .AppendLineIndent("}")
-            .AppendSeparatorLine();
-
-        if (enumeratorIsCorrectType)
-        {
-            generator
-                .AppendLineIndent(
-                    "result = property.Value.Validate(result, level);");
-        }
-        else
-        {
-            generator
-                .AppendLineIndent(
-                    "result = property.ValueAs<",
-                    objectProperty.ReducedType.FullyQualifiedDotnetTypeName(),
-                    ">().Validate(result, level);");
-        }
-
-        return generator
-            .AppendBlockIndent(
-            """
-            if (level == ValidationLevel.Flag && !result.IsValid)
-            {
-                return result;
-            }
-
-            if (level > ValidationLevel.Basic)
-            {
-                result = result.PopLocation();
-            }
-
-            result = result.WithLocalItemIndex(length);
-            """);
-    }
-
-    /// <summary>
-    /// Appends validation code for an <see cref="PropertyDeclaration"/>.
-    /// </summary>
-    /// <param name="generator">The code generator to which to append the validation code.</param>
-    /// <param name="fallbackPropertyType">The <see cref="PropertyDeclaration"/> for which to emit validation code.</param>
-    /// <param name="enumeratorIsCorrectType">Indicates whether the enumerator automatically reutrns the correct type for validation.</param>
-    /// <returns>A reference to the generator having completed the operation.</returns>
-    public static CodeGenerator AppendValidateLocalAndAppliedEvaluatedProperty(this CodeGenerator generator, FallbackObjectPropertyType fallbackPropertyType, bool enumeratorIsCorrectType)
-    {
-        generator
-            .AppendLineIndent("if (!result.HasEvaluatedLocalOrAppliedProperty(propertyIndex))")
-            .AppendLineIndent("{")
-            .PushIndent()
-                .AppendLineIndent("if (level > ValidationLevel.Basic)")
-                .AppendLineIndent("{")
-                .PushIndent()
-                    .AppendLineIndent(
-                        "result = result.PushValidationLocationReducedPathModifier(new(",
-                        SymbolDisplay.FormatLiteral(fallbackPropertyType.ReducedPathModifier, true),
-                        "));")
-                .PopIndent()
-                .AppendLineIndent("}")
-                .AppendSeparatorLine();
-
-        if (enumeratorIsCorrectType)
-        {
-            generator
-                .AppendLineIndent(
-                    "result = property.Value.Validate(result, level);");
-        }
-        else
-        {
-            generator
-                .AppendLineIndent(
-                    "result = property.ValueAs<",
-                    fallbackPropertyType.ReducedType.FullyQualifiedDotnetTypeName(),
-                    ">().Validate(result, level);");
-        }
-
-        return generator
-            .AppendBlockIndent(
-            """
-                if (level == ValidationLevel.Flag && !result.IsValid)
-                {
-                    return result;
-                }
-
-                if (level > ValidationLevel.Basic)
-                {
-                    result = result.PopLocation();
-                }
-
-                result = result.WithLocalProperty(propertyCount);
-                """)
-        .PopIndent()
-        .AppendLineIndent("}");
     }
 
     private static CodeGenerator AppendObjectValidation(
@@ -304,16 +193,8 @@ public static partial class ValidationCodeGeneratorExtensions
             }
 
             generator
-                    .AppendSeparatorLine()
-                    .AppendBlockIndent(
-                    """
-                    if (level > ValidationLevel.Basic)
-                    {
-                        result = result.PopLocation();
-                    }
-
-                    propertyCount++;
-                    """)
+                .AppendSeparatorLine()
+                .AppendLineIndent("propertyCount++;")
                 .PopIndent()
                 .AppendLineIndent("}");
         }

@@ -50,9 +50,15 @@ public readonly struct JsonPropertyName
         JsonElement = 0b1000,
     }
 
-    private bool HasStringBacking => (this.backing & Backing.String) != 0;
+    /// <summary>
+    /// Gets a value indicating whether this has a string backing.
+    /// </summary>
+    public bool HasStringBacking => (this.backing & Backing.String) != 0;
 
-    private bool HasJsonElementBacking => (this.backing & Backing.JsonElement) != 0;
+    /// <summary>
+    /// Gets a value indicating whether this has a <see cref="JsonElement"/> backing.
+    /// </summary>
+    public bool HasJsonElementBacking => (this.backing & Backing.JsonElement) != 0;
 
     /// <summary>
     /// Conversion from string.

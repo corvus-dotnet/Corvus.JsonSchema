@@ -27,6 +27,11 @@ public sealed class FallbackObjectPropertyType(TypeDeclaration propertiesType, I
     public TypeDeclaration ReducedType { get; } = propertiesType.ReducedTypeDeclaration().ReducedType;
 
     /// <summary>
+    /// Gets the keyword path modifier for this fallback type.
+    /// </summary>
+    public string KeywordPathModifier { get; } = keyword.GetPathModifier();
+
+    /// <summary>
     /// Gets the reduced path modifier for the type of the properties in the object.
     /// </summary>
     public JsonReference ReducedPathModifier { get; } = propertiesType.ReducedTypeDeclaration().ReducedPathModifier;
