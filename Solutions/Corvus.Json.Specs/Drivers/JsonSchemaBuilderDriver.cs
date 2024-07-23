@@ -404,7 +404,7 @@ global using global::System.Threading.Tasks;";
         IEnumerable<SyntaxTree> syntaxTrees = ParseSyntaxTrees(generatedTypes, defines);
 
         // We are happy with the defaults (debug etc.)
-        var options = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary);
+        var options = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, generalDiagnosticOption: ReportDiagnostic.Error);
         var compilation = CSharpCompilation.Create($"Driver.GeneratedTypes_{Guid.NewGuid()}", syntaxTrees, references, options);
         using MemoryStream outputStream = new();
         EmitResult result = compilation.Emit(outputStream);
