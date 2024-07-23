@@ -106,4 +106,7 @@ public class PatternPropertiesValidationHandler : IChildObjectPropertyValidation
     {
         return generator;
     }
+
+    /// <inheritdoc/>
+    public bool RequiresPropertyNameAsString(TypeDeclaration typeDeclaration) => typeDeclaration.PatternProperties() is not null;
 }

@@ -72,8 +72,5 @@ public sealed class MinPropertiesKeyword : IPropertyCountConstantValidationKeywo
     }
 
     /// <inheritdoc/>
-    public bool RequiresPropertyNameAsString(TypeDeclaration typeDeclaration) => false;
-
-    /// <inheritdoc/>
     public bool RequiresObjectEnumeration(TypeDeclaration typeDeclaration) => false;
 }

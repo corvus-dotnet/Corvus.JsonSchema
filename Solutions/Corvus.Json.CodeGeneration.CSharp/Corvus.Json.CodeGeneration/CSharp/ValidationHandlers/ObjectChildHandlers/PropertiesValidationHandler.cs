@@ -224,4 +224,7 @@ public class PropertiesValidationHandler : IChildObjectPropertyValidationHandler
     {
         return generator;
     }
+
+    /// <inheritdoc/>
+    public bool RequiresPropertyNameAsString(TypeDeclaration typeDeclaration) => typeDeclaration.LocalEvaluatedPropertyType() is not null || typeDeclaration.LocalAndAppliedEvaluatedPropertyType() is not null;
 }

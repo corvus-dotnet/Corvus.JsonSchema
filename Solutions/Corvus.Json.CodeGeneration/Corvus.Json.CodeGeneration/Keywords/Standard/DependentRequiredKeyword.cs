@@ -88,8 +88,5 @@ public sealed class DependentRequiredKeyword : IPropertyProviderKeyword, IObject
     public bool RequiresPropertyEvaluationTracking(TypeDeclaration typeDeclaration) => false;
 
     /// <inheritdoc/>
-    public bool RequiresPropertyNameAsString(TypeDeclaration typeDeclaration) => typeDeclaration.HasKeyword(this);
-
-    /// <inheritdoc/>
     public bool RequiresObjectEnumeration(TypeDeclaration typeDeclaration) => false;
 }

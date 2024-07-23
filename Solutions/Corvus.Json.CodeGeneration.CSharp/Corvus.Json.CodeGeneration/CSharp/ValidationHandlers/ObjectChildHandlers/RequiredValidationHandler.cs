@@ -155,6 +155,9 @@ public class RequiredValidationHandler : IChildObjectPropertyValidationHandler
         return generator;
     }
 
+    /// <inheritdoc/>
+    public bool RequiresPropertyNameAsString(TypeDeclaration typeDeclaration) => false;
+
     private static string GetRequiredName(CodeGenerator generator, PropertyDeclaration property)
     {
         return generator.GetVariableNameInScope(property.DotnetPropertyName(), prefix: "hasSeen");
