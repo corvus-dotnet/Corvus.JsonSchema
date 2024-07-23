@@ -157,7 +157,7 @@ internal static partial class CodeGeneratorExtensions
                     /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
                     /// <exception cref="InvalidOperationException">The value is not an array.</exception>
                     """)
-                    .AppendArrayIndexer(typeDeclaration, itemsType.ReducedType.DotnetTypeName(), isExplicit: false);
+                    .AppendArrayIndexer(typeDeclaration, itemsType.ReducedType.FullyQualifiedDotnetTypeName(), isExplicit: false);
             }
         }
 
