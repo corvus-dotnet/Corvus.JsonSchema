@@ -20,4 +20,10 @@ public interface IFallbackObjectPropertyTypeProviderKeyword : IKeyword
     /// single object property type is found.</param>
     /// <returns><see langword="true"/> if an object property type value was found.</returns>
     bool TryGetFallbackObjectPropertyType(TypeDeclaration typeDeclaration, [MaybeNullWhen(false)] out FallbackObjectPropertyType? objectPropertyType);
+
+    /// <summary>
+    /// Gets the reduced path modifier for the keyword.
+    /// </summary>
+    /// <returns>The path modifier for the keyword.</returns>
+    string GetPathModifier();
 }

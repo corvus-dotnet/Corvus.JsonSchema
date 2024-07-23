@@ -16,7 +16,11 @@ public sealed class UnevaluatedPropertiesKeyword
         ISubschemaProviderKeyword,
         ILocalAndAppliedEvaluatedPropertyValidationKeyword
 {
-    private const string KeywordPath = "#/unevaluatedProperties";
+    /// <summary>
+    /// Gets the keyword path.
+    /// </summary>
+    public const string KeywordPath = "#/unevaluatedProperties";
+
     private static readonly JsonReference KeywordPathReference = new(KeywordPath);
 
     private UnevaluatedPropertiesKeyword()
@@ -101,4 +105,10 @@ public sealed class UnevaluatedPropertiesKeyword
 
     /// <inheritdoc/>
     public bool RequiresObjectEnumeration(TypeDeclaration typeDeclaration) => typeDeclaration.HasKeyword(this);
+
+    /// <inheritdoc/>
+    public string GetPathModifier()
+    {
+        return KeywordPathReference;
+    }
 }

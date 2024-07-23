@@ -100,19 +100,22 @@ public static partial class ValidationCodeGeneratorExtensions
             .AppendLineIndent("}")
             .AppendSeparatorLine();
 
-        if (enumeratorIsCorrectType)
+        if (!arrayItems.ReducedType.IsJsonAnyType())
         {
-            generator
-                .AppendLineIndent(
-                    "result = arrayEnumerator.Current.Validate(result, level);");
-        }
-        else
-        {
-            generator
-                .AppendLineIndent(
-                    "result = arrayEnumerator.Current.As<",
-                    arrayItems.ReducedType.FullyQualifiedDotnetTypeName(),
-                    ">().Validate(result, level);");
+            if (enumeratorIsCorrectType)
+            {
+                generator
+                    .AppendLineIndent(
+                        "result = arrayEnumerator.Current.Validate(result, level);");
+            }
+            else
+            {
+                generator
+                    .AppendLineIndent(
+                        "result = arrayEnumerator.Current.As<",
+                        arrayItems.ReducedType.FullyQualifiedDotnetTypeName(),
+                        ">().Validate(result, level);");
+            }
         }
 
         return generator
@@ -156,19 +159,22 @@ public static partial class ValidationCodeGeneratorExtensions
                 .AppendLineIndent("}")
                 .AppendSeparatorLine();
 
-        if (enumeratorIsCorrectType)
+        if (!arrayItems.ReducedType.IsJsonAnyType())
         {
-            generator
-                .AppendLineIndent(
-                    "result = arrayEnumerator.Current.Validate(result, level);");
-        }
-        else
-        {
-            generator
-                .AppendLineIndent(
-                    "result = arrayEnumerator.Current.As<",
-                    arrayItems.ReducedType.FullyQualifiedDotnetTypeName(),
-                    ">().Validate(result, level);");
+            if (enumeratorIsCorrectType)
+            {
+                generator
+                    .AppendLineIndent(
+                        "result = arrayEnumerator.Current.Validate(result, level);");
+            }
+            else
+            {
+                generator
+                    .AppendLineIndent(
+                        "result = arrayEnumerator.Current.As<",
+                        arrayItems.ReducedType.FullyQualifiedDotnetTypeName(),
+                        ">().Validate(result, level);");
+            }
         }
 
         return generator

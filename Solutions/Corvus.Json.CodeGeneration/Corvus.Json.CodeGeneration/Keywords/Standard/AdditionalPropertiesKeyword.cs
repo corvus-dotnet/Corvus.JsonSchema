@@ -92,4 +92,10 @@ public sealed class AdditionalPropertiesKeyword
 
     /// <inheritdoc/>
     public bool RequiresObjectEnumeration(TypeDeclaration typeDeclaration) => typeDeclaration.HasKeyword(this);
+
+    /// <inheritdoc/>
+    public string GetPathModifier()
+    {
+        return KeywordPathReference;
+    }
 }
