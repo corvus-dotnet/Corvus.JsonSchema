@@ -33,9 +33,6 @@ public sealed class BuiltInStringTypeNameHeuristic : IBuiltInTypeNameHeuristic
             typeDeclaration.AllowedCoreTypes().CountTypes() == 1)
         {
             string? candidateFormat = null;
-            string? candidateContentEncoding = null;
-            string? candidateContentMediaType = null;
-            ContentEncodingSemantics? contentSemantics = null;
 
             // We are a simple string type
             foreach (IKeyword keyword in typeDeclaration.Keywords())
@@ -57,19 +54,6 @@ public sealed class BuiltInStringTypeNameHeuristic : IBuiltInTypeNameHeuristic
                     continue;
                 }
 
-                if (keyword is IContentEncodingProviderKeyword contentEncodingKeyword)
-                {
-                    contentEncodingKeyword.TryGetContentEncoding(typeDeclaration, out candidateContentEncoding);
-                    contentSemantics = contentEncodingKeyword.ContentSemantics;
-                    continue;
-                }
-
-                if (keyword is IContentMediaTypeProviderKeyword contentMediaTypeKeyword)
-                {
-                    contentMediaTypeKeyword.TryGetContentMediaType(typeDeclaration, out candidateContentMediaType);
-                    continue;
-                }
-
                 // This is "some other" structural keyword, so we can't continue.
                 return false;
             }
@@ -79,39 +63,6 @@ public sealed class BuiltInStringTypeNameHeuristic : IBuiltInTypeNameHeuristic
             if (candidateFormat is string format)
             {
                 typeDeclaration.SetDotnetTypeName(FormatProviderRegistry.Instance.StringTypeFormatProviders.GetDotnetTypeNameFor(format) ?? "JsonString");
-            }
-            else if (
-                candidateContentMediaType is string contentMediaType &&
-                contentMediaType == "application/json")
-            {
-                if (candidateContentEncoding is string contentEncoding)
-                {
-                    if (contentEncoding == "base64")
-                    {
-                        typeDeclaration.SetDotnetTypeName("JsonBase64Content");
-                    }
-                    else
-                    {
-                        typeDeclaration.SetDotnetTypeName("JsonString");
-                    }
-                }
-                else
-                {
-                    typeDeclaration.SetDotnetTypeName("JsonContent");
-                }
-            }
-            else if (
-                candidateContentEncoding is string contentEncoding &&
-                contentEncoding == "base64")
-            {
-                if (contentSemantics == ContentEncodingSemantics.PreDraft201909)
-                {
-                    typeDeclaration.SetDotnetTypeName("JsonBase64StringPre201909");
-                }
-                else
-                {
-                    typeDeclaration.SetDotnetTypeName("JsonBase64String");
-                }
             }
             else
             {

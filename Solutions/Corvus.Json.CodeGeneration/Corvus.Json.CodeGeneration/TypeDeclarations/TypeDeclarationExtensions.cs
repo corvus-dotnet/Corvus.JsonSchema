@@ -42,6 +42,70 @@ public static class TypeDeclarationExtensions
     }
 
     /// <summary>
+    /// Gets the explicit content media type for the type declaration.
+    /// </summary>
+    /// <param name="that">The type declaration.</param>
+    /// <returns>The content media type, or <see langword="null"/> if the type is not set.</returns>
+    public static string? ExplicitContentMediaType(this TypeDeclaration that)
+    {
+        if (!that.TryGetMetadata(nameof(ExplicitContentMediaType), out string? result))
+        {
+            bool found = false;
+
+            foreach (IContentMediaTypeValidationKeyword keyword in that.Keywords().OfType<IContentMediaTypeValidationKeyword>())
+            {
+                if (keyword.TryGetContentMediaType(that, out string? m))
+                {
+                    result = m;
+                    that.SetMetadata(nameof(ExplicitContentMediaType), result);
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found)
+            {
+                result = null;
+                that.SetMetadata(nameof(ExplicitContentMediaType), result);
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Gets the explicit content media type for the type declaration.
+    /// </summary>
+    /// <param name="that">The type declaration.</param>
+    /// <returns>The content media type, or <see langword="null"/> if the type is not set.</returns>
+    public static string? ExplicitContentEncoding(this TypeDeclaration that)
+    {
+        if (!that.TryGetMetadata(nameof(ExplicitContentEncoding), out string? result))
+        {
+            bool found = false;
+
+            foreach (IContentEncodingValidationKeyword keyword in that.Keywords().OfType<IContentEncodingValidationKeyword>())
+            {
+                if (keyword.TryGetContentEncoding(that, out string? m))
+                {
+                    result = m;
+                    that.SetMetadata(nameof(ExplicitContentEncoding), result);
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found)
+            {
+                result = null;
+                that.SetMetadata(nameof(ExplicitContentEncoding), result);
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
     /// Gets a value indicating whether the type is deprecated.
     /// </summary>
     /// <param name="that">The type declaration to test.</param>

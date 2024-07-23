@@ -46,5 +46,5 @@ public class FormatValidationHandler : KeywordValidationHandlerBase
     }
 
     /// <inheritdoc/>
-    public override bool HandlesKeyword(IKeyword keyword) => keyword is IFormatValidationKeyword;
+    public override bool HandlesKeyword(IKeyword keyword) => keyword is IFormatProviderKeyword;
 }

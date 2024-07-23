@@ -10,7 +10,7 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 /// The contentSchema keyword.
 /// </summary>
 public sealed class ContentSchemaKeyword
-    : ISubschemaTypeBuilderKeyword, ILocalSubschemaRegistrationKeyword, IStringValidationKeyword
+    : ISubschemaTypeBuilderKeyword, ILocalSubschemaRegistrationKeyword
 {
     private const string KeywordPath = "#/contentSchema";
     private static readonly JsonReference KeywordPathReference = new(KeywordPath);
@@ -29,9 +29,6 @@ public sealed class ContentSchemaKeyword
 
     /// <inheritdoc />
     public ReadOnlySpan<byte> KeywordUtf8 => "contentSchema"u8;
-
-    /// <inheritdoc/>
-    public uint ValidationPriority => ValidationPriorities.AfterComposition;
 
     /// <inheritdoc />
     public void RegisterLocalSubschema(JsonSchemaRegistry registry, JsonElement schema, JsonReference currentLocation, IVocabulary vocabulary)
@@ -59,7 +56,4 @@ public sealed class ContentSchemaKeyword
         typeDeclaration.HasKeyword(this)
             ? CoreTypes.String
             : CoreTypes.None;
-
-    /// <inheritdoc/>
-    public bool RequiresStringLength(TypeDeclaration typeDeclaration) => false;
 }

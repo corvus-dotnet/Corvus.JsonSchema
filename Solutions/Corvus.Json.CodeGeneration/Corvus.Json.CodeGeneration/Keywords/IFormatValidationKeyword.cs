@@ -7,4 +7,4 @@ namespace Corvus.Json.CodeGeneration;
 /// <summary>
 /// Validation keywords.
 /// </summary>
-public interface IFormatValidationKeyword : IValidationKeyword, IFormatProviderKeyword;
+public interface IFormatValidationKeyword : IValueKindValidationKeyword, IFormatProviderKeyword;

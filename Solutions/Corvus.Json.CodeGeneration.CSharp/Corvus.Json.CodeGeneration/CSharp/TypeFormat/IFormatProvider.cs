@@ -26,4 +26,14 @@ public interface IFormatProvider
     /// <returns>The expected <see cref="JsonValueKind"/>, or <see langword="null"/>
     /// if no value kind is expected for the format.</returns>
     JsonValueKind? GetExpectedValueKind(string format);
+
+    /// <summary>
+    /// Append a format assertion to the generator.
+    /// </summary>
+    /// <param name="generator">The generator to which to append the format assertion.</param>
+    /// <param name="format">The format to assert.</param>
+    /// <param name="valueIdentifier">The identifier for the value to test.</param>
+    /// <param name="validationContextIdentifier">The identifier for the validation context to update.</param>
+    /// <returns><see langword="true"/> if the assertion was appended successfully.</returns>
+    bool AppendFormatAssertion(CodeGenerator generator, string format, string valueIdentifier, string validationContextIdentifier);
 }
