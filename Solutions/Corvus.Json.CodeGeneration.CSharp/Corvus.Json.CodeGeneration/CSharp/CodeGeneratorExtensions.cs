@@ -1414,7 +1414,7 @@ internal static partial class CodeGeneratorExtensions
                 /// <returns>An instance of this type, initialized from the <see cref="JsonElement"/>.</returns>
                 /// <remarks>The returned value will have a <see cref = "IJsonValue.ValueKind"/> of <see cref = "JsonValueKind.Undefined"/> if the
                 /// value cannot be constructed from the given instance (e.g. because they have an incompatible .NET backing type).
-                /// </remarks>                
+                /// </remarks>
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 """)
             .AppendIndent("public static ")
@@ -2436,10 +2436,10 @@ internal static partial class CodeGeneratorExtensions
         string dotnetTypeName,
         ConditionalCodeSpecification[]? interfaces = null)
     {
-        string name = generator.GetTypeNameInScope(dotnetTypeName);
+        generator.ReserveNameIfNotReserved(dotnetTypeName);
         generator
             .AppendIndent("public readonly partial struct ")
-            .AppendLine(name);
+            .AppendLine(dotnetTypeName);
 
         if (interfaces is ConditionalCodeSpecification[] conditionalSpecifications)
         {
@@ -2450,8 +2450,8 @@ internal static partial class CodeGeneratorExtensions
 
         return generator
             .AppendLineIndent("{")
-            .PushMemberScope(name, ScopeType.Type)
-            .ReserveNameIfNotReserved(name) // Reserve the name of the containing scope in its own scope
+            .PushMemberScope(dotnetTypeName, ScopeType.Type)
+            .ReserveNameIfNotReserved(dotnetTypeName) // Reserve the name of the containing scope in its own scope
             .PushIndent();
 
         static void AppendInterface(CodeGenerator generator, Action<CodeGenerator> appendFunction, int elementIndexInConditionalBlock)

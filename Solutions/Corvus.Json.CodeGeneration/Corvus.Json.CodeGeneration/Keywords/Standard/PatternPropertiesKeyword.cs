@@ -13,8 +13,7 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 public sealed class PatternPropertiesKeyword
     : ISubschemaTypeBuilderKeyword,
       ILocalSubschemaRegistrationKeyword,
-      ISubschemaProviderKeyword,
-      IObjectValidationKeyword,
+      IObjectPatternPropertyValidationKeyword,
       IValidationRegexProviderKeyword
 {
     private const string KeywordPath = "#/patternProperties";
@@ -85,6 +84,7 @@ public sealed class PatternPropertiesKeyword
                 regexBuilder.Add(property.Name);
             }
 
+            regexBuilder.Sort(StringComparer.Ordinal);
             regexes = regexBuilder;
             return true;
         }
@@ -96,7 +96,7 @@ public sealed class PatternPropertiesKeyword
     /// <inheritdoc/>
     public IReadOnlyCollection<TypeDeclaration> GetSubschemaTypeDeclarations(TypeDeclaration typeDeclaration)
     {
-        return typeDeclaration.SubschemaTypeDeclarations.Where(t => t.Key.StartsWith(KeywordPath)).Select(t => t.Value).ToList();
+        return typeDeclaration.SubschemaTypeDeclarations.Where(t => t.Key.StartsWith(KeywordPath)).OrderBy(k => k.Key).Select(t => t.Value).ToList();
     }
 
     /// <inheritdoc/>
@@ -104,4 +104,10 @@ public sealed class PatternPropertiesKeyword
 
     /// <inheritdoc/>
     public bool RequiresObjectEnumeration(TypeDeclaration typeDeclaration) => typeDeclaration.HasKeyword(this);
+
+    /// <inheritdoc/>
+    public string GetPathModifier(ReducedTypeDeclaration propertyTypeDeclaration)
+    {
+        return KeywordPathReference.AppendFragment(propertyTypeDeclaration.ReducedPathModifier);
+    }
 }

@@ -160,7 +160,7 @@ public class PropertiesValidationHandler : IChildObjectPropertyValidationHandler
                     .PushIndent()
                         .AppendLineIndent("string localEvaluatedPropertyName = (propertyNameAsString ??= property.Name.GetString());");
 
-            if (fallbackPropertyType.ReducedPathModifier.HasFragment)
+            if (fallbackPropertyType.ReducedPathModifier.Fragment.Length > 1)
             {
                 generator
                             .AppendLineIndent(
@@ -176,7 +176,7 @@ public class PropertiesValidationHandler : IChildObjectPropertyValidationHandler
                             .AppendLineIndent(
                                 "result = result.PushValidationLocationReducedPathModifierAndProperty(new JsonReference(",
                                 SymbolDisplay.FormatLiteral(fallbackPropertyType.KeywordPathModifier, true),
-                                ").AppendUnencodedPropertyNameToFragment(localEvaluatedPropertyName), propertyNa);");
+                                ").AppendUnencodedPropertyNameToFragment(localEvaluatedPropertyName), localEvaluatedPropertyName);");
             }
 
             generator

@@ -32,11 +32,9 @@ public sealed class ObjectPartial : ICodeFileBuilder
                     .AppendLine("#nullable enable")
                     .AppendLine()
                     .AppendUsings(
-                        new("System.Buffers", FrameworkType.Net80OrGreater),
                         new("System.Collections", EmitIfIsMapObject(typeDeclaration)),
                         "System.Collections.Immutable",
                         new("System.Diagnostics.CodeAnalysis", EmitIfIsMapObject(typeDeclaration)),
-                        "System.Runtime.CompilerServices",
                         "System.Text.Json",
                         "Corvus.Json",
                         "Corvus.Json.Internal")

@@ -49,9 +49,7 @@ public sealed class BaseSchemaNameHeuristic : INameHeuristicBeforeSubschema
                 }
             }
 
-            name.CopyTo(typeNameBuffer);
-            written = name.Length;
-            written = Formatting.ToPascalCase(typeNameBuffer[..written]);
+            written = Formatting.FormatTypeNameComponent(typeDeclaration, name, typeNameBuffer);
 
             if (collidesWithParent)
             {

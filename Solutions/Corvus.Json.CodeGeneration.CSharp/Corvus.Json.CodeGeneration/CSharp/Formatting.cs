@@ -40,11 +40,11 @@ public static class Formatting
         "MemberwiseClone", "ReferenceEquals", "ToString"
     ];
 
+    private static ReadOnlySpan<char> EntitySuffix => "Entity".AsSpan();
+
     private static ReadOnlySpan<char> TypePrefix => "Type".AsSpan();
 
     private static ReadOnlySpan<char> ArraySuffix => "Array".AsSpan();
-
-    private static ReadOnlySpan<char> EntitySuffix => "Entity".AsSpan();
 
     private static ReadOnlySpan<char> PropertySuffix => "Property".AsSpan();
 
@@ -64,7 +64,7 @@ public static class Formatting
 
         Span<char> corvusTypeNameBuffer = typeNameBuffer[..corvusTypeName.Length];
         int writtenLength = Formatting.ToPascalCase(corvusTypeNameBuffer);
-        return Formatting.FixReservedWords(typeNameBuffer, writtenLength, TypePrefix, ReadOnlySpan<char>.Empty);
+        return Formatting.FixReservedWords(typeNameBuffer, writtenLength, TypePrefix, Formatting.EntitySuffix);
     }
 
     /// <summary>
@@ -230,6 +230,11 @@ public static class Formatting
         {
             if (k.AsSpan().SequenceEqual(v))
             {
+                if (collisionSuffix.IsEmpty)
+                {
+                    collisionSuffix = EntitySuffix;
+                }
+
                 collisionSuffix.CopyTo(buffer[length..]);
                 return length + collisionSuffix.Length;
             }

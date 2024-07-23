@@ -46,10 +46,7 @@ public sealed class PathNameHeuristic : INameHeuristicBeforeSubschema
             }
 
             ReadOnlySpan<char> name = reference.Path[(lastSlash + 1)..];
-            name.CopyTo(typeNameBuffer);
-            written = name.Length;
-            written = Formatting.ToPascalCase(typeNameBuffer[..written]);
-            written = Formatting.ApplyStandardSuffix(typeDeclaration, typeNameBuffer, typeNameBuffer[..written]);
+            written = Formatting.FormatTypeNameComponent(typeDeclaration, name, typeNameBuffer);
             return true;
         }
 
