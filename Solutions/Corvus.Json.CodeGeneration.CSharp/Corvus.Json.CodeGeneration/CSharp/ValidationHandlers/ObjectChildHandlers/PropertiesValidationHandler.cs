@@ -158,7 +158,7 @@ public class PropertiesValidationHandler : IChildObjectPropertyValidationHandler
                     .AppendLineIndent("if (level > ValidationLevel.Basic)")
                     .AppendLineIndent("{")
                     .PushIndent()
-                        .AppendLineIndent("string localEvaluatedPropertyName = property.Name.GetString();");
+                        .AppendLineIndent("string localEvaluatedPropertyName = (propertyNameAsString ??= property.Name.GetString());");
 
             if (fallbackPropertyType.ReducedPathModifier.HasFragment)
             {
@@ -176,7 +176,7 @@ public class PropertiesValidationHandler : IChildObjectPropertyValidationHandler
                             .AppendLineIndent(
                                 "result = result.PushValidationLocationReducedPathModifierAndProperty(new JsonReference(",
                                 SymbolDisplay.FormatLiteral(fallbackPropertyType.KeywordPathModifier, true),
-                                ").AppendUnencodedPropertyNameToFragment(localEvaluatedPropertyName), localEvaluatedPropertyName);");
+                                ").AppendUnencodedPropertyNameToFragment(localEvaluatedPropertyName), propertyNa);");
             }
 
             generator

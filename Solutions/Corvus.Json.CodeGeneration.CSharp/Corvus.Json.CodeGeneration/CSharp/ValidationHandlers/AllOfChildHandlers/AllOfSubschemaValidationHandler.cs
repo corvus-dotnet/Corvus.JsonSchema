@@ -44,18 +44,17 @@ public class AllOfSubschemaValidationHandler : IChildArrayItemValidationHandler
                 {
                     ReducedTypeDeclaration reducedType = subschemaType.ReducedTypeDeclaration();
                     string pathModifier = keyword.GetPathModifier(reducedType, i);
-                    string contextName = generator.GetUniqueVariableNameInScope("ChildContext", prefix: keyword.Keyword, suffix: i.ToString());
                     string resultName = generator.GetUniqueVariableNameInScope("Result", prefix: keyword.Keyword, suffix: i.ToString());
                     generator
                         .AppendSeparatorLine()
-                        .AppendLineIndent("ValidationContext ", contextName, " = childContextBase;")
+                        .AppendLineIndent("ValidationContext ", resultName, " = childContextBase.CreateChildContext();")
                         .AppendLineIndent("if (level > ValidationLevel.Basic)")
                         .AppendLineIndent("{")
                         .PushIndent()
                             .AppendLineIndent(
-                                contextName,
+                                resultName,
                                 " = ",
-                                contextName,
+                                resultName,
                                 ".PushValidationLocationReducedPathModifier(new(",
                                 SymbolDisplay.FormatLiteral(pathModifier, true),
                                 "));")
@@ -63,13 +62,12 @@ public class AllOfSubschemaValidationHandler : IChildArrayItemValidationHandler
                         .AppendLineIndent("}")
                         .AppendSeparatorLine()
                         .AppendLineIndent(
-                            "ValidationContext ",
                             resultName,
                             " = value.As<",
                             reducedType.ReducedType.FullyQualifiedDotnetTypeName(),
                             ">().Validate(",
-                            contextName,
-                            ".CreateChildContext(), level);")
+                            resultName,
+                            ", level);")
                         .AppendSeparatorLine()
                         .AppendLineIndent("if (!", resultName, ".IsValid)")
                         .AppendLineIndent("{")
