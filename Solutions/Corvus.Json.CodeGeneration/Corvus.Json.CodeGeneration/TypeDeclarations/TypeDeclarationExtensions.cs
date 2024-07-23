@@ -235,6 +235,48 @@ public static class TypeDeclarationExtensions
     }
 
     /// <summary>
+    /// Gets the pattern property delcarations for the type declaration.
+    /// </summary>
+    /// <param name="that">The type declaration for which to get the pattern properties..</param>
+    /// <returns>The collection of <see cref="PatternPropertyDeclaration"/>, by keyword or <see langword="null"/>
+    /// if no pattern properties were defined.</returns>
+    public static IReadOnlyDictionary<IObjectPatternPropertyValidationKeyword, IReadOnlyCollection<PatternPropertyDeclaration>>? PatternProperties(this TypeDeclaration that)
+    {
+        if (!that.TryGetMetadata(
+                nameof(PatternProperties),
+                out IReadOnlyDictionary<IObjectPatternPropertyValidationKeyword, IReadOnlyCollection<PatternPropertyDeclaration>>? result))
+        {
+            Dictionary<IObjectPatternPropertyValidationKeyword, IReadOnlyCollection<PatternPropertyDeclaration>> dictionary = [];
+
+            foreach (IObjectPatternPropertyValidationKeyword keyword in that.Keywords().OfType<IObjectPatternPropertyValidationKeyword>())
+            {
+                List<PatternPropertyDeclaration> list = [];
+
+                IReadOnlyCollection<TypeDeclaration> typeDeclarations = keyword.GetSubschemaTypeDeclarations(that);
+
+                foreach (TypeDeclaration typeDeclaration in typeDeclarations)
+                {
+                    list.Add(new(keyword, typeDeclaration));
+                }
+
+                if (list.Count > 0)
+                {
+                    dictionary[keyword] = list;
+                }
+            }
+
+            if (dictionary.Count > 0)
+            {
+                result = dictionary;
+            }
+
+            that.SetMetadata(nameof(PatternProperties), result);
+        }
+
+        return result;
+    }
+
+    /// <summary>
     /// Gets a value indicating whether the type requires number value validation.
     /// </summary>
     /// <param name="that">The type declaration to test.</param>

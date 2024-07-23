@@ -41,9 +41,7 @@ public sealed class SubschemaNameHeuristic : INameHeuristicBeforeSubschema
                     }
 
                     ReadOnlySpan<char> name = reference.Fragment[(lastSlash + 1)..];
-                    name.CopyTo(typeNameBuffer);
-                    written = name.Length;
-                    written = Formatting.ToPascalCase(typeNameBuffer[..written]);
+                    written = Formatting.FormatTypeNameComponent(typeDeclaration, name, typeNameBuffer);
                 }
                 else if ((parent.AllowedCoreTypes() & CoreTypes.Array) != 0 && lastSlash > 0 && !typeDeclaration.IsInDefinitionsContainer())
                 {
@@ -51,16 +49,12 @@ public sealed class SubschemaNameHeuristic : INameHeuristicBeforeSubschema
                     int previousSlash = reference.Fragment[..(lastSlash - 1)].LastIndexOf('/');
 
                     ReadOnlySpan<char> name = reference.Fragment[(previousSlash + 1)..lastSlash];
-                    name.CopyTo(typeNameBuffer);
-                    written = name.Length;
-                    written = Formatting.ToPascalCase(typeNameBuffer[..written]);
+                    written = Formatting.FormatTypeNameComponent(typeDeclaration, name, typeNameBuffer);
                 }
                 else
                 {
                     ReadOnlySpan<char> name = reference.Fragment[(lastSlash + 1)..];
-                    name.CopyTo(typeNameBuffer);
-                    written = name.Length;
-                    written = Formatting.ToPascalCase(typeNameBuffer[..written]);
+                    written = Formatting.FormatTypeNameComponent(typeDeclaration, name, typeNameBuffer);
                 }
 
                 if (typeDeclaration.CollidesWithParent(typeNameBuffer[..written]) ||
