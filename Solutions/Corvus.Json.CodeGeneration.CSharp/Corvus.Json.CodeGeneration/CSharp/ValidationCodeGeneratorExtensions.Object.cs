@@ -180,7 +180,9 @@ public static partial class ValidationCodeGeneratorExtensions
                         (CodeGenerator.Segment)(g => g.AppendJsonObjectPropertyType(typeDeclaration)),
                         " property = objectEnumerator.Current;");
 
-            if (typeDeclaration.RequiresPropertyNameAsString())
+            if (children
+                    .OfType<IChildObjectPropertyValidationHandler>()
+                    .Any(child => child.RequiresPropertyNameAsString(typeDeclaration)))
             {
                 generator
                     .ReserveName("propertyNameAsString")

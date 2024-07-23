@@ -100,9 +100,6 @@ public sealed class PatternPropertiesKeyword
     }
 
     /// <inheritdoc/>
-    public bool RequiresPropertyNameAsString(TypeDeclaration typeDeclaration) => typeDeclaration.HasKeyword(this);
-
-    /// <inheritdoc/>
     public bool RequiresObjectEnumeration(TypeDeclaration typeDeclaration) => typeDeclaration.HasKeyword(this);
 
     /// <inheritdoc/>

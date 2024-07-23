@@ -86,9 +86,6 @@ public sealed class DependenciesKeyword
     public bool RequiresPropertyCount(TypeDeclaration typeDeclaration) => false;
 
     /// <inheritdoc/>
-    public bool RequiresPropertyNameAsString(TypeDeclaration typeDeclaration) => typeDeclaration.HasKeyword(this);
-
-    /// <inheritdoc/>
     public bool RequiresObjectEnumeration(TypeDeclaration typeDeclaration) =>
         typeDeclaration.TryGetKeyword(this, out JsonElement value) &&
         (value.ValueKind == JsonValueKind.Object || value.ValueKind == JsonValueKind.True || value.ValueKind == JsonValueKind.False);

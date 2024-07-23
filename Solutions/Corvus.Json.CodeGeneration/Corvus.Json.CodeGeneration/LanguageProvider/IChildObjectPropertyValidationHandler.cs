@@ -29,4 +29,11 @@ public interface IChildObjectPropertyValidationHandler : IChildValidationHandler
     /// </para>
     /// </remarks>
     CodeGenerator AppendObjectPropertyValidationCode(CodeGenerator generator, TypeDeclaration typeDeclaration);
+
+    /// <summary>
+    /// Gets a value indicating whether the handler requires property names as a string.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration to test.</param>
+    /// <returns><see langword="true"/> if the handler requires property names as a string.</returns>
+    bool RequiresPropertyNameAsString(TypeDeclaration typeDeclaration);
 }

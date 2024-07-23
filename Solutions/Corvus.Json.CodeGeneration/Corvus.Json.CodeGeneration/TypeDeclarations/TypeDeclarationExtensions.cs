@@ -219,22 +219,6 @@ public static class TypeDeclarationExtensions
     }
 
     /// <summary>
-    /// Gets a value indicating whether the type requires the property name as a string in object validation.
-    /// </summary>
-    /// <param name="that">The type declaration to test.</param>
-    /// <returns><see langword="true"/> if the type declaration requires the property name as a string in object validation.</returns>
-    public static bool RequiresPropertyNameAsString(this TypeDeclaration that)
-    {
-        if (!that.TryGetMetadata(nameof(RequiresPropertyNameAsString), out bool? result))
-        {
-            result = that.Keywords().OfType<IObjectValidationKeyword>().Any(k => k.RequiresPropertyNameAsString(that));
-            that.SetMetadata(nameof(RequiresPropertyNameAsString), result);
-        }
-
-        return result ?? false;
-    }
-
-    /// <summary>
     /// Gets the pattern property delcarations for the type declaration.
     /// </summary>
     /// <param name="that">The type declaration for which to get the pattern properties..</param>

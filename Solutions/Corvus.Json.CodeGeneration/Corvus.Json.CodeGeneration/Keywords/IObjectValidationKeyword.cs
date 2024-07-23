@@ -39,16 +39,4 @@ public interface IObjectValidationKeyword : IValueKindValidationKeyword
     /// <param name="typeDeclaration">The type declaration to test.</param>
     /// <returns><see langword="true"/> if the keyword requires object enumeration.</returns>
     bool RequiresObjectEnumeration(TypeDeclaration typeDeclaration);
-
-    /// <summary>
-    /// Gets a value indicating whether the keyword requires property names as a string.
-    /// </summary>
-    /// <param name="typeDeclaration">The type declaration to test.</param>
-    /// <returns><see langword="true"/> if the keyword requires property names as a string.</returns>
-    /// <remarks>
-    /// Although the keyword itself may process the property name as a string, it is up to the individual
-    /// <see cref="ILanguageProvider"/> to decide how it implements these behaviours. For example, they may
-    /// lazily evaluate the string. It does not imply any particular implementation approach.
-    /// </remarks>
-    bool RequiresPropertyNameAsString(TypeDeclaration typeDeclaration);
 }
