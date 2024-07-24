@@ -260,9 +260,7 @@ public class JsonSchemaBuilderDriver : IDisposable
 
         this.builder.AddDocument(path, JsonDocument.Parse(schema));
 
-        IVocabulary defaultVocabulary = Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary;
-
-        TypeDeclaration rootType = await this.builder.AddTypeDeclarationsAsync(new(path), defaultVocabulary, true);
+        TypeDeclaration rootType = await this.builder.AddTypeDeclarationsAsync(new(path), this.defaultVocabulary, true);
 
         var options = new CSharpLanguageProvider.Options(
             $"{featureName}Feature.{scenarioName}",
@@ -275,7 +273,7 @@ public class JsonSchemaBuilderDriver : IDisposable
             rootType);
 
 #if NET8_0_OR_GREATER
-        return CompileGeneratedType(this.assemblyLoadContext!, CSharpLanguageProvider.GetFullyQualifiedDotnetTypeName(rootType), generatedCode);
+        return CompileGeneratedType(this.assemblyLoadContext!, CSharpLanguageProvider.GetFullyQualifiedDotnetTypeName(rootType.ReducedTypeDeclaration().ReducedType), generatedCode);
 #else
         return CompileGeneratedType(CSharpLanguageProvider.GetFullyQualifiedDotnetTypeName(rootType), generatedCode);
 #endif
@@ -295,9 +293,7 @@ public class JsonSchemaBuilderDriver : IDisposable
         string baseDirectory = this.configuration[$"{this.settingsKey}:testBaseDirectory"]!;
         string path = Path.Combine(baseDirectory, filename) + schemaPath;
 
-        IVocabulary defaultVocabulary = Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary;
-
-        TypeDeclaration rootType = await this.builder.AddTypeDeclarationsAsync(new(path), defaultVocabulary, true);
+        TypeDeclaration rootType = await this.builder.AddTypeDeclarationsAsync(new(path), this.defaultVocabulary, true);
 
         var options = new CSharpLanguageProvider.Options(
             $"{featureName}Feature.{scenarioName}",
@@ -310,7 +306,7 @@ public class JsonSchemaBuilderDriver : IDisposable
             rootType);
 
 #if NET8_0_OR_GREATER
-        return CompileGeneratedType(this.assemblyLoadContext!, CSharpLanguageProvider.GetFullyQualifiedDotnetTypeName(rootType), generatedCode);
+        return CompileGeneratedType(this.assemblyLoadContext!, CSharpLanguageProvider.GetFullyQualifiedDotnetTypeName(rootType.ReducedTypeDeclaration().ReducedType), generatedCode);
 #else
         return CompileGeneratedType(CSharpLanguageProvider.GetFullyQualifiedDotnetTypeName(rootType), generatedCode);
 #endif
@@ -337,9 +333,7 @@ public class JsonSchemaBuilderDriver : IDisposable
 
         this.builder.AddDocument(path, JsonDocument.Parse(schema));
 
-        IVocabulary defaultVocabulary = Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary;
-
-        TypeDeclaration rootType = this.builder.AddTypeDeclarations(new(path), defaultVocabulary, true);
+        TypeDeclaration rootType = this.builder.AddTypeDeclarations(new(path), this.defaultVocabulary, true);
 
         var options = new CSharpLanguageProvider.Options(
             $"{featureName}Feature.{scenarioName}",
@@ -353,7 +347,7 @@ public class JsonSchemaBuilderDriver : IDisposable
             rootType);
 
 #if NET8_0_OR_GREATER
-        return CompileGeneratedType(this.assemblyLoadContext!, CSharpLanguageProvider.GetFullyQualifiedDotnetTypeName(rootType), generatedCode);
+        return CompileGeneratedType(this.assemblyLoadContext!, CSharpLanguageProvider.GetFullyQualifiedDotnetTypeName(rootType.ReducedTypeDeclaration().ReducedType), generatedCode);
 #else
         return CompileGeneratedType(CSharpLanguageProvider.GetFullyQualifiedDotnetTypeName(rootType), generatedCode);
 #endif
@@ -387,7 +381,7 @@ public class JsonSchemaBuilderDriver : IDisposable
             rootType);
 
 #if NET8_0_OR_GREATER
-        return CompileGeneratedType(this.assemblyLoadContext!, CSharpLanguageProvider.GetFullyQualifiedDotnetTypeName(rootType), generatedCode);
+        return CompileGeneratedType(this.assemblyLoadContext!, CSharpLanguageProvider.GetFullyQualifiedDotnetTypeName(rootType.ReducedTypeDeclaration().ReducedType), generatedCode);
 #else
         return CompileGeneratedType(CSharpLanguageProvider.GetFullyQualifiedDotnetTypeName(rootType), generatedCode);
 #endif

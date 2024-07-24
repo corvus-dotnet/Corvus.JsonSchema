@@ -16,7 +16,7 @@ internal sealed class SchemaVocabulary : IVocabulary
     [
         DollarIdKeyword.Instance,
         DollarSchemaKeyword.Instance,
-        DollarRefKeyword.Instance,
+        DollarRefHidesSiblingsKeyword.Instance,
         DollarCommentKeyword.Instance,
         TitleKeyword.Instance,
         DescriptionKeyword.Instance,
@@ -33,6 +33,7 @@ internal sealed class SchemaVocabulary : IVocabulary
         MinLengthKeyword.Instance,
         PatternKeyword.Instance,
         AdditionalItemsKeyword.Instance,
+        AdditionalPropertiesKeyword.Instance,
         ItemsWithSchemaOrArrayOfSchemaKeyword.Instance,
         MaxItemsKeyword.Instance,
         MinItemsKeyword.Instance,

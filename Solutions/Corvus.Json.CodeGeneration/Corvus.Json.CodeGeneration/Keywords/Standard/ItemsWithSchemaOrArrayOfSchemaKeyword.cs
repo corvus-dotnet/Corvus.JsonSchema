@@ -98,7 +98,8 @@ public sealed class ItemsWithSchemaOrArrayOfSchemaKeyword
     /// <inheritdoc/>
     public bool TryGetTupleType(TypeDeclaration typeDeclaration, [MaybeNullWhen(false)] out TupleTypeDeclaration? tupleType)
     {
-        if (typeDeclaration.TryGetKeyword(this, out JsonElement value))
+        if (typeDeclaration.TryGetKeyword(this, out JsonElement value) &&
+            value.ValueKind == JsonValueKind.Array)
         {
             TypeDeclaration[] tupleTypes =
                 typeDeclaration.SubschemaTypeDeclarations

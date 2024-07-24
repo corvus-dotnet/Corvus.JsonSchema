@@ -16,7 +16,7 @@ public sealed class AdditionalItemsKeyword
       INonTupleArrayItemsTypeProviderKeyword,
       IArrayValidationKeyword
 {
-    private const string KeywordPath = "#/aditionalItems";
+    private const string KeywordPath = "#/additionalItems";
     private static readonly JsonReference KeywordPathReference = new(KeywordPath);
 
     private AdditionalItemsKeyword()
@@ -29,10 +29,10 @@ public sealed class AdditionalItemsKeyword
     public static AdditionalItemsKeyword Instance { get; } = new AdditionalItemsKeyword();
 
     /// <inheritdoc />
-    public string Keyword => "aditionalItems";
+    public string Keyword => "additionalItems";
 
     /// <inheritdoc />
-    public ReadOnlySpan<byte> KeywordUtf8 => "aditionalItems"u8;
+    public ReadOnlySpan<byte> KeywordUtf8 => "additionalItems"u8;
 
     /// <inheritdoc/>
     public uint ValidationPriority => ValidationPriorities.Default;
@@ -53,7 +53,7 @@ public sealed class AdditionalItemsKeyword
     public async ValueTask BuildSubschemaTypes(TypeBuilderContext typeBuilderContext, TypeDeclaration typeDeclaration)
     {
         // The 2019-09 and earlier additionalItems keyword only applies if the schema is also has an array-of-schema Items keyword.
-        if (this.HasKeyword(typeDeclaration))
+        if (this.HasKeyword(typeDeclaration) && AllowsAdditionalItems(typeDeclaration))
         {
             await Subschemas.BuildSubschemaTypesForSchemaProperty(typeBuilderContext, typeDeclaration, KeywordPathReference).ConfigureAwait(false);
         }
@@ -73,7 +73,8 @@ public sealed class AdditionalItemsKeyword
         TypeDeclaration typeDeclaration,
         [MaybeNullWhen(false)] out ArrayItemsTypeDeclaration? arrayItemsType)
     {
-        if (typeDeclaration.SubschemaTypeDeclarations.TryGetValue(KeywordPath, out TypeDeclaration? itemsType))
+        if (typeDeclaration.SubschemaTypeDeclarations.TryGetValue(KeywordPath, out TypeDeclaration? itemsType) &&
+            AllowsAdditionalItems(typeDeclaration))
         {
             arrayItemsType = new(itemsType, isExplicit: false, this);
             return true;
@@ -88,7 +89,8 @@ public sealed class AdditionalItemsKeyword
         TypeDeclaration typeDeclaration,
         [MaybeNullWhen(false)] out ArrayItemsTypeDeclaration? arrayItemsType)
     {
-        if (typeDeclaration.SubschemaTypeDeclarations.TryGetValue(KeywordPath, out TypeDeclaration? itemsType))
+        if (typeDeclaration.SubschemaTypeDeclarations.TryGetValue(KeywordPath, out TypeDeclaration? itemsType) &&
+            AllowsAdditionalItems(typeDeclaration))
         {
             arrayItemsType = new(itemsType, isExplicit: true, this);
             return true;
@@ -113,10 +115,14 @@ public sealed class AdditionalItemsKeyword
         return KeywordPathReference.AppendFragment(item.ReducedPathModifier);
     }
 
+    private static bool AllowsAdditionalItems(TypeDeclaration typeDeclaration)
+    {
+        return typeDeclaration.TryGetKeyword(ItemsWithSchemaOrArrayOfSchemaKeyword.Instance, out JsonElement itemsKeywordValue) &&
+                        itemsKeywordValue.ValueKind == JsonValueKind.Array;
+    }
+
     private bool HasKeyword(TypeDeclaration typeDeclaration)
     {
-        return typeDeclaration.HasKeyword(this) &&
-                    typeDeclaration.TryGetKeyword(ItemsWithSchemaOrArrayOfSchemaKeyword.Instance, out JsonElement itemsKeywordValue) &&
-                    itemsKeywordValue.ValueKind == JsonValueKind.Array;
+        return typeDeclaration.HasKeyword(this);
     }
 }

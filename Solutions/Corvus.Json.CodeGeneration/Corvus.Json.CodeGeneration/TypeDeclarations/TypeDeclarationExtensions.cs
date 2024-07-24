@@ -1764,7 +1764,7 @@ public static class TypeDeclarationExtensions
     {
         if (typeDeclaration.HasSiblingHidingKeyword())
         {
-            typeDeclaration.SetMetadata(nameof(SingleConstantValue), default(string?));
+            typeDeclaration.SetMetadata(nameof(SingleConstantValue), default(JsonElement));
             return;
         }
 
