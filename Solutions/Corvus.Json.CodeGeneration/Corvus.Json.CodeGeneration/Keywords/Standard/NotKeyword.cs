@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 
 namespace Corvus.Json.CodeGeneration.Keywords;
@@ -10,7 +11,7 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 /// The not keyword.
 /// </summary>
 public sealed class NotKeyword
-    : ISubschemaTypeBuilderKeyword, ILocalSubschemaRegistrationKeyword, ISubschemaProviderKeyword, INotValidationKeyword
+    : ILocalSubschemaRegistrationKeyword, INotValidationKeyword
 {
     private const string KeywordPath = "#/not";
     private static readonly JsonReference KeywordPathReference = new(KeywordPath);
@@ -66,5 +67,26 @@ public sealed class NotKeyword
         }
 
         return [];
+    }
+
+    /// <inheritdoc />
+    public bool TryGetNotType(
+        TypeDeclaration typeDeclaration,
+        [MaybeNullWhen(false)] out ReducedTypeDeclaration? notType)
+    {
+        if (typeDeclaration.SubschemaTypeDeclarations.TryGetValue(KeywordPath, out TypeDeclaration? itemsType))
+        {
+            notType = itemsType.ReducedTypeDeclaration();
+            return true;
+        }
+
+        notType = null;
+        return false;
+    }
+
+    /// <inheritdoc/>
+    public string GetPathModifier(ReducedTypeDeclaration notType)
+    {
+        return KeywordPathReference.AppendFragment(notType.ReducedPathModifier);
     }
 }

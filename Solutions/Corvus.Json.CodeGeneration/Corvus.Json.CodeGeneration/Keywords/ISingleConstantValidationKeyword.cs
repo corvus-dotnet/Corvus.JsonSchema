@@ -13,6 +13,12 @@ namespace Corvus.Json.CodeGeneration;
 public interface ISingleConstantValidationKeyword : IAnyOfValidationKeyword, IValidationConstantProviderKeyword
 {
     /// <summary>
+    /// Gets the path modifier for the keyword.
+    /// </summary>
+    /// <returns>The path modifier for the keyword.</returns>
+    string GetPathModifier();
+
+    /// <summary>
     /// Try to get the single constant value for the type declaration.
     /// </summary>
     /// <param name="typeDeclaration">The type declaration.</param>
