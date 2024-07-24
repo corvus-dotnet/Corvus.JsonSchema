@@ -29,7 +29,7 @@ public class ArrayValidationHandler : KeywordValidationHandlerBase
     public override CodeGenerator AppendValidationMethod(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
         return generator
-            .AppendArrayValidation(generator.ValidationHandlerMethodName(this), typeDeclaration, this.ChildHandlers, this.ValidationHandlerPriority);
+            .AppendArrayValidation(generator.ValidationHandlerMethodName(this), typeDeclaration, this.ChildHandlers);
     }
 
     /// <inheritdoc/>

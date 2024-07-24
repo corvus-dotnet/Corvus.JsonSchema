@@ -7,7 +7,7 @@ namespace Corvus.Json.CodeGeneration;
 /// <summary>
 /// Keywords that support binary or ternary if validation.
 /// </summary>
-public interface IIfValidationKeyword : IValidationKeyword, ISubschemaProviderKeyword
+public interface IIfValidationKeyword : IValidationKeyword, ISingleSubschemaProviderKeyword
 {
     /// <summary>
     /// Tries to get the type declaration for a binary or ternary if expression..

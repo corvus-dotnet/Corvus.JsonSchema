@@ -72,4 +72,10 @@ public sealed class TernaryIfKeyword : ISubschemaTypeBuilderKeyword, ILocalSubsc
 
         return [];
     }
+
+    /// <inheritdoc/>
+    public string GetPathModifier(ReducedTypeDeclaration subschemaType)
+    {
+        return KeywordPathReference.AppendFragment(subschemaType.ReducedPathModifier);
+    }
 }

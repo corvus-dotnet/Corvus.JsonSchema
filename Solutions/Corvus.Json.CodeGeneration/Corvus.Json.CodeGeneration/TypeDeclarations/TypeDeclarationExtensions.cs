@@ -317,6 +317,87 @@ public static class TypeDeclarationExtensions
     }
 
     /// <summary>
+    /// Gets the if subschema type, if available.
+    /// </summary>
+    /// <param name="that">The type declaration for which to get the subschema type.</param>
+    /// <returns>The <see cref="SingleSubschemaKeywordTypeDeclaration"/>, or <see langword="null"/> if no type was available.</returns>
+    public static SingleSubschemaKeywordTypeDeclaration? IfSubschemaType(this TypeDeclaration that)
+    {
+        if (!that.TryGetMetadata(nameof(IfSubschemaType), out SingleSubschemaKeywordTypeDeclaration? subschemaType))
+        {
+            // We are only expecting to deal with a single if-like keyword.
+            if (that.Keywords().OfType<IIfValidationKeyword>().FirstOrDefault() is IIfValidationKeyword keyword &&
+                keyword.TryGetIfDeclaration(that, out TypeDeclaration? value) &&
+                value is TypeDeclaration typeDeclaration)
+            {
+                subschemaType = new(typeDeclaration, keyword);
+            }
+            else
+            {
+                subschemaType = null;
+            }
+
+            that.SetMetadata(nameof(IfSubschemaType), subschemaType);
+        }
+
+        return subschemaType;
+    }
+
+    /// <summary>
+    /// Gets the then subschema type, if available.
+    /// </summary>
+    /// <param name="that">The type declaration for which to get the subschema type.</param>
+    /// <returns>The <see cref="SingleSubschemaKeywordTypeDeclaration"/>, or <see langword="null"/> if no type was available.</returns>
+    public static SingleSubschemaKeywordTypeDeclaration? ThenSubschemaType(this TypeDeclaration that)
+    {
+        if (!that.TryGetMetadata(nameof(ThenSubschemaType), out SingleSubschemaKeywordTypeDeclaration? subschemaType))
+        {
+            // We are only expecting to deal with a single then-like keyword.
+            if (that.Keywords().OfType<IIfThenValidationKeyword>().FirstOrDefault() is IIfThenValidationKeyword keyword &&
+                keyword.TryGetThenDeclaration(that, out TypeDeclaration? value) &&
+                value is TypeDeclaration typeDeclaration)
+            {
+                subschemaType = new(typeDeclaration, keyword);
+            }
+            else
+            {
+                subschemaType = null;
+            }
+
+            that.SetMetadata(nameof(ThenSubschemaType), subschemaType);
+        }
+
+        return subschemaType;
+    }
+
+    /// <summary>
+    /// Gets the else subschema type, if available.
+    /// </summary>
+    /// <param name="that">The type declaration for which to get the subschema type.</param>
+    /// <returns>The <see cref="SingleSubschemaKeywordTypeDeclaration"/>, or <see langword="null"/> if no type was available.</returns>
+    public static SingleSubschemaKeywordTypeDeclaration? ElseSubschemaType(this TypeDeclaration that)
+    {
+        if (!that.TryGetMetadata(nameof(ElseSubschemaType), out SingleSubschemaKeywordTypeDeclaration? subschemaType))
+        {
+            // We are only expecting to deal with a single else-like keyword.
+            if (that.Keywords().OfType<ITernaryIfElseValidationKeyword>().FirstOrDefault() is ITernaryIfElseValidationKeyword keyword &&
+                keyword.TryGetElseDeclaration(that, out TypeDeclaration? value) &&
+                value is TypeDeclaration typeDeclaration)
+            {
+                subschemaType = new(typeDeclaration, keyword);
+            }
+            else
+            {
+                subschemaType = null;
+            }
+
+            that.SetMetadata(nameof(ElseSubschemaType), subschemaType);
+        }
+
+        return subschemaType;
+    }
+
+    /// <summary>
     /// Gets the AllOf composition types for the type declaration, grouped by the providing keyword.
     /// </summary>
     /// <param name="that">The type declaration for which to get the AllOf composition types.</param>

@@ -29,7 +29,7 @@ public class CompositionOneOfValidationHandler : KeywordValidationHandlerBase
     public override CodeGenerator AppendValidationMethod(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
         return generator
-            .AppendCompositionOneOfValidation(generator.ValidationHandlerMethodName(this), typeDeclaration, this.ChildHandlers, this.ValidationHandlerPriority);
+            .AppendCompositionOneOfValidation(generator.ValidationHandlerMethodName(this), typeDeclaration, this.ChildHandlers);
     }
 
     /// <inheritdoc/>

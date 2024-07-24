@@ -30,7 +30,7 @@ public class ObjectValidationHandler : KeywordValidationHandlerBase
     public override CodeGenerator AppendValidationMethod(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
         return generator
-            .AppendObjectValidation(generator.ValidationHandlerMethodName(this), typeDeclaration, this.ChildHandlers, this.ValidationHandlerPriority);
+            .AppendObjectValidation(generator.ValidationHandlerMethodName(this), typeDeclaration, this.ChildHandlers);
     }
 
     /// <inheritdoc/>

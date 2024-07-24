@@ -12,7 +12,6 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 public sealed class ThenKeyword
     :   ISubschemaTypeBuilderKeyword,
         ILocalSubschemaRegistrationKeyword,
-        ISubschemaProviderKeyword,
         IPropertyProviderKeyword,
         IIfThenValidationKeyword
 {
@@ -36,9 +35,6 @@ public sealed class ThenKeyword
 
     /// <inheritdoc />
     public uint PropertyProviderPriority => PropertyProviderPriorities.Default;
-
-    /// <inheritdoc/>
-    public uint ValidationPriority => ValidationPriorities.Default;
 
     /// <inheritdoc />
     public void RegisterLocalSubschema(JsonSchemaRegistry registry, JsonElement schema, JsonReference currentLocation, IVocabulary vocabulary)
@@ -86,5 +82,17 @@ public sealed class ThenKeyword
         }
 
         return [];
+    }
+
+    /// <inheritdoc/>
+    public string GetPathModifier(ReducedTypeDeclaration subschemaType)
+    {
+        return KeywordPathReference.AppendFragment(subschemaType.ReducedPathModifier);
+    }
+
+    /// <inheritdoc/>
+    public bool TryGetThenDeclaration(TypeDeclaration typeDeclaration, out TypeDeclaration? thenDeclaration)
+    {
+        return typeDeclaration.SubschemaTypeDeclarations.TryGetValue(KeywordPathReference, out thenDeclaration);
     }
 }

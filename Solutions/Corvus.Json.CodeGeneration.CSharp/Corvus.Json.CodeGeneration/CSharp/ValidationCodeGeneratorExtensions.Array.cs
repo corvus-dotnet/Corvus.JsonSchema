@@ -22,14 +22,12 @@ public static partial class ValidationCodeGeneratorExtensions
     /// <param name="methodName">The name of the validation method.</param>
     /// <param name="typeDeclaration">The type declaration which requires array validation.</param>
     /// <param name="children">The child handlers for the <see cref="IKeywordValidationHandler"/>.</param>
-    /// <param name="parentHandlerPriority">The parent validation handler priority.</param>
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendArrayValidation(
         this CodeGenerator generator,
         string methodName,
         TypeDeclaration typeDeclaration,
-        IReadOnlyCollection<IChildValidationHandler> children,
-        uint parentHandlerPriority)
+        IReadOnlyCollection<IChildValidationHandler> children)
     {
         return generator
             .BeginReservedMethodDeclaration(

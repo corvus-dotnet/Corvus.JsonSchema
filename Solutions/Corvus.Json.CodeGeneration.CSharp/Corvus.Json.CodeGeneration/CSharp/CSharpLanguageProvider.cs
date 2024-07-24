@@ -227,7 +227,6 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
 
         languageProvider.RegisterValidationHandlers(
             ArrayValidationHandler.Instance,
-            BinaryIfValidationHandler.Instance,
             CompositionAllOfValidationHandler.Instance,
             CompositionAnyOfValidationHandler.Instance,
             CompositionNotValidationHandler.Instance,
