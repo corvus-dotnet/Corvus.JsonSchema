@@ -110,6 +110,8 @@ public class JsonSchemaTypeBuilder(
     {
         IReadOnlyList<TypeDeclaration> candidateTypesToGenerate = GetCandidateTypesToGenerate(rootTypeDeclarations);
 
+        MarkNonGeneratedTypes(languageProvider, rootTypeDeclarations);
+
         // A language provider can opt out of being hierarchical by not implementing
         // the IHierarchicalLanguageProvider interface. In that case, we don't need to set parents.
         if (languageProvider is IHierarchicalLanguageProvider hierarchicalProvider)
@@ -172,16 +174,48 @@ public class JsonSchemaTypeBuilder(
         }
     }
 
-    private static void SetNames(ILanguageProvider languageProvider, TypeDeclaration[] rootTypeDeclarations)
+    private static void MarkNonGeneratedTypes(ILanguageProvider languageProvider, TypeDeclaration[] rootTypeDeclarations)
     {
         HashSet<TypeDeclaration> visitedTypes = [];
 
-        // Set the names for the well-known types we pre-define.
-        // Note that any well-known types used by the language provider itself
-        // will be set if needed; but these are assumed to be set *even if they aren't needed directly*
-        // This is because language providers will often use these types directly in their code generation.
-        SetNamesBeforeSubschema(WellKnownTypeDeclarations.JsonAny, visitedTypes);
-        SetNamesBeforeSubschema(WellKnownTypeDeclarations.JsonNotAny, visitedTypes);
+        // Deal with the well-known type declarations first.
+        IdentifyNonGeneratedTypes(WellKnownTypeDeclarations.JsonAny, visitedTypes);
+        IdentifyNonGeneratedTypes(WellKnownTypeDeclarations.JsonNotAny, visitedTypes);
+
+        foreach (TypeDeclaration type in rootTypeDeclarations)
+        {
+            IdentifyNonGeneratedTypes(type, visitedTypes);
+        }
+
+        void IdentifyNonGeneratedTypes(TypeDeclaration typeDeclaration, HashSet<TypeDeclaration> visitedTypeDeclarations)
+        {
+            // Quit early if we are already visiting the type declaration.
+            if (visitedTypeDeclarations.Contains(typeDeclaration))
+            {
+                return;
+            }
+
+            // Tell ourselves early that we have visited this type declaration already.
+            visitedTypeDeclarations.Add(typeDeclaration);
+
+            // We only set a name for ourselves if we cannot be reduced.
+            if (!typeDeclaration.CanReduce())
+            {
+                // Set the name for this type
+                languageProvider.IdentifyNonGeneratedType(typeDeclaration);
+            }
+
+            // Then set the names for the subschema it requires.
+            foreach (TypeDeclaration child in typeDeclaration.SubschemaTypeDeclarations.Values.OrderBy(t => t.LocatedSchema.Location.ToString()))
+            {
+                IdentifyNonGeneratedTypes(child, visitedTypeDeclarations);
+            }
+        }
+    }
+
+    private static void SetNames(ILanguageProvider languageProvider, TypeDeclaration[] rootTypeDeclarations)
+    {
+        HashSet<TypeDeclaration> visitedTypes = [];
 
         foreach (TypeDeclaration type in rootTypeDeclarations)
         {

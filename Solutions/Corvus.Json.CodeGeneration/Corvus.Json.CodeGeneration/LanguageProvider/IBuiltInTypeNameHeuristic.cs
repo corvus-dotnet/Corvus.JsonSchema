@@ -7,4 +7,4 @@ namespace Corvus.Json.CodeGeneration;
 /// <summary>
 /// Defines a built in type provider.
 /// </summary>
-public interface IBuiltInTypeNameHeuristic : INameHeuristicBeforeSubschema;
+public interface IBuiltInTypeNameHeuristic : INameHeuristic;
