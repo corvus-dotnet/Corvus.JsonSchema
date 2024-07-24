@@ -2,6 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using Microsoft.CodeAnalysis.CSharp;
+
 namespace Corvus.Json.CodeGeneration.CSharp;
 
 /// <summary>
@@ -37,6 +39,16 @@ public class StringLengthValidationHandler : IChildValidationHandler
             string memberName = generator.GetStaticReadOnlyFieldNameInScope(keyword.Keyword);
 
             generator
+                .AppendSeparatorLine()
+                .AppendLineIndent("if (context.Level > ValidationLevel.Basic)")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendLineIndent(
+                        "result = result.PushValidationLocationReducedPathModifier(new(",
+                        SymbolDisplay.FormatLiteral(keyword.GetPathModifier(), true),
+                        "));")
+                .PopIndent()
+                .AppendLineIndent("}")
                 .AppendSeparatorLine()
                 .AppendIndent("if (length ")
                 .AppendOperator(op)
@@ -76,7 +88,15 @@ public class StringLengthValidationHandler : IChildValidationHandler
                     .PopIndent()
                     .AppendLineIndent("}")
                 .PopIndent()
-                .AppendLineIndent("}");
+                .AppendLineIndent("}")
+                .AppendSeparatorLine()
+                .AppendLineIndent("if (context.Level > ValidationLevel.Basic)")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendLineIndent("result = result.PopLocation();")
+                .PopIndent()
+                .AppendLineIndent("}")
+;
         }
 
         return generator;

@@ -88,7 +88,17 @@ public class PropertiesValidationHandler : IChildObjectPropertyValidationHandler
                     ")))")
                 .PopIndent()
                 .AppendLineIndent("{")
-                .PushIndent()
+                .PushIndent();
+
+            if (property.RequiredOrOptional == RequiredOrOptional.Required &&
+                !property.ReducedPropertyType.HasDefaultValue())
+            {
+                string hasSeenField = RequiredValidationHandler.GetHasSeenVariableName(generator, property);
+                generator
+                    .AppendLineIndent(hasSeenField, " = true;");
+            }
+
+            generator
                     .AppendLineIndent("result = result.WithLocalProperty(propertyCount);")
                     .AppendLineIndent("if (level > ValidationLevel.Basic)")
                     .AppendLineIndent("{")

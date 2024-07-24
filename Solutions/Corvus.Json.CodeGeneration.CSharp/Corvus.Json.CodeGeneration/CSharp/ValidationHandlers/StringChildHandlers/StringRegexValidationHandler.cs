@@ -38,6 +38,16 @@ public class StringRegexValidationHandler : IChildValidationHandler
 
                 generator
                     .AppendSeparatorLine()
+                    .AppendLineIndent("if (level > ValidationLevel.Basic)")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent(
+                            "result = result.PushValidationLocationReducedPathModifier(new(",
+                            SymbolDisplay.FormatLiteral(keyword.GetPathModifier(), true),
+                            "));")
+                    .PopIndent()
+                    .AppendLineIndent("}")
+                    .AppendSeparatorLine()
                     .AppendIndent("if (")
                     .Append(memberName)
                     .AppendLine(".IsMatch(input))")
@@ -73,6 +83,13 @@ public class StringRegexValidationHandler : IChildValidationHandler
                             .AppendLineIndent("return true;")
                         .PopIndent()
                         .AppendLineIndent("}")
+                    .PopIndent()
+                    .AppendLineIndent("}")
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("if (level > ValidationLevel.Basic)")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent("result = result.PopLocation()")
                     .PopIndent()
                     .AppendLineIndent("}");
             }

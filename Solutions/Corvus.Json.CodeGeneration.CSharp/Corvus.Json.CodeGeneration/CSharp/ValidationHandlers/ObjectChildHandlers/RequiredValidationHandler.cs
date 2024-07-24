@@ -28,15 +28,25 @@ public class RequiredValidationHandler : IChildObjectPropertyValidationHandler
             foreach (PropertyDeclaration property in properties)
             {
                 // Don't bother with properties that have default values.
-                if (property.ReducedPropertyType.HasDefaultValue())
+                if (property.ReducedPropertyType.HasDefaultValue() || property.RequiredKeyword is not IObjectRequiredPropertyValidationKeyword keyword)
                 {
                     continue;
                 }
 
                 Debug.Assert(property.Keyword is not null, "The property keyword must be set for required property validation.");
 
-                string requiredName = GetRequiredName(generator, property);
+                string requiredName = GetHasSeenVariableName(generator, property);
                 generator
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("if (level > ValidationLevel.Basic)")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent(
+                            "result = result.PushValidationLocationReducedPathModifier(new(",
+                            SymbolDisplay.FormatLiteral(keyword.GetPathModifier(property), true),
+                            "));")
+                    .PopIndent()
+                    .AppendLineIndent("}")
                     .AppendSeparatorLine()
                     .AppendLineIndent("if (!", requiredName, ")")
                     .AppendLineIndent("{")
@@ -54,6 +64,19 @@ public class RequiredValidationHandler : IChildObjectPropertyValidationHandler
                         .PopIndent()
                         .AppendLineIndent("}")
                     .PopIndent()
+                    .AppendLineIndent("}")
+                    .AppendLineIndent("else if (level == ValidationLevel.Verbose)")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                            .AppendKeywordValidationResult(isValid: true, property.Keyword, "result", g => AppendValidText(g, property), false)
+                    .PopIndent()
+                    .AppendLineIndent("}")
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("if (level > ValidationLevel.Basic)")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent("result = result.PopLocation();")
+                    .PopIndent()
                     .AppendLineIndent("}");
             }
         }
@@ -66,6 +89,14 @@ public class RequiredValidationHandler : IChildObjectPropertyValidationHandler
                 .Append("the required property '")
                 .Append(SymbolDisplay.FormatLiteral(property.JsonPropertyName, true).Trim('"'))
                 .Append("' was not present.");
+        }
+
+        static void AppendValidText(CodeGenerator generator, PropertyDeclaration property)
+        {
+            generator
+                .Append("the required property '")
+                .Append(SymbolDisplay.FormatLiteral(property.JsonPropertyName, true).Trim('"'))
+                .Append("' was present.");
         }
     }
 
@@ -85,7 +116,7 @@ public class RequiredValidationHandler : IChildObjectPropertyValidationHandler
                     continue;
                 }
 
-                string requiredName = GetRequiredName(generator, property);
+                string requiredName = GetHasSeenVariableName(generator, property);
                 generator
                     .AppendLineIndent("bool ", requiredName, " = false;");
             }
@@ -97,55 +128,6 @@ public class RequiredValidationHandler : IChildObjectPropertyValidationHandler
     /// <inheritdoc/>
     public CodeGenerator AppendObjectPropertyValidationCode(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
-        if (typeDeclaration.ExplicitRequiredProperties() is IReadOnlyCollection<PropertyDeclaration> properties)
-        {
-            generator
-                .AppendSeparatorLine();
-
-            bool first = true;
-            foreach (PropertyDeclaration property in properties)
-            {
-                // As above, skip the properties that have default values.
-                if (property.ReducedPropertyType.HasDefaultValue())
-                {
-                    continue;
-                }
-
-                if (first)
-                {
-                    first = false;
-                    generator.AppendIndent(string.Empty);
-                }
-                else
-                {
-                    generator.AppendIndent("else ");
-                }
-
-                string requiredName = GetRequiredName(generator, property);
-
-                generator
-                    .AppendLine(
-                        "if ((value.HasJsonElementBacking && property.NameEquals(",
-                        generator.JsonPropertyNamesClassName(),
-                        ".",
-                        property.DotnetPropertyName(),
-                        "Utf8)) ||")
-                    .PushIndent()
-                    .AppendLineIndent(
-                        "(!value.HasJsonElementBacking && property.NameEquals(",
-                        generator.JsonPropertyNamesClassName(),
-                        ".",
-                        property.DotnetPropertyName(),
-                        ")))")
-                    .PopIndent()
-                    .AppendLineIndent("{")
-                    .PushIndent()
-                    .AppendLineIndent(requiredName, " = true;")
-                    .PopIndent()
-                    .AppendLineIndent("}");
-            }
-        }
-
         return generator;
     }
 
@@ -158,7 +140,13 @@ public class RequiredValidationHandler : IChildObjectPropertyValidationHandler
     /// <inheritdoc/>
     public bool RequiresPropertyNameAsString(TypeDeclaration typeDeclaration) => false;
 
-    private static string GetRequiredName(CodeGenerator generator, PropertyDeclaration property)
+    /// <summary>
+    /// Gets the required property hasSeen variable name.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <param name="property">The property declaration.</param>
+    /// <returns>The required property hasSeen variable name.</returns>
+    internal static string GetHasSeenVariableName(CodeGenerator generator, PropertyDeclaration property)
     {
         return generator.GetVariableNameInScope(property.DotnetPropertyName(), prefix: "hasSeen");
     }

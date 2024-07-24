@@ -57,6 +57,7 @@ public sealed class DependentRequiredKeyword : IPropertyProviderKeyword, IObject
                         WellKnownTypeDeclarations.JsonAny,
                         RequiredOrOptional.Optional,
                         source == target ? LocalOrComposed.Local : LocalOrComposed.Composed,
+                        this,
                         null));
 
                 foreach (JsonElement requiredValue in property.Value.EnumerateArray())
@@ -69,6 +70,7 @@ public sealed class DependentRequiredKeyword : IPropertyProviderKeyword, IObject
                             WellKnownTypeDeclarations.JsonAny,
                             RequiredOrOptional.Optional,
                             source == target ? LocalOrComposed.Local : LocalOrComposed.Composed,
+                            this,
                             null));
                 }
             }

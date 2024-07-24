@@ -2,6 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using Microsoft.CodeAnalysis.CSharp;
+
 namespace Corvus.Json.CodeGeneration.CSharp;
 
 /// <summary>
@@ -51,7 +53,12 @@ public class NumberRangeValidationHandler : IChildValidationHandler
                     .AppendLineIndent("if (level == ValidationLevel.Verbose)")
                     .AppendLineIndent("{")
                     .PushIndent()
+                        .AppendLineIndent(
+                            "result = result.PushValidationLocationProperty(",
+                            SymbolDisplay.FormatLiteral(keyword.Keyword, true),
+                            ");")
                         .AppendKeywordValidationResult(isValid: true, keyword, "result", g => GetValidMessage(g, op, memberName), useInterpolatedString: true)
+                        .AppendLineIndent("result = result.PopLocation();")
                     .PopIndent()
                     .AppendLineIndent("}")
                 .PopIndent()
@@ -59,6 +66,16 @@ public class NumberRangeValidationHandler : IChildValidationHandler
                 .AppendLineIndent("else")
                 .AppendLineIndent("{")
                 .PushIndent()
+                    .AppendLineIndent("if (level >= ValidationLevel.Basic)")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent(
+                            "result = result.PushValidationLocationProperty(",
+                            SymbolDisplay.FormatLiteral(keyword.Keyword, true),
+                            ");")
+                    .PopIndent()
+                    .AppendLineIndent("}")
+                    .AppendSeparatorLine()
                     .AppendLineIndent("if (level >= ValidationLevel.Detailed)")
                     .AppendLineIndent("{")
                     .PushIndent()
@@ -77,6 +94,14 @@ public class NumberRangeValidationHandler : IChildValidationHandler
                         .AppendLineIndent("return result.WithResult(isValid: false);")
                     .PopIndent()
                     .AppendLineIndent("}")
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("if (level >= ValidationLevel.Basic)")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent("result = result.PopLocation();")
+                    .PopIndent()
+                    .AppendLineIndent("}")
+
                 .PopIndent()
                 .AppendLineIndent("}");
         }

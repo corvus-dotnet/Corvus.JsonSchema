@@ -12,6 +12,8 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 /// </summary>
 public sealed class PatternKeyword : IStringRegexValidationProviderKeyword
 {
+    private const string KeywordPath = "#/pattern";
+
     private PatternKeyword()
     {
     }
@@ -32,6 +34,12 @@ public sealed class PatternKeyword : IStringRegexValidationProviderKeyword
 
     /// <inheritdoc />
     public bool CanReduce(in JsonElement schemaValue) => Reduction.CanReduceNonReducingKeyword(schemaValue, this.KeywordUtf8);
+
+    /// <inheritdoc />
+    public string GetPathModifier()
+    {
+        return KeywordPath;
+    }
 
     /// <inheritdoc />
     public CoreTypes ImpliesCoreTypes(TypeDeclaration typeDeclaration) =>

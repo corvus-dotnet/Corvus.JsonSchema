@@ -12,6 +12,8 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 /// </summary>
 public sealed class MinLengthKeyword : IStringLengthConstantValidationKeyword
 {
+    private const string KeywordPath = "#/minLength";
+
     private MinLengthKeyword()
     {
     }
@@ -43,6 +45,12 @@ public sealed class MinLengthKeyword : IStringLengthConstantValidationKeyword
     public bool RequiresStringLength(TypeDeclaration typeDeclaration)
     {
         return typeDeclaration.HasKeyword(this);
+    }
+
+    /// <inheritdoc/>
+    public string GetPathModifier()
+    {
+        return KeywordPath;
     }
 
     /// <inheritdoc/>

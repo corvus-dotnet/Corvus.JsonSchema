@@ -128,7 +128,12 @@ public static partial class ValidationCodeGeneratorExtensions
         foreach (IObjectValidationKeyword keyword in typeDeclaration.Keywords().OfType<IObjectValidationKeyword>())
         {
             generator
-                .AppendKeywordValidationResult(isValid: true, keyword, "ignoredResult", "ignored because the value is not an object");
+                .AppendLineIndent(
+                    "ignoredResult = ignoredResult.PushValidationLocationProperty(",
+                    SymbolDisplay.FormatLiteral(keyword.Keyword, true),
+                    ");")
+                .AppendKeywordValidationResult(isValid: true, keyword, "ignoredResult", "ignored because the value is not an object")
+                .AppendLineIndent("ignoredResult = ignoredResult.PopLocation();");
         }
 
         generator

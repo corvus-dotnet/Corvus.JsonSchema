@@ -14,4 +14,9 @@ namespace Corvus.Json.CodeGeneration;
 /// </remarks>
 public interface IStringRegexValidationProviderKeyword : IStringValueValidationKeyword, IValidationRegexProviderKeyword
 {
+    /// <summary>
+    /// Gets the path modifier for the keyword.
+    /// </summary>
+    /// <returns>The path modifier for the keyword.</returns>
+    string GetPathModifier();
 }

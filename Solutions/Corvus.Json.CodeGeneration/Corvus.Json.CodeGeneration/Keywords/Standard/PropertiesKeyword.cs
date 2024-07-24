@@ -81,7 +81,8 @@ public sealed class PropertiesKeyword
                             propertyTypeDeclaration,
                             RequiredOrOptional.Optional, // We always say optional; required will have been set by a "requiring" keyword
                             source == target ? LocalOrComposed.Local : LocalOrComposed.Composed,
-                            this));
+                            this,
+                            null));
                 }
                 else
                 {

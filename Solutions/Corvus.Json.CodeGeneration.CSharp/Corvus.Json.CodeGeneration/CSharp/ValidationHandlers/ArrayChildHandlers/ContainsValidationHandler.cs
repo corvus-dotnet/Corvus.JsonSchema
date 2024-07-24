@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Diagnostics;
+using Microsoft.CodeAnalysis.CSharp;
 
 namespace Corvus.Json.CodeGeneration.CSharp;
 
@@ -51,6 +52,16 @@ public class ContainsValidationHandler : IChildArrayItemValidationHandler
 
                 generator
                     .AppendSeparatorLine()
+                    .AppendLineIndent("if (level > ValidationLevel.Basic)")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent(
+                            "result = result.PushValidationLocationProperty(",
+                            SymbolDisplay.FormatLiteral(keyword.Keyword, true),
+                            ");")
+                    .PopIndent()
+                    .AppendLineIndent("}")
+                    .AppendSeparatorLine()
                     .AppendIndent("if (")
                     .Append(containsCountName)
                     .Append(' ')
@@ -90,12 +101,28 @@ public class ContainsValidationHandler : IChildArrayItemValidationHandler
                         .PopIndent()
                         .AppendLineIndent("}")
                     .PopIndent()
+                    .AppendLineIndent("}")
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("if (level > ValidationLevel.Basic)")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent("result = result.PopLocation();")
+                    .PopIndent()
                     .AppendLineIndent("}");
             }
 
             if (!foundMinimumRangeValidation)
             {
                 generator
+                    .AppendLineIndent("if (level > ValidationLevel.Basic)")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent(
+                            "result = result.PushValidationLocationProperty(",
+                            SymbolDisplay.FormatLiteral(containsKeyword.Keyword, true),
+                            ");")
+                    .PopIndent()
+                    .AppendLineIndent("}")
                     .AppendSeparatorLine()
                     .AppendIndent("if (")
                     .Append(containsCountName)
@@ -118,6 +145,19 @@ public class ContainsValidationHandler : IChildArrayItemValidationHandler
                             .AppendLineIndent("return result.WithResult(isValid: false);")
                         .PopIndent()
                         .AppendLineIndent("}")
+                    .PopIndent()
+                    .AppendLineIndent("}")
+                    .AppendLineIndent("else if (level == ValidationLevel.Verbose)")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                            .AppendKeywordValidationResult(isValid: true, containsKeyword, "result", "contained at least one item.")
+                    .PopIndent()
+                    .AppendLineIndent("}")
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("if (level > ValidationLevel.Basic)")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent("result = result.PopLocation();")
                     .PopIndent()
                     .AppendLineIndent("}");
             }
