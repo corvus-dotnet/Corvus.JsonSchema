@@ -15,10 +15,12 @@ internal sealed class SchemaVocabulary : IVocabulary
     private static readonly IKeyword[] KeywordsBacking =
     [
         TitleKeyword.Instance,
+        DefinitionsKeyword.Instance,
         MultipleOfKeyword.Instance,
-        MaximumWithBooleanExclusiveKeyword.Instance,
-        ExclusiveMaximumBooleanKeyword.Instance,
-        MinimumWithBooleanExclusiveKeyword.Instance,
+        DollarRefHidesSiblingsKeyword.Instance,
+        MaximumKeyword.Instance,
+        ExclusiveMinimumBooleanKeyword.Instance,
+        MinimumKeyword.Instance,
         ExclusiveMaximumBooleanKeyword.Instance,
         MaxLengthKeyword.Instance,
         MinLengthKeyword.Instance,
