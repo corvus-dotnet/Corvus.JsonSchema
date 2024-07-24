@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Corvus.Json.CodeGeneration.CSharp;
@@ -11,6 +12,8 @@ namespace Corvus.Json.CodeGeneration.CSharp;
 /// </summary>
 internal static class PropertyDeclarationExtensions
 {
+    private static ReadOnlySpan<char> ValueSpan => "Value".AsSpan();
+
     /// <summary>
     /// Gets the .NET property name for the property.
     /// </summary>
@@ -25,6 +28,12 @@ internal static class PropertyDeclarationExtensions
             that.JsonPropertyName.AsSpan().CopyTo(buffer);
             int written = Formatting.ToPascalCase(buffer[..that.JsonPropertyName.Length]);
             written = Formatting.FixReservedWords(buffer, written, "V".AsSpan(), "Property".AsSpan());
+
+            if (that.Owner.DotnetTypeName() == buffer[..written].ToString())
+            {
+                ValueSpan.CopyTo(buffer[written..]);
+                written += ValueSpan.Length;
+            }
 
             Span<char> appendBuffer = buffer[written..];
             ReadOnlySpan<char> currentName = buffer[..written];

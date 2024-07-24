@@ -32,6 +32,7 @@ public sealed class NumberPartial : ICodeFileBuilder
                     .AppendLine("#nullable enable")
                     .AppendLine()
                     .AppendUsings(
+                        new("System.Collections.Immutable", EmitIfIsObjectOrArray(typeDeclaration)),
                         "System.Diagnostics.CodeAnalysis",
                         new("System.Numerics", FrameworkType.Net80OrGreater),
                         "System.Text.Json",
@@ -72,5 +73,12 @@ public sealed class NumberPartial : ICodeFileBuilder
         }
 
         return generator;
+
+        static FrameworkType EmitIfIsObjectOrArray(TypeDeclaration typeDeclaration)
+        {
+            return (typeDeclaration.ImpliedCoreTypes() & (CoreTypes.Object | CoreTypes.Array)) != 0
+                 ? FrameworkType.All
+                 : FrameworkType.NotEmitted;
+        }
     }
 }

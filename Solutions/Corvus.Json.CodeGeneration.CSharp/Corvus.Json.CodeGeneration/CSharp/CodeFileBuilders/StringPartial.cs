@@ -33,6 +33,7 @@ public sealed class StringPartial : ICodeFileBuilder
                     .AppendLine()
                     .AppendUsings(
                         "System.Buffers",
+                        new("System.Collections.Immutable", EmitIfIsObjectOrArray(typeDeclaration)),
                         "System.Diagnostics.CodeAnalysis",
                         "System.Text",
                         "System.Text.Json",
@@ -69,5 +70,12 @@ public sealed class StringPartial : ICodeFileBuilder
         }
 
         return generator;
+
+        static FrameworkType EmitIfIsObjectOrArray(TypeDeclaration typeDeclaration)
+        {
+            return (typeDeclaration.ImpliedCoreTypes() & (CoreTypes.Object | CoreTypes.Array)) != 0
+                 ? FrameworkType.All
+                 : FrameworkType.NotEmitted;
+        }
     }
 }
