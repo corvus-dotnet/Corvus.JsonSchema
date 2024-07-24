@@ -138,6 +138,25 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
     }
 
     /// <inheritdoc/>
+    public void IdentifyNonGeneratedType(TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.HasDotnetTypeName())
+        {
+            return;
+        }
+
+        JsonReferenceBuilder reference = GetReferenceWithoutQuery(typeDeclaration);
+
+        Span<char> typeNameBuffer = stackalloc char[Formatting.MaxIdentifierLength];
+
+        SetTypeNameWithKeywordHeuristics(
+            typeDeclaration,
+            reference,
+            typeNameBuffer,
+            this.GetBuiltInTypeNameHeuristics());
+    }
+
+    /// <inheritdoc/>
     public void SetNamesBeforeSubschema(TypeDeclaration typeDeclaration, string fallbackName)
     {
         // We've already set the dotnet type name.
@@ -148,13 +167,7 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
 
         string ns = this.options.GetNamespace(typeDeclaration);
 
-        var reference = JsonReferenceBuilder.From(typeDeclaration.LocatedSchema.Location);
-
-        if (reference.HasQuery)
-        {
-            // Remove the query.
-            reference = new JsonReferenceBuilder(reference.Scheme, reference.Authority, reference.Path, [], reference.Fragment);
-        }
+        JsonReferenceBuilder reference = GetReferenceWithoutQuery(typeDeclaration);
 
         Span<char> typeNameBuffer = stackalloc char[Formatting.MaxIdentifierLength];
 
@@ -184,6 +197,19 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
     public IReadOnlyCollection<TypeDeclaration> GetChildren(TypeDeclaration typeDeclaration)
     {
         return typeDeclaration.Children();
+    }
+
+    private static JsonReferenceBuilder GetReferenceWithoutQuery(TypeDeclaration typeDeclaration)
+    {
+        var reference = JsonReferenceBuilder.From(typeDeclaration.LocatedSchema.Location);
+
+        if (reference.HasQuery)
+        {
+            // Remove the query.
+            reference = new JsonReferenceBuilder(reference.Scheme, reference.Authority, reference.Path, [], reference.Fragment);
+        }
+
+        return reference;
     }
 
     private static CSharpLanguageProvider CreateDefaultCSharpLanguageProvider(Options? options)
@@ -232,17 +258,20 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
         return languageProvider;
     }
 
-    private static JsonReferenceBuilder GetReferenceWithoutQuery(TypeDeclaration typeDeclaration)
+    private static void SetTypeNameWithKeywordHeuristics(
+    TypeDeclaration typeDeclaration,
+    JsonReferenceBuilder reference,
+    Span<char> typeNameBuffer,
+    IEnumerable<IBuiltInTypeNameHeuristic> nameHeuristics)
     {
-        var reference = JsonReferenceBuilder.From(typeDeclaration.LocatedSchema.Location);
-
-        if (reference.HasQuery)
+        foreach (IBuiltInTypeNameHeuristic heuristic in nameHeuristics)
         {
-            // Remove the query.
-            reference = new JsonReferenceBuilder(reference.Scheme, reference.Authority, reference.Path, [], reference.Fragment);
+            if (heuristic.TryGetName(typeDeclaration, reference, typeNameBuffer, out int written))
+            {
+                typeDeclaration.SetDoNotGenerate();
+                return;
+            }
         }
-
-        return reference;
     }
 
     private static void SetTypeNameWithKeywordHeuristics(
@@ -290,6 +319,14 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
                 return;
             }
         }
+    }
+
+    private IEnumerable<IBuiltInTypeNameHeuristic> GetBuiltInTypeNameHeuristics()
+    {
+        return
+            this.options.UseOptionalNameHeuristics
+                ? this.nameHeuristicRegistry.RegisteredHeuristics.OfType<IBuiltInTypeNameHeuristic>().OrderBy(h => h.Priority)
+                : this.nameHeuristicRegistry.RegisteredHeuristics.OfType<IBuiltInTypeNameHeuristic>().Where(h => !h.IsOptional).OrderBy(h => h.Priority);
     }
 
     private IEnumerable<INameHeuristic> GetOrderedNameBeforeSubschemaHeuristics()

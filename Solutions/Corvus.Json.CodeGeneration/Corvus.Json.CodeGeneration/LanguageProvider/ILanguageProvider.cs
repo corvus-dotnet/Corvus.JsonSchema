@@ -63,6 +63,13 @@ public interface ILanguageProvider
     bool ShouldGenerate(TypeDeclaration type);
 
     /// <summary>
+    /// Determine if the type should not be generated (typically
+    /// because it is a built-ins) and mark them appropriately.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration to test.</param>
+    void IdentifyNonGeneratedType(TypeDeclaration typeDeclaration);
+
+    /// <summary>
     /// Set the name for the type declaration, and any outstanding properties, after its subschema names have been set.
     /// </summary>
     /// <param name="typeDeclaration">The type declaration for which to set the name.</param>
