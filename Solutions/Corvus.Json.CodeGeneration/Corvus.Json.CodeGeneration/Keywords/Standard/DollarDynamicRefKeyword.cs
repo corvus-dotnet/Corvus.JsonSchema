@@ -10,7 +10,7 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 /// <summary>
 /// The $dynamicRef keyword.
 /// </summary>
-public sealed class DollarDynamicRefKeyword : IReferenceKeyword
+public sealed class DollarDynamicRefKeyword : IDynamicReferenceKeyword
 {
     private const string KeywordPath = "#/$dynamicRef";
     private static readonly JsonReference KeywordPathReference = new(KeywordPath);
