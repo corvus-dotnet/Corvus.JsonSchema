@@ -12,8 +12,7 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 public sealed class PropertyNamesKeyword
     :   ISubschemaTypeBuilderKeyword,
         ILocalSubschemaRegistrationKeyword,
-        ISubschemaProviderKeyword,
-        IObjectValidationKeyword
+        IObjectPropertyNameSubschemaValidationKeyword
 {
     private const string KeywordPath = "#/propertyNames";
     private static readonly JsonReference KeywordPathReference = new(KeywordPath);
@@ -82,4 +81,16 @@ public sealed class PropertyNamesKeyword
 
     /// <inheritdoc/>
     public bool RequiresObjectEnumeration(TypeDeclaration typeDeclaration) => typeDeclaration.HasKeyword(this);
+
+    /// <inheritdoc/>
+    public string GetPathModifier(ReducedTypeDeclaration subschemaType)
+    {
+        return KeywordPathReference.AppendFragment(subschemaType.ReducedPathModifier);
+    }
+
+    /// <inheritdoc/>
+    public bool TryGetPropertyNameDeclaration(TypeDeclaration typeDeclaration, out TypeDeclaration? thenDeclaration)
+    {
+        return typeDeclaration.SubschemaTypeDeclarations.TryGetValue(KeywordPathReference, out thenDeclaration);
+    }
 }

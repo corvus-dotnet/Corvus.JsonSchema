@@ -138,6 +138,12 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
     }
 
     /// <inheritdoc/>
+    public TypeDeclaration? GetParent(TypeDeclaration child)
+    {
+        return child.Parent();
+    }
+
+    /// <inheritdoc/>
     public void IdentifyNonGeneratedType(TypeDeclaration typeDeclaration)
     {
         if (typeDeclaration.HasDotnetTypeName())

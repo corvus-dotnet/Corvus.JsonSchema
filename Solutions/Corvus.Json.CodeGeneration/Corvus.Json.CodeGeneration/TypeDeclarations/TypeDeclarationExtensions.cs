@@ -371,6 +371,33 @@ public static class TypeDeclarationExtensions
     }
 
     /// <summary>
+    /// Gets the property names subschema type, if available.
+    /// </summary>
+    /// <param name="that">The type declaration for which to get the subschema type.</param>
+    /// <returns>The <see cref="SingleSubschemaKeywordTypeDeclaration"/>, or <see langword="null"/> if no type was available.</returns>
+    public static SingleSubschemaKeywordTypeDeclaration? PropertyNamesSubschemaType(this TypeDeclaration that)
+    {
+        if (!that.TryGetMetadata(nameof(PropertyNamesSubschemaType), out SingleSubschemaKeywordTypeDeclaration? subschemaType))
+        {
+            // We are only expecting to deal with a single then-like keyword.
+            if (that.Keywords().OfType<IObjectPropertyNameSubschemaValidationKeyword>().FirstOrDefault() is IObjectPropertyNameSubschemaValidationKeyword keyword &&
+                keyword.TryGetPropertyNameDeclaration(that, out TypeDeclaration? value) &&
+                value is TypeDeclaration typeDeclaration)
+            {
+                subschemaType = new(typeDeclaration, keyword);
+            }
+            else
+            {
+                subschemaType = null;
+            }
+
+            that.SetMetadata(nameof(PropertyNamesSubschemaType), subschemaType);
+        }
+
+        return subschemaType;
+    }
+
+    /// <summary>
     /// Gets the else subschema type, if available.
     /// </summary>
     /// <param name="that">The type declaration for which to get the subschema type.</param>
