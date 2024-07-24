@@ -244,7 +244,7 @@ public static class References
         visitedTypes.Add(type);
 
         var dynamicRefKeywords =
-            type.Keywords()
+            type.LocatedSchema.Vocabulary.Keywords
                 .OfType<IDynamicReferenceKeyword>()
                 .ToDictionary(
                     k => (string)new JsonReference("#").AppendUnencodedPropertyNameToFragment(k.Keyword),
@@ -291,7 +291,7 @@ public static class References
         visitedTypes.Add(type);
 
         var recursiveRefKeywords =
-            type.Keywords()
+            type.LocatedSchema.Vocabulary.Keywords
                 .OfType<IRecursiveReferenceKeyword>()
                 .ToDictionary(
                     k => (string)new JsonReference("#").AppendUnencodedPropertyNameToFragment(k.Keyword),

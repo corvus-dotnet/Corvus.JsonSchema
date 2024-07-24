@@ -138,7 +138,7 @@ public sealed class DollarDynamicAnchorKeyword : IAnchorKeyword
                     .OfType<DynamicLocatedAnchor>()
                     .FirstOrDefault(a => a.Name == anchor);
 
-            if (anchor is not null)
+            if (a is not null)
             {
                 baseScopeLocation = scope.Location;
                 return true;
