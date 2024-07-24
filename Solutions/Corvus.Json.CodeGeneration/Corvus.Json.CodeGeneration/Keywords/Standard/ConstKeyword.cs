@@ -12,6 +12,8 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 /// </summary>
 public sealed class ConstKeyword : ISingleConstantValidationKeyword
 {
+    private const string KeywordPath = "#/const";
+
     private ConstKeyword()
     {
     }
@@ -56,5 +58,11 @@ public sealed class ConstKeyword : ISingleConstantValidationKeyword
     public bool TryGetConstantValue(TypeDeclaration typeDeclaration, [NotNullWhen(true)] out JsonElement constantValue)
     {
         return typeDeclaration.TryGetKeyword(this, out constantValue);
+    }
+
+    /// <inheritdoc/>
+    public string GetPathModifier()
+    {
+        return KeywordPath;
     }
 }

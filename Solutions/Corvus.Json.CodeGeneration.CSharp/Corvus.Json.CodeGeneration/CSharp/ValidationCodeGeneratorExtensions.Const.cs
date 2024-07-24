@@ -97,6 +97,8 @@ public static partial class ValidationCodeGeneratorExtensions
                     .AppendLineIndent("}");
             }
 
+            string pathModifier = keyword.GetPathModifier();
+
             generator
                 .AppendLine()
                 .BeginLocalMethodDeclaration(
@@ -109,6 +111,16 @@ public static partial class ValidationCodeGeneratorExtensions
                     .ReserveName("result")
                     .AppendBlockIndent("ValidationContext result = validationContext;")
                     .AppendSeparatorLine()
+                    .AppendLineIndent("if (level > ValidationLevel.Basic)")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent(
+                            "result = result.PushValidationLocationReducedPathModifier(new(",
+                            SymbolDisplay.FormatLiteral(pathModifier, true),
+                            "));")
+                    .PopIndent()
+                    .AppendLineIndent("}")
+                    .AppendSeparatorLine()
                     .AppendLineIndent("if (value.Equals(", generator.ValidationClassName(), ".", constField, "))")
                     .AppendLineIndent("{")
                     .PushIndent()
@@ -119,6 +131,13 @@ public static partial class ValidationCodeGeneratorExtensions
                         .PopIndent()
                         .AppendLineIndent("}")
                         .AppendSeparatorLine()
+                        .AppendLineIndent("if (level > ValidationLevel.Basic)")
+                        .AppendLineIndent("{")
+                        .PushIndent()
+                            .AppendLineIndent("result = result.PopLocation();")
+                        .PopIndent()
+                        .AppendLineIndent("}")
+                        .AppendSeparatorLine()
                         .AppendLineIndent("return result;")
                     .PopIndent()
                     .AppendLineIndent("}")
@@ -126,19 +145,26 @@ public static partial class ValidationCodeGeneratorExtensions
                     .AppendLineIndent("if (level >= ValidationLevel.Detailed)")
                     .AppendLineIndent("{")
                     .PushIndent()
-                        .AppendKeywordValidationResult(isValid: true, keyword, "result", g => AppendDetailedInvalidText(g, keyword, constantValueRawString), useInterpolatedString: true)
+                        .AppendKeywordValidationResult(isValid: false, keyword, "result", g => AppendDetailedInvalidText(g, keyword, constantValueRawString), useInterpolatedString: true)
                     .PopIndent()
                     .AppendLineIndent("}")
                     .AppendLineIndent("else if (level == ValidationLevel.Basic)")
                     .AppendLineIndent("{")
                     .PushIndent()
-                        .AppendKeywordValidationResult(isValid: true, keyword, "result", g => AppendInvalidText(g, keyword, constantValueRawString))
+                        .AppendKeywordValidationResult(isValid: false, keyword, "result", g => AppendInvalidText(g, keyword, constantValueRawString))
                     .PopIndent()
                     .AppendLineIndent("}")
                     .AppendLineIndent("else")
                     .AppendLineIndent("{")
                     .PushIndent()
                         .AppendLineIndent("return result.WithResult(isValid: false);")
+                    .PopIndent()
+                    .AppendLineIndent("}")
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("if (level > ValidationLevel.Basic)")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent("result = result.PopLocation();")
                     .PopIndent()
                     .AppendLineIndent("}")
                     .AppendSeparatorLine()
