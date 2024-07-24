@@ -240,10 +240,19 @@ public class JsonSchemaTypeBuilder(
             // Tell ourselves early that we have visited this type declaration already.
             visitedTypeDeclarations.Add(typeDeclaration);
 
+            // First, ensure our parent is set.
+            if (languageProvider is IHierarchicalLanguageProvider hierarchical)
+            {
+                TypeDeclaration? parent = hierarchical.GetParent(typeDeclaration);
+                if (parent is TypeDeclaration p)
+                {
+                    SetNamesBeforeSubschema(parent, visitedTypeDeclarations);
+                }
+            }
+
             // We only set a name for ourselves if we cannot be reduced.
             if (!typeDeclaration.CanReduce())
             {
-                // Set the name for this type
                 languageProvider.SetNamesBeforeSubschema(typeDeclaration, "Entity");
             }
 
