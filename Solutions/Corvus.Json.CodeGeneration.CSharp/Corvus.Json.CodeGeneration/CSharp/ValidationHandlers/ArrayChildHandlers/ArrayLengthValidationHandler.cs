@@ -2,6 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using Microsoft.CodeAnalysis.CSharp;
+
 namespace Corvus.Json.CodeGeneration.CSharp;
 
 /// <summary>
@@ -44,6 +46,16 @@ public class ArrayLengthValidationHandler : IChildArrayItemValidationHandler
 
             generator
                 .AppendSeparatorLine()
+                .AppendLineIndent("if (level > ValidationLevel.Basic)")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendLineIndent(
+                        "result = result.PushValidationLocationProperty(",
+                        SymbolDisplay.FormatLiteral(keyword.Keyword, true),
+                        ");")
+                .PopIndent()
+                .AppendLineIndent("}")
+                .AppendSeparatorLine()
                 .AppendIndent("if (length ")
                 .AppendOperator(op)
                 .Append(' ')
@@ -80,6 +92,12 @@ public class ArrayLengthValidationHandler : IChildArrayItemValidationHandler
                         .AppendLineIndent("return result.WithResult(isValid: false);")
                     .PopIndent()
                     .AppendLineIndent("}")
+                .PopIndent()
+                .AppendLineIndent("}")
+                .AppendLineIndent("if (level > ValidationLevel.Basic)")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendLineIndent("result = result.PopLocation();")
                 .PopIndent()
                 .AppendLineIndent("}");
         }

@@ -4,8 +4,9 @@
 
 #if !NET8_0_OR_GREATER
 using System.Buffers;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 #endif
+
+using Microsoft.CodeAnalysis.CSharp;
 
 namespace Corvus.Json.CodeGeneration.CSharp;
 
@@ -62,7 +63,12 @@ public static partial class ValidationCodeGeneratorExtensions
         foreach (INumberValidationKeyword keyword in typeDeclaration.Keywords().OfType<INumberValidationKeyword>())
         {
             generator
-                .AppendKeywordValidationResult(isValid: true, keyword, "ignoredResult", "ignored because the value is not a number");
+                .AppendLineIndent(
+                    "ignoredResult = ignoredResult.PushValidationLocationProperty(",
+                    SymbolDisplay.FormatLiteral(keyword.Keyword, true),
+                    ");")
+                .AppendKeywordValidationResult(isValid: true, keyword, "ignoredResult", "ignored because the value is not a number")
+                .AppendLineIndent("ignoredResult = ignoredResult.PopLocation();");
         }
 
         generator

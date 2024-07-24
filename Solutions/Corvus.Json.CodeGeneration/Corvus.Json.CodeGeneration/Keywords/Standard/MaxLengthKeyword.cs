@@ -12,6 +12,8 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 /// </summary>
 public sealed class MaxLengthKeyword : IStringLengthConstantValidationKeyword
 {
+    private const string KeywordPath = "#/maxLength";
+
     private MaxLengthKeyword()
     {
     }
@@ -32,6 +34,12 @@ public sealed class MaxLengthKeyword : IStringLengthConstantValidationKeyword
 
     /// <inheritdoc />
     public bool CanReduce(in JsonElement schemaValue) => Reduction.CanReduceNonReducingKeyword(schemaValue, this.KeywordUtf8);
+
+    /// <inheritdoc/>
+    public string GetPathModifier()
+    {
+        return KeywordPath;
+    }
 
     /// <inheritdoc />
     public CoreTypes ImpliesCoreTypes(TypeDeclaration typeDeclaration) =>

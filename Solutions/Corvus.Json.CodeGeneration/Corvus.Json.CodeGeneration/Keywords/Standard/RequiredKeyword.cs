@@ -2,6 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System;
+using System.Diagnostics;
 using System.Text.Json;
 
 namespace Corvus.Json.CodeGeneration.Keywords;
@@ -9,8 +11,11 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 /// <summary>
 /// The required keyword.
 /// </summary>
-public sealed class RequiredKeyword : IPropertyProviderKeyword, IObjectValidationKeyword
+public sealed class RequiredKeyword : IPropertyProviderKeyword, IObjectRequiredPropertyValidationKeyword
 {
+    private const string KeywordPath = "#/required";
+    private static readonly JsonReference KeywordPathReference = new(KeywordPath);
+
     private RequiredKeyword()
     {
     }
@@ -52,6 +57,7 @@ public sealed class RequiredKeyword : IPropertyProviderKeyword, IObjectValidatio
                         WellKnownTypeDeclarations.JsonAny,
                         treatRequiredAsOptional ? RequiredOrOptional.Optional : RequiredOrOptional.Required,
                         source == target ? LocalOrComposed.Local : LocalOrComposed.Composed,
+                        this,
                         this));
             }
         }
@@ -71,4 +77,28 @@ public sealed class RequiredKeyword : IPropertyProviderKeyword, IObjectValidatio
 
     /// <inheritdoc/>
     public bool RequiresObjectEnumeration(TypeDeclaration typeDeclaration) => typeDeclaration.HasKeyword(this);
+
+    /// <inheritdoc/>
+    public string GetPathModifier(PropertyDeclaration property)
+    {
+        if (property.Owner.TryGetKeyword(this, out JsonElement element)
+            && element.ValueKind == JsonValueKind.Array)
+        {
+            int index = 0;
+            foreach (JsonElement item in element.EnumerateArray())
+            {
+                if (item.ValueEquals(property.JsonPropertyName))
+                {
+                    break;
+                }
+
+                index++;
+            }
+
+            return KeywordPathReference.AppendArrayIndexToFragment(index);
+        }
+
+        Debug.Fail("The path modifier was not available for this keyword.");
+        return KeywordPath;
+    }
 }

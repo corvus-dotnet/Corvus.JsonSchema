@@ -213,7 +213,12 @@ public static partial class ValidationCodeGeneratorExtensions
         foreach (IArrayValidationKeyword keyword in typeDeclaration.Keywords().OfType<IArrayValidationKeyword>())
         {
             generator
-                .AppendKeywordValidationResult(isValid: true, keyword, "ignoredResult", "ignored because the value is not an array");
+                .AppendLineIndent(
+                    "ignoredResult = ignoredResult.PushValidationLocationProperty(",
+                    SymbolDisplay.FormatLiteral(keyword.Keyword, true),
+                    ");")
+                .AppendKeywordValidationResult(isValid: true, keyword, "ignoredResult", "ignored because the value is not an array")
+                .AppendLineIndent("ignoredResult = ignoredResult.PopLocation();");
         }
 
         generator

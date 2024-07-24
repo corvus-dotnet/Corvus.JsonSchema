@@ -6,6 +6,8 @@
 using System.Buffers;
 #endif
 
+using Microsoft.CodeAnalysis.CSharp;
+
 namespace Corvus.Json.CodeGeneration.CSharp;
 
 /// <summary>
@@ -59,7 +61,12 @@ public static partial class ValidationCodeGeneratorExtensions
         foreach (IStringValidationKeyword keyword in typeDeclaration.Keywords().OfType<IStringValidationKeyword>())
         {
             generator
-                .AppendKeywordValidationResult(isValid: true, keyword, "ignoredResult", "ignored because the value is not a string");
+                .AppendLineIndent(
+                    "ignoredResult = ignoredResult.PushValidationLocationProperty(",
+                    SymbolDisplay.FormatLiteral(keyword.Keyword, true),
+                    ");")
+                .AppendKeywordValidationResult(isValid: true, keyword, "ignoredResult", "ignored because the value is not a string")
+                .AppendLineIndent("ignoredResult = ignoredResult.PopLocation();");
         }
 
         generator

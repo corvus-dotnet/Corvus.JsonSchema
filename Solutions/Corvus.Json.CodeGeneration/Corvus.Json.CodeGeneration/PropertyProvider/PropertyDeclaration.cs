@@ -18,13 +18,15 @@ namespace Corvus.Json.CodeGeneration;
 /// or composed from a subschema.
 /// </param>
 /// <param name="keyword">The keyword that provided the property.</param>
+/// <param name="requiredKeyword">The keyword that made this a required property.</param>
 public sealed class PropertyDeclaration(
     TypeDeclaration owner,
     string jsonPropertyName,
     TypeDeclaration propertyType,
     RequiredOrOptional requiredOrOptional,
     LocalOrComposed localOrComposed,
-    IObjectValidationKeyword? keyword)
+    IObjectValidationKeyword? keyword,
+    IObjectRequiredPropertyValidationKeyword? requiredKeyword)
 {
     private readonly Dictionary<string, object?> metadata = [];
 
@@ -67,6 +69,11 @@ public sealed class PropertyDeclaration(
     /// Gets the keyword that provided the property, if it is a validation property.
     /// </summary>
     public IObjectValidationKeyword? Keyword { get; } = keyword;
+
+    /// <summary>
+    /// Gets the keyword that made this a required property, if it is a required property.
+    /// </summary>
+    public IObjectRequiredPropertyValidationKeyword? RequiredKeyword { get; } = requiredKeyword;
 
     /// <summary>
     /// Sets a metadata value for the property declaration.

@@ -136,7 +136,8 @@ public sealed class TypeDeclaration(LocatedSchema locatedSchema)
                     propertyDeclaration.UnreducedPropertyType,
                     MergeRequiredOrOptional(propertyDeclaration, existingProperty),
                     propertyDeclaration.LocalOrComposed,
-                    propertyDeclaration.Keyword ?? existingProperty.Keyword);
+                    propertyDeclaration.Keyword ?? existingProperty.Keyword,
+                    propertyDeclaration.RequiredKeyword ?? existingProperty.RequiredKeyword);
         }
         else if (propertyDeclaration.Owner != this)
         {
@@ -147,7 +148,8 @@ public sealed class TypeDeclaration(LocatedSchema locatedSchema)
                     propertyDeclaration.UnreducedPropertyType,
                     propertyDeclaration.RequiredOrOptional,
                     LocalOrComposed.Composed,
-                    propertyDeclaration.Keyword);
+                    propertyDeclaration.Keyword,
+                    propertyDeclaration.RequiredKeyword);
         }
         else
         {
