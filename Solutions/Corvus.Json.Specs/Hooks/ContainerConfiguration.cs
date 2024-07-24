@@ -30,7 +30,7 @@ public static class ContainerConfiguration
     {
         var services = new ServiceCollection();
 
-        services.AddTransient<IDocumentResolver>(serviceProvider => new CompoundDocumentResolver(new FakeWebDocumentResolver(serviceProvider.GetRequiredService<IConfiguration>()["jsonSchemaBuilderDriverSettings:remotesBaseDirectory"]!), new FileSystemDocumentResolver(), new HttpClientDocumentResolver(new HttpClient())));
+        services.AddTransient(serviceProvider => new CompoundDocumentResolver(new FakeWebDocumentResolver(serviceProvider.GetRequiredService<IConfiguration>()["jsonSchemaBuilderDriverSettings:remotesBaseDirectory"]!), new FileSystemDocumentResolver()).AddMetaschema());
         services.AddTransient<JsonSchemaTypeBuilder>();
         services.AddTransient(sp =>
         {
