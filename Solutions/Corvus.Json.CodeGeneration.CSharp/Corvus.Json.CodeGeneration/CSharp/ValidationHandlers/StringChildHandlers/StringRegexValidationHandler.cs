@@ -38,7 +38,7 @@ public class StringRegexValidationHandler : IChildValidationHandler
 
                 generator
                     .AppendSeparatorLine()
-                    .AppendLineIndent("if (level > ValidationLevel.Basic)")
+                    .AppendLineIndent("if (context.Level > ValidationLevel.Basic)")
                     .AppendLineIndent("{")
                     .PushIndent()
                         .AppendLineIndent(
@@ -86,10 +86,10 @@ public class StringRegexValidationHandler : IChildValidationHandler
                     .PopIndent()
                     .AppendLineIndent("}")
                     .AppendSeparatorLine()
-                    .AppendLineIndent("if (level > ValidationLevel.Basic)")
+                    .AppendLineIndent("if (context.Level > ValidationLevel.Basic)")
                     .AppendLineIndent("{")
                     .PushIndent()
-                        .AppendLineIndent("result = result.PopLocation()")
+                        .AppendLineIndent("result = result.PopLocation();")
                     .PopIndent()
                     .AppendLineIndent("}");
             }

@@ -12,7 +12,6 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 public sealed class ElseKeyword
     :   ISubschemaTypeBuilderKeyword,
         ILocalSubschemaRegistrationKeyword,
-        ISubschemaProviderKeyword,
         IPropertyProviderKeyword,
         ITernaryIfElseValidationKeyword
 {
@@ -83,5 +82,17 @@ public sealed class ElseKeyword
         }
 
         return [];
+    }
+
+    /// <inheritdoc/>
+    public string GetPathModifier(ReducedTypeDeclaration subschemaType)
+    {
+        return KeywordPathReference.AppendFragment(subschemaType.ReducedPathModifier);
+    }
+
+    /// <inheritdoc/>
+    public bool TryGetElseDeclaration(TypeDeclaration typeDeclaration, out TypeDeclaration? elseDeclaration)
+    {
+        return typeDeclaration.SubschemaTypeDeclarations.TryGetValue(KeywordPathReference, out elseDeclaration);
     }
 }

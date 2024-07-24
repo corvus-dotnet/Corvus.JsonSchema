@@ -17,13 +17,11 @@ public static partial class ValidationCodeGeneratorExtensions
     /// <param name="typeDeclaration">The type declaration which requires anyOf validation.</param>
     /// <param name="children">The child handlers for the <see cref="IKeywordValidationHandler"/>.</param>
     /// <returns>A reference to the generator having completed the operation.</returns>
-    /// <param name="parentHandlerPriority">The parent validation handler priority.</param>
     public static CodeGenerator AppendCompositionAnyOfValidation(
         this CodeGenerator generator,
         string methodName,
         TypeDeclaration typeDeclaration,
-        IReadOnlyCollection<IChildValidationHandler> children,
-        uint parentHandlerPriority)
+        IReadOnlyCollection<IChildValidationHandler> children)
     {
         return generator
             .BeginReservedMethodDeclaration(
