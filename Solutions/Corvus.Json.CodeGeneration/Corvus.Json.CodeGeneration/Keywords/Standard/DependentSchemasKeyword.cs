@@ -10,7 +10,7 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 /// The dependentSchemas keyword.
 /// </summary>
 public sealed class DependentSchemasKeyword
-    : ISubschemaTypeBuilderKeyword, ILocalSubschemaRegistrationKeyword, IPropertyProviderKeyword, IObjectValidationKeyword
+    : ISubschemaTypeBuilderKeyword, ILocalSubschemaRegistrationKeyword, IPropertyProviderKeyword, IObjectPropertyDependentSchemasValidationKeyword
 {
     private const string KeywordPath = "#/dependentSchemas";
     private static readonly JsonReference KeywordPathReference = new(KeywordPath);
@@ -87,4 +87,31 @@ public sealed class DependentSchemasKeyword
 
     /// <inheritdoc/>
     public bool RequiresObjectEnumeration(TypeDeclaration typeDeclaration) => typeDeclaration.HasKeyword(this);
+
+    /// <inheritdoc/>
+    public string GetPathModifier(ReducedTypeDeclaration typeDeclaration, string propertyName)
+    {
+        return KeywordPathReference.AppendFragment(typeDeclaration.ReducedPathModifier).AppendUnencodedPropertyNameToFragment(propertyName);
+    }
+
+    /// <inheritdoc/>
+    public IReadOnlyCollection<DependentSchemaDeclaration> GetDependentSchemaDeclarations(TypeDeclaration typeDeclaration)
+    {
+        List<DependentSchemaDeclaration> declarations = [];
+
+        if (typeDeclaration.TryGetKeyword(this, out JsonElement value) &&
+            value.ValueKind == JsonValueKind.Object)
+        {
+            foreach (JsonProperty property in value.EnumerateObject())
+            {
+                JsonReference subschemaLocation = KeywordPathReference.AppendUnencodedPropertyNameToFragment(property.Name);
+                if (typeDeclaration.SubschemaTypeDeclarations.TryGetValue(subschemaLocation.ToString(), out TypeDeclaration? subschemaTypeDeclaration))
+                {
+                    declarations.Add(new(this, property.Name, subschemaTypeDeclaration));
+                }
+            }
+        }
+
+        return declarations;
+    }
 }

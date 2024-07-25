@@ -44,7 +44,12 @@ internal sealed class SchemaVocabulary : IVocabulary
     public ReadOnlySpan<byte> UriUtf8 => "https://json-schema.org/draft/2019-09/schema"u8;
 
     /// <inheritdoc/>
-    public IEnumerable<IKeyword> Keywords => this.vocabularies.SelectMany(v => v.Keywords);
+    public IEnumerable<IKeyword> Keywords => this.vocabularies.SelectMany(v => v.Keywords)
+        .Union(
+        [
+            DefinitionsKeyword.Instance,
+            DependenciesKeyword.Instance,
+        ]);
 
     /// <inheritdoc/>
     public JsonDocument? BuildReferenceSchemaInstance(JsonReference jsonSchemaPath)
