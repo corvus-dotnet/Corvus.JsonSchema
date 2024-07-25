@@ -51,7 +51,7 @@ internal sealed class SchemaVocabulary : IVocabulary
         EnumKeyword.Instance,
         TypeKeyword.Instance,
         FormatWithAssertionKeyword.Instance,
-        ContentMediaTypeKeyword.Instance,
+        ContentMediaTypePre201909Keyword.Instance,
         ContentEncodingPre201909Keyword.Instance,
         TernaryIfKeyword.Instance,
         ThenKeyword.Instance,
