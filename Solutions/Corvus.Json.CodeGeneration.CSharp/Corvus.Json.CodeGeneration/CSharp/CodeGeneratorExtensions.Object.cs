@@ -262,10 +262,16 @@ internal static partial class CodeGeneratorExtensions
             .AppendLineIndent("/// </summary>")
             .BeginPublicStaticClassDeclaration(generator.JsonPropertyNamesClassName());
 
+        int i = 0;
         foreach (PropertyDeclaration property in typeDeclaration.PropertyDeclarations)
         {
+            if (i > 0)
+            {
+                generator
+                    .AppendLine();
+            }
+
             generator
-                .AppendSeparatorLine()
                 .AppendLineIndent("/// <summary>")
                 .AppendLineIndent("/// Gets the JSON property name for <see cref=\"", property.DotnetPropertyName(), "\"/>.")
                 .AppendLineIndent("/// </summary>")
@@ -275,12 +281,18 @@ internal static partial class CodeGeneratorExtensions
                     " = ",
                     SymbolDisplay.FormatLiteral(property.JsonPropertyName, true),
                     ";");
+            i++;
         }
 
         foreach (PropertyDeclaration property in typeDeclaration.PropertyDeclarations)
         {
+            if (i > 0)
+            {
+                generator
+                    .AppendLine();
+            }
+
             generator
-                .AppendSeparatorLine()
                 .AppendLineIndent("/// <summary>")
                 .AppendLineIndent("/// Gets the JSON property name for <see cref=\"", property.DotnetPropertyName(), "\"/>.")
                 .AppendLineIndent("/// </summary>")
@@ -290,6 +302,7 @@ internal static partial class CodeGeneratorExtensions
                     "Utf8 => ",
                     SymbolDisplay.FormatLiteral(property.JsonPropertyName, true),
                     "u8;");
+            i++;
         }
 
         return generator
@@ -810,7 +823,7 @@ internal static partial class CodeGeneratorExtensions
 
         if (isGeneric)
         {
-            generator.AppendLineIndent("/// <inheritdoc");
+            generator.AppendLineIndent("/// <inheritdoc />");
         }
         else
         {
@@ -918,7 +931,7 @@ internal static partial class CodeGeneratorExtensions
     {
         return generator
             .AppendSeparatorLine()
-            .AppendLineIndent("/// <inheritdoc/")
+            .AppendLineIndent("/// <inheritdoc />")
             .AppendIndent("public ")
             .Append(typeDeclaration.DotnetTypeName())
             .Append(" RemoveProperty(")

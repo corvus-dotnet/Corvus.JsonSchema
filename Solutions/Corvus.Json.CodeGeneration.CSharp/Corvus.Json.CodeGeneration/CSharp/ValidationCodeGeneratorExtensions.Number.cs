@@ -83,12 +83,6 @@ public static partial class ValidationCodeGeneratorExtensions
         generator
             .AppendLineIndent("ValidationContext result = validationContext;");
 
-        if (typeDeclaration.RequiresNumberValueValidation())
-        {
-            generator
-                .AppendLineIndent("BinaryJsonNumber numberValue = value.AsBinaryJsonNumber;");
-        }
-
         foreach (IChildValidationHandler child in children)
         {
             child.AppendValidationCode(generator, typeDeclaration);

@@ -11,7 +11,7 @@ namespace Corvus.Json.CodeGeneration;
 /// </summary>
 public interface INumberConstantValidationKeyword
     : IValidationConstantProviderKeyword,
-      INumberValueValidationKeyword
+      INumberValidationKeyword
 {
     /// <summary>
     /// Gets the operator to use for the comparison.

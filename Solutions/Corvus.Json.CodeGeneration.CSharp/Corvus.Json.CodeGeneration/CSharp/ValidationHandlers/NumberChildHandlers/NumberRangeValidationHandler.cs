@@ -111,7 +111,7 @@ public class NumberRangeValidationHandler : IChildValidationHandler
         static void GetValidMessage(CodeGenerator generator, Operator op, string memberName)
         {
             generator
-                .Append("{numberValue} ")
+                .Append("{value} ")
                 .AppendTextForOperator(op)
                 .Append(" {")
                 .Append(memberName)
@@ -121,7 +121,7 @@ public class NumberRangeValidationHandler : IChildValidationHandler
         static void GetInvalidMessage(CodeGenerator generator, Operator op, string memberName)
         {
             generator
-                .Append("{numberValue} ")
+                .Append("{value} ")
                 .AppendTextForInverseOperator(op)
                 .Append(" {")
                 .Append(memberName)
@@ -139,17 +139,24 @@ public class NumberRangeValidationHandler : IChildValidationHandler
         {
             generator
                 .AppendSeparatorLine()
-                .AppendLineIndent("if (numberValue.IsMultipleOf(", memberName, "))");
+                .AppendLineIndent("if (value.HasJsonElementBacking")
+                .PushIndent()
+                .AppendLineIndent("? BinaryJsonNumber.IsMultipleOf(value.AsJsonElement, ", memberName, ")")
+                .AppendLineIndent(": value.AsBinaryJsonNumber.IsMultipleOf(", memberName, "))")
+                .PopIndent();
         }
 
         static void AppendStandardOperator(CodeGenerator generator, INumberConstantValidationKeyword keyword, Operator op, string memberName)
         {
             generator
                 .AppendSeparatorLine()
-                .AppendIndent("if (numberValue ")
+
+                .AppendLineIndent("if ((value.HasJsonElementBacking")
+                .PushIndent()
+                .AppendLineIndent("? BinaryJsonNumber.Compare(value.AsJsonElement, ", memberName, ")")
+                .AppendIndent(": BinaryJsonNumber.Compare(value.AsBinaryJsonNumber, ", memberName, "))")
                 .AppendOperator(op)
-                .Append(' ')
-                .Append(memberName)
+                .Append(" 0")
                 .AppendLine(")");
         }
     }

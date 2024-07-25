@@ -3,10 +3,12 @@
 
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
-		<TargetFrameworks>net481;net8.0</TargetFrameworks>
-		<ImplicitUsings>enable</ImplicitUsings>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<IsPackable>false</IsPackable>
+    <NoWarn>SA1615</NoWarn>
+    <Platforms>AnyCPU</Platforms>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -14,11 +16,11 @@
 	</ItemGroup>
 
 	<ItemGroup>
-    <PackageReference Include="BenchmarkDotNet" Version="0.13.12" />
+    <PackageReference Include="BenchmarkDotNet" Version="0.13.13-nightly.20240720.163" />
     <PackageReference Include="System.Private.Uri" Version="4.3.2" />
     <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
     <PackageReference Include="System.Text.Json" Version="8.0.4" />
-		<PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.13.12" />
+		<PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.13.13-nightly.20240720.163" />
 		<PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.12">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -29,10 +31,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <None Update="PersonModel\person-array-schema.json">
+	  <None Update="person-array-schema.json">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </None>
-	  <None Update="PersonModel\person-schema.json">
+	  <None Update="person-schema.json">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </None>
 	</ItemGroup>
@@ -44,6 +46,10 @@
 
 	<ItemGroup>
 	  <PackageReference Update="Roslynator.Analyzers" Version="4.12.4" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="PersonModel.V3\" />
 	</ItemGroup>
 
 </Project>

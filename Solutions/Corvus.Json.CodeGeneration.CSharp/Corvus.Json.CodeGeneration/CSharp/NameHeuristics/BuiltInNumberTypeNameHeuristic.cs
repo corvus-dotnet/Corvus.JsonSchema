@@ -48,7 +48,7 @@ public sealed class BuiltInNumberTypeNameHeuristic : IBuiltInTypeNameHeuristic
                     continue;
                 }
 
-                if (keyword is IFormatValidationKeyword formatKeyword)
+                if (keyword is IFormatProviderKeyword formatKeyword)
                 {
                     formatKeyword.TryGetFormat(typeDeclaration, out candidateFormat);
                     continue;
