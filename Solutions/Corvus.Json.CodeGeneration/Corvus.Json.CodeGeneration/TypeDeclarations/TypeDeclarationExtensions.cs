@@ -481,6 +481,42 @@ public static class TypeDeclarationExtensions
     }
 
     /// <summary>
+    /// Gets the AnyOf constant values for the type declaration, grouped by the providing keyword.
+    /// </summary>
+    /// <param name="that">The type declaration for which to get the AnyOf const values.</param>
+    /// <returns>A map of the keyword to the ordered collection of const values.</returns>
+    public static IReadOnlyDictionary<IAnyOfConstantValidationKeyword, JsonElement[]>? AnyOfConstantValues(this TypeDeclaration that)
+    {
+        if (!that.TryGetMetadata(nameof(AnyOfConstantValues), out IReadOnlyDictionary<IAnyOfConstantValidationKeyword, JsonElement[]>? constValues))
+        {
+            constValues = BuildAnyOfConstValues(that);
+            that.SetMetadata(nameof(AnyOfConstantValues), constValues);
+        }
+
+        return constValues;
+
+        static IReadOnlyDictionary<IAnyOfConstantValidationKeyword, JsonElement[]> BuildAnyOfConstValues(TypeDeclaration that)
+        {
+            Dictionary<IAnyOfConstantValidationKeyword, JsonElement[]> result = [];
+
+            foreach (IAnyOfConstantValidationKeyword keyword in that.Keywords().OfType<IAnyOfConstantValidationKeyword>())
+            {
+                if (keyword.TryGetValidationConstants(that, out JsonElement[]? value) &&
+                    value is JsonElement[] constants)
+                {
+                    result[keyword] = constants;
+                }
+                else
+                {
+                    result[keyword] = [];
+                }
+            }
+
+            return result.ToFrozenDictionary();
+        }
+    }
+
+    /// <summary>
     /// Gets the OneOf composition types for the type declaration, grouped by the providing keyword.
     /// </summary>
     /// <param name="that">The type declaration for which to get the OneOf composition types.</param>
