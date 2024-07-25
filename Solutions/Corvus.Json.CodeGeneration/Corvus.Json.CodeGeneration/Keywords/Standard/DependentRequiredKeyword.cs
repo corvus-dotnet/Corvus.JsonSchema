@@ -9,8 +9,11 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 /// <summary>
 /// The dependentRequired keyword.
 /// </summary>
-public sealed class DependentRequiredKeyword : IPropertyProviderKeyword, IObjectValidationKeyword
+public sealed class DependentRequiredKeyword : IPropertyProviderKeyword, IObjectDependentRequiredValidationKeyword
 {
+    private const string KeywordPath = "#/dependentRequired";
+    private static readonly JsonReference KeywordPathReference = new(KeywordPath);
+
     private DependentRequiredKeyword()
     {
     }
@@ -91,4 +94,36 @@ public sealed class DependentRequiredKeyword : IPropertyProviderKeyword, IObject
 
     /// <inheritdoc/>
     public bool RequiresObjectEnumeration(TypeDeclaration typeDeclaration) => false;
+
+    /// <inheritdoc/>
+    public string GetPathModifier(DependentRequiredDeclaration dependentRequired, int index)
+    {
+        return KeywordPathReference.AppendArrayIndexToFragment(index);
+    }
+
+    /// <inheritdoc/>
+    public IReadOnlyCollection<DependentRequiredDeclaration> GetDependentRequiredDeclarations(TypeDeclaration typeDeclaration)
+    {
+        List<DependentRequiredDeclaration> declarations = [];
+
+        if (typeDeclaration.TryGetKeyword(this, out JsonElement value) &&
+            value.ValueKind == JsonValueKind.Object)
+        {
+            foreach (JsonProperty property in value.EnumerateObject())
+            {
+                if (property.Value.ValueKind == JsonValueKind.Array)
+                {
+                    declarations.Add(
+                        new(
+                            this,
+                            Uri.UnescapeDataString(property.Name),
+                            property.Value.EnumerateArray()
+                                .Select(a => Uri.UnescapeDataString(a.GetString()!))
+                                .ToList()));
+                }
+            }
+        }
+
+        return declarations;
+    }
 }

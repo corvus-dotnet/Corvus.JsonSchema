@@ -425,6 +425,34 @@ public static class TypeDeclarationExtensions
     }
 
     /// <summary>
+    /// Gets the dependent required declarations for the type declaration, grouped by the providing keyword.
+    /// </summary>
+    /// <param name="that">The type declaration for which to get the dependent required declarations.</param>
+    /// <returns>A map of the keyword to the ordered collection of required property names.</returns>
+    public static IReadOnlyDictionary<IObjectDependentRequiredValidationKeyword, IReadOnlyCollection<DependentRequiredDeclaration>>? DependentRequired(this TypeDeclaration that)
+    {
+        if (!that.TryGetMetadata(nameof(DependentRequired), out IReadOnlyDictionary<IObjectDependentRequiredValidationKeyword, IReadOnlyCollection<DependentRequiredDeclaration>>? compositionTypes))
+        {
+            compositionTypes = BuildDependentRequiredSubschemaTypes(that);
+            that.SetMetadata(nameof(DependentRequired), compositionTypes);
+        }
+
+        return compositionTypes;
+
+        static IReadOnlyDictionary<IObjectDependentRequiredValidationKeyword, IReadOnlyCollection<DependentRequiredDeclaration>> BuildDependentRequiredSubschemaTypes(TypeDeclaration that)
+        {
+            Dictionary<IObjectDependentRequiredValidationKeyword, IReadOnlyCollection<DependentRequiredDeclaration>> result = [];
+
+            foreach (IObjectDependentRequiredValidationKeyword keyword in that.Keywords().OfType<IObjectDependentRequiredValidationKeyword>())
+            {
+                result[keyword] = keyword.GetDependentRequiredDeclarations(that);
+            }
+
+            return result;
+        }
+    }
+
+    /// <summary>
     /// Gets the dependent schema declarations for the type declaration, grouped by the providing keyword.
     /// </summary>
     /// <param name="that">The type declaration for which to get the dependent schema declarations.</param>
@@ -434,7 +462,7 @@ public static class TypeDeclarationExtensions
         if (!that.TryGetMetadata(nameof(DependentSchemasSubschemaTypes), out IReadOnlyDictionary<IObjectPropertyDependentSchemasValidationKeyword, IReadOnlyCollection<DependentSchemaDeclaration>>? compositionTypes))
         {
             compositionTypes = BuildDependentSchemasSubschemaTypes(that);
-            that.SetMetadata(nameof(AllOfCompositionTypes), compositionTypes);
+            that.SetMetadata(nameof(DependentSchemasSubschemaTypes), compositionTypes);
         }
 
         return compositionTypes;
