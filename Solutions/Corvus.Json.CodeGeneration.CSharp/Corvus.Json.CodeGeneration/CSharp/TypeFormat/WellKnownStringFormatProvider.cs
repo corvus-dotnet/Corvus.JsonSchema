@@ -181,6 +181,14 @@ public class WellKnownStringFormatProvider : IStringFormatProvider
                     validationContextIdentifier,
                     ", level);");
                 return true;
+            case "corvus-base64-content-pre201909":
+                generator.AppendLineIndent(
+                    "return Corvus.Json.Validate.TypeBase64Content(",
+                    valueIdentifier,
+                    ", ",
+                    validationContextIdentifier,
+                    ", level, false);");
+                return true;
             case "corvus-base64-string":
                 generator.AppendLineIndent(
                     "return Corvus.Json.Validate.TypeBase64String(",
@@ -204,6 +212,14 @@ public class WellKnownStringFormatProvider : IStringFormatProvider
                     ", ",
                     validationContextIdentifier,
                     ", level);");
+                return true;
+            case "corvus-json-content-pre201909":
+                generator.AppendLineIndent(
+                    "return Corvus.Json.Validate.TypeContent(",
+                    valueIdentifier,
+                    ", ",
+                    validationContextIdentifier,
+                    ", level, false);");
                 return true;
             default:
                 return false;
@@ -235,9 +251,11 @@ public class WellKnownStringFormatProvider : IStringFormatProvider
             "relative-json-pointer" => "JsonRelativePointer",
             "regex" => "JsonRegex",
             "corvus-base64-content" => "JsonBase64Content",
+            "corvus-base64-content-pre201909" => "JsonBase64ContentPre201909",
             "corvus-base64-string" => "JsonBase64String",
             "corvus-base64-string-pre201909" => "JsonBase64StringPre201909",
             "corvus-json-content" => "JsonContent",
+            "corvus-json-content-pre201909" => "JsonContentPre201909",
             _ => null,
         };
     }
