@@ -425,6 +425,34 @@ public static class TypeDeclarationExtensions
     }
 
     /// <summary>
+    /// Gets the dependent schema declarations for the type declaration, grouped by the providing keyword.
+    /// </summary>
+    /// <param name="that">The type declaration for which to get the dependent schema declarations.</param>
+    /// <returns>A map of the keyword to the ordered collection of composition types.</returns>
+    public static IReadOnlyDictionary<IObjectPropertyDependentSchemasValidationKeyword, IReadOnlyCollection<DependentSchemaDeclaration>>? DependentSchemasSubschemaTypes(this TypeDeclaration that)
+    {
+        if (!that.TryGetMetadata(nameof(DependentSchemasSubschemaTypes), out IReadOnlyDictionary<IObjectPropertyDependentSchemasValidationKeyword, IReadOnlyCollection<DependentSchemaDeclaration>>? compositionTypes))
+        {
+            compositionTypes = BuildDependentSchemasSubschemaTypes(that);
+            that.SetMetadata(nameof(AllOfCompositionTypes), compositionTypes);
+        }
+
+        return compositionTypes;
+
+        static IReadOnlyDictionary<IObjectPropertyDependentSchemasValidationKeyword, IReadOnlyCollection<DependentSchemaDeclaration>> BuildDependentSchemasSubschemaTypes(TypeDeclaration that)
+        {
+            Dictionary<IObjectPropertyDependentSchemasValidationKeyword, IReadOnlyCollection<DependentSchemaDeclaration>> result = [];
+
+            foreach (IObjectPropertyDependentSchemasValidationKeyword keyword in that.Keywords().OfType<IObjectPropertyDependentSchemasValidationKeyword>())
+            {
+                result[keyword] = keyword.GetDependentSchemaDeclarations(that);
+            }
+
+            return result;
+        }
+    }
+
+    /// <summary>
     /// Gets the AllOf composition types for the type declaration, grouped by the providing keyword.
     /// </summary>
     /// <param name="that">The type declaration for which to get the AllOf composition types.</param>
@@ -448,7 +476,7 @@ public static class TypeDeclarationExtensions
                 result[keyword] = keyword.GetSubschemaTypeDeclarations(that);
             }
 
-            return result.ToFrozenDictionary();
+            return result;
         }
     }
 
@@ -476,7 +504,7 @@ public static class TypeDeclarationExtensions
                 result[keyword] = keyword.GetSubschemaTypeDeclarations(that);
             }
 
-            return result.ToFrozenDictionary();
+            return result;
         }
     }
 
@@ -512,7 +540,7 @@ public static class TypeDeclarationExtensions
                 }
             }
 
-            return result.ToFrozenDictionary();
+            return result;
         }
     }
 
@@ -540,7 +568,7 @@ public static class TypeDeclarationExtensions
                 result[keyword] = keyword.GetSubschemaTypeDeclarations(that);
             }
 
-            return result.ToFrozenDictionary();
+            return result;
         }
     }
 
@@ -1823,7 +1851,7 @@ public static class TypeDeclarationExtensions
 
             if (constants.Count > 0)
             {
-                validationConstants = constants.ToFrozenDictionary();
+                validationConstants = constants;
                 return true;
             }
 
@@ -1876,7 +1904,7 @@ public static class TypeDeclarationExtensions
 
             if (constants.Count > 0)
             {
-                validationRegularExpressions = constants.ToFrozenDictionary();
+                validationRegularExpressions = constants;
                 return true;
             }
 

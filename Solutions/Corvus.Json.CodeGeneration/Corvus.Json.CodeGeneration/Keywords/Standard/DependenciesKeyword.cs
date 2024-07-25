@@ -10,7 +10,7 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 /// The dependencies keyword.
 /// </summary>
 public sealed class DependenciesKeyword
-    : ISubschemaTypeBuilderKeyword, ILocalSubschemaRegistrationKeyword, IPropertyProviderKeyword, IObjectValidationKeyword
+    : ISubschemaTypeBuilderKeyword, ILocalSubschemaRegistrationKeyword, IPropertyProviderKeyword, IObjectPropertyDependentSchemasValidationKeyword
 {
     private const string KeywordPath = "#/dependencies";
     private static readonly JsonReference KeywordPathReference = new(KeywordPath);
@@ -89,4 +89,31 @@ public sealed class DependenciesKeyword
     public bool RequiresObjectEnumeration(TypeDeclaration typeDeclaration) =>
         typeDeclaration.TryGetKeyword(this, out JsonElement value) &&
         (value.ValueKind == JsonValueKind.Object || value.ValueKind == JsonValueKind.True || value.ValueKind == JsonValueKind.False);
+
+    /// <inheritdoc/>
+    public string GetPathModifier(ReducedTypeDeclaration typeDeclaration, string propertyName)
+    {
+        return KeywordPathReference.AppendFragment(typeDeclaration.ReducedPathModifier).AppendUnencodedPropertyNameToFragment(propertyName);
+    }
+
+    /// <inheritdoc/>
+    public IReadOnlyCollection<DependentSchemaDeclaration> GetDependentSchemaDeclarations(TypeDeclaration typeDeclaration)
+    {
+        List<DependentSchemaDeclaration> declarations = [];
+
+        if (typeDeclaration.TryGetKeyword(this, out JsonElement value) &&
+            value.ValueKind == JsonValueKind.Object)
+        {
+            foreach (JsonProperty property in value.EnumerateObject())
+            {
+                JsonReference subschemaLocation = KeywordPathReference.AppendUnencodedPropertyNameToFragment(property.Name);
+                if (typeDeclaration.SubschemaTypeDeclarations.TryGetValue(subschemaLocation.ToString(), out TypeDeclaration? subschemaTypeDeclaration))
+                {
+                    declarations.Add(new(this, property.Name, subschemaTypeDeclaration));
+                }
+            }
+        }
+
+        return declarations;
+    }
 }
