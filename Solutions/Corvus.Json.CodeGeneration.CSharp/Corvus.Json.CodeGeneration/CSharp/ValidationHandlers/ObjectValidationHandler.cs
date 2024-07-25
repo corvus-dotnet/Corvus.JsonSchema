@@ -54,6 +54,7 @@ public class ObjectValidationHandler : KeywordValidationHandlerBase
         var result = new ObjectValidationHandler();
         result
             .RegisterChildHandlers(
+                PropertyCountValidationHandler.Instance,
                 PropertyNamesValidationHandler.Instance,
                 PatternPropertiesValidationHandler.Instance,
                 PropertiesValidationHandler.Instance,

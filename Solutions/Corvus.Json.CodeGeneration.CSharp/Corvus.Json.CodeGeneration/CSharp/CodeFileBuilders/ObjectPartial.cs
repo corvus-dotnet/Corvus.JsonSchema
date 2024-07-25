@@ -56,6 +56,7 @@ public sealed class ObjectPartial : ICodeFileBuilder
                             .AppendImplicitConversionFromJsonValueTypeUsingConstructor(typeDeclaration, "JsonObject", JsonValueKind.Object, "__CorvusObjectHelpers.GetPropertyBacking(value)")
                             .AppendImplicitConversionToJsonValueType(typeDeclaration, "JsonObject", CoreTypes.Object, "value.AsObject")
                             .AppendObjectIndexerProperties(typeDeclaration)
+                            .AppendPropertyCount()
                             .AppendReadOnlyDictionaryProperties(typeDeclaration)
                             .PushJsonPropertyNamesClassNameAndScope()
                             .AppendPropertyAccessors(typeDeclaration)
