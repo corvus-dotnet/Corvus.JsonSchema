@@ -1,20 +1,21 @@
-﻿// <copyright file="AnyOfSubschemaValidationHandler.cs" company="Endjin Limited">
+﻿// <copyright file="AnyOfConstValidationHandler.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Text.Json;
 using Microsoft.CodeAnalysis.CSharp;
 
 namespace Corvus.Json.CodeGeneration.CSharp;
 
 /// <summary>
-/// An any-of subschema validation handler.
+/// An any-of const validation handler.
 /// </summary>
-public class AnyOfSubschemaValidationHandler : IChildValidationHandler
+public class AnyOfConstValidationHandler : IChildValidationHandler
 {
     /// <summary>
-    /// Gets the singleton instance of the <see cref="AnyOfSubschemaValidationHandler"/>.
+    /// Gets the singleton instance of the <see cref="AnyOfConstValidationHandler"/>.
     /// </summary>
-    public static AnyOfSubschemaValidationHandler Instance { get; } = new();
+    public static AnyOfConstValidationHandler Instance { get; } = new();
 
     /// <inheritdoc/>
     public uint ValidationHandlerPriority { get; } = ValidationPriorities.Default;
@@ -28,9 +29,9 @@ public class AnyOfSubschemaValidationHandler : IChildValidationHandler
     /// <inheritdoc/>
     public CodeGenerator AppendValidationCode(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
-        if (typeDeclaration.AnyOfCompositionTypes() is IReadOnlyDictionary<IAnyOfSubschemaValidationKeyword, IReadOnlyCollection<TypeDeclaration>> subschemaDictionary)
+        if (typeDeclaration.AnyOfConstantValues() is IReadOnlyDictionary<IAnyOfConstantValidationKeyword, JsonElement[]> constDictionary)
         {
-            foreach (IAnyOfSubschemaValidationKeyword keyword in subschemaDictionary.Keys)
+            foreach (IAnyOfConstantValidationKeyword keyword in constDictionary.Keys)
             {
                 string localMethodName = generator.GetUniqueMethodNameInScope(keyword.Keyword, prefix: "Validate");
 
@@ -54,90 +55,40 @@ public class AnyOfSubschemaValidationHandler : IChildValidationHandler
                     .PushIndent()
                     .AppendLineIndent("ValidationContext result = validationContext;");
 
-                IReadOnlyCollection<TypeDeclaration> subschemaTypes = subschemaDictionary[keyword];
-                int i = 0;
+                IReadOnlyCollection<JsonElement> constValues = constDictionary[keyword];
 
                 string foundValidName = generator.GetUniqueVariableNameInScope("FoundValid", prefix: keyword.Keyword);
                 generator
                     .AppendLineIndent("bool ", foundValidName, " = false;");
 
-                foreach (TypeDeclaration subschemaType in subschemaTypes)
+                int count = constValues.Count;
+                for (int i = 1; i <= count; ++i)
                 {
-                    ReducedTypeDeclaration reducedType = subschemaType.ReducedTypeDeclaration();
-                    string pathModifier = keyword.GetPathModifier(reducedType, i);
-                    string contextName = generator.GetUniqueVariableNameInScope("ChildContext", prefix: keyword.Keyword, suffix: i.ToString());
-                    string resultName = generator.GetUniqueVariableNameInScope("Result", prefix: keyword.Keyword, suffix: i.ToString());
-                    generator
-                        .AppendSeparatorLine()
-                        .AppendLineIndent("ValidationContext ", contextName, " = validationContext.CreateChildContext();")
-                        .AppendLineIndent("if (level > ValidationLevel.Basic)")
-                        .AppendLineIndent("{")
-                        .PushIndent()
-                            .AppendLineIndent(
-                                contextName,
-                                " = ",
-                                contextName,
-                                ".PushValidationLocationReducedPathModifier(new(",
-                                SymbolDisplay.FormatLiteral(pathModifier, true),
-                                "));")
-                        .PopIndent()
-                        .AppendLineIndent("}")
-                        .AppendSeparatorLine()
-                        .AppendLineIndent(
-                            "ValidationContext ",
-                            resultName,
-                            " = value.As<",
-                            reducedType.ReducedType.FullyQualifiedDotnetTypeName(),
-                            ">().Validate(",
-                            contextName,
-                            ", level);")
-                        .AppendSeparatorLine()
-                        .AppendLineIndent("if (", resultName, ".IsValid)")
-                        .AppendLineIndent("{")
-                        .PushIndent()
-                        .AppendLineIndent(
-                            "result = result.MergeChildContext(",
-                            resultName,
-                            ", level >= ValidationLevel.Verbose);");
+                    string pathModifier = keyword.GetPathModifier(i);
+                    string constField =
+                        generator.GetPropertyNameInScope(
+                            keyword.Keyword,
+                            rootScope: generator.ValidationClassScope(),
+                            suffix: count > 1 ? i.ToString() : null);
 
-                    if (!typeDeclaration.RequiresItemsEvaluationTracking() &&
-                        !typeDeclaration.RequiresPropertyEvaluationTracking())
+                    if (i > 1)
                     {
                         generator
-                            .AppendLineIndent("if (level == ValidationLevel.Flag)")
+                            .AppendLineIndent("if (!", foundValidName, ")")
                             .AppendLineIndent("{")
-                            .PushIndent()
-                                .AppendLineIndent("return result;")
-                            .PopIndent()
-                            .AppendLineIndent("}")
-                            .AppendLineIndent("else")
-                            .AppendLineIndent("{")
-                            .PushIndent()
-                                .AppendLineIndent(foundValidName, " = true;")
+                            .PushIndent();
+                    }
+
+                    generator
+                        .AppendSeparatorLine()
+                        .AppendLineIndent(foundValidName, " = value.Equals(", generator.ValidationClassName(), ".", constField, ");");
+
+                    if (i > 1)
+                    {
+                        generator
                             .PopIndent()
                             .AppendLineIndent("}");
                     }
-                    else
-                    {
-                        generator
-                            .AppendLineIndent(foundValidName, " = true;");
-                    }
-
-                    generator
-                        .PopIndent()
-                        .AppendLineIndent("}")
-                        .AppendLineIndent("else")
-                        .AppendLineIndent("{")
-                        .PushIndent()
-                            .AppendLineIndent("if (level >= ValidationLevel.Verbose)")
-                            .AppendLineIndent("{")
-                            .PushIndent()
-                            .AppendLineIndent("result = result.MergeResults(result.IsValid, level, ", resultName, ");")
-                            .PopIndent()
-                            .AppendLineIndent("}")
-                        .PopIndent()
-                        .AppendLineIndent("}");
-                    i++;
                 }
 
                 generator
@@ -158,7 +109,7 @@ public class AnyOfSubschemaValidationHandler : IChildValidationHandler
                             .AppendLineIndent("if (level >= ValidationLevel.Verbose)")
                             .AppendLineIndent("{")
                             .PushIndent()
-                                .AppendKeywordValidationResult(isValid: true, keyword, "result", "validated against the schema.")
+                                .AppendKeywordValidationResult(isValid: true, keyword, "result", "validated against the enumeration.")
                             .PopIndent()
                             .AppendLineIndent("}")
                         .PopIndent()
@@ -169,7 +120,7 @@ public class AnyOfSubschemaValidationHandler : IChildValidationHandler
                             .AppendLineIndent("if (level >= ValidationLevel.Basic)")
                             .AppendLineIndent("{")
                             .PushIndent()
-                                .AppendKeywordValidationResult(isValid: false, keyword, "result", "did not validate against the schema.")
+                                .AppendKeywordValidationResult(isValid: false, keyword, "result", "did not validate against the enumeration.")
                             .PopIndent()
                             .AppendLineIndent("}")
                             .AppendLineIndent("else")

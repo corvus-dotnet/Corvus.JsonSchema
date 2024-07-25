@@ -9,7 +9,7 @@ namespace Corvus.Json.CodeGeneration.CSharp;
 /// <summary>
 /// A oneOf subschema validation handler.
 /// </summary>
-public class OneOfSubschemaValidationHandler : IChildArrayItemValidationHandler
+public class OneOfSubschemaValidationHandler : IChildValidationHandler
 {
     /// <summary>
     /// Gets the singleton instance of the <see cref="OneOfSubschemaValidationHandler"/>.
@@ -21,12 +21,6 @@ public class OneOfSubschemaValidationHandler : IChildArrayItemValidationHandler
 
     /// <inheritdoc/>
     public CodeGenerator AppendValidateMethodSetup(CodeGenerator generator, TypeDeclaration typeDeclaration)
-    {
-        return generator;
-    }
-
-    /// <inheritdoc/>
-    public CodeGenerator AppendArrayItemValidationCode(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
         return generator;
     }

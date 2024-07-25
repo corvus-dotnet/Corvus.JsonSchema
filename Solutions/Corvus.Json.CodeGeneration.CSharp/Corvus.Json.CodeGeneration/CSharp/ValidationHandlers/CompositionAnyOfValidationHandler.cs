@@ -53,6 +53,7 @@ public class CompositionAnyOfValidationHandler : KeywordValidationHandlerBase
         var result = new CompositionAnyOfValidationHandler();
         result
             .RegisterChildHandlers(
+                AnyOfConstValidationHandler.Instance,
                 AnyOfSubschemaValidationHandler.Instance);
 
         return result;
