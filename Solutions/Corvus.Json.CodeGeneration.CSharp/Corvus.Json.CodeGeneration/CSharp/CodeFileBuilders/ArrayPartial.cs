@@ -72,6 +72,7 @@ public sealed class ArrayPartial : ICodeFileBuilder
                             .AppendFromValuesFactoryMethod(typeDeclaration)
                             .AppendCreateTupleFactoryMethod(typeDeclaration)
                             .AppendCollectionEnumerableMethods(typeDeclaration)
+                            .AppendTryGetNumericValuesMethod(typeDeclaration)
                             .AppendAsImmutableListMethods()
                             .AppendGetArrayLengthMethod()
                             .AppendEnumerateArrayMethods(typeDeclaration)

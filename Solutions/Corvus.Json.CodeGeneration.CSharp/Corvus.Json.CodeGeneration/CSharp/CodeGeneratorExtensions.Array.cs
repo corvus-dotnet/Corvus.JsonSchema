@@ -118,6 +118,173 @@ internal static partial class CodeGeneratorExtensions
     }
 
     /// <summary>
+    /// Append the TryGetNumericValues() method.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to emit the method.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendTryGetNumericValuesMethod(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.ArrayItemsType() is not ArrayItemsTypeDeclaration arrayItemsType ||
+            arrayItemsType.ReducedType.PreferredDotnetNumericTypeName() is not string preferredNumericTypeName ||
+            typeDeclaration.ArrayRank() is not int arrayRank)
+        {
+            return generator;
+        }
+
+        string arrayItemsTypeName = arrayItemsType.ReducedType.FullyQualifiedDotnetTypeName();
+
+        if (typeDeclaration.ArrayValueBufferSize() is int valueBufferSize)
+        {
+            generator
+                .ReserveName("TryGetNumericValues")
+                .AppendSeparatorLine()
+                .AppendBlockIndent(
+                    """
+                    /// <param name="items">The <see cref="Span{T}"/> to fill with the values in the array.</param>
+                    /// <param name="written">The number of values written.</param>
+                    /// <returns><see langword="true"/> if the array was written successfully, otherwise <see langword="false" />.</returns>
+                    /// <remarks>
+                    /// You can determine the size of the array to fill by interrogating
+                    /// <see cref="ArrayBufferSize"/>
+                    /// </remarks>
+                    """)
+                .AppendLineIndent("public bool TryGetNumericValues(Span<", preferredNumericTypeName, "> items, out int written)")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendLineIndent("if (items.Length < ValueBufferSize)")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent("written = 0;")
+                        .AppendLineIndent("return false;")
+                    .PopIndent()
+                    .AppendLineIndent("}")
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("int index = 0;")
+                    .AppendConditionalBackingValueCallbackIndent(
+                        "Backing.Array",
+                        "arrayBacking",
+                        (g, f) => AppendForArrayBacking(g, f, preferredNumericTypeName, arrayItemsTypeName, arrayRank))
+                    .AppendSeparatorLine()
+                    .AppendConditionalBackingValueCallbackIndent(
+                        "Backing.JsonElement",
+                        "jsonElementBacking",
+                        (g, f) => AppendForJsonElementBacking(g, f, preferredNumericTypeName, arrayItemsTypeName, arrayRank))
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("written = 0;")
+                    .AppendLineIndent("return false;")
+                .PopIndent()
+                .AppendLineIndent("}");
+        }
+
+        return generator;
+
+        static void AppendForJsonElementBacking(CodeGenerator generator, string fieldName, string preferredNumericTypeName, string arrayItemsTypeName, int arrayRank)
+        {
+            generator
+                .AppendLineIndent("if (this.", fieldName, ".ValueKind != JsonValueKind.Number)")
+                .AppendBlockIndent(
+                    """
+                    {
+                        written = 0;
+                        return false;
+                    }
+                    """)
+                .AppendSeparatorLine()
+                .AppendLineIndent("foreach (JsonElement item in this.", fieldName, ".EnumerateArray())")
+                .AppendLineIndent("{")
+                .PushIndent();
+
+            if (arrayRank == 1)
+            {
+                string dotNetTypeName = FormatProviderRegistry.Instance.NumberTypeFormatProviders.GetDotnetTypeNameForCSharpNumericLangwordOrTypeName(preferredNumericTypeName) ?? "Double";
+                generator
+                    .AppendLineIndent(
+                        "if (item.ValueKind != JsonValueKind.Number || !item.TryGet",
+                        dotNetTypeName,
+                        "(out ",
+                        preferredNumericTypeName,
+                        " value))")
+                    .AppendBlockIndent(
+                        """
+                        {
+                            written = 0;
+                            return false;
+                        }
+                        """)
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("items[index++] = value;");
+            }
+            else
+            {
+                generator
+                    .AppendLineIndent(arrayItemsTypeName, " child = ", arrayItemsTypeName, ".FromJson(item);")
+                    .AppendBlockIndent(
+                        """
+                        if (!child.TryGetNumericValues(items[index..], out int writtenChildren))
+                        {
+                            written = 0;
+                            return false;
+                        }
+
+                        index += writtenChildren;
+                        """);
+            }
+
+            generator
+                .PopIndent()
+                .AppendLineIndent("}")
+                .AppendSeparatorLine()
+                .AppendLineIndent("written = index;")
+                .AppendLineIndent("return true;");
+        }
+
+        static void AppendForArrayBacking(CodeGenerator generator, string fieldName, string preferredNumericTypeName, string arrayItemsTypeName, int arrayRank)
+        {
+            generator
+                .AppendLineIndent("foreach (", arrayItemsTypeName, " item in this.", fieldName, ")")
+                .AppendLineIndent("{")
+                .PushIndent();
+
+            if (arrayRank == 1)
+            {
+                generator
+                    .AppendBlockIndent(
+                        """
+                        if (item.ValueKind != JsonValueKind.Number)
+                        {
+                            written = 0;
+                            return false;
+                        }
+                        """)
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("items[index++] = (", preferredNumericTypeName, ")item;");
+            }
+            else
+            {
+                generator
+                    .AppendBlockIndent(
+                        """
+                        if (!item.TryGetNumericValues(items[index..], out int writtenChildren))
+                        {
+                            written = 0;
+                            return false;
+                        }
+
+                        index += writtenChildren;
+                        """);
+            }
+
+            generator
+                .PopIndent()
+                .AppendLineIndent("}")
+                .AppendSeparatorLine()
+                .AppendLineIndent("written = index;")
+                .AppendLineIndent("return true;");
+        }
+    }
+
+    /// <summary>
     /// Append array indexer properties.
     /// </summary>
     /// <param name="generator">The code generator.</param>
@@ -1643,7 +1810,7 @@ internal static partial class CodeGeneratorExtensions
                 ?? throw new InvalidOperationException("Unexpected missing ArrayItemsType() in numeric array build.");
 
         generator
-            .AppendLineIndent("while (index < Dimension)")
+            .AppendLineIndent("while (index < ValueBufferSize)")
             .AppendLineIndent("{")
             .PushIndent();
 
@@ -1655,11 +1822,11 @@ internal static partial class CodeGeneratorExtensions
                 .Append(arrayItemsType.FullyQualifiedDotnetTypeName())
                 .Append(".FromValues(values.Slice(index, ")
                 .Append(arrayItemsType.FullyQualifiedDotnetTypeName())
-                .AppendLine(".Dimension));")
+                .AppendLine(".ValueBufferSize));")
                 .AppendLineIndent("builder.Add(child);")
                 .AppendIndent("index += ")
                 .Append(arrayItemsType.FullyQualifiedDotnetTypeName())
-                .AppendLine(".Dimension;");
+                .AppendLine(".ValueBufferSize;");
         }
         else
         {
