@@ -22,7 +22,7 @@ public sealed class DocumentationNameHeuristic : INameHeuristicBeforeSubschema
     public bool IsOptional => true;
 
     /// <inheritdoc/>
-    public uint Priority => 1500;
+    public uint Priority => 5_000;
 
     /// <inheritdoc/>
     public bool TryGetName(TypeDeclaration typeDeclaration, JsonReferenceBuilder reference, Span<char> typeNameBuffer, out int written)

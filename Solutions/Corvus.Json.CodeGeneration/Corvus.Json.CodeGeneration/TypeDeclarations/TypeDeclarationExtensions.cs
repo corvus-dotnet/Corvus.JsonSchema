@@ -261,22 +261,6 @@ public static class TypeDeclarationExtensions
     }
 
     /// <summary>
-    /// Gets a value indicating whether the type requires number value validation.
-    /// </summary>
-    /// <param name="that">The type declaration to test.</param>
-    /// <returns><see langword="true"/> if the type declaration requires number value validation.</returns>
-    public static bool RequiresNumberValueValidation(this TypeDeclaration that)
-    {
-        if (!that.TryGetMetadata(nameof(RequiresNumberValueValidation), out bool? result))
-        {
-            result = that.Keywords().OfType<INumberValueValidationKeyword>().Any();
-            that.SetMetadata(nameof(RequiresNumberValueValidation), result);
-        }
-
-        return result ?? false;
-    }
-
-    /// <summary>
     /// Gets the reduced type declaration for the type.
     /// </summary>
     /// <param name="that">The type declaration to reduce.</param>

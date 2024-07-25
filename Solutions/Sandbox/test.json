@@ -1,0 +1,17 @@
+{
+    "type": "array",
+    "prefixItems": [
+        {
+            "$corvusTypeName": "PositiveInt32",
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+        },
+        { "type": "string" },
+        {
+            "type": "string",
+            "format": "date-time"
+        }
+    ],
+    "unevaluatedItems": false
+}

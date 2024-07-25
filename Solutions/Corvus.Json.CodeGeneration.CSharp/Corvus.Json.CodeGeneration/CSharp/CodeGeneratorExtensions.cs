@@ -2140,9 +2140,18 @@ internal static partial class CodeGeneratorExtensions
                 .AppendIndent(parameter.Type);
         }
 
-        return generator
+        generator
             .Append(' ')
             .Append(name);
+
+        if (!string.IsNullOrEmpty(parameter.DefaultValue))
+        {
+            generator
+                .Append(" = ")
+                .Append(parameter.DefaultValue);
+        }
+
+        return generator;
     }
 
     /// <summary>
@@ -2164,10 +2173,19 @@ internal static partial class CodeGeneratorExtensions
                 .Append(' ');
         }
 
-        return generator
+        generator
             .Append(parameter.Type)
             .Append(' ')
             .Append(name);
+
+        if (!string.IsNullOrEmpty(parameter.DefaultValue))
+        {
+            generator
+                .Append(" = ")
+                .Append(parameter.DefaultValue);
+        }
+
+        return generator;
     }
 
     /// <summary>

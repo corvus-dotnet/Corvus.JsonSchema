@@ -170,15 +170,12 @@ public static partial class ValidationCodeGeneratorExtensions
             generator
                 .ReserveName("objectEnumerator");
 
-            AppendObjectEnumerator(generator, typeDeclaration, "objectEnumerator");
-
             generator
-                .AppendLineIndent("while (objectEnumerator.MoveNext())")
+                .AppendIndent("foreach (")
+                .AppendJsonObjectPropertyType(typeDeclaration)
+                .AppendLine(" property in value.EnumerateObject())")
                 .AppendLineIndent("{")
-                .PushIndent()
-                    .AppendLineIndent(
-                        (CodeGenerator.Segment)(g => g.AppendJsonObjectPropertyType(typeDeclaration)),
-                        " property = objectEnumerator.Current;");
+                .PushIndent();
 
             if (children
                     .OfType<IChildObjectPropertyValidationHandler>()
