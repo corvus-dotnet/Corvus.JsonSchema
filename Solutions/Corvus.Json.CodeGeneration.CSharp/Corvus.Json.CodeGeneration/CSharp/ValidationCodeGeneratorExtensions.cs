@@ -566,7 +566,7 @@ public static partial class ValidationCodeGeneratorExtensions
 
         return generator
             .AppendSeparatorLine()
-            .BeginPrivateStaticPartialClassDeclaration(validationClassName);
+            .BeginReservedPrivateStaticPartialClassDeclaration(validationClassName);
     }
 
     private static CodeGenerator EndValidationClass(this CodeGenerator generator)

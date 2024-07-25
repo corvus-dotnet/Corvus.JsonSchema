@@ -63,6 +63,49 @@ internal static partial class CodeGeneratorExtensions
     }
 
     /// <summary>
+    /// Append the object property count property.
+    /// </summary>
+    /// <param name="generator">The generator to which to append the properties.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendPropertyCount(this CodeGenerator generator)
+    {
+        return generator
+            .ReserveNameIfNotReserved("Count")
+            .AppendLineIndent("/// <summary>")
+            .AppendLineIndent("/// Gets the number of properties in the object.")
+            .AppendLineIndent("/// </summary>")
+            .AppendLineIndent("public int Count")
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendLineIndent("get")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendConditionalBackingValueCallbackIndent("Backing.JsonElement", "jsonElementBacking", CountProperties)
+                    .AppendConditionalWrappedBackingValueLineIndent("Backing.Object", "return ", "objectBacking", ".Count;")
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("throw new InvalidOperationException();")
+                .PopIndent()
+                .AppendLineIndent("}")
+            .PopIndent()
+            .AppendLineIndent("}");
+
+        static void CountProperties(CodeGenerator generator, string fieldName)
+        {
+            generator
+                .AppendLineIndent("int count = 0;")
+                .AppendIndent("foreach (var _ in this.")
+                .Append(fieldName)
+                .AppendLine(".EnumerateObject())")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendLineIndent("count++;")
+                .PopIndent()
+                .AppendLineIndent("}")
+                .AppendLineIndent("return count;");
+        }
+    }
+
+    /// <summary>
     /// Append the dictionary enumerable methods.
     /// </summary>
     /// <param name="generator">The generator to which to append the methods.</param>
@@ -1439,34 +1482,6 @@ internal static partial class CodeGeneratorExtensions
         return generator
             .AppendIndent("int IReadOnlyCollection<KeyValuePair<JsonPropertyName, ")
             .Append(propertyTypeName)
-            .AppendLine(">>.Count")
-            .AppendLineIndent("{")
-            .PushIndent()
-                .AppendLineIndent("get")
-                .AppendLineIndent("{")
-                .PushIndent()
-                    .AppendConditionalBackingValueCallbackIndent("Backing.JsonElement", "jsonElementBacking", CountProperties)
-                    .AppendConditionalWrappedBackingValueLineIndent("Backing.Object", "return ", "objectBacking", ".Count;")
-                    .AppendSeparatorLine()
-                    .AppendLineIndent("throw new InvalidOperationException();")
-                .PopIndent()
-                .AppendLineIndent("}")
-            .PopIndent()
-            .AppendLineIndent("}");
-
-        static void CountProperties(CodeGenerator generator, string fieldName)
-        {
-            generator
-                .AppendLineIndent("int count = 0;")
-                .AppendIndent("foreach (var _ in this.")
-                .Append(fieldName)
-                .AppendLine(".EnumerateObject())")
-                .AppendLineIndent("{")
-                .PushIndent()
-                    .AppendLineIndent("count++;")
-                .PopIndent()
-                .AppendLineIndent("}")
-                .AppendLineIndent("return count;");
-        }
+            .AppendLine(">>.Count => this.Count;");
     }
 }

@@ -9,11 +9,6 @@ namespace Corvus.Json.CodeGeneration.CSharp;
 /// </summary>
 public sealed class ValidatePartial : ICodeFileBuilder
 {
-    /// <summary>
-    /// The base name of the validation constants class.
-    /// </summary>
-    public const string ValidationConstantsClassBaseName = "CorvusValidationConstants";
-
     private ValidatePartial()
     {
     }
