@@ -107,7 +107,7 @@ public sealed class DependentSchemasKeyword
                 JsonReference subschemaLocation = KeywordPathReference.AppendUnencodedPropertyNameToFragment(property.Name);
                 if (typeDeclaration.SubschemaTypeDeclarations.TryGetValue(subschemaLocation.ToString(), out TypeDeclaration? subschemaTypeDeclaration))
                 {
-                    declarations.Add(new(this, property.Name, subschemaTypeDeclaration));
+                    declarations.Add(new(this, Uri.UnescapeDataString(property.Name), subschemaTypeDeclaration));
                 }
             }
         }

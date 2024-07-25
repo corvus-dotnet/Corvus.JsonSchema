@@ -10,7 +10,7 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 /// The dependencies keyword.
 /// </summary>
 public sealed class DependenciesKeyword
-    : ISubschemaTypeBuilderKeyword, ILocalSubschemaRegistrationKeyword, IPropertyProviderKeyword, IObjectPropertyDependentSchemasValidationKeyword
+    : ISubschemaTypeBuilderKeyword, ILocalSubschemaRegistrationKeyword, IPropertyProviderKeyword, IObjectPropertyDependentSchemasValidationKeyword, IObjectDependentRequiredValidationKeyword
 {
     private const string KeywordPath = "#/dependencies";
     private static readonly JsonReference KeywordPathReference = new(KeywordPath);
@@ -110,6 +110,38 @@ public sealed class DependenciesKeyword
                 if (typeDeclaration.SubschemaTypeDeclarations.TryGetValue(subschemaLocation.ToString(), out TypeDeclaration? subschemaTypeDeclaration))
                 {
                     declarations.Add(new(this, property.Name, subschemaTypeDeclaration));
+                }
+            }
+        }
+
+        return declarations;
+    }
+
+    /// <inheritdoc/>
+    public string GetPathModifier(DependentRequiredDeclaration dependentRequired, int index)
+    {
+        return KeywordPathReference.AppendArrayIndexToFragment(index);
+    }
+
+    /// <inheritdoc/>
+    public IReadOnlyCollection<DependentRequiredDeclaration> GetDependentRequiredDeclarations(TypeDeclaration typeDeclaration)
+    {
+        List<DependentRequiredDeclaration> declarations = [];
+
+        if (typeDeclaration.TryGetKeyword(this, out JsonElement value) &&
+            value.ValueKind == JsonValueKind.Object)
+        {
+            foreach (JsonProperty property in value.EnumerateObject())
+            {
+                if (property.Value.ValueKind == JsonValueKind.Array)
+                {
+                    declarations.Add(
+                        new(
+                            this,
+                            Uri.UnescapeDataString(property.Name),
+                            property.Value.EnumerateArray()
+                                .Select(a => Uri.UnescapeDataString(a.GetString()!))
+                                .ToList()));
                 }
             }
         }
