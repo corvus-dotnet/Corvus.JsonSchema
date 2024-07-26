@@ -155,6 +155,7 @@ public class NumberRangeValidationHandler : IChildValidationHandler
                 .PushIndent()
                 .AppendLineIndent("? BinaryJsonNumber.Compare(value.AsJsonElement, ", memberName, ")")
                 .AppendIndent(": BinaryJsonNumber.Compare(value.AsBinaryJsonNumber, ", memberName, "))")
+                .PopIndent()
                 .AppendOperator(op)
                 .Append(" 0")
                 .AppendLine(")");
