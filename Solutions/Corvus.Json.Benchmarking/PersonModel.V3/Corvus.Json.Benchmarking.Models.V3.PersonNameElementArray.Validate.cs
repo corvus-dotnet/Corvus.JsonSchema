@@ -14,34 +14,109 @@ using Corvus.Json;
 
 namespace Corvus.Json.Benchmarking.Models.V3;
 
-        /// <summary>
-        /// Generated from JSON Schema.
-        /// </summary>
-        public readonly partial struct PersonNameElementArray
+/// <summary>
+/// Generated from JSON Schema.
+/// </summary>
+public readonly partial struct PersonNameElementArray
+{
+    /// <inheritdoc/>
+    public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
+    {
+        ValidationContext result = validationContext;
+        if (level > ValidationLevel.Flag)
         {
-            /// <inheritdoc/>
-            public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
+            result = result.UsingResults();
+        }
+
+        if (level > ValidationLevel.Basic)
+        {
+            result = result.UsingStack();
+            result = result.PushSchemaLocation("#/$defs/PersonNameElementArray");
+        }
+
+        JsonValueKind valueKind = this.ValueKind;
+        result = CorvusValidation.TypeValidationHandler(this, valueKind, result, level);
+        if (level == ValidationLevel.Flag && !result.IsValid)
+        {
+            return result;
+        }
+
+        result = CorvusValidation.ArrayValidationHandler(this, valueKind, result, level);
+        if (level == ValidationLevel.Flag && !result.IsValid)
+        {
+            return result;
+        }
+
+        if (level > ValidationLevel.Basic)
+        {
+            result = result.PopLocation();
+        }
+
+        return result;
+    }
+
+    private static partial class CorvusValidation
+    {
+        public static ValidationContext TypeValidationHandler(
+            in PersonNameElementArray value,
+            JsonValueKind valueKind,
+            in ValidationContext validationContext,
+            ValidationLevel level = ValidationLevel.Flag)
+        {
+            ValidationContext result = validationContext;
+            bool isValid = false;
+            ValidationContext localResultArray = Corvus.Json.Validate.TypeArray(valueKind, result.CreateChildContext(), level);
+            if (level == ValidationLevel.Flag && localResultArray.IsValid)
             {
-                ValidationContext result = validationContext;
-                if (level > ValidationLevel.Flag)
+                return validationContext;
+            }
+
+            if (localResultArray.IsValid)
+            {
+                isValid = true;
+            }
+
+            return result.MergeResults(
+                isValid,
+                level,
+                localResultArray);
+        }
+
+        public static ValidationContext ArrayValidationHandler(
+            in PersonNameElementArray value,
+            JsonValueKind valueKind,
+            in ValidationContext validationContext,
+            ValidationLevel level = ValidationLevel.Flag)
+        {
+            ValidationContext result = validationContext;
+            if (valueKind != JsonValueKind.Array)
+            {
+                if (level == ValidationLevel.Verbose)
                 {
-                    result = result.UsingResults();
+                    ValidationContext ignoredResult = validationContext;
+                    ignoredResult = ignoredResult.PushValidationLocationProperty("items");
+                    ignoredResult = ignoredResult.WithResult(isValid: true, "Validation items - ignored because the value is not an array");
+                    ignoredResult = ignoredResult.PopLocation();
+                    return ignoredResult;
                 }
 
+                return validationContext;
+            }
+
+            int length = 0;
+            using JsonArrayEnumerator<Corvus.Json.Benchmarking.Models.V3.PersonNameElement> arrayEnumerator = value.EnumerateArray();
+            while (arrayEnumerator.MoveNext())
+            {
                 if (level > ValidationLevel.Basic)
                 {
-                    result = result.UsingStack();
-                    result = result.PushSchemaLocation("#/$defs/PersonNameElementArray");
+                    result = result.PushDocumentArrayIndex(length);
                 }
-
-                JsonValueKind valueKind = this.ValueKind;
-                result = CorvusValidation.TypeValidationHandler(this, valueKind, result, level);
-                if (level == ValidationLevel.Flag && !result.IsValid)
+                if (level > ValidationLevel.Basic)
                 {
-                    return result;
+                    result = result.PushValidationLocationReducedPathModifier(new("#/items/$ref"));
                 }
 
-                result = CorvusValidation.ArrayValidationHandler(this, valueKind, result, level);
+                result = arrayEnumerator.Current.Validate(result, level);
                 if (level == ValidationLevel.Flag && !result.IsValid)
                 {
                     return result;
@@ -52,91 +127,16 @@ namespace Corvus.Json.Benchmarking.Models.V3;
                     result = result.PopLocation();
                 }
 
-                return result;
-            }
-
-            private static partial class CorvusValidation
-            {
-                public static ValidationContext TypeValidationHandler(
-                    in PersonNameElementArray value,
-                    JsonValueKind valueKind,
-                    in ValidationContext validationContext,
-                    ValidationLevel level = ValidationLevel.Flag)
+                result = result.WithLocalItemIndex(length);
+                if (level > ValidationLevel.Basic)
                 {
-                    ValidationContext result = validationContext;
-                    bool isValid = false;
-                    ValidationContext localResultArray = Corvus.Json.Validate.TypeArray(valueKind, result.CreateChildContext(), level);
-                    if (level == ValidationLevel.Flag && localResultArray.IsValid)
-                    {
-                        return validationContext;
-                    }
-
-                    if (localResultArray.IsValid)
-                    {
-                        isValid = true;
-                    }
-
-                    return result.MergeResults(
-                        isValid,
-                        level,
-                        localResultArray);
+                    result = result.PopLocation();
                 }
 
-                public static ValidationContext ArrayValidationHandler(
-                    in PersonNameElementArray value,
-                    JsonValueKind valueKind,
-                    in ValidationContext validationContext,
-                    ValidationLevel level = ValidationLevel.Flag)
-                {
-                    ValidationContext result = validationContext;
-                    if (valueKind != JsonValueKind.Array)
-                    {
-                        if (level == ValidationLevel.Verbose)
-                        {
-                            ValidationContext ignoredResult = validationContext;
-                            ignoredResult = ignoredResult.PushValidationLocationProperty("items");
-                            ignoredResult = ignoredResult.WithResult(isValid: true, "Validation items - ignored because the value is not an array");
-                            ignoredResult = ignoredResult.PopLocation();
-                            return ignoredResult;
-                        }
-
-                        return validationContext;
-                    }
-
-                    int length = 0;
-                    using JsonArrayEnumerator<Corvus.Json.Benchmarking.Models.V3.PersonNameElement> arrayEnumerator = value.EnumerateArray();
-                    while (arrayEnumerator.MoveNext())
-                    {
-                        if (level > ValidationLevel.Basic)
-                        {
-                            result = result.PushDocumentArrayIndex(length);
-                        }
-                        if (level > ValidationLevel.Basic)
-                        {
-                            result = result.PushValidationLocationReducedPathModifier(new("#/items/$ref"));
-                        }
-
-                        result = arrayEnumerator.Current.Validate(result, level);
-                        if (level == ValidationLevel.Flag && !result.IsValid)
-                        {
-                            return result;
-                        }
-
-                        if (level > ValidationLevel.Basic)
-                        {
-                            result = result.PopLocation();
-                        }
-
-                        result = result.WithLocalItemIndex(length);
-                        if (level > ValidationLevel.Basic)
-                        {
-                            result = result.PopLocation();
-                        }
-
-                        length++;
-                    }
-
-                    return result;
-                }
+                length++;
             }
+
+            return result;
         }
+    }
+}

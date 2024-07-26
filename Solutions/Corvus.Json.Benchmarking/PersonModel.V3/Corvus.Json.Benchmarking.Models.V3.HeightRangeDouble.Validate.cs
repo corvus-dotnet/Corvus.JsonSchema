@@ -113,77 +113,77 @@ public readonly partial struct HeightRangeDouble
             if ((value.HasJsonElementBacking
                 ? BinaryJsonNumber.Compare(value.AsJsonElement, Maximum)
                 : BinaryJsonNumber.Compare(value.AsBinaryJsonNumber, Maximum))<= 0)
+            {
+                if (level == ValidationLevel.Verbose)
                 {
-                    if (level == ValidationLevel.Verbose)
-                    {
-                        result = result.PushValidationLocationProperty("maximum");
-                        result = result.WithResult(isValid: true, $"Validation maximum - {value} is less than or equal to {Maximum}");
-                        result = result.PopLocation();
-                    }
+                    result = result.PushValidationLocationProperty("maximum");
+                    result = result.WithResult(isValid: true, $"Validation maximum - {value} is less than or equal to {Maximum}");
+                    result = result.PopLocation();
+                }
+            }
+            else
+            {
+                if (level >= ValidationLevel.Basic)
+                {
+                    result = result.PushValidationLocationProperty("maximum");
+                }
+
+                if (level >= ValidationLevel.Detailed)
+                {
+                    result = result.WithResult(isValid: false, $"Validation maximum - {value} is greater than {Maximum}");
+                }
+                else if (level >= ValidationLevel.Basic)
+                {
+                    result = result.WithResult(isValid: false, "Validation maximum - is greater than the required value.");
                 }
                 else
                 {
-                    if (level >= ValidationLevel.Basic)
-                    {
-                        result = result.PushValidationLocationProperty("maximum");
-                    }
-
-                    if (level >= ValidationLevel.Detailed)
-                    {
-                        result = result.WithResult(isValid: false, $"Validation maximum - {value} is greater than {Maximum}");
-                    }
-                    else if (level >= ValidationLevel.Basic)
-                    {
-                        result = result.WithResult(isValid: false, "Validation maximum - is greater than the required value.");
-                    }
-                    else
-                    {
-                        return result.WithResult(isValid: false);
-                    }
-
-                    if (level >= ValidationLevel.Basic)
-                    {
-                        result = result.PopLocation();
-                    }
+                    return result.WithResult(isValid: false);
                 }
 
-                if ((value.HasJsonElementBacking
-                    ? BinaryJsonNumber.Compare(value.AsJsonElement, Minimum)
-                    : BinaryJsonNumber.Compare(value.AsBinaryJsonNumber, Minimum))>= 0)
-                    {
-                        if (level == ValidationLevel.Verbose)
-                        {
-                            result = result.PushValidationLocationProperty("minimum");
-                            result = result.WithResult(isValid: true, $"Validation minimum - {value} is greater than or equal to {Minimum}");
-                            result = result.PopLocation();
-                        }
-                    }
-                    else
-                    {
-                        if (level >= ValidationLevel.Basic)
-                        {
-                            result = result.PushValidationLocationProperty("minimum");
-                        }
-
-                        if (level >= ValidationLevel.Detailed)
-                        {
-                            result = result.WithResult(isValid: false, $"Validation minimum - {value} is less than {Minimum}");
-                        }
-                        else if (level >= ValidationLevel.Basic)
-                        {
-                            result = result.WithResult(isValid: false, "Validation minimum - is less than the required value.");
-                        }
-                        else
-                        {
-                            return result.WithResult(isValid: false);
-                        }
-
-                        if (level >= ValidationLevel.Basic)
-                        {
-                            result = result.PopLocation();
-                        }
-                    }
-                    return result;
+                if (level >= ValidationLevel.Basic)
+                {
+                    result = result.PopLocation();
                 }
             }
+
+            if ((value.HasJsonElementBacking
+                ? BinaryJsonNumber.Compare(value.AsJsonElement, Minimum)
+                : BinaryJsonNumber.Compare(value.AsBinaryJsonNumber, Minimum))>= 0)
+            {
+                if (level == ValidationLevel.Verbose)
+                {
+                    result = result.PushValidationLocationProperty("minimum");
+                    result = result.WithResult(isValid: true, $"Validation minimum - {value} is greater than or equal to {Minimum}");
+                    result = result.PopLocation();
+                }
+            }
+            else
+            {
+                if (level >= ValidationLevel.Basic)
+                {
+                    result = result.PushValidationLocationProperty("minimum");
+                }
+
+                if (level >= ValidationLevel.Detailed)
+                {
+                    result = result.WithResult(isValid: false, $"Validation minimum - {value} is less than {Minimum}");
+                }
+                else if (level >= ValidationLevel.Basic)
+                {
+                    result = result.WithResult(isValid: false, "Validation minimum - is less than the required value.");
+                }
+                else
+                {
+                    return result.WithResult(isValid: false);
+                }
+
+                if (level >= ValidationLevel.Basic)
+                {
+                    result = result.PopLocation();
+                }
+            }
+            return result;
         }
+    }
+}

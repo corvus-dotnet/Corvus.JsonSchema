@@ -241,6 +241,7 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
         Debug.Assert(this.currentTypeDeclarationFiles is not null, "The type declaration has been ended out-of-sequence.");
         Debug.Assert(this.currentTypeDeclaration == typeDeclaration, "A file has been ended out-of-sequence for the current type declaration.");
         Debug.Assert(this.currentFileBuilderName == fileSuffix, "A file has been ended out-of-sequence.");
+        Debug.Assert(this.indentationLevel == 0, "Mismatched indents in file.");
 
         this.currentTypeDeclarationFiles.Add(this.currentFileBuilderName, this.ToString());
         return this;
