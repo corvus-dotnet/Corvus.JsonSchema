@@ -849,7 +849,7 @@ internal static partial class CodeGeneratorExtensions
             .AppendLineIndent("/// </summary>");
 
         bool usingRemarks = false;
-        if (required)
+        if (!required)
         {
             usingRemarks = true;
 
