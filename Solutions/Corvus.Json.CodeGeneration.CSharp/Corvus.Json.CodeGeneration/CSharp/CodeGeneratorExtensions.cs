@@ -497,6 +497,41 @@ internal static partial class CodeGeneratorExtensions
     }
 
     /// <summary>
+    /// Append the static property which provides a const instance of the type declaration.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to emit the property.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendConstInstanceStaticProperty(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.Keywords().OfType<ISingleConstantValidationKeyword>().FirstOrDefault()
+            is ISingleConstantValidationKeyword keyword)
+        {
+            string validationClassName = generator.ValidationClassName();
+            string constantFieldName =
+                generator.GetStaticReadOnlyFieldNameInScope(
+                    keyword.Keyword,
+                    rootScope: generator.ValidationClassScope());
+
+            generator
+                .ReserveName("ConstInstance")
+                .AppendSeparatorLine()
+                .AppendBlockIndent(
+                """
+                /// <summary>
+                /// Gets the const instance.
+                /// </summary>
+                """)
+                .AppendIndent("public static ")
+                .Append(typeDeclaration.DotnetTypeName())
+                .Append(" ConstInstance => ")
+                .AppendLine(validationClassName, ".", constantFieldName, ";");
+        }
+
+        return generator;
+    }
+
+    /// <summary>
     /// Append the property which converts this instance to a JsonAny instance.
     /// </summary>
     /// <param name="generator">The code generator.</param>
@@ -1725,7 +1760,7 @@ internal static partial class CodeGeneratorExtensions
                 /// <summary>
                 /// Equality comparison.
                 /// </summary>
-                /// <param name = "other">The other item with which to compare.</param>
+                /// <param name="other">The other item with which to compare.</param>
                 /// <returns><see langword="true"/> if the values were equal.</returns>
                 """)
             .AppendIndent("public bool Equals(in ")
@@ -2140,6 +2175,12 @@ internal static partial class CodeGeneratorExtensions
                 .AppendIndent(parameter.Type);
         }
 
+        if (parameter.TypeIsNullable)
+        {
+            generator
+                .Append('?');
+        }
+
         generator
             .Append(' ')
             .Append(name);
@@ -2174,7 +2215,15 @@ internal static partial class CodeGeneratorExtensions
         }
 
         generator
-            .Append(parameter.Type)
+            .Append(parameter.Type);
+
+        if (parameter.TypeIsNullable)
+        {
+            generator
+                .Append('?');
+        }
+
+        generator
             .Append(' ')
             .Append(name);
 
@@ -2736,6 +2785,33 @@ internal static partial class CodeGeneratorExtensions
 
         return generator
             .AppendLine(";");
+    }
+
+    /// <summary>
+    /// Gets the name for a parameter.
+    /// </summary>
+    /// <param name="generator">The generator from which to get the name.</param>
+    /// <param name="baseName">The base name.</param>
+    /// <param name="childScope">The (optional) child scope from the root scope.</param>
+    /// <param name="rootScope">The (optional) root scope overriding the current scope.</param>
+    /// <param name="prefix">The (optional) prefix for the name.</param>
+    /// <param name="suffix">The (optional) suffix for the name.</param>
+    /// <returns>A unique name in the scope.</returns>
+    public static string GetParameterNameInScope(
+        this CodeGenerator generator,
+        string baseName,
+        string? childScope = null,
+        string? rootScope = null,
+        string? prefix = null,
+        string? suffix = null)
+    {
+        return generator.GetOrAddMemberName(
+            new CSharpMemberName(
+                generator.GetChildScope(childScope, rootScope),
+                baseName,
+                Casing.CamelCase,
+                prefix,
+                suffix));
     }
 
     /// <summary>

@@ -32,10 +32,14 @@ public abstract class MemberName(
     public Casing Casing { get; } = casing;
 
     /// <summary>
+    /// Gets the invariant base name for the member.
+    /// </summary>
+    public string BaseNameLowerInvariant { get; } = baseName.ToLowerInvariant();
+
+    /// <summary>
     /// Gets the base name for the member.
     /// </summary>
-    public string BaseName =>
-        baseName;
+    public string BaseName => baseName;
 
     /// <summary>
     /// Gets the prefix for the name.
@@ -67,7 +71,7 @@ public abstract class MemberName(
         }
 
         return
-            this.BaseName == other.BaseName &&
+            this.BaseNameLowerInvariant == other.BaseNameLowerInvariant &&
             this.Casing == other.Casing &&
             this.Prefix == other.Prefix &&
             this.Suffix == other.Suffix &&
@@ -78,7 +82,7 @@ public abstract class MemberName(
     public override int GetHashCode()
     {
         return HashCode.Combine(
-            this.BaseName,
+            this.BaseNameLowerInvariant,
             this.Casing,
             this.Prefix,
             this.Suffix,

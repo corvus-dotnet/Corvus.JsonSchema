@@ -141,11 +141,7 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
                     currentTask.Increment(1);
                     try
                     {
-                        string source =
-                            SyntaxFactory.ParseCompilationUnit(generatedCodeFile.FileContent)
-                             .NormalizeWhitespace()
-                             .GetText()
-                             .ToString();
+                        string source = generatedCodeFile.FileContent;
 
                         string outputFile = Path.Combine(outputPath, generatedCodeFile.FileName);
                         File.WriteAllText(outputFile, source);
