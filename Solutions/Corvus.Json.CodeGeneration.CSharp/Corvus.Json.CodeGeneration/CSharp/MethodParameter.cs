@@ -18,12 +18,14 @@ public readonly struct MethodParameter
     /// <param name="modifiers">The parameter modifiers.</param>
     /// <param name="type">The parameter type.</param>
     /// <param name="parameterName">The specific (reserved) parameter name.</param>
+    /// <param name="typeIsNullable">If true, the type is nullable.</param>
     /// <param name="defaultValue">The (optional) default value for the parameter.</param>
-    public MethodParameter(string modifiers, string type, string parameterName, string? defaultValue = null)
+    public MethodParameter(string modifiers, string type, string parameterName, bool typeIsNullable = false, string? defaultValue = null)
     {
         this.Modifiers = modifiers;
         this.Type = type;
         this.specificParameterName = parameterName;
+        this.TypeIsNullable = typeIsNullable;
         this.DefaultValue = defaultValue;
     }
 
@@ -48,9 +50,14 @@ public readonly struct MethodParameter
     public string Modifiers { get; }
 
     /// <summary>
-    /// Gets the type and modifiers for the parameter.
+    /// Gets the type for the parameter.
     /// </summary>
     public string Type { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether the type is nullable.
+    /// </summary>
+    public bool TypeIsNullable { get; }
 
     /// <summary>
     /// Gets the (optional) default value for the parameter.
@@ -69,10 +76,16 @@ public readonly struct MethodParameter
     public static implicit operator MethodParameter((string TypeAndModifiers, string ParameterName) tuple) => new(string.Empty, tuple.TypeAndModifiers, tuple.ParameterName);
 
     /// <summary>
+    /// Implicit conversion from type, modifiers, parameter name, nullability and default value.
+    /// </summary>
+    /// <param name="tuple">The tuple from which to convert.</param>
+    public static implicit operator MethodParameter((string TypeAndModifiers, string ParameterName, bool TypeIsNullable, string DefaultValue) tuple) => new(string.Empty, tuple.TypeAndModifiers, tuple.ParameterName, tuple.TypeIsNullable, tuple.DefaultValue);
+
+    /// <summary>
     /// Implicit conversion from type, modifiers, parameter name and default value.
     /// </summary>
     /// <param name="tuple">The tuple from which to convert.</param>
-    public static implicit operator MethodParameter((string TypeAndModifiers, string ParameterName, string DefaultValue) tuple) => new(string.Empty, tuple.TypeAndModifiers, tuple.ParameterName, tuple.DefaultValue);
+    public static implicit operator MethodParameter((string TypeAndModifiers, string ParameterName, string DefaultValue) tuple) => new(string.Empty, tuple.TypeAndModifiers, tuple.ParameterName, defaultValue: tuple.DefaultValue);
 
     /// <summary>
     /// Implicit conversion from type, modifiers and parameter name.
@@ -102,7 +115,7 @@ public readonly struct MethodParameter
         {
             if (isDeclaration)
             {
-                generator.ReserveName(specificName);
+                generator.ReserveNameIfNotReserved(specificName);
             }
 
             return specificName;

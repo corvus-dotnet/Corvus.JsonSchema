@@ -543,8 +543,8 @@ internal static partial class CodeGeneratorExtensions
                 /// Builds an <see cref = "ImmutableList{JsonAny}"/> from the array, replacing the item at the specified index with the given item.
                 /// </summary>
                 /// <param name="arrayInstance">The array instance.</param>
-                /// <param name = "index">The index at which to add the element.</param>
-                /// <param name = "value">The value to add.</param>
+                /// <param name="index">The index at which to add the element.</param>
+                /// <param name="value">The value to add.</param>
                 /// <returns>An immutable list containing the contents of the list, with the specified item at the index.</returns>
                 /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
                 /// <exception cref = "IndexOutOfRangeException">Thrown if the range is beyond the bounds of the array.</exception>
@@ -567,8 +567,8 @@ internal static partial class CodeGeneratorExtensions
                 /// Builds an <see cref = "ImmutableList{JsonAny}"/> from the array, removing the first item that equals the given value, and replacing it with the specified item.
                 /// </summary>
                 /// <param name="arrayInstance">The array instance.</param>
-                /// <param name = "oldItem">The item to remove.</param>
-                /// <param name = "newItem">The item to insert.</param>
+                /// <param name="oldItem">The item to remove.</param>
+                /// <param name="newItem">The item to insert.</param>
                 /// <returns>An immutable list containing the contents of the list, without the first instance that matches the old item, replacing it with the new item.</returns>
                 /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
                 """)
@@ -590,7 +590,7 @@ internal static partial class CodeGeneratorExtensions
                 /// Builds an <see cref = "ImmutableList{JsonAny}"/> from the array, removing the first item arrayInstance equals the given value.
                 /// </summary>
                 /// <param name="arrayInstance">The array instance.</param>
-                /// <param name = "item">The item to remove.</param>
+                /// <param name="item">The item to remove.</param>
                 /// <returns>An immutable list containing the contents of the list, without the first instance arrayInstance matches the given item.</returns>
                 /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
                 """)
@@ -612,8 +612,8 @@ internal static partial class CodeGeneratorExtensions
                 /// Builds an <see cref = "ImmutableList{JsonAny}"/> from the array, removing the given range.
                 /// </summary>
                 /// <param name="arrayInstance">The array instance.</param>
-                /// <param name = "index">The start index of the range to remove.</param>
-                /// <param name = "count">The length of the range to remove.</param>
+                /// <param name="index">The start index of the range to remove.</param>
+                /// <param name="count">The length of the range to remove.</param>
                 /// <returns>An immutable list containing the contents of the list, without the given range of items.</returns>
                 /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
                 /// <exception cref = "IndexOutOfRangeException">Thrown if the range is beyond the bounds of the array.</exception>
@@ -636,8 +636,8 @@ internal static partial class CodeGeneratorExtensions
                 // Builds an <see cref = "ImmutableList{JsonAny}"/> from the array, inserting the given item at the index.
                 // </summary>
                 // <param name="arrayInstance">The array instance.</param>
-                // <param name = "index">The index at which to add the element.</param>
-                // <param name = "value">The value to add.</param>
+                // <param name="index">The index at which to add the element.</param>
+                // <param name="value">The value to add.</param>
                 // <returns>An immutable list containing the contents of the list, without the array.</returns>
                 // <exception cref = "InvalidOperationException">The value is not an array.</exception>
                 // <exception cref = "IndexOutOfRangeException">Thrown if the range is beyond the bounds of the array.</exception>
@@ -661,8 +661,8 @@ internal static partial class CodeGeneratorExtensions
                 /// given index.
                 /// </summary>
                 /// <param name="arrayInstance">The array instance.</param>
-                /// <param name = "index">The index at which to add the element.</param>
-                /// <param name = "values">The values to add.</param>
+                /// <param name="index">The index at which to add the element.</param>
+                /// <param name="values">The values to add.</param>
                 /// <returns>An immutable list containing the contents of the list, without the array.</returns>
                 /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
                 /// <exception cref = "IndexOutOfRangeException">Thrown if the range is beyond the bounds of the array.</exception>
@@ -1427,8 +1427,8 @@ internal static partial class CodeGeneratorExtensions
             /// <summary>
             /// Create an array from the given items.
             /// </summary>
-            /// <typeparam name = "T">The type of the <paramref name = "items"/> from which to create the array.</typeparam>
-            /// <param name = "items">The items from which to create the array.</param>
+            /// <typeparam name="T">The type of the <paramref name = "items"/> from which to create the array.</typeparam>
+            /// <param name="items">The items from which to create the array.</param>
             /// <returns>The new array created from the items.</returns>
             /// <remarks>
             /// This will serialize the items to create the underlying array. Note the

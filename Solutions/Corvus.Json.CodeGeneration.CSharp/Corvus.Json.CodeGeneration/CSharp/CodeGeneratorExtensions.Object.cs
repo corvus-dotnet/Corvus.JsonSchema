@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Text.Json;
 using Microsoft.CodeAnalysis.CSharp;
 
 namespace Corvus.Json.CodeGeneration.CSharp;
@@ -376,6 +377,155 @@ internal static partial class CodeGeneratorExtensions
         }
 
         return generator;
+    }
+
+    /// <summary>
+    /// Append the <c>Create()</c> factory method.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to emit the create factory method.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendCreateFactoryMethod(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (!typeDeclaration.HasPropertyDeclarations)
+        {
+            return generator;
+        }
+
+        MethodParameter[] methodParameters = BuildMethodParameters(generator, typeDeclaration);
+        PropertyDeclaration[] orderedProperties = BuildOrderedProperties(typeDeclaration);
+
+        generator
+            .AppendSeparatorLine()
+            .AppendLineIndent("/// <summary>")
+            .AppendLineIndent("/// Creates an instance of a <see cref=\"", typeDeclaration.DotnetTypeName(), "\"/>.")
+            .AppendLineIndent("/// </summary>");
+
+        generator
+            .BeginReservedMethodDeclaration(
+                "public static",
+                typeDeclaration.DotnetTypeName(),
+                "Create",
+                methodParameters);
+
+        AppendBuildObjectFromParameters(generator, orderedProperties);
+
+        return generator
+            .EndMethodDeclaration();
+
+        static MethodParameter[] BuildMethodParameters(CodeGenerator generator, TypeDeclaration typeDeclaration)
+        {
+            // Filter out the constant values from the property list;
+            // we don't need to supply them.
+            return
+            [
+                .. typeDeclaration.PropertyDeclarations
+                            .Where(p => p.RequiredOrOptional == RequiredOrOptional.Required &&
+                                   p.ReducedPropertyType.SingleConstantValue().ValueKind == JsonValueKind.Undefined)
+                            .OrderBy(p => p.JsonPropertyName)
+                            .Select(p => new MethodParameter("in", p.ReducedPropertyType.FullyQualifiedDotnetTypeName(), generator.GetParameterNameInScope(p.DotnetPropertyName(), childScope: "Create"))),
+                .. typeDeclaration.PropertyDeclarations
+                                        .Where(p => p.RequiredOrOptional == RequiredOrOptional.Optional)
+                                        .OrderBy(p => p.JsonPropertyName)
+                                        .Select(p =>
+                                            new MethodParameter(
+                                                "in",
+                                                p.ReducedPropertyType.FullyQualifiedDotnetTypeName(),
+                                                generator.GetParameterNameInScope(p.DotnetPropertyName(), childScope: "Create"),
+                                                typeIsNullable: true,
+                                                defaultValue: "null")),
+            ];
+        }
+
+        static PropertyDeclaration[] BuildOrderedProperties(TypeDeclaration typeDeclaration)
+        {
+            // Filter out the constant values from the property list;
+            // we don't need to supply them.
+            return
+            [
+                .. typeDeclaration.PropertyDeclarations
+                                            .Where(p => p.RequiredOrOptional == RequiredOrOptional.Required)
+                                            .OrderBy(p => p.JsonPropertyName),
+                .. typeDeclaration.PropertyDeclarations
+                                            .Where(p => p.RequiredOrOptional == RequiredOrOptional.Optional)
+                                            .OrderBy(p => p.JsonPropertyName),
+            ];
+        }
+
+        static CodeGenerator AppendBuildObjectFromParameters(CodeGenerator generator, PropertyDeclaration[] properties)
+        {
+            generator
+                .AppendLineIndent("var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();");
+
+            foreach (PropertyDeclaration property in properties)
+            {
+                if (property.RequiredOrOptional == RequiredOrOptional.Required)
+                {
+                    AddRequiredProperty(generator, property);
+                }
+                else
+                {
+                    AddOptionalProperty(generator, property);
+                }
+            }
+
+            return generator
+                .AppendSeparatorLine()
+                .AppendLineIndent("return new(builder.ToImmutable());");
+        }
+
+        static void AddRequiredProperty(CodeGenerator generator, PropertyDeclaration property)
+        {
+            string propertyNamesClass = generator.JsonPropertyNamesClassName();
+            if (property.ReducedPropertyType.SingleConstantValue().ValueKind != JsonValueKind.Undefined)
+            {
+                generator
+                    .AppendLineIndent(
+                        "builder.Add(",
+                        propertyNamesClass,
+                        ".",
+                        property.DotnetPropertyName(),
+                        ", ",
+                        property.ReducedPropertyType.FullyQualifiedDotnetTypeName(),
+                        ".ConstInstance.AsAny);");
+            }
+            else
+            {
+                string parameterName = generator.GetParameterNameInScope(property.DotnetPropertyName());
+
+                generator
+                    .AppendLineIndent(
+                        "builder.Add(",
+                        propertyNamesClass,
+                        ".",
+                        property.DotnetPropertyName(),
+                        ", ",
+                        parameterName,
+                        ".AsAny);");
+            }
+        }
+
+        static void AddOptionalProperty(CodeGenerator generator, PropertyDeclaration property)
+        {
+            string propertyNamesClass = generator.JsonPropertyNamesClassName();
+            string parameterName = generator.GetParameterNameInScope(property.DotnetPropertyName());
+
+            generator
+                .AppendSeparatorLine()
+                .AppendLineIndent("if (", parameterName, " is not null)")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendLineIndent(
+                        "builder.Add(",
+                        propertyNamesClass,
+                        ".",
+                        property.DotnetPropertyName(),
+                        ", ",
+                        parameterName,
+                        ".Value.AsAny);")
+                .PopIndent()
+                .AppendLineIndent("}");
+        }
     }
 
     /// <summary>

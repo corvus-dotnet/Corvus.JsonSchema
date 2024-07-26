@@ -316,7 +316,7 @@ internal static partial class CodeGeneratorExtensions
             .AppendLineIndent("/// <summary>")
             .AppendLineIndent("/// Initializes a new instance of the <see cref = \"", typeDeclaration.DotnetTypeName(), "\"/> struct.")
             .AppendLineIndent("/// </summary>")
-            .AppendLineIndent("/// <param name = \"value\">The value from which to construct the instance.</param>")
+            .AppendLineIndent("/// <param name=\"value\">The value from which to construct the instance.</param>")
             .AppendIndent("public ")
             .Append(typeDeclaration.DotnetTypeName())
             .Append('(')
