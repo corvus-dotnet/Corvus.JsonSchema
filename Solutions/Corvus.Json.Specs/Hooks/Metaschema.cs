@@ -15,8 +15,8 @@ internal static class Metaschema
     internal static IDocumentResolver AddMetaschema(this IDocumentResolver documentResolver)
     {
         documentResolver.AddDocument(
-        "http://json-schema.org/draft-04/schema",
-        JsonDocument.Parse(File.ReadAllText("./metaschema/draft4/schema.json")));
+            "http://json-schema.org/draft-04/schema",
+            JsonDocument.Parse(File.ReadAllText("./metaschema/draft4/schema.json")));
 
         documentResolver.AddDocument(
             "http://json-schema.org/draft-06/schema",
