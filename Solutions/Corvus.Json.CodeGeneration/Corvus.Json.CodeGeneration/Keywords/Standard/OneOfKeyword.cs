@@ -55,7 +55,13 @@ public sealed class OneOfKeyword
     public bool CanReduce(in JsonElement schemaValue) => Reduction.CanReduceNonReducingKeyword(schemaValue, this.KeywordUtf8);
 
     /// <inheritdoc />
-    public CoreTypes ImpliesCoreTypes(TypeDeclaration typeDeclaration) => CoreTypes.None;
+    public CoreTypes ImpliesCoreTypes(TypeDeclaration typeDeclaration) =>
+        typeDeclaration.HasKeyword(this)
+            ? Composition.UnionImpliesCoreTypeForSubschema(
+                typeDeclaration,
+                KeywordPath,
+                CoreTypes.None)
+            : CoreTypes.None;
 
     /// <inheritdoc/>
     public IReadOnlyCollection<TypeDeclaration> GetSubschemaTypeDeclarations(TypeDeclaration typeDeclaration)

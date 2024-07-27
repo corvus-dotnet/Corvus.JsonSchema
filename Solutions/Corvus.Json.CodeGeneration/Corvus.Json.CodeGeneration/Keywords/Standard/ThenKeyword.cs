@@ -71,7 +71,13 @@ public sealed class ThenKeyword
     }
 
     /// <inheritdoc />
-    public CoreTypes ImpliesCoreTypes(TypeDeclaration typeDeclaration) => CoreTypes.None;
+    public CoreTypes ImpliesCoreTypes(TypeDeclaration typeDeclaration) =>
+        typeDeclaration.HasKeyword(this)
+            ? Composition.UnionImpliesCoreTypeForSubschema(
+                typeDeclaration,
+                KeywordPath,
+                CoreTypes.None)
+            : CoreTypes.None;
 
     /// <inheritdoc/>
     public IReadOnlyCollection<TypeDeclaration> GetSubschemaTypeDeclarations(TypeDeclaration typeDeclaration)
