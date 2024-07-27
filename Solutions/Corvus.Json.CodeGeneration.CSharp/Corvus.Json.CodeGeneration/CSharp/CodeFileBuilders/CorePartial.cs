@@ -45,7 +45,6 @@ public sealed class CorePartial : ICodeFileBuilder
                         interfaces: [
                             JsonAnyType(typeDeclaration)
                             ])
-                        ////.PushValidationClassNameAndScope()
                         .AppendBackingFields(typeDeclaration.ImpliedCoreTypes())
                         .AppendPublicDefaultConstructor(typeDeclaration)
                         .AppendPublicJsonElementConstructor(typeDeclaration)
@@ -53,7 +52,6 @@ public sealed class CorePartial : ICodeFileBuilder
                         .AppendNullInstanceStaticProperty(typeDeclaration)
                         .AppendUndefinedInstanceStaticProperty(typeDeclaration)
                         .AppendDefaultInstanceStaticProperty(typeDeclaration)
-                        ////.AppendConstInstanceStaticProperty(typeDeclaration)
                         .AppendAsAnyProperty(typeDeclaration)
                         .AppendAsJsonElementProperty(typeDeclaration)
                         .AppendAsStringProperty(typeDeclaration)
