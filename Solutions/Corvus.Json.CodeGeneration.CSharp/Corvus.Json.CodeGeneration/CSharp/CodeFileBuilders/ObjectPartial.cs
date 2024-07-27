@@ -61,7 +61,7 @@ public sealed class ObjectPartial : ICodeFileBuilder
                             .PushJsonPropertyNamesClassNameAndScope()
                             .AppendPropertyAccessors(typeDeclaration)
                             .AppendFromPropertiesFactoryMethods(typeDeclaration)
-                            ////.AppendCreateFactoryMethod(typeDeclaration)
+                            .AppendCreateFactoryMethod(typeDeclaration)
                             .AppendAsPropertyBackingMethod()
                             .AppendEnumerateObjectMethods(typeDeclaration)
                             .AppendReadOnlyDictionaryMethods(typeDeclaration)

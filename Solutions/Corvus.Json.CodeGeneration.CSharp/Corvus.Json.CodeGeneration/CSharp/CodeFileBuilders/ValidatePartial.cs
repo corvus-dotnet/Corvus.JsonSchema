@@ -42,6 +42,7 @@ public sealed class ValidatePartial : ICodeFileBuilder
                         .BeginPublicReadonlyPartialStructDeclaration(typeDeclaration.DotnetTypeName())
                             .PushValidationClassNameAndScope()
                             .PushValidationHandlerMethodNames(typeDeclaration)
+                            .AppendConstInstanceStaticProperty(typeDeclaration)
                             .AppendValidateMethod(typeDeclaration)
                             .AppendValidationClass(typeDeclaration)
                             .PopValidationHandlerMethodNames(typeDeclaration)
