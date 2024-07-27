@@ -10,6 +10,7 @@
 #nullable enable
 
 using System.Buffers;
+using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
@@ -22,10 +23,12 @@ namespace Corvus.Json.Benchmarking.Models.V3;
 /// </summary>
 [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<OtherNames>))]
 public readonly partial struct OtherNames
-    : IJsonValue<Corvus.Json.Benchmarking.Models.V3.OtherNames>
+
 {
     private readonly Backing backing;
     private readonly JsonElement jsonElementBacking;
+    private readonly string stringBacking;
+    private readonly ImmutableList<JsonAny> arrayBacking;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="OtherNames"/> struct.
@@ -34,6 +37,8 @@ public readonly partial struct OtherNames
     {
         this.jsonElementBacking = default;
         this.backing = Backing.JsonElement;
+        this.stringBacking = string.Empty;
+        this.arrayBacking = ImmutableList<JsonAny>.Empty;
     }
 
     /// <summary>
@@ -44,6 +49,8 @@ public readonly partial struct OtherNames
     {
         this.jsonElementBacking = value;
         this.backing = Backing.JsonElement;
+        this.stringBacking = string.Empty;
+        this.arrayBacking = ImmutableList<JsonAny>.Empty;
     }
 
     /// <summary>
@@ -71,6 +78,21 @@ public readonly partial struct OtherNames
     {
         get
         {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                return new(this.jsonElementBacking);
+            }
+
+            if ((this.backing & Backing.String) != 0)
+            {
+                return new(this.stringBacking);
+            }
+
+            if ((this.backing & Backing.Array) != 0)
+            {
+                return new(this.arrayBacking);
+            }
+
             if ((this.backing & Backing.Null) != 0)
             {
                 return JsonAny.Null;
@@ -85,6 +107,21 @@ public readonly partial struct OtherNames
     {
         get
         {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                return this.jsonElementBacking;
+            }
+
+            if ((this.backing & Backing.String) != 0)
+            {
+                return JsonValueHelpers.StringToJsonElement(this.stringBacking);
+            }
+
+            if ((this.backing & Backing.Array) != 0)
+            {
+                return JsonValueHelpers.ArrayToJsonElement(this.arrayBacking);
+            }
+
             if ((this.backing & Backing.Null) != 0)
             {
                 return JsonValueHelpers.NullElement;
@@ -95,10 +132,20 @@ public readonly partial struct OtherNames
     }
 
     /// <inheritdoc/>
-    JsonString IJsonValue.AsString
+    public JsonString AsString
     {
         get
         {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                return new(this.jsonElementBacking);
+            }
+
+            if ((this.backing & Backing.String) != 0)
+            {
+                return new(this.stringBacking);
+            }
+
             throw new InvalidOperationException();
         }
     }
@@ -108,6 +155,11 @@ public readonly partial struct OtherNames
     {
         get
         {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                return new(this.jsonElementBacking);
+            }
+
             throw new InvalidOperationException();
         }
     }
@@ -117,6 +169,11 @@ public readonly partial struct OtherNames
     {
         get
         {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                return new(this.jsonElementBacking);
+            }
+
             throw new InvalidOperationException();
         }
     }
@@ -126,15 +183,30 @@ public readonly partial struct OtherNames
     {
         get
         {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                return new(this.jsonElementBacking);
+            }
+
             throw new InvalidOperationException();
         }
     }
 
     /// <inheritdoc/>
-    JsonArray IJsonValue.AsArray
+    public JsonArray AsArray
     {
         get
         {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                return new(this.jsonElementBacking);
+            }
+
+            if ((this.backing & Backing.Array) != 0)
+            {
+                return new(this.arrayBacking);
+            }
+
             throw new InvalidOperationException();
         }
     }
@@ -165,6 +237,16 @@ public readonly partial struct OtherNames
             if ((this.backing & Backing.JsonElement) != 0)
             {
                 return this.jsonElementBacking.ValueKind;
+            }
+
+            if ((this.backing & Backing.String) != 0)
+            {
+                return JsonValueKind.String;
+            }
+
+            if ((this.backing & Backing.Array) != 0)
+            {
+                return JsonValueKind.Array;
             }
 
             return JsonValueKind.Undefined;
@@ -244,6 +326,8 @@ public readonly partial struct OtherNames
 
         return value.ValueKind switch
         {
+            JsonValueKind.String => new((string)value.AsString),
+            JsonValueKind.Array => new(value.AsArray.AsImmutableList()),
             JsonValueKind.Null => Null,
             _ => Undefined,
         };
@@ -268,7 +352,6 @@ public readonly partial struct OtherNames
     }
 #endif
 
-#if NET8_0_OR_GREATER
     /// <summary>
     /// Gets an instance of the JSON value from a <see cref="JsonAny"/> value.
     /// </summary>
@@ -276,16 +359,21 @@ public readonly partial struct OtherNames
     /// <param name="value">The <see cref="JsonAny"/> value from which to instantiate the instance.</param>
     /// <returns>An instance of this type, initialized from the <see cref="JsonAny"/> value.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static OtherNames IJsonValue<OtherNames>.FromString<TValue>(in TValue value)
+    public static OtherNames FromString<TValue>(in TValue value)
+        where TValue : struct, IJsonString<TValue>
     {
         if (value.HasJsonElementBacking)
         {
             return new(value.AsJsonElement);
         }
 
-        return Undefined;
+        return value.ValueKind switch
+        {
+            JsonValueKind.String => new((string)value.AsString),
+            JsonValueKind.Null => Null,
+            _ => Undefined,
+        };
     }
-#endif
 
 #if NET8_0_OR_GREATER
     /// <summary>
@@ -325,7 +413,6 @@ public readonly partial struct OtherNames
     }
 #endif
 
-#if NET8_0_OR_GREATER
     /// <summary>
     /// Gets an instance of the JSON value from a <see cref="JsonAny"/> value.
     /// </summary>
@@ -333,16 +420,21 @@ public readonly partial struct OtherNames
     /// <param name="value">The <see cref="JsonAny"/> value from which to instantiate the instance.</param>
     /// <returns>An instance of this type, initialized from the <see cref="JsonAny"/> value.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static OtherNames IJsonValue<OtherNames>.FromArray<TValue>(in TValue value)
+    public static OtherNames FromArray<TValue>(in TValue value)
+        where TValue : struct, IJsonArray<TValue>
     {
         if (value.HasJsonElementBacking)
         {
             return new(value.AsJsonElement);
         }
 
-        return Undefined;
+        return value.ValueKind switch
+        {
+            JsonValueKind.Array => new(value.AsArray.AsImmutableList()),
+            JsonValueKind.Null => Null,
+            _ => Undefined,
+        };
     }
-#endif
 
     /// <summary>
     /// Parses the OtherNames.
@@ -453,6 +545,16 @@ public readonly partial struct OtherNames
             return TTarget.FromJson(this.jsonElementBacking);
         }
 
+        if ((this.backing & Backing.String) != 0)
+        {
+            return TTarget.FromString(this);
+        }
+
+        if ((this.backing & Backing.Array) != 0)
+        {
+            return TTarget.FromArray(this);
+        }
+
         if ((this.backing & Backing.Null) != 0)
         {
             return TTarget.Null;
@@ -498,6 +600,20 @@ public readonly partial struct OtherNames
             {
                 this.jsonElementBacking.WriteTo(writer);
             }
+
+            return;
+        }
+
+        if ((this.backing & Backing.Array) != 0)
+        {
+            JsonValueHelpers.WriteItems(this.arrayBacking, writer);
+
+            return;
+        }
+
+        if ((this.backing & Backing.String) != 0)
+        {
+            writer.WriteStringValue(this.stringBacking);
 
             return;
         }
