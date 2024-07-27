@@ -46,7 +46,7 @@ public static class Composition
 
         foreach (TypeDeclaration subschemaTypeDeclaration in typeDeclaration.SubschemaTypeDeclarations.Where(k => k.Key.StartsWith(keywordPath)).Select(kvp => kvp.Value))
         {
-            result |= typeDeclaration.ImpliedCoreTypes();
+            result |= subschemaTypeDeclaration.ImpliedCoreTypes();
         }
 
         return result;
