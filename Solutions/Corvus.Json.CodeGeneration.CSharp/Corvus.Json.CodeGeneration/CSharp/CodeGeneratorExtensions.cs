@@ -524,8 +524,19 @@ internal static partial class CodeGeneratorExtensions
                 """)
                 .AppendIndent("public static ")
                 .Append(typeDeclaration.DotnetTypeName())
-                .Append(" ConstInstance => ")
-                .AppendLine(validationClassName, ".", constantFieldName, ";");
+                .Append(" ConstInstance => ");
+
+            if (keyword.TryGetConstantValue(typeDeclaration, out JsonElement constantValue) &&
+                constantValue.ValueKind == JsonValueKind.Number)
+            {
+                generator
+                    .AppendLine("new(", validationClassName, ".", constantFieldName, ");");
+            }
+            else
+            {
+                generator
+                    .AppendLine(validationClassName, ".", constantFieldName, ".As<", typeDeclaration.DotnetTypeName(), ">();");
+            }
         }
 
         return generator;

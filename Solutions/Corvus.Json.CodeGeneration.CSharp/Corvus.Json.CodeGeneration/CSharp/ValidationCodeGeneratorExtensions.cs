@@ -322,9 +322,14 @@ public static partial class ValidationCodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator PushValidationClassNameAndScope(this CodeGenerator generator)
     {
-        string validationClassName = generator.GetTypeNameInScope(ValidationClassBaseName);
-        return generator
-            .PushMetadata(ValidationClassNameKey, (validationClassName, generator.GetChildScope(validationClassName, null)));
+        if (!generator.TryPeekMetadata(ValidationClassNameKey, out (string, string) _))
+        {
+            string validationClassName = generator.GetTypeNameInScope(ValidationClassBaseName);
+            return generator
+                .PushMetadata(ValidationClassNameKey, (validationClassName, generator.GetChildScope(validationClassName, null)));
+        }
+
+        return generator;
     }
 
     /// <summary>
