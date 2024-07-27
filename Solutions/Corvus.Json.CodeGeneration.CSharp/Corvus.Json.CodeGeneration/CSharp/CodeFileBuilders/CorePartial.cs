@@ -45,7 +45,7 @@ public sealed class CorePartial : ICodeFileBuilder
                         interfaces: [
                             JsonAnyType(typeDeclaration)
                             ])
-                        .AppendBackingFields(typeDeclaration.ImpliedCoreTypes())
+                        .AppendBackingFields(typeDeclaration.ImpliedCoreTypesOrAny())
                         .AppendPublicDefaultConstructor(typeDeclaration)
                         .AppendPublicJsonElementConstructor(typeDeclaration)
                         .AppendSchemaLocationStaticProperty(typeDeclaration)
@@ -94,7 +94,7 @@ public sealed class CorePartial : ICodeFileBuilder
 
     private static bool RequiresImmutableCollections(TypeDeclaration typeDeclaration)
     {
-        return (typeDeclaration.ImpliedCoreTypes() & (CoreTypes.Array | CoreTypes.Object)) != 0;
+        return (typeDeclaration.ImpliedCoreTypesOrAny() & (CoreTypes.Array | CoreTypes.Object)) != 0;
     }
 
     private static ConditionalCodeSpecification JsonAnyType(TypeDeclaration typeDeclaration)

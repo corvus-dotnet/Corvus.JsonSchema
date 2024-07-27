@@ -147,7 +147,7 @@ internal static class TypeDeclarationExtensions
                 return arrayItemsType.ReducedType.PreferredDotnetNumericTypeName();
             }
 
-            if ((typeDeclaration.ImpliedCoreTypes() & (CoreTypes.Number | CoreTypes.Integer)) != 0)
+            if ((typeDeclaration.ImpliedCoreTypesOrAny() & (CoreTypes.Number | CoreTypes.Integer)) != 0)
             {
                 string? candidateFormat = typeDeclaration.Format();
 
@@ -200,7 +200,7 @@ internal static class TypeDeclarationExtensions
 
             if ((typeDeclaration.ImpliedCoreTypes() & CoreTypes.String) != 0 && typeDeclaration.Format() is string candidateFormat)
             {
-                return FormatProviderRegistry.Instance.StringTypeFormatProviders.GetDotnetTypeNameFor(candidateFormat);
+                return FormatProviderRegistry.Instance.StringTypeFormatProviders.GetCorvusJsonTypeNameFor(candidateFormat);
             }
 
             return null;

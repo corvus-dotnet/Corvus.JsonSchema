@@ -23,7 +23,7 @@ public sealed class StringPartial : ICodeFileBuilder
     /// <inheritdoc/>
     public CodeGenerator EmitFile(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
-        if ((typeDeclaration.ImpliedCoreTypes() & CoreTypes.String) != 0)
+        if ((typeDeclaration.ImpliedCoreTypesOrAny() & CoreTypes.String) != 0)
         {
             generator
                 .BeginFile(typeDeclaration, "String")
@@ -73,7 +73,7 @@ public sealed class StringPartial : ICodeFileBuilder
 
         static FrameworkType EmitIfIsObjectOrArray(TypeDeclaration typeDeclaration)
         {
-            return (typeDeclaration.ImpliedCoreTypes() & (CoreTypes.Object | CoreTypes.Array)) != 0
+            return (typeDeclaration.ImpliedCoreTypesOrAny() & (CoreTypes.Object | CoreTypes.Array)) != 0
                  ? FrameworkType.All
                  : FrameworkType.NotEmitted;
         }

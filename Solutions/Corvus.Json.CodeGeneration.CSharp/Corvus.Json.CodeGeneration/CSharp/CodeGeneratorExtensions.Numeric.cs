@@ -61,7 +61,15 @@ internal static partial class CodeGeneratorExtensions
     {
         if (typeDeclaration.PreferredDotnetNumericTypeName() is string numericTypeName)
         {
-            string dotnetTypeSuffix = FormatProviderRegistry.Instance.NumberTypeFormatProviders.GetDotnetTypeNameForCSharpNumericLangwordOrTypeName(numericTypeName) ?? numericTypeName;
+            bool isNet80OrGreaterType = IsNet8OrGreaterNumericType(numericTypeName);
+
+            if (isNet80OrGreaterType)
+            {
+                generator
+                    .AppendLine("#if NET8_0_OR_GREATER");
+            }
+
+            string dotnetTypeSuffix = FormatProviderRegistry.Instance.NumberTypeFormatProviders.GetTypeNameForNumericLangwordOrTypeName(numericTypeName) ?? numericTypeName;
             generator
                 .AppendSeparatorLine()
                 .AppendLineIndent("/// <summary>")
@@ -76,6 +84,12 @@ internal static partial class CodeGeneratorExtensions
                 .Append("() => (")
                 .Append(numericTypeName)
                 .AppendLine(")this;");
+
+            if (isNet80OrGreaterType)
+            {
+                generator
+                    .AppendLine("#endif");
+            }
         }
 
         return generator;
@@ -276,7 +290,7 @@ internal static partial class CodeGeneratorExtensions
                 .AppendLine("#else")
                 .AppendPublicNumericConstructor(
                     typeDeclaration,
-                    (typeDeclaration.ImpliedCoreTypes() & CoreTypes.Integer) != 0 ? "long" : "double")
+                    (typeDeclaration.ImpliedCoreTypesOrAny() & CoreTypes.Integer) != 0 ? "long" : "double")
                 .AppendLine("#endif");
         }
 

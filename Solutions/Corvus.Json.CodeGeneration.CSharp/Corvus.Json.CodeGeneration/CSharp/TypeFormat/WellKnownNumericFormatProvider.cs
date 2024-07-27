@@ -140,7 +140,7 @@ public class WellKnownNumericFormatProvider : INumberFormatProvider
     }
 
     /// <inheritdoc/>
-    public string? GetDotnetTypeNameForCSharpNumericLangwordOrTypeName(string langword)
+    public string? GetTypeNameForNumericLangwordOrTypeName(string langword)
     {
         return langword switch
         {
@@ -163,14 +163,14 @@ public class WellKnownNumericFormatProvider : INumberFormatProvider
     }
 
     /// <inheritdoc/>
-    public string? GetDotnetTypeNameFor(string format)
+    public string? GetCorvusJsonTypeNameFor(string format)
     {
-        return this.GetIntegerDotnetTypeNameFor(format) ??
-               this.GetFloatDotnetTypeNameFor(format);
+        return this.GetIntegerCorvusJsonTypeNameFor(format) ??
+               this.GetFloatCorvusJsonTypeNameFor(format);
     }
 
     /// <inheritdoc/>
-    public string? GetIntegerDotnetTypeNameFor(string format)
+    public string? GetIntegerCorvusJsonTypeNameFor(string format)
     {
         return format switch
         {
@@ -189,7 +189,7 @@ public class WellKnownNumericFormatProvider : INumberFormatProvider
     }
 
     /// <inheritdoc/>
-    public string? GetFloatDotnetTypeNameFor(string format)
+    public string? GetFloatCorvusJsonTypeNameFor(string format)
     {
         return format switch
         {
@@ -204,7 +204,7 @@ public class WellKnownNumericFormatProvider : INumberFormatProvider
     /// <inheritdoc/>
     public JsonValueKind? GetExpectedValueKind(string format)
     {
-        if (this.GetDotnetTypeNameFor(format) is not null)
+        if (this.GetCorvusJsonTypeNameFor(format) is not null)
         {
             return JsonValueKind.Number;
         }
