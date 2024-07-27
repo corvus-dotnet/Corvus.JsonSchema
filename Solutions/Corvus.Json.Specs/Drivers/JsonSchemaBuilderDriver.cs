@@ -275,7 +275,7 @@ public class JsonSchemaBuilderDriver : IDisposable
 #if NET8_0_OR_GREATER
         return CompileGeneratedType(this.assemblyLoadContext!, CSharpLanguageProvider.GetFullyQualifiedDotnetTypeName(rootType.ReducedTypeDeclaration().ReducedType), generatedCode);
 #else
-        return CompileGeneratedType(CSharpLanguageProvider.GetFullyQualifiedDotnetTypeName(rootType), generatedCode);
+        return CompileGeneratedType(CSharpLanguageProvider.GetFullyQualifiedDotnetTypeName(rootType.ReducedTypeDeclaration().ReducedType), generatedCode);
 #endif
     }
 
@@ -308,7 +308,7 @@ public class JsonSchemaBuilderDriver : IDisposable
 #if NET8_0_OR_GREATER
         return CompileGeneratedType(this.assemblyLoadContext!, CSharpLanguageProvider.GetFullyQualifiedDotnetTypeName(rootType.ReducedTypeDeclaration().ReducedType), generatedCode);
 #else
-        return CompileGeneratedType(CSharpLanguageProvider.GetFullyQualifiedDotnetTypeName(rootType), generatedCode);
+        return CompileGeneratedType(CSharpLanguageProvider.GetFullyQualifiedDotnetTypeName(rootType.ReducedTypeDeclaration().ReducedType), generatedCode);
 #endif
     }
 
@@ -349,7 +349,7 @@ public class JsonSchemaBuilderDriver : IDisposable
 #if NET8_0_OR_GREATER
         return CompileGeneratedType(this.assemblyLoadContext!, CSharpLanguageProvider.GetFullyQualifiedDotnetTypeName(rootType.ReducedTypeDeclaration().ReducedType), generatedCode);
 #else
-        return CompileGeneratedType(CSharpLanguageProvider.GetFullyQualifiedDotnetTypeName(rootType), generatedCode);
+        return CompileGeneratedType(CSharpLanguageProvider.GetFullyQualifiedDotnetTypeName(rootType.ReducedTypeDeclaration().ReducedType), generatedCode);
 #endif
     }
 
@@ -383,7 +383,7 @@ public class JsonSchemaBuilderDriver : IDisposable
 #if NET8_0_OR_GREATER
         return CompileGeneratedType(this.assemblyLoadContext!, CSharpLanguageProvider.GetFullyQualifiedDotnetTypeName(rootType.ReducedTypeDeclaration().ReducedType), generatedCode);
 #else
-        return CompileGeneratedType(CSharpLanguageProvider.GetFullyQualifiedDotnetTypeName(rootType), generatedCode);
+        return CompileGeneratedType(CSharpLanguageProvider.GetFullyQualifiedDotnetTypeName(rootType.ReducedTypeDeclaration().ReducedType), generatedCode);
 #endif
     }
 

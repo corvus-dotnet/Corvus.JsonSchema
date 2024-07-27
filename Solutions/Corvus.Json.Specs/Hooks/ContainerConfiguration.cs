@@ -10,6 +10,7 @@ using Corvus.Json.CodeGeneration;
 using Drivers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using NUnit.Framework;
 using SolidToken.SpecFlow.DependencyInjection;
 using TechTalk.SpecFlow;
 
@@ -28,6 +29,8 @@ public static class ContainerConfiguration
     [ScenarioDependencies]
     public static IServiceCollection CreateServices()
     {
+        Environment.CurrentDirectory = TestContext.CurrentContext.TestDirectory;
+
         var services = new ServiceCollection();
 
         services.AddTransient(serviceProvider => new CompoundDocumentResolver(new FakeWebDocumentResolver(serviceProvider.GetRequiredService<IConfiguration>()["jsonSchemaBuilderDriverSettings:remotesBaseDirectory"]!), new FileSystemDocumentResolver()).AddMetaschema());
