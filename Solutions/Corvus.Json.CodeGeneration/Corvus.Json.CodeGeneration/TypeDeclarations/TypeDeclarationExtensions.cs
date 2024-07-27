@@ -1696,6 +1696,29 @@ public static class TypeDeclarationExtensions
     /// </summary>
     /// <param name="that">The type declaration.</param>
     /// <returns>The CoreTypes implied by the type declaration.</returns>
+    public static CoreTypes ImpliedCoreTypesOrAny(this TypeDeclaration that)
+    {
+        if (!that.BuildComplete)
+        {
+            throw new InvalidOperationException("You cannot get the core types during the type build process.");
+        }
+
+        CoreTypes coreTypes = that.ImpliedCoreTypes();
+
+        // If there are no implied types, this is actually any Any type.
+        if ((coreTypes & CoreTypes.Any) == 0)
+        {
+            return CoreTypes.Any;
+        }
+
+        return coreTypes;
+    }
+
+    /// <summary>
+    /// Gets a value indicating the core types represented by the type declaration.
+    /// </summary>
+    /// <param name="that">The type declaration.</param>
+    /// <returns>The CoreTypes implied by the type declaration.</returns>
     public static CoreTypes ImpliedCoreTypes(this TypeDeclaration that)
     {
         if (!that.BuildComplete)

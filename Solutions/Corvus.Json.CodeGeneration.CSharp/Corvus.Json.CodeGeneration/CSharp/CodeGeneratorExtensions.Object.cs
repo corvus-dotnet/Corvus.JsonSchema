@@ -858,7 +858,7 @@ internal static partial class CodeGeneratorExtensions
                 .AppendLineIndent("/// <para>")
                 .AppendIndent("/// If the instance is valid, this property will not be <c>undefined</c>");
 
-            if ((property.ReducedPropertyType.ImpliedCoreTypes() & CoreTypes.Null) != 0)
+            if ((property.ReducedPropertyType.ImpliedCoreTypesOrAny() & CoreTypes.Null) != 0)
             {
                 generator.Append(", but may be <c>null</c>");
             }

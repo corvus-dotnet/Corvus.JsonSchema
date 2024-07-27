@@ -197,7 +197,7 @@ internal static partial class CodeGeneratorExtensions
 
             if (arrayRank == 1)
             {
-                string dotNetTypeName = FormatProviderRegistry.Instance.NumberTypeFormatProviders.GetDotnetTypeNameForCSharpNumericLangwordOrTypeName(preferredNumericTypeName) ?? "Double";
+                string dotNetTypeName = FormatProviderRegistry.Instance.NumberTypeFormatProviders.GetTypeNameForNumericLangwordOrTypeName(preferredNumericTypeName) ?? "Double";
                 generator
                     .AppendLineIndent(
                         "if (item.ValueKind != JsonValueKind.Number || !item.TryGet",

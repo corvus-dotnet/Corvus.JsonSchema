@@ -16,7 +16,7 @@ public interface IFormatProvider
     /// </summary>
     /// <param name="format">The candidate format.</param>
     /// <returns>The corresponding .NET type name, or <see langword="null"/> if the format is not explicitly supported.</returns>
-    string? GetDotnetTypeNameFor(string format);
+    string? GetCorvusJsonTypeNameFor(string format);
 
     /// <summary>
     /// Gets the expected <see cref="JsonValueKind"/> for instances

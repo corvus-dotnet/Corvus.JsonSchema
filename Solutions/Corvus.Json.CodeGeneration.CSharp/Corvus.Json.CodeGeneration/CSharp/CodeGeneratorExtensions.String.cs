@@ -67,7 +67,7 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendImplicitConversionToStringFormat(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
-        if (typeDeclaration.Format() is string format && FormatProviderRegistry.Instance.StringTypeFormatProviders.GetDotnetTypeNameFor(format) is string formatType)
+        if (typeDeclaration.Format() is string format && FormatProviderRegistry.Instance.StringTypeFormatProviders.GetCorvusJsonTypeNameFor(format) is string formatType)
         {
             return generator
                 .AppendImplicitConversionFromJsonValueTypeUsingAs(typeDeclaration, formatType)

@@ -563,32 +563,32 @@ internal static partial class CodeGeneratorExtensions
                     .AppendConditionalConstructFromBacking(
                         "Backing.JsonElement",
                         "jsonElementBacking",
-                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypes(),
+                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
                         forCoreTypes: CoreTypes.Any)
                     .AppendConditionalConstructFromBacking(
                         "Backing.String",
                         "stringBacking",
-                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypes(),
+                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
                         forCoreTypes: CoreTypes.String)
                     .AppendConditionalConstructFromBacking(
                         "Backing.Bool",
                         "boolBacking",
-                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypes(),
+                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
                         forCoreTypes: CoreTypes.Boolean)
                     .AppendConditionalConstructFromBacking(
                         "Backing.Number",
                         "numberBacking",
-                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypes(),
+                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
                         forCoreTypes: CoreTypes.Number | CoreTypes.Integer)
                     .AppendConditionalConstructFromBacking(
                         "Backing.Array",
                         "arrayBacking",
-                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypes(),
+                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
                         forCoreTypes: CoreTypes.Array)
                     .AppendConditionalConstructFromBacking(
                         "Backing.Object",
                         "objectBacking",
-                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypes(),
+                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
                         forCoreTypes: CoreTypes.Object)
                     .AppendReturnNullInstanceIfNull()
                     .AppendSeparatorLine()
@@ -622,7 +622,7 @@ internal static partial class CodeGeneratorExtensions
                         "return ",
                         "jsonElementBacking",
                         ";",
-                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypes(),
+                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
                         forCoreTypes: CoreTypes.Any)
                     .AppendSeparatorLine()
                     .AppendConditionalWrappedBackingValueLineIndent(
@@ -630,7 +630,7 @@ internal static partial class CodeGeneratorExtensions
                         "return JsonValueHelpers.StringToJsonElement(",
                         "stringBacking",
                         ");",
-                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypes(),
+                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
                         forCoreTypes: CoreTypes.String)
                     .AppendSeparatorLine()
                     .AppendConditionalWrappedBackingValueLineIndent(
@@ -638,7 +638,7 @@ internal static partial class CodeGeneratorExtensions
                         "return JsonValueHelpers.BoolToJsonElement(",
                         "boolBacking",
                         ");",
-                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypes(),
+                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
                         forCoreTypes: CoreTypes.Boolean)
                     .AppendSeparatorLine()
                     .AppendConditionalWrappedBackingValueLineIndent(
@@ -646,7 +646,7 @@ internal static partial class CodeGeneratorExtensions
                         "return JsonValueHelpers.NumberToJsonElement(",
                         "numberBacking",
                         ");",
-                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypes(),
+                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
                         forCoreTypes: CoreTypes.Number | CoreTypes.Integer)
                     .AppendSeparatorLine()
                     .AppendConditionalWrappedBackingValueLineIndent(
@@ -654,7 +654,7 @@ internal static partial class CodeGeneratorExtensions
                         "return JsonValueHelpers.ArrayToJsonElement(",
                         "arrayBacking",
                         ");",
-                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypes(),
+                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
                         forCoreTypes: CoreTypes.Array)
                     .AppendSeparatorLine()
                     .AppendConditionalWrappedBackingValueLineIndent(
@@ -662,7 +662,7 @@ internal static partial class CodeGeneratorExtensions
                         "return JsonValueHelpers.ObjectToJsonElement(",
                         "objectBacking",
                         ");",
-                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypes(),
+                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
                         forCoreTypes: CoreTypes.Object)
                     .AppendSeparatorLine()
                     .AppendReturnNullJsonElementIfNull()
@@ -687,7 +687,7 @@ internal static partial class CodeGeneratorExtensions
             .AppendSeparatorLine()
             .AppendLineIndent("/// <inheritdoc/>")
             .AppendLineIndent(
-                (typeDeclaration.ImpliedCoreTypes() & CoreTypes.String) != 0
+                (typeDeclaration.ImpliedCoreTypesOrAny() & CoreTypes.String) != 0
                     ? "public JsonString AsString"
                     : "JsonString IJsonValue.AsString")
             .AppendLineIndent("{")
@@ -700,7 +700,7 @@ internal static partial class CodeGeneratorExtensions
                         "return new(",
                         "jsonElementBacking",
                         ");",
-                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypes(),
+                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
                         forCoreTypes: CoreTypes.Any)
                     .AppendSeparatorLine()
                     .AppendConditionalWrappedBackingValueLineIndent(
@@ -708,7 +708,7 @@ internal static partial class CodeGeneratorExtensions
                         "return new(",
                         "stringBacking",
                         ");",
-                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypes(),
+                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
                         forCoreTypes: CoreTypes.String)
                     .AppendSeparatorLine()
                     .AppendLineIndent("throw new InvalidOperationException();")
@@ -731,7 +731,7 @@ internal static partial class CodeGeneratorExtensions
             .AppendSeparatorLine()
             .AppendLineIndent("/// <inheritdoc/>")
             .AppendLineIndent(
-                (typeDeclaration.ImpliedCoreTypes() & CoreTypes.Boolean) != 0
+                (typeDeclaration.ImpliedCoreTypesOrAny() & CoreTypes.Boolean) != 0
                     ? "public JsonBoolean AsBoolean"
                     : "JsonBoolean IJsonValue.AsBoolean")
             .AppendLineIndent("{")
@@ -744,7 +744,7 @@ internal static partial class CodeGeneratorExtensions
                         "return new(",
                         "jsonElementBacking",
                         ");",
-                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypes(),
+                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
                         forCoreTypes: CoreTypes.Any)
                     .AppendSeparatorLine()
                     .AppendConditionalWrappedBackingValueLineIndent(
@@ -752,7 +752,7 @@ internal static partial class CodeGeneratorExtensions
                         "return new(",
                         "boolBacking",
                         ");",
-                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypes(),
+                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
                         forCoreTypes: CoreTypes.Boolean)
                     .AppendSeparatorLine()
                     .AppendLineIndent("throw new InvalidOperationException();")
@@ -775,7 +775,7 @@ internal static partial class CodeGeneratorExtensions
             .AppendSeparatorLine()
             .AppendLineIndent("/// <inheritdoc/>")
             .AppendLineIndent(
-                (typeDeclaration.ImpliedCoreTypes() & (CoreTypes.Number | CoreTypes.Integer)) != 0
+                (typeDeclaration.ImpliedCoreTypesOrAny() & (CoreTypes.Number | CoreTypes.Integer)) != 0
                     ? "public JsonNumber AsNumber"
                     : "JsonNumber IJsonValue.AsNumber")
             .AppendLineIndent("{")
@@ -788,7 +788,7 @@ internal static partial class CodeGeneratorExtensions
                         "return new(",
                         "jsonElementBacking",
                         ");",
-                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypes(),
+                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
                         forCoreTypes: CoreTypes.Any)
                     .AppendSeparatorLine()
                     .AppendConditionalWrappedBackingValueLineIndent(
@@ -796,7 +796,7 @@ internal static partial class CodeGeneratorExtensions
                         "return new(",
                         "numberBacking",
                         ");",
-                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypes(),
+                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
                         forCoreTypes: CoreTypes.Number | CoreTypes.Integer)
                     .AppendSeparatorLine()
                     .AppendLineIndent("throw new InvalidOperationException();")
@@ -819,7 +819,7 @@ internal static partial class CodeGeneratorExtensions
             .AppendSeparatorLine()
             .AppendLineIndent("/// <inheritdoc/>")
             .AppendLineIndent(
-                (typeDeclaration.ImpliedCoreTypes() & CoreTypes.Object) != 0
+                (typeDeclaration.ImpliedCoreTypesOrAny() & CoreTypes.Object) != 0
                     ? "public JsonObject AsObject"
                     : "JsonObject IJsonValue.AsObject")
             .AppendLineIndent("{")
@@ -832,7 +832,7 @@ internal static partial class CodeGeneratorExtensions
                         "return new(",
                         "jsonElementBacking",
                         ");",
-                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypes(),
+                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
                         forCoreTypes: CoreTypes.Any)
                     .AppendSeparatorLine()
                     .AppendConditionalWrappedBackingValueLineIndent(
@@ -840,7 +840,7 @@ internal static partial class CodeGeneratorExtensions
                         "return new(",
                         "objectBacking",
                         ");",
-                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypes(),
+                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
                         forCoreTypes: CoreTypes.Object)
                     .AppendSeparatorLine()
                     .AppendLineIndent("throw new InvalidOperationException();")
@@ -863,7 +863,7 @@ internal static partial class CodeGeneratorExtensions
             .AppendSeparatorLine()
             .AppendLineIndent("/// <inheritdoc/>")
             .AppendLineIndent(
-                (typeDeclaration.ImpliedCoreTypes() & CoreTypes.Array) != 0
+                (typeDeclaration.ImpliedCoreTypesOrAny() & CoreTypes.Array) != 0
                     ? "public JsonArray AsArray"
                     : "JsonArray IJsonValue.AsArray")
             .AppendLineIndent("{")
@@ -876,7 +876,7 @@ internal static partial class CodeGeneratorExtensions
                         "return new(",
                         "jsonElementBacking",
                         ");",
-                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypes(),
+                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
                         forCoreTypes: CoreTypes.Any)
                     .AppendSeparatorLine()
                     .AppendConditionalWrappedBackingValueLineIndent(
@@ -884,7 +884,7 @@ internal static partial class CodeGeneratorExtensions
                         "return new(",
                         "arrayBacking",
                         ");",
-                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypes(),
+                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
                         forCoreTypes: CoreTypes.Array)
                     .AppendSeparatorLine()
                     .AppendLineIndent("throw new InvalidOperationException();")
@@ -972,34 +972,34 @@ internal static partial class CodeGeneratorExtensions
                     .AppendConditionalBackingValueLineIndent(
                         "Backing.String",
                         "return JsonValueKind.String;",
-                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypes(),
+                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
                         forCoreTypes: CoreTypes.String)
                     .AppendConditionalWrappedBackingValueLineIndent(
                         "Backing.Bool",
                         "return ",
                         "boolBacking",
                         " ? JsonValueKind.True : JsonValueKind.False;",
-                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypes(),
+                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
                         forCoreTypes: CoreTypes.Boolean)
                     .AppendConditionalBackingValueLineIndent(
                         "Backing.Number",
                         "return JsonValueKind.Number;",
-                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypes(),
+                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
                         forCoreTypes: CoreTypes.Number | CoreTypes.Integer)
                     .AppendConditionalBackingValueLineIndent(
                         "Backing.Array",
                         "return JsonValueKind.Array;",
-                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypes(),
+                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
                         forCoreTypes: CoreTypes.Array)
                     .AppendConditionalBackingValueLineIndent(
                         "Backing.Object",
                         "return JsonValueKind.Object;",
-                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypes(),
+                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
                         forCoreTypes: CoreTypes.Object)
                     .AppendConditionalBackingValueLineIndent(
                         "Backing.Null",
                         "return JsonValueKind.Null;",
-                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypes(),
+                        impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
                         forCoreTypes: CoreTypes.Null)
                     .AppendSeparatorLine()
                     .AppendLineIndent("return JsonValueKind.Undefined;")
@@ -1023,7 +1023,7 @@ internal static partial class CodeGeneratorExtensions
             return generator;
         }
 
-        CoreTypes impliedCoreTypes = typeDeclaration.ImpliedCoreTypes();
+        CoreTypes impliedCoreTypes = typeDeclaration.ImpliedCoreTypesOrAny();
 
         return generator
             .AppendSeparatorLine()
@@ -1056,7 +1056,7 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendPublicJsonElementConstructor(this CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
-        CoreTypes impliedCoreTypes = typeDeclaration.ImpliedCoreTypes();
+        CoreTypes impliedCoreTypes = typeDeclaration.ImpliedCoreTypesOrAny();
 
         return generator
             .AppendSeparatorLine()
@@ -1240,7 +1240,7 @@ internal static partial class CodeGeneratorExtensions
         CoreTypes forCoreTypes,
         string dotnetTypeConversion)
     {
-        if ((typeDeclaration.ImpliedCoreTypes() & forCoreTypes) == 0)
+        if ((typeDeclaration.ImpliedCoreTypesOrAny() & forCoreTypes) == 0)
         {
             return generator;
         }
@@ -1499,7 +1499,7 @@ internal static partial class CodeGeneratorExtensions
             .AppendLine(" FromAny(in JsonAny value)")
             .AppendLineIndent("{")
             .PushIndent()
-                .AppendConversionFromValue("value", typeDeclaration.ImpliedCoreTypes())
+                .AppendConversionFromValue("value", typeDeclaration.ImpliedCoreTypesOrAny())
             .PopIndent()
             .AppendLineIndent("}");
     }
@@ -1519,7 +1519,7 @@ internal static partial class CodeGeneratorExtensions
         CoreTypes forCoreTypes,
         string jsonValueTypeBaseName)
     {
-        if ((typeDeclaration.ImpliedCoreTypes() & forCoreTypes) != 0)
+        if ((typeDeclaration.ImpliedCoreTypesOrAny() & forCoreTypes) != 0)
         {
             return generator
                 .ReserveName($"From{jsonValueTypeBaseName}")
@@ -1655,11 +1655,11 @@ internal static partial class CodeGeneratorExtensions
             .PushIndent()
             .AppendLine("#if NET8_0_OR_GREATER")
             .AppendConditionalBackingValueLineIndent("Backing.JsonElement", "return TTarget.FromJson(this.jsonElementBacking);")
-            .AppendConditionalBackingValueLineIndent("Backing.String", "return TTarget.FromString(this);", typeDeclaration.ImpliedCoreTypes(), CoreTypes.String)
-            .AppendConditionalBackingValueLineIndent("Backing.Bool", "return TTarget.FromBoolean(this);", typeDeclaration.ImpliedCoreTypes(), CoreTypes.Boolean)
-            .AppendConditionalBackingValueLineIndent("Backing.Number", "return TTarget.FromNumber(this);", typeDeclaration.ImpliedCoreTypes(), CoreTypes.Number | CoreTypes.Integer)
-            .AppendConditionalBackingValueLineIndent("Backing.Array", "return TTarget.FromArray(this);", typeDeclaration.ImpliedCoreTypes(), CoreTypes.Array)
-            .AppendConditionalBackingValueLineIndent("Backing.Object", "return TTarget.FromObject(this);", typeDeclaration.ImpliedCoreTypes(), CoreTypes.Object)
+            .AppendConditionalBackingValueLineIndent("Backing.String", "return TTarget.FromString(this);", typeDeclaration.ImpliedCoreTypesOrAny(), CoreTypes.String)
+            .AppendConditionalBackingValueLineIndent("Backing.Bool", "return TTarget.FromBoolean(this);", typeDeclaration.ImpliedCoreTypesOrAny(), CoreTypes.Boolean)
+            .AppendConditionalBackingValueLineIndent("Backing.Number", "return TTarget.FromNumber(this);", typeDeclaration.ImpliedCoreTypesOrAny(), CoreTypes.Number | CoreTypes.Integer)
+            .AppendConditionalBackingValueLineIndent("Backing.Array", "return TTarget.FromArray(this);", typeDeclaration.ImpliedCoreTypesOrAny(), CoreTypes.Array)
+            .AppendConditionalBackingValueLineIndent("Backing.Object", "return TTarget.FromObject(this);", typeDeclaration.ImpliedCoreTypesOrAny(), CoreTypes.Object)
             .AppendConditionalBackingValueLineIndent("Backing.Null", "return TTarget.Null;")
             .AppendSeparatorLine()
             .AppendLineIndent("return TTarget.Undefined;")
@@ -1697,7 +1697,7 @@ internal static partial class CodeGeneratorExtensions
                     "JsonValueHelpers.WriteItems(",
                     "arrayBacking",
                     ", writer);",
-                    impliedCoreTypes: typeDeclaration.ImpliedCoreTypes(),
+                    impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
                     forCoreTypes: CoreTypes.Array,
                     returnFromClause: true)
                 .AppendConditionalWrappedBackingValueLineIndent(
@@ -1705,7 +1705,7 @@ internal static partial class CodeGeneratorExtensions
                     "writer.WriteBooleanValue(",
                     "boolBacking",
                     ");",
-                    impliedCoreTypes: typeDeclaration.ImpliedCoreTypes(),
+                    impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
                     forCoreTypes: CoreTypes.Boolean,
                     returnFromClause: true)
                 .AppendConditionalWrappedBackingValueLineIndent(
@@ -1713,7 +1713,7 @@ internal static partial class CodeGeneratorExtensions
                     string.Empty,
                     "numberBacking",
                     ".WriteTo(writer);",
-                    impliedCoreTypes: typeDeclaration.ImpliedCoreTypes(),
+                    impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
                     forCoreTypes: CoreTypes.Number | CoreTypes.Integer,
                     returnFromClause: true)
                 .AppendConditionalWrappedBackingValueLineIndent(
@@ -1721,7 +1721,7 @@ internal static partial class CodeGeneratorExtensions
                     "JsonValueHelpers.WriteProperties(",
                     "objectBacking",
                     ", writer);",
-                    impliedCoreTypes: typeDeclaration.ImpliedCoreTypes(),
+                    impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
                     forCoreTypes: CoreTypes.Object,
                     returnFromClause: true)
                 .AppendConditionalWrappedBackingValueLineIndent(
@@ -1729,7 +1729,7 @@ internal static partial class CodeGeneratorExtensions
                     "writer.WriteStringValue(",
                     "stringBacking",
                     ");",
-                    impliedCoreTypes: typeDeclaration.ImpliedCoreTypes(),
+                    impliedCoreTypes: typeDeclaration.ImpliedCoreTypesOrAny(),
                     forCoreTypes: CoreTypes.String,
                     returnFromClause: true)
                 .AppendConditionalBackingValueLineIndent(
@@ -2008,7 +2008,12 @@ internal static partial class CodeGeneratorExtensions
         string valueType,
         CoreTypes valueCoreType)
     {
-        CoreTypes impliedCoreTypes = typeDeclaration.ImpliedCoreTypes();
+        CoreTypes impliedCoreTypes = typeDeclaration.ImpliedCoreTypesOrAny();
+
+        if ((impliedCoreTypes & valueCoreType) == 0)
+        {
+            return generator;
+        }
 
         return generator
             .AppendSeparatorLine()
@@ -2043,6 +2048,7 @@ internal static partial class CodeGeneratorExtensions
                 CoreTypes.Boolean => "Backing.Bool",
                 CoreTypes.Number => "Backing.Number",
                 CoreTypes.Integer => "Backing.Number",
+                CoreTypes.Number | CoreTypes.Integer => "Backing.Number",
                 CoreTypes.Array => "Backing.Array",
                 CoreTypes.Object => "Backing.Object",
                 _ => throw new InvalidOperationException($"Unsupported backing type {valueCoreTypes}"),

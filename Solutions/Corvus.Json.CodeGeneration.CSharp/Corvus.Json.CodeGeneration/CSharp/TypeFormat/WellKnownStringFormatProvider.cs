@@ -227,7 +227,7 @@ public class WellKnownStringFormatProvider : IStringFormatProvider
     }
 
     /// <inheritdoc/>
-    public string? GetDotnetTypeNameFor(string format)
+    public string? GetCorvusJsonTypeNameFor(string format)
     {
         return format switch
         {
@@ -263,7 +263,7 @@ public class WellKnownStringFormatProvider : IStringFormatProvider
     /// <inheritdoc/>
     public JsonValueKind? GetExpectedValueKind(string format)
     {
-        if (this.GetDotnetTypeNameFor(format) is not null)
+        if (this.GetCorvusJsonTypeNameFor(format) is not null)
         {
             return JsonValueKind.String;
         }

@@ -12,18 +12,18 @@ namespace Corvus.Json.CodeGeneration.CSharp;
 public static class FormatProviderExtensions
 {
     /// <summary>
-    /// Gets the .NET type name for the given candidate format (e.g. JsonUuid, JsonIri, JsonInt64 etc).
+    /// Gets the Corvus.Json type name for the given candidate format (e.g. JsonUuid, JsonIri, JsonInt64 etc).
     /// </summary>
     /// <typeparam name="T">The type of the format provider.</typeparam>
     /// <param name="providers">The providers to test.</param>
     /// <param name="format">The candidate format.</param>
     /// <returns>The corresponding .NET type name, or <see langword="null"/> if the format is not explicitly supported.</returns>
-    public static string? GetDotnetTypeNameFor<T>(this IEnumerable<T> providers, string format)
+    public static string? GetCorvusJsonTypeNameFor<T>(this IEnumerable<T> providers, string format)
         where T : notnull, IFormatProvider
     {
         foreach (T provider in providers)
         {
-            if (provider.GetDotnetTypeNameFor(format) is string result)
+            if (provider.GetCorvusJsonTypeNameFor(format) is string result)
             {
                 return result;
             }
@@ -56,18 +56,18 @@ public static class FormatProviderExtensions
     }
 
     /// <summary>
-    /// Gets the .NET BCL type name for the given C# numeric langword or type.
+    /// Gets the .NET BCL type name for the given C# numeric langword, or BCL type name.
     /// </summary>
     /// <typeparam name="T">The type of the format provider.</typeparam>
     /// <param name="providers">The providers to test.</param>
-    /// <param name="langword">The .NET numeric langword.</param>
+    /// <param name="langwordOrTypeName">The .NET numeric langword, or BCL type name.</param>
     /// <returns>The JSON string form suffix (e.g. <see langword="long"/> becomes <c>Int64</c>.</returns>
-    public static string? GetDotnetTypeNameForCSharpNumericLangwordOrTypeName<T>(this IEnumerable<T> providers, string langword)
+    public static string? GetTypeNameForNumericLangwordOrTypeName<T>(this IEnumerable<T> providers, string langwordOrTypeName)
         where T : notnull, INumberFormatProvider
     {
         foreach (T provider in providers)
         {
-            if (provider.GetDotnetTypeNameForCSharpNumericLangwordOrTypeName(langword) is string result)
+            if (provider.GetTypeNameForNumericLangwordOrTypeName(langwordOrTypeName) is string result)
             {
                 return result;
             }
@@ -84,12 +84,12 @@ public static class FormatProviderExtensions
     /// <param name="format">The format for which to get the type.</param>
     /// <returns>The <c>Corvus.Json</c> type name corresponding to the format,
     /// or <see cref="JsonNumber"/> if the format is not recognized.</returns>
-    public static string? GetIntegerDotnetTypeNameFor<T>(this IEnumerable<T> providers, string format)
+    public static string? GetIntegerCorvusJsonTypeNameFor<T>(this IEnumerable<T> providers, string format)
         where T : notnull, INumberFormatProvider
     {
         foreach (T provider in providers)
         {
-            if (provider.GetIntegerDotnetTypeNameFor(format) is string result)
+            if (provider.GetIntegerCorvusJsonTypeNameFor(format) is string result)
             {
                 return result;
             }
@@ -106,12 +106,12 @@ public static class FormatProviderExtensions
     /// <param name="format">The format for which to get the type.</param>
     /// <returns>The <c>Corvus.Json</c> type name corresponding to the format,
     /// or <see cref="JsonNumber"/> if the format is not recognized.</returns>
-    public static string? GetFloatDotnetTypeNameFor<T>(this IEnumerable<T> providers, string format)
+    public static string? GetFloatCorvusJsonTypeNameFor<T>(this IEnumerable<T> providers, string format)
         where T : notnull, INumberFormatProvider
     {
         foreach (T provider in providers)
         {
-            if (provider.GetFloatDotnetTypeNameFor(format) is string result)
+            if (provider.GetFloatCorvusJsonTypeNameFor(format) is string result)
             {
                 return result;
             }

@@ -23,7 +23,7 @@ public sealed class NumberPartial : ICodeFileBuilder
     /// <inheritdoc/>
     public CodeGenerator EmitFile(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
-        if ((typeDeclaration.ImpliedCoreTypes() & (CoreTypes.Number | CoreTypes.Integer)) != 0)
+        if ((typeDeclaration.ImpliedCoreTypesOrAny() & (CoreTypes.Number | CoreTypes.Integer)) != 0)
         {
             generator
                 .BeginFile(typeDeclaration, "Number")
@@ -56,7 +56,7 @@ public sealed class NumberPartial : ICodeFileBuilder
                                     new(g => g.GenericTypeOf("IDecrementOperators", typeDeclaration), FrameworkType.Net80OrGreater),
                                 ])
                             //// We do not need to speciy CoreTypes.Integer as this simply determines the backing field to set.
-                            .AppendPublicValueConstructor(typeDeclaration, "BinaryJsonNumber", CoreTypes.Number)
+                            .AppendPublicValueConstructor(typeDeclaration, "BinaryJsonNumber", CoreTypes.Number | CoreTypes.Integer)
                             .AppendPublicNumericConstructor(typeDeclaration)
                             .AppendImplicitConversionFromJsonValueTypeUsingConstructor(typeDeclaration, "JsonNumber", JsonValueKind.Number, "value.AsBinaryJsonNumber")
                             .AppendImplicitConversionToJsonValueType(typeDeclaration, "JsonNumber", CoreTypes.Number, "value.AsNumber")
@@ -76,7 +76,7 @@ public sealed class NumberPartial : ICodeFileBuilder
 
         static FrameworkType EmitIfIsObjectOrArray(TypeDeclaration typeDeclaration)
         {
-            return (typeDeclaration.ImpliedCoreTypes() & (CoreTypes.Object | CoreTypes.Array)) != 0
+            return (typeDeclaration.ImpliedCoreTypesOrAny() & (CoreTypes.Object | CoreTypes.Array)) != 0
                  ? FrameworkType.All
                  : FrameworkType.NotEmitted;
         }
