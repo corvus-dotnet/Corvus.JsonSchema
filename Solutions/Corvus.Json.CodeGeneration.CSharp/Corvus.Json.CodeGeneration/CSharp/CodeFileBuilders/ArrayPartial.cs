@@ -23,7 +23,7 @@ public sealed class ArrayPartial : ICodeFileBuilder
     /// <inheritdoc/>
     public CodeGenerator EmitFile(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
-        if ((typeDeclaration.ImpliedCoreTypesOrAny() & CoreTypes.Array) != 0)
+        if ((typeDeclaration.LocallyImpliedCoreTypes() & CoreTypes.Array) != 0)
         {
             generator
                 .BeginFile(typeDeclaration, "Array")
@@ -53,7 +53,6 @@ public sealed class ArrayPartial : ICodeFileBuilder
                                 ReadOnlyCollectionType(typeDeclaration),
                             ])
                             .AppendEmptyArrayInstanceStaticProperty(typeDeclaration)
-                            .AppendPublicValueConstructor(typeDeclaration, "ImmutableList<JsonAny>", CoreTypes.Array)
                             .AppendArrayRankStaticProperty(typeDeclaration)
                             .AppendArrayDimensionStaticProperty(typeDeclaration)
                             .AppendArrayValueBufferSizeStaticProperty(typeDeclaration)

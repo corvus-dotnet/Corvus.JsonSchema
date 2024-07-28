@@ -51,6 +51,17 @@ public readonly partial struct Person
     }
 
     /// <summary>
+    /// Initializes a new instance of the <see cref="Person"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to construct the instance.</param>
+    public Person(ImmutableList<JsonObjectProperty> value)
+    {
+        this.backing = Backing.Object;
+        this.jsonElementBacking = default;
+        this.objectBacking = value;
+    }
+
+    /// <summary>
     /// Gets the schema location from which this type was generated.
     /// </summary>
     public static string SchemaLocation { get; } = "#/$defs/Person";

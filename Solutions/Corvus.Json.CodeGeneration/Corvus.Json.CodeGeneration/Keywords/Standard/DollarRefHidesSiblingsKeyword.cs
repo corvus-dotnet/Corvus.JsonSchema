@@ -10,7 +10,7 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 /// <summary>
 /// The $ref keyword (which hides siblings).
 /// </summary>
-public sealed class DollarRefHidesSiblingsKeyword : IReferenceKeyword, IHidesSiblingsKeyword
+public sealed class DollarRefHidesSiblingsKeyword : IReferenceKeyword, IHidesSiblingsKeyword, ICompositionKeyword
 {
     private const string KeywordPath = "#/$ref";
     private static readonly JsonReference KeywordPathReference = new(KeywordPath);

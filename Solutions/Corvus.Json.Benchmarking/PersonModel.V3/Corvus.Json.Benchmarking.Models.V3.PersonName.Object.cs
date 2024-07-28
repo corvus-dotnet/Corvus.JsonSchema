@@ -28,17 +28,6 @@ public readonly partial struct PersonName
     : IJsonObject<Corvus.Json.Benchmarking.Models.V3.PersonName>
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="PersonName"/> struct.
-    /// </summary>
-    /// <param name="value">The value from which to construct the instance.</param>
-    public PersonName(ImmutableList<JsonObjectProperty> value)
-    {
-        this.backing = Backing.Object;
-        this.jsonElementBacking = default;
-        this.objectBacking = value;
-    }
-
-    /// <summary>
     /// Conversion from <see cref="ImmutableList{JsonObjectProperty}"/>.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>

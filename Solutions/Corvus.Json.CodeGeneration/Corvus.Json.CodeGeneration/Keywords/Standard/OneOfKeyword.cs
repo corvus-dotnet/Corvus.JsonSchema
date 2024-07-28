@@ -10,7 +10,7 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 /// The oneOf keyword.
 /// </summary>
 public sealed class OneOfKeyword
-    : IOneOfSubschemaValidationKeyword, ILocalSubschemaRegistrationKeyword, ISubschemaTypeBuilderKeyword
+    : IOneOfSubschemaValidationKeyword, ILocalSubschemaRegistrationKeyword, ISubschemaTypeBuilderKeyword, ICompositionKeyword
 {
     private const string KeywordPath = "#/oneOf";
     private static readonly JsonReference KeywordPathReference = new(KeywordPath);

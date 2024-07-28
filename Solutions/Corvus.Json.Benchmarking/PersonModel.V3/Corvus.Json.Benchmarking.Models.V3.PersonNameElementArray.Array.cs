@@ -37,17 +37,6 @@ public readonly partial struct PersonNameElementArray
     public static PersonNameElementArray EmptyArray { get; } = From(ImmutableList<JsonAny>.Empty);
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="PersonNameElementArray"/> struct.
-    /// </summary>
-    /// <param name="value">The value from which to construct the instance.</param>
-    public PersonNameElementArray(ImmutableList<JsonAny> value)
-    {
-        this.backing = Backing.Array;
-        this.jsonElementBacking = default;
-        this.arrayBacking = value;
-    }
-
-    /// <summary>
     /// Gets the rank of the array.
     /// </summary>
     public static int Rank => 1;

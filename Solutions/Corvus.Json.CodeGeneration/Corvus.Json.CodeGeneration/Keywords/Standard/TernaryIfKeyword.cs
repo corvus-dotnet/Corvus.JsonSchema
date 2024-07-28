@@ -9,7 +9,7 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 /// <summary>
 /// The if keyword with corresponding then and else keywords.
 /// </summary>
-public sealed class TernaryIfKeyword : ISubschemaTypeBuilderKeyword, ILocalSubschemaRegistrationKeyword, ITernaryIfValidationKeyword
+public sealed class TernaryIfKeyword : ISubschemaTypeBuilderKeyword, ILocalSubschemaRegistrationKeyword, ITernaryIfValidationKeyword, ICompositionKeyword
 {
     private const string KeywordPath = "#/if";
     private static readonly JsonReference KeywordPathReference = new(KeywordPath);

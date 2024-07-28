@@ -30,17 +30,6 @@ public readonly partial struct PersonNameElement
 #endif
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="PersonNameElement"/> struct.
-    /// </summary>
-    /// <param name="value">The value from which to construct the instance.</param>
-    public PersonNameElement(string value)
-    {
-        this.backing = Backing.String;
-        this.jsonElementBacking = default;
-        this.stringBacking = value;
-    }
-
-    /// <summary>
     /// Conversion from <see cref="string"/>.
     /// </summary>
     /// <param name="value">The value from which to convert.</param>

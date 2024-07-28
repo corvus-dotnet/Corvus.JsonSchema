@@ -13,7 +13,8 @@ public sealed class ElseKeyword
     :   ISubschemaTypeBuilderKeyword,
         ILocalSubschemaRegistrationKeyword,
         IPropertyProviderKeyword,
-        ITernaryIfElseValidationKeyword
+        ITernaryIfElseValidationKeyword,
+        ICompositionKeyword
 {
     private const string KeywordPath = "#/else";
     private static readonly JsonReference KeywordPathReference = new(KeywordPath);

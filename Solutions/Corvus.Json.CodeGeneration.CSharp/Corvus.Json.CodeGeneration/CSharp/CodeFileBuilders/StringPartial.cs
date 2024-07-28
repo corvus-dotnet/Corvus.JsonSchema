@@ -23,7 +23,7 @@ public sealed class StringPartial : ICodeFileBuilder
     /// <inheritdoc/>
     public CodeGenerator EmitFile(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
-        if ((typeDeclaration.ImpliedCoreTypesOrAny() & CoreTypes.String) != 0)
+        if ((typeDeclaration.LocallyImpliedCoreTypes() & CoreTypes.String) != 0)
         {
             generator
                 .BeginFile(typeDeclaration, "String")
@@ -51,7 +51,6 @@ public sealed class StringPartial : ICodeFileBuilder
                                     new(g => g.GenericTypeOf("IJsonString", typeDeclaration)),
                                     new("ISpanFormattable", FrameworkType.Net80OrGreater),
                                 ])
-                                .AppendPublicValueConstructor(typeDeclaration, "string", CoreTypes.String)
                                 .AppendImplicitConversionFromTypeUsingConstructor(typeDeclaration, "string")
                                 .AppendImplicitConversionFromJsonValueTypeUsingConstructor(typeDeclaration, "JsonString", JsonValueKind.String, "(string)value")
                                 .AppendImplicitConversionToJsonValueType(typeDeclaration, "JsonString", CoreTypes.String, "value.AsString")

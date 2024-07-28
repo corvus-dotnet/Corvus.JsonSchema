@@ -50,6 +50,17 @@ public readonly partial struct PersonNameElement
     }
 
     /// <summary>
+    /// Initializes a new instance of the <see cref="PersonNameElement"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to construct the instance.</param>
+    public PersonNameElement(string value)
+    {
+        this.backing = Backing.String;
+        this.jsonElementBacking = default;
+        this.stringBacking = value;
+    }
+
+    /// <summary>
     /// Gets the schema location from which this type was generated.
     /// </summary>
     public static string SchemaLocation { get; } = "#/$defs/PersonNameElement";

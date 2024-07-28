@@ -10,7 +10,7 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 /// The anyOf keyword.
 /// </summary>
 public sealed class AnyOfKeyword
-    : IAnyOfSubschemaValidationKeyword, ISubschemaTypeBuilderKeyword, ILocalSubschemaRegistrationKeyword
+    : IAnyOfSubschemaValidationKeyword, ISubschemaTypeBuilderKeyword, ILocalSubschemaRegistrationKeyword, ICompositionKeyword
 {
     private const string KeywordPath = "#/anyOf";
     private static readonly JsonReference KeywordPathReference = new(KeywordPath);

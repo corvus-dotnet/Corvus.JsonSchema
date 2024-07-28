@@ -34,6 +34,24 @@ public static class Composition
     }
 
     /// <summary>
+    /// Gets the locally implied core type for subschema.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration whose core type is to be determined.</param>
+    /// <param name="currentCoreTypes">The current implied core types.</param>
+    /// <returns>The composed core types.</returns>
+    public static CoreTypes UnionLocallyImpliedCoreTypeForTypeDeclaration(TypeDeclaration typeDeclaration, in CoreTypes currentCoreTypes)
+    {
+        CoreTypes result = currentCoreTypes;
+        foreach (IKeyword keyword in typeDeclaration.Keywords()
+                    .Where(k => k is not ICompositionKeyword))
+        {
+            result |= keyword.ImpliesCoreTypes(typeDeclaration);
+        }
+
+        return result;
+    }
+
+    /// <summary>
     /// Gets the implied core type for subschema.
     /// </summary>
     /// <param name="typeDeclaration">The type declaration whose core type is to be determined.</param>
