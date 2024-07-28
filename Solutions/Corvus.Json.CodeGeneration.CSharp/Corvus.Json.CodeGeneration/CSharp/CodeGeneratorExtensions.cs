@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Diagnostics;
+using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis.CSharp;
@@ -3326,8 +3327,8 @@ internal static partial class CodeGeneratorExtensions
             foreach (IAnyOfConstantValidationKeyword keyword in anyOfConstant.Keys)
             {
                 JsonElement[] constantValues = anyOfConstant[keyword];
-                AppendMatchConstantMethod(generator, typeDeclaration, constantValues, includeContext: true, matchOverloadIndex: matchOverloadIndex++);
-                AppendMatchConstantMethod(generator, typeDeclaration, constantValues, includeContext: false, matchOverloadIndex: matchOverloadIndex++);
+                AppendMatchConstantMethod(generator, typeDeclaration, keyword, constantValues, includeContext: true, matchOverloadIndex: matchOverloadIndex++);
+                AppendMatchConstantMethod(generator, typeDeclaration, keyword, constantValues, includeContext: false, matchOverloadIndex: matchOverloadIndex++);
             }
         }
 
@@ -3460,9 +3461,136 @@ internal static partial class CodeGeneratorExtensions
                 .AppendLineIndent("}");
         }
 
-        static void AppendMatchConstantMethod(CodeGenerator generator, TypeDeclaration typeDeclaration, JsonElement[] subschema, bool includeContext, int matchOverloadIndex)
+        static void AppendMatchConstantMethod(CodeGenerator generator, TypeDeclaration typeDeclaration, IAnyOfConstantValidationKeyword keyword, JsonElement[] constValues, bool includeContext, int matchOverloadIndex)
         {
-            throw new NotImplementedException();
+            string scopeName = $"Match{matchOverloadIndex}";
+
+            generator
+                .ReserveNameIfNotReserved("Match")
+                .AppendSeparatorLine()
+                .AppendBlockIndent(
+                """
+                /// <summary>
+                /// Matches the value against the constant values, and returns the result of calling the provided match function for the first match found.
+                /// </summary>
+                """);
+
+            if (includeContext)
+            {
+                generator
+                    .AppendLineIndent("/// <typeparam name=\"TIn\">The immutable context to pass in to the match function.</typeparam>");
+            }
+
+            generator
+                .AppendLineIndent("/// <typeparam name=\"TOut\">The result of calling the match function.</typeparam>");
+
+            if (includeContext)
+            {
+                generator
+                    .AppendLineIndent("/// <param name=\"context\">The context to pass to the match function.</param>")
+                    .ReserveNameIfNotReserved("context", childScope: scopeName);
+            }
+
+            // Reserve the parameter names we are going to require
+            generator
+                .ReserveNameIfNotReserved("defaultMatch", childScope: scopeName);
+
+            int count = constValues.Length;
+            string[] parameterNames = new string[count];
+            string[] constFields = new string[count];
+
+            for (int i = 1; i <= count; ++i)
+            {
+                JsonElement constValue = constValues[i - 1];
+
+                string matchParamName = GetUniqueParameterName(generator, scopeName, constValue, i);
+                string constField =
+                    generator.GetPropertyNameInScope(
+                        keyword.Keyword,
+                        rootScope: generator.ValidationClassScope(),
+                        suffix: count > 1 ? i.ToString() : null);
+
+                parameterNames[i - 1] = matchParamName;
+                constFields[i - 1] = constField;
+
+                generator
+                    .AppendIndent("/// <param name=\"", matchParamName, "\">Match ")
+                    .AppendOrdinalName(i)
+                    .AppendLine(" item.</param>");
+            }
+
+            generator
+                .AppendLineIndent("/// <param name=\"defaultMatch\">Match any other value.</param>")
+                .AppendLineIndent("/// <returns>An instance of the value returned by the match function.</returns>")
+                .AppendLineIndent("public TOut Match<", includeContext ? "TIn, " : string.Empty, "TOut>(")
+                .PushMemberScope(scopeName, ScopeType.Method)
+                .PushIndent();
+
+            if (includeContext)
+            {
+                generator
+                    .AppendIndent("in TIn context");
+            }
+
+            for (int i = 0; i < count; ++i)
+            {
+                if (i > 0 || includeContext)
+                {
+                    generator
+                        .AppendLine(",");
+                }
+
+                generator
+                    .AppendIndent(
+                        "Func<",
+                        includeContext ? "TIn, " : string.Empty,
+                        "TOut> ",
+                        parameterNames[i]);
+            }
+
+            generator
+                .AppendLine(",")
+                .AppendLineIndent(
+                    "Func<",
+                    includeContext ? "TIn, " : string.Empty,
+                    "TOut> defaultMatch)")
+                .PopIndent()
+                .AppendLineIndent("{")
+                .PushIndent();
+
+            for (int i = 0; i < count; ++i)
+            {
+                generator
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("if (this.Equals(", generator.ValidationClassName(), ".", constFields[i], "))")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent("return ", parameterNames[i], "(", includeContext ? "context);" : ");")
+                    .PopIndent()
+                    .AppendLineIndent("}");
+            }
+
+            generator
+                .AppendSeparatorLine()
+                .AppendLineIndent("return defaultMatch(", includeContext ? "context" : string.Empty, ");")
+                .PopMemberScope()
+                .PopIndent()
+                .AppendLineIndent("}");
+        }
+
+        static string GetUniqueParameterName(CodeGenerator generator, string scopeName, JsonElement constValue, int index)
+        {
+            return constValue.ValueKind switch
+            {
+                JsonValueKind.Object => generator.GetUniqueParameterNameInScope("matchObjectValue", childScope: scopeName, suffix: index.ToString()),
+                JsonValueKind.Array => generator.GetUniqueParameterNameInScope("matchArrayValue", childScope: scopeName, suffix: index.ToString()),
+                JsonValueKind.String => generator.GetUniqueParameterNameInScope(constValue.GetString()!, prefix: "match", childScope: scopeName),
+                JsonValueKind.Number => generator.GetUniqueParameterNameInScope(constValue.GetRawText().Replace(".", "point"), prefix: "matchNumber", childScope: scopeName),
+                JsonValueKind.True => generator.GetUniqueParameterNameInScope("matchTrue", childScope: scopeName),
+                JsonValueKind.False => generator.GetUniqueParameterNameInScope("matchFalse", childScope: scopeName),
+                JsonValueKind.Null => generator.GetUniqueParameterNameInScope("matchNull", childScope: scopeName),
+                _ => throw new InvalidOperationException($"Unsupport JsonValueKind: {constValue.ValueKind}"),
+            };
         }
 
         static void AppendMatchIfMethod(CodeGenerator generator, TypeDeclaration typeDeclaration, SingleSubschemaKeywordTypeDeclaration ifSubschema, bool includeContext, int matchOverloadIndex)
