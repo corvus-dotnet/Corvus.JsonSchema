@@ -1742,6 +1742,34 @@ public static class TypeDeclarationExtensions
     }
 
     /// <summary>
+    /// Gets a value indicating the core types represented by the type declaration,
+    /// considering only locally implied types, not composite subschema.
+    /// </summary>
+    /// <param name="that">The type declaration.</param>
+    /// <returns>The CoreTypes implied by the type declaration.</returns>
+    public static CoreTypes LocallyImpliedCoreTypes(this TypeDeclaration that)
+    {
+        if (!that.BuildComplete)
+        {
+            throw new InvalidOperationException("You cannot get the core types during the type build process.");
+        }
+
+        if (!that.TryGetMetadata(nameof(LocallyImpliedCoreTypes), out CoreTypes coreTypes))
+        {
+            // Set us to None temporarily to avoid recursion.
+            that.SetMetadata(nameof(LocallyImpliedCoreTypes), CoreTypes.None);
+
+            // Then union the types
+            coreTypes = Composition.UnionLocallyImpliedCoreTypeForTypeDeclaration(that, CoreTypes.None);
+
+            // Then set the actual metadata
+            that.SetMetadata(nameof(LocallyImpliedCoreTypes), coreTypes);
+        }
+
+        return coreTypes;
+    }
+
+    /// <summary>
     /// Gets the union of <see cref="CoreTypes"/> to match for type validation, or
     /// <see cref="CoreTypes.None"/> if any type is valid.
     /// </summary>

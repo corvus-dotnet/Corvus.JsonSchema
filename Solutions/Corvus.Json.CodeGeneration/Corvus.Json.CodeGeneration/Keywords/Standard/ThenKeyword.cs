@@ -13,7 +13,8 @@ public sealed class ThenKeyword
     :   ISubschemaTypeBuilderKeyword,
         ILocalSubschemaRegistrationKeyword,
         IPropertyProviderKeyword,
-        IIfThenValidationKeyword
+        IIfThenValidationKeyword,
+        ICompositionKeyword
 {
     private const string KeywordPath = "#/then";
     private static readonly JsonReference KeywordPathReference = new(KeywordPath);

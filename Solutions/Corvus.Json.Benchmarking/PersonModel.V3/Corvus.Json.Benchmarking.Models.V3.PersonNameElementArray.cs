@@ -51,6 +51,17 @@ public readonly partial struct PersonNameElementArray
     }
 
     /// <summary>
+    /// Initializes a new instance of the <see cref="PersonNameElementArray"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to construct the instance.</param>
+    public PersonNameElementArray(ImmutableList<JsonAny> value)
+    {
+        this.backing = Backing.Array;
+        this.jsonElementBacking = default;
+        this.arrayBacking = value;
+    }
+
+    /// <summary>
     /// Gets the schema location from which this type was generated.
     /// </summary>
     public static string SchemaLocation { get; } = "#/$defs/PersonNameElementArray";

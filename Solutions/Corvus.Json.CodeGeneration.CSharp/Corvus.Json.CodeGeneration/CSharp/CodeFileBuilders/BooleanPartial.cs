@@ -23,7 +23,7 @@ public sealed class BooleanPartial : ICodeFileBuilder
     /// <inheritdoc/>
     public CodeGenerator EmitFile(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
-        if ((typeDeclaration.ImpliedCoreTypesOrAny() & CoreTypes.Boolean) != 0)
+        if ((typeDeclaration.LocallyImpliedCoreTypes() & CoreTypes.Boolean) != 0)
         {
             generator
                 .BeginFile(typeDeclaration, "Boolean")
@@ -48,7 +48,6 @@ public sealed class BooleanPartial : ICodeFileBuilder
                                 [
                                     new(g => g.GenericTypeOf("IJsonBoolean", typeDeclaration))
                                 ])
-                                .AppendPublicValueConstructor(typeDeclaration, "bool", CoreTypes.Boolean)
                                 .AppendImplicitConversionFromTypeUsingConstructor(typeDeclaration, "bool")
                                 .AppendImplicitConversionFromJsonValueTypeUsingConstructor(typeDeclaration, "JsonBoolean", [JsonValueKind.False, JsonValueKind.True], "(bool)value")
                                 .AppendImplicitConversionToJsonValueType(typeDeclaration, "JsonBoolean", CoreTypes.Boolean, "value.AsBoolean")

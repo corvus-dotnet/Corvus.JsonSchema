@@ -23,7 +23,7 @@ namespace Corvus.Json.Benchmarking.Models.V3;
 /// </summary>
 [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<OtherNames>))]
 public readonly partial struct OtherNames
-
+    : IJsonValue<Corvus.Json.Benchmarking.Models.V3.OtherNames>
 {
     private readonly Backing backing;
     private readonly JsonElement jsonElementBacking;
@@ -50,6 +50,30 @@ public readonly partial struct OtherNames
         this.jsonElementBacking = value;
         this.backing = Backing.JsonElement;
         this.stringBacking = string.Empty;
+        this.arrayBacking = ImmutableList<JsonAny>.Empty;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="OtherNames"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to construct the instance.</param>
+    public OtherNames(ImmutableList<JsonAny> value)
+    {
+        this.backing = Backing.Array;
+        this.jsonElementBacking = default;
+        this.stringBacking = string.Empty;
+        this.arrayBacking = value;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="OtherNames"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to construct the instance.</param>
+    public OtherNames(string value)
+    {
+        this.backing = Backing.String;
+        this.jsonElementBacking = default;
+        this.stringBacking = value;
         this.arrayBacking = ImmutableList<JsonAny>.Empty;
     }
 
@@ -547,12 +571,12 @@ public readonly partial struct OtherNames
 
         if ((this.backing & Backing.String) != 0)
         {
-            return TTarget.FromString(this);
+            return TTarget.FromString(this.AsString);
         }
 
         if ((this.backing & Backing.Array) != 0)
         {
-            return TTarget.FromArray(this);
+            return TTarget.FromArray(this.AsArray);
         }
 
         if ((this.backing & Backing.Null) != 0)

@@ -23,7 +23,7 @@ public sealed class ObjectPartial : ICodeFileBuilder
     /// <inheritdoc/>
     public CodeGenerator EmitFile(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
-        if ((typeDeclaration.ImpliedCoreTypesOrAny() & CoreTypes.Object) != 0)
+        if ((typeDeclaration.LocallyImpliedCoreTypes() & CoreTypes.Object) != 0)
         {
             generator
                 .BeginFile(typeDeclaration, "Object")
@@ -50,7 +50,6 @@ public sealed class ObjectPartial : ICodeFileBuilder
                                 JsonObjectType(typeDeclaration),
                                 ReadOnlyDictionaryType(typeDeclaration),
                             ])
-                            .AppendPublicValueConstructor(typeDeclaration, "ImmutableList<JsonObjectProperty>", CoreTypes.Object)
                             .AppendImplicitConversionFromTypeUsingConstructor(typeDeclaration, "ImmutableList<JsonObjectProperty>")
                             .AppendImplicitConversionToType(typeDeclaration, "ImmutableList<JsonObjectProperty>", "__CorvusObjectHelpers.GetPropertyBacking(value)")
                             .AppendImplicitConversionFromJsonValueTypeUsingConstructor(typeDeclaration, "JsonObject", JsonValueKind.Object, "__CorvusObjectHelpers.GetPropertyBacking(value)")

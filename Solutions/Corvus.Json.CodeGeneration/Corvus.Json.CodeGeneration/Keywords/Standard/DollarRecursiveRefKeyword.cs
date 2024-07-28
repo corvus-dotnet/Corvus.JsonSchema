@@ -10,7 +10,7 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 /// <summary>
 /// The $recursiveRef keyword.
 /// </summary>
-public sealed class DollarRecursiveRefKeyword : IRecursiveReferenceKeyword
+public sealed class DollarRecursiveRefKeyword : IRecursiveReferenceKeyword, ICompositionKeyword
 {
     private const string KeywordPath = "#/$recursiveRef";
     private static readonly JsonReference KeywordPathReference = new(KeywordPath);

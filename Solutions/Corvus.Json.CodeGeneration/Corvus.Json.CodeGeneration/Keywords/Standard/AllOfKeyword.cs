@@ -10,7 +10,7 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 /// The allOf keyword.
 /// </summary>
 public sealed class AllOfKeyword
-    : IPropertyProviderKeyword, IAllOfSubschemaValidationKeyword, ILocalSubschemaRegistrationKeyword, ISubschemaTypeBuilderKeyword
+    : IPropertyProviderKeyword, IAllOfSubschemaValidationKeyword, ILocalSubschemaRegistrationKeyword, ISubschemaTypeBuilderKeyword, ICompositionKeyword
 {
     private const string KeywordPath = "#/allOf";
     private static readonly JsonReference KeywordPathReference = new(KeywordPath);

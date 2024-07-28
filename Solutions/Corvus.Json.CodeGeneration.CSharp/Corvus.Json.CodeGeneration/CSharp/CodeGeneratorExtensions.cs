@@ -1654,12 +1654,34 @@ internal static partial class CodeGeneratorExtensions
                 """)
             .PushIndent()
             .AppendLine("#if NET8_0_OR_GREATER")
-            .AppendConditionalBackingValueLineIndent("Backing.JsonElement", "return TTarget.FromJson(this.jsonElementBacking);")
-            .AppendConditionalBackingValueLineIndent("Backing.String", "return TTarget.FromString(this);", typeDeclaration.ImpliedCoreTypesOrAny(), CoreTypes.String)
-            .AppendConditionalBackingValueLineIndent("Backing.Bool", "return TTarget.FromBoolean(this);", typeDeclaration.ImpliedCoreTypesOrAny(), CoreTypes.Boolean)
-            .AppendConditionalBackingValueLineIndent("Backing.Number", "return TTarget.FromNumber(this);", typeDeclaration.ImpliedCoreTypesOrAny(), CoreTypes.Number | CoreTypes.Integer)
-            .AppendConditionalBackingValueLineIndent("Backing.Array", "return TTarget.FromArray(this);", typeDeclaration.ImpliedCoreTypesOrAny(), CoreTypes.Array)
-            .AppendConditionalBackingValueLineIndent("Backing.Object", "return TTarget.FromObject(this);", typeDeclaration.ImpliedCoreTypesOrAny(), CoreTypes.Object)
+            .AppendConditionalBackingValueLineIndent(
+                "Backing.JsonElement",
+                "return TTarget.FromJson(this.jsonElementBacking);")
+            .AppendConditionalBackingValueLineIndent(
+                "Backing.String",
+                (typeDeclaration.LocallyImpliedCoreTypes() & CoreTypes.String) != 0 ? "return TTarget.FromString(this);" : "return TTarget.FromString(this.AsString);",
+                typeDeclaration.ImpliedCoreTypesOrAny(),
+                CoreTypes.String)
+            .AppendConditionalBackingValueLineIndent(
+                "Backing.Bool",
+                (typeDeclaration.LocallyImpliedCoreTypes() & CoreTypes.Boolean) != 0 ? "return TTarget.FromBoolean(this);" : "return TTarget.FromBoolean(this.AsBoolean);",
+                typeDeclaration.ImpliedCoreTypesOrAny(),
+                CoreTypes.Boolean)
+            .AppendConditionalBackingValueLineIndent(
+                "Backing.Number",
+                (typeDeclaration.LocallyImpliedCoreTypes() & (CoreTypes.Number | CoreTypes.Integer)) != 0 ? "return TTarget.FromNumber(this);" : "return TTarget.FromNumber(this.AsNumber);",
+                typeDeclaration.ImpliedCoreTypesOrAny(),
+                CoreTypes.Number | CoreTypes.Integer)
+            .AppendConditionalBackingValueLineIndent(
+                "Backing.Array",
+                (typeDeclaration.LocallyImpliedCoreTypes() & CoreTypes.Array) != 0 ? "return TTarget.FromArray(this);" : "return TTarget.FromArray(this.AsArray);",
+                typeDeclaration.ImpliedCoreTypesOrAny(),
+                CoreTypes.Array)
+            .AppendConditionalBackingValueLineIndent(
+                "Backing.Object",
+                (typeDeclaration.LocallyImpliedCoreTypes() & CoreTypes.Object) != 0 ? "return TTarget.FromObject(this);" : "return TTarget.FromObject(this.AsObject);",
+                typeDeclaration.ImpliedCoreTypesOrAny(),
+                CoreTypes.Object)
             .AppendConditionalBackingValueLineIndent("Backing.Null", "return TTarget.Null;")
             .AppendSeparatorLine()
             .AppendLineIndent("return TTarget.Undefined;")

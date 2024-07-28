@@ -48,6 +48,11 @@ public sealed class CorePartial : ICodeFileBuilder
                         .AppendBackingFields(typeDeclaration.ImpliedCoreTypesOrAny())
                         .AppendPublicDefaultConstructor(typeDeclaration)
                         .AppendPublicJsonElementConstructor(typeDeclaration)
+                        .AppendPublicValueConstructor(typeDeclaration, "ImmutableList<JsonAny>", CoreTypes.Array)
+                        .AppendPublicValueConstructor(typeDeclaration, "bool", CoreTypes.Boolean)
+                        .AppendPublicValueConstructor(typeDeclaration, "BinaryJsonNumber", CoreTypes.Number | CoreTypes.Integer)
+                        .AppendPublicValueConstructor(typeDeclaration, "ImmutableList<JsonObjectProperty>", CoreTypes.Object)
+                        .AppendPublicValueConstructor(typeDeclaration, "string", CoreTypes.String)
                         .AppendSchemaLocationStaticProperty(typeDeclaration)
                         .AppendNullInstanceStaticProperty(typeDeclaration)
                         .AppendUndefinedInstanceStaticProperty(typeDeclaration)
@@ -100,7 +105,7 @@ public sealed class CorePartial : ICodeFileBuilder
     private static ConditionalCodeSpecification JsonAnyType(TypeDeclaration typeDeclaration)
     {
         bool isNull = (typeDeclaration.ImpliedCoreTypes() & CoreTypes.Null) != 0 && typeDeclaration.ImpliedCoreTypes().CountTypes() == 1;
-        bool isAny = typeDeclaration.ImpliedCoreTypes().CountTypes() == 0;
+        bool isAny = typeDeclaration.LocallyImpliedCoreTypes().CountTypes() == 0;
         return new(
             g => g.GenericTypeOf("IJsonValue", typeDeclaration),
             isNull || isAny ? FrameworkType.All : FrameworkType.NotEmitted);

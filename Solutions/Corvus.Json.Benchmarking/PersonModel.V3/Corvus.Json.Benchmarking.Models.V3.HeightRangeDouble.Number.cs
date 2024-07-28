@@ -36,17 +36,6 @@ public readonly partial struct HeightRangeDouble
 #endif
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="HeightRangeDouble"/> struct.
-    /// </summary>
-    /// <param name="value">The value from which to construct the instance.</param>
-    public HeightRangeDouble(BinaryJsonNumber value)
-    {
-        this.backing = Backing.Number;
-        this.jsonElementBacking = default;
-        this.numberBacking = value;
-    }
-
-    /// <summary>
     /// Initializes a new instance of the <see cref = "HeightRangeDouble"/> struct.
     /// </summary>
     /// <param name="value">The value from which to construct the instance.</param>
