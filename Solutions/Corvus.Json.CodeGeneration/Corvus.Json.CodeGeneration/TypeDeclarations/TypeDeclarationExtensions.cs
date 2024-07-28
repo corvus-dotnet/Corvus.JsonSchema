@@ -1477,6 +1477,38 @@ public static class TypeDeclarationExtensions
     }
 
     /// <summary>
+    /// Gets the type declarations provided by <see cref="ICompositionKeyword"/> keywords for the type declaration.
+    /// </summary>
+    /// <param name="that">The type declaration.</param>
+    /// <returns>The collection of composition type declarations.</returns>
+    public static IReadOnlyCollection<TypeDeclaration> CompositionTypeDeclarations(this TypeDeclaration that)
+    {
+        if (!that.BuildComplete)
+        {
+            throw new InvalidOperationException("You cannot use DefinitionKeywords during the type build process.");
+        }
+
+        if (!that.TryGetMetadata(nameof(CompositionTypeDeclarations), out IReadOnlyCollection<TypeDeclaration>? compositionTypeDeclarations))
+        {
+            HashSet<TypeDeclaration> result = [];
+
+            foreach (ISubschemaProviderKeyword keyword in that.Keywords().OfType<ICompositionKeyword>().OfType<ISubschemaProviderKeyword>())
+            {
+                foreach (TypeDeclaration subschema in keyword.GetSubschemaTypeDeclarations(that))
+                {
+                    result.Add(subschema.ReducedTypeDeclaration().ReducedType);
+                }
+            }
+
+            compositionTypeDeclarations = result.OrderBy(t => t.LocatedSchema.Location).ToList();
+
+            that.SetMetadata(nameof(CompositionTypeDeclarations), compositionTypeDeclarations);
+        }
+
+        return compositionTypeDeclarations ?? [];
+    }
+
+    /// <summary>
     /// Gets the <see cref="IKeyword" /> keywords for the type declaration.
     /// </summary>
     /// <param name="that">The type declaration.</param>
