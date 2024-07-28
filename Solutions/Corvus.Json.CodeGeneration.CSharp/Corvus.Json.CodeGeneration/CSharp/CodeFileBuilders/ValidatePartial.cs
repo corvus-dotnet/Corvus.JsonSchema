@@ -31,6 +31,7 @@ public sealed class ValidatePartial : ICodeFileBuilder
                     .AppendLine("#nullable enable")
                     .AppendLine()
                     .AppendUsings(
+                        "System.Runtime.CompilerServices",
                         "System.Text.Json",
                         RequiresRegularExressions(typeDeclaration) ? "System.Text.RegularExpressions" : ConditionalCodeSpecification.DoNotEmit,
                         "Corvus.Json")

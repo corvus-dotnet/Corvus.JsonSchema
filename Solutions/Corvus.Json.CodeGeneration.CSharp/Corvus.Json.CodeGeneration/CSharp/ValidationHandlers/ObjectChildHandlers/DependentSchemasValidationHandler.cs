@@ -48,15 +48,11 @@ public class DependentSchemasValidationHandler : IChildObjectPropertyValidationH
                     generator
                         .AppendSeparatorLine()
                         .AppendLineIndent(
-                            "if ((property.NamePrefersUtf8 && property.NameEquals(",
+                            "if (property.NameEquals(",
                             quotedPropertyName,
-                            "u8)) ||")
-                        .PushIndent()
-                        .AppendLineIndent(
-                            "(!property.NamePrefersUtf8 && property.NameEquals(",
+                            "u8, ",
                             quotedPropertyName,
-                            ")))")
-                        .PopIndent()
+                            "))")
                         .AppendLineIndent("{")
                         .PushIndent()
                             .AppendLineIndent("if (level > ValidationLevel.Basic)")

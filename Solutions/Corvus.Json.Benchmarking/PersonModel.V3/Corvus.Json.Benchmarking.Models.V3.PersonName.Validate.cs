@@ -115,8 +115,7 @@ public readonly partial struct PersonName
             int propertyCount = 0;
             foreach (JsonObjectProperty property in value.EnumerateObject())
             {
-                if ((property.NamePrefersUtf8 && property.NameEquals(JsonPropertyNames.FamilyNameUtf8)) ||
-                    (!property.NamePrefersUtf8 && property.NameEquals(JsonPropertyNames.FamilyName)))
+                if (property.NameEquals(JsonPropertyNames.FamilyNameUtf8, JsonPropertyNames.FamilyName))
                 {
                     hasSeenFamilyName = true;
                     result = result.WithLocalProperty(propertyCount);
@@ -137,8 +136,7 @@ public readonly partial struct PersonName
                         return result;
                     }
                 }
-                else if ((property.NamePrefersUtf8 && property.NameEquals(JsonPropertyNames.GivenNameUtf8)) ||
-                    (!property.NamePrefersUtf8 && property.NameEquals(JsonPropertyNames.GivenName)))
+                else if (property.NameEquals(JsonPropertyNames.GivenNameUtf8, JsonPropertyNames.GivenName))
                 {
                     result = result.WithLocalProperty(propertyCount);
                     if (level > ValidationLevel.Basic)
@@ -158,8 +156,7 @@ public readonly partial struct PersonName
                         return result;
                     }
                 }
-                else if ((property.NamePrefersUtf8 && property.NameEquals(JsonPropertyNames.OtherNamesUtf8)) ||
-                    (!property.NamePrefersUtf8 && property.NameEquals(JsonPropertyNames.OtherNames)))
+                else if (property.NameEquals(JsonPropertyNames.OtherNamesUtf8, JsonPropertyNames.OtherNames))
                 {
                     result = result.WithLocalProperty(propertyCount);
                     if (level > ValidationLevel.Basic)
