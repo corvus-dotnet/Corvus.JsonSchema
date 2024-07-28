@@ -70,6 +70,7 @@ public sealed class CorePartial : ICodeFileBuilder
                         .AppendValueKindProperty(typeDeclaration)
                         .AppendImplicitConversionFromJsonValueTypeUsingAs(typeDeclaration, "JsonAny")
                         .AppendImplicitConversionToJsonAny(typeDeclaration)
+                        .AppendConversionToCompositionTypes(typeDeclaration)
                         .AppendBinaryOperator(typeDeclaration, "bool", "==", "return left.Equals(right);", "<c>True</c> if the values are equal.")
                         .AppendBinaryOperator(typeDeclaration, "bool", "!=", "return !left.Equals(right);", "<c>True</c> if the values are not equal.")
                         .AppendFromJsonFactoryMethod(typeDeclaration)
