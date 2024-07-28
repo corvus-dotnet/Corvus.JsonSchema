@@ -45,6 +45,7 @@ public class AnyOfConstValidationHandler : IChildValidationHandler
                     .PopIndent()
                     .AppendLineIndent("}")
                     .AppendSeparatorLine()
+                    .AppendLineIndent("[MethodImpl(MethodImplOptions.AggressiveInlining)]")
                     .AppendLineIndent(
                         "static ValidationContext ",
                         localMethodName,

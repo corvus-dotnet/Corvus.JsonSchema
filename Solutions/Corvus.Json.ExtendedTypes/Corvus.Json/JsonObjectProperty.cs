@@ -116,20 +116,6 @@ public readonly struct JsonObjectProperty
     }
 
     /// <summary>
-    /// Gets a value indicating whether the <see cref="JsonObjectProperty"/>
-    /// prefers a UTF8 representation of the name.
-    /// </summary>
-    public bool NamePrefersUtf8
-    {
-        get
-        {
-            return
-                (this.backing & Backing.JsonProperty) != 0 ||
-                ((this.backing & Backing.NameValue) != 0 && this.name.HasJsonElementBacking);
-        }
-    }
-
-    /// <summary>
     /// Standard equality operator.
     /// </summary>
     /// <param name="left">The LHS of the comparison.</param>
@@ -239,6 +225,28 @@ public readonly struct JsonObjectProperty
         }
 
         value = default;
+        return false;
+    }
+
+    /// <summary>
+    /// Compares the specified UTF-8 encoded text to the name of this property.
+    /// </summary>
+    /// <param name="utf8Name">The name to match as a UTF8 string.</param>
+    /// <param name="name">The name to match as a string.</param>
+    /// <returns><c>True</c> if the name matches.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool NameEquals(ReadOnlySpan<byte> utf8Name, string name)
+    {
+        if ((this.backing & Backing.JsonProperty) != 0)
+        {
+            return this.jsonProperty.NameEquals(utf8Name);
+        }
+
+        if ((this.backing & Backing.NameValue) != 0)
+        {
+            return this.name.Equals(utf8Name, name);
+        }
+
         return false;
     }
 

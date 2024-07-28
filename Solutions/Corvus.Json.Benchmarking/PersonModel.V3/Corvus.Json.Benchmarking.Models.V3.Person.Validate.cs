@@ -110,8 +110,7 @@ public readonly partial struct Person
             int propertyCount = 0;
             foreach (JsonObjectProperty property in value.EnumerateObject())
             {
-                if ((property.NamePrefersUtf8 && property.NameEquals(JsonPropertyNames.DateOfBirthUtf8)) ||
-                    (!property.NamePrefersUtf8 && property.NameEquals(JsonPropertyNames.DateOfBirth)))
+                if (property.NameEquals(JsonPropertyNames.DateOfBirthUtf8, JsonPropertyNames.DateOfBirth))
                 {
                     result = result.WithLocalProperty(propertyCount);
                     if (level > ValidationLevel.Basic)
@@ -131,8 +130,7 @@ public readonly partial struct Person
                         return result;
                     }
                 }
-                else if ((property.NamePrefersUtf8 && property.NameEquals(JsonPropertyNames.EmailUtf8)) ||
-                    (!property.NamePrefersUtf8 && property.NameEquals(JsonPropertyNames.Email)))
+                else if (property.NameEquals(JsonPropertyNames.EmailUtf8, JsonPropertyNames.Email))
                 {
                     result = result.WithLocalProperty(propertyCount);
                     if (level > ValidationLevel.Basic)
@@ -152,8 +150,7 @@ public readonly partial struct Person
                         return result;
                     }
                 }
-                else if ((property.NamePrefersUtf8 && property.NameEquals(JsonPropertyNames.HeightUtf8)) ||
-                    (!property.NamePrefersUtf8 && property.NameEquals(JsonPropertyNames.Height)))
+                else if (property.NameEquals(JsonPropertyNames.HeightUtf8, JsonPropertyNames.Height))
                 {
                     result = result.WithLocalProperty(propertyCount);
                     if (level > ValidationLevel.Basic)
@@ -173,8 +170,7 @@ public readonly partial struct Person
                         return result;
                     }
                 }
-                else if ((property.NamePrefersUtf8 && property.NameEquals(JsonPropertyNames.NameUtf8)) ||
-                    (!property.NamePrefersUtf8 && property.NameEquals(JsonPropertyNames.Name)))
+                else if (property.NameEquals(JsonPropertyNames.NameUtf8, JsonPropertyNames.Name))
                 {
                     hasSeenName = true;
                     result = result.WithLocalProperty(propertyCount);
@@ -195,8 +191,7 @@ public readonly partial struct Person
                         return result;
                     }
                 }
-                else if ((property.NamePrefersUtf8 && property.NameEquals(JsonPropertyNames.NetWorthUtf8)) ||
-                    (!property.NamePrefersUtf8 && property.NameEquals(JsonPropertyNames.NetWorth)))
+                else if (property.NameEquals(JsonPropertyNames.NetWorthUtf8, JsonPropertyNames.NetWorth))
                 {
                     result = result.WithLocalProperty(propertyCount);
                     if (level > ValidationLevel.Basic)

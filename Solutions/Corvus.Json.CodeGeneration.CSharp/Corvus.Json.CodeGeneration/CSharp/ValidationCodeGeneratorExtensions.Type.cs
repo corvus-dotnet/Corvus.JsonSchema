@@ -30,6 +30,7 @@ public static partial class ValidationCodeGeneratorExtensions
         uint parentHandlerPriority)
     {
         return generator
+            .AppendLineIndent("[MethodImpl(MethodImplOptions.AggressiveInlining)]")
             .BeginReservedMethodDeclaration(
                 "public static",
                 "ValidationContext",

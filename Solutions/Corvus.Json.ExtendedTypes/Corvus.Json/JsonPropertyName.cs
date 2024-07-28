@@ -479,6 +479,29 @@ public readonly struct JsonPropertyName
     /// <summary>
     /// Compare with the name of a <see cref="JsonProperty"/>.
     /// </summary>
+    /// <param name="utf8Name">The name with which to compare as a UTF8 string.</param>
+    /// <param name="name">The name with which to compare as a string.</param>
+    /// <returns><see langword="true"/> if the property name was equal to this name.</returns>
+    /// <exception cref="InvalidOperationException">The property name did not have a valid backing.</exception>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool Equals(ReadOnlySpan<byte> utf8Name, string name)
+    {
+        if (this.HasJsonElementBacking)
+        {
+            return this.jsonElementBacking.ValueEquals(name);
+        }
+
+        if (this.HasStringBacking)
+        {
+            return this.stringBacking.Equals(name);
+        }
+
+        throw new InvalidOperationException("Unsupported JSON property name");
+    }
+
+    /// <summary>
+    /// Compare with the name of a <see cref="JsonProperty"/>.
+    /// </summary>
     /// <param name="name">The name with which to compare.</param>
     /// <returns><see langword="true"/> if the property name was equal to this name.</returns>
     /// <exception cref="InvalidOperationException">The property name did not have a valid backing.</exception>

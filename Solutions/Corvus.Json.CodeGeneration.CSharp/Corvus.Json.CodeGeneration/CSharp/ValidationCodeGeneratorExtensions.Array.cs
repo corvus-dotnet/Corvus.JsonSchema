@@ -30,6 +30,7 @@ public static partial class ValidationCodeGeneratorExtensions
         IReadOnlyCollection<IChildValidationHandler> children)
     {
         return generator
+            .AppendLineIndent("[MethodImpl(MethodImplOptions.AggressiveInlining)]")
             .BeginReservedMethodDeclaration(
                 "public static",
                 "ValidationContext",
@@ -37,7 +38,7 @@ public static partial class ValidationCodeGeneratorExtensions
                 new("in", typeDeclaration.DotnetTypeName(), "value"),
                 ("JsonValueKind", "valueKind"),
                 ("in ValidationContext", "validationContext"),
-                ("ValidationLevel", "level", "ValidationLevel.Flag"))
+                ("ValidationLevel", "level"))
                 .ReserveName("result")
                 .ReserveName("isValid")
                 .AppendBlockIndent(

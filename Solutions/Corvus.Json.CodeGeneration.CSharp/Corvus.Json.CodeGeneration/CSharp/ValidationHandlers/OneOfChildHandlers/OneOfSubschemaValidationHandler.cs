@@ -44,6 +44,7 @@ public class OneOfSubschemaValidationHandler : IChildValidationHandler
                     .PopIndent()
                     .AppendLineIndent("}")
                     .AppendSeparatorLine()
+                    .AppendLineIndent("[MethodImpl(MethodImplOptions.AggressiveInlining)]")
                     .AppendLineIndent(
                         "static ValidationContext ",
                         localMethodName,

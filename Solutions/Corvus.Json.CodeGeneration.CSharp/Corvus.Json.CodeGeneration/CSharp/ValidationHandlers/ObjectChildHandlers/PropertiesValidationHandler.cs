@@ -74,19 +74,15 @@ public class PropertiesValidationHandler : IChildObjectPropertyValidationHandler
         {
             generator
                 .AppendLine(
-                    "if ((property.NamePrefersUtf8 && property.NameEquals(",
+                    "if (property.NameEquals(",
                     generator.JsonPropertyNamesClassName(),
                     ".",
                     property.DotnetPropertyName(),
-                    "Utf8)) ||")
-                .PushIndent()
-                .AppendLineIndent(
-                    "(!property.NamePrefersUtf8 && property.NameEquals(",
+                    "Utf8, ",
                     generator.JsonPropertyNamesClassName(),
                     ".",
                     property.DotnetPropertyName(),
-                    ")))")
-                .PopIndent()
+                    "))")
                 .AppendLineIndent("{")
                 .PushIndent();
 
