@@ -56,16 +56,15 @@ public class AnyOfConstValidationHandler : IChildValidationHandler
                     .PushIndent()
                     .AppendLineIndent("ValidationContext result = validationContext;");
 
-                IReadOnlyCollection<JsonElement> constValues = constDictionary[keyword];
+                JsonElement[] constValues = constDictionary[keyword];
 
                 string foundValidName = generator.GetUniqueVariableNameInScope("FoundValid", prefix: keyword.Keyword);
                 generator
                     .AppendLineIndent("bool ", foundValidName, " = false;");
 
-                int count = constValues.Count;
+                int count = constValues.Length;
                 for (int i = 1; i <= count; ++i)
                 {
-                    string pathModifier = keyword.GetPathModifier(i);
                     string constField =
                         generator.GetPropertyNameInScope(
                             keyword.Keyword,
