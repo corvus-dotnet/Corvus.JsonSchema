@@ -122,7 +122,7 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
             }
         }
 
-        return generator.GetGeneratedCodeFiles(t => new(t.FullyQualifiedDotnetTypeName(), ".cs"));
+        return generator.GetGeneratedCodeFiles(t => new(t.DotnetTypeNameWithoutNamespace(), ".cs"));
     }
 
     /// <inheritdoc/>

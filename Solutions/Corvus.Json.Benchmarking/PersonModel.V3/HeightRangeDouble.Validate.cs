@@ -9,6 +9,7 @@
 
 #nullable enable
 
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
 
@@ -61,6 +62,7 @@ public readonly partial struct HeightRangeDouble
 
         public static readonly BinaryJsonNumber Minimum = new(0);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ValidationContext TypeValidationHandler(
             in HeightRangeDouble value,
             JsonValueKind valueKind,
@@ -85,7 +87,7 @@ public readonly partial struct HeightRangeDouble
                 level,
                 localResultNumber);
         }
-
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ValidationContext NumberValidationHandler(
             in HeightRangeDouble value,
             JsonValueKind valueKind,

@@ -9,6 +9,7 @@
 
 #nullable enable
 
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
 
@@ -50,6 +51,7 @@ public readonly partial struct OtherNames
 
     private static partial class CorvusValidation
     {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ValidationContext CompositionOneOfValidationHandler(
             in OtherNames value,
             in ValidationContext validationContext,
@@ -62,6 +64,7 @@ public readonly partial struct OtherNames
                 return result;
             }
 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             static ValidationContext ValidateOneOf(in OtherNames value, in ValidationContext validationContext, ValidationLevel level)
             {
                 ValidationContext result = validationContext;
