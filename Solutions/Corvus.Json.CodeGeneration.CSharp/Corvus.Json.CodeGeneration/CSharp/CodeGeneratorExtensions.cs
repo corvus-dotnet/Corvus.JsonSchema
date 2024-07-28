@@ -2605,7 +2605,6 @@ internal static partial class CodeGeneratorExtensions
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator BeginPrivateStaticPartialClassDeclaration(this CodeGenerator generator, string dotnetTypeName)
     {
-        string name = generator.GetTypeNameInScope(dotnetTypeName);
         return generator
             .BeginReservedPrivateStaticPartialClassDeclaration(dotnetTypeName);
     }
@@ -3306,7 +3305,7 @@ internal static partial class CodeGeneratorExtensions
         {
             foreach (IAnyOfSubschemaValidationKeyword keyword in anyOf.Keys)
             {
-                IReadOnlyCollection<TypeDeclaration> subschema = anyOf[keyword];
+                IReadOnlyCollection<TypeDeclaration> subschema = anyOf[keyword].Distinct().ToList();
                 AppendMatchCompositionMethod(generator, typeDeclaration, subschema, includeContext: true, matchOverloadIndex++);
                 AppendMatchCompositionMethod(generator, typeDeclaration, subschema, includeContext: false, matchOverloadIndex++);
             }
@@ -3316,7 +3315,7 @@ internal static partial class CodeGeneratorExtensions
         {
             foreach (IOneOfSubschemaValidationKeyword keyword in oneOf.Keys)
             {
-                IReadOnlyCollection<TypeDeclaration> subschema = oneOf[keyword];
+                IReadOnlyCollection<TypeDeclaration> subschema = oneOf[keyword].Distinct().ToList();
                 AppendMatchCompositionMethod(generator, typeDeclaration, subschema, includeContext: true, matchOverloadIndex++);
                 AppendMatchCompositionMethod(generator, typeDeclaration, subschema, includeContext: false, matchOverloadIndex++);
             }
@@ -3326,9 +3325,9 @@ internal static partial class CodeGeneratorExtensions
         {
             foreach (IAnyOfConstantValidationKeyword keyword in anyOfConstant.Keys)
             {
-                JsonElement[] constantValues = anyOfConstant[keyword];
-                AppendMatchConstantMethod(generator, typeDeclaration, keyword, constantValues, includeContext: true, matchOverloadIndex: matchOverloadIndex++);
-                AppendMatchConstantMethod(generator, typeDeclaration, keyword, constantValues, includeContext: false, matchOverloadIndex: matchOverloadIndex++);
+                JsonElement[] constantValues = anyOfConstant[keyword].Distinct().ToArray();
+                AppendMatchConstantMethod(generator, keyword, constantValues, includeContext: true, matchOverloadIndex: matchOverloadIndex++);
+                AppendMatchConstantMethod(generator, keyword, constantValues, includeContext: false, matchOverloadIndex: matchOverloadIndex++);
             }
         }
 
@@ -3461,7 +3460,7 @@ internal static partial class CodeGeneratorExtensions
                 .AppendLineIndent("}");
         }
 
-        static void AppendMatchConstantMethod(CodeGenerator generator, TypeDeclaration typeDeclaration, IAnyOfConstantValidationKeyword keyword, JsonElement[] constValues, bool includeContext, int matchOverloadIndex)
+        static void AppendMatchConstantMethod(CodeGenerator generator, IAnyOfConstantValidationKeyword keyword, JsonElement[] constValues, bool includeContext, int matchOverloadIndex)
         {
             string scopeName = $"Match{matchOverloadIndex}";
 
@@ -3584,8 +3583,8 @@ internal static partial class CodeGeneratorExtensions
             {
                 JsonValueKind.Object => generator.GetUniqueParameterNameInScope("matchObjectValue", childScope: scopeName, suffix: index.ToString()),
                 JsonValueKind.Array => generator.GetUniqueParameterNameInScope("matchArrayValue", childScope: scopeName, suffix: index.ToString()),
-                JsonValueKind.String => generator.GetUniqueParameterNameInScope(constValue.GetString()!, prefix: "match", childScope: scopeName),
-                JsonValueKind.Number => generator.GetUniqueParameterNameInScope(constValue.GetRawText().Replace(".", "point"), prefix: "matchNumber", childScope: scopeName),
+                JsonValueKind.String => generator.GetUniqueParameterNameInScope(constValue.GetString()!, childScope: scopeName, prefix: "match"),
+                JsonValueKind.Number => generator.GetUniqueParameterNameInScope(constValue.GetRawText().Replace(".", "point"), childScope: scopeName, prefix: "matchNumber"),
                 JsonValueKind.True => generator.GetUniqueParameterNameInScope("matchTrue", childScope: scopeName),
                 JsonValueKind.False => generator.GetUniqueParameterNameInScope("matchFalse", childScope: scopeName),
                 JsonValueKind.Null => generator.GetUniqueParameterNameInScope("matchNull", childScope: scopeName),
@@ -3642,25 +3641,23 @@ internal static partial class CodeGeneratorExtensions
                     .ReserveNameIfNotReserved("context", childScope: scopeName);
             }
 
-            string? thenMatchTypeName = null;
             string? thenMatchParamName = null;
 
             if (thenDeclaration is SingleSubschemaKeywordTypeDeclaration thenSubschema)
             {
                 // This is the parameter name for the if match method.
-                thenMatchTypeName = thenSubschema.ReducedType.DotnetTypeName();
+                string? thenMatchTypeName = thenSubschema.ReducedType.DotnetTypeName();
                 thenMatchParamName = generator.GetUniqueParameterNameInScope(thenMatchTypeName, childScope: scopeName, prefix: "match");
 
                 generator
                     .AppendLineIndent("/// <param name=\"", thenMatchParamName, "\">Match a <see cref=\"", thenMatchTypeName, "\"/>.</param>");
             }
 
-            string? elseMatchTypeName = null;
             string? elseMatchParamName = null;
             if (elseDeclaration is SingleSubschemaKeywordTypeDeclaration elseSubschema)
             {
                 // This is the parameter name for the if match method.
-                elseMatchTypeName = elseSubschema.ReducedType.DotnetTypeName();
+                string? elseMatchTypeName = elseSubschema.ReducedType.DotnetTypeName();
                 elseMatchParamName = generator.GetUniqueParameterNameInScope(elseMatchTypeName, childScope: scopeName, prefix: "match");
 
                 generator
