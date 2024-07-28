@@ -94,6 +94,7 @@ public sealed class CorePartial : ICodeFileBuilder
                         .AppendGetHashCodeAndToStringMethods()
                         .AppendValidateMethodForNoValidation(typeDeclaration)
                         .AppendMatchMethods(typeDeclaration)
+                        .AppendTryGetMethods(typeDeclaration)
                         .PopValidationClassNameAndScope()
                     .EndClassOrStructDeclaration()
                 .EndTypeDeclarationNesting(typeDeclaration)

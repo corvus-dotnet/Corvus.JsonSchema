@@ -1442,6 +1442,45 @@ internal static partial class CodeGeneratorExtensions
     }
 
     /// <summary>
+    /// Appends <c>TryGet()</c> methods composition types.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <param name="rootDeclaration">The type declaration which is the basis of the composition types.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendTryGetMethods(
+        this CodeGenerator generator,
+        TypeDeclaration rootDeclaration)
+    {
+        HashSet<string> visitedTypes = [];
+
+        foreach (TypeDeclaration t in rootDeclaration.CompositionTypeDeclarations())
+        {
+            if (!visitedTypes.Add(t.FullyQualifiedDotnetTypeName()))
+            {
+                continue;
+            }
+
+            string methodName = generator.GetMethodNameInScope("TryGetAs", suffix: t.DotnetTypeName());
+            generator
+                .AppendSeparatorLine()
+                .AppendLineIndent("/// <summary>")
+                .AppendLineIndent("/// Gets the value as a <see cref=\"", t.FullyQualifiedDotnetTypeName(), "\" />.")
+                .AppendLineIndent("/// </summary>")
+                .AppendLineIndent("/// <param name=\"result\">The result of the conversions.</param>")
+                .AppendLineIndent("/// <returns><see langword=\"true\" /> if the conversion was valid.</returns>")
+                .AppendLineIndent("public bool ", methodName, "(out ", t.FullyQualifiedDotnetTypeName(), " result)")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendLineIndent("result = this.As<", t.FullyQualifiedDotnetTypeName(), ">();")
+                    .AppendLineIndent("return result.IsValid();")
+                .PopIndent()
+                .AppendLineIndent("}");
+        }
+
+        return generator;
+    }
+
+    /// <summary>
     /// Appends conversions from dotnet type of the <paramref name="rootDeclaration"/>
     /// to the composition types.
     /// </summary>
@@ -1449,8 +1488,8 @@ internal static partial class CodeGeneratorExtensions
     /// <param name="rootDeclaration">The type declaration which is the basis of the conversions.</param>
     /// <returns>A reference to the generator having completed the operation.</returns>
     public static CodeGenerator AppendConversionToCompositionTypes(
-        this CodeGenerator generator,
-        TypeDeclaration rootDeclaration)
+    this CodeGenerator generator,
+    TypeDeclaration rootDeclaration)
     {
         HashSet<TypeDeclaration> appliedConversions = [];
         Queue<(TypeDeclaration Target, bool AllowsImplicitFrom, bool AllowsImplicitTo)> typesToProcess = [];

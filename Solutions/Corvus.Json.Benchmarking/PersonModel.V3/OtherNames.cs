@@ -756,4 +756,26 @@ public readonly partial struct OtherNames
 
         return defaultMatch(this);
     }
+
+    /// <summary>
+    /// Gets the value as a <see cref="Corvus.Json.Benchmarking.Models.V3.PersonNameElement" />.
+    /// </summary>
+    /// <param name="result">The result of the conversions.</param>
+    /// <returns><see langword="true" /> if the conversion was valid.</returns>
+    public bool TryGetAsPersonNameElement(out Corvus.Json.Benchmarking.Models.V3.PersonNameElement result)
+    {
+        result = this.As<Corvus.Json.Benchmarking.Models.V3.PersonNameElement>();
+        return result.IsValid();
+    }
+
+    /// <summary>
+    /// Gets the value as a <see cref="Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray" />.
+    /// </summary>
+    /// <param name="result">The result of the conversions.</param>
+    /// <returns><see langword="true" /> if the conversion was valid.</returns>
+    public bool TryGetAsPersonNameElementArray(out Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray result)
+    {
+        result = this.As<Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray>();
+        return result.IsValid();
+    }
 }
