@@ -296,6 +296,42 @@ public readonly partial struct OtherNames
     }
 
     /// <summary>
+    /// Conversion to <see cref="Corvus.Json.Benchmarking.Models.V3.PersonNameElement"/>.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static explicit operator Corvus.Json.Benchmarking.Models.V3.PersonNameElement(OtherNames value)
+    {
+        return value.As<Corvus.Json.Benchmarking.Models.V3.PersonNameElement>();
+    }
+
+    /// <summary>
+    /// Conversion from <see cref="Corvus.Json.Benchmarking.Models.V3.PersonNameElement"/>.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator OtherNames(Corvus.Json.Benchmarking.Models.V3.PersonNameElement value)
+    {
+        return value.As<OtherNames>();
+    }
+
+    /// <summary>
+    /// Conversion to <see cref="Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray"/>.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static explicit operator Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray(OtherNames value)
+    {
+        return value.As<Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray>();
+    }
+
+    /// <summary>
+    /// Conversion from <see cref="Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray"/>.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator OtherNames(Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray value)
+    {
+        return value.As<OtherNames>();
+    }
+
+    /// <summary>
     /// Operator ==.
     /// </summary>
     /// <param name="left">The lhs of the operator.</param>
