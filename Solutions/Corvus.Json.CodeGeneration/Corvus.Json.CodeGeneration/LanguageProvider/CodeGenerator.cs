@@ -1875,6 +1875,7 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
     public IReadOnlyCollection<GeneratedCodeFile> GetGeneratedCodeFiles(Func<TypeDeclaration, FileNameDescription> getFileNameDescription)
     {
         List<GeneratedCodeFile> generatedCode = [];
+        HashSet<string> uniqueFileNames = [];
 
         foreach (KeyValuePair<TypeDeclaration, Dictionary<string, string>> kvp in this.generatedFiles)
         {
@@ -1884,7 +1885,7 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
                 generatedCode.Add(
                     new(
                         kvp.Key,
-                        GetFileName(fileNameDescription, fileAndContent.Key),
+                        GetFileName(fileNameDescription, fileAndContent.Key, uniqueFileNames),
                         fileAndContent.Value));
             }
         }
@@ -1892,24 +1893,40 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
         return generatedCode;
     }
 
-    private static string GetFileName(FileNameDescription fileNameDescription, string fileName)
+    private static string GetFileName(FileNameDescription fileNameDescription, string fileName, HashSet<string> uniqueFileNames)
     {
-        if (fileNameDescription.Extension is string extension)
+        string candidateName = GetBaseFileName(fileNameDescription, fileName);
+        string baseFileNameWithoutExtension = Path.GetFileNameWithoutExtension(candidateName);
+        string extension = Path.GetExtension(candidateName);
+
+        int index = 1;
+
+        while (!uniqueFileNames.Add(candidateName))
         {
-            if (fileName.Length == 0)
+            candidateName = $"{baseFileNameWithoutExtension}{index}.{extension}";
+        }
+
+        return candidateName;
+
+        static string GetBaseFileName(FileNameDescription fileNameDescription, string fileName)
+        {
+            if (fileNameDescription.Extension is string extension)
             {
-                return $"{fileNameDescription.BaseFileName}{extension}";
+                if (fileName.Length == 0)
+                {
+                    return $"{fileNameDescription.BaseFileName}{extension}";
+                }
+
+                return $"{fileNameDescription.BaseFileName}{fileNameDescription.Separator}{fileName}{extension}";
             }
 
-            return $"{fileNameDescription.BaseFileName}{fileNameDescription.Separator}{fileName}{extension}";
-        }
+            if (fileName.Length == 0)
+            {
+                return fileNameDescription.BaseFileName;
+            }
 
-        if (fileName.Length == 0)
-        {
-            return fileNameDescription.BaseFileName;
+            return $"{fileNameDescription.BaseFileName}{fileNameDescription.Separator}{fileName}";
         }
-
-        return $"{fileNameDescription.BaseFileName}{fileNameDescription.Separator}{fileName}";
     }
 
     private string AddName(MemberName memberName)

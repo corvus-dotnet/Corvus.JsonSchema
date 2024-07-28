@@ -94,12 +94,19 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
 
             JsonReference reference = new(schemaFile, rootPath ?? string.Empty);
 
-            Progress progress = AnsiConsole.Progress();
+            Progress progress = 
+                AnsiConsole.Progress()
+                    .Columns(
+                    [
+                        new TaskDescriptionColumn { Alignment = Justify.Left },    // Task description
+                    ]);
 
             await progress.StartAsync(async context =>
             {
-                ProgressTask currentTask = context.AddTask($"Building type declaration for {reference}", true);
+                ProgressTask outerTask = context.AddTask($"Generating JSON type for {reference}");
+                ProgressTask currentTask = context.AddTask($"Building type declarations for {reference}");
                 TypeDeclaration rootType = await typeBuilder.AddTypeDeclarationsAsync(reference, defaultVocabulary, rebaseToRootPath).ConfigureAwait(false);
+                currentTask.Increment(100);
                 currentTask.StopTask();
 
                 var options = new CSharpLanguageProvider.Options(
@@ -107,12 +114,13 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
                     namedTypes: rootTypeName is string rtn ? [new CSharpLanguageProvider.NamedType(rootType.LocatedSchema.Location, rtn)] : null,
                     alwaysAssertFormat: assertFormat);
 
-                currentTask = context.AddTask($"Generating code for {reference}", true);
+                currentTask = context.AddTask($"Generating code for {reference}");
                 var languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
                 IReadOnlyCollection<GeneratedCodeFile> generatedCode =
                     typeBuilder.GenerateCodeUsing(
                         languageProvider,
                         rootType);
+                currentTask.Increment(100);
                 currentTask.StopTask();
 
                 if (!string.IsNullOrEmpty(outputPath))
@@ -133,11 +141,11 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
 
                 bool first = true;
 
-                currentTask = context.AddTask("Generating files", true, generatedCode.Count);
+                currentTask = context.AddTask("Writing files", true, generatedCode.Count);
 
                 foreach (GeneratedCodeFile generatedCodeFile in generatedCode)
                 {
-                    currentTask.Description = $"Generating {generatedCodeFile.TypeDeclaration.RelativeSchemaLocation}: {generatedCodeFile.FileName}";
+                    ProgressTask subtask = context.AddTask($"{generatedCodeFile.FileName} [green]({generatedCodeFile.TypeDeclaration.RelativeSchemaLocation})[/]");
                     currentTask.Increment(1);
                     try
                     {
@@ -163,18 +171,26 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
                     {
                         throw new InvalidOperationException($"Unable to parse generated type: {CSharpLanguageProvider.GetFullyQualifiedDotnetTypeName(generatedCodeFile)} from location {generatedCodeFile.TypeDeclaration.LocatedSchema.Location}", ex);
                     }
+                    subtask.Increment(100);
+                    subtask.StopTask();
                 }
+
 
                 if (!string.IsNullOrEmpty(mapFile))
                 {
                     await File.AppendAllTextAsync(mapFile, "]");
                 }
+
+                currentTask.StopTask();
+                outerTask.Increment(100);
+                AnsiConsole.MarkupLineInterpolated($"Completed in: [green]{outerTask.ElapsedTime?.TotalSeconds}s[/]");
+                outerTask.StopTask();
             });
 
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine(ex.Message);
+            AnsiConsole.WriteException(ex);
             return -1;
         }
 

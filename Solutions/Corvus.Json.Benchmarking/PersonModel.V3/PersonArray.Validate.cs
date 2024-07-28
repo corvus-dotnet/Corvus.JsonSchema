@@ -9,6 +9,7 @@
 
 #nullable enable
 
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
 
@@ -57,6 +58,7 @@ public readonly partial struct PersonArray
 
     private static partial class CorvusValidation
     {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ValidationContext TypeValidationHandler(
             in PersonArray value,
             JsonValueKind valueKind,
@@ -81,12 +83,12 @@ public readonly partial struct PersonArray
                 level,
                 localResultArray);
         }
-
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ValidationContext ArrayValidationHandler(
             in PersonArray value,
             JsonValueKind valueKind,
             in ValidationContext validationContext,
-            ValidationLevel level = ValidationLevel.Flag)
+            ValidationLevel level)
         {
             ValidationContext result = validationContext;
             if (valueKind != JsonValueKind.Array)

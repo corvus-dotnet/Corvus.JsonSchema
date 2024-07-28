@@ -9,6 +9,7 @@
 
 #nullable enable
 
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
 
@@ -61,6 +62,7 @@ public readonly partial struct PersonNameElement
 
         public static readonly long MinLength = 1;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ValidationContext TypeValidationHandler(
             in PersonNameElement value,
             JsonValueKind valueKind,
@@ -85,7 +87,7 @@ public readonly partial struct PersonNameElement
                 level,
                 localResultString);
         }
-
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ValidationContext StringValidationHandler(
             in PersonNameElement value,
             JsonValueKind valueKind,

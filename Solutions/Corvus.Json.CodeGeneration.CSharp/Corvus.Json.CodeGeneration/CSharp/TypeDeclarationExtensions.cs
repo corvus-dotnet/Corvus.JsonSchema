@@ -16,6 +16,7 @@ internal static class TypeDeclarationExtensions
     private const string ParentKey = "CSharp_LanguageProvider_Parent";
     private const string ChildrenKey = "CSharp_LanguageProvider_Children";
     private const string DoNotGenerateKey = "CSharp_LanguageProvider_DoNotGenerate";
+    private const string DotnetTypeNameWithoutNamespaceKey = "CSharp_LanguageProvider_DotnetTypeNameWithoutNamespace";
     private const string FullyQualifiedDotnetTypeNameKey = "CSharp_LanguageProvider_FullyQualifiedDotnetTypeName";
     private const string PreferredDotnetNumericTypeNameKey = "CSharp_LanguageProvider_PreferredDotnetNumericTypeName";
     private const string AlwaysAssertFormatKey = "CSharp_LanguageProvider_AlwaysAssertFormat";
@@ -222,6 +223,26 @@ internal static class TypeDeclarationExtensions
                 : $"{parent.FullyQualifiedDotnetTypeName()}.{typeDeclaration.DotnetTypeName()}";
 
             typeDeclaration.SetMetadata(FullyQualifiedDotnetTypeNameKey, fqdntn);
+        }
+
+        return fqdntn ?? throw new InvalidOperationException("The dotnet type name metadata is not available.");
+    }
+
+    /// <summary>
+    /// Gets the .NET type name fully qualified, but without the namespace.
+    /// </summary>
+    /// <param name="typeDeclaration">The type declaration.</param>
+    /// <returns>The fully qualified .NET type name without the namespace.</returns>
+    public static string DotnetTypeNameWithoutNamespace(this TypeDeclaration typeDeclaration)
+    {
+        if (!typeDeclaration.TryGetMetadata(DotnetTypeNameWithoutNamespaceKey, out string? fqdntn))
+        {
+            TypeDeclaration? parent = typeDeclaration.Parent();
+            fqdntn = parent is null
+                ? typeDeclaration.DotnetTypeName()
+                : $"{parent.DotnetTypeNameWithoutNamespace()}.{typeDeclaration.DotnetTypeName()}";
+
+            typeDeclaration.SetMetadata(DotnetTypeNameWithoutNamespaceKey, fqdntn);
         }
 
         return fqdntn ?? throw new InvalidOperationException("The dotnet type name metadata is not available.");
