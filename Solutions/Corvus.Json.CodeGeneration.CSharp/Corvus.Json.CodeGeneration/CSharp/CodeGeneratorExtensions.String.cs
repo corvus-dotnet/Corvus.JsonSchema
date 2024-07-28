@@ -2,6 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Text.Json;
+
 namespace Corvus.Json.CodeGeneration.CSharp;
 
 /// <summary>
@@ -527,28 +529,5 @@ internal static partial class CodeGeneratorExtensions
                     return this.Serialize();
                 }
                 """);
-    }
-
-    /// <summary>
-    /// Appends the Validate() method if there are no validation keywords present.
-    /// </summary>
-    /// <param name="generator">The code generator.</param>
-    /// <param name="typeDeclaration">The type declaration to which to append the method.</param>
-    /// <returns>A reference to the generator having completed the operation.</returns>
-    public static CodeGenerator AppendValidateMethodForNoValidation(this CodeGenerator generator, TypeDeclaration typeDeclaration)
-    {
-        if (typeDeclaration.ValidationKeywords().Count == 0)
-        {
-            generator
-                .ReserveNameIfNotReserved("Validate")
-                .AppendSeparatorLine()
-                .AppendBlockIndent(
-                """
-                /// <inheritdoc/>
-                public ValidationContext Validate(in ValidationContext context, ValidationLevel validationLevel = ValidationLevel.Flag) => context;
-                """);
-        }
-
-        return generator;
     }
 }
