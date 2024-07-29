@@ -234,18 +234,20 @@ public static class TypeDeclarationExtensions
 
             foreach (IObjectPatternPropertyValidationKeyword keyword in that.Keywords().OfType<IObjectPatternPropertyValidationKeyword>())
             {
-                List<PatternPropertyDeclaration> list = [];
-
-                IReadOnlyCollection<TypeDeclaration> typeDeclarations = keyword.GetSubschemaTypeDeclarations(that);
-
-                foreach (TypeDeclaration typeDeclaration in typeDeclarations)
+                if (keyword.TryGetValidationRegularExpressions(that, out IReadOnlyList<string>? patterns))
                 {
-                    list.Add(new(keyword, typeDeclaration));
-                }
+                    List<PatternPropertyDeclaration> list = [];
+                    int i = 0;
+                    foreach (TypeDeclaration typeDeclaration in keyword.GetSubschemaTypeDeclarations(that))
+                    {
+                        list.Add(new(keyword, typeDeclaration, patterns[i]));
+                        ++i;
+                    }
 
-                if (list.Count > 0)
-                {
-                    dictionary[keyword] = list;
+                    if (list.Count > 0)
+                    {
+                        dictionary[keyword] = list;
+                    }
                 }
             }
 

@@ -8,7 +8,7 @@ namespace Corvus.Json.CodeGeneration;
 /// Validates <see cref="System.Text.Json.JsonValueKind.Object"/> property values by matching
 /// the property value against a schema if the property name matches a given pattern.
 /// </summary>
-public interface IObjectPatternPropertyValidationKeyword : IObjectValidationKeyword, ISubschemaProviderKeyword
+public interface IObjectPatternPropertyValidationKeyword : IObjectValidationKeyword, ISubschemaProviderKeyword, IValidationRegexProviderKeyword
 {
     /// <summary>
     /// Gets the reduced path modifier for the pattern property declaration.

@@ -13,8 +13,7 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 public sealed class PatternPropertiesKeyword
     : ISubschemaTypeBuilderKeyword,
       ILocalSubschemaRegistrationKeyword,
-      IObjectPatternPropertyValidationKeyword,
-      IValidationRegexProviderKeyword
+      IObjectPatternPropertyValidationKeyword
 {
     private const string KeywordPath = "#/patternProperties";
     private static readonly JsonReference KeywordPathReference = new(KeywordPath);
@@ -73,6 +72,11 @@ public sealed class PatternPropertiesKeyword
     /// <inheritdoc/>
     public bool TryGetValidationRegularExpressions(TypeDeclaration typeDeclaration, [NotNullWhen(true)] out IReadOnlyList<string>? regexes)
     {
+        // You, like me, may have been wondering how the TryGetValidationRegularExpressions()  and the SubschemaTypeDeclarations()
+        // manage to magicaly produce collections that are ordered in the same way.
+        // Well, that's easy! The SubschemaTypeDeclarations() method is using the same ordering as the TryGetValidationRegularExpressions()
+        // because the keyword path for the subschema is terminated with the property name, and that property name *is* the regular
+        // expresion used here. So they sort the same.
         List<string>? regexBuilder;
 
         if (typeDeclaration.TryGetKeyword(this, out JsonElement regexMap) &&

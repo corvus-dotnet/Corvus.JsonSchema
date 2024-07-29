@@ -36,6 +36,7 @@ public sealed class ObjectPartial : ICodeFileBuilder
                         "System.Collections.Immutable",
                         new("System.Diagnostics.CodeAnalysis", EmitIfIsMapObject(typeDeclaration)),
                         "System.Text.Json",
+                        new("System.Text.RegularExpressions", EmitIfObjectHasPatternProperties(typeDeclaration)),
                         "Corvus.Json",
                         "Corvus.Json.Internal")
                     .AppendLine()
@@ -50,6 +51,8 @@ public sealed class ObjectPartial : ICodeFileBuilder
                                 JsonObjectType(typeDeclaration),
                                 ReadOnlyDictionaryType(typeDeclaration),
                             ])
+                            .PushValidationClassNameAndScope()
+                            .AppendPatternPropertiesStaticProperties(typeDeclaration)
                             .AppendImplicitConversionFromTypeUsingConstructor(typeDeclaration, "ImmutableList<JsonObjectProperty>")
                             .AppendImplicitConversionToType(typeDeclaration, "ImmutableList<JsonObjectProperty>", "__CorvusObjectHelpers.GetPropertyBacking(value)")
                             .AppendImplicitConversionFromJsonValueTypeUsingConstructor(typeDeclaration, "JsonObject", JsonValueKind.Object, "__CorvusObjectHelpers.GetPropertyBacking(value)")
@@ -70,8 +73,10 @@ public sealed class ObjectPartial : ICodeFileBuilder
                             .AppendSetPropertyMethods(typeDeclaration)
                             .AppendRemovePropertyMethods(typeDeclaration)
                             .AppendTryGetAsDependentSchemaMethods(typeDeclaration)
+                            .AppendPatternPropertiesMethods(typeDeclaration)
                             .AppendJsonPropertyNamesClass(typeDeclaration)
                             .AppendCorvusObjectHelpers(typeDeclaration)
+                            .PopValidationClassNameAndScope()
                         .EndClassOrStructDeclaration()
                     .EndTypeDeclarationNesting(typeDeclaration)
                     .EndNamespace()
@@ -83,6 +88,13 @@ public sealed class ObjectPartial : ICodeFileBuilder
         static FrameworkType EmitIfIsMapObject(TypeDeclaration typeDeclaration)
         {
             return typeDeclaration.IsMapObject()
+                 ? FrameworkType.All
+                 : FrameworkType.NotEmitted;
+        }
+
+        static FrameworkType EmitIfObjectHasPatternProperties(TypeDeclaration typeDeclaration)
+        {
+            return typeDeclaration.PatternProperties()?.Count > 0
                  ? FrameworkType.All
                  : FrameworkType.NotEmitted;
         }
