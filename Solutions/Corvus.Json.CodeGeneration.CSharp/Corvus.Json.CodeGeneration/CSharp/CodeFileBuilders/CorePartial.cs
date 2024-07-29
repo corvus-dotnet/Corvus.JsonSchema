@@ -65,6 +65,7 @@ public sealed class CorePartial : ICodeFileBuilder
                         .AppendAsNumberProperty(typeDeclaration)
                         .AppendAsObjectProperty(typeDeclaration)
                         .AppendAsArrayProperty(typeDeclaration)
+                        .AppendAsProperties(typeDeclaration)
                         .AppendHasJsonElementBackingProperty()
                         .AppendHasDotnetBackingProperty()
                         .AppendValueKindProperty(typeDeclaration)

@@ -235,6 +235,50 @@ public readonly partial struct OtherNames
         }
     }
 
+    /// <summary>
+    /// Gets the instance as a <see cref="Corvus.Json.Benchmarking.Models.V3.PersonNameElement" />.
+    /// </summary>
+    public Corvus.Json.Benchmarking.Models.V3.PersonNameElement AsPersonNameElement
+    {
+        get
+        {
+            return this.As<Corvus.Json.Benchmarking.Models.V3.PersonNameElement>();
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether the instance is a <see cref="Corvus.Json.Benchmarking.Models.V3.PersonNameElement" />.
+    /// </summary>
+    public bool IsPersonNameElement
+    {
+        get
+        {
+            return this.As<Corvus.Json.Benchmarking.Models.V3.PersonNameElement>().IsValid();
+        }
+    }
+
+    /// <summary>
+    /// Gets the instance as a <see cref="Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray" />.
+    /// </summary>
+    public Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray AsPersonNameElementArray
+    {
+        get
+        {
+            return this.As<Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray>();
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether the instance is a <see cref="Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray" />.
+    /// </summary>
+    public bool IsPersonNameElementArray
+    {
+        get
+        {
+            return this.As<Corvus.Json.Benchmarking.Models.V3.PersonNameElementArray>().IsValid();
+        }
+    }
+
     /// <inheritdoc/>
     public bool HasJsonElementBacking
     {
