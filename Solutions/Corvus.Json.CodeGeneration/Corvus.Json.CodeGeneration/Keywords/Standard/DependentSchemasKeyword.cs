@@ -60,17 +60,12 @@ public sealed class DependentSchemasKeyword
     /// <inheritdoc />
     public void CollectProperties(TypeDeclaration source, TypeDeclaration target, HashSet<TypeDeclaration> visitedTypeDeclarations, bool treatRequiredAsOptional)
     {
-        foreach (TypeDeclaration subschema in
-            source.SubschemaTypeDeclarations
-                .Where(kvp => kvp.Key.StartsWith(KeywordPath))
-                .Select(kvp => kvp.Value))
-        {
-            PropertyProvider.CollectProperties(
-                subschema,
-                target,
-                visitedTypeDeclarations,
-                true);
-        }
+        PropertyProvider.CollectPropertiesForMapOfPropertyNameToSchema(
+            KeywordPath,
+            source,
+            target,
+            visitedTypeDeclarations,
+            true);
     }
 
     /// <inheritdoc />
