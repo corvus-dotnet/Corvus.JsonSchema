@@ -246,6 +246,10 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
             TypeValidationHandler.Instance);
 
         languageProvider.RegisterNameHeuristics(
+            BuiltInNullTypeNameHeuristic.Instance,
+            BuiltInBooleanTypeNameHeuristic.Instance,
+            BuiltInObjectTypeNameHeuristic.Instance,
+            BuiltInArrayTypeNameHeuristic.Instance,
             BuiltInStringTypeNameHeuristic.Instance,
             BuiltInNumberTypeNameHeuristic.Instance,
             BuiltInIntegerTypeNameHeuristic.Instance,

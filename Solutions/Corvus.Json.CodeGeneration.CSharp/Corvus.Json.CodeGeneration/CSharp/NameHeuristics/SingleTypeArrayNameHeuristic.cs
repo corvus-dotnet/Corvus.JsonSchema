@@ -30,7 +30,6 @@ public sealed class SingleTypeArrayNameHeuristic : INameHeuristicAfterSubschema
         if (typeDeclaration.Parent() is TypeDeclaration parent &&
             !typeDeclaration.IsInDefinitionsContainer() &&
             typeDeclaration.ArrayItemsType() is ArrayItemsTypeDeclaration itemsTypeDeclaration &&
-            itemsTypeDeclaration.IsExplicit &&
             typeDeclaration.ImpliedCoreTypes().CountTypes() == 1)
         {
             ReadOnlySpan<char> itemsNameSpan = itemsTypeDeclaration.ReducedType.DotnetTypeName().AsSpan();

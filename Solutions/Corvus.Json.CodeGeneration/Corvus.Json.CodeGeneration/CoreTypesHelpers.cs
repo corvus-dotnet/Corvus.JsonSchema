@@ -25,7 +25,7 @@ public static class CoreTypesHelpers
             JsonValueKind.Undefined => CoreTypes.None,
             JsonValueKind.Null => CoreTypes.Null,
             JsonValueKind.Number => CoreTypes.Number,
-            JsonValueKind.String => CoreTypes.Number,
+            JsonValueKind.String => CoreTypes.String,
             JsonValueKind.True => CoreTypes.Boolean,
             JsonValueKind.False => CoreTypes.Boolean,
             JsonValueKind.Array => CoreTypes.Array,

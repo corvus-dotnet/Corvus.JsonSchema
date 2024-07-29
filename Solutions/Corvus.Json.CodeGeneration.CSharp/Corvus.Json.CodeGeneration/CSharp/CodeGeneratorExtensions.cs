@@ -3815,8 +3815,11 @@ internal static partial class CodeGeneratorExtensions
             foreach (IAllOfSubschemaValidationKeyword keyword in allOf.Keys)
             {
                 IReadOnlyCollection<TypeDeclaration> subschema = allOf[keyword].Distinct().ToList();
-                AppendMatchCompositionMethod(generator, typeDeclaration, subschema, includeContext: true, matchOverloadIndex++);
-                AppendMatchCompositionMethod(generator, typeDeclaration, subschema, includeContext: false, matchOverloadIndex++);
+                if (subschema.Count > 1)
+                {
+                    AppendMatchCompositionMethod(generator, typeDeclaration, subschema, includeContext: true, matchOverloadIndex++);
+                    AppendMatchCompositionMethod(generator, typeDeclaration, subschema, includeContext: false, matchOverloadIndex++);
+                }
             }
         }
 
@@ -3825,8 +3828,11 @@ internal static partial class CodeGeneratorExtensions
             foreach (IAnyOfSubschemaValidationKeyword keyword in anyOf.Keys)
             {
                 IReadOnlyCollection<TypeDeclaration> subschema = anyOf[keyword].Distinct().ToList();
-                AppendMatchCompositionMethod(generator, typeDeclaration, subschema, includeContext: true, matchOverloadIndex++);
-                AppendMatchCompositionMethod(generator, typeDeclaration, subschema, includeContext: false, matchOverloadIndex++);
+                if (subschema.Count > 1)
+                {
+                    AppendMatchCompositionMethod(generator, typeDeclaration, subschema, includeContext: true, matchOverloadIndex++);
+                    AppendMatchCompositionMethod(generator, typeDeclaration, subschema, includeContext: false, matchOverloadIndex++);
+                }
             }
         }
 
@@ -3835,8 +3841,11 @@ internal static partial class CodeGeneratorExtensions
             foreach (IOneOfSubschemaValidationKeyword keyword in oneOf.Keys)
             {
                 IReadOnlyCollection<TypeDeclaration> subschema = oneOf[keyword].Distinct().ToList();
-                AppendMatchCompositionMethod(generator, typeDeclaration, subschema, includeContext: true, matchOverloadIndex++);
-                AppendMatchCompositionMethod(generator, typeDeclaration, subschema, includeContext: false, matchOverloadIndex++);
+                if (subschema.Count > 1)
+                {
+                    AppendMatchCompositionMethod(generator, typeDeclaration, subschema, includeContext: true, matchOverloadIndex++);
+                    AppendMatchCompositionMethod(generator, typeDeclaration, subschema, includeContext: false, matchOverloadIndex++);
+                }
             }
         }
 
@@ -3845,8 +3854,11 @@ internal static partial class CodeGeneratorExtensions
             foreach (IAnyOfConstantValidationKeyword keyword in anyOfConstant.Keys)
             {
                 JsonElement[] constantValues = anyOfConstant[keyword].Distinct().ToArray();
-                AppendMatchConstantMethod(generator, keyword, constantValues, includeContext: true, matchOverloadIndex: matchOverloadIndex++);
-                AppendMatchConstantMethod(generator, keyword, constantValues, includeContext: false, matchOverloadIndex: matchOverloadIndex++);
+                if (constantValues.Length > 1)
+                {
+                    AppendMatchConstantMethod(generator, keyword, constantValues, includeContext: true, matchOverloadIndex: matchOverloadIndex++);
+                    AppendMatchConstantMethod(generator, keyword, constantValues, includeContext: false, matchOverloadIndex: matchOverloadIndex++);
+                }
             }
         }
 
@@ -3898,7 +3910,7 @@ internal static partial class CodeGeneratorExtensions
             foreach (TypeDeclaration match in subschema)
             {
                 // This is the parameter name for the match match method.
-                string matchTypeName = match.ReducedTypeDeclaration().ReducedType.DotnetTypeName();
+                string matchTypeName = match.ReducedTypeDeclaration().ReducedType.FullyQualifiedDotnetTypeName();
                 string matchParamName = generator.GetUniqueParameterNameInScope(matchTypeName, childScope: scopeName, prefix: "match");
 
                 parameterNames[i++] = matchParamName;
