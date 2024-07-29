@@ -2021,11 +2021,11 @@ internal static partial class CodeGeneratorExtensions
                 .AppendBlockIndent(
                     """
                     /// <summary>
-                    /// Gets an instance of the JSON value from a <see cref="JsonAny"/> value.
+                    /// Gets an instance of the JSON value from the provided value.
                     /// </summary>
                     /// <typeparam name="TValue">The type of the value.</typeparam>
-                    /// <param name="value">The <see cref="JsonAny"/> value from which to instantiate the instance.</param>
-                    /// <returns>An instance of this type, initialized from the <see cref="JsonAny"/> value.</returns>
+                    /// <param name="value">The value from which to instantiate the instance.</param>
+                    /// <returns>An instance of this type, initialized from the provided value.</returns>
                     """)
                 .AppendLineIndent("[MethodImpl(MethodImplOptions.AggressiveInlining)]")
                 .AppendIndent("public static ")
@@ -2053,11 +2053,11 @@ internal static partial class CodeGeneratorExtensions
                 .AppendBlockIndent(
                     """
                     /// <summary>
-                    /// Gets an instance of the JSON value from a <see cref="JsonAny"/> value.
+                    /// Gets an instance of the JSON value from the provided value.
                     /// </summary>
                     /// <typeparam name="TValue">The type of the value.</typeparam>
-                    /// <param name="value">The <see cref="JsonAny"/> value from which to instantiate the instance.</param>
-                    /// <returns>An instance of this type, initialized from the <see cref="JsonAny"/> value.</returns>
+                    /// <param name="value">The value from which to instantiate the instance.</param>
+                    /// <returns>An instance of this type, initialized from the provided value.</returns>
                     """)
                 .AppendLineIndent("[MethodImpl(MethodImplOptions.AggressiveInlining)]")
                 .AppendIndent("static ")
