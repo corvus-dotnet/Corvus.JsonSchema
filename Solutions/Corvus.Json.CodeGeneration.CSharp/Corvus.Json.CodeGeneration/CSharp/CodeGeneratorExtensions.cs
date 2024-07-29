@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Web;
 using Microsoft.CodeAnalysis.CSharp;
 
 namespace Corvus.Json.CodeGeneration.CSharp;
@@ -542,6 +543,264 @@ internal static partial class CodeGeneratorExtensions
         }
 
         return generator;
+    }
+
+    /// <summary>
+    /// Append the classes which provide sets of constant values.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to emit the enum values class.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendAnyOfConstantValuesClasses(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.AnyOfConstantValues() is IReadOnlyDictionary<IAnyOfConstantValidationKeyword, JsonElement[]> constantValues)
+        {
+            foreach (IAnyOfConstantValidationKeyword keyword in constantValues.Keys)
+            {
+                JsonElement[] constants = constantValues[keyword];
+                string className = generator.GetUniqueClassNameInScope(keyword.Keyword, suffix: "Values");
+
+                generator
+                    .PushMemberScope(className, ScopeType.Type)
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("/// <summary>")
+                    .AppendLineIndent("/// Constant values for the ", keyword.Keyword, " keyword.")
+                    .AppendLineIndent("/// </summary>")
+                    .AppendLineIndent("public static class ", className)
+                    .AppendLineIndent("{")
+                    .PushIndent();
+
+                for (int i = 0; i < constants.Length; i++)
+                {
+                    AppendAnyOfConstantValue(generator, typeDeclaration, keyword, constants, i);
+                }
+
+                generator
+                    .PopIndent()
+                    .AppendLineIndent("}")
+                    .PopMemberScope();
+            }
+        }
+
+        return generator;
+
+        static void AppendAnyOfConstantValue(CodeGenerator generator, TypeDeclaration typeDeclaration, IKeyword keyword, JsonElement[] constants, int i)
+        {
+            bool requiresIndex = constants.Length > 1;
+            JsonElement constantValue = constants[i];
+
+            switch (constantValue.ValueKind)
+            {
+                case JsonValueKind.String:
+                    AppendStringProperties(generator, typeDeclaration, keyword, requiresIndex ? (i + 1).ToString() : null, constantValue);
+                    break;
+                case JsonValueKind.Number:
+                    AppendNumberProperties(generator, typeDeclaration, keyword, requiresIndex ? (i + 1).ToString() : null, constantValue);
+                    break;
+                case JsonValueKind.True:
+                case JsonValueKind.False:
+                    AppendBooleanProperties(generator, typeDeclaration, keyword, requiresIndex ? (i + 1).ToString() : null, constantValue);
+                    break;
+                case JsonValueKind.Object:
+                    AppendObjectProperties(generator, typeDeclaration, keyword, requiresIndex ? (i + 1).ToString() : null, constantValue);
+                    break;
+                case JsonValueKind.Array:
+                    AppendArrayProperties(generator, typeDeclaration, keyword, requiresIndex ? (i + 1).ToString() : null, constantValue);
+                    break;
+                case JsonValueKind.Null:
+                    AppendNullProperties(generator, typeDeclaration, keyword, requiresIndex ? (i + 1).ToString() : null, constantValue);
+                    break;
+            }
+        }
+
+        static void AppendStringProperties(CodeGenerator generator, TypeDeclaration typeDeclaration, IKeyword keyword, string? index, JsonElement constantValue)
+        {
+            if (constantValue.GetString() is string stringValue)
+            {
+                string constField =
+                    generator.GetPropertyNameInScope(
+                        keyword.Keyword,
+                        rootScope: generator.ValidationClassScope(),
+                        suffix: index);
+
+                string propertyName = generator.GetUniquePropertyNameInScope(stringValue);
+
+                generator
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("/// <summary>")
+                    .AppendLineIndent("/// Gets the string '", HttpUtility.HtmlEncode(SymbolDisplay.FormatLiteral(stringValue, false)), "'")
+                    .AppendLineIndent("/// as a <see cref=\"", typeDeclaration.FullyQualifiedDotnetTypeName(), "\"/>.")
+                    .AppendLineIndent("/// </summary>")
+                    .AppendLineIndent(
+                        "public static ",
+                        typeDeclaration.DotnetTypeName(),
+                        " ",
+                        propertyName,
+                        " { get; } = ",
+                        generator.ValidationClassName(),
+                        ".",
+                        constField,
+                        ".As<",
+                        typeDeclaration.DotnetTypeName(),
+                        ">();")
+                    .AppendSeparatorLine()
+                    .AppendLineIndent("/// <summary>")
+                    .AppendLineIndent("/// Gets the string '", HttpUtility.HtmlEncode(SymbolDisplay.FormatLiteral(stringValue, false)), "'")
+                    .AppendLineIndent("/// as a UTF8 byte array.")
+                    .AppendLineIndent("/// </summary>")
+                    .ReserveName(propertyName, suffix: "Utf8")
+                    .AppendLineIndent(
+                        "public static ReadOnlySpan<byte> ",
+                        propertyName,
+                        "Utf8 => ",
+                        generator.ValidationClassName(),
+                        ".",
+                        constField,
+                        "Utf8;");
+            }
+        }
+
+        static void AppendNumberProperties(CodeGenerator generator, TypeDeclaration typeDeclaration, IKeyword keyword, string? index, JsonElement constantValue)
+        {
+            string numberValue = constantValue.GetRawText();
+            string constField =
+                generator.GetPropertyNameInScope(
+                    keyword.Keyword,
+                    rootScope: generator.ValidationClassScope(),
+                    suffix: index);
+
+            string propertyName = index is string i ? $"Item{index}" : "Item1";
+
+            generator
+                .AppendSeparatorLine()
+                .AppendLineIndent("/// <summary>")
+                .AppendLineIndent("/// Gets the number '", HttpUtility.HtmlEncode(SymbolDisplay.FormatLiteral(numberValue, false)), "'")
+                .AppendLineIndent("/// as a <see cref=\"", typeDeclaration.FullyQualifiedDotnetTypeName(), "\"/>.")
+                .AppendLineIndent("/// </summary>")
+                .AppendLineIndent(
+                    "public static ",
+                    typeDeclaration.DotnetTypeName(),
+                    " ",
+                    propertyName,
+                    " { get; } = new(",
+                    generator.ValidationClassName(),
+                    ".",
+                    constField,
+                    ");");
+        }
+
+        static void AppendBooleanProperties(CodeGenerator generator, TypeDeclaration typeDeclaration, IKeyword keyword, string? index, JsonElement constantValue)
+        {
+            string booleanValue = constantValue.GetRawText();
+            string constField =
+                generator.GetPropertyNameInScope(
+                    keyword.Keyword,
+                    rootScope: generator.ValidationClassScope(),
+                    suffix: index);
+
+            string propertyName = index is string i ? $"Item{index}" : "Item1";
+
+            generator
+                .AppendSeparatorLine()
+                .AppendLineIndent("/// <summary>")
+                .AppendLineIndent("/// Gets the boolean value '", HttpUtility.HtmlEncode(SymbolDisplay.FormatLiteral(booleanValue, false)), "'")
+                .AppendLineIndent("/// as a <see cref=\"", typeDeclaration.FullyQualifiedDotnetTypeName(), "\"/>.")
+                .AppendLineIndent("/// </summary>")
+                .AppendLineIndent(
+                    "public static ",
+                    typeDeclaration.DotnetTypeName(),
+                    " ",
+                    propertyName,
+                    " { get; } = ",
+                    generator.ValidationClassName(),
+                    ".",
+                    constField,
+                    ".As<",
+                    typeDeclaration.DotnetTypeName(),
+                    ">();");
+        }
+
+        static void AppendNullProperties(CodeGenerator generator, TypeDeclaration typeDeclaration, IKeyword keyword, string? index, JsonElement constantValue)
+        {
+            string booleanValue = constantValue.GetRawText();
+            string propertyName = index is string i ? $"Item{index}" : "Item1";
+
+            generator
+                .AppendSeparatorLine()
+                .AppendLineIndent("/// <summary>")
+                .AppendLineIndent("/// Gets the null value for a <see cref=\"", typeDeclaration.FullyQualifiedDotnetTypeName(), "\"/>.")
+                .AppendLineIndent("/// </summary>")
+                .AppendLineIndent(
+                    "public static ",
+                    typeDeclaration.DotnetTypeName(),
+                    " ",
+                    propertyName,
+                    " => ",
+                    typeDeclaration.DotnetTypeName(),
+                    ".Null;");
+        }
+
+        static void AppendObjectProperties(CodeGenerator generator, TypeDeclaration typeDeclaration, IKeyword keyword, string? index, JsonElement constantValue)
+        {
+            string objectValue = constantValue.GetRawText();
+            string constField =
+                generator.GetPropertyNameInScope(
+                    keyword.Keyword,
+                    rootScope: generator.ValidationClassScope(),
+                    suffix: index);
+
+            string propertyName = index is string i ? $"Item{index}" : "Item1";
+
+            generator
+                .AppendSeparatorLine()
+                .AppendLineIndent("/// <summary>")
+                .AppendLineIndent("/// Gets the object value '", HttpUtility.HtmlEncode(SymbolDisplay.FormatLiteral(objectValue, false)), "'")
+                .AppendLineIndent("/// as a <see cref=\"", typeDeclaration.FullyQualifiedDotnetTypeName(), "\"/>.")
+                .AppendLineIndent("/// </summary>")
+                .AppendLineIndent(
+                    "public static ",
+                    typeDeclaration.DotnetTypeName(),
+                    " ",
+                    propertyName,
+                    " { get; } = ",
+                    generator.ValidationClassName(),
+                    ".",
+                    constField,
+                    ".As<",
+                    typeDeclaration.DotnetTypeName(),
+                    ">();");
+        }
+
+        static void AppendArrayProperties(CodeGenerator generator, TypeDeclaration typeDeclaration, IKeyword keyword, string? index, JsonElement constantValue)
+        {
+            string arrayValue = constantValue.GetRawText();
+            string constField =
+                generator.GetPropertyNameInScope(
+                    keyword.Keyword,
+                    rootScope: generator.ValidationClassScope(),
+                    suffix: index);
+
+            string propertyName = index is string i ? $"Item{index}" : "Item1";
+
+            generator
+                .AppendSeparatorLine()
+                .AppendLineIndent("/// <summary>")
+                .AppendLineIndent("/// Gets the array value '", HttpUtility.HtmlEncode(SymbolDisplay.FormatLiteral(arrayValue, false)), "'")
+                .AppendLineIndent("/// as a <see cref=\"", typeDeclaration.FullyQualifiedDotnetTypeName(), "\"/>.")
+                .AppendLineIndent("/// </summary>")
+                .AppendLineIndent(
+                    "public static ",
+                    typeDeclaration.DotnetTypeName(),
+                    " ",
+                    propertyName,
+                    " { get; } = ",
+                    generator.ValidationClassName(),
+                    ".",
+                    constField,
+                    ".As<",
+                    typeDeclaration.DotnetTypeName(),
+                    ">();");
+        }
     }
 
     /// <summary>
@@ -3314,6 +3573,33 @@ internal static partial class CodeGeneratorExtensions
     /// <param name="suffix">The (optional) suffix for the name.</param>
     /// <returns>A unique name in the scope.</returns>
     public static string GetUniqueMethodNameInScope(
+        this CodeGenerator generator,
+        string baseName,
+        string? childScope = null,
+        string? rootScope = null,
+        string? prefix = null,
+        string? suffix = null)
+    {
+        return generator.GetUniqueMemberName(
+            new CSharpMemberName(
+                generator.GetChildScope(childScope, rootScope),
+                baseName,
+                Casing.PascalCase,
+                prefix,
+                suffix));
+    }
+
+    /// <summary>
+    /// Gets the name for a class.
+    /// </summary>
+    /// <param name="generator">The generator from which to get the name.</param>
+    /// <param name="baseName">The base name.</param>
+    /// <param name="childScope">The (optional) child scope from the root scope.</param>
+    /// <param name="rootScope">The (optional) root scope overriding the current scope.</param>
+    /// <param name="prefix">The (optional) prefix for the name.</param>
+    /// <param name="suffix">The (optional) suffix for the name.</param>
+    /// <returns>A unique name in the scope.</returns>
+    public static string GetUniqueClassNameInScope(
         this CodeGenerator generator,
         string baseName,
         string? childScope = null,

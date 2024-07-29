@@ -24,6 +24,7 @@ public static partial class ValidationCodeGeneratorExtensions
         TypeDeclaration typeDeclaration)
     {
         return generator
+            .AppendSeparatorLine()
             .AppendLineIndent("[MethodImpl(MethodImplOptions.AggressiveInlining)]")
             .BeginReservedMethodDeclaration(
                 "public static",
