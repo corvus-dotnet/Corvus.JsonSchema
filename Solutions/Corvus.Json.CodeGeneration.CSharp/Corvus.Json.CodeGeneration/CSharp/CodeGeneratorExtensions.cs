@@ -1442,6 +1442,64 @@ internal static partial class CodeGeneratorExtensions
     }
 
     /// <summary>
+    /// Appends <c>Is[Type]</c> and <c>As[Type]</c> methods for composition types.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <param name="rootDeclaration">The type declaration which is the basis of the composition types.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendAsProperties(
+        this CodeGenerator generator,
+        TypeDeclaration rootDeclaration)
+    {
+        HashSet<string> visitedTypes = [];
+
+        foreach (TypeDeclaration t in rootDeclaration.CompositionTypeDeclarations())
+        {
+            if (!visitedTypes.Add(t.FullyQualifiedDotnetTypeName()))
+            {
+                continue;
+            }
+
+            string propertyNameAs = generator.GetPropertyNameInScope("As", suffix: t.DotnetTypeName());
+            string propertyNameIs = generator.GetPropertyNameInScope("Is", suffix: t.DotnetTypeName());
+
+            generator
+                .AppendSeparatorLine()
+                .AppendLineIndent("/// <summary>")
+                .AppendLineIndent("/// Gets the instance as a <see cref=\"", t.FullyQualifiedDotnetTypeName(), "\" />.")
+                .AppendLineIndent("/// </summary>")
+                .AppendLineIndent("public ", t.FullyQualifiedDotnetTypeName(), " ", propertyNameAs)
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendLineIndent("get")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent("return this.As<", t.FullyQualifiedDotnetTypeName(), ">();")
+                    .PopIndent()
+                    .AppendLineIndent("}")
+                .PopIndent()
+                .AppendLineIndent("}")
+                .AppendSeparatorLine()
+                .AppendLineIndent("/// <summary>")
+                .AppendLineIndent("/// Gets a value indicating whether the instance is a <see cref=\"", t.FullyQualifiedDotnetTypeName(), "\" />.")
+                .AppendLineIndent("/// </summary>")
+                .AppendLineIndent("public bool ", propertyNameIs)
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendLineIndent("get")
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent("return this.As<", t.FullyQualifiedDotnetTypeName(), ">().IsValid();")
+                    .PopIndent()
+                    .AppendLineIndent("}")
+                .PopIndent()
+                .AppendLineIndent("}");
+        }
+
+        return generator;
+    }
+
+    /// <summary>
     /// Appends <c>TryGet()</c> methods composition types.
     /// </summary>
     /// <param name="generator">The code generator.</param>
