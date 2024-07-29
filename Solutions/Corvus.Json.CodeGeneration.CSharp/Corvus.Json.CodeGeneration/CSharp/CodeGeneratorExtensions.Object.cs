@@ -2,7 +2,9 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System;
 using System.Text.Json;
+using System.Web;
 using Microsoft.CodeAnalysis.CSharp;
 
 namespace Corvus.Json.CodeGeneration.CSharp;
@@ -374,6 +376,113 @@ internal static partial class CodeGeneratorExtensions
         {
             generator
                 .AppendEnumerateObjectMethod(typeDeclaration);
+        }
+
+        return generator;
+    }
+
+    /// <summary>
+    /// Append the <c>MatchesPattern()</c> and <c>TryAsPattern()</c> methods.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to emit the methods.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendPatternPropertiesMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.PatternProperties() is IReadOnlyDictionary<IObjectPatternPropertyValidationKeyword, IReadOnlyCollection<PatternPropertyDeclaration>> patternProperties)
+        {
+            foreach (IObjectPatternPropertyValidationKeyword keyword in patternProperties.Keys)
+            {
+                IReadOnlyCollection<PatternPropertyDeclaration> declarations = patternProperties[keyword];
+                int index = 1;
+                bool hasIndex = declarations.Count > 1;
+
+                foreach (PatternPropertyDeclaration declaration in declarations)
+                {
+                    string regexAccessor =
+                        generator.GetStaticReadOnlyFieldNameInScope(
+                            declaration.Keyword.Keyword,
+                            rootScope: generator.ValidationClassScope(),
+                            suffix: hasIndex ? index.ToString() : null);
+
+                    string matchesPatternName = generator.GetMethodNameInScope(declaration.ReducedPatternPropertyType.DotnetTypeName(), prefix: "MatchesPattern");
+                    string tryAsPatternName = generator.GetMethodNameInScope(declaration.ReducedPatternPropertyType.DotnetTypeName(), prefix: "TryAsPattern");
+
+                    generator
+                        .AppendSeparatorLine()
+                        .AppendLineIndent("/// <summary>")
+                        .AppendLineIndent("/// Determines if a property name matches '", HttpUtility.HtmlEncode(declaration.Pattern), "'")
+                        .AppendLineIndent("/// for the pattern property producing the type")
+                        .AppendLineIndent("/// <see cref=\"", declaration.ReducedPatternPropertyType.FullyQualifiedDotnetTypeName(), "\"/>.")
+                        .AppendLineIndent("/// </summary>")
+                        .AppendLineIndent("public static bool ", matchesPatternName, "(in JsonObjectProperty property) => property.Name.IsMatch(", generator.ValidationClassName(), ".", regexAccessor, ");")
+                        .AppendSeparatorLine()
+                        .AppendLineIndent("/// <summary>")
+                        .AppendLineIndent("/// Gets an instance of the type")
+                        .AppendLineIndent("/// <see cref=\"", declaration.ReducedPatternPropertyType.FullyQualifiedDotnetTypeName(), "\"/>")
+                        .AppendLineIndent("/// if the property name matches '", HttpUtility.HtmlEncode(declaration.Pattern), "'.")
+                        .AppendLineIndent("/// </summary>")
+                        .AppendLineIndent("public static bool ", tryAsPatternName, "(in JsonObjectProperty property, out ", declaration.ReducedPatternPropertyType.FullyQualifiedDotnetTypeName(), " result)")
+                        .AppendLineIndent("{")
+                        .PushIndent()
+                            .AppendLineIndent("if (property.Name.IsMatch(", generator.ValidationClassName(), ".", regexAccessor, "))")
+                            .AppendLineIndent("{")
+                            .PushIndent()
+                                .AppendLineIndent("result = property.Value.As<", declaration.ReducedPatternPropertyType.FullyQualifiedDotnetTypeName(), ">();")
+                                .AppendLineIndent("return result.IsValid();")
+                            .PopIndent()
+                            .AppendLineIndent("}")
+                            .AppendSeparatorLine()
+                            .AppendLineIndent("result = ", declaration.ReducedPatternPropertyType.FullyQualifiedDotnetTypeName(), ".Undefined;")
+                            .AppendLineIndent("return false;")
+                        .PopIndent()
+                        .AppendLineIndent("}");
+                    ++index;
+                }
+            }
+        }
+
+        return generator;
+    }
+
+    /// <summary>
+    /// Append the pattern properties static properties.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to emit the properties.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendPatternPropertiesStaticProperties(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.PatternProperties() is IReadOnlyDictionary<IObjectPatternPropertyValidationKeyword, IReadOnlyCollection<PatternPropertyDeclaration>> patternProperties)
+        {
+            foreach (IObjectPatternPropertyValidationKeyword keyword in patternProperties.Keys)
+            {
+                IReadOnlyCollection<PatternPropertyDeclaration> declarations = patternProperties[keyword];
+                int index = 1;
+                bool hasIndex = declarations.Count > 1;
+
+                foreach (PatternPropertyDeclaration declaration in declarations)
+                {
+                    string regexAccessor =
+                        generator.GetStaticReadOnlyFieldNameInScope(
+                            declaration.Keyword.Keyword,
+                            rootScope: generator.ValidationClassScope(),
+                            suffix: hasIndex ? index.ToString() : null);
+
+                    string propertyName = generator.GetPropertyNameInScope(declaration.ReducedPatternPropertyType.DotnetTypeName(), prefix: "PatternProperty");
+
+                    generator
+                        .AppendSeparatorLine()
+                        .AppendLineIndent("/// <summary>")
+                        .AppendLineIndent("/// The pattern matching '", HttpUtility.HtmlEncode(declaration.Pattern), "'")
+                        .AppendLineIndent("/// for the pattern property producing the type")
+                        .AppendLineIndent("/// <see cref=\"", declaration.ReducedPatternPropertyType.FullyQualifiedDotnetTypeName(), "\"/>.")
+                        .AppendLineIndent("/// </summary>")
+                        .AppendLineIndent("public static Regex ", propertyName, " => ", generator.ValidationClassName(), ".", regexAccessor, ";");
+
+                    ++index;
+                }
+            }
         }
 
         return generator;

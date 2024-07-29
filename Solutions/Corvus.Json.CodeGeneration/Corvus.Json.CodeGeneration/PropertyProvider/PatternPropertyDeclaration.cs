@@ -7,7 +7,7 @@ namespace Corvus.Json.CodeGeneration;
 /// <summary>
 /// A regular expression and a schema.
 /// </summary>
-public sealed class PatternPropertyDeclaration(IObjectPatternPropertyValidationKeyword keyword, TypeDeclaration patternPropertyType)
+public sealed class PatternPropertyDeclaration(IObjectPatternPropertyValidationKeyword keyword, TypeDeclaration patternPropertyType, string pattern)
 {
     /// <summary>
     /// Gets the keyword for the pattern property.
@@ -23,6 +23,11 @@ public sealed class PatternPropertyDeclaration(IObjectPatternPropertyValidationK
     /// Gets the unreduced pattern property type.
     /// </summary>
     public TypeDeclaration UnreducedPatternPropertyType { get; } = patternPropertyType;
+
+    /// <summary>
+    /// Gets the pattern for the pattern property.
+    /// </summary>
+    public string Pattern { get; } = pattern;
 
     /// <summary>
     /// Gets the reduced path modifier for the pattern property.
