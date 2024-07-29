@@ -69,6 +69,7 @@ public sealed class ObjectPartial : ICodeFileBuilder
                             .AppendTryGetPropertyMethods(typeDeclaration)
                             .AppendSetPropertyMethods(typeDeclaration)
                             .AppendRemovePropertyMethods(typeDeclaration)
+                            .AppendTryGetAsDependentSchemaMethods(typeDeclaration)
                             .AppendJsonPropertyNamesClass(typeDeclaration)
                             .AppendCorvusObjectHelpers(typeDeclaration)
                         .EndClassOrStructDeclaration()

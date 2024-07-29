@@ -380,6 +380,68 @@ internal static partial class CodeGeneratorExtensions
     }
 
     /// <summary>
+    /// Append the <c>TryGetDependentSchema()</c> methods.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to emit the methods.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendTryGetAsDependentSchemaMethods(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.DependentSchemasSubschemaTypes() is IReadOnlyDictionary<IObjectPropertyDependentSchemasValidationKeyword, IReadOnlyCollection<DependentSchemaDeclaration>> dependencies)
+        {
+            HashSet<string> visitedTypeNames = [];
+            foreach (IReadOnlyCollection<DependentSchemaDeclaration> declarations in dependencies.Values)
+            {
+                foreach (DependentSchemaDeclaration declaration in declarations)
+                {
+                    if (!visitedTypeNames.Add(declaration.JsonPropertyName))
+                    {
+                        continue;
+                    }
+
+                    string name = generator.GetMethodNameInScope("TryAsDependentSchemaFor", suffix: declaration.JsonPropertyName);
+                    string dotnetPropertyName =
+                        typeDeclaration
+                            .PropertyDeclarations
+                            .Single(p => p.JsonPropertyName == declaration.JsonPropertyName)
+                            .DotnetPropertyName();
+                    string targetName = declaration.ReducedDepdendentSchemaType.FullyQualifiedDotnetTypeName();
+
+                    generator
+                        .AppendSeparatorLine()
+                        .AppendLineIndent("/// <summary>")
+                        .AppendLineIndent(
+                            "/// Tries to get the instance as a <see cref=\"",
+                            targetName,
+                            "\"/>, if the <see cref=\"",
+                            dotnetPropertyName,
+                            "\"/> property is present.")
+                        .AppendLineIndent("/// </summary>")
+                        .AppendLineIndent("/// <param name=\"result\">The value as a <see cref=\"", targetName, "\" />.</param>.")
+                        .AppendLineIndent("/// <returns><see langword=\"true\" /> if the property was present, and the instance matches the dependent schema.</returns>")
+                        .AppendLineIndent("public bool ", name, "(out ", targetName, " result)")
+                        .AppendLineIndent("{")
+                        .PushIndent()
+                            .AppendLineIndent("if (this.", dotnetPropertyName, ".IsNotUndefined())")
+                            .AppendLineIndent("{")
+                            .PushIndent()
+                                .AppendLineIndent("result = this.As<", targetName, ">();")
+                                .AppendLineIndent("return result.IsValid();")
+                            .PopIndent()
+                            .AppendLineIndent("}")
+                            .AppendSeparatorLine()
+                            .AppendLineIndent("result = ", targetName, ".Undefined;")
+                            .AppendLineIndent("return false;")
+                        .PopIndent()
+                        .AppendLineIndent("}");
+                }
+            }
+        }
+
+        return generator;
+    }
+
+    /// <summary>
     /// Append the <c>Create()</c> factory method.
     /// </summary>
     /// <param name="generator">The code generator.</param>
