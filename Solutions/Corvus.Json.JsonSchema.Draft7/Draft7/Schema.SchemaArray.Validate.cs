@@ -6,11 +6,28 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.Draft7;
+
+/// <summary>
+/// Core schema meta-schema
+/// </summary>
+/// <remarks>
+/// <para>
+/// Examples:
+/// <example>
+/// <code>
+/// true
+/// </code>
+/// </example>
+/// </para>
+/// </remarks>
 public readonly partial struct Schema
 {
     /// <summary>
@@ -34,24 +51,148 @@ public readonly partial struct Schema
             }
 
             JsonValueKind valueKind = this.ValueKind;
-            result = this.ValidateType(valueKind, result, level);
+            result = CorvusValidation.TypeValidationHandler(this, valueKind, result, level);
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
             }
 
-            result = this.ValidateArray(valueKind, result, level);
+            result = CorvusValidation.ArrayValidationHandler(this, valueKind, result, level);
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
             }
 
-            if (level != ValidationLevel.Flag)
+            if (level > ValidationLevel.Basic)
             {
                 result = result.PopLocation();
             }
 
             return result;
+        }
+
+        private static partial class CorvusValidation
+        {
+            public static readonly long MinItems = 1;
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static ValidationContext TypeValidationHandler(
+                in SchemaArray value,
+                JsonValueKind valueKind,
+                in ValidationContext validationContext,
+                ValidationLevel level = ValidationLevel.Flag)
+            {
+                ValidationContext result = validationContext;
+                bool isValid = false;
+                ValidationContext localResultArray = Corvus.Json.Validate.TypeArray(valueKind, result.CreateChildContext(), level);
+                if (level == ValidationLevel.Flag && localResultArray.IsValid)
+                {
+                    return validationContext;
+                }
+
+                if (localResultArray.IsValid)
+                {
+                    isValid = true;
+                }
+
+                return result.MergeResults(
+                    isValid,
+                    level,
+                    localResultArray);
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static ValidationContext ArrayValidationHandler(
+                in SchemaArray value,
+                JsonValueKind valueKind,
+                in ValidationContext validationContext,
+                ValidationLevel level)
+            {
+                ValidationContext result = validationContext;
+                if (valueKind != JsonValueKind.Array)
+                {
+                    if (level == ValidationLevel.Verbose)
+                    {
+                        ValidationContext ignoredResult = validationContext;
+                        ignoredResult = ignoredResult.PushValidationLocationProperty("items");
+                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation items - ignored because the value is not an array");
+                        ignoredResult = ignoredResult.PopLocation();
+                        ignoredResult = ignoredResult.PushValidationLocationProperty("minItems");
+                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation minItems - ignored because the value is not an array");
+                        ignoredResult = ignoredResult.PopLocation();
+                        return ignoredResult;
+                    }
+
+                    return validationContext;
+                }
+
+                int length = 0;
+                using JsonArrayEnumerator<Corvus.Json.JsonSchema.Draft7.Schema> arrayEnumerator = value.EnumerateArray();
+                while (arrayEnumerator.MoveNext())
+                {
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushDocumentArrayIndex(length);
+                    }
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifier(new("#/items/$ref"));
+                    }
+
+                    result = arrayEnumerator.Current.Validate(result, level);
+                    if (level == ValidationLevel.Flag && !result.IsValid)
+                    {
+                        return result;
+                    }
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+
+                    result = result.WithLocalItemIndex(length);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+
+                    length++;
+                }
+
+                if (level > ValidationLevel.Basic)
+                {
+                    result = result.PushValidationLocationProperty("minItems");
+                }
+
+                if (length >= MinItems)
+                {
+                    if (level == ValidationLevel.Verbose)
+                    {
+                        result = result.WithResult(isValid: true, $"Validation minItems - array of length {length} is greater than or equal to {MinItems}");
+                    }
+                }
+                else
+                {
+                    if (level >= ValidationLevel.Detailed)
+                    {
+                        result = result.WithResult(isValid: false, $"Validation minItems - array of length {length} is less than {MinItems}");
+                    }
+                    else if (level >= ValidationLevel.Basic)
+                    {
+                        result = result.WithResult(isValid: false, "Validation minItems - is less than the required length.");
+                    }
+                    else
+                    {
+                        return result.WithResult(isValid: false);
+                    }
+                }
+                if (level > ValidationLevel.Basic)
+                {
+                    result = result.PopLocation();
+                }
+
+                return result;
+            }
         }
     }
 }

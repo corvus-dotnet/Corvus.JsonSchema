@@ -6,13 +6,28 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.OpenApi31;
+
+/// <summary>
+/// Generated from JSON Schema.
+/// </summary>
+/// <remarks>
+/// <para>
+/// The description of OpenAPI v3.1.x documents without schema validation, as defined by https://spec.openapis.org/oas/v3.1.0
+/// </para>
+/// </remarks>
 public readonly partial struct OpenApiDocument
 {
+    /// <summary>
+    /// Generated from JSON Schema.
+    /// </summary>
     public readonly partial struct License
     {
         /// <summary>
@@ -35,18 +50,67 @@ public readonly partial struct OpenApiDocument
                     result = result.PushSchemaLocation("https://spec.openapis.org/oas/3.1/schema/2022-10-07#/$defs/license/dependentSchemas/identifier");
                 }
 
-                result = this.ValidateNot(result, level);
+                result = CorvusValidation.CompositionNotValidationHandler(this, result, level);
                 if (level == ValidationLevel.Flag && !result.IsValid)
                 {
                     return result;
                 }
 
-                if (level != ValidationLevel.Flag)
+                if (level > ValidationLevel.Basic)
                 {
                     result = result.PopLocation();
                 }
 
                 return result;
+            }
+
+            private static partial class CorvusValidation
+            {
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static ValidationContext CompositionNotValidationHandler(
+                    in IdentifierEntity value,
+                    in ValidationContext validationContext,
+                    ValidationLevel level = ValidationLevel.Flag)
+                {
+                    return ValidateNot(value, validationContext, level);
+
+                    static ValidationContext ValidateNot(
+                        in IdentifierEntity value,
+                        in ValidationContext validationContext,
+                        ValidationLevel level = ValidationLevel.Flag)
+                    {
+                        ValidationContext result = validationContext;
+                        if (level > ValidationLevel.Basic)
+                        {
+                            result = result.PushValidationLocationReducedPathModifier(new("#/not"));
+                        }
+
+                        ValidationContext compositionResult = value.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.License.IdentifierEntity.RequiredUrl>().Validate(result.CreateChildContext(), level);
+                        if (compositionResult.IsValid)
+                        {
+                            if (level >= ValidationLevel.Basic)
+                            {
+                                result = validationContext.MergeResults(false, level, compositionResult);
+                                result = result.WithResult(isValid: false, "Validation not - incorrectly validated successfully against the schema");
+                            }
+                            else
+                            {
+                                result = validationContext.WithResult(isValid: false);
+                            }
+                        }
+                        else if (level >= ValidationLevel.Basic)
+                        {
+                            result = result.MergeResults(result.IsValid, level, compositionResult);
+                        }
+
+                        if (level > ValidationLevel.Basic)
+                        {
+                            result = result.PopLocation();
+                        }
+
+                        return result;
+                    }
+                }
             }
         }
     }

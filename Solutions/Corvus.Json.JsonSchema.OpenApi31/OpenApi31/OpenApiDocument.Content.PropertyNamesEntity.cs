@@ -6,9 +6,10 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
 using System.Buffers;
-using System.ComponentModel;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
@@ -16,8 +17,20 @@ using Corvus.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json.JsonSchema.OpenApi31;
+
+/// <summary>
+/// Generated from JSON Schema.
+/// </summary>
+/// <remarks>
+/// <para>
+/// The description of OpenAPI v3.1.x documents without schema validation, as defined by https://spec.openapis.org/oas/v3.1.0
+/// </para>
+/// </remarks>
 public readonly partial struct OpenApiDocument
 {
+    /// <summary>
+    /// Generated from JSON Schema.
+    /// </summary>
     public readonly partial struct Content
     {
         /// <summary>
@@ -25,6 +38,7 @@ public readonly partial struct OpenApiDocument
         /// </summary>
         [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<PropertyNamesEntity>))]
         public readonly partial struct PropertyNamesEntity
+            : IJsonValue<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Content.PropertyNamesEntity>
         {
             private readonly Backing backing;
             private readonly JsonElement jsonElementBacking;
@@ -33,8 +47,9 @@ public readonly partial struct OpenApiDocument
             private readonly BinaryJsonNumber numberBacking;
             private readonly ImmutableList<JsonAny> arrayBacking;
             private readonly ImmutableList<JsonObjectProperty> objectBacking;
+
             /// <summary>
-            /// Initializes a new instance of the <see cref = "PropertyNamesEntity"/> struct.
+            /// Initializes a new instance of the <see cref="PropertyNamesEntity"/> struct.
             /// </summary>
             public PropertyNamesEntity()
             {
@@ -48,9 +63,9 @@ public readonly partial struct OpenApiDocument
             }
 
             /// <summary>
-            /// Initializes a new instance of the <see cref = "PropertyNamesEntity"/> struct.
+            /// Initializes a new instance of the <see cref="PropertyNamesEntity"/> struct.
             /// </summary>
-            /// <param name = "value">The value from which to construct the instance.</param>
+            /// <param name="value">The value from which to construct the instance.</param>
             public PropertyNamesEntity(in JsonElement value)
             {
                 this.jsonElementBacking = value;
@@ -63,19 +78,97 @@ public readonly partial struct OpenApiDocument
             }
 
             /// <summary>
+            /// Initializes a new instance of the <see cref="PropertyNamesEntity"/> struct.
+            /// </summary>
+            /// <param name="value">The value from which to construct the instance.</param>
+            public PropertyNamesEntity(ImmutableList<JsonAny> value)
+            {
+                this.backing = Backing.Array;
+                this.jsonElementBacking = default;
+                this.stringBacking = string.Empty;
+                this.boolBacking = default;
+                this.numberBacking = default;
+                this.arrayBacking = value;
+                this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
+            }
+
+            /// <summary>
+            /// Initializes a new instance of the <see cref="PropertyNamesEntity"/> struct.
+            /// </summary>
+            /// <param name="value">The value from which to construct the instance.</param>
+            public PropertyNamesEntity(bool value)
+            {
+                this.backing = Backing.Bool;
+                this.jsonElementBacking = default;
+                this.stringBacking = string.Empty;
+                this.boolBacking = value;
+                this.numberBacking = default;
+                this.arrayBacking = ImmutableList<JsonAny>.Empty;
+                this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
+            }
+
+            /// <summary>
+            /// Initializes a new instance of the <see cref="PropertyNamesEntity"/> struct.
+            /// </summary>
+            /// <param name="value">The value from which to construct the instance.</param>
+            public PropertyNamesEntity(BinaryJsonNumber value)
+            {
+                this.backing = Backing.Number;
+                this.jsonElementBacking = default;
+                this.stringBacking = string.Empty;
+                this.boolBacking = default;
+                this.numberBacking = value;
+                this.arrayBacking = ImmutableList<JsonAny>.Empty;
+                this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
+            }
+
+            /// <summary>
+            /// Initializes a new instance of the <see cref="PropertyNamesEntity"/> struct.
+            /// </summary>
+            /// <param name="value">The value from which to construct the instance.</param>
+            public PropertyNamesEntity(ImmutableList<JsonObjectProperty> value)
+            {
+                this.backing = Backing.Object;
+                this.jsonElementBacking = default;
+                this.stringBacking = string.Empty;
+                this.boolBacking = default;
+                this.numberBacking = default;
+                this.arrayBacking = ImmutableList<JsonAny>.Empty;
+                this.objectBacking = value;
+            }
+
+            /// <summary>
+            /// Initializes a new instance of the <see cref="PropertyNamesEntity"/> struct.
+            /// </summary>
+            /// <param name="value">The value from which to construct the instance.</param>
+            public PropertyNamesEntity(string value)
+            {
+                this.backing = Backing.String;
+                this.jsonElementBacking = default;
+                this.stringBacking = value;
+                this.boolBacking = default;
+                this.numberBacking = default;
+                this.arrayBacking = ImmutableList<JsonAny>.Empty;
+                this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
+            }
+
+            /// <summary>
             /// Gets the schema location from which this type was generated.
             /// </summary>
             public static string SchemaLocation { get; } = "https://spec.openapis.org/oas/3.1/schema/2022-10-07#/$defs/content/propertyNames";
+
             /// <summary>
             /// Gets a Null instance.
             /// </summary>
             public static PropertyNamesEntity Null { get; } = new(JsonValueHelpers.NullElement);
+
             /// <summary>
             /// Gets an Undefined instance.
             /// </summary>
             public static PropertyNamesEntity Undefined { get; }
+
             /// <summary>
-            /// Gets the default instance of the type.
+            /// Gets the default instance.
             /// </summary>
             public static PropertyNamesEntity DefaultInstance { get; }
 
@@ -168,7 +261,7 @@ public readonly partial struct OpenApiDocument
             }
 
             /// <inheritdoc/>
-            JsonString IJsonValue.AsString
+            public JsonString AsString
             {
                 get
                 {
@@ -187,7 +280,7 @@ public readonly partial struct OpenApiDocument
             }
 
             /// <inheritdoc/>
-            JsonBoolean IJsonValue.AsBoolean
+            public JsonBoolean AsBoolean
             {
                 get
                 {
@@ -206,7 +299,7 @@ public readonly partial struct OpenApiDocument
             }
 
             /// <inheritdoc/>
-            JsonNumber IJsonValue.AsNumber
+            public JsonNumber AsNumber
             {
                 get
                 {
@@ -225,7 +318,7 @@ public readonly partial struct OpenApiDocument
             }
 
             /// <inheritdoc/>
-            JsonObject IJsonValue.AsObject
+            public JsonObject AsObject
             {
                 get
                 {
@@ -244,7 +337,7 @@ public readonly partial struct OpenApiDocument
             }
 
             /// <inheritdoc/>
-            JsonArray IJsonValue.AsArray
+            public JsonArray AsArray
             {
                 get
                 {
@@ -327,9 +420,8 @@ public readonly partial struct OpenApiDocument
             /// <summary>
             /// Conversion from JsonAny.
             /// </summary>
-            /// <param name = "value">The value from which to convert.</param>
-            /// <exception cref = "InvalidOperationException">The value was not compatible with this type.</exception>
-            public static implicit operator PropertyNamesEntity(in JsonAny value)
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator PropertyNamesEntity(JsonAny value)
             {
                 return value.As<PropertyNamesEntity>();
             }
@@ -337,43 +429,57 @@ public readonly partial struct OpenApiDocument
             /// <summary>
             /// Conversion to JsonAny.
             /// </summary>
-            /// <param name = "value">The value from which to convert.</param>
-            /// <exception cref = "InvalidOperationException">The value was not compatible with this type.</exception>
-            public static implicit operator JsonAny(in PropertyNamesEntity value)
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator JsonAny(PropertyNamesEntity value)
             {
                 return value.AsAny;
             }
 
             /// <summary>
-            /// Equality operator.
+            /// Operator ==.
             /// </summary>
-            /// <param name = "left">The lhs.</param>
-            /// <param name = "right">The rhs.</param>
-            /// <returns><c>True</c> if the values are equal.</returns>
+            /// <param name="left">The lhs of the operator.</param>
+            /// <param name="right">The rhs of the operator.</param>
+            /// <returns>
+            /// <c>True</c> if the values are equal.
+            /// </returns>
             public static bool operator ==(in PropertyNamesEntity left, in PropertyNamesEntity right)
             {
                 return left.Equals(right);
             }
 
             /// <summary>
-            /// Inequality operator.
+            /// Operator !=.
             /// </summary>
-            /// <param name = "left">The lhs.</param>
-            /// <param name = "right">The rhs.</param>
-            /// <returns><c>True</c> if the values are equal.</returns>
+            /// <param name="left">The lhs of the operator.</param>
+            /// <param name="right">The rhs of the operator.</param>
+            /// <returns>
+            /// <c>True</c> if the values are not equal.
+            /// </returns>
             public static bool operator !=(in PropertyNamesEntity left, in PropertyNamesEntity right)
             {
                 return !left.Equals(right);
             }
 
             /// <summary>
-            /// Gets an instance of the JSON value from a JsonAny value.
+            /// Gets an instance of the JSON value from a <see cref="JsonElement"/> value.
             /// </summary>
-            /// <param name = "value">The <see cref = "JsonAny"/> value from which to instantiate the instance.</param>
-            /// <returns>An instance of this type, initialized from the <see cref = "JsonAny"/>.</returns>
+            /// <param name="value">The <see cref="JsonElement"/> value from which to instantiate the instance.</param>
+            /// <returns>An instance of this type, initialized from the <see cref="JsonElement"/>.</returns>
             /// <remarks>The returned value will have a <see cref = "IJsonValue.ValueKind"/> of <see cref = "JsonValueKind.Undefined"/> if the
-            /// value cannot be constructed from the given instance (e.g. because they have an incompatible dotnet backing type.
+            /// value cannot be constructed from the given instance (e.g. because they have an incompatible .NET backing type).
             /// </remarks>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static PropertyNamesEntity FromJson(in JsonElement value)
+            {
+                return new(value);
+            }
+
+            /// <summary>
+            /// Gets an instance of the JSON value from a <see cref="JsonAny"/> value.
+            /// </summary>
+            /// <param name="value">The <see cref="JsonAny"/> value from which to instantiate the instance.</param>
+            /// <returns>An instance of this type, initialized from the <see cref="JsonAny"/> value.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static PropertyNamesEntity FromAny(in JsonAny value)
             {
@@ -382,8 +488,7 @@ public readonly partial struct OpenApiDocument
                     return new(value.AsJsonElement);
                 }
 
-                JsonValueKind valueKind = value.ValueKind;
-                return valueKind switch
+                return value.ValueKind switch
                 {
                     JsonValueKind.String => new((string)value.AsString),
                     JsonValueKind.True => new(true),
@@ -397,293 +502,261 @@ public readonly partial struct OpenApiDocument
             }
 
             /// <summary>
-            /// Gets an instance of the JSON value from a <see cref = "JsonElement"/> value.
+            /// Gets an instance of the JSON value from the provided value.
             /// </summary>
-            /// <param name = "value">The <see cref = "JsonElement"/> value from which to instantiate the instance.</param>
-            /// <returns>An instance of this type, initialized from the <see cref = "JsonElement"/>.</returns>
+            /// <typeparam name="TValue">The type of the value.</typeparam>
+            /// <param name="value">The value from which to instantiate the instance.</param>
+            /// <returns>An instance of this type, initialized from the provided value.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static PropertyNamesEntity FromJson(in JsonElement value)
+            public static PropertyNamesEntity FromBoolean<TValue>(in TValue value)
+                where TValue : struct, IJsonBoolean<TValue>
             {
-                return new(value);
+                if (value.HasJsonElementBacking)
+                {
+                    return new(value.AsJsonElement);
+                }
+
+                return value.ValueKind switch
+                {
+                    JsonValueKind.True => new(true),
+                    JsonValueKind.False => new(false),
+                    JsonValueKind.Null => Null,
+                    _ => Undefined,
+                };
             }
 
+            /// <summary>
+            /// Gets an instance of the JSON value from the provided value.
+            /// </summary>
+            /// <typeparam name="TValue">The type of the value.</typeparam>
+            /// <param name="value">The value from which to instantiate the instance.</param>
+            /// <returns>An instance of this type, initialized from the provided value.</returns>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static PropertyNamesEntity FromString<TValue>(in TValue value)
+                where TValue : struct, IJsonString<TValue>
+            {
+                if (value.HasJsonElementBacking)
+                {
+                    return new(value.AsJsonElement);
+                }
+
+                return value.ValueKind switch
+                {
+                    JsonValueKind.String => new((string)value.AsString),
+                    JsonValueKind.Null => Null,
+                    _ => Undefined,
+                };
+            }
+
+            /// <summary>
+            /// Gets an instance of the JSON value from the provided value.
+            /// </summary>
+            /// <typeparam name="TValue">The type of the value.</typeparam>
+            /// <param name="value">The value from which to instantiate the instance.</param>
+            /// <returns>An instance of this type, initialized from the provided value.</returns>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static PropertyNamesEntity FromNumber<TValue>(in TValue value)
+                where TValue : struct, IJsonNumber<TValue>
+            {
+                if (value.HasJsonElementBacking)
+                {
+                    return new(value.AsJsonElement);
+                }
+
+                return value.ValueKind switch
+                {
+                    JsonValueKind.Number => new(value.AsNumber.AsBinaryJsonNumber),
+                    JsonValueKind.Null => Null,
+                    _ => Undefined,
+                };
+            }
+
+            /// <summary>
+            /// Gets an instance of the JSON value from the provided value.
+            /// </summary>
+            /// <typeparam name="TValue">The type of the value.</typeparam>
+            /// <param name="value">The value from which to instantiate the instance.</param>
+            /// <returns>An instance of this type, initialized from the provided value.</returns>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static PropertyNamesEntity FromObject<TValue>(in TValue value)
+                where TValue : struct, IJsonObject<TValue>
+            {
+                if (value.HasJsonElementBacking)
+                {
+                    return new(value.AsJsonElement);
+                }
+
+                return value.ValueKind switch
+                {
+                    JsonValueKind.Object => new(value.AsObject.AsPropertyBacking()),
+                    JsonValueKind.Null => Null,
+                    _ => Undefined,
+                };
+            }
+
+            /// <summary>
+            /// Gets an instance of the JSON value from the provided value.
+            /// </summary>
+            /// <typeparam name="TValue">The type of the value.</typeparam>
+            /// <param name="value">The value from which to instantiate the instance.</param>
+            /// <returns>An instance of this type, initialized from the provided value.</returns>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static PropertyNamesEntity FromArray<TValue>(in TValue value)
+                where TValue : struct, IJsonArray<TValue>
+            {
+                if (value.HasJsonElementBacking)
+                {
+                    return new(value.AsJsonElement);
+                }
+
+                return value.ValueKind switch
+                {
+                    JsonValueKind.Array => new(value.AsArray.AsImmutableList()),
+                    JsonValueKind.Null => Null,
+                    _ => Undefined,
+                };
+            }
+
+            /// <summary>
+            /// Parses the PropertyNamesEntity.
+            /// </summary>
+            /// <param name="source">The source of the JSON string to parse.</param>
+            /// <param name="options">The (optional) JsonDocumentOptions.</param>
+            public static PropertyNamesEntity Parse(string source, JsonDocumentOptions options = default)
+            {
+                using var jsonDocument = JsonDocument.Parse(source, options);
+                return new(jsonDocument.RootElement.Clone());
+            }
+
+            /// <summary>
+            /// Parses the PropertyNamesEntity.
+            /// </summary>
+            /// <param name="source">The source of the JSON string to parse.</param>
+            /// <param name="options">The (optional) JsonDocumentOptions.</param>
+            public static PropertyNamesEntity Parse(Stream source, JsonDocumentOptions options = default)
+            {
+                using var jsonDocument = JsonDocument.Parse(source, options);
+                return new(jsonDocument.RootElement.Clone());
+            }
+
+            /// <summary>
+            /// Parses the PropertyNamesEntity.
+            /// </summary>
+            /// <param name="source">The source of the JSON string to parse.</param>
+            /// <param name="options">The (optional) JsonDocumentOptions.</param>
+            public static PropertyNamesEntity Parse(ReadOnlyMemory<byte> source, JsonDocumentOptions options = default)
+            {
+                using var jsonDocument = JsonDocument.Parse(source, options);
+                return new(jsonDocument.RootElement.Clone());
+            }
+
+            /// <summary>
+            /// Parses the PropertyNamesEntity.
+            /// </summary>
+            /// <param name="source">The source of the JSON string to parse.</param>
+            /// <param name="options">The (optional) JsonDocumentOptions.</param>
+            public static PropertyNamesEntity Parse(ReadOnlyMemory<char> source, JsonDocumentOptions options = default)
+            {
+                using var jsonDocument = JsonDocument.Parse(source, options);
+                return new(jsonDocument.RootElement.Clone());
+            }
+
+            /// <summary>
+            /// Parses the PropertyNamesEntity.
+            /// </summary>
+            /// <param name="source">The source of the JSON string to parse.</param>
+            /// <param name="options">The (optional) JsonDocumentOptions.</param>
+            public static PropertyNamesEntity Parse(ReadOnlySequence<byte> source, JsonDocumentOptions options = default)
+            {
+                using var jsonDocument = JsonDocument.Parse(source, options);
+                return new(jsonDocument.RootElement.Clone());
+            }
+
+            /// <summary>
+            /// Parses the PropertyNamesEntity.
+            /// </summary>
+            /// <param name="source">The source of the JSON string to parse.</param>
+            public static PropertyNamesEntity ParseValue(ReadOnlySpan<char> source)
+            {
 #if NET8_0_OR_GREATER
-    /// <summary>
-    /// Gets an instance of the JSON value from a boolean value.
-    /// </summary>
-    /// <typeparam name = "TValue">The type of the value.</typeparam>
-    /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be PropertyNamesEntity.Undefined if the type is not compatible.</remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static PropertyNamesEntity IJsonValue<PropertyNamesEntity>.FromBoolean<TValue>(in TValue value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        if (value.ValueKind == JsonValueKind.True)
-        {
-            return new(true);
-        }
-
-        if (value.ValueKind == JsonValueKind.False)
-        {
-            return new(false);
-        }
-
-        return Undefined;
-    }
-#endif
-#if NET8_0_OR_GREATER
-    /// <summary>
-    /// Gets an instance of the JSON value from a string value.
-    /// </summary>
-    /// <typeparam name="TValue">The type of the value.</typeparam>
-    /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be PropertyNamesEntity.Undefined if the type is not compatible.</remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static PropertyNamesEntity IJsonValue<PropertyNamesEntity>.FromString<TValue>(in TValue value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        if (value.ValueKind == JsonValueKind.String)
-        {
-#if NET8_0_OR_GREATER
-            return new((string)value);
+                return IJsonValue<PropertyNamesEntity>.ParseValue(source);
 #else
-            return new((string)value.AsString);
+                return JsonValueHelpers.ParseValue<PropertyNamesEntity>(source);
 #endif
-        }
-
-        return Undefined;
-    }
-#endif
-#if NET8_0_OR_GREATER
-    /// <summary>
-    /// Gets an instance of the JSON value from a number value.
-    /// </summary>
-    /// <typeparam name="TValue">The type of the value.</typeparam>
-    /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be PropertyNamesEntity.Undefined if the type is not compatible.</remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static PropertyNamesEntity IJsonValue<PropertyNamesEntity>.FromNumber<TValue>(in TValue value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        if (value.ValueKind == JsonValueKind.Number)
-        {
-            return new(value.AsBinaryJsonNumber);
-        }
-
-        return Undefined;
-    }
-#endif
-#if NET8_0_OR_GREATER
-    /// <summary>
-    /// Gets an instance of the JSON value from an array value.
-    /// </summary>
-    /// <typeparam name="TValue">The type of the value.</typeparam>
-    /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be PropertyNamesEntity.Undefined if the type is not compatible.</remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static PropertyNamesEntity IJsonValue<PropertyNamesEntity>.FromArray<TValue>(in TValue value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        if (value.ValueKind == JsonValueKind.Array)
-        {
-            return new(value.AsImmutableList());
-        }
-
-        return Undefined;
-    }
-#endif
-#if NET8_0_OR_GREATER
-    /// <summary>
-    /// Gets an instance of the JSON value from an object value.
-    /// </summary>
-    /// <typeparam name="TValue">The type of the value.</typeparam>
-    /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be PropertyNamesEntity.Undefined if the type is not compatible.</remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static PropertyNamesEntity IJsonValue<PropertyNamesEntity>.FromObject<TValue>(in TValue value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        if (value.ValueKind == JsonValueKind.Object)
-        {
-            return new(value.AsPropertyBacking());
-        }
-
-        return Undefined;
-    }
-#endif
-            /// <summary>
-            /// Parses a JSON string into a PropertyNamesEntity.
-            /// </summary>
-            /// <param name = "json">The json string to parse.</param>
-            /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-            /// <returns>A <see cref = "PropertyNamesEntity"/> instance built from the JSON string.</returns>
-            public static PropertyNamesEntity Parse(string json, JsonDocumentOptions options = default)
-            {
-                using var jsonDocument = JsonDocument.Parse(json, options);
-                return new PropertyNamesEntity(jsonDocument.RootElement.Clone());
             }
 
             /// <summary>
-            /// Parses a JSON string into a PropertyNamesEntity.
+            /// Parses the PropertyNamesEntity.
             /// </summary>
-            /// <param name = "utf8Json">The json string to parse.</param>
-            /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-            /// <returns>A <see cref = "PropertyNamesEntity"/> instance built from the JSON string.</returns>
-            public static PropertyNamesEntity Parse(Stream utf8Json, JsonDocumentOptions options = default)
-            {
-                using var jsonDocument = JsonDocument.Parse(utf8Json, options);
-                return new PropertyNamesEntity(jsonDocument.RootElement.Clone());
-            }
-
-            /// <summary>
-            /// Parses a JSON string into a PropertyNamesEntity.
-            /// </summary>
-            /// <param name = "utf8Json">The json string to parse.</param>
-            /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-            /// <returns>A <see cref = "PropertyNamesEntity"/> instance built from the JSON string.</returns>
-            public static PropertyNamesEntity Parse(ReadOnlyMemory<byte> utf8Json, JsonDocumentOptions options = default)
-            {
-                using var jsonDocument = JsonDocument.Parse(utf8Json, options);
-                return new PropertyNamesEntity(jsonDocument.RootElement.Clone());
-            }
-
-            /// <summary>
-            /// Parses a JSON string into a PropertyNamesEntity.
-            /// </summary>
-            /// <param name = "json">The json string to parse.</param>
-            /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-            /// <returns>A <see cref = "PropertyNamesEntity"/> instance built from the JSON string.</returns>
-            public static PropertyNamesEntity Parse(ReadOnlyMemory<char> json, JsonDocumentOptions options = default)
-            {
-                using var jsonDocument = JsonDocument.Parse(json, options);
-                return new PropertyNamesEntity(jsonDocument.RootElement.Clone());
-            }
-
-            /// <summary>
-            /// Parses a JSON string into a PropertyNamesEntity.
-            /// </summary>
-            /// <param name = "utf8Json">The json string to parse.</param>
-            /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-            /// <returns>A <see cref = "PropertyNamesEntity"/> instance built from the JSON string.</returns>
-            public static PropertyNamesEntity Parse(ReadOnlySequence<byte> utf8Json, JsonDocumentOptions options = default)
-            {
-                using var jsonDocument = JsonDocument.Parse(utf8Json, options);
-                return new PropertyNamesEntity(jsonDocument.RootElement.Clone());
-            }
-
-            /// <summary>
-            /// Parses a JSON value from a buffer.
-            /// </summary>
-            /// <param name = "buffer">The buffer from which to parse the value.</param>
-            /// <returns>The parsed value.</returns>
-            static PropertyNamesEntity ParseValue(ReadOnlySpan<char> buffer)
+            /// <param name="source">The source of the JSON string to parse.</param>
+            public static PropertyNamesEntity ParseValue(ReadOnlySpan<byte> source)
             {
 #if NET8_0_OR_GREATER
-        return IJsonValue<PropertyNamesEntity>.ParseValue(buffer);
+                return IJsonValue<PropertyNamesEntity>.ParseValue(source);
 #else
-                return JsonValueHelpers.ParseValue<PropertyNamesEntity>(buffer);
+                return JsonValueHelpers.ParseValue<PropertyNamesEntity>(source);
 #endif
             }
 
             /// <summary>
-            /// Parses a JSON value from a buffer.
+            /// Parses the PropertyNamesEntity.
             /// </summary>
-            /// <param name = "buffer">The buffer from which to parse the value.</param>
-            /// <returns>The parsed value.</returns>
-            static PropertyNamesEntity ParseValue(ReadOnlySpan<byte> buffer)
+            /// <param name="source">The source of the JSON string to parse.</param>
+            public static PropertyNamesEntity ParseValue(ref Utf8JsonReader source)
             {
 #if NET8_0_OR_GREATER
-        return IJsonValue<PropertyNamesEntity>.ParseValue(buffer);
+                return IJsonValue<PropertyNamesEntity>.ParseValue(ref source);
 #else
-                return JsonValueHelpers.ParseValue<PropertyNamesEntity>(buffer);
-#endif
-            }
-
-            /// <summary>
-            /// Parses a JSON value from a buffer.
-            /// </summary>
-            /// <param name = "reader">The reader from which to parse the value.</param>
-            /// <returns>The parsed value.</returns>
-            static PropertyNamesEntity ParseValue(ref Utf8JsonReader reader)
-            {
-#if NET8_0_OR_GREATER
-        return IJsonValue<PropertyNamesEntity>.ParseValue(ref reader);
-#else
-                return JsonValueHelpers.ParseValue<PropertyNamesEntity>(ref reader);
+                return JsonValueHelpers.ParseValue<PropertyNamesEntity>(ref source);
 #endif
             }
 
             /// <summary>
             /// Gets the value as an instance of the target value.
             /// </summary>
-            /// <typeparam name = "TTarget">The type of the target.</typeparam>
+            /// <typeparam name="TTarget">The type of the target.</typeparam>
             /// <returns>An instance of the target type.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public TTarget As<TTarget>()
                 where TTarget : struct, IJsonValue<TTarget>
             {
 #if NET8_0_OR_GREATER
-        if ((this.backing & Backing.JsonElement) != 0)
-        {
-            return TTarget.FromJson(this.jsonElementBacking);
-        }
+                if ((this.backing & Backing.JsonElement) != 0)
+                {
+                    return TTarget.FromJson(this.jsonElementBacking);
+                }
 
-        if ((this.backing & Backing.String) != 0)
-        {
-            return TTarget.FromString(this);
-        }
+                if ((this.backing & Backing.String) != 0)
+                {
+                    return TTarget.FromString(this.AsString);
+                }
 
-        if ((this.backing & Backing.Bool) != 0)
-        {
-            return TTarget.FromBoolean(this);
-        }
+                if ((this.backing & Backing.Bool) != 0)
+                {
+                    return TTarget.FromBoolean(this.AsBoolean);
+                }
 
-        if ((this.backing & Backing.Number) != 0)
-        {
-            return TTarget.FromNumber(this);
-        }
+                if ((this.backing & Backing.Number) != 0)
+                {
+                    return TTarget.FromNumber(this.AsNumber);
+                }
 
-        if ((this.backing & Backing.Array) != 0)
-        {
-            return TTarget.FromArray(this);
-        }
+                if ((this.backing & Backing.Array) != 0)
+                {
+                    return TTarget.FromArray(this.AsArray);
+                }
 
-        if ((this.backing & Backing.Object) != 0)
-        {
-            return TTarget.FromObject(this);
-        }
+                if ((this.backing & Backing.Object) != 0)
+                {
+                    return TTarget.FromObject(this.AsObject);
+                }
 
-        if ((this.backing & Backing.Null) != 0)
-        {
-            return TTarget.Null;
-        }
+                if ((this.backing & Backing.Null) != 0)
+                {
+                    return TTarget.Null;
+                }
 
-        return TTarget.Undefined;
+                return TTarget.Undefined;
 #else
                 return this.As<PropertyNamesEntity, TTarget>();
 #endif
@@ -692,7 +765,9 @@ public readonly partial struct OpenApiDocument
             /// <inheritdoc/>
             public override bool Equals(object? obj)
             {
-                return (obj is IJsonValue jv && this.Equals(jv.AsAny)) || (obj is null && this.IsNull());
+                return
+                    (obj is IJsonValue jv && this.Equals(jv.AsAny)) ||
+                    (obj is null && this.IsNull());
             }
 
             /// <inheritdoc/>
@@ -705,7 +780,7 @@ public readonly partial struct OpenApiDocument
             /// <summary>
             /// Equality comparison.
             /// </summary>
-            /// <param name = "other">The other item with which to compare.</param>
+            /// <param name="other">The other item with which to compare.</param>
             /// <returns><see langword="true"/> if the values were equal.</returns>
             public bool Equals(in PropertyNamesEntity other)
             {
@@ -728,36 +803,42 @@ public readonly partial struct OpenApiDocument
                 if ((this.backing & Backing.Array) != 0)
                 {
                     JsonValueHelpers.WriteItems(this.arrayBacking, writer);
+
                     return;
                 }
 
                 if ((this.backing & Backing.Bool) != 0)
                 {
-                    writer.WriteBooleanValue(this.numberBacking.GetByteAsBool());
+                    writer.WriteBooleanValue(this.boolBacking);
+
                     return;
                 }
 
                 if ((this.backing & Backing.Number) != 0)
                 {
                     this.numberBacking.WriteTo(writer);
+
                     return;
                 }
 
                 if ((this.backing & Backing.Object) != 0)
                 {
                     JsonValueHelpers.WriteProperties(this.objectBacking, writer);
+
                     return;
                 }
 
                 if ((this.backing & Backing.String) != 0)
                 {
                     writer.WriteStringValue(this.stringBacking);
+
                     return;
                 }
 
                 if ((this.backing & Backing.Null) != 0)
                 {
                     writer.WriteNullValue();
+
                     return;
                 }
             }

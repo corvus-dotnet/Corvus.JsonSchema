@@ -6,13 +6,28 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.OpenApi31;
+
+/// <summary>
+/// Generated from JSON Schema.
+/// </summary>
+/// <remarks>
+/// <para>
+/// The description of OpenAPI v3.1.x documents without schema validation, as defined by https://spec.openapis.org/oas/v3.1.0
+/// </para>
+/// </remarks>
 public readonly partial struct OpenApiDocument
 {
+    /// <summary>
+    /// Generated from JSON Schema.
+    /// </summary>
     public readonly partial struct ExampleOrReference
     {
         /// <summary>
@@ -36,24 +51,133 @@ public readonly partial struct OpenApiDocument
                 }
 
                 JsonValueKind valueKind = this.ValueKind;
-                result = this.ValidateType(valueKind, result, level);
+                result = CorvusValidation.TypeValidationHandler(this, valueKind, result, level);
                 if (level == ValidationLevel.Flag && !result.IsValid)
                 {
                     return result;
                 }
 
-                result = this.ValidateObject(valueKind, result, level);
+                result = CorvusValidation.ObjectValidationHandler(this, valueKind, result, level);
                 if (level == ValidationLevel.Flag && !result.IsValid)
                 {
                     return result;
                 }
 
-                if (level != ValidationLevel.Flag)
+                if (level > ValidationLevel.Basic)
                 {
                     result = result.PopLocation();
                 }
 
                 return result;
+            }
+
+            private static partial class CorvusValidation
+            {
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static ValidationContext TypeValidationHandler(
+                    in RequiredRef value,
+                    JsonValueKind valueKind,
+                    in ValidationContext validationContext,
+                    ValidationLevel level = ValidationLevel.Flag)
+                {
+                    ValidationContext result = validationContext;
+                    bool isValid = false;
+                    ValidationContext localResultObject = Corvus.Json.Validate.TypeObject(valueKind, result.CreateChildContext(), level);
+                    if (level == ValidationLevel.Flag && localResultObject.IsValid)
+                    {
+                        return validationContext;
+                    }
+
+                    if (localResultObject.IsValid)
+                    {
+                        isValid = true;
+                    }
+
+                    return result.MergeResults(
+                        isValid,
+                        level,
+                        localResultObject);
+                }
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static ValidationContext ObjectValidationHandler(
+                    in RequiredRef value,
+                    JsonValueKind valueKind,
+                    in ValidationContext validationContext,
+                    ValidationLevel level = ValidationLevel.Flag)
+                {
+                    ValidationContext result = validationContext;
+                    if (valueKind != JsonValueKind.Object)
+                    {
+                        if (level == ValidationLevel.Verbose)
+                        {
+                            ValidationContext ignoredResult = validationContext;
+                            ignoredResult = ignoredResult.PushValidationLocationProperty("required");
+                            ignoredResult = ignoredResult.WithResult(isValid: true, "Validation required - ignored because the value is not an object");
+                            ignoredResult = ignoredResult.PopLocation();
+                            return ignoredResult;
+                        }
+
+                        return validationContext;
+                    }
+
+                    bool hasSeenRef = false;
+                    int propertyCount = 0;
+                    foreach (JsonObjectProperty property in value.EnumerateObject())
+                    {
+                        if (property.NameEquals(JsonPropertyNames.RefUtf8, JsonPropertyNames.Ref))
+                        {
+                            hasSeenRef = true;
+                            result = result.WithLocalProperty(propertyCount);
+                            if (level > ValidationLevel.Basic)
+                            {
+                                result = result.PushValidationLocationReducedPathModifierAndProperty(new(""), JsonPropertyNames.Ref);
+                            }
+
+                            ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonAny>().Validate(result.CreateChildContext(), level);
+                            result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+                            if (level > ValidationLevel.Basic)
+                            {
+                                result = result.PopLocation();
+                            }
+
+                            if (level == ValidationLevel.Flag && !result.IsValid)
+                            {
+                                return result;
+                            }
+                        }
+
+                        propertyCount++;
+                    }
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifier(new("#/required/0"));
+                    }
+
+                    if (!hasSeenRef)
+                    {
+                        if (level >= ValidationLevel.Basic)
+                        {
+                            result = result.WithResult(isValid: false, "Validation required - the required property '$ref' was not present.");
+                        }
+                        else
+                        {
+                            return result.WithResult(isValid: false);
+                        }
+                    }
+                    else if (level == ValidationLevel.Verbose)
+                    {
+                        result = result.WithResult(isValid: true, "Validation required - the required property '$ref' was present.");
+                    }
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+
+                    return result;
+                }
             }
         }
     }

@@ -28,7 +28,7 @@ public sealed class CustomKeywordNameHeuristic : INameHeuristicBeforeSubschema
     public uint Priority => 100;
 
     /// <inheritdoc/>
-    public bool TryGetName(TypeDeclaration typeDeclaration, JsonReferenceBuilder reference, Span<char> typeNameBuffer, out int written)
+    public bool TryGetName(ILanguageProvider languageProvider, TypeDeclaration typeDeclaration, JsonReferenceBuilder reference, Span<char> typeNameBuffer, out int written)
     {
         if (typeDeclaration.TypeNameProviderKeywords().FirstOrDefault() is ITypeNameProviderKeyword typeNameProviderKeyword &&
             typeDeclaration.LocatedSchema.Schema.TryGetProperty(typeNameProviderKeyword.KeywordUtf8, out JsonElement valueElement) &&
@@ -36,7 +36,11 @@ public sealed class CustomKeywordNameHeuristic : INameHeuristicBeforeSubschema
             valueElement.GetString() is string value)
         {
             written = Formatting.FormatTypeNameComponent(typeDeclaration, value.AsSpan(), typeNameBuffer);
-            return true;
+
+            if (!typeDeclaration.CollidesWithParent(typeNameBuffer[..written]))
+            {
+                return true;
+            }
         }
 
         written = 0;

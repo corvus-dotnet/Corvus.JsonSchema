@@ -1904,6 +1904,7 @@ public class CodeGenerator(ILanguageProvider languageProvider, int instancesPerI
         while (!uniqueFileNames.Add(candidateName))
         {
             candidateName = $"{baseFileNameWithoutExtension}{index}.{extension}";
+            index++;
         }
 
         return candidateName;

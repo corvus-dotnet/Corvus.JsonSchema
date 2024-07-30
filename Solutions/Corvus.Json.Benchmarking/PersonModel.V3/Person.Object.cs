@@ -79,6 +79,7 @@ public readonly partial struct Person
             throw new InvalidOperationException();
         }
     }
+
     /// <summary>
     /// Gets the number of properties in the object.
     /// </summary>

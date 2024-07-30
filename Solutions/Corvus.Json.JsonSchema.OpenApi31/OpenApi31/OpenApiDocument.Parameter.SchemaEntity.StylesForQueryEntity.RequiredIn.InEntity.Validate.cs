@@ -6,19 +6,43 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.OpenApi31;
+
+/// <summary>
+/// Generated from JSON Schema.
+/// </summary>
+/// <remarks>
+/// <para>
+/// The description of OpenAPI v3.1.x documents without schema validation, as defined by https://spec.openapis.org/oas/v3.1.0
+/// </para>
+/// </remarks>
 public readonly partial struct OpenApiDocument
 {
+    /// <summary>
+    /// Generated from JSON Schema.
+    /// </summary>
     public readonly partial struct Parameter
     {
+        /// <summary>
+        /// Generated from JSON Schema.
+        /// </summary>
         public readonly partial struct SchemaEntity
         {
+            /// <summary>
+            /// Generated from JSON Schema.
+            /// </summary>
             public readonly partial struct StylesForQueryEntity
             {
+                /// <summary>
+                /// Generated from JSON Schema.
+                /// </summary>
                 public readonly partial struct RequiredIn
                 {
                     /// <summary>
@@ -26,6 +50,11 @@ public readonly partial struct OpenApiDocument
                     /// </summary>
                     public readonly partial struct InEntity
                     {
+                        /// <summary>
+                        /// Gets the const instance.
+                        /// </summary>
+                        public static InEntity ConstInstance => CorvusValidation.Const.As<InEntity>();
+
                         /// <inheritdoc/>
                         public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
                         {
@@ -41,18 +70,97 @@ public readonly partial struct OpenApiDocument
                                 result = result.PushSchemaLocation("https://spec.openapis.org/oas/3.1/schema/2022-10-07#/$defs/parameter/dependentSchemas/schema/$defs/styles-for-query/if/properties/in");
                             }
 
-                            result = Corvus.Json.Validate.ValidateConst(this, result, level, __CorvusConstValue);
+                            result = CorvusValidation.ConstValidationHandler(this, result, level);
                             if (level == ValidationLevel.Flag && !result.IsValid)
                             {
                                 return result;
                             }
 
-                            if (level != ValidationLevel.Flag)
+                            result = CorvusValidation.CompositionAnyOfValidationHandler(this, result, level);
+                            if (level == ValidationLevel.Flag && !result.IsValid)
+                            {
+                                return result;
+                            }
+
+                            if (level > ValidationLevel.Basic)
                             {
                                 result = result.PopLocation();
                             }
 
                             return result;
+                        }
+
+                        private static partial class CorvusValidation
+                        {
+                            public static readonly JsonString Const = JsonString.ParseValue("\"query\"");
+
+                            public static ReadOnlySpan<byte> ConstUtf8 => "\"query\""u8;
+
+                            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                            public static ValidationContext ConstValidationHandler(
+                                in InEntity value,
+                                in ValidationContext validationContext,
+                                ValidationLevel level = ValidationLevel.Flag)
+                            {
+                                return ValidateConst(value, validationContext, level);
+
+                                static ValidationContext ValidateConst(
+                                    in InEntity value,
+                                    in ValidationContext validationContext,
+                                    ValidationLevel level = ValidationLevel.Flag)
+                                {
+                                    ValidationContext result = validationContext;
+                                    if (level > ValidationLevel.Basic)
+                                    {
+                                        result = result.PushValidationLocationReducedPathModifier(new("#/const"));
+                                    }
+
+                                    if (value.Equals(CorvusValidation.Const))
+                                    {
+                                        if (level == ValidationLevel.Verbose)
+                                        {
+                                            result = result.WithResult(isValid: true, $"Validation const - the value '{value}' matched match '\"query\'.");
+                                        }
+
+                                        if (level > ValidationLevel.Basic)
+                                        {
+                                            result = result.PopLocation();
+                                        }
+
+                                        return result;
+                                    }
+
+                                    if (level >= ValidationLevel.Detailed)
+                                    {
+                                        result = result.WithResult(isValid: false, $"Validation const - the value '{value}' did not match '\"query\'.");
+                                    }
+                                    else if (level == ValidationLevel.Basic)
+                                    {
+                                        result = result.WithResult(isValid: false, "Validation const - the value did not match '\"query\'.");
+                                    }
+                                    else
+                                    {
+                                        return result.WithResult(isValid: false);
+                                    }
+
+                                    if (level > ValidationLevel.Basic)
+                                    {
+                                        result = result.PopLocation();
+                                    }
+
+                                    return result;
+                                }
+                            }
+
+                            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                            public static ValidationContext CompositionAnyOfValidationHandler(
+                                in InEntity value,
+                                in ValidationContext validationContext,
+                                ValidationLevel level = ValidationLevel.Flag)
+                            {
+                                ValidationContext result = validationContext;
+                                return result;
+                            }
                         }
                     }
                 }

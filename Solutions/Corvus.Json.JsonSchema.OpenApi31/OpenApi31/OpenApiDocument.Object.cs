@@ -6,14 +6,16 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
 using System.Collections.Immutable;
-using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json.JsonSchema.OpenApi31;
+
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -22,81 +24,510 @@ namespace Corvus.Json.JsonSchema.OpenApi31;
 /// The description of OpenAPI v3.1.x documents without schema validation, as defined by https://spec.openapis.org/oas/v3.1.0
 /// </para>
 /// </remarks>
-public readonly partial struct OpenApiDocument : IJsonObject<OpenApiDocument>
+public readonly partial struct OpenApiDocument
+    : IJsonObject<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument>
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref = "OpenApiDocument"/> struct.
+    /// Conversion from <see cref="ImmutableList{JsonObjectProperty}"/>.
     /// </summary>
-    /// <param name = "value">The value from which to construct the instance.</param>
-    public OpenApiDocument(ImmutableList<JsonObjectProperty> value)
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator OpenApiDocument(ImmutableList<JsonObjectProperty> value)
     {
-        this.jsonElementBacking = default;
-        this.backing = Backing.Object;
-        this.objectBacking = value;
+        return new(value);
+    }
+
+    /// <summary>
+    /// Conversion to <see cref="ImmutableList{JsonObjectProperty}"/>.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator ImmutableList<JsonObjectProperty>(OpenApiDocument value)
+    {
+        return
+            __CorvusObjectHelpers.GetPropertyBacking(value);
     }
 
     /// <summary>
     /// Conversion from JsonObject.
     /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
+    /// <param name="value">The value from which to convert.</param>
     public static implicit operator OpenApiDocument(JsonObject value)
     {
         if (value.HasDotnetBacking && value.ValueKind == JsonValueKind.Object)
         {
-            return new(value.AsPropertyBacking());
+            return new(
+                __CorvusObjectHelpers.GetPropertyBacking(value));
         }
 
         return new(value.AsJsonElement);
     }
 
-    /// <inheritdoc/>
-    public ImmutableList<JsonObjectProperty> AsPropertyBacking()
+    /// <summary>
+    /// Conversion to JsonObject.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator JsonObject(OpenApiDocument value)
     {
-        return this.GetPropertyBacking();
+        return
+            value.AsObject;
     }
 
     /// <inheritdoc/>
-    public JsonAny this[in JsonPropertyName name]
+    public Corvus.Json.JsonAny this[in JsonPropertyName name]
     {
         get
         {
-            if (this.TryGetProperty(name, out JsonAny result))
+            if (this.TryGetProperty(name, out Corvus.Json.JsonAny result))
             {
                 return result;
             }
 
-            throw new IndexOutOfRangeException();
+            throw new InvalidOperationException();
         }
     }
 
     /// <summary>
-    /// Creates an instance of the type from the given dictionary of properties.
+    /// Gets the number of properties in the object.
     /// </summary>
-    /// <param name = "source">The dictionary of properties.</param>
-    /// <returns>An instance of the type initialized from the dictionary of properties.</returns>
+    public int Count
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                int count = 0;
+                foreach (var _ in this.jsonElementBacking.EnumerateObject())
+                {
+                    count++;
+                }
+                return count;
+            }
+
+            if ((this.backing & Backing.Object) != 0)
+            {
+                return this.objectBacking.Count;
+            }
+
+            throw new InvalidOperationException();
+        }
+    }
+
+    /// <summary>
+    /// Gets the <c>components</c> property.
+    /// </summary>
+    public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Components ComponentsValue
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                {
+                    return default;
+                }
+
+                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.ComponentsValueUtf8, out JsonElement result))
+                {
+                    return new(result);
+                }
+            }
+
+            if ((this.backing & Backing.Object) != 0)
+            {
+                if (this.objectBacking.TryGetValue(JsonPropertyNames.ComponentsValue, out JsonAny result))
+                {
+                    return result.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Components>();
+                }
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets the <c>externalDocs</c> property.
+    /// </summary>
+    public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ExternalDocumentation ExternalDocs
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                {
+                    return default;
+                }
+
+                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.ExternalDocsUtf8, out JsonElement result))
+                {
+                    return new(result);
+                }
+            }
+
+            if ((this.backing & Backing.Object) != 0)
+            {
+                if (this.objectBacking.TryGetValue(JsonPropertyNames.ExternalDocs, out JsonAny result))
+                {
+                    return result.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ExternalDocumentation>();
+                }
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets the (optional) <c>info</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// If the instance is valid, this property will not be <c>undefined</c>.
+    /// </para>
+    /// </remarks>
+    public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Info InfoValue
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                {
+                    return default;
+                }
+
+                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.InfoValueUtf8, out JsonElement result))
+                {
+                    return new(result);
+                }
+            }
+
+            if ((this.backing & Backing.Object) != 0)
+            {
+                if (this.objectBacking.TryGetValue(JsonPropertyNames.InfoValue, out JsonAny result))
+                {
+                    return result.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Info>();
+                }
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets the <c>jsonSchemaDialect</c> property.
+    /// </summary>
+    public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.JsonSchemaDialectEntity JsonSchemaDialect
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                {
+                    return default;
+                }
+
+                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.JsonSchemaDialectUtf8, out JsonElement result))
+                {
+                    return new(result);
+                }
+            }
+
+            if ((this.backing & Backing.Object) != 0)
+            {
+                if (this.objectBacking.TryGetValue(JsonPropertyNames.JsonSchemaDialect, out JsonAny result))
+                {
+                    return result.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.JsonSchemaDialectEntity>();
+                }
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets the (optional) <c>openapi</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// If the instance is valid, this property will not be <c>undefined</c>.
+    /// </para>
+    /// </remarks>
+    public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OpenapiEntity Openapi
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                {
+                    return default;
+                }
+
+                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.OpenapiUtf8, out JsonElement result))
+                {
+                    return new(result);
+                }
+            }
+
+            if ((this.backing & Backing.Object) != 0)
+            {
+                if (this.objectBacking.TryGetValue(JsonPropertyNames.Openapi, out JsonAny result))
+                {
+                    return result.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OpenapiEntity>();
+                }
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets the <c>paths</c> property.
+    /// </summary>
+    public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Paths PathsValue
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                {
+                    return default;
+                }
+
+                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.PathsValueUtf8, out JsonElement result))
+                {
+                    return new(result);
+                }
+            }
+
+            if ((this.backing & Backing.Object) != 0)
+            {
+                if (this.objectBacking.TryGetValue(JsonPropertyNames.PathsValue, out JsonAny result))
+                {
+                    return result.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Paths>();
+                }
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets the <c>security</c> property.
+    /// </summary>
+    public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityRequirementArray Security
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                {
+                    return default;
+                }
+
+                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.SecurityUtf8, out JsonElement result))
+                {
+                    return new(result);
+                }
+            }
+
+            if ((this.backing & Backing.Object) != 0)
+            {
+                if (this.objectBacking.TryGetValue(JsonPropertyNames.Security, out JsonAny result))
+                {
+                    return result.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityRequirementArray>();
+                }
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets the <c>servers</c> property.
+    /// </summary>
+    public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ServerArray Servers
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                {
+                    return default;
+                }
+
+                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.ServersUtf8, out JsonElement result))
+                {
+                    return new(result);
+                }
+            }
+
+            if ((this.backing & Backing.Object) != 0)
+            {
+                if (this.objectBacking.TryGetValue(JsonPropertyNames.Servers, out JsonAny result))
+                {
+                    return result.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ServerArray>();
+                }
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets the <c>tags</c> property.
+    /// </summary>
+    public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.TagArray Tags
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                {
+                    return default;
+                }
+
+                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.TagsUtf8, out JsonElement result))
+                {
+                    return new(result);
+                }
+            }
+
+            if ((this.backing & Backing.Object) != 0)
+            {
+                if (this.objectBacking.TryGetValue(JsonPropertyNames.Tags, out JsonAny result))
+                {
+                    return result.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.TagArray>();
+                }
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets the <c>webhooks</c> property.
+    /// </summary>
+    public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.WebhooksEntity Webhooks
+    {
+        get
+        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                if (this.jsonElementBacking.ValueKind != JsonValueKind.Object)
+                {
+                    return default;
+                }
+
+                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.WebhooksUtf8, out JsonElement result))
+                {
+                    return new(result);
+                }
+            }
+
+            if ((this.backing & Backing.Object) != 0)
+            {
+                if (this.objectBacking.TryGetValue(JsonPropertyNames.Webhooks, out JsonAny result))
+                {
+                    return result.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.WebhooksEntity>();
+                }
+            }
+
+            return default;
+        }
+    }
+
+    /// <inheritdoc/>
     public static OpenApiDocument FromProperties(IDictionary<JsonPropertyName, JsonAny> source)
     {
         return new(source.Select(kvp => new JsonObjectProperty(kvp.Key, kvp.Value)).ToImmutableList());
     }
 
+    /// <inheritdoc/>
+    public static OpenApiDocument FromProperties(params (JsonPropertyName Name, JsonAny Value)[] source)
+    {
+        return new(source.Select(s => new JsonObjectProperty(s.Name, s.Value.AsAny)).ToImmutableList());
+    }
+
     /// <summary>
-    /// Creates an instance of the type from the given dictionary of properties.
+    /// Creates an instance of the type from the given immutable list of properties.
     /// </summary>
-    /// <param name = "source">The dictionary of properties.</param>
-    /// <returns>An instance of the type initialized from the dictionary of properties.</returns>
+    /// <param name="source">The list of properties.</param>
+    /// <returns>An instance of the type initialized from the list of properties.</returns>
     public static OpenApiDocument FromProperties(ImmutableList<JsonObjectProperty> source)
     {
         return new(source);
     }
 
     /// <summary>
-    /// Creates an instance of the type from the given dictionary of properties.
+    /// Creates an instance of a <see cref="OpenApiDocument"/>.
     /// </summary>
-    /// <param name = "source">The dictionary of properties.</param>
-    /// <returns>An instance of the type initialized from the dictionary of properties.</returns>
-    public static OpenApiDocument FromProperties(params (JsonPropertyName Name, JsonAny Value)[] source)
+    public static OpenApiDocument Create(
+        in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Info infoValue,
+        in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.OpenapiEntity openapi,
+        in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Components? componentsValue = null,
+        in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ExternalDocumentation? externalDocs = null,
+        in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.JsonSchemaDialectEntity? jsonSchemaDialect = null,
+        in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Paths? pathsValue = null,
+        in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityRequirementArray? security = null,
+        in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.ServerArray? servers = null,
+        in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.TagArray? tags = null,
+        in Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.WebhooksEntity? webhooks = null)
     {
-        return new(source.Select(s => new JsonObjectProperty(s.Name, s.Value)).ToImmutableList());
+        var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
+        builder.Add(JsonPropertyNames.InfoValue, infoValue.AsAny);
+        builder.Add(JsonPropertyNames.Openapi, openapi.AsAny);
+        if (componentsValue is not null)
+        {
+            builder.Add(JsonPropertyNames.ComponentsValue, componentsValue.Value.AsAny);
+        }
+
+        if (externalDocs is not null)
+        {
+            builder.Add(JsonPropertyNames.ExternalDocs, externalDocs.Value.AsAny);
+        }
+
+        if (jsonSchemaDialect is not null)
+        {
+            builder.Add(JsonPropertyNames.JsonSchemaDialect, jsonSchemaDialect.Value.AsAny);
+        }
+
+        if (pathsValue is not null)
+        {
+            builder.Add(JsonPropertyNames.PathsValue, pathsValue.Value.AsAny);
+        }
+
+        if (security is not null)
+        {
+            builder.Add(JsonPropertyNames.Security, security.Value.AsAny);
+        }
+
+        if (servers is not null)
+        {
+            builder.Add(JsonPropertyNames.Servers, servers.Value.AsAny);
+        }
+
+        if (tags is not null)
+        {
+            builder.Add(JsonPropertyNames.Tags, tags.Value.AsAny);
+        }
+
+        if (webhooks is not null)
+        {
+            builder.Add(JsonPropertyNames.Webhooks, webhooks.Value.AsAny);
+        }
+
+        return new(builder.ToImmutable());
+    }
+
+    /// <inheritdoc/>
+    public ImmutableList<JsonObjectProperty> AsPropertyBacking()
+    {
+        return __CorvusObjectHelpers.GetPropertyBacking(this);
     }
 
     /// <inheritdoc/>
@@ -132,78 +563,84 @@ public readonly partial struct OpenApiDocument : IJsonObject<OpenApiDocument>
         throw new InvalidOperationException();
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public bool HasProperty(in JsonPropertyName name)
     {
+        if ((this.backing & Backing.Object) != 0)
+        {
+            return this.objectBacking.ContainsKey(name);
+        }
+
         if ((this.backing & Backing.JsonElement) != 0)
         {
             return name.TryGetProperty(this.jsonElementBacking, out JsonElement _);
         }
 
-        if ((this.backing & Backing.Object) != 0)
-        {
-            return this.objectBacking.ContainsKey(name);
-        }
-
         throw new InvalidOperationException();
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public bool HasProperty(string name)
     {
-        if ((this.backing & Backing.JsonElement) != 0)
-        {
-            return this.jsonElementBacking.TryGetProperty(name, out _);
-        }
-
         if ((this.backing & Backing.Object) != 0)
         {
             return this.objectBacking.ContainsKey(name);
         }
 
+        if ((this.backing & Backing.JsonElement) != 0)
+        {
+            return this.jsonElementBacking.TryGetProperty(name, out _);
+        }
+
         throw new InvalidOperationException();
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public bool HasProperty(ReadOnlySpan<char> name)
     {
-        if ((this.backing & Backing.JsonElement) != 0)
-        {
-            return this.jsonElementBacking.TryGetProperty(name, out _);
-        }
-
         if ((this.backing & Backing.Object) != 0)
         {
             return this.objectBacking.ContainsKey(name);
         }
 
-        throw new InvalidOperationException();
-    }
-
-    /// <inheritdoc/>
-    public bool HasProperty(ReadOnlySpan<byte> utf8Name)
-    {
         if ((this.backing & Backing.JsonElement) != 0)
         {
-            return this.jsonElementBacking.TryGetProperty(utf8Name, out _);
-        }
-
-        if ((this.backing & Backing.Object) != 0)
-        {
-            return this.objectBacking.ContainsKey(utf8Name);
+            return this.jsonElementBacking.TryGetProperty(name, out _);
         }
 
         throw new InvalidOperationException();
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
+    public bool HasProperty(ReadOnlySpan<byte> name)
+    {
+        if ((this.backing & Backing.Object) != 0)
+        {
+            return this.objectBacking.ContainsKey(name);
+        }
+
+        if ((this.backing & Backing.JsonElement) != 0)
+        {
+            return this.jsonElementBacking.TryGetProperty(name, out _);
+        }
+
+        throw new InvalidOperationException();
+    }
+
+    /// <summary>
+    /// Get a property.
+    /// </summary>
+    /// <param name="name">The name of the property.</param>
+    /// <param name="value">The value of the property.</param>
+    /// <returns><c>True</c> if the property was present.</returns>
+    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
     public bool TryGetProperty(in JsonPropertyName name, out JsonAny value)
     {
         if ((this.backing & Backing.JsonElement) != 0)
         {
-            if (name.TryGetProperty(this.jsonElementBacking, out JsonElement result))
+            if (name.TryGetProperty(this.jsonElementBacking, out JsonElement element))
             {
-                value = new(result);
+                value = new(element);
                 return true;
             }
 
@@ -213,20 +650,33 @@ public readonly partial struct OpenApiDocument : IJsonObject<OpenApiDocument>
 
         if ((this.backing & Backing.Object) != 0)
         {
-            return this.objectBacking.TryGetValue(name, out value);
+            if (this.objectBacking.TryGetValue(name, out JsonAny result))
+            {
+                value = result;
+                return true;
+            }
+
+            value = default;
+            return false;
         }
 
         throw new InvalidOperationException();
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Get a property.
+    /// </summary>
+    /// <param name="name">The name of the property.</param>
+    /// <param name="value">The value of the property.</param>
+    /// <returns><c>True</c> if the property was present.</returns>
+    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
     public bool TryGetProperty(string name, out JsonAny value)
     {
         if ((this.backing & Backing.JsonElement) != 0)
         {
-            if (this.jsonElementBacking.TryGetProperty(name, out JsonElement result))
+            if (this.jsonElementBacking.TryGetProperty(name, out JsonElement element))
             {
-                value = new(result);
+                value = new(element);
                 return true;
             }
 
@@ -236,20 +686,33 @@ public readonly partial struct OpenApiDocument : IJsonObject<OpenApiDocument>
 
         if ((this.backing & Backing.Object) != 0)
         {
-            return this.objectBacking.TryGetValue(name, out value);
+            if (this.objectBacking.TryGetValue(name, out JsonAny result))
+            {
+                value = result;
+                return true;
+            }
+
+            value = default;
+            return false;
         }
 
         throw new InvalidOperationException();
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Get a property.
+    /// </summary>
+    /// <param name="name">The name of the property.</param>
+    /// <param name="value">The value of the property.</param>
+    /// <returns><c>True</c> if the property was present.</returns>
+    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
     public bool TryGetProperty(ReadOnlySpan<char> name, out JsonAny value)
     {
         if ((this.backing & Backing.JsonElement) != 0)
         {
-            if (this.jsonElementBacking.TryGetProperty(name, out JsonElement result))
+            if (this.jsonElementBacking.TryGetProperty(name, out JsonElement element))
             {
-                value = new(result);
+                value = new(element);
                 return true;
             }
 
@@ -259,20 +722,33 @@ public readonly partial struct OpenApiDocument : IJsonObject<OpenApiDocument>
 
         if ((this.backing & Backing.Object) != 0)
         {
-            return this.objectBacking.TryGetValue(name, out value);
+            if (this.objectBacking.TryGetValue(name, out JsonAny result))
+            {
+                value = result;
+                return true;
+            }
+
+            value = default;
+            return false;
         }
 
         throw new InvalidOperationException();
     }
 
-    /// <inheritdoc/>
-    public bool TryGetProperty(ReadOnlySpan<byte> utf8Name, out JsonAny value)
+    /// <summary>
+    /// Get a property.
+    /// </summary>
+    /// <param name="name">The name of the property.</param>
+    /// <param name="value">The value of the property.</param>
+    /// <returns><c>True</c> if the property was present.</returns>
+    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+    public bool TryGetProperty(ReadOnlySpan<byte> name, out JsonAny value)
     {
         if ((this.backing & Backing.JsonElement) != 0)
         {
-            if (this.jsonElementBacking.TryGetProperty(utf8Name, out JsonElement result))
+            if (this.jsonElementBacking.TryGetProperty(name, out JsonElement element))
             {
-                value = new(result);
+                value = new(element);
                 return true;
             }
 
@@ -282,25 +758,33 @@ public readonly partial struct OpenApiDocument : IJsonObject<OpenApiDocument>
 
         if ((this.backing & Backing.Object) != 0)
         {
-            return this.objectBacking.TryGetValue(utf8Name, out value);
+            if (this.objectBacking.TryGetValue(name, out JsonAny result))
+            {
+                value = result;
+                return true;
+            }
+
+            value = default;
+            return false;
         }
 
         throw new InvalidOperationException();
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public bool TryGetProperty<TValue>(in JsonPropertyName name, out TValue value)
         where TValue : struct, IJsonValue<TValue>
     {
         if ((this.backing & Backing.JsonElement) != 0)
         {
-            if (name.TryGetProperty(this.jsonElementBacking, out JsonElement result))
+            if (name.TryGetProperty(this.jsonElementBacking, out JsonElement element))
             {
 #if NET8_0_OR_GREATER
-                value = TValue.FromJson(result);
+                value = TValue.FromJson(element);
 #else
-                value = JsonValueNetStandard20Extensions.FromJsonElement<TValue>(result);
+                value = JsonValueNetStandard20Extensions.FromJsonElement<TValue>(element);
 #endif
+
                 return true;
             }
 
@@ -327,19 +811,20 @@ public readonly partial struct OpenApiDocument : IJsonObject<OpenApiDocument>
         throw new InvalidOperationException();
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public bool TryGetProperty<TValue>(string name, out TValue value)
         where TValue : struct, IJsonValue<TValue>
     {
         if ((this.backing & Backing.JsonElement) != 0)
         {
-            if (this.jsonElementBacking.TryGetProperty(name, out JsonElement result))
+            if (this.jsonElementBacking.TryGetProperty(name, out JsonElement element))
             {
 #if NET8_0_OR_GREATER
-                value = TValue.FromJson(result);
+                value = TValue.FromJson(element);
 #else
-                value = JsonValueNetStandard20Extensions.FromJsonElement<TValue>(result);
+                value = JsonValueNetStandard20Extensions.FromJsonElement<TValue>(element);
 #endif
+
                 return true;
             }
 
@@ -366,19 +851,20 @@ public readonly partial struct OpenApiDocument : IJsonObject<OpenApiDocument>
         throw new InvalidOperationException();
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public bool TryGetProperty<TValue>(ReadOnlySpan<char> name, out TValue value)
         where TValue : struct, IJsonValue<TValue>
     {
         if ((this.backing & Backing.JsonElement) != 0)
         {
-            if (this.jsonElementBacking.TryGetProperty(name, out JsonElement result))
+            if (this.jsonElementBacking.TryGetProperty(name, out JsonElement element))
             {
 #if NET8_0_OR_GREATER
-                value = TValue.FromJson(result);
+                value = TValue.FromJson(element);
 #else
-                value = JsonValueNetStandard20Extensions.FromJsonElement<TValue>(result);
+                value = JsonValueNetStandard20Extensions.FromJsonElement<TValue>(element);
 #endif
+
                 return true;
             }
 
@@ -405,19 +891,20 @@ public readonly partial struct OpenApiDocument : IJsonObject<OpenApiDocument>
         throw new InvalidOperationException();
     }
 
-    /// <inheritdoc/>
-    public bool TryGetProperty<TValue>(ReadOnlySpan<byte> utf8Name, out TValue value)
+    /// <inheritdoc />
+    public bool TryGetProperty<TValue>(ReadOnlySpan<byte> name, out TValue value)
         where TValue : struct, IJsonValue<TValue>
     {
         if ((this.backing & Backing.JsonElement) != 0)
         {
-            if (this.jsonElementBacking.TryGetProperty(utf8Name, out JsonElement result))
+            if (this.jsonElementBacking.TryGetProperty(name, out JsonElement element))
             {
 #if NET8_0_OR_GREATER
-                value = TValue.FromJson(result);
+                value = TValue.FromJson(element);
 #else
-                value = JsonValueNetStandard20Extensions.FromJsonElement<TValue>(result);
+                value = JsonValueNetStandard20Extensions.FromJsonElement<TValue>(element);
 #endif
+
                 return true;
             }
 
@@ -427,7 +914,7 @@ public readonly partial struct OpenApiDocument : IJsonObject<OpenApiDocument>
 
         if ((this.backing & Backing.Object) != 0)
         {
-            if (this.objectBacking.TryGetValue(utf8Name, out JsonAny result))
+            if (this.objectBacking.TryGetValue(name, out JsonAny result))
             {
 #if NET8_0_OR_GREATER
                 value = TValue.FromAny(result);
@@ -444,125 +931,263 @@ public readonly partial struct OpenApiDocument : IJsonObject<OpenApiDocument>
         throw new InvalidOperationException();
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public OpenApiDocument SetProperty<TValue>(in JsonPropertyName name, TValue value)
         where TValue : struct, IJsonValue
     {
-        return new(this.GetPropertyBackingWith(name, value.AsAny));
+        return new(__CorvusObjectHelpers.GetPropertyBackingWith(this, name, value.AsAny));
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public OpenApiDocument RemoveProperty(in JsonPropertyName name)
     {
-        return new(this.GetPropertyBackingWithout(name));
+        return new(__CorvusObjectHelpers.GetPropertyBackingWithout(this, name));
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public OpenApiDocument RemoveProperty(string name)
     {
-        return new(this.GetPropertyBackingWithout(name));
+        return new(__CorvusObjectHelpers.GetPropertyBackingWithout(this, name));
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public OpenApiDocument RemoveProperty(ReadOnlySpan<char> name)
     {
-        return new(this.GetPropertyBackingWithout(name));
+        return new(__CorvusObjectHelpers.GetPropertyBackingWithout(this, name));
     }
 
-    /// <inheritdoc/>
-    public OpenApiDocument RemoveProperty(ReadOnlySpan<byte> utf8Name)
+    /// <inheritdoc />
+    public OpenApiDocument RemoveProperty(ReadOnlySpan<byte> name)
     {
-        return new(this.GetPropertyBackingWithout(utf8Name));
-    }
-
-    /// <summary>
-    /// Builds an <see cref = "ImmutableList{JsonObjectProperty}"/> from the object.
-    /// </summary>
-    /// <returns>An immutable list of <see cref = "JsonAny"/> built from the array.</returns>
-    /// <exception cref = "InvalidOperationException">The value is not an array.</exception>
-    private ImmutableList<JsonObjectProperty> GetPropertyBacking()
-    {
-        if ((this.backing & Backing.Object) != 0)
-        {
-            return this.objectBacking;
-        }
-
-        return PropertyBackingBuilders.GetPropertyBackingBuilder(this.jsonElementBacking).ToImmutable();
+        return new(__CorvusObjectHelpers.GetPropertyBackingWithout(this, name));
     }
 
     /// <summary>
-    /// Builds an <see cref = "ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
+    /// Provides UTF8 and string versions of the JSON property names on the object.
     /// </summary>
-    /// <returns>An immutable dictionary builder of <see cref = "JsonPropertyName"/> to <see cref = "JsonAny"/>, built from the existing object, without the given property.</returns>
-    /// <exception cref = "InvalidOperationException">The value is not an object.</exception>
-    private ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in JsonPropertyName name)
+    public static class JsonPropertyNames
     {
-        if ((this.backing & Backing.Object) != 0)
-        {
-            return this.objectBacking.Remove(name);
-        }
+        /// <summary>
+        /// Gets the JSON property name for <see cref="ComponentsValue"/>.
+        /// </summary>
+        public const string ComponentsValue = "components";
 
-        return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(this.jsonElementBacking, name).ToImmutable();
+        /// <summary>
+        /// Gets the JSON property name for <see cref="ExternalDocs"/>.
+        /// </summary>
+        public const string ExternalDocs = "externalDocs";
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="InfoValue"/>.
+        /// </summary>
+        public const string InfoValue = "info";
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="JsonSchemaDialect"/>.
+        /// </summary>
+        public const string JsonSchemaDialect = "jsonSchemaDialect";
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Openapi"/>.
+        /// </summary>
+        public const string Openapi = "openapi";
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="PathsValue"/>.
+        /// </summary>
+        public const string PathsValue = "paths";
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Security"/>.
+        /// </summary>
+        public const string Security = "security";
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Servers"/>.
+        /// </summary>
+        public const string Servers = "servers";
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Tags"/>.
+        /// </summary>
+        public const string Tags = "tags";
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Webhooks"/>.
+        /// </summary>
+        public const string Webhooks = "webhooks";
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="ComponentsValue"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ComponentsValueUtf8 => "components"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="ExternalDocs"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ExternalDocsUtf8 => "externalDocs"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="InfoValue"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> InfoValueUtf8 => "info"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="JsonSchemaDialect"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> JsonSchemaDialectUtf8 => "jsonSchemaDialect"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Openapi"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> OpenapiUtf8 => "openapi"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="PathsValue"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> PathsValueUtf8 => "paths"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Security"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> SecurityUtf8 => "security"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Servers"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ServersUtf8 => "servers"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Tags"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> TagsUtf8 => "tags"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Webhooks"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> WebhooksUtf8 => "webhooks"u8;
     }
 
-    /// <summary>
-    /// Builds an <see cref = "ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
-    /// </summary>
-    /// <returns>An immutable dictionary builder of <see cref = "JsonPropertyName"/> to <see cref = "JsonAny"/>, built from the existing object, without the given property.</returns>
-    /// <exception cref = "InvalidOperationException">The value is not an object.</exception>
-    private ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(ReadOnlySpan<char> name)
+    private static class __CorvusObjectHelpers
     {
-        if ((this.backing & Backing.Object) != 0)
+        /// <summary>
+        /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object.
+        /// </summary>
+        /// <returns>An immutable list of <see cref="JsonAny"/> built from the object.</returns>
+        /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+        public static ImmutableList<JsonObjectProperty> GetPropertyBacking(in OpenApiDocument that)
         {
-            return this.objectBacking.Remove(name);
+            if ((that.backing & Backing.Object) != 0)
+            {
+                return that.objectBacking;
+            }
+
+            if ((that.backing & Backing.JsonElement) != 0)
+            {
+                return PropertyBackingBuilders.GetPropertyBackingBuilder(that.jsonElementBacking).ToImmutable();
+            }
+
+            throw new InvalidOperationException();
         }
 
-        return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(this.jsonElementBacking, name).ToImmutable();
-    }
-
-    /// <summary>
-    /// Builds an <see cref = "ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
-    /// </summary>
-    /// <returns>An immutable dictionary builder of <see cref = "JsonPropertyName"/> to <see cref = "JsonAny"/>, built from the existing object, without the given property.</returns>
-    /// <exception cref = "InvalidOperationException">The value is not an object.</exception>
-    private ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(ReadOnlySpan<byte> name)
-    {
-        if ((this.backing & Backing.Object) != 0)
+        /// <summary>
+        /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
+        /// </summary>
+        /// <returns>An immutable dictionary builder of <see cref="JsonPropertyName"/> to <see cref="JsonAny"/>, built from the existing object, without the given property.</returns>
+        /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+        public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in OpenApiDocument that, in JsonPropertyName name)
         {
-            return this.objectBacking.Remove(name);
+            if ((that.backing & Backing.Object) != 0)
+            {
+                return that.objectBacking.Remove(name);
+            }
+
+            if ((that.backing & Backing.JsonElement) != 0)
+            {
+                return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(that.jsonElementBacking, name).ToImmutable();
+            }
+
+            throw new InvalidOperationException();
         }
 
-        return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(this.jsonElementBacking, name).ToImmutable();
-    }
-
-    /// <summary>
-    /// Builds an <see cref = "ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
-    /// </summary>
-    /// <returns>An immutable dictionary builder of <see cref = "JsonPropertyName"/> to <see cref = "JsonAny"/>, built from the existing object, without the given property.</returns>
-    /// <exception cref = "InvalidOperationException">The value is not an object.</exception>
-    private ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(string name)
-    {
-        if ((this.backing & Backing.Object) != 0)
+        /// <summary>
+        /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
+        /// </summary>
+        /// <returns>An immutable dictionary builder of <see cref="JsonPropertyName"/> to <see cref="JsonAny"/>, built from the existing object, without the given property.</returns>
+        /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+        public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in OpenApiDocument that, ReadOnlySpan<char> name)
         {
-            return this.objectBacking.Remove(name);
+            if ((that.backing & Backing.Object) != 0)
+            {
+                return that.objectBacking.Remove(name);
+            }
+
+            if ((that.backing & Backing.JsonElement) != 0)
+            {
+                return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(that.jsonElementBacking, name).ToImmutable();
+            }
+
+            throw new InvalidOperationException();
         }
 
-        return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(this.jsonElementBacking, name).ToImmutable();
-    }
-
-    /// <summary>
-    /// Builds an <see cref = "ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
-    /// </summary>
-    /// <returns>An immutable dictionary builder of <see cref = "JsonPropertyName"/> to <see cref = "JsonAny"/>, built from the existing object, without the given property.</returns>
-    /// <exception cref = "InvalidOperationException">The value is not an object.</exception>
-    private ImmutableList<JsonObjectProperty> GetPropertyBackingWith(in JsonPropertyName name, in JsonAny value)
-    {
-        if ((this.backing & Backing.Object) != 0)
+        /// <summary>
+        /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
+        /// </summary>
+        /// <returns>An immutable dictionary builder of <see cref="JsonPropertyName"/> to <see cref="JsonAny"/>, built from the existing object, without the given property.</returns>
+        /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+        public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in OpenApiDocument that, ReadOnlySpan<byte> name)
         {
-            return this.objectBacking.SetItem(name, value);
+            if ((that.backing & Backing.Object) != 0)
+            {
+                return that.objectBacking.Remove(name);
+            }
+
+            if ((that.backing & Backing.JsonElement) != 0)
+            {
+                return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(that.jsonElementBacking, name).ToImmutable();
+            }
+
+            throw new InvalidOperationException();
         }
 
-        ImmutableList<JsonObjectProperty>.Builder result = PropertyBackingBuilders.GetPropertyBackingBuilderReplacing(this.jsonElementBacking, name, value);
-        return result.ToImmutable();
+        /// <summary>
+        /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
+        /// </summary>
+        /// <returns>An immutable dictionary builder of <see cref="JsonPropertyName"/> to <see cref="JsonAny"/>, built from the existing object, without the given property.</returns>
+        /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+        public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in OpenApiDocument that, string name)
+        {
+            if ((that.backing & Backing.Object) != 0)
+            {
+                return that.objectBacking.Remove(name);
+            }
+
+            if ((that.backing & Backing.JsonElement) != 0)
+            {
+                return PropertyBackingBuilders.GetPropertyBackingBuilderWithout(that.jsonElementBacking, name).ToImmutable();
+            }
+
+            throw new InvalidOperationException();
+        }
+
+        /// <summary>
+        /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
+        /// </summary>
+        /// <returns>An immutable dictionary builder of <see cref="JsonPropertyName"/> to <see cref="JsonAny"/>, built from the existing object, with the given property.</returns>
+        /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+        public static ImmutableList<JsonObjectProperty> GetPropertyBackingWith(in OpenApiDocument that, in JsonPropertyName name, in JsonAny value)
+        {
+            if ((that.backing & Backing.Object) != 0)
+            {
+                return that.objectBacking.SetItem(name, value);
+            }
+
+            if ((that.backing & Backing.JsonElement) != 0)
+            {
+                return PropertyBackingBuilders.GetPropertyBackingBuilderReplacing(that.jsonElementBacking, name, value).ToImmutable();
+            }
+
+            throw new InvalidOperationException();
+        }
     }
 }

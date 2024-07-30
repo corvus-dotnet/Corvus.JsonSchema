@@ -83,6 +83,7 @@ public readonly partial struct Person
                 level,
                 localResultObject);
         }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ValidationContext ObjectValidationHandler(
             in Person value,

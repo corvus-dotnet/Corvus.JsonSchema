@@ -6,13 +6,28 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.OpenApi31;
+
+/// <summary>
+/// Generated from JSON Schema.
+/// </summary>
+/// <remarks>
+/// <para>
+/// The description of OpenAPI v3.1.x documents without schema validation, as defined by https://spec.openapis.org/oas/v3.1.0
+/// </para>
+/// </remarks>
 public readonly partial struct OpenApiDocument
 {
+    /// <summary>
+    /// Generated from JSON Schema.
+    /// </summary>
     public readonly partial struct SecurityScheme
     {
         /// <summary>
@@ -35,18 +50,170 @@ public readonly partial struct OpenApiDocument
                     result = result.PushSchemaLocation("https://spec.openapis.org/oas/3.1/schema/2022-10-07#/$defs/security-scheme/properties/type");
                 }
 
-                result = Corvus.Json.Validate.ValidateEnum(this, result, level, EnumValues.Item0, EnumValues.Item1, EnumValues.Item2, EnumValues.Item3, EnumValues.Item4);
+                result = CorvusValidation.CompositionAnyOfValidationHandler(this, result, level);
                 if (level == ValidationLevel.Flag && !result.IsValid)
                 {
                     return result;
                 }
 
-                if (level != ValidationLevel.Flag)
+                if (level > ValidationLevel.Basic)
                 {
                     result = result.PopLocation();
                 }
 
                 return result;
+            }
+
+            /// <summary>
+            /// Constant values for the enum keyword.
+            /// </summary>
+            public static class EnumValues
+            {
+                /// <summary>
+                /// Gets the string 'apiKey'
+                /// as a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeEntity"/>.
+                /// </summary>
+                public static TypeEntity ApiKey { get; } = CorvusValidation.Enum1.As<TypeEntity>();
+
+                /// <summary>
+                /// Gets the string 'apiKey'
+                /// as a UTF8 byte array.
+                /// </summary>
+                public static ReadOnlySpan<byte> ApiKeyUtf8 => CorvusValidation.Enum1Utf8;
+
+                /// <summary>
+                /// Gets the string 'http'
+                /// as a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeEntity"/>.
+                /// </summary>
+                public static TypeEntity Http { get; } = CorvusValidation.Enum2.As<TypeEntity>();
+
+                /// <summary>
+                /// Gets the string 'http'
+                /// as a UTF8 byte array.
+                /// </summary>
+                public static ReadOnlySpan<byte> HttpUtf8 => CorvusValidation.Enum2Utf8;
+
+                /// <summary>
+                /// Gets the string 'mutualTLS'
+                /// as a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeEntity"/>.
+                /// </summary>
+                public static TypeEntity MutualTls { get; } = CorvusValidation.Enum3.As<TypeEntity>();
+
+                /// <summary>
+                /// Gets the string 'mutualTLS'
+                /// as a UTF8 byte array.
+                /// </summary>
+                public static ReadOnlySpan<byte> MutualTlsUtf8 => CorvusValidation.Enum3Utf8;
+
+                /// <summary>
+                /// Gets the string 'oauth2'
+                /// as a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeEntity"/>.
+                /// </summary>
+                public static TypeEntity Oauth2 { get; } = CorvusValidation.Enum4.As<TypeEntity>();
+
+                /// <summary>
+                /// Gets the string 'oauth2'
+                /// as a UTF8 byte array.
+                /// </summary>
+                public static ReadOnlySpan<byte> Oauth2Utf8 => CorvusValidation.Enum4Utf8;
+
+                /// <summary>
+                /// Gets the string 'openIdConnect'
+                /// as a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SecurityScheme.TypeEntity"/>.
+                /// </summary>
+                public static TypeEntity OpenIdConnect { get; } = CorvusValidation.Enum5.As<TypeEntity>();
+
+                /// <summary>
+                /// Gets the string 'openIdConnect'
+                /// as a UTF8 byte array.
+                /// </summary>
+                public static ReadOnlySpan<byte> OpenIdConnectUtf8 => CorvusValidation.Enum5Utf8;
+            }
+
+            private static partial class CorvusValidation
+            {
+                public static readonly JsonString Enum1 = JsonString.ParseValue("\"apiKey\"");
+                public static readonly JsonString Enum2 = JsonString.ParseValue("\"http\"");
+                public static readonly JsonString Enum3 = JsonString.ParseValue("\"mutualTLS\"");
+                public static readonly JsonString Enum4 = JsonString.ParseValue("\"oauth2\"");
+                public static readonly JsonString Enum5 = JsonString.ParseValue("\"openIdConnect\"");
+
+                public static ReadOnlySpan<byte> Enum1Utf8 => "\"apiKey\""u8;
+                public static ReadOnlySpan<byte> Enum2Utf8 => "\"http\""u8;
+                public static ReadOnlySpan<byte> Enum3Utf8 => "\"mutualTLS\""u8;
+                public static ReadOnlySpan<byte> Enum4Utf8 => "\"oauth2\""u8;
+                public static ReadOnlySpan<byte> Enum5Utf8 => "\"openIdConnect\""u8;
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static ValidationContext CompositionAnyOfValidationHandler(
+                    in TypeEntity value,
+                    in ValidationContext validationContext,
+                    ValidationLevel level = ValidationLevel.Flag)
+                {
+                    ValidationContext result = validationContext;
+                    result = ValidateEnum(value, result, level);
+                    if (!result.IsValid && level == ValidationLevel.Flag)
+                    {
+                        return result;
+                    }
+
+                    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                    static ValidationContext ValidateEnum(in TypeEntity value, in ValidationContext validationContext, ValidationLevel level)
+                    {
+                        ValidationContext result = validationContext;
+                        bool enumFoundValid = false;
+                        enumFoundValid = value.Equals(CorvusValidation.Enum1);
+                        if (!enumFoundValid)
+                        {
+                            enumFoundValid = value.Equals(CorvusValidation.Enum2);
+                        }
+                        if (!enumFoundValid)
+                        {
+                            enumFoundValid = value.Equals(CorvusValidation.Enum3);
+                        }
+                        if (!enumFoundValid)
+                        {
+                            enumFoundValid = value.Equals(CorvusValidation.Enum4);
+                        }
+                        if (!enumFoundValid)
+                        {
+                            enumFoundValid = value.Equals(CorvusValidation.Enum5);
+                        }
+
+                        if (level >= ValidationLevel.Basic)
+                        {
+                            result.PushValidationLocationProperty("enum");
+                        }
+
+                        if (enumFoundValid)
+                        {
+                            if (level >= ValidationLevel.Verbose)
+                            {
+                                result = result.WithResult(isValid: true, "Validation enum - validated against the enumeration.");
+                            }
+                        }
+                        else
+                        {
+                            if (level >= ValidationLevel.Basic)
+                            {
+                                result = result.WithResult(isValid: false, "Validation enum - did not validate against the enumeration.");
+                            }
+                            else
+                            {
+                                result = result.WithResult(isValid: false);
+                            }
+                        }
+
+                        if (level >= ValidationLevel.Basic)
+                        {
+                            result.PopLocation();
+                        }
+
+                        return result;
+                    }
+
+                    return result;
+                }
             }
         }
     }

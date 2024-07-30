@@ -6,73 +6,93 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
-using System.Collections.Immutable;
+
+using System.Diagnostics.CodeAnalysis;
+#if NET8_0_OR_GREATER
 using System.Numerics;
-using System.Runtime.CompilerServices;
+#endif
 using System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json.JsonSchema.Draft4;
+
+/// <summary>
+/// Generated from JSON Schema.
+/// </summary>
+/// <remarks>
+/// <para>
+/// Core schema meta-schema
+/// </para>
+/// <para>
+/// Examples:
+/// <example>
+/// <code>
+/// {}
+/// </code>
+/// </example>
+/// </para>
+/// </remarks>
 public readonly partial struct Schema
 {
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
-    public readonly partial struct MultipleOfEntity 
+    public readonly partial struct MultipleOfEntity
 #if NET8_0_OR_GREATER
-: IJsonNumber<MultipleOfEntity>,
-  IAdditionOperators<MultipleOfEntity, MultipleOfEntity, MultipleOfEntity>,
-  ISubtractionOperators<MultipleOfEntity, MultipleOfEntity, MultipleOfEntity>,
-  IMultiplyOperators<MultipleOfEntity, MultipleOfEntity, MultipleOfEntity>,
-  IDivisionOperators<MultipleOfEntity, MultipleOfEntity, MultipleOfEntity>,
-  IIncrementOperators<MultipleOfEntity>,
-  IDecrementOperators<MultipleOfEntity>
+        : IJsonNumber<Corvus.Json.JsonSchema.Draft4.Schema.MultipleOfEntity>,
+          IAdditionOperators<Corvus.Json.JsonSchema.Draft4.Schema.MultipleOfEntity, Corvus.Json.JsonSchema.Draft4.Schema.MultipleOfEntity, Corvus.Json.JsonSchema.Draft4.Schema.MultipleOfEntity>,
+          ISubtractionOperators<Corvus.Json.JsonSchema.Draft4.Schema.MultipleOfEntity, Corvus.Json.JsonSchema.Draft4.Schema.MultipleOfEntity, Corvus.Json.JsonSchema.Draft4.Schema.MultipleOfEntity>,
+          IMultiplyOperators<Corvus.Json.JsonSchema.Draft4.Schema.MultipleOfEntity, Corvus.Json.JsonSchema.Draft4.Schema.MultipleOfEntity, Corvus.Json.JsonSchema.Draft4.Schema.MultipleOfEntity>,
+          IDivisionOperators<Corvus.Json.JsonSchema.Draft4.Schema.MultipleOfEntity, Corvus.Json.JsonSchema.Draft4.Schema.MultipleOfEntity, Corvus.Json.JsonSchema.Draft4.Schema.MultipleOfEntity>,
+          IIncrementOperators<Corvus.Json.JsonSchema.Draft4.Schema.MultipleOfEntity>,
+          IDecrementOperators<Corvus.Json.JsonSchema.Draft4.Schema.MultipleOfEntity>
 #else
-    : IJsonNumber<MultipleOfEntity>
+        : IJsonNumber<Corvus.Json.JsonSchema.Draft4.Schema.MultipleOfEntity>
 #endif
     {
         /// <summary>
         /// Initializes a new instance of the <see cref = "MultipleOfEntity"/> struct.
         /// </summary>
-        /// <param name = "value">The value from which to construct the instance.</param>
-        public MultipleOfEntity(in BinaryJsonNumber value)
-        {
-            this.jsonElementBacking = default;
-            this.backing = Backing.Number;
-            this.numberBacking = value;
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref = "MultipleOfEntity"/> struct.
-        /// </summary>
-        /// <param name = "value">The value from which to initialize the number.</param>
-        public MultipleOfEntity(double value) : this(new BinaryJsonNumber(value))
+        /// <param name="value">The value from which to construct the instance.</param>
+        public MultipleOfEntity(double value)
+            : this(new BinaryJsonNumber(value))
         {
         }
 
         /// <summary>
         /// Conversion from JsonNumber.
         /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
+        /// <param name="value">The value from which to convert.</param>
         public static implicit operator MultipleOfEntity(JsonNumber value)
         {
             if (value.HasDotnetBacking && value.ValueKind == JsonValueKind.Number)
             {
-                return new(value.AsBinaryJsonNumber);
+                return new(
+                    value.AsBinaryJsonNumber);
             }
 
             return new(value.AsJsonElement);
         }
 
         /// <summary>
+        /// Conversion to JsonNumber.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator JsonNumber(MultipleOfEntity value)
+        {
+            return
+                value.AsNumber;
+        }
+
+        /// <summary>
         /// Conversion to byte.
         /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-        /// <exception cref = "FormatException">The value was not formatted as a byte.</exception>
-        public static explicit operator byte (MultipleOfEntity value)
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the byte.</returns>
+        public static explicit operator byte(MultipleOfEntity value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -88,12 +108,21 @@ public readonly partial struct Schema
         }
 
         /// <summary>
+        /// Conversion from byte.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the <see cref="MultipleOfEntity"/>.</returns>
+        public static explicit operator MultipleOfEntity(byte value)
+        {
+            return new(new BinaryJsonNumber(value));
+        }
+
+        /// <summary>
         /// Conversion to decimal.
         /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-        /// <exception cref = "FormatException">The value was not formatted as a decimal.</exception>
-        public static explicit operator decimal (MultipleOfEntity value)
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the decimal.</returns>
+        public static explicit operator decimal(MultipleOfEntity value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -109,12 +138,21 @@ public readonly partial struct Schema
         }
 
         /// <summary>
+        /// Conversion from decimal.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the <see cref="MultipleOfEntity"/>.</returns>
+        public static explicit operator MultipleOfEntity(decimal value)
+        {
+            return new(new BinaryJsonNumber(value));
+        }
+
+        /// <summary>
         /// Conversion to double.
         /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-        /// <exception cref = "FormatException">The value was not formatted as a double.</exception>
-        public static explicit operator double (MultipleOfEntity value)
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the double.</returns>
+        public static implicit operator double(MultipleOfEntity value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -130,12 +168,21 @@ public readonly partial struct Schema
         }
 
         /// <summary>
-        /// Conversion to Int16.
+        /// Conversion from double.
         /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-        /// <exception cref = "FormatException">The value was not formatted as an Int16.</exception>
-        public static explicit operator short (MultipleOfEntity value)
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the <see cref="MultipleOfEntity"/>.</returns>
+        public static implicit operator MultipleOfEntity(double value)
+        {
+            return new(new BinaryJsonNumber(value));
+        }
+
+        /// <summary>
+        /// Conversion to short.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the short.</returns>
+        public static explicit operator short(MultipleOfEntity value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -151,12 +198,21 @@ public readonly partial struct Schema
         }
 
         /// <summary>
-        /// Conversion to Int32.
+        /// Conversion from short.
         /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-        /// <exception cref = "FormatException">The value was not formatted as an Int32.</exception>
-        public static explicit operator int (MultipleOfEntity value)
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the <see cref="MultipleOfEntity"/>.</returns>
+        public static explicit operator MultipleOfEntity(short value)
+        {
+            return new(new BinaryJsonNumber(value));
+        }
+
+        /// <summary>
+        /// Conversion to int.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the int.</returns>
+        public static explicit operator int(MultipleOfEntity value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -172,12 +228,21 @@ public readonly partial struct Schema
         }
 
         /// <summary>
-        /// Conversion to Int64.
+        /// Conversion from int.
         /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-        /// <exception cref = "FormatException">The value was not formatted as an Int64.</exception>
-        public static explicit operator long (MultipleOfEntity value)
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the <see cref="MultipleOfEntity"/>.</returns>
+        public static explicit operator MultipleOfEntity(int value)
+        {
+            return new(new BinaryJsonNumber(value));
+        }
+
+        /// <summary>
+        /// Conversion to long.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the long.</returns>
+        public static explicit operator long(MultipleOfEntity value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -192,35 +257,54 @@ public readonly partial struct Schema
             throw new InvalidOperationException();
         }
 
-#if NET8_0_OR_GREATER
-    /// <summary>
-    /// Conversion to Int128.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
-    /// <exception cref="FormatException">The value was not formatted as an Int64.</exception>
-    public static explicit operator Int128(MultipleOfEntity value)
-    {
-        if ((value.backing & Backing.JsonElement) != 0)
-        {
-            return value.jsonElementBacking.SafeGetInt128();
-        }
-
-        if ((value.backing & Backing.Number) != 0)
-        {
-            return value.numberBacking.CreateChecked<Int128>();
-        }
-
-        throw new InvalidOperationException();
-    }
-#endif
         /// <summary>
-        /// Conversion to SByte.
+        /// Conversion from long.
         /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-        /// <exception cref = "FormatException">The value was not formatted as an SByte.</exception>
-        public static explicit operator sbyte (MultipleOfEntity value)
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the <see cref="MultipleOfEntity"/>.</returns>
+        public static explicit operator MultipleOfEntity(long value)
+        {
+            return new(new BinaryJsonNumber(value));
+        }
+
+#if NET8_0_OR_GREATER
+        /// <summary>
+        /// Conversion to Int128.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the Int128.</returns>
+        public static explicit operator Int128(MultipleOfEntity value)
+        {
+            if ((value.backing & Backing.JsonElement) != 0)
+            {
+                return value.jsonElementBacking.SafeGetInt128();
+            }
+
+            if ((value.backing & Backing.Number) != 0)
+            {
+                return value.numberBacking.CreateChecked<Int128>();
+            }
+
+            throw new InvalidOperationException();
+        }
+
+        /// <summary>
+        /// Conversion from Int128.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the <see cref="MultipleOfEntity"/>.</returns>
+        public static explicit operator MultipleOfEntity(Int128 value)
+        {
+            return new(new BinaryJsonNumber(value));
+        }
+#endif
+
+        /// <summary>
+        /// Conversion to sbyte.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the sbyte.</returns>
+        public static explicit operator sbyte(MultipleOfEntity value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -235,35 +319,54 @@ public readonly partial struct Schema
             throw new InvalidOperationException();
         }
 
-#if NET8_0_OR_GREATER
-    /// <summary>
-    /// Conversion to Half.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
-    /// <exception cref="FormatException">The value was not formatted as a Single.</exception>
-    public static explicit operator Half(MultipleOfEntity value)
-    {
-        if ((value.backing & Backing.JsonElement) != 0)
-        {
-            return value.jsonElementBacking.SafeGetHalf();
-        }
-
-        if ((value.backing & Backing.Number) != 0)
-        {
-            return value.numberBacking.CreateChecked<Half>();
-        }
-
-        throw new InvalidOperationException();
-    }
-#endif
         /// <summary>
-        /// Conversion to Single.
+        /// Conversion from sbyte.
         /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-        /// <exception cref = "FormatException">The value was not formatted as a Single.</exception>
-        public static explicit operator float (MultipleOfEntity value)
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the <see cref="MultipleOfEntity"/>.</returns>
+        public static explicit operator MultipleOfEntity(sbyte value)
+        {
+            return new(new BinaryJsonNumber(value));
+        }
+
+#if NET8_0_OR_GREATER
+        /// <summary>
+        /// Conversion to Half.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the Half.</returns>
+        public static explicit operator Half(MultipleOfEntity value)
+        {
+            if ((value.backing & Backing.JsonElement) != 0)
+            {
+                return value.jsonElementBacking.SafeGetHalf();
+            }
+
+            if ((value.backing & Backing.Number) != 0)
+            {
+                return value.numberBacking.CreateChecked<Half>();
+            }
+
+            throw new InvalidOperationException();
+        }
+
+        /// <summary>
+        /// Conversion from Half.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the <see cref="MultipleOfEntity"/>.</returns>
+        public static explicit operator MultipleOfEntity(Half value)
+        {
+            return new(new BinaryJsonNumber(value));
+        }
+#endif
+
+        /// <summary>
+        /// Conversion to float.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the float.</returns>
+        public static explicit operator float(MultipleOfEntity value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -279,12 +382,21 @@ public readonly partial struct Schema
         }
 
         /// <summary>
-        /// Conversion to UInt16.
+        /// Conversion from float.
         /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-        /// <exception cref = "FormatException">The value was not formatted as an UInt16.</exception>
-        public static explicit operator ushort (MultipleOfEntity value)
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the <see cref="MultipleOfEntity"/>.</returns>
+        public static explicit operator MultipleOfEntity(float value)
+        {
+            return new(new BinaryJsonNumber(value));
+        }
+
+        /// <summary>
+        /// Conversion to ushort.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the ushort.</returns>
+        public static explicit operator ushort(MultipleOfEntity value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -300,12 +412,21 @@ public readonly partial struct Schema
         }
 
         /// <summary>
-        /// Conversion to UInt32.
+        /// Conversion from ushort.
         /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-        /// <exception cref = "FormatException">The value was not formatted as an UInt32.</exception>
-        public static explicit operator uint (MultipleOfEntity value)
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the <see cref="MultipleOfEntity"/>.</returns>
+        public static explicit operator MultipleOfEntity(ushort value)
+        {
+            return new(new BinaryJsonNumber(value));
+        }
+
+        /// <summary>
+        /// Conversion to uint.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the uint.</returns>
+        public static explicit operator uint(MultipleOfEntity value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -321,12 +442,21 @@ public readonly partial struct Schema
         }
 
         /// <summary>
-        /// Conversion to UInt64.
+        /// Conversion from uint.
         /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-        /// <exception cref = "FormatException">The value was not formatted as an UInt64.</exception>
-        public static explicit operator ulong (MultipleOfEntity value)
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the <see cref="MultipleOfEntity"/>.</returns>
+        public static explicit operator MultipleOfEntity(uint value)
+        {
+            return new(new BinaryJsonNumber(value));
+        }
+
+        /// <summary>
+        /// Conversion to ulong.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the ulong.</returns>
+        public static explicit operator ulong(MultipleOfEntity value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -341,185 +471,70 @@ public readonly partial struct Schema
             throw new InvalidOperationException();
         }
 
-#if NET8_0_OR_GREATER
-    /// <summary>
-    /// Conversion to UInt128.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
-    /// <exception cref="FormatException">The value was not formatted as an UInt64.</exception>
-    public static explicit operator UInt128(MultipleOfEntity value)
-    {
-        if ((value.backing & Backing.JsonElement) != 0)
-        {
-            return value.jsonElementBacking.SafeGetUInt128();
-        }
-
-        if ((value.backing & Backing.Number) != 0)
-        {
-            return value.numberBacking.CreateChecked<UInt128>();
-        }
-
-        throw new InvalidOperationException();
-    }
-#endif
-        /// <summary>
-        /// Conversion from decimal.
-        /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        public static explicit operator MultipleOfEntity(decimal value)
-        {
-            return new(new BinaryJsonNumber(value));
-        }
-
-        /// <summary>
-        /// Conversion from double.
-        /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        public static explicit operator MultipleOfEntity(double value)
-        {
-            return new(new BinaryJsonNumber(value));
-        }
-
-#if NET8_0_OR_GREATER
-    /// <summary>
-    /// Conversion from Half.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    public static explicit operator MultipleOfEntity(Half value)
-    {
-        return new(new BinaryJsonNumber(value));
-    }
-#endif
-        /// <summary>
-        /// Conversion from float.
-        /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        public static explicit operator MultipleOfEntity(float value)
-        {
-            return new(new BinaryJsonNumber(value));
-        }
-
-        /// <summary>
-        /// Conversion from byte.
-        /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        public static explicit operator MultipleOfEntity(byte value)
-        {
-            return new(new BinaryJsonNumber(value));
-        }
-
-        /// <summary>
-        /// Conversion from short.
-        /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        public static explicit operator MultipleOfEntity(short value)
-        {
-            return new(new BinaryJsonNumber(value));
-        }
-
-        /// <summary>
-        /// Conversion from int.
-        /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        public static explicit operator MultipleOfEntity(int value)
-        {
-            return new(new BinaryJsonNumber(value));
-        }
-
-        /// <summary>
-        /// Conversion from long.
-        /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        public static explicit operator MultipleOfEntity(long value)
-        {
-            return new(new BinaryJsonNumber(value));
-        }
-
-        /// <summary>
-        /// Conversion from sbyte.
-        /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        public static explicit operator MultipleOfEntity(sbyte value)
-        {
-            return new(new BinaryJsonNumber(value));
-        }
-
-        /// <summary>
-        /// Conversion from ushort.
-        /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        public static explicit operator MultipleOfEntity(ushort value)
-        {
-            return new(new BinaryJsonNumber(value));
-        }
-
-        /// <summary>
-        /// Conversion from uint.
-        /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        public static explicit operator MultipleOfEntity(uint value)
-        {
-            return new(new BinaryJsonNumber(value));
-        }
-
         /// <summary>
         /// Conversion from ulong.
         /// </summary>
-        /// <param name = "value">The value to convert.</param>
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the <see cref="MultipleOfEntity"/>.</returns>
         public static explicit operator MultipleOfEntity(ulong value)
         {
             return new(new BinaryJsonNumber(value));
         }
 
 #if NET8_0_OR_GREATER
-    /// <summary>
-    /// Conversion from Int128.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    public static explicit operator MultipleOfEntity(Int128 value)
-    {
-        return new(new BinaryJsonNumber(value));
-    }
+        /// <summary>
+        /// Conversion to UInt128.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the UInt128.</returns>
+        public static explicit operator UInt128(MultipleOfEntity value)
+        {
+            if ((value.backing & Backing.JsonElement) != 0)
+            {
+                return value.jsonElementBacking.SafeGetUInt128();
+            }
 
-    /// <summary>
-    /// Conversion from UInt128.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    public static explicit operator MultipleOfEntity(UInt128 value)
-    {
-        return new(new BinaryJsonNumber(value));
-    }
+            if ((value.backing & Backing.Number) != 0)
+            {
+                return value.numberBacking.CreateChecked<UInt128>();
+            }
+
+            throw new InvalidOperationException();
+        }
+
+        /// <summary>
+        /// Conversion from UInt128.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the <see cref="MultipleOfEntity"/>.</returns>
+        public static explicit operator MultipleOfEntity(UInt128 value)
+        {
+            return new(new BinaryJsonNumber(value));
+        }
 #endif
+
         /// <summary>
         /// Less than operator.
         /// </summary>
-        /// <param name = "left">The LHS of the comparison.</param>
-        /// <param name = "right">The RHS of the comparison.</param>
-        /// <returns><see langword="true"/> if the left is less than the right, otherwise <see langword="false"/>.</returns>
-        public static bool operator <(in MultipleOfEntity left, in MultipleOfEntity right)
+        /// <param name="left">The LHS of the comparison.</param>
+        /// <param name="right">The RHS of the comparison.</param>
+        /// <returns>
+        /// <see langword="true"/> if the left is less than the right, otherwise <see langword="false"/>.
+        /// </returns>
+        public static bool operator <(MultipleOfEntity left, MultipleOfEntity right)
         {
             return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && Compare(left, right) < 0;
         }
 
         /// <summary>
-        /// Greater than operator.
+        /// Less than or equals operator.
         /// </summary>
-        /// <param name = "left">The LHS of the comparison.</param>
-        /// <param name = "right">The RHS of the comparison.</param>
-        /// <returns><see langword="true"/> if the left is greater than the right, otherwise <see langword="false"/>.</returns>
-        public static bool operator>(in MultipleOfEntity left, in MultipleOfEntity right)
-        {
-            return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && Compare(left, right) > 0;
-        }
-
-        /// <summary>
-        /// Less than operator.
-        /// </summary>
-        /// <param name = "left">The LHS of the comparison.</param>
-        /// <param name = "right">The RHS of the comparison.</param>
-        /// <returns><see langword="true"/> if the left is less than the right, otherwise <see langword="false"/>.</returns>
-        public static bool operator <=(in MultipleOfEntity left, in MultipleOfEntity right)
+        /// <param name="left">The LHS of the comparison.</param>
+        /// <param name="right">The RHS of the comparison.</param>
+        /// <returns>
+        /// <see langword="true"/> if the left is less than or equal to the right, otherwise <see langword="false"/>.
+        /// </returns>
+        public static bool operator <=(MultipleOfEntity left, MultipleOfEntity right)
         {
             return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && Compare(left, right) <= 0;
         }
@@ -527,86 +542,102 @@ public readonly partial struct Schema
         /// <summary>
         /// Greater than operator.
         /// </summary>
-        /// <param name = "left">The LHS of the comparison.</param>
-        /// <param name = "right">The RHS of the comparison.</param>
-        /// <returns><see langword="true"/> if the left is greater than the right, otherwise <see langword="false"/>.</returns>
-        public static bool operator >=(in MultipleOfEntity left, in MultipleOfEntity right)
+        /// <param name="left">The LHS of the comparison.</param>
+        /// <param name="right">The RHS of the comparison.</param>
+        /// <returns>
+        /// <see langword="true"/> if the left is greater than the right, otherwise <see langword="false"/>.
+        /// </returns>
+        public static bool operator >(MultipleOfEntity left, MultipleOfEntity right)
+        {
+            return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && Compare(left, right) > 0;
+        }
+
+        /// <summary>
+        /// Greater than or equals operator.
+        /// </summary>
+        /// <param name="left">The LHS of the comparison.</param>
+        /// <param name="right">The RHS of the comparison.</param>
+        /// <returns>
+        /// <see langword="true"/> if the left is greater than or equal to the right, otherwise <see langword="false"/>.
+        /// </returns>
+        public static bool operator >=(MultipleOfEntity left, MultipleOfEntity right)
         {
             return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && Compare(left, right) >= 0;
         }
 
         /// <summary>
-        /// Adds two values together to compute their sum.
+        /// Adds two numbers to produce their sum.
         /// </summary>
-        /// <param name = "left">The left hand side.</param>
-        /// <param name = "right">The right hand side.</param>
-        /// <returns>The resulting value.</returns>
+        /// <param name="left">The left hand side of the binary operator.</param>
+        /// <param name="right">The right hand side of the binary operator.</param>
+        /// <returns>The result of the operation.</returns>
         public static MultipleOfEntity operator +(MultipleOfEntity left, MultipleOfEntity right)
         {
             return new(left.AsBinaryJsonNumber + right.AsBinaryJsonNumber);
         }
 
         /// <summary>
-        /// Subtracts two values together to compute their difference.
+        /// Subtracts two numbers to produce their difference.
         /// </summary>
-        /// <param name = "left">The left hand side.</param>
-        /// <param name = "right">The right hand side.</param>
-        /// <returns>The resulting value.</returns>
+        /// <param name="left">The left hand side of the binary operator.</param>
+        /// <param name="right">The right hand side of the binary operator.</param>
+        /// <returns>The result of the operation.</returns>
         public static MultipleOfEntity operator -(MultipleOfEntity left, MultipleOfEntity right)
         {
             return new(left.AsBinaryJsonNumber - right.AsBinaryJsonNumber);
         }
 
         /// <summary>
-        /// Multiplies two values together.
+        /// Multiplies two numbers.
         /// </summary>
-        /// <param name = "left">The left hand side.</param>
-        /// <param name = "right">The right hand side.</param>
-        /// <returns>The resulting value.</returns>
+        /// <param name="left">The left hand side of the binary operator.</param>
+        /// <param name="right">The right hand side of the binary operator.</param>
+        /// <returns>The result of the operation.</returns>
         public static MultipleOfEntity operator *(MultipleOfEntity left, MultipleOfEntity right)
         {
             return new(left.AsBinaryJsonNumber * right.AsBinaryJsonNumber);
         }
 
         /// <summary>
-        /// Divides two values.
+        /// Divides two numbers.
         /// </summary>
-        /// <param name = "left">The left hand side.</param>
-        /// <param name = "right">The right hand side.</param>
-        /// <returns>The resulting value.</returns>
+        /// <param name="left">The left hand side of the binary operator.</param>
+        /// <param name="right">The right hand side of the binary operator.</param>
+        /// <returns>The result of the operation.</returns>
         public static MultipleOfEntity operator /(MultipleOfEntity left, MultipleOfEntity right)
         {
             return new(left.AsBinaryJsonNumber / right.AsBinaryJsonNumber);
         }
 
         /// <summary>
-        /// Increments the value.
+        /// Increments the number.
         /// </summary>
-        /// <param name = "value">The value.</param>
-        /// <returns>The resulting value.</returns>
+        /// <param name="value">The value on which to operate.</param>
+        /// <returns>The result of the operation.</returns>
         public static MultipleOfEntity operator ++(MultipleOfEntity value)
         {
-            BinaryJsonNumber num = value.AsBinaryJsonNumber;
-            return new(num++);
+            BinaryJsonNumber num = value.AsBinaryJsonNumber;            return new(num++);
         }
 
         /// <summary>
-        /// Decrements the value.
+        /// Decrements the number.
         /// </summary>
-        /// <param name = "value">The value.</param>
-        /// <returns>The resulting value.</returns>
+        /// <param name="value">The value on which to operate.</param>
+        /// <returns>The result of the operation.</returns>
         public static MultipleOfEntity operator --(MultipleOfEntity value)
         {
-            BinaryJsonNumber num = value.AsBinaryJsonNumber;
-            return new(num--);
+            BinaryJsonNumber num = value.AsBinaryJsonNumber;            return new(num--);
         }
 
         /// <summary>
-        /// Compare with another number.
+        /// Compare two numbers.
         /// </summary>
-        /// <param name = "lhs">The lhs of the comparison.</param>
-        /// <param name = "rhs">The rhs of the comparison.</param>
-        /// <returns>0 if the numbers are equal, -1 if the lhs is less than the rhs, and 1 if the lhs is greater than the rhs.</returns>
+        /// <param name="lhs">The left hand side of the comparison.</param>
+        /// <param name="rhs">The right hand side of the comparison.</param>
+        /// <returns>
+        /// 0 if the numbers are equal, -1 if <paramref name="lhs"/> is less than <paramref name="rhs"/>,
+        /// and 1 if <paramref name="lhs"/> is greater than <paramref name="rhs"/>.
+        /// </returns>
         public static int Compare(in MultipleOfEntity lhs, in MultipleOfEntity rhs)
         {
             if (lhs.ValueKind != rhs.ValueKind)
@@ -621,13 +652,6 @@ public readonly partial struct Schema
                 return 0;
             }
 
-            if (lhs.backing == Backing.Number && rhs.backing == Backing.Number)
-            {
-                return BinaryJsonNumber.Compare(lhs.numberBacking, rhs.numberBacking);
-            }
-
-            // After this point there is no need to check both value kinds because our first quick test verified that they were the same.
-            // If either one is a Backing.Number or a JsonValueKind.Number then we know the rhs is compatible.
             if (lhs.backing == Backing.Number && rhs.backing == Backing.Number)
             {
                 return BinaryJsonNumber.Compare(lhs.numberBacking, rhs.numberBacking);
@@ -651,7 +675,48 @@ public readonly partial struct Schema
             throw new InvalidOperationException();
         }
 
-        /// <inheritdoc/>
-        public BinaryJsonNumber AsBinaryJsonNumber => this.HasDotnetBacking ? this.numberBacking : BinaryJsonNumber.FromJson(this.jsonElementBacking);
+        /// <summary>
+        /// Gets the value as a <see cref="BinaryJsonNumber"/>.
+        /// </summary>
+        public BinaryJsonNumber AsBinaryJsonNumber
+        {
+            get
+            {
+                if ((this.backing & Backing.Number) != 0)
+                {
+                    return this.numberBacking;
+                }
+
+                if ((this.backing & Backing.JsonElement) != 0)
+                {
+                    return BinaryJsonNumber.FromJson(this.jsonElementBacking);
+                }
+
+                throw new InvalidOperationException();
+            }
+        }
+
+        /// <summary>
+        /// Gets the value as a double.
+        /// </summary>
+        public double AsDouble() => (double)this;
+
+        /// <summary>
+        /// Equality comparison.
+        /// </summary>
+        /// <param name="other">The <see cref="BinaryJsonNumber"/> with which to compare.</param>
+        /// <returns><see langword="true"/> if the values were equal.</returns>
+        public bool Equals(in BinaryJsonNumber other)        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+return this.jsonElementBacking.ValueKind == JsonValueKind.Number && other.Equals(this.jsonElementBacking);            }
+
+            if ((this.backing & Backing.Number) != 0)
+            {
+                return BinaryJsonNumber.Equals(other, this.numberBacking);
+            }
+
+            return false;
+        }
     }
 }

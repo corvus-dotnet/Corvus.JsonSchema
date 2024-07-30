@@ -23,7 +23,7 @@ public sealed class StringPartial : ICodeFileBuilder
     /// <inheritdoc/>
     public CodeGenerator EmitFile(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
-        if ((typeDeclaration.LocallyImpliedCoreTypes() & CoreTypes.String) != 0)
+        if ((typeDeclaration.ImpliedCoreTypes() & CoreTypes.String) != 0)
         {
             generator
                 .BeginFile(typeDeclaration, "String")

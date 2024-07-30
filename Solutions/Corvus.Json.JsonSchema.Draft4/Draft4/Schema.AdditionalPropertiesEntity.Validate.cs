@@ -6,16 +6,46 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.Draft4;
+
+/// <summary>
+/// Generated from JSON Schema.
+/// </summary>
+/// <remarks>
+/// <para>
+/// Core schema meta-schema
+/// </para>
+/// <para>
+/// Examples:
+/// <example>
+/// <code>
+/// {}
+/// </code>
+/// </example>
+/// </para>
+/// </remarks>
 public readonly partial struct Schema
 {
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Examples:
+    /// <example>
+    /// <code>
+    /// {}
+    /// </code>
+    /// </example>
+    /// </para>
+    /// </remarks>
     public readonly partial struct AdditionalPropertiesEntity
     {
         /// <inheritdoc/>
@@ -33,18 +63,127 @@ public readonly partial struct Schema
                 result = result.PushSchemaLocation("http://json-schema.org/draft-04/schema#/properties/additionalProperties");
             }
 
-            result = this.ValidateAnyOf(result, level);
+            result = CorvusValidation.CompositionAnyOfValidationHandler(this, result, level);
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
             }
 
-            if (level != ValidationLevel.Flag)
+            if (level > ValidationLevel.Basic)
             {
                 result = result.PopLocation();
             }
 
             return result;
+        }
+
+        private static partial class CorvusValidation
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static ValidationContext CompositionAnyOfValidationHandler(
+                in AdditionalPropertiesEntity value,
+                in ValidationContext validationContext,
+                ValidationLevel level = ValidationLevel.Flag)
+            {
+                ValidationContext result = validationContext;
+                result = ValidateAnyOf(value, result, level);
+                if (!result.IsValid && level == ValidationLevel.Flag)
+                {
+                    return result;
+                }
+
+                static ValidationContext ValidateAnyOf(in AdditionalPropertiesEntity value, in ValidationContext validationContext, ValidationLevel level)
+                {
+                    ValidationContext result = validationContext;
+                    bool anyOfFoundValid = false;
+                    ValidationContext anyOfChildContext0 = validationContext.CreateChildContext();
+                    if (level > ValidationLevel.Basic)
+                    {
+                        anyOfChildContext0 = anyOfChildContext0.PushValidationLocationReducedPathModifier(new("#/anyOf/0"));
+                    }
+
+                    ValidationContext anyOfResult0 = value.As<Corvus.Json.JsonBoolean>().Validate(anyOfChildContext0, level);
+                    if (anyOfResult0.IsValid)
+                    {
+                        result = result.MergeChildContext(anyOfResult0, level >= ValidationLevel.Verbose);
+                        if (level == ValidationLevel.Flag)
+                        {
+                            return result;
+                        }
+                        else
+                        {
+                            anyOfFoundValid = true;
+                        }
+                    }
+                    else
+                    {
+                        if (level >= ValidationLevel.Verbose)
+                        {
+                            result = result.MergeResults(result.IsValid, level, anyOfResult0);
+                        }
+                    }
+
+                    ValidationContext anyOfChildContext1 = validationContext.CreateChildContext();
+                    if (level > ValidationLevel.Basic)
+                    {
+                        anyOfChildContext1 = anyOfChildContext1.PushValidationLocationReducedPathModifier(new("#/anyOf/1/$ref"));
+                    }
+
+                    ValidationContext anyOfResult1 = value.As<Corvus.Json.JsonSchema.Draft4.Schema>().Validate(anyOfChildContext1, level);
+                    if (anyOfResult1.IsValid)
+                    {
+                        result = result.MergeChildContext(anyOfResult1, level >= ValidationLevel.Verbose);
+                        if (level == ValidationLevel.Flag)
+                        {
+                            return result;
+                        }
+                        else
+                        {
+                            anyOfFoundValid = true;
+                        }
+                    }
+                    else
+                    {
+                        if (level >= ValidationLevel.Verbose)
+                        {
+                            result = result.MergeResults(result.IsValid, level, anyOfResult1);
+                        }
+                    }
+
+                    if (level >= ValidationLevel.Basic)
+                    {
+                        result.PushValidationLocationProperty("anyOf");
+                    }
+
+                    if (anyOfFoundValid)
+                    {
+                        if (level >= ValidationLevel.Verbose)
+                        {
+                            result = result.WithResult(isValid: true, "Validation anyOf - validated against the schema.");
+                        }
+                    }
+                    else
+                    {
+                        if (level >= ValidationLevel.Basic)
+                        {
+                            result = result.WithResult(isValid: false, "Validation anyOf - did not validate against the schema.");
+                        }
+                        else
+                        {
+                            result = result.WithResult(isValid: false);
+                        }
+                    }
+
+                    if (level >= ValidationLevel.Basic)
+                    {
+                        result.PopLocation();
+                    }
+
+                    return result;
+                }
+
+                return result;
+            }
         }
     }
 }

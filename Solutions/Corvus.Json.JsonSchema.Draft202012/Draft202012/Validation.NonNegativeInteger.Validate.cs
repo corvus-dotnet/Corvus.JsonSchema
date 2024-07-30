@@ -6,11 +6,18 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.Draft202012;
+
+/// <summary>
+/// Validation vocabulary meta-schema
+/// </summary>
 public readonly partial struct Validation
 {
     /// <summary>
@@ -18,7 +25,6 @@ public readonly partial struct Validation
     /// </summary>
     public readonly partial struct NonNegativeInteger
     {
-        private static readonly BinaryJsonNumber __Corvus_Minimum = new(0);
         /// <inheritdoc/>
         public ValidationContext Validate(in ValidationContext validationContext, ValidationLevel level = ValidationLevel.Flag)
         {
@@ -35,24 +41,116 @@ public readonly partial struct Validation
             }
 
             JsonValueKind valueKind = this.ValueKind;
-            result = this.ValidateType(valueKind, result, level);
+            result = CorvusValidation.TypeValidationHandler(this, valueKind, result, level);
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
             }
 
-            result = Corvus.Json.Validate.ValidateNumber(this, result, level, BinaryJsonNumber.None, BinaryJsonNumber.None, BinaryJsonNumber.None, __Corvus_Minimum, BinaryJsonNumber.None);
+            result = CorvusValidation.NumberValidationHandler(this, valueKind, result, level);
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
             }
 
-            if (level != ValidationLevel.Flag)
+            if (level > ValidationLevel.Basic)
             {
                 result = result.PopLocation();
             }
 
             return result;
+        }
+
+        private static partial class CorvusValidation
+        {
+            public static readonly BinaryJsonNumber Minimum = new(0);
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static ValidationContext TypeValidationHandler(
+                in NonNegativeInteger value,
+                JsonValueKind valueKind,
+                in ValidationContext validationContext,
+                ValidationLevel level = ValidationLevel.Flag)
+            {
+                ValidationContext result = validationContext;
+                bool isValid = false;
+                ValidationContext localResultInteger = Corvus.Json.Validate.TypeInteger(value, result.CreateChildContext(), level);
+                if (level == ValidationLevel.Flag && localResultInteger.IsValid)
+                {
+                    return validationContext;
+                }
+
+                if (localResultInteger.IsValid)
+                {
+                    isValid = true;
+                }
+
+                return result.MergeResults(
+                    isValid,
+                    level,
+                    localResultInteger);
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static ValidationContext NumberValidationHandler(
+                in NonNegativeInteger value,
+                JsonValueKind valueKind,
+                in ValidationContext validationContext,
+                ValidationLevel level = ValidationLevel.Flag)
+            {
+                if (valueKind != JsonValueKind.Number)
+                {
+                    if (level == ValidationLevel.Verbose)
+                    {
+                        ValidationContext ignoredResult = validationContext;
+                        ignoredResult = ignoredResult.PushValidationLocationProperty("minimum");
+                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation minimum - ignored because the value is not a number");
+                        ignoredResult = ignoredResult.PopLocation();
+                        return ignoredResult;
+                    }
+
+                    return validationContext;
+                }
+
+                ValidationContext result = validationContext;
+                if ((value.HasJsonElementBacking
+                    ? BinaryJsonNumber.Compare(value.AsJsonElement, Minimum)
+                    : BinaryJsonNumber.Compare(value.AsBinaryJsonNumber, Minimum))>= 0)
+                {
+                    if (level == ValidationLevel.Verbose)
+                    {
+                        result = result.PushValidationLocationProperty("minimum");
+                        result = result.WithResult(isValid: true, $"Validation minimum - {value} is greater than or equal to {Minimum}");
+                        result = result.PopLocation();
+                    }
+                }
+                else
+                {
+                    if (level >= ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationProperty("minimum");
+                    }
+
+                    if (level >= ValidationLevel.Detailed)
+                    {
+                        result = result.WithResult(isValid: false, $"Validation minimum - {value} is less than {Minimum}");
+                    }
+                    else if (level >= ValidationLevel.Basic)
+                    {
+                        result = result.WithResult(isValid: false, "Validation minimum - is less than the required value.");
+                    }
+                    else
+                    {
+                        return result.WithResult(isValid: false);
+                    }
+
+                    if (level >= ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+                }
+                return result;
+            }
         }
     }
 }

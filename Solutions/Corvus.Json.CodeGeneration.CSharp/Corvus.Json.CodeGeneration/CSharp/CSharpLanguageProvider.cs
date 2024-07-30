@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Collections.Frozen;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Corvus.Json.CodeGeneration.CSharp;
@@ -105,10 +106,24 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
     /// <inheritdoc/>
     public IReadOnlyCollection<GeneratedCodeFile> GenerateCodeFor(IEnumerable<TypeDeclaration> typeDeclarations)
     {
+#if DEBUG
+        Dictionary<string, TypeDeclaration> namesSeen = [];
+#endif
         CodeGenerator generator = new(this);
 
         foreach (TypeDeclaration typeDeclaration in typeDeclarations)
         {
+#if DEBUG
+            if (namesSeen.ContainsKey(typeDeclaration.FullyQualifiedDotnetTypeName()))
+            {
+                Debug.Fail($"Skipped: {typeDeclaration.LocatedSchema.Location}");
+                continue;
+            }
+            else
+            {
+                namesSeen[typeDeclaration.FullyQualifiedDotnetTypeName()] = typeDeclaration;
+            }
+#endif
             typeDeclaration.SetCSharpOptions(this.options);
 
             if (generator.TryBeginTypeDeclaration(typeDeclaration))
@@ -156,6 +171,7 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
         Span<char> typeNameBuffer = stackalloc char[Formatting.MaxIdentifierLength];
 
         SetTypeNameWithKeywordHeuristics(
+            this,
             typeDeclaration,
             reference,
             typeNameBuffer,
@@ -172,12 +188,20 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
         }
 
         string ns = this.options.GetNamespace(typeDeclaration);
-
         JsonReferenceBuilder reference = GetReferenceWithoutQuery(typeDeclaration);
+
+        if (this.options.TryGetTypeName(reference.ToString(), out string? typeName))
+        {
+            typeDeclaration.SetDotnetTypeName(typeName);
+            typeDeclaration.SetDotnetNamespace(ns);
+
+            return;
+        }
 
         Span<char> typeNameBuffer = stackalloc char[Formatting.MaxIdentifierLength];
 
         SetTypeNameWithKeywordHeuristics(
+            this,
             typeDeclaration,
             reference,
             typeNameBuffer,
@@ -193,6 +217,7 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
 
         Span<char> typeNameBuffer = stackalloc char[Formatting.MaxIdentifierLength];
         UpdateTypeNameWithKeywordHeuristics(
+            this,
             typeDeclaration,
             reference,
             typeNameBuffer,
@@ -268,14 +293,15 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
     }
 
     private static void SetTypeNameWithKeywordHeuristics(
-    TypeDeclaration typeDeclaration,
-    JsonReferenceBuilder reference,
-    Span<char> typeNameBuffer,
-    IEnumerable<IBuiltInTypeNameHeuristic> nameHeuristics)
+        CSharpLanguageProvider languageProvider,
+        TypeDeclaration typeDeclaration,
+        JsonReferenceBuilder reference,
+        Span<char> typeNameBuffer,
+        IEnumerable<IBuiltInTypeNameHeuristic> nameHeuristics)
     {
         foreach (IBuiltInTypeNameHeuristic heuristic in nameHeuristics)
         {
-            if (heuristic.TryGetName(typeDeclaration, reference, typeNameBuffer, out int written))
+            if (heuristic.TryGetName(languageProvider, typeDeclaration, reference, typeNameBuffer, out int _))
             {
                 typeDeclaration.SetDoNotGenerate();
                 return;
@@ -284,6 +310,7 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
     }
 
     private static void SetTypeNameWithKeywordHeuristics(
+        CSharpLanguageProvider languageProvider,
         TypeDeclaration typeDeclaration,
         JsonReferenceBuilder reference,
         Span<char> typeNameBuffer,
@@ -293,7 +320,7 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
     {
         foreach (INameHeuristic heuristic in nameHeuristics)
         {
-            if (heuristic.TryGetName(typeDeclaration, reference, typeNameBuffer, out int written))
+            if (heuristic.TryGetName(languageProvider, typeDeclaration, reference, typeNameBuffer, out int written))
             {
                 if (heuristic is IBuiltInTypeNameHeuristic)
                 {
@@ -301,7 +328,7 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
                 }
                 else
                 {
-                    // The namespace will have been set by the heuristic for a built-in type.
+                    written = FixTypeNameForCollisionWithParent(typeDeclaration, typeNameBuffer, written);
                     typeDeclaration.SetDotnetTypeName(typeNameBuffer[..written].ToString());
                     typeDeclaration.SetDotnetNamespace(ns);
                 }
@@ -314,7 +341,96 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
         typeDeclaration.SetDotnetNamespace(ns);
     }
 
+    private static int FixTypeNameForCollisionWithParent(TypeDeclaration typeDeclaration, Span<char> typeNameBuffer, int written)
+    {
+        if (typeDeclaration.Parent() is TypeDeclaration parent && !typeDeclaration.IsInDefinitionsContainer() && parent.TryGetDotnetTypeName(out string? name))
+        {
+            ReadOnlySpan<char> parentSpan = name.AsSpan();
+
+            // Capture the reference outside the loop so we can work through it.
+            JsonReference updatedReference = typeDeclaration.LocatedSchema.Location.MoveToParentFragment();
+            Span<char> trimmedStringBuffer = stackalloc char[typeNameBuffer.Length];
+
+            for (int index = 1; parent.DotnetTypeName().AsSpan().Equals(typeNameBuffer[..written], StringComparison.Ordinal) || NameMatchesChildren(parent, typeDeclaration, typeNameBuffer[..written]); index++)
+            {
+                int trimmedStringLength = written;
+                while (trimmedStringLength > 1 && typeNameBuffer[trimmedStringLength - 1] >= '0' && typeNameBuffer[trimmedStringLength - 1] <= '9')
+                {
+                    trimmedStringLength--;
+                }
+
+                typeNameBuffer[..trimmedStringLength].CopyTo(trimmedStringBuffer);
+
+                ReadOnlySpan<char> trimmedString = trimmedStringBuffer[..trimmedStringLength];
+
+                while (updatedReference.HasFragment && IsPropertySubschemaKeywordFragment(typeDeclaration, updatedReference.Fragment))
+                {
+                    updatedReference = updatedReference.MoveToParentFragment();
+                }
+
+                int slashIndex = 0;
+
+                if (updatedReference.HasFragment && (slashIndex = updatedReference.Fragment.LastIndexOf('/')) >= 0 && slashIndex < updatedReference.Fragment.Length - 1)
+                {
+                    ReadOnlySpan<char> previousNode = updatedReference.Fragment[(slashIndex + 1)..];
+                    previousNode.CopyTo(typeNameBuffer);
+                    written = Formatting.ToPascalCase(typeNameBuffer[..previousNode.Length]);
+                    trimmedString.CopyTo(typeNameBuffer[previousNode.Length..]);
+                    written += trimmedString.Length;
+                }
+                else if (!trimmedString.Equals(parent.DotnetTypeName().AsSpan(), StringComparison.Ordinal))
+                {
+                    parentSpan.CopyTo(typeNameBuffer);
+                    trimmedString.CopyTo(typeNameBuffer[parentSpan.Length..]);
+                    written = parentSpan.Length + trimmedString.Length;
+                    index--;
+                }
+                else
+                {
+                    trimmedString.CopyTo(typeNameBuffer);
+                    written = trimmedStringLength;
+                    written += Formatting.ApplySuffix(index, typeNameBuffer[trimmedStringLength..]);
+                }
+            }
+        }
+
+        return written;
+    }
+
+    private static bool IsPropertySubschemaKeywordFragment(TypeDeclaration typeDeclaration, ReadOnlySpan<char> fragment)
+    {
+        foreach (IPropertySubchemaProviderKeyword keyword in typeDeclaration.LocatedSchema.Vocabulary.Keywords.OfType<IPropertySubchemaProviderKeyword>())
+        {
+            if (keyword.Keyword.AsSpan().Equals(fragment, StringComparison.Ordinal))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static TypeDeclaration? FindMatchingChild(TypeDeclaration parent, TypeDeclaration typeDeclaration, ReadOnlySpan<char> span)
+    {
+        foreach (TypeDeclaration child in parent.Children())
+        {
+            TypeDeclaration reducedChild = child.ReducedTypeDeclaration().ReducedType;
+            if (reducedChild != typeDeclaration && reducedChild.TryGetDotnetTypeName(out string? typeName) && typeName.AsSpan().Equals(span, StringComparison.Ordinal))
+            {
+                return reducedChild;
+            }
+        }
+
+        return null;
+    }
+
+    private static bool NameMatchesChildren(TypeDeclaration parent, TypeDeclaration typeDeclaration, ReadOnlySpan<char> span)
+    {
+        return FindMatchingChild(parent, typeDeclaration, span) is not null;
+    }
+
     private static void UpdateTypeNameWithKeywordHeuristics(
+        CSharpLanguageProvider languageProvider,
         TypeDeclaration typeDeclaration,
         JsonReferenceBuilder reference,
         Span<char> typeNameBuffer,
@@ -322,10 +438,27 @@ public class CSharpLanguageProvider(CSharpLanguageProvider.Options? options = nu
     {
         foreach (INameHeuristic heuristic in nameHeuristics)
         {
-            if (heuristic.TryGetName(typeDeclaration, reference, typeNameBuffer, out int written))
+            if (heuristic.TryGetName(languageProvider, typeDeclaration, reference, typeNameBuffer, out int written))
             {
                 typeDeclaration.SetDotnetTypeName(typeNameBuffer[..written].ToString());
-                return;
+                break;
+            }
+        }
+
+        if (typeDeclaration.Parent() is TypeDeclaration parent &&
+            FindMatchingChild(parent, typeDeclaration, typeDeclaration.DotnetTypeName().AsSpan()) is TypeDeclaration child
+            && child.Parent() == parent)
+        {
+            // We have found this same type through multiple dynamic paths. If we are not the one with the dynamic reference, we will set ourselves
+            // to DONOTGENERATE, and the other one will be the one that is actually generated.
+            JsonReferenceBuilder builder = typeDeclaration.LocatedSchema.Location.AsBuilder();
+            if (builder.HasQuery && !child.DoNotGenerate())
+            {
+                typeDeclaration.SetDoNotGenerate(resetParent: false);
+            }
+            else if (!typeDeclaration.DoNotGenerate())
+            {
+                child.SetDoNotGenerate(resetParent: false);
             }
         }
     }

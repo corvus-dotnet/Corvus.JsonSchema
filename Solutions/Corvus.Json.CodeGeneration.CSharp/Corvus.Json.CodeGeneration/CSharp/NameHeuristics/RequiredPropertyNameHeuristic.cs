@@ -22,22 +22,27 @@ public sealed class RequiredPropertyNameHeuristic : INameHeuristicBeforeSubschem
     public bool IsOptional => true;
 
     /// <inheritdoc/>
-    public uint Priority => 1600;
+    public uint Priority => 1550;
 
     private static ReadOnlySpan<char> RequiredPropertyPrefix => "Required".AsSpan();
 
     private static ReadOnlySpan<char> RequiredPropertySeparator => "And".AsSpan();
 
     /// <inheritdoc/>
-    public bool TryGetName(TypeDeclaration typeDeclaration, JsonReferenceBuilder reference, Span<char> typeNameBuffer, out int written)
+    public bool TryGetName(ILanguageProvider languageProvider, TypeDeclaration typeDeclaration, JsonReferenceBuilder reference, Span<char> typeNameBuffer, out int written)
     {
+        if (typeDeclaration.Parent() is null || typeDeclaration.IsInDefinitionsContainer())
+        {
+            written = 0;
+            return false;
+        }
+
         int count = 0;
         written = 0;
         foreach (PropertyDeclaration property in
                     typeDeclaration.PropertyDeclarations
                         .Where(p =>
-                            p.RequiredOrOptional == RequiredOrOptional.Required &&
-                            p.LocalOrComposed == LocalOrComposed.Local))
+                            p.RequiredOrOptional == RequiredOrOptional.Required))
         {
             if (count > 3)
             {
@@ -58,6 +63,11 @@ public sealed class RequiredPropertyNameHeuristic : INameHeuristicBeforeSubschem
             }
 
             written += Formatting.FormatTypeNameComponent(typeDeclaration, property.JsonPropertyName.AsSpan(), typeNameBuffer[written..]);
+        }
+
+        if (written > 0 && typeDeclaration.CollidesWithParent(typeNameBuffer[..written]))
+        {
+            written = 0;
         }
 
         return written > 0;

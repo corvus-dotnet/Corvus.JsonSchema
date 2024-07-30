@@ -23,7 +23,7 @@ public sealed class ArrayPartial : ICodeFileBuilder
     /// <inheritdoc/>
     public CodeGenerator EmitFile(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
-        if ((typeDeclaration.LocallyImpliedCoreTypes() & CoreTypes.Array) != 0)
+        if ((typeDeclaration.ImpliedCoreTypes() & CoreTypes.Array) != 0)
         {
             generator
                 .BeginFile(typeDeclaration, "Array")

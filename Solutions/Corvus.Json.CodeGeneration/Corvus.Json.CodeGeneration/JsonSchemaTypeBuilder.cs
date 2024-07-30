@@ -5,6 +5,7 @@
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
+using static System.Net.WebRequestMethods;
 
 namespace Corvus.Json.CodeGeneration;
 
@@ -121,7 +122,9 @@ public class JsonSchemaTypeBuilder(
 
         SetNames(languageProvider, rootTypeDeclarations);
 
-        return languageProvider.GenerateCodeFor(candidateTypesToGenerate.Where(languageProvider.ShouldGenerate));
+        IEnumerable<TypeDeclaration> typeDeclarations = candidateTypesToGenerate.Where(languageProvider.ShouldGenerate);
+
+        return languageProvider.GenerateCodeFor(typeDeclarations);
     }
 
     /// <summary>
@@ -240,24 +243,20 @@ public class JsonSchemaTypeBuilder(
             // Tell ourselves early that we have visited this type declaration already.
             visitedTypeDeclarations.Add(typeDeclaration);
 
-            // First, ensure our parent is set.
-            if (languageProvider is IHierarchicalLanguageProvider hierarchical)
+            // We only set a name for ourselves if we cannot be reduced.
+            if (typeDeclaration.CanReduce())
             {
-                TypeDeclaration? parent = hierarchical.GetParent(typeDeclaration);
-                if (parent is TypeDeclaration p)
-                {
-                    SetNamesBeforeSubschema(parent, visitedTypeDeclarations);
-                }
+                typeDeclaration = typeDeclaration.ReducedTypeDeclaration().ReducedType;
+                SetNamesBeforeSubschema(typeDeclaration, visitedTypeDeclarations);
+                return;
             }
 
-            // We only set a name for ourselves if we cannot be reduced.
-            if (!typeDeclaration.CanReduce())
-            {
-                languageProvider.SetNamesBeforeSubschema(typeDeclaration, "Entity");
-            }
+            languageProvider.SetNamesBeforeSubschema(typeDeclaration, "Entity");
 
             // Then set the names for the subschema it requires.
-            foreach (TypeDeclaration child in typeDeclaration.SubschemaTypeDeclarations.Values.OrderBy(t => t.LocatedSchema.Location.ToString()))
+            foreach (TypeDeclaration child in typeDeclaration.SubschemaTypeDeclarations.Values
+                        .Select(s => s.ReducedTypeDeclaration().ReducedType)
+                        .OrderBy(t => t.LocatedSchema.Location.ToString()))
             {
                 SetNamesBeforeSubschema(child, visitedTypeDeclarations);
             }
@@ -282,7 +281,9 @@ public class JsonSchemaTypeBuilder(
             }
 
             // Then set the names for the subschema it requires.
-            foreach (TypeDeclaration child in typeDeclaration.SubschemaTypeDeclarations.Values.OrderBy(t => t.LocatedSchema.Location.ToString()))
+            foreach (TypeDeclaration child in typeDeclaration.SubschemaTypeDeclarations.Values
+                            .Select(s => s.ReducedTypeDeclaration().ReducedType)
+                            .OrderBy(t => t.LocatedSchema.Location.ToString()))
             {
                 SetNamesAfterSubschema(child, visitedTypeDeclarations);
             }

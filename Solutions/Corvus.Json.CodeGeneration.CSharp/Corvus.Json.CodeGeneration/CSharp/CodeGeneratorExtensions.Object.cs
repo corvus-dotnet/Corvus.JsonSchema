@@ -74,6 +74,7 @@ internal static partial class CodeGeneratorExtensions
     {
         return generator
             .ReserveNameIfNotReserved("Count")
+            .AppendSeparatorLine()
             .AppendLineIndent("/// <summary>")
             .AppendLineIndent("/// Gets the number of properties in the object.")
             .AppendLineIndent("/// </summary>")
@@ -329,7 +330,7 @@ internal static partial class CodeGeneratorExtensions
             generator
                 .AppendLineIndent(
                     "/// <inheritdoc/>")
-                .AppendObjectIndexer(typeDeclaration, propertyType.ReducedType.DotnetTypeName(), isExplicit: true)
+                .AppendObjectIndexer(typeDeclaration, propertyType.ReducedType.FullyQualifiedDotnetTypeName(), isExplicit: true)
                 .AppendSeparatorLine()
                 .AppendBlockIndent(
                 """
@@ -337,11 +338,11 @@ internal static partial class CodeGeneratorExtensions
                     /// Gets the property with the given name.
                     /// </summary>
                     /// <param name="name">The name of the property to retrieve.</param>
-                    /// <returns>The value of thee property with the given name.</returns>
+                    /// <returns>The value of the property with the given name.</returns>
                     /// <exception cref="IndexOutOfRangeException">The given property was not present on the object.</exception>
                     /// <exception cref="InvalidOperationException">The value is not an object.</exception>
                     """)
-                .AppendObjectIndexer(typeDeclaration, propertyType.ReducedType.DotnetTypeName(), isExplicit: false);
+                .AppendObjectIndexer(typeDeclaration, propertyType.ReducedType.FullyQualifiedDotnetTypeName(), isExplicit: false);
         }
         else
         {
@@ -1082,7 +1083,7 @@ internal static partial class CodeGeneratorExtensions
             /// <summary>
             /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
             /// </summary>
-            /// <returns>An immutable dictionary builder of <see cref="JsonPropertyName"/> to <see cref="JsonAny"/>, built from the existing object, without the given property.</returns>
+            /// <returns>An immutable list of <see cref="JsonObjectProperty"/>, built from the existing object, without the given property.</returns>
             /// <exception cref="InvalidOperationException">The value is not an object.</exception>
             """)
             .AppendIndent("public static ImmutableList<JsonObjectProperty> GetPropertyBackingWithout(in ")
@@ -1114,7 +1115,7 @@ internal static partial class CodeGeneratorExtensions
             /// <summary>
             /// Builds an <see cref="ImmutableList{JsonObjectProperty}"/> from the object, without a specific property.
             /// </summary>
-            /// <returns>An immutable dictionary builder of <see cref="JsonPropertyName"/> to <see cref="JsonAny"/>, built from the existing object, with the given property.</returns>
+            /// <returns>An immutable list of <see cref="JsonObjectProperty"/>, built from the existing object, with the given property.</returns>
             /// <exception cref="InvalidOperationException">The value is not an object.</exception>
             """)
             .AppendIndent("public static ImmutableList<JsonObjectProperty> GetPropertyBackingWith(in ")

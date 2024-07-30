@@ -6,20 +6,48 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.OpenApi31;
+
+/// <summary>
+/// Generated from JSON Schema.
+/// </summary>
+/// <remarks>
+/// <para>
+/// The description of OpenAPI v3.1.x documents without schema validation, as defined by https://spec.openapis.org/oas/v3.1.0
+/// </para>
+/// </remarks>
 public readonly partial struct OpenApiDocument
 {
+    /// <summary>
+    /// Generated from JSON Schema.
+    /// </summary>
     public readonly partial struct Header
     {
+        /// <summary>
+        /// Generated from JSON Schema.
+        /// </summary>
         public readonly partial struct WithStyleSimple
         {
             /// <summary>
             /// Generated from JSON Schema.
             /// </summary>
+            /// <remarks>
+            /// <para>
+            /// Examples:
+            /// <example>
+            /// <code>
+            /// false
+            /// </code>
+            /// </example>
+            /// </para>
+            /// </remarks>
             public readonly partial struct ExplodeEntity
             {
                 /// <inheritdoc/>
@@ -38,18 +66,47 @@ public readonly partial struct OpenApiDocument
                     }
 
                     JsonValueKind valueKind = this.ValueKind;
-                    result = this.ValidateType(valueKind, result, level);
+                    result = CorvusValidation.TypeValidationHandler(this, valueKind, result, level);
                     if (level == ValidationLevel.Flag && !result.IsValid)
                     {
                         return result;
                     }
 
-                    if (level != ValidationLevel.Flag)
+                    if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
                     }
 
                     return result;
+                }
+
+                private static partial class CorvusValidation
+                {
+                    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                    public static ValidationContext TypeValidationHandler(
+                        in ExplodeEntity value,
+                        JsonValueKind valueKind,
+                        in ValidationContext validationContext,
+                        ValidationLevel level = ValidationLevel.Flag)
+                    {
+                        ValidationContext result = validationContext;
+                        bool isValid = false;
+                        ValidationContext localResultBoolean = Corvus.Json.Validate.TypeBoolean(valueKind, result.CreateChildContext(), level);
+                        if (level == ValidationLevel.Flag && localResultBoolean.IsValid)
+                        {
+                            return validationContext;
+                        }
+
+                        if (localResultBoolean.IsValid)
+                        {
+                            isValid = true;
+                        }
+
+                        return result.MergeResults(
+                            isValid,
+                            level,
+                            localResultBoolean);
+                    }
                 }
             }
         }

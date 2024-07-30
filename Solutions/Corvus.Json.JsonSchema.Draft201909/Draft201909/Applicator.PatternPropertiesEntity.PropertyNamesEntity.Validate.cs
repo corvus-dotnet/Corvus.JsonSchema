@@ -6,13 +6,33 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.Draft201909;
+
+/// <summary>
+/// Applicator vocabulary meta-schema
+/// </summary>
 public readonly partial struct Applicator
 {
+    /// <summary>
+    /// Generated from JSON Schema.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Examples:
+    /// <example>
+    /// <code>
+    /// {}
+    /// </code>
+    /// </example>
+    /// </para>
+    /// </remarks>
     public readonly partial struct PatternPropertiesEntity
     {
         /// <summary>
@@ -36,18 +56,43 @@ public readonly partial struct Applicator
                 }
 
                 JsonValueKind valueKind = this.ValueKind;
-                result = this.ValidateFormat(valueKind, result, level);
+                result = CorvusValidation.FormatValidationHandler(this, valueKind, result, level);
                 if (level == ValidationLevel.Flag && !result.IsValid)
                 {
                     return result;
                 }
 
-                if (level != ValidationLevel.Flag)
+                if (level > ValidationLevel.Basic)
                 {
                     result = result.PopLocation();
                 }
 
                 return result;
+            }
+
+            private static partial class CorvusValidation
+            {
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static ValidationContext FormatValidationHandler(
+                    in PropertyNamesEntity value,
+                    JsonValueKind valueKind,
+                    in ValidationContext validationContext,
+                    ValidationLevel level = ValidationLevel.Flag)
+                {
+                    if (valueKind != JsonValueKind.String)
+                    {
+                        if (level == ValidationLevel.Verbose)
+                        {
+                            ValidationContext ignoredResult = validationContext;
+                            ignoredResult = ignoredResult.WithResult(isValid: true, $"Validation format - ignored 'regex' because the value '{{valueKind}}' is not 'String'.");
+                            return ignoredResult;
+                        }
+
+                        return validationContext;
+                    }
+
+                    return Corvus.Json.Validate.TypeRegex(value, validationContext, level);
+                }
             }
         }
     }

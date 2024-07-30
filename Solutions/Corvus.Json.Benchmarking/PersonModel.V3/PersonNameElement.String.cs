@@ -321,7 +321,7 @@ public readonly partial struct PersonNameElement
 
         if ((this.backing & Backing.String) != 0)
         {
-            int maxCharCount = Encoding.UTF8.GetMaxCharCount(utf8Bytes.Length);
+            int maxCharCount = System.Text.Encoding.UTF8.GetMaxCharCount(utf8Bytes.Length);
 #if NET8_0_OR_GREATER
             char[]? pooledChars = null;
 
@@ -331,7 +331,7 @@ public readonly partial struct PersonNameElement
 
             try
             {
-                int written = Encoding.UTF8.GetChars(utf8Bytes, chars);
+                int written = System.Text.Encoding.UTF8.GetChars(utf8Bytes, chars);
                 return chars[..written].SequenceEqual(this.stringBacking);
             }
             finally
@@ -348,7 +348,7 @@ public readonly partial struct PersonNameElement
 
             try
             {
-                int written = Encoding.UTF8.GetChars(bytes, 0, bytes.Length, chars, 0);
+                int written = System.Text.Encoding.UTF8.GetChars(bytes, 0, bytes.Length, chars, 0);
                 return chars.SequenceEqual(this.stringBacking);
             }
             finally

@@ -31,8 +31,14 @@ public sealed class ConstPropertyNameHeuristic : INameHeuristicBeforeSubschema
     private static ReadOnlySpan<char> ConstPropertySeparator => "And".AsSpan();
 
     /// <inheritdoc/>
-    public bool TryGetName(TypeDeclaration typeDeclaration, JsonReferenceBuilder reference, Span<char> typeNameBuffer, out int written)
+    public bool TryGetName(ILanguageProvider languageProvider, TypeDeclaration typeDeclaration, JsonReferenceBuilder reference, Span<char> typeNameBuffer, out int written)
     {
+        if (typeDeclaration.Parent() is null || typeDeclaration.IsInDefinitionsContainer())
+        {
+            written = 0;
+            return false;
+        }
+
         int count = 0;
         written = 0;
         foreach (PropertyDeclaration? property in
@@ -44,6 +50,7 @@ public sealed class ConstPropertyNameHeuristic : INameHeuristicBeforeSubschema
             if (count > 3)
             {
                 // We don't do it for more than 3 properties.
+                written = 0;
                 return false;
             }
 
@@ -70,6 +77,11 @@ public sealed class ConstPropertyNameHeuristic : INameHeuristicBeforeSubschema
                     : constValue.GetRawText().AsSpan();
 
             written += Formatting.FormatTypeNameComponent(typeDeclaration, constSpan, typeNameBuffer[written..]);
+        }
+
+        if (written > 0 && typeDeclaration.CollidesWithParent(typeNameBuffer[..written]))
+        {
+            written = 0;
         }
 
         return written > 0;

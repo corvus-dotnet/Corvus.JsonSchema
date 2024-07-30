@@ -6,15 +6,34 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
+using System.Runtime.CompilerServices;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.OpenApi31;
+
+/// <summary>
+/// Generated from JSON Schema.
+/// </summary>
+/// <remarks>
+/// <para>
+/// The description of OpenAPI v3.1.x documents without schema validation, as defined by https://spec.openapis.org/oas/v3.1.0
+/// </para>
+/// </remarks>
 public readonly partial struct OpenApiDocument
 {
+    /// <summary>
+    /// Generated from JSON Schema.
+    /// </summary>
     public readonly partial struct Components
     {
+        /// <summary>
+        /// Generated from JSON Schema.
+        /// </summary>
         public readonly partial struct SchemasResponsesParametersExamplesRequestBodiesHeadersSecuritySchemesLinksCallbacksPathItemsEntity
         {
             /// <summary>
@@ -37,18 +56,97 @@ public readonly partial struct OpenApiDocument
                         result = result.PushSchemaLocation("https://spec.openapis.org/oas/3.1/schema/2022-10-07#/$defs/components/patternProperties/^(schemas|responses|parameters|examples|requestBodies|headers|securitySchemes|links|callbacks|pathItems)$/propertyNames");
                     }
 
-                    result = Corvus.Json.Validate.ValidateString(this, result, level, null, null, __CorvusPatternExpression);
+                    JsonValueKind valueKind = this.ValueKind;
+                    result = CorvusValidation.StringValidationHandler(this, valueKind, result, level);
                     if (level == ValidationLevel.Flag && !result.IsValid)
                     {
                         return result;
                     }
 
-                    if (level != ValidationLevel.Flag)
+                    if (level > ValidationLevel.Basic)
                     {
                         result = result.PopLocation();
                     }
 
                     return result;
+                }
+
+                private static partial class CorvusValidation
+                {
+                    public static readonly Regex Pattern = CreatePattern();
+
+                    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                    public static ValidationContext StringValidationHandler(
+                        in PropertyNamesEntity value,
+                        JsonValueKind valueKind,
+                        in ValidationContext validationContext,
+                        ValidationLevel level = ValidationLevel.Flag)
+                    {
+                        if (valueKind != JsonValueKind.String)
+                        {
+                            if (level == ValidationLevel.Verbose)
+                            {
+                                ValidationContext ignoredResult = validationContext;
+                                ignoredResult = ignoredResult.PushValidationLocationProperty("pattern");
+                                ignoredResult = ignoredResult.WithResult(isValid: true, "Validation pattern - ignored because the value is not a string");
+                                ignoredResult = ignoredResult.PopLocation();
+                                return ignoredResult;
+                            }
+
+                            return validationContext;
+                        }
+
+                        ValidationContext result = validationContext;
+                        value.AsString.TryGetValue(StringValidator, new Corvus.Json.Validate.ValidationContextWrapper(result, level), out result);
+                        return result;
+
+                        static bool StringValidator(ReadOnlySpan<char> input, in Corvus.Json.Validate.ValidationContextWrapper context, out ValidationContext result)
+                        {
+                            result = context.Context;
+                            if (context.Level > ValidationLevel.Basic)
+                            {
+                                result = result.PushValidationLocationReducedPathModifier(new("#/pattern"));
+                            }
+
+                            if (Pattern.IsMatch(input))
+                            {
+                                if (context.Level == ValidationLevel.Verbose)
+                                {
+                                    result = result.WithResult(isValid: true, $"Validation pattern - {input.ToString()} matched  '^[a-zA-Z0-9._-]+$'");
+                                }
+                            }
+                            else
+                            {
+                                if (context.Level >= ValidationLevel.Detailed)
+                                {
+                                    result = result.WithResult(isValid: false, $"Validation pattern - {input.ToString()} did not match  '^[a-zA-Z0-9._-]+$'");
+                                }
+                                else if (context.Level >= ValidationLevel.Basic)
+                                {
+                                    result = result.WithResult(isValid: false, "Validation pattern - The value did not match  '^[a-zA-Z0-9._-]+$'");
+                                }
+                                else
+                                {
+                                    result = context.Context.WithResult(isValid: false);
+                                    return true;
+                                }
+                            }
+
+                            if (context.Level > ValidationLevel.Basic)
+                            {
+                                result = result.PopLocation();
+                            }
+
+                            return true;
+                        }
+                    }
+
+#if NET8_0_OR_GREATER && !SPECFLOW_BUILD
+                    [GeneratedRegex("^[a-zA-Z0-9._-]+$")]
+                    private static partial Regex CreatePattern();
+#else
+                    private static Regex CreatePattern() => new("^[a-zA-Z0-9._-]+$", RegexOptions.Compiled);
+#endif
                 }
             }
         }

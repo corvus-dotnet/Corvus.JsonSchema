@@ -23,7 +23,7 @@ public sealed class BooleanPartial : ICodeFileBuilder
     /// <inheritdoc/>
     public CodeGenerator EmitFile(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
-        if ((typeDeclaration.LocallyImpliedCoreTypes() & CoreTypes.Boolean) != 0)
+        if ((typeDeclaration.ImpliedCoreTypes() & CoreTypes.Boolean) != 0)
         {
             generator
                 .BeginFile(typeDeclaration, "Boolean")

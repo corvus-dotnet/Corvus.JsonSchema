@@ -58,7 +58,8 @@ internal static class TypeDeclarationExtensions
     {
         return
             typeDeclaration.Parent() is TypeDeclaration parent &&
-            name.Equals(parent.DotnetTypeName().AsSpan(), StringComparison.Ordinal);
+            parent.TryGetDotnetTypeName(out string? parentName) &&
+            name.Equals(parentName.AsSpan(), StringComparison.Ordinal);
     }
 
     /// <summary>
@@ -355,11 +356,17 @@ internal static class TypeDeclarationExtensions
     /// be generated.
     /// </summary>
     /// <param name="typeDeclaration">The type declaration to test.</param>
+    /// <param name="resetParent">If true, also reset the parent to null.</param>
     /// <returns>A reference to the type declaration after the operation has completed.</returns>
-    public static TypeDeclaration SetDoNotGenerate(this TypeDeclaration typeDeclaration)
+    public static TypeDeclaration SetDoNotGenerate(this TypeDeclaration typeDeclaration, bool resetParent = true)
     {
         typeDeclaration.SetMetadata(DoNotGenerateKey, true);
-        typeDeclaration.SetParent(null);
+
+        if (resetParent)
+        {
+            typeDeclaration.SetParent(null);
+        }
+
         return typeDeclaration;
     }
 

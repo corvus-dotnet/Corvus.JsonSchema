@@ -23,7 +23,7 @@ public sealed class NumberPartial : ICodeFileBuilder
     /// <inheritdoc/>
     public CodeGenerator EmitFile(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
-        if ((typeDeclaration.LocallyImpliedCoreTypes() & (CoreTypes.Number | CoreTypes.Integer)) != 0)
+        if ((typeDeclaration.ImpliedCoreTypes() & (CoreTypes.Number | CoreTypes.Integer)) != 0)
         {
             generator
                 .BeginFile(typeDeclaration, "Number")

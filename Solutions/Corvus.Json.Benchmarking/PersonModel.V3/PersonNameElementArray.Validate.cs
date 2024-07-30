@@ -83,6 +83,7 @@ public readonly partial struct PersonNameElementArray
                 level,
                 localResultArray);
         }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ValidationContext ArrayValidationHandler(
             in PersonNameElementArray value,

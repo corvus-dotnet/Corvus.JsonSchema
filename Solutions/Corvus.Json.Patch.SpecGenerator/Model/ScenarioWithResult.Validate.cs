@@ -6,11 +6,15 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.Patch.SpecGenerator;
+
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -28,27 +32,169 @@ public readonly partial struct ScenarioWithResult
         if (level > ValidationLevel.Basic)
         {
             result = result.UsingStack();
-            result = result.PushSchemaLocation("json-patch-test.json#/$defs/ScenarioWithResult");
+            result = result.PushSchemaLocation("#/$defs/ScenarioWithResult");
         }
 
         JsonValueKind valueKind = this.ValueKind;
-        result = this.ValidateAllOf(result, level);
+        result = CorvusValidation.CompositionAllOfValidationHandler(this, result, level);
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
             return result;
         }
 
-        result = this.ValidateObject(valueKind, result, level);
+        result = CorvusValidation.ObjectValidationHandler(this, valueKind, result, level);
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
             return result;
         }
 
-        if (level != ValidationLevel.Flag)
+        if (level > ValidationLevel.Basic)
         {
             result = result.PopLocation();
         }
 
         return result;
+    }
+
+    private static partial class CorvusValidation
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ValidationContext CompositionAllOfValidationHandler(
+            in ScenarioWithResult value,
+            in ValidationContext validationContext,
+            ValidationLevel level = ValidationLevel.Flag)
+        {
+            ValidationContext result = validationContext;
+            ValidationContext childContextBase = result;
+            ValidationContext allOfResult0 = childContextBase.CreateChildContext();
+            if (level > ValidationLevel.Basic)
+            {
+                allOfResult0 = allOfResult0.PushValidationLocationReducedPathModifier(new("#/allOf/0/$ref"));
+            }
+
+            allOfResult0 = value.As<Corvus.Json.Patch.SpecGenerator.ScenarioCommon>().Validate(allOfResult0, level);
+            if (!allOfResult0.IsValid)
+            {
+                if (level >= ValidationLevel.Basic)
+                {
+                    result = result.MergeChildContext(allOfResult0, true).WithResult(isValid: false, "Validation - allOf failed to validate against the schema.");
+                }
+                else
+                {
+                    result = result.MergeChildContext(allOfResult0, false).WithResult(isValid: false);
+                    return result;
+                }
+            }
+            else
+            {
+                result = result.MergeChildContext(allOfResult0, level >= ValidationLevel.Detailed);
+            }
+
+            ValidationContext allOfResult1 = childContextBase.CreateChildContext();
+            if (level > ValidationLevel.Basic)
+            {
+                allOfResult1 = allOfResult1.PushValidationLocationReducedPathModifier(new("#/allOf/1/$ref"));
+            }
+
+            allOfResult1 = value.As<Corvus.Json.Patch.SpecGenerator.NotDisabled>().Validate(allOfResult1, level);
+            if (!allOfResult1.IsValid)
+            {
+                if (level >= ValidationLevel.Basic)
+                {
+                    result = result.MergeChildContext(allOfResult1, true).WithResult(isValid: false, "Validation - allOf failed to validate against the schema.");
+                }
+                else
+                {
+                    result = result.MergeChildContext(allOfResult1, false).WithResult(isValid: false);
+                    return result;
+                }
+            }
+            else
+            {
+                result = result.MergeChildContext(allOfResult1, level >= ValidationLevel.Detailed);
+            }
+
+            return result;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ValidationContext ObjectValidationHandler(
+            in ScenarioWithResult value,
+            JsonValueKind valueKind,
+            in ValidationContext validationContext,
+            ValidationLevel level = ValidationLevel.Flag)
+        {
+            ValidationContext result = validationContext;
+            if (valueKind != JsonValueKind.Object)
+            {
+                if (level == ValidationLevel.Verbose)
+                {
+                    ValidationContext ignoredResult = validationContext;
+                    ignoredResult = ignoredResult.PushValidationLocationProperty("required");
+                    ignoredResult = ignoredResult.WithResult(isValid: true, "Validation required - ignored because the value is not an object");
+                    ignoredResult = ignoredResult.PopLocation();
+                    return ignoredResult;
+                }
+
+                return validationContext;
+            }
+
+            bool hasSeenExpected = false;
+            int propertyCount = 0;
+            foreach (JsonObjectProperty property in value.EnumerateObject())
+            {
+                if (property.NameEquals(JsonPropertyNames.ExpectedUtf8, JsonPropertyNames.Expected))
+                {
+                    hasSeenExpected = true;
+                    result = result.WithLocalProperty(propertyCount);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new(""), JsonPropertyNames.Expected);
+                    }
+
+                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonAny>().Validate(result.CreateChildContext(), level);
+                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+
+                    if (level == ValidationLevel.Flag && !result.IsValid)
+                    {
+                        return result;
+                    }
+                }
+
+                propertyCount++;
+            }
+
+            if (level > ValidationLevel.Basic)
+            {
+                result = result.PushValidationLocationReducedPathModifier(new("#/required/0"));
+            }
+
+            if (!hasSeenExpected)
+            {
+                if (level >= ValidationLevel.Basic)
+                {
+                    result = result.WithResult(isValid: false, "Validation required - the required property 'expected' was not present.");
+                }
+                else
+                {
+                    return result.WithResult(isValid: false);
+                }
+            }
+            else if (level == ValidationLevel.Verbose)
+            {
+                result = result.WithResult(isValid: true, "Validation required - the required property 'expected' was present.");
+            }
+
+            if (level > ValidationLevel.Basic)
+            {
+                result = result.PopLocation();
+            }
+
+            return result;
+        }
     }
 }

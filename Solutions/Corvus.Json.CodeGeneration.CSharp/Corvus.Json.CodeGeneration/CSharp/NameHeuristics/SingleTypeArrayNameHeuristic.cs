@@ -25,7 +25,7 @@ public sealed class SingleTypeArrayNameHeuristic : INameHeuristicAfterSubschema
     public uint Priority => 1600;
 
     /// <inheritdoc/>
-    public bool TryGetName(TypeDeclaration typeDeclaration, JsonReferenceBuilder reference, Span<char> typeNameBuffer, out int written)
+    public bool TryGetName(ILanguageProvider languageProvider, TypeDeclaration typeDeclaration, JsonReferenceBuilder reference, Span<char> typeNameBuffer, out int written)
     {
         if (typeDeclaration.Parent() is TypeDeclaration parent &&
             !typeDeclaration.IsInDefinitionsContainer() &&

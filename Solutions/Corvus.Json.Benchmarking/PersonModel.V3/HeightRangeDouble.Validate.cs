@@ -87,6 +87,7 @@ public readonly partial struct HeightRangeDouble
                 level,
                 localResultNumber);
         }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ValidationContext NumberValidationHandler(
             in HeightRangeDouble value,

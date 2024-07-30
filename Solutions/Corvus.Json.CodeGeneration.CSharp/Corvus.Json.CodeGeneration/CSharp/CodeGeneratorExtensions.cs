@@ -4177,7 +4177,7 @@ internal static partial class CodeGeneratorExtensions
             if (thenDeclaration is SingleSubschemaKeywordTypeDeclaration thenSubschema)
             {
                 // This is the parameter name for the if match method.
-                string? thenMatchTypeName = thenSubschema.ReducedType.DotnetTypeName();
+                string? thenMatchTypeName = thenSubschema.ReducedType.FullyQualifiedDotnetTypeName();
                 thenMatchParamName = generator.GetUniqueParameterNameInScope(thenMatchTypeName, childScope: scopeName, prefix: "match");
 
                 generator
@@ -4188,7 +4188,7 @@ internal static partial class CodeGeneratorExtensions
             if (elseDeclaration is SingleSubschemaKeywordTypeDeclaration elseSubschema)
             {
                 // This is the parameter name for the if match method.
-                string? elseMatchTypeName = elseSubschema.ReducedType.DotnetTypeName();
+                string? elseMatchTypeName = elseSubschema.ReducedType.FullyQualifiedDotnetTypeName();
                 elseMatchParamName = generator.GetUniqueParameterNameInScope(elseMatchTypeName, childScope: scopeName, prefix: "match");
 
                 generator

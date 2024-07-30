@@ -6,9 +6,10 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
 using System.Buffers;
-using System.ComponentModel;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
@@ -16,20 +17,49 @@ using Corvus.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json.JsonSchema.Draft4;
+
+/// <summary>
+/// Generated from JSON Schema.
+/// </summary>
+/// <remarks>
+/// <para>
+/// Core schema meta-schema
+/// </para>
+/// <para>
+/// Examples:
+/// <example>
+/// <code>
+/// {}
+/// </code>
+/// </example>
+/// </para>
+/// </remarks>
 public readonly partial struct Schema
 {
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Examples:
+    /// <example>
+    /// <code>
+    /// {}
+    /// </code>
+    /// </example>
+    /// </para>
+    /// </remarks>
     [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<AdditionalPropertiesEntity>))]
     public readonly partial struct AdditionalPropertiesEntity
+
     {
         private readonly Backing backing;
         private readonly JsonElement jsonElementBacking;
         private readonly bool boolBacking;
         private readonly ImmutableList<JsonObjectProperty> objectBacking;
+
         /// <summary>
-        /// Initializes a new instance of the <see cref = "AdditionalPropertiesEntity"/> struct.
+        /// Initializes a new instance of the <see cref="AdditionalPropertiesEntity"/> struct.
         /// </summary>
         public AdditionalPropertiesEntity()
         {
@@ -40,9 +70,9 @@ public readonly partial struct Schema
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref = "AdditionalPropertiesEntity"/> struct.
+        /// Initializes a new instance of the <see cref="AdditionalPropertiesEntity"/> struct.
         /// </summary>
-        /// <param name = "value">The value from which to construct the instance.</param>
+        /// <param name="value">The value from which to construct the instance.</param>
         public AdditionalPropertiesEntity(in JsonElement value)
         {
             this.jsonElementBacking = value;
@@ -52,19 +82,46 @@ public readonly partial struct Schema
         }
 
         /// <summary>
+        /// Initializes a new instance of the <see cref="AdditionalPropertiesEntity"/> struct.
+        /// </summary>
+        /// <param name="value">The value from which to construct the instance.</param>
+        public AdditionalPropertiesEntity(bool value)
+        {
+            this.backing = Backing.Bool;
+            this.jsonElementBacking = default;
+            this.boolBacking = value;
+            this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AdditionalPropertiesEntity"/> struct.
+        /// </summary>
+        /// <param name="value">The value from which to construct the instance.</param>
+        public AdditionalPropertiesEntity(ImmutableList<JsonObjectProperty> value)
+        {
+            this.backing = Backing.Object;
+            this.jsonElementBacking = default;
+            this.boolBacking = default;
+            this.objectBacking = value;
+        }
+
+        /// <summary>
         /// Gets the schema location from which this type was generated.
         /// </summary>
         public static string SchemaLocation { get; } = "http://json-schema.org/draft-04/schema#/properties/additionalProperties";
+
         /// <summary>
         /// Gets a Null instance.
         /// </summary>
         public static AdditionalPropertiesEntity Null { get; } = new(JsonValueHelpers.NullElement);
+
         /// <summary>
         /// Gets an Undefined instance.
         /// </summary>
         public static AdditionalPropertiesEntity Undefined { get; }
+
         /// <summary>
-        /// Gets the default instance of the type.
+        /// Gets the default instance.
         /// </summary>
         public static AdditionalPropertiesEntity DefaultInstance { get; } = AdditionalPropertiesEntity.ParseValue("{}"u8);
 
@@ -206,6 +263,50 @@ public readonly partial struct Schema
             }
         }
 
+        /// <summary>
+        /// Gets the instance as a <see cref="Corvus.Json.JsonBoolean" />.
+        /// </summary>
+        public Corvus.Json.JsonBoolean AsJsonBoolean
+        {
+            get
+            {
+                return this.As<Corvus.Json.JsonBoolean>();
+            }
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the instance is a <see cref="Corvus.Json.JsonBoolean" />.
+        /// </summary>
+        public bool IsJsonBoolean
+        {
+            get
+            {
+                return this.As<Corvus.Json.JsonBoolean>().IsValid();
+            }
+        }
+
+        /// <summary>
+        /// Gets the instance as a <see cref="Corvus.Json.JsonSchema.Draft4.Schema" />.
+        /// </summary>
+        public Corvus.Json.JsonSchema.Draft4.Schema AsSchema
+        {
+            get
+            {
+                return this.As<Corvus.Json.JsonSchema.Draft4.Schema>();
+            }
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the instance is a <see cref="Corvus.Json.JsonSchema.Draft4.Schema" />.
+        /// </summary>
+        public bool IsSchema
+        {
+            get
+            {
+                return this.As<Corvus.Json.JsonSchema.Draft4.Schema>().IsValid();
+            }
+        }
+
         /// <inheritdoc/>
         public bool HasJsonElementBacking
         {
@@ -244,11 +345,6 @@ public readonly partial struct Schema
                     return JsonValueKind.Object;
                 }
 
-                if ((this.backing & Backing.Null) != 0)
-                {
-                    return JsonValueKind.Null;
-                }
-
                 return JsonValueKind.Undefined;
             }
         }
@@ -256,9 +352,8 @@ public readonly partial struct Schema
         /// <summary>
         /// Conversion from JsonAny.
         /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        /// <exception cref = "InvalidOperationException">The value was not compatible with this type.</exception>
-        public static implicit operator AdditionalPropertiesEntity(in JsonAny value)
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator AdditionalPropertiesEntity(JsonAny value)
         {
             return value.As<AdditionalPropertiesEntity>();
         }
@@ -266,43 +361,75 @@ public readonly partial struct Schema
         /// <summary>
         /// Conversion to JsonAny.
         /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        /// <exception cref = "InvalidOperationException">The value was not compatible with this type.</exception>
-        public static implicit operator JsonAny(in AdditionalPropertiesEntity value)
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator JsonAny(AdditionalPropertiesEntity value)
         {
             return value.AsAny;
         }
 
         /// <summary>
-        /// Equality operator.
+        /// Conversion to <see cref="Corvus.Json.JsonSchema.Draft4.Schema"/>.
         /// </summary>
-        /// <param name = "left">The lhs.</param>
-        /// <param name = "right">The rhs.</param>
-        /// <returns><c>True</c> if the values are equal.</returns>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator Corvus.Json.JsonSchema.Draft4.Schema(AdditionalPropertiesEntity value)
+        {
+            return value.As<Corvus.Json.JsonSchema.Draft4.Schema>();
+        }
+
+        /// <summary>
+        /// Conversion from <see cref="Corvus.Json.JsonSchema.Draft4.Schema"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator AdditionalPropertiesEntity(Corvus.Json.JsonSchema.Draft4.Schema value)
+        {
+            return value.As<AdditionalPropertiesEntity>();
+        }
+
+        /// <summary>
+        /// Operator ==.
+        /// </summary>
+        /// <param name="left">The lhs of the operator.</param>
+        /// <param name="right">The rhs of the operator.</param>
+        /// <returns>
+        /// <c>True</c> if the values are equal.
+        /// </returns>
         public static bool operator ==(in AdditionalPropertiesEntity left, in AdditionalPropertiesEntity right)
         {
             return left.Equals(right);
         }
 
         /// <summary>
-        /// Inequality operator.
+        /// Operator !=.
         /// </summary>
-        /// <param name = "left">The lhs.</param>
-        /// <param name = "right">The rhs.</param>
-        /// <returns><c>True</c> if the values are equal.</returns>
+        /// <param name="left">The lhs of the operator.</param>
+        /// <param name="right">The rhs of the operator.</param>
+        /// <returns>
+        /// <c>True</c> if the values are not equal.
+        /// </returns>
         public static bool operator !=(in AdditionalPropertiesEntity left, in AdditionalPropertiesEntity right)
         {
             return !left.Equals(right);
         }
 
         /// <summary>
-        /// Gets an instance of the JSON value from a JsonAny value.
+        /// Gets an instance of the JSON value from a <see cref="JsonElement"/> value.
         /// </summary>
-        /// <param name = "value">The <see cref = "JsonAny"/> value from which to instantiate the instance.</param>
-        /// <returns>An instance of this type, initialized from the <see cref = "JsonAny"/>.</returns>
+        /// <param name="value">The <see cref="JsonElement"/> value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the <see cref="JsonElement"/>.</returns>
         /// <remarks>The returned value will have a <see cref = "IJsonValue.ValueKind"/> of <see cref = "JsonValueKind.Undefined"/> if the
-        /// value cannot be constructed from the given instance (e.g. because they have an incompatible dotnet backing type.
+        /// value cannot be constructed from the given instance (e.g. because they have an incompatible .NET backing type).
         /// </remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static AdditionalPropertiesEntity FromJson(in JsonElement value)
+        {
+            return new(value);
+        }
+
+        /// <summary>
+        /// Gets an instance of the JSON value from a <see cref="JsonAny"/> value.
+        /// </summary>
+        /// <param name="value">The <see cref="JsonAny"/> value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the <see cref="JsonAny"/> value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static AdditionalPropertiesEntity FromAny(in JsonAny value)
         {
@@ -311,8 +438,7 @@ public readonly partial struct Schema
                 return new(value.AsJsonElement);
             }
 
-            JsonValueKind valueKind = value.ValueKind;
-            return valueKind switch
+            return value.ValueKind switch
             {
                 JsonValueKind.True => new(true),
                 JsonValueKind.False => new(false),
@@ -323,23 +449,11 @@ public readonly partial struct Schema
         }
 
         /// <summary>
-        /// Gets an instance of the JSON value from a <see cref = "JsonElement"/> value.
+        /// Gets an instance of the JSON value from the provided value.
         /// </summary>
-        /// <param name = "value">The <see cref = "JsonElement"/> value from which to instantiate the instance.</param>
-        /// <returns>An instance of this type, initialized from the <see cref = "JsonElement"/>.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static AdditionalPropertiesEntity FromJson(in JsonElement value)
-        {
-            return new(value);
-        }
-
-        /// <summary>
-        /// Gets an instance of the JSON value from a boolean value.
-        /// </summary>
-        /// <typeparam name = "TValue">The type of the value.</typeparam>
-        /// <param name = "value">The value from which to instantiate the instance.</param>
-        /// <returns>An instance of this type, initialized from the value.</returns>
-        /// <remarks>This will be AdditionalPropertiesEntity.Undefined if the type is not compatible.</remarks>
+        /// <typeparam name="TValue">The type of the value.</typeparam>
+        /// <param name="value">The value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the provided value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static AdditionalPropertiesEntity FromBoolean<TValue>(in TValue value)
             where TValue : struct, IJsonBoolean<TValue>
@@ -349,83 +463,59 @@ public readonly partial struct Schema
                 return new(value.AsJsonElement);
             }
 
-            if (value.ValueKind == JsonValueKind.True)
+            return value.ValueKind switch
             {
-                return new(true);
-            }
+                JsonValueKind.True => new(true),
+                JsonValueKind.False => new(false),
+                JsonValueKind.Null => Null,
+                _ => Undefined,
+            };
+        }
 
-            if (value.ValueKind == JsonValueKind.False)
+#if NET8_0_OR_GREATER
+        /// <summary>
+        /// Gets an instance of the JSON value from the provided value.
+        /// </summary>
+        /// <typeparam name="TValue">The type of the value.</typeparam>
+        /// <param name="value">The value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the provided value.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static AdditionalPropertiesEntity IJsonValue<AdditionalPropertiesEntity>.FromString<TValue>(in TValue value)
+        {
+            if (value.HasJsonElementBacking)
             {
-                return new(false);
+                return new(value.AsJsonElement);
             }
 
             return Undefined;
         }
+#endif
 
 #if NET8_0_OR_GREATER
-    /// <summary>
-    /// Gets an instance of the JSON value from a string value.
-    /// </summary>
-    /// <typeparam name="TValue">The type of the value.</typeparam>
-    /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be AdditionalPropertiesEntity.Undefined if the type is not compatible.</remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static AdditionalPropertiesEntity IJsonValue<AdditionalPropertiesEntity>.FromString<TValue>(in TValue value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        return Undefined;
-    }
-#endif
-#if NET8_0_OR_GREATER
-    /// <summary>
-    /// Gets an instance of the JSON value from a number value.
-    /// </summary>
-    /// <typeparam name="TValue">The type of the value.</typeparam>
-    /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be AdditionalPropertiesEntity.Undefined if the type is not compatible.</remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static AdditionalPropertiesEntity IJsonValue<AdditionalPropertiesEntity>.FromNumber<TValue>(in TValue value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        return Undefined;
-    }
-#endif
-#if NET8_0_OR_GREATER
-    /// <summary>
-    /// Gets an instance of the JSON value from an array value.
-    /// </summary>
-    /// <typeparam name="TValue">The type of the value.</typeparam>
-    /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be AdditionalPropertiesEntity.Undefined if the type is not compatible.</remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static AdditionalPropertiesEntity IJsonValue<AdditionalPropertiesEntity>.FromArray<TValue>(in TValue value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        return Undefined;
-    }
-#endif
         /// <summary>
-        /// Gets an instance of the JSON value from an object value.
+        /// Gets an instance of the JSON value from the provided value.
         /// </summary>
-        /// <typeparam name = "TValue">The type of the value.</typeparam>
-        /// <param name = "value">The value from which to instantiate the instance.</param>
-        /// <returns>An instance of this type, initialized from the value.</returns>
-        /// <remarks>This will be AdditionalPropertiesEntity.Undefined if the type is not compatible.</remarks>
+        /// <typeparam name="TValue">The type of the value.</typeparam>
+        /// <param name="value">The value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the provided value.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static AdditionalPropertiesEntity IJsonValue<AdditionalPropertiesEntity>.FromNumber<TValue>(in TValue value)
+        {
+            if (value.HasJsonElementBacking)
+            {
+                return new(value.AsJsonElement);
+            }
+
+            return Undefined;
+        }
+#endif
+
+        /// <summary>
+        /// Gets an instance of the JSON value from the provided value.
+        /// </summary>
+        /// <typeparam name="TValue">The type of the value.</typeparam>
+        /// <param name="value">The value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the provided value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static AdditionalPropertiesEntity FromObject<TValue>(in TValue value)
             where TValue : struct, IJsonObject<TValue>
@@ -435,147 +525,158 @@ public readonly partial struct Schema
                 return new(value.AsJsonElement);
             }
 
-            if (value.ValueKind == JsonValueKind.Object)
+            return value.ValueKind switch
             {
-                return new(value.AsPropertyBacking());
+                JsonValueKind.Object => new(value.AsObject.AsPropertyBacking()),
+                JsonValueKind.Null => Null,
+                _ => Undefined,
+            };
+        }
+
+#if NET8_0_OR_GREATER
+        /// <summary>
+        /// Gets an instance of the JSON value from the provided value.
+        /// </summary>
+        /// <typeparam name="TValue">The type of the value.</typeparam>
+        /// <param name="value">The value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the provided value.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static AdditionalPropertiesEntity IJsonValue<AdditionalPropertiesEntity>.FromArray<TValue>(in TValue value)
+        {
+            if (value.HasJsonElementBacking)
+            {
+                return new(value.AsJsonElement);
             }
 
             return Undefined;
         }
+#endif
 
         /// <summary>
-        /// Parses a JSON string into a AdditionalPropertiesEntity.
+        /// Parses the AdditionalPropertiesEntity.
         /// </summary>
-        /// <param name = "json">The json string to parse.</param>
-        /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "AdditionalPropertiesEntity"/> instance built from the JSON string.</returns>
-        public static AdditionalPropertiesEntity Parse(string json, JsonDocumentOptions options = default)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        /// <param name="options">The (optional) JsonDocumentOptions.</param>
+        public static AdditionalPropertiesEntity Parse(string source, JsonDocumentOptions options = default)
         {
-            using var jsonDocument = JsonDocument.Parse(json, options);
-            return new AdditionalPropertiesEntity(jsonDocument.RootElement.Clone());
+            using var jsonDocument = JsonDocument.Parse(source, options);
+            return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses a JSON string into a AdditionalPropertiesEntity.
+        /// Parses the AdditionalPropertiesEntity.
         /// </summary>
-        /// <param name = "utf8Json">The json string to parse.</param>
-        /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "AdditionalPropertiesEntity"/> instance built from the JSON string.</returns>
-        public static AdditionalPropertiesEntity Parse(Stream utf8Json, JsonDocumentOptions options = default)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        /// <param name="options">The (optional) JsonDocumentOptions.</param>
+        public static AdditionalPropertiesEntity Parse(Stream source, JsonDocumentOptions options = default)
         {
-            using var jsonDocument = JsonDocument.Parse(utf8Json, options);
-            return new AdditionalPropertiesEntity(jsonDocument.RootElement.Clone());
+            using var jsonDocument = JsonDocument.Parse(source, options);
+            return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses a JSON string into a AdditionalPropertiesEntity.
+        /// Parses the AdditionalPropertiesEntity.
         /// </summary>
-        /// <param name = "utf8Json">The json string to parse.</param>
-        /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "AdditionalPropertiesEntity"/> instance built from the JSON string.</returns>
-        public static AdditionalPropertiesEntity Parse(ReadOnlyMemory<byte> utf8Json, JsonDocumentOptions options = default)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        /// <param name="options">The (optional) JsonDocumentOptions.</param>
+        public static AdditionalPropertiesEntity Parse(ReadOnlyMemory<byte> source, JsonDocumentOptions options = default)
         {
-            using var jsonDocument = JsonDocument.Parse(utf8Json, options);
-            return new AdditionalPropertiesEntity(jsonDocument.RootElement.Clone());
+            using var jsonDocument = JsonDocument.Parse(source, options);
+            return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses a JSON string into a AdditionalPropertiesEntity.
+        /// Parses the AdditionalPropertiesEntity.
         /// </summary>
-        /// <param name = "json">The json string to parse.</param>
-        /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "AdditionalPropertiesEntity"/> instance built from the JSON string.</returns>
-        public static AdditionalPropertiesEntity Parse(ReadOnlyMemory<char> json, JsonDocumentOptions options = default)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        /// <param name="options">The (optional) JsonDocumentOptions.</param>
+        public static AdditionalPropertiesEntity Parse(ReadOnlyMemory<char> source, JsonDocumentOptions options = default)
         {
-            using var jsonDocument = JsonDocument.Parse(json, options);
-            return new AdditionalPropertiesEntity(jsonDocument.RootElement.Clone());
+            using var jsonDocument = JsonDocument.Parse(source, options);
+            return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses a JSON string into a AdditionalPropertiesEntity.
+        /// Parses the AdditionalPropertiesEntity.
         /// </summary>
-        /// <param name = "utf8Json">The json string to parse.</param>
-        /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "AdditionalPropertiesEntity"/> instance built from the JSON string.</returns>
-        public static AdditionalPropertiesEntity Parse(ReadOnlySequence<byte> utf8Json, JsonDocumentOptions options = default)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        /// <param name="options">The (optional) JsonDocumentOptions.</param>
+        public static AdditionalPropertiesEntity Parse(ReadOnlySequence<byte> source, JsonDocumentOptions options = default)
         {
-            using var jsonDocument = JsonDocument.Parse(utf8Json, options);
-            return new AdditionalPropertiesEntity(jsonDocument.RootElement.Clone());
+            using var jsonDocument = JsonDocument.Parse(source, options);
+            return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses a JSON value from a buffer.
+        /// Parses the AdditionalPropertiesEntity.
         /// </summary>
-        /// <param name = "buffer">The buffer from which to parse the value.</param>
-        /// <returns>The parsed value.</returns>
-        static AdditionalPropertiesEntity ParseValue(ReadOnlySpan<char> buffer)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        public static AdditionalPropertiesEntity ParseValue(ReadOnlySpan<char> source)
         {
 #if NET8_0_OR_GREATER
-        return IJsonValue<AdditionalPropertiesEntity>.ParseValue(buffer);
+            return IJsonValue<AdditionalPropertiesEntity>.ParseValue(source);
 #else
-            return JsonValueHelpers.ParseValue<AdditionalPropertiesEntity>(buffer);
+            return JsonValueHelpers.ParseValue<AdditionalPropertiesEntity>(source);
 #endif
         }
 
         /// <summary>
-        /// Parses a JSON value from a buffer.
+        /// Parses the AdditionalPropertiesEntity.
         /// </summary>
-        /// <param name = "buffer">The buffer from which to parse the value.</param>
-        /// <returns>The parsed value.</returns>
-        static AdditionalPropertiesEntity ParseValue(ReadOnlySpan<byte> buffer)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        public static AdditionalPropertiesEntity ParseValue(ReadOnlySpan<byte> source)
         {
 #if NET8_0_OR_GREATER
-        return IJsonValue<AdditionalPropertiesEntity>.ParseValue(buffer);
+            return IJsonValue<AdditionalPropertiesEntity>.ParseValue(source);
 #else
-            return JsonValueHelpers.ParseValue<AdditionalPropertiesEntity>(buffer);
+            return JsonValueHelpers.ParseValue<AdditionalPropertiesEntity>(source);
 #endif
         }
 
         /// <summary>
-        /// Parses a JSON value from a buffer.
+        /// Parses the AdditionalPropertiesEntity.
         /// </summary>
-        /// <param name = "reader">The reader from which to parse the value.</param>
-        /// <returns>The parsed value.</returns>
-        static AdditionalPropertiesEntity ParseValue(ref Utf8JsonReader reader)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        public static AdditionalPropertiesEntity ParseValue(ref Utf8JsonReader source)
         {
 #if NET8_0_OR_GREATER
-        return IJsonValue<AdditionalPropertiesEntity>.ParseValue(ref reader);
+            return IJsonValue<AdditionalPropertiesEntity>.ParseValue(ref source);
 #else
-            return JsonValueHelpers.ParseValue<AdditionalPropertiesEntity>(ref reader);
+            return JsonValueHelpers.ParseValue<AdditionalPropertiesEntity>(ref source);
 #endif
         }
 
         /// <summary>
         /// Gets the value as an instance of the target value.
         /// </summary>
-        /// <typeparam name = "TTarget">The type of the target.</typeparam>
+        /// <typeparam name="TTarget">The type of the target.</typeparam>
         /// <returns>An instance of the target type.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TTarget As<TTarget>()
             where TTarget : struct, IJsonValue<TTarget>
         {
 #if NET8_0_OR_GREATER
-        if ((this.backing & Backing.JsonElement) != 0)
-        {
-            return TTarget.FromJson(this.jsonElementBacking);
-        }
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                return TTarget.FromJson(this.jsonElementBacking);
+            }
 
-        if ((this.backing & Backing.Bool) != 0)
-        {
-            return TTarget.FromBoolean(this);
-        }
+            if ((this.backing & Backing.Bool) != 0)
+            {
+                return TTarget.FromBoolean(this.AsBoolean);
+            }
 
-        if ((this.backing & Backing.Object) != 0)
-        {
-            return TTarget.FromObject(this);
-        }
+            if ((this.backing & Backing.Object) != 0)
+            {
+                return TTarget.FromObject(this);
+            }
 
-        if ((this.backing & Backing.Null) != 0)
-        {
-            return TTarget.Null;
-        }
+            if ((this.backing & Backing.Null) != 0)
+            {
+                return TTarget.Null;
+            }
 
-        return TTarget.Undefined;
+            return TTarget.Undefined;
 #else
             return this.As<AdditionalPropertiesEntity, TTarget>();
 #endif
@@ -584,7 +685,9 @@ public readonly partial struct Schema
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            return (obj is IJsonValue jv && this.Equals(jv.AsAny)) || (obj is null && this.IsNull());
+            return
+                (obj is IJsonValue jv && this.Equals(jv.AsAny)) ||
+                (obj is null && this.IsNull());
         }
 
         /// <inheritdoc/>
@@ -597,7 +700,7 @@ public readonly partial struct Schema
         /// <summary>
         /// Equality comparison.
         /// </summary>
-        /// <param name = "other">The other item with which to compare.</param>
+        /// <param name="other">The other item with which to compare.</param>
         /// <returns><see langword="true"/> if the values were equal.</returns>
         public bool Equals(in AdditionalPropertiesEntity other)
         {
@@ -620,18 +723,21 @@ public readonly partial struct Schema
             if ((this.backing & Backing.Bool) != 0)
             {
                 writer.WriteBooleanValue(this.boolBacking);
+
                 return;
             }
 
             if ((this.backing & Backing.Object) != 0)
             {
                 JsonValueHelpers.WriteProperties(this.objectBacking, writer);
+
                 return;
             }
 
             if ((this.backing & Backing.Null) != 0)
             {
                 writer.WriteNullValue();
+
                 return;
             }
         }
@@ -646,6 +752,87 @@ public readonly partial struct Schema
         public override string ToString()
         {
             return this.Serialize();
+        }
+
+        /// <summary>
+        /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
+        /// </summary>
+        /// <typeparam name="TIn">The immutable context to pass in to the match function.</typeparam>
+        /// <typeparam name="TOut">The result of calling the match function.</typeparam>
+        /// <param name="context">The context to pass to the match function.</param>
+        /// <param name="matchCorvusJsonJsonBoolean">Match a <see cref="Corvus.Json.JsonBoolean"/>.</param>
+        /// <param name="matchCorvusJsonJsonSchemaDraft4Schema">Match a <see cref="Corvus.Json.JsonSchema.Draft4.Schema"/>.</param>
+        /// <param name="defaultMatch">Match any other value.</param>
+        /// <returns>An instance of the value returned by the match function.</returns>
+        public TOut Match<TIn, TOut>(
+            in TIn context,
+            Matcher<Corvus.Json.JsonBoolean, TIn, TOut> matchCorvusJsonJsonBoolean,
+            Matcher<Corvus.Json.JsonSchema.Draft4.Schema, TIn, TOut> matchCorvusJsonJsonSchemaDraft4Schema,
+            Matcher<AdditionalPropertiesEntity, TIn, TOut> defaultMatch)
+        {
+            Corvus.Json.JsonBoolean matchCorvusJsonJsonBooleanValue = this.As<Corvus.Json.JsonBoolean>();
+            if (matchCorvusJsonJsonBooleanValue.IsValid())
+            {
+                return matchCorvusJsonJsonBoolean(matchCorvusJsonJsonBooleanValue, context);
+            }
+
+            Corvus.Json.JsonSchema.Draft4.Schema matchCorvusJsonJsonSchemaDraft4SchemaValue = this.As<Corvus.Json.JsonSchema.Draft4.Schema>();
+            if (matchCorvusJsonJsonSchemaDraft4SchemaValue.IsValid())
+            {
+                return matchCorvusJsonJsonSchemaDraft4Schema(matchCorvusJsonJsonSchemaDraft4SchemaValue, context);
+            }
+
+            return defaultMatch(this, context);
+        }
+
+        /// <summary>
+        /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
+        /// </summary>
+        /// <typeparam name="TOut">The result of calling the match function.</typeparam>
+        /// <param name="matchCorvusJsonJsonBoolean">Match a <see cref="Corvus.Json.JsonBoolean"/>.</param>
+        /// <param name="matchCorvusJsonJsonSchemaDraft4Schema">Match a <see cref="Corvus.Json.JsonSchema.Draft4.Schema"/>.</param>
+        /// <param name="defaultMatch">Match any other value.</param>
+        /// <returns>An instance of the value returned by the match function.</returns>
+        public TOut Match<TOut>(
+            Matcher<Corvus.Json.JsonBoolean, TOut> matchCorvusJsonJsonBoolean,
+            Matcher<Corvus.Json.JsonSchema.Draft4.Schema, TOut> matchCorvusJsonJsonSchemaDraft4Schema,
+            Matcher<AdditionalPropertiesEntity, TOut> defaultMatch)
+        {
+            Corvus.Json.JsonBoolean matchCorvusJsonJsonBooleanValue = this.As<Corvus.Json.JsonBoolean>();
+            if (matchCorvusJsonJsonBooleanValue.IsValid())
+            {
+                return matchCorvusJsonJsonBoolean(matchCorvusJsonJsonBooleanValue);
+            }
+
+            Corvus.Json.JsonSchema.Draft4.Schema matchCorvusJsonJsonSchemaDraft4SchemaValue = this.As<Corvus.Json.JsonSchema.Draft4.Schema>();
+            if (matchCorvusJsonJsonSchemaDraft4SchemaValue.IsValid())
+            {
+                return matchCorvusJsonJsonSchemaDraft4Schema(matchCorvusJsonJsonSchemaDraft4SchemaValue);
+            }
+
+            return defaultMatch(this);
+        }
+
+        /// <summary>
+        /// Gets the value as a <see cref="Corvus.Json.JsonBoolean" />.
+        /// </summary>
+        /// <param name="result">The result of the conversions.</param>
+        /// <returns><see langword="true" /> if the conversion was valid.</returns>
+        public bool TryGetAsJsonBoolean(out Corvus.Json.JsonBoolean result)
+        {
+            result = this.As<Corvus.Json.JsonBoolean>();
+            return result.IsValid();
+        }
+
+        /// <summary>
+        /// Gets the value as a <see cref="Corvus.Json.JsonSchema.Draft4.Schema" />.
+        /// </summary>
+        /// <param name="result">The result of the conversions.</param>
+        /// <returns><see langword="true" /> if the conversion was valid.</returns>
+        public bool TryGetAsSchema(out Corvus.Json.JsonSchema.Draft4.Schema result)
+        {
+            result = this.As<Corvus.Json.JsonSchema.Draft4.Schema>();
+            return result.IsValid();
         }
     }
 }
