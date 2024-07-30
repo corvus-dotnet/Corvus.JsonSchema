@@ -25,9 +25,9 @@ public sealed class PathNameHeuristic : INameHeuristicBeforeSubschema
     public uint Priority => 11_000;
 
     /// <inheritdoc/>
-    public bool TryGetName(TypeDeclaration typeDeclaration, JsonReferenceBuilder reference, Span<char> typeNameBuffer, out int written)
+    public bool TryGetName(ILanguageProvider languageProvider, TypeDeclaration typeDeclaration, JsonReferenceBuilder reference, Span<char> typeNameBuffer, out int written)
     {
-        if (typeDeclaration.Parent() is not null &&
+        if (typeDeclaration.Parent() is not null && !typeDeclaration.IsInDefinitionsContainer() &&
             reference.HasPath)
         {
             int lastSlash = reference.Path.LastIndexOf('/');
@@ -47,6 +47,12 @@ public sealed class PathNameHeuristic : INameHeuristicBeforeSubschema
 
             ReadOnlySpan<char> name = reference.Path[(lastSlash + 1)..];
             written = Formatting.FormatTypeNameComponent(typeDeclaration, name, typeNameBuffer);
+
+            if (typeDeclaration.CollidesWithParent(typeNameBuffer[..written]))
+            {
+                written = Formatting.ApplyStandardSuffix(typeDeclaration, typeNameBuffer, typeNameBuffer[..written]);
+            }
+
             return true;
         }
 

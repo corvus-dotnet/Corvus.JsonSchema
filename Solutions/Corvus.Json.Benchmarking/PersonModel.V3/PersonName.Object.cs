@@ -84,6 +84,7 @@ public readonly partial struct PersonName
             throw new InvalidOperationException();
         }
     }
+
     /// <summary>
     /// Gets the number of properties in the object.
     /// </summary>
@@ -195,7 +196,7 @@ public readonly partial struct PersonName
     /// Other (middle) names for the person
     /// </para>
     /// </remarks>
-    public Corvus.Json.Benchmarking.Models.V3.OtherNames OtherNames
+    public Corvus.Json.Benchmarking.Models.V3.OtherNames OtherNamesValue
     {
         get
         {
@@ -206,7 +207,7 @@ public readonly partial struct PersonName
                     return default;
                 }
 
-                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.OtherNamesUtf8, out JsonElement result))
+                if (this.jsonElementBacking.TryGetProperty(JsonPropertyNames.OtherNamesValueUtf8, out JsonElement result))
                 {
                     return new(result);
                 }
@@ -214,7 +215,7 @@ public readonly partial struct PersonName
 
             if ((this.backing & Backing.Object) != 0)
             {
-                if (this.objectBacking.TryGetValue(JsonPropertyNames.OtherNames, out JsonAny result))
+                if (this.objectBacking.TryGetValue(JsonPropertyNames.OtherNamesValue, out JsonAny result))
                 {
                     return result.As<Corvus.Json.Benchmarking.Models.V3.OtherNames>();
                 }
@@ -252,7 +253,7 @@ public readonly partial struct PersonName
     public static PersonName Create(
         in Corvus.Json.Benchmarking.Models.V3.PersonNameElement familyName,
         in Corvus.Json.Benchmarking.Models.V3.PersonNameElement? givenName = null,
-        in Corvus.Json.Benchmarking.Models.V3.OtherNames? otherNames = null)
+        in Corvus.Json.Benchmarking.Models.V3.OtherNames? otherNamesValue = null)
     {
         var builder = ImmutableList.CreateBuilder<JsonObjectProperty>();
         builder.Add(JsonPropertyNames.FamilyName, familyName.AsAny);
@@ -261,9 +262,9 @@ public readonly partial struct PersonName
             builder.Add(JsonPropertyNames.GivenName, givenName.Value.AsAny);
         }
 
-        if (otherNames is not null)
+        if (otherNamesValue is not null)
         {
-            builder.Add(JsonPropertyNames.OtherNames, otherNames.Value.AsAny);
+            builder.Add(JsonPropertyNames.OtherNamesValue, otherNamesValue.Value.AsAny);
         }
 
         return new(builder.ToImmutable());
@@ -723,9 +724,9 @@ public readonly partial struct PersonName
         public const string GivenName = "givenName";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="OtherNames"/>.
+        /// Gets the JSON property name for <see cref="OtherNamesValue"/>.
         /// </summary>
-        public const string OtherNames = "otherNames";
+        public const string OtherNamesValue = "otherNames";
 
         /// <summary>
         /// Gets the JSON property name for <see cref="FamilyName"/>.
@@ -738,9 +739,9 @@ public readonly partial struct PersonName
         public static ReadOnlySpan<byte> GivenNameUtf8 => "givenName"u8;
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="OtherNames"/>.
+        /// Gets the JSON property name for <see cref="OtherNamesValue"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> OtherNamesUtf8 => "otherNames"u8;
+        public static ReadOnlySpan<byte> OtherNamesValueUtf8 => "otherNames"u8;
     }
 
     private static class __CorvusObjectHelpers

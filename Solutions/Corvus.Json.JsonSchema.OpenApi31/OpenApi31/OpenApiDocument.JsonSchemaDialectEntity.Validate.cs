@@ -6,16 +6,38 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.OpenApi31;
+
+/// <summary>
+/// Generated from JSON Schema.
+/// </summary>
+/// <remarks>
+/// <para>
+/// The description of OpenAPI v3.1.x documents without schema validation, as defined by https://spec.openapis.org/oas/v3.1.0
+/// </para>
+/// </remarks>
 public readonly partial struct OpenApiDocument
 {
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Examples:
+    /// <example>
+    /// <code>
+    /// "https://spec.openapis.org/oas/3.1/dialect/base"
+    /// </code>
+    /// </example>
+    /// </para>
+    /// </remarks>
     public readonly partial struct JsonSchemaDialectEntity
     {
         /// <inheritdoc/>
@@ -34,24 +56,75 @@ public readonly partial struct OpenApiDocument
             }
 
             JsonValueKind valueKind = this.ValueKind;
-            result = this.ValidateType(valueKind, result, level);
+            result = CorvusValidation.FormatValidationHandler(this, valueKind, result, level);
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
             }
 
-            result = this.ValidateFormat(valueKind, result, level);
+            result = CorvusValidation.TypeValidationHandler(this, valueKind, result, level);
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
             }
 
-            if (level != ValidationLevel.Flag)
+            if (level > ValidationLevel.Basic)
             {
                 result = result.PopLocation();
             }
 
             return result;
+        }
+
+        private static partial class CorvusValidation
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static ValidationContext FormatValidationHandler(
+                in JsonSchemaDialectEntity value,
+                JsonValueKind valueKind,
+                in ValidationContext validationContext,
+                ValidationLevel level = ValidationLevel.Flag)
+            {
+                if (valueKind != JsonValueKind.String)
+                {
+                    if (level == ValidationLevel.Verbose)
+                    {
+                        ValidationContext ignoredResult = validationContext;
+                        ignoredResult = ignoredResult.WithResult(isValid: true, $"Validation format - ignored 'uri' because the value '{{valueKind}}' is not 'String'.");
+                        return ignoredResult;
+                    }
+
+                    return validationContext;
+                }
+
+                return Corvus.Json.Validate.TypeUri(value, validationContext, level);
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static ValidationContext TypeValidationHandler(
+                in JsonSchemaDialectEntity value,
+                JsonValueKind valueKind,
+                in ValidationContext validationContext,
+                ValidationLevel level = ValidationLevel.Flag)
+            {
+                ValidationContext result = validationContext;
+                bool isValid = false;
+                ValidationContext localResultString = Corvus.Json.Validate.TypeString(valueKind, result.CreateChildContext(), level);
+                if (level == ValidationLevel.Flag && localResultString.IsValid)
+                {
+                    return validationContext;
+                }
+
+                if (localResultString.IsValid)
+                {
+                    isValid = true;
+                }
+
+                return result.MergeResults(
+                    isValid,
+                    level,
+                    localResultString);
+            }
         }
     }
 }

@@ -6,9 +6,10 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
 using System.Buffers;
-using System.ComponentModel;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
@@ -16,17 +17,20 @@ using Corvus.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json.Patch.SpecGenerator;
+
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
 [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<DisabledScenario>))]
 public readonly partial struct DisabledScenario
+
 {
     private readonly Backing backing;
     private readonly JsonElement jsonElementBacking;
     private readonly ImmutableList<JsonObjectProperty> objectBacking;
+
     /// <summary>
-    /// Initializes a new instance of the <see cref = "DisabledScenario"/> struct.
+    /// Initializes a new instance of the <see cref="DisabledScenario"/> struct.
     /// </summary>
     public DisabledScenario()
     {
@@ -36,9 +40,9 @@ public readonly partial struct DisabledScenario
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref = "DisabledScenario"/> struct.
+    /// Initializes a new instance of the <see cref="DisabledScenario"/> struct.
     /// </summary>
-    /// <param name = "value">The value from which to construct the instance.</param>
+    /// <param name="value">The value from which to construct the instance.</param>
     public DisabledScenario(in JsonElement value)
     {
         this.jsonElementBacking = value;
@@ -47,19 +51,33 @@ public readonly partial struct DisabledScenario
     }
 
     /// <summary>
+    /// Initializes a new instance of the <see cref="DisabledScenario"/> struct.
+    /// </summary>
+    /// <param name="value">The value from which to construct the instance.</param>
+    public DisabledScenario(ImmutableList<JsonObjectProperty> value)
+    {
+        this.backing = Backing.Object;
+        this.jsonElementBacking = default;
+        this.objectBacking = value;
+    }
+
+    /// <summary>
     /// Gets the schema location from which this type was generated.
     /// </summary>
-    public static string SchemaLocation { get; } = "json-patch-test.json#/$defs/DisabledScenario";
+    public static string SchemaLocation { get; } = "#/$defs/DisabledScenario";
+
     /// <summary>
     /// Gets a Null instance.
     /// </summary>
     public static DisabledScenario Null { get; } = new(JsonValueHelpers.NullElement);
+
     /// <summary>
     /// Gets an Undefined instance.
     /// </summary>
     public static DisabledScenario Undefined { get; }
+
     /// <summary>
-    /// Gets the default instance of the type.
+    /// Gets the default instance.
     /// </summary>
     public static DisabledScenario DefaultInstance { get; }
 
@@ -186,6 +204,28 @@ public readonly partial struct DisabledScenario
         }
     }
 
+    /// <summary>
+    /// Gets the instance as a <see cref="Corvus.Json.Patch.SpecGenerator.ScenarioCommon" />.
+    /// </summary>
+    public Corvus.Json.Patch.SpecGenerator.ScenarioCommon AsScenarioCommon
+    {
+        get
+        {
+            return this.As<Corvus.Json.Patch.SpecGenerator.ScenarioCommon>();
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether the instance is a <see cref="Corvus.Json.Patch.SpecGenerator.ScenarioCommon" />.
+    /// </summary>
+    public bool IsScenarioCommon
+    {
+        get
+        {
+            return this.As<Corvus.Json.Patch.SpecGenerator.ScenarioCommon>().IsValid();
+        }
+    }
+
     /// <inheritdoc/>
     public bool HasJsonElementBacking
     {
@@ -219,11 +259,6 @@ public readonly partial struct DisabledScenario
                 return JsonValueKind.Object;
             }
 
-            if ((this.backing & Backing.Null) != 0)
-            {
-                return JsonValueKind.Null;
-            }
-
             return JsonValueKind.Undefined;
         }
     }
@@ -231,9 +266,8 @@ public readonly partial struct DisabledScenario
     /// <summary>
     /// Conversion from JsonAny.
     /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    /// <exception cref = "InvalidOperationException">The value was not compatible with this type.</exception>
-    public static implicit operator DisabledScenario(in JsonAny value)
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator DisabledScenario(JsonAny value)
     {
         return value.As<DisabledScenario>();
     }
@@ -241,43 +275,75 @@ public readonly partial struct DisabledScenario
     /// <summary>
     /// Conversion to JsonAny.
     /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    /// <exception cref = "InvalidOperationException">The value was not compatible with this type.</exception>
-    public static implicit operator JsonAny(in DisabledScenario value)
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator JsonAny(DisabledScenario value)
     {
         return value.AsAny;
     }
 
     /// <summary>
-    /// Equality operator.
+    /// Conversion to <see cref="Corvus.Json.Patch.SpecGenerator.ScenarioCommon"/>.
     /// </summary>
-    /// <param name = "left">The lhs.</param>
-    /// <param name = "right">The rhs.</param>
-    /// <returns><c>True</c> if the values are equal.</returns>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator Corvus.Json.Patch.SpecGenerator.ScenarioCommon(DisabledScenario value)
+    {
+        return value.As<Corvus.Json.Patch.SpecGenerator.ScenarioCommon>();
+    }
+
+    /// <summary>
+    /// Conversion from <see cref="Corvus.Json.Patch.SpecGenerator.ScenarioCommon"/>.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static explicit operator DisabledScenario(Corvus.Json.Patch.SpecGenerator.ScenarioCommon value)
+    {
+        return value.As<DisabledScenario>();
+    }
+
+    /// <summary>
+    /// Operator ==.
+    /// </summary>
+    /// <param name="left">The lhs of the operator.</param>
+    /// <param name="right">The rhs of the operator.</param>
+    /// <returns>
+    /// <c>True</c> if the values are equal.
+    /// </returns>
     public static bool operator ==(in DisabledScenario left, in DisabledScenario right)
     {
         return left.Equals(right);
     }
 
     /// <summary>
-    /// Inequality operator.
+    /// Operator !=.
     /// </summary>
-    /// <param name = "left">The lhs.</param>
-    /// <param name = "right">The rhs.</param>
-    /// <returns><c>True</c> if the values are equal.</returns>
+    /// <param name="left">The lhs of the operator.</param>
+    /// <param name="right">The rhs of the operator.</param>
+    /// <returns>
+    /// <c>True</c> if the values are not equal.
+    /// </returns>
     public static bool operator !=(in DisabledScenario left, in DisabledScenario right)
     {
         return !left.Equals(right);
     }
 
     /// <summary>
-    /// Gets an instance of the JSON value from a JsonAny value.
+    /// Gets an instance of the JSON value from a <see cref="JsonElement"/> value.
     /// </summary>
-    /// <param name = "value">The <see cref = "JsonAny"/> value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the <see cref = "JsonAny"/>.</returns>
+    /// <param name="value">The <see cref="JsonElement"/> value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the <see cref="JsonElement"/>.</returns>
     /// <remarks>The returned value will have a <see cref = "IJsonValue.ValueKind"/> of <see cref = "JsonValueKind.Undefined"/> if the
-    /// value cannot be constructed from the given instance (e.g. because they have an incompatible dotnet backing type.
+    /// value cannot be constructed from the given instance (e.g. because they have an incompatible .NET backing type).
     /// </remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static DisabledScenario FromJson(in JsonElement value)
+    {
+        return new(value);
+    }
+
+    /// <summary>
+    /// Gets an instance of the JSON value from a <see cref="JsonAny"/> value.
+    /// </summary>
+    /// <param name="value">The <see cref="JsonAny"/> value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the <see cref="JsonAny"/> value.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DisabledScenario FromAny(in JsonAny value)
     {
@@ -286,8 +352,7 @@ public readonly partial struct DisabledScenario
             return new(value.AsJsonElement);
         }
 
-        JsonValueKind valueKind = value.ValueKind;
-        return valueKind switch
+        return value.ValueKind switch
         {
             JsonValueKind.Object => new(value.AsObject.AsPropertyBacking()),
             JsonValueKind.Null => Null,
@@ -295,25 +360,13 @@ public readonly partial struct DisabledScenario
         };
     }
 
-    /// <summary>
-    /// Gets an instance of the JSON value from a <see cref = "JsonElement"/> value.
-    /// </summary>
-    /// <param name = "value">The <see cref = "JsonElement"/> value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the <see cref = "JsonElement"/>.</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static DisabledScenario FromJson(in JsonElement value)
-    {
-        return new(value);
-    }
-
 #if NET8_0_OR_GREATER
     /// <summary>
-    /// Gets an instance of the JSON value from a boolean value.
+    /// Gets an instance of the JSON value from the provided value.
     /// </summary>
-    /// <typeparam name = "TValue">The type of the value.</typeparam>
+    /// <typeparam name="TValue">The type of the value.</typeparam>
     /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be DisabledScenario.Undefined if the type is not compatible.</remarks>
+    /// <returns>An instance of this type, initialized from the provided value.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static DisabledScenario IJsonValue<DisabledScenario>.FromBoolean<TValue>(in TValue value)
     {
@@ -325,14 +378,14 @@ public readonly partial struct DisabledScenario
         return Undefined;
     }
 #endif
+
 #if NET8_0_OR_GREATER
     /// <summary>
-    /// Gets an instance of the JSON value from a string value.
+    /// Gets an instance of the JSON value from the provided value.
     /// </summary>
     /// <typeparam name="TValue">The type of the value.</typeparam>
     /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be DisabledScenario.Undefined if the type is not compatible.</remarks>
+    /// <returns>An instance of this type, initialized from the provided value.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static DisabledScenario IJsonValue<DisabledScenario>.FromString<TValue>(in TValue value)
     {
@@ -344,14 +397,14 @@ public readonly partial struct DisabledScenario
         return Undefined;
     }
 #endif
+
 #if NET8_0_OR_GREATER
     /// <summary>
-    /// Gets an instance of the JSON value from a number value.
+    /// Gets an instance of the JSON value from the provided value.
     /// </summary>
     /// <typeparam name="TValue">The type of the value.</typeparam>
     /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be DisabledScenario.Undefined if the type is not compatible.</remarks>
+    /// <returns>An instance of this type, initialized from the provided value.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static DisabledScenario IJsonValue<DisabledScenario>.FromNumber<TValue>(in TValue value)
     {
@@ -363,14 +416,37 @@ public readonly partial struct DisabledScenario
         return Undefined;
     }
 #endif
-#if NET8_0_OR_GREATER
+
     /// <summary>
-    /// Gets an instance of the JSON value from an array value.
+    /// Gets an instance of the JSON value from the provided value.
     /// </summary>
     /// <typeparam name="TValue">The type of the value.</typeparam>
     /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be DisabledScenario.Undefined if the type is not compatible.</remarks>
+    /// <returns>An instance of this type, initialized from the provided value.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static DisabledScenario FromObject<TValue>(in TValue value)
+        where TValue : struct, IJsonObject<TValue>
+    {
+        if (value.HasJsonElementBacking)
+        {
+            return new(value.AsJsonElement);
+        }
+
+        return value.ValueKind switch
+        {
+            JsonValueKind.Object => new(value.AsObject.AsPropertyBacking()),
+            JsonValueKind.Null => Null,
+            _ => Undefined,
+        };
+    }
+
+#if NET8_0_OR_GREATER
+    /// <summary>
+    /// Gets an instance of the JSON value from the provided value.
+    /// </summary>
+    /// <typeparam name="TValue">The type of the value.</typeparam>
+    /// <param name="value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the provided value.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static DisabledScenario IJsonValue<DisabledScenario>.FromArray<TValue>(in TValue value)
     {
@@ -382,136 +458,105 @@ public readonly partial struct DisabledScenario
         return Undefined;
     }
 #endif
+
     /// <summary>
-    /// Gets an instance of the JSON value from an object value.
+    /// Parses the DisabledScenario.
     /// </summary>
-    /// <typeparam name = "TValue">The type of the value.</typeparam>
-    /// <param name = "value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be DisabledScenario.Undefined if the type is not compatible.</remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static DisabledScenario FromObject<TValue>(in TValue value)
-        where TValue : struct, IJsonObject<TValue>
+    /// <param name="source">The source of the JSON string to parse.</param>
+    /// <param name="options">The (optional) JsonDocumentOptions.</param>
+    public static DisabledScenario Parse(string source, JsonDocumentOptions options = default)
     {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        if (value.ValueKind == JsonValueKind.Object)
-        {
-            return new(value.AsPropertyBacking());
-        }
-
-        return Undefined;
+        using var jsonDocument = JsonDocument.Parse(source, options);
+        return new(jsonDocument.RootElement.Clone());
     }
 
     /// <summary>
-    /// Parses a JSON string into a DisabledScenario.
+    /// Parses the DisabledScenario.
     /// </summary>
-    /// <param name = "json">The json string to parse.</param>
-    /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-    /// <returns>A <see cref = "DisabledScenario"/> instance built from the JSON string.</returns>
-    public static DisabledScenario Parse(string json, JsonDocumentOptions options = default)
+    /// <param name="source">The source of the JSON string to parse.</param>
+    /// <param name="options">The (optional) JsonDocumentOptions.</param>
+    public static DisabledScenario Parse(Stream source, JsonDocumentOptions options = default)
     {
-        using var jsonDocument = JsonDocument.Parse(json, options);
-        return new DisabledScenario(jsonDocument.RootElement.Clone());
+        using var jsonDocument = JsonDocument.Parse(source, options);
+        return new(jsonDocument.RootElement.Clone());
     }
 
     /// <summary>
-    /// Parses a JSON string into a DisabledScenario.
+    /// Parses the DisabledScenario.
     /// </summary>
-    /// <param name = "utf8Json">The json string to parse.</param>
-    /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-    /// <returns>A <see cref = "DisabledScenario"/> instance built from the JSON string.</returns>
-    public static DisabledScenario Parse(Stream utf8Json, JsonDocumentOptions options = default)
+    /// <param name="source">The source of the JSON string to parse.</param>
+    /// <param name="options">The (optional) JsonDocumentOptions.</param>
+    public static DisabledScenario Parse(ReadOnlyMemory<byte> source, JsonDocumentOptions options = default)
     {
-        using var jsonDocument = JsonDocument.Parse(utf8Json, options);
-        return new DisabledScenario(jsonDocument.RootElement.Clone());
+        using var jsonDocument = JsonDocument.Parse(source, options);
+        return new(jsonDocument.RootElement.Clone());
     }
 
     /// <summary>
-    /// Parses a JSON string into a DisabledScenario.
+    /// Parses the DisabledScenario.
     /// </summary>
-    /// <param name = "utf8Json">The json string to parse.</param>
-    /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-    /// <returns>A <see cref = "DisabledScenario"/> instance built from the JSON string.</returns>
-    public static DisabledScenario Parse(ReadOnlyMemory<byte> utf8Json, JsonDocumentOptions options = default)
+    /// <param name="source">The source of the JSON string to parse.</param>
+    /// <param name="options">The (optional) JsonDocumentOptions.</param>
+    public static DisabledScenario Parse(ReadOnlyMemory<char> source, JsonDocumentOptions options = default)
     {
-        using var jsonDocument = JsonDocument.Parse(utf8Json, options);
-        return new DisabledScenario(jsonDocument.RootElement.Clone());
+        using var jsonDocument = JsonDocument.Parse(source, options);
+        return new(jsonDocument.RootElement.Clone());
     }
 
     /// <summary>
-    /// Parses a JSON string into a DisabledScenario.
+    /// Parses the DisabledScenario.
     /// </summary>
-    /// <param name = "json">The json string to parse.</param>
-    /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-    /// <returns>A <see cref = "DisabledScenario"/> instance built from the JSON string.</returns>
-    public static DisabledScenario Parse(ReadOnlyMemory<char> json, JsonDocumentOptions options = default)
+    /// <param name="source">The source of the JSON string to parse.</param>
+    /// <param name="options">The (optional) JsonDocumentOptions.</param>
+    public static DisabledScenario Parse(ReadOnlySequence<byte> source, JsonDocumentOptions options = default)
     {
-        using var jsonDocument = JsonDocument.Parse(json, options);
-        return new DisabledScenario(jsonDocument.RootElement.Clone());
+        using var jsonDocument = JsonDocument.Parse(source, options);
+        return new(jsonDocument.RootElement.Clone());
     }
 
     /// <summary>
-    /// Parses a JSON string into a DisabledScenario.
+    /// Parses the DisabledScenario.
     /// </summary>
-    /// <param name = "utf8Json">The json string to parse.</param>
-    /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-    /// <returns>A <see cref = "DisabledScenario"/> instance built from the JSON string.</returns>
-    public static DisabledScenario Parse(ReadOnlySequence<byte> utf8Json, JsonDocumentOptions options = default)
-    {
-        using var jsonDocument = JsonDocument.Parse(utf8Json, options);
-        return new DisabledScenario(jsonDocument.RootElement.Clone());
-    }
-
-    /// <summary>
-    /// Parses a JSON value from a buffer.
-    /// </summary>
-    /// <param name = "buffer">The buffer from which to parse the value.</param>
-    /// <returns>The parsed value.</returns>
-    static DisabledScenario ParseValue(ReadOnlySpan<char> buffer)
+    /// <param name="source">The source of the JSON string to parse.</param>
+    public static DisabledScenario ParseValue(ReadOnlySpan<char> source)
     {
 #if NET8_0_OR_GREATER
-        return IJsonValue<DisabledScenario>.ParseValue(buffer);
+        return IJsonValue<DisabledScenario>.ParseValue(source);
 #else
-        return JsonValueHelpers.ParseValue<DisabledScenario>(buffer);
+        return JsonValueHelpers.ParseValue<DisabledScenario>(source);
 #endif
     }
 
     /// <summary>
-    /// Parses a JSON value from a buffer.
+    /// Parses the DisabledScenario.
     /// </summary>
-    /// <param name = "buffer">The buffer from which to parse the value.</param>
-    /// <returns>The parsed value.</returns>
-    static DisabledScenario ParseValue(ReadOnlySpan<byte> buffer)
+    /// <param name="source">The source of the JSON string to parse.</param>
+    public static DisabledScenario ParseValue(ReadOnlySpan<byte> source)
     {
 #if NET8_0_OR_GREATER
-        return IJsonValue<DisabledScenario>.ParseValue(buffer);
+        return IJsonValue<DisabledScenario>.ParseValue(source);
 #else
-        return JsonValueHelpers.ParseValue<DisabledScenario>(buffer);
+        return JsonValueHelpers.ParseValue<DisabledScenario>(source);
 #endif
     }
 
     /// <summary>
-    /// Parses a JSON value from a buffer.
+    /// Parses the DisabledScenario.
     /// </summary>
-    /// <param name = "reader">The reader from which to parse the value.</param>
-    /// <returns>The parsed value.</returns>
-    static DisabledScenario ParseValue(ref Utf8JsonReader reader)
+    /// <param name="source">The source of the JSON string to parse.</param>
+    public static DisabledScenario ParseValue(ref Utf8JsonReader source)
     {
 #if NET8_0_OR_GREATER
-        return IJsonValue<DisabledScenario>.ParseValue(ref reader);
+        return IJsonValue<DisabledScenario>.ParseValue(ref source);
 #else
-        return JsonValueHelpers.ParseValue<DisabledScenario>(ref reader);
+        return JsonValueHelpers.ParseValue<DisabledScenario>(ref source);
 #endif
     }
 
     /// <summary>
     /// Gets the value as an instance of the target value.
     /// </summary>
-    /// <typeparam name = "TTarget">The type of the target.</typeparam>
+    /// <typeparam name="TTarget">The type of the target.</typeparam>
     /// <returns>An instance of the target type.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public TTarget As<TTarget>()
@@ -542,7 +587,9 @@ public readonly partial struct DisabledScenario
     /// <inheritdoc/>
     public override bool Equals(object? obj)
     {
-        return (obj is IJsonValue jv && this.Equals(jv.AsAny)) || (obj is null && this.IsNull());
+        return
+            (obj is IJsonValue jv && this.Equals(jv.AsAny)) ||
+            (obj is null && this.IsNull());
     }
 
     /// <inheritdoc/>
@@ -555,7 +602,7 @@ public readonly partial struct DisabledScenario
     /// <summary>
     /// Equality comparison.
     /// </summary>
-    /// <param name = "other">The other item with which to compare.</param>
+    /// <param name="other">The other item with which to compare.</param>
     /// <returns><see langword="true"/> if the values were equal.</returns>
     public bool Equals(in DisabledScenario other)
     {
@@ -578,12 +625,14 @@ public readonly partial struct DisabledScenario
         if ((this.backing & Backing.Object) != 0)
         {
             JsonValueHelpers.WriteProperties(this.objectBacking, writer);
+
             return;
         }
 
         if ((this.backing & Backing.Null) != 0)
         {
             writer.WriteNullValue();
+
             return;
         }
     }
@@ -598,5 +647,16 @@ public readonly partial struct DisabledScenario
     public override string ToString()
     {
         return this.Serialize();
+    }
+
+    /// <summary>
+    /// Gets the value as a <see cref="Corvus.Json.Patch.SpecGenerator.ScenarioCommon" />.
+    /// </summary>
+    /// <param name="result">The result of the conversions.</param>
+    /// <returns><see langword="true" /> if the conversion was valid.</returns>
+    public bool TryGetAsScenarioCommon(out Corvus.Json.Patch.SpecGenerator.ScenarioCommon result)
+    {
+        result = this.As<Corvus.Json.Patch.SpecGenerator.ScenarioCommon>();
+        return result.IsValid();
     }
 }

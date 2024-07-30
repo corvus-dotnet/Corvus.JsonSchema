@@ -145,7 +145,7 @@ internal class GenerateCommand : AsyncCommand<GenerateCommand.Settings>
 
                 foreach (GeneratedCodeFile generatedCodeFile in generatedCode)
                 {
-                    ProgressTask subtask = context.AddTask($"{generatedCodeFile.FileName} [green]({generatedCodeFile.TypeDeclaration.RelativeSchemaLocation})[/]");
+                    ProgressTask subtask = context.AddTask($"{generatedCodeFile.FileName} [green]({generatedCodeFile.TypeDeclaration.RelativeSchemaLocation.ToString().EscapeMarkup()})[/]");
                     currentTask.Increment(1);
                     try
                     {

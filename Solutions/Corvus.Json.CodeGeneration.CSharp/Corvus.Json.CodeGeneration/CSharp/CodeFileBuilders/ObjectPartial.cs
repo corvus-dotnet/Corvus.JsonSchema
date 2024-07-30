@@ -23,7 +23,7 @@ public sealed class ObjectPartial : ICodeFileBuilder
     /// <inheritdoc/>
     public CodeGenerator EmitFile(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
-        if ((typeDeclaration.LocallyImpliedCoreTypes() & CoreTypes.Object) != 0)
+        if ((typeDeclaration.ImpliedCoreTypes() & CoreTypes.Object) != 0)
         {
             generator
                 .BeginFile(typeDeclaration, "Object")

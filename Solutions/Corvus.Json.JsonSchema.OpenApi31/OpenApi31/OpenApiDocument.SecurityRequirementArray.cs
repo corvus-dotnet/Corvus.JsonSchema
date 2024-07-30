@@ -6,9 +6,10 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
 using System.Buffers;
-using System.ComponentModel;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
@@ -16,6 +17,15 @@ using Corvus.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json.JsonSchema.OpenApi31;
+
+/// <summary>
+/// Generated from JSON Schema.
+/// </summary>
+/// <remarks>
+/// <para>
+/// The description of OpenAPI v3.1.x documents without schema validation, as defined by https://spec.openapis.org/oas/v3.1.0
+/// </para>
+/// </remarks>
 public readonly partial struct OpenApiDocument
 {
     /// <summary>
@@ -23,12 +33,14 @@ public readonly partial struct OpenApiDocument
     /// </summary>
     [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<SecurityRequirementArray>))]
     public readonly partial struct SecurityRequirementArray
+
     {
         private readonly Backing backing;
         private readonly JsonElement jsonElementBacking;
         private readonly ImmutableList<JsonAny> arrayBacking;
+
         /// <summary>
-        /// Initializes a new instance of the <see cref = "SecurityRequirementArray"/> struct.
+        /// Initializes a new instance of the <see cref="SecurityRequirementArray"/> struct.
         /// </summary>
         public SecurityRequirementArray()
         {
@@ -38,9 +50,9 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref = "SecurityRequirementArray"/> struct.
+        /// Initializes a new instance of the <see cref="SecurityRequirementArray"/> struct.
         /// </summary>
-        /// <param name = "value">The value from which to construct the instance.</param>
+        /// <param name="value">The value from which to construct the instance.</param>
         public SecurityRequirementArray(in JsonElement value)
         {
             this.jsonElementBacking = value;
@@ -49,19 +61,33 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
+        /// Initializes a new instance of the <see cref="SecurityRequirementArray"/> struct.
+        /// </summary>
+        /// <param name="value">The value from which to construct the instance.</param>
+        public SecurityRequirementArray(ImmutableList<JsonAny> value)
+        {
+            this.backing = Backing.Array;
+            this.jsonElementBacking = default;
+            this.arrayBacking = value;
+        }
+
+        /// <summary>
         /// Gets the schema location from which this type was generated.
         /// </summary>
         public static string SchemaLocation { get; } = "https://spec.openapis.org/oas/3.1/schema/2022-10-07#/properties/security";
+
         /// <summary>
         /// Gets a Null instance.
         /// </summary>
         public static SecurityRequirementArray Null { get; } = new(JsonValueHelpers.NullElement);
+
         /// <summary>
         /// Gets an Undefined instance.
         /// </summary>
         public static SecurityRequirementArray Undefined { get; }
+
         /// <summary>
-        /// Gets the default instance of the type.
+        /// Gets the default instance.
         /// </summary>
         public static SecurityRequirementArray DefaultInstance { get; }
 
@@ -221,11 +247,6 @@ public readonly partial struct OpenApiDocument
                     return JsonValueKind.Array;
                 }
 
-                if ((this.backing & Backing.Null) != 0)
-                {
-                    return JsonValueKind.Null;
-                }
-
                 return JsonValueKind.Undefined;
             }
         }
@@ -233,9 +254,8 @@ public readonly partial struct OpenApiDocument
         /// <summary>
         /// Conversion from JsonAny.
         /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        /// <exception cref = "InvalidOperationException">The value was not compatible with this type.</exception>
-        public static implicit operator SecurityRequirementArray(in JsonAny value)
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator SecurityRequirementArray(JsonAny value)
         {
             return value.As<SecurityRequirementArray>();
         }
@@ -243,43 +263,57 @@ public readonly partial struct OpenApiDocument
         /// <summary>
         /// Conversion to JsonAny.
         /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        /// <exception cref = "InvalidOperationException">The value was not compatible with this type.</exception>
-        public static implicit operator JsonAny(in SecurityRequirementArray value)
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator JsonAny(SecurityRequirementArray value)
         {
             return value.AsAny;
         }
 
         /// <summary>
-        /// Equality operator.
+        /// Operator ==.
         /// </summary>
-        /// <param name = "left">The lhs.</param>
-        /// <param name = "right">The rhs.</param>
-        /// <returns><c>True</c> if the values are equal.</returns>
+        /// <param name="left">The lhs of the operator.</param>
+        /// <param name="right">The rhs of the operator.</param>
+        /// <returns>
+        /// <c>True</c> if the values are equal.
+        /// </returns>
         public static bool operator ==(in SecurityRequirementArray left, in SecurityRequirementArray right)
         {
             return left.Equals(right);
         }
 
         /// <summary>
-        /// Inequality operator.
+        /// Operator !=.
         /// </summary>
-        /// <param name = "left">The lhs.</param>
-        /// <param name = "right">The rhs.</param>
-        /// <returns><c>True</c> if the values are equal.</returns>
+        /// <param name="left">The lhs of the operator.</param>
+        /// <param name="right">The rhs of the operator.</param>
+        /// <returns>
+        /// <c>True</c> if the values are not equal.
+        /// </returns>
         public static bool operator !=(in SecurityRequirementArray left, in SecurityRequirementArray right)
         {
             return !left.Equals(right);
         }
 
         /// <summary>
-        /// Gets an instance of the JSON value from a JsonAny value.
+        /// Gets an instance of the JSON value from a <see cref="JsonElement"/> value.
         /// </summary>
-        /// <param name = "value">The <see cref = "JsonAny"/> value from which to instantiate the instance.</param>
-        /// <returns>An instance of this type, initialized from the <see cref = "JsonAny"/>.</returns>
+        /// <param name="value">The <see cref="JsonElement"/> value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the <see cref="JsonElement"/>.</returns>
         /// <remarks>The returned value will have a <see cref = "IJsonValue.ValueKind"/> of <see cref = "JsonValueKind.Undefined"/> if the
-        /// value cannot be constructed from the given instance (e.g. because they have an incompatible dotnet backing type.
+        /// value cannot be constructed from the given instance (e.g. because they have an incompatible .NET backing type).
         /// </remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static SecurityRequirementArray FromJson(in JsonElement value)
+        {
+            return new(value);
+        }
+
+        /// <summary>
+        /// Gets an instance of the JSON value from a <see cref="JsonAny"/> value.
+        /// </summary>
+        /// <param name="value">The <see cref="JsonAny"/> value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the <see cref="JsonAny"/> value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static SecurityRequirementArray FromAny(in JsonAny value)
         {
@@ -288,8 +322,7 @@ public readonly partial struct OpenApiDocument
                 return new(value.AsJsonElement);
             }
 
-            JsonValueKind valueKind = value.ValueKind;
-            return valueKind switch
+            return value.ValueKind switch
             {
                 JsonValueKind.Array => new(value.AsArray.AsImmutableList()),
                 JsonValueKind.Null => Null,
@@ -297,81 +330,88 @@ public readonly partial struct OpenApiDocument
             };
         }
 
+#if NET8_0_OR_GREATER
         /// <summary>
-        /// Gets an instance of the JSON value from a <see cref = "JsonElement"/> value.
+        /// Gets an instance of the JSON value from the provided value.
         /// </summary>
-        /// <param name = "value">The <see cref = "JsonElement"/> value from which to instantiate the instance.</param>
-        /// <returns>An instance of this type, initialized from the <see cref = "JsonElement"/>.</returns>
+        /// <typeparam name="TValue">The type of the value.</typeparam>
+        /// <param name="value">The value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the provided value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static SecurityRequirementArray FromJson(in JsonElement value)
+        static SecurityRequirementArray IJsonValue<SecurityRequirementArray>.FromBoolean<TValue>(in TValue value)
         {
-            return new(value);
+            if (value.HasJsonElementBacking)
+            {
+                return new(value.AsJsonElement);
+            }
+
+            return Undefined;
         }
+#endif
 
 #if NET8_0_OR_GREATER
-    /// <summary>
-    /// Gets an instance of the JSON value from a boolean value.
-    /// </summary>
-    /// <typeparam name = "TValue">The type of the value.</typeparam>
-    /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be SecurityRequirementArray.Undefined if the type is not compatible.</remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static SecurityRequirementArray IJsonValue<SecurityRequirementArray>.FromBoolean<TValue>(in TValue value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        return Undefined;
-    }
-#endif
-#if NET8_0_OR_GREATER
-    /// <summary>
-    /// Gets an instance of the JSON value from a string value.
-    /// </summary>
-    /// <typeparam name="TValue">The type of the value.</typeparam>
-    /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be SecurityRequirementArray.Undefined if the type is not compatible.</remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static SecurityRequirementArray IJsonValue<SecurityRequirementArray>.FromString<TValue>(in TValue value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        return Undefined;
-    }
-#endif
-#if NET8_0_OR_GREATER
-    /// <summary>
-    /// Gets an instance of the JSON value from a number value.
-    /// </summary>
-    /// <typeparam name="TValue">The type of the value.</typeparam>
-    /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be SecurityRequirementArray.Undefined if the type is not compatible.</remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static SecurityRequirementArray IJsonValue<SecurityRequirementArray>.FromNumber<TValue>(in TValue value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        return Undefined;
-    }
-#endif
         /// <summary>
-        /// Gets an instance of the JSON value from an array value.
+        /// Gets an instance of the JSON value from the provided value.
         /// </summary>
-        /// <typeparam name = "TValue">The type of the value.</typeparam>
-        /// <param name = "value">The value from which to instantiate the instance.</param>
-        /// <returns>An instance of this type, initialized from the value.</returns>
-        /// <remarks>This will be SecurityRequirementArray.Undefined if the type is not compatible.</remarks>
+        /// <typeparam name="TValue">The type of the value.</typeparam>
+        /// <param name="value">The value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the provided value.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static SecurityRequirementArray IJsonValue<SecurityRequirementArray>.FromString<TValue>(in TValue value)
+        {
+            if (value.HasJsonElementBacking)
+            {
+                return new(value.AsJsonElement);
+            }
+
+            return Undefined;
+        }
+#endif
+
+#if NET8_0_OR_GREATER
+        /// <summary>
+        /// Gets an instance of the JSON value from the provided value.
+        /// </summary>
+        /// <typeparam name="TValue">The type of the value.</typeparam>
+        /// <param name="value">The value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the provided value.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static SecurityRequirementArray IJsonValue<SecurityRequirementArray>.FromNumber<TValue>(in TValue value)
+        {
+            if (value.HasJsonElementBacking)
+            {
+                return new(value.AsJsonElement);
+            }
+
+            return Undefined;
+        }
+#endif
+
+#if NET8_0_OR_GREATER
+        /// <summary>
+        /// Gets an instance of the JSON value from the provided value.
+        /// </summary>
+        /// <typeparam name="TValue">The type of the value.</typeparam>
+        /// <param name="value">The value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the provided value.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static SecurityRequirementArray IJsonValue<SecurityRequirementArray>.FromObject<TValue>(in TValue value)
+        {
+            if (value.HasJsonElementBacking)
+            {
+                return new(value.AsJsonElement);
+            }
+
+            return Undefined;
+        }
+#endif
+
+        /// <summary>
+        /// Gets an instance of the JSON value from the provided value.
+        /// </summary>
+        /// <typeparam name="TValue">The type of the value.</typeparam>
+        /// <param name="value">The value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the provided value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static SecurityRequirementArray FromArray<TValue>(in TValue value)
             where TValue : struct, IJsonArray<TValue>
@@ -381,161 +421,134 @@ public readonly partial struct OpenApiDocument
                 return new(value.AsJsonElement);
             }
 
-            if (value.ValueKind == JsonValueKind.Array)
+            return value.ValueKind switch
             {
-                return new(value.AsImmutableList());
-            }
-
-            return Undefined;
-        }
-
-#if NET8_0_OR_GREATER
-    /// <summary>
-    /// Gets an instance of the JSON value from an object value.
-    /// </summary>
-    /// <typeparam name="TValue">The type of the value.</typeparam>
-    /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be SecurityRequirementArray.Undefined if the type is not compatible.</remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static SecurityRequirementArray IJsonValue<SecurityRequirementArray>.FromObject<TValue>(in TValue value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        return Undefined;
-    }
-#endif
-        /// <summary>
-        /// Parses a JSON string into a SecurityRequirementArray.
-        /// </summary>
-        /// <param name = "json">The json string to parse.</param>
-        /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "SecurityRequirementArray"/> instance built from the JSON string.</returns>
-        public static SecurityRequirementArray Parse(string json, JsonDocumentOptions options = default)
-        {
-            using var jsonDocument = JsonDocument.Parse(json, options);
-            return new SecurityRequirementArray(jsonDocument.RootElement.Clone());
+                JsonValueKind.Array => new(value.AsArray.AsImmutableList()),
+                JsonValueKind.Null => Null,
+                _ => Undefined,
+            };
         }
 
         /// <summary>
-        /// Parses a JSON string into a SecurityRequirementArray.
+        /// Parses the SecurityRequirementArray.
         /// </summary>
-        /// <param name = "utf8Json">The json string to parse.</param>
-        /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "SecurityRequirementArray"/> instance built from the JSON string.</returns>
-        public static SecurityRequirementArray Parse(Stream utf8Json, JsonDocumentOptions options = default)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        /// <param name="options">The (optional) JsonDocumentOptions.</param>
+        public static SecurityRequirementArray Parse(string source, JsonDocumentOptions options = default)
         {
-            using var jsonDocument = JsonDocument.Parse(utf8Json, options);
-            return new SecurityRequirementArray(jsonDocument.RootElement.Clone());
+            using var jsonDocument = JsonDocument.Parse(source, options);
+            return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses a JSON string into a SecurityRequirementArray.
+        /// Parses the SecurityRequirementArray.
         /// </summary>
-        /// <param name = "utf8Json">The json string to parse.</param>
-        /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "SecurityRequirementArray"/> instance built from the JSON string.</returns>
-        public static SecurityRequirementArray Parse(ReadOnlyMemory<byte> utf8Json, JsonDocumentOptions options = default)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        /// <param name="options">The (optional) JsonDocumentOptions.</param>
+        public static SecurityRequirementArray Parse(Stream source, JsonDocumentOptions options = default)
         {
-            using var jsonDocument = JsonDocument.Parse(utf8Json, options);
-            return new SecurityRequirementArray(jsonDocument.RootElement.Clone());
+            using var jsonDocument = JsonDocument.Parse(source, options);
+            return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses a JSON string into a SecurityRequirementArray.
+        /// Parses the SecurityRequirementArray.
         /// </summary>
-        /// <param name = "json">The json string to parse.</param>
-        /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "SecurityRequirementArray"/> instance built from the JSON string.</returns>
-        public static SecurityRequirementArray Parse(ReadOnlyMemory<char> json, JsonDocumentOptions options = default)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        /// <param name="options">The (optional) JsonDocumentOptions.</param>
+        public static SecurityRequirementArray Parse(ReadOnlyMemory<byte> source, JsonDocumentOptions options = default)
         {
-            using var jsonDocument = JsonDocument.Parse(json, options);
-            return new SecurityRequirementArray(jsonDocument.RootElement.Clone());
+            using var jsonDocument = JsonDocument.Parse(source, options);
+            return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses a JSON string into a SecurityRequirementArray.
+        /// Parses the SecurityRequirementArray.
         /// </summary>
-        /// <param name = "utf8Json">The json string to parse.</param>
-        /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "SecurityRequirementArray"/> instance built from the JSON string.</returns>
-        public static SecurityRequirementArray Parse(ReadOnlySequence<byte> utf8Json, JsonDocumentOptions options = default)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        /// <param name="options">The (optional) JsonDocumentOptions.</param>
+        public static SecurityRequirementArray Parse(ReadOnlyMemory<char> source, JsonDocumentOptions options = default)
         {
-            using var jsonDocument = JsonDocument.Parse(utf8Json, options);
-            return new SecurityRequirementArray(jsonDocument.RootElement.Clone());
+            using var jsonDocument = JsonDocument.Parse(source, options);
+            return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses a JSON value from a buffer.
+        /// Parses the SecurityRequirementArray.
         /// </summary>
-        /// <param name = "buffer">The buffer from which to parse the value.</param>
-        /// <returns>The parsed value.</returns>
-        static SecurityRequirementArray ParseValue(ReadOnlySpan<char> buffer)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        /// <param name="options">The (optional) JsonDocumentOptions.</param>
+        public static SecurityRequirementArray Parse(ReadOnlySequence<byte> source, JsonDocumentOptions options = default)
+        {
+            using var jsonDocument = JsonDocument.Parse(source, options);
+            return new(jsonDocument.RootElement.Clone());
+        }
+
+        /// <summary>
+        /// Parses the SecurityRequirementArray.
+        /// </summary>
+        /// <param name="source">The source of the JSON string to parse.</param>
+        public static SecurityRequirementArray ParseValue(ReadOnlySpan<char> source)
         {
 #if NET8_0_OR_GREATER
-        return IJsonValue<SecurityRequirementArray>.ParseValue(buffer);
+            return IJsonValue<SecurityRequirementArray>.ParseValue(source);
 #else
-            return JsonValueHelpers.ParseValue<SecurityRequirementArray>(buffer);
+            return JsonValueHelpers.ParseValue<SecurityRequirementArray>(source);
 #endif
         }
 
         /// <summary>
-        /// Parses a JSON value from a buffer.
+        /// Parses the SecurityRequirementArray.
         /// </summary>
-        /// <param name = "buffer">The buffer from which to parse the value.</param>
-        /// <returns>The parsed value.</returns>
-        static SecurityRequirementArray ParseValue(ReadOnlySpan<byte> buffer)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        public static SecurityRequirementArray ParseValue(ReadOnlySpan<byte> source)
         {
 #if NET8_0_OR_GREATER
-        return IJsonValue<SecurityRequirementArray>.ParseValue(buffer);
+            return IJsonValue<SecurityRequirementArray>.ParseValue(source);
 #else
-            return JsonValueHelpers.ParseValue<SecurityRequirementArray>(buffer);
+            return JsonValueHelpers.ParseValue<SecurityRequirementArray>(source);
 #endif
         }
 
         /// <summary>
-        /// Parses a JSON value from a buffer.
+        /// Parses the SecurityRequirementArray.
         /// </summary>
-        /// <param name = "reader">The reader from which to parse the value.</param>
-        /// <returns>The parsed value.</returns>
-        static SecurityRequirementArray ParseValue(ref Utf8JsonReader reader)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        public static SecurityRequirementArray ParseValue(ref Utf8JsonReader source)
         {
 #if NET8_0_OR_GREATER
-        return IJsonValue<SecurityRequirementArray>.ParseValue(ref reader);
+            return IJsonValue<SecurityRequirementArray>.ParseValue(ref source);
 #else
-            return JsonValueHelpers.ParseValue<SecurityRequirementArray>(ref reader);
+            return JsonValueHelpers.ParseValue<SecurityRequirementArray>(ref source);
 #endif
         }
 
         /// <summary>
         /// Gets the value as an instance of the target value.
         /// </summary>
-        /// <typeparam name = "TTarget">The type of the target.</typeparam>
+        /// <typeparam name="TTarget">The type of the target.</typeparam>
         /// <returns>An instance of the target type.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TTarget As<TTarget>()
             where TTarget : struct, IJsonValue<TTarget>
         {
 #if NET8_0_OR_GREATER
-        if ((this.backing & Backing.JsonElement) != 0)
-        {
-            return TTarget.FromJson(this.jsonElementBacking);
-        }
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                return TTarget.FromJson(this.jsonElementBacking);
+            }
 
-        if ((this.backing & Backing.Array) != 0)
-        {
-            return TTarget.FromArray(this);
-        }
+            if ((this.backing & Backing.Array) != 0)
+            {
+                return TTarget.FromArray(this);
+            }
 
-        if ((this.backing & Backing.Null) != 0)
-        {
-            return TTarget.Null;
-        }
+            if ((this.backing & Backing.Null) != 0)
+            {
+                return TTarget.Null;
+            }
 
-        return TTarget.Undefined;
+            return TTarget.Undefined;
 #else
             return this.As<SecurityRequirementArray, TTarget>();
 #endif
@@ -544,7 +557,9 @@ public readonly partial struct OpenApiDocument
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            return (obj is IJsonValue jv && this.Equals(jv.AsAny)) || (obj is null && this.IsNull());
+            return
+                (obj is IJsonValue jv && this.Equals(jv.AsAny)) ||
+                (obj is null && this.IsNull());
         }
 
         /// <inheritdoc/>
@@ -557,7 +572,7 @@ public readonly partial struct OpenApiDocument
         /// <summary>
         /// Equality comparison.
         /// </summary>
-        /// <param name = "other">The other item with which to compare.</param>
+        /// <param name="other">The other item with which to compare.</param>
         /// <returns><see langword="true"/> if the values were equal.</returns>
         public bool Equals(in SecurityRequirementArray other)
         {
@@ -580,12 +595,14 @@ public readonly partial struct OpenApiDocument
             if ((this.backing & Backing.Array) != 0)
             {
                 JsonValueHelpers.WriteItems(this.arrayBacking, writer);
+
                 return;
             }
 
             if ((this.backing & Backing.Null) != 0)
             {
                 writer.WriteNullValue();
+
                 return;
             }
         }

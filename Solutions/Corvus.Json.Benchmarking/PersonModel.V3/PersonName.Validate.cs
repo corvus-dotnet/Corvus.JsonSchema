@@ -88,6 +88,7 @@ public readonly partial struct PersonName
                 level,
                 localResultObject);
         }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ValidationContext ObjectValidationHandler(
             in PersonName value,
@@ -158,12 +159,12 @@ public readonly partial struct PersonName
                         return result;
                     }
                 }
-                else if (property.NameEquals(JsonPropertyNames.OtherNamesUtf8, JsonPropertyNames.OtherNames))
+                else if (property.NameEquals(JsonPropertyNames.OtherNamesValueUtf8, JsonPropertyNames.OtherNamesValue))
                 {
                     result = result.WithLocalProperty(propertyCount);
                     if (level > ValidationLevel.Basic)
                     {
-                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/otherNames/$ref"), JsonPropertyNames.OtherNames);
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/otherNames/$ref"), JsonPropertyNames.OtherNamesValue);
                     }
 
                     ValidationContext propertyResult = property.Value.As<Corvus.Json.Benchmarking.Models.V3.OtherNames>().Validate(result.CreateChildContext(), level);

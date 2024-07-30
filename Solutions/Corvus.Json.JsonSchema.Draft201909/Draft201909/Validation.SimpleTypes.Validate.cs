@@ -6,11 +6,18 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.Draft201909;
+
+/// <summary>
+/// Validation vocabulary meta-schema
+/// </summary>
 public readonly partial struct Validation
 {
     /// <summary>
@@ -33,18 +40,206 @@ public readonly partial struct Validation
                 result = result.PushSchemaLocation("https://json-schema.org/draft/2019-09/meta/validation#/$defs/simpleTypes");
             }
 
-            result = Corvus.Json.Validate.ValidateEnum(this, result, level, EnumValues.Item0, EnumValues.Item1, EnumValues.Item2, EnumValues.Item3, EnumValues.Item4, EnumValues.Item5, EnumValues.Item6);
+            result = CorvusValidation.CompositionAnyOfValidationHandler(this, result, level);
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
             }
 
-            if (level != ValidationLevel.Flag)
+            if (level > ValidationLevel.Basic)
             {
                 result = result.PopLocation();
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// Constant values for the enum keyword.
+        /// </summary>
+        public static class EnumValues
+        {
+            /// <summary>
+            /// Gets the string 'array'
+            /// as a <see cref="Corvus.Json.JsonSchema.Draft201909.Validation.SimpleTypes"/>.
+            /// </summary>
+            public static SimpleTypes Array { get; } = CorvusValidation.Enum1.As<SimpleTypes>();
+
+            /// <summary>
+            /// Gets the string 'array'
+            /// as a UTF8 byte array.
+            /// </summary>
+            public static ReadOnlySpan<byte> ArrayUtf8 => CorvusValidation.Enum1Utf8;
+
+            /// <summary>
+            /// Gets the string 'boolean'
+            /// as a <see cref="Corvus.Json.JsonSchema.Draft201909.Validation.SimpleTypes"/>.
+            /// </summary>
+            public static SimpleTypes Boolean { get; } = CorvusValidation.Enum2.As<SimpleTypes>();
+
+            /// <summary>
+            /// Gets the string 'boolean'
+            /// as a UTF8 byte array.
+            /// </summary>
+            public static ReadOnlySpan<byte> BooleanUtf8 => CorvusValidation.Enum2Utf8;
+
+            /// <summary>
+            /// Gets the string 'integer'
+            /// as a <see cref="Corvus.Json.JsonSchema.Draft201909.Validation.SimpleTypes"/>.
+            /// </summary>
+            public static SimpleTypes Integer { get; } = CorvusValidation.Enum3.As<SimpleTypes>();
+
+            /// <summary>
+            /// Gets the string 'integer'
+            /// as a UTF8 byte array.
+            /// </summary>
+            public static ReadOnlySpan<byte> IntegerUtf8 => CorvusValidation.Enum3Utf8;
+
+            /// <summary>
+            /// Gets the string 'null'
+            /// as a <see cref="Corvus.Json.JsonSchema.Draft201909.Validation.SimpleTypes"/>.
+            /// </summary>
+            public static SimpleTypes Null { get; } = CorvusValidation.Enum4.As<SimpleTypes>();
+
+            /// <summary>
+            /// Gets the string 'null'
+            /// as a UTF8 byte array.
+            /// </summary>
+            public static ReadOnlySpan<byte> NullUtf8 => CorvusValidation.Enum4Utf8;
+
+            /// <summary>
+            /// Gets the string 'number'
+            /// as a <see cref="Corvus.Json.JsonSchema.Draft201909.Validation.SimpleTypes"/>.
+            /// </summary>
+            public static SimpleTypes Number { get; } = CorvusValidation.Enum5.As<SimpleTypes>();
+
+            /// <summary>
+            /// Gets the string 'number'
+            /// as a UTF8 byte array.
+            /// </summary>
+            public static ReadOnlySpan<byte> NumberUtf8 => CorvusValidation.Enum5Utf8;
+
+            /// <summary>
+            /// Gets the string 'object'
+            /// as a <see cref="Corvus.Json.JsonSchema.Draft201909.Validation.SimpleTypes"/>.
+            /// </summary>
+            public static SimpleTypes Object { get; } = CorvusValidation.Enum6.As<SimpleTypes>();
+
+            /// <summary>
+            /// Gets the string 'object'
+            /// as a UTF8 byte array.
+            /// </summary>
+            public static ReadOnlySpan<byte> ObjectUtf8 => CorvusValidation.Enum6Utf8;
+
+            /// <summary>
+            /// Gets the string 'string'
+            /// as a <see cref="Corvus.Json.JsonSchema.Draft201909.Validation.SimpleTypes"/>.
+            /// </summary>
+            public static SimpleTypes String { get; } = CorvusValidation.Enum7.As<SimpleTypes>();
+
+            /// <summary>
+            /// Gets the string 'string'
+            /// as a UTF8 byte array.
+            /// </summary>
+            public static ReadOnlySpan<byte> StringUtf8 => CorvusValidation.Enum7Utf8;
+        }
+
+        private static partial class CorvusValidation
+        {
+            public static readonly JsonString Enum1 = JsonString.ParseValue("\"array\"");
+            public static readonly JsonString Enum2 = JsonString.ParseValue("\"boolean\"");
+            public static readonly JsonString Enum3 = JsonString.ParseValue("\"integer\"");
+            public static readonly JsonString Enum4 = JsonString.ParseValue("\"null\"");
+            public static readonly JsonString Enum5 = JsonString.ParseValue("\"number\"");
+            public static readonly JsonString Enum6 = JsonString.ParseValue("\"object\"");
+            public static readonly JsonString Enum7 = JsonString.ParseValue("\"string\"");
+
+            public static ReadOnlySpan<byte> Enum1Utf8 => "\"array\""u8;
+            public static ReadOnlySpan<byte> Enum2Utf8 => "\"boolean\""u8;
+            public static ReadOnlySpan<byte> Enum3Utf8 => "\"integer\""u8;
+            public static ReadOnlySpan<byte> Enum4Utf8 => "\"null\""u8;
+            public static ReadOnlySpan<byte> Enum5Utf8 => "\"number\""u8;
+            public static ReadOnlySpan<byte> Enum6Utf8 => "\"object\""u8;
+            public static ReadOnlySpan<byte> Enum7Utf8 => "\"string\""u8;
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static ValidationContext CompositionAnyOfValidationHandler(
+                in SimpleTypes value,
+                in ValidationContext validationContext,
+                ValidationLevel level = ValidationLevel.Flag)
+            {
+                ValidationContext result = validationContext;
+                result = ValidateEnum(value, result, level);
+                if (!result.IsValid && level == ValidationLevel.Flag)
+                {
+                    return result;
+                }
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                static ValidationContext ValidateEnum(in SimpleTypes value, in ValidationContext validationContext, ValidationLevel level)
+                {
+                    ValidationContext result = validationContext;
+                    bool enumFoundValid = false;
+                    enumFoundValid = value.Equals(CorvusValidation.Enum1);
+                    if (!enumFoundValid)
+                    {
+                        enumFoundValid = value.Equals(CorvusValidation.Enum2);
+                    }
+                    if (!enumFoundValid)
+                    {
+                        enumFoundValid = value.Equals(CorvusValidation.Enum3);
+                    }
+                    if (!enumFoundValid)
+                    {
+                        enumFoundValid = value.Equals(CorvusValidation.Enum4);
+                    }
+                    if (!enumFoundValid)
+                    {
+                        enumFoundValid = value.Equals(CorvusValidation.Enum5);
+                    }
+                    if (!enumFoundValid)
+                    {
+                        enumFoundValid = value.Equals(CorvusValidation.Enum6);
+                    }
+                    if (!enumFoundValid)
+                    {
+                        enumFoundValid = value.Equals(CorvusValidation.Enum7);
+                    }
+
+                    if (level >= ValidationLevel.Basic)
+                    {
+                        result.PushValidationLocationProperty("enum");
+                    }
+
+                    if (enumFoundValid)
+                    {
+                        if (level >= ValidationLevel.Verbose)
+                        {
+                            result = result.WithResult(isValid: true, "Validation enum - validated against the enumeration.");
+                        }
+                    }
+                    else
+                    {
+                        if (level >= ValidationLevel.Basic)
+                        {
+                            result = result.WithResult(isValid: false, "Validation enum - did not validate against the enumeration.");
+                        }
+                        else
+                        {
+                            result = result.WithResult(isValid: false);
+                        }
+                    }
+
+                    if (level >= ValidationLevel.Basic)
+                    {
+                        result.PopLocation();
+                    }
+
+                    return result;
+                }
+
+                return result;
+            }
         }
     }
 }

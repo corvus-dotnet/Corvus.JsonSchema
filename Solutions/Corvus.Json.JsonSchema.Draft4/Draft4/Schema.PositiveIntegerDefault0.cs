@@ -6,16 +6,33 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
 using System.Buffers;
-using System.ComponentModel;
-using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json.JsonSchema.Draft4;
+
+/// <summary>
+/// Generated from JSON Schema.
+/// </summary>
+/// <remarks>
+/// <para>
+/// Core schema meta-schema
+/// </para>
+/// <para>
+/// Examples:
+/// <example>
+/// <code>
+/// {}
+/// </code>
+/// </example>
+/// </para>
+/// </remarks>
 public readonly partial struct Schema
 {
     /// <summary>
@@ -23,12 +40,14 @@ public readonly partial struct Schema
     /// </summary>
     [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<PositiveIntegerDefault0>))]
     public readonly partial struct PositiveIntegerDefault0
+        : IJsonValue<Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0>
     {
         private readonly Backing backing;
         private readonly JsonElement jsonElementBacking;
         private readonly BinaryJsonNumber numberBacking;
+
         /// <summary>
-        /// Initializes a new instance of the <see cref = "PositiveIntegerDefault0"/> struct.
+        /// Initializes a new instance of the <see cref="PositiveIntegerDefault0"/> struct.
         /// </summary>
         public PositiveIntegerDefault0()
         {
@@ -38,9 +57,9 @@ public readonly partial struct Schema
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref = "PositiveIntegerDefault0"/> struct.
+        /// Initializes a new instance of the <see cref="PositiveIntegerDefault0"/> struct.
         /// </summary>
-        /// <param name = "value">The value from which to construct the instance.</param>
+        /// <param name="value">The value from which to construct the instance.</param>
         public PositiveIntegerDefault0(in JsonElement value)
         {
             this.jsonElementBacking = value;
@@ -49,19 +68,33 @@ public readonly partial struct Schema
         }
 
         /// <summary>
+        /// Initializes a new instance of the <see cref="PositiveIntegerDefault0"/> struct.
+        /// </summary>
+        /// <param name="value">The value from which to construct the instance.</param>
+        public PositiveIntegerDefault0(BinaryJsonNumber value)
+        {
+            this.backing = Backing.Number;
+            this.jsonElementBacking = default;
+            this.numberBacking = value;
+        }
+
+        /// <summary>
         /// Gets the schema location from which this type was generated.
         /// </summary>
         public static string SchemaLocation { get; } = "http://json-schema.org/draft-04/schema#/definitions/positiveIntegerDefault0";
+
         /// <summary>
         /// Gets a Null instance.
         /// </summary>
         public static PositiveIntegerDefault0 Null { get; } = new(JsonValueHelpers.NullElement);
+
         /// <summary>
         /// Gets an Undefined instance.
         /// </summary>
         public static PositiveIntegerDefault0 Undefined { get; }
+
         /// <summary>
-        /// Gets the default instance of the type.
+        /// Gets the default instance.
         /// </summary>
         public static PositiveIntegerDefault0 DefaultInstance { get; }
 
@@ -188,6 +221,50 @@ public readonly partial struct Schema
             }
         }
 
+        /// <summary>
+        /// Gets the instance as a <see cref="Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger" />.
+        /// </summary>
+        public Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger AsPositiveInteger
+        {
+            get
+            {
+                return this.As<Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger>();
+            }
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the instance is a <see cref="Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger" />.
+        /// </summary>
+        public bool IsPositiveInteger
+        {
+            get
+            {
+                return this.As<Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger>().IsValid();
+            }
+        }
+
+        /// <summary>
+        /// Gets the instance as a <see cref="Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0.DefaultValueType0" />.
+        /// </summary>
+        public Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0.DefaultValueType0 AsDefaultValueType0
+        {
+            get
+            {
+                return this.As<Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0.DefaultValueType0>();
+            }
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the instance is a <see cref="Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0.DefaultValueType0" />.
+        /// </summary>
+        public bool IsDefaultValueType0
+        {
+            get
+            {
+                return this.As<Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0.DefaultValueType0>().IsValid();
+            }
+        }
+
         /// <inheritdoc/>
         public bool HasJsonElementBacking
         {
@@ -221,11 +298,6 @@ public readonly partial struct Schema
                     return JsonValueKind.Number;
                 }
 
-                if ((this.backing & Backing.Null) != 0)
-                {
-                    return JsonValueKind.Null;
-                }
-
                 return JsonValueKind.Undefined;
             }
         }
@@ -233,9 +305,8 @@ public readonly partial struct Schema
         /// <summary>
         /// Conversion from JsonAny.
         /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        /// <exception cref = "InvalidOperationException">The value was not compatible with this type.</exception>
-        public static implicit operator PositiveIntegerDefault0(in JsonAny value)
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator PositiveIntegerDefault0(JsonAny value)
         {
             return value.As<PositiveIntegerDefault0>();
         }
@@ -243,43 +314,93 @@ public readonly partial struct Schema
         /// <summary>
         /// Conversion to JsonAny.
         /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        /// <exception cref = "InvalidOperationException">The value was not compatible with this type.</exception>
-        public static implicit operator JsonAny(in PositiveIntegerDefault0 value)
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator JsonAny(PositiveIntegerDefault0 value)
         {
             return value.AsAny;
         }
 
         /// <summary>
-        /// Equality operator.
+        /// Conversion to <see cref="Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger"/>.
         /// </summary>
-        /// <param name = "left">The lhs.</param>
-        /// <param name = "right">The rhs.</param>
-        /// <returns><c>True</c> if the values are equal.</returns>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger(PositiveIntegerDefault0 value)
+        {
+            return value.As<Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger>();
+        }
+
+        /// <summary>
+        /// Conversion from <see cref="Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator PositiveIntegerDefault0(Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger value)
+        {
+            return value.As<PositiveIntegerDefault0>();
+        }
+
+        /// <summary>
+        /// Conversion to <see cref="Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0.DefaultValueType0"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0.DefaultValueType0(PositiveIntegerDefault0 value)
+        {
+            return value.As<Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0.DefaultValueType0>();
+        }
+
+        /// <summary>
+        /// Conversion from <see cref="Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0.DefaultValueType0"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator PositiveIntegerDefault0(Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0.DefaultValueType0 value)
+        {
+            return value.As<PositiveIntegerDefault0>();
+        }
+
+        /// <summary>
+        /// Operator ==.
+        /// </summary>
+        /// <param name="left">The lhs of the operator.</param>
+        /// <param name="right">The rhs of the operator.</param>
+        /// <returns>
+        /// <c>True</c> if the values are equal.
+        /// </returns>
         public static bool operator ==(in PositiveIntegerDefault0 left, in PositiveIntegerDefault0 right)
         {
             return left.Equals(right);
         }
 
         /// <summary>
-        /// Inequality operator.
+        /// Operator !=.
         /// </summary>
-        /// <param name = "left">The lhs.</param>
-        /// <param name = "right">The rhs.</param>
-        /// <returns><c>True</c> if the values are equal.</returns>
+        /// <param name="left">The lhs of the operator.</param>
+        /// <param name="right">The rhs of the operator.</param>
+        /// <returns>
+        /// <c>True</c> if the values are not equal.
+        /// </returns>
         public static bool operator !=(in PositiveIntegerDefault0 left, in PositiveIntegerDefault0 right)
         {
             return !left.Equals(right);
         }
 
         /// <summary>
-        /// Gets an instance of the JSON value from a JsonAny value.
+        /// Gets an instance of the JSON value from a <see cref="JsonElement"/> value.
         /// </summary>
-        /// <param name = "value">The <see cref = "JsonAny"/> value from which to instantiate the instance.</param>
-        /// <returns>An instance of this type, initialized from the <see cref = "JsonAny"/>.</returns>
+        /// <param name="value">The <see cref="JsonElement"/> value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the <see cref="JsonElement"/>.</returns>
         /// <remarks>The returned value will have a <see cref = "IJsonValue.ValueKind"/> of <see cref = "JsonValueKind.Undefined"/> if the
-        /// value cannot be constructed from the given instance (e.g. because they have an incompatible dotnet backing type.
+        /// value cannot be constructed from the given instance (e.g. because they have an incompatible .NET backing type).
         /// </remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static PositiveIntegerDefault0 FromJson(in JsonElement value)
+        {
+            return new(value);
+        }
+
+        /// <summary>
+        /// Gets an instance of the JSON value from a <see cref="JsonAny"/> value.
+        /// </summary>
+        /// <param name="value">The <see cref="JsonAny"/> value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the <see cref="JsonAny"/> value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static PositiveIntegerDefault0 FromAny(in JsonAny value)
         {
@@ -288,8 +409,7 @@ public readonly partial struct Schema
                 return new(value.AsJsonElement);
             }
 
-            JsonValueKind valueKind = value.ValueKind;
-            return valueKind switch
+            return value.ValueKind switch
             {
                 JsonValueKind.Number => new(value.AsNumber.AsBinaryJsonNumber),
                 JsonValueKind.Null => Null,
@@ -297,62 +417,50 @@ public readonly partial struct Schema
             };
         }
 
+#if NET8_0_OR_GREATER
         /// <summary>
-        /// Gets an instance of the JSON value from a <see cref = "JsonElement"/> value.
+        /// Gets an instance of the JSON value from the provided value.
         /// </summary>
-        /// <param name = "value">The <see cref = "JsonElement"/> value from which to instantiate the instance.</param>
-        /// <returns>An instance of this type, initialized from the <see cref = "JsonElement"/>.</returns>
+        /// <typeparam name="TValue">The type of the value.</typeparam>
+        /// <param name="value">The value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the provided value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static PositiveIntegerDefault0 FromJson(in JsonElement value)
+        static PositiveIntegerDefault0 IJsonValue<PositiveIntegerDefault0>.FromBoolean<TValue>(in TValue value)
         {
-            return new(value);
+            if (value.HasJsonElementBacking)
+            {
+                return new(value.AsJsonElement);
+            }
+
+            return Undefined;
         }
+#endif
 
 #if NET8_0_OR_GREATER
-    /// <summary>
-    /// Gets an instance of the JSON value from a boolean value.
-    /// </summary>
-    /// <typeparam name = "TValue">The type of the value.</typeparam>
-    /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be PositiveIntegerDefault0.Undefined if the type is not compatible.</remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static PositiveIntegerDefault0 IJsonValue<PositiveIntegerDefault0>.FromBoolean<TValue>(in TValue value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        return Undefined;
-    }
-#endif
-#if NET8_0_OR_GREATER
-    /// <summary>
-    /// Gets an instance of the JSON value from a string value.
-    /// </summary>
-    /// <typeparam name="TValue">The type of the value.</typeparam>
-    /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be PositiveIntegerDefault0.Undefined if the type is not compatible.</remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static PositiveIntegerDefault0 IJsonValue<PositiveIntegerDefault0>.FromString<TValue>(in TValue value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        return Undefined;
-    }
-#endif
         /// <summary>
-        /// Gets an instance of the JSON value from a number value.
+        /// Gets an instance of the JSON value from the provided value.
         /// </summary>
-        /// <typeparam name = "TValue">The type of the value.</typeparam>
-        /// <param name = "value">The value from which to instantiate the instance.</param>
-        /// <returns>An instance of this type, initialized from the value.</returns>
-        /// <remarks>This will be PositiveIntegerDefault0.Undefined if the type is not compatible.</remarks>
+        /// <typeparam name="TValue">The type of the value.</typeparam>
+        /// <param name="value">The value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the provided value.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static PositiveIntegerDefault0 IJsonValue<PositiveIntegerDefault0>.FromString<TValue>(in TValue value)
+        {
+            if (value.HasJsonElementBacking)
+            {
+                return new(value.AsJsonElement);
+            }
+
+            return Undefined;
+        }
+#endif
+
+        /// <summary>
+        /// Gets an instance of the JSON value from the provided value.
+        /// </summary>
+        /// <typeparam name="TValue">The type of the value.</typeparam>
+        /// <param name="value">The value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the provided value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static PositiveIntegerDefault0 FromNumber<TValue>(in TValue value)
             where TValue : struct, IJsonNumber<TValue>
@@ -362,180 +470,172 @@ public readonly partial struct Schema
                 return new(value.AsJsonElement);
             }
 
-            if (value.ValueKind == JsonValueKind.Number)
+            return value.ValueKind switch
             {
-                return new(value.AsBinaryJsonNumber);
+                JsonValueKind.Number => new(value.AsNumber.AsBinaryJsonNumber),
+                JsonValueKind.Null => Null,
+                _ => Undefined,
+            };
+        }
+
+#if NET8_0_OR_GREATER
+        /// <summary>
+        /// Gets an instance of the JSON value from the provided value.
+        /// </summary>
+        /// <typeparam name="TValue">The type of the value.</typeparam>
+        /// <param name="value">The value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the provided value.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static PositiveIntegerDefault0 IJsonValue<PositiveIntegerDefault0>.FromObject<TValue>(in TValue value)
+        {
+            if (value.HasJsonElementBacking)
+            {
+                return new(value.AsJsonElement);
             }
 
             return Undefined;
         }
-
-#if NET8_0_OR_GREATER
-    /// <summary>
-    /// Gets an instance of the JSON value from an array value.
-    /// </summary>
-    /// <typeparam name="TValue">The type of the value.</typeparam>
-    /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be PositiveIntegerDefault0.Undefined if the type is not compatible.</remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static PositiveIntegerDefault0 IJsonValue<PositiveIntegerDefault0>.FromArray<TValue>(in TValue value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        return Undefined;
-    }
 #endif
-#if NET8_0_OR_GREATER
-    /// <summary>
-    /// Gets an instance of the JSON value from an object value.
-    /// </summary>
-    /// <typeparam name="TValue">The type of the value.</typeparam>
-    /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be PositiveIntegerDefault0.Undefined if the type is not compatible.</remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static PositiveIntegerDefault0 IJsonValue<PositiveIntegerDefault0>.FromObject<TValue>(in TValue value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
 
-        return Undefined;
-    }
+#if NET8_0_OR_GREATER
+        /// <summary>
+        /// Gets an instance of the JSON value from the provided value.
+        /// </summary>
+        /// <typeparam name="TValue">The type of the value.</typeparam>
+        /// <param name="value">The value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the provided value.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static PositiveIntegerDefault0 IJsonValue<PositiveIntegerDefault0>.FromArray<TValue>(in TValue value)
+        {
+            if (value.HasJsonElementBacking)
+            {
+                return new(value.AsJsonElement);
+            }
+
+            return Undefined;
+        }
 #endif
+
         /// <summary>
-        /// Parses a JSON string into a PositiveIntegerDefault0.
+        /// Parses the PositiveIntegerDefault0.
         /// </summary>
-        /// <param name = "json">The json string to parse.</param>
-        /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "PositiveIntegerDefault0"/> instance built from the JSON string.</returns>
-        public static PositiveIntegerDefault0 Parse(string json, JsonDocumentOptions options = default)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        /// <param name="options">The (optional) JsonDocumentOptions.</param>
+        public static PositiveIntegerDefault0 Parse(string source, JsonDocumentOptions options = default)
         {
-            using var jsonDocument = JsonDocument.Parse(json, options);
-            return new PositiveIntegerDefault0(jsonDocument.RootElement.Clone());
+            using var jsonDocument = JsonDocument.Parse(source, options);
+            return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses a JSON string into a PositiveIntegerDefault0.
+        /// Parses the PositiveIntegerDefault0.
         /// </summary>
-        /// <param name = "utf8Json">The json string to parse.</param>
-        /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "PositiveIntegerDefault0"/> instance built from the JSON string.</returns>
-        public static PositiveIntegerDefault0 Parse(Stream utf8Json, JsonDocumentOptions options = default)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        /// <param name="options">The (optional) JsonDocumentOptions.</param>
+        public static PositiveIntegerDefault0 Parse(Stream source, JsonDocumentOptions options = default)
         {
-            using var jsonDocument = JsonDocument.Parse(utf8Json, options);
-            return new PositiveIntegerDefault0(jsonDocument.RootElement.Clone());
+            using var jsonDocument = JsonDocument.Parse(source, options);
+            return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses a JSON string into a PositiveIntegerDefault0.
+        /// Parses the PositiveIntegerDefault0.
         /// </summary>
-        /// <param name = "utf8Json">The json string to parse.</param>
-        /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "PositiveIntegerDefault0"/> instance built from the JSON string.</returns>
-        public static PositiveIntegerDefault0 Parse(ReadOnlyMemory<byte> utf8Json, JsonDocumentOptions options = default)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        /// <param name="options">The (optional) JsonDocumentOptions.</param>
+        public static PositiveIntegerDefault0 Parse(ReadOnlyMemory<byte> source, JsonDocumentOptions options = default)
         {
-            using var jsonDocument = JsonDocument.Parse(utf8Json, options);
-            return new PositiveIntegerDefault0(jsonDocument.RootElement.Clone());
+            using var jsonDocument = JsonDocument.Parse(source, options);
+            return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses a JSON string into a PositiveIntegerDefault0.
+        /// Parses the PositiveIntegerDefault0.
         /// </summary>
-        /// <param name = "json">The json string to parse.</param>
-        /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "PositiveIntegerDefault0"/> instance built from the JSON string.</returns>
-        public static PositiveIntegerDefault0 Parse(ReadOnlyMemory<char> json, JsonDocumentOptions options = default)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        /// <param name="options">The (optional) JsonDocumentOptions.</param>
+        public static PositiveIntegerDefault0 Parse(ReadOnlyMemory<char> source, JsonDocumentOptions options = default)
         {
-            using var jsonDocument = JsonDocument.Parse(json, options);
-            return new PositiveIntegerDefault0(jsonDocument.RootElement.Clone());
+            using var jsonDocument = JsonDocument.Parse(source, options);
+            return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses a JSON string into a PositiveIntegerDefault0.
+        /// Parses the PositiveIntegerDefault0.
         /// </summary>
-        /// <param name = "utf8Json">The json string to parse.</param>
-        /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "PositiveIntegerDefault0"/> instance built from the JSON string.</returns>
-        public static PositiveIntegerDefault0 Parse(ReadOnlySequence<byte> utf8Json, JsonDocumentOptions options = default)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        /// <param name="options">The (optional) JsonDocumentOptions.</param>
+        public static PositiveIntegerDefault0 Parse(ReadOnlySequence<byte> source, JsonDocumentOptions options = default)
         {
-            using var jsonDocument = JsonDocument.Parse(utf8Json, options);
-            return new PositiveIntegerDefault0(jsonDocument.RootElement.Clone());
+            using var jsonDocument = JsonDocument.Parse(source, options);
+            return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses a JSON value from a buffer.
+        /// Parses the PositiveIntegerDefault0.
         /// </summary>
-        /// <param name = "buffer">The buffer from which to parse the value.</param>
-        /// <returns>The parsed value.</returns>
-        static PositiveIntegerDefault0 ParseValue(ReadOnlySpan<char> buffer)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        public static PositiveIntegerDefault0 ParseValue(ReadOnlySpan<char> source)
         {
 #if NET8_0_OR_GREATER
-        return IJsonValue<PositiveIntegerDefault0>.ParseValue(buffer);
+            return IJsonValue<PositiveIntegerDefault0>.ParseValue(source);
 #else
-            return JsonValueHelpers.ParseValue<PositiveIntegerDefault0>(buffer);
+            return JsonValueHelpers.ParseValue<PositiveIntegerDefault0>(source);
 #endif
         }
 
         /// <summary>
-        /// Parses a JSON value from a buffer.
+        /// Parses the PositiveIntegerDefault0.
         /// </summary>
-        /// <param name = "buffer">The buffer from which to parse the value.</param>
-        /// <returns>The parsed value.</returns>
-        static PositiveIntegerDefault0 ParseValue(ReadOnlySpan<byte> buffer)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        public static PositiveIntegerDefault0 ParseValue(ReadOnlySpan<byte> source)
         {
 #if NET8_0_OR_GREATER
-        return IJsonValue<PositiveIntegerDefault0>.ParseValue(buffer);
+            return IJsonValue<PositiveIntegerDefault0>.ParseValue(source);
 #else
-            return JsonValueHelpers.ParseValue<PositiveIntegerDefault0>(buffer);
+            return JsonValueHelpers.ParseValue<PositiveIntegerDefault0>(source);
 #endif
         }
 
         /// <summary>
-        /// Parses a JSON value from a buffer.
+        /// Parses the PositiveIntegerDefault0.
         /// </summary>
-        /// <param name = "reader">The reader from which to parse the value.</param>
-        /// <returns>The parsed value.</returns>
-        static PositiveIntegerDefault0 ParseValue(ref Utf8JsonReader reader)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        public static PositiveIntegerDefault0 ParseValue(ref Utf8JsonReader source)
         {
 #if NET8_0_OR_GREATER
-        return IJsonValue<PositiveIntegerDefault0>.ParseValue(ref reader);
+            return IJsonValue<PositiveIntegerDefault0>.ParseValue(ref source);
 #else
-            return JsonValueHelpers.ParseValue<PositiveIntegerDefault0>(ref reader);
+            return JsonValueHelpers.ParseValue<PositiveIntegerDefault0>(ref source);
 #endif
         }
 
         /// <summary>
         /// Gets the value as an instance of the target value.
         /// </summary>
-        /// <typeparam name = "TTarget">The type of the target.</typeparam>
+        /// <typeparam name="TTarget">The type of the target.</typeparam>
         /// <returns>An instance of the target type.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TTarget As<TTarget>()
             where TTarget : struct, IJsonValue<TTarget>
         {
 #if NET8_0_OR_GREATER
-        if ((this.backing & Backing.JsonElement) != 0)
-        {
-            return TTarget.FromJson(this.jsonElementBacking);
-        }
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                return TTarget.FromJson(this.jsonElementBacking);
+            }
 
-        if ((this.backing & Backing.Number) != 0)
-        {
-            return TTarget.FromNumber(this);
-        }
+            if ((this.backing & Backing.Number) != 0)
+            {
+                return TTarget.FromNumber(this.AsNumber);
+            }
 
-        if ((this.backing & Backing.Null) != 0)
-        {
-            return TTarget.Null;
-        }
+            if ((this.backing & Backing.Null) != 0)
+            {
+                return TTarget.Null;
+            }
 
-        return TTarget.Undefined;
+            return TTarget.Undefined;
 #else
             return this.As<PositiveIntegerDefault0, TTarget>();
 #endif
@@ -544,7 +644,9 @@ public readonly partial struct Schema
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            return (obj is IJsonValue jv && this.Equals(jv.AsAny)) || (obj is null && this.IsNull());
+            return
+                (obj is IJsonValue jv && this.Equals(jv.AsAny)) ||
+                (obj is null && this.IsNull());
         }
 
         /// <inheritdoc/>
@@ -557,7 +659,7 @@ public readonly partial struct Schema
         /// <summary>
         /// Equality comparison.
         /// </summary>
-        /// <param name = "other">The other item with which to compare.</param>
+        /// <param name="other">The other item with which to compare.</param>
         /// <returns><see langword="true"/> if the values were equal.</returns>
         public bool Equals(in PositiveIntegerDefault0 other)
         {
@@ -580,12 +682,14 @@ public readonly partial struct Schema
             if ((this.backing & Backing.Number) != 0)
             {
                 this.numberBacking.WriteTo(writer);
+
                 return;
             }
 
             if ((this.backing & Backing.Null) != 0)
             {
                 writer.WriteNullValue();
+
                 return;
             }
         }
@@ -600,6 +704,87 @@ public readonly partial struct Schema
         public override string ToString()
         {
             return this.Serialize();
+        }
+
+        /// <summary>
+        /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
+        /// </summary>
+        /// <typeparam name="TIn">The immutable context to pass in to the match function.</typeparam>
+        /// <typeparam name="TOut">The result of calling the match function.</typeparam>
+        /// <param name="context">The context to pass to the match function.</param>
+        /// <param name="matchCorvusJsonJsonSchemaDraft4SchemaPositiveInteger">Match a <see cref="Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger"/>.</param>
+        /// <param name="matchCorvusJsonJsonSchemaDraft4SchemaPositiveIntegerDefault0DefaultValueType0">Match a <see cref="Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0.DefaultValueType0"/>.</param>
+        /// <param name="defaultMatch">Match any other value.</param>
+        /// <returns>An instance of the value returned by the match function.</returns>
+        public TOut Match<TIn, TOut>(
+            in TIn context,
+            Matcher<Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger, TIn, TOut> matchCorvusJsonJsonSchemaDraft4SchemaPositiveInteger,
+            Matcher<Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0.DefaultValueType0, TIn, TOut> matchCorvusJsonJsonSchemaDraft4SchemaPositiveIntegerDefault0DefaultValueType0,
+            Matcher<PositiveIntegerDefault0, TIn, TOut> defaultMatch)
+        {
+            Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger matchCorvusJsonJsonSchemaDraft4SchemaPositiveIntegerValue = this.As<Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger>();
+            if (matchCorvusJsonJsonSchemaDraft4SchemaPositiveIntegerValue.IsValid())
+            {
+                return matchCorvusJsonJsonSchemaDraft4SchemaPositiveInteger(matchCorvusJsonJsonSchemaDraft4SchemaPositiveIntegerValue, context);
+            }
+
+            Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0.DefaultValueType0 matchCorvusJsonJsonSchemaDraft4SchemaPositiveIntegerDefault0DefaultValueType0Value = this.As<Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0.DefaultValueType0>();
+            if (matchCorvusJsonJsonSchemaDraft4SchemaPositiveIntegerDefault0DefaultValueType0Value.IsValid())
+            {
+                return matchCorvusJsonJsonSchemaDraft4SchemaPositiveIntegerDefault0DefaultValueType0(matchCorvusJsonJsonSchemaDraft4SchemaPositiveIntegerDefault0DefaultValueType0Value, context);
+            }
+
+            return defaultMatch(this, context);
+        }
+
+        /// <summary>
+        /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
+        /// </summary>
+        /// <typeparam name="TOut">The result of calling the match function.</typeparam>
+        /// <param name="matchCorvusJsonJsonSchemaDraft4SchemaPositiveInteger">Match a <see cref="Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger"/>.</param>
+        /// <param name="matchCorvusJsonJsonSchemaDraft4SchemaPositiveIntegerDefault0DefaultValueType0">Match a <see cref="Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0.DefaultValueType0"/>.</param>
+        /// <param name="defaultMatch">Match any other value.</param>
+        /// <returns>An instance of the value returned by the match function.</returns>
+        public TOut Match<TOut>(
+            Matcher<Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger, TOut> matchCorvusJsonJsonSchemaDraft4SchemaPositiveInteger,
+            Matcher<Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0.DefaultValueType0, TOut> matchCorvusJsonJsonSchemaDraft4SchemaPositiveIntegerDefault0DefaultValueType0,
+            Matcher<PositiveIntegerDefault0, TOut> defaultMatch)
+        {
+            Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger matchCorvusJsonJsonSchemaDraft4SchemaPositiveIntegerValue = this.As<Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger>();
+            if (matchCorvusJsonJsonSchemaDraft4SchemaPositiveIntegerValue.IsValid())
+            {
+                return matchCorvusJsonJsonSchemaDraft4SchemaPositiveInteger(matchCorvusJsonJsonSchemaDraft4SchemaPositiveIntegerValue);
+            }
+
+            Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0.DefaultValueType0 matchCorvusJsonJsonSchemaDraft4SchemaPositiveIntegerDefault0DefaultValueType0Value = this.As<Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0.DefaultValueType0>();
+            if (matchCorvusJsonJsonSchemaDraft4SchemaPositiveIntegerDefault0DefaultValueType0Value.IsValid())
+            {
+                return matchCorvusJsonJsonSchemaDraft4SchemaPositiveIntegerDefault0DefaultValueType0(matchCorvusJsonJsonSchemaDraft4SchemaPositiveIntegerDefault0DefaultValueType0Value);
+            }
+
+            return defaultMatch(this);
+        }
+
+        /// <summary>
+        /// Gets the value as a <see cref="Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger" />.
+        /// </summary>
+        /// <param name="result">The result of the conversions.</param>
+        /// <returns><see langword="true" /> if the conversion was valid.</returns>
+        public bool TryGetAsPositiveInteger(out Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger result)
+        {
+            result = this.As<Corvus.Json.JsonSchema.Draft4.Schema.PositiveInteger>();
+            return result.IsValid();
+        }
+
+        /// <summary>
+        /// Gets the value as a <see cref="Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0.DefaultValueType0" />.
+        /// </summary>
+        /// <param name="result">The result of the conversions.</param>
+        /// <returns><see langword="true" /> if the conversion was valid.</returns>
+        public bool TryGetAsDefaultValueType0(out Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0.DefaultValueType0 result)
+        {
+            result = this.As<Corvus.Json.JsonSchema.Draft4.Schema.PositiveIntegerDefault0.DefaultValueType0>();
+            return result.IsValid();
         }
     }
 }

@@ -6,11 +6,15 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.Patch.SpecGenerator;
+
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -28,27 +32,114 @@ public readonly partial struct Feature
         if (level > ValidationLevel.Basic)
         {
             result = result.UsingStack();
-            result = result.PushSchemaLocation("json-patch-test.json#/$defs/Feature");
+            result = result.PushSchemaLocation("#/$defs/Feature");
         }
 
         JsonValueKind valueKind = this.ValueKind;
-        result = this.ValidateType(valueKind, result, level);
+        result = CorvusValidation.TypeValidationHandler(this, valueKind, result, level);
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
             return result;
         }
 
-        result = this.ValidateArray(valueKind, result, level);
+        result = CorvusValidation.ArrayValidationHandler(this, valueKind, result, level);
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
             return result;
         }
 
-        if (level != ValidationLevel.Flag)
+        if (level > ValidationLevel.Basic)
         {
             result = result.PopLocation();
         }
 
         return result;
+    }
+
+    private static partial class CorvusValidation
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ValidationContext TypeValidationHandler(
+            in Feature value,
+            JsonValueKind valueKind,
+            in ValidationContext validationContext,
+            ValidationLevel level = ValidationLevel.Flag)
+        {
+            ValidationContext result = validationContext;
+            bool isValid = false;
+            ValidationContext localResultArray = Corvus.Json.Validate.TypeArray(valueKind, result.CreateChildContext(), level);
+            if (level == ValidationLevel.Flag && localResultArray.IsValid)
+            {
+                return validationContext;
+            }
+
+            if (localResultArray.IsValid)
+            {
+                isValid = true;
+            }
+
+            return result.MergeResults(
+                isValid,
+                level,
+                localResultArray);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ValidationContext ArrayValidationHandler(
+            in Feature value,
+            JsonValueKind valueKind,
+            in ValidationContext validationContext,
+            ValidationLevel level)
+        {
+            ValidationContext result = validationContext;
+            if (valueKind != JsonValueKind.Array)
+            {
+                if (level == ValidationLevel.Verbose)
+                {
+                    ValidationContext ignoredResult = validationContext;
+                    ignoredResult = ignoredResult.PushValidationLocationProperty("items");
+                    ignoredResult = ignoredResult.WithResult(isValid: true, "Validation items - ignored because the value is not an array");
+                    ignoredResult = ignoredResult.PopLocation();
+                    return ignoredResult;
+                }
+
+                return validationContext;
+            }
+
+            int length = 0;
+            using JsonArrayEnumerator<Corvus.Json.Patch.SpecGenerator.Scenario> arrayEnumerator = value.EnumerateArray();
+            while (arrayEnumerator.MoveNext())
+            {
+                if (level > ValidationLevel.Basic)
+                {
+                    result = result.PushDocumentArrayIndex(length);
+                }
+                if (level > ValidationLevel.Basic)
+                {
+                    result = result.PushValidationLocationReducedPathModifier(new("#/items/$ref"));
+                }
+
+                result = arrayEnumerator.Current.Validate(result, level);
+                if (level == ValidationLevel.Flag && !result.IsValid)
+                {
+                    return result;
+                }
+
+                if (level > ValidationLevel.Basic)
+                {
+                    result = result.PopLocation();
+                }
+
+                result = result.WithLocalItemIndex(length);
+                if (level > ValidationLevel.Basic)
+                {
+                    result = result.PopLocation();
+                }
+
+                length++;
+            }
+
+            return result;
+        }
     }
 }

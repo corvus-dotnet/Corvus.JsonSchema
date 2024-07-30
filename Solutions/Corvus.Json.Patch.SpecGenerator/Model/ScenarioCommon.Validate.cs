@@ -6,11 +6,15 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.Patch.SpecGenerator;
+
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -28,27 +32,207 @@ public readonly partial struct ScenarioCommon
         if (level > ValidationLevel.Basic)
         {
             result = result.UsingStack();
-            result = result.PushSchemaLocation("json-patch-test.json#/$defs/ScenarioCommon");
+            result = result.PushSchemaLocation("#/$defs/ScenarioCommon");
         }
 
         JsonValueKind valueKind = this.ValueKind;
-        result = this.ValidateType(valueKind, result, level);
+        result = CorvusValidation.TypeValidationHandler(this, valueKind, result, level);
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
             return result;
         }
 
-        result = this.ValidateObject(valueKind, result, level);
+        result = CorvusValidation.ObjectValidationHandler(this, valueKind, result, level);
         if (level == ValidationLevel.Flag && !result.IsValid)
         {
             return result;
         }
 
-        if (level != ValidationLevel.Flag)
+        if (level > ValidationLevel.Basic)
         {
             result = result.PopLocation();
         }
 
         return result;
+    }
+
+    private static partial class CorvusValidation
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ValidationContext TypeValidationHandler(
+            in ScenarioCommon value,
+            JsonValueKind valueKind,
+            in ValidationContext validationContext,
+            ValidationLevel level = ValidationLevel.Flag)
+        {
+            ValidationContext result = validationContext;
+            bool isValid = false;
+            ValidationContext localResultObject = Corvus.Json.Validate.TypeObject(valueKind, result.CreateChildContext(), level);
+            if (level == ValidationLevel.Flag && localResultObject.IsValid)
+            {
+                return validationContext;
+            }
+
+            if (localResultObject.IsValid)
+            {
+                isValid = true;
+            }
+
+            return result.MergeResults(
+                isValid,
+                level,
+                localResultObject);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ValidationContext ObjectValidationHandler(
+            in ScenarioCommon value,
+            JsonValueKind valueKind,
+            in ValidationContext validationContext,
+            ValidationLevel level = ValidationLevel.Flag)
+        {
+            ValidationContext result = validationContext;
+            if (valueKind != JsonValueKind.Object)
+            {
+                if (level == ValidationLevel.Verbose)
+                {
+                    ValidationContext ignoredResult = validationContext;
+                    ignoredResult = ignoredResult.PushValidationLocationProperty("properties");
+                    ignoredResult = ignoredResult.WithResult(isValid: true, "Validation properties - ignored because the value is not an object");
+                    ignoredResult = ignoredResult.PopLocation();
+                    ignoredResult = ignoredResult.PushValidationLocationProperty("required");
+                    ignoredResult = ignoredResult.WithResult(isValid: true, "Validation required - ignored because the value is not an object");
+                    ignoredResult = ignoredResult.PopLocation();
+                    return ignoredResult;
+                }
+
+                return validationContext;
+            }
+
+            bool hasSeenDoc = false;
+            bool hasSeenPatch = false;
+            int propertyCount = 0;
+            foreach (JsonObjectProperty property in value.EnumerateObject())
+            {
+                if (property.NameEquals(JsonPropertyNames.CommentUtf8, JsonPropertyNames.Comment))
+                {
+                    result = result.WithLocalProperty(propertyCount);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/comment"), JsonPropertyNames.Comment);
+                    }
+
+                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonString>().Validate(result.CreateChildContext(), level);
+                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+
+                    if (level == ValidationLevel.Flag && !result.IsValid)
+                    {
+                        return result;
+                    }
+                }
+                else if (property.NameEquals(JsonPropertyNames.DocUtf8, JsonPropertyNames.Doc))
+                {
+                    hasSeenDoc = true;
+                    result = result.WithLocalProperty(propertyCount);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/doc"), JsonPropertyNames.Doc);
+                    }
+
+                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonAny>().Validate(result.CreateChildContext(), level);
+                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+
+                    if (level == ValidationLevel.Flag && !result.IsValid)
+                    {
+                        return result;
+                    }
+                }
+                else if (property.NameEquals(JsonPropertyNames.PatchUtf8, JsonPropertyNames.Patch))
+                {
+                    hasSeenPatch = true;
+                    result = result.WithLocalProperty(propertyCount);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifierAndProperty(new("#/properties/patch"), JsonPropertyNames.Patch);
+                    }
+
+                    ValidationContext propertyResult = property.Value.As<Corvus.Json.JsonAny>().Validate(result.CreateChildContext(), level);
+                    result = result.MergeResults(propertyResult.IsValid, level, propertyResult);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+
+                    if (level == ValidationLevel.Flag && !result.IsValid)
+                    {
+                        return result;
+                    }
+                }
+
+                propertyCount++;
+            }
+
+            if (level > ValidationLevel.Basic)
+            {
+                result = result.PushValidationLocationReducedPathModifier(new("#/required/0"));
+            }
+
+            if (!hasSeenDoc)
+            {
+                if (level >= ValidationLevel.Basic)
+                {
+                    result = result.WithResult(isValid: false, "Validation properties - the required property 'doc' was not present.");
+                }
+                else
+                {
+                    return result.WithResult(isValid: false);
+                }
+            }
+            else if (level == ValidationLevel.Verbose)
+            {
+                result = result.WithResult(isValid: true, "Validation properties - the required property 'doc' was present.");
+            }
+
+            if (level > ValidationLevel.Basic)
+            {
+                result = result.PopLocation();
+            }
+
+            if (level > ValidationLevel.Basic)
+            {
+                result = result.PushValidationLocationReducedPathModifier(new("#/required/1"));
+            }
+
+            if (!hasSeenPatch)
+            {
+                if (level >= ValidationLevel.Basic)
+                {
+                    result = result.WithResult(isValid: false, "Validation properties - the required property 'patch' was not present.");
+                }
+                else
+                {
+                    return result.WithResult(isValid: false);
+                }
+            }
+            else if (level == ValidationLevel.Verbose)
+            {
+                result = result.WithResult(isValid: true, "Validation properties - the required property 'patch' was present.");
+            }
+
+            if (level > ValidationLevel.Basic)
+            {
+                result = result.PopLocation();
+            }
+
+            return result;
+        }
     }
 }

@@ -12,8 +12,7 @@ namespace Corvus.Json.CodeGeneration.Keywords;
 public sealed class PropertiesKeyword
     :   ISubschemaTypeBuilderKeyword,
         ILocalSubschemaRegistrationKeyword,
-        ISubschemaProviderKeyword,
-        IPropertyProviderKeyword,
+        IPropertySubchemaProviderKeyword,
         IObjectPropertyValidationKeyword
 {
     private const string KeywordPath = "#/properties";

@@ -24,13 +24,19 @@ public sealed class DefaultValueNameHeuristic : INameHeuristicBeforeSubschema
     public bool IsOptional => true;
 
     /// <inheritdoc/>
-    public uint Priority => 1600;
+    public uint Priority => 1500;
 
     private static ReadOnlySpan<char> DefaultValuePrefix => "DefaultValue".AsSpan();
 
     /// <inheritdoc/>
-    public bool TryGetName(TypeDeclaration typeDeclaration, JsonReferenceBuilder reference, Span<char> typeNameBuffer, out int written)
+    public bool TryGetName(ILanguageProvider languageProvider, TypeDeclaration typeDeclaration, JsonReferenceBuilder reference, Span<char> typeNameBuffer, out int written)
     {
+        if (typeDeclaration.Parent() is null || typeDeclaration.IsInDefinitionsContainer())
+        {
+            written = 0;
+            return false;
+        }
+
         JsonElement defaultValue = typeDeclaration.DefaultValue();
         if (defaultValue.ValueKind != JsonValueKind.Undefined &&
             typeDeclaration.LocatedSchema.Schema.EnumerateObject().Count() == 1)
@@ -44,6 +50,13 @@ public sealed class DefaultValueNameHeuristic : INameHeuristicBeforeSubschema
 
             written = DefaultValuePrefix.Length;
             written += Formatting.FormatTypeNameComponent(typeDeclaration, dvSpan, typeNameBuffer[written..]);
+
+            if (typeDeclaration.CollidesWithParent(typeNameBuffer[..written]))
+            {
+                written = 0;
+                return false;
+            }
+
             return true;
         }
 

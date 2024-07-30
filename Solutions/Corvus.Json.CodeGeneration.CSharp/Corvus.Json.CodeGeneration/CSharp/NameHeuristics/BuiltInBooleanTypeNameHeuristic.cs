@@ -25,7 +25,7 @@ public sealed class BuiltInBooleanTypeNameHeuristic : IBuiltInTypeNameHeuristic
     public uint Priority => 1;
 
     /// <inheritdoc/>
-    public bool TryGetName(TypeDeclaration typeDeclaration, JsonReferenceBuilder reference, Span<char> typeNameBuffer, out int written)
+    public bool TryGetName(ILanguageProvider languageProvider, TypeDeclaration typeDeclaration, JsonReferenceBuilder reference, Span<char> typeNameBuffer, out int written)
     {
         written = 0;
 

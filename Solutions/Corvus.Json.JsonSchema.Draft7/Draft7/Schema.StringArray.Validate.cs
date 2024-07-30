@@ -6,16 +6,43 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.Draft7;
+
+/// <summary>
+/// Core schema meta-schema
+/// </summary>
+/// <remarks>
+/// <para>
+/// Examples:
+/// <example>
+/// <code>
+/// true
+/// </code>
+/// </example>
+/// </para>
+/// </remarks>
 public readonly partial struct Schema
 {
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Examples:
+    /// <example>
+    /// <code>
+    /// []
+    /// </code>
+    /// </example>
+    /// </para>
+    /// </remarks>
     public readonly partial struct StringArray
     {
         /// <inheritdoc/>
@@ -34,24 +61,158 @@ public readonly partial struct Schema
             }
 
             JsonValueKind valueKind = this.ValueKind;
-            result = this.ValidateType(valueKind, result, level);
+            result = CorvusValidation.TypeValidationHandler(this, valueKind, result, level);
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
             }
 
-            result = this.ValidateArray(valueKind, result, level);
+            result = CorvusValidation.ArrayValidationHandler(this, valueKind, result, level);
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
             }
 
-            if (level != ValidationLevel.Flag)
+            if (level > ValidationLevel.Basic)
             {
                 result = result.PopLocation();
             }
 
             return result;
+        }
+
+        private static partial class CorvusValidation
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static ValidationContext TypeValidationHandler(
+                in StringArray value,
+                JsonValueKind valueKind,
+                in ValidationContext validationContext,
+                ValidationLevel level = ValidationLevel.Flag)
+            {
+                ValidationContext result = validationContext;
+                bool isValid = false;
+                ValidationContext localResultArray = Corvus.Json.Validate.TypeArray(valueKind, result.CreateChildContext(), level);
+                if (level == ValidationLevel.Flag && localResultArray.IsValid)
+                {
+                    return validationContext;
+                }
+
+                if (localResultArray.IsValid)
+                {
+                    isValid = true;
+                }
+
+                return result.MergeResults(
+                    isValid,
+                    level,
+                    localResultArray);
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static ValidationContext ArrayValidationHandler(
+                in StringArray value,
+                JsonValueKind valueKind,
+                in ValidationContext validationContext,
+                ValidationLevel level)
+            {
+                ValidationContext result = validationContext;
+                if (valueKind != JsonValueKind.Array)
+                {
+                    if (level == ValidationLevel.Verbose)
+                    {
+                        ValidationContext ignoredResult = validationContext;
+                        ignoredResult = ignoredResult.PushValidationLocationProperty("items");
+                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation items - ignored because the value is not an array");
+                        ignoredResult = ignoredResult.PopLocation();
+                        ignoredResult = ignoredResult.PushValidationLocationProperty("uniqueItems");
+                        ignoredResult = ignoredResult.WithResult(isValid: true, "Validation uniqueItems - ignored because the value is not an array");
+                        ignoredResult = ignoredResult.PopLocation();
+                        return ignoredResult;
+                    }
+
+                    return validationContext;
+                }
+
+                int length = 0;
+                using JsonArrayEnumerator<Corvus.Json.JsonString> arrayEnumerator = value.EnumerateArray();
+                while (arrayEnumerator.MoveNext())
+                {
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushDocumentArrayIndex(length);
+                    }
+
+                    using JsonArrayEnumerator<Corvus.Json.JsonString> innerEnumerator = value.EnumerateArray();
+                    int innerIndex = -1;
+                    while (innerIndex < length && 
+innerEnumerator.MoveNext())
+                    {
+                        innerIndex++;
+                    }
+
+                    bool foundDuplicate = false;                    while (innerEnumerator.MoveNext())
+                    {
+                        if (innerEnumerator.Current.Equals(arrayEnumerator.Current))                        {
+                            foundDuplicate = true;
+                            if (level >= ValidationLevel.Basic)
+                            {
+                                result = result.PushValidationLocationProperty("uniqueItems");
+                            }
+
+                            if (level >= ValidationLevel.Detailed)
+                            {
+                                result = result.WithResult(isValid: false, $"Validation uniqueItems - duplicate items were found at indices innerIndex and {length}.");
+                            }
+                            else if (level >= ValidationLevel.Basic)
+                            {
+                                result = result.WithResult(isValid: false, "Validation uniqueItems - duplicate items were found.");
+                            }
+                            else
+                            {
+                                return result.WithResult(isValid: false);
+                            }
+
+                            if (level >= ValidationLevel.Basic)
+                            {
+                                result = result.PopLocation();
+                            }
+                        }
+                    }
+
+                    if (!foundDuplicate && level == ValidationLevel.Verbose)
+                    {
+                        result = result.PushValidationLocationProperty("uniqueItems");
+                        result = result.WithResult(isValid: true, "Validation uniqueItems - no duplicate items found.");
+                        result = result.PopLocation();
+                    }
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PushValidationLocationReducedPathModifier(new("#/items"));
+                    }
+
+                    result = arrayEnumerator.Current.Validate(result, level);
+                    if (level == ValidationLevel.Flag && !result.IsValid)
+                    {
+                        return result;
+                    }
+
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+
+                    result = result.WithLocalItemIndex(length);
+                    if (level > ValidationLevel.Basic)
+                    {
+                        result = result.PopLocation();
+                    }
+
+                    length++;
+                }
+
+                return result;
+            }
         }
     }
 }

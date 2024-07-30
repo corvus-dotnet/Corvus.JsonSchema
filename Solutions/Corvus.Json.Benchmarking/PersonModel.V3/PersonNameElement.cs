@@ -321,11 +321,11 @@ public readonly partial struct PersonNameElement
 
 #if NET8_0_OR_GREATER
     /// <summary>
-    /// Gets an instance of the JSON value from a <see cref="JsonAny"/> value.
+    /// Gets an instance of the JSON value from the provided value.
     /// </summary>
     /// <typeparam name="TValue">The type of the value.</typeparam>
-    /// <param name="value">The <see cref="JsonAny"/> value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the <see cref="JsonAny"/> value.</returns>
+    /// <param name="value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the provided value.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static PersonNameElement IJsonValue<PersonNameElement>.FromBoolean<TValue>(in TValue value)
     {
@@ -339,11 +339,11 @@ public readonly partial struct PersonNameElement
 #endif
 
     /// <summary>
-    /// Gets an instance of the JSON value from a <see cref="JsonAny"/> value.
+    /// Gets an instance of the JSON value from the provided value.
     /// </summary>
     /// <typeparam name="TValue">The type of the value.</typeparam>
-    /// <param name="value">The <see cref="JsonAny"/> value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the <see cref="JsonAny"/> value.</returns>
+    /// <param name="value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the provided value.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static PersonNameElement FromString<TValue>(in TValue value)
         where TValue : struct, IJsonString<TValue>
@@ -363,11 +363,11 @@ public readonly partial struct PersonNameElement
 
 #if NET8_0_OR_GREATER
     /// <summary>
-    /// Gets an instance of the JSON value from a <see cref="JsonAny"/> value.
+    /// Gets an instance of the JSON value from the provided value.
     /// </summary>
     /// <typeparam name="TValue">The type of the value.</typeparam>
-    /// <param name="value">The <see cref="JsonAny"/> value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the <see cref="JsonAny"/> value.</returns>
+    /// <param name="value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the provided value.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static PersonNameElement IJsonValue<PersonNameElement>.FromNumber<TValue>(in TValue value)
     {
@@ -382,11 +382,11 @@ public readonly partial struct PersonNameElement
 
 #if NET8_0_OR_GREATER
     /// <summary>
-    /// Gets an instance of the JSON value from a <see cref="JsonAny"/> value.
+    /// Gets an instance of the JSON value from the provided value.
     /// </summary>
     /// <typeparam name="TValue">The type of the value.</typeparam>
-    /// <param name="value">The <see cref="JsonAny"/> value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the <see cref="JsonAny"/> value.</returns>
+    /// <param name="value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the provided value.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static PersonNameElement IJsonValue<PersonNameElement>.FromObject<TValue>(in TValue value)
     {
@@ -401,11 +401,11 @@ public readonly partial struct PersonNameElement
 
 #if NET8_0_OR_GREATER
     /// <summary>
-    /// Gets an instance of the JSON value from a <see cref="JsonAny"/> value.
+    /// Gets an instance of the JSON value from the provided value.
     /// </summary>
     /// <typeparam name="TValue">The type of the value.</typeparam>
-    /// <param name="value">The <see cref="JsonAny"/> value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the <see cref="JsonAny"/> value.</returns>
+    /// <param name="value">The value from which to instantiate the instance.</param>
+    /// <returns>An instance of this type, initialized from the provided value.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static PersonNameElement IJsonValue<PersonNameElement>.FromArray<TValue>(in TValue value)
     {

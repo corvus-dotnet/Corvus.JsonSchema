@@ -25,7 +25,7 @@ public sealed class BaseSchemaNameHeuristic : INameHeuristicBeforeSubschema
     public uint Priority => 1000;
 
     /// <inheritdoc/>
-    public bool TryGetName(TypeDeclaration typeDeclaration, JsonReferenceBuilder reference, Span<char> typeNameBuffer, out int written)
+    public bool TryGetName(ILanguageProvider languageProvider, TypeDeclaration typeDeclaration, JsonReferenceBuilder reference, Span<char> typeNameBuffer, out int written)
     {
         if (typeDeclaration.Parent() is null || typeDeclaration.IsInDefinitionsContainer())
         {
@@ -35,37 +35,14 @@ public sealed class BaseSchemaNameHeuristic : INameHeuristicBeforeSubschema
                 return false;
             }
 
-            ReadOnlySpan<char> name = typeNameBuffer[..written];
-            bool collidesWithParent = typeDeclaration.CollidesWithParent(name);
-            if (!collidesWithParent && typeDeclaration.MatchesExistingTypeInParent(name))
+            written = Formatting.FormatTypeNameComponent(typeDeclaration, typeNameBuffer[..written], typeNameBuffer);
+
+            if (!typeDeclaration.CollidesWithParent(typeNameBuffer[..written]))
             {
-                if (reference.HasPath && reference.HasFragment)
-                {
-                    // Secondary buffer for name composition. Its contents are always disposable
-                    Span<char> interimBuffer = stackalloc char[Formatting.MaxIdentifierLength];
-                    int pathNameLength = GetNameFromPath(typeDeclaration, reference, interimBuffer);
-                    int formatted = Formatting.FormatCompositeName(typeDeclaration, typeNameBuffer, interimBuffer[..pathNameLength], name);
-                    name = typeNameBuffer[..formatted];
-                }
+                return true;
             }
 
-            written = Formatting.FormatTypeNameComponent(typeDeclaration, name, typeNameBuffer);
-
-            if (collidesWithParent)
-            {
-                written = Formatting.ApplyStandardSuffix(typeDeclaration, typeNameBuffer, typeNameBuffer[..written]);
-            }
-
-            int index = 1;
-            int writtenBefore = written;
-
-            while (typeDeclaration.MatchesExistingTypeInParent(typeNameBuffer[..written]) ||
-                   typeDeclaration.MatchesExistingPropertyNameInParent(typeNameBuffer[..written]))
-            {
-                written = writtenBefore + Formatting.ApplySuffix(index, typeNameBuffer[writtenBefore..]);
-                index++;
-            }
-
+            written = Formatting.ApplyStandardSuffix(typeDeclaration, typeNameBuffer, typeNameBuffer[..written]);
             return true;
         }
 
@@ -97,6 +74,12 @@ public sealed class BaseSchemaNameHeuristic : INameHeuristicBeforeSubschema
         JsonReferenceBuilder reference,
         Span<char> typeNameBuffer)
     {
+        if (typeDeclaration.Parent()?.DotnetTypeName() is string name)
+        {
+            name.AsSpan().CopyTo(typeNameBuffer);
+            return name.Length;
+        }
+
         int lastSlash = reference.Path.LastIndexOf('/');
         if (lastSlash == reference.Path.Length - 1 && lastSlash > 0)
         {

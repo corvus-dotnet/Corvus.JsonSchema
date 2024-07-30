@@ -6,9 +6,10 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
 using System.Buffers;
-using System.ComponentModel;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
@@ -16,6 +17,15 @@ using Corvus.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json.JsonSchema.OpenApi31;
+
+/// <summary>
+/// Generated from JSON Schema.
+/// </summary>
+/// <remarks>
+/// <para>
+/// The description of OpenAPI v3.1.x documents without schema validation, as defined by https://spec.openapis.org/oas/v3.1.0
+/// </para>
+/// </remarks>
 public readonly partial struct OpenApiDocument
 {
     /// <summary>
@@ -23,12 +33,14 @@ public readonly partial struct OpenApiDocument
     /// </summary>
     [System.Text.Json.Serialization.JsonConverter(typeof(Corvus.Json.Internal.JsonValueConverter<Header>))]
     public readonly partial struct Header
+
     {
         private readonly Backing backing;
         private readonly JsonElement jsonElementBacking;
         private readonly ImmutableList<JsonObjectProperty> objectBacking;
+
         /// <summary>
-        /// Initializes a new instance of the <see cref = "Header"/> struct.
+        /// Initializes a new instance of the <see cref="Header"/> struct.
         /// </summary>
         public Header()
         {
@@ -38,9 +50,9 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref = "Header"/> struct.
+        /// Initializes a new instance of the <see cref="Header"/> struct.
         /// </summary>
-        /// <param name = "value">The value from which to construct the instance.</param>
+        /// <param name="value">The value from which to construct the instance.</param>
         public Header(in JsonElement value)
         {
             this.jsonElementBacking = value;
@@ -49,19 +61,33 @@ public readonly partial struct OpenApiDocument
         }
 
         /// <summary>
+        /// Initializes a new instance of the <see cref="Header"/> struct.
+        /// </summary>
+        /// <param name="value">The value from which to construct the instance.</param>
+        public Header(ImmutableList<JsonObjectProperty> value)
+        {
+            this.backing = Backing.Object;
+            this.jsonElementBacking = default;
+            this.objectBacking = value;
+        }
+
+        /// <summary>
         /// Gets the schema location from which this type was generated.
         /// </summary>
         public static string SchemaLocation { get; } = "https://spec.openapis.org/oas/3.1/schema/2022-10-07#/$defs/header";
+
         /// <summary>
         /// Gets a Null instance.
         /// </summary>
         public static Header Null { get; } = new(JsonValueHelpers.NullElement);
+
         /// <summary>
         /// Gets an Undefined instance.
         /// </summary>
         public static Header Undefined { get; }
+
         /// <summary>
-        /// Gets the default instance of the type.
+        /// Gets the default instance.
         /// </summary>
         public static Header DefaultInstance { get; }
 
@@ -188,6 +214,72 @@ public readonly partial struct OpenApiDocument
             }
         }
 
+        /// <summary>
+        /// Gets the instance as a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredSchema" />.
+        /// </summary>
+        public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredSchema AsRequiredSchema
+        {
+            get
+            {
+                return this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredSchema>();
+            }
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the instance is a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredSchema" />.
+        /// </summary>
+        public bool IsRequiredSchema
+        {
+            get
+            {
+                return this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredSchema>().IsValid();
+            }
+        }
+
+        /// <summary>
+        /// Gets the instance as a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredContent" />.
+        /// </summary>
+        public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredContent AsRequiredContent
+        {
+            get
+            {
+                return this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredContent>();
+            }
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the instance is a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredContent" />.
+        /// </summary>
+        public bool IsRequiredContent
+        {
+            get
+            {
+                return this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredContent>().IsValid();
+            }
+        }
+
+        /// <summary>
+        /// Gets the instance as a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions" />.
+        /// </summary>
+        public Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions AsSpecificationExtensions
+        {
+            get
+            {
+                return this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions>();
+            }
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the instance is a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions" />.
+        /// </summary>
+        public bool IsSpecificationExtensions
+        {
+            get
+            {
+                return this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions>().IsValid();
+            }
+        }
+
         /// <inheritdoc/>
         public bool HasJsonElementBacking
         {
@@ -221,11 +313,6 @@ public readonly partial struct OpenApiDocument
                     return JsonValueKind.Object;
                 }
 
-                if ((this.backing & Backing.Null) != 0)
-                {
-                    return JsonValueKind.Null;
-                }
-
                 return JsonValueKind.Undefined;
             }
         }
@@ -233,9 +320,8 @@ public readonly partial struct OpenApiDocument
         /// <summary>
         /// Conversion from JsonAny.
         /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        /// <exception cref = "InvalidOperationException">The value was not compatible with this type.</exception>
-        public static implicit operator Header(in JsonAny value)
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Header(JsonAny value)
         {
             return value.As<Header>();
         }
@@ -243,43 +329,111 @@ public readonly partial struct OpenApiDocument
         /// <summary>
         /// Conversion to JsonAny.
         /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
-        /// <exception cref = "InvalidOperationException">The value was not compatible with this type.</exception>
-        public static implicit operator JsonAny(in Header value)
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator JsonAny(Header value)
         {
             return value.AsAny;
         }
 
         /// <summary>
-        /// Equality operator.
+        /// Conversion to <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions"/>.
         /// </summary>
-        /// <param name = "left">The lhs.</param>
-        /// <param name = "right">The rhs.</param>
-        /// <returns><c>True</c> if the values are equal.</returns>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions(Header value)
+        {
+            return value.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions>();
+        }
+
+        /// <summary>
+        /// Conversion from <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator Header(Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions value)
+        {
+            return value.As<Header>();
+        }
+
+        /// <summary>
+        /// Conversion to <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredSchema"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredSchema(Header value)
+        {
+            return value.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredSchema>();
+        }
+
+        /// <summary>
+        /// Conversion from <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredSchema"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Header(Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredSchema value)
+        {
+            return value.As<Header>();
+        }
+
+        /// <summary>
+        /// Conversion to <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredContent"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static explicit operator Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredContent(Header value)
+        {
+            return value.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredContent>();
+        }
+
+        /// <summary>
+        /// Conversion from <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredContent"/>.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator Header(Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredContent value)
+        {
+            return value.As<Header>();
+        }
+
+        /// <summary>
+        /// Operator ==.
+        /// </summary>
+        /// <param name="left">The lhs of the operator.</param>
+        /// <param name="right">The rhs of the operator.</param>
+        /// <returns>
+        /// <c>True</c> if the values are equal.
+        /// </returns>
         public static bool operator ==(in Header left, in Header right)
         {
             return left.Equals(right);
         }
 
         /// <summary>
-        /// Inequality operator.
+        /// Operator !=.
         /// </summary>
-        /// <param name = "left">The lhs.</param>
-        /// <param name = "right">The rhs.</param>
-        /// <returns><c>True</c> if the values are equal.</returns>
+        /// <param name="left">The lhs of the operator.</param>
+        /// <param name="right">The rhs of the operator.</param>
+        /// <returns>
+        /// <c>True</c> if the values are not equal.
+        /// </returns>
         public static bool operator !=(in Header left, in Header right)
         {
             return !left.Equals(right);
         }
 
         /// <summary>
-        /// Gets an instance of the JSON value from a JsonAny value.
+        /// Gets an instance of the JSON value from a <see cref="JsonElement"/> value.
         /// </summary>
-        /// <param name = "value">The <see cref = "JsonAny"/> value from which to instantiate the instance.</param>
-        /// <returns>An instance of this type, initialized from the <see cref = "JsonAny"/>.</returns>
+        /// <param name="value">The <see cref="JsonElement"/> value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the <see cref="JsonElement"/>.</returns>
         /// <remarks>The returned value will have a <see cref = "IJsonValue.ValueKind"/> of <see cref = "JsonValueKind.Undefined"/> if the
-        /// value cannot be constructed from the given instance (e.g. because they have an incompatible dotnet backing type.
+        /// value cannot be constructed from the given instance (e.g. because they have an incompatible .NET backing type).
         /// </remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Header FromJson(in JsonElement value)
+        {
+            return new(value);
+        }
+
+        /// <summary>
+        /// Gets an instance of the JSON value from a <see cref="JsonAny"/> value.
+        /// </summary>
+        /// <param name="value">The <see cref="JsonAny"/> value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the <see cref="JsonAny"/> value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Header FromAny(in JsonAny value)
         {
@@ -288,8 +442,7 @@ public readonly partial struct OpenApiDocument
                 return new(value.AsJsonElement);
             }
 
-            JsonValueKind valueKind = value.ValueKind;
-            return valueKind switch
+            return value.ValueKind switch
             {
                 JsonValueKind.Object => new(value.AsObject.AsPropertyBacking()),
                 JsonValueKind.Null => Null,
@@ -297,100 +450,69 @@ public readonly partial struct OpenApiDocument
             };
         }
 
+#if NET8_0_OR_GREATER
         /// <summary>
-        /// Gets an instance of the JSON value from a <see cref = "JsonElement"/> value.
+        /// Gets an instance of the JSON value from the provided value.
         /// </summary>
-        /// <param name = "value">The <see cref = "JsonElement"/> value from which to instantiate the instance.</param>
-        /// <returns>An instance of this type, initialized from the <see cref = "JsonElement"/>.</returns>
+        /// <typeparam name="TValue">The type of the value.</typeparam>
+        /// <param name="value">The value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the provided value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Header FromJson(in JsonElement value)
+        static Header IJsonValue<Header>.FromBoolean<TValue>(in TValue value)
         {
-            return new(value);
+            if (value.HasJsonElementBacking)
+            {
+                return new(value.AsJsonElement);
+            }
+
+            return Undefined;
         }
+#endif
 
 #if NET8_0_OR_GREATER
-    /// <summary>
-    /// Gets an instance of the JSON value from a boolean value.
-    /// </summary>
-    /// <typeparam name = "TValue">The type of the value.</typeparam>
-    /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be Header.Undefined if the type is not compatible.</remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static Header IJsonValue<Header>.FromBoolean<TValue>(in TValue value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        return Undefined;
-    }
-#endif
-#if NET8_0_OR_GREATER
-    /// <summary>
-    /// Gets an instance of the JSON value from a string value.
-    /// </summary>
-    /// <typeparam name="TValue">The type of the value.</typeparam>
-    /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be Header.Undefined if the type is not compatible.</remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static Header IJsonValue<Header>.FromString<TValue>(in TValue value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        return Undefined;
-    }
-#endif
-#if NET8_0_OR_GREATER
-    /// <summary>
-    /// Gets an instance of the JSON value from a number value.
-    /// </summary>
-    /// <typeparam name="TValue">The type of the value.</typeparam>
-    /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be Header.Undefined if the type is not compatible.</remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static Header IJsonValue<Header>.FromNumber<TValue>(in TValue value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        return Undefined;
-    }
-#endif
-#if NET8_0_OR_GREATER
-    /// <summary>
-    /// Gets an instance of the JSON value from an array value.
-    /// </summary>
-    /// <typeparam name="TValue">The type of the value.</typeparam>
-    /// <param name="value">The value from which to instantiate the instance.</param>
-    /// <returns>An instance of this type, initialized from the value.</returns>
-    /// <remarks>This will be Header.Undefined if the type is not compatible.</remarks>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static Header IJsonValue<Header>.FromArray<TValue>(in TValue value)
-    {
-        if (value.HasJsonElementBacking)
-        {
-            return new(value.AsJsonElement);
-        }
-
-        return Undefined;
-    }
-#endif
         /// <summary>
-        /// Gets an instance of the JSON value from an object value.
+        /// Gets an instance of the JSON value from the provided value.
         /// </summary>
-        /// <typeparam name = "TValue">The type of the value.</typeparam>
-        /// <param name = "value">The value from which to instantiate the instance.</param>
-        /// <returns>An instance of this type, initialized from the value.</returns>
-        /// <remarks>This will be Header.Undefined if the type is not compatible.</remarks>
+        /// <typeparam name="TValue">The type of the value.</typeparam>
+        /// <param name="value">The value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the provided value.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static Header IJsonValue<Header>.FromString<TValue>(in TValue value)
+        {
+            if (value.HasJsonElementBacking)
+            {
+                return new(value.AsJsonElement);
+            }
+
+            return Undefined;
+        }
+#endif
+
+#if NET8_0_OR_GREATER
+        /// <summary>
+        /// Gets an instance of the JSON value from the provided value.
+        /// </summary>
+        /// <typeparam name="TValue">The type of the value.</typeparam>
+        /// <param name="value">The value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the provided value.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static Header IJsonValue<Header>.FromNumber<TValue>(in TValue value)
+        {
+            if (value.HasJsonElementBacking)
+            {
+                return new(value.AsJsonElement);
+            }
+
+            return Undefined;
+        }
+#endif
+
+        /// <summary>
+        /// Gets an instance of the JSON value from the provided value.
+        /// </summary>
+        /// <typeparam name="TValue">The type of the value.</typeparam>
+        /// <param name="value">The value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the provided value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Header FromObject<TValue>(in TValue value)
             where TValue : struct, IJsonObject<TValue>
@@ -400,142 +522,153 @@ public readonly partial struct OpenApiDocument
                 return new(value.AsJsonElement);
             }
 
-            if (value.ValueKind == JsonValueKind.Object)
+            return value.ValueKind switch
             {
-                return new(value.AsPropertyBacking());
+                JsonValueKind.Object => new(value.AsObject.AsPropertyBacking()),
+                JsonValueKind.Null => Null,
+                _ => Undefined,
+            };
+        }
+
+#if NET8_0_OR_GREATER
+        /// <summary>
+        /// Gets an instance of the JSON value from the provided value.
+        /// </summary>
+        /// <typeparam name="TValue">The type of the value.</typeparam>
+        /// <param name="value">The value from which to instantiate the instance.</param>
+        /// <returns>An instance of this type, initialized from the provided value.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static Header IJsonValue<Header>.FromArray<TValue>(in TValue value)
+        {
+            if (value.HasJsonElementBacking)
+            {
+                return new(value.AsJsonElement);
             }
 
             return Undefined;
         }
+#endif
 
         /// <summary>
-        /// Parses a JSON string into a Header.
+        /// Parses the Header.
         /// </summary>
-        /// <param name = "json">The json string to parse.</param>
-        /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "Header"/> instance built from the JSON string.</returns>
-        public static Header Parse(string json, JsonDocumentOptions options = default)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        /// <param name="options">The (optional) JsonDocumentOptions.</param>
+        public static Header Parse(string source, JsonDocumentOptions options = default)
         {
-            using var jsonDocument = JsonDocument.Parse(json, options);
-            return new Header(jsonDocument.RootElement.Clone());
+            using var jsonDocument = JsonDocument.Parse(source, options);
+            return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses a JSON string into a Header.
+        /// Parses the Header.
         /// </summary>
-        /// <param name = "utf8Json">The json string to parse.</param>
-        /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "Header"/> instance built from the JSON string.</returns>
-        public static Header Parse(Stream utf8Json, JsonDocumentOptions options = default)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        /// <param name="options">The (optional) JsonDocumentOptions.</param>
+        public static Header Parse(Stream source, JsonDocumentOptions options = default)
         {
-            using var jsonDocument = JsonDocument.Parse(utf8Json, options);
-            return new Header(jsonDocument.RootElement.Clone());
+            using var jsonDocument = JsonDocument.Parse(source, options);
+            return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses a JSON string into a Header.
+        /// Parses the Header.
         /// </summary>
-        /// <param name = "utf8Json">The json string to parse.</param>
-        /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "Header"/> instance built from the JSON string.</returns>
-        public static Header Parse(ReadOnlyMemory<byte> utf8Json, JsonDocumentOptions options = default)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        /// <param name="options">The (optional) JsonDocumentOptions.</param>
+        public static Header Parse(ReadOnlyMemory<byte> source, JsonDocumentOptions options = default)
         {
-            using var jsonDocument = JsonDocument.Parse(utf8Json, options);
-            return new Header(jsonDocument.RootElement.Clone());
+            using var jsonDocument = JsonDocument.Parse(source, options);
+            return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses a JSON string into a Header.
+        /// Parses the Header.
         /// </summary>
-        /// <param name = "json">The json string to parse.</param>
-        /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "Header"/> instance built from the JSON string.</returns>
-        public static Header Parse(ReadOnlyMemory<char> json, JsonDocumentOptions options = default)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        /// <param name="options">The (optional) JsonDocumentOptions.</param>
+        public static Header Parse(ReadOnlyMemory<char> source, JsonDocumentOptions options = default)
         {
-            using var jsonDocument = JsonDocument.Parse(json, options);
-            return new Header(jsonDocument.RootElement.Clone());
+            using var jsonDocument = JsonDocument.Parse(source, options);
+            return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses a JSON string into a Header.
+        /// Parses the Header.
         /// </summary>
-        /// <param name = "utf8Json">The json string to parse.</param>
-        /// <param name = "options">The (optional) JsonDocumentOptions.</param>
-        /// <returns>A <see cref = "Header"/> instance built from the JSON string.</returns>
-        public static Header Parse(ReadOnlySequence<byte> utf8Json, JsonDocumentOptions options = default)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        /// <param name="options">The (optional) JsonDocumentOptions.</param>
+        public static Header Parse(ReadOnlySequence<byte> source, JsonDocumentOptions options = default)
         {
-            using var jsonDocument = JsonDocument.Parse(utf8Json, options);
-            return new Header(jsonDocument.RootElement.Clone());
+            using var jsonDocument = JsonDocument.Parse(source, options);
+            return new(jsonDocument.RootElement.Clone());
         }
 
         /// <summary>
-        /// Parses a JSON value from a buffer.
+        /// Parses the Header.
         /// </summary>
-        /// <param name = "buffer">The buffer from which to parse the value.</param>
-        /// <returns>The parsed value.</returns>
-        static Header ParseValue(ReadOnlySpan<char> buffer)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        public static Header ParseValue(ReadOnlySpan<char> source)
         {
 #if NET8_0_OR_GREATER
-        return IJsonValue<Header>.ParseValue(buffer);
+            return IJsonValue<Header>.ParseValue(source);
 #else
-            return JsonValueHelpers.ParseValue<Header>(buffer);
+            return JsonValueHelpers.ParseValue<Header>(source);
 #endif
         }
 
         /// <summary>
-        /// Parses a JSON value from a buffer.
+        /// Parses the Header.
         /// </summary>
-        /// <param name = "buffer">The buffer from which to parse the value.</param>
-        /// <returns>The parsed value.</returns>
-        static Header ParseValue(ReadOnlySpan<byte> buffer)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        public static Header ParseValue(ReadOnlySpan<byte> source)
         {
 #if NET8_0_OR_GREATER
-        return IJsonValue<Header>.ParseValue(buffer);
+            return IJsonValue<Header>.ParseValue(source);
 #else
-            return JsonValueHelpers.ParseValue<Header>(buffer);
+            return JsonValueHelpers.ParseValue<Header>(source);
 #endif
         }
 
         /// <summary>
-        /// Parses a JSON value from a buffer.
+        /// Parses the Header.
         /// </summary>
-        /// <param name = "reader">The reader from which to parse the value.</param>
-        /// <returns>The parsed value.</returns>
-        static Header ParseValue(ref Utf8JsonReader reader)
+        /// <param name="source">The source of the JSON string to parse.</param>
+        public static Header ParseValue(ref Utf8JsonReader source)
         {
 #if NET8_0_OR_GREATER
-        return IJsonValue<Header>.ParseValue(ref reader);
+            return IJsonValue<Header>.ParseValue(ref source);
 #else
-            return JsonValueHelpers.ParseValue<Header>(ref reader);
+            return JsonValueHelpers.ParseValue<Header>(ref source);
 #endif
         }
 
         /// <summary>
         /// Gets the value as an instance of the target value.
         /// </summary>
-        /// <typeparam name = "TTarget">The type of the target.</typeparam>
+        /// <typeparam name="TTarget">The type of the target.</typeparam>
         /// <returns>An instance of the target type.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TTarget As<TTarget>()
             where TTarget : struct, IJsonValue<TTarget>
         {
 #if NET8_0_OR_GREATER
-        if ((this.backing & Backing.JsonElement) != 0)
-        {
-            return TTarget.FromJson(this.jsonElementBacking);
-        }
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+                return TTarget.FromJson(this.jsonElementBacking);
+            }
 
-        if ((this.backing & Backing.Object) != 0)
-        {
-            return TTarget.FromObject(this);
-        }
+            if ((this.backing & Backing.Object) != 0)
+            {
+                return TTarget.FromObject(this);
+            }
 
-        if ((this.backing & Backing.Null) != 0)
-        {
-            return TTarget.Null;
-        }
+            if ((this.backing & Backing.Null) != 0)
+            {
+                return TTarget.Null;
+            }
 
-        return TTarget.Undefined;
+            return TTarget.Undefined;
 #else
             return this.As<Header, TTarget>();
 #endif
@@ -544,7 +677,9 @@ public readonly partial struct OpenApiDocument
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
-            return (obj is IJsonValue jv && this.Equals(jv.AsAny)) || (obj is null && this.IsNull());
+            return
+                (obj is IJsonValue jv && this.Equals(jv.AsAny)) ||
+                (obj is null && this.IsNull());
         }
 
         /// <inheritdoc/>
@@ -557,7 +692,7 @@ public readonly partial struct OpenApiDocument
         /// <summary>
         /// Equality comparison.
         /// </summary>
-        /// <param name = "other">The other item with which to compare.</param>
+        /// <param name="other">The other item with which to compare.</param>
         /// <returns><see langword="true"/> if the values were equal.</returns>
         public bool Equals(in Header other)
         {
@@ -580,12 +715,14 @@ public readonly partial struct OpenApiDocument
             if ((this.backing & Backing.Object) != 0)
             {
                 JsonValueHelpers.WriteProperties(this.objectBacking, writer);
+
                 return;
             }
 
             if ((this.backing & Backing.Null) != 0)
             {
                 writer.WriteNullValue();
+
                 return;
             }
         }
@@ -600,6 +737,98 @@ public readonly partial struct OpenApiDocument
         public override string ToString()
         {
             return this.Serialize();
+        }
+
+        /// <summary>
+        /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
+        /// </summary>
+        /// <typeparam name="TIn">The immutable context to pass in to the match function.</typeparam>
+        /// <typeparam name="TOut">The result of calling the match function.</typeparam>
+        /// <param name="context">The context to pass to the match function.</param>
+        /// <param name="matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentHeaderRequiredSchema">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredSchema"/>.</param>
+        /// <param name="matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentHeaderRequiredContent">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredContent"/>.</param>
+        /// <param name="defaultMatch">Match any other value.</param>
+        /// <returns>An instance of the value returned by the match function.</returns>
+        public TOut Match<TIn, TOut>(
+            in TIn context,
+            Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredSchema, TIn, TOut> matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentHeaderRequiredSchema,
+            Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredContent, TIn, TOut> matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentHeaderRequiredContent,
+            Matcher<Header, TIn, TOut> defaultMatch)
+        {
+            Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredSchema matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentHeaderRequiredSchemaValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredSchema>();
+            if (matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentHeaderRequiredSchemaValue.IsValid())
+            {
+                return matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentHeaderRequiredSchema(matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentHeaderRequiredSchemaValue, context);
+            }
+
+            Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredContent matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentHeaderRequiredContentValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredContent>();
+            if (matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentHeaderRequiredContentValue.IsValid())
+            {
+                return matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentHeaderRequiredContent(matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentHeaderRequiredContentValue, context);
+            }
+
+            return defaultMatch(this, context);
+        }
+
+        /// <summary>
+        /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
+        /// </summary>
+        /// <typeparam name="TOut">The result of calling the match function.</typeparam>
+        /// <param name="matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentHeaderRequiredSchema">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredSchema"/>.</param>
+        /// <param name="matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentHeaderRequiredContent">Match a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredContent"/>.</param>
+        /// <param name="defaultMatch">Match any other value.</param>
+        /// <returns>An instance of the value returned by the match function.</returns>
+        public TOut Match<TOut>(
+            Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredSchema, TOut> matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentHeaderRequiredSchema,
+            Matcher<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredContent, TOut> matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentHeaderRequiredContent,
+            Matcher<Header, TOut> defaultMatch)
+        {
+            Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredSchema matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentHeaderRequiredSchemaValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredSchema>();
+            if (matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentHeaderRequiredSchemaValue.IsValid())
+            {
+                return matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentHeaderRequiredSchema(matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentHeaderRequiredSchemaValue);
+            }
+
+            Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredContent matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentHeaderRequiredContentValue = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredContent>();
+            if (matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentHeaderRequiredContentValue.IsValid())
+            {
+                return matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentHeaderRequiredContent(matchCorvusJsonJsonSchemaOpenApi31OpenApiDocumentHeaderRequiredContentValue);
+            }
+
+            return defaultMatch(this);
+        }
+
+        /// <summary>
+        /// Gets the value as a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredSchema" />.
+        /// </summary>
+        /// <param name="result">The result of the conversions.</param>
+        /// <returns><see langword="true" /> if the conversion was valid.</returns>
+        public bool TryGetAsRequiredSchema(out Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredSchema result)
+        {
+            result = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredSchema>();
+            return result.IsValid();
+        }
+
+        /// <summary>
+        /// Gets the value as a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredContent" />.
+        /// </summary>
+        /// <param name="result">The result of the conversions.</param>
+        /// <returns><see langword="true" /> if the conversion was valid.</returns>
+        public bool TryGetAsRequiredContent(out Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredContent result)
+        {
+            result = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.Header.RequiredContent>();
+            return result.IsValid();
+        }
+
+        /// <summary>
+        /// Gets the value as a <see cref="Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions" />.
+        /// </summary>
+        /// <param name="result">The result of the conversions.</param>
+        /// <returns><see langword="true" /> if the conversion was valid.</returns>
+        public bool TryGetAsSpecificationExtensions(out Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions result)
+        {
+            result = this.As<Corvus.Json.JsonSchema.OpenApi31.OpenApiDocument.SpecificationExtensions>();
+            return result.IsValid();
         }
     }
 }

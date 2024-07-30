@@ -25,9 +25,9 @@ public sealed class SubschemaNameHeuristic : INameHeuristicBeforeSubschema
     public uint Priority => 10_000;
 
     /// <inheritdoc/>
-    public bool TryGetName(TypeDeclaration typeDeclaration, JsonReferenceBuilder reference, Span<char> typeNameBuffer, out int written)
+    public bool TryGetName(ILanguageProvider languageProvider, TypeDeclaration typeDeclaration, JsonReferenceBuilder reference, Span<char> typeNameBuffer, out int written)
     {
-        if (typeDeclaration.Parent() is TypeDeclaration parent)
+        if (typeDeclaration.Parent() is TypeDeclaration parent && !typeDeclaration.IsInDefinitionsContainer())
         {
             if (reference.HasFragment)
             {
@@ -57,21 +57,7 @@ public sealed class SubschemaNameHeuristic : INameHeuristicBeforeSubschema
                     written = Formatting.FormatTypeNameComponent(typeDeclaration, name, typeNameBuffer);
                 }
 
-                if (typeDeclaration.CollidesWithParent(typeNameBuffer[..written]) ||
-                    typeDeclaration.MatchesExistingPropertyNameInParent(typeNameBuffer[..written]))
-                {
-                    written = Formatting.ApplyStandardSuffix(typeDeclaration, typeNameBuffer, typeNameBuffer[..written]);
-                }
-
-                int index = 1;
-                int writtenBefore = written;
-
-                while (typeDeclaration.MatchesExistingTypeInParent(typeNameBuffer[..written]) ||
-                       typeDeclaration.MatchesExistingPropertyNameInParent(typeNameBuffer[..written]))
-                {
-                    written = writtenBefore + Formatting.ApplySuffix(index, typeNameBuffer[writtenBefore..]);
-                    index++;
-                }
+                written = Formatting.ApplyStandardSuffix(typeDeclaration, typeNameBuffer, typeNameBuffer[..written]);
 
                 return true;
             }

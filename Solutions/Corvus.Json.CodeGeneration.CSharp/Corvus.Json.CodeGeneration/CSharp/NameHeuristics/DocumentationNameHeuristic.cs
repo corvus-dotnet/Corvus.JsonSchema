@@ -22,23 +22,35 @@ public sealed class DocumentationNameHeuristic : INameHeuristicBeforeSubschema
     public bool IsOptional => true;
 
     /// <inheritdoc/>
-    public uint Priority => 5_000;
+    public uint Priority => 1_500;
 
     /// <inheritdoc/>
-    public bool TryGetName(TypeDeclaration typeDeclaration, JsonReferenceBuilder reference, Span<char> typeNameBuffer, out int written)
+    public bool TryGetName(ILanguageProvider languageProvider, TypeDeclaration typeDeclaration, JsonReferenceBuilder reference, Span<char> typeNameBuffer, out int written)
     {
+        if (typeDeclaration.Parent() is null || typeDeclaration.IsInDefinitionsContainer())
+        {
+            written = 0;
+            return false;
+        }
+
         if (typeDeclaration.ShortDocumentation() is string shortDocumentation &&
             shortDocumentation.Length > 0 && shortDocumentation.Length < 64)
         {
             written = Formatting.FormatTypeNameComponent(typeDeclaration, shortDocumentation.AsSpan(), typeNameBuffer);
-            return true;
+            if (written > 1 && written < 64 && !typeDeclaration.CollidesWithParent(typeNameBuffer[..written]))
+            {
+                return true;
+            }
         }
 
         if (typeDeclaration.LongDocumentation() is string longDocumentation &&
             longDocumentation.Length > 0 && longDocumentation.Length < 64)
         {
             written = Formatting.FormatTypeNameComponent(typeDeclaration, longDocumentation.AsSpan(), typeNameBuffer);
-            return true;
+            if (written > 1 && written < 64 && !typeDeclaration.CollidesWithParent(typeNameBuffer[..written]))
+            {
+                return true;
+            }
         }
 
         written = 0;

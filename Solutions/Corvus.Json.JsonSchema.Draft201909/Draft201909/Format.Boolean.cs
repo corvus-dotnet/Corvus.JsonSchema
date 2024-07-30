@@ -6,61 +6,63 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json.JsonSchema.Draft201909;
+
 /// <summary>
 /// Format vocabulary meta-schema
 /// </summary>
-public readonly partial struct Format : IJsonBoolean<Format>
+public readonly partial struct Format
+    : IJsonBoolean<Corvus.Json.JsonSchema.Draft201909.Format>
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref = "Format"/> struct.
+    /// Conversion from <see cref="bool"/>.
     /// </summary>
-    /// <param name = "value">The value from which to construct the instance.</param>
-    public Format(bool value)
-    {
-        this.jsonElementBacking = default;
-        this.backing = Backing.Bool;
-        this.boolBacking = value;
-        this.objectBacking = ImmutableList<JsonObjectProperty>.Empty;
-    }
-
-    /// <summary>
-    /// Conversion from JsonBoolean.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    public static implicit operator Format(JsonBoolean value)
-    {
-        if (value.HasDotnetBacking && (value.ValueKind == JsonValueKind.True || value.ValueKind == JsonValueKind.False))
-        {
-            return new((bool)value);
-        }
-
-        return new(value.AsJsonElement);
-    }
-
-    /// <summary>
-    /// Conversion from bool.
-    /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
+    /// <param name="value">The value from which to convert.</param>
     public static implicit operator Format(bool value)
     {
         return new(value);
     }
 
     /// <summary>
-    /// Conversion to bool.
+    /// Conversion from JsonBoolean.
     /// </summary>
-    /// <param name = "value">The value from which to convert.</param>
-    /// <exception cref = "InvalidOperationException">The value was not a string.</exception>
-    public static implicit operator bool (Format value)
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator Format(JsonBoolean value)
+    {
+        if (value.HasDotnetBacking && (value.ValueKind == JsonValueKind.False || value.ValueKind == JsonValueKind.True))
+        {
+            return new(
+                (bool)value);
+        }
+
+        return new(value.AsJsonElement);
+    }
+
+    /// <summary>
+    /// Conversion to JsonBoolean.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    public static implicit operator JsonBoolean(Format value)
+    {
+        return
+            value.AsBoolean;
+    }
+
+    /// <summary>
+    /// Conversion to <see langword="bool"/>.
+    /// </summary>
+    /// <param name="value">The value from which to convert.</param>
+    /// <exception cref="InvalidOperationException">The value was not a boolean.</exception>
+    public static implicit operator bool(Format value)
     {
         return value.GetBoolean() ?? throw new InvalidOperationException();
     }
@@ -68,7 +70,7 @@ public readonly partial struct Format : IJsonBoolean<Format>
     /// <summary>
     /// Try to retrieve the value as a boolean.
     /// </summary>
-    /// <param name = "result"><see langword="true"/> if the value was true, otherwise <see langword="false"/>.</param>
+    /// <param name="result"><see langword="true"/> if the value was true, otherwise <see langword="false"/>.</param>
     /// <returns><see langword="true"/> if the value was representable as a boolean, otherwise <see langword="false"/>.</returns>
     public bool TryGetBoolean([NotNullWhen(true)] out bool result)
     {

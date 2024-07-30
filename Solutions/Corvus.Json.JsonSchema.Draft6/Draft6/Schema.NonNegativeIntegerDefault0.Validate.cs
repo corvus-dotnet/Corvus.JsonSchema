@@ -6,11 +6,28 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
+
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Corvus.Json;
 
 namespace Corvus.Json.JsonSchema.Draft6;
+
+/// <summary>
+/// Core schema meta-schema
+/// </summary>
+/// <remarks>
+/// <para>
+/// Examples:
+/// <example>
+/// <code>
+/// {}
+/// </code>
+/// </example>
+/// </para>
+/// </remarks>
 public readonly partial struct Schema
 {
     /// <summary>
@@ -33,18 +50,80 @@ public readonly partial struct Schema
                 result = result.PushSchemaLocation("http://json-schema.org/draft-06/schema#/definitions/nonNegativeIntegerDefault0");
             }
 
-            result = this.ValidateAllOf(result, level);
+            result = CorvusValidation.CompositionAllOfValidationHandler(this, result, level);
             if (level == ValidationLevel.Flag && !result.IsValid)
             {
                 return result;
             }
 
-            if (level != ValidationLevel.Flag)
+            if (level > ValidationLevel.Basic)
             {
                 result = result.PopLocation();
             }
 
             return result;
+        }
+
+        private static partial class CorvusValidation
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static ValidationContext CompositionAllOfValidationHandler(
+                in NonNegativeIntegerDefault0 value,
+                in ValidationContext validationContext,
+                ValidationLevel level = ValidationLevel.Flag)
+            {
+                ValidationContext result = validationContext;
+                ValidationContext childContextBase = result;
+                ValidationContext allOfResult0 = childContextBase.CreateChildContext();
+                if (level > ValidationLevel.Basic)
+                {
+                    allOfResult0 = allOfResult0.PushValidationLocationReducedPathModifier(new("#/allOf/0/$ref"));
+                }
+
+                allOfResult0 = value.As<Corvus.Json.JsonSchema.Draft6.Schema.NonNegativeInteger>().Validate(allOfResult0, level);
+                if (!allOfResult0.IsValid)
+                {
+                    if (level >= ValidationLevel.Basic)
+                    {
+                        result = result.MergeChildContext(allOfResult0, true).WithResult(isValid: false, "Validation - allOf failed to validate against the schema.");
+                    }
+                    else
+                    {
+                        result = result.MergeChildContext(allOfResult0, false).WithResult(isValid: false);
+                        return result;
+                    }
+                }
+                else
+                {
+                    result = result.MergeChildContext(allOfResult0, level >= ValidationLevel.Detailed);
+                }
+
+                ValidationContext allOfResult1 = childContextBase.CreateChildContext();
+                if (level > ValidationLevel.Basic)
+                {
+                    allOfResult1 = allOfResult1.PushValidationLocationReducedPathModifier(new("#/allOf/1"));
+                }
+
+                allOfResult1 = value.As<Corvus.Json.JsonSchema.Draft6.Schema.NonNegativeIntegerDefault0.DefaultValueType0>().Validate(allOfResult1, level);
+                if (!allOfResult1.IsValid)
+                {
+                    if (level >= ValidationLevel.Basic)
+                    {
+                        result = result.MergeChildContext(allOfResult1, true).WithResult(isValid: false, "Validation - allOf failed to validate against the schema.");
+                    }
+                    else
+                    {
+                        result = result.MergeChildContext(allOfResult1, false).WithResult(isValid: false);
+                        return result;
+                    }
+                }
+                else
+                {
+                    result = result.MergeChildContext(allOfResult1, level >= ValidationLevel.Detailed);
+                }
+
+                return result;
+            }
         }
     }
 }

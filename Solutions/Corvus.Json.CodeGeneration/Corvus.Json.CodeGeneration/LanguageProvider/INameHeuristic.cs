@@ -22,12 +22,14 @@ public interface INameHeuristic
     /// <summary>
     /// Try to get a name for a type declaration using the heuristic.
     /// </summary>
+    /// <param name="languageProvider">The language provider for the heuristic.</param>
     /// <param name="typeDeclaration">The type declaration for which to get the name.</param>
     /// <param name="reference">The decomposed reference for the type declaration.</param>
     /// <param name="typeNameBuffer">The working buffer for the type name into which the name will be written.</param>
     /// <param name="written">The number of characters written.</param>
     /// <returns><see langword="true"/> if the heuristic was able to generate a name.</returns>
     bool TryGetName(
+        ILanguageProvider languageProvider,
         TypeDeclaration typeDeclaration,
         JsonReferenceBuilder reference,
         Span<char> typeNameBuffer,

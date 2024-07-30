@@ -6,73 +6,90 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
+
 #nullable enable
-using System.Collections.Immutable;
+
+using System.Diagnostics.CodeAnalysis;
+#if NET8_0_OR_GREATER
 using System.Numerics;
-using System.Runtime.CompilerServices;
+#endif
 using System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.Internal;
 
 namespace Corvus.Json.JsonSchema.Draft201909;
+
+/// <summary>
+/// Validation vocabulary meta-schema
+/// </summary>
 public readonly partial struct Validation
 {
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
-    public readonly partial struct NonNegativeInteger 
+    public readonly partial struct NonNegativeInteger
 #if NET8_0_OR_GREATER
-: IJsonNumber<NonNegativeInteger>,
-  IAdditionOperators<NonNegativeInteger, NonNegativeInteger, NonNegativeInteger>,
-  ISubtractionOperators<NonNegativeInteger, NonNegativeInteger, NonNegativeInteger>,
-  IMultiplyOperators<NonNegativeInteger, NonNegativeInteger, NonNegativeInteger>,
-  IDivisionOperators<NonNegativeInteger, NonNegativeInteger, NonNegativeInteger>,
-  IIncrementOperators<NonNegativeInteger>,
-  IDecrementOperators<NonNegativeInteger>
+        : IJsonNumber<Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger>,
+          IAdditionOperators<Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger, Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger, Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger>,
+          ISubtractionOperators<Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger, Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger, Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger>,
+          IMultiplyOperators<Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger, Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger, Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger>,
+          IDivisionOperators<Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger, Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger, Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger>,
+          IIncrementOperators<Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger>,
+          IDecrementOperators<Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger>
 #else
-    : IJsonNumber<NonNegativeInteger>
+        : IJsonNumber<Corvus.Json.JsonSchema.Draft201909.Validation.NonNegativeInteger>
 #endif
     {
         /// <summary>
         /// Initializes a new instance of the <see cref = "NonNegativeInteger"/> struct.
         /// </summary>
-        /// <param name = "value">The value from which to construct the instance.</param>
-        public NonNegativeInteger(in BinaryJsonNumber value)
-        {
-            this.jsonElementBacking = default;
-            this.backing = Backing.Number;
-            this.numberBacking = value;
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref = "NonNegativeInteger"/> struct.
-        /// </summary>
-        /// <param name = "value">The value from which to initialize the number.</param>
-        public NonNegativeInteger(long value) : this(new BinaryJsonNumber(value))
+        /// <param name="value">The value from which to construct the instance.</param>
+        public NonNegativeInteger(long value)
+            : this(new BinaryJsonNumber(value))
         {
         }
 
         /// <summary>
         /// Conversion from JsonNumber.
         /// </summary>
-        /// <param name = "value">The value from which to convert.</param>
+        /// <param name="value">The value from which to convert.</param>
         public static implicit operator NonNegativeInteger(JsonNumber value)
         {
             if (value.HasDotnetBacking && value.ValueKind == JsonValueKind.Number)
             {
-                return new(value.AsBinaryJsonNumber);
+                return new(
+                    value.AsBinaryJsonNumber);
             }
 
             return new(value.AsJsonElement);
         }
 
         /// <summary>
+        /// Conversion to JsonNumber.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator JsonNumber(NonNegativeInteger value)
+        {
+            return
+                value.AsNumber;
+        }
+
+        /// <summary>
+        /// Conversion to JsonInteger.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        public static implicit operator JsonInteger(NonNegativeInteger value)
+        {
+            return
+                value.As<JsonInteger>();
+        }
+
+        /// <summary>
         /// Conversion to byte.
         /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-        /// <exception cref = "FormatException">The value was not formatted as a byte.</exception>
-        public static explicit operator byte (NonNegativeInteger value)
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the byte.</returns>
+        public static explicit operator byte(NonNegativeInteger value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -88,12 +105,21 @@ public readonly partial struct Validation
         }
 
         /// <summary>
+        /// Conversion from byte.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the <see cref="NonNegativeInteger"/>.</returns>
+        public static explicit operator NonNegativeInteger(byte value)
+        {
+            return new(new BinaryJsonNumber(value));
+        }
+
+        /// <summary>
         /// Conversion to decimal.
         /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-        /// <exception cref = "FormatException">The value was not formatted as a decimal.</exception>
-        public static explicit operator decimal (NonNegativeInteger value)
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the decimal.</returns>
+        public static explicit operator decimal(NonNegativeInteger value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -109,12 +135,21 @@ public readonly partial struct Validation
         }
 
         /// <summary>
+        /// Conversion from decimal.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the <see cref="NonNegativeInteger"/>.</returns>
+        public static explicit operator NonNegativeInteger(decimal value)
+        {
+            return new(new BinaryJsonNumber(value));
+        }
+
+        /// <summary>
         /// Conversion to double.
         /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-        /// <exception cref = "FormatException">The value was not formatted as a double.</exception>
-        public static explicit operator double (NonNegativeInteger value)
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the double.</returns>
+        public static explicit operator double(NonNegativeInteger value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -130,12 +165,21 @@ public readonly partial struct Validation
         }
 
         /// <summary>
-        /// Conversion to Int16.
+        /// Conversion from double.
         /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-        /// <exception cref = "FormatException">The value was not formatted as an Int16.</exception>
-        public static explicit operator short (NonNegativeInteger value)
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the <see cref="NonNegativeInteger"/>.</returns>
+        public static explicit operator NonNegativeInteger(double value)
+        {
+            return new(new BinaryJsonNumber(value));
+        }
+
+        /// <summary>
+        /// Conversion to short.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the short.</returns>
+        public static explicit operator short(NonNegativeInteger value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -151,12 +195,21 @@ public readonly partial struct Validation
         }
 
         /// <summary>
-        /// Conversion to Int32.
+        /// Conversion from short.
         /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-        /// <exception cref = "FormatException">The value was not formatted as an Int32.</exception>
-        public static explicit operator int (NonNegativeInteger value)
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the <see cref="NonNegativeInteger"/>.</returns>
+        public static explicit operator NonNegativeInteger(short value)
+        {
+            return new(new BinaryJsonNumber(value));
+        }
+
+        /// <summary>
+        /// Conversion to int.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the int.</returns>
+        public static explicit operator int(NonNegativeInteger value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -172,12 +225,21 @@ public readonly partial struct Validation
         }
 
         /// <summary>
-        /// Conversion to Int64.
+        /// Conversion from int.
         /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-        /// <exception cref = "FormatException">The value was not formatted as an Int64.</exception>
-        public static explicit operator long (NonNegativeInteger value)
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the <see cref="NonNegativeInteger"/>.</returns>
+        public static explicit operator NonNegativeInteger(int value)
+        {
+            return new(new BinaryJsonNumber(value));
+        }
+
+        /// <summary>
+        /// Conversion to long.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the long.</returns>
+        public static implicit operator long(NonNegativeInteger value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -192,35 +254,54 @@ public readonly partial struct Validation
             throw new InvalidOperationException();
         }
 
-#if NET8_0_OR_GREATER
-    /// <summary>
-    /// Conversion to Int128.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
-    /// <exception cref="FormatException">The value was not formatted as an Int64.</exception>
-    public static explicit operator Int128(NonNegativeInteger value)
-    {
-        if ((value.backing & Backing.JsonElement) != 0)
-        {
-            return value.jsonElementBacking.SafeGetInt128();
-        }
-
-        if ((value.backing & Backing.Number) != 0)
-        {
-            return value.numberBacking.CreateChecked<Int128>();
-        }
-
-        throw new InvalidOperationException();
-    }
-#endif
         /// <summary>
-        /// Conversion to SByte.
+        /// Conversion from long.
         /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-        /// <exception cref = "FormatException">The value was not formatted as an SByte.</exception>
-        public static explicit operator sbyte (NonNegativeInteger value)
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the <see cref="NonNegativeInteger"/>.</returns>
+        public static implicit operator NonNegativeInteger(long value)
+        {
+            return new(new BinaryJsonNumber(value));
+        }
+
+#if NET8_0_OR_GREATER
+        /// <summary>
+        /// Conversion to Int128.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the Int128.</returns>
+        public static explicit operator Int128(NonNegativeInteger value)
+        {
+            if ((value.backing & Backing.JsonElement) != 0)
+            {
+                return value.jsonElementBacking.SafeGetInt128();
+            }
+
+            if ((value.backing & Backing.Number) != 0)
+            {
+                return value.numberBacking.CreateChecked<Int128>();
+            }
+
+            throw new InvalidOperationException();
+        }
+
+        /// <summary>
+        /// Conversion from Int128.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the <see cref="NonNegativeInteger"/>.</returns>
+        public static explicit operator NonNegativeInteger(Int128 value)
+        {
+            return new(new BinaryJsonNumber(value));
+        }
+#endif
+
+        /// <summary>
+        /// Conversion to sbyte.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the sbyte.</returns>
+        public static explicit operator sbyte(NonNegativeInteger value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -235,35 +316,54 @@ public readonly partial struct Validation
             throw new InvalidOperationException();
         }
 
-#if NET8_0_OR_GREATER
-    /// <summary>
-    /// Conversion to Half.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
-    /// <exception cref="FormatException">The value was not formatted as a Single.</exception>
-    public static explicit operator Half(NonNegativeInteger value)
-    {
-        if ((value.backing & Backing.JsonElement) != 0)
-        {
-            return value.jsonElementBacking.SafeGetHalf();
-        }
-
-        if ((value.backing & Backing.Number) != 0)
-        {
-            return value.numberBacking.CreateChecked<Half>();
-        }
-
-        throw new InvalidOperationException();
-    }
-#endif
         /// <summary>
-        /// Conversion to Single.
+        /// Conversion from sbyte.
         /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-        /// <exception cref = "FormatException">The value was not formatted as a Single.</exception>
-        public static explicit operator float (NonNegativeInteger value)
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the <see cref="NonNegativeInteger"/>.</returns>
+        public static explicit operator NonNegativeInteger(sbyte value)
+        {
+            return new(new BinaryJsonNumber(value));
+        }
+
+#if NET8_0_OR_GREATER
+        /// <summary>
+        /// Conversion to Half.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the Half.</returns>
+        public static explicit operator Half(NonNegativeInteger value)
+        {
+            if ((value.backing & Backing.JsonElement) != 0)
+            {
+                return value.jsonElementBacking.SafeGetHalf();
+            }
+
+            if ((value.backing & Backing.Number) != 0)
+            {
+                return value.numberBacking.CreateChecked<Half>();
+            }
+
+            throw new InvalidOperationException();
+        }
+
+        /// <summary>
+        /// Conversion from Half.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the <see cref="NonNegativeInteger"/>.</returns>
+        public static explicit operator NonNegativeInteger(Half value)
+        {
+            return new(new BinaryJsonNumber(value));
+        }
+#endif
+
+        /// <summary>
+        /// Conversion to float.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the float.</returns>
+        public static explicit operator float(NonNegativeInteger value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -279,12 +379,21 @@ public readonly partial struct Validation
         }
 
         /// <summary>
-        /// Conversion to UInt16.
+        /// Conversion from float.
         /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-        /// <exception cref = "FormatException">The value was not formatted as an UInt16.</exception>
-        public static explicit operator ushort (NonNegativeInteger value)
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the <see cref="NonNegativeInteger"/>.</returns>
+        public static explicit operator NonNegativeInteger(float value)
+        {
+            return new(new BinaryJsonNumber(value));
+        }
+
+        /// <summary>
+        /// Conversion to ushort.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the ushort.</returns>
+        public static explicit operator ushort(NonNegativeInteger value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -300,12 +409,21 @@ public readonly partial struct Validation
         }
 
         /// <summary>
-        /// Conversion to UInt32.
+        /// Conversion from ushort.
         /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-        /// <exception cref = "FormatException">The value was not formatted as an UInt32.</exception>
-        public static explicit operator uint (NonNegativeInteger value)
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the <see cref="NonNegativeInteger"/>.</returns>
+        public static explicit operator NonNegativeInteger(ushort value)
+        {
+            return new(new BinaryJsonNumber(value));
+        }
+
+        /// <summary>
+        /// Conversion to uint.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the uint.</returns>
+        public static explicit operator uint(NonNegativeInteger value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -321,12 +439,21 @@ public readonly partial struct Validation
         }
 
         /// <summary>
-        /// Conversion to UInt64.
+        /// Conversion from uint.
         /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        /// <exception cref = "InvalidOperationException">The value was not a number.</exception>
-        /// <exception cref = "FormatException">The value was not formatted as an UInt64.</exception>
-        public static explicit operator ulong (NonNegativeInteger value)
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the <see cref="NonNegativeInteger"/>.</returns>
+        public static explicit operator NonNegativeInteger(uint value)
+        {
+            return new(new BinaryJsonNumber(value));
+        }
+
+        /// <summary>
+        /// Conversion to ulong.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the ulong.</returns>
+        public static explicit operator ulong(NonNegativeInteger value)
         {
             if ((value.backing & Backing.JsonElement) != 0)
             {
@@ -341,185 +468,70 @@ public readonly partial struct Validation
             throw new InvalidOperationException();
         }
 
-#if NET8_0_OR_GREATER
-    /// <summary>
-    /// Conversion to UInt128.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    /// <exception cref="InvalidOperationException">The value was not a number.</exception>
-    /// <exception cref="FormatException">The value was not formatted as an UInt64.</exception>
-    public static explicit operator UInt128(NonNegativeInteger value)
-    {
-        if ((value.backing & Backing.JsonElement) != 0)
-        {
-            return value.jsonElementBacking.SafeGetUInt128();
-        }
-
-        if ((value.backing & Backing.Number) != 0)
-        {
-            return value.numberBacking.CreateChecked<UInt128>();
-        }
-
-        throw new InvalidOperationException();
-    }
-#endif
-        /// <summary>
-        /// Conversion from decimal.
-        /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        public static explicit operator NonNegativeInteger(decimal value)
-        {
-            return new(new BinaryJsonNumber(value));
-        }
-
-        /// <summary>
-        /// Conversion from double.
-        /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        public static explicit operator NonNegativeInteger(double value)
-        {
-            return new(new BinaryJsonNumber(value));
-        }
-
-#if NET8_0_OR_GREATER
-    /// <summary>
-    /// Conversion from Half.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    public static explicit operator NonNegativeInteger(Half value)
-    {
-        return new(new BinaryJsonNumber(value));
-    }
-#endif
-        /// <summary>
-        /// Conversion from float.
-        /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        public static explicit operator NonNegativeInteger(float value)
-        {
-            return new(new BinaryJsonNumber(value));
-        }
-
-        /// <summary>
-        /// Conversion from byte.
-        /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        public static explicit operator NonNegativeInteger(byte value)
-        {
-            return new(new BinaryJsonNumber(value));
-        }
-
-        /// <summary>
-        /// Conversion from short.
-        /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        public static explicit operator NonNegativeInteger(short value)
-        {
-            return new(new BinaryJsonNumber(value));
-        }
-
-        /// <summary>
-        /// Conversion from int.
-        /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        public static explicit operator NonNegativeInteger(int value)
-        {
-            return new(new BinaryJsonNumber(value));
-        }
-
-        /// <summary>
-        /// Conversion from long.
-        /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        public static explicit operator NonNegativeInteger(long value)
-        {
-            return new(new BinaryJsonNumber(value));
-        }
-
-        /// <summary>
-        /// Conversion from sbyte.
-        /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        public static explicit operator NonNegativeInteger(sbyte value)
-        {
-            return new(new BinaryJsonNumber(value));
-        }
-
-        /// <summary>
-        /// Conversion from ushort.
-        /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        public static explicit operator NonNegativeInteger(ushort value)
-        {
-            return new(new BinaryJsonNumber(value));
-        }
-
-        /// <summary>
-        /// Conversion from uint.
-        /// </summary>
-        /// <param name = "value">The value to convert.</param>
-        public static explicit operator NonNegativeInteger(uint value)
-        {
-            return new(new BinaryJsonNumber(value));
-        }
-
         /// <summary>
         /// Conversion from ulong.
         /// </summary>
-        /// <param name = "value">The value to convert.</param>
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the <see cref="NonNegativeInteger"/>.</returns>
         public static explicit operator NonNegativeInteger(ulong value)
         {
             return new(new BinaryJsonNumber(value));
         }
 
 #if NET8_0_OR_GREATER
-    /// <summary>
-    /// Conversion from Int128.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    public static explicit operator NonNegativeInteger(Int128 value)
-    {
-        return new(new BinaryJsonNumber(value));
-    }
+        /// <summary>
+        /// Conversion to UInt128.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the UInt128.</returns>
+        public static explicit operator UInt128(NonNegativeInteger value)
+        {
+            if ((value.backing & Backing.JsonElement) != 0)
+            {
+                return value.jsonElementBacking.SafeGetUInt128();
+            }
 
-    /// <summary>
-    /// Conversion from UInt128.
-    /// </summary>
-    /// <param name="value">The value to convert.</param>
-    public static explicit operator NonNegativeInteger(UInt128 value)
-    {
-        return new(new BinaryJsonNumber(value));
-    }
+            if ((value.backing & Backing.Number) != 0)
+            {
+                return value.numberBacking.CreateChecked<UInt128>();
+            }
+
+            throw new InvalidOperationException();
+        }
+
+        /// <summary>
+        /// Conversion from UInt128.
+        /// </summary>
+        /// <param name="value">The value from which to convert.</param>
+        /// <returns>An instance of the <see cref="NonNegativeInteger"/>.</returns>
+        public static explicit operator NonNegativeInteger(UInt128 value)
+        {
+            return new(new BinaryJsonNumber(value));
+        }
 #endif
+
         /// <summary>
         /// Less than operator.
         /// </summary>
-        /// <param name = "left">The LHS of the comparison.</param>
-        /// <param name = "right">The RHS of the comparison.</param>
-        /// <returns><see langword="true"/> if the left is less than the right, otherwise <see langword="false"/>.</returns>
-        public static bool operator <(in NonNegativeInteger left, in NonNegativeInteger right)
+        /// <param name="left">The LHS of the comparison.</param>
+        /// <param name="right">The RHS of the comparison.</param>
+        /// <returns>
+        /// <see langword="true"/> if the left is less than the right, otherwise <see langword="false"/>.
+        /// </returns>
+        public static bool operator <(NonNegativeInteger left, NonNegativeInteger right)
         {
             return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && Compare(left, right) < 0;
         }
 
         /// <summary>
-        /// Greater than operator.
+        /// Less than or equals operator.
         /// </summary>
-        /// <param name = "left">The LHS of the comparison.</param>
-        /// <param name = "right">The RHS of the comparison.</param>
-        /// <returns><see langword="true"/> if the left is greater than the right, otherwise <see langword="false"/>.</returns>
-        public static bool operator>(in NonNegativeInteger left, in NonNegativeInteger right)
-        {
-            return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && Compare(left, right) > 0;
-        }
-
-        /// <summary>
-        /// Less than operator.
-        /// </summary>
-        /// <param name = "left">The LHS of the comparison.</param>
-        /// <param name = "right">The RHS of the comparison.</param>
-        /// <returns><see langword="true"/> if the left is less than the right, otherwise <see langword="false"/>.</returns>
-        public static bool operator <=(in NonNegativeInteger left, in NonNegativeInteger right)
+        /// <param name="left">The LHS of the comparison.</param>
+        /// <param name="right">The RHS of the comparison.</param>
+        /// <returns>
+        /// <see langword="true"/> if the left is less than or equal to the right, otherwise <see langword="false"/>.
+        /// </returns>
+        public static bool operator <=(NonNegativeInteger left, NonNegativeInteger right)
         {
             return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && Compare(left, right) <= 0;
         }
@@ -527,86 +539,102 @@ public readonly partial struct Validation
         /// <summary>
         /// Greater than operator.
         /// </summary>
-        /// <param name = "left">The LHS of the comparison.</param>
-        /// <param name = "right">The RHS of the comparison.</param>
-        /// <returns><see langword="true"/> if the left is greater than the right, otherwise <see langword="false"/>.</returns>
-        public static bool operator >=(in NonNegativeInteger left, in NonNegativeInteger right)
+        /// <param name="left">The LHS of the comparison.</param>
+        /// <param name="right">The RHS of the comparison.</param>
+        /// <returns>
+        /// <see langword="true"/> if the left is greater than the right, otherwise <see langword="false"/>.
+        /// </returns>
+        public static bool operator >(NonNegativeInteger left, NonNegativeInteger right)
+        {
+            return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && Compare(left, right) > 0;
+        }
+
+        /// <summary>
+        /// Greater than or equals operator.
+        /// </summary>
+        /// <param name="left">The LHS of the comparison.</param>
+        /// <param name="right">The RHS of the comparison.</param>
+        /// <returns>
+        /// <see langword="true"/> if the left is greater than or equal to the right, otherwise <see langword="false"/>.
+        /// </returns>
+        public static bool operator >=(NonNegativeInteger left, NonNegativeInteger right)
         {
             return left.IsNotNullOrUndefined() && right.IsNotNullOrUndefined() && Compare(left, right) >= 0;
         }
 
         /// <summary>
-        /// Adds two values together to compute their sum.
+        /// Adds two numbers to produce their sum.
         /// </summary>
-        /// <param name = "left">The left hand side.</param>
-        /// <param name = "right">The right hand side.</param>
-        /// <returns>The resulting value.</returns>
+        /// <param name="left">The left hand side of the binary operator.</param>
+        /// <param name="right">The right hand side of the binary operator.</param>
+        /// <returns>The result of the operation.</returns>
         public static NonNegativeInteger operator +(NonNegativeInteger left, NonNegativeInteger right)
         {
             return new(left.AsBinaryJsonNumber + right.AsBinaryJsonNumber);
         }
 
         /// <summary>
-        /// Subtracts two values together to compute their difference.
+        /// Subtracts two numbers to produce their difference.
         /// </summary>
-        /// <param name = "left">The left hand side.</param>
-        /// <param name = "right">The right hand side.</param>
-        /// <returns>The resulting value.</returns>
+        /// <param name="left">The left hand side of the binary operator.</param>
+        /// <param name="right">The right hand side of the binary operator.</param>
+        /// <returns>The result of the operation.</returns>
         public static NonNegativeInteger operator -(NonNegativeInteger left, NonNegativeInteger right)
         {
             return new(left.AsBinaryJsonNumber - right.AsBinaryJsonNumber);
         }
 
         /// <summary>
-        /// Multiplies two values together.
+        /// Multiplies two numbers.
         /// </summary>
-        /// <param name = "left">The left hand side.</param>
-        /// <param name = "right">The right hand side.</param>
-        /// <returns>The resulting value.</returns>
+        /// <param name="left">The left hand side of the binary operator.</param>
+        /// <param name="right">The right hand side of the binary operator.</param>
+        /// <returns>The result of the operation.</returns>
         public static NonNegativeInteger operator *(NonNegativeInteger left, NonNegativeInteger right)
         {
             return new(left.AsBinaryJsonNumber * right.AsBinaryJsonNumber);
         }
 
         /// <summary>
-        /// Divides two values.
+        /// Divides two numbers.
         /// </summary>
-        /// <param name = "left">The left hand side.</param>
-        /// <param name = "right">The right hand side.</param>
-        /// <returns>The resulting value.</returns>
+        /// <param name="left">The left hand side of the binary operator.</param>
+        /// <param name="right">The right hand side of the binary operator.</param>
+        /// <returns>The result of the operation.</returns>
         public static NonNegativeInteger operator /(NonNegativeInteger left, NonNegativeInteger right)
         {
             return new(left.AsBinaryJsonNumber / right.AsBinaryJsonNumber);
         }
 
         /// <summary>
-        /// Increments the value.
+        /// Increments the number.
         /// </summary>
-        /// <param name = "value">The value.</param>
-        /// <returns>The resulting value.</returns>
+        /// <param name="value">The value on which to operate.</param>
+        /// <returns>The result of the operation.</returns>
         public static NonNegativeInteger operator ++(NonNegativeInteger value)
         {
-            BinaryJsonNumber num = value.AsBinaryJsonNumber;
-            return new(num++);
+            BinaryJsonNumber num = value.AsBinaryJsonNumber;            return new(num++);
         }
 
         /// <summary>
-        /// Decrements the value.
+        /// Decrements the number.
         /// </summary>
-        /// <param name = "value">The value.</param>
-        /// <returns>The resulting value.</returns>
+        /// <param name="value">The value on which to operate.</param>
+        /// <returns>The result of the operation.</returns>
         public static NonNegativeInteger operator --(NonNegativeInteger value)
         {
-            BinaryJsonNumber num = value.AsBinaryJsonNumber;
-            return new(num--);
+            BinaryJsonNumber num = value.AsBinaryJsonNumber;            return new(num--);
         }
 
         /// <summary>
-        /// Compare with another number.
+        /// Compare two numbers.
         /// </summary>
-        /// <param name = "lhs">The lhs of the comparison.</param>
-        /// <param name = "rhs">The rhs of the comparison.</param>
-        /// <returns>0 if the numbers are equal, -1 if the lhs is less than the rhs, and 1 if the lhs is greater than the rhs.</returns>
+        /// <param name="lhs">The left hand side of the comparison.</param>
+        /// <param name="rhs">The right hand side of the comparison.</param>
+        /// <returns>
+        /// 0 if the numbers are equal, -1 if <paramref name="lhs"/> is less than <paramref name="rhs"/>,
+        /// and 1 if <paramref name="lhs"/> is greater than <paramref name="rhs"/>.
+        /// </returns>
         public static int Compare(in NonNegativeInteger lhs, in NonNegativeInteger rhs)
         {
             if (lhs.ValueKind != rhs.ValueKind)
@@ -621,13 +649,6 @@ public readonly partial struct Validation
                 return 0;
             }
 
-            if (lhs.backing == Backing.Number && rhs.backing == Backing.Number)
-            {
-                return BinaryJsonNumber.Compare(lhs.numberBacking, rhs.numberBacking);
-            }
-
-            // After this point there is no need to check both value kinds because our first quick test verified that they were the same.
-            // If either one is a Backing.Number or a JsonValueKind.Number then we know the rhs is compatible.
             if (lhs.backing == Backing.Number && rhs.backing == Backing.Number)
             {
                 return BinaryJsonNumber.Compare(lhs.numberBacking, rhs.numberBacking);
@@ -651,7 +672,48 @@ public readonly partial struct Validation
             throw new InvalidOperationException();
         }
 
-        /// <inheritdoc/>
-        public BinaryJsonNumber AsBinaryJsonNumber => this.HasDotnetBacking ? this.numberBacking : BinaryJsonNumber.FromJson(this.jsonElementBacking);
+        /// <summary>
+        /// Gets the value as a <see cref="BinaryJsonNumber"/>.
+        /// </summary>
+        public BinaryJsonNumber AsBinaryJsonNumber
+        {
+            get
+            {
+                if ((this.backing & Backing.Number) != 0)
+                {
+                    return this.numberBacking;
+                }
+
+                if ((this.backing & Backing.JsonElement) != 0)
+                {
+                    return BinaryJsonNumber.FromJson(this.jsonElementBacking);
+                }
+
+                throw new InvalidOperationException();
+            }
+        }
+
+        /// <summary>
+        /// Gets the value as a long.
+        /// </summary>
+        public long AsInt64() => (long)this;
+
+        /// <summary>
+        /// Equality comparison.
+        /// </summary>
+        /// <param name="other">The <see cref="BinaryJsonNumber"/> with which to compare.</param>
+        /// <returns><see langword="true"/> if the values were equal.</returns>
+        public bool Equals(in BinaryJsonNumber other)        {
+            if ((this.backing & Backing.JsonElement) != 0)
+            {
+return this.jsonElementBacking.ValueKind == JsonValueKind.Number && other.Equals(this.jsonElementBacking);            }
+
+            if ((this.backing & Backing.Number) != 0)
+            {
+                return BinaryJsonNumber.Equals(other, this.numberBacking);
+            }
+
+            return false;
+        }
     }
 }
