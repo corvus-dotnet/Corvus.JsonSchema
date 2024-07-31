@@ -54,7 +54,7 @@ public readonly struct PatchBuilder
     {
         if (path.Length == 0)
         {
-            return this.Replace(value, new JsonPointer(path));
+            return this.Replace(new JsonPointer(path), value);
         }
 
         bool goingDeep = false;
@@ -100,7 +100,7 @@ public readonly struct PatchBuilder
         // If we are not going deep, we may be replacing the element at the path
         if (!goingDeep && this.Value.TryResolvePointer(path, out _))
         {
-            return currentBuilder.Replace(value, new JsonPointer(path));
+            return currentBuilder.Replace(new JsonPointer(path), value);
         }
         else
         {
@@ -117,7 +117,7 @@ public readonly struct PatchBuilder
     /// <exception cref="JsonPatchException">Thrown if the value cannot be added at the given path.</exception>
     public PatchBuilder Add(in JsonAny value, in JsonPointer path)
     {
-        var operation = JsonPatchDocument.AddEntity.Create(path, value);
+        var operation = JsonPatchDocument.AddOperation.Create(path, value);
         if (this.Value.TryApplyPatch(JsonPatchDocument.FromItems(operation), out JsonAny result))
         {
             return new(result, this.PatchOperations.Add(operation));
@@ -135,7 +135,7 @@ public readonly struct PatchBuilder
     /// <exception cref="JsonPatchException">Thrown if the value cannot be copied from the source to the path.</exception>
     public PatchBuilder Copy(in JsonPointer from, in JsonPointer path)
     {
-        var operation = JsonPatchDocument.Copy.Create(from, path);
+        var operation = JsonPatchDocument.CopyOperation.Create(from, path);
         if (this.Value.TryApplyPatch(JsonPatchDocument.FromItems(operation), out JsonAny result))
         {
             return new(result, this.PatchOperations.Add(operation));
@@ -153,7 +153,7 @@ public readonly struct PatchBuilder
     /// <exception cref="JsonPatchException">Thrown if the value cannot be moved from the source location to the path.</exception>
     public PatchBuilder Move(in JsonPointer from, in JsonPointer path)
     {
-        var operation = JsonPatchDocument.Move.Create(from, path);
+        var operation = JsonPatchDocument.MoveOperation.Create(from, path);
         if (this.Value.TryApplyPatch(JsonPatchDocument.FromItems(operation), out JsonAny result))
         {
             return new(result, this.PatchOperations.Add(operation));
@@ -170,7 +170,7 @@ public readonly struct PatchBuilder
     /// <exception cref="JsonPatchException">Thrown if the value cannot be removed at the given path.</exception>
     public PatchBuilder Remove(in JsonPointer path)
     {
-        var operation = JsonPatchDocument.RemoveEntity.Create(path);
+        var operation = JsonPatchDocument.RemoveOperation.Create(path);
         if (this.Value.TryApplyPatch(JsonPatchDocument.FromItems(operation), out JsonAny result))
         {
             return new(result, this.PatchOperations.Add(operation));
@@ -182,13 +182,13 @@ public readonly struct PatchBuilder
     /// <summary>
     /// Replace the given <paramref name="value"/> to the entity at the given <paramref name="path"/>.
     /// </summary>
-    /// <param name="value">The <see cref="IJsonValue"/> with which to replace the existing value.</param>
     /// <param name="path">The path at which to replace the existing value.</param>
+    /// <param name="value">The <see cref="IJsonValue"/> with which to replace the existing value.</param>
     /// <returns>An instance of a <see cref="PatchBuilder"/> with the updated value, and the operation added to the operation array.</returns>
     /// <exception cref="JsonPatchException">Thrown if the value cannot be replaced at the given path.</exception>
-    public PatchBuilder Replace(in JsonAny value, in JsonPointer path)
+    public PatchBuilder Replace(in JsonPointer path, in JsonAny value)
     {
-        var operation = JsonPatchDocument.ReplaceEntity.Create(path, value);
+        var operation = JsonPatchDocument.ReplaceOperation.Create(path, value);
         if (this.Value.TryApplyPatch(JsonPatchDocument.FromItems(operation), out JsonAny result))
         {
             return new(result, this.PatchOperations.Add(operation));
@@ -200,13 +200,13 @@ public readonly struct PatchBuilder
     /// <summary>
     /// Tests that the <paramref name="value"/> is found at the given <paramref name="path"/>.
     /// </summary>
-    /// <param name="value">The <see cref="IJsonValue"/> expected at the given path.</param>
     /// <param name="path">The path at which to replace the existing value.</param>
+    /// <param name="value">The <see cref="IJsonValue"/> expected at the given path.</param>
     /// <returns>An instance of a <see cref="PatchBuilder"/> with the updated value, and the operation added to the operation array.</returns>
     /// <exception cref="JsonPatchException">Thrown if the value cannot be replaced at the given path.</exception>
-    public PatchBuilder Test(in JsonAny value, in JsonPointer path)
+    public PatchBuilder Test(in JsonPointer path, in JsonAny value)
     {
-        var operation = JsonPatchDocument.Test.Create(path, value);
+        var operation = JsonPatchDocument.TestOperation.Create(path, value);
         if (this.Value.TryApplyPatch(JsonPatchDocument.FromItems(operation), out JsonAny result))
         {
             return new(result, this.PatchOperations.Add(operation));
